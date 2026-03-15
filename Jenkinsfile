@@ -24,19 +24,17 @@ pipeline {
 
         stage('Backend CI') {
             steps {
-                sh """
-                    docker run --rm -v ${WORKSPACE}:/app -w /app/ag-extension-dashboard/src/backend node:20-alpine \
-                    sh -c 'npm install && npm run lint && npm run test'
-                """
+                dir('ag-extension-dashboard') {
+                    sh 'docker compose run --rm --no-deps backend sh -c "npm install && npm run lint && npm run test"'
+                }
             }
         }
 
         stage('Frontend CI') {
             steps {
-                sh """
-                    docker run --rm -v ${WORKSPACE}:/app -w /app/ag-extension-dashboard/src/frontend node:20-alpine \
-                    sh -c 'npm install -g pnpm && pnpm install && pnpm run lint && pnpm run test'
-                """
+                dir('ag-extension-dashboard') {
+                    sh 'docker compose run --rm --no-deps frontend sh -c "npm install -g pnpm && pnpm install && pnpm run lint && pnpm run test"'
+                }
             }
         }
 
