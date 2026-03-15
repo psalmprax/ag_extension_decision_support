@@ -24,30 +24,18 @@ pipeline {
 
         stage('Backend CI') {
             steps {
-                dir('ag-extension-dashboard') {
-                    sh '''
-                        if command -v docker-compose >/dev/null 2>&1; then
-                            COMPOSE_CMD="docker-compose"
-                        else
-                            COMPOSE_CMD="docker compose"
-                        fi
-                        $COMPOSE_CMD run --rm --no-deps backend sh -c "npm install && npm run lint && npm run test"
-                    '''
+                dir('ag-extension-dashboard/src/backend') {
+                    sh 'docker build -t ag-backend-test --target development .'
+                    sh 'docker run --rm ag-backend-test sh -c "npm run lint && npm run test"'
                 }
             }
         }
 
         stage('Frontend CI') {
             steps {
-                dir('ag-extension-dashboard') {
-                    sh '''
-                        if command -v docker-compose >/dev/null 2>&1; then
-                            COMPOSE_CMD="docker-compose"
-                        else
-                            COMPOSE_CMD="docker compose"
-                        fi
-                        $COMPOSE_CMD run --rm --no-deps frontend sh -c "npm install -g pnpm && pnpm install && pnpm run lint && pnpm run test"
-                    '''
+                dir('ag-extension-dashboard/src/frontend') {
+                    sh 'docker build -t ag-frontend-test --target development .'
+                    sh 'docker run --rm ag-frontend-test sh -c "npm run lint && npm run test"'
                 }
             }
         }
@@ -55,14 +43,7 @@ pipeline {
         stage('Docker Build') {
             steps {
                 dir('ag-extension-dashboard') {
-                    sh '''
-                        if command -v docker-compose >/dev/null 2>&1; then
-                            COMPOSE_CMD="docker-compose"
-                        else
-                            COMPOSE_CMD="docker compose"
-                        fi
-                        $COMPOSE_CMD build
-                    '''
+                    sh 'docker compose build'
                 }
             }
         }
