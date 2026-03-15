@@ -23,6 +23,12 @@ pipeline {
         }
 
         stage('Backend CI') {
+            agent {
+                docker {
+                    image 'node:20-alpine'
+                    reuseNode true
+                }
+            }
             steps {
                 dir('ag-extension-dashboard/src/backend') {
                     sh 'npm install'
@@ -33,11 +39,18 @@ pipeline {
         }
 
         stage('Frontend CI') {
+            agent {
+                docker {
+                    image 'node:20-alpine'
+                    reuseNode true
+                }
+            }
             steps {
                 dir('ag-extension-dashboard/src/frontend') {
-                    sh 'npm install'
-                    sh 'npm run lint'
-                    sh 'npm run test'
+                    sh 'npm install -g pnpm'
+                    sh 'pnpm install'
+                    sh 'pnpm run lint'
+                    sh 'pnpm run test'
                 }
             }
         }
