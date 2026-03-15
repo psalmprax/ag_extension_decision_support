@@ -1,0 +1,34 @@
+#!/bin/sh
+# Pre-commit hook for AG Extension Dashboard
+
+echo "Running pre-commit checks..."
+
+# Change to frontend directory
+cd "$(dirname "$0")/.." || exit 1
+
+# Run TypeScript type check
+echo "Running TypeScript type check..."
+npx tsc --noEmit
+if [ $? -ne 0 ]; then
+  echo "TypeScript check failed!"
+  exit 1
+fi
+
+# Run lint
+echo "Running lint..."
+npm run lint
+if [ $? -ne 0 ]; then
+  echo "Lint failed!"
+  exit 1
+fi
+
+# Run tests
+echo "Running tests..."
+npm run test -- --run
+if [ $? -ne 0 ]; then
+  echo "Tests failed!"
+  exit 1
+fi
+
+echo "All pre-commit checks passed!"
+exit 0

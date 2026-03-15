@@ -1,0 +1,280 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email         String             @unique @db.VarChar(255)
+  passwordHash  String             @map("password_hash") @db.VarChar(255)
+  firstName     String             @map("first_name") @db.VarChar(100)
+  lastName      String             @map("last_name") @db.VarChar(100)
+  role          String             @default("extension_officer") @db.VarChar(50)
+  region        String?            @db.VarChar(100)
+  phone         String?            @db.VarChar(20)
+  avatarUrl     String?            @map("avatar_url")
+  isActive      Boolean?           @default(true) @map("is_active")
+  createdAt     DateTime?          @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt     DateTime?          @default(now()) @map("updated_at") @db.Timestamp(6)
+  farmers       Farmer[]
+  assignedFarmers Farmer[]          @relation("FarmerOfficer")
+  visits        Visit[]
+  conversations ChatConversation[]
+  reports       Report[]
+  analytics     AnalyticsEvent[]
+  subscription  Subscription?
+  pushSubscriptions PushSubscription[]
+  notifications     Notification[]
+
+  @@map("users")
+}
+
+model Farmer {
+  id                       String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                   String?            @map("user_id") @db.Uuid
+  assignedOfficerId        String?            @map("assigned_officer_id") @db.Uuid
+  firstName                String             @map("first_name") @db.VarChar(100)
+  lastName                 String             @map("last_name") @db.VarChar(100)
+  phone                    String?            @db.VarChar(20)
+  location                 String?            @db.VarChar(255)
+  village                  String?            @db.VarChar(100)
+  district                 String?            @db.VarChar(100)
+  region                   String?            @db.VarChar(100)
+  country                  String?            @default("Kenya") @db.VarChar(100)
+  farmSizeHectares         Decimal?           @map("farm_size_hectares") @db.Decimal(10, 2)
+  crops                    String[]
+  languagePreference       String?            @default("en") @map("language_preference") @db.VarChar(20)
+  isActive                 Boolean?           @default(true) @map("is_active")
+  assignmentNotificationSent Boolean           @default(false) @map("assignment_notification_sent")
+  createdAt                DateTime?          @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt                DateTime?          @default(now()) @map("updated_at") @db.Timestamp(6)
+  user                     User?              @relation(fields: [userId], references: [id])
+  assignedOfficer          User?              @relation("FarmerOfficer", fields: [assignedOfficerId], references: [id])
+  visits                   Visit[]
+  conversations            ChatConversation[]
+  analytics                AnalyticsEvent[]
+
+  @@map("farmers")
+}
+
+model Visit {
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  officerId            String?   @map("officer_id") @db.Uuid
+  farmerId             String?   @map("farmer_id") @db.Uuid
+  visitType            String?   @default("routine") @map("visit_type") @db.VarChar(50)
+  status               String?   @default("scheduled") @db.VarChar(50)
+  scheduledAt          DateTime? @map("scheduled_at") @db.Timestamp(6)
+  startedAt            DateTime? @map("started_at") @db.Timestamp(6)
+  completedAt          DateTime? @map("completed_at") @db.Timestamp(6)
+  durationMinutes      Int?      @map("duration_minutes")
+  locationLat          Decimal?  @map("location_lat") @db.Decimal(10, 8)
+  locationLng          Decimal?  @map("location_lng") @db.Decimal(11, 8)
+  notes                String?
+  outcomes             String?
+  followUpRequired     Boolean?  @default(false) @map("follow_up_required")
+  followUpDate         DateTime? @map("follow_up_date") @db.Date
+  reminderSent         Boolean?  @default(false) @map("reminder_sent")
+  overdueAlertSent    Boolean?  @default(false) @map("overdue_alert_sent")
+  followUpReminderSent Boolean?  @default(false) @map("follow_up_reminder_sent")
+  createdAt            DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt            DateTime? @default(now()) @map("updated_at") @db.Timestamp(6)
+  officer              User?     @relation(fields: [officerId], references: [id])
+  farmer               Farmer?   @relation(fields: [farmerId], references: [id])
+
+  @@map("visits")
+}
+
+model KnowledgeArticle {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title      String    @db.VarChar(255)
+  content    String
+  summary    String?
+  category   String?   @db.VarChar(100)
+  tags       String[]
+  crops      String[]
+  regions    String[]
+  source     String?   @db.VarChar(255)
+  sourceUrl  String?   @map("source_url")
+  embedding  Float[]
+  createdAt  DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt  DateTime? @default(now()) @map("updated_at") @db.Timestamp(6)
+
+  @@map("knowledge_articles")
+}
+
+model ChatConversation {
+  id                    String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  farmerId              String?       @map("farmer_id") @db.Uuid
+  officerId             String?       @map("officer_id") @db.Uuid
+  language              String?       @default("en") @db.VarChar(20)
+  status                String?       @default("active") @db.VarChar(50)
+  startedAt             DateTime?     @default(now()) @map("started_at") @db.Timestamp(6)
+  endedAt               DateTime?     @map("ended_at") @db.Timestamp(6)
+  satisfactionScore     Int?          @map("satisfaction_score")
+  lowSatisfactionAlertSent Boolean    @default(false) @map("low_satisfaction_alert_sent")
+  createdAt             DateTime?     @default(now()) @map("created_at") @db.Timestamp(6)
+  farmer                Farmer?       @relation(fields: [farmerId], references: [id])
+  officer               User?         @relation(fields: [officerId], references: [id])
+  messages              ChatMessage[]
+
+  @@map("chat_conversations")
+}
+
+model ChatMessage {
+  id                String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId    String?          @map("conversation_id") @db.Uuid
+  role              String           @db.VarChar(20)
+  content           String
+  language          String?          @db.VarChar(20)
+  translatedContent String?          @map("translated_content")
+  intent            String?          @db.VarChar(100)
+  entities          Json?
+  isVoice           Boolean?         @default(false) @map("is_voice")
+  audioUrl          String?          @map("audio_url")
+  createdAt         DateTime?        @default(now()) @map("created_at") @db.Timestamp(6)
+  conversation      ChatConversation? @relation(fields: [conversationId], references: [id])
+
+  @@map("chat_messages")
+}
+
+model Report {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type        String    @db.VarChar(50)
+  title       String    @db.VarChar(255)
+  content     Json
+  generatedBy String?   @map("generated_by") @db.Uuid
+  status      String?   @default("draft") @db.VarChar(50)
+  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime? @default(now()) @map("updated_at") @db.Timestamp(6)
+  user        User?     @relation(fields: [generatedBy], references: [id])
+
+  @@map("reports")
+}
+
+model AnalyticsEvent {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  eventType String    @map("event_type") @db.VarChar(100)
+  userId    String?   @map("user_id") @db.Uuid
+  farmerId  String?   @map("farmer_id") @db.Uuid
+  metadata  Json?
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+  user      User?     @relation(fields: [userId], references: [id])
+  farmer    Farmer?   @relation(fields: [farmerId], references: [id])
+
+  @@map("analytics_events")
+}
+
+model Alert {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type            String    @db.VarChar(50)
+  severity        String?   @default("medium") @db.VarChar(20)
+  title           String    @db.VarChar(255)
+  description     String?
+  location        String?   @db.VarChar(255)
+  affectedFarmers String[]  @map("affected_farmers") @db.Uuid
+  isActive        Boolean?  @default(true) @map("is_active")
+  notificationSent Boolean? @default(false) @map("notification_sent")
+  triggeredAt     DateTime? @default(now()) @map("triggered_at") @db.Timestamp(6)
+  resolvedAt      DateTime? @map("resolved_at") @db.Timestamp(6)
+  createdAt       DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@map("alerts")
+}
+
+model SubscriptionPlan {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @db.VarChar(100)
+  description String?
+  price       Decimal  @db.Decimal(10, 2)
+  currency    String   @default("USD") @db.VarChar(10)
+  interval    String   @default("month") @db.VarChar(20)
+  stripePriceId String? @map("stripe_price_id") @db.VarChar(255)
+  features    Json?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
+  subscriptions Subscription[]
+
+  @@map("subscription_plans")
+}
+
+model Subscription {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String    @unique @map("user_id") @db.Uuid
+  planId            String    @map("plan_id") @db.Uuid
+  status            String    @default("active") @db.VarChar(50)
+  currentPeriodStart DateTime  @map("current_period_start") @db.Timestamp(6)
+  currentPeriodEnd   DateTime  @map("current_period_end") @db.Timestamp(6)
+  cancelAtPeriodEnd  Boolean   @default(false) @map("cancel_at_period_end")
+  stripeSubscriptionId String?  @map("stripe_subscription_id") @db.VarChar(255)
+  expiryNotificationSent Boolean @default(false) @map("expiry_notification_sent")
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt         DateTime  @default(now()) @map("updated_at") @db.Timestamp(6)
+  user              User      @relation(fields: [userId], references: [id])
+  plan              SubscriptionPlan @relation(fields: [planId], references: [id])
+  payments          Payment[]
+  usage             Usage?
+
+  @@map("subscriptions")
+}
+
+model Payment {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subscriptionId String   @map("subscription_id") @db.Uuid
+  amount         Decimal  @db.Decimal(10, 2)
+  currency       String   @db.VarChar(10)
+  status         String   @db.VarChar(50)
+  paymentMethod  String?  @map("payment_method") @db.VarChar(50)
+  transactionId  String?  @map("transaction_id") @db.VarChar(255)
+  paidAt         DateTime? @map("paid_at") @db.Timestamp(6)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+
+  @@map("payments")
+}
+
+model Usage {
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subscriptionId  String       @unique @map("subscription_id") @db.Uuid
+  subscription    Subscription @relation(fields: [subscriptionId], references: [id])
+  smsCount        Int          @default(0) @map("sms_count")
+  aiChatCount     Int          @default(0) @map("ai_chat_count")
+  reportCount     Int          @default(0) @map("report_count")
+  lastResetAt     DateTime     @default(now()) @map("last_reset_at") @db.Timestamp(6)
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime     @default(now()) @map("updated_at") @db.Timestamp(6)
+
+  @@map("usage")
+}
+
+model PushSubscription {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("push_subscriptions")
+}
+
+model Notification {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  type      String    @db.VarChar(50)
+  title     String    @db.VarChar(255)
+  message   String
+  isRead    Boolean   @default(false) @map("is_read")
+  channel   String?   @default("in_app") @db.VarChar(50)
+  metadata  Json?
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+  readAt    DateTime? @map("read_at") @db.Timestamp(6)
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}

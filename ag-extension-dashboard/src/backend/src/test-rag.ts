@@ -1,0 +1,36 @@
+import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
+import { VectorService } from '@/services/vectorService';
+import { KnowledgeService } from '@/services/knowledgeService';
+import { mockKnowledgeArticles } from '@/routes/knowledge';
+import { logger } from '@/utils/logger';
+
+async function testRAG() {
+    console.log('--- Starting RAG Verification ---');
+    
+    // Initialize factory
+    AIProviderFactory.initialize();
+    
+    // Seed vector store
+    console.log('\n1. Seeding Vector Store...');
+    await VectorService.seedKnowledge(mockKnowledgeArticles);
+    console.log('Seeding complete.');
+    
+    try {
+        console.log('\n2. Testing Vector Search (Query: "maize diseases")...');
+        const searchResults = await KnowledgeService.searchKnowledge('maize diseases', 2);
+        searchResults.forEach((res, i) => {
+            console.log(`[Result ${i+1}] ${res.id}: ${res.content.substring(0, 50)}... (Score: ${res.score.toFixed(4)})`);
+        });
+        
+        console.log('\n3. Testing RAG Answer (Reasoning)...');
+        const ragResult = await KnowledgeService.askQuestion('What are common maize diseases and how to prevent them?');
+        console.log('Answer:', ragResult.answer);
+        console.log('Context Items Used:', ragResult.contextUsed.length);
+        
+        console.log('\n--- RAG Verification Complete ---');
+    } catch (error) {
+        console.error('RAG Verification Failed:', error);
+    }
+}
+
+testRAG();

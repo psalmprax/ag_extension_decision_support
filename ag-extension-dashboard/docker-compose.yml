@@ -1,0 +1,72 @@
+services:
+  app-db:
+    image: postgres:15-alpine
+    container_name: ag-dashboard-db
+    environment:
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+      POSTGRES_DB: ${DATABASE_NAME:-ag_extension}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ag-network
+
+  redis:
+    image: redis:alpine
+    container_name: ag-dashboard-redis
+    ports:
+      - "6381:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ag-network
+
+  backend:
+    build:
+      context: ./src/backend
+      target: development
+    container_name: ag-dashboard-backend
+    ports:
+      - "3010:3001"
+    environment:
+      - DATABASE_URL=postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@app-db:5432/${DATABASE_NAME:-ag_extension}?schema=public
+      - REDIS_URL=redis://redis:6379
+      - PORT=3001
+      - NODE_ENV=development
+    depends_on:
+      - app-db
+      - redis
+    volumes:
+      - ./src/backend:/app
+      - /app/node_modules
+    networks:
+      - ag-network
+
+  frontend:
+    build:
+      context: ./src/frontend
+      target: development
+    container_name: ag-dashboard-frontend
+    ports:
+      - "5174:5173"
+    environment:
+      - VITE_API_URL=http://localhost:3010/api
+    depends_on:
+      - backend
+    volumes:
+      - ./src/frontend:/app
+      - /app/node_modules
+    networks:
+      - ag-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+
+networks:
+  ag-network:
+    name: ag-network
+    driver: bridge

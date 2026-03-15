@@ -1,0 +1,63 @@
+# Docker Compose for AI Agents
+# Run with: docker-compose -f docker-compose.agents.yml up -d
+
+services:
+  # Agent Zero Service
+  agent-zero:
+    build:
+      context: ./src/agents
+      dockerfile: Dockerfile.agent-zero
+    container_name: ag-agent-zero
+    ports:
+      - "8010:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - DATABASE_URL=postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@app-db:5432/${DATABASE_NAME:-ag_extension}
+    depends_on:
+      - app-db
+    networks:
+      - ag-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    volumes:
+      - ./src/agents:/app
+      - agent-zero-data:/app/data
+
+  # Crew AI Service
+  crew-ai:
+    build:
+      context: ./src/agents
+      dockerfile: Dockerfile.crew-ai
+    container_name: ag-crew-ai
+    ports:
+      - "8011:8001"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - DATABASE_URL=postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@app-db:5432/${DATABASE_NAME:-ag_extension}
+    depends_on:
+      - app-db
+    networks:
+      - ag-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8001/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    volumes:
+      - ./src/agents:/app
+      - crew-ai-data:/app/data
+
+networks:
+  ag-network:
+    external: true
+
+volumes:
+  agent-zero-data:
+  crew-ai-data:

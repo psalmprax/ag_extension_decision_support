@@ -1,0 +1,282 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Default theme CSS variables (Forest theme) - will be overridden at runtime */
+:root {
+    /* Primary colors (Forest Green) */
+    --color-primary-50-rgb: 240, 253, 244;
+    --color-primary-100-rgb: 220, 252, 231;
+    --color-primary-200-rgb: 187, 247, 208;
+    --color-primary-300-rgb: 134, 239, 172;
+    --color-primary-400-rgb: 74, 222, 128;
+    --color-primary-500-rgb: 34, 197, 94;
+    --color-primary-600-rgb: 22, 163, 74;
+    --color-primary-700-rgb: 21, 128, 61;
+    --color-primary-800-rgb: 22, 101, 52;
+    --color-primary-900-rgb: 20, 83, 45;
+
+    /* Secondary colors */
+    --color-secondary-50-rgb: 250, 250, 250;
+    --color-secondary-100-rgb: 244, 244, 245;
+    --color-secondary-200-rgb: 228, 228, 231;
+    --color-secondary-300-rgb: 212, 212, 216;
+    --color-secondary-400-rgb: 161, 161, 170;
+    --color-secondary-500-rgb: 113, 113, 122;
+    --color-secondary-600-rgb: 82, 82, 89;
+    --color-secondary-700-rgb: 63, 63, 70;
+    --color-secondary-800-rgb: 39, 39, 42;
+    --color-secondary-900-rgb: 24, 24, 27;
+
+    /* Accent colors */
+    --color-accent-50-rgb: 254, 249, 195;
+    --color-accent-100-rgb: 254, 240, 138;
+    --color-accent-200-rgb: 253, 224, 71;
+    --color-accent-300-rgb: 252, 211, 77;
+    --color-accent-400-rgb: 251, 191, 36;
+    --color-accent-500-rgb: 245, 158, 11;
+    --color-accent-600-rgb: 217, 119, 6;
+    --color-accent-700-rgb: 180, 83, 9;
+    --color-accent-800-rgb: 146, 64, 14;
+    --color-accent-900-rgb: 120, 53, 15;
+
+    /* Error colors */
+    --color-error-50-rgb: 254, 226, 226;
+    --color-error-100-rgb: 254, 202, 202;
+    --color-error-200-rgb: 252, 165, 165;
+    --color-error-300-rgb: 248, 113, 113;
+    --color-error-400-rgb: 248, 113, 113;
+    --color-error-500-rgb: 239, 68, 68;
+    --color-error-600-rgb: 220, 38, 38;
+    --color-error-700-rgb: 185, 28, 28;
+    --color-error-800-rgb: 153, 27, 27;
+    --color-error-900-rgb: 127, 29, 29;
+
+    /* Background colors */
+    --color-bg-primary-rgb: 250, 250, 249;
+    --color-bg-secondary-rgb: 245, 245, 244;
+    --color-bg-card-rgb: 255, 255, 255;
+
+    /* Hex versions for direct use */
+    --color-primary-50: #f0fdf4;
+    --color-primary-100: #dcfce7;
+    --color-primary-200: #bbf7d0;
+    --color-primary-300: #86efac;
+    --color-primary-400: #4ade80;
+    --color-primary-500: #22c55e;
+    --color-primary-600: #16a34a;
+    --color-primary-700: #15803d;
+    --color-primary-800: #166534;
+    --color-primary-900: #14532d;
+    --color-bg-primary: #fafaf9;
+    --color-bg-secondary: #f5f5f4;
+    --color-bg-card: #ffffff;
+}
+
+/* Dark mode CSS variables */
+.dark {
+    /* Primary colors - darker forest green for dark mode */
+    --color-primary-50-rgb: 20, 83, 45;
+    --color-primary-100-rgb: 22, 101, 52;
+    --color-primary-200-rgb: 21, 128, 61;
+    --color-primary-300-rgb: 22, 163, 74;
+    --color-primary-400-rgb: 34, 197, 94;
+    --color-primary-500-rgb: 74, 222, 128;
+    --color-primary-600-rgb: 134, 239, 172;
+    --color-primary-700-rgb: 187, 247, 208;
+    --color-primary-800-rgb: 220, 252, 231;
+    --color-primary-900-rgb: 240, 253, 244;
+
+    /* Secondary colors - dark grays */
+    --color-secondary-50-rgb: 24, 24, 27;
+    --color-secondary-100-rgb: 39, 39, 42;
+    --color-secondary-200-rgb: 63, 63, 70;
+    --color-secondary-300-rgb: 82, 82, 89;
+    --color-secondary-400-rgb: 113, 113, 122;
+    --color-secondary-500-rgb: 161, 161, 170;
+    --color-secondary-600-rgb: 212, 212, 216;
+    --color-secondary-700-rgb: 228, 228, 231;
+    --color-secondary-800-rgb: 244, 244, 245;
+    --color-secondary-900-rgb: 250, 250, 250;
+
+    /* Accent colors */
+    --color-accent-50-rgb: 120, 53, 15;
+    --color-accent-100-rgb: 146, 64, 14;
+    --color-accent-200-rgb: 180, 83, 9;
+    --color-accent-300-rgb: 217, 119, 6;
+    --color-accent-400-rgb: 251, 191, 36;
+    --color-accent-500-rgb: 252, 211, 77;
+    --color-accent-600-rgb: 253, 224, 71;
+    --color-accent-700-rgb: 254, 240, 138;
+    --color-accent-800-rgb: 254, 249, 195;
+    --color-accent-900-rgb: 255, 255, 245;
+
+    /* Error colors - dark mode */
+    --color-error-50-rgb: 127, 29, 29;
+    --color-error-100-rgb: 153, 27, 27;
+    --color-error-200-rgb: 185, 28, 28;
+    --color-error-300-rgb: 220, 38, 38;
+    --color-error-400-rgb: 239, 68, 68;
+    --color-error-500-rgb: 248, 113, 113;
+    --color-error-600-rgb: 252, 165, 165;
+    --color-error-700-rgb: 254, 202, 202;
+    --color-error-800-rgb: 254, 226, 226;
+    --color-error-900-rgb: 255, 245, 245;
+
+    /* Background colors - dark */
+    --color-bg-primary-rgb: 17, 24, 39;
+    --color-bg-secondary-rgb: 31, 41, 55;
+    --color-bg-card-rgb: 31, 41, 55;
+
+    /* Hex versions for direct use */
+    --color-primary-50: #14532d;
+    --color-primary-100: #166534;
+    --color-primary-200: #15803d;
+    --color-primary-300: #16a34a;
+    --color-primary-400: #22c55e;
+    --color-primary-500: #4ade80;
+    --color-primary-600: #86efac;
+    --color-primary-700: #bbf7d0;
+    --color-primary-800: #dcfce7;
+    --color-primary-900: #f0fdf4;
+    --color-bg-primary: #111827;
+    --color-bg-secondary: #1f2937;
+    --color-bg-card: #1f2937;
+}
+
+@layer base {
+    html {
+        font-family: 'Inter', system-ui, sans-serif;
+        scroll-behavior: smooth;
+    }
+
+    body {
+        @apply bg-gray-50 text-gray-900 antialiased;
+    }
+
+    .dark body {
+        @apply bg-gray-900 text-gray-100;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        @apply bg-gray-100;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        @apply bg-gray-300 rounded-full;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        @apply bg-gray-400;
+    }
+}
+
+@layer components {
+
+    /* Card styles */
+    .card {
+        @apply bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden;
+    }
+
+    .card-hover {
+        @apply transition-all duration-300 hover:shadow-md hover:border-gray-200;
+    }
+
+    /* Button styles */
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200;
+    }
+
+    .btn-primary {
+        @apply bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800 shadow-sm hover:shadow-md;
+    }
+
+    .btn-secondary {
+        @apply bg-secondary-600 text-white hover:bg-secondary-700 active:bg-secondary-800 shadow-sm hover:shadow-md;
+    }
+
+    .btn-outline {
+        @apply border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300;
+    }
+
+    .btn-ghost {
+        @apply text-gray-600 hover:bg-gray-100 hover:text-gray-900;
+    }
+
+    /* Input styles */
+    .input {
+        @apply w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 transition-all duration-200;
+        @apply focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500;
+    }
+
+    /* Badge styles */
+    .badge {
+        @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium;
+    }
+
+    .badge-success {
+        @apply bg-green-100 text-green-700;
+    }
+
+    .badge-warning {
+        @apply bg-yellow-100 text-yellow-700;
+    }
+
+    .badge-danger {
+        @apply bg-red-100 text-red-700;
+    }
+
+    .badge-info {
+        @apply bg-blue-100 text-blue-700;
+    }
+
+    /* Animations */
+    .animate-stagger>* {
+        @apply animate-slide-up;
+    }
+
+    .animate-stagger>*:nth-child(1) {
+        animation-delay: 0ms;
+    }
+
+    .animate-stagger>*:nth-child(2) {
+        animation-delay: 50ms;
+    }
+
+    .animate-stagger>*:nth-child(3) {
+        animation-delay: 100ms;
+    }
+
+    .animate-stagger>*:nth-child(4) {
+        animation-delay: 150ms;
+    }
+
+    .animate-stagger>*:nth-child(5) {
+        animation-delay: 200ms;
+    }
+}
+
+@layer utilities {
+    .text-gradient {
+        @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-secondary-600;
+    }
+
+    .glass {
+        @apply bg-white/80 backdrop-blur-lg;
+    }
+
+    .dark .glass {
+        @apply bg-gray-900/80 backdrop-blur-lg;
+    }
+
+    .pattern-dots {
+        background-image: radial-gradient(circle, rgb(156 163 175 / 0.15) 1px, transparent 1px);
+        background-size: 24px 24px;
+    }
+}
