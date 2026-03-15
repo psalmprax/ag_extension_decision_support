@@ -1,0 +1,57 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e4]:
+  - generic [ref=e5]:
+    - img [ref=e7]
+    - heading "Create Account" [level=1] [ref=e11]
+    - paragraph [ref=e12]: Join the agricultural extension network
+  - paragraph [ref=e14]: register_password_requirements
+  - generic [ref=e15]:
+    - generic [ref=e16]:
+      - generic [ref=e17]:
+        - generic [ref=e18]: First Name
+        - textbox [ref=e19]: Test
+      - generic [ref=e20]:
+        - generic [ref=e21]: Last Name
+        - textbox [ref=e22]: User
+    - generic [ref=e23]:
+      - generic [ref=e24]: Email Address
+      - textbox "you@example.com" [ref=e25]: test_1773183314462@example.com
+    - generic [ref=e26]:
+      - generic [ref=e27]: Select Role
+      - combobox [ref=e28]:
+        - option "Extension Officer" [selected]
+        - option "Farmer"
+        - option "Administrator"
+    - generic [ref=e29]:
+      - generic [ref=e30]: Region (Optional)
+      - textbox "e.g., Lilongwe" [ref=e31]
+    - generic [ref=e32]:
+      - generic [ref=e33]: Password
+      - generic [ref=e34]:
+        - textbox "••••••••" [ref=e35]: password123
+        - button [ref=e36] [cursor=pointer]:
+          - img [ref=e37]
+      - generic [ref=e40]:
+        - generic [ref=e41]:
+          - img [ref=e42]
+          - text: password_req_8_chars
+        - generic [ref=e44]:
+          - img [ref=e45]
+          - text: password_req_uppercase
+        - generic [ref=e47]:
+          - img [ref=e48]
+          - text: password_req_lowercase
+        - generic [ref=e50]:
+          - img [ref=e51]
+          - text: password_req_number
+    - generic [ref=e53]:
+      - generic [ref=e54]: Confirm Password
+      - textbox "••••••••" [ref=e55]: password123
+    - button "register_create_account" [active] [ref=e56] [cursor=pointer]
+  - paragraph [ref=e57]:
+    - text: Already have an account?
+    - link "Sign in" [ref=e58] [cursor=pointer]:
+      - /url: /login
+```
