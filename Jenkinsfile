@@ -3,8 +3,8 @@ pipeline {
 
     environment {
         // IDs for Jenkins Credentials Manager
-        SSH_CRED_ID = 'ssh-deploy-key'
-        GIT_CRED_ID = 'git-creds'
+        SSH_CRED_ID = 'OCI_SSH_KEY'
+        GIT_CRED_ID = 'GITHUB_CREDENTIALS'
         
         // Remote server details (Provide these as Jenkins Build Parameters or hardcode here)
         REMOTE_USER = 'psalmprax'
