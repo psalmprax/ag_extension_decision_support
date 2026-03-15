@@ -8,7 +8,7 @@ pipeline {
         
         // Remote server details (Provide these as Jenkins Build Parameters or hardcode here)
         REMOTE_USER = 'psalmprax'
-        REMOTE_HOST = 'your-remote-server-ip'
+        REMOTE_HOST = 'localhost'
         DEPLOY_DIR = '/home/psalmprax/ag-extension-decision-support'
         
         // Docker registry (Optional)
