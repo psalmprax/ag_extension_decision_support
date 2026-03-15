@@ -25,7 +25,14 @@ pipeline {
         stage('Backend CI') {
             steps {
                 dir('ag-extension-dashboard') {
-                    sh 'docker compose run --rm --no-deps backend sh -c "npm install && npm run lint && npm run test"'
+                    sh '''
+                        if command -v docker-compose >/dev/null 2>&1; then
+                            COMPOSE_CMD="docker-compose"
+                        else
+                            COMPOSE_CMD="docker compose"
+                        fi
+                        $COMPOSE_CMD run --rm --no-deps backend sh -c "npm install && npm run lint && npm run test"
+                    '''
                 }
             }
         }
@@ -33,7 +40,14 @@ pipeline {
         stage('Frontend CI') {
             steps {
                 dir('ag-extension-dashboard') {
-                    sh 'docker compose run --rm --no-deps frontend sh -c "npm install -g pnpm && pnpm install && pnpm run lint && pnpm run test"'
+                    sh '''
+                        if command -v docker-compose >/dev/null 2>&1; then
+                            COMPOSE_CMD="docker-compose"
+                        else
+                            COMPOSE_CMD="docker compose"
+                        fi
+                        $COMPOSE_CMD run --rm --no-deps frontend sh -c "npm install -g pnpm && pnpm install && pnpm run lint && pnpm run test"
+                    '''
                 }
             }
         }
@@ -41,7 +55,14 @@ pipeline {
         stage('Docker Build') {
             steps {
                 dir('ag-extension-dashboard') {
-                    sh 'docker compose build'
+                    sh '''
+                        if command -v docker-compose >/dev/null 2>&1; then
+                            COMPOSE_CMD="docker-compose"
+                        else
+                            COMPOSE_CMD="docker compose"
+                        fi
+                        $COMPOSE_CMD build
+                    '''
                 }
             }
         }
