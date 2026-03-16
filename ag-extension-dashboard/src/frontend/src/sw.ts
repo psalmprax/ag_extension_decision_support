@@ -1,6 +1,6 @@
 import { precacheAndRoute } from 'workbox-precaching';
 
-// @ts-ignore
+// @ts-expect-error - __WB_MANIFEST is injected by workbox
 precacheAndRoute(self.__WB_MANIFEST);
 
 const sw = self as any;

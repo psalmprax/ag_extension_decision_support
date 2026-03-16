@@ -10,10 +10,10 @@ export const subscribeUserToPush = async () => {
         }
 
         const registration = await navigator.serviceWorker.ready;
-        
+
         // Check if already subscribed
         let subscription = await registration.pushManager.getSubscription();
-        
+
         if (!subscription) {
             // Subscribe the user
             subscription = await registration.pushManager.subscribe({
@@ -24,7 +24,7 @@ export const subscribeUserToPush = async () => {
 
         // Send subscription to backend
         await apiClient.post('/api/v1/notifications/subscribe', subscription);
-        
+
         return subscription;
     } catch (error) {
         console.error('Error subscribing to push notifications:', error);
@@ -36,7 +36,7 @@ export const unsubscribeFromPush = async () => {
     try {
         const registration = await navigator.serviceWorker.ready;
         const subscription = await registration.pushManager.getSubscription();
-        
+
         if (subscription) {
             await subscription.unsubscribe();
             // Inform backend
@@ -55,7 +55,7 @@ export const unsubscribeFromPush = async () => {
 function urlBase64ToUint8Array(base64String: string) {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
     const base64 = (base64String + padding)
-        .replace(/\-/g, '+')
+        .replace(/-/g, '+')
         .replace(/_/g, '/');
 
     const rawData = window.atob(base64);
