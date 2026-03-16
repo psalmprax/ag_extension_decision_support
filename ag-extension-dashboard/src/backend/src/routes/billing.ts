@@ -9,7 +9,7 @@ const router = Router();
 const prisma = getPrisma();
 
 // Helper to check if subscription is active
-const isSubscriptionActive = (subscription: any): boolean => {
+const isSubscriptionActive = (subscription: { status: string }): boolean => {
     if (!subscription) return false;
     const validStatuses = ['active', 'trialing', 'past_due'];
     return validStatuses.includes(subscription.status);
@@ -92,10 +92,10 @@ router.get('/usage', authorize('admin', 'extension_officer', 'farmer'), async (r
  *     security:
  *       - bearerAuth: []
  */
-router.post('/subscribe', authorize('admin', 'extension_officer', 'farmer'), async (req: any, res) => {
+router.post('/subscribe', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
     try {
         const { priceId } = req.body;
-        const userId = req.user.userId;
+        const userId = req.user!.userId;
 
         if (!priceId) {
             return res.status(400).json({ success: false, message: 'Price ID is required' });
@@ -215,9 +215,9 @@ router.post('/subscribe', authorize('admin', 'extension_officer', 'farmer'), asy
  *     security:
  *       - bearerAuth: []
  */
-router.post('/cancel', authorize('admin', 'extension_officer', 'farmer'), async (req: any, res) => {
+router.post('/cancel', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
     try {
-        const userId = req.user.userId;
+        const userId = req.user!.userId;
 
         const subscription = await prisma.subscription.findUnique({
             where: { userId }
@@ -255,9 +255,9 @@ router.post('/cancel', authorize('admin', 'extension_officer', 'farmer'), async 
  *     security:
  *       - bearerAuth: []
  */
-router.post('/portal', authorize('admin', 'extension_officer', 'farmer'), async (req: any, res) => {
+router.post('/portal', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
     try {
-        const userId = req.user.userId;
+        const userId = req.user!.userId;
         const user = await prisma.user.findUnique({ where: { id: userId } });
 
         if (!user) {
@@ -283,10 +283,10 @@ router.post('/portal', authorize('admin', 'extension_officer', 'farmer'), async 
  *     security:
  *       - bearerAuth: []
  */
-router.post('/switch', authorize('admin', 'extension_officer', 'farmer'), async (req: any, res) => {
+router.post('/switch', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
     try {
         const { priceId, billingCycle } = req.body;
-        const userId = req.user.userId;
+        const userId = req.user!.userId;
 
         if (!priceId) {
             return res.status(400).json({ success: false, message: 'Price ID is required' });
@@ -372,9 +372,9 @@ router.post('/switch', authorize('admin', 'extension_officer', 'farmer'), async 
  *     security:
  *       - bearerAuth: []
  */
-router.get('/payment-methods', authorize('admin', 'extension_officer', 'farmer'), async (req: any, res) => {
+router.get('/payment-methods', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
     try {
-        const userId = req.user.userId;
+        const userId = req.user!.userId;
         const user = await prisma.user.findUnique({ where: { id: userId } });
 
         if (!user) {
@@ -400,10 +400,10 @@ router.get('/payment-methods', authorize('admin', 'extension_officer', 'farmer')
  *     security:
  *       - bearerAuth: []
  */
-router.post('/payment-methods', authorize('admin', 'extension_officer', 'farmer'), async (req: any, res) => {
+router.post('/payment-methods', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
     try {
         // In a real implementation, this would handle Stripe SetupIntents or PayPal linking
-        logger.info(`[MOCK] User ${req.user.userId} attempted to add a payment method of type: ${req.body.type || 'unknown'}`);
+        logger.info(`[MOCK] User ${req.user!.userId} attempted to add a payment method of type: ${req.body.type || 'unknown'}`);
         
         res.json({ 
             success: true, 
@@ -467,9 +467,10 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req: a
         }
 
         res.json({ received: true });
-    } catch (err: any) {
-        logger.error('Webhook Error:', err.message);
-        res.status(400).send(`Webhook Error: ${err.message}`);
+    } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        logger.error('Webhook Error:', errorMessage);
+        res.status(400).send(`Webhook Error: ${errorMessage}`);
     }
 });
 

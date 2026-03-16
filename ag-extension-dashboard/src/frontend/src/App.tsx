@@ -1,7 +1,7 @@
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import FarmerMap, { SAMPLE_FARMERS } from '@/components/FarmerMap';
+import FarmerMap from '@/components/FarmerMap';
 import {
     LayoutDashboard,
     MessageSquare,
@@ -10,10 +10,6 @@ import {
     Users,
     MapPin,
     Search,
-    Settings,
-    Bell,
-    Menu,
-    X,
     ChevronRight,
     TrendingUp,
     Activity,
@@ -29,25 +25,22 @@ import {
     Navigation,
     Pencil,
     Trash2,
-    Calendar,
-    MessageCircle,
-    FolderOpen,
     CreditCard
 } from 'lucide-react';
 import { useEffect } from 'react';
 import { WeatherWidget } from '@/components/WeatherWidget';
-import { CardSkeleton, TableSkeleton, ListSkeleton, ChartSkeleton, EmptyState } from '@/components/Skeleton';
-import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { CardSkeleton } from '@/components/Skeleton';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { fetchDashboardData } from '@/api/dashboardService';
-import { searchKnowledge, askAI } from '@/api/knowledgeService';
+import { askAI } from '@/api/knowledgeService';
 import { fetchUserProfile, AuthResponse } from '@/api/authService';
 import { fetchFarmers } from '@/api/farmerService';
 import { fetchVisits } from '@/api/visitService';
 import { fetchReports } from '@/api/reportService';
 import { fetchPerformanceData } from '@/api/analyticsService';
 import { fetchConversations, fetchMessages, sendMessage, createConversation, createAIConversation } from '@/api/chatbotService';
-import { themes, ThemeName, getThemeCSS, applyTheme } from '@/theme';
+import { themes, getThemeCSS, applyTheme } from '@/theme';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import VisitModal from '@/components/forms/VisitModal';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
@@ -63,9 +56,17 @@ import { FarmerDetailPanel } from '@/components/FarmerDetailPanel';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { subscribeUserToPush } from '@/api/pushNotificationService';
 
-const COLORS = ['#22c55e', '#3b82f6', '#8b5cf6', '#f59e0b', '#6b7280'];
+// COLORS constant removed as it's unused
 
-const StatCard = ({ title, value, change, icon: Icon, delay }: any) => {
+interface StatCardProps {
+    title: string;
+    value: number | string;
+    change?: number;
+    icon: React.ElementType;
+    delay: number;
+}
+
+const StatCard = ({ title, value, change, icon: Icon, delay }: StatCardProps) => {
     const { t } = useLanguage();
     return (
     <motion.div
@@ -94,6 +95,32 @@ const StatCard = ({ title, value, change, icon: Icon, delay }: any) => {
     );
 };
 
+interface Conversation {
+    id: string;
+    title: string;
+    farmerId?: string;
+    farmerName?: string;
+    lastMessage?: string;
+    updatedAt: string;
+}
+
+interface ChatMessage {
+    role: 'user' | 'assistant' | 'officer';
+    content: string;
+    timestamp: string;
+}
+
+interface Farmer {
+    id: string;
+    name: string;
+    location: string;
+    cropType: string;
+    status: 'Healthy' | 'Warning' | 'Critical' | string;
+    lastVisit?: string;
+    contact?: string;
+    coordinates?: [number, number];
+}
+
 function App() {
     const { t, language } = useLanguage();
     const navigate = useNavigate();
@@ -116,8 +143,7 @@ function App() {
 
     const [searchQuery, setSearchQuery] = useState('');
     const [userLocation, setUserLocation] = useState<string>('');
-    const [loginTime, setLoginTime] = useState<string>('');
-    const [ragAnswer, setRagAnswer] = useState<any>(null);
+    const [ragAnswer, setRagAnswer] = useState<string | null>(null);
     const [isAsking, setIsAsking] = useState(false);
 
     // Apply theme when it changes
@@ -127,28 +153,28 @@ function App() {
     }, [themeName]);
 
     // Chatbot States (AI Assistant)
-    const [conversations, setConversations] = useState<any[]>([]);
+    const [conversations, setConversations] = useState<Conversation[]>([]);
     const [activeConvId, setActiveConvId] = useState<string | null>(null);
     const [editingConvId, setEditingConvId] = useState<string | null>(null);
     const [editingTitle, setEditingTitle] = useState<string>('');
     const [deletingConvId, setDeletingConvId] = useState<string | null>(null);
-    const [chatMessages, setChatMessages] = useState<any[]>([]);
+    const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
     const [chatInput, setChatInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
 
     // Farmer Chat States
-    const [farmerConversations, setFarmerConversations] = useState<any[]>([]);
+    const [farmerConversations, setFarmerConversations] = useState<Conversation[]>([]);
 
     // Visit Modal State
     const [showVisitModal, setShowVisitModal] = useState(false);
     const [activeFarmerConvId, setActiveFarmerConvId] = useState<string | null>(null);
-    const [farmerChatMessages, setFarmerChatMessages] = useState<any[]>([]);
+    const [farmerChatMessages, setFarmerChatMessages] = useState<ChatMessage[]>([]);
     const [farmerChatInput, setFarmerChatInput] = useState('');
     const [showFarmerModal, setShowFarmerModal] = useState(false);
     const [farmerSearchQuery, setFarmerSearchQuery] = useState('');
 
     // Farmer Detail Panel State
-    const [selectedFarmer, setSelectedFarmer] = useState<any>(null);
+    const [selectedFarmer, setSelectedFarmer] = useState<Farmer | null>(null);
     const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
 
     const handleOpenFarmerDetail = (farmer: any) => {
@@ -199,7 +225,7 @@ function App() {
     // Get user location on mount
     useEffect(() => {
         // Set login time
-        setLoginTime(new Date().toLocaleString());
+        // Set login time removed as loginTime state is unused
 
         // Try to get user's real location
         if (navigator.geolocation) {
@@ -247,30 +273,30 @@ function App() {
     const user = userResponse?.data;
 
     // Fetch Dashboard Data
-    const { data: dashboardResponse, isLoading, isError } = useQuery({
+    const { data: dashboardResponse, isLoading, isError } = useQuery<{ success: boolean; data: any }>({
         queryKey: ['dashboard'],
         queryFn: fetchDashboardData,
         enabled: activeTab === 'dashboard'
     });
 
-    const dashboardData = (dashboardResponse as any)?.data;
+    const dashboardData = dashboardResponse?.data;
 
     // Fetch Farmers Data (Portfolio)
-    const { data: farmersResponse } = useQuery<any>({
+    const { data: farmersResponse } = useQuery<{ success: boolean; data: { farmers: Farmer[] } }>({
         queryKey: ['farmers'],
-        queryFn: fetchFarmers,
+        queryFn: fetchFarmers as any,
         enabled: activeTab === 'portfolio'
     });
-    const queryFarmers = (farmersResponse as any)?.data?.farmers || [];
+    const queryFarmers = farmersResponse?.data?.farmers || [];
     const farmers = queryFarmers.length > 0 ? queryFarmers : storeFarmers;
 
     // Fetch Visits Data
-    const { data: visitsResponse, refetch: refetchVisits } = useQuery<any>({
+    const { data: visitsResponse, refetch: refetchVisits } = useQuery<{ success: boolean; data: { visits: any[] } }>({
         queryKey: ['visits'],
-        queryFn: fetchVisits,
+        queryFn: fetchVisits as any,
         enabled: activeTab === 'visits'
     });
-    const visits = (visitsResponse as any)?.data?.visits || [];
+    const visits = visitsResponse?.data?.visits || [];
 
     // Fetch Reports Data
     const { data: reportsResponse } = useQuery<any>({

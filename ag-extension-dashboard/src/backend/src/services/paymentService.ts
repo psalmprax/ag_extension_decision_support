@@ -24,6 +24,23 @@ export interface CreatePaymentIntentParams {
     metadata?: Record<string, string>;
 }
 
+interface StripeSubscription {
+    id: string;
+    status: string;
+    current_period_start: number;
+    current_period_end: number;
+    cancel_at_period_end: boolean;
+    items: {
+        data: Array<{
+            id: string;
+            price: {
+                id: string;
+                nickname?: string;
+            };
+        }>;
+    };
+}
+
 class PaymentService {
     private stripe: Stripe | null = null;
 
@@ -184,7 +201,7 @@ class PaymentService {
 
             return {
                 status: subscription.status,
-                currentPeriodEnd: (subscription as any).current_period_end * 1000,
+                currentPeriodEnd: (subscription as unknown as StripeSubscription).current_period_end * 1000,
                 planName: price.nickname || 'Subscription',
             };
         } catch (error) {
@@ -215,15 +232,15 @@ class PaymentService {
                     phases: [
                         {
                             items: [{ price: (subscription.items.data[0].price as Stripe.Price).id, quantity: 1 }],
-                            end_date: (subscription as any).current_period_end,
+                            end_date: (subscription as unknown as StripeSubscription).current_period_end,
                         },
                         {
                             items: [{ price: newPriceId, quantity: 1 }],
-                            start_date: (subscription as any).current_period_end,
+                            start_date: (subscription as unknown as StripeSubscription).current_period_end,
                         }
                     ]
                 });
-                logger.info(`Scheduled subscription change for ${subscriptionId} to ${newPriceId} at ${(subscription as any).current_period_end}`);
+                logger.info(`Scheduled subscription change for ${subscriptionId} to ${newPriceId} at ${(subscription as unknown as StripeSubscription).current_period_end}`);
             } else {
                 // Immediate switch
                 await this.stripe.subscriptions.update(subscriptionId, {
@@ -319,8 +336,8 @@ class PaymentService {
                                 planId: plan.id,
                                 stripeSubscriptionId,
                                 status: subscription.status as string,
-                                currentPeriodStart: new Date((subscription as any).current_period_start * 1000),
-                                currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
+                                currentPeriodStart: new Date((subscription as unknown as StripeSubscription).current_period_start * 1000),
+                                currentPeriodEnd: new Date((subscription as unknown as StripeSubscription).current_period_end * 1000),
                                 cancelAtPeriodEnd: subscription.cancel_at_period_end as boolean,
                             },
                             create: {
@@ -328,8 +345,8 @@ class PaymentService {
                                 planId: plan.id,
                                 stripeSubscriptionId,
                                 status: subscription.status as string,
-                                currentPeriodStart: new Date((subscription as any).current_period_start * 1000),
-                                currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
+                                currentPeriodStart: new Date((subscription as unknown as StripeSubscription).current_period_start * 1000),
+                                currentPeriodEnd: new Date((subscription as unknown as StripeSubscription).current_period_end * 1000),
                             }
                         });
                         logger.info(`Subscription created/updated for user ${userId} via checkout`);
@@ -348,8 +365,8 @@ class PaymentService {
                             where: { stripeSubscriptionId },
                             data: {
                                 status: 'active',
-                                currentPeriodStart: new Date((subscription as any).current_period_start * 1000),
-                                currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
+                                currentPeriodStart: new Date((subscription as unknown as StripeSubscription).current_period_start * 1000),
+                                currentPeriodEnd: new Date((subscription as unknown as StripeSubscription).current_period_end * 1000),
                             }
                         });
 
@@ -394,7 +411,7 @@ class PaymentService {
                             data: {
                                 planId: plan.id,
                                 status: subscription.status as string,
-                                currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
+                                currentPeriodEnd: new Date((subscription as unknown as StripeSubscription).current_period_end * 1000),
                                 cancelAtPeriodEnd: subscription.cancel_at_period_end as boolean,
                             }
                         });
@@ -538,9 +555,9 @@ class PaymentService {
                 id: inv.id,
                 amount_paid: inv.amount_paid,
                 currency: inv.currency,
-                status: inv.status,
+                status: inv.status as string,
                 created: inv.created,
-                invoice_pdf: inv.invoice_pdf
+                invoice_pdf: inv.invoice_pdf as string
             }));
         } catch (error) {
             logger.error('Failed to fetch invoices:', error);

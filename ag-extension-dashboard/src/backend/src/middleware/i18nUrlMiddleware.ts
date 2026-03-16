@@ -366,7 +366,7 @@ function translateToCanonical(localizedPath: string, language: string): string {
  */
 export function i18nUrlMiddleware(req: Request, res: Response, next: NextFunction): void {
     const path = req.path;
-    const url = req.url;
+    // url variable removed as it was unused
 
     // Skip if not API route
     if (!path.startsWith('/api/')) {
@@ -411,9 +411,10 @@ export function i18nUrlMiddleware(req: Request, res: Response, next: NextFunctio
 
     // Attach language info to request
     (req as any).language = language;
+    const langConfig = getLanguageConfig(language);
     (req as any).i18n = {
         language,
-        isRTL: getLanguageConfig(language)?.isRTL || false,
+        isRTL: langConfig?.isRTL || false,
         originalPath: path,
         canonicalPath,
     };
@@ -494,7 +495,7 @@ export function createUrlLocalizer(language: string) {
  * It temporarily modifies req.path for route matching
  */
 export function i18nRouteHandler(req: Request, _res: Response, next: NextFunction): void {
-    const translatedPath = (req as any)._i18nTranslatedPath;
+    const translatedPath = (req as any)._i18nTranslatedPath as string | undefined;
 
     if (translatedPath) {
         // Temporarily override path for route matching (cast to any to bypass read-only)
