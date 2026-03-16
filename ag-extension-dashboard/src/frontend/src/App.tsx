@@ -38,7 +38,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'rec
 import { useQuery } from '@tanstack/react-query';
 import { fetchDashboardData } from '@/api/dashboardService';
 import { askAI } from '@/api/knowledgeService';
-import { fetchUserProfile, AuthResponse } from '@/api/authService';
+import { fetchUserProfile, AuthResponse, ProfileResponse } from '@/api/authService';
 import { fetchFarmers } from '@/api/farmerService';
 import { fetchVisits } from '@/api/visitService';
 import { fetchReports } from '@/api/reportService';
@@ -310,7 +310,7 @@ function App() {
         }
     }, [setActiveTab]);
 
-    const { data: userResponse } = useQuery<AuthResponse>({
+    const { data: userResponse } = useQuery<ProfileResponse>({
         queryKey: ['user-profile'],
         queryFn: fetchUserProfile,
     });

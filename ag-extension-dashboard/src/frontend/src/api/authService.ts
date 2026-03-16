@@ -24,8 +24,13 @@ export interface AuthResponse {
     token?: string;
 }
 
-export const fetchUserProfile = async (): Promise<AuthResponse> => {
-    const response = await apiClient.get<AuthResponse>('/auth/me');
+export interface ProfileResponse {
+    success: boolean;
+    data: User;
+}
+
+export const fetchUserProfile = async (): Promise<ProfileResponse> => {
+    const response = await apiClient.get<ProfileResponse>('/auth/me');
     return response.data;
 };
 
