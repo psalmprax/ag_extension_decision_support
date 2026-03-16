@@ -56,9 +56,8 @@ describe('BillingDashboard', () => {
             expect(screen.queryByRole('status')).not.toBeInTheDocument();
         });
 
-        // Use region role for section with accessible name from mock i18n
-        const statusSection = await screen.findByRole('region', { name: /Current Plan/i });
-        expect(statusSection).toBeInTheDocument();
+        // Check for the subscription status heading
+        expect(screen.getByText('Current Plan')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: /Pro/i, level: 2 })).toBeInTheDocument();
     });
 
@@ -69,7 +68,12 @@ describe('BillingDashboard', () => {
             expect(screen.queryByRole('status')).not.toBeInTheDocument();
         });
 
-        const planArticles = screen.getAllByRole('article');
-        expect(planArticles.length).toBeGreaterThan(0);
+        // Plans are now in a section with aria-label="Available subscription plans"
+        const plansSection = screen.getByRole('region', { name: /Available subscription plans/i });
+        expect(plansSection).toBeInTheDocument();
+
+        // Check for plan headings (Basic and Pro)
+        expect(screen.getByRole('heading', { name: /Basic/i, level: 3 })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /Pro/i, level: 3 })).toBeInTheDocument();
     });
 });
