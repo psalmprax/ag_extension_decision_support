@@ -156,7 +156,7 @@ router.post('/demo', async (req: Request, res: Response) => {
     try {
         const email = 'demo@agridemo.com';
         
-        let userResult = await query('SELECT * FROM users WHERE email = $1', [email]);
+        const userResult = await query('SELECT * FROM users WHERE email = $1', [email]);
         let user = userResult.rows[0];
         if (!user) {
             const passwordHash = await bcrypt.hash('demo-password-123', 10);

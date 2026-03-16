@@ -193,7 +193,7 @@ class SMSService {
             case 1:
                 return 'CON Welcome to Ag Extension\n1. Check Weather\n2. Market Prices\n3. Crop Advice\n4. Exit';
 
-            case 2:
+            case 2: {
                 const choice = text;
                 session.data.choice = choice;
 
@@ -210,6 +210,7 @@ class SMSService {
                     default:
                         return 'CON Invalid option. Try again.\n1. Back to menu';
                 }
+            }
 
             case 3:
                 if (session.data.choice === '3') {

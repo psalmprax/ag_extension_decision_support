@@ -14,7 +14,7 @@ const SENSITIVE_PATTERNS = {
     // Social Security Numbers (various formats)
     ssn: /\b\d{3}[-\s]?\d{2}[-\s]?\d{4}\b/g,
     // API keys (generic patterns)
-    apiKey: /(api[_-]?key|apikey|secret[_-]?key|auth[_-]?token)['":\s=]+['"]?([a-zA-Z0-9_\-]{20,})['"]?/gi,
+    apiKey: /(api[_-]?key|apikey|secret[_-]?key|auth[_-]?token)['":\s=]+['"]?([a-zA-Z0-9_-]{20,})['"]?/gi,
     // JWT tokens
     jwt: /eyJ[a-zA-Z0-9_-]*\.eyJ[a-zA-Z0-9_-]*\.[a-zA-Z0-9_-]*/g,
     // Bank account numbers

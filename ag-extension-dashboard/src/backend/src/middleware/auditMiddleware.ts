@@ -7,7 +7,7 @@ export const auditMiddleware = (actionType: string) => {
         const originalSend = res.send;
         
         // Proxy the send method to capture completion
-        res.send = function(content: any) {
+        res.send = function(...args: any[]) {
             const statusCode = res.statusCode;
             
             // Only log successful or important actions
@@ -31,7 +31,7 @@ export const auditMiddleware = (actionType: string) => {
                 .catch(err => logger.error('Audit logging failed:', err));
             }
 
-            return originalSend.apply(res, arguments as any);
+            return originalSend.apply(res, args);
         };
 
         next();

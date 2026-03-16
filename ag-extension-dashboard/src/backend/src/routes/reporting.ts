@@ -72,7 +72,7 @@ router.post('/generate', checkUsageLimit('report'), async (req: AuthRequest, res
         const { type, startDate, endDate, officerId, region } = req.body;
         const pool = getPool();
 
-        let reportData: any = {};
+        const reportData: any = {};
 
         if (pool) {
             if (type === 'visit_summary' || type === 'activity_report') {
