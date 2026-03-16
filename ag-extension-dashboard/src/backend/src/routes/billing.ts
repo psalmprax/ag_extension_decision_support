@@ -450,8 +450,9 @@ router.get('/invoices', authorize('admin', 'extension_officer', 'farmer'), async
  *   post:
  *     summary: Stripe Webhook handler
  *     tags: [Billing]
-/**
- * Stripe Webhook handler
+ *     responses:
+ *       200:
+ *         description: Webhook received.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req: any, res: any) => {

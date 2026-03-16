@@ -56,7 +56,7 @@ export const mockKnowledgeArticles = [
 ];
 
 // Seed knowledge articles into database
-async function seedKnowledgeArticles(): Promise<void> {
+export async function seedKnowledgeArticles(): Promise<void> {
     const pool = getPool();
     if (!pool) return;
 
@@ -104,23 +104,22 @@ async function seedKnowledgeArticles(): Promise<void> {
     ];
 
     try {
-        const existing = await query('SELECT COUNT(*) as count FROM knowledge_articles');
-        if (existing.rows[0].count === 0) {
+        const result = await query('SELECT COUNT(*) as count FROM knowledge_articles');
+        const count = result?.rows?.[0]?.count;
+
+        if (count === '0' || count === 0) {
             for (const article of articles) {
                 await query(
                     'INSERT INTO knowledge_articles (title, content, category, tags, crops, regions) VALUES ($1, $2, $3, $4, $5, $6)',
                     [article.title, article.content, article.category, article.tags, article.crops, article.regions]
                 );
             }
-            logger.info('Knowledge articles seeded');
+            logger.info('Knowledge articles seeded successfully');
         }
     } catch (error) {
         logger.error('Error seeding knowledge articles:', error);
     }
 }
-
-// Initialize knowledge base
-seedKnowledgeArticles();
 
 // Search knowledge base
 router.get('/search', async (req: Request, res: Response) => {

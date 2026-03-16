@@ -54,8 +54,13 @@ async function bootstrap() {
         AIProviderFactory.initialize();
         logger.info('AI Provider Factory initialized');
 
+        // Seed Knowledge Articles (async)
+        const { seedKnowledgeArticles, mockKnowledgeArticles } = await import('./routes/knowledge');
+        seedKnowledgeArticles().catch(err => 
+            logger.error('Failed to seed knowledge articles:', err)
+        );
+
         // Seed Vector Knowledge Base (async)
-        const { mockKnowledgeArticles } = await import('./routes/knowledge');
         VectorService.seedKnowledge(mockKnowledgeArticles).catch(err =>
             logger.error('Failed to seed vector knowledge:', err)
         );

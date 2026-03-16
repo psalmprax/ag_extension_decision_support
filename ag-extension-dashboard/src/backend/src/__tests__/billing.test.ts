@@ -7,9 +7,15 @@ import { config } from '../config';
 jest.mock('../services/databaseService', () => ({
     initializeDatabase: jest.fn(),
     getPool: jest.fn(() => ({
-        query: jest.fn().mockResolvedValue({ rows: [] })
+        query: jest.fn().mockResolvedValue({ 
+            rows: [{ count: 0 }],
+            rowCount: 1 
+        })
     })),
-    query: jest.fn().mockResolvedValue({ rows: [] })
+    query: jest.fn().mockResolvedValue({ 
+        rows: [{ count: 0 }],
+        rowCount: 1 
+    })
 }));
 
 jest.mock('../services/cacheService', () => ({
