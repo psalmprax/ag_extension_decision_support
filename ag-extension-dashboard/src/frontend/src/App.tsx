@@ -289,6 +289,9 @@ function App() {
                 },
                 (error) => {
                     console.log('Geolocation error:', error.message);
+                    if (error.code === 1 && error.message.includes('Only secure origins are allowed')) {
+                        console.warn('Geolocation blocked: Not a secure origin (HTTPS/localhost)');
+                    }
                     setUserLocation(storeUser?.region || 'Kenya');
                 }
             );

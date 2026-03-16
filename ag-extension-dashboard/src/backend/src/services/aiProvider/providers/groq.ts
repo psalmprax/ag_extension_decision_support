@@ -14,7 +14,7 @@ import { Tool } from '../../../tools/types';
 
 export class GroqProvider extends BaseAIProvider {
     readonly provider: AIProviderType = 'groq';
-    readonly capabilities = ['text-generation', 'tool-use'];
+    readonly capabilities = ['text-generation', 'tool-use', 'embeddings'];
     private client: Groq;
 
     constructor() {
@@ -76,6 +76,27 @@ export class GroqProvider extends BaseAIProvider {
                 usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
                 finishReason: 'error',
             };
+        }
+    }
+
+    async createEmbedding(text: string, options?: any): Promise<any> {
+        const model = options?.model || 'nomic-embed-text-v1.5';
+        try {
+            const response = await this.client.embeddings.create({
+                model,
+                input: text,
+            });
+
+            return {
+                embedding: response.data[0].embedding,
+                model,
+                usage: {
+                    tokens: response.usage.total_tokens,
+                },
+            };
+        } catch (error) {
+            logger.error('Groq createEmbedding error:', error);
+            throw error;
         }
     }
 
