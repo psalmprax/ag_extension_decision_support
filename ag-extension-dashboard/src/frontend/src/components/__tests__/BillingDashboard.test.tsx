@@ -8,7 +8,9 @@ import { MemoryRouter } from 'react-router-dom';
 // Mock framer-motion to avoid animation issues in tests
 vi.mock('framer-motion', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mockComponent = ({ children, ...props }: any) => <div {...props}>{children}</div>;
+    const mockComponent = ({ children, whileHover, whileTap, initial, animate, exit, variants, transition, layout, ...props }: any) => (
+        <div {...props}>{children}</div>
+    );
     return {
         motion: {
             div: mockComponent,
@@ -36,7 +38,7 @@ const queryClient = new QueryClient({
 const renderComponent = () => {
     return render(
         <QueryClientProvider client={queryClient}>
-            <MemoryRouter>
+            <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                 <LanguageProvider>
                     <BillingDashboard />
                 </LanguageProvider>
