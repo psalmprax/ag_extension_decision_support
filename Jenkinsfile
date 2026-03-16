@@ -9,7 +9,7 @@ pipeline {
         // Remote server details (Provide these as Jenkins Build Parameters or hardcode here)
         REMOTE_USER = 'root'
         REMOTE_HOST = '172.21.0.1'
-        DEPLOY_DIR = '/root/ag-extension-decision-support'
+        DEPLOY_DIR = '/var/jenkins_home/deployments/ag_extension'
         
         // Docker registry (Optional)
         // DOCKER_REGISTRY = 'your-registry.com'
