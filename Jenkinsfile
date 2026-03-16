@@ -50,18 +50,14 @@ pipeline {
 
         stage('Deploy to Remote') {
             steps {
-                sshagent([SSH_CRED_ID]) {
-                    sh """
-                        ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} 'mkdir -p ${DEPLOY_DIR}'
-                        scp -o StrictHostKeyChecking=no ag-extension-dashboard/docker-compose.yml ${REMOTE_USER}@${REMOTE_HOST}:${DEPLOY_DIR}/
-                        scp -o StrictHostKeyChecking=no ag-extension-dashboard/docker-compose.agents.yml ${REMOTE_USER}@${REMOTE_HOST}:${DEPLOY_DIR}/
-                        
-                        # Copy backend production files if needed, or pull images if using registry
-                        # For this example, we assume we might need to build on remote or sync source if not using registry
-                        # rsync -avz --exclude 'node_modules' ag-extension-dashboard/ ${REMOTE_USER}@${REMOTE_HOST}:${DEPLOY_DIR}/
-                        
-                        ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} 'cd ${DEPLOY_DIR} && docker-compose -f docker-compose.yml -f docker-compose.agents.yml up -d --build'
-                    """
+                script {
+                    echo "Deploying to Host via Docker Socket..."
+                    sh "mkdir -p ${DEPLOY_DIR}"
+                    sh "cp -r ag-extension-dashboard/* ${DEPLOY_DIR}/"
+                    dir(DEPLOY_DIR) {
+                        sh "docker compose -f docker-compose.yml -f docker-compose.agents.yml down || true"
+                        sh "docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --build"
+                    }
                 }
             }
         }
