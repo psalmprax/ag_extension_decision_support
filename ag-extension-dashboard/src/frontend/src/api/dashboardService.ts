@@ -21,10 +21,15 @@ export interface DashboardResponse {
     data: {
         overview: DashboardOverview;
         trends: DashboardTrends;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         timeline: any[];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         geography: any[];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         crops: any[];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         recentActivity: any[];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         priorityQueue: any[];
     };
 }

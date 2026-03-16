@@ -69,29 +69,29 @@ interface StatCardProps {
 const StatCard = ({ title, value, change, icon: Icon, delay }: StatCardProps) => {
     const { t } = useLanguage();
     return (
-    <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay }}
-        className="card p-6 bg-theme-bg-card dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300"
-    >
-        <div className="flex items-start justify-between">
-            <div>
-                <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{title}</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{value.toLocaleString()}</p>
-                {change !== undefined && (
-                    <div className={`flex items-center gap-1 text-xs font-bold mt-2 ${change >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                        {change >= 0 ? <TrendingUp className="w-3 h-3" /> : <Activity className="w-3 h-3" />}
-                        <span>{change >= 0 ? '+' : ''}{change}%</span>
-                        <span className="text-gray-400 font-medium ml-1">{t('stat_vs_last_month')}</span>
-                    </div>
-                )}
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay }}
+            className="card p-6 bg-theme-bg-card dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300"
+        >
+            <div className="flex items-start justify-between">
+                <div>
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{title}</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{value.toLocaleString()}</p>
+                    {change !== undefined && (
+                        <div className={`flex items-center gap-1 text-xs font-bold mt-2 ${change >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                            {change >= 0 ? <TrendingUp className="w-3 h-3" /> : <Activity className="w-3 h-3" />}
+                            <span>{change >= 0 ? '+' : ''}{change}%</span>
+                            <span className="text-gray-400 font-medium ml-1">{t('stat_vs_last_month')}</span>
+                        </div>
+                    )}
+                </div>
+                <div className="p-3 bg-primary-50 dark:bg-primary-900/30 rounded-xl">
+                    <Icon className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                </div>
             </div>
-            <div className="p-3 bg-primary-50 dark:bg-primary-900/30 rounded-xl">
-                <Icon className="w-6 h-6 text-primary-600 dark:text-primary-400" />
-            </div>
-        </div>
-    </motion.div>
+        </motion.div>
     );
 };
 
@@ -112,13 +112,48 @@ interface ChatMessage {
 
 interface Farmer {
     id: string;
-    name: string;
-    location: string;
-    cropType: string;
-    status: 'Healthy' | 'Warning' | 'Critical' | string;
-    lastVisit?: string;
-    contact?: string;
-    coordinates?: [number, number];
+    firstName: string;
+    lastName: string;
+    region: string;
+    village: string;
+    farmSize: number;
+    crops: string[];
+    latitude?: number;
+    longitude?: number;
+    phone?: string;
+    yield?: number;
+    status?: string;
+}
+
+interface Visit {
+    id: string;
+    farmer_id: string;
+    farmer_name: string;
+    scheduled_at: string;
+    visit_type: string;
+    status: string;
+}
+
+interface Report {
+    id: string;
+    title: string;
+    status: string;
+    generatedAt: string;
+}
+
+interface DashboardData {
+    overview: {
+        totalFarmers: number;
+        activeConversations: number;
+        visitsThisMonth: number;
+        avgSatisfaction: number;
+    };
+    trends: {
+        farmersGrowth: number;
+        conversationsGrowth: number;
+        visitsGrowth: number;
+        satisfactionChange: number;
+    };
 }
 
 function App() {
@@ -143,7 +178,8 @@ function App() {
 
     const [searchQuery, setSearchQuery] = useState('');
     const [userLocation, setUserLocation] = useState<string>('');
-    const [ragAnswer, setRagAnswer] = useState<string | null>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [ragAnswer, setRagAnswer] = useState<{ answer: string; contextUsed: any[] } | null>(null);
     const [isAsking, setIsAsking] = useState(false);
 
     // Apply theme when it changes
@@ -177,7 +213,7 @@ function App() {
     const [selectedFarmer, setSelectedFarmer] = useState<Farmer | null>(null);
     const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
 
-    const handleOpenFarmerDetail = (farmer: any) => {
+    const handleOpenFarmerDetail = (farmer: Farmer) => {
         setSelectedFarmer(farmer);
         setIsDetailPanelOpen(true);
     };
@@ -197,6 +233,7 @@ function App() {
 
         // Apply theme variables to :root
         const root = document.documentElement;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const theme = themes[themeName];
 
         // Inject variables
@@ -263,7 +300,7 @@ function App() {
         } else if (params.get('canceled') === 'true') {
             setActiveTab('billing');
         }
-    }, []);
+    }, [setActiveTab]);
 
     const { data: userResponse } = useQuery<AuthResponse>({
         queryKey: ['user-profile'],
@@ -273,7 +310,7 @@ function App() {
     const user = userResponse?.data;
 
     // Fetch Dashboard Data
-    const { data: dashboardResponse, isLoading, isError } = useQuery<{ success: boolean; data: any }>({
+    const { data: dashboardResponse, isLoading, isError } = useQuery<{ success: boolean; data: DashboardData }>({
         queryKey: ['dashboard'],
         queryFn: fetchDashboardData,
         enabled: activeTab === 'dashboard'
@@ -284,34 +321,37 @@ function App() {
     // Fetch Farmers Data (Portfolio)
     const { data: farmersResponse } = useQuery<{ success: boolean; data: { farmers: Farmer[] } }>({
         queryKey: ['farmers'],
-        queryFn: fetchFarmers as any,
+        queryFn: fetchFarmers,
         enabled: activeTab === 'portfolio'
     });
     const queryFarmers = farmersResponse?.data?.farmers || [];
     const farmers = queryFarmers.length > 0 ? queryFarmers : storeFarmers;
 
     // Fetch Visits Data
-    const { data: visitsResponse, refetch: refetchVisits } = useQuery<{ success: boolean; data: { visits: any[] } }>({
+    const { data: visitsResponse, refetch: refetchVisits } = useQuery<{ success: boolean; data: { visits: Visit[] } }>({
         queryKey: ['visits'],
-        queryFn: fetchVisits as any,
+        queryFn: fetchVisits,
         enabled: activeTab === 'visits'
     });
     const visits = visitsResponse?.data?.visits || [];
 
     // Fetch Reports Data
-    const { data: reportsResponse } = useQuery<any>({
+    const { data: reportsResponse } = useQuery<{ success: boolean; data: { reports: Report[] } }>({
         queryKey: ['reports'],
         queryFn: fetchReports,
         enabled: activeTab === 'reports'
     });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const reports = (reportsResponse as any)?.data?.reports || [];
 
     // Fetch Analytics/Performance Data
-    const { data: performanceResponse } = useQuery<any>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: performanceResponse } = useQuery<{ success: boolean; data: any }>({
         queryKey: ['performance'],
         queryFn: fetchPerformanceData,
         enabled: activeTab === 'analytics'
     });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const performanceData = (performanceResponse as any)?.data;
 
     const allNavItems = [
@@ -346,7 +386,7 @@ function App() {
         }
     };
 
-    const loadConversations = async () => {
+    const loadConversations = React.useCallback(async () => {
         try {
             const res = await fetchConversations();
             setConversations(res.data);
@@ -356,16 +396,16 @@ function App() {
         } catch (error) {
             console.error('Failed to load conversations:', error);
         }
-    };
+    }, [activeConvId]);
 
-    const loadMessages = async (id: string) => {
+    const loadMessages = React.useCallback(async (id: string) => {
         try {
             const res = await fetchMessages(id);
             setChatMessages(res.data);
         } catch (error) {
             console.error('Failed to load messages:', error);
         }
-    };
+    }, []);
 
     const updateConversationTitle = async (id: string, title: string) => {
         try {
@@ -410,7 +450,7 @@ function App() {
     };
 
     // Farmer Chat functions
-    const loadFarmerConversations = async () => {
+    const loadFarmerConversations = React.useCallback(async () => {
         try {
             const res = await fetchConversations();
             setFarmerConversations(res.data);
@@ -420,16 +460,16 @@ function App() {
         } catch (error) {
             console.error('Failed to load farmer conversations:', error);
         }
-    };
+    }, [activeFarmerConvId]);
 
-    const loadFarmerMessages = async (id: string) => {
+    const loadFarmerMessages = React.useCallback(async (id: string) => {
         try {
             const res = await fetchMessages(id);
             setFarmerChatMessages(res.data);
         } catch (error) {
             console.error('Failed to load farmer messages:', error);
         }
-    };
+    }, []);
 
     const handleFarmerChatSend = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -458,6 +498,7 @@ function App() {
     };
 
     // Farmer state for new conversation
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [farmerList, setFarmerList] = useState<any[]>([]);
     const [isLoadingFarmers, setIsLoadingFarmers] = useState(false);
 
@@ -474,11 +515,11 @@ function App() {
         }
     };
 
-    const handleStartConversation = async (farmer: any, chatType: 'ai' | 'farmer' = 'ai') => {
+    const handleStartConversation = async (farmer: Farmer, chatType: 'ai' | 'farmer' = 'ai') => {
         try {
             // Check if conversation already exists with this farmer
             const existingConversations = chatType === 'farmer' ? farmerConversations : conversations;
-            const existingConv = existingConversations.find((c: any) => c.farmerId === farmer.id);
+            const existingConv = existingConversations.find((c: Conversation) => c.farmerId === farmer.id);
 
             if (existingConv) {
                 // Redirect to existing conversation
@@ -546,13 +587,13 @@ function App() {
         if (activeTab === 'farmerchat') {
             loadFarmerConversations();
         }
-    }, [activeTab]);
+    }, [activeTab, loadConversations, loadFarmerConversations]);
 
     useEffect(() => {
         if (activeConvId) {
             loadMessages(activeConvId);
         }
-    }, [activeConvId]);
+    }, [activeConvId, loadMessages]);
 
     if (isError) return <div className="flex items-center justify-center min-h-screen text-red-500 bg-gray-50 dark:bg-gray-900">{t('error_loading')}</div>;
 
@@ -732,6 +773,7 @@ function App() {
                                     <div className="relative h-[400px] bg-theme-bg-primary dark:bg-gray-900/50 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800">
                                         <FarmerMap
                                             height="400px"
+                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                             farmers={farmers.map((f: any) => ({
                                                 id: f.id,
                                                 name: f.name || `${f.firstName} ${f.lastName}`,
@@ -818,7 +860,7 @@ function App() {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">
-                                            {farmers.map((farmer: any) => (
+                                            {farmers.map((farmer: Farmer) => (
                                                 <tr
                                                     key={farmer.id}
                                                     onClick={() => handleOpenFarmerDetail(farmer)}
@@ -876,7 +918,7 @@ function App() {
                                 </button>
                             </div>
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                {visits.map((visit: any) => (
+                                {visits.map((visit: Visit) => (
                                     <div key={visit.id} className="card p-6 flex items-center justify-between bg-theme-bg-card dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:shadow-md transition-all group">
                                         <div className="flex items-center gap-4">
                                             <div className="w-12 h-12 bg-secondary-50 dark:bg-secondary-900/30 rounded-2xl flex items-center justify-center transition-colors group-hover:bg-secondary-100 dark:group-hover:bg-secondary-900/50">
@@ -904,6 +946,7 @@ function App() {
                                             </span>
                                             <button
                                                 onClick={() => {
+                                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                                     const farmerData = farmers.find((f: any) => f.id === visit.farmer_id || f.name === visit.farmer_name);
                                                     if (farmerData) handleOpenFarmerDetail(farmerData);
                                                 }}
@@ -931,7 +974,7 @@ function App() {
                                 </button>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {reports.map((report: any) => (
+                                {reports.map((report: Report) => (
                                     <div key={report.id} className="card group p-6 bg-theme-bg-card dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-400 transition-all cursor-pointer shadow-sm hover:shadow-xl">
                                         <div className="flex justify-between items-start mb-6">
                                             <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-2xl group-hover:bg-primary-50 dark:group-hover:bg-primary-900/30 transition-colors">
@@ -1139,7 +1182,7 @@ function App() {
                                             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest ">{t('ai_contextual_verification')}</h4>
                                         </div>
                                         <div className="flex flex-wrap gap-2">
-                                            {ragAnswer.contextUsed.map((ctx: any, i: number) => (
+                                            {ragAnswer.contextUsed.map((ctx: { metadata: { crop: string; category: string } }, i: number) => (
                                                 <div key={i} className="px-3 py-1.5 bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-600/50 rounded-xl flex items-center gap-2">
                                                     <div className="w-1.5 h-1.5 bg-primary-500 rounded-full"></div>
                                                     <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase">
@@ -1690,6 +1733,7 @@ function App() {
                 isOpen={isDetailPanelOpen}
                 onClose={() => setIsDetailPanelOpen(false)}
                 farmer={selectedFarmer}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 visits={visits.filter((v: any) => selectedFarmer && (v.farmer_id === selectedFarmer.id || v.farmer_name === `${selectedFarmer.firstName} ${selectedFarmer.lastName}`))}
             />
         </div>

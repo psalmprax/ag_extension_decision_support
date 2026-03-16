@@ -58,6 +58,7 @@ export const BillingDashboard: React.FC = () => {
     const [plans, setPlans] = useState<Plan[]>([]);
     const [subscription, setSubscription] = useState<Subscription | null>(null);
     const [invoices, setInvoices] = useState<Invoice[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -171,9 +172,11 @@ export const BillingDashboard: React.FC = () => {
                 alert(response.message);
                 fetchData();
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
+             
             console.error('Subscription failed:', error);
-            alert(error.response?.data?.message || 'Subscription failed. Please try again.');
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            alert((error as any).response?.data?.message || 'Subscription failed. Please try again.');
         } finally {
             setActionLoading(null);
         }
@@ -189,9 +192,11 @@ export const BillingDashboard: React.FC = () => {
             } else {
                 alert(data.message || 'Failed to switch plan');
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
+             
             console.error('Switch failed:', error);
-            alert(error.response?.data?.message || 'Failed to switch plan. Please try again.');
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            alert((error as any).response?.data?.message || 'Failed to switch plan. Please try again.');
         } finally {
             setActionLoading(null);
         }

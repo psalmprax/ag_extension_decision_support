@@ -5,6 +5,7 @@ import * as matchers from '@testing-library/jest-dom/matchers';
 import { server } from '../mocks/server';
 
 // Extend expect with jest-dom matchers
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 expect.extend(matchers as any);
 
 // Establish API mocking before all tests.

@@ -22,12 +22,24 @@ export const fetchUserProfile = async (): Promise<AuthResponse> => {
     return response.data;
 };
 
-export const login = async (credentials: any): Promise<AuthResponse> => {
+export interface LoginCredentials {
+    email: string;
+    password: string;
+}
+
+export interface RegisterData {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+}
+
+export const login = async (credentials: LoginCredentials): Promise<AuthResponse> => {
     const response = await apiClient.post<AuthResponse>('/auth/login', credentials);
     return response.data;
 };
 
-export const register = async (userData: any): Promise<AuthResponse> => {
+export const register = async (userData: RegisterData): Promise<AuthResponse> => {
     const response = await apiClient.post<AuthResponse>('/auth/register', userData);
     return response.data;
 };

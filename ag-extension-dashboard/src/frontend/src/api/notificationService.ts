@@ -5,6 +5,7 @@ export interface Notification {
     type: string;
     title: string;
     message: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     metadata: Record<string, any>;
     isRead: boolean;
     channel: string;
@@ -44,6 +45,7 @@ export const sendNotification = async (params: {
     type?: string;
     title: string;
     message: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     metadata?: Record<string, any>;
 }): Promise<void> => {
     await apiClient.post('/notifications/send', params);
@@ -53,6 +55,7 @@ export const broadcastNotification = async (params: {
     type?: string;
     title: string;
     message: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     metadata?: Record<string, any>;
     role?: string;
 }): Promise<{ sent: number }> => {

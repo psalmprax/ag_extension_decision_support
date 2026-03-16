@@ -1,11 +1,12 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Language, translations } from './i18n';
+import { Language } from './i18n';
 
 interface LanguageContextType {
     language: Language;
     setLanguage: (lang: Language) => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     t: (key: string, options?: { defaultValue?: string } & Record<string, any>) => string;
     isRTL: boolean;
 }
@@ -41,17 +42,18 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
         const initI18n = async () => {
             const savedLanguage = localStorage.getItem('preferred_language') as Language;
             const targetLang = (savedLanguage && isValidLanguage(savedLanguage)) ? savedLanguage : 'en';
-            
+
             // Load both target and English (for fallback) in parallel
             await Promise.all([
                 loadLanguage(targetLang),
                 targetLang !== 'en' ? loadLanguage('en') : Promise.resolve()
             ]);
-            
+
             setLanguageState(targetLang);
             setIsLoaded(true);
         };
         initI18n();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const setLanguage = async (lang: Language) => {
@@ -62,6 +64,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
         setIsLoaded(true);
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const t = (key: string, options?: { defaultValue?: string } & Record<string, any>): string => {
         if (!isLoaded) return options?.defaultValue || key;
 
@@ -125,6 +128,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
 };
 
 // Hook to use language context
+// eslint-disable-next-line react-refresh/only-export-components
 export const useLanguage = () => {
     const context = useContext(LanguageContext);
     if (context === undefined) {

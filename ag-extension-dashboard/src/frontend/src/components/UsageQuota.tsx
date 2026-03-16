@@ -47,12 +47,12 @@ const QuotaBar = ({ label, current, limit, icon: Icon, color, glowColor }: Quota
                     animate={{ width: isUnlimited ? '100%' : `${percentage}%` }}
                     transition={{ duration: 1.5, ease: [0.34, 1.56, 0.64, 1] }}
                     className={`absolute inset-y-0 left-0 rounded-full bg-gradient-to-r ${color} transition-all duration-300 ${isUnlimited ? 'opacity-20' : ''}`}
-                    style={{ 
+                    style={{
                         boxShadow: (isUnlimited || percentage > 5) ? `0 0 20px ${glowColor}` : 'none'
                     }}
                 >
                     {/* Liquid Wave Effect */}
-                    <motion.div 
+                    <motion.div
                         animate={{ x: ["-100%", "100%"] }}
                         transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
                         className="absolute inset-0 opacity-30 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.4)_50%,transparent_100%)] skew-x-12"
@@ -67,7 +67,7 @@ const QuotaBar = ({ label, current, limit, icon: Icon, color, glowColor }: Quota
 
 export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
     const { t } = useLanguage();
-    const { data: usageResponse, isLoading, error } = useQuery({
+    const { data: usageResponse, isLoading } = useQuery({
         queryKey: ['usage'],
         queryFn: fetchUsage,
         refetchInterval: 60000,
@@ -99,10 +99,10 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
                     <h4 className="text-sm font-black text-white uppercase tracking-widest mb-2">{t('usage_init_title')}</h4>
                     <p className="text-xs text-gray-400 max-w-[200px] leading-relaxed mb-6">{t('usage_init_desc')}</p>
                     <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-                        <motion.div 
-                            animate={{ x: ["-100%", "100%"] }} 
+                        <motion.div
+                            animate={{ x: ["-100%", "100%"] }}
                             transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                            className="w-1/2 h-full bg-primary-500/50 blur-[2px]" 
+                            className="w-1/2 h-full bg-primary-500/50 blur-[2px]"
                         />
                     </div>
                 </div>
@@ -110,6 +110,7 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
         );
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const typeConfig: Record<string, { icon: any, color: string, glow: string }> = {
         'sms': { icon: Send, color: "from-primary-400 to-primary-600", glow: "rgba(34, 197, 94, 0.4)" },
         'ai_chat': { icon: MessageSquare, color: "from-blue-400 to-indigo-600", glow: "rgba(59, 130, 246, 0.4)" },
@@ -121,7 +122,7 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
             {!compact && (
                 <>
                     <div className="absolute top-0 right-0 w-48 h-48 bg-primary-500/5 rounded-full blur-[80px] -translate-y-24 translate-x-24 group-hover:bg-primary-500/10 transition-colors duration-700" aria-hidden="true" />
-                    
+
                     <div className="flex items-center justify-between mb-10 relative z-10">
                         <div className="flex items-center gap-3">
                             <div className="p-2.5 bg-primary-500/10 rounded-xl border border-primary-500/20 shadow-lg shadow-primary-500/5">
@@ -144,6 +145,7 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
             )}
 
             <div className={`grid gap-10 ${compact ? 'space-y-4' : 'grid-cols-1'}`}>
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {usageData.map((item: any) => {
                     const config = typeConfig[item.type] || typeConfig['sms'];
                     return (
@@ -161,10 +163,11 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
             </div>
 
             {(() => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const smsUsage = usageData.find((u: any) => u.type === 'sms');
                 if (!compact && smsUsage && smsUsage.limit > 0 && smsUsage.current / smsUsage.limit > 0.9) {
                     return (
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             className="mt-10 p-5 rounded-2xl bg-red-500/5 border border-red-500/20 flex items-start gap-4 backdrop-blur-md relative overflow-hidden"

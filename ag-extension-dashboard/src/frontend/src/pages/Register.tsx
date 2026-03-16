@@ -68,8 +68,9 @@ export function Register() {
 
             // Success - redirect to login
             navigate('/login', { state: { registered: true } });
-        } catch (err: any) {
-            setError(err.message || t('register_failed'));
+        } catch (err: unknown) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setError((err as any).message || t('register_failed'));
         } finally {
             setIsLoading(false);
         }

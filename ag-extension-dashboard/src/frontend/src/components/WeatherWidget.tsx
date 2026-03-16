@@ -1,19 +1,23 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Cloud, CloudRain, Sun, Wind, Thermometer, MapPin, Droplets } from 'lucide-react';
+import { Cloud, CloudRain, Sun, Wind, MapPin, Droplets } from 'lucide-react';
 import { fetchWeather } from '@/api/weatherService';
-import { Skeleton } from './Skeleton';
 import { useLanguage } from '@/lib/LanguageContext';
 
 interface WeatherWidgetProps {
     location?: string;
 }
 
-// ... imports ...
+interface WeatherData {
+    temp: number;
+    condition: string;
+    humidity: number;
+    windSpeed: number;
+}
 
 export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location = 'Kenya' }) => {
     const { t } = useLanguage();
-    const { data: weatherResponse, isLoading } = useQuery({
+    const { data: weatherResponse, isLoading } = useQuery<{ success: boolean; data: WeatherData }>({
         queryKey: ['weather', location],
         queryFn: () => fetchWeather(location),
         refetchInterval: 1000 * 60 * 30, // 30 mins
@@ -31,13 +35,18 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location = 'Kenya'
     const weather = weatherResponse?.data;
     if (!weather) return null;
 
-    const WeatherIcon = () => {
-        const cond = weather.condition.toLowerCase();
-        if (cond.includes('sun') || cond.includes('clear')) return <Sun className="text-yellow-500 w-5 h-5 transition-transform hover:rotate-12 duration-500" />;
-        if (cond.includes('rain') || cond.includes('drizzle')) return <CloudRain className="text-blue-500 w-5 h-5 transition-transform hover:-translate-y-0.5 duration-500" />;
-        if (cond.includes('cloud')) return <Cloud className="text-gray-400 w-5 h-5 transition-transform hover:scale-105 duration-500" />;
-        return <Wind className="text-teal-500 w-5 h-5 transition-transform hover:scale-105 duration-500" />;
-    };
+    const cond = weather.condition.toLowerCase();
+
+    let WeatherIconComponent;
+    if (cond.includes('sun') || cond.includes('clear')) {
+        WeatherIconComponent = <Sun className="text-yellow-500 w-5 h-5 transition-transform hover:rotate-12 duration-500" />;
+    } else if (cond.includes('rain') || cond.includes('drizzle')) {
+        WeatherIconComponent = <CloudRain className="text-blue-500 w-5 h-5 transition-transform hover:-translate-y-0.5 duration-500" />;
+    } else if (cond.includes('cloud')) {
+        WeatherIconComponent = <Cloud className="text-gray-400 w-5 h-5 transition-transform hover:scale-105 duration-500" />;
+    } else {
+        WeatherIconComponent = <Wind className="text-teal-500 w-5 h-5 transition-transform hover:scale-105 duration-500" />;
+    }
 
     return (
         <div className="flex items-center space-x-4 bg-white/50 dark:bg-gray-900/40 backdrop-blur-xl px-5 py-2.5 rounded-2xl border border-white/20 dark:border-white/5 shadow-xl transition-all hover:shadow-primary-500/5 group">
@@ -47,7 +56,7 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location = 'Kenya'
             </div>
 
             <div className="flex items-center space-x-3">
-                <WeatherIcon />
+                {WeatherIconComponent}
                 <div className="flex flex-col">
                     <div className="flex items-baseline space-x-1 leading-none mb-0.5">
                         <span className="text-xl font-black text-gray-900 dark:text-white tracking-tighter">{Math.round(weather.temp)}°</span>

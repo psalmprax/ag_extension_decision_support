@@ -7,6 +7,7 @@ import { LanguageProvider, useLanguage } from '../lib/LanguageContext';
 // We only need to mock the structure for types if needed, 
 // but LanguageContext already has its own types.
 vi.mock('../lib/i18n', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const actual = await vi.importActual<any>('../lib/i18n');
     return {
         ...actual,
@@ -91,7 +92,7 @@ describe('LanguageContext', () => {
         // We need to trigger RTL
         // Note: RTL_LANGUAGES is internal to LanguageContext but 'ar' is one.
         // Our mock doesn't have 'ar', so let's check 'en' which is NOT RTL.
-        
+
         render(
             <LanguageProvider>
                 <TestComponent />

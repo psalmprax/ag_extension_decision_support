@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { 
-    Send, MessageSquare, Users, Clock, CheckCircle, 
-    XCircle, Loader2, Search, Plus, Zap, BarChart3, 
+import React, { useState } from 'react';
+import {
+    Send, Users, Clock, CheckCircle,
+    XCircle, Loader2, Search, Plus, BarChart3,
     Layout, Bell, History, Info, ChevronRight, User
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,7 +25,7 @@ interface Contact {
 
 export function SMSPage() {
     const { t } = useLanguage();
-    
+
     // UI State
     const [activeTab, setActiveTab] = useState<'compose' | 'history'>('compose');
     const [sendMode, setSendMode] = useState<'single' | 'bulk'>('single');
@@ -38,8 +38,9 @@ export function SMSPage() {
     const [recipients, setRecipients] = useState('');
     const [isSending, setIsSending] = useState(false);
     const [showRightPanel, setShowRightPanel] = useState(true);
-    
+
     // Status State
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [response, setResponse] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
     const [history, setHistory] = useState<SMSMessage[]>([]);
@@ -65,8 +66,8 @@ export function SMSPage() {
 
         try {
             const endpoint = sendMode === 'single' ? '/api/sms/send' : '/api/sms/bulk';
-            const payload = sendMode === 'single' 
-                ? { to: phoneNumber, message } 
+            const payload = sendMode === 'single'
+                ? { to: phoneNumber, message }
                 : { recipients: recipients.split(',').map(r => r.trim()).filter(r => r), message };
 
             const res = await client.post(endpoint, payload);
@@ -86,8 +87,9 @@ export function SMSPage() {
                 // Handle bulk history...
             }
             setMessage('');
-        } catch (err: any) {
-            setError(err.response?.data?.message || err.message);
+        } catch (err: unknown) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setError((err as any).response?.data?.message || (err as any).message);
         } finally {
             setIsSending(false);
         }
@@ -114,8 +116,8 @@ export function SMSPage() {
                     </h2>
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <input 
-                            type="text" 
+                        <input
+                            type="text"
                             placeholder={t('farmer_search_placeholder')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -123,17 +125,16 @@ export function SMSPage() {
                         />
                     </div>
                 </div>
-                
+
                 <div className="flex-1 overflow-y-auto p-2 space-y-1">
                     {recentContacts.map((contact) => (
                         <button
                             key={contact.id}
                             onClick={() => selectContact(contact)}
-                            className={`w-full flex items-center justify-between p-3 rounded-xl transition-all ${
-                                selectedContact?.id === contact.id 
-                                ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-100 dark:border-primary-800' 
+                            className={`w-full flex items-center justify-between p-3 rounded-xl transition-all ${selectedContact?.id === contact.id
+                                ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-100 dark:border-primary-800'
                                 : 'hover:bg-slate-100 dark:hover:bg-slate-800'
-                            }`}
+                                }`}
                         >
                             <div className="flex items-center gap-3 text-left">
                                 <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
@@ -161,20 +162,18 @@ export function SMSPage() {
             <div className="flex-1 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col shadow-sm">
                 <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800">
                     <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-                        <button 
+                        <button
                             onClick={() => setActiveTab('compose')}
-                            className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-all ${
-                                activeTab === 'compose' ? 'bg-white dark:bg-slate-700 text-primary-600 shadow-sm' : 'text-slate-500 dark:text-slate-400'
-                            }`}
+                            className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-all ${activeTab === 'compose' ? 'bg-white dark:bg-slate-700 text-primary-600 shadow-sm' : 'text-slate-500 dark:text-slate-400'
+                                }`}
                         >
                             <Layout className="w-4 h-4 inline-block mr-2" />
                             {t('sms_tab_compose')}
                         </button>
-                        <button 
+                        <button
                             onClick={() => setActiveTab('history')}
-                            className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-all ${
-                                activeTab === 'history' ? 'bg-white dark:bg-slate-700 text-primary-600 shadow-sm' : 'text-slate-500 dark:text-slate-400'
-                            }`}
+                            className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-all ${activeTab === 'history' ? 'bg-white dark:bg-slate-700 text-primary-600 shadow-sm' : 'text-slate-500 dark:text-slate-400'
+                                }`}
                         >
                             <History className="w-4 h-4 inline-block mr-2" />
                             {t('sms_tab_history')}
@@ -183,26 +182,24 @@ export function SMSPage() {
 
                     {activeTab === 'compose' && (
                         <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-                            <button 
+                            <button
                                 onClick={() => setSendMode('single')}
-                                className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${
-                                    sendMode === 'single' ? 'bg-white dark:bg-slate-700 text-emerald-600 shadow-sm' : 'text-slate-500 dark:text-slate-400'
-                                }`}
+                                className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${sendMode === 'single' ? 'bg-white dark:bg-slate-700 text-emerald-600 shadow-sm' : 'text-slate-500 dark:text-slate-400'
+                                    }`}
                             >
                                 {t('sms_single_tab')}
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setSendMode('bulk')}
-                                className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${
-                                    sendMode === 'bulk' ? 'bg-white dark:bg-slate-700 text-emerald-600 shadow-sm' : 'text-slate-500 dark:text-slate-400'
-                                }`}
+                                className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${sendMode === 'bulk' ? 'bg-white dark:bg-slate-700 text-emerald-600 shadow-sm' : 'text-slate-500 dark:text-slate-400'
+                                    }`}
                             >
                                 {t('sms_bulk_tab')}
                             </button>
                         </div>
                     )}
-                    
-                    <button 
+
+                    <button
                         onClick={() => setShowRightPanel(!showRightPanel)}
                         className={`p-2 rounded-xl transition-all ml-auto ${showRightPanel ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
                         title="Toggle Sidebar"
@@ -214,7 +211,7 @@ export function SMSPage() {
                 <div className="flex-1 p-6 overflow-y-auto">
                     <AnimatePresence mode="wait">
                         {activeTab === 'compose' ? (
-                            <motion.div 
+                            <motion.div
                                 key="compose"
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -228,7 +225,7 @@ export function SMSPage() {
                                                 {t('sms_phone_label')}
                                             </label>
                                             <div className="relative group">
-                                                <input 
+                                                <input
                                                     type="tel"
                                                     value={phoneNumber}
                                                     onChange={(e) => setPhoneNumber(e.target.value)}
@@ -245,7 +242,7 @@ export function SMSPage() {
                                             <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">
                                                 {t('sms_bulk_recipients')}
                                             </label>
-                                            <textarea 
+                                            <textarea
                                                 value={recipients}
                                                 onChange={(e) => setRecipients(e.target.value)}
                                                 placeholder="+2541, +2542, +2543..."
@@ -264,7 +261,7 @@ export function SMSPage() {
                                                 {t('sms_char_count').replace('{count}', message.length.toString())}
                                             </span>
                                         </div>
-                                        <textarea 
+                                        <textarea
                                             value={message}
                                             onChange={(e) => setMessage(e.target.value)}
                                             placeholder="..."
@@ -274,7 +271,7 @@ export function SMSPage() {
                                     </div>
 
                                     {(response || error) && (
-                                        <motion.div 
+                                        <motion.div
                                             initial={{ opacity: 0, scale: 0.95 }}
                                             animate={{ opacity: 1, scale: 1 }}
                                             className={`p-4 rounded-xl flex items-center gap-3 ${error ? 'bg-rose-50 text-rose-700 dark:bg-rose-900/20' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20'}`}
@@ -284,12 +281,11 @@ export function SMSPage() {
                                         </motion.div>
                                     )}
 
-                                    <button 
+                                    <button
                                         disabled={isSending || !message || (sendMode === 'single' ? !phoneNumber : !recipients)}
                                         onClick={handleSend}
-                                        className={`w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-lg shadow-primary-500/20 active:scale-[0.98] transition-all ${
-                                            isSending ? 'bg-slate-200 dark:bg-slate-800' : 'bg-primary-600 hover:bg-primary-500 text-white'
-                                        }`}
+                                        className={`w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-lg shadow-primary-500/20 active:scale-[0.98] transition-all ${isSending ? 'bg-slate-200 dark:bg-slate-800' : 'bg-primary-600 hover:bg-primary-500 text-white'
+                                            }`}
                                     >
                                         {isSending ? (
                                             <>
@@ -306,7 +302,7 @@ export function SMSPage() {
                                 </div>
                             </motion.div>
                         ) : (
-                            <motion.div 
+                            <motion.div
                                 key="history"
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
@@ -343,81 +339,81 @@ export function SMSPage() {
 
             {/* RIGHT PANEL: Analytics & Utilities */}
             {showRightPanel && (
-            <div className="w-full lg:w-1/4 space-y-4 overflow-y-auto pr-1">
-                {/* GLASS DASHBOARD CARD */}
-                <div className="relative overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 dark:border-slate-800/50 rounded-3xl p-6 shadow-xl space-y-6">
-                    <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary-500/10 rounded-full blur-3xl"></div>
-                    
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
-                            <Plus className="w-5 h-5 text-emerald-500 p-1 bg-emerald-100 dark:bg-emerald-900/50 rounded-lg" />
-                            {t('sms_quota_title')}
-                        </h3>
-                        <button onClick={() => setShowRightPanel(false)} className="relative z-10 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-400 hover:text-rose-500">
-                            <XCircle className="w-5 h-5" />
-                        </button>
-                    </div>
+                <div className="w-full lg:w-1/4 space-y-4 overflow-y-auto pr-1">
+                    {/* GLASS DASHBOARD CARD */}
+                    <div className="relative overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 dark:border-slate-800/50 rounded-3xl p-6 shadow-xl space-y-6">
+                        <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary-500/10 rounded-full blur-3xl"></div>
 
-                    <div className="space-y-4">
-                        <div className="flex items-end justify-between">
-                            <span className="text-4xl font-extrabold text-slate-900 dark:text-white">4,821</span>
-                            <span className="text-sm font-bold text-slate-500 flex items-center gap-1 mb-1">
-                                / 10,000
-                                <Info className="w-3 h-3 cursor-help" />
-                            </span>
-                        </div>
-                        <div className="h-3 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                            <motion.div 
-                                initial={{ width: 0 }}
-                                animate={{ width: '48%' }}
-                                className="h-full bg-gradient-to-r from-primary-600 to-indigo-600 rounded-full"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="p-4 bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl">
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{t('sms_stats_title')}</span>
-                            <BarChart3 className="w-4 h-4 text-indigo-500" />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <p className="text-xl font-bold text-emerald-600">124</p>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase">{t('sms_stats_sent')}</p>
-                            </div>
-                            <div>
-                                <p className="text-xl font-bold text-rose-500 font-mono">2</p>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase">{t('sms_stats_failed')}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* TEMPLATES CARD */}
-                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 flex flex-col shadow-sm">
-                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <Plus className="w-4 h-4" />
-                        {t('sms_template_title')}
-                    </h3>
-                    <div className="space-y-3">
-                        {templates.map((tpl) => (
-                            <button
-                                key={tpl.id}
-                                onClick={() => applyTemplate(tpl.content)}
-                                className="w-full group p-3 text-left border border-slate-100 dark:border-slate-800 hover:border-primary-200 dark:hover:border-primary-900 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all active:scale-[0.98]"
-                            >
-                                <div className="flex items-center gap-3 mb-1.5">
-                                    <div className={`p-1.5 rounded-lg ${tpl.color}`}>
-                                        <tpl.icon className="w-4 h-4" />
-                                    </div>
-                                    <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{tpl.title}</span>
-                                </div>
-                                <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed italic">"{tpl.content}"</p>
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
+                                <Plus className="w-5 h-5 text-emerald-500 p-1 bg-emerald-100 dark:bg-emerald-900/50 rounded-lg" />
+                                {t('sms_quota_title')}
+                            </h3>
+                            <button onClick={() => setShowRightPanel(false)} className="relative z-10 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-400 hover:text-rose-500">
+                                <XCircle className="w-5 h-5" />
                             </button>
-                        ))}
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="flex items-end justify-between">
+                                <span className="text-4xl font-extrabold text-slate-900 dark:text-white">4,821</span>
+                                <span className="text-sm font-bold text-slate-500 flex items-center gap-1 mb-1">
+                                    / 10,000
+                                    <Info className="w-3 h-3 cursor-help" />
+                                </span>
+                            </div>
+                            <div className="h-3 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: '48%' }}
+                                    className="h-full bg-gradient-to-r from-primary-600 to-indigo-600 rounded-full"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="p-4 bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{t('sms_stats_title')}</span>
+                                <BarChart3 className="w-4 h-4 text-indigo-500" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p className="text-xl font-bold text-emerald-600">124</p>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase">{t('sms_stats_sent')}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xl font-bold text-rose-500 font-mono">2</p>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase">{t('sms_stats_failed')}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* TEMPLATES CARD */}
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 flex flex-col shadow-sm">
+                        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <Plus className="w-4 h-4" />
+                            {t('sms_template_title')}
+                        </h3>
+                        <div className="space-y-3">
+                            {templates.map((tpl) => (
+                                <button
+                                    key={tpl.id}
+                                    onClick={() => applyTemplate(tpl.content)}
+                                    className="w-full group p-3 text-left border border-slate-100 dark:border-slate-800 hover:border-primary-200 dark:hover:border-primary-900 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all active:scale-[0.98]"
+                                >
+                                    <div className="flex items-center gap-3 mb-1.5">
+                                        <div className={`p-1.5 rounded-lg ${tpl.color}`}>
+                                            <tpl.icon className="w-4 h-4" />
+                                        </div>
+                                        <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{tpl.title}</span>
+                                    </div>
+                                    <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed italic">"{tpl.content}"</p>
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
-            </div>
             )}
         </div>
     );

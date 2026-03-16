@@ -10,6 +10,12 @@ import { loginSchema, registerSchema } from '@/utils/schemas';
 
 const router = Router();
 
+interface JWTPayload {
+    userId: string;
+    email: string;
+    role: string;
+}
+
 // Login
 router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], async (req: Request, res: Response) => {
     try {
@@ -194,7 +200,7 @@ router.post('/demo', async (req: Request, res: Response) => {
         
 
         const token = jwt.sign(
-            { userId: user.id || user.id, email: user.email, role: user.role || user.role },
+            { userId: user.id, email: user.email, role: user.role },
             config.jwt.secret as jwt.Secret,
             { expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
         );
@@ -232,7 +238,7 @@ router.post('/refresh', (req: Request, res: Response) => {
         }
 
         // Verify and refresh token
-        const decoded = jwt.verify(token, config.jwt.secret as jwt.Secret) as any;
+        const decoded = jwt.verify(token, config.jwt.secret as jwt.Secret) as JWTPayload;
 
         const newToken = jwt.sign(
             { userId: decoded.userId, email: decoded.email, role: decoded.role },
@@ -267,7 +273,7 @@ router.get('/me', async (req: Request, res: Response) => {
 
     try {
         const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, config.jwt.secret) as any;
+        const decoded = jwt.verify(token, config.jwt.secret as string) as JWTPayload;
 
         const result = await query('SELECT id, email, first_name, last_name, role, region FROM users WHERE id = $1', [decoded.userId]);
         const user = result.rows[0];

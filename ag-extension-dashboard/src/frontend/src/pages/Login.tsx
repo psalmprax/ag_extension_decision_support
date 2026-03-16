@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Loader2, Sprout, Globe } from 'lucide-react';
-import { useAppStore, User } from '@/store/useAppStore';
+import { Eye, EyeOff, Loader2, Sprout } from 'lucide-react';
+import { useAppStore } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
@@ -60,8 +60,9 @@ export function Login({ onDemo }: LoginProps) {
             }
 
             navigate('/dashboard');
-        } catch (err: any) {
-            setError(err.message || t('login_invalid_credentials'));
+        } catch (err: unknown) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setError((err as any).message || t('login_invalid_credentials'));
         } finally {
             setIsLoading(false);
         }
@@ -78,20 +79,21 @@ export function Login({ onDemo }: LoginProps) {
             });
             if (!response.ok) throw new Error('Demo login failed');
             const data = await response.json();
-            
+
             const token = data.data?.token;
             const userData = data.data?.user;
-            
+
             if (token) localStorage.setItem('token', token);
             if (userData) {
                 localStorage.setItem('user', JSON.stringify(userData));
                 setUser(userData);
             }
-            
+
             onDemo?.();
             navigate('/dashboard');
-        } catch (err: any) {
-            setError(err.message || 'Demo login failed');
+        } catch (err: unknown) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setError((err as any).message || 'Demo login failed');
         } finally {
             setIsLoading(false);
         }

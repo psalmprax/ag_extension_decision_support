@@ -10,7 +10,7 @@ const router = Router();
 router.use(authorize('admin', 'regional_manager', 'extension_officer', 'farmer'));
 
 // Helper to safely execute database queries with fallback
-async function getFromDB(sql: string, params: any[] = []): Promise<any[]> {
+async function getFromDB(sql: string, params: unknown[] = []): Promise<any[]> {
     try {
         const pool = getPool();
         if (!pool) {
@@ -73,10 +73,10 @@ router.get('/dashboard', async (_req: Request, res: Response) => {
         `);
 
         // Calculate crop percentages
-        const totalCropCount = cropsData.reduce((sum: number, row: any) => sum + parseInt(row.count), 0);
-        const crops = cropsData.slice(0, 5).map((row: any) => ({
-            name: row.crop,
-            percentage: Math.round((parseInt(row.count) / totalCropCount) * 100)
+        const totalCropCount = cropsData.reduce((sum: number, row: Record<string, unknown>) => sum + parseInt(row.count as string), 0);
+        const top5Crops = cropsData.slice(0, 5).map((row: Record<string, unknown>) => ({
+            name: row.crop as string,
+            percentage: Math.round((parseInt(row.count as string) / totalCropCount) * 100)
         }));
 
         // Get recent activity from visits and conversations
@@ -101,14 +101,7 @@ router.get('/dashboard', async (_req: Request, res: Response) => {
             LIMIT 5
         `);
 
-        // Format activity times
-        const formatTime = (timeDiff: any) => {
-            const hours = Math.floor(timeDiff / 3600000);
-            const days = Math.floor(hours / 24);
-            if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
-            if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-            return 'Just now';
-        };
+        // formatTime removed as it was unused
 
         // Get trends (comparing to last month)
         const [
@@ -123,20 +116,20 @@ router.get('/dashboard', async (_req: Request, res: Response) => {
             getFromDB("SELECT AVG(satisfaction_score) as avg FROM chat_conversations WHERE satisfaction_score IS NOT NULL AND created_at > NOW() - INTERVAL '60 days' AND created_at < NOW() - INTERVAL '30 days'")
         ]);
 
-        const currentFarmers = parseInt(farmersCount[0]?.count || '0');
-        const lastFarmers = parseInt(lastMonthFarmers[0]?.count || '0');
+        const currentFarmers = parseInt((farmersCount[0] as any)?.count || '0');
+        const lastFarmers = parseInt((lastMonthFarmers[0] as any)?.count || '0');
         const farmersGrowth = lastFarmers > 0 ? ((currentFarmers - lastFarmers) / lastFarmers * 100) : 0;
 
-        const currentConversations = parseInt(activeConversations[0]?.count || '0');
-        const lastConversations = parseInt(lastMonthConversations[0]?.count || '0');
+        const currentConversations = parseInt((activeConversations[0] as any)?.count || '0');
+        const lastConversations = parseInt((lastMonthConversations[0] as any)?.count || '0');
         const conversationsGrowth = lastConversations > 0 ? ((currentConversations - lastConversations) / lastConversations * 100) : 0;
 
-        const currentVisits = parseInt(recentVisits[0]?.count || '0');
-        const lastVisits = parseInt(lastMonthVisits[0]?.count || '0');
+        const currentVisits = parseInt((recentVisits[0] as any)?.count || '0');
+        const lastVisits = parseInt((lastMonthVisits[0] as any)?.count || '0');
         const visitsGrowth = lastVisits > 0 ? ((currentVisits - lastVisits) / lastVisits * 100) : 0;
 
-        const currentSatisfaction = parseFloat(avgSatisfactionResult[0]?.avg || '0');
-        const lastSatisfaction = parseFloat(lastMonthSatisfaction[0]?.avg || '0');
+        const currentSatisfaction = parseFloat((avgSatisfactionResult[0] as any)?.avg || '0');
+        const lastSatisfaction = parseFloat((lastMonthSatisfaction[0] as any)?.avg || '0');
         const satisfactionChange = lastSatisfaction > 0 ? (currentSatisfaction - lastSatisfaction) : 0;
 
         // Build response with real data
@@ -156,11 +149,11 @@ router.get('/dashboard', async (_req: Request, res: Response) => {
         const dashboard = {
             overview: {
                 totalFarmers: currentFarmers,
-                totalOfficers: parseInt(officersCount[0]?.count || '0'),
+                totalOfficers: parseInt((officersCount[0] as any)?.count || '0'),
                 activeConversations: currentConversations,
                 visitsThisMonth: currentVisits,
                 avgSatisfaction: Math.round(currentSatisfaction * 10) / 10,
-                queriesResolved: parseInt(resolvedQueries[0]?.count || '0'),
+                queriesResolved: parseInt((resolvedQueries[0] as any)?.count || '0'),
             },
             trends: {
                 farmersGrowth: Math.round(farmersGrowth * 10) / 10,
@@ -168,19 +161,19 @@ router.get('/dashboard', async (_req: Request, res: Response) => {
                 visitsGrowth: Math.round(visitsGrowth * 10) / 10,
                 satisfactionChange: Math.round(satisfactionChange * 10) / 10,
             },
-            geography: geography.map((row: any) => ({
-                region: row.region || 'Unknown',
-                farmers: parseInt(row.farmers) || 0,
-                officers: parseInt(row.officers) || 0,
+            geography: geography.map((row: Record<string, unknown>) => ({
+                region: (row.region as string) || 'Unknown',
+                farmers: parseInt(row.farmers as string) || 0,
+                officers: parseInt(row.officers as string) || 0,
             })),
-            priorityQueue: priorityQueueData.map((row: any) => ({
-                farmerId: row.farmer_id,
-                name: row.name,
-                reason: row.reason,
-                severity: row.severity,
-                crop: row.crop
+            priorityQueue: priorityQueueData.map((row: Record<string, unknown>) => ({
+                farmerId: row.farmer_id as string,
+                name: row.name as string,
+                reason: row.reason as string,
+                severity: row.severity as string,
+                crop: row.crop as string
             })),
-            crops: [],
+            crops: top5Crops,
             recentActivity: recentActivity || [
                 { time: '2 hours ago', description: 'Scheduled visit for Farmer Kamau' },
                 { time: '5 hours ago', description: 'Knowledge base updated for Maize Rust' }
@@ -277,16 +270,16 @@ router.get('/performance', async (req: Request, res: Response) => {
             `)
         ]);
 
-        const totalConversations = parseInt(resolutionResult[0]?.total || '0');
-        const resolvedConversations = parseInt(resolutionResult[0]?.resolved || '0');
+        const totalConversations = parseInt((resolutionResult[0]?.total as string) || '0');
+        const resolvedConversations = parseInt((resolutionResult[0]?.resolved as string) || '0');
 
         const performance = {
             metrics: {
                 avgResponseTime: Math.round(parseFloat(responseTimeResult[0]?.avg_minutes || '0') * 10) / 10 || 4.2,
                 resolutionRate: totalConversations > 0 ? Math.round((resolvedConversations / totalConversations) * 100) : 89,
-                satisfactionScore: Math.round(parseFloat(satisfactionResult[0]?.avg || '0') * 10) / 10 || 4.6,
-                followUpRate: Math.round(parseInt(followUpResult[0]?.count || '0') / days * 100) || 78,
-                firstContactResolution: Math.round(parseInt(fcrResult[0]?.count || '0') / totalConversations * 100) || 65,
+                satisfactionScore: Math.round(parseFloat((satisfactionResult[0]?.avg as string) || '0') * 10) / 10 || 4.6,
+                followUpRate: Math.round(parseInt((followUpResult[0]?.count as string) || '0') / days * 100) || 78,
+                firstContactResolution: Math.round(parseInt((fcrResult[0]?.count as string) || '0') / totalConversations * 100) || 65,
             },
             timeline: timelineData.length > 0 ? timelineData.map((row: any) => ({
                 date: row.date,
@@ -359,21 +352,21 @@ router.get('/queries', async (req: Request, res: Response) => {
             `)
         ]);
 
-        const total = parseInt(totalQueries[0]?.count || '0');
+        const total = parseInt((totalQueries[0]?.count as string) || '0');
 
         const queries = {
             total,
-            resolved: parseInt(resolvedQueries[0]?.count || '0'),
-            pending: parseInt(pendingQueries[0]?.count || '0'),
-            categories: categoryData.map((row: any) => ({
-                name: row.name,
-                count: parseInt(row.count),
-                percentage: total > 0 ? Math.round((parseInt(row.count) / total) * 100) : 0
+            resolved: parseInt((resolvedQueries[0]?.count as string) || '0'),
+            pending: parseInt((pendingQueries[0]?.count as string) || '0'),
+            categories: categoryData.map((row: Record<string, unknown>) => ({
+                name: row.name as string,
+                count: parseInt(row.count as string),
+                percentage: total > 0 ? Math.round((parseInt(row.count as string) / total) * 100) : 0
             })),
-            languages: languageData.map((row: any) => ({
-                name: row.name || 'en',
-                count: parseInt(row.count),
-                percentage: total > 0 ? Math.round((parseInt(row.count) / total) * 100) : 0
+            languages: languageData.map((row: Record<string, unknown>) => ({
+                name: row.name as string || 'en',
+                count: parseInt(row.count as string),
+                percentage: total > 0 ? Math.round((parseInt(row.count as string) / total) * 100) : 0
             })),
             avgResolutionTime: Math.round(parseFloat(avgResolutionTime[0]?.avg_minutes || '0') * 10) / 10 || 0,
             topKeywords: topKeywords.map((k: any) => k.keyword),
@@ -414,14 +407,14 @@ router.get('/chatbot', async (req: Request, res: Response) => {
             `)
         ]);
 
-        const total = parseInt(conversations[0]?.total || '0');
+        const total = parseInt((conversations[0]?.total as string) || '0');
 
         const chatbot = {
             conversations: {
                 total,
-                completed: parseInt(conversations[0]?.completed || '0'),
-                active: parseInt(conversations[0]?.active || '0'),
-                abandoned: parseInt(conversations[0]?.abandoned || '0'),
+                completed: parseInt((conversations[0]?.completed as string) || '0'),
+                active: parseInt((conversations[0]?.active as string) || '0'),
+                abandoned: parseInt((conversations[0]?.abandoned as string) || '0'),
             },
             engagement: {
                 avgMessagesPerConversation: 0,

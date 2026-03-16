@@ -1,36 +1,37 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    X, 
-    User, 
-    MapPin, 
-    Calendar, 
-    TrendingUp, 
-    MessageSquare, 
-    Phone, 
-    Video, 
-    Clock, 
+import {
+    X,
+    MapPin,
+    Calendar,
+    TrendingUp,
+    MessageSquare,
+    Phone,
+    Video,
+    Clock,
     ChevronRight,
     Sprout,
     Maximize2,
     Activity,
     Mail
 } from 'lucide-react';
-import { 
-    AreaChart, 
-    Area, 
-    XAxis, 
-    YAxis, 
-    CartesianGrid, 
-    Tooltip, 
-    ResponsiveContainer 
+import {
+    AreaChart,
+    Area,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer
 } from 'recharts';
 import { useLanguage } from '@/lib/LanguageContext';
 
 interface FarmerDetailPanelProps {
     isOpen: boolean;
     onClose: () => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     farmer: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     visits?: any[];
 }
 
@@ -43,9 +44,9 @@ const yieldData = [
     { month: 'Jun', yield: 67 },
 ];
 
-export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({ 
-    isOpen, 
-    onClose, 
+export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
+    isOpen,
+    onClose,
     farmer,
     visits = []
 }) => {
@@ -78,8 +79,8 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                         <div className="relative h-64 flex-shrink-0">
                             <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-secondary-700 opacity-90" />
                             <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80')] bg-cover bg-center mix-blend-overlay" />
-                            
-                            <button 
+
+                            <button
                                 onClick={onClose}
                                 className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full text-white transition-all z-20"
                             >
@@ -149,29 +150,29 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                         <AreaChart data={yieldData}>
                                             <defs>
                                                 <linearGradient id="colorYield" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>
-                                                    <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
+                                                    <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
+                                                    <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
                                                 </linearGradient>
                                             </defs>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                                             <XAxis dataKey="month" hide />
                                             <YAxis hide />
-                                            <Tooltip 
-                                                contentStyle={{ 
-                                                    borderRadius: '16px', 
-                                                    border: 'none', 
+                                            <Tooltip
+                                                contentStyle={{
+                                                    borderRadius: '16px',
+                                                    border: 'none',
                                                     boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
                                                     fontSize: '12px',
                                                     fontWeight: 'bold'
                                                 }}
                                             />
-                                            <Area 
-                                                type="monotone" 
-                                                dataKey="yield" 
-                                                stroke="#22c55e" 
+                                            <Area
+                                                type="monotone"
+                                                dataKey="yield"
+                                                stroke="#22c55e"
                                                 strokeWidth={3}
-                                                fillOpacity={1} 
-                                                fill="url(#colorYield)" 
+                                                fillOpacity={1}
+                                                fill="url(#colorYield)"
                                             />
                                         </AreaChart>
                                     </ResponsiveContainer>
@@ -223,10 +224,9 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                                 <div className="absolute left-3 top-6 bottom-[-16px] w-0.5 bg-gray-100 dark:bg-gray-800 group-hover:bg-primary-500 transition-colors" />
                                             )}
                                             {/* Dot */}
-                                            <div className={`absolute left-0 top-1.5 w-6 h-6 rounded-full border-4 border-white dark:border-gray-900 shadow-md ${
-                                                visit.status === 'completed' ? 'bg-primary-500' : 'bg-accent-500'
-                                            }`} />
-                                            
+                                            <div className={`absolute left-0 top-1.5 w-6 h-6 rounded-full border-4 border-white dark:border-gray-900 shadow-md ${visit.status === 'completed' ? 'bg-primary-500' : 'bg-accent-500'
+                                                }`} />
+
                                             <div className="p-4 bg-gray-50/50 dark:bg-gray-800/30 rounded-2xl border border-gray-100 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-800 transition-all cursor-pointer">
                                                 <div className="flex justify-between items-start mb-1">
                                                     <span className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-tight">

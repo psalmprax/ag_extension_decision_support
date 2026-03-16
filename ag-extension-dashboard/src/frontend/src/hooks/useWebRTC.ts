@@ -117,6 +117,7 @@ export function useWebRTC(): UseWebRTCReturn {
         return () => {
             socket.close();
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const createPeerConnection = async (peerId: string, createOffer: boolean): Promise<RTCPeerConnection> => {
@@ -185,10 +186,12 @@ export function useWebRTC(): UseWebRTCReturn {
                     setIsInCall(true);
                 }
             });
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setError((err as any).message);
             console.error('Error starting call:', err);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [localStream]);
 
     const joinCall = useCallback(async (roomId: string, userId: string, userName: string) => {
@@ -214,8 +217,9 @@ export function useWebRTC(): UseWebRTCReturn {
                     setIsInCall(true);
                 }
             });
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setError((err as any).message);
             console.error('Error joining call:', err);
         }
     }, []);

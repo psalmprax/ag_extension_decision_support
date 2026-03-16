@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { useAppStore } from '../store/useAppStore';
 
 describe('useAppStore', () => {
@@ -20,17 +20,17 @@ describe('useAppStore', () => {
 
     it('should toggle sidebar', () => {
         const { toggleSidebar } = useAppStore.getState();
-        
+
         toggleSidebar();
         expect(useAppStore.getState().sidebarOpen).toBe(false);
-        
+
         toggleSidebar();
         expect(useAppStore.getState().sidebarOpen).toBe(true);
     });
 
     it('should set active tab', () => {
         const { setActiveTab } = useAppStore.getState();
-        
+
         setActiveTab('farmers');
         expect(useAppStore.getState().activeTab).toBe('farmers');
     });
@@ -38,7 +38,7 @@ describe('useAppStore', () => {
     it('should manage farmers', () => {
         const { addFarmer, removeFarmer, updateFarmer } = useAppStore.getState();
         const initialCount = useAppStore.getState().farmers.length;
-        
+
         const newFarmer = {
             id: '99',
             name: 'Test Farmer',
@@ -60,7 +60,7 @@ describe('useAppStore', () => {
 
     it('should manage notifications', () => {
         const { addNotification, clearNotifications } = useAppStore.getState();
-        
+
         addNotification({
             type: 'info',
             message: 'Test Notification'
@@ -78,7 +78,7 @@ describe('useAppStore', () => {
 
     it('should toggle dark mode and save to localStorage', () => {
         const { toggleDarkMode } = useAppStore.getState();
-        
+
         toggleDarkMode();
         expect(useAppStore.getState().darkMode).toBe(true);
         expect(localStorage.getItem('theme')).toBe('dark');

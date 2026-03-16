@@ -54,7 +54,7 @@ test.describe('Weather Widget', () => {
 
         // Look for weather-related content
         const weatherWidget = page.locator('[class*="weather"], .weather-widget, [data-testid="weather"]');
-        const count = await weatherWidget.count();
+        await weatherWidget.count();
         // Weather may or may not load depending on API, just check page loads
         expect(page.url()).toContain('localhost');
     });

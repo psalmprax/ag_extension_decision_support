@@ -7,7 +7,7 @@ export interface EmailJobData {
     text: string;
     html?: string;
     template?: string;
-    templateData?: Record<string, any>;
+    templateData?: Record<string, unknown>;
 }
 
 export const emailQueue = new Queue<EmailJobData>('email-queue', {

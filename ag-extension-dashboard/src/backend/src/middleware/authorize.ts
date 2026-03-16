@@ -5,20 +5,15 @@ import { logger } from '@/utils/logger';
 
 export type UserRole = 'admin' | 'regional_manager' | 'extension_officer' | 'farmer';
 
-export interface AuthRequest extends Request {
-    user?: {
-        userId: string;
-        email: string;
-        role: UserRole;
-    };
-}
+// AuthRequest is now a type alias for Request because Request is augmented globally in types.d.ts
+export type AuthRequest = Request;
 
 /**
  * Authorization middleware factory
  * Checks if the user has the required role(s)
  */
 export const authorize = (...allowedRoles: UserRole[]) => {
-    return (req: AuthRequest, res: Response, next: NextFunction): void => {
+    return (req: Request, res: Response, next: NextFunction): void => {
         try {
             // Get token from Authorization header
             const authHeader = req.headers.authorization;
@@ -87,7 +82,7 @@ export const authorize = (...allowedRoles: UserRole[]) => {
  * Optional authentication middleware
  * Attaches user to request if token is valid, but doesn't require it
  */
-export const optionalAuth = (req: AuthRequest, res: Response, next: NextFunction): void => {
+export const optionalAuth = (req: Request, res: Response, next: NextFunction): void => {
     try {
         const authHeader = req.headers.authorization;
 
@@ -119,7 +114,7 @@ export const optionalAuth = (req: AuthRequest, res: Response, next: NextFunction
  * Check if user owns resource or is admin
  */
 export const ownershipOrAdmin = (
-    req: AuthRequest,
+    req: Request,
     res: Response,
     next: NextFunction
 ): void => {
@@ -229,7 +224,7 @@ export const requirePermission = (permission: string) => {
             return;
         }
 
-        if (!hasPermission(req.user.role, permission)) {
+        if (!hasPermission(req.user.role as UserRole, permission)) {
             res.status(403).json({
                 success: false,
                 error: 'Insufficient permissions',

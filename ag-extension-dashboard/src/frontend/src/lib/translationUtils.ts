@@ -170,6 +170,7 @@ export async function generateAllTranslations(): Promise<Record<string, Record<s
 
 // Export for use in console
 if (typeof window !== 'undefined') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).translationUtils = {
         translateText,
         translateToLanguage,

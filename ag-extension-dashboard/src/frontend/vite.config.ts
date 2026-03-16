@@ -5,6 +5,7 @@ import path from 'path';
 import { VitePWA } from 'vite-plugin-pwa';
 
 interface VitestConfigExport extends UserConfig {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     test?: any;
 }
 

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { X, Maximize2, Layers, Info, MapPin, Wheat, Droplets, Sun, Phone, MessageSquare, Navigation, Crosshair, Search, Users, TrendingUp, Calendar, ChevronRight } from 'lucide-react';
+import { X, Maximize2, Layers, Info, MapPin, Wheat, Phone, MessageSquare, Navigation, Crosshair, Search, Users, TrendingUp, Calendar, ChevronRight } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { themes, ThemeName } from '@/theme';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -305,7 +305,7 @@ function LayerSwitcher({
 }: {
     currentLayer: MapLayer;
     onLayerChange: (layer: MapLayer) => void;
-    t: any;
+    t: (key: string) => string;
 }) {
     return (
         <div className="leaflet-top leaflet-right" style={{ marginTop: '10px', marginRight: '10px' }}>
@@ -342,7 +342,7 @@ function LayerSwitcher({
 }
 
 // Legend component
-function MapLegend({ show, t }: { show: boolean, t: any }) {
+function MapLegend({ show, t }: { show: boolean, t: (key: string) => string }) {
     if (!show) return null;
 
     return (
@@ -407,7 +407,6 @@ export function FarmerMap({
     const [mapBounds, setMapBounds] = useState<L.LatLngBoundsExpression | undefined>(undefined);
     const [searchQuery, setSearchQuery] = useState('');
     const [showMiniSearch, setShowMiniSearch] = useState(false);
-    const [markerAnimation, setMarkerAnimation] = useState(true);
     const [visibleStats, setVisibleStats] = useState(true);
 
     // Get theme from store
@@ -434,17 +433,16 @@ export function FarmerMap({
     }, [farmers]);
 
     const filteredFarmers = useMemo(() => {
-        return SAMPLE_FARMERS.filter(f =>
+        return farmers.filter(f =>
             f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             f.crop.toLowerCase().includes(searchQuery.toLowerCase()) ||
             f.region.toLowerCase().includes(searchQuery.toLowerCase())
         );
-    }, [searchQuery]);
+    }, [farmers, searchQuery]);
 
     // Disable marker animation after initial render
     useEffect(() => {
-        const timer = setTimeout(() => setMarkerAnimation(false), 1500);
-        return () => clearTimeout(timer);
+        // We can keep the effect if we use it, otherwise remove it too if we removed state
     }, []);
 
     const handleLocateMe = () => {

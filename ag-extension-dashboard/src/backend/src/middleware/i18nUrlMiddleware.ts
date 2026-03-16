@@ -410,9 +410,9 @@ export function i18nUrlMiddleware(req: Request, res: Response, next: NextFunctio
     const canonicalPath = translateToCanonical(remainingPath, language);
 
     // Attach language info to request
-    (req as any).language = language;
+    req.language = language;
     const langConfig = getLanguageConfig(language);
-    (req as any).i18n = {
+    req.i18n = {
         language,
         isRTL: langConfig?.isRTL || false,
         originalPath: path,
@@ -424,7 +424,7 @@ export function i18nUrlMiddleware(req: Request, res: Response, next: NextFunctio
     if (canonicalPath !== remainingPath) {
         const newPath = path.replace(remainingPath, canonicalPath);
         // Store for use in route matching middleware
-        (req as any)._i18nTranslatedPath = newPath;
+        req._i18nTranslatedPath = newPath;
     }
 
     next();
@@ -495,15 +495,15 @@ export function createUrlLocalizer(language: string) {
  * It temporarily modifies req.path for route matching
  */
 export function i18nRouteHandler(req: Request, _res: Response, next: NextFunction): void {
-    const translatedPath = (req as any)._i18nTranslatedPath as string | undefined;
+    const translatedPath = req._i18nTranslatedPath;
 
     if (translatedPath) {
         // Temporarily override path for route matching (cast to any to bypass read-only)
-        const originalPath = (req as any).path;
+        const originalPath = req.path;
         (req as any).path = translatedPath;
 
         // Store original for restoration after request
-        (req as any)._originalPath = originalPath;
+        req._originalPath = originalPath;
     }
 
     next();
@@ -514,7 +514,7 @@ export function i18nRouteHandler(req: Request, _res: Response, next: NextFunctio
  * Should be placed AFTER all routes
  */
 export function restoreOriginalPath(req: Request, _res: Response, next: NextFunction): void {
-    const originalPath = (req as any)._originalPath;
+    const originalPath = req._originalPath;
 
     if (originalPath) {
         (req as any).path = originalPath;

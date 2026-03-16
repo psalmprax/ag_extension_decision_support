@@ -23,7 +23,7 @@ router.use(authorize('admin', 'regional_manager', 'extension_officer', 'farmer')
  */
 router.post('/synthesize-visit', [checkUsageLimit('ai_chat'), validate({ body: aiSchemas.synthesizeVisit })], async (req: AuthRequest, res: Response) => {
     try {
-        const { notes, farmerId } = req.body;
+        const { notes } = req.body;
         const userId = req.user!.userId;
 
         const prompt = `

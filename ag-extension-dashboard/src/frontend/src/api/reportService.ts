@@ -6,6 +6,7 @@ export interface Report {
     title: string;
     generatedAt: string;
     status: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: any;
 }
 

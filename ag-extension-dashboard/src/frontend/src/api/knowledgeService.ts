@@ -3,6 +3,7 @@ import apiClient from './client';
 export interface SearchResponse {
     success: boolean;
     data: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         articles: any[];
         total: number;
     };
@@ -12,6 +13,7 @@ export interface AskResponse {
     success: boolean;
     data: {
         answer: string;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         contextUsed: any[];
     };
 }

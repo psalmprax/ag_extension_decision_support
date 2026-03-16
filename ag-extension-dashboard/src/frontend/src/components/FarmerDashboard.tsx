@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
-import { Sprout, MessageSquare, Calendar, Bell, ChevronRight, TrendingUp } from 'lucide-react';
+import { Sprout, MessageSquare, Calendar, Bell } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const FarmerDashboard: React.FC = () => {

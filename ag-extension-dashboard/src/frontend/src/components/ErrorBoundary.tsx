@@ -127,6 +127,7 @@ class ErrorBoundary extends Component<Props, State> {
 export default ErrorBoundary;
 
 // Higher-order component for wrapping components
+// eslint-disable-next-line react-refresh/only-export-components
 export const withErrorBoundary = <P extends object>(
     Component: React.ComponentType<P>,
     errorBoundaryProps?: Partial<Props>
@@ -142,6 +143,7 @@ export const withErrorBoundary = <P extends object>(
 };
 
 // Hook for programmatic error handling
+// eslint-disable-next-line react-refresh/only-export-components
 export const useErrorHandler = () => {
     const [, setError] = React.useState<Error | null>(null);
 

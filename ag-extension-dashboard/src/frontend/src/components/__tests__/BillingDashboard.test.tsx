@@ -7,6 +7,7 @@ import { MemoryRouter } from 'react-router-dom';
 
 // Mock framer-motion to avoid animation issues in tests
 vi.mock('framer-motion', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mockComponent = ({ children, ...props }: any) => <div {...props}>{children}</div>;
     return {
         motion: {
@@ -19,6 +20,7 @@ vi.mock('framer-motion', () => {
             p: mockComponent,
             span: mockComponent,
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         AnimatePresence: ({ children }: any) => <>{children}</>
     };
 });
