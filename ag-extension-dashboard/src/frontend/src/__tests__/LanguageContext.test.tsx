@@ -3,17 +3,16 @@ import { render, screen, act } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { LanguageProvider, useLanguage } from '../lib/LanguageContext';
 
-// Mock translations since they are large
-vi.mock('../lib/i18n', () => ({
-    translations: {
-        en: { test_key: 'Test English', app_title: 'Ag-Extension' },
-        sw: { test_key: 'Jaribio la Kiswahili', app_title: 'Ag-Extension' }
-    },
-    languages: [
-        { code: 'en', name: 'English', flag: '🇺🇸' },
-        { code: 'sw', name: 'Swahili', flag: '🇰🇪' }
-    ]
-}));
+// Mocks are now handled by MSW for translation fetches
+// We only need to mock the structure for types if needed, 
+// but LanguageContext already has its own types.
+vi.mock('../lib/i18n', async () => {
+    const actual = await vi.importActual<any>('../lib/i18n');
+    return {
+        ...actual,
+        translations: {} // Keep it empty as in production
+    };
+});
 
 const TestComponent = () => {
     const { language, setLanguage, t, isRTL } = useLanguage();

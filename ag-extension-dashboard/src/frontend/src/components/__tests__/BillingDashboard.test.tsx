@@ -48,8 +48,8 @@ describe('BillingDashboard', () => {
             expect(screen.queryByRole('status')).not.toBeInTheDocument();
         });
 
-        // Use region role for section with accessible name
-        const statusSection = screen.getByRole('region', { name: /billing_current_plan/i });
+        // Use region role for section with accessible name from mock i18n
+        const statusSection = await screen.findByRole('region', { name: /Current Plan/i });
         expect(statusSection).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: /Pro/i, level: 2 })).toBeInTheDocument();
     });

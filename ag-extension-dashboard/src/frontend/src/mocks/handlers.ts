@@ -67,5 +67,74 @@ export const handlers = [
                 ]
             }
         });
+    }),
+
+    // Missing Billing Mocks
+    http.get('*/api/billing/invoices', () => {
+        return HttpResponse.json({
+            success: true,
+            data: []
+        });
+    }),
+
+    http.get('*/api/billing/payment-methods', () => {
+        return HttpResponse.json({
+            success: true,
+            data: []
+        });
+    }),
+
+    // Locale Mocks
+    http.get('*/locales/:lang.json', ({ params }) => {
+        const { lang } = params;
+        if (lang === 'sw') {
+            return HttpResponse.json({
+                test_key: 'Jaribio la Kiswahili',
+                billing_title: 'Billing Intelligence',
+                billing_account_control: 'Account Control',
+                billing_subtitle: 'Manage your subscription',
+                billing_promo_title: 'Pro Plan',
+                billing_promo_desc: 'Upgrade now',
+                billing_instant_activation: 'Instant Activation',
+                billing_payment_intelligence: 'Payment Intelligence',
+                billing_admin_vault_title: 'Admin Vault',
+                billing_legacy_transactions: 'Legacy Transactions',
+                billing_add_method: 'Add Method',
+                billing_link_account: 'Link Account',
+                billing_update_credentials: 'Update Credentials',
+                billing_timeframe: 'Timeframe',
+                billing_evaluation: 'Evaluation',
+                billing_execution: 'Execution',
+                billing_download: 'Download',
+                billing_no_records: 'No records found',
+                billing_current_plan: 'Current Plan',
+                usage_init_title: 'Usage Intelligence',
+                usage_init_desc: 'Real-time usage tracking'
+            });
+        }
+        // Default to English
+        return HttpResponse.json({
+            test_key: 'Test English',
+            billing_title: 'Billing Intelligence',
+            billing_account_control: 'Account Control',
+            billing_subtitle: 'Manage your subscription',
+            billing_promo_title: 'Pro Plan',
+            billing_promo_desc: 'Upgrade now',
+            billing_instant_activation: 'Instant Activation',
+            billing_payment_intelligence: 'Payment Intelligence',
+            billing_admin_vault_title: 'Admin Vault',
+            billing_legacy_transactions: 'Legacy Transactions',
+            billing_add_method: 'Add Method',
+            billing_link_account: 'Link Account',
+            billing_update_credentials: 'Update Credentials',
+            billing_timeframe: 'Timeframe',
+            billing_evaluation: 'Evaluation',
+            billing_execution: 'Execution',
+            billing_download: 'Download',
+            billing_no_records: 'No records found',
+            billing_current_plan: 'Current Plan',
+            usage_init_title: 'Usage Intelligence',
+            usage_init_desc: 'Real-time usage tracking'
+        });
     })
 ];
