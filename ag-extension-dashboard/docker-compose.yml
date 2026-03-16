@@ -52,7 +52,7 @@ services:
     ports:
       - "5174:5173"
     environment:
-      - VITE_API_URL=http://localhost:3010/api
+      - VITE_API_URL=/api
     depends_on:
       - backend
     volumes:
