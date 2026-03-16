@@ -53,7 +53,7 @@ pipeline {
                 script {
                     echo "Deploying Core Project to Host via Docker Socket Orchestration..."
                     sh "mkdir -p ${DEPLOY_DIR}"
-                    sh "cp -r ag-extension-dashboard/* ${DEPLOY_DIR}/"
+                    sh "cp -r ag-extension-dashboard/. ${DEPLOY_DIR}/"
                     // First remove any existing containers to avoid conflicts
                     sh "docker rm -f ag-dashboard-db ag-dashboard-redis ag-dashboard-frontend ag-dashboard-backend 2>/dev/null || true"
                     // Trigger deployment of core services only
