@@ -425,6 +425,8 @@ const translations: Record<string, Record<string, string>> = {
 
 // Languages that need auto-translation
 // We'll use placeholder translations for now - run with actual translation API for production
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const languagesNeedingTranslation = [
     'pt', 'oro', 'lug', 'zu', 'it', 'nl', 'da', 'pl', 'hu', 'tr', 'ar', 'zh', 'hi', 'ru', 'uk', 'ro', 'cs', 'sk', 'bg', 'el'
 ];

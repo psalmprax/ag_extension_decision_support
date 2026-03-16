@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { query, getPool } from './databaseService';
 import { logger } from '../utils/logger';
 

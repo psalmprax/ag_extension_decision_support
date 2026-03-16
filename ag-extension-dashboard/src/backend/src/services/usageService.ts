@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { PrismaClient } from '@prisma/client';
 import { logger } from '../utils/logger';
 
@@ -55,6 +56,7 @@ class UsageService {
                 return false;
             }
 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const updateData: any = {};
             if (type === 'sms') updateData.smsCount = { increment: 1 };
             if (type === 'ai_chat') updateData.aiChatCount = { increment: 1 };
@@ -83,6 +85,7 @@ class UsageService {
                 return { allowed: false, current: 0, limit: 0 };
             }
 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const features = data.plan.features as any;
             
             let current = 0;
@@ -115,6 +118,7 @@ class UsageService {
             const data = await this.getUsage(userId);
             if (!data) return null;
 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const features = (data.plan.features as any) || {};
             
             return {

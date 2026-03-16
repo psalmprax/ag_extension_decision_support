@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, Request, Response } from 'express';
 import { query, getPool } from '@/services/databaseService';
 import { cacheGet, cacheSet } from '@/services/cacheService';
@@ -10,6 +11,7 @@ const router = Router();
 router.use(authorize('admin', 'regional_manager', 'extension_officer', 'farmer'));
 
 // Helper to safely execute database queries with fallback
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function getFromDB(sql: string, params: unknown[] = []): Promise<any[]> {
     try {
         const pool = getPool();
@@ -281,12 +283,14 @@ router.get('/performance', async (req: Request, res: Response) => {
                 followUpRate: Math.round(parseInt((followUpResult[0]?.count as string) || '0') / days * 100) || 78,
                 firstContactResolution: Math.round(parseInt((fcrResult[0]?.count as string) || '0') / totalConversations * 100) || 65,
             },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             timeline: timelineData.length > 0 ? timelineData.map((row: any) => ({
                 date: row.date,
                 visits: parseInt(row.visits) || 0,
                 queries: parseInt(row.queries) || 0,
                 satisfaction: 4.5, // Placeholder for satisfaction trend if data sparse
             })) : [],
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             byOfficer: officerData.length > 0 ? officerData.map((row: any) => ({
                 officerId: row.officer_id,
                 name: row.name,

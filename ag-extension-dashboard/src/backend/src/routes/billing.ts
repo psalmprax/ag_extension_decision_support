@@ -1,4 +1,4 @@
-import express, { Router, Request, Response } from 'express';
+import express, { Router } from 'express';
 import { paymentService } from '../services/paymentService';
 import { getPrisma } from '../services/prismaService';
 import { logger } from '../utils/logger';
@@ -115,7 +115,7 @@ router.post('/subscribe', authorize('admin', 'extension_officer', 'farmer'), asy
         if (currentSubscription && isSubscriptionActive(currentSubscription) && hasStripeSubscription) {
             const currentPlanPriceId = currentSubscription.plan?.stripePriceId;
             const currentPlanName = currentSubscription.plan?.name;
-            const currentPeriodEnd = currentSubscription.currentPeriodEnd;
+            // const currentPeriodEnd = currentSubscription.currentPeriodEnd;
 
             // Same plan check
             const isSamePlan = currentPlanPriceId === priceId;
@@ -450,8 +450,10 @@ router.get('/invoices', authorize('admin', 'extension_officer', 'farmer'), async
  *   post:
  *     summary: Stripe Webhook handler
  *     tags: [Billing]
- *     description: Endpoint for Stripe to send asynchronous notifications
+/**
+ * Stripe Webhook handler
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req: any, res: any) => {
     const sig = req.headers['stripe-signature'];
 

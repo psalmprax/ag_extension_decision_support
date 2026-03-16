@@ -1,10 +1,11 @@
 import { AIRouter } from '@/services/aiProvider/aiProvider';
-import { query, getPool } from '@/services/databaseService';
+import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 
 export interface VectorDocument {
     id: string;
     content: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     metadata: Record<string, any>;
     embedding?: number[];
 }
@@ -17,6 +18,7 @@ export class VectorService {
     /**
      * Upsert a document into the vector store (PostgreSQL)
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     static async upsertDocument(id: string, content: string, metadata: Record<string, any>): Promise<void> {
         logger.info(`Upserting document to persistent vector store: ${id}`);
 
@@ -71,6 +73,7 @@ export class VectorService {
                 LIMIT $2
             `, [vector, limit]);
 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return result.rows.map((row: any) => ({
                 id: row.id,
                 content: row.content,
@@ -90,6 +93,7 @@ export class VectorService {
     /**
      * Seed initial knowledge into DB
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     static async seedKnowledge(articles: any[]): Promise<void> {
         logger.info(`Seeding persistent vector store with ${articles.length} articles`);
         for (const article of articles) {

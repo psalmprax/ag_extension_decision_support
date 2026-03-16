@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, Request, Response } from 'express';
 import { smsService } from '../services/smsService';
 import { validate } from '../middleware/validate';
@@ -97,7 +98,8 @@ router.post('/ussd/start', validate({ body: ussdSchema }), async (req: Request, 
 // Handle USSD input
 router.post('/ussd/handle', validate({ body: ussdSchema }), async (req: Request, res: Response) => {
     try {
-        const { sessionId, phoneNumber, text } = req.body;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { sessionId, phoneNumber: _phoneNumber, text } = req.body;
 
         const response = await smsService.handleUSSDInput(sessionId, text);
 

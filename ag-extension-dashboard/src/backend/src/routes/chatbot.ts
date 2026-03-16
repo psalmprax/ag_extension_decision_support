@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, Request, Response } from 'express';
 import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
 import { toolRegistry, toolMap } from '@/tools/registry';

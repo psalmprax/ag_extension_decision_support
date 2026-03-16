@@ -500,6 +500,7 @@ export function i18nRouteHandler(req: Request, _res: Response, next: NextFunctio
     if (translatedPath) {
         // Temporarily override path for route matching (cast to any to bypass read-only)
         const originalPath = req.path;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (req as any).path = translatedPath;
 
         // Store original for restoration after request
@@ -517,6 +518,7 @@ export function restoreOriginalPath(req: Request, _res: Response, next: NextFunc
     const originalPath = req._originalPath;
 
     if (originalPath) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (req as any).path = originalPath;
     }
 

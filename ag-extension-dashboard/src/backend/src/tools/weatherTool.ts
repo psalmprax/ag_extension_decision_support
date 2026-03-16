@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { Tool } from './types';
-import { config } from '@/config';
+
 import { logger } from '@/utils/logger';
 
 // Define the schema for weather tool arguments

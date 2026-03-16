@@ -1,6 +1,7 @@
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Tool } from './types';
-import { z } from 'zod';
+
 // Import your tools here
 import { getDateTool } from './getDate';
 import { weatherTool } from './weatherTool';

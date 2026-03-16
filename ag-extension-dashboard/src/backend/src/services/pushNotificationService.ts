@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import webpush from 'web-push';
 import { getPrisma } from './prismaService';
 import { logger } from '../utils/logger';
@@ -16,6 +17,7 @@ if (publicVapidKey && privateVapidKey) {
 /**
  * Subscribe a user to push notifications
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const subscribeUser = async (userId: string, subscription: any) => {
     const prisma = getPrisma();
     try {
@@ -85,7 +87,8 @@ export const sendPushNotification = async (userId: string, title: string, body: 
             try {
                 await webpush.sendNotification(pushConfig, notificationPayload);
             } catch (error: any) {
-                if (error.statusCode === 410 || error.statusCode === 404) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                if ((error as any).statusCode === 410 || (error as any).statusCode === 404) {
                     // Subscription has expired or is no longer valid
                     logger.info(`Unsubscribing invalid endpoint: ${sub.endpoint}`);
                     await unsubscribeUser(sub.endpoint);

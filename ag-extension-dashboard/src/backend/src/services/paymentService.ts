@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { config } from '../config';
+
 import { logger } from '../utils/logger';
 
 export interface CreateCheckoutSessionParams {
@@ -60,6 +60,7 @@ class PaymentService {
         if (isValidKey) {
             try {
                 this.stripe = new Stripe(stripeKey, {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     apiVersion: '2024-12-18.acacia' as any,
                 });
                 logger.info('Stripe payment service initialized');
@@ -355,6 +356,7 @@ class PaymentService {
                 }
 
                 case 'invoice.paid': {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const invoice = event.data.object as any;
                     const stripeSubscriptionId = invoice.subscription as string;
 
@@ -397,10 +399,12 @@ class PaymentService {
                 }
 
                 case 'customer.subscription.updated': {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const subscription = event.data.object as any;
                     const stripeSubscriptionId = subscription.id;
                     const priceId = subscription.items.data[0].price.id;
 
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const plan = await (prisma.subscriptionPlan as any).findFirst({
                         where: { stripePriceId: priceId }
                     });
@@ -461,7 +465,7 @@ class PaymentService {
     }
 
     // Get available pricing plans
-    async getPricingPlans(language: string = 'en'): Promise<Array<{
+    async getPricingPlans(): Promise<Array<{
         id: string;
         name: string;
         price: number;
@@ -521,6 +525,7 @@ class PaymentService {
                 name: (price.product as Stripe.Product).name || 'Plan',
                 price: price.unit_amount || 0,
                 interval: price.recurring?.interval || 'month',
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 features: ((price.product as any).features) || [],
             }));
         } catch (error) {
@@ -530,6 +535,7 @@ class PaymentService {
     }
 
     // Get invoices for a customer
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async getInvoices(customerId: string): Promise<any[]> {
         // Return mock data if Stripe is not configured
         if (!this.stripe) {

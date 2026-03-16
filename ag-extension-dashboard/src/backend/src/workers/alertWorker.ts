@@ -1,4 +1,4 @@
-import { getPrisma } from '../services/prismaService';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { notificationService } from '../services/notificationService';
 import { logger } from '../utils/logger';
 import { query } from '../services/databaseService';
@@ -19,7 +19,7 @@ import { query } from '../services/databaseService';
  * Auto-starts when imported
  */
 
-const prisma = getPrisma();
+
 
 // Auto-start the alert worker (after a delay to ensure database is ready)
 setTimeout(() => {
@@ -56,6 +56,7 @@ async function checkWeatherAlerts(): Promise<void> {
         // This would integrate with the weather service
         // For now, check if there's weather data in the last 24h with extreme conditions
 
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const weatherResult = await query(`
             SELECT DISTINCT 
                 f.region,
@@ -420,6 +421,7 @@ async function checkDiseaseAlerts(): Promise<void> {
 
         for (const alert of alertsResult.rows) {
             // Determine which officers to notify based on alert location
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const relevantOfficers = officersResult.rows.filter((officer: any) =>
                 !alert.location || alert.location === officer.region || alert.location === 'All'
             );

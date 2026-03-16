@@ -2,12 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 
-interface AuthenticatedRequest extends Request {
-    user?: {
-        id: string;
-        role: string;
-    };
-}
+
 
 export const auditMiddleware = (actionType: string) => {
     return async (req: Request, res: Response, next: NextFunction) => {
@@ -19,7 +14,7 @@ export const auditMiddleware = (actionType: string) => {
             
             // Only log successful or important actions
             if (statusCode >= 200 && statusCode < 300) {
-                const userId = (req as AuthenticatedRequest).user?.id;
+                const userId = req.user?.userId;
                 const metadata = {
                     method: req.method,
                     path: req.path,

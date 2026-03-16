@@ -65,11 +65,12 @@ export class WeatherService {
             // Try to find a result matching the country if provided
             let coords = geocodeResponse.data.results[0];
             if (location.toLowerCase().includes('germany') || location.toLowerCase().includes('deutschland')) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const germanResult = geocodeResponse.data.results.find((r: any) => r.country_code === 'DE');
                 if (germanResult) coords = germanResult;
             }
 
-            const { latitude, longitude, name, country } = coords;
+            const { latitude, longitude } = coords;
 
             // Get weather data from Open-Meteo
             const weatherResponse = await axios.get(
@@ -107,7 +108,7 @@ export class WeatherService {
         }
     }
 
-    private static getMockWeather(location: string): WeatherData {
+    private static getMockWeather(_location: string): WeatherData {
         return {
             temp: 24,
             condition: 'Partly Cloudy',

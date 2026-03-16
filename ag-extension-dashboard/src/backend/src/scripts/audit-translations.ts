@@ -1,5 +1,5 @@
 import fs from 'fs';
-import path from 'path';
+
 
 const fileContent = fs.readFileSync('src/frontend/src/lib/i18n.ts', 'utf8');
 

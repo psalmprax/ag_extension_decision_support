@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, Request, Response } from 'express';
 import { query, getPool } from '@/services/databaseService';
 import { logger } from '@/utils/logger';

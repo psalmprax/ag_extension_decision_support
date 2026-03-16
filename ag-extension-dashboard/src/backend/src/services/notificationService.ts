@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { logger } from '../utils/logger';
 import { sendPushNotification } from './pushNotificationService';
 import { PrismaClient } from '@prisma/client';

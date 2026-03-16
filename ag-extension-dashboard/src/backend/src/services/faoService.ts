@@ -25,7 +25,7 @@ export class FAOService {
             const response = await axios.get(`${this.baseUrl}/alerts`, {
                 params: { region, crop, type: 'disease' },
                 timeout: 5000
-            }).catch(e => ({ data: [] })); // Graceful fallback
+            }).catch(_e => ({ data: [] })); // Graceful fallback
 
             if (response.data && response.data.length > 0) {
                 return response.data;

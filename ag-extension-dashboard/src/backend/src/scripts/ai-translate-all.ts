@@ -1,12 +1,8 @@
 import fs from 'fs';
-import path from 'path';
 import Groq from 'groq-sdk';
 import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
 
-// Setup __dirname for ESM
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+
 
 dotenv.config();
 
@@ -152,12 +148,13 @@ Guidelines:
             const translatedBatch = JSON.parse(completion.choices[0]?.message?.content || "{}");
             Object.assign(resultDict, translatedBatch);
             console.log(`    ✅ Batch ${Math.floor(i / batchSize) + 1} complete. (${batch.length} keys)`);
-        } catch (err: any) {
-            if (err?.error?.code === 'rate_limit_exceeded') {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (_err: any) {
+            if (_err?.error?.code === 'rate_limit_exceeded') {
                 console.error(`    🔴 Rate limit exceeded. Stopping translations for ${langCode}. Save and resume later.`);
-                throw err; // Propagate to stop the whole process
+                throw _err; // Propagate to stop the whole process
             }
-            console.error(`    ❌ Error in batch ${Math.floor(i / batchSize) + 1}:`, err);
+            console.error(`    ❌ Error in batch ${Math.floor(i / batchSize) + 1}:`, _err);
             batch.forEach(k => { if (!resultDict[k]) resultDict[k] = sourceDict[k]; });
         }
     }

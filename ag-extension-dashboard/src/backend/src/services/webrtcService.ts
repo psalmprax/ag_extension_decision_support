@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Server } from 'socket.io';
 import { logger } from '../utils/logger';
 import { v4 as uuidv4 } from 'uuid';

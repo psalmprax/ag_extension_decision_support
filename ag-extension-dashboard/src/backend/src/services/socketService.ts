@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Server as SocketServer, Socket } from 'socket.io';
 import { logger } from '@/utils/logger';
 
@@ -37,6 +38,7 @@ export function initializeSocketHandlers(io: SocketServer): void {
         // Chat message
         socket.on('chat_message', (data: {
             conversationId: string;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             message: any;
         }) => {
             io.to(`conversation:${data.conversationId}`).emit('new_message', data.message);
@@ -62,6 +64,7 @@ export function initializeSocketHandlers(io: SocketServer): void {
         });
 
         // Alert notification
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         socket.on('alert', (data: { type: string; message: string; data?: any }) => {
             io.emit('notification', data);
         });
@@ -73,14 +76,17 @@ export function initializeSocketHandlers(io: SocketServer): void {
     });
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function emitToUser(io: SocketServer, userId: string, event: string, data: any): void {
     io.to(`user:${userId}`).emit(event, data);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function emitToRole(io: SocketServer, role: string, event: string, data: any): void {
     io.to(role).emit(event, data);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function emitToConversation(io: SocketServer, conversationId: string, event: string, data: any): void {
     io.to(`conversation:${conversationId}`).emit(event, data);
 }

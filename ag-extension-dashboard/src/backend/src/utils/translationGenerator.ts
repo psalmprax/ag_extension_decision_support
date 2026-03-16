@@ -333,8 +333,6 @@ const englishTranslations = {
     sms_title: "SMS Messaging",
     sms_subtitle: "Engage with farmers via automated and direct SMS",
     sms_quota_remaining: "{count} credits remaining",
-    sms_stats_title: "SMS Stats",
-    sms_template_visit: "Visit Reminder",
 };
 
 // Target languages to translate to
@@ -375,7 +373,8 @@ async function generateTranslations() {
     allTranslations['en'] = englishTranslations;
 
     // Also add existing translations we know work
-    const existingTranslations = {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _existingTranslations = {
         sw: {}, fr: {}, de: {}, es: {}  // These have manual translations
     };
 
