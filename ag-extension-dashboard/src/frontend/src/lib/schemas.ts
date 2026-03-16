@@ -20,12 +20,13 @@ export const registerSchema = z.object({
 
 // Farmer schemas
 export const farmerSchema = z.object({
-    name: z.string().min(1, 'Name is required').max(100),
+    firstName: z.string().min(1, 'First name is required').max(50),
+    lastName: z.string().min(1, 'Last name is required').max(50),
     location: z.string().min(1, 'Location is required').max(200),
     phone: z.string().regex(phoneRegex, 'Invalid phone number'),
     languagePreference: z.string().optional(),
     crops: z.array(z.string()).optional(),
-    farmSize: z.number().positive().optional(),
+    farmSize: z.number().nonnegative().optional(),
     latitude: z.number().min(-90).max(90).optional(),
     longitude: z.number().min(-180).max(180).optional(),
 })

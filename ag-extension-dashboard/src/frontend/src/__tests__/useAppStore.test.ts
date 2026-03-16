@@ -41,7 +41,8 @@ describe('useAppStore', () => {
 
         const newFarmer = {
             id: '99',
-            name: 'Test Farmer',
+            firstName: 'Test',
+            lastName: 'Farmer',
             location: 'Test Location',
             phone: '123456789'
         };
@@ -50,9 +51,9 @@ describe('useAppStore', () => {
         expect(useAppStore.getState().farmers.length).toBe(initialCount + 1);
         expect(useAppStore.getState().farmers).toContainEqual(newFarmer);
 
-        updateFarmer('99', { name: 'Updated Name' });
+        updateFarmer('99', { firstName: 'Updated' });
         const updatedFarmer = useAppStore.getState().farmers.find(f => f.id === '99');
-        expect(updatedFarmer?.name).toBe('Updated Name');
+        expect(updatedFarmer?.firstName).toBe('Updated');
 
         removeFarmer('99');
         expect(useAppStore.getState().farmers.length).toBe(initialCount);

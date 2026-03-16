@@ -14,14 +14,17 @@ export interface User {
 
 export interface Farmer {
     id: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     location: string;
+    village?: string;
     phone: string;
     languagePreference?: string;
     crops?: string[];
     farmSize?: number;
     latitude?: number;
     longitude?: number;
+    region?: string;
 }
 
 export interface Visit {
@@ -122,11 +125,11 @@ export const useAppStore = create<AppState>()(
             darkMode: localStorage.getItem('theme') === 'dark',
             activeTab: 'dashboard',
             farmers: [
-                { id: '1', name: 'John Banda', latitude: -13.9626, longitude: 33.7741, region: 'Lilongwe', crops: ['maize', 'groundnuts'], location: 'Lilongwe Rural', phone: '+265880000001' },
-                { id: '2', name: 'Mary Phiri', latitude: -15.7861, longitude: 35.0058, region: 'Blantyre', crops: ['tobacco'], location: 'Blantyre West', phone: '+265880000002' },
-                { id: '3', name: 'Peter Moyo', latitude: -11.8667, longitude: 33.4833, region: 'Mzuzu', crops: ['maize', 'beans'], location: 'Mzuzu City', phone: '+265880000003' },
-                { id: '4', name: 'Grace Chirwa', latitude: -14.3783, longitude: 34.2875, region: 'Kasungu', crops: ['tobacco', 'maize'], location: 'Kasungu Central', phone: '+265880000004' },
-                { id: '5', name: 'James Zomba', latitude: -15.3866, longitude: 35.3186, region: 'Zomba', crops: ['groundnuts'], location: 'Zomba Plateau', phone: '+265880000005' },
+                { id: '1', firstName: 'John', lastName: 'Banda', latitude: -13.9626, longitude: 33.7741, region: 'Lilongwe', crops: ['maize', 'groundnuts'], location: 'Lilongwe Rural', phone: '+265880000001' },
+                { id: '2', firstName: 'Mary', lastName: 'Phiri', latitude: -15.7861, longitude: 35.0058, region: 'Blantyre', crops: ['tobacco'], location: 'Blantyre West', phone: '+265880000002' },
+                { id: '3', firstName: 'Peter', lastName: 'Moyo', latitude: -11.8667, longitude: 33.4833, region: 'Mzuzu', crops: ['maize', 'beans'], location: 'Mzuzu City', phone: '+265880000003' },
+                { id: '4', firstName: 'Grace', lastName: 'Chirwa', latitude: -14.3783, longitude: 34.2875, region: 'Kasungu', crops: ['tobacco', 'maize'], location: 'Kasungu Central', phone: '+265880000004' },
+                { id: '5', firstName: 'James', lastName: 'Zomba', latitude: -15.3866, longitude: 35.3186, region: 'Zomba', crops: ['groundnuts'], location: 'Zomba Plateau', phone: '+265880000005' },
             ],
             visits: [],
             notifications: [],

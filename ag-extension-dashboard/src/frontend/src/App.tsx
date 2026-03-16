@@ -28,7 +28,8 @@ import {
     Trash2,
     CreditCard,
     Menu,
-    X
+    X,
+    Bell
 } from 'lucide-react';
 import { useEffect } from 'react';
 import { WeatherWidget } from '@/components/WeatherWidget';
@@ -105,6 +106,7 @@ interface Conversation {
     farmerName?: string;
     lastMessage?: string;
     updatedAt: string;
+    startedAt: string;
 }
 
 interface ChatMessage {
@@ -117,10 +119,10 @@ interface Farmer {
     id: string;
     firstName: string;
     lastName: string;
-    region: string;
-    village: string;
-    farmSize: number;
-    crops: string[];
+    region?: string;
+    village?: string;
+    farmSize?: number;
+    crops?: string[];
     latitude?: number;
     longitude?: number;
     phone?: string;
@@ -478,7 +480,7 @@ function App() {
         e.preventDefault();
         if (!farmerChatInput.trim()) return;
 
-        const userMsg = { role: 'officer', content: farmerChatInput, timestamp: new Date().toISOString() };
+        const userMsg: ChatMessage = { role: 'officer', content: farmerChatInput, timestamp: new Date().toISOString() };
         setFarmerChatMessages(prev => [...prev, userMsg]);
         setFarmerChatInput('');
 
@@ -567,14 +569,14 @@ function App() {
         e.preventDefault();
         if (!chatInput.trim() || !activeConvId) return;
 
-        const userMsg = { role: 'user', content: chatInput, timestamp: new Date().toISOString() };
+        const userMsg: ChatMessage = { role: 'user', content: chatInput, timestamp: new Date().toISOString() };
         setChatMessages(prev => [...prev, userMsg]);
         setChatInput('');
         setIsTyping(true);
 
         try {
             const res = await sendMessage({ conversationId: activeConvId, message: chatInput, language });
-            const aiMsg = { role: 'assistant', content: res.response, timestamp: new Date().toISOString() };
+            const aiMsg: ChatMessage = { role: 'assistant', content: res.response, timestamp: new Date().toISOString() };
             setChatMessages(prev => [...prev, aiMsg]);
         } catch (error) {
             console.error('Failed to send message:', error);
@@ -788,12 +790,15 @@ function App() {
                                                 phone: f.phone,
                                                 yield: f.yield || 0
                                             }))}
-                                            onFarmerClick={(farmer) => {
+                                            onFarmerClick={(farmerData) => {
                                                 if (user?.role === 'extension_officer' || user?.role === 'admin') {
                                                     setActiveTab('farmerchat');
-                                                    handleStartConversation(farmer, 'farmer');
+                                                    // Map FarmerData back to Farmer for the conversation handler
+                                                    const farmer = farmers.find(f => f.id === farmerData.id) as Farmer;
+                                                    if (farmer) handleStartConversation(farmer, 'farmer');
                                                 } else {
-                                                    handleOpenFarmerDetail(farmer);
+                                                    const farmer = farmers.find(f => f.id === farmerData.id) as Farmer;
+                                                    if (farmer) handleOpenFarmerDetail(farmer);
                                                 }
                                             }}
                                         />

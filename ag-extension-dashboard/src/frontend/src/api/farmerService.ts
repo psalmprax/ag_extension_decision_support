@@ -10,6 +10,8 @@ export interface Farmer {
     village: string;
     crops: string[];
     farmSize: number;
+    latitude?: number;
+    longitude?: number;
 }
 
 export interface FarmersResponse {

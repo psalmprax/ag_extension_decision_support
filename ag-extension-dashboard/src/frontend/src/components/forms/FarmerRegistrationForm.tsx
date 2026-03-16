@@ -31,23 +31,28 @@ export const FarmerRegistrationForm: React.FC = () => {
     try {
       // Call API to create farmer
       const response = await createFarmer({
-        firstName: data.name.split(' ')[0],
-        lastName: data.name.split(' ').slice(1).join(' ') || '',
+        firstName: data.firstName,
+        lastName: data.lastName,
         phone: data.phone,
         region: data.location,
         village: data.location,
         crops: data.crops || [],
         farmSize: data.farmSize || 0,
+        latitude: data.latitude,
+        longitude: data.longitude
       });
 
       if (response.success) {
         addFarmer({
           id: response.data.id,
-          name: `${response.data.firstName} ${response.data.lastName}`,
+          firstName: response.data.firstName,
+          lastName: response.data.lastName,
           phone: response.data.phone,
           location: response.data.region || response.data.village,
           crops: response.data.crops,
           farmSize: response.data.farmSize,
+          latitude: response.data.latitude,
+          longitude: response.data.longitude
         });
         toast.success(t('farmer_register_success'));
         reset();
@@ -74,19 +79,35 @@ export const FarmerRegistrationForm: React.FC = () => {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Name */}
+          {/* First Name */}
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
               <UserPlus className="w-4 h-4" />
-              {t('farmer_register_name')}
+              {t('farmer_register_first_name') || 'First Name'}
             </label>
             <input
-              {...register('name')}
+              {...register('firstName')}
               className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none transition-all"
-              placeholder={t('farmer_register_name_placeholder')}
+              placeholder={t('farmer_register_first_name_placeholder') || 'Enter first name'}
             />
-            {errors.name && (
-              <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>
+            {errors.firstName && (
+              <p className="text-red-500 text-xs mt-1">{errors.firstName.message}</p>
+            )}
+          </div>
+
+          {/* Last Name */}
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+              <UserPlus className="w-4 h-4" />
+              {t('farmer_register_last_name') || 'Last Name'}
+            </label>
+            <input
+              {...register('lastName')}
+              className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+              placeholder={t('farmer_register_last_name_placeholder') || 'Enter last name'}
+            />
+            {errors.lastName && (
+              <p className="text-red-500 text-xs mt-1">{errors.lastName.message}</p>
             )}
           </div>
 
