@@ -26,7 +26,9 @@ import {
     Navigation,
     Pencil,
     Trash2,
-    CreditCard
+    CreditCard,
+    Menu,
+    X
 } from 'lucide-react';
 import { useEffect } from 'react';
 import { WeatherWidget } from '@/components/WeatherWidget';
