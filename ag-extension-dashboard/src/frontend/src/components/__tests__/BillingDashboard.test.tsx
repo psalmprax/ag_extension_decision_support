@@ -6,14 +6,22 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 
 // Mock framer-motion to avoid animation issues in tests
-vi.mock('framer-motion', () => ({
-    motion: {
-        div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-        section: ({ children, ...props }: any) => <section {...props}>{children}</section>,
-        article: ({ children, ...props }: any) => <article {...props}>{children}</article>,
-    },
-    AnimatePresence: ({ children }: any) => <>{children}</>
-}));
+vi.mock('framer-motion', () => {
+    const mockComponent = ({ children, ...props }: any) => <div {...props}>{children}</div>;
+    return {
+        motion: {
+            div: mockComponent,
+            section: mockComponent,
+            article: mockComponent,
+            button: mockComponent,
+            h1: mockComponent,
+            h2: mockComponent,
+            p: mockComponent,
+            span: mockComponent,
+        },
+        AnimatePresence: ({ children }: any) => <>{children}</>
+    };
+});
 
 const queryClient = new QueryClient({
     defaultOptions: {
