@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Loader2, Sprout, Check } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
+import { register } from '@/api/authService';
 
 export function Register() {
     const navigate = useNavigate();
@@ -45,32 +46,25 @@ export function Register() {
         setIsLoading(true);
 
         try {
-            const response = await fetch('http://localhost:3001/api/auth/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    firstName: formData.firstName,
-                    lastName: formData.lastName,
-                    email: formData.email,
-                    password: formData.password,
-                    role: formData.role,
-                    region: formData.region,
-                }),
-                credentials: 'include',
+            await register({
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                email: formData.email,
+                password: formData.password,
+                role: formData.role,
+                region: formData.region,
             });
-
-            if (!response.ok) {
-                const data = await response.json();
-                // Show detailed error if available
-                const errorMsg = data.details?.[0]?.message || data.error || 'Registration failed';
-                throw new Error(errorMsg);
-            }
 
             // Success - redirect to login
             navigate('/login', { state: { registered: true } });
-        } catch (err: unknown) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            setError((err as any).message || t('register_failed'));
+        } catch (err: any) {
+            // Error handling is managed by apiClient interceptors, 
+            // but we can extract more detail if available
+            const errorMsg = err.response?.data?.details?.[0]?.message || 
+                            err.response?.data?.error || 
+                            err.message || 
+                            t('register_failed');
+            setError(errorMsg);
         } finally {
             setIsLoading(false);
         }

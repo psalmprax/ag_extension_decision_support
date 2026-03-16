@@ -1,11 +1,13 @@
 import apiClient from './client';
 
+export type UserRole = 'admin' | 'extension_officer' | 'farmer';
+
 export interface User {
     id: string;
     email: string;
     firstName: string;
     lastName: string;
-    role: string;
+    role: UserRole;
     region?: string;
     phone?: string;
     avatarUrl?: string;
@@ -13,7 +15,12 @@ export interface User {
 
 export interface AuthResponse {
     success: boolean;
-    data: User;
+    data: {
+        user: User;
+        token: string;
+    };
+    // Support legacy/flat structures
+    user?: User;
     token?: string;
 }
 
@@ -32,6 +39,8 @@ export interface RegisterData {
     password: string;
     firstName: string;
     lastName: string;
+    role: string;
+    region?: string;
 }
 
 export const login = async (credentials: LoginCredentials): Promise<AuthResponse> => {
@@ -41,5 +50,10 @@ export const login = async (credentials: LoginCredentials): Promise<AuthResponse
 
 export const register = async (userData: RegisterData): Promise<AuthResponse> => {
     const response = await apiClient.post<AuthResponse>('/auth/register', userData);
+    return response.data;
+};
+
+export const demoLogin = async (): Promise<AuthResponse> => {
+    const response = await apiClient.post<AuthResponse>('/auth/demo');
     return response.data;
 };

@@ -6,6 +6,8 @@ import { useAppStore } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
+import { login, demoLogin } from '@/api/authService';
+
 interface LoginProps {
     onDemo?: () => void;
 }
@@ -27,23 +29,11 @@ export function Login({ onDemo }: LoginProps) {
         setError('');
 
         try {
-            const response = await fetch('http://localhost:3001/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
-                credentials: 'include',
-            });
-
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error || 'Login failed');
-            }
-
-            const data = await response.json();
+            const data = await login({ email, password });
 
             // Handle nested response structure { success: true, data: { token, user } }
-            const token = data.token || (data.data?.token);
-            const userData = data.user || (data.data?.user);
+            const token = data.token || data.data?.token;
+            const userData = data.data?.user || data.user;
 
             // Store token in localStorage for API requests
             if (token) {
@@ -52,7 +42,7 @@ export function Login({ onDemo }: LoginProps) {
             // Also store user data
             if (userData) {
                 localStorage.setItem('user', JSON.stringify(userData));
-                setUser(userData);
+                setUser(userData as any); // Cast to any if there are minor semantic differences, but should match now
             }
 
             if (!token) {
@@ -60,9 +50,9 @@ export function Login({ onDemo }: LoginProps) {
             }
 
             navigate('/dashboard');
-        } catch (err: unknown) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            setError((err as any).message || t('login_invalid_credentials'));
+        } catch (err: any) {
+            const errorMsg = err.response?.data?.error || err.message || t('login_invalid_credentials');
+            setError(errorMsg);
         } finally {
             setIsLoading(false);
         }
@@ -72,28 +62,22 @@ export function Login({ onDemo }: LoginProps) {
         setIsLoading(true);
         setError('');
         try {
-            const response = await fetch('http://localhost:3001/api/auth/demo', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-            });
-            if (!response.ok) throw new Error('Demo login failed');
-            const data = await response.json();
+            const data = await demoLogin();
 
-            const token = data.data?.token;
-            const userData = data.data?.user;
+            const token = data.token || data.data?.token;
+            const userData = data.data?.user || data.user;
 
             if (token) localStorage.setItem('token', token);
             if (userData) {
                 localStorage.setItem('user', JSON.stringify(userData));
-                setUser(userData);
+                setUser(userData as any);
             }
 
             onDemo?.();
             navigate('/dashboard');
-        } catch (err: unknown) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            setError((err as any).message || 'Demo login failed');
+        } catch (err: any) {
+            const errorMsg = err.response?.data?.error || err.message || 'Demo login failed';
+            setError(errorMsg);
         } finally {
             setIsLoading(false);
         }
