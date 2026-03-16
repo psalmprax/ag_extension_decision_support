@@ -3,7 +3,7 @@
  * Multiple aesthetic themes for the Ag-Extension Dashboard
  */
 
-export type ThemeName = 'forest' | 'golden' | 'terracotta' | 'oceanic' | 'sunset' | 'sage';
+export type ThemeName = 'forest' | 'golden' | 'terracotta' | 'oceanic' | 'sunset' | 'sage' | 'cyber';
 
 export interface ThemeColors {
     primary: {
@@ -337,6 +337,54 @@ export const themes: Record<ThemeName, ThemeColors> = {
             card: '#ffffff',
         },
     },
+
+    /**
+     * Cyber Theme - Futuristic dark interface with neon accents
+     * Best for: High-tech precision agriculture, IoT dashboards, night operations
+     */
+    cyber: {
+        primary: {
+            50: '#f0fdf4',
+            100: '#dcfce7',
+            200: '#bbf7d0',
+            300: '#86efac',
+            400: '#4ade80',
+            500: '#22c55e',
+            600: '#16a34a',
+            700: '#15803d',
+            800: '#166534',
+            900: '#14532d',
+        },
+        secondary: {
+            50: '#ecfeff',
+            100: '#cffafe',
+            200: '#a5f3fc',
+            300: '#67e8f9',
+            400: '#22d3ee',
+            500: '#06b6d4',
+            600: '#0891b2',
+            700: '#0e7490',
+            800: '#155e75',
+            900: '#164e63',
+        },
+        accent: {
+            50: '#f5f3ff',
+            100: '#ede9fe',
+            200: '#ddd6fe',
+            300: '#c4b5fd',
+            400: '#a78bfa',
+            500: '#8b5cf6',
+            600: '#7c3aed',
+            700: '#6d28d9',
+            800: '#5b21b6',
+            900: '#4c1d95',
+        },
+        background: {
+            primary: '#0a0a0a',
+            secondary: '#171717',
+            card: '#262626',
+        },
+    },
 };
 
 /**
@@ -393,6 +441,7 @@ export const themeDescriptions: Record<ThemeName, string> = {
     oceanic: '🌊 Oceanic Blue - Water and irrigation',
     sunset: '🌅 Sunset Orange - Warm harvest twilight',
     sage: '🌿 Sage Green - Vegetables and organic',
+    cyber: '🤖 Cyber Neon - High-tech precision agriculture',
 };
 
 /**
@@ -407,6 +456,22 @@ export function applyTheme(themeName: ThemeName): void {
         styleElement = document.createElement('style');
         styleElement.id = 'theme-css-vars';
         document.head.appendChild(styleElement);
+    }
+
+    // Force dark mode for Cyber theme
+    if (themeName === 'cyber') {
+        document.documentElement.classList.add('dark');
+        document.body.classList.add('theme-cyber');
+    } else {
+        // If user prefers light mode (or no preference), keep it light unless manually switched
+        // But typically 'applyTheme' is called on init, so we might want to default to dark if system prefers
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (prefersDark) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        document.body.classList.remove('theme-cyber');
     }
 
     // Create dark mode versions of the theme colors (inverted for dark backgrounds)
@@ -438,12 +503,29 @@ export function applyTheme(themeName: ThemeName): void {
     });
 
     // Dark mode backgrounds
-    darkVars.push(`--color-bg-primary: #111827;`);
-    darkVars.push(`--color-bg-secondary: #1f2937;`);
-    darkVars.push(`--color-bg-card: #374151;`);
-    darkVars.push(`--color-bg-primary-rgb: 17 24 39;`);
-    darkVars.push(`--color-bg-secondary-rgb: 31 41 55;`);
-    darkVars.push(`--color-bg-card-rgb: 55 65 81;`);
+    if (themeName === 'cyber') {
+        // Cyber theme dark mode - enhanced neon effects
+        darkVars.push(`--color-bg-primary: #050505;`);
+        darkVars.push(`--color-bg-secondary: #0a0a0a;`);
+        darkVars.push(`--color-bg-card: #111111;`);
+        darkVars.push(`--color-bg-primary-rgb: 5 5 5;`);
+        darkVars.push(`--color-bg-secondary-rgb: 10 10 10;`);
+        darkVars.push(`--color-bg-card-rgb: 17 17 17;`);
+
+        // Cyber specific overrides for darker/brighter neon
+        darkVars.push(`--color-primary-50: #000000;`);
+        darkVars.push(`--color-primary-100: #0a0a0a;`);
+        darkVars.push(`--color-primary-200: #111111;`);
+        darkVars.push(`--color-primary-300: #171717;`);
+        darkVars.push(`--color-primary-400: #1a1a1a;`);
+    } else {
+        darkVars.push(`--color-bg-primary: #111827;`);
+        darkVars.push(`--color-bg-secondary: #1f2937;`);
+        darkVars.push(`--color-bg-card: #374151;`);
+        darkVars.push(`--color-bg-primary-rgb: 17 24 39;`);
+        darkVars.push(`--color-bg-secondary-rgb: 31 41 55;`);
+        darkVars.push(`--color-bg-card-rgb: 55 65 81;`);
+    }
 
     styleElement.textContent = `:root {\n${css}\n}\n.dark {\n${darkVars.join('\n')}\n}`;
 }

@@ -279,4 +279,47 @@
         background-image: radial-gradient(circle, rgb(156 163 175 / 0.15) 1px, transparent 1px);
         background-size: 24px 24px;
     }
+
+    /* Cyber Theme Styles */
+    .theme-cyber {
+        /* Neon Glows */
+        --glow-primary: 0 0 20px rgba(34, 197, 94, 0.5);
+        --glow-secondary: 0 0 20px rgba(6, 182, 212, 0.5);
+        --glow-accent: 0 0 20px rgba(139, 92, 246, 0.5);
+    }
+
+    .theme-cyber .glass-panel {
+        @apply bg-gray-900/60 backdrop-blur-xl border border-gray-800;
+        box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.1), 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .theme-cyber .glass-panel-glow {
+        @apply bg-gray-900/80 backdrop-blur-xl border border-primary-500/30;
+        box-shadow: 0 0 30px rgba(34, 197, 94, 0.15), 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    .theme-cyber .text-glow {
+        text-shadow: 0 0 10px currentColor;
+    }
+
+    .theme-cyber .card {
+        @apply bg-gray-900/80 border border-gray-800;
+    }
+
+    .theme-cyber .btn-primary {
+        @apply bg-primary-600 border border-primary-400/30;
+        box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
+    }
+
+    .theme-cyber .btn-primary:hover {
+        box-shadow: 0 0 25px rgba(34, 197, 94, 0.5);
+    }
+
+    /* Grid pattern for cyber theme */
+    .theme-cyber .cyber-grid {
+        background-image:
+            linear-gradient(rgba(34, 197, 94, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(34, 197, 94, 0.03) 1px, transparent 1px);
+        background-size: 50px 50px;
+    }
 }
