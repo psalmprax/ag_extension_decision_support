@@ -51,12 +51,12 @@ pipeline {
         stage('Deploy to Remote') {
             steps {
                 script {
-                    echo "Deploying to Host via Docker Socket Orchestration..."
+                    echo "Deploying Full Project to Host via Docker Socket Orchestration..."
                     sh "mkdir -p ${DEPLOY_DIR}"
-                    sh "cp -r ag-extension-dashboard/* ${DEPLOY_DIR}/"
+                    sh "cp -r . ${DEPLOY_DIR}/"
                     // Trigger deployment on host using the host's env but triggered from here
-                    sh "docker-compose -f ${DEPLOY_DIR}/docker-compose.yml -f ${DEPLOY_DIR}/docker-compose.agents.yml down || true"
-                    sh "docker-compose -f ${DEPLOY_DIR}/docker-compose.yml -f ${DEPLOY_DIR}/docker-compose.agents.yml up -d --build"
+                    sh "docker-compose -f ${DEPLOY_DIR}/ag-extension-dashboard/docker-compose.yml -f ${DEPLOY_DIR}/ag-extension-dashboard/docker-compose.agents.yml down || true"
+                    sh "docker-compose -f ${DEPLOY_DIR}/ag-extension-dashboard/docker-compose.yml -f ${DEPLOY_DIR}/ag-extension-dashboard/docker-compose.agents.yml up -d --build"
                 }
             }
         }
