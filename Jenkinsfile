@@ -43,7 +43,7 @@ pipeline {
         stage('Docker Build') {
             steps {
                 dir('ag-extension-dashboard') {
-                    sh 'docker compose build'
+                    sh 'docker-compose build'
                 }
             }
         }
@@ -60,7 +60,7 @@ pipeline {
                         # For this example, we assume we might need to build on remote or sync source if not using registry
                         # rsync -avz --exclude 'node_modules' ag-extension-dashboard/ ${REMOTE_USER}@${REMOTE_HOST}:${DEPLOY_DIR}/
                         
-                        ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} 'cd ${DEPLOY_DIR} && docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --build'
+                        ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} 'cd ${DEPLOY_DIR} && docker-compose -f docker-compose.yml -f docker-compose.agents.yml up -d --build'
                     """
                 }
             }
