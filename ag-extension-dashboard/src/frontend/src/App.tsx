@@ -1,5 +1,6 @@
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import FarmerMap from '@/components/FarmerMap';
 import {
@@ -386,7 +387,7 @@ function App() {
         }
     };
 
-    const loadConversations = React.useCallback(async () => {
+    const loadConversations = useCallback(async () => {
         try {
             const res = await fetchConversations();
             setConversations(res.data);
@@ -398,7 +399,7 @@ function App() {
         }
     }, [activeConvId]);
 
-    const loadMessages = React.useCallback(async (id: string) => {
+    const loadMessages = useCallback(async (id: string) => {
         try {
             const res = await fetchMessages(id);
             setChatMessages(res.data);
@@ -450,7 +451,7 @@ function App() {
     };
 
     // Farmer Chat functions
-    const loadFarmerConversations = React.useCallback(async () => {
+    const loadFarmerConversations = useCallback(async () => {
         try {
             const res = await fetchConversations();
             setFarmerConversations(res.data);
@@ -462,7 +463,7 @@ function App() {
         }
     }, [activeFarmerConvId]);
 
-    const loadFarmerMessages = React.useCallback(async (id: string) => {
+    const loadFarmerMessages = useCallback(async (id: string) => {
         try {
             const res = await fetchMessages(id);
             setFarmerChatMessages(res.data);
