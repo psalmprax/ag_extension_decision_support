@@ -1,12 +1,17 @@
 import React from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
-import { Sprout, MessageSquare, Calendar, Bell } from 'lucide-react';
+import { Sprout, MessageSquare, Calendar, Bell, TrendingUp, Zap, ShieldAlert, LineChart } from 'lucide-react';
 import { motion } from 'framer-motion';
+import IsometricFarmOverview from './Cyber/IsometricFarmOverview';
+import SimulationGantt from './Cyber/SimulationGantt';
+import MaintenanceDiagnostics from './Cyber/MaintenanceDiagnostics';
 
 export const FarmerDashboard: React.FC = () => {
-  const { user } = useAppStore();
+  const { user, themeName } = useAppStore();
   const { t } = useLanguage();
+
+  const isCyber = themeName === 'cyber';
 
   const stats = [
     { title: t('farmer_my_crops'), value: `${t('crop_maize')}, ${t('crop_beans')}`, icon: Sprout, color: 'text-primary-600', bg: 'bg-primary-100' },
@@ -15,8 +20,63 @@ export const FarmerDashboard: React.FC = () => {
     { title: t('farmer_alerts'), value: `1 ${t('farmer_active_status', { defaultValue: 'Active' })}`, icon: Bell, color: 'text-amber-600', bg: 'bg-amber-100' },
   ];
 
+  if (isCyber) {
+    return (
+      <div className="space-y-8 animate-fade-in theme-cyber">
+        <header className="flex justify-between items-end">
+          <div>
+            <h1 className="text-4xl font-black text-white tracking-tighter text-glow uppercase">
+              {t('farmer_greeting').replace('{name}', user?.firstName || 'Farmer')}
+            </h1>
+            <p className="text-primary-300/60 mt-1 font-bold uppercase tracking-widest text-xs">{t('farmer_overview')}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] font-black text-primary-300/40 uppercase tracking-[0.3em]">System Status: Optimal</p>
+            <p className="text-sm font-bold text-white tabular-nums mt-1">OCT 26, 2024 - 14:38 GMT</p>
+          </div>
+        </header>
+
+        {/* Hero Isometric Overview */}
+        <section className="animate-slide-up">
+            <IsometricFarmOverview />
+        </section>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Simulation Widget */}
+            <div className="lg:col-span-2 animate-slide-up" style={{ animationDelay: '100ms' }}>
+                <SimulationGantt />
+            </div>
+
+            {/* Diagnostics Widget */}
+            <div className="animate-slide-up" style={{ animationDelay: '200ms' }}>
+                <MaintenanceDiagnostics />
+            </div>
+        </div>
+
+        {/* Legacy Stats converted to Cyber Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+                { label: 'SOIL MOISTURE', value: '34%', icon: Zap, trend: '+2%' },
+                { label: 'AVG TEMP', value: '21°C', icon:TrendingUp, trend: 'Stable' },
+                { label: 'PH LEVEL', value: '6.8', icon: LineChart, trend: 'Optimal' },
+                { label: 'AI CONFIDENCE', value: '98%', icon: ShieldAlert, trend: 'High' }
+            ].map((stat, i) => (
+                <div key={i} className="glass-premium p-6 rounded-2xl border-white/5 group hover:border-primary-500/30 transition-all">
+                    <div className="flex justify-between items-start mb-4">
+                        <stat.icon className="w-5 h-5 text-primary-400 opacity-60 group-hover:opacity-100 transition-opacity" />
+                        <span className="text-[10px] font-bold text-primary-300/40 tracking-widest leading-none mt-1">{stat.trend}</span>
+                    </div>
+                    <p className="text-[10px] font-black text-primary-300/40 uppercase tracking-widest leading-none mb-1">{stat.label}</p>
+                    <p className="text-2xl font-black text-white tabular-nums tracking-tighter">{stat.value}</p>
+                </div>
+            ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-fade-in">
       <header>
         <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">{t('farmer_greeting').replace('{name}', user?.firstName || 'Farmer')}</h1>
         <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">{t('farmer_overview')}</p>

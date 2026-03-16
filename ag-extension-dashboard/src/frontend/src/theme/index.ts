@@ -344,45 +344,45 @@ export const themes: Record<ThemeName, ThemeColors> = {
      */
     cyber: {
         primary: {
-            50: '#f0fdf4',
-            100: '#dcfce7',
-            200: '#bbf7d0',
-            300: '#86efac',
-            400: '#4ade80',
-            500: '#22c55e',
-            600: '#16a34a',
-            700: '#15803d',
-            800: '#166534',
-            900: '#14532d',
+            50: '#e6fffa',
+            100: '#b2f5ea',
+            200: '#81e6d9',
+            300: '#4fd1c5',
+            400: '#38b2ac',
+            500: '#319795',
+            600: '#2c7a7b',
+            700: '#285e61',
+            800: '#234e52',
+            900: '#1d4044',
         },
         secondary: {
-            50: '#ecfeff',
-            100: '#cffafe',
-            200: '#a5f3fc',
-            300: '#67e8f9',
-            400: '#22d3ee',
-            500: '#06b6d4',
-            600: '#0891b2',
-            700: '#0e7490',
-            800: '#155e75',
-            900: '#164e63',
+            50: '#fffaf0',
+            100: '#feebc8',
+            200: '#fbd38d',
+            300: '#f6ad55',
+            400: '#ed8936',
+            500: '#dd6b20',
+            600: '#c05621',
+            700: '#9c4221',
+            800: '#7b341e',
+            900: '#652b19',
         },
         accent: {
-            50: '#f5f3ff',
-            100: '#ede9fe',
-            200: '#ddd6fe',
-            300: '#c4b5fd',
-            400: '#a78bfa',
-            500: '#8b5cf6',
-            600: '#7c3aed',
-            700: '#6d28d9',
-            800: '#5b21b6',
-            900: '#4c1d95',
+            50: '#faf5ff',
+            100: '#e9d5ff',
+            200: '#d6bcfa',
+            300: '#b794f4',
+            400: '#9f7aea',
+            500: '#805ad5',
+            600: '#6b46c1',
+            700: '#553c9a',
+            800: '#44337a',
+            900: '#322659',
         },
         background: {
-            primary: '#0a0a0a',
-            secondary: '#171717',
-            card: '#262626',
+            primary: '#010101',
+            secondary: '#0a0a0a',
+            card: '#121212',
         },
     },
 };
@@ -505,19 +505,24 @@ export function applyTheme(themeName: ThemeName): void {
     // Dark mode backgrounds
     if (themeName === 'cyber') {
         // Cyber theme dark mode - enhanced neon effects
-        darkVars.push(`--color-bg-primary: #050505;`);
-        darkVars.push(`--color-bg-secondary: #0a0a0a;`);
-        darkVars.push(`--color-bg-card: #111111;`);
-        darkVars.push(`--color-bg-primary-rgb: 5 5 5;`);
-        darkVars.push(`--color-bg-secondary-rgb: 10 10 10;`);
-        darkVars.push(`--color-bg-card-rgb: 17 17 17;`);
+        darkVars.push(`--color-bg-primary: #010101;`);
+        darkVars.push(`--color-bg-secondary: #050505;`);
+        darkVars.push(`--color-bg-card: #0a0a0a;`);
+        darkVars.push(`--color-bg-primary-rgb: 1 1 1;`);
+        darkVars.push(`--color-bg-secondary-rgb: 5 5 5;`);
+        darkVars.push(`--color-bg-card-rgb: 10 10 10;`);
+
+        // Glassmorphism variables for premium feel
+        darkVars.push(`--glass-bg: rgba(10, 10, 10, 0.6);`);
+        darkVars.push(`--glass-border: rgba(79, 209, 197, 0.2);`);
+        darkVars.push(`--glass-blur: 16px;`);
 
         // Cyber specific overrides for darker/brighter neon
         darkVars.push(`--color-primary-50: #000000;`);
-        darkVars.push(`--color-primary-100: #0a0a0a;`);
-        darkVars.push(`--color-primary-200: #111111;`);
-        darkVars.push(`--color-primary-300: #171717;`);
-        darkVars.push(`--color-primary-400: #1a1a1a;`);
+        darkVars.push(`--color-primary-100: #050505;`);
+        darkVars.push(`--color-primary-200: #0a0a0a;`);
+        darkVars.push(`--color-primary-300: #0f0f0f;`);
+        darkVars.push(`--color-primary-400: #141414;`);
     } else {
         darkVars.push(`--color-bg-primary: #111827;`);
         darkVars.push(`--color-bg-secondary: #1f2937;`);
