@@ -7,9 +7,9 @@ pipeline {
         GIT_CRED_ID = 'GITHUB_CREDENTIALS'
         
         // Remote server details (Provide these as Jenkins Build Parameters or hardcode here)
-        REMOTE_USER = 'psalmprax'
-        REMOTE_HOST = 'localhost'
-        DEPLOY_DIR = '/home/psalmprax/ag-extension-decision-support'
+        REMOTE_USER = 'root'
+        REMOTE_HOST = '172.21.0.1'
+        DEPLOY_DIR = '/root/ag-extension-decision-support'
         
         // Docker registry (Optional)
         // DOCKER_REGISTRY = 'your-registry.com'
