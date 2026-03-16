@@ -55,7 +55,8 @@ pipeline {
                     sh "mkdir -p ${DEPLOY_DIR}"
                     sh "cp -r ag-extension-dashboard/* ${DEPLOY_DIR}/"
                     // Trigger deployment of core services only
-                    sh "docker-compose -f ${DEPLOY_DIR}/docker-compose.yml down || true"
+                    // First stop and remove any existing containers to free ports
+                    sh "docker-compose -f ${DEPLOY_DIR}/docker-compose.yml down -v --remove-orphans || true"
                     sh "docker-compose -f ${DEPLOY_DIR}/docker-compose.yml up -d --build"
                 }
             }
