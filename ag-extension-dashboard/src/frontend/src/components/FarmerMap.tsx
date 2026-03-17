@@ -788,10 +788,10 @@ export function FarmerMap({
 
             {/* Fullscreen Modal */}
             {isExpanded && (
-                <div className={`fixed inset-0 z-[9999] ${themeName === 'cyber' ? 'bg-black/90' : 'bg-black/80'} backdrop-blur-md flex items-center justify-center p-4`}>
-                    <div className={`${themeName === 'cyber' ? 'glass-premium theme-cyber' : 'bg-white dark:bg-gray-900'} rounded-3xl shadow-2xl w-full max-w-7xl h-[92vh] flex flex-col overflow-hidden ${themeName === 'cyber' ? 'border border-primary-500/30' : 'border border-white/20 dark:border-gray-700'}`}>
+                <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-7xl h-[92vh] flex flex-col overflow-hidden border border-white/20 dark:border-gray-700">
                         {/* Modal Header */}
-                        <div className={`flex items-center justify-between px-8 py-5 border-b ${themeName === 'cyber' ? 'border-primary-500/20' : 'border-gray-100 dark:border-gray-800'} ${themeName === 'cyber' ? 'glass-premium' : 'bg-white dark:bg-gray-900'}`}>
+                        <div className="flex items-center justify-between px-8 py-5 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
                             <div className="flex items-center gap-4">
                                 <div
                                     className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg"
@@ -803,8 +803,8 @@ export function FarmerMap({
                                     <MapPin className="w-6 h-6 text-white" />
                                 </div>
                                 <div>
-                                    <h2 className={`text-2xl font-black ${themeName === 'cyber' ? 'text-primary-400 text-glow' : 'text-gray-800 dark:text-white'} tracking-tight`}>{t('map_overview')}</h2>
-                                    <p className={`text-sm font-medium flex items-center gap-2 ${themeName === 'cyber' ? 'text-primary-300/70' : 'text-gray-500 dark:text-gray-400'}`}>
+                                    <h2 className="text-2xl font-black text-gray-800 dark:text-white tracking-tight">{t('map_overview')}</h2>
+                                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
                                         <span className="flex h-2 w-2 rounded-full animate-pulse" style={{ backgroundColor: theme.primary[500] }}></span>
                                         {t('common_ai_powered')} • {farmers.length} {t('map_farms')}
                                     </p>
@@ -818,13 +818,13 @@ export function FarmerMap({
                                         placeholder={t('map_search_placeholder') || "Search farmers, regions, crops..."}
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className={`pl-10 pr-4 py-2.5 rounded-2xl w-80 text-sm focus:outline-none focus:ring-2 transition-all ${themeName === 'cyber' ? 'bg-gray-900/80 border border-primary-500/30 text-primary-100 placeholder-primary-500/50' : 'bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-800 dark:text-white placeholder-gray-400'}`}
+                                        className="pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl w-80 text-sm focus:outline-none focus:ring-2 transition-all text-gray-800 dark:text-white placeholder-gray-400"
                                         style={{ '--tw-ring-color': `${theme.primary[500]}33` } as React.CSSProperties}
                                     />
                                 </div>
                                 <button
                                     onClick={() => setIsExpanded(false)}
-                                    className={`p-3 rounded-2xl transition-all border ${themeName === 'cyber' ? 'bg-gray-900/80 border-primary-500/30 text-primary-400 hover:bg-primary-500/20 hover:text-primary-300' : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-900 dark:hover:text-white border-gray-100 dark:border-gray-700'}`}
+                                    className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all border border-gray-100 dark:border-gray-700"
                                 >
                                     <X className="w-6 h-6" />
                                 </button>
@@ -834,9 +834,9 @@ export function FarmerMap({
                         {/* Modal Main Content */}
                         <div className="flex-1 flex overflow-hidden">
                             {/* Side Panel */}
-                            <div className={`w-80 border-r flex flex-col ${themeName === 'cyber' ? 'border-primary-500/20 bg-black/40' : 'border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/30'}`}>
-                                <div className={`p-4 border-b ${themeName === 'cyber' ? 'border-primary-500/20 bg-primary-500/5' : 'border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50'}`}>
-                                    <div className={`text-[11px] uppercase tracking-wider font-bold ${themeName === 'cyber' ? 'text-primary-400' : 'text-gray-400'}`}>Farmlist</div>
+                            <div className="w-80 border-r border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/30 flex flex-col">
+                                <div className="p-4 border-b border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50">
+                                    <div className="text-[11px] uppercase tracking-wider text-gray-400 font-bold">Farmlist</div>
                                 </div>
                                 <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
                                     {filteredFarmers.length > 0 ? (
@@ -850,25 +850,25 @@ export function FarmerMap({
                                                     setSelectedFarmer(farmer);
                                                 }}
                                                 className={`w-full text-left p-3 rounded-2xl transition-all flex items-center gap-3 group ${selectedFarmer?.id === farmer.id
-                                                    ? themeName === 'cyber' ? 'bg-primary-500/20 shadow-lg border border-primary-500/40' : 'bg-white dark:bg-gray-800 shadow-md border border-gray-100 dark:border-gray-700'
-                                                    : themeName === 'cyber' ? 'hover:bg-primary-500/10 border border-transparent hover:border-primary-500/20' : 'hover:bg-white/60 dark:hover:bg-gray-800/60 border border-transparent hover:border-gray-100 dark:hover:border-gray-700'
+                                                    ? 'bg-white dark:bg-gray-800 shadow-md border border-gray-100 dark:border-gray-700'
+                                                    : 'hover:bg-white/60 dark:hover:bg-gray-800/60 border border-transparent hover:border-gray-100 dark:hover:border-gray-700'
                                                     }`}
                                             >
                                                 <div className="text-2xl group-hover:scale-110 transition-transform">
                                                     {CROP_ICONS[farmer.crop.toLowerCase()] || CROP_ICONS.default}
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <div className={`font-bold text-sm truncate ${themeName === 'cyber' ? 'text-primary-300' : 'text-gray-800 dark:text-white'}`}>{farmer.name}</div>
-                                                    <div className={`text-[10px] font-medium truncate ${themeName === 'cyber' ? 'text-primary-500/60' : 'text-gray-400'}`}>{farmer.region} • {farmer.size}ha</div>
+                                                    <div className="font-bold text-gray-800 dark:text-white text-sm truncate">{farmer.name}</div>
+                                                    <div className="text-[10px] text-gray-400 font-medium truncate">{farmer.region} • {farmer.size}ha</div>
                                                 </div>
                                             </button>
                                         ))
                                     ) : (
                                         <div className="p-8 text-center">
-                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3 ${themeName === 'cyber' ? 'bg-primary-500/10' : 'bg-gray-100 dark:bg-gray-800'}`}>
-                                                <Search className={`w-6 h-6 ${themeName === 'cyber' ? 'text-primary-400' : 'text-gray-300'}`} />
+                                            <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                                                <Search className="w-6 h-6 text-gray-300" />
                                             </div>
-                                            <p className={`text-sm ${themeName === 'cyber' ? 'text-primary-300/70' : 'text-gray-500'}`}>No farmers found for "{searchQuery}"</p>
+                                            <p className="text-sm text-gray-500">No farmers found for "{searchQuery}"</p>
                                         </div>
                                     )}
                                 </div>

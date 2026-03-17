@@ -2,79 +2,64 @@
   "hash": "4136ee4f",
   "configHash": "d644ed1d",
   "lockfileHash": "a319d52c",
-  "browserHash": "0b2e11d6",
+  "browserHash": "9b148535",
   "optimized": {
     "react": {
       "src": "../../node_modules/react/index.js",
       "file": "react.js",
-      "fileHash": "f9c0b7bf",
+      "fileHash": "82b4f2dc",
       "needsInterop": true
     },
     "react-dom/client": {
       "src": "../../node_modules/react-dom/client.js",
       "file": "react-dom_client.js",
-      "fileHash": "28f20195",
+      "fileHash": "63af2217",
       "needsInterop": true
     },
     "react-router-dom": {
       "src": "../../node_modules/react-router-dom/dist/index.js",
       "file": "react-router-dom.js",
-      "fileHash": "c1c81e7f",
+      "fileHash": "74c695e0",
       "needsInterop": false
     },
     "@tanstack/react-query": {
       "src": "../../node_modules/@tanstack/react-query/build/modern/index.js",
       "file": "@tanstack_react-query.js",
-      "fileHash": "7aac2325",
+      "fileHash": "01c68d2f",
       "needsInterop": false
     },
     "react-hot-toast": {
       "src": "../../node_modules/react-hot-toast/dist/index.mjs",
       "file": "react-hot-toast.js",
-      "fileHash": "d63a79ab",
+      "fileHash": "da24c418",
       "needsInterop": false
     },
     "framer-motion": {
       "src": "../../node_modules/framer-motion/dist/es/index.mjs",
       "file": "framer-motion.js",
-      "fileHash": "1910c7eb",
+      "fileHash": "d062467f",
       "needsInterop": false
     },
     "lucide-react": {
       "src": "../../node_modules/lucide-react/dist/esm/lucide-react.js",
       "file": "lucide-react.js",
-      "fileHash": "20f23515",
+      "fileHash": "36e82530",
       "needsInterop": false
     },
     "recharts": {
       "src": "../../node_modules/recharts/es6/index.js",
       "file": "recharts.js",
-      "fileHash": "ab04dd29",
+      "fileHash": "3fd9a3d4",
       "needsInterop": false
     },
     "axios": {
       "src": "../../node_modules/axios/index.js",
       "file": "axios.js",
-      "fileHash": "22afa0a1",
+      "fileHash": "4cc3a24a",
       "needsInterop": false
-    },
-    "react-leaflet": {
-      "src": "../../node_modules/react-leaflet/lib/index.js",
-      "file": "react-leaflet.js",
-      "fileHash": "a26dc405",
-      "needsInterop": false
-    },
-    "leaflet": {
-      "src": "../../node_modules/leaflet/dist/leaflet-src.js",
-      "file": "leaflet.js",
-      "fileHash": "9decd4bb",
-      "needsInterop": true
     }
   },
   "chunks": {
-    "chunk-HNPMGFM6": {
-      "file": "chunk-HNPMGFM6.js"
-    },
     "chunk-5L737GQX": {
       "file": "chunk-5L737GQX.js"
     },
