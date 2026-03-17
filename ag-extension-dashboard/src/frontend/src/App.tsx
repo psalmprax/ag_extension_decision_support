@@ -765,7 +765,7 @@ function App() {
                             </div>
 
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                                <div className={`${themeName === 'cyber' ? 'lg:col-span-3' : 'lg:col-span-2'} card p-8 bg-theme-bg-card dark:bg-gray-800 border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden group`}>
+                                <div className={`${themeName === 'cyber' ? 'lg:col-span-3' : 'lg:col-span-2'} card p-8 bg-theme-bg-card dark:bg-gray-800 border-gray-100 dark:border-gray-700 shadow-sm relative ${themeName === 'cyber' ? '' : 'overflow-hidden'} group`}>
                                     <div className="flex justify-between items-center mb-6">
                                         <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                             <MapPin className="w-5 h-5 text-primary-500" />
@@ -778,7 +778,7 @@ function App() {
                                         </div>
                                     </div>
 
-                                    <div className="relative h-[400px] bg-theme-bg-primary dark:bg-gray-900/50 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800">
+                                    <div className={`relative h-[400px] bg-theme-bg-primary dark:bg-gray-900/50 rounded-2xl ${themeName === 'cyber' ? '' : 'overflow-hidden'} border border-gray-100 dark:border-gray-800`}>
                                         <FarmerMap
                                             height="400px"
                                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
