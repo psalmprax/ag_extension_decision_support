@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import FarmerMap from '@/components/FarmerMap';
+import FarmerMap from './components/FarmerMap';
 import {
     LayoutDashboard,
     MessageSquare,
@@ -765,7 +765,7 @@ function App() {
                             </div>
 
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                                <div className={`${themeName === 'cyber' ? 'lg:col-span-3' : 'lg:col-span-2'} card p-8 bg-theme-bg-card dark:bg-gray-800 border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden group`}>
+                                <div className="lg:col-span-3 card p-8 bg-theme-bg-card dark:bg-gray-800 border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden group">
                                     <div className="flex justify-between items-center mb-6">
                                         <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                             <MapPin className="w-5 h-5 text-primary-500" />
