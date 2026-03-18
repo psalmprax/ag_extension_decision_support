@@ -9,7 +9,7 @@ services:
       dockerfile: Dockerfile.agent-zero
     container_name: ag-agent-zero
     ports:
-      - "8010:8000"
+      - "7504:8000"
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
@@ -35,7 +35,7 @@ services:
       dockerfile: Dockerfile.crew-ai
     container_name: ag-crew-ai
     ports:
-      - "8011:8001"
+      - "7505:8001"
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}

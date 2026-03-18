@@ -22,7 +22,7 @@ export const FarmerDashboard: React.FC = () => {
 
   if (isCyber) {
     return (
-      <div className="space-y-8 animate-fade-in theme-cyber">
+      <div className="space-y-8 animate-fade-in">
         <header className="flex justify-between items-end">
           <div>
             <h1 className="text-4xl font-black text-white tracking-tighter text-glow uppercase">

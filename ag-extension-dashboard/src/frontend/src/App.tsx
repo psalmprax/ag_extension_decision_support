@@ -616,9 +616,9 @@ function App() {
     );
 
     return (
-        <div className={`min-h-screen ${darkMode ? 'dark' : ''} bg-theme-bg-primary dark:bg-gray-900 transition-colors duration-300`}>
+        <div className={`min-h-screen ${darkMode ? 'dark' : ''} bg-theme-bg-primary transition-colors duration-300`}>
             {/* Top Navigation */}
-            <header className="fixed top-0 left-0 right-0 z-50 glass bg-theme-bg-card/80 dark:bg-gray-900/80 border-b border-gray-200 dark:border-gray-800 transition-colors">
+            <header className="fixed top-0 left-0 right-0 z-50 glass bg-theme-bg-card/80 border-b border-gray-200 dark:border-gray-800 transition-colors">
                 <div className="flex items-center justify-between px-6 py-4">
                     <div className="flex items-center gap-4">
                         <button
@@ -693,7 +693,7 @@ function App() {
                         initial={{ width: 0, opacity: 0 }}
                         animate={{ width: 260, opacity: 1 }}
                         exit={{ width: 0, opacity: 0 }}
-                        className="fixed left-0 top-[73px] bottom-0 z-40 bg-theme-bg-card dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 overflow-hidden transition-colors"
+                        className="fixed left-0 top-[73px] bottom-0 z-40 bg-theme-bg-card border-r border-gray-200 dark:border-gray-800 overflow-hidden transition-colors"
                     >
                         <nav className="p-4 space-y-2">
                             {navItems.map((item) => (
@@ -723,27 +723,28 @@ function App() {
             {/* Main Content */}
             <main className={`pt-[73px] min-h-screen transition-all duration-300 ${sidebarOpen ? 'ml-[260px]' : 'ml-0'}`}>
                 <div className="p-8">
-                    <ErrorBoundary>
-                        {activeTab === 'farmer_dashboard' && <FarmerDashboard />}
+                    <div className={themeName === 'cyber' ? 'theme-cyber -mx-8 -mt-8 p-8 min-h-[calc(100vh-73px)]' : ''}>
+                        <ErrorBoundary>
+                            {activeTab === 'farmer_dashboard' && <FarmerDashboard />}
 
-                        {activeTab === 'register_farmer' && (
-                            <RoleGuard allowedRoles={['extension_officer', 'admin']}>
-                                <FarmerRegistrationForm />
-                            </RoleGuard>
-                        )}
+                            {activeTab === 'register_farmer' && (
+                                <RoleGuard allowedRoles={['extension_officer', 'admin']}>
+                                    <FarmerRegistrationForm />
+                                </RoleGuard>
+                            )}
 
-                        {activeTab === 'visit_synthesis' && (
-                            <RoleGuard allowedRoles={['extension_officer', 'admin']}>
-                                <VisitSynthesisForm />
-                            </RoleGuard>
-                        )}
-                    </ErrorBoundary>
+                            {activeTab === 'visit_synthesis' && (
+                                <RoleGuard allowedRoles={['extension_officer', 'admin']}>
+                                    <VisitSynthesisForm />
+                                </RoleGuard>
+                            )}
+                        </ErrorBoundary>
 
                     {activeTab === 'dashboard' && (
                         <ErrorBoundary>
-                            <div className="mb-8">
-                                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('dashboard_overview')}</h1>
-                                <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">{t('dashboard_welcome').replace('{name}', user?.firstName || 'Extension Officer')}</p>
+                            <div className={themeName === 'cyber' ? 'mb-0' : 'mb-8'}>
+                                <h1 className={themeName === 'cyber' ? 'text-4xl font-black text-white tracking-tighter text-glow uppercase' : 'text-3xl font-bold text-gray-900 dark:text-white'}>{t('dashboard_overview')}</h1>
+                                <p className={themeName === 'cyber' ? 'text-primary-300/60 mt-1 font-bold uppercase tracking-widest text-xs' : 'text-gray-500 dark:text-gray-400 mt-1 font-medium'}>{t('dashboard_welcome').replace('{name}', user?.firstName || 'Extension Officer')}</p>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -765,7 +766,7 @@ function App() {
                             </div>
 
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                                <div className={`${themeName === 'cyber' ? 'lg:col-span-3' : 'lg:col-span-2'} card p-8 bg-theme-bg-card dark:bg-gray-800 border-gray-100 dark:border-gray-700 shadow-sm relative ${themeName === 'cyber' ? '' : 'overflow-hidden'} group`}>
+                                <div className={`${themeName === 'cyber' ? 'lg:col-span-3' : 'lg:col-span-2'} card p-6 bg-theme-bg-card dark:bg-gray-800 border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden group`}>
                                     <div className="flex justify-between items-center mb-6">
                                         <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                             <MapPin className="w-5 h-5 text-primary-500" />
@@ -778,7 +779,7 @@ function App() {
                                         </div>
                                     </div>
 
-                                    <div className={`relative h-[400px] bg-theme-bg-primary dark:bg-gray-900/50 rounded-2xl ${themeName === 'cyber' ? '' : 'overflow-hidden'} border border-gray-100 dark:border-gray-800`}>
+                                    <div className="relative h-[400px] bg-theme-bg-primary dark:bg-gray-900/50 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800">
                                         <FarmerMap
                                             height="400px"
                                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -848,8 +849,8 @@ function App() {
                                             </div>
                                         ))}
                                     </div>
-                                </div>
                             </div>
+                        </div>
                         </ErrorBoundary>
                     )}
                     {activeTab === 'portfolio' && (
@@ -1661,6 +1662,7 @@ function App() {
                             </div>
                         </div>
                     )}
+                    </div>
                 </div>
 
                 {/* Farmer Selection Modal - accessible from both AI Assistant and Farmer Chat */}

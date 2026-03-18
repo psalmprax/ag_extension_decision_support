@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres}
       POSTGRES_DB: ${DATABASE_NAME:-ag_extension}
     ports:
-      - "5434:5432"
+      - "7501:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -17,7 +17,7 @@ services:
     image: redis:alpine
     container_name: ag-dashboard-redis
     ports:
-      - "6381:6379"
+      - "7502:6379"
     volumes:
       - redis_data:/data
     networks:
@@ -29,7 +29,7 @@ services:
       target: development
     container_name: ag-dashboard-backend
     ports:
-      - "3010:3001"
+      - "7500:3001"
     environment:
       - DATABASE_URL=postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@app-db:5432/${DATABASE_NAME:-ag_extension}?schema=public
       - REDIS_URL=redis://redis:6379
@@ -50,7 +50,7 @@ services:
       target: development
     container_name: ag-dashboard-frontend
     ports:
-      - "5174:5173"
+      - "7503:5173"
     environment:
       - VITE_API_URL=/api
     depends_on:

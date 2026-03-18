@@ -788,8 +788,8 @@ export function FarmerMap({
 
             {/* Fullscreen Modal */}
             {isExpanded && (
-                <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-0">
-                    <div className={`bg-white dark:bg-gray-900 rounded-none shadow-2xl w-screen h-screen max-w-none flex flex-col overflow-hidden border-0`} style={{ width: '100vw', height: '100vh', maxWidth: '100vw', maxHeight: '100vh' }}>
+                <div className={`fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-0 ${themeName === 'cyber' ? 'cyber-map-modal' : ''}`} style={themeName === 'cyber' ? { overflow: 'visible' } : {}}>
+                    <div className={`${themeName === 'cyber' ? 'bg-black' : 'bg-white dark:bg-gray-900'} rounded-none shadow-2xl w-screen h-screen max-w-none flex flex-col ${themeName === 'cyber' ? '' : 'overflow-hidden'} border-0`} style={themeName === 'cyber' ? { width: '100vw', height: '100vh', maxWidth: '100vw', maxHeight: '100vh' } : {}}>
                         {/* Modal Header */}
                         <div className="flex items-center justify-between px-8 py-5 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
                             <div className="flex items-center gap-4">

@@ -378,9 +378,8 @@
         mask-image: radial-gradient(circle at center, black, transparent 80%);
     }
 
-    /* Fix for map expansion in cyber theme - ensure overflow works properly */
-    /* Note: z-[9999] in Tailwind compiles to inline style, not a class, so we target .fixed.inset-0 */
-    .theme-cyber .fixed.inset-0 {
+    /* Fix for map expansion in cyber theme - ensure overflow works properly for specific modal */
+    .theme-cyber .fixed.inset-0.cyber-map-modal {
         overflow: visible !important;
     }
 
