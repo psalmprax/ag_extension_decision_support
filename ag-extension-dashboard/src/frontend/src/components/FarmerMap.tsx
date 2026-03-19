@@ -835,7 +835,7 @@ export function FarmerMap({
 
             {/* Fullscreen Modal */}
             {isExpanded && (
-                <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-0">
+                <div className={`fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-0 ${themeName === 'cyber' ? 'cyber-map-modal' : ''}`}>
                     <div className={`${themeName === 'cyber' ? 'glass-premium border border-primary-500/20' : ''} bg-white dark:bg-gray-900 rounded-none shadow-2xl w-screen h-screen max-w-none flex flex-col overflow-hidden border-0`} style={{ width: '100vw', height: '100vh' }}>
                         {/* Modal Header */}
                         <div className={`flex items-center justify-between px-8 py-5 border-b ${themeName === 'cyber' ? 'border-primary-500/10' : 'border-gray-100 dark:border-gray-800'} ${themeName === 'cyber' ? 'bg-gray-900/80' : 'bg-white dark:bg-gray-900'}`}>
