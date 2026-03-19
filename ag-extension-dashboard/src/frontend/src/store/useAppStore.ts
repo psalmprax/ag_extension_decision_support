@@ -106,6 +106,10 @@ interface AppState {
         periodEnd: string;
     } | null;
     setSubscription: (subscription: AppState['subscription']) => void;
+    
+    // Cross-route data
+    pendingSMS: { phone: string; name: string } | null;
+    setPendingSMS: (data: { phone: string; name: string } | null) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -135,6 +139,7 @@ export const useAppStore = create<AppState>()(
             notifications: [],
             isLoading: false,
             subscription: null,
+            pendingSMS: null,
 
             // Actions
             setUser: (user) => set({ user }),
@@ -202,6 +207,7 @@ export const useAppStore = create<AppState>()(
 
             setLoading: (isLoading) => set({ isLoading }),
             setSubscription: (subscription) => set({ subscription }),
+            setPendingSMS: (pendingSMS) => set({ pendingSMS }),
         }),
         {
             name: 'ag-extension-storage',

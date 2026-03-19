@@ -29,7 +29,8 @@ import {
     CreditCard,
     Menu,
     X,
-    Bell
+    Bell,
+    Loader2
 } from 'lucide-react';
 import { useEffect } from 'react';
 import { WeatherWidget } from '@/components/WeatherWidget';
@@ -170,7 +171,8 @@ function App() {
         sidebarOpen, setSidebarOpen,
         activeTab, setActiveTab,
         farmers: storeFarmers,
-        user: storeUser, setUser
+        user: storeUser, setUser,
+        addNotification
     } = useAppStore();
 
     // Logout handler
@@ -186,6 +188,8 @@ function App() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [ragAnswer, setRagAnswer] = useState<{ answer: string; contextUsed: any[] } | null>(null);
     const [isAsking, setIsAsking] = useState(false);
+    const [isMapExpanded, setIsMapExpanded] = useState(false);
+    const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
     // Apply theme when it changes
     useEffect(() => {
@@ -344,7 +348,7 @@ function App() {
     const visits = visitsResponse?.data?.visits || [];
 
     // Fetch Reports Data
-    const { data: reportsResponse } = useQuery<{ success: boolean; data: { reports: Report[] } }>({
+    const { data: reportsResponse, refetch: refetchReports } = useQuery<{ success: boolean; data: { reports: Report[] } }>({
         queryKey: ['reports'],
         queryFn: fetchReports,
         enabled: activeTab === 'reports'
@@ -379,6 +383,21 @@ function App() {
     ];
 
     const navItems = allNavItems.filter(item => !user || item.roles.includes(user.role));
+
+    // Report Generation Simulation
+    const handleGenerateReport = async () => {
+        setIsGeneratingReport(true);
+        // Simulate background processing
+        setTimeout(() => {
+            setIsGeneratingReport(false);
+            addNotification({
+                type: 'success',
+                message: t('reports_generated_success') || 'AI Synthesis Report generated successfully!'
+            });
+            // Refetch reports
+            refetchReports();
+        }, 3000);
+    };
 
     const handleKnowledgeSearch = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
@@ -782,6 +801,8 @@ function App() {
                                     <div className="relative h-[400px] bg-theme-bg-primary dark:bg-gray-900/50 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800">
                                         <FarmerMap
                                             height="400px"
+                                            isExternalExpanded={isMapExpanded}
+                                            onToggleExpand={setIsMapExpanded}
                                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                             farmers={farmers.map((f: any) => ({
                                                 id: f.id,
@@ -818,7 +839,10 @@ function App() {
                                                     <span className="text-[10px] font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest">{t('analytics_disease_alerts')}</span>
                                                 </div>
                                             </div>
-                                            <button className="text-[10px] font-black text-primary-600 dark:text-primary-400 uppercase bg-primary-50 dark:bg-primary-900/30 px-3 py-1 rounded-lg">
+                                            <button 
+                                                onClick={() => setIsMapExpanded(true)}
+                                                className="text-[10px] font-black text-primary-600 dark:text-primary-400 uppercase bg-primary-50 dark:bg-primary-900/30 px-3 py-1 rounded-lg hover:bg-primary-100 transition-colors"
+                                            >
                                                 {t('viz_detail_view')}
                                             </button>
                                         </div>
@@ -980,9 +1004,13 @@ function App() {
                                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('reports_title')}</h1>
                                     <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">{t('reports_subtitle')}</p>
                                 </div>
-                                <button className="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-primary-500/20 transition-all flex items-center gap-2">
-                                    <FileText className="w-4 h-4" />
-                                    {t('reports_generate_new')}
+                                <button 
+                                    onClick={handleGenerateReport}
+                                    disabled={isGeneratingReport}
+                                    className="px-6 py-3 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-xl font-bold text-sm shadow-lg shadow-primary-500/20 transition-all flex items-center gap-2"
+                                >
+                                    {isGeneratingReport ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+                                    {isGeneratingReport ? t('reports_generating') || 'Generating...' : t('reports_generate_new')}
                                 </button>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1664,6 +1692,45 @@ function App() {
                     )}
                     </div>
                 </div>
+
+                {/* Report Generation Overlay */}
+                <AnimatePresence>
+                    {isGeneratingReport && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+                        >
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                className={`${themeName === 'cyber' ? 'glass-premium border border-primary-500/30' : 'bg-white dark:bg-gray-800'} p-10 rounded-3xl shadow-2xl max-w-md w-full text-center space-y-6`}
+                            >
+                                <div className="relative w-24 h-24 mx-auto">
+                                    <div className="absolute inset-0 border-4 border-primary-500/20 rounded-full"></div>
+                                    <div className="absolute inset-0 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <FileText className="w-10 h-10 text-primary-500" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 className={`text-2xl font-black ${themeName === 'cyber' ? 'text-white text-glow' : 'text-gray-900 dark:text-white'}`}>
+                                        {t('reports_generating_title') || 'Synthesizing Data'}
+                                    </h3>
+                                    <p className="text-gray-500 dark:text-gray-400 mt-2 font-medium">
+                                        {t('reports_generating_desc') || 'Our AI is analyzing visit records, yield trends, and farmer interactions to generate your comprehensive report.'}
+                                    </p>
+                                </div>
+                                <div className="flex gap-2 justify-center">
+                                    <span className="w-2 h-2 bg-primary-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                                    <span className="w-2 h-2 bg-primary-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                                    <span className="w-2 h-2 bg-primary-500 rounded-full animate-bounce"></span>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {/* Farmer Selection Modal - accessible from both AI Assistant and Farmer Chat */}
                 {(activeTab === 'aiassistant' || activeTab === 'farmerchat') && showFarmerModal && (

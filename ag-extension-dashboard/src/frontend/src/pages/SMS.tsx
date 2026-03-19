@@ -7,6 +7,8 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
 import client from '../api/client';
+import { useAppStore } from '../store/useAppStore';
+import { useEffect } from 'react';
 
 interface SMSMessage {
     id: string;
@@ -25,6 +27,7 @@ interface Contact {
 
 export function SMSPage() {
     const { t } = useLanguage();
+    const { pendingSMS, setPendingSMS } = useAppStore();
 
     // UI State
     const [activeTab, setActiveTab] = useState<'compose' | 'history'>('compose');
@@ -44,6 +47,15 @@ export function SMSPage() {
     const [response, setResponse] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
     const [history, setHistory] = useState<SMSMessage[]>([]);
+    
+    // Check for pending SMS on mount
+    useEffect(() => {
+        if (pendingSMS) {
+            setPhoneNumber(pendingSMS.phone);
+            setSendMode('single'); // Ensure we are in single mode to see the number
+            setPendingSMS(null); // Clear it after consuming
+        }
+    }, [pendingSMS, setPendingSMS]);
 
     // Mock Data for Design
     const recentContacts: Contact[] = [

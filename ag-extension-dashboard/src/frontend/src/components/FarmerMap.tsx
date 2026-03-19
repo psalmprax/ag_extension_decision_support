@@ -434,6 +434,8 @@ export interface FarmerMapProps {
     className?: string;
     onFarmerClick?: (farmer: FarmerData) => void;
     farmers?: FarmerData[];
+    isExternalExpanded?: boolean;
+    onToggleExpand?: (isExpanded: boolean) => void;
 }
 
 export function FarmerMap({
@@ -444,11 +446,19 @@ export function FarmerMap({
     className = '',
     onFarmerClick,
     farmers: propFarmers,
+    isExternalExpanded,
+    onToggleExpand,
 }: FarmerMapProps) {
     const farmers = propFarmers || SAMPLE_FARMERS;
     const [currentLayer, setCurrentLayer] = useState<MapLayer>('street');
     const [selectedFarmer, setSelectedFarmer] = useState<FarmerData | null>(null);
-    const [isExpanded, setIsExpanded] = useState(false);
+    const [internalExpanded, setInternalExpanded] = useState(false);
+    
+    const isExpanded = isExternalExpanded !== undefined ? isExternalExpanded : internalExpanded;
+    const setIsExpanded = (val: boolean) => {
+        setInternalExpanded(val);
+        onToggleExpand?.(val);
+    };
     const [mapCenter, setMapCenter] = useState<[number, number]>(initialCenter);
     const [mapZoom, setMapZoom] = useState<number>(initialZoom);
     const [mapBounds, setMapBounds] = useState<L.LatLngBoundsExpression | undefined>(undefined);
