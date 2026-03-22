@@ -824,8 +824,8 @@ function App() {
 
                     {activeTab === 'dashboard' && (
                         <ErrorBoundary>
-                            <div className={themeName === 'cyber' ? 'mb-0' : 'mb-8'}>
-                                <h1 className={themeName === 'cyber' ? 'text-4xl font-black text-white tracking-tighter text-glow uppercase' : 'text-3xl font-bold text-gray-900 dark:text-white'}>{t('dashboard_overview')}</h1>
+                            <div className='mb-8'>
+                                <h1 className='text-3xl font-bold text-gray-900 dark:text-white'>{t('dashboard_overview')}</h1>
                                 <p className={themeName === 'cyber' ? 'text-primary-300/60 mt-1 font-bold uppercase tracking-widest text-xs' : 'text-gray-500 dark:text-gray-400 mt-1 font-medium'}>{t('dashboard_welcome').replace('{name}', user?.firstName || 'Extension Officer')}</p>
                             </div>
 

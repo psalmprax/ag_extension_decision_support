@@ -25,7 +25,7 @@ services:
       timeout: 10s
       retries: 3
     volumes:
-      - ./src/agents:/app
+      # - ./src/agents:/app
       - agent-zero-data:/app/data
 
   # Crew AI Service
@@ -51,7 +51,7 @@ services:
       timeout: 10s
       retries: 3
     volumes:
-      - ./src/agents:/app
+      # - ./src/agents:/app
       - crew-ai-data:/app/data
 
 networks:

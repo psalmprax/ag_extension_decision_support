@@ -38,9 +38,9 @@ services:
     depends_on:
       - app-db
       - redis
-    volumes:
-      - ./src/backend:/app
-      - /app/node_modules
+    # volumes:
+    #   - ./src/backend:/app
+    #   - /app/node_modules
     networks:
       - ag-network
 
@@ -55,9 +55,9 @@ services:
       - VITE_API_URL=/api
     depends_on:
       - backend
-    volumes:
-      - ./src/frontend:/app
-      - /app/node_modules
+    # volumes:
+    #   - ./src/frontend:/app
+    #   - /app/node_modules
     networks:
       - ag-network
 
