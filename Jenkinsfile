@@ -7,6 +7,11 @@ pipeline {
     }
 
     stages {
+        stage('Cleanup') {
+            steps {
+                cleanWs()
+            }
+        }
         stage('Checkout') {
             steps {
                 checkout scm
@@ -16,7 +21,7 @@ pipeline {
         stage('Install Backend Dependencies') {
             steps {
                 dir("${PROJECT_DIR}/src/backend") {
-                    sh 'npm install'
+                    sh 'npm install --verbose'
                 }
             }
         }
