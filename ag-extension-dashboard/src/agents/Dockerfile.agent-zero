@@ -24,7 +24,7 @@ RUN pip install --no-cache-dir \
     langchain
 
 # Copy agent code
-COPY agents/ ./agents/
+COPY main.py .
 COPY requirements.txt .
 
 # Install Python requirements
