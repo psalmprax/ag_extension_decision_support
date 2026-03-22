@@ -699,7 +699,8 @@ export function FarmerMap({
     return (
         <div className={`relative ${className}`} role="application" aria-label="Regional Farmer Distribution Map">
             {/* Top Controls Bar */}
-            <div className="absolute top-3 left-3 right-14 z-[1000] flex items-center gap-2">
+            {!isExpanded && (
+                <div className="absolute top-3 left-3 right-14 z-[1000] flex items-center gap-2">
                 {/* Mini Search Bar */}
                 <div className={`flex-1 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-100 dark:border-gray-700/50 overflow-hidden transition-all ${showMiniSearch ? 'opacity-100' : 'opacity-70 hover:opacity-100'}`}>
                     <div className="flex items-center px-3 py-2">
@@ -749,22 +750,25 @@ export function FarmerMap({
                     )}
                 </div>
             </div>
+        )}
 
             {/* Expand button */}
-            <button
-                onClick={() => setIsExpanded(true)}
-                className="absolute top-3 right-3 z-[1500] bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-lg p-2.5 hover:bg-white dark:hover:bg-gray-700 transition-all group border border-gray-100 dark:border-gray-700/50"
-                title={t('map_expand') || "Expand Map"}
-            >
-                <Maximize2 className="w-4 h-4 text-gray-600 dark:text-gray-300 group-hover:text-emerald-600 dark:group-hover:text-primary-400" />
-            </button>
+            {!isExpanded && (
+                <button
+                    onClick={() => setIsExpanded(true)}
+                    className="absolute top-3 right-3 z-[1500] bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-lg p-2.5 hover:bg-white dark:hover:bg-gray-700 transition-all group border border-gray-100 dark:border-gray-700/50"
+                    title={t('map_expand') || "Expand Map"}
+                >
+                    <Maximize2 className="w-4 h-4 text-gray-600 dark:text-gray-300 group-hover:text-emerald-600 dark:group-hover:text-primary-400" />
+                </button>
+            )}
 
             <div className="relative" style={{ height }}>
                 {mapContent}
             </div>
 
             {/* Stats Panel - Bottom Left */}
-            {visibleStats && (
+            {visibleStats && !isExpanded && (
                 <div className="absolute bottom-4 left-4 z-[1000] hidden md:block">
                     <div className={`stats-card dark:stats-card-dark rounded-2xl shadow-xl border border-gray-100/50 dark:border-gray-700/50 p-3 min-w-[180px]`}>
                         <div className="flex items-center justify-between mb-2">
@@ -846,7 +850,7 @@ export function FarmerMap({
             {/* Fullscreen Modal */}
             {isExpanded && (
                 <div className={`fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-0 ${themeName === 'cyber' ? 'cyber-map-modal' : ''}`}>
-                    <div className={`${themeName === 'cyber' ? 'glass-premium border border-primary-500/20' : ''} bg-white dark:bg-gray-900 rounded-none shadow-2xl w-screen h-screen max-w-none flex flex-col overflow-hidden border-0`} style={{ width: '100vw', height: '100vh' }}>
+                    <div className={`${themeName === 'cyber' ? 'glass-premium !bg-[#010101] border border-primary-500/20' : ''} bg-white dark:bg-gray-900 rounded-none shadow-2xl w-screen h-screen max-w-none flex flex-col overflow-hidden border-0`} style={{ width: '100vw', height: '100vh' }}>
                         {/* Modal Header */}
                         <div className={`flex items-center justify-between px-8 py-5 border-b ${themeName === 'cyber' ? 'border-primary-500/10' : 'border-gray-100 dark:border-gray-800'} ${themeName === 'cyber' ? 'bg-gray-900/80' : 'bg-white dark:bg-gray-900'}`}>
                             <div className="flex items-center gap-4">

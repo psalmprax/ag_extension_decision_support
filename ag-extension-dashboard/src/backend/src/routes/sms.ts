@@ -7,6 +7,9 @@ import { authorize, AuthRequest } from '@/middleware/authorize';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { usageService } from '../services/usageService';
 
+import { AIRouter } from '../services/aiProvider/aiProvider';
+import { query } from '../services/databaseService';
+
 const router = Router();
 
 // Apply authentication to all SMS routes
@@ -16,12 +19,20 @@ router.use(authorize('admin', 'regional_manager', 'extension_officer'));
 const sendSMSSchema = z.object({
     to: z.string().min(1, 'Phone number is required'),
     message: z.string().min(1, 'Message is required'),
+    farmerId: z.string().uuid().optional(),
 });
 
 // Bulk SMS Schema
 const bulkSMSSchema = z.object({
     recipients: z.array(z.string()).min(1, 'At least one recipient required'),
     message: z.string().min(1, 'Message is required'),
+    farmerId: z.string().uuid().optional(),
+});
+
+// Translate Schema
+const translateSchema = z.object({
+    text: z.string().min(1, 'Text is required'),
+    targetLanguage: z.string().min(2, 'Target language is required'),
 });
 
 // USSD Schema
@@ -36,17 +47,24 @@ const scheduleSMSSchema = z.object({
     to: z.string().min(1, 'Phone number is required'),
     message: z.string().min(1, 'Message is required'),
     scheduledTime: z.string().datetime(),
+    farmerId: z.string().uuid().optional(),
 });
 
 // Send single SMS
 router.post('/send', checkUsageLimit('sms'), validate({ body: sendSMSSchema }), async (req: AuthRequest, res: Response) => {
     try {
-        const { to, message } = req.body;
+        const { to, message, farmerId } = req.body;
+        const senderId = req.user!.userId;
 
-        const success = await smsService.sendSMS({ to, message });
+        const success = await smsService.sendSMS({ 
+            to, 
+            message, 
+            farmerId, 
+            senderId 
+        });
 
         if (success) {
-            await usageService.incrementUsage(req.user!.userId, 'sms');
+            await usageService.incrementUsage(senderId, 'sms');
             res.json({ success: true, message: 'SMS sent successfully' });
         } else {
             res.status(500).json({ success: false, message: 'Failed to send SMS' });
@@ -59,15 +77,19 @@ router.post('/send', checkUsageLimit('sms'), validate({ body: sendSMSSchema }), 
 // Send bulk SMS
 router.post('/bulk', checkUsageLimit('sms'), validate({ body: bulkSMSSchema }), async (req: AuthRequest, res: Response) => {
     try {
-        const { recipients, message } = req.body;
+        const { recipients, message, farmerId } = req.body;
+        const senderId = req.user!.userId;
 
-        const result = await smsService.sendBulkSMS({ recipients, message });
+        const result = await smsService.sendBulkSMS({ 
+            recipients, 
+            message, 
+            farmerId, 
+            senderId 
+        });
 
         if (result.sent > 0) {
-            // For bulk, we increment by the number of sent messages? 
-            // Or just 1 bulk operation? Usually SMS is billed per recipient.
             for (let i = 0; i < result.sent; i++) {
-                await usageService.incrementUsage(req.user!.userId, 'sms');
+                await usageService.incrementUsage(senderId, 'sms');
             }
         }
 
@@ -76,6 +98,57 @@ router.post('/bulk', checkUsageLimit('sms'), validate({ body: bulkSMSSchema }), 
             sent: result.sent,
             failed: result.failed,
             results: result.results,
+        });
+    } catch (error: any) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// Get SMS history
+router.get('/history', async (req: AuthRequest, res: Response) => {
+    try {
+        const { farmerId } = req.query;
+        let sql = 'SELECT * FROM sms_history ';
+        const params: any[] = [];
+
+        if (farmerId) {
+            sql += 'WHERE farmer_id = $1 ';
+            params.push(farmerId);
+        }
+
+        sql += 'ORDER BY created_at DESC LIMIT 100';
+
+        const result = await query(sql, params);
+
+        res.json({
+            success: true,
+            data: result.rows,
+        });
+    } catch (error: any) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// Translate SMS content
+router.post('/translate', validate({ body: translateSchema }), async (req: AuthRequest, res: Response) => {
+    try {
+        const { text, targetLanguage } = req.body;
+
+        const prompt = `Translate the following agricultural message to ${targetLanguage}. Keep it concise for SMS (max 160 chars if possible). Do not add any preamble or quotes.
+        
+        Message: ${text}`;
+
+        const result = await AIRouter.routeRequest('generate', {
+            prompt,
+            options: { temperature: 0.3, maxTokens: 200 }
+        });
+
+        res.json({
+            success: true,
+            data: {
+                translatedText: result.text.trim(),
+                targetLanguage
+            }
         });
     } catch (error: any) {
         res.status(500).json({ success: false, message: error.message });

@@ -13,7 +13,12 @@ import {
     Sprout,
     Maximize2,
     Activity,
-    Mail
+    Mail,
+    Edit2,
+    Save,
+    History,
+    FileText,
+    Loader2
 } from 'lucide-react';
 import {
     AreaChart,
@@ -27,6 +32,8 @@ import {
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 import { useNavigate } from 'react-router-dom';
+
+import { fetchSMSHistory } from '@/api/smsService';
 
 interface FarmerDetailPanelProps {
     isOpen: boolean;
@@ -53,8 +60,49 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
     visits = []
 }) => {
     const { t } = useLanguage();
-    const { setActiveTab, themeName, addNotification, setPendingSMS } = useAppStore();
+    const { setActiveTab: setGlobalTab, themeName, addNotification, setPendingSMS, updateFarmer } = useAppStore();
     const navigate = useNavigate();
+    const [activeTab, setActiveTab] = React.useState<'overview' | 'history' | 'insights'>('overview');
+    const [isEditing, setIsEditing] = React.useState(false);
+    const [editData, setEditData] = React.useState(farmer);
+    const [interactions, setInteractions] = React.useState<any[]>([]);
+    const [isLoadingHistory, setIsLoadingHistory] = React.useState(false);
+
+    const loadInteractions = async () => {
+        if (!farmer?.id) return;
+        setIsLoadingHistory(true);
+        try {
+            const res = await fetchSMSHistory(farmer.id);
+            if (res.success) {
+                setInteractions(res.data.map((msg: any) => ({
+                    type: 'SMS',
+                    date: new Date(msg.createdAt).toLocaleDateString(),
+                    status: msg.status === 'sent' ? 'delivered' : msg.status,
+                    content: msg.message
+                })));
+            }
+        } catch (err) {
+            console.error('Failed to load interactions:', err);
+        } finally {
+            setIsLoadingHistory(false);
+        }
+    };
+
+    React.useEffect(() => {
+        setEditData(farmer);
+        if (activeTab === 'history') {
+            loadInteractions();
+        }
+    }, [farmer, activeTab]);
+
+    const handleSave = () => {
+        updateFarmer(farmer.id, editData);
+        setIsEditing(false);
+        addNotification({
+            type: 'success',
+            message: `Updated profile for ${farmer.firstName}`
+        });
+    };
 
     if (!farmer) return null;
 
@@ -63,7 +111,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
     const handleAction = (type: 'chat' | 'sms' | 'call' | 'video') => {
         switch (type) {
             case 'chat':
-                setActiveTab('farmerchat');
+                setGlobalTab('farmerchat');
                 onClose();
                 break;
             case 'sms':
@@ -123,14 +171,25 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                 <div className="absolute inset-0 cyber-grid-premium opacity-20" />
                             )}
 
-                            <button
-                                onClick={onClose}
-                                className={`absolute top-6 right-6 p-2 backdrop-blur-md rounded-full text-white transition-all z-20 ${
-                                    isCyber ? 'bg-primary-500/20 hover:bg-primary-500/40 border border-primary-500/30' : 'bg-white/10 hover:bg-white/20'
-                                }`}
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
+                            <div className="absolute top-6 right-6 flex items-center gap-2 z-20">
+                                <button
+                                    onClick={() => isEditing ? handleSave() : setIsEditing(true)}
+                                    className={`p-2 backdrop-blur-md rounded-full text-white transition-all ${
+                                        isCyber ? 'bg-primary-500/20 hover:bg-primary-500/40 border border-primary-500/30' : 'bg-white/10 hover:bg-white/20'
+                                    }`}
+                                    title={isEditing ? 'Save Changes' : 'Edit Farmer'}
+                                >
+                                    {isEditing ? <Save className="w-5 h-5" /> : <Edit2 className="w-5 h-5" />}
+                                </button>
+                                <button
+                                    onClick={onClose}
+                                    className={`p-2 backdrop-blur-md rounded-full text-white transition-all ${
+                                        isCyber ? 'bg-primary-500/20 hover:bg-primary-500/40 border border-primary-500/30' : 'bg-white/10 hover:bg-white/20'
+                                    }`}
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
 
                             <div className="absolute bottom-0 left-0 right-0 p-8 pt-20 bg-gradient-to-t from-black/60 to-transparent">
                                 <div className="flex items-end gap-6">
@@ -148,11 +207,30 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                         <div className="flex items-center gap-4 text-white/80 text-sm font-medium">
                                             <div className="flex items-center gap-1.5">
                                                 <MapPin className="w-4 h-4" />
-                                                <span>{farmer.region}, {farmer.village}</span>
+                                                {isEditing ? (
+                                                    <input 
+                                                        type="text"
+                                                        value={editData.region || ''}
+                                                        onChange={(e) => setEditData({ ...editData, region: e.target.value })}
+                                                        className="bg-white/10 border border-white/20 rounded px-2 py-0.5 text-white placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                                                        placeholder="Region"
+                                                    />
+                                                ) : (
+                                                    <span>{farmer.region}, {farmer.village}</span>
+                                                )}
                                             </div>
                                             <div className="flex items-center gap-1.5">
                                                 <Maximize2 className="w-4 h-4" />
-                                                <span>{farmer.farmSize} ha</span>
+                                                {isEditing ? (
+                                                    <input 
+                                                        type="number"
+                                                        value={editData.farmSize || 0}
+                                                        onChange={(e) => setEditData({ ...editData, farmSize: Number(e.target.value) })}
+                                                        className="bg-white/10 border border-white/20 rounded px-2 py-0.5 text-white w-16 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                                                    />
+                                                ) : (
+                                                    <span>{farmer.farmSize} ha</span>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -160,8 +238,42 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                             </div>
                         </div>
 
+                        {/* Tabs */}
+                        <div className={`px-8 pt-6 border-b ${isCyber ? 'bg-black/40 border-primary-500/10' : 'bg-white border-gray-100 dark:border-gray-800'}`}>
+                            <div className="flex items-center gap-8">
+                                {[
+                                    { id: 'overview', label: t('nav_dashboard') || 'Overview', icon: FileText },
+                                    { id: 'history', label: t('nav_sms_history') || 'Communication', icon: History },
+                                    { id: 'insights', label: t('nav_analytics') || 'Insights', icon: TrendingUp },
+                                ].map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id as any)}
+                                        className={`pb-4 text-[10px] font-black uppercase tracking-[0.2em] relative transition-all ${
+                                            activeTab === tab.id 
+                                            ? (isCyber ? 'text-primary-400' : 'text-primary-600') 
+                                            : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
+                                        }`}
+                                    >
+                                        <span className="flex items-center gap-2">
+                                            <tab.icon className="w-4 h-4" />
+                                            {tab.label}
+                                        </span>
+                                        {activeTab === tab.id && (
+                                            <motion.div 
+                                                layoutId="activeTab"
+                                                className={`absolute bottom-0 left-0 right-0 h-1 rounded-t-full ${isCyber ? 'bg-primary-500 neon-glow-primary' : 'bg-primary-500'}`} 
+                                            />
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
                         {/* Content Section */}
-                        <div className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar">
+                        <div className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar overflow-x-hidden">
+                            {activeTab === 'overview' ? (
+                                <>
                             {/* Action Buttons */}
                             <div className="grid grid-cols-4 gap-4">
                                 {[
@@ -326,6 +438,58 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                     )}
                                 </div>
                             </section>
+                                </>
+                            ) : activeTab === 'history' ? (
+                                <section className="space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className={`text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2 ${isCyber ? 'text-primary-300/60' : 'text-gray-400'}`}>
+                                            <History className={`w-4 h-4 ${isCyber ? 'text-primary-400' : 'text-primary-500'}`} />
+                                            Recent Interactions
+                                        </h3>
+                                    </div>
+                                    <div className="space-y-4">
+                                        {isLoadingHistory ? (
+                                            <div className="flex justify-center py-10">
+                                                <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+                                            </div>
+                                        ) : interactions.length > 0 ? (
+                                            interactions.map((log, i) => (
+                                                <div 
+                                                    key={i}
+                                                    className={`p-4 rounded-2xl border ${
+                                                        isCyber ? 'bg-black/20 border-primary-500/10' : 'bg-gray-50/50 dark:bg-gray-800/30 border-gray-100 dark:border-gray-800'
+                                                    }`}
+                                                >
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${
+                                                                log.type === 'SMS' ? 'bg-blue-100 text-blue-600' : log.type === 'CHAT' ? 'bg-purple-100 text-purple-600' : 'bg-green-100 text-green-600'
+                                                            }`}>
+                                                                {log.type}
+                                                            </span>
+                                                            <span className="text-[10px] text-gray-400">{log.date}</span>
+                                                        </div>
+                                                        <span className="text-[8px] font-black uppercase tracking-widest text-emerald-500">{log.status}</span>
+                                                    </div>
+                                                    <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+                                                        {log.content || (log.type === 'CALL' ? `Outbound call duration: ${log.duration}` : '')}
+                                                    </p>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="text-center py-10 text-gray-500 uppercase text-[10px] font-bold tracking-widest">
+                                                No interaction history found
+                                            </div>
+                                        )}
+                                    </div>
+                                </section>
+                            ) : (
+                                <div className="p-12 text-center space-y-4">
+                                    <Activity className="w-12 h-12 text-gray-300 mx-auto" />
+                                    <p className="text-sm font-bold text-gray-400 tracking-widest uppercase">Deep Insights Coming Soon</p>
+                                    <p className="text-xs text-gray-500 uppercase tracking-widest">Integrating with satellite data...</p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Footer Quick Action */}

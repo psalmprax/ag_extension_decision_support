@@ -70,5 +70,10 @@
     "workbox-routing": "^7.4.0",
     "workbox-runtime-caching": "^2.0.3",
     "workbox-strategies": "^7.4.0"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
   }
 }

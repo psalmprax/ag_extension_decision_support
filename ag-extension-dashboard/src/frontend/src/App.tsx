@@ -30,8 +30,14 @@ import {
     Menu,
     X,
     Bell,
-    Loader2
+    Loader2,
+    ChevronDown,
+    User,
+    Settings,
+    Shield,
+    HelpCircle
 } from 'lucide-react';
+import { NotificationPanel } from './components/NotificationPanel';
 import { useEffect } from 'react';
 import { WeatherWidget } from '@/components/WeatherWidget';
 import { CardSkeleton } from '@/components/Skeleton';
@@ -172,7 +178,8 @@ function App() {
         activeTab, setActiveTab,
         farmers: storeFarmers,
         user: storeUser, setUser,
-        addNotification
+        addNotification,
+        notifications
     } = useAppStore();
 
     // Logout handler
@@ -184,6 +191,8 @@ function App() {
     };
 
     const [searchQuery, setSearchQuery] = useState('');
+    const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
+    const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const [userLocation, setUserLocation] = useState<string>('');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [ragAnswer, setRagAnswer] = useState<{ answer: string; contextUsed: any[] } | null>(null);
@@ -384,19 +393,25 @@ function App() {
 
     const navItems = allNavItems.filter(item => !user || item.roles.includes(user.role));
 
-    // Report Generation Simulation
+    // Report Generation
     const handleGenerateReport = async () => {
         setIsGeneratingReport(true);
-        // Simulate background processing
-        setTimeout(() => {
-            setIsGeneratingReport(false);
+        try {
+            await generateReport('synthesis', 'AI Synthesis Report');
             addNotification({
                 type: 'success',
                 message: t('reports_generated_success') || 'AI Synthesis Report generated successfully!'
             });
-            // Refetch reports
             refetchReports();
-        }, 3000);
+        } catch (error) {
+            console.error('Failed to generate report:', error);
+            addNotification({
+                type: 'error',
+                message: 'Failed to generate report. Please try again.'
+            });
+        } finally {
+            setIsGeneratingReport(false);
+        }
     };
 
     const handleKnowledgeSearch = async (e?: React.FormEvent) => {
@@ -675,32 +690,80 @@ function App() {
                         <ThemeSwitcher currentTheme={themeName} onThemeChange={setThemeName} />
                         <LanguageSwitcher compact />
                         <ThemeToggle />
-                        <button className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative">
-                            <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                            <span className="absolute top-1 right-1 w-2 h-2 bg-error-500 rounded-full border-2 border-white dark:border-gray-900"></span>
-                        </button>
-                        <div className="flex items-center gap-3 pl-4 border-l border-gray-200 dark:border-gray-700">
-                            <div className="w-10 h-10 bg-gradient-to-br from-secondary-500 to-secondary-700 rounded-full flex items-center justify-center shadow-lg shadow-secondary-500/20">
-                                <span className="text-white font-medium">{storeUser?.firstName?.[0]}{storeUser?.lastName?.[0] || 'U'}</span>
-                            </div>
-                            <div className="hidden xl:block">
-                                <p className="text-sm font-black text-gray-900 dark:text-white tracking-tight">{storeUser?.firstName} {storeUser?.lastName || 'User'}</p>
-                                <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-widest font-black leading-none mt-1">{storeUser?.role?.replace('_', ' ') || 'Extension Officer'}</p>
-                                {userLocation && (
-                                    <div className="flex items-center gap-1.5 mt-1.5">
-                                        <Navigation className="w-2.5 h-2.5 text-primary-500" />
-                                        <span className="text-[10px] text-primary-500/80 dark:text-primary-400/80 font-black uppercase tracking-widest">{userLocation}</span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                        <button
-                            onClick={handleLogout}
-                            className="ml-3 p-2 rounded-lg hover:bg-error-50 dark:hover:bg-error-900/20 transition-colors group"
-                            title={t('nav_logout')}
+                        <button 
+                            onClick={() => setIsNotificationPanelOpen(true)}
+                            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative"
                         >
-                            <LogOut className="w-5 h-5 text-gray-500 group-hover:text-red-600 dark:group-hover:text-red-400" />
+                            <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                            {notifications.some(n => !n.read) && (
+                                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white dark:border-gray-900 animate-pulse"></span>
+                            )}
                         </button>
+                        
+                        <div className="relative">
+                            <button 
+                                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                                className="flex items-center gap-3 pl-4 border-l border-gray-200 dark:border-gray-700 hover:opacity-80 transition-opacity"
+                            >
+                                <div className="w-10 h-10 bg-gradient-to-br from-secondary-500 to-secondary-700 rounded-full flex items-center justify-center shadow-lg shadow-secondary-500/20">
+                                    <span className="text-white font-medium">{storeUser?.firstName?.[0]}{storeUser?.lastName?.[0] || 'U'}</span>
+                                </div>
+                                <div className="hidden xl:block text-left">
+                                    <p className="text-sm font-black text-gray-900 dark:text-white tracking-tight flex items-center gap-1">
+                                        {storeUser?.firstName} {storeUser?.lastName || 'User'}
+                                        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
+                                    </p>
+                                    <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-widest font-black leading-none mt-1">{storeUser?.role?.replace('_', ' ') || 'Extension Officer'}</p>
+                                </div>
+                            </button>
+
+                            <AnimatePresence>
+                                {isProfileMenuOpen && (
+                                    <>
+                                        <div 
+                                            className="fixed inset-0 z-40" 
+                                            onClick={() => setIsProfileMenuOpen(false)}
+                                        />
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 p-2 z-50 backdrop-blur-xl"
+                                        >
+                                            <div className="p-3 mb-2 border-b border-gray-100 dark:border-gray-700">
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Account Info</p>
+                                                <p className="text-xs font-bold text-gray-900 dark:text-white truncate">{storeUser?.email}</p>
+                                            </div>
+                                            
+                                            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-600 dark:text-gray-300 group">
+                                                <User className="w-4 h-4 text-gray-400 group-hover:text-primary-500" />
+                                                <span className="text-xs font-bold uppercase tracking-widest">My Profile</span>
+                                            </button>
+                                            
+                                            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-600 dark:text-gray-300 group">
+                                                <Settings className="w-4 h-4 text-gray-400 group-hover:text-primary-500" />
+                                                <span className="text-xs font-bold uppercase tracking-widest">Settings</span>
+                                            </button>
+
+                                            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-600 dark:text-gray-300 group">
+                                                <HelpCircle className="w-4 h-4 text-gray-400 group-hover:text-primary-500" />
+                                                <span className="text-xs font-bold uppercase tracking-widest">Help Center</span>
+                                            </button>
+
+                                            <div className="h-px bg-gray-100 dark:bg-gray-700 my-2" />
+                                            
+                                            <button 
+                                                onClick={handleLogout}
+                                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors text-gray-600 dark:text-gray-300 group"
+                                            >
+                                                <LogOut className="w-4 h-4 text-gray-400 group-hover:text-rose-500" />
+                                                <span className="text-xs font-bold uppercase tracking-widest group-hover:text-rose-500">Sign Out</span>
+                                            </button>
+                                        </motion.div>
+                                    </>
+                                )}
+                            </AnimatePresence>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -828,39 +891,41 @@ function App() {
                                             }}
                                         />
 
-                                        <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center bg-white/10 dark:bg-black/20 backdrop-blur-md p-3 rounded-xl border border-white/20">
-                                            <div className="flex gap-4">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-2 h-2 bg-primary-500 rounded-full"></div>
-                                                    <span className="text-[10px] font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest">{t('table_active')}</span>
+                                         {!isMapExpanded && (
+                                            <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center bg-white/10 dark:bg-black/20 backdrop-blur-md p-3 rounded-xl border border-white/20">
+                                                <div className="flex gap-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-2 h-2 bg-primary-500 rounded-full"></div>
+                                                        <span className="text-[10px] font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest">{t('table_active')}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-2 h-2 bg-secondary-500 rounded-full"></div>
+                                                        <span className="text-[10px] font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest">{t('analytics_disease_alerts')}</span>
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-2 h-2 bg-secondary-500 rounded-full"></div>
-                                                    <span className="text-[10px] font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest">{t('analytics_disease_alerts')}</span>
-                                                </div>
+                                                <button 
+                                                    onClick={() => setIsMapExpanded(true)}
+                                                    className="text-[10px] font-black text-primary-600 dark:text-primary-400 uppercase bg-primary-50 dark:bg-primary-900/30 px-3 py-1 rounded-lg hover:bg-primary-100 transition-colors"
+                                                >
+                                                    {t('viz_detail_view')}
+                                                </button>
                                             </div>
-                                            <button 
-                                                onClick={() => setIsMapExpanded(true)}
-                                                className="text-[10px] font-black text-primary-600 dark:text-primary-400 uppercase bg-primary-50 dark:bg-primary-900/30 px-3 py-1 rounded-lg hover:bg-primary-100 transition-colors"
-                                            >
-                                                {t('viz_detail_view')}
-                                            </button>
-                                        </div>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="card p-8 bg-theme-bg-card dark:bg-gray-800 border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden relative">
                                     <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">{t('analytics_support_efficiency')}</h3>
                                     <div className="space-y-6">
                                         {[
-                                            { name: t('viz_crop_planning'), progress: 85, color: 'bg-primary-500' },
-                                            { name: t('viz_pest_management'), progress: 62, color: 'bg-secondary-500' },
-                                            { name: t('viz_financial_aid'), progress: 45, color: 'bg-purple-500' },
-                                            { name: t('viz_export_readiness'), progress: 78, color: 'bg-orange-500' }
+                                            { name: t('analytics_resolution_rate'), progress: performanceData?.metrics?.resolutionRate || 85, color: 'bg-primary-500' },
+                                            { name: t('analytics_satisfaction_score'), progress: (performanceData?.metrics?.satisfactionScore || 4.5) * 20, color: 'bg-secondary-500' },
+                                            { name: t('analytics_follow_up_rate'), progress: performanceData?.metrics?.followUpRate || 45, color: 'bg-purple-500' },
+                                            { name: t('analytics_first_contact_res'), progress: performanceData?.metrics?.firstContactResolution || 78, color: 'bg-orange-500' }
                                         ].map((item, i) => (
                                             <div key={i} className="space-y-2">
                                                 <div className="flex justify-between items-center">
                                                     <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{item.name}</span>
-                                                    <span className="text-xs font-black text-gray-400">{item.progress}%</span>
+                                                    <span className="text-xs font-black text-gray-400">{Math.round(item.progress)}%</span>
                                                 </div>
                                                 <div className="w-full h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                                                     <motion.div
@@ -1690,8 +1755,6 @@ function App() {
                             </div>
                         </div>
                     )}
-                    </div>
-                </div>
 
                 {/* Report Generation Overlay */}
                 <AnimatePresence>
@@ -1799,6 +1862,8 @@ function App() {
                         </div>
                     </div>
                 )}
+                    </div>
+                </div>
             </main>
 
             {/* Visit Modal */}
@@ -1815,6 +1880,10 @@ function App() {
                 farmer={selectedFarmer}
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 visits={visits.filter((v: any) => selectedFarmer && (v.farmer_id === selectedFarmer.id || v.farmer_name === `${selectedFarmer.firstName} ${selectedFarmer.lastName}`))}
+            />
+            <NotificationPanel 
+                isOpen={isNotificationPanelOpen} 
+                onClose={() => setIsNotificationPanelOpen(false)} 
             />
         </div>
     );

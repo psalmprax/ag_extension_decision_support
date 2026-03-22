@@ -22,3 +22,12 @@ export const fetchReports = async (): Promise<ReportsResponse> => {
     const response = await apiClient.get<ReportsResponse>('/reporting');
     return response.data;
 };
+
+export const generateReport = async (type: string, title?: string, farmerId?: string) => {
+    const response = await apiClient.post('/reporting/generate', {
+        type,
+        title,
+        farmerId,
+    });
+    return response.data;
+};

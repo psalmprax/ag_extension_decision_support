@@ -1,6 +1,44 @@
 import React from 'react';
+import { useAppStore } from '@/store/useAppStore';
 
 const MaintenanceDiagnostics: React.FC = () => {
+  const { addNotification } = useAppStore();
+
+  const handleDownload = () => {
+    addNotification({
+      type: 'info',
+      message: 'Generating Equipment Diagnostic Report...'
+    });
+    
+    // Simulate file generation and download
+    setTimeout(() => {
+      const data = {
+        reportId: 'DIAG-2024-001',
+        timestamp: new Date().toISOString(),
+        equipment: 'Ag-Extension-Tractor-01',
+        diagnostics: {
+          engine: 'Optimal',
+          transmission: 'Optimal',
+          hydraulics: 'Alert: Check Pressure',
+          downtimeAvoided: '15 HRS'
+        }
+      };
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'diagnostics-report.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      addNotification({
+          type: 'success',
+          message: 'Maintenance Report downloaded successfully'
+      });
+    }, 1000);
+  };
+
   return (
     <div className="glass-panel p-6 rounded-2xl border border-white/5 relative overflow-hidden h-full flex flex-col group">
         <div className="flex justify-between items-start mb-6">
@@ -10,7 +48,11 @@ const MaintenanceDiagnostics: React.FC = () => {
                     <div className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-ping"></div>
                 </h4>
             </div>
-            <button className="text-gray-500 hover:text-white transition-colors">
+            <button 
+                onClick={handleDownload}
+                className="text-gray-500 hover:text-white transition-colors"
+                title="Download Report"
+            >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>

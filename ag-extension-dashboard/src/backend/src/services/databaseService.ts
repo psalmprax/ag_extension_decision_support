@@ -199,6 +199,18 @@ export async function createTables(): Promise<void> {
       created_at TIMESTAMP DEFAULT NOW()
     );
 
+    -- SMS history table
+    CREATE TABLE IF NOT EXISTS sms_history (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      sender_id UUID REFERENCES users(id),
+      recipient_phone VARCHAR(20) NOT NULL,
+      farmer_id UUID REFERENCES farmers(id),
+      message TEXT NOT NULL,
+      status VARCHAR(50) DEFAULT 'sent',
+      provider VARCHAR(50),
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+
     -- Create indexes
     CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
     CREATE INDEX IF NOT EXISTS idx_farmers_region ON farmers(region);
@@ -209,6 +221,8 @@ export async function createTables(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_messages_conversation ON chat_messages(conversation_id);
     CREATE INDEX IF NOT EXISTS idx_analytics_events_type ON analytics_events(event_type);
     CREATE INDEX IF NOT EXISTS idx_alerts_active ON alerts(is_active);
+    CREATE INDEX IF NOT EXISTS idx_sms_history_farmer ON sms_history(farmer_id);
+    CREATE INDEX IF NOT EXISTS idx_sms_history_created ON sms_history(created_at);
   `;
 
     try {

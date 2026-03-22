@@ -1,10 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from 'axios';
 import { logger } from '../utils/logger';
+import { query } from './databaseService';
 
 export interface SMSOptions {
     to: string;
     message: string;
+    farmerId?: string;
+    senderId?: string;
+    provider?: string;
 }
 
 export interface USSDOptions {
@@ -16,6 +19,8 @@ export interface USSDOptions {
 export interface BulkSMSOptions {
     recipients: string[];
     message: string;
+    farmerId?: string;
+    senderId?: string;
 }
 
 class SMSService {
@@ -50,6 +55,19 @@ class SMSService {
 
         if (!this.africaTalkingApiKey && !this.twilioAccountSid) {
             logger.warn('SMS service not configured - messages will be logged only');
+        }
+    }
+
+    private async persistSMS(options: SMSOptions, status: string = 'sent'): Promise<void> {
+        try {
+            const { to, message, farmerId, senderId, provider } = options;
+            await query(
+                `INSERT INTO sms_history (sender_id, recipient_phone, farmer_id, message, status, provider)
+                 VALUES ($1, $2, $3, $4, $5, $6)`,
+                [senderId || null, to, farmerId || null, message, status, provider || 'none']
+            );
+        } catch (error) {
+            logger.error('Failed to persist SMS to history:', error);
         }
     }
 
@@ -126,22 +144,25 @@ class SMSService {
         // Format phone number (ensure E.164 format)
         const formattedPhone = this.formatPhoneNumber(to);
 
+        let success = false;
+        let provider = 'none';
+
         // Log in development
         if (!this.africaTalkingApiKey && !this.twilioAccountSid) {
             logger.info(`[DEV SMS] To: ${formattedPhone}, Message: ${message}`);
-            return true;
+            success = true;
+        } else if (this.africaTalkingApiKey) {
+            provider = 'africa_talking';
+            success = await this.sendViaAfricaTalking(formattedPhone, message);
+        } else if (this.twilioAccountSid) {
+            provider = 'twilio';
+            success = await this.sendViaTwilio(formattedPhone, message);
         }
 
-        // Try providers in order of preference
-        if (this.africaTalkingApiKey) {
-            return this.sendViaAfricaTalking(formattedPhone, message);
-        }
+        // Persist to database
+        await this.persistSMS({ ...options, to: formattedPhone, provider }, success ? 'sent' : 'failed');
 
-        if (this.twilioAccountSid) {
-            return this.sendViaTwilio(formattedPhone, message);
-        }
-
-        return false;
+        return success;
     }
 
     // Send bulk SMS
