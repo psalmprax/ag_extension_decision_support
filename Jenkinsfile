@@ -2,6 +2,7 @@ pipeline {
     agent any
     environment {
         PROJECT_DIR = 'ag-extension-dashboard'
+        COMPOSE_PROJECT_NAME = 'ag-extension'
     }
     stages {
         stage('Checkout') {
@@ -9,34 +10,24 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Install Backend Dependencies') {
+        stage('Deploy All Stacks') {
             steps {
-                dir("${PROJECT_DIR}/src/backend") {
-                    sh 'npm install --no-audit --no-fund --no-progress'
-                }
+                // Deploying Main Dashboard, Backend, DB, Redis and AI Agents
+                // First Deploy Main Stack to create network and base services
+                sh "docker-compose -f ${PROJECT_DIR}/docker-compose.yml up -d --build"
+                // Then deploy AI Agents overlay
+                sh "docker-compose -f ${PROJECT_DIR}/docker-compose.yml -f ${PROJECT_DIR}/docker-compose.agents.yml up -d --build"
             }
         }
-        stage('Build Backend') {
+        stage('Verify Deployment') {
             steps {
-                dir("${PROJECT_DIR}/src/backend") {
-                    sh 'npm run build || echo "Build failed, but continuing"'
-                }
+                sh 'docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep ag-'
             }
         }
-        stage('Install Frontend Dependencies') {
-            steps {
-                dir("${PROJECT_DIR}/src/frontend") {
-                    sh 'npm install --no-audit --no-fund --no-progress'
-                }
-            }
-        }
-        stage('Build Frontend') {
-            steps {
-                dir("${PROJECT_DIR}/src/frontend") {
-                    // Fail the build if frontend build fails
-                    sh 'npm run build'
-                }
-            }
+    }
+    post {
+        always {
+            echo "Deployment cycle finished."
         }
     }
 }
