@@ -151,16 +151,4 @@ export const handlers = [
         });
     }),
 
-    // Locale Mocks
-    http.get('*/locales/:lang.json', ({ params }) => {
-        const { lang } = params;
-        // Simplified for demo, actual app uses local-based translations
-        // Returning minimal set to prevent raw keys
-        return HttpResponse.json({
-            dashboard_title: 'Dashboard Executive',
-            login_title: 'Secure Access Gateway',
-            error_loading: 'Initialization Error',
-            stat_vs_last_month: 'vs last month'
-        });
-    })
 ];

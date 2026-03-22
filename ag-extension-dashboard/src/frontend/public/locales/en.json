@@ -256,6 +256,7 @@
   "reports_description_suffix": " trends and performance metrics for the current period.",
   "reports_generate_new": "Generate New Report",
   "reports_subtitle": "View and export impact reports",
+  "reports_generated_success": "AI Synthesis Report generated successfully!",
   "reports_title": "Reports",
   "save_records": "Save Records",
   "signal_alerts": "Signal Alerts",
