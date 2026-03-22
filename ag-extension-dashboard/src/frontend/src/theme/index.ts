@@ -3,7 +3,7 @@
  * Multiple aesthetic themes for the Ag-Extension Dashboard
  */
 
-export type ThemeName = 'forest' | 'golden' | 'terracotta' | 'oceanic' | 'sunset' | 'sage' | 'cyber';
+export type ThemeName = 'forest' | 'golden' | 'terracotta' | 'oceanic' | 'sunset' | 'sage';
 
 export interface ThemeColors {
     primary: {
@@ -441,7 +441,6 @@ export const themeDescriptions: Record<ThemeName, string> = {
     oceanic: '🌊 Oceanic Blue - Water and irrigation',
     sunset: '🌅 Sunset Orange - Warm harvest twilight',
     sage: '🌿 Sage Green - Vegetables and organic',
-    cyber: '⚡ Cyber Theme - Futuristic dark neon interface',
 };
 
 /**
