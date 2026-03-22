@@ -69,4 +69,4 @@ volumes:
 networks:
   ag-network:
     name: ag-network
-    driver: bridge
+    external: true

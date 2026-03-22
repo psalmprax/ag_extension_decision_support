@@ -10,22 +10,28 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Cleanup Previous Deployment') {
+        stage('Setup Environment') {
             steps {
-                // Ensure the previous deployment is removed to avoid conflicts
-                sh "docker-compose -p ${COMPOSE_PROJECT_NAME} -f ${PROJECT_DIR}/docker-compose.yml -f ${PROJECT_DIR}/docker-compose.agents.yml down --remove-orphans || true"
+                // Ensure the external network exists
+                sh "docker network create ag-network || true"
+                // Cleanup any orphans from other projects that might conflict with container names
+                sh "docker stop ag-dashboard-frontend ag-dashboard-backend ag-dashboard-db ag-dashboard-redis ag-agent-zero ag-crew-ai || true"
+                sh "docker rm ag-dashboard-frontend ag-dashboard-backend ag-dashboard-db ag-dashboard-redis ag-agent-zero ag-crew-ai || true"
             }
         }
-        stage('Deploy All Stacks') {
+        stage('Deploy Application Stack') {
             steps {
-                // Deploying Main Dashboard, Backend, DB, Redis and AI Agents
-                // Using -p flag specifically to ensure consistent project naming
+                sh "docker-compose -p ${COMPOSE_PROJECT_NAME} -f ${PROJECT_DIR}/docker-compose.yml up -d --build"
+            }
+        }
+        stage('Deploy AI Agents') {
+            steps {
+                // Combining both files ensures they share the same project context and network
                 sh "docker-compose -p ${COMPOSE_PROJECT_NAME} -f ${PROJECT_DIR}/docker-compose.yml -f ${PROJECT_DIR}/docker-compose.agents.yml up -d --build"
             }
         }
         stage('Verify Deployment') {
             steps {
-                // Wait a few seconds for services to stabilize
                 sh "sleep 10"
                 sh 'docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep ag-'
             }
