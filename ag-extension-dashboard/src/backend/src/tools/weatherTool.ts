@@ -70,5 +70,3 @@ function getAgriculturalAdvice(condition: string): string {
   if (c.includes('wind')) return 'Delay spraying pesticides to avoid drift.';
   return 'Monitor soil moisture and crop health.';
 }
-  },
-};

@@ -486,7 +486,6 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                             ) : (
                                 <div className="p-12 text-center space-y-4">
                                     <Activity className="w-12 h-12 text-gray-300 mx-auto" />
-                                    <Activity className="w-12 h-12 text-gray-300 mx-auto" />
                                     <p className="text-sm font-bold text-gray-400 tracking-widest uppercase">{t('no_insights_available') || 'No Insights Available'}</p>
                                     <p className="text-xs text-gray-500 uppercase tracking-widest">{t('satellite_data_pending') || 'Satellite data integration pending for this region'}</p>
                                 </div>

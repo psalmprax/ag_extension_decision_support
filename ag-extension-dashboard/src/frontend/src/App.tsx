@@ -805,7 +805,7 @@ function App() {
             {/* Main Content */}
             <main className={`pt-[73px] min-h-screen transition-all duration-300 ${sidebarOpen ? 'ml-[260px]' : 'ml-0'}`}>
                 <div className="p-8">
-                    <div className={themeName === 'cyber' ? 'theme-cyber -mx-8 -mt-8 p-8 min-h-[calc(100vh-73px)]' : ''}>
+                    <div className=''>
                         <ErrorBoundary>
                             {activeTab === 'farmer_dashboard' && <FarmerDashboard />}
 

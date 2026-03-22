@@ -216,7 +216,7 @@ export function SMSPage() {
                             </div>
                             <ChevronRight className={`w-4 h-4 text-slate-300 ${selectedContact?.id === contact.id ? 'text-primary-500' : ''}`} />
                         </button>
-                    ))}
+                    )))}
                     {!isLoadingContacts && recentContacts.length === 0 && (
                         <div className="text-center py-10 text-slate-400 text-xs uppercase font-bold tracking-widest">
                             No farmers found

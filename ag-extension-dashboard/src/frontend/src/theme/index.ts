@@ -441,7 +441,7 @@ export const themeDescriptions: Record<ThemeName, string> = {
     oceanic: '🌊 Oceanic Blue - Water and irrigation',
     sunset: '🌅 Sunset Orange - Warm harvest twilight',
     sage: '🌿 Sage Green - Vegetables and organic',
-    cyber: '🤖 Cyber Neon - High-tech precision agriculture',
+    cyber: '⚡ Cyber Theme - Futuristic dark neon interface',
 };
 
 /**
