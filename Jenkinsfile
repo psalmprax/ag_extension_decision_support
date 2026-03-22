@@ -33,7 +33,8 @@ pipeline {
         stage('Build Frontend') {
             steps {
                 dir("${PROJECT_DIR}/src/frontend") {
-                    sh 'npm run build || echo "Build failed, but continuing"'
+                    // Fail the build if frontend build fails
+                    sh 'npm run build'
                 }
             }
         }

@@ -48,7 +48,7 @@ import { askAI } from '@/api/knowledgeService';
 import { fetchUserProfile, AuthResponse, ProfileResponse } from '@/api/authService';
 import { fetchFarmers } from '@/api/farmerService';
 import { fetchVisits } from '@/api/visitService';
-import { fetchReports } from '@/api/reportService';
+import { fetchReports, generateReport } from '@/api/reportService';
 import { fetchPerformanceData } from '@/api/analyticsService';
 import { fetchConversations, fetchMessages, sendMessage, createConversation, createAIConversation } from '@/api/chatbotService';
 import { themes, getThemeCSS, applyTheme } from '@/theme';

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     Send, Users, Clock, CheckCircle,
     XCircle, Loader2, Search, Plus, BarChart3,
-    Layout, Bell, History, Info, ChevronRight, User, Sparkles
+    Layout, Bell, History, Info, ChevronRight, User, Sparkles, MapPin, AlertTriangle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
@@ -33,6 +33,18 @@ export function SMSPage() {
     const [sendMode, setSendMode] = useState<'single' | 'bulk'>('single');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+
+    const templates = [
+        { id: '1', title: t('sms_template_greeting'), content: "Hello, this is your Ag Extension officer. How is your crop doing?", icon: Sparkles, color: 'bg-amber-100 text-amber-600' },
+        { id: '2', title: t('sms_template_visit'), content: "I will be visiting your farm tomorrow at 10 AM. Please be available.", icon: MapPin, color: 'bg-blue-100 text-blue-600' },
+        { id: '3', title: t('sms_template_alert'), content: "URGENT: Heavy rain expected. Please take necessary precautions for your harvest.", icon: AlertTriangle, color: 'bg-rose-100 text-rose-600' },
+    ];
+
+    const recentContacts: Contact[] = [
+        { id: '1', name: 'John Doe', phone: '+254 712 345678', lastSeen: '2h ago' },
+        { id: '2', name: 'Jane Smith', phone: '+254 722 876543', lastSeen: '5h ago' },
+        { id: '3', name: 'Samuel Kamau', phone: '+254 733 112233', lastSeen: '1d ago' },
+    ];
 
     // Form State
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -85,7 +97,7 @@ export function SMSPage() {
         if (!message) return;
         setIsTranslating(true);
         try {
-            const res = await translateMessage(message, language);
+            const res = await translateMessage({ text: message, targetLanguage: language });
             if (res.success) {
                 setMessage(res.data.translatedText);
             }
@@ -105,10 +117,10 @@ export function SMSPage() {
         try {
             let res;
             if (sendMode === 'single') {
-                res = await sendSMS(phoneNumber, message, selectedContact?.id);
+                res = await sendSMS({ to: phoneNumber, message, farmerId: selectedContact?.id });
             } else {
                 const recipientList = recipients.split(',').map(r => r.trim()).filter(r => r);
-                res = await sendBulkSMS(recipientList, message);
+                res = await sendBulkSMS({ recipients: recipientList, message });
             }
 
             if (res.success) {
