@@ -20,6 +20,9 @@ FROM node:20-alpine AS production
 
 WORKDIR /app
 
+# Install OpenSSL for Prisma
+RUN apk add --no-cache openssl
+
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
@@ -31,9 +34,8 @@ ENV PORT=3001
 # Copy package files
 COPY package*.json ./
 
-# Install production dependencies
-RUN npm ci --omit=dev && \
-    npm cache clean --force
+# Install all dependencies (prisma CLI needed for startup schema sync)
+RUN npm ci && npm cache clean --force
 
 # Copy built application
 COPY --from=builder /app/dist ./dist

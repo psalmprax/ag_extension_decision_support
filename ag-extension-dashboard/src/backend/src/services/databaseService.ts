@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Pool } from 'pg';
+import { execSync } from 'child_process';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
 import { getPrisma } from './prismaService';
@@ -26,12 +27,34 @@ export async function initializeDatabase(): Promise<void> {
         getPrisma();
         logger.info('Prisma ORM initialized');
 
-        // Create tables if they don't exist
+        // Sync Prisma schema with database
+        await syncPrismaSchema();
+
+        // Create tables if they don't exist (legacy fallback)
         await createTables();
     } catch (error) {
         logger.error('Failed to initialize database:', error);
         // Continue without database for development
         logger.warn('Continuing without database connection');
+    }
+}
+
+async function syncPrismaSchema(): Promise<void> {
+    try {
+        logger.info('Syncing Prisma schema with database...');
+        const { PrismaClient } = await import('@prisma/client');
+        const prisma = new PrismaClient();
+        await prisma.$executeRaw`SELECT 1`; // Test connection
+        await prisma.$disconnect();
+        
+        // Use child_process to run prisma db push
+        execSync('npx prisma db push --accept-data-loss', {
+            stdio: 'pipe',
+            env: { ...process.env }
+        });
+        logger.info('Prisma schema synced successfully');
+    } catch (error) {
+        logger.warn('Prisma schema sync skipped:', error);
     }
 }
 
