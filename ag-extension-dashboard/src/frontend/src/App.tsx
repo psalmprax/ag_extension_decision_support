@@ -805,22 +805,21 @@ function App() {
             {/* Main Content */}
             <main className={`pt-[73px] min-h-screen transition-all duration-300 ${sidebarOpen ? 'ml-[260px]' : 'ml-0'}`}>
                 <div className="p-8">
-                    <div className=''>
-                        <ErrorBoundary>
-                            {activeTab === 'farmer_dashboard' && <FarmerDashboard />}
+                    <ErrorBoundary>
+                        {activeTab === 'farmer_dashboard' && <FarmerDashboard />}
 
-                            {activeTab === 'register_farmer' && (
-                                <RoleGuard allowedRoles={['extension_officer', 'admin']}>
-                                    <FarmerRegistrationForm />
-                                </RoleGuard>
-                            )}
+                        {activeTab === 'register_farmer' && (
+                            <RoleGuard allowedRoles={['extension_officer', 'admin']}>
+                                <FarmerRegistrationForm />
+                            </RoleGuard>
+                        )}
 
-                            {activeTab === 'visit_synthesis' && (
-                                <RoleGuard allowedRoles={['extension_officer', 'admin']}>
-                                    <VisitSynthesisForm />
-                                </RoleGuard>
-                            )}
-                        </ErrorBoundary>
+                        {activeTab === 'visit_synthesis' && (
+                            <RoleGuard allowedRoles={['extension_officer', 'admin']}>
+                                <VisitSynthesisForm />
+                            </RoleGuard>
+                        )}
+                    </ErrorBoundary>
 
                     {activeTab === 'dashboard' && (
                         <ErrorBoundary>
