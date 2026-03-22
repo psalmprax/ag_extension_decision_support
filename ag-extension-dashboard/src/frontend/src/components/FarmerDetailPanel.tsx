@@ -137,6 +137,10 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
         });
     };
 
+    const nextScheduledVisit = visits
+        .filter(v => v.status === 'scheduled')
+        .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime())[0];
+
     return (
         <AnimatePresence>
             {isOpen && (
@@ -503,8 +507,8 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                 <div>
                                     <p className={`text-[10px] font-black uppercase tracking-widest ${isCyber ? 'text-primary-300/40' : 'text-gray-400'}`}>{t('visit_next_scheduled')}</p>
                                     <p className={`text-sm font-bold ${isCyber ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
-                                        {visits.filter(v => v.status === 'scheduled').sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime())[0]?.scheduled_at 
-                                            ? new Date(visits.filter(v => v.status === 'scheduled').sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime())[0].scheduled_at).toLocaleDateString() 
+                                        {nextScheduledVisit
+                                            ? new Date(nextScheduledVisit.scheduled_at).toLocaleDateString()
                                             : t('no_visit_scheduled') || 'None scheduled'}
                                     </p>
                                 </div>
