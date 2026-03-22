@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
 import { useAppStore } from '../store/useAppStore';
 import { fetchSMSHistory, sendSMS, sendBulkSMS, translateMessage } from '../api/smsService';
+import { fetchFarmers, Farmer } from '../api/farmerService';
 
 interface SMSMessage {
     id: string;
@@ -40,11 +41,8 @@ export function SMSPage() {
         { id: '3', title: t('sms_template_alert'), content: "URGENT: Heavy rain expected. Please take necessary precautions for your harvest.", icon: AlertTriangle, color: 'bg-rose-100 text-rose-600' },
     ];
 
-    const recentContacts: Contact[] = [
-        { id: '1', name: 'John Doe', phone: '+254 712 345678', lastSeen: '2h ago' },
-        { id: '2', name: 'Jane Smith', phone: '+254 722 876543', lastSeen: '5h ago' },
-        { id: '3', name: 'Samuel Kamau', phone: '+254 733 112233', lastSeen: '1d ago' },
-    ];
+    const [recentContacts, setRecentContacts] = useState<Contact[]>([]);
+    const [isLoadingContacts, setIsLoadingContacts] = useState(false);
 
     // Form State
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -79,8 +77,27 @@ export function SMSPage() {
         }
     };
 
+    const loadContacts = async () => {
+        setIsLoadingContacts(true);
+        try {
+            const res = await fetchFarmers();
+            if (res.success) {
+                setRecentContacts(res.data.farmers.map((f: Farmer) => ({
+                    id: f.id,
+                    name: `${f.firstName} ${f.lastName}`,
+                    phone: f.phone || '',
+                })));
+            }
+        } catch (err) {
+            console.error('Failed to fetch farmers for SMS contacts:', err);
+        } finally {
+            setIsLoadingContacts(false);
+        }
+    };
+
     useEffect(() => {
         loadHistory();
+        loadContacts();
     }, []);
 
     // Check for pending SMS on mount
@@ -172,7 +189,14 @@ export function SMSPage() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                    {recentContacts.map((contact) => (
+                    {isLoadingContacts ? (
+                        <div className="flex flex-col items-center justify-center py-10">
+                            <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
+                        </div>
+                    ) : (
+                        recentContacts
+                            .filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.phone.includes(searchQuery))
+                            .map((contact) => (
                         <button
                             key={contact.id}
                             onClick={() => selectContact(contact)}
@@ -193,6 +217,11 @@ export function SMSPage() {
                             <ChevronRight className={`w-4 h-4 text-slate-300 ${selectedContact?.id === contact.id ? 'text-primary-500' : ''}`} />
                         </button>
                     ))}
+                    {!isLoadingContacts && recentContacts.length === 0 && (
+                        <div className="text-center py-10 text-slate-400 text-xs uppercase font-bold tracking-widest">
+                            No farmers found
+                        </div>
+                    )}
                 </div>
 
                 <div className="p-4 border-t border-slate-200 dark:border-slate-800">

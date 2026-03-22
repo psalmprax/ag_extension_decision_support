@@ -408,7 +408,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                             } ${visit.status === 'completed' ? (isCyber ? 'bg-primary-500 neon-glow-primary' : 'bg-primary-500') : 'bg-accent-500'}`} />
 
                                             <div 
-                                                onClick={() => addNotification({ type: 'info', message: t('visit_detail_coming') || 'Visit details coming soon' })}
+                                                onClick={() => {}}
                                                 className={`p-4 rounded-2xl border transition-all cursor-pointer ${
                                                     isCyber 
                                                     ? 'bg-black/20 border-primary-500/10 hover:bg-primary-500/5 hover:border-primary-500/30' 
@@ -486,8 +486,9 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                             ) : (
                                 <div className="p-12 text-center space-y-4">
                                     <Activity className="w-12 h-12 text-gray-300 mx-auto" />
-                                    <p className="text-sm font-bold text-gray-400 tracking-widest uppercase">Deep Insights Coming Soon</p>
-                                    <p className="text-xs text-gray-500 uppercase tracking-widest">Integrating with satellite data...</p>
+                                    <Activity className="w-12 h-12 text-gray-300 mx-auto" />
+                                    <p className="text-sm font-bold text-gray-400 tracking-widest uppercase">{t('no_insights_available') || 'No Insights Available'}</p>
+                                    <p className="text-xs text-gray-500 uppercase tracking-widest">{t('satellite_data_pending') || 'Satellite data integration pending for this region'}</p>
                                 </div>
                             )}
                         </div>
@@ -502,7 +503,11 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                 </div>
                                 <div>
                                     <p className={`text-[10px] font-black uppercase tracking-widest ${isCyber ? 'text-primary-300/40' : 'text-gray-400'}`}>{t('visit_next_scheduled')}</p>
-                                    <p className={`text-sm font-bold ${isCyber ? 'text-white' : 'text-gray-900 dark:text-white'}`}>{t('visit_date_march')}</p>
+                                    <p className={`text-sm font-bold ${isCyber ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
+                                        {visits.filter(v => v.status === 'scheduled').sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime())[0]?.scheduled_at 
+                                            ? new Date(visits.filter(v => v.status === 'scheduled').sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime())[0].scheduled_at).toLocaleDateString() 
+                                            : t('no_visit_scheduled') || 'None scheduled'}
+                                    </p>
                                 </div>
                             </div>
                             <button 
