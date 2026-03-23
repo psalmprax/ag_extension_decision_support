@@ -33,3 +33,24 @@ export const createFarmer = async (farmer: Partial<Farmer>): Promise<{ success: 
     const response = await apiClient.post<{ success: boolean; data: Farmer }>('/farmers', farmer);
     return response.data;
 };
+
+export interface FarmerStats {
+    crops: string[];
+    farmSize: number;
+    vitalScore: number;
+    yieldHistory: any[];
+    soilMoisture: string;
+    avgTemp: string;
+    phLevel: string;
+    aiConfidence: string;
+}
+
+export interface FarmerStatsResponse {
+    success: boolean;
+    data: FarmerStats;
+}
+
+export const fetchFarmerStats = async (): Promise<FarmerStatsResponse> => {
+    const response = await apiClient.get<FarmerStatsResponse>('/analytics/farmer-stats');
+    return response.data;
+};

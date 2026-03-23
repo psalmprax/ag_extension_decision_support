@@ -1,8 +1,10 @@
 import React from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
-import { Sprout, MessageSquare, Calendar, Bell, TrendingUp, Zap, ShieldAlert, LineChart } from 'lucide-react';
+import { Sprout, MessageSquare, Calendar, Bell, TrendingUp, Zap, ShieldAlert, LineChart, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import { fetchFarmerStats } from '@/api/farmerService';
 import IsometricFarmOverview from './Cyber/IsometricFarmOverview';
 import SimulationGantt from './Cyber/SimulationGantt';
 import MaintenanceDiagnostics from './Cyber/MaintenanceDiagnostics';
@@ -11,10 +13,25 @@ export const FarmerDashboard: React.FC = () => {
   const { user, themeName } = useAppStore();
   const { t } = useLanguage();
 
+  const { data: statsResponse, isLoading: statsLoading } = useQuery({
+    queryKey: ['farmer-stats'],
+    queryFn: fetchFarmerStats,
+    enabled: !!user
+  });
+
+  const farmerStats = statsResponse?.data;
   const isCyber = themeName === 'cyber';
 
   const stats = [
-    { title: t('farmer_my_crops'), value: `${t('crop_maize')}, ${t('crop_beans')}`, icon: Sprout, color: 'text-primary-600', bg: 'bg-primary-100' },
+    {
+      title: t('farmer_my_crops'),
+      value: farmerStats?.crops && farmerStats.crops.length > 0
+        ? farmerStats.crops.join(', ')
+        : `${t('crop_maize')}, ${t('crop_beans')}`,
+      icon: Sprout,
+      color: 'text-primary-600',
+      bg: 'bg-primary-100'
+    },
     { title: t('farmer_next_visit'), value: t('farmer_next_visit_val'), icon: Calendar, color: 'text-secondary-600', bg: 'bg-secondary-100' },
     { title: t('farmer_ai_advisory'), value: t('farmer_new_tips', { count: 2 }), icon: MessageSquare, color: 'text-accent-600', bg: 'bg-accent-100' },
     { title: t('farmer_alerts'), value: `1 ${t('farmer_active_status', { defaultValue: 'Active' })}`, icon: Bell, color: 'text-amber-600', bg: 'bg-amber-100' },
@@ -56,10 +73,10 @@ export const FarmerDashboard: React.FC = () => {
         {/* Legacy Stats converted to Cyber Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-                { label: 'SOIL MOISTURE', value: '34%', icon: Zap, trend: '+2%' },
-                { label: 'AVG TEMP', value: '21°C', icon:TrendingUp, trend: 'Stable' },
-                { label: 'PH LEVEL', value: '6.8', icon: LineChart, trend: 'Optimal' },
-                { label: 'AI CONFIDENCE', value: '98%', icon: ShieldAlert, trend: 'High' }
+                { label: 'SOIL MOISTURE', value: farmerStats?.soilMoisture || '34%', icon: Zap, trend: '+2%' },
+                { label: 'AVG TEMP', value: farmerStats?.avgTemp || '21°C', icon:TrendingUp, trend: 'Stable' },
+                { label: 'PH LEVEL', value: farmerStats?.phLevel || '6.8', icon: LineChart, trend: 'Optimal' },
+                { label: 'AI CONFIDENCE', value: farmerStats?.aiConfidence || '98%', icon: ShieldAlert, trend: 'High' }
             ].map((stat, i) => (
                 <div key={i} className="glass-premium p-6 rounded-2xl border-white/5 group hover:border-primary-500/30 transition-all">
                     <div className="flex justify-between items-start mb-4">
@@ -71,6 +88,14 @@ export const FarmerDashboard: React.FC = () => {
                 </div>
             ))}
         </div>
+      </div>
+    );
+  }
+
+  if (statsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
       </div>
     );
   }

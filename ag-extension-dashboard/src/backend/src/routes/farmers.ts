@@ -57,12 +57,28 @@ router.use(authorize('admin', 'regional_manager', 'extension_officer', 'farmer')
 // Get all farmers
 router.get('/', async (req: Request, res: Response) => {
     try {
-        const { region, search, limit = '50', offset = '0' } = req.query;
+        const { region: queryRegion, search, limit = '50', offset = '0' } = req.query;
+        const { userId, role } = req.user as any;
         const prisma = getPrisma();
 
         const where: any = {};
-        if (region) {
-            where.region = region as string;
+        
+        // Role-based filtering
+        if (role === 'extension_officer') {
+            where.assignedOfficerId = userId;
+        } else if (role === 'regional_manager') {
+            // Fetch manager's region
+            const manager = await prisma.user.findUnique({ where: { id: userId }, select: { region: true } });
+            if (manager?.region) {
+                where.region = manager.region;
+            }
+        } else if (role === 'farmer') {
+            where.userId = userId;
+        }
+
+        // Search and manual region filters
+        if (queryRegion) {
+            where.region = queryRegion as string;
         }
         if (search) {
             where.OR = [
@@ -129,6 +145,7 @@ router.get('/', async (req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
+        const { userId, role } = req.user as any;
         const prisma = getPrisma();
 
         const farmer = await prisma.farmer.findUnique({
@@ -137,6 +154,20 @@ router.get('/:id', async (req: Request, res: Response) => {
 
         if (!farmer) {
             return res.status(404).json({ success: false, error: 'Farmer not found' });
+        }
+
+        // Ownership/Visibility check
+        if (role === 'extension_officer' && farmer.assignedOfficerId !== userId) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+        if (role === 'farmer' && farmer.userId !== userId) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+        if (role === 'regional_manager') {
+            const manager = await prisma.user.findUnique({ where: { id: userId }, select: { region: true } });
+            if (manager?.region && farmer.region !== manager.region) {
+                return res.status(403).json({ success: false, error: 'Access denied' });
+            }
         }
 
         res.json({
