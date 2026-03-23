@@ -66,6 +66,7 @@ import { UsageQuota } from '@/components/UsageQuota';
 import { FarmerDetailPanel } from '@/components/FarmerDetailPanel';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { subscribeUserToPush } from '@/api/pushNotificationService';
+import AlphaAI from './components/Cyber/AlphaAI';
 
 // COLORS constant removed as it's unused
 
@@ -1330,194 +1331,76 @@ function App() {
                     )}
 
                     {activeTab === 'aiassistant' && (
-                        <div className="flex h-[calc(100vh-140px)] gap-6">
-                            {/* AI Advisor Sidebar - Redesigned */}
-                            <div className="w-80 flex flex-col bg-theme-bg-card dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-                                {/* Header */}
-                                <div className="p-4 border-b border-gray-100 dark:border-gray-700">
-                                    <h3 className="font-bold text-lg text-gray-900 dark:text-white">{t('chat_ai_advisor')}</h3>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('chat_connect_farmers')}</p>
-                                </div>
+                        <AlphaAI />
+                    )}
 
-                                {/* Quick Actions */}
-                                <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+                    {/* Farmer Chat Section */}
+                    {activeTab === 'farmerchat' && (
+                        <div className="flex h-[calc(100vh-140px)] gap-6">
+                            {/* Farmer Conversations Sidebar */}
+                            <div className="w-80 flex flex-col bg-theme-bg-card dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+                                <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                                    <h3 className="font-bold text-gray-900 dark:text-white">{t('chat_farmer_chats')}</h3>
                                     <button
-                                        onClick={async () => {
-                                            try {
-                                                const res = await createAIConversation({ language });
-                                                if (res.success && res.data) {
-                                                    setConversations(prev => [res.data, ...prev]);
-                                                    setActiveConvId(res.data.id);
-                                                    setChatMessages([]);
-                                                }
-                                            } catch (error) {
-                                                console.error('Failed to start AI conversation:', error);
-                                            }
-                                        }}
-                                        className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-medium transition-colors shadow-lg shadow-primary-500/20"
+                                        onClick={() => { loadFarmers(); setShowFarmerModal(true); }}
+                                        className="p-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+                                        title={t('common_new_conversation')}
                                     >
                                         <Plus className="w-4 h-4" />
-                                        {t('chat_start_new')}
                                     </button>
                                 </div>
-
-                                {/* AI Capabilities - Clean Card Design */}
-                                <div className="p-4 border-b border-gray-100 dark:border-gray-700">
-                                    <p className="font-semibold text-sm text-gray-700 dark:text-gray-300 mb-3">{t('chat_ask_anything')}</p>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <div className="flex items-center gap-2 px-3 py-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
-                                            <span className="text-primary-500">✓</span>
-                                            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{t('chat_crop_diseases')}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 px-3 py-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
-                                            <span className="text-primary-500">✓</span>
-                                            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{t('chat_weather')}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 px-3 py-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
-                                            <span className="text-primary-500">✓</span>
-                                            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{t('chat_farming_practices')}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 px-3 py-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
-                                            <span className="text-primary-500">✓</span>
-                                            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{t('chat_pest_management')}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 px-3 py-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg col-span-2">
-                                            <span className="text-primary-500">✓</span>
-                                            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{t('chat_market_prices')}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Recent Conversations */}
-                                <div className="flex-1 overflow-y-auto p-2">
-                                    <p className="px-2 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('chat_recent')}</p>
-                                    {conversations.length === 0 ? (
+                                <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                                    {farmerConversations.length === 0 ? (
                                         <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
-                                            {t('chat_no_conversations')}
+                                            {t('chat_no_conversations')}<br />{t('chat_start_new_chat')}
                                         </div>
                                     ) : (
-                                        conversations.map(conv => (
-                                            <div
+                                        farmerConversations.map(conv => (
+                                            <button
                                                 key={conv.id}
-                                                className={`w-full p-3 rounded-xl text-left transition-all mb-1 ${activeConvId === conv.id
+                                                onClick={() => {
+                                                    setActiveFarmerConvId(conv.id);
+                                                    loadFarmerMessages(conv.id);
+                                                }}
+                                                className={`w-full p-3 rounded-xl text-left transition-all ${activeFarmerConvId === conv.id
                                                     ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-100 dark:border-primary-800'
-                                                    : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                                                    }`}
+                                                    : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <div
-                                                        className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-secondary-500 flex items-center justify-center text-white text-xs font-bold cursor-pointer"
-                                                        onClick={() => {
-                                                            setActiveConvId(conv.id);
-                                                            loadMessages(conv.id);
-                                                        }}
-                                                    >
-                                                        <Sparkles className="w-4 h-4" />
+                                                    <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold">
+                                                        {conv.farmerName?.[0]}
                                                     </div>
-                                                    {editingConvId === conv.id ? (
-                                                        <div className="flex-1 flex items-center gap-2">
-                                                            <input
-                                                                type="text"
-                                                                value={editingTitle}
-                                                                onChange={(e) => setEditingTitle(e.target.value)}
-                                                                onKeyDown={(e) => {
-                                                                    if (e.key === 'Enter') {
-                                                                        updateConversationTitle(conv.id, editingTitle);
-                                                                    } else if (e.key === 'Escape') {
-                                                                        setEditingConvId(null);
-                                                                    }
-                                                                }}
-                                                                className="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                                                autoFocus
-                                                            />
-                                                            <button
-                                                                onClick={() => updateConversationTitle(conv.id, editingTitle)}
-                                                                className="p-1 text-green-600 hover:text-green-700"
-                                                            >
-                                                                <span className="text-lg">✓</span>
-                                                            </button>
-                                                            <button
-                                                                onClick={() => setEditingConvId(null)}
-                                                                className="p-1 text-gray-500 hover:text-gray-600"
-                                                            >
-                                                                <span className="text-lg">✕</span>
-                                                            </button>
+                                                    <div className="flex-1 overflow-hidden">
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="font-bold text-sm text-gray-900 dark:text-white truncate">{conv.farmerName}</span>
+                                                            <span className="text-[10px] text-gray-400">{new Date(conv.startedAt).toLocaleDateString()}</span>
                                                         </div>
-                                                    ) : (
-                                                        <>
-                                                            <div
-                                                                className="flex-1 min-w-0 cursor-pointer"
-                                                                onClick={() => {
-                                                                    setActiveConvId(conv.id);
-                                                                    loadMessages(conv.id);
-                                                                }}
-                                                            >
-                                                                <p className="font-medium text-sm text-gray-900 dark:text-white truncate">
-                                                                    {conv.title || t('chat_new_conv')}
-                                                                </p>
-                                                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                                                                    {conv.lastMessage || t('chat_ai_advisor')}
-                                                                </p>
-                                                            </div>
-                                                            <div className="flex items-center gap-1">
-                                                                <button
-                                                                    onClick={() => {
-                                                                        setEditingConvId(conv.id);
-                                                                        setEditingTitle(conv.title || '');
-                                                                    }}
-                                                                    className="p-1.5 text-gray-400 hover:text-primary-500 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600"
-                                                                    title={t('chat_rename_conversation')}
-                                                                >
-                                                                    <Pencil className="w-3.5 h-3.5" />
-                                                                </button>
-                                                                {deletingConvId === conv.id ? (
-                                                                    <div className="flex items-center gap-1">
-                                                                        <button
-                                                                            onClick={() => deleteConversation(conv.id)}
-                                                                            className="p-1.5 text-error-500 hover:text-error-600 rounded-lg hover:bg-error-50 dark:hover:bg-error-900/20"
-                                                                        >
-                                                                            <span className="text-lg">✓</span>
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => setDeletingConvId(null)}
-                                                                            className="p-1.5 text-gray-400 hover:text-gray-500 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600"
-                                                                        >
-                                                                            <span className="text-lg">✕</span>
-                                                                        </button>
-                                                                    </div>
-                                                                ) : (
-                                                                    <button
-                                                                        onClick={() => setDeletingConvId(conv.id)}
-                                                                        className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600"
-                                                                        title={t('chat_delete_conversation')}
-                                                                    >
-                                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                                    </button>
-                                                                )}
-                                                            </div>
-                                                        </>
-                                                    )}
+                                                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{conv.lastMessage}</p>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            </button>
                                         ))
                                     )}
                                 </div>
                             </div>
 
-                            {/* AI Chat Area */}
+                            {/* Farmer Chat Area */}
                             <div className="flex-1 flex flex-col bg-theme-bg-card dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-                                {activeConvId ? (
+                                {activeFarmerConvId ? (
                                     <>
                                         {/* Chat Header */}
                                         <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-secondary-500 flex items-center justify-center text-white font-bold shadow-lg shadow-primary-500/20">
-                                                    <Sparkles className="w-5 h-5" />
+                                                <div className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center text-white font-bold shadow-lg shadow-primary-500/20">
+                                                    {farmerConversations.find(c => c.id === activeFarmerConvId)?.farmerName?.[0]}
                                                 </div>
                                                 <div>
-                                                    <h4 className="font-bold text-gray-900 dark:text-white">{t('chat_ai_advisor')}</h4>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">{t('chat_ai_ready')}</span>
+                                                    <h4 className="font-bold text-gray-900 dark:text-white">
+                                                        {farmerConversations.find(c => c.id === activeFarmerConvId)?.farmerName}
+                                                    </h4>
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="w-2 h-2 bg-secondary-500 rounded-full animate-pulse"></span>
+                                                        <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">{t('chat_direct_chat')}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1525,43 +1408,34 @@ function App() {
 
                                         {/* Messages */}
                                         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                                            {chatMessages.map((msg, i) => (
-                                                <div key={i} className={`flex ${msg.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
-                                                    <div className={`max-w-[80%] p-4 rounded-2xl shadow-sm ${msg.role === 'assistant'
-                                                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-tl-none'
-                                                        : 'bg-primary-600 text-white rounded-tr-none'
+                                            {farmerChatMessages.map((msg, i) => (
+                                                <div key={i} className={`flex ${msg.role === 'officer' ? 'justify-end' : 'justify-start'}`}>
+                                                    <div className={`max-w-[80%] p-4 rounded-2xl shadow-sm ${msg.role === 'officer'
+                                                        ? 'bg-primary-600 text-white rounded-tr-none'
+                                                        : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-tl-none'
                                                         }`}>
                                                         <p className="text-sm leading-relaxed">{msg.content}</p>
-                                                        <span className={`text-[9px] mt-2 block ${msg.role === 'assistant' ? 'text-gray-400' : 'text-primary-200'}`}>
+                                                        <span className={`text-[9px] mt-2 block ${msg.role === 'officer' ? 'text-primary-200' : 'text-gray-400'}`}>
                                                             {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                         </span>
                                                     </div>
                                                 </div>
                                             ))}
-                                            {isTyping && (
-                                                <div className="flex justify-start">
-                                                    <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-2xl rounded-tl-none animate-pulse flex gap-1">
-                                                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></div>
-                                                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce delay-75"></div>
-                                                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce delay-150"></div>
-                                                    </div>
-                                                </div>
-                                            )}
                                         </div>
 
                                         {/* Input */}
-                                        <form onSubmit={handleChatSend} className="p-4 bg-gray-50 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700">
+                                        <form onSubmit={handleFarmerChatSend} className="p-4 bg-gray-50 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700">
                                             <div className="relative flex items-center gap-3">
                                                 <input
                                                     type="text"
-                                                    value={chatInput}
-                                                    onChange={(e) => setChatInput(e.target.value)}
-                                                    placeholder={t('chat_input_placeholder')}
+                                                    value={farmerChatInput}
+                                                    onChange={(e) => setFarmerChatInput(e.target.value)}
+                                                    placeholder={t('farmer_chat_placeholder')}
                                                     className="flex-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-500 transition-all dark:text-white"
                                                 />
                                                 <button
                                                     type="submit"
-                                                    disabled={!chatInput.trim() || isTyping}
+                                                    disabled={!farmerChatInput.trim()}
                                                     className="p-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl shadow-lg shadow-primary-500/20 transition-all disabled:opacity-50"
                                                 >
                                                     <Send className="w-5 h-5" />
@@ -1570,9 +1444,9 @@ function App() {
                                         </form>
                                     </>
                                 ) : (
-                                    <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
-                                        <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 transition-colors">
-                                            <MessageSquare className="w-10 h-10 text-gray-300 dark:text-gray-600" />
+                                    <div className="flex-1 flex flex-col items-center justify-center p-8">
+                                        <div className="w-20 h-20 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-600 dark:text-primary-400 mb-4">
+                                            <Users className="w-10 h-10" />
                                         </div>
                                         <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t('chat_select_conversation')}</h3>
                                         <p className="text-gray-500 dark:text-gray-400 max-w-xs">{t('chat_connect_farmers')}</p>

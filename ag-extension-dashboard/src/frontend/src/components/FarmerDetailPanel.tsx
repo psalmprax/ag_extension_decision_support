@@ -20,6 +20,7 @@ import {
     FileText,
     Loader2
 } from 'lucide-react';
+import { VideoCall } from './VideoCall';
 import {
     AreaChart,
     Area,
@@ -34,6 +35,8 @@ import { useAppStore } from '@/store/useAppStore';
 import { useNavigate } from 'react-router-dom';
 
 import { fetchSMSHistory } from '@/api/smsService';
+import { generateSynthesis } from '@/api/chatbotService';
+import { SatelliteInsights } from './SatelliteInsights';
 
 interface FarmerDetailPanelProps {
     isOpen: boolean;
@@ -107,6 +110,9 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
 
     if (!farmer) return null;
 
+    const [showVideoCall, setShowVideoCall] = React.useState(false);
+    const { user: storeUser } = useAppStore();
+
     const handleAction = (type: 'chat' | 'sms' | 'call' | 'video') => {
         switch (type) {
             case 'chat':
@@ -131,8 +137,10 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                 }
                 break;
             case 'video':
-                if (farmer.phone) {
-                    // Simulated video link for demo/whatsapp
+                if (storeUser?.role === 'extension_officer' || storeUser?.role === 'admin') {
+                    setShowVideoCall(true);
+                } else if (farmer.phone) {
+                    // Simulated video link for other roles (demo/whatsapp)
                     window.open(`https://wa.me/${farmer.phone.replace(/\D/g, '')}`, '_blank');
                     addNotification({
                         type: 'info',
@@ -143,11 +151,36 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
         }
     };
 
-    const handleStartSynthesis = () => {
-        addNotification({
-            type: 'success',
-            message: t('synthesis_started') || 'AI Synthesis started for ' + farmer.firstName
-        });
+    const [isSynthesizing, setIsSynthesizing] = React.useState(false);
+
+    const handleStartSynthesis = async () => {
+        if (!farmer?.id) return;
+        
+        setIsSynthesizing(true);
+        try {
+            const res = await generateSynthesis({
+                farmerId: farmer.id,
+                notes: `Farmer: ${farmer.firstName} ${farmer.lastName}. Region: ${farmer.region}. Farm Size: ${farmer.farmSize}ha. Crops: ${farmer.crops?.join(', ')}.`,
+                visitDate: new Date().toLocaleDateString()
+            });
+
+            if (res.success) {
+                addNotification({
+                    type: 'success',
+                    message: `AI Synthesis complete for ${farmer.firstName}`
+                });
+                // In a real app, we might open a modal with the summary here
+                console.log('Synthesis Result:', res.data.summary);
+            }
+        } catch (err) {
+            console.error('Synthesis failed:', err);
+            addNotification({
+                type: 'error',
+                message: 'AI Synthesis failed to generate'
+            });
+        } finally {
+            setIsSynthesizing(false);
+        }
     };
 
     const nextScheduledVisit = visits
@@ -478,11 +511,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                     </div>
                                 </section>
                             ) : (
-                                <div className="p-12 text-center space-y-4">
-                                    <Activity className="w-12 h-12 text-gray-300 mx-auto" />
-                                    <p className="text-sm font-bold text-gray-400 tracking-widest uppercase">{t('no_insights_available') || 'No Insights Available'}</p>
-                                    <p className="text-xs text-gray-500 uppercase tracking-widest">{t('satellite_data_pending') || 'Satellite data integration pending for this region'}</p>
-                                </div>
+                                <SatelliteInsights farmerId={farmer.id} isCyber={isCyber} />
                             )}
                         </div>
 
@@ -504,16 +533,47 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                             </div>
                             <button
                                 onClick={handleStartSynthesis}
-                                className={`px-6 py-3 rounded-2xl font-black text-xs shadow-xl transition-all flex items-center gap-2 bg-primary-400 shadow-primary-500/20'
-                                        : 'bg-primary-600 hover:bg-primary-700 text-white shadow-primary-500/20'
-                                    `}
+                                disabled={isSynthesizing}
+                                className={`px-6 py-3 rounded-2xl font-black text-xs shadow-xl transition-all flex items-center gap-2 ${
+                                    isCyber ? 'bg-primary-400 shadow-primary-500/20' : 'bg-primary-600 hover:bg-primary-700 text-white shadow-primary-500/20'
+                                } ${isSynthesizing ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
-                                {t('action_start_synthesis')}
-                                <ChevronRight className="w-4 h-4" />
+                                {isSynthesizing ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        GENERATING...
+                                    </>
+                                ) : (
+                                    <>
+                                        {t('action_start_synthesis')}
+                                        <ChevronRight className="w-4 h-4" />
+                                    </>
+                                )}
                             </button>
                         </div>
                     </motion.aside>
                 </>
+            )}
+            {showVideoCall && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+                    <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden relative rounded-3xl border border-white/20 shadow-2xl">
+                        <button 
+                            onClick={() => setShowVideoCall(false)}
+                            className="absolute top-4 right-4 z-[110] p-2 bg-black/50 hover:bg-black/70 text-white rounded-full backdrop-blur-md transition-all"
+                        >
+                            <X className="w-6 h-6" />
+                        </button>
+                        <div className="overflow-y-auto max-h-[85vh]">
+                            <VideoCall 
+                                roomId={`farmer-${farmer.id}`}
+                                userId={(storeUser as any)?.userId || 'unknown'}
+                                userName={`${storeUser?.firstName} ${storeUser?.lastName}` || 'Extension Officer'}
+                                isHost={true}
+                                onEnd={() => setShowVideoCall(false)}
+                            />
+                        </div>
+                    </div>
+                </div>
             )}
         </AnimatePresence>
     );

@@ -538,4 +538,43 @@ router.delete('/conversations/:id', async (req: Request, res: Response) => {
     }
 });
 
+// Generate visit synthesis / summary
+router.post('/synthesis', async (req: AuthRequest, res: Response) => {
+    try {
+        const { farmerId, notes, visitDate } = req.body;
+
+        if (!farmerId || !notes) {
+            return res.status(400).json({ success: false, error: 'farmerId and notes are required' });
+        }
+
+        const check = await usageService.checkLimit(req.user!.userId, 'ai_chat');
+        if (!check.allowed) {
+            return res.status(403).json({ success: false, error: 'AI Synthesis limit exceeded', details: check });
+        }
+
+        // Use AI provider to generate a summary
+        const provider = await AIProviderFactory.getProvider('groq');
+        const systemPrompt = "You are an agricultural expert. Summarize the following farm visit notes into a professional, concise assessment report with clear recommendations.";
+        const userPrompt = `Farmer ID: ${farmerId}\nVisit Date: ${visitDate || 'Today'}\nNotes: ${notes}`;
+
+        const response = await provider.generateText([
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+        ]);
+
+        await usageService.incrementUsage(req.user!.userId, 'ai_chat');
+
+        res.json({
+            success: true,
+            data: {
+                summary: response.text,
+                generatedAt: new Date().toISOString()
+            }
+        });
+    } catch (error) {
+        logger.error('Synthesis generation error:', error);
+        res.status(500).json({ success: false, error: 'Failed to generate synthesis' });
+    }
+});
+
 export default router;

@@ -147,6 +147,15 @@ async function main() {
           village: 'Village A',
           crops: ['Corn', 'Wheat'],
           userId: user.id,
+          vitalScore: 82,
+          yieldHistory: [
+            { month: 'Jan', yield: 45 },
+            { month: 'Feb', yield: 52 },
+            { month: 'Mar', yield: 48 },
+            { month: 'Apr', yield: 61 },
+            { month: 'May', yield: 55 },
+            { month: 'Jun', yield: 67 },
+          ]
         },
         {
           firstName: 'Peter',
@@ -156,6 +165,15 @@ async function main() {
           village: 'Village B',
           crops: ['Coffee', 'Tea'],
           userId: user.id,
+          vitalScore: 65,
+          yieldHistory: [
+            { month: 'Jan', yield: 38 },
+            { month: 'Feb', yield: 42 },
+            { month: 'Mar', yield: 40 },
+            { month: 'Apr', yield: 45 },
+            { month: 'May', yield: 48 },
+            { month: 'Jun', yield: 50 },
+          ]
         }
       ]
     });
