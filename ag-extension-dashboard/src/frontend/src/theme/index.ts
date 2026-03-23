@@ -3,7 +3,7 @@
  * Multiple aesthetic themes for the Ag-Extension Dashboard
  */
 
-export type ThemeName = 'forest' | 'golden' | 'terracotta' | 'oceanic' | 'sunset' | 'sage';
+export type ThemeName = 'forest' | 'golden' | 'terracotta' | 'oceanic' | 'sunset' | 'sage' | 'cyber';
 
 export interface ThemeColors {
     primary: {
@@ -338,6 +338,54 @@ export const themes: Record<ThemeName, ThemeColors> = {
         },
     },
 
+    /**
+     * Cyber Theme - High-contrast dark theme with neon accents
+     * Best for: Tech-forward users, night operations
+     */
+    cyber: {
+        primary: {
+            50: '#ecfeff',
+            100: '#cffafe',
+            200: '#a5f3fc',
+            300: '#67e8f9',
+            400: '#22d3ee',
+            500: '#06b6d4',
+            600: '#0891b2',
+            700: '#0e7490',
+            800: '#155e75',
+            900: '#164e63',
+        },
+        secondary: {
+            50: '#f5f3ff',
+            100: '#ede9fe',
+            200: '#ddd6fe',
+            300: '#c4b5fd',
+            400: '#a78bfa',
+            500: '#8b5cf6',
+            600: '#7c3aed',
+            700: '#6d28d9',
+            800: '#5b21b6',
+            900: '#4c1d95',
+        },
+        accent: {
+            50: '#ecfeff',
+            100: '#cffafe',
+            200: '#a5f3fc',
+            300: '#67e8f9',
+            400: '#22d3ee',
+            500: '#06b6d4',
+            600: '#0891b2',
+            700: '#0e7490',
+            800: '#155e75',
+            900: '#164e63',
+        },
+        background: {
+            primary: '#0e172a',
+            secondary: '#1e293b',
+            card: '#1e293b',
+        },
+    },
+
 };
 
 /**
@@ -394,6 +442,7 @@ export const themeDescriptions: Record<ThemeName, string> = {
     oceanic: '🌊 Oceanic Blue - Water and irrigation',
     sunset: '🌅 Sunset Orange - Warm harvest twilight',
     sage: '🌿 Sage Green - Vegetables and organic',
+    cyber: '🌑 Cyber Dark - High-tech night mode',
 };
 
 /**

@@ -61,6 +61,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
 }) => {
     const { t } = useLanguage();
     const { setActiveTab: setGlobalTab, themeName, addNotification, setPendingSMS, updateFarmer } = useAppStore();
+    const isCyber = themeName === 'cyber';
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = React.useState<'overview' | 'history' | 'insights'>('overview');
     const [isEditing, setIsEditing] = React.useState(false);
@@ -158,8 +159,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className={`fixed right-0 top-0 bottom-0 w-full max-w-xl z-[70] shadow-2xl overflow-hidden flex flex-col 'bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border-l border-white/20 dark:border-gray-800/50'
-                            `}
+                        className={`fixed right-0 top-0 bottom-0 w-full max-w-xl z-[70] shadow-2xl overflow-hidden flex flex-col ${isCyber ? 'bg-black/90 dark:bg-gray-900/90' : 'bg-white/90 dark:bg-gray-900/90'} backdrop-blur-xl border-l border-white/20 dark:border-gray-800/50`}
                     >
                         {/* Header Section */}
                         <div className="relative h-64 flex-shrink-0">
@@ -173,16 +173,14 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                             <div className="absolute top-6 right-6 flex items-center gap-2 z-20">
                                 <button
                                     onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-                                    className={`p-2 backdrop-blur-md rounded-full text-white transition-all bg-primary-500/40 border border-primary-500/30' : 'bg-white/10 hover:bg-white/20'
-                                        `}
+                                    className={`p-2 backdrop-blur-md rounded-full text-white transition-all ${isEditing ? 'bg-primary-500/40 border border-primary-500/30' : 'bg-white/10 hover:bg-white/20'}`}
                                     title={isEditing ? 'Save Changes' : 'Edit Farmer'}
                                 >
                                     {isEditing ? <Save className="w-5 h-5" /> : <Edit2 className="w-5 h-5" />}
                                 </button>
                                 <button
                                     onClick={onClose}
-                                    className={`p-2 backdrop-blur-md rounded-full text-white transition-all bg-primary-500/40 border border-primary-500/30' : 'bg-white/10 hover:bg-white/20'
-                                        `}
+                                    className="p-2 backdrop-blur-md rounded-full text-white transition-all bg-white/10 hover:bg-white/20"
                                 >
                                     <X className="w-5 h-5" />
                                 </button>

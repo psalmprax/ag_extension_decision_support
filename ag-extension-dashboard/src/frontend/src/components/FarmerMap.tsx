@@ -854,7 +854,7 @@ export function FarmerMap({
                                 </div>
                                 <button
                                     onClick={() => setIsExpanded(false)}
-                                    className={`p-3 rounded-2xl transition-all border bg-primary-500/20 hover:text-white' : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-900 dark:hover:text-white border-gray-100 dark:border-gray-700'`}
+                                    className={`p-3 rounded-2xl transition-all border ${themeName === 'cyber' ? 'bg-primary-500/20 hover:text-white' : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-900 dark:hover:text-white border-gray-100 dark:border-gray-700'}`}
                                 >
                                     <X className="w-6 h-6" />
                                 </button>
@@ -864,9 +864,9 @@ export function FarmerMap({
                         {/* Modal Main Content */}
                         <div className="flex-1 flex overflow-hidden">
                             {/* Side Panel */}
-                            <div className={`w-80 border-r flex flex-col 'border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/30'`}>
-                                <div className={`p-4 border-b 'border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50'`}>
-                                    <div className={`text-[11px] uppercase tracking-wider font-bold 'text-gray-400'`}>Farmlist</div>
+                            <div className={`w-80 border-r flex flex-col ${themeName === 'cyber' ? 'border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/30' : 'bg-white dark:bg-gray-900'}`}>
+                                <div className={`p-4 border-b ${themeName === 'cyber' ? 'border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50' : 'bg-gray-50 dark:bg-gray-800/50'}`}>
+                                    <div className="text-[11px] uppercase tracking-wider font-bold text-gray-400">Farmlist</div>
                                 </div>
                                 <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
                                     {filteredFarmers.length > 0 ? (
@@ -880,7 +880,7 @@ export function FarmerMap({
                                                     setSelectedFarmer(farmer);
                                                 }}
                                                 className={`w-full text-left p-3 rounded-2xl transition-all flex items-center gap-3 group ${selectedFarmer?.id === farmer.id
-                                                    \'bg-white dark:bg-gray-800 shadow-md border border-gray-100 dark:border-gray-700\'
+                                                    ? 'bg-white dark:bg-gray-800 shadow-md border border-gray-100 dark:border-gray-700'
                                                     : themeName === 'cyber' ? 'hover:bg-primary-500/5 border border-transparent hover:border-primary-500/10'
                                                         : 'hover:bg-white/60 dark:hover:bg-gray-800/60 border border-transparent hover:border-gray-100 dark:hover:border-gray-700'
                                                     }`}
