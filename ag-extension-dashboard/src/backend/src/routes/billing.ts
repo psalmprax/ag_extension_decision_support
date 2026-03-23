@@ -1,5 +1,6 @@
 import express, { Router } from 'express';
 import { paymentService } from '../services/paymentService';
+import { systemConfigService } from '../services/systemConfigService';
 import { getPrisma } from '../services/prismaService';
 import { logger } from '../utils/logger';
 import { authorize, AuthRequest } from '../middleware/authorize';
@@ -393,6 +394,65 @@ router.get('/payment-methods', authorize('admin', 'extension_officer', 'farmer')
 
 /**
  * @swagger
+ * /api/v1/billing/invoices:
+ *   get:
+ *     summary: Get user invoices
+ *     tags: [Billing]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/invoices', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
+    try {
+        const userId = req.user!.userId;
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const customerId = await paymentService.getOrCreateCustomer(userId, user.email);
+        const invoices = await paymentService.getInvoices(customerId);
+
+        res.json({ success: true, data: invoices });
+    } catch (error) {
+        logger.error('Failed to get invoices:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/billing/admin/config:
+ *   patch:
+ *     summary: Update billing configuration (Admin only)
+ *     tags: [Billing]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.patch('/admin/config', authorize('admin'), async (req: AuthRequest, res) => {
+    try {
+        const { stripeSecretKey, paypalClientId } = req.body;
+
+        if (stripeSecretKey) {
+            await systemConfigService.set('STRIPE_SECRET_KEY', stripeSecretKey, true);
+        }
+
+        if (paypalClientId) {
+            await systemConfigService.set('PAYPAL_CLIENT_ID', paypalClientId, false);
+        }
+
+        // Reload Stripe client with new key
+        await paymentService.reloadConfiguration();
+
+        res.json({ success: true, message: 'Billing configuration updated successfully' });
+    } catch (error) {
+        logger.error('Failed to update billing configuration:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
+/**
+ * @swagger
  * /api/v1/billing/payment-methods:
  *   post:
  *     summary: Add a new payment method (Placeholder)
@@ -402,18 +462,24 @@ router.get('/payment-methods', authorize('admin', 'extension_officer', 'farmer')
  */
 router.post('/payment-methods', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
     try {
-        // In a real implementation, this would handle Stripe SetupIntents or PayPal linking
-        logger.info(`[${paymentService.isSimulated ? 'DEMO' : 'REAL'}] User ${req.user!.userId} attempted to add a payment method of type: ${req.body.type || 'unknown'}`);
-        
-        res.json({ 
-            success: true, 
-            message: paymentService.isSimulated 
-                ? 'Stripe is not configured. In this Demo Mode, payment methods are simulated.' 
-                : 'Payment method added successfully (Real Mode).',
-            isMock: paymentService.isSimulated
-        });
+        const userId = req.user!.userId;
+        const email = req.user!.email;
+        const { successUrl, cancelUrl } = req.body;
+
+        const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const finalSuccessUrl = successUrl || `${baseUrl}/billing?success=true`;
+        const finalCancelUrl = cancelUrl || `${baseUrl}/billing?canceled=true`;
+
+        const result = await paymentService.createSetupSession(
+            userId,
+            email,
+            finalSuccessUrl,
+            finalCancelUrl
+        );
+
+        res.json({ success: true, data: result });
     } catch (error) {
-        logger.error('Failed to add payment method:', error);
+        logger.error('Failed to create setup session:', error);
         res.status(500).json({ success: false, message: 'Internal server error' });
     }
 });

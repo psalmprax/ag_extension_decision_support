@@ -282,3 +282,14 @@ model Notification {
 
   @@map("notifications")
 }
+
+model SystemConfig {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key       String   @unique @db.VarChar(100)
+  value     String
+  isSecret  Boolean  @default(false) @map("is_secret")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_configs")
+}

@@ -54,3 +54,8 @@ export const deletePaymentMethod = async (id: string) => {
     const { data } = await apiClient.delete(`/billing/payment-methods/${id}`);
     return data;
 };
+
+export const updateAdminConfig = async (config: { stripeSecretKey?: string; paypalClientId?: string }) => {
+    const { data } = await apiClient.patch('/billing/admin/config', config);
+    return data;
+};

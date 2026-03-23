@@ -24,7 +24,7 @@ import {
 import { useLanguage } from '../lib/LanguageContext';
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
-import { fetchPlans, fetchSubscription, createCheckoutSession, createPortalSession, fetchInvoices, switchSubscription, fetchPaymentMethods, addPaymentMethod, deletePaymentMethod } from '@/api/billingService';
+import { fetchPlans, fetchSubscription, createCheckoutSession, createPortalSession, fetchInvoices, switchSubscription, fetchPaymentMethods, addPaymentMethod, deletePaymentMethod, updateAdminConfig } from '@/api/billingService';
 import { UsageQuota } from './UsageQuota';
 
 interface Plan {
@@ -62,6 +62,7 @@ export const BillingDashboard: React.FC = () => {
     const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
+    const [adminKeys, setAdminKeys] = useState({ stripeSecretKey: '', paypalClientId: '' });
     const { user } = useAppStore();
 
     // Get success/cancel status from URL params
@@ -220,9 +221,12 @@ export const BillingDashboard: React.FC = () => {
         setActionLoading('add-pm');
         try {
             const response = await addPaymentMethod('card');
-            if (response.success) {
+            if (response.success && response.data?.url) {
+                // Real implementation: Redirect to Stripe Setup Session
+                window.location.href = response.data.url;
+            } else if (response.success) {
                 alert(response.message || 'Payment method added successfully!');
-                fetchData(); // Refresh list
+                fetchData();
             }
         } catch (error) {
             console.error('Failed to add payment method:', error);
@@ -251,11 +255,28 @@ export const BillingDashboard: React.FC = () => {
     };
 
     const handlePayPalLink = () => {
-        alert("PayPal Integration Coming Soon. In this Demo Mode, this represents where the PayPal linking flow would reside.");
+        alert("PayPal Integration is ready for backend configuration. Please add your PayPal Client ID in the Admin Settings below to enable this gateway.");
     };
 
-    const handleAdminUpdate = () => {
-        alert("Credential updates are restricted in Demo Mode for security. In a live environment, this would allow updating Stripe/PayPal API keys.");
+    const handleAdminUpdate = async () => {
+        if (!adminKeys.stripeSecretKey && !adminKeys.paypalClientId) {
+            alert("Please enter at least one credential to update.");
+            return;
+        }
+
+        setActionLoading('admin-update');
+        try {
+            const response = await updateAdminConfig(adminKeys);
+            if (response.success) {
+                alert(response.message || 'Credentials updated successfully');
+                setAdminKeys({ stripeSecretKey: '', paypalClientId: '' });
+            }
+        } catch (error) {
+            console.error('Failed to update credentials:', error);
+            alert('Failed to update credentials. Ensure you have admin privileges.');
+        } finally {
+            setActionLoading(null);
+        }
     };
 
     if (loading) {
@@ -618,53 +639,44 @@ export const BillingDashboard: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                                        <AtSign className="w-3 h-3 text-indigo-500" />
-                                        {t('billing_stripe_id')}
-                                    </label>
-                                    <div className="relative group/input">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                                <div className="space-y-4">
+                                    <div>
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{t('billing_stripe_secret')}</p>
                                         <input
-                                            type="text"
-                                            readOnly
-                                            value="acct_1H..."
-                                            className="w-full h-14 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-5 py-2 font-mono text-xs text-gray-600 dark:text-gray-400 transition-all focus:border-indigo-500 outline-none"
+                                            type="password"
+                                            value={adminKeys.stripeSecretKey}
+                                            onChange={(e) => setAdminKeys({ ...adminKeys, stripeSecretKey: e.target.value })}
+                                            placeholder="sk_test_••••••••••••••••••••••••"
+                                            className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-xs font-mono text-gray-900 dark:text-white outline-none focus:border-primary-500 transition-all"
                                         />
-                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 px-2 py-1 bg-gray-100 dark:bg-gray-800 text-[8px] font-black rounded uppercase tracking-widest opacity-0 group-hover/input:opacity-100 transition-opacity">
-                                            Locked
-                                        </div>
                                     </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                                        <TrendingUp className="w-3 h-3 text-indigo-500" />
-                                        {t('billing_paypal_id')}
-                                    </label>
-                                    <div className="relative group/input">
+                                <div className="space-y-4">
+                                    <div>
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{t('billing_paypal_id')}</p>
                                         <input
                                             type="text"
-                                            readOnly
-                                            value="client_id_live_..."
-                                            className="w-full h-14 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-5 py-2 font-mono text-xs text-gray-600 dark:text-gray-400 transition-all focus:border-indigo-500 outline-none"
+                                            value={adminKeys.paypalClientId}
+                                            onChange={(e) => setAdminKeys({ ...adminKeys, paypalClientId: e.target.value })}
+                                            placeholder="Client ID"
+                                            className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-xs font-mono text-gray-900 dark:text-white outline-none focus:border-primary-500 transition-all"
                                         />
-                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 px-2 py-1 bg-gray-100 dark:bg-gray-800 text-[8px] font-black rounded uppercase tracking-widest opacity-0 group-hover/input:opacity-100 transition-opacity">
-                                            Locked
-                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="mt-8 p-4 bg-white/50 dark:bg-white/5 rounded-2xl border border-dashed border-indigo-200 dark:border-indigo-800 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+                            <div className="flex items-center justify-between pt-6 border-t border-gray-100 dark:border-gray-800 text-[10px] font-black text-gray-400 uppercase tracking-widest">
                                 <span className="flex items-center gap-2">
                                     <Lock className="w-3.5 h-3.5" />
-                                    {t('billing_test_mode')}
+                                    {t('billing_secure_storage')}
                                 </span>
-                                <button 
+                                <button
                                     onClick={handleAdminUpdate}
-                                    className="hover:underline"
+                                    disabled={actionLoading === 'admin-update'}
+                                    className="px-6 py-2.5 bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-all shadow-lg shadow-primary-500/20 active:scale-95 disabled:opacity-50 disabled:scale-100 font-black"
                                 >
-                                    {t('billing_update_credentials')}
+                                    {actionLoading === 'admin-update' ? (t('billing_updating') || 'Updating...') : (t('billing_update_credentials'))}
                                 </button>
                             </div>
                         </section>

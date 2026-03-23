@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 
 import { logger } from '../utils/logger';
+import { systemConfigService } from './systemConfigService';
 
 export interface CreateCheckoutSessionParams {
     userId: string;
@@ -49,8 +50,8 @@ class PaymentService {
         this.initializeStripe();
     }
 
-    private initializeStripe() {
-        const stripeKey = process.env.STRIPE_SECRET_KEY;
+    private async initializeStripe() {
+        const stripeKey = await systemConfigService.getStripeKey();
 
         // Check if key is valid (must be real Stripe key, not placeholder)
         const isValidKey = stripeKey &&
@@ -77,6 +78,11 @@ class PaymentService {
             this.stripe = null;
             this.isSimulated = true;
         }
+    }
+
+    // Explicitly reload keys (useful after admin updates)
+    async reloadConfiguration() {
+        await this.initializeStripe();
     }
 
     // Create a checkout session for subscription
@@ -113,6 +119,34 @@ class PaymentService {
 
         return {
             sessionId: session.id,
+            url: session.url!,
+        };
+    }
+
+    // Create a setup session for adding payment methods
+    async createSetupSession(userId: string, email: string, successUrl: string, cancelUrl: string): Promise<{
+        url: string;
+    }> {
+        if (!this.stripe) {
+            return {
+                url: successUrl + '?setup_id=mock_setup_' + Date.now(),
+            };
+        }
+
+        const customerId = await this.getOrCreateCustomer(userId, email);
+
+        const session = await this.stripe.checkout.sessions.create({
+            mode: 'setup',
+            customer: customerId,
+            payment_method_types: ['card'],
+            success_url: successUrl,
+            cancel_url: cancelUrl,
+            metadata: {
+                userId,
+            },
+        });
+
+        return {
             url: session.url!,
         };
     }
