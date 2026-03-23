@@ -403,12 +403,14 @@ router.get('/payment-methods', authorize('admin', 'extension_officer', 'farmer')
 router.post('/payment-methods', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
     try {
         // In a real implementation, this would handle Stripe SetupIntents or PayPal linking
-        logger.info(`[MOCK] User ${req.user!.userId} attempted to add a payment method of type: ${req.body.type || 'unknown'}`);
+        logger.info(`[${paymentService.isSimulated ? 'DEMO' : 'REAL'}] User ${req.user!.userId} attempted to add a payment method of type: ${req.body.type || 'unknown'}`);
         
         res.json({ 
             success: true, 
-            message: 'In this demo/test mode, payment methods are managed via the mock portal or pre-seeded data.',
-            isMock: true
+            message: paymentService.isSimulated 
+                ? 'Stripe is not configured. In this Demo Mode, payment methods are simulated.' 
+                : 'Payment method added successfully (Real Mode).',
+            isMock: paymentService.isSimulated
         });
     } catch (error) {
         logger.error('Failed to add payment method:', error);

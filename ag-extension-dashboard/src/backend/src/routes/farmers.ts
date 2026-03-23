@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, Request, Response } from 'express';
+import { Farmer } from '@prisma/client';
 import { logger } from '@/utils/logger';
 import { validate } from '@/middleware/validationMiddleware';
 import { createFarmerSchema } from '@/utils/schemas';
@@ -39,6 +39,20 @@ router.use(authorize('admin', 'regional_manager', 'extension_officer', 'farmer')
  *     responses:
  *       200:
  *         description: List of farmers
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     farmers:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Farmer'
+ *                     total: { type: integer }
  */
 // Get all farmers
 router.get('/', async (req: Request, res: Response) => {
@@ -68,7 +82,7 @@ router.get('/', async (req: Request, res: Response) => {
         res.json({
             success: true,
             data: {
-                farmers: farmers.map(f => ({
+                farmers: farmers.map((f: Farmer) => ({
                     id: f.id,
                     firstName: f.firstName,
                     lastName: f.lastName,
@@ -77,9 +91,13 @@ router.get('/', async (req: Request, res: Response) => {
                     village: f.village,
                     crops: f.crops,
                     farmSize: f.farmSizeHectares,
+                    vitalScore: f.vitalScore,
+                    yieldHistory: f.yieldHistory,
+                    locationLat: f.locationLat,
+                    locationLng: f.locationLng,
                     languagePreference: f.languagePreference,
                 })),
-                total: farmers.length, // In a real app, you'd want a count query separately
+                total: farmers.length, 
             },
         });
     } catch (error) {
@@ -129,13 +147,13 @@ router.get('/:id', async (req: Request, res: Response) => {
                 lastName: farmer.lastName,
                 phone: farmer.phone,
                 email: null, // Since we don't have email in the schema yet matching exactly what was there
-                location: {
-                    region: farmer.region,
-                    district: farmer.district,
-                    village: farmer.village,
-                    lat: null, // location_lat was Decimal, we should probably add it back or map it
-                    lng: null,
-                },
+                locationLat: farmer.locationLat,
+                locationLng: farmer.locationLng,
+                region: farmer.region,
+                district: farmer.district,
+                village: farmer.village,
+                vitalScore: farmer.vitalScore,
+                yieldHistory: farmer.yieldHistory,
                 farmSize: farmer.farmSizeHectares,
                 crops: farmer.crops,
                 languagePreference: farmer.languagePreference || 'en',
@@ -171,6 +189,10 @@ router.get('/:id', async (req: Request, res: Response) => {
  *               farmSize: { type: number }
  *               crops: { type: array, items: { type: string } }
  *               languagePreference: { type: string }
+ *               vitalScore: { type: number }
+ *               yieldHistory: { type: object }
+ *               locationLat: { type: number }
+ *               locationLng: { type: number }
  *     responses:
  *       201:
  *         description: Farmer created
@@ -178,7 +200,11 @@ router.get('/:id', async (req: Request, res: Response) => {
 // Create farmer
 router.post('/', validate(createFarmerSchema), async (req: Request, res: Response) => {
     try {
-        const { firstName, lastName, phone, region, village, farmSize, crops, languagePreference } = req.body;
+        const { 
+            firstName, lastName, phone, region, village, 
+            farmSize, crops, languagePreference,
+            vitalScore, yieldHistory, locationLat, locationLng
+        } = req.body;
         const prisma = getPrisma();
 
         const farmer = await prisma.farmer.create({
@@ -191,10 +217,31 @@ router.post('/', validate(createFarmerSchema), async (req: Request, res: Respons
                 farmSizeHectares: farmSize,
                 crops,
                 languagePreference: languagePreference || 'en',
+                vitalScore,
+                yieldHistory,
+                locationLat,
+                locationLng,
             },
         });
 
-        res.status(201).json({ success: true, data: farmer });
+        res.status(201).json({ 
+            success: true, 
+            data: {
+                id: farmer.id,
+                firstName: farmer.firstName,
+                lastName: farmer.lastName,
+                phone: farmer.phone,
+                region: farmer.region,
+                village: farmer.village,
+                crops: farmer.crops,
+                farmSize: farmer.farmSizeHectares,
+                vitalScore: farmer.vitalScore,
+                yieldHistory: farmer.yieldHistory,
+                locationLat: farmer.locationLat,
+                locationLng: farmer.locationLng,
+                languagePreference: farmer.languagePreference,
+            } 
+        });
     } catch (error) {
         logger.error('Create farmer error:', error);
         res.status(500).json({ success: false, error: 'Failed to create farmer' });
@@ -205,7 +252,11 @@ router.post('/', validate(createFarmerSchema), async (req: Request, res: Respons
 router.patch('/:id', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { firstName, lastName, phone, region, village, farmSize, crops, languagePreference } = req.body;
+        const { 
+            firstName, lastName, phone, region, village, 
+            farmSize, crops, languagePreference,
+            vitalScore, yieldHistory, locationLat, locationLng
+        } = req.body;
         const prisma = getPrisma();
 
         const farmer = await prisma.farmer.update({
@@ -219,11 +270,32 @@ router.patch('/:id', async (req: Request, res: Response) => {
                 farmSizeHectares: farmSize,
                 crops,
                 languagePreference,
+                vitalScore,
+                yieldHistory,
+                locationLat,
+                locationLng,
                 updatedAt: new Date(),
             },
         });
 
-        res.json({ success: true, data: farmer });
+        res.json({ 
+            success: true, 
+            data: {
+                id: farmer.id,
+                firstName: farmer.firstName,
+                lastName: farmer.lastName,
+                phone: farmer.phone,
+                region: farmer.region,
+                village: farmer.village,
+                crops: farmer.crops,
+                farmSize: farmer.farmSizeHectares,
+                vitalScore: farmer.vitalScore,
+                yieldHistory: farmer.yieldHistory,
+                locationLat: farmer.locationLat,
+                locationLng: farmer.locationLng,
+                languagePreference: farmer.languagePreference,
+            }
+        });
     } catch (error) {
         logger.error('Update farmer error:', error);
         res.status(500).json({ success: false, error: 'Failed to update farmer' });

@@ -4,14 +4,16 @@ export interface Farmer {
     id: string;
     firstName: string;
     lastName: string;
-    phone: string;
-    region: string;
-    location?: string;
-    village: string;
-    crops: string[];
-    farmSize: number;
-    latitude?: number;
-    longitude?: number;
+    phone?: string;
+    region?: string;
+    village?: string;
+    crops?: string[];
+    farmSize?: number;
+    vitalScore?: number;
+    yieldHistory?: any;
+    locationLat?: number;
+    locationLng?: number;
+    languagePreference?: string;
 }
 
 export interface FarmersResponse {

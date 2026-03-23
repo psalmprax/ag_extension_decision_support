@@ -30,6 +30,10 @@ export const createFarmerSchema = z.object({
     farmSize: z.number().positive(),
     crops: z.array(z.string()).min(1),
     phone: z.string().optional(),
+    vitalScore: z.number().min(0).max(100).optional(),
+    yieldHistory: z.any().optional(),
+    locationLat: z.number().optional(),
+    locationLng: z.number().optional(),
   }),
 });
 

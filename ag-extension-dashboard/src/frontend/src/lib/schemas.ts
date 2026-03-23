@@ -29,6 +29,8 @@ export const farmerSchema = z.object({
     farmSize: z.number().nonnegative().optional(),
     latitude: z.number().min(-90).max(90).optional(),
     longitude: z.number().min(-180).max(180).optional(),
+    vitalScore: z.number().min(0).max(100).optional(),
+    yieldHistory: z.any().optional(),
 })
 
 export const farmerUpdateSchema = farmerSchema.partial()

@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { farmerSchema, type FarmerInput } from '@/lib/schemas';
 import { useAppStore } from '@/store/useAppStore';
-import { Loader2, UserPlus, MapPin, Phone, Maximize } from 'lucide-react';
+import { Loader2, UserPlus, MapPin, Phone, Maximize, Activity } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/lib/LanguageContext';
 import { createFarmer } from '@/api/farmerService';
@@ -38,8 +38,9 @@ export const FarmerRegistrationForm: React.FC = () => {
         village: data.location,
         crops: data.crops || [],
         farmSize: data.farmSize || 0,
-        latitude: data.latitude,
-        longitude: data.longitude
+        locationLat: data.latitude,
+        locationLng: data.longitude,
+        vitalScore: data.vitalScore
       });
 
       if (response.success) {
@@ -48,11 +49,11 @@ export const FarmerRegistrationForm: React.FC = () => {
           firstName: response.data.firstName,
           lastName: response.data.lastName,
           phone: response.data.phone,
-          location: response.data.region || response.data.village,
+          location: data.location,
           crops: response.data.crops,
           farmSize: response.data.farmSize,
-          latitude: response.data.latitude,
-          longitude: response.data.longitude
+          latitude: response.data.locationLat,
+          longitude: response.data.locationLng
         });
         toast.success(t('farmer_register_success'));
         reset();
@@ -177,6 +178,27 @@ export const FarmerRegistrationForm: React.FC = () => {
               <option value="oro">Afaan Oromoo (oro)</option>
               <option value="fr">French (fr)</option>
             </select>
+          </div>
+
+          {/* Performance & Health */}
+          <div className="space-y-4 md:col-span-2 p-4 bg-primary-50 dark:bg-primary-900/10 rounded-xl border border-primary-100 dark:border-primary-800/50">
+            <h3 className="text-sm font-bold text-primary-700 dark:text-primary-300 uppercase tracking-wider flex items-center gap-2">
+              <Activity className="w-4 h-4" />
+              Performance & Health
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                  Initial Vital Score (0-100)
+                </label>
+                <input
+                  type="number"
+                  {...register('vitalScore', { valueAsNumber: true })}
+                  className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                  placeholder="e.g. 85"
+                />
+              </div>
+            </div>
           </div>
 
           {/* Geolocation */}

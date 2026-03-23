@@ -44,7 +44,7 @@ interface FarmerDetailPanelProps {
     visits?: any[];
 }
 
-const yieldData = [
+const defaultYieldData = [
     { month: 'Jan', yield: 45 },
     { month: 'Feb', yield: 52 },
     { month: 'Mar', yield: 48 },
@@ -120,11 +120,25 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                 }
                 break;
             case 'call':
+                if (farmer.phone) {
+                    window.location.href = `tel:${farmer.phone}`;
+                    addNotification({
+                        type: 'info',
+                        message: `${t('action_connecting') || 'Connecting to'} ${farmer.firstName}...`
+                    });
+                } else {
+                    addNotification({ type: 'error', message: 'No phone number available' });
+                }
+                break;
             case 'video':
-                addNotification({
-                    type: 'info',
-                    message: `${t('action_connecting') || 'Connecting to'} ${farmer.firstName}... (${type.toUpperCase()})`
-                });
+                if (farmer.phone) {
+                    // Simulated video link for demo/whatsapp
+                    window.open(`https://wa.me/${farmer.phone.replace(/\D/g, '')}`, '_blank');
+                    addNotification({
+                        type: 'info',
+                        message: `${t('action_connecting') || 'Opening WhatsApp for'} ${farmer.firstName}...`
+                    });
+                }
                 break;
         }
     };
@@ -306,7 +320,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                         <div className={`h-48 w-full rounded-3xl p-4 border 'bg-gray-50/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800'
                                             `}>
                                             <ResponsiveContainer width="100%" height="100%">
-                                                <AreaChart data={yieldData}>
+                                                <AreaChart data={farmer.yieldHistory || defaultYieldData}>
                                                     <defs>
                                                         <linearGradient id="colorYield" x1="0" y1="0" x2="0" y2="1">
                                                             <stop offset="5%" stopColor={isCyber ? "#4fd1c5" : "#22c55e"} stopOpacity={0.3} />
@@ -366,10 +380,10 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                                 {t('farmer_vital_score')}
                                             </h3>
                                             <div className={`text-3xl font-black leading-none 'text-gray-900 dark:text-white'`}>
-                                                84<span className="text-sm text-gray-400">/100</span>
+                                                {farmer.vitalScore || 0}<span className="text-sm text-gray-400">/100</span>
                                             </div>
                                             <div className={`w-full h-1.5 rounded-full mt-3 overflow-hidden 'bg-gray-100 dark:bg-gray-700'`}>
-                                                <div className={`h-full rounded-full 'bg-secondary-500'`} style={{ width: '84%' }} />
+                                                <div className={`h-full rounded-full 'bg-secondary-500'`} style={{ width: `${farmer.vitalScore || 0}%` }} />
                                             </div>
                                         </section>
                                     </div>

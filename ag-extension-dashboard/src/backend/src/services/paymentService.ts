@@ -43,6 +43,7 @@ interface StripeSubscription {
 
 class PaymentService {
     private stripe: Stripe | null = null;
+    public isSimulated: boolean = true;
 
     constructor() {
         this.initializeStripe();
@@ -63,14 +64,18 @@ class PaymentService {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     apiVersion: '2024-12-18.acacia' as any,
                 });
-                logger.info('Stripe payment service initialized');
+                this.isSimulated = false;
+                logger.info('Stripe payment service initialized (Real Mode)');
             } catch (error) {
-                logger.warn('Failed to initialize Stripe with provided key - payments will be simulated:', error);
+                logger.warn('Failed to initialize Stripe with provided key - payments will be simulated (Demo Mode):', error);
                 this.stripe = null;
+                this.isSimulated = true;
             }
         } else {
-            logger.warn('Stripe not configured or invalid key - payments will be simulated');
+            const reason = !stripeKey ? 'Key missing' : 'Key is placeholder/invalid';
+            logger.warn(`Stripe not configured (${reason}) - payments will be simulated (Demo Mode)`);
             this.stripe = null;
+            this.isSimulated = true;
         }
     }
 

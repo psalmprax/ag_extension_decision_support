@@ -47,6 +47,10 @@ model Farmer {
   country                  String?            @default("Kenya") @db.VarChar(100)
   farmSizeHectares         Decimal?           @map("farm_size_hectares") @db.Decimal(10, 2)
   crops                    String[]
+  vitalScore               Decimal?           @map("vital_score") @db.Decimal(5, 2)
+  yieldHistory             Json?              @map("yield_history")
+  locationLat              Decimal?           @map("location_lat") @db.Decimal(10, 8)
+  locationLng              Decimal?           @map("location_lng") @db.Decimal(11, 8)
   languagePreference       String?            @default("en") @map("language_preference") @db.VarChar(20)
   isActive                 Boolean?           @default(true) @map("is_active")
   assignmentNotificationSent Boolean           @default(false) @map("assignment_notification_sent")
