@@ -352,5 +352,7 @@
   "weather_humidity": "Υγρασία",
   "weather_malawi": "Μέτασοι του Μαλάουι",
   "weather_title": "Μέτεωρα",
-  "weather_wind": "Ταχύτητα του Αέρος"
+  "weather_wind": "Ταχύτητα του Αέρος",
+  "billing_secure_storage": "Secure Storage",
+  "billing_stripe_secret": "Stripe Secret Key"
 }

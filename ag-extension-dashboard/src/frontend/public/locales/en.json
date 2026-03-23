@@ -353,5 +353,7 @@
   "weather_humidity": "Humidity",
   "weather_malawi": "Malawi Weather",
   "weather_title": "Weather",
-  "weather_wind": "Wind Speed"
+  "weather_wind": "Wind Speed",
+  "billing_secure_storage": "Secure Storage",
+  "billing_stripe_secret": "Stripe Secret Key"
 }

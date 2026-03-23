@@ -361,5 +361,7 @@
   "weather_humidity": "Umiditate",
   "weather_malawi": "Vremea din Malawi",
   "weather_title": "Vremea",
-  "weather_wind": "Viteză de Vânt"
+  "weather_wind": "Viteză de Vânt",
+  "billing_secure_storage": "Secure Storage",
+  "billing_stripe_secret": "Stripe Secret Key"
 }

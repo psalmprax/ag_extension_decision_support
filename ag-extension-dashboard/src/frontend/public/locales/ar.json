@@ -352,5 +352,7 @@
   "weather_humidity": "الرطوبة",
   "weather_malawi": "الطقس في مالاوي",
   "weather_title": "الطقس",
-  "weather_wind": "سرعة الرياح"
+  "weather_wind": "سرعة الرياح",
+  "billing_secure_storage": "Secure Storage",
+  "billing_stripe_secret": "Stripe Secret Key"
 }

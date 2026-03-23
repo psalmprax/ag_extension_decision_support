@@ -352,5 +352,7 @@
   "weather_humidity": "Fugtighed",
   "weather_malawi": "Malawis Vejr",
   "weather_title": "Vejr",
-  "weather_wind": "Vindhastighed"
+  "weather_wind": "Vindhastighed",
+  "billing_secure_storage": "Secure Storage",
+  "billing_stripe_secret": "Stripe Secret Key"
 }

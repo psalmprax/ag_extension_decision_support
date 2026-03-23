@@ -352,5 +352,7 @@
   "weather_humidity": "湿度",
   "weather_malawi": "马拉维天气",
   "weather_title": "天气",
-  "weather_wind": "风速"
+  "weather_wind": "风速",
+  "billing_secure_storage": "Secure Storage",
+  "billing_stripe_secret": "Stripe Secret Key"
 }

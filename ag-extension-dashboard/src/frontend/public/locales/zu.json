@@ -352,5 +352,7 @@
   "weather_humidity": "Ukungcolilelo Lwesifundo",
   "weather_malawi": "Hulumeni Lwamalawi",
   "weather_title": "Hulumeni",
-  "weather_wind": "Ukubhala kwesintu"
+  "weather_wind": "Ukubhala kwesintu",
+  "billing_secure_storage": "Secure Storage",
+  "billing_stripe_secret": "Stripe Secret Key"
 }

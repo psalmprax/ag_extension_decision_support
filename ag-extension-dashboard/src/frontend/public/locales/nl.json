@@ -352,5 +352,7 @@
   "weather_humidity": "Vochtigheid",
   "weather_malawi": "Weer in Malawi",
   "weather_title": "Weer",
-  "weather_wind": "Wind snelheid"
+  "weather_wind": "Wind snelheid",
+  "billing_secure_storage": "Secure Storage",
+  "billing_stripe_secret": "Stripe Secret Key"
 }

@@ -352,5 +352,7 @@
   "weather_humidity": "उच्चता",
   "weather_malawi": "मलावी मौसम",
   "weather_title": "मौसम",
-  "weather_wind": "वायुमंडलीय गति"
+  "weather_wind": "वायुमंडलीय गति",
+  "billing_secure_storage": "Secure Storage",
+  "billing_stripe_secret": "Stripe Secret Key"
 }

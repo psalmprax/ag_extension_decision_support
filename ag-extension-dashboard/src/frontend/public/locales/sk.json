@@ -352,5 +352,7 @@
   "weather_humidity": "Vlhkosť",
   "weather_malawi": "Počasie Malawi",
   "weather_title": "Počasie",
-  "weather_wind": "Rýchlosť vetra"
+  "weather_wind": "Rýchlosť vetra",
+  "billing_secure_storage": "Secure Storage",
+  "billing_stripe_secret": "Stripe Secret Key"
 }

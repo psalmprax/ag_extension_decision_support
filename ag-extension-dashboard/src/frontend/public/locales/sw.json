@@ -353,5 +353,7 @@
   "weather_humidity": "Unyevunyevu",
   "weather_malawi": "Hali ya Hewa ya Malawi",
   "weather_title": "Hali ya Hewa",
-  "weather_wind": "Kasi ya Upepo"
+  "weather_wind": "Kasi ya Upepo",
+  "billing_secure_storage": "Secure Storage",
+  "billing_stripe_secret": "Stripe Secret Key"
 }

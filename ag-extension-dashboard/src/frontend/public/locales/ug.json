@@ -352,5 +352,7 @@
   "weather_humidity": "نىمىلىق",
   "weather_malawi": "مالاتۋىيە ئابىىدايى",
   "weather_title": "ئابىىداي",
-  "weather_wind": "ھاۋا سۈرئىتى"
+  "weather_wind": "ھاۋا سۈرئىتى",
+  "billing_secure_storage": "Secure Storage",
+  "billing_stripe_secret": "Stripe Secret Key"
 }

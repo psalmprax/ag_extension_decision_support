@@ -352,5 +352,7 @@
   "weather_humidity": "Влажност",
   "weather_malawi": "Малави - метеорологична информация",
   "weather_title": "Метеорологична информация",
-  "weather_wind": "Скорост на вятъра"
+  "weather_wind": "Скорост на вятъра",
+  "billing_secure_storage": "Secure Storage",
+  "billing_stripe_secret": "Stripe Secret Key"
 }

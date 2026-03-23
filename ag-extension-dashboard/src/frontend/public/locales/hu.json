@@ -352,5 +352,7 @@
   "weather_humidity": "Páratartalom",
   "weather_malawi": "Malawi időjárás",
   "weather_title": "Időjárás",
-  "weather_wind": "Szélsebesség"
+  "weather_wind": "Szélsebesség",
+  "billing_secure_storage": "Secure Storage",
+  "billing_stripe_secret": "Stripe Secret Key"
 }

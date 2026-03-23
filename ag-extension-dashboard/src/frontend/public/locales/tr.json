@@ -352,5 +352,7 @@
   "weather_humidity": "Nem",
   "weather_malawi": "Malavi Hava Durumu",
   "weather_title": "Hava Durumu",
-  "weather_wind": "Rüzgar Hızı"
+  "weather_wind": "Rüzgar Hızı",
+  "billing_secure_storage": "Secure Storage",
+  "billing_stripe_secret": "Stripe Secret Key"
 }
