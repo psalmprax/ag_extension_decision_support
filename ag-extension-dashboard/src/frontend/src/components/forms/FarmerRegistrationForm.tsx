@@ -48,7 +48,7 @@ export const FarmerRegistrationForm: React.FC = () => {
           id: response.data.id,
           firstName: response.data.firstName,
           lastName: response.data.lastName,
-          phone: response.data.phone,
+          phone: response.data.phone || '',
           location: data.location,
           crops: response.data.crops,
           farmSize: response.data.farmSize,

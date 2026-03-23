@@ -159,6 +159,7 @@ interface DashboardData {
         activeConversations: number;
         visitsThisMonth: number;
         avgSatisfaction: number;
+        avgConversationsPerFarmer: number;
     };
     trends: {
         farmersGrowth: number;
@@ -329,9 +330,10 @@ function App() {
     });
 
     const user = userResponse?.data;
+    const isOfficer = user?.role === 'extension_officer';
 
     // Fetch Dashboard Data
-    const { data: dashboardResponse, isLoading, isError } = useQuery<{ success: boolean; data: DashboardData }>({
+    const { data: dashboardResponse, isLoading, isError } = useQuery<any>({
         queryKey: ['dashboard'],
         queryFn: fetchDashboardData,
         enabled: activeTab === 'dashboard'
@@ -840,10 +842,34 @@ function App() {
                                     </>
                                 ) : dashboardData ? (
                                     <>
-                                        <StatCard title={t('stat_total_farmers')} value={dashboardData.overview.totalFarmers} change={dashboardData.trends.farmersGrowth} icon={Users} delay={0} />
-                                        <StatCard title={t('stat_active_conversations')} value={dashboardData.overview.activeConversations} change={dashboardData.trends.conversationsGrowth} icon={MessageSquare} delay={0.05} />
-                                        <StatCard title={t('stat_visits_this_month')} value={dashboardData.overview.visitsThisMonth} change={dashboardData.trends.visitsGrowth} icon={MapPin} delay={0.1} />
-                                        <StatCard title={t('stat_avg_satisfaction')} value={dashboardData.overview.avgSatisfaction} change={dashboardData.trends.satisfactionChange} icon={TrendingUp} delay={0.15} />
+                                        <StatCard 
+                                            title={isOfficer ? "My Farmers" : t('stat_total_farmers')} 
+                                            value={dashboardData.overview.totalFarmers} 
+                                            change={dashboardData.trends.farmersGrowth} 
+                                            icon={Users} 
+                                            delay={0} 
+                                        />
+                                        <StatCard 
+                                            title={isOfficer ? "My Active Chats" : t('stat_active_conversations')} 
+                                            value={dashboardData.overview.activeConversations} 
+                                            change={dashboardData.trends.conversationsGrowth} 
+                                            icon={MessageSquare} 
+                                            delay={0.05} 
+                                        />
+                                        <StatCard 
+                                            title={isOfficer ? "My Visits (30d)" : t('stat_visits_this_month')} 
+                                            value={dashboardData.overview.visitsThisMonth} 
+                                            change={dashboardData.trends.visitsGrowth} 
+                                            icon={MapPin} 
+                                            delay={0.1} 
+                                        />
+                                        <StatCard 
+                                            title={isOfficer ? "Avg. Conversations" : t('stat_avg_satisfaction')} 
+                                            value={isOfficer ? dashboardData.overview.avgConversationsPerFarmer : `${dashboardData.overview.avgSatisfaction}/5`} 
+                                            change={isOfficer ? undefined : dashboardData.trends.satisfactionChange} 
+                                            icon={isOfficer ? MessageSquare : Sparkles} 
+                                            delay={0.15} 
+                                        />
                                     </>
                                 ) : null}
                             </div>

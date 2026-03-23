@@ -7,6 +7,7 @@ export interface DashboardOverview {
     visitsThisMonth: number;
     avgSatisfaction: number;
     queriesResolved: number;
+    avgConversationsPerFarmer: number;
 }
 
 export interface DashboardTrends {

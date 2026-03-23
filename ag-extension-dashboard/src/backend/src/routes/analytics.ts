@@ -28,10 +28,15 @@ async function getFromDB(sql: string, params: unknown[] = []): Promise<any[]> {
 }
 
 // Dashboard overview - fetches real data from database
-router.get('/dashboard', async (_req: Request, res: Response) => {
+router.get('/dashboard', async (req: Request, res: Response) => {
     try {
-        // Try to get cached data first
-        const cached = await cacheGet('analytics:dashboard');
+        const { userId, role } = req.user as any;
+        const isOfficer = role === 'extension_officer';
+        const officerId = isOfficer ? userId : null;
+
+        // Try to get cached data first - user-specific for officers
+        const cacheKey = isOfficer ? `analytics:dashboard:${userId}` : 'analytics:dashboard:global';
+        const cached = await cacheGet(cacheKey);
         if (cached) {
             return res.json(JSON.parse(cached));
         }
@@ -45,12 +50,37 @@ router.get('/dashboard', async (_req: Request, res: Response) => {
             avgSatisfactionResult,
             resolvedQueries
         ] = await Promise.all([
-            getFromDB("SELECT COUNT(*) as count FROM farmers WHERE is_active = true"),
+            getFromDB(
+                isOfficer 
+                ? "SELECT COUNT(*) as count FROM farmers WHERE is_active = true AND assigned_officer_id = $1" 
+                : "SELECT COUNT(*) as count FROM farmers WHERE is_active = true",
+                isOfficer ? [officerId] : []
+            ),
             getFromDB("SELECT COUNT(*) as count FROM users WHERE role = 'extension_officer' AND is_active = true"),
-            getFromDB("SELECT COUNT(*) as count FROM chat_conversations WHERE status = 'active'"),
-            getFromDB("SELECT COUNT(*) as count FROM visits WHERE created_at > NOW() - INTERVAL '30 days'"),
-            getFromDB("SELECT AVG(satisfaction_score) as avg FROM chat_conversations WHERE satisfaction_score IS NOT NULL"),
-            getFromDB("SELECT COUNT(*) as count FROM chat_conversations WHERE status = 'resolved'")
+            getFromDB(
+                isOfficer
+                ? "SELECT COUNT(*) as count FROM chat_conversations WHERE status = 'active' AND officer_id = $1"
+                : "SELECT COUNT(*) as count FROM chat_conversations WHERE status = 'active'",
+                isOfficer ? [officerId] : []
+            ),
+            getFromDB(
+                isOfficer
+                ? "SELECT COUNT(*) as count FROM visits WHERE created_at > NOW() - INTERVAL '30 days' AND officer_id = $1"
+                : "SELECT COUNT(*) as count FROM visits WHERE created_at > NOW() - INTERVAL '30 days'",
+                isOfficer ? [officerId] : []
+            ),
+            getFromDB(
+                isOfficer
+                ? "SELECT AVG(satisfaction_score) as avg FROM chat_conversations WHERE satisfaction_score IS NOT NULL AND officer_id = $1"
+                : "SELECT AVG(satisfaction_score) as avg FROM chat_conversations WHERE satisfaction_score IS NOT NULL",
+                isOfficer ? [officerId] : []
+            ),
+            getFromDB(
+                isOfficer
+                ? "SELECT COUNT(*) as count FROM chat_conversations WHERE status = 'resolved' AND officer_id = $1"
+                : "SELECT COUNT(*) as count FROM chat_conversations WHERE status = 'resolved'",
+                isOfficer ? [officerId] : []
+            )
         ]);
 
         // Get regional data
@@ -112,10 +142,30 @@ router.get('/dashboard', async (_req: Request, res: Response) => {
             lastMonthVisits,
             lastMonthSatisfaction
         ] = await Promise.all([
-            getFromDB("SELECT COUNT(*) as count FROM farmers WHERE created_at > NOW() - INTERVAL '60 days' AND created_at < NOW() - INTERVAL '30 days'"),
-            getFromDB("SELECT COUNT(*) as count FROM chat_conversations WHERE started_at > NOW() - INTERVAL '60 days' AND started_at < NOW() - INTERVAL '30 days'"),
-            getFromDB("SELECT COUNT(*) as count FROM visits WHERE created_at > NOW() - INTERVAL '60 days' AND created_at < NOW() - INTERVAL '30 days'"),
-            getFromDB("SELECT AVG(satisfaction_score) as avg FROM chat_conversations WHERE satisfaction_score IS NOT NULL AND created_at > NOW() - INTERVAL '60 days' AND created_at < NOW() - INTERVAL '30 days'")
+            getFromDB(
+                isOfficer
+                ? "SELECT COUNT(*) as count FROM farmers WHERE created_at > NOW() - INTERVAL '60 days' AND created_at < NOW() - INTERVAL '30 days' AND assigned_officer_id = $1"
+                : "SELECT COUNT(*) as count FROM farmers WHERE created_at > NOW() - INTERVAL '60 days' AND created_at < NOW() - INTERVAL '30 days'",
+                isOfficer ? [officerId] : []
+            ),
+            getFromDB(
+                isOfficer
+                ? "SELECT COUNT(*) as count FROM chat_conversations WHERE started_at > NOW() - INTERVAL '60 days' AND started_at < NOW() - INTERVAL '30 days' AND officer_id = $1"
+                : "SELECT COUNT(*) as count FROM chat_conversations WHERE started_at > NOW() - INTERVAL '60 days' AND started_at < NOW() - INTERVAL '30 days'",
+                isOfficer ? [officerId] : []
+            ),
+            getFromDB(
+                isOfficer
+                ? "SELECT COUNT(*) as count FROM visits WHERE created_at > NOW() - INTERVAL '60 days' AND created_at < NOW() - INTERVAL '30 days' AND officer_id = $1"
+                : "SELECT COUNT(*) as count FROM visits WHERE created_at > NOW() - INTERVAL '60 days' AND created_at < NOW() - INTERVAL '30 days'",
+                isOfficer ? [officerId] : []
+            ),
+            getFromDB(
+                isOfficer
+                ? "SELECT AVG(satisfaction_score) as avg FROM chat_conversations WHERE satisfaction_score IS NOT NULL AND created_at > NOW() - INTERVAL '60 days' AND created_at < NOW() - INTERVAL '30 days' AND officer_id = $1"
+                : "SELECT AVG(satisfaction_score) as avg FROM chat_conversations WHERE satisfaction_score IS NOT NULL AND created_at > NOW() - INTERVAL '60 days' AND created_at < NOW() - INTERVAL '30 days'",
+                isOfficer ? [officerId] : []
+            )
         ]);
 
         const currentFarmers = parseInt((farmersCount[0] as any)?.count || '0');
@@ -156,6 +206,7 @@ router.get('/dashboard', async (_req: Request, res: Response) => {
                 visitsThisMonth: currentVisits,
                 avgSatisfaction: Math.round(currentSatisfaction * 10) / 10,
                 queriesResolved: parseInt((resolvedQueries[0] as any)?.count || '0'),
+                avgConversationsPerFarmer: currentFarmers > 0 ? Math.round((currentConversations / currentFarmers) * 10) / 10 : 0
             },
             trends: {
                 farmersGrowth: Math.round(farmersGrowth * 10) / 10,
@@ -183,7 +234,7 @@ router.get('/dashboard', async (_req: Request, res: Response) => {
         };
 
         // Cache for 5 minutes
-        await cacheSet('analytics:dashboard', JSON.stringify({ success: true, data: dashboard }), 300);
+        await cacheSet(cacheKey, JSON.stringify({ success: true, data: dashboard }), 300);
 
         res.json({ success: true, data: dashboard });
     } catch (error) {
