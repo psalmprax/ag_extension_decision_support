@@ -420,6 +420,31 @@ router.post('/payment-methods', authorize('admin', 'extension_officer', 'farmer'
 
 /**
  * @swagger
+ * /api/v1/billing/payment-methods/{id}:
+ *   delete:
+ *     summary: Delete a payment method
+ *     tags: [Billing]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.delete('/payment-methods/:id', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
+    try {
+        const { id } = req.params;
+        const success = await paymentService.deletePaymentMethod(id);
+
+        if (success) {
+            res.json({ success: true, message: 'Payment method removed successfully' });
+        } else {
+            res.status(500).json({ success: false, message: 'Failed to remove payment method' });
+        }
+    } catch (error) {
+        logger.error('Failed to delete payment method:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
+/**
+ * @swagger
  * /api/v1/billing/invoices:
  *   get:
  *     summary: Get user invoices

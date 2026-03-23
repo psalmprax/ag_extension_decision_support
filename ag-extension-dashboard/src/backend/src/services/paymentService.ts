@@ -315,6 +315,22 @@ class PaymentService {
         }
     }
 
+    // Delete payment method
+    async deletePaymentMethod(paymentMethodId: string): Promise<boolean> {
+        if (!this.stripe) {
+            logger.info(`[MOCK] Deleted payment method: ${paymentMethodId}`);
+            return true;
+        }
+
+        try {
+            await this.stripe.paymentMethods.detach(paymentMethodId);
+            return true;
+        } catch (error) {
+            logger.error('Failed to delete payment method:', error);
+            return false;
+        }
+    }
+
     // Handle Stripe webhooks
     async handleWebhook(event: Stripe.Event): Promise<boolean> {
         const prisma = (await import('./prismaService')).getPrisma();

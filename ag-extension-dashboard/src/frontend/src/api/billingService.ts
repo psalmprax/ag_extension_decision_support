@@ -44,3 +44,13 @@ export const fetchPaymentMethods = async () => {
     const { data } = await apiClient.get('/billing/payment-methods');
     return data;
 };
+
+export const addPaymentMethod = async (type: string) => {
+    const { data } = await apiClient.post('/billing/payment-methods', { type });
+    return data;
+};
+
+export const deletePaymentMethod = async (id: string) => {
+    const { data } = await apiClient.delete(`/billing/payment-methods/${id}`);
+    return data;
+};
