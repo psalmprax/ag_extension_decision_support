@@ -338,53 +338,6 @@ export const themes: Record<ThemeName, ThemeColors> = {
         },
     },
 
-    /**
-     * Cyber Theme - Futuristic dark interface with neon accents
-     * Best for: High-tech precision agriculture, IoT dashboards, night operations
-     */
-    cyber: {
-        primary: {
-            50: '#e0ffff',
-            100: '#b3ffff',
-            200: '#80ffff',
-            300: '#4dffff',
-            400: '#1affff',
-            500: '#00ffff',
-            600: '#00cccc',
-            700: '#009999',
-            800: '#006666',
-            900: '#003333',
-        },
-        secondary: {
-            50: '#ffe0f0',
-            100: '#ffb3d9',
-            200: '#ff80c0',
-            300: '#ff4da6',
-            400: '#ff1a8c',
-            500: '#ff00ff',
-            600: '#cc00cc',
-            700: '#990099',
-            800: '#660066',
-            900: '#330033',
-        },
-        accent: {
-            50: '#e0e0ff',
-            100: '#b3b3ff',
-            200: '#8080ff',
-            300: '#4d4dff',
-            400: '#1a1aff',
-            500: '#0000ff',
-            600: '#0000cc',
-            700: '#000099',
-            800: '#000066',
-            900: '#000033',
-        },
-        background: {
-            primary: '#010101',
-            secondary: '#0a0a0a',
-            card: '#121212',
-        },
-    },
 };
 
 /**
@@ -457,22 +410,6 @@ export function applyTheme(themeName: ThemeName): void {
         document.head.appendChild(styleElement);
     }
 
-    // Force dark mode for Cyber theme
-    if (themeName === 'cyber') {
-        document.documentElement.classList.add('dark');
-        document.body.classList.add('theme-cyber');
-    } else {
-        // If user prefers light mode (or no preference), keep it light unless manually switched
-        // But typically 'applyTheme' is called on init, so we might want to default to dark if system prefers
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (prefersDark) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-        document.body.classList.remove('theme-cyber');
-    }
-
     // Create dark mode versions of the theme colors (inverted for dark backgrounds)
     const darkVars: string[] = [];
     const theme = themes[themeName];
@@ -502,34 +439,6 @@ export function applyTheme(themeName: ThemeName): void {
     });
 
     // Dark mode backgrounds
-    if (themeName === 'cyber') {
-        // Cyber theme dark mode - enhanced neon effects
-        darkVars.push(`--color-bg-primary: #010101;`);
-        darkVars.push(`--color-bg-secondary: #050505;`);
-        darkVars.push(`--color-bg-card: #0a0a0a;`);
-        darkVars.push(`--color-bg-primary-rgb: 1 1 1;`);
-        darkVars.push(`--color-bg-secondary-rgb: 5 5 5;`);
-        darkVars.push(`--color-bg-card-rgb: 10 10 10;`);
-
-        // Glassmorphism variables for premium feel
-        darkVars.push(`--glass-bg: rgba(10, 10, 10, 0.6);`);
-        darkVars.push(`--glass-border: rgba(79, 209, 197, 0.2);`);
-        darkVars.push(`--glass-blur: 16px;`);
-
-        // Cyber specific overrides for darker/brighter neon
-        darkVars.push(`--color-primary-50: #000000;`);
-        darkVars.push(`--color-primary-100: #050505;`);
-        darkVars.push(`--color-primary-200: #0a0a0a;`);
-        darkVars.push(`--color-primary-300: #0f0f0f;`);
-        darkVars.push(`--color-primary-400: #141414;`);
-    } else {
-        darkVars.push(`--color-bg-primary: #111827;`);
-        darkVars.push(`--color-bg-secondary: #1f2937;`);
-        darkVars.push(`--color-bg-card: #374151;`);
-        darkVars.push(`--color-bg-primary-rgb: 17 24 39;`);
-        darkVars.push(`--color-bg-secondary-rgb: 31 41 55;`);
-        darkVars.push(`--color-bg-card-rgb: 55 65 81;`);
-    }
 
     styleElement.textContent = `:root {\n${css}\n}\n.dark {\n${darkVars.join('\n')}\n}`;
 }

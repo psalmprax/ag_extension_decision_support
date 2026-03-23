@@ -6,10 +6,7 @@ test.describe('Theme Map Expansion Tests', () => {
         await page.waitForLoadState('networkidle');
     });
 
-    test('should apply cyber theme and verify dark mode is enforced', async ({ page }) => {
-        // Set cyber theme directly via localStorage
         await page.addInitScript(() => {
-            localStorage.setItem('ag-theme-name', 'cyber');
             localStorage.setItem('theme', 'dark'); // Force dark mode
         });
 
@@ -19,9 +16,7 @@ test.describe('Theme Map Expansion Tests', () => {
         // Wait a bit for theme to apply
         await page.waitForTimeout(1000);
 
-        // Check if cyber class is applied to body
         const hasCyberClass = await page.evaluate(() => {
-            return document.body.classList.contains('theme-cyber');
         });
 
         // Check if dark mode is enforced
@@ -120,21 +115,15 @@ test.describe('Theme Map Expansion Tests', () => {
             await page.waitForTimeout(500);
 
             // Look for theme options in the dropdown
-            const themeOptions = page.locator('[role="dialog"] button, .absolute button').filter({ hasText: /forest|cyber|golden|oceanic/i });
 
             // Count available themes
             const themeCount = await themeOptions.count();
             console.log(`Found ${themeCount} theme options`);
 
-            // Test clicking cyber theme if available
-            const cyberOption = page.getByRole('button', { name: /cyber/i }).first();
-            if (await cyberOption.isVisible().catch(() => false)) {
-                await cyberOption.click({ force: true });
                 await page.waitForTimeout(1000);
 
                 // Verify theme was applied
                 const hasCyberClass = await page.evaluate(() => {
-                    return document.body.classList.contains('theme-cyber');
                 });
                 console.log(`Cyber theme applied: ${hasCyberClass}`);
             }

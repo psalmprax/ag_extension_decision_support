@@ -827,7 +827,7 @@ function App() {
                         <ErrorBoundary>
                             <div className='mb-8'>
                                 <h1 className='text-3xl font-bold text-gray-900 dark:text-white'>{t('dashboard_overview')}</h1>
-                                <p className={themeName === 'cyber' ? 'text-primary-300/60 mt-1 font-bold uppercase tracking-widest text-xs' : 'text-gray-500 dark:text-gray-400 mt-1 font-medium'}>{t('dashboard_welcome').replace('{name}', user?.firstName || 'Extension Officer')}</p>
+                                <p className={'text-gray-500 dark:text-gray-400 mt-1 font-medium'}>{t('dashboard_welcome').replace('{name}', user?.firstName || 'Extension Officer')}</p>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -849,7 +849,7 @@ function App() {
                             </div>
 
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                                <div className={`${themeName === 'cyber' ? 'lg:col-span-3' : 'lg:col-span-2'} card p-6 bg-theme-bg-card dark:bg-gray-800 border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden group`}>
+                                <div className={`lg:col-span-2 card p-6 bg-theme-bg-card dark:bg-gray-800 border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden group`}>
                                     <div className="flex justify-between items-center mb-6">
                                         <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                             <MapPin className="w-5 h-5 text-primary-500" />
@@ -1769,7 +1769,7 @@ function App() {
                             <motion.div
                                 initial={{ scale: 0.9, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
-                                className={`${themeName === 'cyber' ? 'glass-premium border border-primary-500/30' : 'bg-white dark:bg-gray-800'} p-10 rounded-3xl shadow-2xl max-w-md w-full text-center space-y-6`}
+                                className={`bg-white dark:bg-gray-800 p-10 rounded-3xl shadow-2xl max-w-md w-full text-center space-y-6`}
                             >
                                 <div className="relative w-24 h-24 mx-auto">
                                     <div className="absolute inset-0 border-4 border-primary-500/20 rounded-full"></div>
@@ -1779,7 +1779,7 @@ function App() {
                                     </div>
                                 </div>
                                 <div>
-                                    <h3 className={`text-2xl font-black ${themeName === 'cyber' ? 'text-white text-glow' : 'text-gray-900 dark:text-white'}`}>
+                                    <h3 className={`text-2xl font-black 'text-gray-900 dark:text-white'`}>
                                         {t('reports_generating_title') || 'Synthesizing Data'}
                                     </h3>
                                     <p className="text-gray-500 dark:text-gray-400 mt-2 font-medium">
