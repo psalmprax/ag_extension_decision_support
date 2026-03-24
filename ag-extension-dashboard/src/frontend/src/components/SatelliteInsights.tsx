@@ -11,19 +11,30 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 
+interface Metric {
+    label: string;
+    value: string;
+    status: string;
+    icon: any;
+    color: string;
+}
+
 interface SatelliteInsightsProps {
     farmerId: string;
     isCyber?: boolean;
+    metrics?: Metric[];
 }
 
-export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, isCyber }) => {
+export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, isCyber, metrics }) => {
     const { t } = useLanguage();
 
-    const metrics = [
+    const defaultMetrics = [
         { label: 'NDVI Index', value: '0.68', status: 'Optimal', icon: Zap, color: 'text-green-400' },
         { label: 'Soil Moisture', value: '42%', status: 'Stable', icon: Droplets, color: 'text-blue-400' },
         { label: 'Solar Rad.', value: '18MJ/m²', status: 'High', icon: Sun, color: 'text-yellow-400' },
     ];
+
+    const displayMetrics = metrics || defaultMetrics;
 
     return (
         <div className="space-y-8">

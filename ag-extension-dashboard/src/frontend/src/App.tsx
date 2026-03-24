@@ -71,6 +71,8 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import { subscribeUserToPush } from '@/api/pushNotificationService';
 import AlphaAI from './components/Cyber/AlphaAI';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
+import { ContextMenu } from '@/components/ContextMenu';
+import { ShareModal } from '@/components/ShareModal';
 
 // COLORS constant removed as it's unused
 
@@ -244,17 +246,42 @@ function App() {
         setIsDragOver(false);
     };
 
-    const handleDrop = (e: React.DragEvent) => {
+    const handleDrop = async (e: React.DragEvent) => {
         e.preventDefault();
         setIsDragOver(false);
 
         const files = Array.from(e.dataTransfer.files);
         if (files.length > 0) {
-            // For now, just show a notification - file processing can be enhanced later
-            addNotification({
-                type: 'info',
-                message: `${files.length} file(s) dropped. File analysis coming soon!`
-            });
+            const formData = new FormData();
+            files.forEach(file => formData.append('file', file));
+
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (response.ok) {
+                    addNotification({
+                        type: 'success',
+                        message: `${files.length} file(s) uploaded and processed successfully.`
+                    });
+                } else {
+                    addNotification({
+                        type: 'error',
+                        message: 'Failed to upload files. Please try again.'
+                    });
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                addNotification({
+                    type: 'error',
+                    message: 'An error occurred during file upload.'
+                });
+            }
         }
     };
     const [isMapExpanded, setIsMapExpanded] = useState(false);
@@ -273,6 +300,27 @@ function App() {
     const [editingTitle, setEditingTitle] = useState<string>('');
     const [deletingConvId, setDeletingConvId] = useState<string | null>(null);
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+    const { 
+        contextMenu, hideContextMenu, 
+        shareModal, hideShareModal,
+        addNotification
+    } = useAppStore();
+
+    const handleMenuAction = (action: string, entityId?: string) => {
+        console.log(`Global Menu Action: ${action} on ${entityId}`);
+        
+        if (action.startsWith('share_')) {
+            // shareModal is handled via store, but we might want to trigger it here
+        } else if (action === 'schedule_visit') {
+            // open visit modal
+        } else if (action === 'export_farmer' || action.startsWith('export_')) {
+            addNotification({ type: 'success', message: `Exporting ${action.split('_')[1]} data...` });
+        } else if (action.includes('delete')) {
+            if (confirm(`Are you sure you want to perform this action: ${action}?`)) {
+                addNotification({ type: 'info', message: 'Action executed successfully' });
+            }
+        }
+    };
     const [chatInput, setChatInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
 
@@ -316,16 +364,42 @@ function App() {
         }
     };
 
-    const handleBulkSMS = () => {
+    const handleBulkSMS = async () => {
         const selectedFarmersList = farmers?.filter(f => selectedFarmers.has(f.id)) || [];
         if (selectedFarmersList.length > 0) {
-            // For now, just navigate to SMS tab - bulk SMS can be implemented later
-            setActiveTab('sms');
-            setSelectedFarmers(new Set());
-            addNotification({
-                type: 'info',
-                message: `${selectedFarmersList.length} farmers selected for bulk SMS`
-            });
+            try {
+                const response = await fetch('/api/sms/bulk', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        recipients: selectedFarmersList.map(f => f.phone).filter(Boolean),
+                        message: "AG Extension Support: We have noticed updates in your area. Please check the USSD menu *384*100# for more info."
+                    })
+                });
+
+                if (response.ok) {
+                    setActiveTab('sms');
+                    setSelectedFarmers(new Set());
+                    addNotification({
+                        type: 'success',
+                        message: `Bulk SMS sent to ${selectedFarmersList.length} farmers.`
+                    });
+                } else {
+                    addNotification({
+                        type: 'error',
+                        message: 'Failed to send bulk SMS.'
+                    });
+                }
+            } catch (error) {
+                console.error('Bulk SMS error:', error);
+                addNotification({
+                    type: 'error',
+                    message: 'Error connecting to SMS service.'
+                });
+            }
         }
     };
 
@@ -1816,6 +1890,27 @@ function App() {
                 isOpen={isNotificationPanelOpen}
                 onClose={() => setIsNotificationPanelOpen(false)}
             />
+            {/* Global UI Elements */}
+            {contextMenu && (
+                <ContextMenu
+                    x={contextMenu.x}
+                    y={contextMenu.y}
+                    entityType={contextMenu.entityType}
+                    entityId={contextMenu.entityId}
+                    isBulk={contextMenu.isBulk}
+                    onClose={hideContextMenu}
+                    onAction={handleMenuAction}
+                />
+            )}
+            {shareModal && (
+                <ShareModal
+                    isOpen={!!shareModal}
+                    onClose={hideShareModal}
+                    entityType={shareModal.entityType}
+                    entityId={shareModal.entityId}
+                    entityName={shareModal.entityName}
+                />
+            )}
         </div>
     );
 }

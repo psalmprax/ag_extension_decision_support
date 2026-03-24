@@ -10,7 +10,7 @@ import SimulationGantt from './Cyber/SimulationGantt';
 import MaintenanceDiagnostics from './Cyber/MaintenanceDiagnostics';
 
 export const FarmerDashboard: React.FC = () => {
-  const { user, themeName } = useAppStore();
+  const { user, themeName, showContextMenu } = useAppStore();
   const { t } = useLanguage();
 
   const { data: statsResponse, isLoading: statsLoading } = useQuery({
@@ -61,7 +61,14 @@ export const FarmerDashboard: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Simulation Widget */}
             <div className="lg:col-span-2 animate-slide-up" style={{ animationDelay: '100ms' }}>
-                <SimulationGantt />
+                <SimulationGantt 
+                    items={farmerStats?.yieldHistory?.map((y: any, i: number) => ({
+                        id: String(i),
+                        label: `PHASE_${i+1}: ${y.crop || 'GROWTH'}`,
+                        value: `${y.yield || 0} t/ha`,
+                        percent: Math.min((y.yield || 0) * 10, 100)
+                    }))}
+                />
             </div>
 
             {/* Diagnostics Widget */}
@@ -78,7 +85,14 @@ export const FarmerDashboard: React.FC = () => {
                 { label: 'PH LEVEL', value: farmerStats?.phLevel || '6.8', icon: LineChart, trend: 'Optimal' },
                 { label: 'AI CONFIDENCE', value: farmerStats?.aiConfidence || '98%', icon: ShieldAlert, trend: 'High' }
             ].map((stat, i) => (
-                <div key={i} className="glass-premium p-6 rounded-2xl border-white/5 group hover:border-primary-500/30 transition-all">
+                <div 
+                    key={i} 
+                    className="glass-premium p-6 rounded-2xl border-white/5 group hover:border-primary-500/30 transition-all cursor-context-menu"
+                    onContextMenu={(e) => {
+                        e.preventDefault();
+                        showContextMenu({ x: e.clientX, y: e.clientY, entityType: 'stat', entityId: stat.label.toLowerCase().replace(' ', '_') });
+                    }}
+                >
                     <div className="flex justify-between items-start mb-4">
                         <stat.icon className="w-5 h-5 text-primary-400 opacity-60 group-hover:opacity-100 transition-opacity" />
                         <span className="text-[10px] font-bold text-primary-300/40 tracking-widest leading-none mt-1">{stat.trend}</span>
@@ -114,7 +128,11 @@ export const FarmerDashboard: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
-            className="p-6 bg-theme-bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 hover:shadow-xl transition-all group"
+            className="p-6 bg-theme-bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 hover:shadow-xl transition-all group cursor-context-menu"
+            onContextMenu={(e) => {
+                e.preventDefault();
+                showContextMenu({ x: e.clientX, y: e.clientY, entityType: 'stat', entityId: stat.title.toLowerCase().replace(' ', '_') });
+            }}
           >
             <div className="flex items-start justify-between">
               <div className="space-y-1.5">

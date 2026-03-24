@@ -110,6 +110,15 @@ interface AppState {
     // Cross-route data
     pendingSMS: { phone: string; name: string } | null;
     setPendingSMS: (data: { phone: string; name: string } | null) => void;
+
+    // UI Elements
+    contextMenu: { x: number; y: number; entityType: any; entityId?: string; isBulk?: boolean } | null;
+    showContextMenu: (data: AppState['contextMenu']) => void;
+    hideContextMenu: () => void;
+
+    shareModal: { entityType: string; entityId: string; entityName?: string } | null;
+    showShareModal: (data: AppState['shareModal']) => void;
+    hideShareModal: () => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -140,6 +149,8 @@ export const useAppStore = create<AppState>()(
             isLoading: false,
             subscription: null,
             pendingSMS: null,
+            contextMenu: null,
+            shareModal: null,
 
             // Actions
             setUser: (user) => set({ user }),
@@ -208,6 +219,12 @@ export const useAppStore = create<AppState>()(
             setLoading: (isLoading) => set({ isLoading }),
             setSubscription: (subscription) => set({ subscription }),
             setPendingSMS: (pendingSMS) => set({ pendingSMS }),
+
+            showContextMenu: (contextMenu) => set({ contextMenu }),
+            hideContextMenu: () => set({ contextMenu: null }),
+
+            showShareModal: (shareModal) => set({ shareModal }),
+            hideShareModal: () => set({ shareModal: null }),
         }),
         {
             name: 'ag-extension-storage',

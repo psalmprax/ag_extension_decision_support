@@ -114,61 +114,7 @@ function App() {
   const [queuedRequests, setQueuedRequests] = useState<QueuedRequest[]>([]);
   const [showOfflineManager, setShowOfflineManager] = useState(false);
 
-  // Get page context on mount
-  useEffect(() => {
-    const getPageContext = async () => {
-      try {
-        const browserAPI = (window as any).browser || (window as any).chrome;
-        if (browserAPI && browserAPI.tabs) {
-          const [tab] = await browserAPI.tabs.query({ active: true, currentWindow: true });
-          if (tab && tab.id) {
-            browserAPI.tabs.sendMessage(tab.id, { action: 'get_page_context' }, (response: PageContext) => {
-              if (response) {
-                setPageContext(response);
-                // Add welcome message based on page context
-                const welcomeMessage: Message = {
-                  id: 'welcome',
-                  role: 'assistant',
-                  content: `I've loaded the page "${response.title}". I can help you summarize content, extract data, or analyze this page. What would you like to do?`,
-                  timestamp: new Date()
-                };
-                setMessages([welcomeMessage]);
-              }
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Error getting page context:', error);
-      }
-    };
-
-    getPageContext();
-  }, []);
-
-  // Listen for online status changes and queue updates
-  useEffect(() => {
-    const browserAPI = (window as any).browser || (window as any).chrome;
-    if (browserAPI && browserAPI.runtime) {
-      const handleMessage = (message: any) => {
-        if (message.action === 'online_status_changed') {
-          setIsOnline(message.isOnline);
-        } else if (message.action === 'queue_updated') {
-          loadQueuedRequests();
-        }
-      };
-
-      browserAPI.runtime.onMessage.addListener(handleMessage);
-
-      // Load initial data
-      loadQueuedRequests();
-      apiQueue.isCurrentlyOnline().then(setIsOnline);
-
-      return () => {
-        browserAPI.runtime.onMessage.removeListener(handleMessage);
-      };
-    }
-  }, []);
-
+  // Handlers defined first to avoid use-before-definition issues in effects
   const loadQueuedRequests = async () => {
     try {
       const requests = await apiQueue.getQueuedRequests();
@@ -186,92 +132,6 @@ function App() {
       console.error('Sync failed:', error);
     }
   };
-
-  // Listen for messages from content script (photo capture, location)
-  useEffect(() => {
-    const handleMessage = async (message: any) => {
-      if (message.action === 'photo_captured' && message.imageData) {
-        // Add user message indicating photo was captured
-        const photoMessage: Message = {
-          id: Date.now().toString(),
-          role: 'user',
-          content: '📸 Photo captured - analyzing with AI...',
-          timestamp: new Date()
-        };
-        setMessages((prev: Message[]) => [...prev, photoMessage]);
-
-        // Send to AI for analysis
-        setIsLoading(true);
-        try {
-          const aiResponse = await sendMessageToAI('', message.imageData);
-          const assistantMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            role: 'assistant',
-            content: aiResponse,
-            timestamp: new Date()
-          };
-          setMessages((prev: Message[]) => [...prev, assistantMessage]);
-        } catch (error) {
-          const errorMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            role: 'assistant',
-            content: 'Sorry, I encountered an error analyzing the photo. Please try again.',
-            timestamp: new Date()
-          };
-          setMessages((prev: Message[]) => [...prev, errorMessage]);
-        } finally {
-          setIsLoading(false);
-        }
-      } else if (message.action === 'location_captured' && message.location) {
-        const { latitude, longitude, accuracy, accuracyStatus, timestamp } = message.location;
-        const locationMessage: Message = {
-          id: Date.now().toString(),
-          role: 'user',
-          content: `📍 Location captured: ${latitude.toFixed(6)}, ${longitude.toFixed(6)} (accuracy: ${accuracy.toFixed(1)}m - ${accuracyStatus})`,
-          timestamp: new Date()
-        };
-        setMessages((prev: Message[]) => [...prev, locationMessage]);
-
-        // Send location to backend for storage
-        const backendResult = await sendLocationToBackend(message.location);
-
-        // Send to AI for location-based insights
-        setIsLoading(true);
-        try {
-          const aiResponse = await sendMessageToAI(`Location data: Latitude ${latitude}, Longitude ${longitude}. Provide agricultural insights for this location. ${backendResult.success ? 'Location has been logged in the system.' : 'Note: Location logging failed.'}`);
-          const assistantMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            role: 'assistant',
-            content: aiResponse,
-            timestamp: new Date()
-          };
-          setMessages((prev: Message[]) => [...prev, assistantMessage]);
-        } catch (error) {
-          const errorMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            role: 'assistant',
-            content: 'Sorry, I encountered an error analyzing the location. Please try again.',
-            timestamp: new Date()
-          };
-          setMessages((prev: Message[]) => [...prev, errorMessage]);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    // Add listener for browser runtime messages
-    const anyWin = window as any;
-    const browserAPI = typeof anyWin.browser !== 'undefined' ? anyWin.browser : (typeof anyWin.chrome !== 'undefined' ? anyWin.chrome : null);
-    if (browserAPI && browserAPI.runtime) {
-      const wrappedHandler = (message: any) => {
-        handleMessage(message);
-        return true; // Keep channel open for async
-      };
-      browserAPI.runtime.onMessage.addListener(wrappedHandler);
-      return () => browserAPI.runtime.onMessage.removeListener(wrappedHandler);
-    }
-  }, []);
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -325,6 +185,12 @@ function App() {
       case 'Analyze Page':
         prompt = `Please analyze this webpage for agricultural relevance. Title: ${pageContext.title}. URL: ${pageContext.url}. Description: ${pageContext.metaDescription}. Main content: ${pageContext.mainContent}`;
         break;
+      case 'Weather':
+        prompt = "Provide a detailed weather forecast and agricultural implications for the current region.";
+        break;
+      case 'Settings':
+        prompt = "Open extension settings and configuration options.";
+        break;
       default:
         return;
     }
@@ -360,6 +226,124 @@ function App() {
       setIsLoading(false);
     }
   };
+
+  // Get page context on mount
+  useEffect(() => {
+    const getPageContext = async () => {
+      try {
+        const browserAPI = (window as any).browser || (window as any).chrome;
+        if (browserAPI && browserAPI.tabs) {
+          const [tab] = await browserAPI.tabs.query({ active: true, currentWindow: true });
+          if (tab && tab.id) {
+            browserAPI.tabs.sendMessage(tab.id, { action: 'get_page_context' }, (response: PageContext) => {
+              if (response) {
+                setPageContext(response);
+                const welcomeMessage: Message = {
+                  id: 'welcome',
+                  role: 'assistant',
+                  content: `I've loaded the page "${response.title}". I can help you summarize content, extract data, or analyze this page. What would you like to do?`,
+                  timestamp: new Date()
+                };
+                setMessages([welcomeMessage]);
+              }
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error getting page context:', error);
+      }
+    };
+
+    getPageContext();
+  }, []);
+
+  // Listen for online status changes and queue updates
+  useEffect(() => {
+    const browserAPI = (window as any).browser || (window as any).chrome;
+    if (browserAPI && browserAPI.runtime) {
+      const handleStatusMessage = (message: any) => {
+        if (message.action === 'online_status_changed') {
+          setIsOnline(message.isOnline);
+        } else if (message.action === 'queue_updated') {
+          loadQueuedRequests();
+        }
+      };
+
+      browserAPI.runtime.onMessage.addListener(handleStatusMessage);
+      loadQueuedRequests();
+      apiQueue.isCurrentlyOnline().then(setIsOnline);
+
+      return () => {
+        browserAPI.runtime.onMessage.removeListener(handleStatusMessage);
+      };
+    }
+  }, []);
+
+  // Listen for messages from background script or popup
+  useEffect(() => {
+    const anyWin = window as any;
+    const browserAPI = typeof anyWin.browser !== 'undefined' ? anyWin.browser : (typeof anyWin.chrome !== 'undefined' ? anyWin.chrome : null);
+    
+    if (browserAPI && browserAPI.runtime) {
+      const handlePopupMessage = async (message: any) => {
+        if (message.action === 'trigger_quick_action') {
+          handleQuickAction(message.actionType);
+        } else if (message.action === 'photo_captured' && message.imageData) {
+          const photoMessage: Message = {
+            id: Date.now().toString(),
+            role: 'user',
+            content: '📸 Photo captured - analyzing with AI...',
+            timestamp: new Date()
+          };
+          setMessages((prev: Message[]) => [...prev, photoMessage]);
+
+          setIsLoading(true);
+          try {
+            const aiResponse = await sendMessageToAI('', message.imageData);
+            const assistantMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              role: 'assistant',
+              content: aiResponse,
+              timestamp: new Date()
+            };
+            setMessages((prev: Message[]) => [...prev, assistantMessage]);
+          } catch (error) {
+            console.error('Photo analysis error:', error);
+          } finally {
+            setIsLoading(false);
+          }
+        } else if (message.action === 'location_captured' && message.location) {
+          const { latitude, longitude } = message.location;
+          const locationMessage: Message = {
+            id: Date.now().toString(),
+            role: 'user',
+            content: `📍 Location captured: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+            timestamp: new Date()
+          };
+          setMessages((prev: Message[]) => [...prev, locationMessage]);
+          
+          setIsLoading(true);
+          try {
+            const aiResponse = await sendMessageToAI(`Location data: Latitude ${latitude}, Longitude ${longitude}. Provide agricultural insights.`);
+            const assistantMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              role: 'assistant',
+              content: aiResponse,
+              timestamp: new Date()
+            };
+            setMessages((prev: Message[]) => [...prev, assistantMessage]);
+          } catch (error) {
+            console.error('Location analysis error:', error);
+          } finally {
+            setIsLoading(false);
+          }
+        }
+      };
+
+      browserAPI.runtime.onMessage.addListener(handlePopupMessage);
+      return () => browserAPI.runtime.onMessage.removeListener(handlePopupMessage);
+    }
+  }, [pageContext]); 
 
   return (
     <div className="flex flex-col h-screen bg-slate-950 text-slate-200 font-sans">

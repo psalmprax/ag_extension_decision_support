@@ -25,7 +25,12 @@ const queryClient = new QueryClient({
 });
 
 async function enableMocking() {
-    if (import.meta.env.MODE !== 'development') {
+    const params = new URLSearchParams(window.location.search);
+    const mockParam = params.get('mock');
+    
+    // Only enable mocking if explicitly requested via ?mock=true
+    // or if we are in development AND the real backend is unreachable (handled by manual override for now)
+    if (mockParam !== 'true') {
         return;
     }
 
