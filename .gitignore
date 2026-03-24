@@ -12,3 +12,5 @@ _agents/
 _agent/
 brain/
 tmp/
+.output/
+.wxt/
