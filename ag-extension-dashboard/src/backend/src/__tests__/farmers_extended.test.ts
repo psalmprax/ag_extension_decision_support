@@ -2,7 +2,6 @@ import request from 'supertest';
 import app from '../app';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
-import { getPrisma } from '../services/prismaService';
 
 // We won't mock Prisma here to test the actual data flow if possible, 
 // but since the original test mocked it, I'll follow that pattern for consistency 

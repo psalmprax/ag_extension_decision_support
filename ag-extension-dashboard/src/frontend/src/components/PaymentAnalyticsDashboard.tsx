@@ -355,7 +355,7 @@ export const PaymentAnalyticsDashboard: React.FC = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {analytics.cohorts.cohorts.slice(0, 6).map((cohort, index) => (
+                                    {analytics.cohorts.cohorts.slice(0, 6).map((cohort) => (
                                         <tr key={cohort.period} className="border-b border-gray-100 dark:border-gray-800">
                                             <td className="py-3 px-4 font-medium text-gray-900 dark:text-white">
                                                 {cohort.period}
