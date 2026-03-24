@@ -66,7 +66,7 @@ async function bootstrap() {
         );
 
         // Start server
-        httpServer.listen(config.port, () => {
+        httpServer.listen(config.port, '0.0.0.0', () => {
             logger.info(`Server running on port ${config.port} in ${config.nodeEnv} mode`);
         });
     } catch (error) {

@@ -86,6 +86,22 @@ export interface ReasoningResult {
     confidence?: number;
 }
 
+export interface ImageAnalysisOptions {
+    model?: string;
+    maxTokens?: number;
+    temperature?: number;
+}
+
+export interface ImageAnalysisResult {
+    analysis: string;
+    model: string;
+    usage?: {
+        promptTokens: number;
+        completionTokens: number;
+        totalTokens: number;
+    };
+}
+
 // Base capability interface
 export interface AICapability {
     readonly provider: AIProviderType;
@@ -108,6 +124,9 @@ export interface AICapability {
 
     // Classification
     classify(input: string, options: ClassificationOptions): Promise<ClassificationResult>;
+
+    // Image analysis
+    analyzeImage(imageData: string | Buffer, prompt?: string, options?: ImageAnalysisOptions): Promise<ImageAnalysisResult>;
 
     // Health check
     healthCheck(): Promise<boolean>;
@@ -147,6 +166,10 @@ export abstract class BaseAIProvider implements AICapability {
     }
 
     async classify(_input: string, _options: ClassificationOptions): Promise<ClassificationResult> {
+        throw new Error('Method not implemented');
+    }
+
+    async analyzeImage(_imageData: string | Buffer, _prompt?: string, _options?: ImageAnalysisOptions): Promise<ImageAnalysisResult> {
         throw new Error('Method not implemented');
     }
 
@@ -264,7 +287,7 @@ export class AIRouter {
     }
 
     static async routeRequest(
-        requestType: 'generate' | 'embed' | 'speech' | 'classify' | 'reason' | 'weather' | 'disease_alerts',
+        requestType: 'generate' | 'embed' | 'speech' | 'classify' | 'reason' | 'weather' | 'disease_alerts' | 'vision',
         params: any
     ): Promise<any> {
         // For embeddings, allow mock fallback
@@ -288,6 +311,8 @@ export class AIRouter {
                 case 'disease_alerts':
                     const { FAOService } = await import('@/services/faoService');
                     return FAOService.getDiseaseAlerts(params.region, params.crop);
+                case 'vision':
+                    return provider.analyzeImage(params.imageData, params.prompt, params.options);
                 default:
                     throw new Error(`Unknown request type: ${requestType}`);
             }

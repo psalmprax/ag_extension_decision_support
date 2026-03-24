@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { shareService } from "@/services/shareService";
 import { Router, Request, Response } from 'express';
 import { query, getPool } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { authorize, AuthRequest } from '@/middleware/authorize';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { usageService } from '../services/usageService';
+import { bulkOperationsService } from '@/services/bulkOperationsService';
 
 const router = Router();
 
@@ -161,6 +163,34 @@ router.get('/:id', async (req: Request, res: Response) => {
     } catch (error) {
         logger.error('Get report error:', error);
         res.status(500).json({ success: false, error: 'Failed to get report' });
+    }
+});
+
+router.post("/:id/share", async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { isPublic, expiresAt, permissions } = req.body;
+        const createdBy = req.user?.id;
+
+        const shareLink = await shareService.createShare({
+            entityType: "report",
+            entityId: id,
+            createdBy,
+            isPublic,
+            expiresAt: expiresAt ? new Date(expiresAt) : undefined,
+            permissions,
+        });
+
+        res.status(201).json({
+            success: true,
+            data: shareLink,
+        });
+    } catch (error) {
+        logger.error("Error creating report share:", error);
+        res.status(500).json({
+            success: false,
+            error: "Failed to create share link",
+        });
     }
 });
 

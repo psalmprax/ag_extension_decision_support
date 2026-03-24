@@ -226,12 +226,15 @@ export const BillingDashboard: React.FC = () => {
                 // Real implementation: Redirect to Stripe Setup Session
                 window.location.href = response.data.url;
             } else if (response.success) {
-                alert(response.message || 'Payment method added successfully!');
+                alert(response.message || 'Payment method setup initiated successfully!');
                 fetchData();
+            } else {
+                alert(response.error || response.message || 'Failed to initialize payment method setup');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to add payment method:', error);
-            alert('Failed to add payment method');
+            const errorMessage = error.response?.data?.error || error.message || 'Unknown error occurred';
+            alert(`Failed to add payment method: ${errorMessage}`);
         } finally {
             setActionLoading(null);
         }

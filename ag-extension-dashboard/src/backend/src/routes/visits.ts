@@ -5,6 +5,8 @@ import { logger } from '@/utils/logger';
 import { validate } from '@/middleware/validationMiddleware';
 import { createVisitSchema } from '@/utils/schemas';
 import { authorize } from '@/middleware/authorize';
+import { shareService } from '@/services/shareService';
+import { bulkOperationsService } from '@/services/bulkOperationsService';
 
 const router = Router();
 
@@ -168,6 +170,123 @@ router.patch('/:id', async (req: Request, res: Response) => {
     } catch (error) {
         logger.error('Update visit error:', error);
         res.status(500).json({ success: false, error: 'Failed to update visit' });
+    }
+});
+
+// Log GPS location for extension use
+router.post('/location', async (req: Request, res: Response) => {
+    try {
+        const { latitude, longitude, accuracy, accuracyStatus, timestamp } = req.body;
+
+        // Validate coordinates
+        if (!latitude || !longitude || typeof latitude !== 'number' || typeof longitude !== 'number') {
+            return res.status(400).json({ success: false, error: 'Invalid coordinates' });
+        }
+
+        // Insert location log as a visit entry
+        const result = await query(`
+            INSERT INTO visits (visit_type, status, location_lat, location_lng, notes, created_at)
+            VALUES ('location_capture', 'completed', $1, $2, $3, $4)
+            RETURNING id
+        `, [latitude, longitude, `GPS accuracy: ${accuracy}m (${accuracyStatus})`, timestamp || new Date().toISOString()]);
+
+        res.json({
+            success: true,
+            data: {
+                visitId: result.rows[0].id,
+                message: `Location logged: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
+            }
+        });
+    } catch (error) {
+        logger.error('Log location error:', error);
+        res.status(500).json({ success: false, error: 'Failed to log location' });
+    }
+});
+
+router.post("/:id/share", async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { isPublic, expiresAt, permissions } = req.body;
+        const createdBy = req.user?.id;
+
+        const shareLink = await shareService.createShare({
+            entityType: "visit",
+            entityId: id,
+            createdBy,
+            isPublic,
+            expiresAt: expiresAt ? new Date(expiresAt) : undefined,
+            permissions,
+        });
+
+        res.status(201).json({
+            success: true,
+            data: shareLink,
+        });
+    } catch (error) {
+        logger.error("Error creating visit share:", error);
+        res.status(500).json({
+            success: false,
+            error: "Failed to create share link",
+        });
+    }
+});
+
+/**
+ * @openapi
+ * /api/visits/bulk/delete:
+ *   post:
+ *     summary: Bulk delete visits
+ *     tags: [Visits]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [ids]
+ *             properties:
+ *               ids: { type: array, items: { type: string } }
+ *               reason: { type: string }
+ *     responses:
+ *       200:
+ *         description: Bulk delete result
+ */
+router.post('/bulk/delete', async (req: Request, res: Response) => {
+    try {
+        const { ids, reason } = req.body;
+        const { userId, role } = req.user as any;
+
+        if (!ids || !Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'IDs array is required and cannot be empty'
+            });
+        }
+
+        // Only admins and regional managers can perform bulk operations
+        if (!['admin', 'regional_manager'].includes(role)) {
+            return res.status(403).json({
+                success: false,
+                error: 'Insufficient permissions for bulk operations'
+            });
+        }
+
+        const result = await bulkOperationsService.bulkDeleteVisits(
+            { ids, reason },
+            userId,
+            role
+        );
+
+        res.json({
+            success: true,
+            data: result
+        });
+    } catch (error) {
+        logger.error('Bulk delete visits error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to perform bulk delete operation'
+        });
     }
 });
 

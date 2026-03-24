@@ -180,7 +180,7 @@ router.post('/conversations/ai', async (req: AuthRequest, res: Response) => {
 // - mode='farmer': message is stored for direct farmer conversation
 // Send a message
 router.post('/message', async (req: AuthRequest, res: Response) => {
-    const { conversationId, message, farmerId, mode = 'ai', language = 'en' } = req.body;
+    const { conversationId, message, farmerId, mode = 'ai', language = 'en', imageData } = req.body;
 
     if (!message) {
         return res.status(400).json({ error: 'message is required' });
@@ -190,8 +190,8 @@ router.post('/message', async (req: AuthRequest, res: Response) => {
     if (mode === 'ai') {
         const check = await usageService.checkLimit(req.user!.userId, 'ai_chat');
         if (!check.allowed) {
-            return res.status(403).json({ 
-                success: false, 
+            return res.status(403).json({
+                success: false,
                 error: 'AI Chat limit exceeded',
                 details: check
             });
@@ -244,6 +244,70 @@ router.post('/message', async (req: AuthRequest, res: Response) => {
     }
 
     // AI Chat Mode - process through AI provider (original behavior)
+
+    // Handle image analysis if imageData is provided
+    if (imageData) {
+        try {
+            const provider = await AIProviderFactory.getProvider();
+            if (!provider.capabilities.includes('vision')) {
+                return res.status(400).json({ success: false, error: 'Vision capability not available' });
+            }
+
+            const analysis = await provider.analyzeImage(imageData, message, { temperature: 0.3, maxTokens: 1000 });
+
+            // Create conversation if not exists
+            let convId = conversationId;
+            if (!convId && farmerId) {
+                try {
+                    const pool = getPool();
+                    if (pool) {
+                        const result = await query(`
+                            INSERT INTO chat_conversations (farmer_id, language, status, started_at)
+                            VALUES ($1, 'en', 'active', NOW())
+                            RETURNING id
+                        `, [farmerId]);
+                        convId = result.rows[0].id;
+                    } else {
+                        return res.status(503).json({ error: 'Database connection unavailable' });
+                    }
+                } catch (error) {
+                    convId = `conv_${Date.now()}`;
+                }
+            }
+
+            // Store user message (image description) in DB
+            try {
+                const pool = getPool();
+                if (pool && convId) {
+                    await query(`
+                        INSERT INTO chat_messages (conversation_id, role, content, language, created_at)
+                        VALUES ($1, 'farmer', $2, 'en', NOW())
+                    `, [convId, message || 'Image analysis request']);
+                }
+            } catch (error) {
+                logger.error('Error saving image message:', error);
+            }
+
+            // Store AI response in DB
+            try {
+                const pool = getPool();
+                if (pool && convId) {
+                    await query(`
+                        INSERT INTO chat_messages (conversation_id, role, content, language, created_at)
+                        VALUES ($1, 'assistant', $2, 'en', NOW())
+                    `, [convId, analysis.analysis]);
+                }
+            } catch (error) {
+                logger.error('Error saving analysis message:', error);
+            }
+
+            await usageService.incrementUsage(req.user!.userId, 'ai_chat');
+            return res.json({ response: analysis.analysis });
+        } catch (error) {
+            logger.error('Image analysis error:', error);
+            return res.status(500).json({ error: 'Image analysis failed' });
+        }
+    }
 
     // Create conversation if not exists
     let convId = conversationId;

@@ -9,6 +9,8 @@ import {
     ClassificationResult,
     ReasoningOptions,
     ReasoningResult,
+    ImageAnalysisOptions,
+    ImageAnalysisResult,
 } from '../aiProvider';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
@@ -20,6 +22,7 @@ export class OpenAIProvider extends BaseAIProvider {
         'embeddings',
         'classification',
         'reasoning',
+        'vision',
     ];
 
     private client: any = null;
@@ -201,6 +204,63 @@ export class OpenAIProvider extends BaseAIProvider {
                     { label: 'general', score: 0.8 },
                     { label: 'crop_management', score: 0.5 },
                 ],
+            };
+        }
+    }
+
+    async analyzeImage(imageData: string | Buffer, prompt?: string, options?: ImageAnalysisOptions): Promise<ImageAnalysisResult> {
+        const client = await this.getClient();
+        const model = options?.model || 'gpt-4-vision-preview';
+
+        try {
+            // Convert imageData to base64 if it's a Buffer
+            let base64Image: string;
+            if (Buffer.isBuffer(imageData)) {
+                base64Image = imageData.toString('base64');
+            } else if (typeof imageData === 'string' && imageData.startsWith('data:image/')) {
+                // Extract base64 from data URL
+                const parts = imageData.split(',');
+                base64Image = parts[1];
+            } else {
+                base64Image = imageData as string;
+            }
+
+            const defaultPrompt = 'Analyze this agricultural image. Identify any plants, crops, diseases, pests, or agricultural features. Provide detailed analysis including crop health assessment, disease identification, and recommendations for farmers.';
+
+            const messages = [
+                {
+                    role: 'user',
+                    content: [
+                        { type: 'text', text: prompt || defaultPrompt },
+                        {
+                            type: 'image_url',
+                            image_url: {
+                                url: `data:image/jpeg;base64,${base64Image}`,
+                            },
+                        },
+                    ],
+                },
+            ];
+
+            const response = await client.chat.completions.create({
+                model,
+                messages,
+                temperature: options?.temperature ?? 0.3,
+                max_tokens: options?.maxTokens ?? 1000,
+            });
+
+            const choice = response.choices[0];
+            return {
+                analysis: choice.message.content || 'Unable to analyze image',
+                model,
+                usage: response.usage,
+            };
+        } catch (error) {
+            logger.error('OpenAI analyzeImage error:', error);
+            return {
+                analysis: 'Mock image analysis - configure OpenAI API key with vision support',
+                model,
+                usage: { promptTokens: 10, completionTokens: 20, totalTokens: 30 },
             };
         }
     }
