@@ -34,35 +34,36 @@ model User {
 }
 
 model Farmer {
-  id                       String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId                   String?            @map("user_id") @db.Uuid
-  assignedOfficerId        String?            @map("assigned_officer_id") @db.Uuid
-  firstName                String             @map("first_name") @db.VarChar(100)
-  lastName                 String             @map("last_name") @db.VarChar(100)
-  phone                    String?            @db.VarChar(20)
-  location                 String?            @db.VarChar(255)
-  village                  String?            @db.VarChar(100)
-  district                 String?            @db.VarChar(100)
-  region                   String?            @db.VarChar(100)
-  country                  String?            @default("Kenya") @db.VarChar(100)
-  farmSizeHectares         Decimal?           @map("farm_size_hectares") @db.Decimal(10, 2)
-  crops                    String[]
-  vitalScore               Decimal?           @map("vital_score") @db.Decimal(5, 2)
-  yieldHistory             Json?              @map("yield_history")
-  locationLat              Decimal?           @map("location_lat") @db.Decimal(10, 8)
-  locationLng              Decimal?           @map("location_lng") @db.Decimal(11, 8)
-  languagePreference       String?            @default("en") @map("language_preference") @db.VarChar(20)
-  isActive                 Boolean?           @default(true) @map("is_active")
-  assignmentNotificationSent Boolean           @default(false) @map("assignment_notification_sent")
-  createdAt                DateTime?          @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt                DateTime?          @default(now()) @map("updated_at") @db.Timestamp(6)
-  user                     User?              @relation(fields: [userId], references: [id])
-  assignedOfficer          User?              @relation("FarmerOfficer", fields: [assignedOfficerId], references: [id])
-  visits                   Visit[]
-  conversations            ChatConversation[]
-  analytics                AnalyticsEvent[]
+   id                       String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+   userId                   String?            @map("user_id") @db.Uuid
+   assignedOfficerId        String?            @map("assigned_officer_id") @db.Uuid
+   firstName                String             @map("first_name") @db.VarChar(100)
+   lastName                 String             @map("last_name") @db.VarChar(100)
+   phone                    String?            @db.VarChar(20)
+   location                 String?            @db.VarChar(255)
+   village                  String?            @db.VarChar(100)
+   district                 String?            @db.VarChar(100)
+   region                   String?            @db.VarChar(100)
+   country                  String?            @default("Kenya") @db.VarChar(100)
+   farmSizeHectares         Decimal?           @map("farm_size_hectares") @db.Decimal(10, 2)
+   crops                    String[]
+   vitalScore               Decimal?           @map("vital_score") @db.Decimal(5, 2)
+   yieldHistory             Json?              @map("yield_history")
+   locationLat              Decimal?           @map("location_lat") @db.Decimal(10, 8)
+   locationLng              Decimal?           @map("location_lng") @db.Decimal(11, 8)
+   languagePreference       String?            @default("en") @map("language_preference") @db.VarChar(20)
+   isActive                 Boolean?           @default(true) @map("is_active")
+   assignmentNotificationSent Boolean           @default(false) @map("assignment_notification_sent")
+   order                    Int?               @default(0) @db.Integer
+   createdAt                DateTime?          @default(now()) @map("created_at") @db.Timestamp(6)
+   updatedAt                DateTime?          @default(now()) @map("updated_at") @db.Timestamp(6)
+   user                     User?              @relation(fields: [userId], references: [id])
+   assignedOfficer          User?              @relation("FarmerOfficer", fields: [assignedOfficerId], references: [id])
+   visits                   Visit[]
+   conversations            ChatConversation[]
+   analytics                AnalyticsEvent[]
 
-  @@map("farmers")
+   @@map("farmers")
 }
 
 model Visit {
@@ -93,21 +94,23 @@ model Visit {
 }
 
 model KnowledgeArticle {
-  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title      String    @db.VarChar(255)
-  content    String
-  summary    String?
-  category   String?   @db.VarChar(100)
-  tags       String[]
-  crops      String[]
-  regions    String[]
-  source     String?   @db.VarChar(255)
-  sourceUrl  String?   @map("source_url")
-  embedding  Float[]
-  createdAt  DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt  DateTime? @default(now()) @map("updated_at") @db.Timestamp(6)
+   id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+   title       String    @db.VarChar(255)
+   content     String
+   contentType String?   @default("text") @map("content_type") @db.VarChar(50)
+   summary     String?
+   category    String?   @db.VarChar(100)
+   tags        String[]
+   crops       String[]
+   regions     String[]
+   source      String?   @db.VarChar(255)
+   sourceUrl   String?   @map("source_url")
+   embedding   Float[]
+   order       Int?      @default(0) @db.Integer
+   createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+   updatedAt   DateTime? @default(now()) @map("updated_at") @db.Timestamp(6)
 
-  @@map("knowledge_articles")
+   @@map("knowledge_articles")
 }
 
 model ChatConversation {
@@ -292,4 +295,32 @@ model SystemConfig {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("system_configs")
+}
+
+model Share {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  token       String    @unique @db.VarChar(255)
+  entityType  String    @map("entity_type") @db.VarChar(50) // 'farmer', 'visit', 'report', 'knowledge'
+  entityId    String    @map("entity_id") @db.Uuid
+  createdBy   String?   @map("created_by") @db.Uuid
+  isPublic    Boolean   @default(false) @map("is_public")
+  expiresAt   DateTime? @map("expires_at") @db.Timestamp(6)
+  permissions String[]  @default(["view"]) // permissions like 'view', 'edit'
+  accessCount Int       @default(0) @map("access_count")
+  lastAccessedAt DateTime? @map("last_accessed_at") @db.Timestamp(6)
+  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime? @default(now()) @map("updated_at") @db.Timestamp(6)
+  accesses    ShareAccess[]
+
+  @@map("shares")
+}
+
+model ShareAccess {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  shareId    String    @map("share_id") @db.Uuid
+  accessedBy String?   @map("accessed_by") @db.VarChar(255) // IP or user id if logged in
+  accessedAt DateTime? @default(now()) @map("accessed_at") @db.Timestamp(6)
+  share      Share     @relation(fields: [shareId], references: [id], onDelete: Cascade)
+
+  @@map("share_accesses")
 }

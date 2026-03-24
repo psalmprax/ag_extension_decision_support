@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { shareService } from "@/services/shareService";
 import { Router, Request, Response } from 'express';
 import { KnowledgeService } from '@/services/knowledgeService';
 import { cacheGet, cacheSet } from '@/services/cacheService';
 import { getPool, query } from '@/services/databaseService';
+import { getPrisma } from '@/services/prismaService';
 import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
 
@@ -148,7 +150,7 @@ router.get('/search', async (req: Request, res: Response) => {
                 paramIndex++;
             }
 
-            sql += ' ORDER BY created_at DESC LIMIT $' + paramIndex + ' OFFSET $' + (paramIndex + 1);
+            sql += ' ORDER BY order ASC, created_at DESC LIMIT $' + paramIndex + ' OFFSET $' + (paramIndex + 1);
             params.push(parseInt(limit as string), parseInt(offset as string));
 
             const result = await query(sql, params);
@@ -268,6 +270,326 @@ router.get('/meta/crops', async (_req: Request, res: Response) => {
     } catch (error) {
         logger.error('Get crops error:', error);
         res.json({ success: true, data: [] });
+    }
+});
+
+router.post("/:id/share", async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { isPublic, expiresAt, permissions } = req.body;
+        const createdBy = req.user?.id;
+
+        const shareLink = await shareService.createShare({
+            entityType: "knowledge",
+            entityId: id,
+            createdBy,
+            isPublic,
+            expiresAt: expiresAt ? new Date(expiresAt) : undefined,
+            permissions,
+        });
+
+        res.status(201).json({
+            success: true,
+            data: shareLink,
+        });
+    } catch (error) {
+        logger.error("Error creating knowledge share:", error);
+        res.status(500).json({
+            success: false,
+            error: "Failed to create share link",
+        });
+    }
+});
+
+/**
+ * @openapi
+ * /api/knowledge/reorder:
+ *   post:
+ *     summary: Reorder knowledge articles for drag-and-drop functionality
+ *     tags: [Knowledge]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [items]
+ *             properties:
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required: [id, order]
+ *                   properties:
+ *                     id: { type: string, format: uuid }
+ *                     order: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Articles reordered successfully
+ *       400:
+ *         description: Invalid request data
+ */
+router.post('/reorder', async (req: Request, res: Response) => {
+    try {
+        const { items } = req.body;
+        const prisma = getPrisma();
+
+        if (!items || !Array.isArray(items)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Items array is required',
+                aria: { role: 'alert', label: 'Reorder failed: Invalid data provided' }
+            });
+        }
+
+        // Validate each item has id and order
+        for (const item of items) {
+            if (!item.id || typeof item.order !== 'number') {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Each item must have id and order',
+                    aria: { role: 'alert', label: 'Reorder failed: Invalid item format' }
+                });
+            }
+        }
+
+        // Get article IDs to check existence
+        const articleIds = items.map(item => item.id);
+        const articles = await prisma.knowledgeArticle.findMany({
+            where: { id: { in: articleIds } },
+            select: { id: true }
+        });
+
+        if (articles.length !== items.length) {
+            return res.status(400).json({
+                success: false,
+                error: 'Some articles not found',
+                aria: { role: 'alert', label: 'Reorder failed: Some articles not found' }
+            });
+        }
+
+        // Update orders in transaction
+        await prisma.$transaction(
+            items.map(item =>
+                prisma.knowledgeArticle.update({
+                    where: { id: item.id },
+                    data: { order: item.order }
+                })
+            )
+        );
+
+        res.json({
+            success: true,
+            message: 'Articles reordered successfully',
+            aria: { role: 'status', label: 'Articles reordered successfully' }
+        });
+    } catch (error) {
+        logger.error('Reorder articles error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to reorder articles',
+            aria: { role: 'alert', label: 'Reorder failed: Internal server error' }
+        });
+    }
+});
+
+/**
+ * @openapi
+ * /api/knowledge:
+ *   post:
+ *     summary: Create a new knowledge article
+ *     tags: [Knowledge]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [title, content]
+ *             properties:
+ *               title: { type: string }
+ *               content: { type: string }
+ *               contentType: { type: string, enum: [text, html], default: text }
+ *               summary: { type: string }
+ *               category: { type: string }
+ *               tags: { type: array, items: { type: string } }
+ *               crops: { type: array, items: { type: string } }
+ *               regions: { type: array, items: { type: string } }
+ *               source: { type: string }
+ *               sourceUrl: { type: string }
+ *     responses:
+ *       201:
+ *         description: Article created
+ */
+router.post('/', async (req: Request, res: Response) => {
+    try {
+        const {
+            title, content, contentType = 'text', summary, category,
+            tags = [], crops = [], regions = [], source, sourceUrl
+        } = req.body;
+        const prisma = getPrisma();
+
+        if (!title || !content) {
+            return res.status(400).json({
+                success: false,
+                error: 'Title and content are required',
+                aria: { role: 'alert', label: 'Article creation failed: Title and content required' }
+            });
+        }
+
+        // Validate contentType
+        if (!['text', 'html'].includes(contentType)) {
+            return res.status(400).json({
+                success: false,
+                error: 'contentType must be either "text" or "html"',
+                aria: { role: 'alert', label: 'Article creation failed: Invalid content type' }
+            });
+        }
+
+        // Sanitize HTML content if contentType is html
+        let sanitizedContent = content;
+        if (contentType === 'html') {
+            // Basic HTML sanitization - remove dangerous tags
+            sanitizedContent = content.replace(/<script[^>]*>.*?<\/script>/gi, '')
+                .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '')
+                .replace(/<object[^>]*>.*?<\/object>/gi, '')
+                .replace(/<embed[^>]*>.*?<\/embed>/gi, '');
+        }
+
+        const article = await prisma.knowledgeArticle.create({
+            data: {
+                title,
+                content: sanitizedContent,
+                contentType,
+                summary,
+                category,
+                tags,
+                crops,
+                regions,
+                source,
+                sourceUrl,
+            },
+        });
+
+        res.status(201).json({
+            success: true,
+            data: article,
+            aria: { role: 'status', label: 'Article created successfully' }
+        });
+    } catch (error) {
+        logger.error('Create article error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to create article',
+            aria: { role: 'alert', label: 'Article creation failed: Internal server error' }
+        });
+    }
+});
+
+/**
+ * @openapi
+ * /api/knowledge/{id}:
+ *   put:
+ *     summary: Update a knowledge article
+ *     tags: [Knowledge]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title: { type: string }
+ *               content: { type: string }
+ *               contentType: { type: string, enum: [text, html] }
+ *               summary: { type: string }
+ *               category: { type: string }
+ *               tags: { type: array, items: { type: string } }
+ *               crops: { type: array, items: { type: string } }
+ *               regions: { type: array, items: { type: string } }
+ *               source: { type: string }
+ *               sourceUrl: { type: string }
+ *     responses:
+ *       200:
+ *         description: Article updated
+ */
+router.put('/:id', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const {
+            title, content, contentType, summary, category,
+            tags, crops, regions, source, sourceUrl
+        } = req.body;
+        const prisma = getPrisma();
+
+        // Check if article exists
+        const existingArticle = await prisma.knowledgeArticle.findUnique({
+            where: { id }
+        });
+
+        if (!existingArticle) {
+            return res.status(404).json({
+                success: false,
+                error: 'Article not found',
+                aria: { role: 'alert', label: 'Article update failed: Article not found' }
+            });
+        }
+
+        // Validate contentType if provided
+        if (contentType && !['text', 'html'].includes(contentType)) {
+            return res.status(400).json({
+                success: false,
+                error: 'contentType must be either "text" or "html"',
+                aria: { role: 'alert', label: 'Article update failed: Invalid content type' }
+            });
+        }
+
+        // Sanitize HTML content if contentType is html
+        let sanitizedContent = content;
+        if ((contentType === 'html' || existingArticle.contentType === 'html') && content) {
+            sanitizedContent = content.replace(/<script[^>]*>.*?<\/script>/gi, '')
+                .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '')
+                .replace(/<object[^>]*>.*?<\/object>/gi, '')
+                .replace(/<embed[^>]*>.*?<\/embed>/gi, '');
+        }
+
+        const updateData: any = {};
+        if (title !== undefined) updateData.title = title;
+        if (content !== undefined) updateData.content = sanitizedContent;
+        if (contentType !== undefined) updateData.contentType = contentType;
+        if (summary !== undefined) updateData.summary = summary;
+        if (category !== undefined) updateData.category = category;
+        if (tags !== undefined) updateData.tags = tags;
+        if (crops !== undefined) updateData.crops = crops;
+        if (regions !== undefined) updateData.regions = regions;
+        if (source !== undefined) updateData.source = source;
+        if (sourceUrl !== undefined) updateData.sourceUrl = sourceUrl;
+        updateData.updatedAt = new Date();
+
+        const article = await prisma.knowledgeArticle.update({
+            where: { id },
+            data: updateData,
+        });
+
+        res.json({
+            success: true,
+            data: article,
+            aria: { role: 'status', label: 'Article updated successfully' }
+        });
+    } catch (error) {
+        logger.error('Update article error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update article',
+            aria: { role: 'alert', label: 'Article update failed: Internal server error' }
+        });
     }
 });
 

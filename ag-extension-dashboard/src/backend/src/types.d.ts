@@ -38,23 +38,65 @@ declare module 'json-schema-faker' {
     export default jsonSchemaFaker;
 }
 
-declare namespace Express {
-    export interface Request {
-        user?: {
-            userId: string;
-            email: string;
-            role: any; // Using any for role to avoid complex type matching across modules
-            [key: string]: any;
-        };
-        language?: string;
-        i18n?: {
-            language: string;
-            isRTL: boolean;
-            originalPath: string;
-            canonicalPath: string;
-            [key: string]: any;
-        };
-        _i18nTranslatedPath?: string;
-        _originalPath?: string;
+export type UserRole = 'admin' | 'regional_manager' | 'extension_officer' | 'farmer';
+
+declare global {
+    namespace Express {
+        export interface Request {
+            user?: {
+                userId: string;
+                email: string;
+                role: UserRole;
+                [key: string]: any;
+            };
+            language?: string;
+            i18n?: {
+                language: string;
+                isRTL: boolean;
+                originalPath: string;
+                canonicalPath: string;
+                [key: string]: any;
+            };
+            _i18nTranslatedPath?: string;
+            _originalPath?: string;
+        }
     }
+}
+
+// Context Menu Types
+export interface ContextMenuItem {
+    id: string;
+    label: string;
+    icon?: string;
+    action: string;
+    permissions?: string[];
+    separator?: boolean;
+    disabled?: boolean;
+    children?: ContextMenuItem[];
+}
+
+export interface ContextMenuSection {
+    id: string;
+    title?: string;
+    items: ContextMenuItem[];
+}
+
+export interface ContextMenu {
+    entityType: 'farmer' | 'visit' | 'report' | 'knowledge' | 'user';
+    entityId?: string;
+    sections: ContextMenuSection[];
+}
+
+export interface ContextMenuAction {
+    action: string;
+    entityType: string;
+    entityId: string;
+    data?: any;
+}
+
+// Breadcrumb Types
+export interface Breadcrumb {
+    label: string;
+    url?: string;
+    active?: boolean;
 }
