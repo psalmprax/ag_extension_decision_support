@@ -72,6 +72,9 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
     const [editData, setEditData] = React.useState(farmer);
     const [interactions, setInteractions] = React.useState<any[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = React.useState(false);
+    const [showVideoCall, setShowVideoCall] = React.useState(false);
+    const [isSynthesizing, setIsSynthesizing] = React.useState(false);
+    const { user: storeUser } = useAppStore();
 
     const loadInteractions = async () => {
         if (!farmer?.id) return;
@@ -142,9 +145,6 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
 
     if (!farmer) return null;
 
-    const [showVideoCall, setShowVideoCall] = React.useState(false);
-    const { user: storeUser } = useAppStore();
-
     const handleAction = (type: 'chat' | 'sms' | 'call' | 'video') => {
         switch (type) {
             case 'chat':
@@ -179,11 +179,8 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                         message: `${t('action_connecting') || 'Opening WhatsApp for'} ${farmer.firstName}...`
                     });
                 }
-                break;
         }
     };
-
-    const [isSynthesizing, setIsSynthesizing] = React.useState(false);
 
     const handleStartSynthesis = async () => {
         if (!farmer?.id) return;

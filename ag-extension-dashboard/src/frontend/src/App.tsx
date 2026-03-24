@@ -426,9 +426,12 @@ function App() {
                     }
                 },
                 (error) => {
-                    console.log('Geolocation error:', error.message);
                     if (error.code === 1 && error.message.includes('Only secure origins are allowed')) {
-                        console.warn('Geolocation blocked: Not a secure origin (HTTPS/localhost)');
+                        console.warn('Geolocation blocked: Not a secure origin (HTTPS/localhost). Falling back to profile region.');
+                    } else if (error.code === 1) {
+                        console.warn('Geolocation permission denied. Falling back to profile region.');
+                    } else {
+                        console.log('Geolocation error:', error.message);
                     }
                     setUserLocation(storeUser?.region || 'Kenya');
                 }
