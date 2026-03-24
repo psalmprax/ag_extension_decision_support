@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import paypal from 'paypal-rest-sdk';
 
 import { logger } from '../utils/logger';
 import { systemConfigService } from './systemConfigService';
@@ -44,10 +45,12 @@ interface StripeSubscription {
 
 class PaymentService {
     private stripe: Stripe | null = null;
+    private paypalConfigured: boolean = false;
     public isSimulated: boolean = true;
 
     constructor() {
         this.initializeStripe();
+        this.initializePayPal();
     }
 
     private async initializeStripe() {
@@ -80,9 +83,34 @@ class PaymentService {
         }
     }
 
+    // PayPal initialization
+    private async initializePayPal() {
+        const paypalClientId = await systemConfigService.getPayPalKey();
+        const paypalClientSecret = process.env.PAYPAL_CLIENT_SECRET;
+
+        if (paypalClientId && paypalClientSecret) {
+            try {
+                paypal.configure({
+                    mode: process.env.NODE_ENV === 'production' ? 'live' : 'sandbox',
+                    client_id: paypalClientId,
+                    client_secret: paypalClientSecret
+                });
+                this.paypalConfigured = true;
+                logger.info('PayPal payment service initialized');
+            } catch (error) {
+                logger.warn('Failed to initialize PayPal:', error);
+                this.paypalConfigured = false;
+            }
+        } else {
+            logger.warn('PayPal not configured - PayPal payments unavailable');
+            this.paypalConfigured = false;
+        }
+    }
+
     // Explicitly reload keys (useful after admin updates)
     async reloadConfiguration() {
         await this.initializeStripe();
+        await this.initializePayPal();
     }
 
     // Create a checkout session for subscription
@@ -625,6 +653,86 @@ class PaymentService {
             return [];
         }
     }
+
+    // PayPal payment methods
+    async createPayPalPayment(params: {
+        userId: string;
+        amount: number;
+        currency: string;
+        description: string;
+        returnUrl: string;
+        cancelUrl: string;
+    }): Promise<{ paymentId: string; approvalUrl: string } | null> {
+        if (!this.paypalConfigured) {
+            // Return mock data for development
+            return {
+                paymentId: 'mock_paypal_' + Date.now(),
+                approvalUrl: params.returnUrl + '?paymentId=mock_paypal_' + Date.now()
+            };
+        }
+
+        return new Promise((resolve, reject) => {
+            const createPaymentJson = {
+                intent: 'sale',
+                payer: {
+                    payment_method: 'paypal'
+                },
+                redirect_urls: {
+                    return_url: params.returnUrl,
+                    cancel_url: params.cancelUrl
+                },
+                transactions: [{
+                    item_list: {
+                        items: [{
+                            name: params.description,
+                            sku: 'subscription',
+                            price: (params.amount / 100).toFixed(2),
+                            currency: params.currency,
+                            quantity: 1
+                        }]
+                    },
+                    amount: {
+                        currency: params.currency,
+                        total: (params.amount / 100).toFixed(2)
+                    },
+                    description: params.description
+                }]
+            };
+
+            paypal.payment.create(createPaymentJson, (error: any, payment: any) => {
+                if (error) {
+                    logger.error('PayPal payment creation failed:', error);
+                    reject(error);
+                } else {
+                    const approvalUrl = payment.links.find((link: any) => link.rel === 'approval_url').href;
+                    resolve({
+                        paymentId: payment.id,
+                        approvalUrl
+                    });
+                }
+            });
+        });
+    }
+
+    async executePayPalPayment(paymentId: string, payerId: string): Promise<boolean> {
+        if (!this.paypalConfigured) {
+            logger.info(`[MOCK] PayPal payment ${paymentId} executed for payer ${payerId}`);
+            return true;
+        }
+
+        return new Promise((resolve) => {
+            paypal.payment.execute(paymentId, { payer_id: payerId }, (error: any, payment: any) => {
+                if (error) {
+                    logger.error('PayPal payment execution failed:', error);
+                    resolve(false);
+                } else {
+                    logger.info('PayPal payment executed successfully:', payment.id);
+                    resolve(true);
+                }
+            });
+        });
+    }
+
 }
 
 export const paymentService = new PaymentService();

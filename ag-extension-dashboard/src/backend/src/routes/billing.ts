@@ -99,7 +99,7 @@ router.post('/subscribe', authorize('admin', 'extension_officer', 'farmer'), asy
         });
 
         const hasStripeSubscription = currentSubscription && currentSubscription.stripeSubscriptionId;
-        
+
         if (currentSubscription && isSubscriptionActive(currentSubscription) && hasStripeSubscription) {
             const currentPlanPriceId = currentSubscription.plan?.stripePriceId;
             const currentPlanName = currentSubscription.plan?.name;
@@ -135,9 +135,9 @@ router.post('/subscribe', authorize('admin', 'extension_officer', 'farmer'), asy
                                 where: { userId },
                                 data: { cancelAtPeriodEnd: false }
                             });
-                            return res.json({ 
-                                success: true, 
-                                message: `Successfully scheduled renewal for ${currentPlanName}.` 
+                            return res.json({
+                                success: true,
+                                message: `Successfully scheduled renewal for ${currentPlanName}.`
                             });
                         }
                     } else {
@@ -394,13 +394,127 @@ router.patch('/admin/config', authorize('admin'), async (req: AuthRequest, res) 
         const { stripeSecretKey, paypalClientId } = req.body;
         if (stripeSecretKey) await systemConfigService.set('STRIPE_SECRET_KEY', stripeSecretKey, true);
         if (paypalClientId) await systemConfigService.set('PAYPAL_CLIENT_ID', paypalClientId, false);
-        
+
         await paymentService.reloadConfiguration();
         res.json({ success: true, message: 'Billing configuration updated successfully' });
     } catch (error) {
         logger.error('Failed to update billing configuration:', error);
         res.status(500).json({ success: false, message: 'Internal server error' });
     }
+});
+
+/**
+ * @swagger
+ * /api/v1/billing/paypal/subscribe:
+ *   post:
+ *     summary: Create PayPal subscription
+ *     tags: [Billing]
+ */
+router.post('/paypal/subscribe', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
+    try {
+        const { planId } = req.body;
+        const userId = req.user!.userId;
+
+        if (!planId) {
+            return res.status(400).json({ success: false, message: 'Plan ID is required' });
+        }
+
+        const plans = await paymentService.getPricingPlans();
+        const selectedPlan = plans.find(p => p.id === planId);
+
+        if (!selectedPlan) {
+            return res.status(400).json({ success: false, message: 'Invalid plan ID' });
+        }
+
+        const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const result = await paymentService.createPayPalPayment({
+            userId,
+            amount: selectedPlan.price,
+            currency: 'USD',
+            description: `${selectedPlan.name} Plan Subscription`,
+            returnUrl: `${baseUrl}/billing/paypal/success`,
+            cancelUrl: `${baseUrl}/billing/paypal/cancel`
+        });
+
+        if (result) {
+            res.json({ success: true, data: result });
+        } else {
+            res.status(500).json({ success: false, message: 'Failed to create PayPal payment' });
+        }
+    } catch (error) {
+        logger.error('Failed to create PayPal subscription:', error);
+        res.status(500).json({ success: false, message: 'Failed to initiate PayPal subscription' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/billing/paypal/success:
+ *   get:
+ *     summary: Handle PayPal payment success
+ *     tags: [Billing]
+ */
+router.get('/paypal/success', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
+    try {
+        const { paymentId, PayerID } = req.query;
+        const userId = req.user!.userId;
+
+        if (!paymentId || !PayerID) {
+            return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=missing_params`);
+        }
+
+        const success = await paymentService.executePayPalPayment(paymentId as string, PayerID as string);
+
+        if (success) {
+            // Update subscription in database
+            const subscription = await prisma.subscription.upsert({
+                where: { userId },
+                update: {
+                    status: 'active',
+                    currentPeriodStart: new Date(),
+                    currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
+                },
+                create: {
+                    userId,
+                    planId: 'price_pro_monthly', // Default to pro plan
+                    status: 'active',
+                    currentPeriodStart: new Date(),
+                    currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                }
+            });
+
+            // Create payment record
+            await prisma.payment.create({
+                data: {
+                    subscriptionId: subscription.id,
+                    amount: 29.00, // Should be dynamic based on plan
+                    currency: 'USD',
+                    status: 'completed',
+                    paymentMethod: 'paypal',
+                    transactionId: paymentId as string,
+                    paidAt: new Date()
+                }
+            });
+
+            res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?success=true&payment=paypal`);
+        } else {
+            res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=payment_failed`);
+        }
+    } catch (error) {
+        logger.error('PayPal success handling failed:', error);
+        res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=server_error`);
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/billing/paypal/cancel:
+ *   get:
+ *     summary: Handle PayPal payment cancellation
+ *     tags: [Billing]
+ */
+router.get('/paypal/cancel', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?canceled=true&payment=paypal`);
 });
 
 /**

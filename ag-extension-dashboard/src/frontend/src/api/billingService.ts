@@ -59,3 +59,8 @@ export const updateAdminConfig = async (config: { stripeSecretKey?: string; payp
     const { data } = await apiClient.patch('/billing/admin/config', config);
     return data;
 };
+
+export const createPayPalSubscription = async (planId: string) => {
+    const { data } = await apiClient.post('/billing/paypal/subscribe', { planId });
+    return data;
+};

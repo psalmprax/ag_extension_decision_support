@@ -46,6 +46,7 @@
     "multer": "^2.1.1",
     "nodemailer": "^8.0.2",
     "openai": "^4.20.1",
+    "paypal-rest-sdk": "^1.8.1",
     "pg": "^8.11.3",
     "redis": "^4.6.12",
     "socket.io": "^4.7.2",

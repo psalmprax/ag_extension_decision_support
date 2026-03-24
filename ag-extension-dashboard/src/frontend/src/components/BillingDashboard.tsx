@@ -24,7 +24,7 @@ import {
 import { useLanguage } from '../lib/LanguageContext';
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
-import { fetchPlans, fetchSubscription, createCheckoutSession, createPortalSession, fetchInvoices, switchSubscription, fetchPaymentMethods, addPaymentMethod, deletePaymentMethod, updateAdminConfig } from '@/api/billingService';
+import { fetchPlans, fetchSubscription, createCheckoutSession, createPortalSession, fetchInvoices, switchSubscription, fetchPaymentMethods, addPaymentMethod, deletePaymentMethod, updateAdminConfig, createPayPalSubscription } from '@/api/billingService';
 import { UsageQuota } from './UsageQuota';
 
 interface Plan {
@@ -174,7 +174,7 @@ export const BillingDashboard: React.FC = () => {
                 fetchData();
             }
         } catch (error: unknown) {
-             
+
             console.error('Subscription failed:', error);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             alert((error as any).response?.data?.message || 'Subscription failed. Please try again.');
@@ -194,7 +194,7 @@ export const BillingDashboard: React.FC = () => {
                 alert(data.message || 'Failed to switch plan');
             }
         } catch (error: unknown) {
-             
+
             console.error('Switch failed:', error);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             alert((error as any).response?.data?.message || 'Failed to switch plan. Please try again.');
@@ -238,7 +238,7 @@ export const BillingDashboard: React.FC = () => {
 
     const handleDeleteMethod = async (id: string) => {
         if (!confirm(t('confirm_delete_payment_method') || 'Are you sure you want to remove this payment method?')) return;
-        
+
         setActionLoading(`delete-${id}`);
         try {
             const response = await deletePaymentMethod(id);
@@ -254,8 +254,22 @@ export const BillingDashboard: React.FC = () => {
         }
     };
 
-    const handlePayPalLink = () => {
-        alert("PayPal Integration is ready for backend configuration. Please add your PayPal Client ID in the Admin Settings below to enable this gateway.");
+    const handlePayPalSubscription = async (planId: string) => {
+        setActionLoading(`paypal-${planId}`);
+        try {
+            const response = await createPayPalSubscription(planId);
+            if (response.success && response.data?.approvalUrl) {
+                // Redirect to PayPal for approval
+                window.location.href = response.data.approvalUrl;
+            } else {
+                alert(response.message || 'Failed to initiate PayPal subscription');
+            }
+        } catch (error) {
+            console.error('PayPal subscription failed:', error);
+            alert('Failed to create PayPal subscription. Please try again.');
+        } finally {
+            setActionLoading(null);
+        }
     };
 
     const handleAdminUpdate = async () => {
@@ -550,21 +564,21 @@ export const BillingDashboard: React.FC = () => {
                                         {t('billing_payment_intelligence')}
                                     </h3>
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{t('billing_stored_protocols')}</p>
+                                </div>
                             </div>
+                            <button
+                                onClick={handleAddMethod}
+                                disabled={actionLoading !== null}
+                                className="flex items-center gap-2 px-6 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary-500 dark:hover:bg-primary-500 dark:hover:text-white transition-all shadow-xl active:scale-95 disabled:opacity-50"
+                            >
+                                {actionLoading === 'add-pm' ? (
+                                    <div className="w-4 h-4 border-2 border-primary-500/20 border-t-primary-500 rounded-full animate-spin" />
+                                ) : (
+                                    <Plus className="w-4 h-4" />
+                                )}
+                                {t('billing_add_method')}
+                            </button>
                         </div>
-                        <button 
-                            onClick={handleAddMethod}
-                            disabled={actionLoading !== null}
-                            className="flex items-center gap-2 px-6 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary-500 dark:hover:bg-primary-500 dark:hover:text-white transition-all shadow-xl active:scale-95 disabled:opacity-50"
-                        >
-                            {actionLoading === 'add-pm' ? (
-                                <div className="w-4 h-4 border-2 border-primary-500/20 border-t-primary-500 rounded-full animate-spin" />
-                            ) : (
-                                <Plus className="w-4 h-4" />
-                            )}
-                            {t('billing_add_method')}
-                        </button>
-                    </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
                             {paymentMethods.length > 0 ? (
@@ -579,7 +593,7 @@ export const BillingDashboard: React.FC = () => {
                                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('billing_expires').replace('{date}', `${pm.card?.expMonth}/${pm.card?.expYear}`)}</p>
                                             </div>
                                         </div>
-                                        <button 
+                                        <button
                                             onClick={() => handleDeleteMethod(pm.id)}
                                             disabled={actionLoading === `delete-${pm.id}`}
                                             className="p-2 text-gray-400 hover:text-error-500 transition-colors opacity-0 group-hover/pm:opacity-100 disabled:opacity-50"
@@ -611,11 +625,19 @@ export const BillingDashboard: React.FC = () => {
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('billing_global_p2p')}</p>
                                 </div>
                             </div>
-                            <button 
-                                onClick={handlePayPalLink}
-                                className="flex items-center gap-3 px-6 py-2.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/50 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all shadow-lg active:scale-95"
+                            <button
+                                onClick={() => handlePayPalSubscription('price_pro_monthly')}
+                                disabled={actionLoading === 'paypal-price_pro_monthly'}
+                                className="flex items-center gap-3 px-6 py-2.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/50 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {t('billing_link_account')}
+                                {actionLoading === 'paypal-price_pro_monthly' ? (
+                                    <div className="w-4 h-4 border-2 border-indigo-600/20 border-t-indigo-600 rounded-full animate-spin" />
+                                ) : (
+                                    <>
+                                        <Globe className="w-4 h-4" />
+                                        {t('billing_subscribe_paypal')}
+                                    </>
+                                )}
                             </button>
                         </div>
                     </section>
