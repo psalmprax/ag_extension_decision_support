@@ -1,6 +1,7 @@
 import express, { Router } from 'express';
 import { paymentService } from '../services/paymentService';
 import { systemConfigService } from '../services/systemConfigService';
+import { paymentAnalyticsService } from '../services/paymentAnalyticsService';
 import { getPrisma } from '../services/prismaService';
 import { logger } from '../utils/logger';
 import { authorize, AuthRequest } from '../middleware/authorize';
@@ -379,6 +380,126 @@ router.get('/invoices', authorize('admin', 'extension_officer', 'farmer'), async
     } catch (error) {
         logger.error('Failed to get invoices:', error);
         res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/billing/analytics/dashboard:
+ *   get:
+ *     summary: Get comprehensive payment analytics dashboard data (Admin only)
+ *     tags: [Billing]
+ */
+router.get('/analytics/dashboard', authorize('admin'), async (req: AuthRequest, res) => {
+    try {
+        const analytics = await paymentAnalyticsService.getAnalyticsDashboard();
+        res.json({ success: true, data: analytics });
+    } catch (error) {
+        logger.error('Failed to get analytics dashboard:', error);
+        res.status(500).json({ success: false, message: 'Failed to retrieve analytics data' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/billing/analytics/revenue:
+ *   get:
+ *     summary: Get revenue metrics (Admin only)
+ *     tags: [Billing]
+ */
+router.get('/analytics/revenue', authorize('admin'), async (req: AuthRequest, res) => {
+    try {
+        const timeframe = (req.query.timeframe as 'month' | 'quarter' | 'year') || 'month';
+        const metrics = await paymentAnalyticsService.getRevenueMetrics(timeframe);
+        res.json({ success: true, data: metrics });
+    } catch (error) {
+        logger.error('Failed to get revenue metrics:', error);
+        res.status(500).json({ success: false, message: 'Failed to retrieve revenue metrics' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/billing/analytics/customers:
+ *   get:
+ *     summary: Get customer analytics (Admin only)
+ *     tags: [Billing]
+ */
+router.get('/analytics/customers', authorize('admin'), async (req: AuthRequest, res) => {
+    try {
+        const metrics = await paymentAnalyticsService.getCustomerMetrics();
+        res.json({ success: true, data: metrics });
+    } catch (error) {
+        logger.error('Failed to get customer metrics:', error);
+        res.status(500).json({ success: false, message: 'Failed to retrieve customer metrics' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/billing/analytics/subscriptions:
+ *   get:
+ *     summary: Get subscription analytics (Admin only)
+ *     tags: [Billing]
+ */
+router.get('/analytics/subscriptions', authorize('admin'), async (req: AuthRequest, res) => {
+    try {
+        const metrics = await paymentAnalyticsService.getSubscriptionMetrics();
+        res.json({ success: true, data: metrics });
+    } catch (error) {
+        logger.error('Failed to get subscription metrics:', error);
+        res.status(500).json({ success: false, message: 'Failed to retrieve subscription metrics' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/billing/analytics/payment-methods:
+ *   get:
+ *     summary: Get payment method analytics (Admin only)
+ *     tags: [Billing]
+ */
+router.get('/analytics/payment-methods', authorize('admin'), async (req: AuthRequest, res) => {
+    try {
+        const analytics = await paymentAnalyticsService.getPaymentMethodAnalytics();
+        res.json({ success: true, data: analytics });
+    } catch (error) {
+        logger.error('Failed to get payment method analytics:', error);
+        res.status(500).json({ success: false, message: 'Failed to retrieve payment method analytics' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/billing/analytics/churn:
+ *   get:
+ *     summary: Get churn prediction analytics (Admin only)
+ *     tags: [Billing]
+ */
+router.get('/analytics/churn', authorize('admin'), async (req: AuthRequest, res) => {
+    try {
+        const prediction = await paymentAnalyticsService.getChurnPrediction();
+        res.json({ success: true, data: prediction });
+    } catch (error) {
+        logger.error('Failed to get churn prediction:', error);
+        res.status(500).json({ success: false, message: 'Failed to retrieve churn analytics' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/billing/analytics/cohorts:
+ *   get:
+ *     summary: Get cohort analysis (Admin only)
+ *     tags: [Billing]
+ */
+router.get('/analytics/cohorts', authorize('admin'), async (req: AuthRequest, res) => {
+    try {
+        const cohorts = await paymentAnalyticsService.getCohortAnalysis();
+        res.json({ success: true, data: cohorts });
+    } catch (error) {
+        logger.error('Failed to get cohort analysis:', error);
+        res.status(500).json({ success: false, message: 'Failed to retrieve cohort analysis' });
     }
 });
 

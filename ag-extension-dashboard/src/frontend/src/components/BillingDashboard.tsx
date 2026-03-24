@@ -25,6 +25,7 @@ import { useLanguage } from '../lib/LanguageContext';
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
 import { fetchPlans, fetchSubscription, createCheckoutSession, createPortalSession, fetchInvoices, switchSubscription, fetchPaymentMethods, addPaymentMethod, deletePaymentMethod, updateAdminConfig, createPayPalSubscription } from '@/api/billingService';
+import { PaymentAnalyticsDashboard } from './PaymentAnalyticsDashboard';
 import { UsageQuota } from './UsageQuota';
 
 interface Plan {
