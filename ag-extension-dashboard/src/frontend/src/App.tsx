@@ -94,7 +94,7 @@ const StatCard = ({ title, value, change, icon: Icon, delay }: StatCardProps) =>
             <div className="flex items-start justify-between">
                 <div>
                     <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{title}</p>
-                    <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{value.toLocaleString()}</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{value !== undefined && value !== null ? value.toLocaleString() : '0'}</p>
                     {change !== undefined && (
                         <div className={`flex items-center gap-1 text-xs font-bold mt-2 ${change >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                             {change >= 0 ? <TrendingUp className="w-3 h-3" /> : <Activity className="w-3 h-3" />}

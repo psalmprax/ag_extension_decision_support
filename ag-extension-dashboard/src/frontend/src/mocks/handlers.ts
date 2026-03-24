@@ -59,7 +59,8 @@ export const handlers = [
                     activeConversations: 156,
                     visitsThisMonth: 89,
                     avgSatisfaction: 4.8,
-                    queriesResolved: 432
+                    queriesResolved: 432,
+                    avgConversationsPerFarmer: 24
                 },
                 trends: {
                     farmersGrowth: 12,

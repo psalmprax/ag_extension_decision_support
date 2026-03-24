@@ -73,6 +73,10 @@ export function Login({ onDemo }: LoginProps) {
                 setUser(userData as any);
             }
 
+            if (!token) {
+                throw new Error('Demo login failed: No access token received');
+            }
+
             onDemo?.();
             navigate('/dashboard');
         } catch (err: any) {
