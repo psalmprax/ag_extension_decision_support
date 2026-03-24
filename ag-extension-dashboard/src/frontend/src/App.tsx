@@ -187,7 +187,9 @@ function App() {
         farmers: storeFarmers,
         user: storeUser, setUser,
         addNotification,
-        notifications
+        notifications,
+        contextMenu, hideContextMenu, 
+        shareModal, hideShareModal
     } = useAppStore();
 
     // Logout handler
@@ -300,11 +302,6 @@ function App() {
     const [editingTitle, setEditingTitle] = useState<string>('');
     const [deletingConvId, setDeletingConvId] = useState<string | null>(null);
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-    const { 
-        contextMenu, hideContextMenu, 
-        shareModal, hideShareModal,
-        addNotification
-    } = useAppStore();
 
     const handleMenuAction = (action: string, entityId?: string) => {
         console.log(`Global Menu Action: ${action} on ${entityId}`);
