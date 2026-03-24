@@ -18,7 +18,8 @@ import {
     Save,
     History,
     FileText,
-    Loader2
+    Loader2,
+    Share2
 } from 'lucide-react';
 import { VideoCall } from './VideoCall';
 import {
@@ -108,6 +109,37 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
         });
     };
 
+    const handleShare = async () => {
+        const shareData = {
+            title: `${farmer.firstName} ${farmer.lastName} - Farmer Profile`,
+            text: `Check out this farmer profile: ${farmer.firstName} ${farmer.lastName} from ${farmer.region || farmer.village || 'Unknown location'}. Farm size: ${farmer.farmSize || 'N/A'} hectares.`,
+            url: `${window.location.origin}/farmers/${farmer.id}`
+        };
+
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+                addNotification({
+                    type: 'success',
+                    message: 'Farmer profile shared successfully'
+                });
+            } else {
+                // Fallback to clipboard
+                await navigator.clipboard.writeText(`${shareData.title}\n${shareData.text}\n${shareData.url}`);
+                addNotification({
+                    type: 'success',
+                    message: 'Farmer profile link copied to clipboard'
+                });
+            }
+        } catch (error) {
+            console.error('Error sharing:', error);
+            addNotification({
+                type: 'error',
+                message: 'Failed to share farmer profile'
+            });
+        }
+    };
+
     if (!farmer) return null;
 
     const [showVideoCall, setShowVideoCall] = React.useState(false);
@@ -155,7 +187,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
 
     const handleStartSynthesis = async () => {
         if (!farmer?.id) return;
-        
+
         setIsSynthesizing(true);
         try {
             const res = await generateSynthesis({
@@ -226,6 +258,13 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                     {isEditing ? <Save className="w-5 h-5" /> : <Edit2 className="w-5 h-5" />}
                                 </button>
                                 <button
+                                    onClick={handleShare}
+                                    className="p-2 backdrop-blur-md rounded-full text-white transition-all bg-white/10 hover:bg-white/20"
+                                    title="Share Farmer Information"
+                                >
+                                    <Share2 className="w-5 h-5" />
+                                </button>
+                                <button
                                     onClick={onClose}
                                     className="p-2 backdrop-blur-md rounded-full text-white transition-all bg-white/10 hover:bg-white/20"
                                 >
@@ -291,8 +330,8 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id as any)}
                                         className={`pb-4 text-[10px] font-black uppercase tracking-[0.2em] relative transition-all ${activeTab === tab.id
-                                                ? (isCyber ? 'text-primary-400' : 'text-primary-600')
-                                                : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
+                                            ? (isCyber ? 'text-primary-400' : 'text-primary-600')
+                                            : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
                                             }`}
                                     >
                                         <span className="flex items-center gap-2">
@@ -534,9 +573,8 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                             <button
                                 onClick={handleStartSynthesis}
                                 disabled={isSynthesizing}
-                                className={`px-6 py-3 rounded-2xl font-black text-xs shadow-xl transition-all flex items-center gap-2 ${
-                                    isCyber ? 'bg-primary-400 shadow-primary-500/20' : 'bg-primary-600 hover:bg-primary-700 text-white shadow-primary-500/20'
-                                } ${isSynthesizing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                className={`px-6 py-3 rounded-2xl font-black text-xs shadow-xl transition-all flex items-center gap-2 ${isCyber ? 'bg-primary-400 shadow-primary-500/20' : 'bg-primary-600 hover:bg-primary-700 text-white shadow-primary-500/20'
+                                    } ${isSynthesizing ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                                 {isSynthesizing ? (
                                     <>
@@ -557,14 +595,14 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
             {showVideoCall && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
                     <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden relative rounded-3xl border border-white/20 shadow-2xl">
-                        <button 
+                        <button
                             onClick={() => setShowVideoCall(false)}
                             className="absolute top-4 right-4 z-[110] p-2 bg-black/50 hover:bg-black/70 text-white rounded-full backdrop-blur-md transition-all"
                         >
                             <X className="w-6 h-6" />
                         </button>
                         <div className="overflow-y-auto max-h-[85vh]">
-                            <VideoCall 
+                            <VideoCall
                                 roomId={`farmer-${farmer.id}`}
                                 userId={(storeUser as any)?.userId || 'unknown'}
                                 userName={`${storeUser?.firstName} ${storeUser?.lastName}` || 'Extension Officer'}

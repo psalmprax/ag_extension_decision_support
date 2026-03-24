@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Send, Bot, User, Sparkles, Brain, Code, Terminal, Zap } from 'lucide-react';
 
 interface Message {
@@ -6,6 +6,44 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+}
+
+// API configuration - should be configurable
+const API_BASE_URL = 'http://localhost:3001/api'; // Adjust based on your backend URL
+
+async function sendMessageToAI(message: string, imageData?: string): Promise<string> {
+  try {
+    const payload: any = {
+      message,
+      mode: 'extension',
+      language: 'en' // Could be configurable
+    };
+
+    if (imageData) {
+      payload.imageData = imageData;
+      payload.message = `Please analyze this agricultural image: ${message || 'Identify any plants, diseases, or agricultural features in this photo.'}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/chatbot/message`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // Add authorization if needed
+        // 'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.response || data.message || 'Sorry, I could not process your request.';
+  } catch (error) {
+    console.error('Error sending message to AI:', error);
+    return 'Sorry, I\'m having trouble connecting to the AI service. Please check your connection and try again.';
+  }
 }
 
 function App() {
@@ -18,17 +56,127 @@ function App() {
     }
   ]);
   const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSend = () => {
-    if (!input.trim()) return;
-    const newMessage: Message = {
+  // Listen for messages from content script (photo capture, location)
+  useEffect(() => {
+    const handleMessage = async (message: any) => {
+      if (message.action === 'photo_captured' && message.imageData) {
+        // Add user message indicating photo was captured
+        const photoMessage: Message = {
+          id: Date.now().toString(),
+          role: 'user',
+          content: '📸 Photo captured - analyzing with AI...',
+          timestamp: new Date()
+        };
+        setMessages((prev: Message[]) => [...prev, photoMessage]);
+
+        // Send to AI for analysis
+        setIsLoading(true);
+        try {
+          const aiResponse = await sendMessageToAI('', message.imageData);
+          const assistantMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: aiResponse,
+            timestamp: new Date()
+          };
+          setMessages((prev: Message[]) => [...prev, assistantMessage]);
+        } catch (error) {
+          const errorMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: 'Sorry, I encountered an error analyzing the photo. Please try again.',
+            timestamp: new Date()
+          };
+          setMessages((prev: Message[]) => [...prev, errorMessage]);
+        } finally {
+          setIsLoading(false);
+        }
+      } else if (message.action === 'location_captured' && message.location) {
+        const { latitude, longitude, accuracy, timestamp } = message.location;
+        const locationMessage: Message = {
+          id: Date.now().toString(),
+          role: 'user',
+          content: `📍 Location captured: ${latitude.toFixed(6)}, ${longitude.toFixed(6)} (accuracy: ${accuracy.toFixed(1)}m)`,
+          timestamp: new Date()
+        };
+        setMessages((prev: Message[]) => [...prev, locationMessage]);
+
+        // Send to AI for location-based insights
+        setIsLoading(true);
+        try {
+          const aiResponse = await sendMessageToAI(`Location data: Latitude ${latitude}, Longitude ${longitude}. Provide agricultural insights for this location.`);
+          const assistantMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: aiResponse,
+            timestamp: new Date()
+          };
+          setMessages((prev: Message[]) => [...prev, assistantMessage]);
+        } catch (error) {
+          const errorMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: 'Sorry, I encountered an error analyzing the location. Please try again.',
+            timestamp: new Date()
+          };
+          setMessages((prev: Message[]) => [...prev, errorMessage]);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    // Add listener for browser runtime messages
+    const anyWin = window as any;
+    const browserAPI = typeof anyWin.browser !== 'undefined' ? anyWin.browser : (typeof anyWin.chrome !== 'undefined' ? anyWin.chrome : null);
+    if (browserAPI && browserAPI.runtime) {
+      const wrappedHandler = (message: any) => {
+        handleMessage(message);
+        return true; // Keep channel open for async
+      };
+      browserAPI.runtime.onMessage.addListener(wrappedHandler);
+      return () => browserAPI.runtime.onMessage.removeListener(wrappedHandler);
+    }
+  }, []);
+
+  const handleSend = async () => {
+    if (!input.trim() || isLoading) return;
+
+    const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
       content: input,
       timestamp: new Date()
     };
-    setMessages([...messages, newMessage]);
+
+    setMessages((prev: Message[]) => [...prev, userMessage]);
     setInput('');
+    setIsLoading(true);
+
+    try {
+      const aiResponse = await sendMessageToAI(input);
+
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: aiResponse,
+        timestamp: new Date()
+      };
+
+      setMessages((prev: Message[]) => [...prev, assistantMessage]);
+    } catch (error) {
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: 'Sorry, I encountered an error. Please try again.',
+        timestamp: new Date()
+      };
+      setMessages((prev: Message[]) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -48,9 +196,9 @@ function App() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-           <button className="p-2 hover:bg-slate-800 rounded-lg transition-colors border border-transparent hover:border-slate-700">
-             <Terminal className="w-4 h-4 text-slate-400" />
-           </button>
+          <button className="p-2 hover:bg-slate-800 rounded-lg transition-colors border border-transparent hover:border-slate-700">
+            <Terminal className="w-4 h-4 text-slate-400" />
+          </button>
         </div>
       </header>
 
@@ -58,18 +206,16 @@ function App() {
       <main className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
         {messages.map((msg) => (
           <div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
-              msg.role === 'assistant' 
-                ? 'bg-primary-500/10 border-primary-500/20 shadow-lg shadow-primary-500/5' 
-                : 'bg-secondary-500/10 border-secondary-500/20 shadow-lg shadow-secondary-500/5'
-            }`}>
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${msg.role === 'assistant'
+              ? 'bg-primary-500/10 border-primary-500/20 shadow-lg shadow-primary-500/5'
+              : 'bg-secondary-500/10 border-secondary-500/20 shadow-lg shadow-secondary-500/5'
+              }`}>
               {msg.role === 'assistant' ? <Bot className="w-4 h-4 text-primary-400" /> : <User className="w-4 h-4 text-secondary-400" />}
             </div>
-            <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm ${
-              msg.role === 'assistant' 
-                ? 'bg-slate-900 border border-slate-800 text-slate-200 rounded-tl-none' 
-                : 'bg-primary-600 border border-primary-500 text-white rounded-tr-none'
-            }`}>
+            <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.role === 'assistant'
+              ? 'bg-slate-900 border border-slate-800 text-slate-200 rounded-tl-none'
+              : 'bg-primary-600 border border-primary-500 text-white rounded-tr-none'
+              }`}>
               {msg.content}
             </div>
           </div>
@@ -96,13 +242,18 @@ function App() {
           />
           <button
             onClick={handleSend}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-primary-600 hover:bg-primary-500 rounded-xl text-white transition-all shadow-lg shadow-primary-500/20"
+            disabled={isLoading}
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-primary-600 hover:bg-primary-500 rounded-xl text-white transition-all shadow-lg shadow-primary-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Send className="w-4 h-4" />
+            {isLoading ? (
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
           </button>
         </div>
         <p className="mt-2 text-center text-[9px] font-bold text-slate-600 uppercase tracking-[0.2em] flex items-center justify-center gap-1">
-           <Sparkles className="w-2.5 h-2.5" /> Powered by OpenCrew AI & Claude
+          <Sparkles className="w-2.5 h-2.5" /> Powered by OpenCrew AI & Claude
         </p>
       </footer>
     </div>

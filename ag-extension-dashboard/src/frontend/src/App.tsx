@@ -35,7 +35,10 @@ import {
     User,
     Settings,
     Shield,
-    HelpCircle
+    HelpCircle,
+    Upload,
+    Wifi,
+    WifiOff
 } from 'lucide-react';
 import { NotificationPanel } from './components/NotificationPanel';
 import { useEffect } from 'react';
@@ -67,6 +70,7 @@ import { FarmerDetailPanel } from '@/components/FarmerDetailPanel';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { subscribeUserToPush } from '@/api/pushNotificationService';
 import AlphaAI from './components/Cyber/AlphaAI';
+import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 
 // COLORS constant removed as it's unused
 
@@ -199,6 +203,60 @@ function App() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [ragAnswer, setRagAnswer] = useState<{ answer: string; contextUsed: any[] } | null>(null);
     const [isAsking, setIsAsking] = useState(false);
+    const [isDragOver, setIsDragOver] = useState(false);
+    const [isOnline, setIsOnline] = useState(navigator.onLine);
+    const [pendingSyncCount, setPendingSyncCount] = useState(0);
+
+    // Online/offline detection
+    useEffect(() => {
+        const handleOnline = () => {
+            setIsOnline(true);
+            addNotification({
+                type: 'success',
+                message: 'Back online - syncing data...'
+            });
+        };
+        const handleOffline = () => {
+            setIsOnline(false);
+            addNotification({
+                type: 'warning',
+                message: 'You are offline - changes will be synced when connection returns'
+            });
+        };
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
+
+    // Drag and drop handlers
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragOver(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragOver(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragOver(false);
+
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length > 0) {
+            // For now, just show a notification - file processing can be enhanced later
+            addNotification({
+                type: 'info',
+                message: `${files.length} file(s) dropped. File analysis coming soon!`
+            });
+        }
+    };
     const [isMapExpanded, setIsMapExpanded] = useState(false);
     const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
@@ -232,10 +290,75 @@ function App() {
     // Farmer Detail Panel State
     const [selectedFarmer, setSelectedFarmer] = useState<Farmer | null>(null);
     const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
+    const [selectedFarmers, setSelectedFarmers] = useState<Set<string>>(new Set());
 
     const handleOpenFarmerDetail = (farmer: Farmer) => {
         setSelectedFarmer(farmer);
         setIsDetailPanelOpen(true);
+    };
+
+    // Bulk Actions
+    const handleSelectFarmer = (farmerId: string, checked: boolean) => {
+        const newSelected = new Set(selectedFarmers);
+        if (checked) {
+            newSelected.add(farmerId);
+        } else {
+            newSelected.delete(farmerId);
+        }
+        setSelectedFarmers(newSelected);
+    };
+
+    const handleSelectAllFarmers = (checked: boolean) => {
+        if (checked && farmers) {
+            setSelectedFarmers(new Set(farmers.map(f => f.id)));
+        } else {
+            setSelectedFarmers(new Set());
+        }
+    };
+
+    const handleBulkSMS = () => {
+        const selectedFarmersList = farmers?.filter(f => selectedFarmers.has(f.id)) || [];
+        if (selectedFarmersList.length > 0) {
+            // For now, just navigate to SMS tab - bulk SMS can be implemented later
+            setActiveTab('sms');
+            setSelectedFarmers(new Set());
+            addNotification({
+                type: 'info',
+                message: `${selectedFarmersList.length} farmers selected for bulk SMS`
+            });
+        }
+    };
+
+    const handleBulkExport = () => {
+        const selectedFarmersList = farmers?.filter(f => selectedFarmers.has(f.id)) || [];
+        if (selectedFarmersList.length > 0) {
+            // Create CSV export
+            const csvContent = [
+                ['Name', 'Phone', 'Region', 'Village', 'Crops', 'Farm Size (ha)'],
+                ...selectedFarmersList.map(f => [
+                    `${f.firstName} ${f.lastName}`,
+                    f.phone || '',
+                    f.region || '',
+                    f.village || '',
+                    f.crops?.join(', ') || '',
+                    f.farmSize?.toString() || ''
+                ])
+            ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `farmers_export_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            setSelectedFarmers(new Set());
+
+            addNotification({
+                type: 'success',
+                message: `Exported ${selectedFarmersList.length} farmers to CSV`
+            });
+        }
     };
 
     useEffect(() => {
@@ -652,6 +775,25 @@ function App() {
         </button>
     );
 
+    // Generate breadcrumb items based on current tab
+    const getBreadcrumbItems = () => {
+        const items = [
+            { label: t('nav_dashboard'), onClick: () => setActiveTab('dashboard') }
+        ];
+
+        if (activeTab !== 'dashboard') {
+            const currentNavItem = allNavItems.find(item => item.id === activeTab);
+            if (currentNavItem) {
+                items.push({
+                    label: currentNavItem.label,
+                    onClick: () => setActiveTab(activeTab)
+                });
+            }
+        }
+
+        return items;
+    };
+
     return (
         <div className={`min-h-screen ${darkMode ? 'dark' : ''} bg-theme-bg-primary transition-colors duration-300`}>
             {/* Top Navigation */}
@@ -693,7 +835,18 @@ function App() {
                         <ThemeSwitcher currentTheme={themeName} onThemeChange={setThemeName} />
                         <LanguageSwitcher compact />
                         <ThemeToggle />
-                        <button 
+                        {/* Sync Status Indicator */}
+                        <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-100/80 dark:bg-gray-800/80 text-xs font-bold">
+                            {isOnline ? (
+                                <Wifi className="w-3 h-3 text-green-600" />
+                            ) : (
+                                <WifiOff className="w-3 h-3 text-red-600" />
+                            )}
+                            <span className={isOnline ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}>
+                                {isOnline ? 'Online' : 'Offline'}
+                            </span>
+                        </div>
+                        <button
                             onClick={() => setIsNotificationPanelOpen(true)}
                             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative"
                         >
@@ -702,9 +855,9 @@ function App() {
                                 <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white dark:border-gray-900 animate-pulse"></span>
                             )}
                         </button>
-                        
+
                         <div className="relative">
-                            <button 
+                            <button
                                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                                 className="flex items-center gap-3 pl-4 border-l border-gray-200 dark:border-gray-700 hover:opacity-80 transition-opacity"
                             >
@@ -723,8 +876,8 @@ function App() {
                             <AnimatePresence>
                                 {isProfileMenuOpen && (
                                     <>
-                                        <div 
-                                            className="fixed inset-0 z-40" 
+                                        <div
+                                            className="fixed inset-0 z-40"
                                             onClick={() => setIsProfileMenuOpen(false)}
                                         />
                                         <motion.div
@@ -737,12 +890,12 @@ function App() {
                                                 <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Account Info</p>
                                                 <p className="text-xs font-bold text-gray-900 dark:text-white truncate">{storeUser?.email}</p>
                                             </div>
-                                            
+
                                             <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-600 dark:text-gray-300 group">
                                                 <User className="w-4 h-4 text-gray-400 group-hover:text-primary-500" />
                                                 <span className="text-xs font-bold uppercase tracking-widest">My Profile</span>
                                             </button>
-                                            
+
                                             <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-600 dark:text-gray-300 group">
                                                 <Settings className="w-4 h-4 text-gray-400 group-hover:text-primary-500" />
                                                 <span className="text-xs font-bold uppercase tracking-widest">Settings</span>
@@ -754,8 +907,8 @@ function App() {
                                             </button>
 
                                             <div className="h-px bg-gray-100 dark:bg-gray-700 my-2" />
-                                            
-                                            <button 
+
+                                            <button
                                                 onClick={handleLogout}
                                                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors text-gray-600 dark:text-gray-300 group"
                                             >
@@ -805,8 +958,15 @@ function App() {
                 )}
             </AnimatePresence>
 
+            {/* Breadcrumb Navigation */}
+            <div className={`fixed top-[73px] left-0 right-0 z-40 bg-theme-bg-primary/80 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-800/50 transition-all duration-300 ${sidebarOpen ? 'ml-[260px]' : 'ml-0'}`}>
+                <div className="px-6 py-3">
+                    <BreadcrumbNavigation items={getBreadcrumbItems()} />
+                </div>
+            </div>
+
             {/* Main Content */}
-            <main className={`pt-[73px] min-h-screen transition-all duration-300 ${sidebarOpen ? 'ml-[260px]' : 'ml-0'}`}>
+            <main className={`pt-[121px] min-h-screen transition-all duration-300 ${sidebarOpen ? 'ml-[260px]' : 'ml-0'}`}>
                 <div className="p-8">
                     <div className=''>
                         <ErrorBoundary>
@@ -843,33 +1003,33 @@ function App() {
                                     </>
                                 ) : dashboardData ? (
                                     <>
-                                        <StatCard 
-                                            title={isOfficer ? "My Farmers" : t('stat_total_farmers')} 
-                                            value={dashboardData.overview.totalFarmers} 
-                                            change={dashboardData.trends.farmersGrowth} 
-                                            icon={Users} 
-                                            delay={0} 
+                                        <StatCard
+                                            title={isOfficer ? "My Farmers" : t('stat_total_farmers')}
+                                            value={dashboardData.overview.totalFarmers}
+                                            change={dashboardData.trends.farmersGrowth}
+                                            icon={Users}
+                                            delay={0}
                                         />
-                                        <StatCard 
-                                            title={isOfficer ? "My Active Chats" : t('stat_active_conversations')} 
-                                            value={dashboardData.overview.activeConversations} 
-                                            change={dashboardData.trends.conversationsGrowth} 
-                                            icon={MessageSquare} 
-                                            delay={0.05} 
+                                        <StatCard
+                                            title={isOfficer ? "My Active Chats" : t('stat_active_conversations')}
+                                            value={dashboardData.overview.activeConversations}
+                                            change={dashboardData.trends.conversationsGrowth}
+                                            icon={MessageSquare}
+                                            delay={0.05}
                                         />
-                                        <StatCard 
-                                            title={isOfficer ? "My Visits (30d)" : t('stat_visits_this_month')} 
-                                            value={dashboardData.overview.visitsThisMonth} 
-                                            change={dashboardData.trends.visitsGrowth} 
-                                            icon={MapPin} 
-                                            delay={0.1} 
+                                        <StatCard
+                                            title={isOfficer ? "My Visits (30d)" : t('stat_visits_this_month')}
+                                            value={dashboardData.overview.visitsThisMonth}
+                                            change={dashboardData.trends.visitsGrowth}
+                                            icon={MapPin}
+                                            delay={0.1}
                                         />
-                                        <StatCard 
-                                            title={isOfficer ? "Avg. Conversations" : t('stat_avg_satisfaction')} 
-                                            value={isOfficer ? dashboardData.overview.avgConversationsPerFarmer : `${dashboardData.overview.avgSatisfaction}/5`} 
-                                            change={isOfficer ? undefined : dashboardData.trends.satisfactionChange} 
-                                            icon={isOfficer ? MessageSquare : Sparkles} 
-                                            delay={0.15} 
+                                        <StatCard
+                                            title={isOfficer ? "Avg. Conversations" : t('stat_avg_satisfaction')}
+                                            value={isOfficer ? dashboardData.overview.avgConversationsPerFarmer : `${dashboardData.overview.avgSatisfaction}/5`}
+                                            change={isOfficer ? undefined : dashboardData.trends.satisfactionChange}
+                                            icon={isOfficer ? MessageSquare : Sparkles}
+                                            delay={0.15}
                                         />
                                     </>
                                 ) : null}
@@ -919,7 +1079,7 @@ function App() {
                                             }}
                                         />
 
-                                         {!isMapExpanded && (
+                                        {!isMapExpanded && (
                                             <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center bg-white/10 dark:bg-black/20 backdrop-blur-md p-3 rounded-xl border border-white/20">
                                                 <div className="flex gap-4">
                                                     <div className="flex items-center gap-2">
@@ -931,7 +1091,7 @@ function App() {
                                                         <span className="text-[10px] font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest">{t('analytics_disease_alerts')}</span>
                                                     </div>
                                                 </div>
-                                                <button 
+                                                <button
                                                     onClick={() => setIsMapExpanded(true)}
                                                     className="text-[10px] font-black text-primary-600 dark:text-primary-400 uppercase bg-primary-50 dark:bg-primary-900/30 px-3 py-1 rounded-lg hover:bg-primary-100 transition-colors"
                                                 >
@@ -966,8 +1126,8 @@ function App() {
                                             </div>
                                         ))}
                                     </div>
+                                </div>
                             </div>
-                        </div>
                         </ErrorBoundary>
                     )}
                     {activeTab === 'portfolio' && (
@@ -976,11 +1136,57 @@ function App() {
                                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('portfolio_title')}</h1>
                                 <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">{t('portfolio_subtitle')}</p>
                             </div>
+                            {/* Bulk Actions Bar */}
+                            {selectedFarmers.size > 0 && (
+                                <div className="mb-4 p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-xl">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-2">
+                                                <Users className="w-5 h-5 text-primary-600" />
+                                                <span className="font-bold text-primary-800 dark:text-primary-200">
+                                                    {selectedFarmers.size} farmer{selectedFarmers.size !== 1 ? 's' : ''} selected
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={handleBulkSMS}
+                                                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2"
+                                            >
+                                                <Send className="w-4 h-4" />
+                                                Send SMS
+                                            </button>
+                                            <button
+                                                onClick={handleBulkExport}
+                                                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2"
+                                            >
+                                                <FileText className="w-4 h-4" />
+                                                Export CSV
+                                            </button>
+                                            <button
+                                                onClick={() => setSelectedFarmers(new Set())}
+                                                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-bold rounded-lg transition-colors"
+                                            >
+                                                Clear Selection
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="card overflow-hidden bg-theme-bg-card dark:bg-gray-800 border-gray-100 dark:border-gray-700 shadow-sm">
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left">
                                         <thead className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700">
                                             <tr>
+                                                <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest w-12">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={farmers && selectedFarmers.size === farmers.length && farmers.length > 0}
+                                                        onChange={(e) => handleSelectAllFarmers(e.target.checked)}
+                                                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                                                    />
+                                                </th>
                                                 <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest ">{t('table_farmer_details')}</th>
                                                 <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest ">{t('table_region_village')}</th>
                                                 <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest ">{t('table_crops')}</th>
@@ -992,10 +1198,17 @@ function App() {
                                             {farmers.map((farmer: Farmer) => (
                                                 <tr
                                                     key={farmer.id}
-                                                    onClick={() => handleOpenFarmerDetail(farmer)}
                                                     className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group cursor-pointer"
                                                 >
-                                                    <td className="px-6 py-4">
+                                                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedFarmers.has(farmer.id)}
+                                                            onChange={(e) => handleSelectFarmer(farmer.id, e.target.checked)}
+                                                            className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                                                        />
+                                                    </td>
+                                                    <td className="px-6 py-4" onClick={() => handleOpenFarmerDetail(farmer)}>
                                                         <div className="flex items-center gap-3">
                                                             <div className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-xs">
                                                                 {farmer.firstName?.[0]}
@@ -1097,7 +1310,7 @@ function App() {
                                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('reports_title')}</h1>
                                     <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">{t('reports_subtitle')}</p>
                                 </div>
-                                <button 
+                                <button
                                     onClick={handleGenerateReport}
                                     disabled={isGeneratingReport}
                                     className="px-6 py-3 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-xl font-bold text-sm shadow-lg shadow-primary-500/20 transition-all flex items-center gap-2"
@@ -1262,18 +1475,32 @@ function App() {
 
                             <form onSubmit={(e) => { e.preventDefault(); handleKnowledgeSearch(e); }} className="mb-12">
                                 <div className="relative group">
-                                    <div className="absolute inset-0 bg-primary-500/10 dark:bg-primary-500/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all opacity-0 group-focus-within:opacity-100"></div>
-                                    <div className="relative flex gap-3 p-2 bg-theme-bg-card dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-xl shadow-primary-500/5 items-center">
+                                    <div className={`absolute inset-0 bg-primary-500/10 dark:bg-primary-500/20 rounded-3xl blur-xl transition-all ${isDragOver ? 'bg-green-500/20 blur-2xl opacity-100' : 'opacity-0 group-focus-within:opacity-100 group-hover:blur-2xl'}`}></div>
+                                    <div
+                                        className={`relative flex gap-3 p-2 bg-theme-bg-card dark:bg-gray-800 rounded-3xl border shadow-xl shadow-primary-500/5 items-center transition-all ${isDragOver
+                                            ? 'border-green-400 border-2 bg-green-50/50 dark:bg-green-900/20 shadow-green-500/20'
+                                            : 'border-gray-100 dark:border-gray-700'
+                                            }`}
+                                        onDragOver={handleDragOver}
+                                        onDragLeave={handleDragLeave}
+                                        onDrop={handleDrop}
+                                    >
                                         <div className="pl-4">
                                             <Search className="w-5 h-5 text-primary-500" />
                                         </div>
                                         <input
                                             type="text"
-                                            placeholder={t('knowledge_search_ask')}
+                                            placeholder={isDragOver ? 'Drop files here to analyze...' : t('knowledge_search_ask')}
                                             className="flex-1 bg-transparent border-none focus:ring-0 py-4 text-gray-900 dark:text-white placeholder-gray-400 font-medium"
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
                                         />
+                                        {isDragOver && (
+                                            <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                                                <Upload className="w-5 h-5" />
+                                                <span className="text-sm font-bold">Drop to analyze</span>
+                                            </div>
+                                        )}
                                         <button
                                             type="submit"
                                             disabled={isAsking}
@@ -1657,112 +1884,112 @@ function App() {
                         </div>
                     )}
 
-                {/* Report Generation Overlay */}
-                <AnimatePresence>
-                    {isGeneratingReport && (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-                        >
+                    {/* Report Generation Overlay */}
+                    <AnimatePresence>
+                        {isGeneratingReport && (
                             <motion.div
-                                initial={{ scale: 0.9, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                className={`bg-white dark:bg-gray-800 p-10 rounded-3xl shadow-2xl max-w-md w-full text-center space-y-6`}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
                             >
-                                <div className="relative w-24 h-24 mx-auto">
-                                    <div className="absolute inset-0 border-4 border-primary-500/20 rounded-full"></div>
-                                    <div className="absolute inset-0 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <FileText className="w-10 h-10 text-primary-500" />
+                                <motion.div
+                                    initial={{ scale: 0.9, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    className={`bg-white dark:bg-gray-800 p-10 rounded-3xl shadow-2xl max-w-md w-full text-center space-y-6`}
+                                >
+                                    <div className="relative w-24 h-24 mx-auto">
+                                        <div className="absolute inset-0 border-4 border-primary-500/20 rounded-full"></div>
+                                        <div className="absolute inset-0 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <FileText className="w-10 h-10 text-primary-500" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h3 className={`text-2xl font-black 'text-gray-900 dark:text-white'`}>
+                                            {t('reports_generating_title') || 'Synthesizing Data'}
+                                        </h3>
+                                        <p className="text-gray-500 dark:text-gray-400 mt-2 font-medium">
+                                            {t('reports_generating_desc') || 'Our AI is analyzing visit records, yield trends, and farmer interactions to generate your comprehensive report.'}
+                                        </p>
+                                    </div>
+                                    <div className="flex gap-2 justify-center">
+                                        <span className="w-2 h-2 bg-primary-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                                        <span className="w-2 h-2 bg-primary-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                                        <span className="w-2 h-2 bg-primary-500 rounded-full animate-bounce"></span>
+                                    </div>
+                                </motion.div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Farmer Selection Modal - accessible from both AI Assistant and Farmer Chat */}
+                    {(activeTab === 'aiassistant' || activeTab === 'farmerchat') && showFarmerModal && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowFarmerModal(false)} />
+                            <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden">
+                                <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                                    <div>
+                                        <h3 className="font-bold text-gray-900 dark:text-white">{t('chat_start_new')}</h3>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">{t('chat_select_farmer')}</p>
+                                    </div>
+                                    <button onClick={() => setShowFarmerModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                                        <X className="w-5 h-5 text-gray-500" />
+                                    </button>
+                                </div>
+                                <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            placeholder={t('common_search_farmers')}
+                                            value={farmerSearchQuery}
+                                            onChange={(e) => setFarmerSearchQuery(e.target.value)}
+                                            className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 dark:text-white"
+                                        />
                                     </div>
                                 </div>
-                                <div>
-                                    <h3 className={`text-2xl font-black 'text-gray-900 dark:text-white'`}>
-                                        {t('reports_generating_title') || 'Synthesizing Data'}
-                                    </h3>
-                                    <p className="text-gray-500 dark:text-gray-400 mt-2 font-medium">
-                                        {t('reports_generating_desc') || 'Our AI is analyzing visit records, yield trends, and farmer interactions to generate your comprehensive report.'}
-                                    </p>
-                                </div>
-                                <div className="flex gap-2 justify-center">
-                                    <span className="w-2 h-2 bg-primary-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                                    <span className="w-2 h-2 bg-primary-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                                    <span className="w-2 h-2 bg-primary-500 rounded-full animate-bounce"></span>
-                                </div>
-                            </motion.div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Farmer Selection Modal - accessible from both AI Assistant and Farmer Chat */}
-                {(activeTab === 'aiassistant' || activeTab === 'farmerchat') && showFarmerModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowFarmerModal(false)} />
-                        <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden">
-                            <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                                <div>
-                                    <h3 className="font-bold text-gray-900 dark:text-white">{t('chat_start_new')}</h3>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">{t('chat_select_farmer')}</p>
-                                </div>
-                                <button onClick={() => setShowFarmerModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
-                                    <X className="w-5 h-5 text-gray-500" />
-                                </button>
-                            </div>
-                            <div className="p-4 border-b border-gray-100 dark:border-gray-700">
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                    <input
-                                        type="text"
-                                        placeholder={t('common_search_farmers')}
-                                        value={farmerSearchQuery}
-                                        onChange={(e) => setFarmerSearchQuery(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 dark:text-white"
-                                    />
-                                </div>
-                            </div>
-                            <div className="p-2 overflow-y-auto max-h-96">
-                                {isLoadingFarmers ? (
-                                    <div className="p-8 text-center text-gray-500">{t('chat_loading_farmers')}</div>
-                                ) : farmerList.filter(f =>
-                                    !farmerSearchQuery ||
-                                    `${f.firstName} ${f.lastName}`.toLowerCase().includes(farmerSearchQuery.toLowerCase()) ||
-                                    (f.region || '').toLowerCase().includes(farmerSearchQuery.toLowerCase()) ||
-                                    (f.village || '').toLowerCase().includes(farmerSearchQuery.toLowerCase())
-                                ).length === 0 ? (
-                                    <div className="p-8 text-center text-gray-500">{t('chat_no_farmers')}</div>
-                                ) : (
-                                    farmerList.filter(f =>
+                                <div className="p-2 overflow-y-auto max-h-96">
+                                    {isLoadingFarmers ? (
+                                        <div className="p-8 text-center text-gray-500">{t('chat_loading_farmers')}</div>
+                                    ) : farmerList.filter(f =>
                                         !farmerSearchQuery ||
                                         `${f.firstName} ${f.lastName}`.toLowerCase().includes(farmerSearchQuery.toLowerCase()) ||
                                         (f.region || '').toLowerCase().includes(farmerSearchQuery.toLowerCase()) ||
                                         (f.village || '').toLowerCase().includes(farmerSearchQuery.toLowerCase())
-                                    ).map((farmer) => (
-                                        <button
-                                            key={farmer.id}
-                                            onClick={() => activeTab === 'farmerchat' ? handleStartConversation(farmer, 'farmer') : handleStartConversation(farmer, 'ai')}
-                                            className="w-full p-3 rounded-xl text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center gap-3"
-                                        >
-                                            <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-lg">
-                                                {farmer.firstName?.[0]}{farmer.lastName?.[0]}
-                                            </div>
-                                            <div className="flex-1">
-                                                <div className="font-bold text-gray-900 dark:text-white">
-                                                    {farmer.firstName} {farmer.lastName}
+                                    ).length === 0 ? (
+                                        <div className="p-8 text-center text-gray-500">{t('chat_no_farmers')}</div>
+                                    ) : (
+                                        farmerList.filter(f =>
+                                            !farmerSearchQuery ||
+                                            `${f.firstName} ${f.lastName}`.toLowerCase().includes(farmerSearchQuery.toLowerCase()) ||
+                                            (f.region || '').toLowerCase().includes(farmerSearchQuery.toLowerCase()) ||
+                                            (f.village || '').toLowerCase().includes(farmerSearchQuery.toLowerCase())
+                                        ).map((farmer) => (
+                                            <button
+                                                key={farmer.id}
+                                                onClick={() => activeTab === 'farmerchat' ? handleStartConversation(farmer, 'farmer') : handleStartConversation(farmer, 'ai')}
+                                                className="w-full p-3 rounded-xl text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center gap-3"
+                                            >
+                                                <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-lg">
+                                                    {farmer.firstName?.[0]}{farmer.lastName?.[0]}
                                                 </div>
-                                                <div className="text-sm text-gray-500 dark:text-gray-400">
-                                                    {farmer.region}{farmer.village ? `, ${farmer.village}` : ''}
+                                                <div className="flex-1">
+                                                    <div className="font-bold text-gray-900 dark:text-white">
+                                                        {farmer.firstName} {farmer.lastName}
+                                                    </div>
+                                                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                                                        {farmer.region}{farmer.village ? `, ${farmer.village}` : ''}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <ChevronRight className="w-5 h-5 text-gray-400" />
-                                        </button>
-                                    ))
-                                )}
+                                                <ChevronRight className="w-5 h-5 text-gray-400" />
+                                            </button>
+                                        ))
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )}
                 </div>
             </main>
 
@@ -1781,9 +2008,9 @@ function App() {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 visits={visits.filter((v: any) => selectedFarmer && (v.farmer_id === selectedFarmer.id || v.farmer_name === `${selectedFarmer.firstName} ${selectedFarmer.lastName}`))}
             />
-            <NotificationPanel 
-                isOpen={isNotificationPanelOpen} 
-                onClose={() => setIsNotificationPanelOpen(false)} 
+            <NotificationPanel
+                isOpen={isNotificationPanelOpen}
+                onClose={() => setIsNotificationPanelOpen(false)}
             />
         </div>
     );

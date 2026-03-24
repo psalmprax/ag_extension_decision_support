@@ -225,22 +225,22 @@ const CROP_ICONS: Record<string, string> = {
 };
 
 // Sample farmer data for Malawi
-const SAMPLE_FARMERS = [
-    { id: 1, name: 'Chimwemwe Farm', lat: -13.9626, lng: 33.7741, crop: 'maize', region: 'Lilongwe', size: 5.2, phone: '+265-991-234-567', yield: 4.5 },
-    { id: 2, name: 'Mzuzu Cooperative', lat: -11.4626, lng: 34.3015, crop: 'tobacco', region: 'Mzuzu', size: 12.5, phone: '+265-991-234-568', yield: 2.1 },
-    { id: 3, name: 'Blantyre Growers', lat: -15.7861, lng: 35.0058, crop: 'groundnuts', region: 'Blantyre', size: 3.8, phone: '+265-991-234-569', yield: 1.8 },
-    { id: 4, name: 'Zomba Farmers Union', lat: -15.3833, lng: 35.3333, crop: 'rice', region: 'Zomba', size: 8.3, phone: '+265-991-234-570', yield: 3.2 },
-    { id: 5, name: 'Mzuzu Tobacco Co', lat: -11.4364, lng: 34.3519, crop: 'tobacco', region: 'Mzuzu', size: 15.0, phone: '+265-991-234-571', yield: 2.3 },
-    { id: 6, name: 'Lilongwe Maize Farm', lat: -13.9626, lng: 33.7741, crop: 'maize', region: 'Lilongwe', size: 6.7, phone: '+265-991-234-572', yield: 5.1 },
-    { id: 7, name: 'Kasungu Groundnuts', lat: -12.9318, lng: 33.3965, crop: 'groundnuts', region: 'Kasungu', size: 4.5, phone: '+265-991-234-573', yield: 1.5 },
-    { id: 8, name: 'Mchinji Soybeans', lat: -13.7989, lng: 32.8843, crop: 'soybeans', region: 'Mchinji', size: 9.2, phone: '+265-991-234-574', yield: 2.8 },
-    { id: 9, name: 'Mzuzu Beans Cooperative', lat: -11.4281, lng: 34.2893, crop: 'beans', region: 'Mzuzu', size: 7.1, phone: '+265-991-234-575', yield: 1.9 },
-    { id: 10, name: 'Blantyre Cotton', lat: -15.7421, lng: 34.9908, crop: 'cotton', region: 'Blantyre', size: 11.4, phone: '+265-991-234-576', yield: 1.2 },
-    { id: 11, name: 'Mzuzu Wheat Farm', lat: -11.4562, lng: 34.3128, crop: 'wheat', region: 'Mzuzu', size: 5.9, phone: '+265-991-234-577', yield: 3.5 },
-    { id: 12, name: 'Zomba Sorghum', lat: -15.3637, lng: 35.3531, crop: 'sorghum', region: 'Zomba', size: 4.2, phone: '+265-991-234-578', yield: 2.9 },
-    { id: 13, name: 'Lilongwe Potatoes', lat: -13.9204, lng: 33.7836, crop: 'potatoes', region: 'Lilongwe', size: 3.3, phone: '+265-991-234-579', yield: 15.0 },
-    { id: 14, name: 'Kasungu Rice', lat: -12.9282, lng: 33.4098, crop: 'rice', region: 'Kasungu', size: 6.8, phone: '+265-991-234-580', yield: 3.8 },
-    { id: 15, name: 'Mchinji Maize', lat: -13.7892, lng: 32.8921, crop: 'maize', region: 'Mchinji', size: 8.1, phone: '+265-991-234-581', yield: 4.2 },
+const SAMPLE_FARMERS: FarmerData[] = [
+    { id: 1, name: 'Chimwemwe Farm', lat: -13.9626, lng: 33.7741, crop: 'maize', region: 'Lilongwe', size: 5.2, phone: '+265-991-234-567', yield: 4.5, firstName: '', lastName: '' },
+    { id: 2, name: 'Mzuzu Cooperative', lat: -11.4626, lng: 34.3015, crop: 'tobacco', region: 'Mzuzu', size: 12.5, phone: '+265-991-234-568', yield: 2.1, firstName: '', lastName: '' },
+    { id: 3, name: 'Blantyre Growers', lat: -15.7861, lng: 35.0058, crop: 'groundnuts', region: 'Blantyre', size: 3.8, phone: '+265-991-234-569', yield: 1.8, firstName: '', lastName: '' },
+    { id: 4, name: 'Zomba Farmers Union', lat: -15.3833, lng: 35.3333, crop: 'rice', region: 'Zomba', size: 8.3, phone: '+265-991-234-570', yield: 3.2, firstName: '', lastName: '' },
+    { id: 5, name: 'Mzuzu Tobacco Co', lat: -11.4364, lng: 34.3519, crop: 'tobacco', region: 'Mzuzu', size: 15.0, phone: '+265-991-234-571', yield: 2.3, firstName: '', lastName: '' },
+    { id: 6, name: 'Lilongwe Maize Farm', lat: -13.9626, lng: 33.7741, crop: 'maize', region: 'Lilongwe', size: 6.7, phone: '+265-991-234-572', yield: 5.1, firstName: '', lastName: '' },
+    { id: 7, name: 'Kasungu Groundnuts', lat: -12.9318, lng: 33.3965, crop: 'groundnuts', region: 'Kasungu', size: 4.5, phone: '+265-991-234-573', yield: 1.5, firstName: '', lastName: '' },
+    { id: 8, name: 'Mchinji Soybeans', lat: -13.7989, lng: 32.8843, crop: 'soybeans', region: 'Mchinji', size: 9.2, phone: '+265-991-234-574', yield: 2.8, firstName: '', lastName: '' },
+    { id: 9, name: 'Mzuzu Beans Cooperative', lat: -11.4281, lng: 34.2893, crop: 'beans', region: 'Mzuzu', size: 7.1, phone: '+265-991-234-575', yield: 1.9, firstName: '', lastName: '' },
+    { id: 10, name: 'Blantyre Cotton', lat: -15.7421, lng: 34.9908, crop: 'cotton', region: 'Blantyre', size: 11.4, phone: '+265-991-234-576', yield: 1.2, firstName: '', lastName: '' },
+    { id: 11, name: 'Mzuzu Wheat Farm', lat: -11.4562, lng: 34.3128, crop: 'wheat', region: 'Mzuzu', size: 5.9, phone: '+265-991-234-577', yield: 3.5, firstName: '', lastName: '' },
+    { id: 12, name: 'Zomba Sorghum', lat: -15.3637, lng: 35.3531, crop: 'sorghum', region: 'Zomba', size: 4.2, phone: '+265-991-234-578', yield: 2.9, firstName: '', lastName: '' },
+    { id: 13, name: 'Lilongwe Potatoes', lat: -13.9204, lng: 33.7836, crop: 'potatoes', region: 'Lilongwe', size: 3.3, phone: '+265-991-234-579', yield: 15.0, firstName: '', lastName: '' },
+    { id: 14, name: 'Kasungu Rice', lat: -12.9282, lng: 33.4098, crop: 'rice', region: 'Kasungu', size: 6.8, phone: '+265-991-234-580', yield: 3.8, firstName: '', lastName: '' },
+    { id: 15, name: 'Mchinji Maize', lat: -13.7892, lng: 32.8921, crop: 'maize', region: 'Mchinji', size: 8.1, phone: '+265-991-234-581', yield: 4.2, firstName: '', lastName: '' },
 ];
 
 // Map tile layer types
@@ -385,7 +385,9 @@ function MapLegend({ show, t }: { show: boolean, t: (key: string) => string }) {
 
 export interface FarmerData {
     id: number | string;
-    name: string;
+    name?: string;
+    firstName?: string;
+    lastName?: string;
     lat: number;
     lng: number;
     crop: string;
@@ -422,7 +424,39 @@ export function FarmerMap({
     const [currentLayer, setCurrentLayer] = useState<MapLayer>('street');
     const [selectedFarmer, setSelectedFarmer] = useState<FarmerData | null>(null);
     const [internalExpanded, setInternalExpanded] = useState(false);
-    
+    const [contextMenu, setContextMenu] = useState<{ x: number; y: number; farmer: FarmerData } | null>(null);
+
+    const handleContextMenu = (e: MouseEvent, farmer: FarmerData) => {
+        e.preventDefault();
+        setContextMenu({
+            x: e.clientX,
+            y: e.clientY,
+            farmer
+        });
+    };
+
+    const handleContextMenuAction = (action: string) => {
+        if (!contextMenu) return;
+
+        switch (action) {
+            case 'view':
+                onFarmerClick?.(contextMenu.farmer);
+                break;
+            case 'chat':
+                handleChat(contextMenu.farmer);
+                break;
+            case 'call':
+                if (contextMenu.farmer.phone) {
+                    handleCall(contextMenu.farmer.phone);
+                }
+                break;
+            case 'navigate':
+                setMapCenter([contextMenu.farmer.lat, contextMenu.farmer.lng]);
+                break;
+        }
+        setContextMenu(null);
+    };
+
     const isExpanded = isExternalExpanded !== undefined ? isExternalExpanded : internalExpanded;
     const setIsExpanded = (val: boolean) => {
         setInternalExpanded(val);
@@ -459,11 +493,15 @@ export function FarmerMap({
     }, [farmers]);
 
     const filteredFarmers = useMemo(() => {
-        return farmers.filter(f =>
-            f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            f.crop.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            f.region.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+        return farmers.filter(f => {
+            const fullName = f.name || `${f.firstName || ''} ${f.lastName || ''}`;
+            const searchStr = searchQuery.toLowerCase();
+            return (
+                fullName.toLowerCase().includes(searchStr) ||
+                (f.crop?.toLowerCase() || '').includes(searchStr) ||
+                (f.region?.toLowerCase() || '').includes(searchStr)
+            );
+        });
     }, [farmers, searchQuery]);
 
     // Disable marker animation after initial render
@@ -542,6 +580,7 @@ export function FarmerMap({
                     icon={createMarkerIcon(farmer.crop, selectedFarmer?.id === farmer.id)}
                     eventHandlers={{
                         click: () => handleFarmerClick(farmer),
+                        contextmenu: (e) => handleContextMenu(e.originalEvent, farmer),
                     }}
                 >
                     <Popup className={`glass-popup ${darkMode ? 'glass-popup-dark' : ''}`} closeButton={false}>
@@ -562,7 +601,9 @@ export function FarmerMap({
                                         {farmer.crop}
                                     </span>
                                 </div>
-                                <h3 className="text-white font-black text-xl leading-tight drop-shadow-lg relative z-10">{farmer.name}</h3>
+                                <h3 className="text-white font-black text-xl leading-tight drop-shadow-lg relative z-10">
+                                    {farmer.name || `${farmer.firstName} ${farmer.lastName}`}
+                                </h3>
                                 <div className="flex items-center gap-1.5 text-white/90 text-xs font-medium mt-1">
                                     <MapPin className="w-3.5 h-3.5" />
                                     {farmer.region}
@@ -670,56 +711,58 @@ export function FarmerMap({
             {/* Top Controls Bar */}
             {!isExpanded && (
                 <div className="absolute top-3 left-3 right-14 z-[1000] flex items-center gap-2">
-                {/* Mini Search Bar */}
-                <div className={`flex-1 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-100 dark:border-gray-700/50 overflow-hidden transition-all ${showMiniSearch ? 'opacity-100' : 'opacity-70 hover:opacity-100'}`}>
-                    <div className="flex items-center px-3 py-2">
-                        <Search className="w-4 h-4 text-gray-400 dark:text-gray-500 mr-2" />
-                        <input
-                            type="text"
-                            placeholder={t('map_search_placeholder') || 'Search farmers...'}
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onFocus={() => setShowMiniSearch(true)}
-                            onBlur={() => setShowMiniSearch(false)}
-                            className="flex-1 text-sm bg-transparent outline-none text-gray-700 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 font-medium"
-                        />
-                        {searchQuery && (
-                            <button
-                                onClick={() => setSearchQuery('')}
-                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                            >
-                                <X className="w-3.5 h-3.5" />
-                            </button>
+                    {/* Mini Search Bar */}
+                    <div className={`flex-1 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-100 dark:border-gray-700/50 overflow-hidden transition-all ${showMiniSearch ? 'opacity-100' : 'opacity-70 hover:opacity-100'}`}>
+                        <div className="flex items-center px-3 py-2">
+                            <Search className="w-4 h-4 text-gray-400 dark:text-gray-500 mr-2" />
+                            <input
+                                type="text"
+                                placeholder={t('map_search_placeholder') || 'Search farmers...'}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onFocus={() => setShowMiniSearch(true)}
+                                onBlur={() => setShowMiniSearch(false)}
+                                className="flex-1 text-sm bg-transparent outline-none text-gray-700 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 font-medium"
+                            />
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery('')}
+                                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
+                            )}
+                        </div>
+                        {/* Search Results Dropdown */}
+                        {searchQuery && filteredFarmers.length > 0 && (
+                            <div className="border-t border-gray-100 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 max-h-48 overflow-y-auto custom-scrollbar">
+                                {filteredFarmers.slice(0, 5).map(farmer => (
+                                    <button
+                                        key={farmer.id}
+                                        onClick={() => {
+                                            setMapCenter([farmer.lat, farmer.lng]);
+                                            setMapZoom(14);
+                                            setMapBounds(undefined);
+                                            setSelectedFarmer(farmer);
+                                            setSearchQuery('');
+                                        }}
+                                        className="w-full text-left px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center gap-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                                    >
+                                        <span className="text-lg">{CROP_ICONS[farmer.crop.toLowerCase()] || CROP_ICONS.default}</span>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="text-sm font-bold text-gray-700 dark:text-gray-200 truncate">
+                                                {farmer.name || `${farmer.firstName} ${farmer.lastName}`}
+                                            </div>
+                                            <div className="text-[10px] text-gray-400">{farmer.region}</div>
+                                        </div>
+                                        <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-500" />
+                                    </button>
+                                ))}
+                            </div>
                         )}
                     </div>
-                    {/* Search Results Dropdown */}
-                    {searchQuery && filteredFarmers.length > 0 && (
-                        <div className="border-t border-gray-100 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 max-h-48 overflow-y-auto custom-scrollbar">
-                            {filteredFarmers.slice(0, 5).map(farmer => (
-                                <button
-                                    key={farmer.id}
-                                    onClick={() => {
-                                        setMapCenter([farmer.lat, farmer.lng]);
-                                        setMapZoom(14);
-                                        setMapBounds(undefined);
-                                        setSelectedFarmer(farmer);
-                                        setSearchQuery('');
-                                    }}
-                                    className="w-full text-left px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center gap-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
-                                >
-                                    <span className="text-lg">{CROP_ICONS[farmer.crop.toLowerCase()] || CROP_ICONS.default}</span>
-                                    <div className="min-w-0 flex-1">
-                                        <div className="text-sm font-bold text-gray-700 dark:text-gray-200 truncate">{farmer.name}</div>
-                                        <div className="text-[10px] text-gray-400">{farmer.region}</div>
-                                    </div>
-                                    <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-500" />
-                                </button>
-                            ))}
-                        </div>
-                    )}
                 </div>
-            </div>
-        )}
+            )}
 
             {/* Expand button */}
             {!isExpanded && (
@@ -889,7 +932,9 @@ export function FarmerMap({
                                                     {CROP_ICONS[farmer.crop.toLowerCase()] || CROP_ICONS.default}
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <div className={`font-bold text-sm truncate 'text-gray-800 dark:text-white'`}>{farmer.name}</div>
+                                                    <div className={`font-bold text-sm truncate 'text-gray-800 dark:text-white'`}>
+                                                        {farmer.name || `${farmer.firstName} ${farmer.lastName}`}
+                                                    </div>
                                                     <div className={`text-[10px] font-medium truncate 'text-gray-400'`}>{farmer.region} • {farmer.size}ha</div>
                                                 </div>
                                             </button>
@@ -947,6 +992,58 @@ export function FarmerMap({
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Context Menu */}
+            {contextMenu && (
+                <>
+                    <div
+                        className="fixed inset-0 z-50"
+                        onClick={() => setContextMenu(null)}
+                    />
+                    <div
+                        className="fixed z-50 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-2 min-w-[160px]"
+                        style={{
+                            left: contextMenu.x,
+                            top: contextMenu.y,
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="px-3 py-1 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b border-gray-100 dark:border-gray-700">
+                            {contextMenu.farmer.firstName ? `${contextMenu.farmer.firstName} ${contextMenu.farmer.lastName}` : contextMenu.farmer.name}
+                        </div>
+                        <button
+                            onClick={() => handleContextMenuAction('view')}
+                            className="w-full px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 text-sm flex items-center gap-2"
+                        >
+                            <Users className="w-4 h-4" />
+                            View Profile
+                        </button>
+                        <button
+                            onClick={() => handleContextMenuAction('chat')}
+                            className="w-full px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 text-sm flex items-center gap-2"
+                        >
+                            <MessageSquare className="w-4 h-4" />
+                            Start Chat
+                        </button>
+                        {contextMenu.farmer.phone && (
+                            <button
+                                onClick={() => handleContextMenuAction('call')}
+                                className="w-full px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 text-sm flex items-center gap-2"
+                            >
+                                <Phone className="w-4 h-4" />
+                                Call Farmer
+                            </button>
+                        )}
+                        <button
+                            onClick={() => handleContextMenuAction('navigate')}
+                            className="w-full px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 text-sm flex items-center gap-2"
+                        >
+                            <Navigation className="w-4 h-4" />
+                            Navigate Here
+                        </button>
+                    </div>
+                </>
             )}
         </div>
     );
