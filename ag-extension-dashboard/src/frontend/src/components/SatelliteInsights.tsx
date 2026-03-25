@@ -28,13 +28,7 @@ interface SatelliteInsightsProps {
 export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, isCyber, metrics }) => {
     const { t } = useLanguage();
 
-    const defaultMetrics = [
-        { label: 'NDVI Index', value: '0.68', status: 'Optimal', icon: Zap, color: 'text-green-400' },
-        { label: 'Soil Moisture', value: '42%', status: 'Stable', icon: Droplets, color: 'text-blue-400' },
-        { label: 'Solar Rad.', value: '18MJ/m²', status: 'High', icon: Sun, color: 'text-yellow-400' },
-    ];
-
-    const displayMetrics = metrics || defaultMetrics;
+    const displayMetrics = metrics || [];
 
     return (
         <div className="space-y-8">
@@ -62,11 +56,11 @@ export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, 
                 </div>
             </div>
 
-            {/* Simulated Satellite Map/Grid */}
+            {/* Spatial Data Visualization */}
             <div className={`aspect-video rounded-3xl relative overflow-hidden border ${isCyber ? 'bg-black/40 border-primary-500/20 shadow-[0_0_30px_rgba(79,209,197,0.1)]' : 'bg-gray-100 border-gray-200'}`}>
                 {isCyber && <div className="absolute inset-0 cyber-grid-premium opacity-30" />}
                 
-                {/* Simulated Data Points */}
+                {/* Data Points Layer */}
                 <div className="absolute inset-0 flex items-center justify-center">
                     <div className="relative w-full h-full">
                         {[...Array(6)].map((_, i) => (
@@ -113,7 +107,7 @@ export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, 
 
             {/* Metrics Grid */}
             <div className="grid grid-cols-3 gap-4">
-                {metrics.map((m) => (
+                {displayMetrics.length > 0 ? displayMetrics.map((m) => (
                     <div key={m.label} className={`p-4 rounded-2xl border ${isCyber ? 'bg-black/40 border-white/10 hover:border-primary-500/30' : 'bg-white border-gray-100 shadow-sm'} transition-all`}>
                         <div className="flex items-center gap-2 mb-2">
                             <m.icon className={`w-3 h-3 ${m.color}`} />
@@ -127,7 +121,11 @@ export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, 
                             <span className="text-[8px] font-black text-green-500 uppercase tracking-tighter">{m.status}</span>
                         </div>
                     </div>
-                ))}
+                )) : (
+                    <div className="col-span-3 py-6 text-center text-[10px] font-black uppercase tracking-widest text-white/20">
+                        Awaiting data stream...
+                    </div>
+                )}
             </div>
 
             {/* Analysis Summary */}

@@ -115,6 +115,10 @@ export async function createTables(): Promise<void> {
       farm_size_hectares DECIMAL(10, 2),
       crops TEXT[],
       language_preference VARCHAR(20) DEFAULT 'en',
+      soil_moisture DECIMAL(5, 2),
+      temperature DECIMAL(5, 2),
+      ph_level DECIMAL(4, 2),
+      ai_confidence DECIMAL(5, 2),
       created_at TIMESTAMP DEFAULT NOW(),
       updated_at TIMESTAMP DEFAULT NOW()
     );

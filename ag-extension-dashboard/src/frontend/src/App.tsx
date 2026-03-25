@@ -189,7 +189,7 @@ function App() {
         addNotification,
         notifications,
         contextMenu, hideContextMenu, 
-        shareModal, hideShareModal
+        shareModal, hideShareModal, showShareModal, removeFarmer
     } = useAppStore();
 
     // Logout handler
@@ -307,14 +307,42 @@ function App() {
         console.log(`Global Menu Action: ${action} on ${entityId}`);
         
         if (action.startsWith('share_')) {
-            // shareModal is handled via store, but we might want to trigger it here
+            const type = action.split('_')[1];
+            const entity = type === 'farmer' ? farmers?.find(f => f.id === entityId) : null;
+            showShareModal({
+                entityType: type,
+                entityId: entityId || '',
+                entityName: entity ? `${entity.firstName} ${entity.lastName}` : undefined
+            });
         } else if (action === 'schedule_visit') {
-            // open visit modal
+            setShowVisitModal(true);
         } else if (action === 'export_farmer' || action.startsWith('export_')) {
-            addNotification({ type: 'success', message: `Exporting ${action.split('_')[1]} data...` });
+            // Trigger export logic
+            if (entityId) {
+                const farmer = farmers?.find(f => f.id === entityId);
+                if (farmer) {
+                    const csvContent = [
+                        ['Name', 'Phone', 'Region', 'Village', 'Crops', 'Farm Size (ha)'],
+                        [`"${farmer.firstName} ${farmer.lastName}"`, `"${farmer.phone || ''}"`, `"${farmer.region || ''}"`, `"${farmer.village || ''}"`, `"${farmer.crops?.join(', ') || ''}"`, `"${farmer.farmSize?.toString() || ''}"`]
+                    ].join('\n');
+                    const blob = new Blob([csvContent], { type: 'text/csv' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `farmer_${entityId}_export.csv`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    addNotification({ type: 'success', message: 'Farmer data exported successfully' });
+                }
+            }
         } else if (action.includes('delete')) {
-            if (confirm(`Are you sure you want to perform this action: ${action}?`)) {
-                addNotification({ type: 'info', message: 'Action executed successfully' });
+            if (window.confirm(`Are you sure you want to perform this action: ${action}?`)) {
+                if (action.startsWith('farmer') && entityId) {
+                    removeFarmer(entityId);
+                    addNotification({ type: 'success', message: 'Farmer record deleted successfully' });
+                } else {
+                    addNotification({ type: 'info', message: 'Action executed successfully' });
+                }
             }
         }
     };
@@ -852,7 +880,10 @@ function App() {
     // Generate breadcrumb items based on current tab
     const getBreadcrumbItems = () => {
         const items = [
-            { label: t('nav_dashboard'), onClick: () => setActiveTab('dashboard') }
+            { label: t('nav_dashboard'), onClick: () => {
+                setActiveTab('dashboard');
+                setIsDetailPanelOpen(false);
+            }}
         ];
 
         if (activeTab !== 'dashboard') {
@@ -860,9 +891,19 @@ function App() {
             if (currentNavItem) {
                 items.push({
                     label: currentNavItem.label,
-                    onClick: () => setActiveTab(activeTab)
+                    onClick: () => {
+                        setActiveTab(activeTab);
+                        setIsDetailPanelOpen(false);
+                    }
                 });
             }
+        }
+
+        if (isDetailPanelOpen && selectedFarmer) {
+            items.push({
+                label: `${selectedFarmer.firstName} ${selectedFarmer.lastName}`,
+                onClick: () => setIsDetailPanelOpen(true)
+            });
         }
 
         return items;

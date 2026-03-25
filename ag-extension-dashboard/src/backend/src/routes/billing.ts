@@ -635,7 +635,7 @@ router.get('/paypal/success', authorize('admin', 'extension_officer', 'farmer'),
  *     tags: [Billing]
  */
 router.get('/paypal/cancel', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
-    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?canceled=true&payment=paypal`);
+        res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?canceled=true&payment=paypal`);
 });
 
 /**

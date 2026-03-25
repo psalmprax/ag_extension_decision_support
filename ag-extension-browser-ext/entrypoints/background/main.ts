@@ -253,6 +253,29 @@ export default defineBackground(() => {
     const init = async () => {
         await initDB();
 
+        // Register Context Menus
+        chromeAPI.contextMenus.removeAll(() => {
+            chromeAPI.contextMenus.create({
+                id: 'alfa-root',
+                title: 'ALFA Advisor',
+                contexts: ['selection', 'page']
+            });
+
+            chromeAPI.contextMenus.create({
+                id: 'alfa-analyze',
+                parentId: 'alfa-root',
+                title: 'Analyze Selection',
+                contexts: ['selection']
+            });
+
+            chromeAPI.contextMenus.create({
+                id: 'alfa-summarize',
+                parentId: 'alfa-root',
+                title: 'Summarize Page',
+                contexts: ['page']
+            });
+        });
+
         // Initial status check
         await handleOnlineStatusChange();
 
@@ -266,6 +289,47 @@ export default defineBackground(() => {
             }
         }, 30000); // Check every 30 seconds
     };
+
+    // Context Menu Click Handler
+    chromeAPI.contextMenus.onClicked.addListener((info: any, tab: any) => {
+        if (info.menuItemId === 'alfa-analyze' && info.selectionText) {
+            chromeAPI.sidePanel.open({ windowId: tab.windowId }).then(() => {
+                // Short delay to ensure sidepanel is ready
+                setTimeout(() => {
+                    chromeAPI.runtime.sendMessage({
+                        action: 'analyze_selection',
+                        text: info.selectionText
+                    });
+                }, 500);
+            });
+        } else if (info.menuItemId === 'alfa-summarize') {
+            chromeAPI.sidePanel.open({ windowId: tab.windowId }).then(() => {
+                setTimeout(() => {
+                    chromeAPI.runtime.sendMessage({
+                        action: 'trigger_quick_action',
+                        actionType: 'Summarize'
+                    });
+                }, 500);
+            });
+        }
+    });
+
+    // Commands Handler (Shortcuts)
+    chromeAPI.commands.onCommand.addListener((command: string) => {
+        chromeAPI.tabs.query({ active: true, currentWindow: true }, ([tab]: any) => {
+            if (!tab) return;
+
+            if (command === 'open_sidepanel') {
+                chromeAPI.sidePanel.open({ windowId: tab.windowId });
+            } else if (command === 'capture_photo') {
+                chromeAPI.sidePanel.open({ windowId: tab.windowId }).then(() => {
+                    setTimeout(() => {
+                        chromeAPI.runtime.sendMessage({ action: 'trigger_capture' });
+                    }, 500);
+                });
+            }
+        });
+    });
 
     // Message handler for queuing requests
     if (chromeAPI?.runtime?.onMessage) {

@@ -33,6 +33,7 @@ import smsRoutes from './routes/sms';
 import billingRoutes from './routes/billing';
 import contextMenuRoutes from './routes/contextMenus';
 import { shareRouter, publicShareRouter } from './routes/shares';
+import alertRoutes from './routes/alerts';
 
 const app: Application = express();
 
@@ -113,6 +114,7 @@ app.use('/api/v1/portfolio', portfolioRoutes);
 app.use('/api/v1/users', usersRoutes);
 app.use('/api/v1/farmers', farmersRoutes);
 app.use('/api/v1/visits', visitsRoutes);
+app.use('/api/v1/alerts', alertRoutes);
 app.use('/api/v1/external', externalRoutes);
 app.use('/api/v1/language', languageRoutes);
 app.use('/api/v1/ai', aiRoutes);
@@ -120,6 +122,7 @@ app.use('/api/v1/upload', uploadRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/sms', smsRoutes);
 app.use('/api/v1/billing', billingRoutes);
+app.use('/api/v1/alerts', alertRoutes);
 app.use('/api/v1/context-menus', contextMenuRoutes);
 app.use('/api/v1/shares', shareRouter);
 app.use('/api/public/shares', publicShareRouter);

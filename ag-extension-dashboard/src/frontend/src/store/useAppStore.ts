@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { ThemeName } from '@/theme';
+import * as farmerService from '@/api/farmerService';
+import * as visitService from '@/api/visitService';
+import { toast } from 'react-hot-toast';
 
 // Types
 export interface User {
@@ -72,14 +75,14 @@ interface AppState {
     farmers: Farmer[];
     setFarmers: (farmers: Farmer[]) => void;
     addFarmer: (farmer: Farmer) => void;
-    updateFarmer: (id: string, updates: Partial<Farmer>) => void;
-    removeFarmer: (id: string) => void;
+    updateFarmer: (id: string, updates: Partial<Farmer>) => Promise<void>;
+    removeFarmer: (id: string) => Promise<void>;
 
     // Visits
     visits: Visit[];
     setVisits: (visits: Visit[]) => void;
-    addVisit: (visit: Visit) => void;
-    updateVisit: (id: string, updates: Partial<Visit>) => void;
+    addVisit: (visit: Partial<Visit>) => Promise<void>;
+    updateVisit: (id: string, updates: Partial<Visit>) => Promise<void>;
 
     // Notifications
     notifications: Notification[];
@@ -125,25 +128,12 @@ export const useAppStore = create<AppState>()(
     persist(
         (set) => ({
             // Initial state
-            user: { 
-                id: '1', 
-                firstName: 'John', 
-                lastName: 'Doe', 
-                email: 'john@example.com', 
-                role: 'admin',
-                region: 'Central'
-            }, // Mock user for now
+            user: null, 
             sidebarOpen: true,
             themeName: (localStorage.getItem('ag-theme-name') as ThemeName) || 'forest',
             darkMode: localStorage.getItem('theme') === 'dark',
             activeTab: 'dashboard',
-            farmers: [
-                { id: '1', firstName: 'John', lastName: 'Banda', latitude: -13.9626, longitude: 33.7741, region: 'Lilongwe', crops: ['maize', 'groundnuts'], location: 'Lilongwe Rural', phone: '+265880000001' },
-                { id: '2', firstName: 'Mary', lastName: 'Phiri', latitude: -15.7861, longitude: 35.0058, region: 'Blantyre', crops: ['tobacco'], location: 'Blantyre West', phone: '+265880000002' },
-                { id: '3', firstName: 'Peter', lastName: 'Moyo', latitude: -11.8667, longitude: 33.4833, region: 'Mzuzu', crops: ['maize', 'beans'], location: 'Mzuzu City', phone: '+265880000003' },
-                { id: '4', firstName: 'Grace', lastName: 'Chirwa', latitude: -14.3783, longitude: 34.2875, region: 'Kasungu', crops: ['tobacco', 'maize'], location: 'Kasungu Central', phone: '+265880000004' },
-                { id: '5', firstName: 'James', lastName: 'Zomba', latitude: -15.3866, longitude: 35.3186, region: 'Zomba', crops: ['groundnuts'], location: 'Zomba Plateau', phone: '+265880000005' },
-            ],
+            farmers: [],
             visits: [],
             notifications: [],
             isLoading: false,
@@ -179,24 +169,89 @@ export const useAppStore = create<AppState>()(
             addFarmer: (farmer) => set((state) => ({
                 farmers: [...state.farmers, farmer]
             })),
-            updateFarmer: (id, updates) => set((state) => ({
-                farmers: state.farmers.map((f) =>
-                    f.id === id ? { ...f, ...updates } : f
-                )
-            })),
-            removeFarmer: (id) => set((state) => ({
-                farmers: state.farmers.filter((f) => f.id !== id)
-            })),
+            updateFarmer: async (id, updates) => {
+                set({ isLoading: true });
+                try {
+                    const response = await farmerService.updateFarmer(id, updates);
+                    if (response.success) {
+                        set((state) => ({
+                            farmers: state.farmers.map((f) =>
+                                f.id === id ? { ...f, ...updates } : f
+                            )
+                        }));
+                        toast.success('Farmer updated successfully');
+                    }
+                } catch (error) {
+                    console.error('Update farmer error:', error);
+                    toast.error('Failed to update farmer');
+                } finally {
+                    set({ isLoading: false });
+                }
+            },
+            removeFarmer: async (id) => {
+                set({ isLoading: true });
+                try {
+                    const response = await farmerService.deleteFarmer(id);
+                    if (response.success) {
+                        set((state) => ({
+                            farmers: state.farmers.filter((f) => f.id !== id)
+                        }));
+                        toast.success('Farmer removed successfully');
+                    }
+                } catch (error) {
+                    console.error('Remove farmer error:', error);
+                    toast.error('Failed to remove farmer');
+                } finally {
+                    set({ isLoading: false });
+                }
+            },
 
             setVisits: (visits) => set({ visits }),
-            addVisit: (visit) => set((state) => ({
-                visits: [...state.visits, visit]
-            })),
-            updateVisit: (id, updates) => set((state) => ({
-                visits: state.visits.map((v) =>
-                    v.id === id ? { ...v, ...updates } : v
-                )
-            })),
+            addVisit: async (visit) => {
+                set({ isLoading: true });
+                try {
+                    const response = await visitService.createVisit(visit);
+                    if (response.success && response.data) {
+                        // Map backend visit to frontend visit interface
+                        const newVisit: Visit = {
+                            id: response.data.id,
+                            farmerId: response.data.farmer_id || (visit as any).farmerId,
+                            farmerName: (response.data as any).farmer_name || (visit as any).farmerName,
+                            scheduledDate: response.data.scheduled_at,
+                            status: response.data.status as any,
+                            notes: response.data.notes
+                        };
+                        set((state) => ({
+                            visits: [newVisit, ...state.visits]
+                        }));
+                        toast.success('Visit scheduled successfully');
+                    }
+                } catch (error) {
+                    console.error('Add visit error:', error);
+                    toast.error('Failed to schedule visit');
+                } finally {
+                    set({ isLoading: false });
+                }
+            },
+            updateVisit: async (id, updates) => {
+                set({ isLoading: true });
+                try {
+                    const response = await visitService.updateVisit(id, updates);
+                    if (response.success) {
+                        set((state) => ({
+                            visits: state.visits.map((v) =>
+                                v.id === id ? { ...v, ...updates } : v
+                            )
+                        }));
+                        toast.success('Visit updated successfully');
+                    }
+                } catch (error) {
+                    console.error('Update visit error:', error);
+                    toast.error('Failed to update visit');
+                } finally {
+                    set({ isLoading: false });
+                }
+            },
 
             addNotification: (notification) => set((state) => ({
                 notifications: [

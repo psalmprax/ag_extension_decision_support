@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
-import { Settings, Shield, Zap, ChevronRight, BarChart3, Cloud } from 'lucide-react';
+import { Settings, Shield, Zap, ChevronRight, BarChart3, Cloud, ArrowLeft, Globe, Server, Bot, Save } from 'lucide-react';
+import { usePersistence } from '@/shared/hooks/usePersistence';
 
 function App() {
-  const [activeAgent, setActiveAgent] = useState('AGENT ALPHA');
+  const [activeAgent, setActiveAgent] = usePersistence('activeAgent', 'AGENT ALPHA');
+  const [language, setLanguage] = usePersistence('language', 'en');
+  const [apiEndpoint, setApiEndpoint] = usePersistence('apiEndpoint', 'https://ag-decision-support.alpha/api');
+  const [showSettings, setShowSettings] = useState(false);
 
   const handleOpenSidepanel = () => {
     const chromeAPI = (window as any).chrome;
@@ -12,6 +16,11 @@ function App() {
   };
 
   const handleQuickAction = (action: string) => {
+    if (action === 'Settings') {
+      setShowSettings(true);
+      return;
+    }
+    
     handleOpenSidepanel();
     // Use a small delay to ensure sidepanel is open before sending message
     setTimeout(() => {
@@ -24,6 +33,78 @@ function App() {
       }
     }, 500);
   };
+
+  if (showSettings) {
+    return (
+      <div className="w-[360px] bg-slate-900 text-white shadow-2xl overflow-hidden font-sans min-h-[400px]">
+        <header className="p-4 bg-slate-800 border-b border-slate-700 flex items-center gap-3">
+          <button 
+            onClick={() => setShowSettings(false)}
+            className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4 text-white" />
+          </button>
+          <h1 className="text-sm font-bold tracking-tight uppercase">System Settings</h1>
+        </header>
+
+        <main className="p-4 space-y-6">
+          {/* Language Setting */}
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">
+              <Globe className="w-3 h-3 text-primary-400" /> Language Preference
+            </label>
+            <select 
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-primary-500/20 outline-none transition-all"
+            >
+              <option value="en">English (Global)</option>
+              <option value="sw">Kiswahili (East Africa)</option>
+              <option value="fr">Français (West Africa)</option>
+            </select>
+          </div>
+
+          {/* Agent Setting */}
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">
+              <Bot className="w-3 h-3 text-secondary-400" /> Default Intelligence Agent
+            </label>
+            <select 
+              value={activeAgent}
+              onChange={(e) => setActiveAgent(e.target.value)}
+              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-primary-500/20 outline-none transition-all"
+            >
+              <option value="AGENT ALPHA">Agent Alpha (Standard)</option>
+              <option value="AGENT SIGMA">Agent Sigma (Specialist)</option>
+              <option value="AGENT BETA">Agent Beta (Experimental)</option>
+            </select>
+          </div>
+
+          {/* API Setting */}
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">
+              <Server className="w-3 h-3 text-blue-400" /> Backend API Endpoint
+            </label>
+            <input 
+              type="text"
+              value={apiEndpoint}
+              onChange={(e) => setApiEndpoint(e.target.value)}
+              placeholder="https://your-api.com/api"
+              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm font-mono focus:ring-2 focus:ring-primary-500/20 outline-none transition-all"
+            />
+          </div>
+
+          <button 
+            onClick={() => setShowSettings(false)}
+            className="w-full mt-4 flex items-center justify-center gap-2 py-4 bg-primary-600 hover:bg-primary-500 text-white font-black rounded-2xl shadow-xl shadow-primary-500/20 transition-all active:scale-[0.98]"
+          >
+            <Save className="w-4 h-4" />
+            SAVE & RETURN
+          </button>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="w-[360px] bg-slate-900 text-white shadow-2xl overflow-hidden font-sans">

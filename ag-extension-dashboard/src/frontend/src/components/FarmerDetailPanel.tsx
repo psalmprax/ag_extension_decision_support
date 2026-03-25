@@ -49,14 +49,6 @@ interface FarmerDetailPanelProps {
     visits?: any[];
 }
 
-const defaultYieldData = [
-    { month: 'Jan', yield: 45 },
-    { month: 'Feb', yield: 52 },
-    { month: 'Mar', yield: 48 },
-    { month: 'Apr', yield: 61 },
-    { month: 'May', yield: 55 },
-    { month: 'Jun', yield: 67 },
-];
 
 export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
     isOpen,
@@ -167,16 +159,8 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                 }
                 break;
             case 'video':
-                if (storeUser?.role === 'extension_officer' || storeUser?.role === 'admin') {
-                    setShowVideoCall(true);
-                } else if (farmer.phone) {
-                    // Simulated video link for other roles (demo/whatsapp)
-                    window.open(`https://wa.me/${farmer.phone.replace(/\D/g, '')}`, '_blank');
-                    addNotification({
-                        type: 'info',
-                        message: `${t('action_connecting') || 'Opening WhatsApp for'} ${farmer.firstName}...`
-                    });
-                }
+                setShowVideoCall(true);
+                break;
         }
     };
 
@@ -393,7 +377,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                         </div>
                                         <div className={`h-48 w-full rounded-3xl p-4 border bg-gray-50/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800`}>
                                             <ResponsiveContainer width="100%" height="100%">
-                                                <AreaChart data={farmer.yieldHistory || defaultYieldData}>
+                                                <AreaChart data={farmer.yieldHistory || []}>
                                                     <defs>
                                                         <linearGradient id="colorYield" x1="0" y1="0" x2="0" y2="1">
                                                             <stop offset="5%" stopColor={isCyber ? "#4fd1c5" : "#22c55e"} stopOpacity={0.3} />

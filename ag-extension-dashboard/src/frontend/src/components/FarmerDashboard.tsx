@@ -5,9 +5,10 @@ import { Sprout, MessageSquare, Calendar, Bell, TrendingUp, Zap, ShieldAlert, Li
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { fetchFarmerStats } from '@/api/farmerService';
+import { fetchMarketPrices, MarketPrice } from '@/api/priceService';
 import IsometricFarmOverview from './Cyber/IsometricFarmOverview';
-import SimulationGantt from './Cyber/SimulationGantt';
-import MaintenanceDiagnostics from './Cyber/MaintenanceDiagnostics';
+import CropCycleGantt from './Cyber/CropCycleGantt';
+import SystemOverview from './Cyber/SystemOverview';
 
 export const FarmerDashboard: React.FC = () => {
   const { user, themeName, showContextMenu } = useAppStore();
@@ -19,6 +20,12 @@ export const FarmerDashboard: React.FC = () => {
     enabled: !!user
   });
 
+  const { data: prices, isLoading: pricesLoading } = useQuery({
+    queryKey: ['market-prices'],
+    queryFn: fetchMarketPrices,
+    enabled: !!user
+  });
+
   const farmerStats = statsResponse?.data;
   const isCyber = themeName === 'cyber';
 
@@ -27,14 +34,14 @@ export const FarmerDashboard: React.FC = () => {
       title: t('farmer_my_crops'),
       value: farmerStats?.crops && farmerStats.crops.length > 0
         ? farmerStats.crops.join(', ')
-        : `${t('crop_maize')}, ${t('crop_beans')}`,
+        : '',
       icon: Sprout,
       color: 'text-primary-600',
       bg: 'bg-primary-100'
     },
-    { title: t('farmer_next_visit'), value: t('farmer_next_visit_val'), icon: Calendar, color: 'text-secondary-600', bg: 'bg-secondary-100' },
-    { title: t('farmer_ai_advisory'), value: t('farmer_new_tips', { count: 2 }), icon: MessageSquare, color: 'text-accent-600', bg: 'bg-accent-100' },
-    { title: t('farmer_alerts'), value: `1 ${t('farmer_active_status', { defaultValue: 'Active' })}`, icon: Bell, color: 'text-amber-600', bg: 'bg-amber-100' },
+    { title: t('farmer_next_visit'), value: farmerStats?.nextVisitDate || '', icon: Calendar, color: 'text-secondary-600', bg: 'bg-secondary-100' },
+    { title: t('farmer_ai_advisory'), value: farmerStats?.aiTipsCount ? t('farmer_new_tips', { count: farmerStats.aiTipsCount }) : '', icon: MessageSquare, color: 'text-accent-600', bg: 'bg-accent-100' },
+    { title: t('farmer_alerts'), value: farmerStats?.alertsCount ? `${farmerStats.alertsCount} ${t('farmer_active_status', { defaultValue: 'Active' })}` : '', icon: Bell, color: 'text-amber-600', bg: 'bg-amber-100' },
   ];
 
   if (isCyber) {
@@ -55,13 +62,16 @@ export const FarmerDashboard: React.FC = () => {
 
         {/* Hero Isometric Overview */}
         <section className="animate-slide-up">
-            <IsometricFarmOverview />
+            <IsometricFarmOverview 
+                farmSize={farmerStats?.farmSize}
+                crops={farmerStats?.crops}
+            />
         </section>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Simulation Widget */}
+            {/* Crop Cycle Widget */}
             <div className="lg:col-span-2 animate-slide-up" style={{ animationDelay: '100ms' }}>
-                <SimulationGantt 
+                <CropCycleGantt 
                     items={farmerStats?.yieldHistory?.map((y: any, i: number) => ({
                         id: String(i),
                         label: `PHASE_${i+1}: ${y.crop || 'GROWTH'}`,
@@ -73,7 +83,14 @@ export const FarmerDashboard: React.FC = () => {
 
             {/* Diagnostics Widget */}
             <div className="animate-slide-up" style={{ animationDelay: '200ms' }}>
-                <MaintenanceDiagnostics />
+                <SystemOverview 
+                    healthScore={farmerStats?.vitalScore ? Number((farmerStats.vitalScore * 10).toFixed(1)) : undefined}
+                    indicators={[
+                        { label: 'SOIL_ANALYSIS', status: farmerStats?.soilMoisture ? 'online' : 'warning' },
+                        { label: 'AI_AGENT', status: farmerStats?.aiConfidence ? 'stable' : 'online' },
+                        { label: 'PERSISTENCE', status: 'online' }
+                    ]}
+                />
             </div>
         </div>
 
@@ -151,18 +168,25 @@ export const FarmerDashboard: React.FC = () => {
         <div className="bg-theme-bg-card dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
           <h3 className="text-lg font-black text-gray-900 dark:text-white mb-6 uppercase tracking-tight">{t('farmer_market_prices')}</h3>
           <div className="space-y-4">
-            {[
-              { crop: t('crop_white_maize_90kg'), price: t('price_val', { amount: '4,200', currency: 'KES' }), trend: '+5%' },
-              { crop: t('crop_dry_beans_90kg'), price: t('price_val', { amount: '12,500', currency: 'KES' }), trend: '-2%' },
-            ].map((item, i) => (
-              <div key={i} className="flex items-center justify-between p-4 bg-theme-bg-secondary/50 dark:bg-gray-900/50 rounded-xl border border-gray-50 dark:border-gray-800 transition-colors hover:border-primary-500/30">
-                <span className="font-bold text-gray-700 dark:text-gray-300">{item.crop}</span>
-                <div className="text-right">
-                  <p className="font-black text-gray-900 dark:text-white">{item.price}</p>
-                  <p className={`text-[10px] font-bold ${item.trend.startsWith('+') ? 'text-emerald-500' : 'text-rose-500'} uppercase tracking-widest`}>{item.trend}</p>
+            {pricesLoading ? (
+                <div className="flex justify-center py-10">
+                    <Loader2 className="w-6 h-6 text-primary-500 animate-spin" />
                 </div>
-              </div>
-            ))}
+            ) : prices && prices.length > 0 ? (
+                prices.map((item: MarketPrice, i: number) => (
+                    <div key={i} className="flex items-center justify-between p-4 bg-theme-bg-secondary/50 dark:bg-gray-900/50 rounded-xl border border-gray-50 dark:border-gray-800 transition-colors hover:border-primary-500/30">
+                        <span className="font-bold text-gray-700 dark:text-gray-300">{item.crop}</span>
+                        <div className="text-right">
+                            <p className="font-black text-gray-900 dark:text-white">{item.price}</p>
+                            <p className={`text-[10px] font-bold ${item.trend.startsWith('+') ? 'text-emerald-500' : 'text-rose-500'} uppercase tracking-widest`}>{item.trend}</p>
+                        </div>
+                    </div>
+                ))
+            ) : (
+                <div className="text-center py-10 text-gray-500 text-xs font-bold uppercase tracking-widest">
+                    No price data available
+                </div>
+            )}
           </div>
         </div>
 

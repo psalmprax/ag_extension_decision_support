@@ -3,6 +3,7 @@ import { WeatherService } from '@/services/weatherService';
 import { FAOService } from '@/services/faoService';
 import { logger } from '@/utils/logger';
 import { getMapData } from '@/services/mapService';
+import { marketPriceService } from '@/services/marketPriceService';
 import { authorize } from '@/middleware/authorize';
 
 const router = Router();
@@ -41,6 +42,16 @@ router.get('/map', async (_req: Request, res: Response) => {
         res.json({ success: true, data: mapData });
     } catch (error) {
         res.status(500).json({ success: false, error: 'Failed to fetch map data' });
+    }
+});
+
+router.get('/prices', async (_req: Request, res: Response) => {
+    try {
+        const prices = await marketPriceService.getLatestPrices();
+        res.json({ success: true, data: prices });
+    } catch (error) {
+        logger.error('Prices route error:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch market prices' });
     }
 });
 

@@ -113,6 +113,11 @@ class PaymentService {
         await this.initializePayPal();
     }
 
+    private appendQueryParam(url: string, key: string, value: string): string {
+        const separator = url.includes('?') ? '&' : '?';
+        return `${url}${separator}${key}=${encodeURIComponent(value)}`;
+    }
+
     // Create a checkout session for subscription
     async createCheckoutSession(params: CreateCheckoutSessionParams): Promise<{
         sessionId: string;
@@ -120,9 +125,19 @@ class PaymentService {
     }> {
         if (!this.stripe) {
             // Return mock data in development
+            const sessionId = 'mock_session_' + Date.now();
+            let url = params.successUrl;
+            
+            // Handle Stripe placeholder {CHECKOUT_SESSION_ID} if present
+            if (url.includes('{CHECKOUT_SESSION_ID}')) {
+                url = url.replace('{CHECKOUT_SESSION_ID}', sessionId);
+            } else {
+                url = this.appendQueryParam(url, 'session_id', 'mock');
+            }
+            
             return {
-                sessionId: 'mock_session_' + Date.now(),
-                url: params.successUrl + '?session_id=mock',
+                sessionId,
+                url,
             };
         }
 
@@ -157,7 +172,7 @@ class PaymentService {
     }> {
         if (!this.stripe) {
             return {
-                url: successUrl + '?setup_id=mock_setup_' + Date.now(),
+                url: this.appendQueryParam(successUrl, 'setup_id', 'mock_setup_' + Date.now()),
             };
         }
 
@@ -517,8 +532,7 @@ class PaymentService {
     // Create billing portal session
     async createPortalSession(customerId: string, returnUrl: string): Promise<string> {
         if (!this.stripe) {
-            const separator = returnUrl.includes('?') ? '&' : '?';
-            return `${returnUrl}${separator}mock_portal=true`;
+            return this.appendQueryParam(returnUrl, 'mock_portal', 'true');
         }
 
         const session = await this.stripe.billingPortal.sessions.create({
@@ -665,9 +679,10 @@ class PaymentService {
     }): Promise<{ paymentId: string; approvalUrl: string } | null> {
         if (!this.paypalConfigured) {
             // Return mock data for development
+            const id = 'mock_paypal_' + Date.now();
             return {
-                paymentId: 'mock_paypal_' + Date.now(),
-                approvalUrl: params.returnUrl + '?paymentId=mock_paypal_' + Date.now()
+                paymentId: id,
+                approvalUrl: this.appendQueryParam(params.returnUrl, 'paymentId', id)
             };
         }
 

@@ -69,7 +69,6 @@ export const BillingDashboard: React.FC = () => {
     // Get success/cancel status from URL params
     const success = searchParams.get('success') === 'true';
     const canceled = searchParams.get('canceled') === 'true';
-    const mockPortal = searchParams.get('mock_portal') === 'true';
 
     // Clear URL params after showing message
     useEffect(() => {
@@ -107,15 +106,6 @@ export const BillingDashboard: React.FC = () => {
         }
     };
 
-    useEffect(() => {
-        if (mockPortal) {
-            alert("Stripe is currently in Test Mode. The Customer Portal is unavailable for real configuration, but you can see the redirection logic works.");
-            setSearchParams(params => {
-                params.delete('mock_portal');
-                return params;
-            });
-        }
-    }, [mockPortal, setSearchParams]);
 
     const handleSubscribe = async (priceId: string, billingCycle: 'current' | 'next' = 'current') => {
         setActionLoading(priceId);

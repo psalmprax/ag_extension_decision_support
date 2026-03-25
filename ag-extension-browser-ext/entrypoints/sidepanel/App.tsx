@@ -1,12 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { Send, Bot, User, Sparkles, Brain, Code, Terminal, Zap, Wifi, WifiOff } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Send, Bot, User, Sparkles, Brain, Code, Terminal, Zap, Wifi, WifiOff, Mic, MicOff, Paperclip, X, Image as ImageIcon, FileText, AlertCircle } from 'lucide-react';
 import { apiQueue } from '../../shared/apiQueue';
+import { usePersistence } from '../../shared/hooks/usePersistence';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  timestamp: Date;
+  timestamp: string; // Changed to string for persistence compatibility
+  file?: {
+    name: string;
+    url: string;
+    type: string;
+  };
 }
 
 interface PageContext {
@@ -17,104 +23,79 @@ interface PageContext {
   mainContent: string;
 }
 
-// API configuration - should be configurable
-const API_BASE_URL = 'http://localhost:3001/api'; // Adjust based on your backend URL
-
-async function sendLocationToBackend(location: { latitude: number; longitude: number; accuracy: number; accuracyStatus: string; timestamp: string }): Promise<{ success: boolean; message: string }> {
-  try {
-    const response = await apiQueue.makeRequest(`${API_BASE_URL}/visits/location`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // Add authorization if needed
-        // 'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(location)
-    });
-
-    if (!response.ok) {
-      // Check if it's a queued response
-      const data = await response.json();
-      if (data.queued) {
-        return { success: true, message: 'Location queued for offline sync' };
-      }
-      throw new Error(`API request failed: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return { success: true, message: data.data?.message || 'Location logged successfully' };
-  } catch (error) {
-    console.error('Error sending location to backend:', error);
-    return { success: false, message: 'Failed to log location to backend' };
-  }
-}
-
-async function sendMessageToAI(message: string, imageData?: string, pageContext?: PageContext): Promise<string> {
-  try {
-    const payload: any = {
-      message,
-      mode: 'extension',
-
-      language: 'en' // Could be configurable
-    };
-
-    if (pageContext) {
-      payload.pageContext = {
-        title: pageContext.title,
-        url: pageContext.url,
-        selectedText: pageContext.selectedText
-      };
-    }
-
-    if (imageData) {
-      payload.imageData = imageData;
-      payload.message = `Please analyze this agricultural image: ${message || 'Identify any plants, diseases, or agricultural features in this photo.'}`;
-    }
-
-    const response = await apiQueue.makeRequest(`${API_BASE_URL}/chatbot/message`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // Add authorization if needed
-        // 'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      // Check if it's a queued response
-      const data = await response.json();
-      if (data.queued) {
-        return 'Message queued for offline processing. It will be sent when connection is restored.';
-      }
-      throw new Error(`API request failed: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.response || data.message || 'Sorry, I could not process your request.';
-  } catch (error) {
-    console.error('Error sending message to AI:', error);
-    return 'Sorry, I\'m having trouble connecting to the AI service. Please check your connection and try again.';
-  }
-}
-interface QueuedRequest {
-  id: string;
-  url: string;
-  method: string;
-  timestamp: number;
-  retries: number;
-}
-
 function App() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages, isLoaded] = usePersistence<Message[]>('chatHistory', []);
+  const [activeAgent] = usePersistence('activeAgent', 'AGENT ALPHA');
+  const [language] = usePersistence('language', 'en');
+  const [apiEndpoint] = usePersistence('apiEndpoint', 'http://localhost:3000/api');
+  
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [pageContext, setPageContext] = useState<PageContext | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [queuedRequests, setQueuedRequests] = useState<QueuedRequest[]>([]);
+  const [queuedRequests, setQueuedRequests] = useState<any[]>([]);
   const [showOfflineManager, setShowOfflineManager] = useState(false);
+  
+  const [isListening, setIsListening] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Handlers defined first to avoid use-before-definition issues in effects
+  // Auto-scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const sendMessageToAI = async (message: string, imageData?: string, pageCtx?: PageContext, fileData?: any): Promise<string> => {
+    try {
+      const payload: any = {
+        message,
+        mode: 'extension',
+        agent: activeAgent,
+        language: language
+      };
+
+      if (pageCtx) {
+        payload.pageContext = {
+          title: pageCtx.title,
+          url: pageCtx.url,
+          selectedText: pageCtx.selectedText
+        };
+      }
+
+      if (imageData) {
+        payload.imageData = imageData;
+      }
+
+      if (fileData) {
+        payload.file = fileData;
+      }
+
+      const response = await apiQueue.makeRequest(`${apiEndpoint}/chatbot/message`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        if (data.queued) {
+          return 'Message queued for offline processing. It will be sent when connection is restored.';
+        }
+        throw new Error(`API request failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.response || data.message || 'Sorry, I could not process your request.';
+    } catch (error) {
+      console.error('Error sending message to AI:', error);
+      return 'Sorry, I\'m having trouble connecting to the AI service. Please check your connection and try again.';
+    }
+  };
+
   const loadQueuedRequests = async () => {
     try {
       const requests = await apiQueue.getQueuedRequests();
@@ -133,28 +114,72 @@ function App() {
     }
   };
 
+  const handleFileUpload = async (file: File) => {
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(`${apiEndpoint}/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Upload failed');
+      const result = await response.json();
+      
+      if (result.success) {
+        setSelectedFile(null); // Clear selection after successful upload preparation
+        return result.data;
+      }
+    } catch (error) {
+      console.error('File upload error:', error);
+      alert('Failed to upload file. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
+    return null;
+  };
+
   const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+    if ((!input.trim() && !selectedFile) || isLoading || isUploading) return;
+
+    setIsLoading(true);
+    let uploadedFileData = null;
+
+    if (selectedFile) {
+      uploadedFileData = await handleFileUpload(selectedFile);
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: input,
-      timestamp: new Date()
+      content: input || (selectedFile ? `Uploaded: ${selectedFile.name}` : ''),
+      timestamp: new Date().toISOString(),
+      file: uploadedFileData ? {
+        name: uploadedFileData.originalName,
+        url: uploadedFileData.url,
+        type: uploadedFileData.mimetype
+      } : undefined
     };
 
     setMessages((prev: Message[]) => [...prev, userMessage]);
     setInput('');
-    setIsLoading(true);
+    setSelectedFile(null);
 
     try {
-      const aiResponse = await sendMessageToAI(input, undefined, pageContext || undefined);
+      const aiResponse = await sendMessageToAI(
+        userMessage.content, 
+        undefined, 
+        pageContext || undefined,
+        uploadedFileData
+      );
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: aiResponse,
-        timestamp: new Date()
+        timestamp: new Date().toISOString()
       };
 
       setMessages((prev: Message[]) => [...prev, assistantMessage]);
@@ -163,7 +188,7 @@ function App() {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: 'Sorry, I encountered an error. Please try again.',
-        timestamp: new Date()
+        timestamp: new Date().toISOString()
       };
       setMessages((prev: Message[]) => [...prev, errorMessage]);
     } finally {
@@ -171,25 +196,50 @@ function App() {
     }
   };
 
+  const handleVoiceInput = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Speech recognition is not supported in this browser.');
+      return;
+    }
+
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = language === 'sw' ? 'sw-TZ' : (language === 'fr' ? 'fr-FR' : 'en-US');
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setInput(prev => prev + ' ' + transcript);
+    };
+
+    recognition.start();
+  };
+
   const handleQuickAction = async (action: string) => {
     if (isLoading || !pageContext) return;
 
+    const { title, metaDescription, mainContent, url } = pageContext;
     let prompt = '';
     switch (action) {
       case 'Summarize':
-        prompt = `Please summarize the content of this page. Title: ${pageContext.title}. Description: ${pageContext.metaDescription}. Main content: ${pageContext.mainContent}`;
-        break;
-      case 'Extract Data':
-        prompt = `Please extract key data, facts, and information from this page. Title: ${pageContext.title}. Description: ${pageContext.metaDescription}. Main content: ${pageContext.mainContent}`;
-        break;
-      case 'Analyze Page':
-        prompt = `Please analyze this webpage for agricultural relevance. Title: ${pageContext.title}. URL: ${pageContext.url}. Description: ${pageContext.metaDescription}. Main content: ${pageContext.mainContent}`;
+        prompt = `Please provide agricultural insights and a summary for this page. Title: ${title}. Key metadata: ${metaDescription}. Content snippet: ${mainContent.substring(0, 1000)}`;
         break;
       case 'Weather':
-        prompt = "Provide a detailed weather forecast and agricultural implications for the current region.";
+        prompt = `Based on the agricultural context of this page (${title}), please provide a relevant weather forecast and its impact on crops mentioned. Current URL: ${url}`;
         break;
-      case 'Settings':
-        prompt = "Open extension settings and configuration options.";
+      case 'Extract Data':
+        prompt = `Please extract key agricultural data, facts, and soil/crop information from this page. Title: ${title}. Content: ${mainContent.substring(0, 1000)}`;
+        break;
+      case 'Analyze Page':
+        prompt = `Please analyze this webpage for agricultural relevance and decision support. Title: ${title}. URL: ${url}. Description: ${metaDescription}`;
         break;
       default:
         return;
@@ -199,7 +249,7 @@ function App() {
       id: Date.now().toString(),
       role: 'user',
       content: `${action} request for the current page.`,
-      timestamp: new Date()
+      timestamp: new Date().toISOString()
     };
 
     setMessages((prev: Message[]) => [...prev, userMessage]);
@@ -211,7 +261,7 @@ function App() {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: aiResponse,
-        timestamp: new Date()
+        timestamp: new Date().toISOString()
       };
       setMessages((prev: Message[]) => [...prev, assistantMessage]);
     } catch (error) {
@@ -219,7 +269,7 @@ function App() {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: 'Sorry, I encountered an error processing your request. Please try again.',
-        timestamp: new Date()
+        timestamp: new Date().toISOString()
       };
       setMessages((prev: Message[]) => [...prev, errorMessage]);
     } finally {
@@ -238,13 +288,16 @@ function App() {
             browserAPI.tabs.sendMessage(tab.id, { action: 'get_page_context' }, (response: PageContext) => {
               if (response) {
                 setPageContext(response);
-                const welcomeMessage: Message = {
-                  id: 'welcome',
-                  role: 'assistant',
-                  content: `I've loaded the page "${response.title}". I can help you summarize content, extract data, or analyze this page. What would you like to do?`,
-                  timestamp: new Date()
-                };
-                setMessages([welcomeMessage]);
+                // Only add welcome message if no history
+                if (messages.length === 0) {
+                  const welcomeMessage: Message = {
+                    id: 'welcome',
+                    role: 'assistant',
+                    content: `I've loaded the page "${response.title}". I can help you summarize content, extract data, or analyze this page. What would you like to do?`,
+                    timestamp: new Date().toISOString()
+                  };
+                  setMessages([welcomeMessage]);
+                }
               }
             });
           }
@@ -255,7 +308,7 @@ function App() {
     };
 
     getPageContext();
-  }, []);
+  }, [isLoaded]); // Depend on history being loaded
 
   // Listen for online status changes and queue updates
   useEffect(() => {
@@ -281,19 +334,44 @@ function App() {
 
   // Listen for messages from background script or popup
   useEffect(() => {
-    const anyWin = window as any;
-    const browserAPI = typeof anyWin.browser !== 'undefined' ? anyWin.browser : (typeof anyWin.chrome !== 'undefined' ? anyWin.chrome : null);
+    const browserAPI = (window as any).browser || (window as any).chrome;
     
     if (browserAPI && browserAPI.runtime) {
       const handlePopupMessage = async (message: any) => {
         if (message.action === 'trigger_quick_action') {
           handleQuickAction(message.actionType);
+        } else if (message.action === 'analyze_selection' && message.text) {
+          const selectionMessage: Message = {
+            id: Date.now().toString(),
+            role: 'user',
+            content: `Analyze this selection: "${message.text}"`,
+            timestamp: new Date().toISOString()
+          };
+          setMessages((prev: Message[]) => [...prev, selectionMessage]);
+          setIsLoading(true);
+          try {
+            const aiResponse = await sendMessageToAI(`Please analyze this text selection: ${message.text}`, undefined, pageContext || undefined);
+            const assistantMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              role: 'assistant',
+              content: aiResponse,
+              timestamp: new Date().toISOString()
+            };
+            setMessages((prev: Message[]) => [...prev, assistantMessage]);
+          } catch (error) {
+            console.error('Selection analysis error:', error);
+          } finally {
+            setIsLoading(false);
+          }
+        } else if (message.action === 'trigger_capture') {
+          // Trigger the 'Analyze Page' quick action as a capture proxy for now
+          handleQuickAction('Analyze Page');
         } else if (message.action === 'photo_captured' && message.imageData) {
           const photoMessage: Message = {
             id: Date.now().toString(),
             role: 'user',
             content: '📸 Photo captured - analyzing with AI...',
-            timestamp: new Date()
+            timestamp: new Date().toISOString()
           };
           setMessages((prev: Message[]) => [...prev, photoMessage]);
 
@@ -304,36 +382,11 @@ function App() {
               id: (Date.now() + 1).toString(),
               role: 'assistant',
               content: aiResponse,
-              timestamp: new Date()
+              timestamp: new Date().toISOString()
             };
             setMessages((prev: Message[]) => [...prev, assistantMessage]);
           } catch (error) {
             console.error('Photo analysis error:', error);
-          } finally {
-            setIsLoading(false);
-          }
-        } else if (message.action === 'location_captured' && message.location) {
-          const { latitude, longitude } = message.location;
-          const locationMessage: Message = {
-            id: Date.now().toString(),
-            role: 'user',
-            content: `📍 Location captured: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
-            timestamp: new Date()
-          };
-          setMessages((prev: Message[]) => [...prev, locationMessage]);
-          
-          setIsLoading(true);
-          try {
-            const aiResponse = await sendMessageToAI(`Location data: Latitude ${latitude}, Longitude ${longitude}. Provide agricultural insights.`);
-            const assistantMessage: Message = {
-              id: (Date.now() + 1).toString(),
-              role: 'assistant',
-              content: aiResponse,
-              timestamp: new Date()
-            };
-            setMessages((prev: Message[]) => [...prev, assistantMessage]);
-          } catch (error) {
-            console.error('Location analysis error:', error);
           } finally {
             setIsLoading(false);
           }
@@ -343,7 +396,7 @@ function App() {
       browserAPI.runtime.onMessage.addListener(handlePopupMessage);
       return () => browserAPI.runtime.onMessage.removeListener(handlePopupMessage);
     }
-  }, [pageContext]); 
+  }, [pageContext, isLoaded]); 
 
   return (
     <div className="flex flex-col h-screen bg-slate-950 text-slate-200 font-sans">
@@ -356,13 +409,9 @@ function App() {
           <div>
             <h1 className="text-sm font-black tracking-tighter text-white uppercase italic">ALFA ADVISOR</h1>
             <div className="flex items-center gap-2">
-              {isOnline ? (
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-              ) : (
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
-              )}
+              <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'}`} />
               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                {isOnline ? 'Online' : 'Offline'}
+                {isOnline ? 'Online' : 'Offline'} • {activeAgent.split(' ')[1]}
               </p>
             </div>
           </div>
@@ -396,18 +445,42 @@ function App() {
               }`}>
               {msg.role === 'assistant' ? <Bot className="w-4 h-4 text-primary-400" /> : <User className="w-4 h-4 text-secondary-400" />}
             </div>
-            <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.role === 'assistant'
-              ? 'bg-slate-900 border border-slate-800 text-slate-200 rounded-tl-none'
-              : 'bg-primary-600 border border-primary-500 text-white rounded-tr-none'
-              }`}>
-              {msg.content}
+            <div className="flex flex-col gap-1 max-w-[85%]">
+              <div className={`p-3 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.role === 'assistant'
+                ? 'bg-slate-900 border border-slate-800 text-slate-200 rounded-tl-none'
+                : 'bg-primary-600 border border-primary-500 text-white rounded-tr-none'
+                }`}>
+                {msg.content}
+                {msg.file && (
+                  <div className="mt-2 p-2 bg-black/20 rounded-xl border border-white/10 flex items-center gap-2">
+                    {msg.file.type.startsWith('image/') ? <ImageIcon className="w-4 h-4 text-primary-300" /> : <FileText className="w-4 h-4 text-primary-300" />}
+                    <span className="text-[10px] font-medium truncate">{msg.file.name}</span>
+                  </div>
+                )}
+              </div>
+              <span className={`text-[9px] font-medium text-slate-600 px-1 ${msg.role === 'user' ? 'text-right' : ''}`}>
+                {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
             </div>
           </div>
         ))}
+        {isLoading && (
+          <div className="flex gap-3">
+            <div className="w-8 h-8 rounded-lg bg-primary-500/10 border border-primary-500/20 flex items-center justify-center">
+              <Bot className="w-4 h-4 text-primary-400 animate-pulse" />
+            </div>
+            <div className="bg-slate-900 border border-slate-800 p-3 rounded-2xl rounded-tl-none flex gap-1 items-center">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-bounce [animation-delay:-0.3s]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-bounce [animation-delay:-0.15s]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-bounce" />
+            </div>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
 
         {/* Offline Queue Manager */}
         {showOfflineManager && (
-          <div className="mb-4 p-4 bg-slate-800/50 border border-slate-700 rounded-lg">
+          <div className="mb-4 p-4 bg-slate-800/50 border border-slate-700 rounded-lg animate-in slide-in-from-top duration-300">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-bold text-white">Offline Queue</h3>
               <button
@@ -420,13 +493,13 @@ function App() {
             </div>
 
             {queuedRequests.length === 0 ? (
-              <p className="text-sm text-slate-400">No pending requests</p>
+              <p className="text-sm text-slate-400 Italics px-1">No pending requests</p>
             ) : (
-              <div className="space-y-2 max-h-48 overflow-y-auto">
+              <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                 {queuedRequests.map((request) => (
                   <div key={request.id} className="flex items-center justify-between p-2 bg-slate-700/50 rounded border border-slate-600">
                     <div className="flex-1">
-                      <p className="text-xs font-mono text-slate-300">{request.method} {request.url.replace(API_BASE_URL, '')}</p>
+                      <p className="text-xs font-mono text-slate-300">{request.method} {request.url.replace(apiEndpoint, '')}</p>
                       <p className="text-[10px] text-slate-500">
                         {new Date(request.timestamp).toLocaleString()} • {request.retries} retries
                       </p>
@@ -438,49 +511,85 @@ function App() {
                 ))}
               </div>
             )}
-
-            {!isOnline && (
-              <p className="mt-3 text-xs text-orange-400 flex items-center gap-1">
-                <WifiOff className="w-3 h-3" />
-                Offline - requests will sync when connection is restored
-              </p>
-            )}
           </div>
         )}
       </main>
 
       {/* Input Area */}
       <footer className="p-4 bg-slate-900/80 border-t border-slate-800 backdrop-blur-md">
-        <div className="flex gap-2 mb-3 px-1">
+        {selectedFile && (
+          <div className="mb-3 p-2 bg-primary-600/20 border border-primary-500/30 rounded-xl flex items-center justify-between animate-in fade-in slide-in-from-bottom-2">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-primary-500/20 flex items-center justify-center">
+                {selectedFile.type.startsWith('image/') ? <ImageIcon className="w-4 h-4 text-primary-400" /> : <FileText className="w-4 h-4 text-primary-400" />}
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-white max-w-[180px] truncate">{selectedFile.name}</span>
+                <span className="text-[10px] text-slate-400 lowercase">{(selectedFile.size / 1024).toFixed(1)} KB</span>
+              </div>
+            </div>
+            <button onClick={() => setSelectedFile(null)} className="p-1.5 hover:bg-white/10 rounded-full transition-colors">
+              <X className="w-4 h-4 text-slate-400" />
+            </button>
+          </div>
+        )}
+
+        <div className="flex gap-2 mb-3 px-1 overflow-x-auto no-scrollbar">
           {['Summarize', 'Extract Data', 'Analyze Page'].map(tag => (
-            <button key={tag} onClick={() => handleQuickAction(tag)} disabled={isLoading || !pageContext} className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-full text-[10px] font-black text-slate-400 hover:text-white transition-all uppercase tracking-tighter disabled:opacity-50 disabled:cursor-not-allowed">
+            <button key={tag} onClick={() => handleQuickAction(tag)} disabled={isLoading || !pageContext} className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-full text-[10px] font-black text-slate-400 hover:text-white transition-all uppercase tracking-tighter disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
               {tag}
             </button>
           ))}
         </div>
-        <div className="relative group">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Ask ALFA Core..."
-            className="w-full bg-slate-950 border border-slate-700 focus:border-primary-500 rounded-2xl py-3 pl-4 pr-12 text-sm outline-none transition-all placeholder:text-slate-600 shadow-inner"
+        
+        <div className="flex gap-2 items-center">
+          <div className="relative flex-1 group">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+              placeholder={isListening ? "Listening..." : "Ask ALFA Core..."}
+              className={`w-full bg-slate-950 border focus:border-primary-500 rounded-2xl py-3 pl-4 pr-12 text-sm outline-none transition-all placeholder:text-slate-600 shadow-inner ${isListening ? 'border-primary-500 ring-2 ring-primary-500/20 animate-pulse' : 'border-slate-700'}`}
+            />
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              <button
+                onClick={handleVoiceInput}
+                className={`p-2 rounded-xl transition-all ${isListening ? 'bg-red-500 text-white animate-pulse' : 'text-slate-500 hover:text-primary-400 hove:bg-slate-800'}`}
+              >
+                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+          
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={(e) => e.target.files && setSelectedFile(e.target.files[0])}
+            className="hidden" 
           />
           <button
-            onClick={handleSend}
-            disabled={isLoading}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-primary-600 hover:bg-primary-500 rounded-xl text-white transition-all shadow-lg shadow-primary-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => fileInputRef.current?.click()}
+            className="p-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-slate-400 hover:text-white transition-all shadow-lg"
           >
-            {isLoading ? (
+            <Paperclip className="w-4 h-4" />
+          </button>
+          
+          <button
+            onClick={handleSend}
+            disabled={isLoading || isUploading || (!input.trim() && !selectedFile)}
+            className="p-3 bg-primary-600 hover:bg-primary-500 rounded-xl text-white transition-all shadow-lg shadow-primary-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading || isUploading ? (
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
               <Send className="w-4 h-4" />
             )}
           </button>
         </div>
+        
         <p className="mt-2 text-center text-[9px] font-bold text-slate-600 uppercase tracking-[0.2em] flex items-center justify-center gap-1">
-          <Sparkles className="w-2.5 h-2.5" /> Powered by OpenCrew AI & Claude
+          <Sparkles className="w-2.5 h-2.5" /> AG-Extension Intelligence Unit
         </p>
       </footer>
     </div>

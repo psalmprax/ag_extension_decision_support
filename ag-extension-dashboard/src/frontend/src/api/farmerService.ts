@@ -43,6 +43,9 @@ export interface FarmerStats {
     avgTemp: string;
     phLevel: string;
     aiConfidence: string;
+    nextVisitDate?: string;
+    aiTipsCount?: number;
+    alertsCount?: number;
 }
 
 export interface FarmerStatsResponse {

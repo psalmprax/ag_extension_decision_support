@@ -247,10 +247,7 @@ router.get('/dashboard', async (req: Request, res: Response) => {
                 crop: row.crop as string
             })),
             crops: top5Crops,
-            recentActivity: recentActivity || [
-                { time: '2 hours ago', description: 'Scheduled visit for Farmer Kamau' },
-                { time: '5 hours ago', description: 'Knowledge base updated for Maize Rust' }
-            ]
+            recentActivity: recentActivity || []
         };
 
         // Cache for 5 minutes
@@ -269,7 +266,8 @@ router.get('/farmer-stats', async (req: Request, res: Response) => {
         const { userId } = req.user as any;
         
         const farmerResult = await getFromDB(`
-            SELECT crops, farm_size_hectares, vital_score, yield_history 
+            SELECT crops, farm_size_hectares, vital_score, yield_history, 
+                   soil_moisture, temperature, ph_level, ai_confidence
             FROM farmers 
             WHERE user_id = $1 
             LIMIT 1
@@ -280,6 +278,33 @@ router.get('/farmer-stats', async (req: Request, res: Response) => {
         }
         
         const farmer = farmerResult[0];
+
+        // Fetch next visit date
+        const nextVisitResult = await getFromDB(`
+            SELECT scheduled_at 
+            FROM visits 
+            WHERE farmer_id = (SELECT id FROM farmers WHERE user_id = $1)
+              AND status = 'scheduled'
+              AND scheduled_at > NOW()
+            ORDER BY scheduled_at ASC
+            LIMIT 1
+        `, [userId]);
+
+        // Fetch alerts count
+        const alertsCountResult = await getFromDB(`
+            SELECT COUNT(*) as count 
+            FROM alerts 
+            WHERE is_active = true 
+              AND (affected_farmers @> ARRAY[(SELECT id FROM farmers WHERE user_id = $1)::uuid])
+        `, [userId]);
+
+        // Fetch AI tips count (resolved conversations)
+        const aiTipsCountResult = await getFromDB(`
+            SELECT COUNT(*) as count 
+            FROM chat_conversations 
+            WHERE farmer_id = (SELECT id FROM farmers WHERE user_id = $1)
+              AND status = 'resolved'
+        `, [userId]);
         
         res.json({
             success: true,
@@ -288,11 +313,13 @@ router.get('/farmer-stats', async (req: Request, res: Response) => {
                 farmSize: farmer.farm_size_hectares || 0,
                 vitalScore: farmer.vital_score || 0,
                 yieldHistory: farmer.yield_history || [],
-                // Simulated real-time metrics for the UI
-                soilMoisture: "34%",
-                avgTemp: "21°C",
-                phLevel: "6.8",
-                aiConfidence: "98%"
+                soilMoisture: farmer.soil_moisture ? `${farmer.soil_moisture}%` : 'N/A',
+                avgTemp: farmer.temperature ? `${farmer.temperature}°C` : 'N/A',
+                phLevel: farmer.ph_level ? `${farmer.ph_level}` : 'N/A',
+                aiConfidence: farmer.ai_confidence ? `${farmer.ai_confidence}%` : 'N/A',
+                nextVisitDate: nextVisitResult[0]?.scheduled_at || 'None',
+                alertsCount: parseInt(alertsCountResult[0]?.count || '0'),
+                aiTipsCount: parseInt(aiTipsCountResult[0]?.count || '0')
             }
         });
     } catch (error) {
@@ -386,18 +413,18 @@ router.get('/performance', async (req: Request, res: Response) => {
 
         const performance = {
             metrics: {
-                avgResponseTime: Math.round(parseFloat(responseTimeResult[0]?.avg_minutes || '0') * 10) / 10 || 4.2,
-                resolutionRate: totalConversations > 0 ? Math.round((resolvedConversations / totalConversations) * 100) : 89,
-                satisfactionScore: Math.round(parseFloat((satisfactionResult[0]?.avg as string) || '0') * 10) / 10 || 4.6,
-                followUpRate: Math.round(parseInt((followUpResult[0]?.count as string) || '0') / days * 100) || 78,
-                firstContactResolution: Math.round(parseInt((fcrResult[0]?.count as string) || '0') / totalConversations * 100) || 65,
+                avgResponseTime: Math.round(parseFloat(responseTimeResult[0]?.avg_minutes || '0') * 10) / 10,
+                resolutionRate: totalConversations > 0 ? Math.round((resolvedConversations / totalConversations) * 100) : 0,
+                satisfactionScore: Math.round(parseFloat((satisfactionResult[0]?.avg as string) || '0') * 10) / 10,
+                followUpRate: Math.round(parseInt((followUpResult[0]?.count as string) || '0') / days * 100),
+                firstContactResolution: Math.round(parseInt((fcrResult[0]?.count as string) || '0') / (totalConversations || 1) * 100),
             },
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             timeline: timelineData.length > 0 ? timelineData.map((row: any) => ({
                 date: row.date,
                 visits: parseInt(row.visits) || 0,
                 queries: parseInt(row.queries) || 0,
-                satisfaction: 4.5, // Placeholder for satisfaction trend if data sparse
+                satisfaction: 0, // No longer using 4.5 fallback
             })) : [],
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             byOfficer: officerData.length > 0 ? officerData.map((row: any) => ({

@@ -23,3 +23,13 @@ export const fetchVisits = async (): Promise<VisitsResponse> => {
     const response = await apiClient.get<VisitsResponse>('/visits');
     return response.data;
 };
+
+export const createVisit = async (data: Partial<Visit>): Promise<{ success: boolean; data: Visit }> => {
+    const response = await apiClient.post('/visits', data);
+    return response.data;
+};
+
+export const updateVisit = async (id: string, data: Partial<Visit>): Promise<{ success: boolean; data: Visit }> => {
+    const response = await apiClient.patch(`/visits/${id}`, data);
+    return response.data;
+};
