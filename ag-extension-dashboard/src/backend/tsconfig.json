@@ -18,6 +18,9 @@
         "moduleResolution": "node",
         "allowSyntheticDefaultImports": true,
         "baseUrl": "./src",
+        "types": [
+            "node"
+        ],
         "paths": {
             "@/*": [
                 "./*"
