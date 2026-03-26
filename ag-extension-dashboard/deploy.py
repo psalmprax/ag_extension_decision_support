@@ -157,11 +157,11 @@ def main():
 
             # Step 2: Generate Prisma client
             logger.info("Generating Prisma client...")
-            run_remote_command(ssh, "npx prisma generate", cwd=f"{deploy_dir}/src/backend")
+            run_remote_command(ssh, "npx prisma generate", cwd=f"{deploy_dir}/ag-extension-dashboard/src/backend")
 
             # Step 3: Build the application
             logger.info("Building the application...")
-            run_remote_command(ssh, "npm run build", cwd=f"{deploy_dir}/src/backend")
+            run_remote_command(ssh, "npm run build", cwd=f"{deploy_dir}/ag-extension-dashboard/src/backend")
 
             # Step 4: Restart PM2 processes
             logger.info("Restarting PM2 processes...")
