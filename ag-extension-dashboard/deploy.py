@@ -174,9 +174,20 @@ def main():
                 logger.info("Installing PM2...")
                 run_remote_command(ssh, "npm install -g pm2")
 
-            # Step 6: Restart PM2 processes
-            logger.info("Restarting PM2 processes...")
-            run_remote_command(ssh, "pm2 restart all")
+            # Step 6: Start or restart PM2 processes
+            logger.info("Checking for existing PM2 processes...")
+            pm2_list, _ = run_remote_command(ssh, "pm2 list --json", check=False)
+            has_processes = '"name"' in pm2_list  # Simple check for processes
+
+            if has_processes:
+                logger.info("Restarting existing PM2 processes...")
+                run_remote_command(ssh, "pm2 restart all")
+            else:
+                logger.info("No existing processes found, starting the application...")
+                # Start the built application with PM2
+                app_path = f"{deploy_dir}/ag-extension-dashboard/src/backend/dist/index.js"
+                run_remote_command(ssh, f"pm2 start {app_path} --name ag-extension-backend")
+                logger.info("Application started successfully with PM2")
 
             logger.info("Deployment completed successfully!")
         except Exception as e:
