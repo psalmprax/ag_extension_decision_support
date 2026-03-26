@@ -37,9 +37,9 @@ services:
       - NODE_ENV=development
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - AI_PRIMARY_PROVIDER=openai
-      - AI_PRIMARY_MODEL=GPT 5.4
+      - AI_PRIMARY_MODEL=gpt-4o
       - AI_FALLBACK_PROVIDER=openai
-      - AI_FALLBACK_MODEL=GPT 5.4-mini
+      - AI_FALLBACK_MODEL=gpt-4o-mini
       - AI_EMBEDDINGS_PROVIDER=openai
     depends_on:
       - app-db

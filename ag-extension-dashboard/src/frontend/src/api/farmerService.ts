@@ -57,3 +57,13 @@ export const fetchFarmerStats = async (): Promise<FarmerStatsResponse> => {
     const response = await apiClient.get<FarmerStatsResponse>('/analytics/farmer-stats');
     return response.data;
 };
+
+export const updateFarmer = async (id: string, updates: Partial<Farmer>): Promise<{ success: boolean; data: Farmer }> => {
+    const response = await apiClient.patch<{ success: boolean; data: Farmer }>(`/farmers/${id}`, updates);
+    return response.data;
+};
+
+export const deleteFarmer = async (id: string): Promise<{ success: boolean }> => {
+    const response = await apiClient.delete<{ success: boolean }>(`/farmers/${id}`);
+    return response.data;
+};
