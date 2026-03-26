@@ -3,7 +3,9 @@ import { logger } from '../utils/logger';
 import { sendPushNotification } from './pushNotificationService';
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+    datasourceUrl: process.env.DATABASE_URL,
+});
 
 export type NotificationType =
     | 'info'

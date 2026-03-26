@@ -2,7 +2,9 @@
 import { PrismaClient } from '@prisma/client';
 import { logger } from '../utils/logger';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+    datasourceUrl: process.env.DATABASE_URL,
+});
 
 export type UsageType = 'sms' | 'ai_chat' | 'report';
 
@@ -17,9 +19,9 @@ class UsageService {
         try {
             const subscription = await prisma.subscription.findUnique({
                 where: { userId },
-                include: { 
+                include: {
                     plan: true,
-                    usage: true 
+                    usage: true
                 },
             });
 
@@ -87,7 +89,7 @@ class UsageService {
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const features = data.plan.features as any;
-            
+
             let current = 0;
             let limit = 0;
 
@@ -120,7 +122,7 @@ class UsageService {
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const features = (data.plan.features as any) || {};
-            
+
             return {
                 plan: {
                     name: data.plan.name,

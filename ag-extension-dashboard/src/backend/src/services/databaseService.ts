@@ -8,60 +8,62 @@ import { getPrisma } from './prismaService';
 let pool: Pool | null = null;
 
 export async function initializeDatabase(): Promise<void> {
-    try {
-        pool = new Pool({
-            connectionString: config.database.url,
-            max: 20,
-            idleTimeoutMillis: 30000,
-            connectionTimeoutMillis: 2000,
-        });
+  try {
+    pool = new Pool({
+      connectionString: config.database.url,
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+    });
 
-        // Test connection
-        const client = await pool.connect();
-        await client.query('SELECT NOW()');
-        client.release();
+    // Test connection
+    const client = await pool.connect();
+    await client.query('SELECT NOW()');
+    client.release();
 
-        logger.info('Database connection established');
+    logger.info('Database connection established');
 
-        // Initialize Prisma
-        getPrisma();
-        logger.info('Prisma ORM initialized');
+    // Initialize Prisma
+    getPrisma();
+    logger.info('Prisma ORM initialized');
 
-        // Sync Prisma schema with database
-        await syncPrismaSchema();
+    // Sync Prisma schema with database
+    await syncPrismaSchema();
 
-        // Create tables if they don't exist (legacy fallback)
-        await createTables();
-    } catch (error) {
-        logger.error('Failed to initialize database:', error);
-        // Continue without database for development
-        logger.warn('Continuing without database connection');
-    }
+    // Create tables if they don't exist (legacy fallback)
+    await createTables();
+  } catch (error) {
+    logger.error('Failed to initialize database:', error);
+    // Continue without database for development
+    logger.warn('Continuing without database connection');
+  }
 }
 
 async function syncPrismaSchema(): Promise<void> {
-    try {
-        logger.info('Syncing Prisma schema with database...');
-        const { PrismaClient } = await import('@prisma/client');
-        const prisma = new PrismaClient();
-        await prisma.$executeRaw`SELECT 1`; // Test connection
-        await prisma.$disconnect();
-        
-        // Use child_process to run prisma db push
-        execSync('npx prisma db push --accept-data-loss', {
-            stdio: 'pipe',
-            env: { ...process.env }
-        });
-        logger.info('Prisma schema synced successfully');
-    } catch (error) {
-        logger.warn('Prisma schema sync skipped:', error);
-    }
+  try {
+    logger.info('Syncing Prisma schema with database...');
+    const { PrismaClient } = await import('@prisma/client');
+    const prisma = new PrismaClient({
+      datasourceUrl: process.env.DATABASE_URL,
+    });
+    await prisma.$executeRaw`SELECT 1`; // Test connection
+    await prisma.$disconnect();
+
+    // Use child_process to run prisma db push
+    execSync('npx prisma db push --accept-data-loss', {
+      stdio: 'pipe',
+      env: { ...process.env }
+    });
+    logger.info('Prisma schema synced successfully');
+  } catch (error) {
+    logger.warn('Prisma schema sync skipped:', error);
+  }
 }
 
 export async function createTables(): Promise<void> {
-    if (!pool) return;
+  if (!pool) return;
 
-    const createTablesSQL = `
+  const createTablesSQL = `
     -- Fallback cosine similarity function
     CREATE OR REPLACE FUNCTION cosine_similarity(a float8[], b float8[]) RETURNS float8 AS $$
     DECLARE
@@ -252,33 +254,33 @@ export async function createTables(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_sms_history_created ON sms_history(created_at);
   `;
 
-    try {
-        await pool.query(createTablesSQL);
-        logger.info('Database tables and functions created');
-    } catch (error) {
-        logger.warn('Error during database provisioning:', error);
-    }
+  try {
+    await pool.query(createTablesSQL);
+    logger.info('Database tables and functions created');
+  } catch (error) {
+    logger.warn('Error during database provisioning:', error);
+  }
 }
 
 export function getPool(): Pool | null {
-    return pool;
+  return pool;
 }
 
 export async function query(text: string, params?: any[]): Promise<any> {
-    if (!pool) {
-        throw new Error('Database not initialized');
-    }
-    const start = Date.now();
-    const res = await pool.query(text, params);
-    const duration = Date.now() - start;
-    logger.debug('Executed query', { text: text.substring(0, 50), duration, rows: res.rowCount });
-    return res;
+  if (!pool) {
+    throw new Error('Database not initialized');
+  }
+  const start = Date.now();
+  const res = await pool.query(text, params);
+  const duration = Date.now() - start;
+  logger.debug('Executed query', { text: text.substring(0, 50), duration, rows: res.rowCount });
+  return res;
 }
 
 export async function closeDatabase(): Promise<void> {
-    if (pool) {
-        await pool.end();
-        pool = null;
-        logger.info('Database connection closed');
-    }
+  if (pool) {
+    await pool.end();
+    pool = null;
+    logger.info('Database connection closed');
+  }
 }
