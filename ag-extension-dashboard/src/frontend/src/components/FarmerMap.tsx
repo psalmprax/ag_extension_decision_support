@@ -224,24 +224,9 @@ const CROP_ICONS: Record<string, string> = {
     default: '📍',
 };
 
-// Sample farmer data for Malawi
-const SAMPLE_FARMERS: FarmerData[] = [
-    { id: 1, name: 'Chimwemwe Farm', lat: -13.9626, lng: 33.7741, crop: 'maize', region: 'Lilongwe', size: 5.2, phone: '+265-991-234-567', yield: 4.5, firstName: '', lastName: '' },
-    { id: 2, name: 'Mzuzu Cooperative', lat: -11.4626, lng: 34.3015, crop: 'tobacco', region: 'Mzuzu', size: 12.5, phone: '+265-991-234-568', yield: 2.1, firstName: '', lastName: '' },
-    { id: 3, name: 'Blantyre Growers', lat: -15.7861, lng: 35.0058, crop: 'groundnuts', region: 'Blantyre', size: 3.8, phone: '+265-991-234-569', yield: 1.8, firstName: '', lastName: '' },
-    { id: 4, name: 'Zomba Farmers Union', lat: -15.3833, lng: 35.3333, crop: 'rice', region: 'Zomba', size: 8.3, phone: '+265-991-234-570', yield: 3.2, firstName: '', lastName: '' },
-    { id: 5, name: 'Mzuzu Tobacco Co', lat: -11.4364, lng: 34.3519, crop: 'tobacco', region: 'Mzuzu', size: 15.0, phone: '+265-991-234-571', yield: 2.3, firstName: '', lastName: '' },
-    { id: 6, name: 'Lilongwe Maize Farm', lat: -13.9626, lng: 33.7741, crop: 'maize', region: 'Lilongwe', size: 6.7, phone: '+265-991-234-572', yield: 5.1, firstName: '', lastName: '' },
-    { id: 7, name: 'Kasungu Groundnuts', lat: -12.9318, lng: 33.3965, crop: 'groundnuts', region: 'Kasungu', size: 4.5, phone: '+265-991-234-573', yield: 1.5, firstName: '', lastName: '' },
-    { id: 8, name: 'Mchinji Soybeans', lat: -13.7989, lng: 32.8843, crop: 'soybeans', region: 'Mchinji', size: 9.2, phone: '+265-991-234-574', yield: 2.8, firstName: '', lastName: '' },
-    { id: 9, name: 'Mzuzu Beans Cooperative', lat: -11.4281, lng: 34.2893, crop: 'beans', region: 'Mzuzu', size: 7.1, phone: '+265-991-234-575', yield: 1.9, firstName: '', lastName: '' },
-    { id: 10, name: 'Blantyre Cotton', lat: -15.7421, lng: 34.9908, crop: 'cotton', region: 'Blantyre', size: 11.4, phone: '+265-991-234-576', yield: 1.2, firstName: '', lastName: '' },
-    { id: 11, name: 'Mzuzu Wheat Farm', lat: -11.4562, lng: 34.3128, crop: 'wheat', region: 'Mzuzu', size: 5.9, phone: '+265-991-234-577', yield: 3.5, firstName: '', lastName: '' },
-    { id: 12, name: 'Zomba Sorghum', lat: -15.3637, lng: 35.3531, crop: 'sorghum', region: 'Zomba', size: 4.2, phone: '+265-991-234-578', yield: 2.9, firstName: '', lastName: '' },
-    { id: 13, name: 'Lilongwe Potatoes', lat: -13.9204, lng: 33.7836, crop: 'potatoes', region: 'Lilongwe', size: 3.3, phone: '+265-991-234-579', yield: 15.0, firstName: '', lastName: '' },
-    { id: 14, name: 'Kasungu Rice', lat: -12.9282, lng: 33.4098, crop: 'rice', region: 'Kasungu', size: 6.8, phone: '+265-991-234-580', yield: 3.8, firstName: '', lastName: '' },
-    { id: 15, name: 'Mchinji Maize', lat: -13.7892, lng: 32.8921, crop: 'maize', region: 'Mchinji', size: 8.1, phone: '+265-991-234-581', yield: 4.2, firstName: '', lastName: '' },
-];
+// Default starting coordinates for the map (Malawi)
+const DEFAULT_CENTER: [number, number] = [-13.5, 34];
+const DEFAULT_ZOOM = 7;
 
 // Map tile layer types
 type MapLayer = 'street' | 'satellite' | 'terrain';
@@ -410,8 +395,8 @@ export interface FarmerMapProps {
 }
 
 export function FarmerMap({
-    initialCenter = [-13.5, 34],
-    initialZoom = 7,
+    initialCenter = DEFAULT_CENTER,
+    initialZoom = DEFAULT_ZOOM,
     showLegend = true,
     height = '400px',
     className = '',
@@ -420,7 +405,7 @@ export function FarmerMap({
     isExternalExpanded,
     onToggleExpand,
 }: FarmerMapProps) {
-    const farmers = propFarmers || SAMPLE_FARMERS;
+    const farmers = propFarmers || [];
     const [currentLayer, setCurrentLayer] = useState<MapLayer>('street');
     const [selectedFarmer, setSelectedFarmer] = useState<FarmerData | null>(null);
     const [internalExpanded, setInternalExpanded] = useState(false);
@@ -777,6 +762,27 @@ export function FarmerMap({
 
             <div className="relative" style={{ height }}>
                 {mapContent}
+                {farmers.length === 0 && (
+                    <div className="absolute inset-0 z-[1100] bg-black/40 backdrop-blur-[2px] flex items-center justify-center p-6 text-center">
+                        <div className="bg-white/90 dark:bg-gray-800/90 rounded-3xl p-8 shadow-2xl border border-white/20 max-w-sm">
+                            <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                <Users className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+                            </div>
+                            <h3 className="text-lg font-black text-gray-900 dark:text-white mb-2 uppercase tracking-wide">
+                                {t('map_no_farmers') || 'Establish Connectivity'}
+                            </h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium leading-relaxed">
+                                {t('map_no_farmers_desc') || "No farmer records detected in current perimeter. Once synchronized with regional nodes, distribution will appear live."}
+                            </p>
+                            <button 
+                                onClick={() => setIsExpanded(false)}
+                                className="mt-6 px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                            >
+                                {t('action_refresh_sync') || 'Refresh Sync'}
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Stats Panel - Bottom Left */}
@@ -1049,5 +1055,5 @@ export function FarmerMap({
     );
 }
 
-export { SAMPLE_FARMERS, CROP_COLORS };
+export { CROP_COLORS };
 export default FarmerMap;

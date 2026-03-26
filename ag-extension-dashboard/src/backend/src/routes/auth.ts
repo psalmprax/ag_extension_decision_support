@@ -80,6 +80,15 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
     try {
         const { email, password, firstName, lastName, role, region, phone } = req.body;
 
+        // SECURITY: Prevent self-registration as admin — admin accounts are internal-only
+        const allowedRoles = ['extension_officer', 'farmer'];
+        if (role && !allowedRoles.includes(role)) {
+            return res.status(403).json({
+                success: false,
+                error: `Role "${role}" is not available for self-registration.`,
+            });
+        }
+
         // Check if user already exists
         const existingUser = await query('SELECT id FROM users WHERE email = $1', [email]);
         if (existingUser.rows.length > 0) {

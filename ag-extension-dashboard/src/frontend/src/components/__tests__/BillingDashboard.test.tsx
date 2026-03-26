@@ -76,8 +76,8 @@ describe('BillingDashboard', () => {
         const plansSection = screen.getByRole('region', { name: /Available subscription plans/i });
         expect(plansSection).toBeInTheDocument();
 
-        // Check for plan headings (Basic and Pro)
-        expect(screen.getByRole('heading', { name: /Basic/i, level: 3 })).toBeInTheDocument();
+        // Check for plan headings (Free and Pro)
+        expect(screen.getByRole('heading', { name: /Free/i, level: 3 })).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: /Pro/i, level: 3 })).toBeInTheDocument();
     });
 });

@@ -363,5 +363,19 @@
   "weather_title": "Clima",
   "weather_wind": "Velocidad del viento",
   "billing_secure_storage": "Secure Storage",
-  "billing_stripe_secret": "Stripe Secret Key"
+  "billing_stripe_secret": "Stripe Secret Key",
+  "map_no_farmers": "Establish Connectivity",
+  "map_no_farmers_desc": "No farmer records detected in current perimeter. Once synchronized with regional nodes, distribution will appear live.",
+  "action_refresh_sync": "Refresh Sync",
+  "billing_subscribe_paypal": "Subscribe with PayPal",
+  "billing_updating": "Updating...",
+  "common_translate": "Translate",
+  "farmer_register_first_name": "First Name",
+  "farmer_register_first_name_placeholder": "Enter first name",
+  "farmer_register_last_name": "Last Name",
+  "farmer_register_last_name_placeholder": "Enter last name",
+  "login_sign_in": "Sign In",
+  "reports_generated_success": "AI Synthesis Report generated successfully!",
+  "sms_template_greeting": "Greeting",
+  "sms_template_alert": "Alert"
 }

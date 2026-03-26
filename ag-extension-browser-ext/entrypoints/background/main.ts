@@ -373,7 +373,16 @@ export default defineBackground(() => {
 
             if (message.action === 'open_sidepanel') {
                 if (chromeAPI?.sidePanel) {
-                    chromeAPI.sidePanel.open({ windowId: sender.tab?.windowId });
+                    chromeAPI.sidePanel.open({ windowId: sender.tab?.windowId }).then(() => {
+                        if (message.tab) {
+                            setTimeout(() => {
+                                chromeAPI.runtime.sendMessage({ 
+                                    action: 'switch_sidepanel_tab', 
+                                    tab: message.tab 
+                                });
+                            }, 500);
+                        }
+                    });
                 }
             }
         });

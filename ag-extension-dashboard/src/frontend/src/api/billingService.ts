@@ -100,3 +100,51 @@ export const getCohortAnalytics = async () => {
     const { data } = await apiClient.get('/billing/analytics/cohorts');
     return data;
 };
+
+// Voucher API functions
+export const redeemVoucher = async (code: string) => {
+    const { data } = await apiClient.post('/billing/voucher/redeem', { code });
+    return data;
+};
+
+export const generateVouchers = async (planId: string, count: number, expiresInDays?: number) => {
+    const { data } = await apiClient.post('/billing/voucher/generate', { planId, count, expiresInDays });
+    return data;
+};
+
+export const listVouchers = async (filters?: { planId?: string; isRedeemed?: boolean }) => {
+    const { data } = await apiClient.get('/billing/voucher/list', { params: filters });
+    return data;
+};
+
+// Transaction submission API functions (M-Pesa / Airtel / Bank)
+export const submitTransaction = async (params: {
+    planId: string;
+    method: 'mpesa' | 'airtel' | 'bank';
+    transactionId: string;
+    amount: number;
+    currency?: string;
+}) => {
+    const { data } = await apiClient.post('/billing/transaction/submit', params);
+    return data;
+};
+
+export const getMyTransactions = async () => {
+    const { data } = await apiClient.get('/billing/transaction/my');
+    return data;
+};
+
+export const listAllTransactions = async (status?: string) => {
+    const { data } = await apiClient.get('/billing/transaction/list', { params: status ? { status } : {} });
+    return data;
+};
+
+export const verifyTransaction = async (id: string) => {
+    const { data } = await apiClient.post(`/billing/transaction/verify/${id}`);
+    return data;
+};
+
+export const rejectTransaction = async (id: string, reason: string) => {
+    const { data } = await apiClient.post(`/billing/transaction/reject/${id}`, { reason });
+    return data;
+};

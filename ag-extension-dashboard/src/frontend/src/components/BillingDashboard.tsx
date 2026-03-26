@@ -19,12 +19,14 @@ import {
     Settings,
     AtSign,
     Globe,
-    CreditCard as CardIcon
+    CreditCard as CardIcon,
+    Smartphone,
+    Ticket
 } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
-import { fetchPlans, fetchSubscription, createCheckoutSession, createPortalSession, fetchInvoices, switchSubscription, fetchPaymentMethods, addPaymentMethod, deletePaymentMethod, updateAdminConfig, createPayPalSubscription } from '@/api/billingService';
+import { fetchPlans, fetchSubscription, createCheckoutSession, createPortalSession, fetchInvoices, switchSubscription, fetchPaymentMethods, addPaymentMethod, deletePaymentMethod, updateAdminConfig, createPayPalSubscription, redeemVoucher, submitTransaction, getMyTransactions } from '@/api/billingService';
 import { PaymentAnalyticsDashboard } from './PaymentAnalyticsDashboard';
 import { UsageQuota } from './UsageQuota';
 
@@ -64,6 +66,13 @@ export const BillingDashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [adminKeys, setAdminKeys] = useState({ stripeSecretKey: '', paypalClientId: '' });
+    const [showMobilePayForm, setShowMobilePayForm] = useState(false);
+    const [showVoucherForm, setShowVoucherForm] = useState(false);
+    const [mobilePayData, setMobilePayData] = useState({ method: 'mpesa' as 'mpesa' | 'airtel' | 'bank', transactionId: '', planId: '', amount: '' });
+    const [voucherCode, setVoucherCode] = useState('');
+    const [formMessage, setFormMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [myTransactions, setMyTransactions] = useState<any[]>([]);
     const { user } = useAppStore();
 
     // Get success/cancel status from URL params
@@ -103,6 +112,59 @@ export const BillingDashboard: React.FC = () => {
             console.error('Failed to fetch billing data:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Voucher Redemption Handler
+    const handleRedeemVoucher = async () => {
+        if (!voucherCode.trim()) return;
+        setActionLoading('voucher');
+        setFormMessage(null);
+        try {
+            const res = await redeemVoucher(voucherCode.trim());
+            if (res.success) {
+                setFormMessage({ type: 'success', text: res.message || `Successfully activated ${res.data?.planName || 'plan'}!` });
+                setVoucherCode('');
+                setShowVoucherForm(false);
+                fetchData(); // Refresh subscription
+            } else {
+                setFormMessage({ type: 'error', text: res.message || 'Voucher redemption failed.' });
+            }
+        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setFormMessage({ type: 'error', text: (error as any).response?.data?.message || 'Voucher redemption failed.' });
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    // Mobile Money Transaction Handler
+    const handleSubmitTransaction = async () => {
+        if (!mobilePayData.transactionId || !mobilePayData.planId || !mobilePayData.amount) return;
+        setActionLoading('mobile-pay');
+        setFormMessage(null);
+        try {
+            const res = await submitTransaction({
+                planId: mobilePayData.planId,
+                method: mobilePayData.method,
+                transactionId: mobilePayData.transactionId,
+                amount: parseFloat(mobilePayData.amount),
+            });
+            if (res.success) {
+                setFormMessage({ type: 'success', text: res.message || 'Transaction submitted for verification!' });
+                setMobilePayData({ method: 'mpesa', transactionId: '', planId: '', amount: '' });
+                setShowMobilePayForm(false);
+                // Refresh user's transactions
+                const txRes = await getMyTransactions();
+                if (txRes.success) setMyTransactions(txRes.data);
+            } else {
+                setFormMessage({ type: 'error', text: res.message || 'Transaction submission failed.' });
+            }
+        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setFormMessage({ type: 'error', text: (error as any).response?.data?.message || 'Transaction submission failed.' });
+        } finally {
+            setActionLoading(null);
         }
     };
 
@@ -483,6 +545,19 @@ export const BillingDashboard: React.FC = () => {
                                     <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-indigo-500/5 rounded-full blur-[60px]" />
                                 </div>
 
+                                {plan.id === 'price_pro_monthly' && (
+                                    <div className="mb-6 inline-flex px-4 py-1.5 bg-indigo-500/10 text-indigo-500 text-[10px] font-black rounded-xl uppercase tracking-[0.2em] border border-indigo-500/20 backdrop-blur-md relative z-10 w-fit">
+                                        <Shield className="w-3.5 h-3.5 mr-2" />
+                                        {t('plan_badge_officer') || 'Recommended for Extension Officers'}
+                                    </div>
+                                )}
+                                {plan.id === 'price_free' && (
+                                    <div className="mb-6 inline-flex px-4 py-1.5 bg-primary-500/10 text-primary-500 text-[10px] font-black rounded-xl uppercase tracking-[0.2em] border border-primary-500/20 backdrop-blur-md relative z-10 w-fit">
+                                        <Zap className="w-3.5 h-3.5 mr-2" />
+                                        {t('plan_badge_farmer') || 'Ideal for Individual Farmers'}
+                                    </div>
+                                )}
+
                                 <div>
                                     <div className="flex justify-between items-start mb-10">
                                         <div className="space-y-2">
@@ -575,6 +650,133 @@ export const BillingDashboard: React.FC = () => {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+                            {/* Regional Mobile Money */}
+                            <div className="p-6 rounded-2xl bg-green-500/5 border border-green-500/20 group/pm hover:border-green-500/40 transition-all duration-300 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-2 opacity-10">
+                                    <Smartphone className="w-12 h-12 text-green-500" />
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4 relative z-10">
+                                        <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/20">
+                                            <Smartphone className="w-6 h-6 text-white" />
+                                        </div>
+                                        <div className="space-y-0.5">
+                                            <p className="text-sm font-black text-gray-900 dark:text-white tracking-tight">M-Pesa / Airtel Money</p>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[8px] font-black bg-green-500/10 text-green-600 px-1.5 py-0.5 rounded uppercase tracking-widest border border-green-500/10">Regional</span>
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('billing_mobile_transfer') || 'Mobile Transfer'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => { setShowMobilePayForm(!showMobilePayForm); setFormMessage(null); }}
+                                        className="px-4 py-2 bg-white dark:bg-gray-800 border border-green-200 dark:border-green-800 text-green-600 dark:text-green-400 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-green-500 hover:text-white transition-all shadow-sm"
+                                    >
+                                        {t('action_pay_mobile') || 'Pay'}
+                                    </button>
+                                </div>
+                                {showMobilePayForm && (
+                                    <div className="mt-4 pt-4 border-t border-green-500/20 space-y-3">
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <select
+                                                value={mobilePayData.method}
+                                                onChange={(e) => setMobilePayData({ ...mobilePayData, method: e.target.value as 'mpesa' | 'airtel' | 'bank' })}
+                                                className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
+                                            >
+                                                <option value="mpesa">M-Pesa</option>
+                                                <option value="airtel">Airtel Money</option>
+                                                <option value="bank">Bank Transfer</option>
+                                            </select>
+                                            <select
+                                                value={mobilePayData.planId}
+                                                onChange={(e) => {
+                                                    const p = plans.find(pl => pl.id === e.target.value);
+                                                    setMobilePayData({ ...mobilePayData, planId: e.target.value, amount: p ? (p.price / 100).toString() : '' });
+                                                }}
+                                                className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
+                                            >
+                                                <option value="">Select Plan</option>
+                                                {plans.filter(p => p.price > 0).map(p => (
+                                                    <option key={p.id} value={p.id}>{p.name} (${(p.price / 100).toFixed(2)}/mo)</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={mobilePayData.transactionId}
+                                            onChange={(e) => setMobilePayData({ ...mobilePayData, transactionId: e.target.value })}
+                                            placeholder="Enter M-Pesa/Airtel Transaction ID"
+                                            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
+                                        />
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-[10px] text-gray-400">Admin will verify your payment before activation.</p>
+                                            <button
+                                                onClick={handleSubmitTransaction}
+                                                disabled={actionLoading === 'mobile-pay' || !mobilePayData.transactionId || !mobilePayData.planId}
+                                                className="px-4 py-2 bg-green-500 text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-green-600 transition-all shadow-sm disabled:opacity-50"
+                                            >
+                                                {actionLoading === 'mobile-pay' ? 'Submitting...' : 'Submit Transaction'}
+                                            </button>
+                                        </div>
+                                        {formMessage && (
+                                            <p className={`text-xs font-medium ${formMessage.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
+                                                {formMessage.text}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* AgriVoucher Option */}
+                            <div className="p-6 rounded-2xl bg-indigo-500/5 border border-indigo-500/20 group/pm hover:border-indigo-500/40 transition-all duration-300 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-2 opacity-10">
+                                    <Ticket className="w-12 h-12 text-indigo-500" />
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4 relative z-10">
+                                        <div className="w-12 h-12 bg-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                                            <Ticket className="w-6 h-6 text-white" />
+                                        </div>
+                                        <div className="space-y-0.5">
+                                            <p className="text-sm font-black text-gray-900 dark:text-white tracking-tight">{t('billing_voucher') || 'AgriVoucher'}</p>
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('billing_voucher_desc') || 'Prepaid Service Code'}</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => { setShowVoucherForm(!showVoucherForm); setFormMessage(null); }}
+                                        className="px-4 py-2 bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-indigo-500 hover:text-white transition-all shadow-sm"
+                                    >
+                                        {t('action_redeem') || 'Redeem'}
+                                    </button>
+                                </div>
+                                {showVoucherForm && (
+                                    <div className="mt-4 pt-4 border-t border-indigo-500/20 space-y-3">
+                                        <input
+                                            type="text"
+                                            value={voucherCode}
+                                            onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                                            placeholder="Enter voucher code (e.g. AGV-A1B2C3D4)"
+                                            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-mono tracking-wider"
+                                        />
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-[10px] text-gray-400">Instantly activates your subscription.</p>
+                                            <button
+                                                onClick={handleRedeemVoucher}
+                                                disabled={actionLoading === 'voucher' || !voucherCode.trim()}
+                                                className="px-4 py-2 bg-indigo-500 text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-sm disabled:opacity-50"
+                                            >
+                                                {actionLoading === 'voucher' ? 'Redeeming...' : 'Activate Voucher'}
+                                            </button>
+                                        </div>
+                                        {formMessage && (
+                                            <p className={`text-xs font-medium ${formMessage.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
+                                                {formMessage.text}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
                             {paymentMethods.length > 0 ? (
                                 paymentMethods.map((pm) => (
                                     <div key={pm.id} className="p-6 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 flex items-center justify-between group/pm hover:border-primary-500/30 transition-all duration-300">

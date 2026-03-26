@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, Bot, User, Sparkles, Brain, Code, Terminal, Zap, Wifi, WifiOff, Mic, MicOff, Paperclip, X, Image as ImageIcon, FileText, AlertCircle } from 'lucide-react';
 import { apiQueue } from '../../shared/apiQueue';
 import { usePersistence } from '../../shared/hooks/usePersistence';
+import CONFIG from '../../shared/config';
+import { VisitLogger } from './components/VisitLogger';
 
 interface Message {
   id: string;
@@ -27,7 +29,9 @@ function App() {
   const [messages, setMessages, isLoaded] = usePersistence<Message[]>('chatHistory', []);
   const [activeAgent] = usePersistence('activeAgent', 'AGENT ALPHA');
   const [language] = usePersistence('language', 'en');
-  const [apiEndpoint] = usePersistence('apiEndpoint', 'http://localhost:3000/api');
+  const [apiEndpoint] = usePersistence('apiEndpoint', CONFIG.API_BASE_URL);
+  const [activeFarmerId, setActiveFarmerId] = usePersistence('activeFarmerId', '');
+  const [activeTab, setActiveTab] = useState<'chat' | 'log'>('chat');
   
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -41,6 +45,7 @@ function App() {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [farmers, setFarmers] = useState<any[]>([]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -53,7 +58,8 @@ function App() {
         message,
         mode: 'extension',
         agent: activeAgent,
-        language: language
+        language: language,
+        farmerId: activeFarmerId
       };
 
       if (pageCtx) {
@@ -120,7 +126,7 @@ function App() {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch(`${apiEndpoint}/upload`, {
+      const response = await fetch(`${CONFIG.API_BASE_URL}/upload`, {
         method: 'POST',
         body: formData,
       });
@@ -282,6 +288,18 @@ function App() {
     const getPageContext = async () => {
       try {
         const browserAPI = (window as any).browser || (window as any).chrome;
+
+        // Fetch farmers
+        try {
+          const fRes = await apiQueue.makeRequest(`${CONFIG.API_BASE_URL}/farmers`);
+          if (fRes.ok) {
+            const fData = await fRes.json();
+            setFarmers(fData.data || []);
+          }
+        } catch (fErr) {
+          console.error('Failed to fetch farmers:', fErr);
+        }
+
         if (browserAPI && browserAPI.tabs) {
           const [tab] = await browserAPI.tabs.query({ active: true, currentWindow: true });
           if (tab && tab.id) {
@@ -390,6 +408,10 @@ function App() {
           } finally {
             setIsLoading(false);
           }
+        } else if (message.action === 'switch_sidepanel_tab') {
+          if (message.tab === 'log' || message.tab === 'chat') {
+            setActiveTab(message.tab);
+          }
         }
       };
 
@@ -435,9 +457,50 @@ function App() {
         </div>
       </header>
 
-      {/* Messages */}
+      {/* Tabs */}
+      <div className="flex border-b border-slate-800 bg-slate-900/30">
+        <button 
+          onClick={() => setActiveTab('chat')}
+          className={`flex-1 py-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all border-b-2 ${activeTab === 'chat' ? 'text-primary-400 border-primary-500 bg-primary-500/5' : 'text-slate-500 border-transparent hover:text-slate-300'}`}
+        >
+          AI Advisor
+        </button>
+        <button 
+          onClick={() => setActiveTab('log')}
+          className={`flex-1 py-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all border-b-2 ${activeTab === 'log' ? 'text-emerald-400 border-emerald-500 bg-emerald-500/5' : 'text-slate-500 border-transparent hover:text-slate-300'}`}
+        >
+          Visit Logger
+        </button>
+      </div>
+
+      {/* Farmer Context Selector */}
+      <div className="px-4 py-2 bg-slate-900/50 border-b border-slate-800 flex items-center gap-2">
+        <User className="w-3 h-3 text-slate-500" />
+        <select
+          value={activeFarmerId}
+          onChange={(e) => setActiveFarmerId(e.target.value)}
+          className="flex-1 bg-transparent text-[10px] font-bold text-slate-400 uppercase tracking-widest outline-none cursor-pointer hover:text-white transition-colors"
+        >
+          <option value="">Select Farmer Context...</option>
+          {farmers.map(f => (
+            <option key={f.id} value={f.id}>{f.firstName} {f.lastName}</option>
+          ))}
+        </select>
+        {activeFarmerId && (
+          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+            <span className="w-1 h-1 rounded-full bg-emerald-500" />
+            <span className="text-[8px] font-black text-emerald-400 uppercase">Context Active</span>
+          </div>
+        )}
+      </div>
+
+      {/* Messages / Logger */}
       <main className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
-        {messages.map((msg) => (
+        {activeTab === 'log' ? (
+          <VisitLogger farmerId={activeFarmerId} />
+        ) : (
+          <>
+            {messages.map((msg) => (
           <div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${msg.role === 'assistant'
               ? 'bg-primary-500/10 border-primary-500/20 shadow-lg shadow-primary-500/5'
@@ -463,20 +526,22 @@ function App() {
               </span>
             </div>
           </div>
-        ))}
-        {isLoading && (
-          <div className="flex gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary-500/10 border border-primary-500/20 flex items-center justify-center">
-              <Bot className="w-4 h-4 text-primary-400 animate-pulse" />
-            </div>
-            <div className="bg-slate-900 border border-slate-800 p-3 rounded-2xl rounded-tl-none flex gap-1 items-center">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-bounce [animation-delay:-0.3s]" />
-              <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-bounce [animation-delay:-0.15s]" />
-              <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-bounce" />
-            </div>
-          </div>
+            ))}
+            {isLoading && (
+              <div className="flex gap-3">
+                <div className="w-8 h-8 rounded-lg bg-primary-500/10 border border-primary-500/20 flex items-center justify-center">
+                  <Bot className="w-4 h-4 text-primary-400 animate-pulse" />
+                </div>
+                <div className="bg-slate-900 border border-slate-800 p-3 rounded-2xl rounded-tl-none flex gap-1 items-center">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-bounce [animation-delay:-0.3s]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-bounce [animation-delay:-0.15s]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-bounce" />
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </>
         )}
-        <div ref={messagesEndRef} />
 
         {/* Offline Queue Manager */}
         {showOfflineManager && (

@@ -2,6 +2,8 @@ import express, { Router } from 'express';
 import { paymentService } from '../services/paymentService';
 import { systemConfigService } from '../services/systemConfigService';
 import { paymentAnalyticsService } from '../services/paymentAnalyticsService';
+import { voucherService } from '../services/voucherService';
+import { transactionService } from '../services/transactionService';
 import { getPrisma } from '../services/prismaService';
 import { logger } from '../utils/logger';
 import { authorize, AuthRequest } from '../middleware/authorize';
@@ -636,6 +638,217 @@ router.get('/paypal/success', authorize('admin', 'extension_officer', 'farmer'),
  */
 router.get('/paypal/cancel', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
         res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?canceled=true&payment=paypal`);
+});
+
+// =============================================
+// VOUCHER ENDPOINTS
+// =============================================
+
+/**
+ * @swagger
+ * /api/v1/billing/voucher/redeem:
+ *   post:
+ *     summary: Redeem a voucher code to activate a subscription
+ *     tags: [Billing]
+ */
+router.post('/voucher/redeem', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
+    try {
+        const { code } = req.body;
+        const userId = req.user!.userId;
+
+        if (!code || typeof code !== 'string') {
+            return res.status(400).json({ success: false, message: 'Voucher code is required.' });
+        }
+
+        const result = await voucherService.redeemVoucher(userId, code);
+        if (result.success) {
+            res.json({ success: true, message: result.message, data: { planName: result.planName } });
+        } else {
+            res.status(400).json({ success: false, message: result.message });
+        }
+    } catch (error) {
+        logger.error('Voucher redemption failed:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/billing/voucher/generate:
+ *   post:
+ *     summary: Generate voucher codes for a plan (Admin only)
+ *     tags: [Billing]
+ */
+router.post('/voucher/generate', authorize('admin'), async (req: AuthRequest, res) => {
+    try {
+        const { planId, count = 1, expiresInDays } = req.body;
+
+        if (!planId) {
+            return res.status(400).json({ success: false, message: 'Plan ID is required.' });
+        }
+
+        const result = await voucherService.generateVouchers(planId, Math.min(count, 100), expiresInDays);
+        res.json({ success: true, data: result });
+    } catch (error) {
+        logger.error('Voucher generation failed:', error);
+        res.status(500).json({ success: false, message: 'Failed to generate vouchers' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/billing/voucher/list:
+ *   get:
+ *     summary: List all vouchers (Admin only)
+ *     tags: [Billing]
+ */
+router.get('/voucher/list', authorize('admin'), async (req: AuthRequest, res) => {
+    try {
+        const { planId, isRedeemed } = req.query;
+        const vouchers = await voucherService.listVouchers({
+            planId: planId as string | undefined,
+            isRedeemed: isRedeemed !== undefined ? isRedeemed === 'true' : undefined,
+        });
+        res.json({ success: true, data: vouchers });
+    } catch (error) {
+        logger.error('Failed to list vouchers:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
+// =============================================
+// TRANSACTION SUBMISSION ENDPOINTS (M-Pesa / Airtel / Bank)
+// =============================================
+
+/**
+ * @swagger
+ * /api/v1/billing/transaction/submit:
+ *   post:
+ *     summary: Submit a manual payment transaction for verification
+ *     tags: [Billing]
+ */
+router.post('/transaction/submit', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
+    try {
+        const { planId, method, transactionId, amount, currency } = req.body;
+        const userId = req.user!.userId;
+
+        if (!planId || !method || !transactionId || !amount) {
+            return res.status(400).json({ success: false, message: 'planId, method, transactionId, and amount are required.' });
+        }
+
+        const validMethods = ['mpesa', 'airtel', 'bank'];
+        if (!validMethods.includes(method)) {
+            return res.status(400).json({ success: false, message: `Invalid method. Must be one of: ${validMethods.join(', ')}` });
+        }
+
+        const result = await transactionService.submitTransaction({
+            userId,
+            planId,
+            method,
+            transactionId,
+            amount: parseFloat(amount),
+            currency,
+        });
+
+        if (result.success) {
+            res.json({ success: true, message: result.message, data: { submissionId: result.submissionId } });
+        } else {
+            res.status(400).json({ success: false, message: result.message });
+        }
+    } catch (error) {
+        logger.error('Transaction submission failed:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/billing/transaction/my:
+ *   get:
+ *     summary: Get the current user's transaction submissions
+ *     tags: [Billing]
+ */
+router.get('/transaction/my', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
+    try {
+        const submissions = await transactionService.getUserSubmissions(req.user!.userId);
+        res.json({ success: true, data: submissions });
+    } catch (error) {
+        logger.error('Failed to get user submissions:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/billing/transaction/list:
+ *   get:
+ *     summary: List all transaction submissions (Admin only)
+ *     tags: [Billing]
+ */
+router.get('/transaction/list', authorize('admin'), async (req: AuthRequest, res) => {
+    try {
+        const { status } = req.query;
+        const transactions = await transactionService.listTransactions({
+            status: status as 'pending' | 'verified' | 'rejected' | undefined,
+        });
+        res.json({ success: true, data: transactions });
+    } catch (error) {
+        logger.error('Failed to list transactions:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/billing/transaction/verify/{id}:
+ *   post:
+ *     summary: Verify (approve) a transaction submission (Admin only)
+ *     tags: [Billing]
+ */
+router.post('/transaction/verify/:id', authorize('admin'), async (req: AuthRequest, res) => {
+    try {
+        const { id } = req.params;
+        const adminUserId = req.user!.userId;
+        const result = await transactionService.verifyTransaction(id, adminUserId);
+
+        if (result.success) {
+            res.json({ success: true, message: result.message });
+        } else {
+            res.status(400).json({ success: false, message: result.message });
+        }
+    } catch (error) {
+        logger.error('Transaction verification failed:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/billing/transaction/reject/{id}:
+ *   post:
+ *     summary: Reject a transaction submission (Admin only)
+ *     tags: [Billing]
+ */
+router.post('/transaction/reject/:id', authorize('admin'), async (req: AuthRequest, res) => {
+    try {
+        const { id } = req.params;
+        const { reason } = req.body;
+        const adminUserId = req.user!.userId;
+
+        if (!reason) {
+            return res.status(400).json({ success: false, message: 'Rejection reason is required.' });
+        }
+
+        const result = await transactionService.rejectTransaction(id, adminUserId, reason);
+        if (result.success) {
+            res.json({ success: true, message: result.message });
+        } else {
+            res.status(400).json({ success: false, message: result.message });
+        }
+    } catch (error) {
+        logger.error('Transaction rejection failed:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
 });
 
 /**

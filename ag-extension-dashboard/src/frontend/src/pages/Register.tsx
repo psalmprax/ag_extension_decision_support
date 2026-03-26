@@ -151,7 +151,6 @@ export function Register() {
                         >
                             <option value="extension_officer">{t('register_role_extension')}</option>
                             <option value="farmer">{t('register_role_farmer')}</option>
-                            <option value="admin">{t('register_role_admin')}</option>
                         </select>
                     </div>
 

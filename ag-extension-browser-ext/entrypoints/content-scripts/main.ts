@@ -281,9 +281,37 @@ export default defineContentScript({
           }
         };
 
+        // Log Visit Button
+        const logVisitBtn = document.createElement('button');
+        logVisitBtn.innerHTML = `
+          <div style="
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 8px 20px -5px rgba(16, 185, 129, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          " onmouseover="this.style.transform='scale(1.05) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+        `;
+
+        logVisitBtn.onclick = () => {
+          const browserAPI = (window as any).browser || (window as any).chrome;
+          if (browserAPI && browserAPI.runtime) {
+            browserAPI.runtime.sendMessage({ action: 'open_sidepanel', tab: 'log' });
+          }
+        };
+
         wrapper.appendChild(syncBtn);
         wrapper.appendChild(gpsBtn);
         wrapper.appendChild(photoBtn);
+        wrapper.appendChild(logVisitBtn);
         wrapper.appendChild(fab);
         container.appendChild(wrapper);
       },

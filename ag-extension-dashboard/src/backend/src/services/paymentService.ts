@@ -124,21 +124,10 @@ class PaymentService {
         url: string;
     }> {
         if (!this.stripe) {
-            // Return mock data in development
-            const sessionId = 'mock_session_' + Date.now();
-            let url = params.successUrl;
-            
-            // Handle Stripe placeholder {CHECKOUT_SESSION_ID} if present
-            if (url.includes('{CHECKOUT_SESSION_ID}')) {
-                url = url.replace('{CHECKOUT_SESSION_ID}', sessionId);
-            } else {
-                url = this.appendQueryParam(url, 'session_id', 'mock');
-            }
-            
-            return {
-                sessionId,
-                url,
-            };
+            // No mock/simulation fallback — Stripe must be configured for card payments.
+            // Voucher redemption and manual transaction flows are separate endpoints.
+            logger.warn(`Stripe not configured. Card checkout unavailable for user ${params.userId}.`);
+            throw new Error('Card payment gateway (Stripe) is not configured. Please use Voucher or Mobile Money payment methods, or contact your administrator.');
         }
 
         const session = await this.stripe.checkout.sessions.create({

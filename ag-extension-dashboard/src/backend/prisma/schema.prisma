@@ -29,6 +29,8 @@ model User {
   subscription  Subscription?
   pushSubscriptions PushSubscription[]
   notifications     Notification[]
+  transactionSubmissions TransactionSubmission[]
+  redeemedVouchers Voucher[] @relation("RedeemedVouchers")
 
   @@map("users")
 }
@@ -205,6 +207,8 @@ model SubscriptionPlan {
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt   DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
   subscriptions Subscription[]
+  vouchers      Voucher[]
+  transactionSubmissions TransactionSubmission[]
 
   @@map("subscription_plans")
 }
@@ -323,4 +327,40 @@ model ShareAccess {
   share      Share     @relation(fields: [shareId], references: [id], onDelete: Cascade)
 
   @@map("share_accesses")
+}
+
+model Voucher {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code        String   @unique @db.VarChar(50)
+  planId      String   @map("plan_id") @db.Uuid
+  isRedeemed  Boolean  @default(false) @map("is_redeemed")
+  redeemedBy  String?  @map("redeemed_by") @db.Uuid
+  redeemedAt  DateTime? @map("redeemed_at") @db.Timestamp(6)
+  expiresAt   DateTime? @map("expires_at") @db.Timestamp(6)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  plan        SubscriptionPlan @relation(fields: [planId], references: [id])
+  redeemedByUser User? @relation("RedeemedVouchers", fields: [redeemedBy], references: [id])
+
+  @@map("vouchers")
+}
+
+model TransactionSubmission {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  planId         String   @map("plan_id") @db.Uuid
+  method         String   @db.VarChar(50)
+  transactionId  String   @unique @map("transaction_id") @db.VarChar(100)
+  amount         Decimal  @db.Decimal(10, 2)
+  currency       String   @default("USD") @db.VarChar(10)
+  status         String   @default("pending") @db.VarChar(20)
+  rejectionReason String? @map("rejection_reason")
+  verifiedAt     DateTime? @map("verified_at") @db.Timestamp(6)
+  verifiedBy     String?  @map("verified_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  user           User     @relation(fields: [userId], references: [id])
+  plan           SubscriptionPlan @relation(fields: [planId], references: [id])
+
+  @@map("transaction_submissions")
 }

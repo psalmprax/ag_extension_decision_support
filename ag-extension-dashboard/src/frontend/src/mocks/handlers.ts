@@ -91,8 +91,8 @@ export const handlers = [
         return HttpResponse.json({
             success: true,
             data: [
-                { id: 'plan_basic', name: 'Basic', price: 0, interval: 'month', features: ['Feature 1'] },
-                { id: 'plan_pro', name: 'Pro', price: 2900, interval: 'month', features: ['Feature 1', 'Feature 2'] }
+                { id: 'price_free', name: 'Free', price: 0, interval: 'month', features: ['Feature 1'] },
+                { id: 'price_pro_monthly', name: 'Pro', price: 2900, interval: 'month', features: ['Feature 1', 'Feature 2'] }
             ]
         });
     }),
@@ -105,7 +105,7 @@ export const handlers = [
                 status: 'active',
                 currentPeriodEnd: new Date(Date.now() + 86400000 * 30).toISOString(),
                 cancelAtPeriodEnd: false,
-                plan: { id: 'plan_pro', name: 'Pro', price: 2900, interval: 'month', features: ['Feature 1', 'Feature 2'] }
+                plan: { id: 'price_pro_monthly', name: 'Pro', price: 2900, interval: 'month', features: ['Feature 1', 'Feature 2'] }
             }
         });
     }),

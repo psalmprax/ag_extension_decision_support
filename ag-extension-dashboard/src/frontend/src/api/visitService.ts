@@ -24,6 +24,16 @@ export const fetchVisits = async (): Promise<VisitsResponse> => {
     return response.data;
 };
 
+export const fetchVisitsByFarmer = async (farmerId: string): Promise<VisitsResponse> => {
+    const response = await apiClient.get<VisitsResponse>(`/visits?farmerId=${farmerId}`);
+    return response.data;
+};
+
+export const fetchSynthesis = async (farmerId: string, notes: string): Promise<{ success: boolean; data: { summary: string } }> => {
+    const response = await apiClient.post('/chatbot/synthesis', { farmerId, notes });
+    return response.data;
+};
+
 export const createVisit = async (data: Partial<Visit>): Promise<{ success: boolean; data: Visit }> => {
     const response = await apiClient.post('/visits', data);
     return response.data;

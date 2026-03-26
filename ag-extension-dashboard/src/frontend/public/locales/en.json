@@ -1,6 +1,8 @@
 {
   "action_call": "Call",
   "action_chat": "Chat",
+  "action_redeem": "Redeem",
+  "action_pay_mobile": "Pay",
   "action_sms": "SMS",
   "action_start_synthesis": "Start Synthesis",
   "action_video": "Video",
@@ -60,6 +62,9 @@
   "billing_status_active": "Active",
   "billing_status_canceled": "Canceled",
   "billing_status_label": "Subscription Status",
+  "billing_voucher": "AgriVoucher",
+  "billing_voucher_desc": "Prepaid Service Code",
+  "billing_mobile_transfer": "Mobile Transfer",
   "billing_status_paid": "Paid",
   "billing_subscribe_paypal": "Subscribe with PayPal",
   "billing_updating": "Updating...",
@@ -240,6 +245,8 @@
   "plan_feature_sla": "SLA",
   "plan_feature_unlimited_farmers": "Unlimited farmers",
   "plan_feature_up_to_10_farmers": "Up to 10 farmers",
+  "plan_badge_officer": "Recommended for Extension Officers",
+  "plan_badge_farmer": "Ideal for Individual Farmers",
   "plan_tier_operational": "Operational Tier",
   "portfolio_subtitle": "Manage your prioritized farmer visits",
   "portfolio_title": "Visit Portfolio",
@@ -374,5 +381,8 @@
   "weather_title": "Weather",
   "weather_wind": "Wind Speed",
   "billing_secure_storage": "Secure Storage",
-  "billing_stripe_secret": "Stripe Secret Key"
+  "billing_stripe_secret": "Stripe Secret Key",
+  "map_no_farmers": "Establish Connectivity",
+  "map_no_farmers_desc": "No farmer records detected in current perimeter. Once synchronized with regional nodes, distribution will appear live.",
+  "action_refresh_sync": "Refresh Sync"
 }
