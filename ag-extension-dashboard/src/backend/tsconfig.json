@@ -19,7 +19,8 @@
         "allowSyntheticDefaultImports": true,
         "baseUrl": "./src",
         "types": [
-            "node"
+            "node",
+            "jest"
         ],
         "paths": {
             "@/*": [
