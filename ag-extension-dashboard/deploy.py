@@ -129,7 +129,7 @@ def main():
             # Directory exists, check if it's a git repo
             git_exists, _ = run_remote_command(ssh, f"test -d {deploy_dir}/.git", check=False)
             if not git_exists:
-                logger.info("Directory exists but is not a git repository, cloning...")
+                logger.info("Directory exists but is not a git repository, removing and cloning...")
                 # Remove existing directory and clone
                 run_remote_command(ssh, f"rm -rf {deploy_dir}")
                 run_remote_command(ssh, f"git clone https://github.com/psalmprax/ag_extension_decision_support.git {deploy_dir}")
