@@ -28,15 +28,9 @@ export class KnowledgeService {
 
         // 1. Retrieve relevant context
         const contextResults = await this.searchKnowledge(query);
-        logger.info(`Retrieved ${contextResults.length} context results for query: "${query}"`);
-        
         const contextText = contextResults
             .map(res => `[Source: ${res.metadata.crop}/${res.metadata.category}]\n${res.content}`)
             .join('\n\n---\n\n');
-        
-        if (contextResults.length === 0) {
-            logger.warn(`No context found for query: "${query}". Proceeding with general knowledge.`);
-        }
 
         // 2. Generate answer using Reasoning capability of ALFA
         try {
