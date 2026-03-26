@@ -229,14 +229,15 @@ export class AIProviderFactory {
         for (const providerType of allProviders) {
             try {
                 const provider = await this.getProvider(providerType);
+                logger.info(`Checking health for AI provider: ${providerType}`);
                 const isHealthy = await provider.healthCheck();
 
                 if (isHealthy) {
-                    logger.info(`Using AI provider: ${providerType}`);
+                    logger.info(`Using active AI provider: ${providerType}`);
                     return await operation(provider);
                 }
 
-                logger.warn(`AI provider ${providerType} unhealthy, trying next...`);
+                logger.warn(`AI provider ${providerType} reported as unhealthy, trying next...`);
             } catch (error) {
                 lastError = error as Error;
                 logger.warn(`AI provider ${providerType} failed:`, error);
@@ -245,7 +246,7 @@ export class AIProviderFactory {
 
         // All providers failed - check if we should return mock
         if (allowMock) {
-            logger.warn('All AI providers failed, using mock data');
+            logger.warn(`All AI providers failed (${allProviders.join(', ')}). Fallback to mock for requestType: ${requestType}`);
             if (requestType === 'embed') {
                 return {
                     embedding: Array(1536).fill(0).map(() => Math.random() - 0.5),
