@@ -8,7 +8,7 @@ const apiClient = axios.create({
         'Content-Type': 'application/json',
     },
     withCredentials: true,
-    timeout: 5000, // 5 second timeout
+    timeout: 30000, // 30 second timeout (AI/LLM calls can take 10-20s)
 });
 
 // Request interceptor to add JWT token to all requests
