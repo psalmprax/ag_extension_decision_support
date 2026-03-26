@@ -212,7 +212,8 @@ export class AIProviderFactory {
 
     static async getWithFallback(
         operation: (provider: AICapability) => Promise<any>,
-        allowMock: boolean = false
+        allowMock: boolean = false,
+        requestType?: string
     ): Promise<any> {
         // Define all available providers for cascading fallback
         const allProviders: AIProviderType[] = [
@@ -245,10 +246,18 @@ export class AIProviderFactory {
         // All providers failed - check if we should return mock
         if (allowMock) {
             logger.warn('All AI providers failed, using mock data');
-            return {
-                embedding: Array(1536).fill(0).map(() => Math.random() - 0.5),
-                model: 'mock-embedding'
-            };
+            if (requestType === 'embed') {
+                return {
+                    embedding: Array(1536).fill(0).map(() => Math.random() - 0.5),
+                    model: 'mock-embedding'
+                };
+            } else if (requestType === 'reason') {
+                return {
+                    reasoning: 'Mock reasoning response due to AI provider unavailability.',
+                    answer: 'I apologize, but I\'m currently unable to provide a detailed answer as the AI services are temporarily unavailable. Please try again later or contact support if this issue persists.',
+                    confidence: 0.5
+                };
+            }
         }
 
         logger.error('All AI providers failed');
@@ -290,8 +299,8 @@ export class AIRouter {
         requestType: 'generate' | 'embed' | 'speech' | 'classify' | 'reason' | 'weather' | 'disease_alerts' | 'vision',
         params: any
     ): Promise<any> {
-        // For embeddings, allow mock fallback
-        const allowMock = requestType === 'embed';
+        // For embeddings and reasoning, allow mock fallback
+        const allowMock = requestType === 'embed' || requestType === 'reason';
 
         return AIProviderFactory.getWithFallback(async (provider) => {
             switch (requestType) {
@@ -316,6 +325,6 @@ export class AIRouter {
                 default:
                     throw new Error(`Unknown request type: ${requestType}`);
             }
-        }, allowMock);
+        }, allowMock, requestType);
     }
 }
