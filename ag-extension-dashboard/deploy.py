@@ -155,15 +155,19 @@ def main():
             run_remote_command(ssh, "git pull", cwd=deploy_dir)
             deployment_started = True
 
-            # Step 2: Generate Prisma client
+            # Step 2: Install dependencies
+            logger.info("Installing dependencies...")
+            run_remote_command(ssh, "npm install", cwd=f"{deploy_dir}/ag-extension-dashboard/src/backend")
+
+            # Step 3: Generate Prisma client
             logger.info("Generating Prisma client...")
             run_remote_command(ssh, "npx prisma generate", cwd=f"{deploy_dir}/ag-extension-dashboard/src/backend")
 
-            # Step 3: Build the application
+            # Step 4: Build the application
             logger.info("Building the application...")
             run_remote_command(ssh, "npm run build", cwd=f"{deploy_dir}/ag-extension-dashboard/src/backend")
 
-            # Step 4: Restart PM2 processes
+            # Step 5: Restart PM2 processes
             logger.info("Restarting PM2 processes...")
             run_remote_command(ssh, "pm2 restart all")
 
