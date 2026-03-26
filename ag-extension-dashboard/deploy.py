@@ -122,23 +122,22 @@ def main():
             )
             logger.info(f"Connected to {ssh_host} as {ssh_username} using password")
 
-        # Check if deployment directory exists and is a git repository
+        # Check if deployment directory exists
         logger.info(f"Checking deployment directory: {deploy_dir}")
         output, error = run_remote_command(ssh, f"test -d {deploy_dir}", check=False)
-        dir_exists = output == "" and error == ""  # test -d succeeds with no output
-        logger.info(f"Directory exists: {dir_exists}")
-        if dir_exists:
-            # Directory exists, check if it's a git repo
-            git_exists, _ = run_remote_command(ssh, f"test -d {deploy_dir}/.git", check=False)
-            if not git_exists:
-                logger.info("Directory exists but is not a git repository, removing and cloning...")
-                # Remove existing directory and clone
-                run_remote_command(ssh, f"rm -rf {deploy_dir}")
-                run_remote_command(ssh, f"git clone https://github.com/psalmprax/ag_extension_decision_support.git {deploy_dir}")
-        else:
-            # Directory doesn't exist, clone it
+        dir_exists = output == "" and error == ""
+        
+        if not dir_exists:
             logger.info("Deployment directory does not exist, cloning repository...")
             run_remote_command(ssh, f"git clone https://github.com/psalmprax/ag_extension_decision_support.git {deploy_dir}")
+        else:
+            logger.info("Directory exists, attempting git fetch...")
+            try:
+                # Try to pull, if it's not a repo this will fail
+                run_remote_command(ssh, "git fetch --all", cwd=deploy_dir)
+            except Exception as e:
+                logger.warning(f"Git fetch failed, directory might not be a repo or is corrupted: {e}")
+                logger.info("Proceeding with caution or manual fix required.")
 
         logger.info(f"Starting remote deployment in {deploy_dir}")
 

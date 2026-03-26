@@ -31,10 +31,11 @@ services:
     ports:
       - "7500:3001"
     environment:
-      - DATABASE_URL=postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@app-db:5432/${DATABASE_NAME:-ag_extension}?schema=public
-      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@ag-dashboard-db:5432/${DATABASE_NAME:-ag_extension}?schema=public
+      - REDIS_URL=redis://ag-dashboard-redis:6379
       - PORT=3001
       - NODE_ENV=development
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     depends_on:
       - app-db
       - redis
