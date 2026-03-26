@@ -384,5 +384,14 @@
   "billing_stripe_secret": "Stripe Secret Key",
   "map_no_farmers": "Establish Connectivity",
   "map_no_farmers_desc": "No farmer records detected in current perimeter. Once synchronized with regional nodes, distribution will appear live.",
-  "action_refresh_sync": "Refresh Sync"
+  "action_refresh_sync": "Refresh Sync",
+  "billing_admin_vouchers": "Voucher Management",
+  "billing_admin_transactions": "Manual Transaction Audit",
+  "billing_admin_generate_vouchers": "Generate Batch",
+  "billing_admin_verify": "Verify",
+  "billing_admin_reject": "Reject",
+  "billing_admin_pending_reason": "Reason for rejection",
+  "billing_admin_no_pending": "No pending transactions requiring audit.",
+  "billing_admin_batch_count": "Voucher Count",
+  "billing_admin_expiry_days": "Expiry (Days)"
 }

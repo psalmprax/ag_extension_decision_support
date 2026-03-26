@@ -26,7 +26,7 @@ import {
 import { useLanguage } from '../lib/LanguageContext';
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
-import { fetchPlans, fetchSubscription, createCheckoutSession, createPortalSession, fetchInvoices, switchSubscription, fetchPaymentMethods, addPaymentMethod, deletePaymentMethod, updateAdminConfig, createPayPalSubscription, redeemVoucher, submitTransaction, getMyTransactions } from '@/api/billingService';
+import { fetchPlans, fetchSubscription, createCheckoutSession, createPortalSession, fetchInvoices, switchSubscription, fetchPaymentMethods, addPaymentMethod, deletePaymentMethod, updateAdminConfig, createPayPalSubscription, redeemVoucher, submitTransaction, getMyTransactions, listAllTransactions, verifyTransaction, rejectTransaction, generateVouchers, listVouchers } from '@/api/billingService';
 import { PaymentAnalyticsDashboard } from './PaymentAnalyticsDashboard';
 import { UsageQuota } from './UsageQuota';
 
@@ -73,6 +73,13 @@ export const BillingDashboard: React.FC = () => {
     const [formMessage, setFormMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [myTransactions, setMyTransactions] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [adminTransactions, setAdminTransactions] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [vouchers, setVouchers] = useState<any[]>([]);
+    const [voucherBatch, setVoucherBatch] = useState({ planId: 'price_pro_monthly', count: 10, expiresInDays: 30 });
+    const [rejectReason, setRejectReason] = useState('');
+    const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
     const { user } = useAppStore();
 
     // Get success/cancel status from URL params
@@ -108,6 +115,19 @@ export const BillingDashboard: React.FC = () => {
             if (subRes.success) setSubscription(subRes.data);
             if (invoicesRes.success) setInvoices(invoicesRes.data);
             if (pmRes.success) setPaymentMethods(pmRes.data);
+
+            const myTxRes = await getMyTransactions();
+            if (myTxRes.success) setMyTransactions(myTxRes.data);
+
+            // Admin data
+            if (user?.role === 'admin') {
+                const [adminTxRes, voucherRes] = await Promise.all([
+                    listAllTransactions('pending'),
+                    listVouchers()
+                ]);
+                if (adminTxRes.success) setAdminTransactions(adminTxRes.data);
+                if (voucherRes.success) setVouchers(voucherRes.data);
+            }
         } catch (error) {
             console.error('Failed to fetch billing data:', error);
         } finally {
@@ -148,25 +168,72 @@ export const BillingDashboard: React.FC = () => {
                 planId: mobilePayData.planId,
                 method: mobilePayData.method,
                 transactionId: mobilePayData.transactionId,
-                amount: parseFloat(mobilePayData.amount),
+                amount: parseFloat(mobilePayData.amount)
             });
             if (res.success) {
                 setFormMessage({ type: 'success', text: res.message || 'Transaction submitted for verification!' });
                 setMobilePayData({ method: 'mpesa', transactionId: '', planId: '', amount: '' });
                 setShowMobilePayForm(false);
-                // Refresh user's transactions
-                const txRes = await getMyTransactions();
-                if (txRes.success) setMyTransactions(txRes.data);
+                fetchData();
             } else {
-                setFormMessage({ type: 'error', text: res.message || 'Transaction submission failed.' });
+                setFormMessage({ type: 'error', text: res.message || 'Submission failed.' });
             }
         } catch (error) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            setFormMessage({ type: 'error', text: (error as any).response?.data?.message || 'Transaction submission failed.' });
+            setFormMessage({ type: 'error', text: (error as any).response?.data?.message || 'Submission failed.' });
         } finally {
             setActionLoading(null);
         }
     };
+
+    // Admin Verification Handlers
+    const handleVerifyTransaction = async (id: string) => {
+        setActionLoading(`verify-${id}`);
+        try {
+            const res = await verifyTransaction(id);
+            if (res.success) {
+                fetchData();
+            }
+        } catch (error) {
+            console.error('Verification failed:', error);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleRejectTransaction = async () => {
+        if (!selectedTransactionId || !rejectReason.trim()) return;
+        setActionLoading(`reject-${selectedTransactionId}`);
+        try {
+            const res = await rejectTransaction(selectedTransactionId, rejectReason);
+            if (res.success) {
+                setSelectedTransactionId(null);
+                setRejectReason('');
+                fetchData();
+            }
+        } catch (error) {
+            console.error('Rejection failed:', error);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleGenerateVouchers = async () => {
+        setActionLoading('generate-vouchers');
+        try {
+            const res = await generateVouchers(voucherBatch.planId, voucherBatch.count, voucherBatch.expiresInDays);
+            if (res.success) {
+                fetchData();
+                alert(`Successfully generated ${voucherBatch.count} vouchers!`);
+            }
+        } catch (error) {
+            console.error('Generation failed:', error);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+
 
 
     const handleSubscribe = async (priceId: string, billingCycle: 'current' | 'next' = 'current') => {
@@ -979,6 +1046,175 @@ export const BillingDashboard: React.FC = () => {
                             </table>
                         </div>
                     </section>
+
+                    {/* Admin Audit & Voucher Management */}
+                    {user?.role === 'admin' && (
+                        <div className="space-y-8 mt-12 pb-20">
+                            {/* Transaction Audit */}
+                            <section className="card p-10 bg-white dark:bg-gray-900 border-none shadow-2xl rounded-[2.5rem] overflow-hidden">
+                                <div className="flex items-center gap-4 mb-8">
+                                    <div className="p-3 bg-amber-500/10 rounded-2xl shadow-inner">
+                                        <AlertCircle className="w-6 h-6 text-amber-500" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
+                                            {t('billing_admin_transactions')}
+                                        </h3>
+                                        <p className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em]">Manual Verification Required</p>
+                                    </div>
+                                </div>
+
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="bg-gray-50/30 dark:bg-gray-800/20">
+                                                <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400">User</th>
+                                                <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Method</th>
+                                                <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400">TX ID</th>
+                                                <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Amount</th>
+                                                <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Plan</th>
+                                                <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                                            {adminTransactions.length > 0 ? (
+                                                adminTransactions.map((tx) => (
+                                                    <tr key={tx.id} className="hover:bg-amber-50/30 dark:hover:bg-amber-900/10 transition-colors">
+                                                        <td className="px-6 py-4 text-xs font-bold">{tx.userEmail}</td>
+                                                        <td className="px-6 py-4 text-xs font-black uppercase text-amber-600">{tx.method}</td>
+                                                        <td className="px-6 py-4 text-xs font-mono">{tx.transactionId}</td>
+                                                        <td className="px-6 py-4 text-xs font-black">{tx.amount} {tx.currency}</td>
+                                                        <td className="px-6 py-4 text-xs uppercase">{tx.planId?.split('_')[1]}</td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex gap-2">
+                                                                <button
+                                                                    onClick={() => handleVerifyTransaction(tx.id)}
+                                                                    disabled={actionLoading === `verify-${tx.id}`}
+                                                                    className="px-3 py-1 bg-green-500 text-white text-[10px] font-black rounded-lg hover:bg-green-600 transition-all uppercase tracking-widest disabled:opacity-50"
+                                                                >
+                                                                    {t('billing_admin_verify')}
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => setSelectedTransactionId(tx.id)}
+                                                                    className="px-3 py-1 bg-red-500 text-white text-[10px] font-black rounded-lg hover:bg-red-600 transition-all uppercase tracking-widest"
+                                                                >
+                                                                    {t('billing_admin_reject')}
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            ) : (
+                                                <tr>
+                                                    <td colSpan={6} className="px-6 py-10 text-center text-xs text-gray-400 font-bold uppercase tracking-widest italic">
+                                                        {t('billing_admin_no_pending')}
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </section>
+
+                            {/* Voucher Generation */}
+                            <section className="card p-10 bg-white dark:bg-gray-900 border-none shadow-2xl rounded-[2.5rem] overflow-hidden">
+                                <div className="flex items-center gap-4 mb-8">
+                                    <div className="p-3 bg-purple-500/10 rounded-2xl shadow-inner">
+                                        <Ticket className="w-6 h-6 text-purple-500" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
+                                            {t('billing_admin_vouchers')}
+                                        </h3>
+                                        <p className="text-[10px] font-black text-purple-500 uppercase tracking-[0.2em]">Batch Generation Unit</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                                    <div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block ml-1">Plan</label>
+                                        <select 
+                                            value={voucherBatch.planId}
+                                            onChange={(e) => setVoucherBatch({ ...voucherBatch, planId: e.target.value })}
+                                            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-purple-500 transition-all font-black uppercase tracking-widest"
+                                        >
+                                            <option value="price_pro_monthly">PRO (Monthly)</option>
+                                            <option value="price_pro_yearly">PRO (Yearly)</option>
+                                            <option value="price_enterprise_monthly">ENTERPRISE (Monthly)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block ml-1">{t('billing_admin_batch_count')}</label>
+                                        <input 
+                                            type="number"
+                                            value={voucherBatch.count}
+                                            onChange={(e) => setVoucherBatch({ ...voucherBatch, count: parseInt(e.target.value) })}
+                                            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-purple-500 transition-all"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block ml-1">{t('billing_admin_expiry_days')}</label>
+                                        <input 
+                                            type="number"
+                                            value={voucherBatch.expiresInDays}
+                                            onChange={(e) => setVoucherBatch({ ...voucherBatch, expiresInDays: parseInt(e.target.value) })}
+                                            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-purple-500 transition-all"
+                                        />
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={handleGenerateVouchers}
+                                    disabled={actionLoading === 'generate-vouchers'}
+                                    className="w-full py-4 bg-purple-500 text-white rounded-2xl hover:bg-purple-600 transition-all shadow-lg shadow-purple-500/20 active:scale-[0.98] disabled:opacity-50 disabled:scale-100 font-black uppercase tracking-widest text-xs"
+                                >
+                                    {actionLoading === 'generate-vouchers' ? t('billing_updating') : t('billing_admin_generate_vouchers')}
+                                </button>
+                            </section>
+                        </div>
+                    )}
+
+                    {/* Rejection Modal */}
+                    {selectedTransactionId && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
+                            <motion.div 
+                                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                className="bg-white dark:bg-gray-900 rounded-[2rem] p-8 max-w-md w-full shadow-2xl border border-gray-100 dark:border-gray-800"
+                            >
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="p-3 bg-red-500/10 rounded-2xl shadow-inner">
+                                        <Trash2 className="w-6 h-6 text-red-500" />
+                                    </div>
+                                    <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Reject Transaction</h3>
+                                </div>
+
+                                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-4">{t('billing_admin_pending_reason')}</p>
+                                <textarea
+                                    value={rejectReason}
+                                    onChange={(e) => setRejectReason(e.target.value)}
+                                    placeholder="Enter reason for rejection..."
+                                    className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-red-500 transition-all min-h-[100px] mb-6"
+                                />
+
+                                <div className="flex gap-4">
+                                    <button
+                                        onClick={() => setSelectedTransactionId(null)}
+                                        className="flex-1 py-4 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-black uppercase tracking-widest text-[10px] rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
+                                    >
+                                        {t('common_cancel')}
+                                    </button>
+                                    <button
+                                        onClick={handleRejectTransaction}
+                                        disabled={actionLoading?.startsWith('reject-')}
+                                        className="flex-1 py-4 bg-red-500 text-white font-black uppercase tracking-widest text-[10px] rounded-xl hover:bg-red-600 shadow-lg shadow-red-500/20 active:scale-95 transition-all disabled:opacity-50"
+                                    >
+                                        {actionLoading?.startsWith('reject-') ? t('billing_updating') : t('billing_admin_reject')}
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
