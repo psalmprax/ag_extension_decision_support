@@ -68,7 +68,7 @@ export class OpenAIProvider extends BaseAIProvider {
 
     async generateText(prompt: string | any[], options?: TextGenerationOptions): Promise<TextGenerationResult> {
         const client = await this.getClient();
-        const model = options?.model || 'gpt-4';
+        const model = options?.model || config.ai.primary.model || 'gpt-4';
 
         try {
             const response = await client.chat.completions.create({
@@ -105,7 +105,7 @@ export class OpenAIProvider extends BaseAIProvider {
 
     async *streamText(prompt: string, options?: TextGenerationOptions): AsyncGenerator<string> {
         const client = await this.getClient();
-        const model = options?.model || 'gpt-4';
+        const model = options?.model || config.ai.primary.model || 'gpt-4';
 
         try {
             const stream = await client.chat.completions.create({
@@ -210,7 +210,7 @@ export class OpenAIProvider extends BaseAIProvider {
 
     async analyzeImage(imageData: string | Buffer, prompt?: string, options?: ImageAnalysisOptions): Promise<ImageAnalysisResult> {
         const client = await this.getClient();
-        const model = options?.model || 'gpt-4-vision-preview';
+        const model = options?.model || 'gpt-4o'; // Default to vision-capable model
 
         try {
             // Convert imageData to base64 if it's a Buffer
@@ -269,7 +269,7 @@ export class OpenAIProvider extends BaseAIProvider {
         try {
             const client = await this.getClient();
             await client.chat.completions.create({
-                model: 'gpt-4',
+                model: config.ai.primary.model || 'gpt-4',
                 messages: [{ role: 'user', content: 'test' }],
                 max_tokens: 1,
             });

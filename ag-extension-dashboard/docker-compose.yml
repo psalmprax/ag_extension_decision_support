@@ -36,6 +36,11 @@ services:
       - PORT=3001
       - NODE_ENV=development
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - AI_PRIMARY_PROVIDER=openai
+      - AI_PRIMARY_MODEL=GPT 5.4
+      - AI_FALLBACK_PROVIDER=openai
+      - AI_FALLBACK_MODEL=GPT 5.4-mini
+      - AI_EMBEDDINGS_PROVIDER=openai
     depends_on:
       - app-db
       - redis
