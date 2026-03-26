@@ -167,7 +167,14 @@ def main():
             logger.info("Building the application...")
             run_remote_command(ssh, "npm run build", cwd=f"{deploy_dir}/ag-extension-dashboard/src/backend")
 
-            # Step 5: Restart PM2 processes
+            # Step 5: Ensure PM2 is installed and restart processes
+            logger.info("Checking PM2 installation...")
+            pm2_check, _ = run_remote_command(ssh, "which pm2", check=False)
+            if not pm2_check.strip():
+                logger.info("Installing PM2...")
+                run_remote_command(ssh, "npm install -g pm2")
+
+            # Step 6: Restart PM2 processes
             logger.info("Restarting PM2 processes...")
             run_remote_command(ssh, "pm2 restart all")
 
