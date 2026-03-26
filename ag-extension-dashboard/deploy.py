@@ -124,7 +124,9 @@ def main():
 
         # Check if deployment directory exists and is a git repository
         logger.info(f"Checking deployment directory: {deploy_dir}")
-        dir_exists, _ = run_remote_command(ssh, f"test -d {deploy_dir}", check=False)
+        output, error = run_remote_command(ssh, f"test -d {deploy_dir}", check=False)
+        dir_exists = output == "" and error == ""  # test -d succeeds with no output
+        logger.info(f"Directory exists: {dir_exists}")
         if dir_exists:
             # Directory exists, check if it's a git repo
             git_exists, _ = run_remote_command(ssh, f"test -d {deploy_dir}/.git", check=False)
