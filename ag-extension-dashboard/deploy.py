@@ -156,15 +156,15 @@ def main():
 
             # Step 2: Install dependencies
             logger.info("Installing dependencies...")
-            run_remote_command(ssh, "npm install", cwd=f"{deploy_dir}/ag-extension-dashboard/src/backend")
+            run_remote_command(ssh, "npm install", cwd=f"{deploy_dir}/src/backend")
 
             # Step 3: Generate Prisma client
             logger.info("Generating Prisma client...")
-            run_remote_command(ssh, "npx prisma generate", cwd=f"{deploy_dir}/ag-extension-dashboard/src/backend")
+            run_remote_command(ssh, "npx prisma generate", cwd=f"{deploy_dir}/src/backend")
 
             # Step 4: Build the application
             logger.info("Building the application...")
-            run_remote_command(ssh, "npm run build", cwd=f"{deploy_dir}/ag-extension-dashboard/src/backend")
+            run_remote_command(ssh, "npm run build", cwd=f"{deploy_dir}/src/backend")
 
             # Step 5: Ensure PM2 is installed and restart processes
             logger.info("Checking PM2 installation...")
@@ -184,7 +184,7 @@ def main():
             else:
                 logger.info("No existing processes found, starting the application...")
                 # Start the built application with PM2
-                app_path = f"{deploy_dir}/ag-extension-dashboard/src/backend/dist/index.js"
+                app_path = f"{deploy_dir}/src/backend/dist/index.js"
                 run_remote_command(ssh, f"pm2 start {app_path} --name ag-extension-backend")
                 logger.info("Application started successfully with PM2")
 
