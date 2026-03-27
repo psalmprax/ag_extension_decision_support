@@ -17,6 +17,10 @@ git pull origin master
 echo "🌐 Ensuring docker network exists..."
 docker network create ag-network || true
 
+# 2.5 Force Remove conflicting containers (Hardening)
+echo "🛡️ Cleaning up any conflicting container names..."
+docker rm -f ag-dashboard-db ag-dashboard-redis ag-dashboard-backend ag-dashboard-frontend ag-crew-ai ag-agent-zero || true
+
 # 3. Deep Clean (Clear volumes and stop containers)
 echo "🧹 Performing Deep Clean (Removing volumes to purge stale cache)..."
 docker compose -p ${COMPOSE_PROJECT_NAME} \
