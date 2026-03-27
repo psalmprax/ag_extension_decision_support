@@ -66,7 +66,7 @@ export default defineBackground(() => {
 
         // Additional connectivity check to backend
         try {
-            await fetch('http://localhost:3001/api/health', {
+            await fetch('http://localhost:7500/api/health', {
                 method: 'HEAD',
                 mode: 'no-cors',
                 cache: 'no-cache'

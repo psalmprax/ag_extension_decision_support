@@ -247,6 +247,12 @@ router.post('/message', async (req: AuthRequest, res: Response) => {
 
     // Handle image analysis if imageData is provided
     if (imageData) {
+        // Enforce 5MB limit for base64 imageData
+        const sizeInBytes = (imageData.length * 3) / 4;
+        if (sizeInBytes > 5 * 1024 * 1024) {
+            return res.status(400).json({ success: false, error: 'Image size exceeds 5MB limit' });
+        }
+
         try {
             const provider = await AIProviderFactory.getProvider();
             if (!provider.capabilities.includes('vision')) {

@@ -39,6 +39,7 @@ function App() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [queuedRequests, setQueuedRequests] = useState<any[]>([]);
   const [showOfflineManager, setShowOfflineManager] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   
   const [isListening, setIsListening] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -112,11 +113,15 @@ function App() {
   };
 
   const handleSync = async () => {
+    if (isSyncing) return;
+    setIsSyncing(true);
     try {
       await apiQueue.syncNow();
       await loadQueuedRequests();
     } catch (error) {
       console.error('Sync failed:', error);
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -550,10 +555,11 @@ function App() {
               <h3 className="text-sm font-bold text-white">Offline Queue</h3>
               <button
                 onClick={handleSync}
-                disabled={!isOnline || queuedRequests.length === 0}
-                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 text-white text-xs font-bold rounded transition-colors disabled:cursor-not-allowed"
+                disabled={!isOnline || queuedRequests.length === 0 || isSyncing}
+                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 text-white text-xs font-bold rounded transition-colors disabled:cursor-not-allowed flex items-center gap-2"
               >
-                Sync Now
+                {isSyncing && <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                {isSyncing ? 'Syncing...' : 'Sync Now'}
               </button>
             </div>
 

@@ -255,12 +255,13 @@ export class OpenAIProvider extends BaseAIProvider {
                 model,
                 usage: response.usage,
             };
-        } catch (error) {
+        } catch (error: any) {
             logger.error('OpenAI analyzeImage error:', error);
+            const errorMessage = error.message || 'Unknown error';
             return {
-                analysis: 'Mock image analysis - configure OpenAI API key with vision support',
+                analysis: `Error during image analysis: ${errorMessage}. Please check your OpenAI API key and usage limits.`,
                 model,
-                usage: { promptTokens: 10, completionTokens: 20, totalTokens: 30 },
+                usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
             };
         }
     }
