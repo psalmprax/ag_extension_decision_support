@@ -13,8 +13,8 @@ pipeline {
         stage('Setup') {
             steps {
                 sh "docker network create ag-network || true"
-                sh "docker stop ag-dashboard-frontend ag-dashboard-backend ag-dashboard-db ag-dashboard-redis ag-agent-zero ag-crew-ai || true"
-                sh "docker rm ag-dashboard-frontend ag-dashboard-backend ag-dashboard-db ag-dashboard-redis ag-agent-zero ag-crew-ai || true"
+                // Deep clean: Stop and remove containers and their volumes to clear stale frontend assets
+                sh "docker-compose -p ${COMPOSE_PROJECT_NAME} -f ${PROJECT_DIR}/docker-compose.yml -f ${PROJECT_DIR}/docker-compose.agents.yml down -v --remove-orphans || true"
             }
         }
         stage('Debug Config') {
@@ -25,8 +25,8 @@ pipeline {
         }
         stage('Deploy') {
             steps {
-                // Run with redirection to see errors clearly in console
-                sh "docker-compose -p ${COMPOSE_PROJECT_NAME} -f ${PROJECT_DIR}/docker-compose.yml -f ${PROJECT_DIR}/docker-compose.agents.yml up -d --build > compose-deploy.log 2>&1"
+                // Force a fresh build without cache to ensure the new frontend logic is compiled
+                sh "docker-compose -p ${COMPOSE_PROJECT_NAME} -f ${PROJECT_DIR}/docker-compose.yml -f ${PROJECT_DIR}/docker-compose.agents.yml up -d --build --force-recreate > compose-deploy.log 2>&1"
             }
         }
         stage('Verify') {
