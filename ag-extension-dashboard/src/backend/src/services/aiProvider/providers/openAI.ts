@@ -275,7 +275,13 @@ export class OpenAIProvider extends BaseAIProvider {
                 max_tokens: 1,
             });
             return true;
-        } catch {
+        } catch (error: any) {
+            logger.error('OpenAI healthCheck error:', {
+                message: error.message,
+                status: error.status,
+                type: error.type,
+                code: error.code
+            });
             return false;
         }
     }
