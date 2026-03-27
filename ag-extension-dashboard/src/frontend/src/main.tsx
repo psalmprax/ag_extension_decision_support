@@ -25,11 +25,21 @@ const queryClient = new QueryClient({
 });
 
 
+// Force unregister any existing service workers to clear stale content
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const registration of registrations) {
+            registration.unregister();
+            console.log('Stale Service Worker unregistered');
+        }
+    });
+}
+
 // Initialize theme before rendering
 initializeTheme();
 
 // Register Service Worker for PWA
-// registerSW({ immediate: true });
+registerSW({ immediate: true });
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
