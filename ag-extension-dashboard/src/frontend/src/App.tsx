@@ -1069,10 +1069,12 @@ function App() {
                                 <UsageQuota />
                             </div>
 
-                            <div className="mt-auto pt-4 flex flex-col items-center">
-                                <span className="px-2 py-0.5 text-[10px] font-bold bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 rounded uppercase tracking-widest">
-                                    v1.0.2 [Hardened]
-                                </span>
+                            <div className="mt-auto pt-6 flex flex-col items-center border-t border-gray-100 dark:border-gray-800">
+                                <div className="px-3 py-1 bg-gray-100 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                                    <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">
+                                        v1.0.2 [Hardened]
+                                    </span>
+                                </div>
                             </div>
                         </nav>
                     </motion.aside>

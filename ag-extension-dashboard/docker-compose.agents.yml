@@ -18,7 +18,7 @@ services:
       - app-db
     networks:
       - ag-network
-    restart: unless-stopped
+    restart: always
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
       interval: 30s
@@ -44,7 +44,7 @@ services:
       - app-db
     networks:
       - ag-network
-    restart: unless-stopped
+    restart: always
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8001/health" ]
       interval: 30s
