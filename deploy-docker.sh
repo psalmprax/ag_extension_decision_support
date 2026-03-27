@@ -19,14 +19,14 @@ docker network create ag-network || true
 
 # 3. Deep Clean (Clear volumes and stop containers)
 echo "🧹 Performing Deep Clean (Removing volumes to purge stale cache)..."
-docker-compose -p ${COMPOSE_PROJECT_NAME} \
+docker compose -p ${COMPOSE_PROJECT_NAME} \
     -f ${PROJECT_DIR}/docker-compose.yml \
     -f ${PROJECT_DIR}/docker-compose.agents.yml \
     down -v --remove-orphans || true
 
 # 4. Deploy with build
 echo "🏗️ Building and Starting Containers..."
-docker-compose -p ${COMPOSE_PROJECT_NAME} \
+docker compose -p ${COMPOSE_PROJECT_NAME} \
     -f ${PROJECT_DIR}/docker-compose.yml \
     -f ${PROJECT_DIR}/docker-compose.agents.yml \
     up -d --build --force-recreate
