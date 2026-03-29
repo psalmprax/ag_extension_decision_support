@@ -183,16 +183,50 @@ export class OpenAIProvider extends BaseAIProvider {
     }
 
     async analyzeWithReasoning(context: string, query: string, options?: ReasoningOptions): Promise<ReasoningResult> {
-        const prompt = `Context:\n${context}\n\nQuestion: ${query}\n\nProvide a detailed analysis.`;
+        const prompt = `
+Context:\n${context}\n\nQuestion: ${query}\n\n
+You are an expert AI Agricultural Analyst for the ALFA Intelligence Engine.
+Provide a high-quality, actionable response including expert analysis and visual data.
+
+Your response MUST follow this structure:
+1. A detailed analysis in professional Markdown (use headers, bullets, and bold text).
+2. A specific JSON block at the end wrapped in <visuals> tags with this schema:
+<visuals>
+{
+  "kpis": [{"label": "string", "value": "string", "status": "good|warning|critical"}],
+  "charts": [{"type": "bar|line|pie|area", "title": "string", "data": [{"label": "string", "value": "number"}]}]
+}
+</visuals>
+
+Focus on precision and expert recommendations. If the context contains statistical data, use it for the charts.
+`;
+
         const result = await this.generateText(prompt, {
-            temperature: options?.temperature ?? 0.3,
-            maxTokens: options?.maxTokens ?? 1500,
+            temperature: options?.temperature ?? 0.2,
+            maxTokens: options?.maxTokens ?? 2000,
         });
 
+        const text = result.text ?? '';
+        
+        // Extract visuals JSON from <visuals> tags
+        let visuals: any = undefined;
+        try {
+            const match = text.match(/<visuals>([\s\S]*?)<\/visuals>/);
+            if (match && match[1]) {
+                visuals = JSON.parse(match[1].trim());
+            }
+        } catch (error) {
+            logger.warn('Failed to parse reasoning visuals JSON:', error);
+        }
+
+        // Clean text of the visuals block for cleaner markdown rendering
+        const cleanAnswer = text.replace(/<visuals>[\s\S]*?<\/visuals>/, '').trim();
+
         return {
-            reasoning: 'Analysis completed.',
-            answer: result.text ?? '',
-            confidence: 0.85,
+            reasoning: 'Detailed Intelligence Analysis completed.',
+            answer: cleanAnswer,
+            confidence: 0.9,
+            visuals
         };
     }
 

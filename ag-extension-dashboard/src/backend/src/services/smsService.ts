@@ -151,8 +151,8 @@ class SMSService {
 
         // Log in development
         if (!this.africaTalkingApiKey && !this.twilioAccountSid) {
-            logger.info(`[DEV SMS] To: ${formattedPhone}, Message: ${message}`);
-            success = true;
+            logger.error('SMS provider not configured — cannot send message');
+            return false;
         } else if (this.africaTalkingApiKey) {
             provider = 'africa_talking';
             success = await this.sendViaAfricaTalking(formattedPhone, message);

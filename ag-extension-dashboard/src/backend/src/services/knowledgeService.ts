@@ -75,20 +75,28 @@ export class KnowledgeService {
                 ORDER BY count DESC 
                 LIMIT 5
             `);
+            const totalQueriesResult = await query(`
+                SELECT COUNT(*) as count FROM knowledge_searches
+            `);
+            const cachedResult = await query(`
+                SELECT COUNT(*) as count FROM semantic_cache
+            `);
             return {
                 crops: topCrops.rows,
-                categories: topCategories.rows
+                categories: topCategories.rows,
+                totalQueries: totalQueriesResult.rows[0]?.count || 0,
+                cachedQueries: cachedResult.rows[0]?.count || 0,
             };
         } catch (error) {
             logger.error('Failed to get search stats:', error);
-            return { crops: [], categories: [] };
+            return { crops: [], categories: [], totalQueries: 0, cachedQueries: 0 };
         }
     }
 
     /**
      * Ask a question and get a RAG-based answer (with semantic caching)
      */
-    static async askQuestion(userId: string, queryText: string): Promise<{ answer: string; contextUsed: SearchResult[]; cached: boolean }> {
+    static async askQuestion(userId: string, queryText: string): Promise<{ answer: string; contextUsed: SearchResult[]; cached: boolean; visuals?: any }> {
         logger.info(`Getting RAG-based answer for query: "${queryText}" (User: ${userId})`);
 
         // 1. Log the search activity

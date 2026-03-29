@@ -58,8 +58,8 @@ export class WeatherService {
             );
 
             if (!geocodeResponse.data?.results?.[0]) {
-                logger.warn(`Location not found: ${location}, returning mock data`);
-                return this.getMockWeather(location);
+                logger.warn(`Location not found: ${location}`);
+                throw new Error(`Location not found: ${location}`);
             }
 
             // Try to find a result matching the country if provided
@@ -104,20 +104,7 @@ export class WeatherService {
             };
         } catch (error) {
             logger.error(`Weather API request failed for ${location}:`, error);
-            return this.getMockWeather(location);
+            throw error;
         }
-    }
-
-    private static getMockWeather(_location: string): WeatherData {
-        return {
-            temp: 24,
-            condition: 'Partly Cloudy',
-            humidity: 65,
-            windSpeed: 12,
-            forecast: [
-                { date: new Date().toISOString().split('T')[0], maxTemp: 26, minTemp: 18, condition: 'Sunny' },
-                { date: new Date(Date.now() + 86400000).toISOString().split('T')[0], maxTemp: 25, minTemp: 19, condition: 'Cloudy' }
-            ]
-        };
     }
 }

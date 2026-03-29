@@ -84,6 +84,14 @@ export interface ReasoningResult {
     reasoning: string;
     answer: string;
     confidence?: number;
+    visuals?: {
+        kpis?: Array<{ label: string; value: string; status: 'good' | 'warning' | 'critical' }>;
+        charts?: Array<{
+            type: 'bar' | 'line' | 'pie' | 'area';
+            title: string;
+            data: Array<{ label: string; value: number }>;
+        }>;
+    };
 }
 
 export interface ImageAnalysisOptions {
