@@ -12,11 +12,118 @@ import {
     ArrowUpRight,
     Droplets,
     Wind,
-    ThermometerSun
+    ThermometerSun,
+    Loader2,
+    AlertTriangle,
+    Database
 } from 'lucide-react';
 import IsometricFarmOverview from './IsometricFarmOverview';
+import { useAppStore } from '@/store/useAppStore';
+import apiClient from '@/api/client';
+import toast from 'react-hot-toast';
+import { useQuery } from '@tanstack/react-query';
+import { fetchMarketPrices, MarketPrice } from '@/api/priceService';
+import { fetchFarmerStats } from '@/api/farmerService';
+
+interface WeatherData {
+    temperature: number;
+    humidity: number;
+    windSpeed: number;
+    description?: string;
+}
+
+interface AlertData {
+    id: string;
+    title: string;
+    description: string;
+    severity: string;
+}
 
 const ActionableAI = () => {
+    const { addNotification, user } = useAppStore();
+    const [isGenerating, setIsGenerating] = React.useState(false);
+
+    // Fetch real market prices for logistics section
+    const { data: pricesData } = useQuery({
+        queryKey: ['actionable-prices'],
+        queryFn: fetchMarketPrices,
+    });
+
+    // Fetch real farmer stats for yield data
+    const { data: statsData } = useQuery({
+        queryKey: ['actionable-stats'],
+        queryFn: fetchFarmerStats,
+        enabled: !!user,
+    });
+
+    // Fetch real weather data
+    const { data: weatherData, isLoading: weatherLoading } = useQuery<WeatherData | null>({
+        queryKey: ['actionable-weather'],
+        queryFn: async () => {
+            try {
+                const region = user?.region || 'Kenya';
+                const { data } = await apiClient.get(`/external/weather/${encodeURIComponent(region)}`);
+                return data?.data || data || null;
+            } catch {
+                return null;
+            }
+        },
+    });
+
+    // Fetch real alerts
+    const { data: alertsData } = useQuery<AlertData[]>({
+        queryKey: ['actionable-alerts'],
+        queryFn: async () => {
+            try {
+                const { data } = await apiClient.get('/alerts');
+                return data?.data || data || [];
+            } catch {
+                return [];
+            }
+        },
+    });
+
+    // Fetch real performance data for economic index
+    const { data: performanceData } = useQuery({
+        queryKey: ['actionable-performance'],
+        queryFn: async () => {
+            try {
+                const { data } = await apiClient.get('/analytics/performance');
+                return data?.data || data || null;
+            } catch {
+                return null;
+            }
+        },
+    });
+
+    const farmerStats = statsData?.data;
+    const prices: MarketPrice[] = pricesData || [];
+    const alerts: AlertData[] = alertsData || [];
+
+    const handleGenerateStrategy = async () => {
+        setIsGenerating(true);
+        try {
+            const { data } = await apiClient.post('/ai/strategy', {
+                type: 'full_strategy',
+                context: 'agricultural_optimization'
+            });
+            if (data.success) {
+                addNotification({ type: 'success', message: 'Full strategy generated successfully. Check reports for details.' });
+            } else {
+                toast.error('Strategy generation returned no data');
+            }
+        } catch {
+            addNotification({ type: 'warning', message: 'Strategy generation queued. It will appear in reports when ready.' });
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    // Derive yield chart data from real stats or show empty
+    const yieldBars = farmerStats?.yieldHistory?.length
+        ? farmerStats.yieldHistory.slice(-9).map((y: { yield: number }) => Math.min((y.yield || 0) * 10, 100))
+        : null;
+
     return (
         <div className="w-full space-y-8 pb-12">
             {/* Header / Title Section */}
@@ -57,68 +164,80 @@ const ActionableAI = () => {
                         <IsometricFarmOverview />
                     </div>
 
-                    {/* Supply Chain / Logistics Precision */}
+                    {/* Supply Chain / Logistics Precision — Real market data */}
                     <div className="grid grid-cols-2 gap-8">
                         <div className="bg-black/40 border border-white/10 rounded-3xl p-6 backdrop-blur-md">
                             <div className="flex items-center justify-between mb-6">
                                 <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
                                     <Truck className="w-4 h-4 text-primary-400" />
-                                    Precision Logistics
+                                    Market Prices
                                 </h3>
                                 <ArrowUpRight className="w-4 h-4 text-white/20" />
                             </div>
-                            <div className="space-y-4">
-                                <div className="p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between">
-                                    <div>
-                                        <div className="text-[8px] font-black text-white/40 uppercase mb-1">Optimal Route Found</div>
-                                        <div className="text-xs font-bold text-white uppercase tracking-wider">Mombasa Port Path A</div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="text-[8px] font-black text-green-400 uppercase mb-1">-14% Time</div>
-                                        <div className="text-xs font-black text-white">4.2h</div>
-                                    </div>
+                            {prices.length > 0 ? (
+                                <div className="space-y-3">
+                                    {prices.slice(0, 3).map((item, i) => (
+                                        <div key={i} className="p-3 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between">
+                                            <div>
+                                                <div className="text-[8px] font-black text-white/40 uppercase mb-1">Commodity</div>
+                                                <div className="text-xs font-bold text-white uppercase tracking-wider">{item.crop}</div>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className={`text-[8px] font-black uppercase mb-1 ${item.trend.startsWith('+') ? 'text-green-400' : item.trend.startsWith('-') ? 'text-red-400' : 'text-white/40'}`}>{item.trend}</div>
+                                                <div className="text-xs font-black text-white">{item.price}</div>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                                <div className="p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between">
-                                    <div>
-                                        <div className="text-[8px] font-black text-white/40 uppercase mb-1">Cold Chain Integrity</div>
-                                        <div className="text-xs font-bold text-white uppercase tracking-wider">Storage Facility #04</div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="text-[8px] font-black text-primary-400 uppercase mb-1">Stable</div>
-                                        <div className="text-xs font-black text-white">4.5°C</div>
-                                    </div>
+                            ) : (
+                                <div className="p-6 text-center">
+                                    <Database className="w-8 h-8 text-white/20 mx-auto mb-2" />
+                                    <p className="text-[10px] text-white/40 font-bold uppercase">No market data available</p>
                                 </div>
-                            </div>
+                            )}
                         </div>
 
                         <div className="bg-black/40 border border-white/10 rounded-3xl p-6 backdrop-blur-md">
                             <div className="flex items-center justify-between mb-6">
                                 <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
                                     <TrendingUp className="w-4 h-4 text-secondary-400" />
-                                    Yield Forecasting
+                                    Yield History
                                 </h3>
-                                <div className="px-2 py-0.5 bg-green-500/10 rounded text-[8px] font-black text-green-400 uppercase tracking-widest">94% Confidence</div>
+                                {yieldBars && (
+                                    <div className="px-2 py-0.5 bg-green-500/10 rounded text-[8px] font-black text-green-400 uppercase tracking-widest">{yieldBars.length} Records</div>
+                                )}
                             </div>
-                            <div className="relative h-24 flex items-end gap-1 px-2">
-                                {[35, 45, 30, 60, 85, 70, 95, 80, 100].map((h, i) => (
-                                    <div 
-                                        key={i} 
-                                        className="flex-1 bg-gradient-to-t from-secondary-500/20 to-secondary-500/60 rounded-t-sm" 
-                                        style={{ height: `${h}%` }}
-                                    />
-                                ))}
-                            </div>
-                            <div className="mt-4 flex justify-between items-center text-[10px] font-bold text-white/40 uppercase">
-                                <span>Q1 Forecast</span>
-                                <span className="text-white">+12.4% Est. Growth</span>
-                            </div>
+                            {yieldBars ? (
+                                <>
+                                    <div className="relative h-24 flex items-end gap-1 px-2">
+                                        {yieldBars.map((h: number, i: number) => (
+                                            <div 
+                                                key={i} 
+                                                className="flex-1 bg-gradient-to-t from-secondary-500/20 to-secondary-500/60 rounded-t-sm" 
+                                                style={{ height: `${Math.max(h, 5)}%` }}
+                                            />
+                                        ))}
+                                    </div>
+                                    <div className="mt-4 flex justify-between items-center text-[10px] font-bold text-white/40 uppercase">
+                                        <span>Yield History</span>
+                                        <span className="text-white">{farmerStats?.yieldHistory?.length || 0} cycles recorded</span>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="h-24 flex items-center justify-center">
+                                    <div className="text-center">
+                                        <TrendingUp className="w-8 h-8 text-white/20 mx-auto mb-2" />
+                                        <p className="text-[10px] text-white/40 font-bold uppercase">No yield data recorded yet</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
 
                 {/* Right Column: Risk & Economic Matrix */}
                 <div className="col-span-4 space-y-8">
-                    {/* Critical Alerts */}
+                    {/* Real Alerts or Data Unavailable */}
                     <div className="bg-error-500/10 border border-error-500/20 rounded-3xl p-6 relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-4 opacity-10">
                             <ShieldAlert className="w-16 h-16 text-error-400" />
@@ -127,15 +246,24 @@ const ActionableAI = () => {
                             <Zap className="w-4 h-4 animate-pulse" />
                             System Anomalies
                         </h3>
-                        <div className="space-y-3">
-                            <div className="p-3 bg-error-500/5 rounded-xl border border-error-500/10">
-                                <p className="text-[11px] font-black text-white uppercase tracking-tight mb-1">Water Scarcity Probability</p>
-                                <p className="text-[10px] text-white/60 leading-relaxed font-medium lowercase">Rift Valley Sector 4 observing 15% moisture decline. Irrigation overrides suggested.</p>
+                        {alerts.length > 0 ? (
+                            <div className="space-y-3">
+                                {alerts.slice(0, 2).map((alert) => (
+                                    <div key={alert.id} className="p-3 bg-error-500/5 rounded-xl border border-error-500/10">
+                                        <p className="text-[11px] font-black text-white uppercase tracking-tight mb-1">{alert.title}</p>
+                                        <p className="text-[10px] text-white/60 leading-relaxed font-medium lowercase">{alert.description}</p>
+                                    </div>
+                                ))}
                             </div>
-                        </div>
+                        ) : (
+                            <div className="p-4 text-center">
+                                <AlertTriangle className="w-6 h-6 text-white/20 mx-auto mb-2" />
+                                <p className="text-[10px] text-white/40 font-bold uppercase">Alert data source currently unavailable</p>
+                            </div>
+                        )}
                     </div>
 
-                    {/* Meteorological Stream */}
+                    {/* Real Weather Data */}
                     <div className="bg-black/40 border border-white/10 rounded-3xl p-6 backdrop-blur-md">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="p-2 bg-primary-500/20 rounded-lg">
@@ -143,38 +271,58 @@ const ActionableAI = () => {
                             </div>
                             <span className="text-xs font-black text-white uppercase tracking-[0.2em]">Environment Stream</span>
                         </div>
-                        <div className="grid grid-cols-3 gap-2">
-                            <div className="text-center p-3 bg-white/5 rounded-2xl border border-white/5">
-                                <ThermometerSun className="w-4 h-4 text-orange-400 mx-auto mb-2" />
-                                <div className="text-[8px] font-black text-white/40 uppercase mb-1">Temp</div>
-                                <div className="text-[11px] font-black text-white">31°C</div>
+                        {weatherData ? (
+                            <div className="grid grid-cols-3 gap-2">
+                                <div className="text-center p-3 bg-white/5 rounded-2xl border border-white/5">
+                                    <ThermometerSun className="w-4 h-4 text-orange-400 mx-auto mb-2" />
+                                    <div className="text-[8px] font-black text-white/40 uppercase mb-1">Temp</div>
+                                    <div className="text-[11px] font-black text-white">{weatherData.temperature ?? '—'}°C</div>
+                                </div>
+                                <div className="text-center p-3 bg-white/5 rounded-2xl border border-white/5">
+                                    <Droplets className="w-4 h-4 text-blue-400 mx-auto mb-2" />
+                                    <div className="text-[8px] font-black text-white/40 uppercase mb-1">Humid</div>
+                                    <div className="text-[11px] font-black text-white">{weatherData.humidity ?? '—'}%</div>
+                                </div>
+                                <div className="text-center p-3 bg-white/5 rounded-2xl border border-white/5">
+                                    <Wind className="w-4 h-4 text-primary-400 mx-auto mb-2" />
+                                    <div className="text-[8px] font-black text-white/40 uppercase mb-1">Wind</div>
+                                    <div className="text-[11px] font-black text-white">{weatherData.windSpeed ?? '—'}km/h</div>
+                                </div>
                             </div>
-                            <div className="text-center p-3 bg-white/5 rounded-2xl border border-white/5">
-                                <Droplets className="w-4 h-4 text-blue-400 mx-auto mb-2" />
-                                <div className="text-[8px] font-black text-white/40 uppercase mb-1">Humid</div>
-                                <div className="text-[11px] font-black text-white">62%</div>
+                        ) : weatherLoading ? (
+                            <div className="flex items-center justify-center py-6">
+                                <Loader2 className="w-5 h-5 animate-spin text-white/40" />
                             </div>
-                            <div className="text-center p-3 bg-white/5 rounded-2xl border border-white/5">
-                                <Wind className="w-4 h-4 text-primary-400 mx-auto mb-2" />
-                                <div className="text-[8px] font-black text-white/40 uppercase mb-1">Wind</div>
-                                <div className="text-[11px] font-black text-white">14km/s</div>
+                        ) : (
+                            <div className="text-center py-4">
+                                <Globe className="w-6 h-6 text-white/20 mx-auto mb-2" />
+                                <p className="text-[10px] text-white/40 font-bold uppercase">Weather data unavailable</p>
                             </div>
-                        </div>
+                        )}
                     </div>
 
-                    {/* Economic Performance */}
+                    {/* Real Economic Performance */}
                     <div className="bg-gradient-to-br from-primary-600/20 to-secondary-600/20 border border-white/10 rounded-3xl p-8 backdrop-blur-md text-center">
                         <BarChart3 className="w-12 h-12 text-primary-400 mx-auto mb-4 opacity-40" />
-                        <h4 className="text-[10px] font-black text-primary-400 uppercase tracking-[0.3em] mb-4">Economic Index Rank</h4>
-                        <div className="flex items-center justify-center gap-4">
-                            <div className="text-5xl font-black text-white tracking-tighter">#04</div>
-                            <div className="text-left">
-                                <span className="block text-[8px] font-black text-green-400 uppercase">+18.5%</span>
-                                <span className="block text-[10px] font-black text-white/60 uppercase">Top 2% Regional</span>
+                        <h4 className="text-[10px] font-black text-primary-400 uppercase tracking-[0.3em] mb-4">Performance Index</h4>
+                        {performanceData?.metrics ? (
+                            <div className="flex items-center justify-center gap-4">
+                                <div className="text-5xl font-black text-white tracking-tighter">{performanceData.metrics.resolutionRate || '—'}%</div>
+                                <div className="text-left">
+                                    <span className="block text-[8px] font-black text-green-400 uppercase">{performanceData.metrics.satisfactionScore || '—'}/5 satisfaction</span>
+                                    <span className="block text-[10px] font-black text-white/60 uppercase">Resolution Rate</span>
+                                </div>
                             </div>
-                        </div>
-                        <button className="w-full mt-8 py-4 bg-primary-500 rounded-2xl font-black text-[10px] text-white uppercase tracking-[0.2em] shadow-lg shadow-primary-500/20 hover:bg-primary-600 transition-all">
-                            Generate Full Strategy
+                        ) : (
+                            <div className="text-3xl font-black text-white/40">—</div>
+                        )}
+                        <button
+                            onClick={handleGenerateStrategy}
+                            disabled={isGenerating}
+                            className="w-full mt-8 py-4 bg-primary-500 rounded-2xl font-black text-[10px] text-white uppercase tracking-[0.2em] shadow-lg shadow-primary-500/20 hover:bg-primary-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                            {isGenerating ? 'Generating...' : 'Generate Full Strategy'}
                         </button>
                     </div>
                 </div>

@@ -107,6 +107,10 @@ export interface AICapability {
     readonly provider: AIProviderType;
     readonly capabilities: string[];
 
+    // Configuration and Health
+    isConfigured(): boolean;
+    healthCheck(): Promise<boolean>;
+
     // Text generation - support both prompt string and message array
     generateText(prompt: string | any[], options?: TextGenerationOptions): Promise<TextGenerationResult>;
     streamText(prompt: string, options?: TextGenerationOptions): AsyncGenerator<string>;
@@ -136,6 +140,10 @@ export interface AICapability {
 export abstract class BaseAIProvider implements AICapability {
     abstract readonly provider: AIProviderType;
     abstract readonly capabilities: string[];
+
+    isConfigured(): boolean {
+        return false;
+    }
 
     async generateText(_messages: any[], _options?: TextGenerationOptions): Promise<TextGenerationResult> {
         throw new Error('Method not implemented');
@@ -229,6 +237,13 @@ export class AIProviderFactory {
         for (const providerType of allProviders) {
             try {
                 const provider = await this.getProvider(providerType);
+                
+                // First check if configured, then check health
+                if (!provider.isConfigured()) {
+                    logger.debug(`AI provider ${providerType} not configured, skipping...`);
+                    continue;
+                }
+
                 const isHealthy = await provider.healthCheck();
 
                 if (isHealthy) {

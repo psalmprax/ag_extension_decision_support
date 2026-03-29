@@ -28,6 +28,10 @@ export class AzureOpenAIProvider extends BaseAIProvider {
         'classification',
     ];
 
+    isConfigured(): boolean {
+        return !!config.azureOpenAI.apiKey && !!config.azureOpenAI.endpoint && config.azureOpenAI.apiKey !== 'your-api-key';
+    }
+
     private client: any = null;
 
     private async getClient(): Promise<any> {

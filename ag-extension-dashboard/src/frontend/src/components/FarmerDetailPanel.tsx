@@ -38,7 +38,9 @@ import { useNavigate } from 'react-router-dom';
 
 import { fetchSMSHistory } from '@/api/smsService';
 import { generateSynthesis } from '@/api/chatbotService';
+import { fetchPriorityScore } from '@/api/visitService';
 import { SatelliteInsights } from './SatelliteInsights';
+import toast from 'react-hot-toast';
 
 interface FarmerDetailPanelProps {
     isOpen: boolean;
@@ -78,6 +80,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
     const [isLoadingHistory, setIsLoadingHistory] = React.useState(false);
     const [showVideoCall, setShowVideoCall] = React.useState(false);
     const [isSynthesizing, setIsSynthesizing] = React.useState(false);
+    const [isRefreshingPriority, setIsRefreshingPriority] = React.useState(false);
 
     const loadInteractions = async () => {
         if (!farmer?.id) return;
@@ -180,7 +183,6 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                     type: 'success',
                     message: `AI Synthesis complete for ${farmer.firstName}`
                 });
-                console.log('Synthesis Result:', res.data.summary);
             }
         } catch (err) {
             console.error('Synthesis failed:', err);
@@ -190,6 +192,29 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
             });
         } finally {
             setIsSynthesizing(false);
+        }
+    };
+
+    const handleRefreshPriority = async () => {
+        if (!farmer?.id) return;
+        setIsRefreshingPriority(true);
+        try {
+            const res = await fetchPriorityScore(farmer.id);
+            if (res.success) {
+                addNotification({
+                    type: 'success',
+                    message: `Priority: ${res.data.level.toUpperCase()} (score: ${res.data.score}/100) — ${res.data.recommendedAction}`
+                });
+                // Switch to insights tab to show the updated data
+                setActiveTab('insights');
+            }
+        } catch {
+            addNotification({
+                type: 'error',
+                message: 'Failed to refresh priority analysis'
+            });
+        } finally {
+            setIsRefreshingPriority(false);
         }
     };
 
@@ -221,7 +246,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                         {/* Header Section */}
                         <div className="relative h-64 flex-shrink-0" onContextMenu={handleContextMenu}>
                             <div className={`absolute inset-0 opacity-90 bg-gradient-to-br from-primary-600 to-secondary-700`} />
-                            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80')] bg-cover bg-center mix-blend-overlay" />
+                            <div className="absolute inset-0 bg-gradient-to-br from-primary-800/40 to-secondary-900/40" />
 
                             {isCyber && (
                                 <div className="absolute inset-0 cyber-grid-premium opacity-20" />
@@ -547,24 +572,39 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                     </p>
                                 </div>
                             </div>
-                            <button
-                                onClick={handleStartSynthesis}
-                                disabled={isSynthesizing}
-                                className={`px-6 py-3 rounded-2xl font-black text-xs shadow-xl transition-all flex items-center gap-2 ${isCyber ? 'bg-primary-400 shadow-primary-500/20 text-white' : 'bg-primary-600 hover:bg-primary-700 text-white shadow-primary-500/20'
-                                    } ${isSynthesizing ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            >
-                                {isSynthesizing ? (
-                                    <>
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={handleRefreshPriority}
+                                    disabled={isRefreshingPriority}
+                                    className={`px-4 py-3 rounded-2xl font-black text-xs transition-all flex items-center gap-2 border ${isCyber ? 'border-primary-500/30 text-primary-400 hover:bg-primary-500/10' : 'border-primary-200 dark:border-primary-800 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20'
+                                        } ${isRefreshingPriority ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                    {isRefreshingPriority ? (
                                         <Loader2 className="w-4 h-4 animate-spin" />
-                                        GENERATING...
-                                    </>
-                                ) : (
-                                    <>
-                                        {t('action_start_synthesis')}
-                                        <ChevronRight className="w-4 h-4" />
-                                    </>
-                                )}
-                            </button>
+                                    ) : (
+                                        <Activity className="w-4 h-4" />
+                                    )}
+                                    {isRefreshingPriority ? 'ANALYZING...' : 'REFRESH ANALYSIS'}
+                                </button>
+                                <button
+                                    onClick={handleStartSynthesis}
+                                    disabled={isSynthesizing}
+                                    className={`px-6 py-3 rounded-2xl font-black text-xs shadow-xl transition-all flex items-center gap-2 ${isCyber ? 'bg-primary-400 shadow-primary-500/20 text-white' : 'bg-primary-600 hover:bg-primary-700 text-white shadow-primary-500/20'
+                                        } ${isSynthesizing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                    {isSynthesizing ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            GENERATING...
+                                        </>
+                                    ) : (
+                                        <>
+                                            {t('action_start_synthesis')}
+                                            <ChevronRight className="w-4 h-4" />
+                                        </>
+                                    )}
+                                </button>
+                            </div>
                         </div>
                     </motion.aside>
                 </>

@@ -20,21 +20,19 @@ export class FAOService {
      */
     static async getDiseaseAlerts(region: string, crop?: string): Promise<DiseaseAlert[]> {
         try {
-            // Note: In a real implementation, this would call FAO EMPRES-i or similar
-            // For now, we simulate the API call to a structured FAO-like endpoint
             const response = await axios.get(`${this.baseUrl}/alerts`, {
                 params: { region, crop, type: 'disease' },
                 timeout: 5000
-            }).catch(_e => ({ data: [] })); // Graceful fallback
+            });
 
             if (response.data && response.data.length > 0) {
                 return response.data;
             }
 
-            return this.getMockAlerts(region, crop);
+            return [];
         } catch (error) {
-            logger.error('FAO Disease alerts fetch failed:', error);
-            return this.getMockAlerts(region, crop);
+            logger.error('FAO Disease alerts fetch failed — external API not configured:', error);
+            return [];
         }
     }
 

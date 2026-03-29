@@ -43,3 +43,36 @@ export const updateVisit = async (id: string, data: Partial<Visit>): Promise<{ s
     const response = await apiClient.patch(`/visits/${id}`, data);
     return response.data;
 };
+
+export interface PriorityData {
+    farmerId: string;
+    score: number;
+    level: string;
+    factors: {
+        diseaseAlerts: number;
+        weatherRisk: number;
+        visitRecency: number;
+        vitalScore: number;
+    };
+    reasons: string[];
+    recommendedAction: string;
+}
+
+export const fetchPriorityScore = async (farmerId: string): Promise<{ success: boolean; data: PriorityData }> => {
+    const response = await apiClient.get<{ success: boolean; data: PriorityData }>(`/external/priority/${farmerId}`);
+    return response.data;
+};
+
+export interface SatelliteIndex {
+    ndvi: number;
+    color: string;
+    health: string;
+    timestamp: string;
+}
+
+export const fetchSatelliteTelemetry = async (lat: number, lng: number, farmerId?: string): Promise<{ success: boolean; data: SatelliteIndex[] }> => {
+    const response = await apiClient.get<{ success: boolean; data: SatelliteIndex[] }>(`/external/satellite`, {
+        params: { lat, lng, farmerId }
+    });
+    return response.data;
+};

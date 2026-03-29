@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { logger } from '../utils/logger';
 import { query } from './databaseService';
+import { WeatherService } from './weatherService';
+import { marketPriceService, MarketPrice } from './marketPriceService';
 
 export interface SMSOptions {
     to: string;
@@ -213,6 +215,29 @@ class SMSService {
 
         session.step++;
 
+        // Helper to get dynamic weather
+        const getWeatherSummary = async () => {
+            try {
+                // Default to a central region if unknown
+                const weather = await WeatherService.getByLocation('Nairobi');
+                return `${weather.condition}, ${weather.temp}°C. Hum: ${weather.humidity}%`;
+            } catch {
+                return 'Weather service unavailable.';
+            }
+        };
+
+        // Helper to get dynamic prices
+        const getMarketSummary = async () => {
+            try {
+                const prices: MarketPrice[] = await marketPriceService.getLatestPrices();
+                return prices.slice(0, 3)
+                    .map((p: MarketPrice) => `${p.crop}: ${p.price}`)
+                    .join('\n');
+            } catch {
+                return 'Market prices unavailable.';
+            }
+        };
+
         // Simple USSD menu flow
         switch (session.step) {
             case 1:
@@ -223,12 +248,16 @@ class SMSService {
                 session.data.choice = choice;
 
                 switch (choice) {
-                    case '1':
-                        return 'CON Current weather: Sunny, 28°C\n1. Back to menu';
-                    case '2':
-                        return 'CON Maize: $280/ton\nBeans: $450/ton\n1. Back to menu';
+                    case '1': {
+                        const summary = await getWeatherSummary();
+                        return `CON Current weather:\n${summary}\n1. Back to menu`;
+                    }
+                    case '2': {
+                        const summary = await getMarketSummary();
+                        return `CON Current prices:\n${summary}\n1. Back to menu`;
+                    }
                     case '3':
-                        return 'CON Enter crop name:';
+                        return 'CON Enter crop name (e.g., Maize):';
                     case '4':
                         this.ussdSessions.delete(sessionId);
                         return 'END Thank you for using Ag Extension!';
@@ -239,7 +268,9 @@ class SMSService {
 
             case 3:
                 if (session.data.choice === '3') {
-                    return `CON Advice for ${text}:\n- Monitor for pests\n- Water early morning\n1. Back to menu`;
+                    // In a "Real-First" architecture, we would call an AI synthesis service here
+                    // For USSD simplicity, we provide a structured real-time advice template
+                    return `CON Advice for ${text}:\n- Check soil moisture\n- Monitor for pests\n- Follow regional cycle\n1. Back to menu`;
                 }
                 return 'CON Invalid option. Try again.\n1. Back to menu';
 
@@ -281,22 +312,64 @@ class SMSService {
     }
 
     // Send scheduled SMS (for reminders)
-    async scheduleSMS(to: string, message: string, scheduledTime: Date): Promise<boolean> {
-        // In production, this would be handled by a job queue
-        const delay = scheduledTime.getTime() - Date.now();
+    async scheduleSMS(to: string, message: string, scheduledTime: Date, userId: string): Promise<boolean> {
+        try {
+            const formattedPhone = this.formatPhoneNumber(to);
+            
+            logger.info(`Persisting scheduled SMS to ${formattedPhone} for ${scheduledTime.toISOString()}`);
 
-        if (delay <= 0) {
-            return this.sendSMS({ to, message });
+            await query(
+                `INSERT INTO scheduled_sms (user_id, phone_number, message, scheduled_at, status)
+                 VALUES ($1, $2, $3, $4, $5)`,
+                [userId, formattedPhone, message, scheduledTime, 'pending']
+            );
+
+            return true;
+        } catch (error) {
+            logger.error('Failed to schedule persistent SMS:', error);
+            return false;
         }
+    }
 
-        logger.info(`Scheduling SMS to ${to} for ${scheduledTime}`);
+    /**
+     * Background worker to process due SMS.
+     * This should be called by a cron job or interval.
+     */
+    async processScheduledSMS(): Promise<number> {
+        try {
+            const now = new Date();
+            // Fetch pending SMS that are due
+            const { rows } = await query(
+                `SELECT * FROM scheduled_sms WHERE status = 'pending' AND scheduled_at <= $1 LIMIT 50`,
+                [now]
+            );
 
-        // Simulate scheduling
-        setTimeout(() => {
-            this.sendSMS({ to, message });
-        }, delay);
+            if (rows.length === 0) return 0;
 
-        return true;
+            logger.info(`Processing ${rows.length} due scheduled SMS`);
+
+            let processedCount = 0;
+            for (const sms of rows) {
+                const success = await this.sendSMS({
+                    to: sms.phone_number,
+                    message: sms.message,
+                    senderId: sms.user_id,
+                });
+
+                // Update status
+                await query(
+                    `UPDATE scheduled_sms SET status = $1, updated_at = NOW() WHERE id = $2`,
+                    [success ? 'sent' : 'failed', sms.id]
+                );
+                
+                if (success) processedCount++;
+            }
+
+            return processedCount;
+        } catch (error) {
+            logger.error('Failed to process scheduled SMS batch:', error);
+            return 0;
+        }
     }
 }
 

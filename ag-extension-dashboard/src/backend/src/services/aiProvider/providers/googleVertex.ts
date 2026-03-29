@@ -26,6 +26,10 @@ export class GoogleVertexProvider extends BaseAIProvider {
         'classification',
     ];
 
+    isConfigured(): boolean {
+        return !!config.googleVertex.projectId && config.googleVertex.projectId !== 'your-project-id';
+    }
+
     private client: any = null;
 
     private async getClient(): Promise<any> {

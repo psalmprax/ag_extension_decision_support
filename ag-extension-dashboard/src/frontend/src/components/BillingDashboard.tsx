@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 import { useAppStore } from '@/store/useAppStore';
 import { fetchPlans, fetchSubscription, createCheckoutSession, createPortalSession, fetchInvoices, switchSubscription, fetchPaymentMethods, addPaymentMethod, deletePaymentMethod, updateAdminConfig, createPayPalSubscription, redeemVoucher, submitTransaction, getMyTransactions, listAllTransactions, verifyTransaction, rejectTransaction, generateVouchers, listVouchers } from '@/api/billingService';
 import { PaymentAnalyticsDashboard } from './PaymentAnalyticsDashboard';
@@ -224,7 +225,7 @@ export const BillingDashboard: React.FC = () => {
             const res = await generateVouchers(voucherBatch.planId, voucherBatch.count, voucherBatch.expiresInDays);
             if (res.success) {
                 fetchData();
-                alert(`Successfully generated ${voucherBatch.count} vouchers!`);
+                toast.success(`Successfully generated ${voucherBatch.count} vouchers!`);
             }
         } catch (error) {
             console.error('Generation failed:', error);
@@ -279,7 +280,7 @@ export const BillingDashboard: React.FC = () => {
                     return;
                 }
 
-                alert(response.message || 'Action failed');
+                toast.error(response.message || 'Action failed');
                 return;
             }
 
@@ -290,14 +291,14 @@ export const BillingDashboard: React.FC = () => {
             }
 
             if (response.message) {
-                alert(response.message);
+                toast.success(response.message);
                 fetchData();
             }
         } catch (error: unknown) {
 
             console.error('Subscription failed:', error);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            alert((error as any).response?.data?.message || 'Subscription failed. Please try again.');
+            toast.error((error as any).response?.data?.message || 'Subscription failed. Please try again.');
         } finally {
             setActionLoading(null);
         }
@@ -308,16 +309,16 @@ export const BillingDashboard: React.FC = () => {
         try {
             const data = await switchSubscription(priceId, billingCycle);
             if (data.success) {
-                alert(data.message || 'Plan switched successfully!');
+                toast.success(data.message || 'Plan switched successfully!');
                 fetchData(); // Refresh data
             } else {
-                alert(data.message || 'Failed to switch plan');
+                toast.error(data.message || 'Failed to switch plan');
             }
         } catch (error: unknown) {
 
             console.error('Switch failed:', error);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            alert((error as any).response?.data?.message || 'Failed to switch plan. Please try again.');
+            toast.error((error as any).response?.data?.message || 'Failed to switch plan. Please try again.');
         } finally {
             setActionLoading(null);
         }
@@ -345,15 +346,15 @@ export const BillingDashboard: React.FC = () => {
                 // Real implementation: Redirect to Stripe Setup Session
                 window.location.href = response.data.url;
             } else if (response.success) {
-                alert(response.message || 'Payment method setup initiated successfully!');
+                toast.success(response.message || 'Payment method setup initiated successfully!');
                 fetchData();
             } else {
-                alert(response.error || response.message || 'Failed to initialize payment method setup');
+                toast.error(response.error || response.message || 'Failed to initialize payment method setup');
             }
         } catch (error: any) {
             console.error('Failed to add payment method:', error);
             const errorMessage = error.response?.data?.error || error.message || 'Unknown error occurred';
-            alert(`Failed to add payment method: ${errorMessage}`);
+            toast.error(`Failed to add payment method: ${errorMessage}`);
         } finally {
             setActionLoading(null);
         }
@@ -366,12 +367,12 @@ export const BillingDashboard: React.FC = () => {
         try {
             const response = await deletePaymentMethod(id);
             if (response.success) {
-                alert(response.message || 'Payment method removed');
+                toast.success(response.message || 'Payment method removed');
                 fetchData(); // Refresh list
             }
         } catch (error) {
             console.error('Failed to delete payment method:', error);
-            alert('Failed to delete payment method');
+            toast.error('Failed to delete payment method');
         } finally {
             setActionLoading(null);
         }
@@ -385,11 +386,11 @@ export const BillingDashboard: React.FC = () => {
                 // Redirect to PayPal for approval
                 window.location.href = response.data.approvalUrl;
             } else {
-                alert(response.message || 'Failed to initiate PayPal subscription');
+                toast.error(response.message || 'Failed to initiate PayPal subscription');
             }
         } catch (error) {
             console.error('PayPal subscription failed:', error);
-            alert('Failed to create PayPal subscription. Please try again.');
+            toast.error('Failed to create PayPal subscription. Please try again.');
         } finally {
             setActionLoading(null);
         }
@@ -397,7 +398,7 @@ export const BillingDashboard: React.FC = () => {
 
     const handleAdminUpdate = async () => {
         if (!adminKeys.stripeSecretKey && !adminKeys.paypalClientId) {
-            alert("Please enter at least one credential to update.");
+            toast.error("Please enter at least one credential to update.");
             return;
         }
 
@@ -405,12 +406,12 @@ export const BillingDashboard: React.FC = () => {
         try {
             const response = await updateAdminConfig(adminKeys);
             if (response.success) {
-                alert(response.message || 'Credentials updated successfully');
+                toast.success(response.message || 'Credentials updated successfully');
                 setAdminKeys({ stripeSecretKey: '', paypalClientId: '' });
             }
         } catch (error) {
             console.error('Failed to update credentials:', error);
-            alert('Failed to update credentials. Ensure you have admin privileges.');
+            toast.error('Failed to update credentials. Ensure you have admin privileges.');
         } finally {
             setActionLoading(null);
         }

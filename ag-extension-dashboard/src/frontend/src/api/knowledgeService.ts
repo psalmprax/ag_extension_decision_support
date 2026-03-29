@@ -15,6 +15,7 @@ export interface AskResponse {
         answer: string;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         contextUsed: any[];
+        cached?: boolean;
     };
 }
 

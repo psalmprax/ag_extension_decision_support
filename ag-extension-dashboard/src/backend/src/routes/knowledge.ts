@@ -204,23 +204,55 @@ router.get('/:id', async (req: Request, res: Response) => {
     }
 });
 
-// Ask AI a question (RAG-based)
+// Get recent search history
+router.get('/history', async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user?.userId || (req as any).user?.id;
+        if (!userId) {
+            return res.status(401).json({ success: false, error: 'User not authenticated' });
+        }
+
+        const history = await KnowledgeService.getSearchHistory(userId);
+        res.json({ success: true, data: history });
+    } catch (error) {
+        logger.error('Get search history error:', error);
+        res.status(500).json({ success: false, error: 'Failed to get search history' });
+    }
+});
+
+// Get search statistics for visuals
+router.get('/stats', async (_req: Request, res: Response) => {
+    try {
+        const stats = await KnowledgeService.getSearchStats();
+        res.json({ success: true, data: stats });
+    } catch (error) {
+        logger.error('Get search stats error:', error);
+        res.status(500).json({ success: false, error: 'Failed to get search statistics' });
+    }
+});
+
+// Ask AI a question (RAG-based with Semantic Caching)
 router.post('/ask', async (req: Request, res: Response) => {
     try {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { question, context: _context } = req.body;
+        const { question } = req.body;
+        const userId = (req as any).user?.userId || (req as any).user?.id;
 
         if (!question) {
             return res.status(400).json({ success: false, error: 'Question is required' });
         }
 
-        const result = await KnowledgeService.askQuestion(question);
+        if (!userId) {
+            return res.status(401).json({ success: false, error: 'User not authenticated' });
+        }
+
+        const result = await KnowledgeService.askQuestion(userId, question);
 
         res.json({
             success: true,
             data: {
                 answer: result.answer,
                 contextUsed: result.contextUsed,
+                cached: result.cached
             },
         });
     } catch (error) {

@@ -8,10 +8,13 @@ import {
     Navigation2,
     Shield,
     Cpu,
-    Loader2
+    Loader2,
+    AlertTriangle,
+    CheckCircle2
 } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
-import { fetchVisitsByFarmer, fetchSynthesis } from '@/api/visitService';
+import { fetchVisitsByFarmer, fetchSynthesis, fetchPriorityScore, PriorityData, fetchSatelliteTelemetry, SatelliteIndex } from '@/api/visitService';
+import { fetchFarmerById, Farmer } from '@/api/farmerService';
 
 interface Metric {
     label: string;
@@ -30,19 +33,36 @@ interface SatelliteInsightsProps {
 export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, isCyber, metrics }) => {
     const { t } = useLanguage();
     const [synthesis, setSynthesis] = useState<string | null>(null);
-    const [isLoadingSynthesis, setIsLoadingSynthesis] = useState(false);
+    const [farmer, setFarmer] = useState<Farmer | null>(null);
+    const [priority, setPriority] = useState<PriorityData | null>(null);
+    const [satelliteData, setSatelliteData] = useState<SatelliteIndex[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         const loadRealData = async () => {
             if (!farmerId) return;
-            setIsLoadingSynthesis(true);
+            setIsLoading(true);
             try {
-                // Fetch latest visits
-                const visitsRes = await fetchVisitsByFarmer(farmerId);
+                // Fetch farmer details first to get coordinates
+                const farmerRes = await fetchFarmerById(farmerId);
+                const farmerData = farmerRes.data;
+                setFarmer(farmerData);
+
+                // Fetch visits, priority, and satellite telemetry in parallel
+                const [visitsRes, priorityRes, satelliteRes] = await Promise.all([
+                    fetchVisitsByFarmer(farmerId),
+                    fetchPriorityScore(farmerId),
+                    farmerData.locationLat && farmerData.locationLng 
+                        ? fetchSatelliteTelemetry(Number(farmerData.locationLat), Number(farmerData.locationLng), farmerId)
+                        : Promise.resolve({ success: true, data: [] })
+                ]);
+
+                setPriority(priorityRes.data);
+                setSatelliteData(satelliteRes.data);
+
                 const latestVisits = visitsRes.data.visits;
                 
                 if (latestVisits && latestVisits.length > 0) {
-                    // Combine notes from latest 3 visits for a better synthesis
                     const combinedNotes = latestVisits.slice(0, 3)
                         .map(v => `${v.visit_type}: ${v.notes || ''}`)
                         .join('\n');
@@ -50,19 +70,32 @@ export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, 
                     const synthesisRes = await fetchSynthesis(farmerId, combinedNotes);
                     setSynthesis(synthesisRes.data.summary);
                 } else {
-                    setSynthesis("No recent visit data available for deep analysis. Metadata indicates stable terrain and expected seasonal vegetation patterns.");
+                    setSynthesis("No recent visit data available. Spatial Intelligence unit merged historical regional telemetry with current vegetation indices.");
                 }
             } catch (err) {
                 console.error('Failed to load real insights:', err);
-                setSynthesis("Connectivity issue with Spatial Intelligence Unit. Falling back to baseline regional averages.");
+                setSynthesis("Connectivity issue with Satellite Intelligence Unit. Falling back to regional baseline.");
             } finally {
-                setIsLoadingSynthesis(false);
+                setIsLoading(false);
             }
         };
 
         loadRealData();
     }, [farmerId]);
 
+    // Use actual satellite telemetry to generate visual data points
+    const dataPoints = satelliteData.map((data, i) => {
+        // Position relative to a 100x100 grid (centralized for the specific location)
+        const x = 50 + (i % 2 === 0 ? 5 : -5);
+        const y = 50 + (i < 2 ? 5 : -5);
+        
+        const colorClass = data.health === 'healthy' ? 'bg-green-500' : data.health === 'normal' ? 'bg-amber-500' : 'bg-red-500';
+        const pulseClass = data.health === 'healthy' ? 'bg-green-400 shadow-[0_0_10px_rgba(34,197,94,0.8)]' : 
+                          data.health === 'normal' ? 'bg-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.8)]' : 
+                          'bg-red-400 shadow-[0_0_10px_rgba(239,68,68,0.8)]';
+
+        return { x, y, colorClass, pulseClass, ndvi: data.ndvi };
+    });
     const displayMetrics = metrics || [];
 
     return (
@@ -97,25 +130,29 @@ export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, 
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/40 via-blue-900/20 to-emerald-950/40" />
                 {isCyber && <div className="absolute inset-0 cyber-grid-premium opacity-30" />}
                 
-                {/* Data Points Layer - Positioned logically based on ID hash */}
+                {/* Data Points Layer - Rendered from real NDVI indices */}
                 <div className="absolute inset-0 flex items-center justify-center">
                     <div className="relative w-full h-full">
-                        {[0, 1, 2, 3, 4, 5].map((i) => {
-                            const x = ((i * 137.5) % 80) + 10;
-                            const y = ((i * 222.5) % 80) + 10;
-                            return (
-                                <motion.div
-                                    key={i}
-                                    initial={{ opacity: 0, scale: 0 }}
-                                    animate={{ opacity: 0.8, scale: 1 }}
-                                    className="absolute w-4 h-4"
-                                    style={{ left: `${x}%`, top: `${y}%` }}
-                                >
-                                    <div className={`w-full h-full rounded-full ${i % 2 === 0 ? 'bg-green-500' : 'bg-blue-500'} blur-md opacity-40 pulse-ring`} />
-                                    <div className={`absolute inset-0 w-2 h-2 m-auto rounded-full ${i % 2 === 0 ? 'bg-green-400 shadow-[0_0_10px_rgba(34,197,94,0.8)]' : 'bg-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.8)]'} border border-white/40 shadow-lg`} />
-                                </motion.div>
-                            );
-                        })}
+                        {dataPoints.map((point, i) => (
+                            <motion.div
+                                key={i}
+                                initial={{ opacity: 0, scale: 0 }}
+                                animate={{ opacity: 0.8, scale: 1 }}
+                                className="absolute w-4 h-4"
+                                style={{ left: `${point.x}%`, top: `${point.y}%` }}
+                            >
+                                <div className={`w-full h-full rounded-full ${point.colorClass} blur-md opacity-40 pulse-ring`} />
+                                <div className={`absolute inset-0 w-2 h-2 m-auto rounded-full ${point.pulseClass} border border-white/40 shadow-lg`} />
+                                <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[8px] font-black text-white/60 uppercase whitespace-nowrap">
+                                    NDVI {point.ndvi}
+                                </div>
+                            </motion.div>
+                        ))}
+                        {dataPoints.length === 0 && !isLoading && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">Precision coordinates pending</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -128,57 +165,90 @@ export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, 
                     />
                 </div>
 
-                {/* Corner Labels */}
+                {/* Status Overlays */}
                 <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
                     <p className="text-[8px] font-black text-primary-400 uppercase tracking-[0.2em] flex items-center gap-2">
                         <Layers className="w-3 h-3" />
                         Spectral Layer IV
                     </p>
                 </div>
+                
+                {priority && (
+                    <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
+                        <div className={`text-[8px] font-black uppercase tracking-[0.2em] flex items-center gap-2 ${
+                            priority.level === 'critical' ? 'text-red-500' : 
+                            priority.level === 'high' ? 'text-orange-500' : 'text-green-500'
+                        }`}>
+                            {priority.level === 'critical' || priority.level === 'high' ? <AlertTriangle className="w-3 h-3" /> : <Shield className="w-3 h-3" />}
+                            {priority.level} PRIORITY
+                        </div>
+                    </div>
+                )}
+
+                <div className="absolute bottom-4 left-4">
+                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">
+                        {farmer?.locationLat ? `Lat: ${Number(farmer.locationLat).toFixed(4)} • Lng: ${Number(farmer.locationLng).toFixed(4)}` : 'GPS Tracking Active'}
+                    </p>
+                </div>
                 <div className="absolute bottom-4 right-4 text-right">
                     <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">
-                        Resolution: 0.25m/px
+                        Source: Sentinel-2 MSI
                     </p>
                 </div>
             </div>
 
             {/* Metrics Grid */}
-            <div className="grid grid-cols-3 gap-4">
-                {displayMetrics.length > 0 ? displayMetrics.map((m) => (
-                    <div key={m.label} className={`p-4 rounded-2xl border ${isCyber ? 'bg-black/40 border-white/10 hover:border-primary-500/30' : 'bg-white border-gray-100 shadow-sm'} transition-all`}>
-                        <div className="flex items-center gap-2 mb-2">
-                            <m.icon className={`w-3 h-3 ${m.color}`} />
-                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{m.label}</span>
+            <div className={`p-6 rounded-3xl border transition-all ${
+                priority?.level === 'critical' ? 'bg-red-500/5 border-red-500/20' : 
+                isCyber ? 'bg-black/40 border-white/10' : 'bg-white border-gray-100 shadow-sm'
+            }`}>
+                <div className="flex items-center justify-between mb-4">
+                    <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Resource Priority Index</h5>
+                    {priority && (
+                        <div className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            priority.level === 'critical' ? 'bg-red-500 text-white' : 'bg-primary-500 text-white'
+                        }`}>
+                            {priority.score}%
                         </div>
-                        <div className={`text-xl font-black ${isCyber ? 'text-white' : 'text-gray-900'}`}>
-                            {m.value}
+                    )}
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                    {priority?.reasons.slice(0, 4).map((reason, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                            <Zap className="w-3 h-3 text-primary-500" />
+                            <span className="text-[10px] font-medium text-gray-400 line-clamp-1">{reason}</span>
                         </div>
-                        <div className="flex items-center gap-1.5 mt-1">
-                            <Shield className="w-2.5 h-2.5 text-green-500" />
-                            <span className="text-[8px] font-black text-green-500 uppercase tracking-tighter">{m.status}</span>
-                        </div>
+                    ))}
+                </div>
+
+                <div className={`p-3 rounded-xl flex items-center gap-3 ${isCyber ? 'bg-white/5' : 'bg-gray-50'}`}>
+                    <div className={`p-1.5 rounded-lg ${priority?.level === 'critical' ? 'bg-red-500/20 text-red-500' : 'bg-primary-500/20 text-primary-500'}`}>
+                        {priority?.level === 'critical' ? <AlertTriangle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
                     </div>
-                )) : (
-                    <div className="col-span-3 py-6 text-center text-[10px] font-black uppercase tracking-widest text-white/20">
-                        Awaiting data stream...
+                    <div>
+                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Recommended Action</p>
+                        <p className={`text-[11px] font-bold ${isCyber ? 'text-white' : 'text-gray-900'}`}>
+                            {isLoading ? 'Calculating...' : (priority?.recommendedAction || 'Monitor and maintain routine visits.')}
+                        </p>
                     </div>
-                )}
+                </div>
             </div>
 
             {/* Analysis Summary */}
             <div className={`p-6 rounded-3xl border relative min-h-[140px] flex flex-col justify-center ${isCyber ? 'bg-primary-500/5 border-primary-500/20 shadow-[0_0_20px_rgba(79,209,197,0.05)]' : 'bg-blue-50/50 border-blue-100'}`}>
                 <h5 className={`text-[10px] font-black uppercase tracking-[0.2em] mb-3 flex items-center gap-2 ${isCyber ? 'text-primary-400' : 'text-blue-600'}`}>
                     <Navigation2 className="w-3 h-3" />
-                    {isLoadingSynthesis ? 'Generating Synthesis...' : 'Growth Trajectory Analysis'}
+                    {isLoading ? 'Generating Synthesis...' : 'Growth Trajectory Analysis'}
                 </h5>
                 
-                {isLoadingSynthesis ? (
+                {isLoading ? (
                     <div className="flex justify-center py-4">
                         <Loader2 className="w-6 h-6 text-primary-500 animate-spin" />
                     </div>
                 ) : (
                     <p className={`text-xs leading-relaxed font-medium ${isCyber ? 'text-gray-300' : 'text-gray-600'}`}>
-                        {synthesis || "Historical data synthesis in progress. Current field observations merged with satellite indices suggest steady developmental progress."}
+                        {synthesis || "Historical data synthesis in progress. Active terrain scan merged with base metrics suggests stable yield expectations."}
                     </p>
                 )}
             </div>

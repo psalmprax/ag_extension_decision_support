@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { synthesizeVisit, type BoxUpdateData } from '@/api/aiService';
+import { createVisit } from '@/api/visitService';
 import { useAppStore } from '@/store/useAppStore';
 import { Sparkles, Loader2, FileText, CheckCircle2, AlertCircle, Calendar } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -9,8 +10,9 @@ import { useLanguage } from '@/lib/LanguageContext';
 export const VisitSynthesisForm: React.FC = () => {
   const [notes, setNotes] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [result, setResult] = useState<BoxUpdateData | null>(null);
-  const { setLoading } = useAppStore();
+  const { setLoading, user } = useAppStore();
   const { t } = useLanguage();
 
   const handleSynthesize = async () => {
@@ -35,6 +37,32 @@ export const VisitSynthesisForm: React.FC = () => {
     } finally {
       setIsProcessing(false);
       setLoading(false);
+    }
+  };
+
+  const handleSaveRecords = async () => {
+    if (!result) return;
+    setIsSaving(true);
+    try {
+      const visitPayload = {
+        farmer_id: user?.id || 'unknown',
+        farmer_name: user ? `${user.firstName} ${user.lastName}` : 'Unknown',
+        visit_type: 'ai_synthesis',
+        status: 'completed',
+        scheduled_at: new Date().toISOString(),
+        notes: `AI Synthesis: ${result.summary}\n\nCrop Health: ${result.cropHealthStatus}\nPest Issues: ${result.pestIssues}\nKey Observations: ${result.keyObservations.join('; ')}\nRecommended Actions: ${result.recommendedActions.join('; ')}`,
+      };
+      const res = await createVisit(visitPayload);
+      if (res.success) {
+        toast.success('Report saved to visits successfully!');
+      } else {
+        toast.error('Failed to save report to visits.');
+      }
+    } catch (error) {
+      console.error('Failed to save records:', error);
+      toast.error('Failed to save records. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -164,10 +192,12 @@ export const VisitSynthesisForm: React.FC = () => {
                   <span className="text-xs font-bold uppercase">{result.nextVisitDateHint}</span>
                 </div>
                 <button 
-                  onClick={() => toast.success('Report saved to visits!')}
-                  className="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 transition-colors"
+                  onClick={handleSaveRecords}
+                  disabled={isSaving}
+                  className="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-2 disabled:opacity-50"
                 >
-                  {t('save_records')}
+                  {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                  {isSaving ? 'Saving...' : t('save_records')}
                 </button>
               </div>
             </div>

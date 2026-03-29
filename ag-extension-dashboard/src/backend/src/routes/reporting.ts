@@ -166,6 +166,40 @@ router.get('/:id', async (req: Request, res: Response) => {
     }
 });
 
+// Download report as CSV
+router.get('/:id/download', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const result = await query('SELECT * FROM reports WHERE id = $1', [id]);
+        const report = result.rows[0];
+
+        if (!report) {
+            return res.status(404).json({ success: false, error: 'Report not found' });
+        }
+
+        const data = report.report_data;
+        let csv = 'Metric,Value\n';
+        
+        // Flatten the JSON report data into CSV rows
+        if (data.visits) {
+            csv += `Total Visits,${data.visits.total || 0}\n`;
+            csv += `Completed Visits,${data.visits.completed || 0}\n`;
+            csv += `Total Minutes,${data.visits.total_minutes || 0}\n`;
+        }
+        if (data.conversations) {
+            csv += `Total Conversations,${data.conversations.total_conversations || 0}\n`;
+            csv += `Average Satisfaction,${data.conversations.avg_satisfaction || 0}\n`;
+        }
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="report_${id}.csv"`);
+        res.status(200).send(csv);
+    } catch (error) {
+        logger.error('Download report error:', error);
+        res.status(500).json({ success: false, error: 'Failed to download report' });
+    }
+});
+
 router.post("/:id/share", async (req: Request, res: Response) => {
     try {
         const { id } = req.params;

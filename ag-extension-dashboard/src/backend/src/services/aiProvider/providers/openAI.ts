@@ -25,6 +25,10 @@ export class OpenAIProvider extends BaseAIProvider {
         'vision',
     ];
 
+    isConfigured(): boolean {
+        return !!config.openAI.apiKey && config.openAI.apiKey !== 'sk-...';
+    }
+
     private client: any = null;
 
     private async getClient(): Promise<any> {

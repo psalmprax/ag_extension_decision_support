@@ -11,7 +11,7 @@ import CropCycleGantt from './Cyber/CropCycleGantt';
 import SystemOverview from './Cyber/SystemOverview';
 
 export const FarmerDashboard: React.FC = () => {
-  const { user, themeName, showContextMenu } = useAppStore();
+  const { user, themeName, showContextMenu, setActiveTab } = useAppStore();
   const { t } = useLanguage();
 
   const { data: statsResponse, isLoading: statsLoading } = useQuery({
@@ -56,7 +56,7 @@ export const FarmerDashboard: React.FC = () => {
           </div>
           <div className="text-right">
             <p className="text-[10px] font-black text-primary-300/40 uppercase tracking-[0.3em]">System Status: Optimal</p>
-            <p className="text-sm font-bold text-white tabular-nums mt-1">OCT 26, 2024 - 14:38 GMT</p>
+            <p className="text-sm font-bold text-white tabular-nums mt-1">{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })}</p>
           </div>
         </header>
 
@@ -97,10 +97,10 @@ export const FarmerDashboard: React.FC = () => {
         {/* Legacy Stats converted to Cyber Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-                { label: 'SOIL MOISTURE', value: farmerStats?.soilMoisture || '34%', icon: Zap, trend: '+2%' },
-                { label: 'AVG TEMP', value: farmerStats?.avgTemp || '21°C', icon:TrendingUp, trend: 'Stable' },
-                { label: 'PH LEVEL', value: farmerStats?.phLevel || '6.8', icon: LineChart, trend: 'Optimal' },
-                { label: 'AI CONFIDENCE', value: farmerStats?.aiConfidence || '98%', icon: ShieldAlert, trend: 'High' }
+                { label: 'SOIL MOISTURE', value: farmerStats?.soilMoisture || '\u2014', icon: Zap, trend: farmerStats?.soilMoisture ? '+2%' : 'No data' },
+                { label: 'AVG TEMP', value: farmerStats?.avgTemp || '\u2014', icon:TrendingUp, trend: farmerStats?.avgTemp ? 'Stable' : 'No data' },
+                { label: 'PH LEVEL', value: farmerStats?.phLevel || '\u2014', icon: LineChart, trend: farmerStats?.phLevel ? 'Optimal' : 'No data' },
+                { label: 'AI CONFIDENCE', value: farmerStats?.aiConfidence || '\u2014', icon: ShieldAlert, trend: farmerStats?.aiConfidence ? 'High' : 'No data' }
             ].map((stat, i) => (
                 <div 
                     key={i} 
@@ -195,7 +195,10 @@ export const FarmerDashboard: React.FC = () => {
           <div className="relative z-10">
             <h3 className="text-2xl font-black mb-3 tracking-tight">{t('farmer_ask_ai')}</h3>
             <p className="text-primary-100 mb-8 font-medium text-lg leading-relaxed max-w-sm">{t('farmer_ai_description')}</p>
-            <button className="px-8 py-3 bg-white text-primary-700 font-bold rounded-2xl hover:bg-primary-50 transition-all shadow-xl active:scale-95">
+            <button
+              onClick={() => setActiveTab('aiassistant')}
+              className="px-8 py-3 bg-white text-primary-700 font-bold rounded-2xl hover:bg-primary-50 transition-all shadow-xl active:scale-95"
+            >
               {t('farmer_start_chat')}
             </button>
           </div>

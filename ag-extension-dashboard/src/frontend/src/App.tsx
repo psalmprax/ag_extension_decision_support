@@ -73,6 +73,10 @@ import AlphaAI from './components/Cyber/AlphaAI';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { ContextMenu } from '@/components/ContextMenu';
 import { ShareModal } from '@/components/ShareModal';
+import ProfileModal from '@/components/ProfileModal';
+import SettingsPanel from '@/components/SettingsPanel';
+import HelpCenterModal from '@/components/HelpCenterModal';
+import { KnowledgeBase } from '@/components/KnowledgeBase';
 
 // COLORS constant removed as it's unused
 
@@ -204,12 +208,19 @@ function App() {
     const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const [userLocation, setUserLocation] = useState<string>('');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [ragAnswer, setRagAnswer] = useState<{ answer: string; contextUsed: any[] } | null>(null);
-    const [isAsking, setIsAsking] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any    // Stats for charts
+    const [performanceData, setPerformanceData] = useState<any[]>([]);
+
+    // Drag-and-drop state
     const [isDragOver, setIsDragOver] = useState(false);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [pendingSyncCount, setPendingSyncCount] = useState(0);
+    const [showProfileModal, setShowProfileModal] = useState(false);
+    const [showSettingsPanel, setShowSettingsPanel] = useState(false);
+    const [showHelpCenter, setShowHelpCenter] = useState(false);
+    const [globalSearchResults, setGlobalSearchResults] = useState<{ type: string; items: { id: string; label: string; sublabel?: string }[] }[]>([]);
+    const [isGlobalSearching, setIsGlobalSearching] = useState(false);
+    const [showGlobalSearch, setShowGlobalSearch] = useState(false);
 
     // Online/offline detection
     useEffect(() => {
@@ -642,17 +653,65 @@ function App() {
         }
     };
 
-    const handleKnowledgeSearch = async (e?: React.FormEvent) => {
-        if (e) e.preventDefault();
-        setRagAnswer(null);
-        setIsAsking(true);
+    // Global search handler — searches farmers, knowledge, visits
+    const handleGlobalSearch = async (query: string) => {
+        if (!query.trim()) {
+            setGlobalSearchResults([]);
+            setShowGlobalSearch(false);
+            return;
+        }
+        setIsGlobalSearching(true);
+        setShowGlobalSearch(true);
+        const results: { type: string; items: { id: string; label: string; sublabel?: string }[] }[] = [];
         try {
-            const result = await askAI(searchQuery);
-            setRagAnswer(result.data);
-        } catch (error) {
-            console.error('Failed to ask AI:', error);
+            // Search farmers
+            const matchedFarmers = (farmers || []).filter((f: Farmer) =>
+                `${f.firstName} ${f.lastName}`.toLowerCase().includes(query.toLowerCase()) ||
+                (f.region || '').toLowerCase().includes(query.toLowerCase()) ||
+                (f.phone || '').includes(query)
+            ).slice(0, 5);
+            if (matchedFarmers.length > 0) {
+                results.push({
+                    type: 'Farmers',
+                    items: matchedFarmers.map((f: Farmer) => ({
+                        id: f.id,
+                        label: `${f.firstName} ${f.lastName}`,
+                        sublabel: f.region || f.village || '',
+                    }))
+                });
+            }
+            // Search knowledge
+            try {
+                const knowledgeResults = await searchKnowledge(query);
+                if (knowledgeResults.success && knowledgeResults.data?.articles?.length > 0) {
+                    results.push({
+                        type: 'Knowledge',
+                        items: knowledgeResults.data.articles.slice(0, 3).map((a: { id: string; title: string; category?: string }) => ({
+                            id: a.id,
+                            label: a.title,
+                            sublabel: a.category || '',
+                        }))
+                    });
+                }
+            } catch { /* knowledge search optional */ }
+            // Search visits
+            const matchedVisits = (visits || []).filter((v: Visit) =>
+                v.farmer_name?.toLowerCase().includes(query.toLowerCase()) ||
+                v.visit_type?.toLowerCase().includes(query.toLowerCase())
+            ).slice(0, 3);
+            if (matchedVisits.length > 0) {
+                results.push({
+                    type: 'Visits',
+                    items: matchedVisits.map((v: Visit) => ({
+                        id: v.id,
+                        label: `${v.farmer_name} — ${v.visit_type}`,
+                        sublabel: new Date(v.scheduled_at).toLocaleDateString(),
+                    }))
+                });
+            }
         } finally {
-            setIsAsking(false);
+            setGlobalSearchResults(results);
+            setIsGlobalSearching(false);
         }
     };
 
@@ -910,9 +969,9 @@ function App() {
     };
 
     return (
-        <div className={`min-h-screen ${darkMode ? 'dark' : ''} bg-theme-bg-primary transition-colors duration-300`}>
+        <div className={`h-screen flex flex-col ${darkMode ? 'dark' : ''} bg-theme-bg-primary transition-colors duration-300 overflow-hidden`}>
             {/* Top Navigation */}
-            <header className="fixed top-0 left-0 right-0 z-50 glass bg-theme-bg-card/80 border-b border-gray-200 dark:border-gray-800 transition-colors">
+            <header className="z-50 glass bg-theme-bg-card/80 border-b border-gray-200 dark:border-gray-800 transition-colors flex-shrink-0">
                 <div className="flex items-center justify-between px-6 py-4">
                     <div className="flex items-center gap-4">
                         <button
@@ -944,8 +1003,52 @@ function App() {
                                 placeholder={t('common_search') + "..."}
                                 className="input dark:bg-gray-800 dark:border-gray-700 dark:text-white pl-10 w-48 xl:w-64"
                                 value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onChange={(e) => {
+                                    setSearchQuery(e.target.value);
+                                    handleGlobalSearch(e.target.value);
+                                }}
+                                onFocus={() => { if (searchQuery.trim()) setShowGlobalSearch(true); }}
+                                onBlur={() => { setTimeout(() => setShowGlobalSearch(false), 200); }}
                             />
+                            {showGlobalSearch && globalSearchResults.length > 0 && (
+                                <div className="absolute top-full mt-2 left-0 right-0 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 z-50 max-h-80 overflow-y-auto">
+                                    {isGlobalSearching ? (
+                                        <div className="p-4 text-center text-sm text-gray-500">
+                                            <Loader2 className="w-4 h-4 animate-spin inline mr-2" />Searching...
+                                        </div>
+                                    ) : (
+                                        globalSearchResults.map((group) => (
+                                            <div key={group.type}>
+                                                <div className="px-4 pt-3 pb-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{group.type}</div>
+                                                {group.items.map((item) => (
+                                                    <button
+                                                        key={item.id}
+                                                        className="w-full px-4 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center gap-3"
+                                                        onClick={() => {
+                                                            if (group.type === 'Farmers') {
+                                                                const farmer = farmers?.find((f: Farmer) => f.id === item.id);
+                                                                if (farmer) handleOpenFarmerDetail(farmer);
+                                                            } else if (group.type === 'Visits') {
+                                                                setActiveTab('visits');
+                                                            } else {
+                                                                setActiveTab('knowledge');
+                                                                setSearchQuery(item.label);
+                                                            }
+                                                            setShowGlobalSearch(false);
+                                                        }}
+                                                    >
+                                                        <div className="flex-1">
+                                                            <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{item.label}</p>
+                                                            {item.sublabel && <p className="text-xs text-gray-500 truncate">{item.sublabel}</p>}
+                                                        </div>
+                                                        <ChevronRight className="w-4 h-4 text-gray-400" />
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            )}
                         </div>
                         <ThemeSwitcher currentTheme={themeName} onThemeChange={setThemeName} />
                         <LanguageSwitcher compact />
@@ -1006,17 +1109,26 @@ function App() {
                                                 <p className="text-xs font-bold text-gray-900 dark:text-white truncate">{storeUser?.email}</p>
                                             </div>
 
-                                            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-600 dark:text-gray-300 group">
+                                            <button
+                                                onClick={() => { setIsProfileMenuOpen(false); setShowProfileModal(true); }}
+                                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-600 dark:text-gray-300 group"
+                                            >
                                                 <User className="w-4 h-4 text-gray-400 group-hover:text-primary-500" />
                                                 <span className="text-xs font-bold uppercase tracking-widest">My Profile</span>
                                             </button>
 
-                                            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-600 dark:text-gray-300 group">
+                                            <button
+                                                onClick={() => { setIsProfileMenuOpen(false); setShowSettingsPanel(true); }}
+                                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-600 dark:text-gray-300 group"
+                                            >
                                                 <Settings className="w-4 h-4 text-gray-400 group-hover:text-primary-500" />
                                                 <span className="text-xs font-bold uppercase tracking-widest">Settings</span>
                                             </button>
 
-                                            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-600 dark:text-gray-300 group">
+                                            <button
+                                                onClick={() => { setIsProfileMenuOpen(false); setShowHelpCenter(true); }}
+                                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-600 dark:text-gray-300 group"
+                                            >
                                                 <HelpCircle className="w-4 h-4 text-gray-400 group-hover:text-primary-500" />
                                                 <span className="text-xs font-bold uppercase tracking-widest">Help Center</span>
                                             </button>
@@ -1039,14 +1151,16 @@ function App() {
                 </div>
             </header>
 
-            {/* Sidebar */}
+            {/* Application Body */}
+            <div className="flex flex-1 overflow-hidden relative">
+                {/* Sidebar */}
             <AnimatePresence>
                 {sidebarOpen && (
                     <motion.aside
                         initial={{ width: 0, opacity: 0 }}
                         animate={{ width: 260, opacity: 1 }}
                         exit={{ width: 0, opacity: 0 }}
-                        className="fixed left-0 top-[73px] bottom-0 z-40 bg-theme-bg-card border-r border-gray-200 dark:border-gray-800 overflow-hidden transition-colors"
+                        className="h-full z-40 bg-theme-bg-card border-r border-gray-200 dark:border-gray-800 overflow-y-auto transition-colors flex-shrink-0"
                     >
                         <nav className="p-4 space-y-2">
                             {navItems.map((item) => (
@@ -1081,16 +1195,18 @@ function App() {
                 )}
             </AnimatePresence>
 
-            {/* Breadcrumb Navigation */}
-            <div className={`fixed top-[73px] left-0 right-0 z-40 bg-theme-bg-primary/80 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-800/50 transition-all duration-300 ${sidebarOpen ? 'ml-[260px]' : 'ml-0'}`}>
-                <div className="px-6 py-3">
-                    <BreadcrumbNavigation items={getBreadcrumbItems()} />
-                </div>
-            </div>
+                {/* Content Area */}
+                <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+                    {/* Breadcrumb Navigation - Sticky within the content area */}
+                    <div className="z-40 bg-theme-bg-primary/80 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-800/50 flex-shrink-0">
+                        <div className="px-6 py-3">
+                            <BreadcrumbNavigation items={getBreadcrumbItems()} />
+                        </div>
+                    </div>
 
-            {/* Main Content */}
-            <main className={`pt-[121px] min-h-screen transition-all duration-300 ${sidebarOpen ? 'ml-[260px]' : 'ml-0'}`}>
-                <div className="p-8">
+                    {/* Main Content Scrollable */}
+                    <main className="flex-1 overflow-y-auto scrollbar-hide">
+                        <div className="p-8">
                     <div className=''>
                         <ErrorBoundary>
                             {activeTab === 'farmer_dashboard' && <FarmerDashboard />}
@@ -1585,99 +1701,8 @@ function App() {
                         </div>
                     )}
 
-                    {activeTab === 'billing' && (
-                        <BillingDashboard />
-                    )}
-
                     {activeTab === 'knowledge' && (
-                        <div className="max-w-4xl mx-auto py-8">
-                            <div className="mb-8 text-center">
-                                <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">{t('knowledge_title')}</h1>
-                                <p className="text-gray-500 dark:text-gray-400 mt-2 text-lg font-medium">{t('knowledge_subtitle')}</p>
-                            </div>
-
-                            <form onSubmit={(e) => { e.preventDefault(); handleKnowledgeSearch(e); }} className="mb-12">
-                                <div className="relative group">
-                                    <div className={`absolute inset-0 bg-primary-500/10 dark:bg-primary-500/20 rounded-3xl blur-xl transition-all ${isDragOver ? 'bg-green-500/20 blur-2xl opacity-100' : 'opacity-0 group-focus-within:opacity-100 group-hover:blur-2xl'}`}></div>
-                                    <div
-                                        className={`relative flex gap-3 p-2 bg-theme-bg-card dark:bg-gray-800 rounded-3xl border shadow-xl shadow-primary-500/5 items-center transition-all ${isDragOver
-                                            ? 'border-green-400 border-2 bg-green-50/50 dark:bg-green-900/20 shadow-green-500/20'
-                                            : 'border-gray-100 dark:border-gray-700'
-                                            }`}
-                                        onDragOver={handleDragOver}
-                                        onDragLeave={handleDragLeave}
-                                        onDrop={handleDrop}
-                                    >
-                                        <div className="pl-4">
-                                            <Search className="w-5 h-5 text-primary-500" />
-                                        </div>
-                                        <input
-                                            type="text"
-                                            placeholder={isDragOver ? 'Drop files here to analyze...' : t('knowledge_search_ask')}
-                                            className="flex-1 bg-transparent border-none focus:ring-0 py-4 text-gray-900 dark:text-white placeholder-gray-400 font-medium"
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                        />
-                                        {isDragOver && (
-                                            <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
-                                                <Upload className="w-5 h-5" />
-                                                <span className="text-sm font-bold">Drop to analyze</span>
-                                            </div>
-                                        )}
-                                        <button
-                                            type="submit"
-                                            disabled={isAsking}
-                                            className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-primary-500/20 transition-all flex items-center gap-2"
-                                        >
-                                            {isAsking ? (
-                                                <>
-                                                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                                                    {t('knowledge_thinking')}
-                                                </>
-                                            ) : t('ai_ask_button')}
-                                        </button>
-                                    </div>
-                                </div>
-                            </form>
-
-                            {ragAnswer && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 30 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="card p-10 bg-theme-bg-card dark:bg-gray-800 shadow-2xl border-primary-100 dark:border-primary-900/50 border relative overflow-hidden group"
-                                >
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/5 rounded-bl-full translate-x-8 -translate-y-8 group-hover:scale-110 transition-transform"></div>
-
-                                    <div className="flex items-center gap-3 mb-6 text-primary-600 dark:text-primary-400">
-                                        <div className="p-2 bg-primary-100 dark:bg-primary-900/40 rounded-xl">
-                                            <MessageSquare className="w-6 h-6" />
-                                        </div>
-                                        <h3 className="text-2xl font-black tracking-tight">{t('ai_expert_recommendation')}</h3>
-                                    </div>
-                                    <div className="prose prose-primary dark:prose-invert max-w-none">
-                                        <p className="text-gray-800 dark:text-gray-200 leading-relaxed text-lg font-medium whitespace-pre-wrap">
-                                            {ragAnswer.answer}
-                                        </p>
-                                    </div>
-                                    <div className="mt-10 pt-8 border-t border-gray-100 dark:border-gray-700/50 flex flex-col gap-4">
-                                        <div className="flex items-center gap-2">
-                                            <Activity className="w-4 h-4 text-gray-400" />
-                                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest ">{t('ai_contextual_verification')}</h4>
-                                        </div>
-                                        <div className="flex flex-wrap gap-2">
-                                            {ragAnswer.contextUsed.map((ctx: { metadata: { crop: string; category: string } }, i: number) => (
-                                                <div key={i} className="px-3 py-1.5 bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-600/50 rounded-xl flex items-center gap-2">
-                                                    <div className="w-1.5 h-1.5 bg-primary-500 rounded-full"></div>
-                                                    <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase">
-                                                        {ctx.metadata.crop} / {ctx.metadata.category}
-                                                    </span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </div>
+                        <KnowledgeBase />
                     )}
 
                     {activeTab === 'aiassistant' && (
@@ -1914,8 +1939,9 @@ function App() {
                             </div>
                         </div>
                     )}
+                    </main>
                 </div>
-            </main>
+            </div>
 
             {/* Visit Modal */}
             <VisitModal
@@ -1957,6 +1983,9 @@ function App() {
                     entityName={shareModal.entityName}
                 />
             )}
+            <ProfileModal isOpen={showProfileModal} onClose={() => setShowProfileModal(false)} />
+            <SettingsPanel isOpen={showSettingsPanel} onClose={() => setShowSettingsPanel(false)} />
+            <HelpCenterModal isOpen={showHelpCenter} onClose={() => setShowHelpCenter(false)} />
         </div>
     );
 }

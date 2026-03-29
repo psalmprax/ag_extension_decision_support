@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, X, CheckCircle2, AlertTriangle, AlertCircle, Info, Trash2, Clock } from 'lucide-react';
+import { Bell, X, CheckCircle2, AlertTriangle, AlertCircle, Info, Trash2, Clock, Loader2 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import { formatDistanceToNow } from 'date-fns';
+import { fetchNotifications, markAsRead, markAllAsRead, clearAllNotifications, Notification as ApiNotification } from '@/api/notificationService';
+import toast from 'react-hot-toast';
 
 interface NotificationPanelProps {
     isOpen: boolean;
@@ -11,8 +13,28 @@ interface NotificationPanelProps {
 }
 
 export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, onClose }) => {
-    const { notifications, markNotificationRead, clearNotifications } = useAppStore();
+    const { notifications: storeNotifications, markNotificationRead: storeMarkRead, clearNotifications: storeClear } = useAppStore();
     const { t } = useLanguage();
+    const [apiNotifications, setApiNotifications] = useState<ApiNotification[]>([]);
+    const [isLoadingApi, setIsLoadingApi] = useState(false);
+    const [useApiData, setUseApiData] = useState(false);
+
+    // Attempt to load from API when panel opens
+    useEffect(() => {
+        if (isOpen) {
+            setIsLoadingApi(true);
+            fetchNotifications()
+                .then((data) => {
+                    setApiNotifications(data);
+                    setUseApiData(true);
+                })
+                .catch(() => {
+                    // Fallback to store data (already available)
+                    setUseApiData(false);
+                })
+                .finally(() => setIsLoadingApi(false));
+        }
+    }, [isOpen]);
 
     const icons = {
         success: <CheckCircle2 className="w-5 h-5 text-emerald-500" />,
@@ -27,6 +49,60 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
         error: 'bg-rose-50 dark:bg-rose-900/10',
         info: 'bg-blue-50 dark:bg-blue-900/10',
     };
+
+    const handleMarkRead = async (id: string) => {
+        if (useApiData) {
+            try {
+                await markAsRead(id);
+                setApiNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true, readAt: new Date().toISOString() } : n));
+            } catch {
+                storeMarkRead(id);
+            }
+        } else {
+            storeMarkRead(id);
+        }
+    };
+
+    const handleMarkAllRead = async () => {
+        if (useApiData) {
+            try {
+                await markAllAsRead();
+                setApiNotifications(prev => prev.map(n => ({ ...n, isRead: true, readAt: new Date().toISOString() })));
+                toast.success('All notifications marked as read');
+            } catch {
+                toast.error('Failed to mark all as read');
+            }
+        } else {
+            storeClear();
+        }
+    };
+
+    const handleClearAll = async () => {
+        if (useApiData) {
+            try {
+                await clearAllNotifications();
+                setApiNotifications([]);
+                toast.success('All notifications cleared');
+            } catch {
+                toast.error('Failed to clear notifications');
+            }
+        } else {
+            storeClear();
+        }
+    };
+
+    // Normalize API notifications to match the display format
+    const displayNotifications = useApiData
+        ? apiNotifications.map(n => ({
+            id: n.id,
+            type: n.type as 'success' | 'warning' | 'error' | 'info',
+            message: n.title ? `${n.title}: ${n.message}` : n.message,
+            timestamp: new Date(n.createdAt).getTime(),
+            read: n.isRead,
+        }))
+        : storeNotifications;
+
+    const unreadCount = displayNotifications.filter(n => !n.read).length;
 
     return (
         <AnimatePresence>
@@ -53,18 +129,29 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
                                 </div>
                                 <div>
                                     <h2 className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-tight">{t('nav_notifications') || 'Notifications'}</h2>
-                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{notifications.length} {t('common_total') || 'Total'}</p>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                                        {unreadCount} {t('common_unread') || 'Unread'} · {displayNotifications.length} {t('common_total') || 'Total'}
+                                    </p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
-                                {notifications.length > 0 && (
-                                    <button
-                                        onClick={clearNotifications}
-                                        className="p-2 text-gray-400 hover:text-rose-500 transition-colors"
-                                        title={t('common_clear_all') || 'Clear All'}
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
+                                {displayNotifications.length > 0 && (
+                                    <>
+                                        <button
+                                            onClick={handleMarkAllRead}
+                                            className="p-2 text-gray-400 hover:text-primary-500 transition-colors"
+                                            title={t('common_mark_all_read') || 'Mark All Read'}
+                                        >
+                                            <CheckCircle2 className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={handleClearAll}
+                                            className="p-2 text-gray-400 hover:text-rose-500 transition-colors"
+                                            title={t('common_clear_all') || 'Clear All'}
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </>
                                 )}
                                 <button
                                     onClick={onClose}
@@ -76,7 +163,11 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
                         </div>
 
                         <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar overflow-x-hidden">
-                            {notifications.length === 0 ? (
+                            {isLoadingApi ? (
+                                <div className="h-full flex items-center justify-center">
+                                    <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
+                                </div>
+                            ) : displayNotifications.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4">
                                     <div className="w-16 h-16 bg-gray-50 dark:bg-gray-800/50 rounded-full flex items-center justify-center border border-gray-100 dark:border-gray-700">
                                         <Bell className="w-8 h-8 text-gray-300" />
@@ -87,7 +178,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
                                     </div>
                                 </div>
                             ) : (
-                                notifications.map((notification) => (
+                                displayNotifications.map((notification) => (
                                     <motion.div
                                         key={notification.id}
                                         layout
@@ -97,7 +188,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
                                             ? 'bg-transparent border-gray-100 dark:border-gray-800 opacity-60'
                                             : `${bgColors[notification.type]} border-white/20 dark:border-white/5 shadow-sm`
                                             }`}
-                                        onClick={() => markNotificationRead(notification.id)}
+                                        onClick={() => handleMarkRead(notification.id)}
                                     >
                                         <div className="flex gap-4">
                                             <div className="shrink-0 mt-1">
@@ -124,9 +215,16 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
                         </div>
 
                         <div className="p-6 border-t border-gray-100 dark:border-gray-800">
-                             <button className="w-full py-3 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs font-bold rounded-xl transition-all uppercase tracking-widest border border-gray-100 dark:border-gray-700">
+                            <button
+                                onClick={() => {
+                                    onClose();
+                                    // Navigate to a full activity view - use the store to switch tab
+                                    useAppStore.getState().setActiveTab('analytics');
+                                }}
+                                className="w-full py-3 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs font-bold rounded-xl transition-all uppercase tracking-widest border border-gray-100 dark:border-gray-700"
+                            >
                                 {t('notifications_view_history') || 'View All Activity'}
-                             </button>
+                            </button>
                         </div>
                     </motion.div>
                 </>

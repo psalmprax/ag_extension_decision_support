@@ -12,43 +12,157 @@ import {
     Database,
     CloudLightning,
     Terminal,
-    AlertCircle
+    AlertCircle,
+    Loader2
 } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
+import { useAppStore } from '@/store/useAppStore';
+import apiClient from '@/api/client';
+import toast from 'react-hot-toast';
+import { useQuery } from '@tanstack/react-query';
+import { searchKnowledge } from '@/api/knowledgeService';
+import { fetchFarmers } from '@/api/farmerService';
+
+interface AgentData {
+    id: string;
+    name: string;
+    status: string;
+    load: number;
+    description: string;
+    capabilities: string[];
+    lastActive?: string;
+}
+
+const iconMap: Record<string, React.ElementType> = {
+    'agent-zero': Cpu,
+    'crew-ai': Layers,
+    'openclaw': Terminal,
+};
 
 const AlphaAgentOps = () => {
     const { t } = useLanguage();
-    const [activeAgent, setActiveAgent] = React.useState<'agent-zero' | 'crew-ai' | 'openclaw'>('agent-zero');
+    const { addNotification } = useAppStore();
+    const [activeAgent, setActiveAgent] = React.useState<string>('agent-zero');
+    const [isRunning, setIsRunning] = React.useState(false);
+    const [isExecuting, setIsExecuting] = React.useState(false);
+    const [consoleOutput, setConsoleOutput] = React.useState<string[]>([]);
 
-    const agents = [
-        { 
-            id: 'agent-zero', 
-            name: 'Agent Zero', 
-            status: 'online', 
-            icon: Cpu, 
-            description: 'Autonomous task execution & tool calling',
-            capabilities: ['Farmer Outreach', 'Data Collection', 'Weather Monitoring'],
-            load: 42
+    const now = () => new Date().toLocaleTimeString('en-US', { hour12: false });
+
+    // Fetch real health data
+    const { data: healthData } = useQuery({
+        queryKey: ['agent-health'],
+        queryFn: async () => {
+            const { data } = await apiClient.get('/health');
+            return data;
         },
-        { 
-            id: 'crew-ai', 
-            name: 'Crew AI', 
-            status: 'idle', 
-            icon: Layers, 
-            description: 'Multi-agent orchestration workflows',
-            capabilities: ['Market Analysis', 'Crop Disease Diagnosis', 'Policy Research'],
-            load: 0
+        refetchInterval: 30000,
+    });
+
+    // Fetch real agent data from backend
+    const { data: agentsData, refetch: refetchAgents } = useQuery<AgentData[]>({
+        queryKey: ['ai-agents'],
+        queryFn: async () => {
+            const { data } = await apiClient.get('/ai/agents');
+            return data.data || [];
         },
-        { 
-            id: 'openclaw', 
-            name: 'OpenClaw', 
-            status: 'online', 
-            icon: Terminal, 
-            description: 'Automated code & system refactoring',
-            capabilities: ['Bug Fixes', 'Unit Testing', 'Doc Gen'],
-            load: 12
+    });
+
+    // Fetch real knowledge count
+    const { data: knowledgeTotal } = useQuery({
+        queryKey: ['knowledge-count'],
+        queryFn: async () => {
+            const res = await searchKnowledge('');
+            return res.data?.total || 0;
+        },
+    });
+
+    // Fetch real farmer count
+    const { data: farmerCount } = useQuery({
+        queryKey: ['farmer-count'],
+        queryFn: async () => {
+            const res = await fetchFarmers();
+            return res.data?.total || 0;
+        },
+    });
+
+    // Fetch real alerts count
+    const { data: alertsCount } = useQuery({
+        queryKey: ['alerts-count'],
+        queryFn: async () => {
+            try {
+                const { data } = await apiClient.get('/alerts');
+                const alerts = data?.data || data || [];
+                return Array.isArray(alerts) ? alerts.length : 0;
+            } catch {
+                return 0;
+            }
+        },
+    });
+
+    const agents = (agentsData || []).map(a => ({
+        ...a,
+        icon: iconMap[a.id] || Cpu,
+    }));
+
+    const handlePlay = async () => {
+        setIsExecuting(true);
+        const ts = now();
+        setConsoleOutput(prev => [...prev, `${ts} [EXEC] Starting ${activeAgent} agent execution...`]);
+        try {
+            const { data } = await apiClient.post('/ai/execute', { agent: activeAgent });
+            if (data.success) {
+                setIsRunning(true);
+                setConsoleOutput(prev => [...prev, `${ts} [OK] Agent ${activeAgent} task dispatched successfully`]);
+                addNotification({ type: 'success', message: `Agent ${activeAgent} started successfully` });
+                refetchAgents();
+            }
+        } catch {
+            setConsoleOutput(prev => [...prev, `${ts} [ERR] Backend unavailable — agent not started`]);
+            addNotification({ type: 'error', message: `Failed to start ${activeAgent} — backend unavailable` });
+        } finally {
+            setIsExecuting(false);
         }
-    ];
+    };
+
+    const handleStop = async () => {
+        setIsExecuting(true);
+        const ts = now();
+        setConsoleOutput(prev => [...prev, `${ts} [EXEC] Stopping ${activeAgent} agent...`]);
+        try {
+            const { data } = await apiClient.post(`/ai/stop/${activeAgent}`);
+            if (data.success) {
+                setIsRunning(false);
+                setConsoleOutput(prev => [...prev, `${ts} [OK] Agent ${activeAgent} stopped`]);
+                addNotification({ type: 'info', message: `Agent ${activeAgent} stopped` });
+                refetchAgents();
+            }
+        } catch {
+            setIsRunning(false);
+            setConsoleOutput(prev => [...prev, `${ts} [ERR] Stop request failed — agent state reset locally`]);
+            addNotification({ type: 'error', message: `Failed to communicate with backend for ${activeAgent}` });
+        } finally {
+            setIsExecuting(false);
+        }
+    };
+
+    const handleRefresh = async () => {
+        setIsExecuting(true);
+        const ts = now();
+        setConsoleOutput(prev => [...prev, `${ts} [REFRESH] Refreshing agent status...`]);
+        try {
+            await refetchAgents();
+            setConsoleOutput(prev => [...prev, `${ts} [OK] Agent status refreshed from backend`]);
+            addNotification({ type: 'success', message: 'Agent status refreshed' });
+        } catch {
+            setConsoleOutput(prev => [...prev, `${ts} [ERR] Failed to refresh agent status`]);
+            addNotification({ type: 'error', message: 'Failed to refresh agent status' });
+        } finally {
+            setIsExecuting(false);
+        }
+    };
+
+    const activeAgentData = agents.find(a => a.id === activeAgent);
 
     return (
         <div className="w-full space-y-8">
@@ -62,16 +176,19 @@ const AlphaAgentOps = () => {
                         Alpha Agent Ops
                     </h2>
                     <p className="text-[10px] font-bold text-primary-400/60 uppercase tracking-widest pl-12">
-                        Neural Orchestration & Autonomous Logistics
+                        Agent Orchestration & Task Management
                     </p>
                 </div>
                 <div className="flex gap-4">
                     <div className="px-4 py-2 bg-black/40 border border-white/10 rounded-xl backdrop-blur-md">
                         <div className="flex items-center gap-2 mb-1">
                             <Activity className="w-3 h-3 text-secondary-400" />
-                            <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">System Load</span>
+                            <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">System Status</span>
                         </div>
-                        <div className="text-lg font-black text-white">18.4 <span className="text-xs text-white/40">GFLOPs</span></div>
+                        <div className="text-lg font-black text-white">
+                            {healthData?.status || 'Unknown'}{' '}
+                            <span className="text-xs text-white/40">{healthData?.environment || ''}</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -81,10 +198,10 @@ const AlphaAgentOps = () => {
                 {/* Agent Selection Sidebar */}
                 <div className="col-span-4 space-y-4">
                     <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-4">Instance Registry</h3>
-                    {agents.map((agent) => (
+                    {agents.length > 0 ? agents.map((agent) => (
                         <button
                             key={agent.id}
-                            onClick={() => setActiveAgent(agent.id as any)}
+                            onClick={() => setActiveAgent(agent.id)}
                             className={`w-full p-4 rounded-2xl border transition-all text-left relative group overflow-hidden ${
                                 activeAgent === agent.id 
                                     ? 'bg-primary-500/10 border-primary-500/30 ring-1 ring-primary-500/20 shadow-lg shadow-primary-500/5' 
@@ -99,16 +216,15 @@ const AlphaAgentOps = () => {
                                     <agent.icon className={`w-5 h-5 ${activeAgent === agent.id ? 'text-primary-400' : 'text-white/40'}`} />
                                 </div>
                                 <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${
-                                    agent.status === 'online' ? 'bg-green-500/10 text-green-400' : 'bg-white/5 text-white/40'
+                                    agent.status === 'online' || agent.status === 'running' ? 'bg-green-500/10 text-green-400' : 'bg-white/5 text-white/40'
                                 }`}>
-                                    <div className={`w-1 h-1 rounded-full ${agent.status === 'online' ? 'bg-green-400 animate-pulse' : 'bg-white/20'}`} />
+                                    <div className={`w-1 h-1 rounded-full ${agent.status === 'online' || agent.status === 'running' ? 'bg-green-400 animate-pulse' : 'bg-white/20'}`} />
                                     {agent.status}
                                 </div>
                             </div>
                             <div className="font-black text-white uppercase tracking-wider mb-1">{agent.name}</div>
                             <div className="text-[10px] text-white/40 font-medium leading-relaxed">{agent.description}</div>
                             
-                            {/* Simple Load Indicator */}
                             {agent.load > 0 && (
                                 <div className="mt-3 space-y-1">
                                     <div className="flex justify-between text-[8px] font-black uppercase tracking-tighter text-white/20">
@@ -121,7 +237,11 @@ const AlphaAgentOps = () => {
                                 </div>
                             )}
                         </button>
-                    ))}
+                    )) : (
+                        <div className="p-8 text-center text-white/40 text-xs font-bold uppercase">
+                            No agents registered
+                        </div>
+                    )}
                 </div>
 
                 {/* Control Panel Section */}
@@ -135,14 +255,26 @@ const AlphaAgentOps = () => {
                                 Operational Console
                             </h4>
                             <div className="flex gap-2">
-                                <button className="p-3 bg-primary-500/20 border border-primary-500/30 rounded-xl text-primary-400 hover:bg-primary-500/30 transition-all">
-                                    <Play className="w-5 h-5" />
+                                <button
+                                    onClick={handlePlay}
+                                    disabled={isExecuting || isRunning}
+                                    className="p-3 bg-primary-500/20 border border-primary-500/30 rounded-xl text-primary-400 hover:bg-primary-500/30 transition-all disabled:opacity-40"
+                                >
+                                    {isExecuting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
                                 </button>
-                                <button className="p-3 bg-white/5 border border-white/10 rounded-xl text-white/40 hover:bg-white/10 transition-all">
+                                <button
+                                    onClick={handleStop}
+                                    disabled={isExecuting || !isRunning}
+                                    className="p-3 bg-white/5 border border-white/10 rounded-xl text-white/40 hover:bg-white/10 transition-all disabled:opacity-40"
+                                >
                                     <Square className="w-5 h-5" />
                                 </button>
-                                <button className="p-3 bg-white/5 border border-white/10 rounded-xl text-white/40 hover:bg-white/10 transition-all">
-                                    <RefreshCcw className="w-5 h-5" />
+                                <button
+                                    onClick={handleRefresh}
+                                    disabled={isExecuting}
+                                    className="p-3 bg-white/5 border border-white/10 rounded-xl text-white/40 hover:bg-white/10 transition-all disabled:opacity-40"
+                                >
+                                    <RefreshCcw className={`w-5 h-5 ${isExecuting ? 'animate-spin' : ''}`} />
                                 </button>
                             </div>
                         </div>
@@ -152,7 +284,7 @@ const AlphaAgentOps = () => {
                             <div className="space-y-4">
                                 <h5 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Active Capabilities</h5>
                                 <div className="space-y-2">
-                                    {agents.find(a => a.id === activeAgent)?.capabilities.map((cap) => (
+                                    {(activeAgentData?.capabilities || []).map((cap) => (
                                         <div key={cap} className="flex items-center gap-3 p-3 bg-white/5 rounded-2xl border border-white/5 hover:border-white/10 transition-all cursor-default">
                                             <div className="w-2 h-2 rounded-full bg-primary-400/40" />
                                             <span className="text-xs font-bold text-white/80">{cap}</span>
@@ -163,9 +295,13 @@ const AlphaAgentOps = () => {
                             </div>
                             <div className="bg-primary-500/5 rounded-3xl border border-primary-500/10 p-6 flex flex-col justify-center items-center text-center">
                                 <CloudLightning className="w-12 h-12 text-primary-400/20 mb-4" />
-                                <div className="text-[10px] font-black text-primary-400 uppercase tracking-[0.2em] mb-2">Neural Link Status</div>
-                                <div className="text-2xl font-black text-white">99.9% <span className="text-sm text-white/40">Sync</span></div>
-                                <p className="text-[9px] text-white/40 mt-2 uppercase tracking-tight">LATENCY: 14ms | BANDWIDTH: 4.2GB/s</p>
+                                <div className="text-[10px] font-black text-primary-400 uppercase tracking-[0.2em] mb-2">System Health</div>
+                                <div className="text-2xl font-black text-white">
+                                    {healthData?.status === 'healthy' ? 'Online' : healthData?.status || 'Unknown'}
+                                </div>
+                                <p className="text-[9px] text-white/40 mt-2 uppercase tracking-tight">
+                                    DB: {healthData?.services?.database || '\u2014'} | Cache: {healthData?.services?.cache || '\u2014'}
+                                </p>
                             </div>
                         </div>
 
@@ -175,32 +311,36 @@ const AlphaAgentOps = () => {
                                 <span className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em]">Runtime History</span>
                                 <Terminal className="w-3 h-3 text-white/40" />
                             </div>
-                            <div className="p-4 space-y-3 font-mono text-[10px]">
-                                <div className="flex gap-3">
-                                    <span className="text-white/20">16:42:10</span>
-                                    <span className="text-primary-400">[SYSTEM]</span>
-                                    <span className="text-white/60">Initialized {activeAgent} instance v2.4.1</span>
-                                </div>
-                                <div className="flex gap-3">
-                                    <span className="text-white/20">16:42:45</span>
-                                    <span className="text-green-400">[QUERY]</span>
-                                    <span className="text-white/60">Regional market price database queried for Maize/Oromo</span>
-                                </div>
-                                <div className="flex gap-3">
-                                    <span className="text-white/20">16:43:02</span>
-                                    <span className="text-secondary-400">[AUTH]</span>
-                                    <span className="text-white/60">Extension Officer (ID: 4421) authorized for outreach</span>
-                                </div>
-                                <div className="flex gap-3 animate-pulse">
-                                    <span className="text-white/20">16:43:20</span>
-                                    <span className="text-primary-400">[PROC]</span>
-                                    <span className="text-white/60">Processing autonomous decision tree for harvest logistics...</span>
-                                </div>
+                            <div className="p-4 space-y-3 font-mono text-[10px] min-h-[80px]">
+                                {consoleOutput.length === 0 ? (
+                                    <div className="text-white/20 text-center py-4">System initialized. Awaiting agent commands.</div>
+                                ) : (
+                                    consoleOutput.map((line, i) => {
+                                        const parts = line.match(/^(\d{2}:\d{2}:\d{2}) \[(\w+)\] (.+)$/);
+                                        if (!parts) return <div key={i} className="text-white/60">{line}</div>;
+                                        const [, time, tag, msg] = parts;
+                                        const tagColor = tag === 'SYSTEM' ? 'text-primary-400' : tag === 'OK' || tag === 'QUERY' ? 'text-green-400' : tag === 'ERR' ? 'text-red-400' : tag === 'WARN' ? 'text-orange-400' : tag === 'EXEC' || tag === 'REFRESH' ? 'text-yellow-400' : 'text-white/60';
+                                        return (
+                                            <div key={i} className="flex gap-3">
+                                                <span className="text-white/20">{time}</span>
+                                                <span className={tagColor}>[{tag}]</span>
+                                                <span className="text-white/60">{msg}</span>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                                {isRunning && (
+                                    <div className="flex gap-3 animate-pulse">
+                                        <span className="text-white/20">{now()}</span>
+                                        <span className="text-primary-400">[PROC]</span>
+                                        <span className="text-white/60">Agent {activeAgent} executing tasks...</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
 
-                    {/* Quick Stats Banner */}
+                    {/* Quick Stats Banner — Real Data */}
                     <div className="grid grid-cols-3 gap-4">
                         <div className="p-4 bg-black/40 border border-white/10 rounded-2xl flex items-center gap-4">
                             <div className="p-2 bg-secondary-500/20 rounded-lg">
@@ -208,7 +348,7 @@ const AlphaAgentOps = () => {
                             </div>
                             <div>
                                 <div className="text-[8px] font-black text-white/40 uppercase tracking-widest">Knowledge Base</div>
-                                <div className="text-sm font-black text-white">12.4K <span className="text-[10px] text-white/40">Docs</span></div>
+                                <div className="text-sm font-black text-white">{knowledgeTotal ?? '\u2014'} <span className="text-[10px] text-white/40">Articles</span></div>
                             </div>
                         </div>
                         <div className="p-4 bg-black/40 border border-white/10 rounded-2xl flex items-center gap-4">
@@ -216,8 +356,8 @@ const AlphaAgentOps = () => {
                                 <Search className="w-5 h-5 text-green-400" />
                             </div>
                             <div>
-                                <div className="text-[8px] font-black text-white/40 uppercase tracking-widest">Active Discovery</div>
-                                <div className="text-sm font-black text-white">4 <span className="text-[10px] text-white/40">Nodes</span></div>
+                                <div className="text-[8px] font-black text-white/40 uppercase tracking-widest">Active Farmers</div>
+                                <div className="text-sm font-black text-white">{farmerCount ?? '\u2014'} <span className="text-[10px] text-white/40">Registered</span></div>
                             </div>
                         </div>
                         <div className="p-4 bg-black/40 border border-orange-500/20 rounded-2xl flex items-center gap-4">
@@ -225,8 +365,8 @@ const AlphaAgentOps = () => {
                                 <AlertCircle className="w-5 h-5 text-orange-400" />
                             </div>
                             <div>
-                                <div className="text-[8px] font-black text-white/40 uppercase tracking-widest">Anomalies</div>
-                                <div className="text-sm font-black text-white">0 <span className="text-[10px] text-white/40">Detected</span></div>
+                                <div className="text-[8px] font-black text-white/40 uppercase tracking-widest">Active Alerts</div>
+                                <div className="text-sm font-black text-white">{alertsCount ?? '\u2014'} <span className="text-[10px] text-white/40">Active</span></div>
                             </div>
                         </div>
                     </div>

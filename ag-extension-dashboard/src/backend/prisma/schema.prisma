@@ -31,8 +31,24 @@ model User {
   notifications     Notification[]
   transactionSubmissions TransactionSubmission[]
   redeemedVouchers Voucher[] @relation("RedeemedVouchers")
+  scheduledSMS  ScheduledSMS[]
+  knowledgeSearches KnowledgeSearch[] @relation("UserKnowledgeSearches")
 
   @@map("users")
+}
+
+model ScheduledSMS {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String   @map("user_id") @db.Uuid
+  phoneNumber     String   @map("phone_number") @db.VarChar(20)
+  message         String
+  scheduledAt     DateTime @map("scheduled_at") @db.Timestamp(6)
+  status          String   @default("pending") @db.VarChar(20) // 'pending', 'sent', 'failed'
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
+  user            User     @relation(fields: [userId], references: [id])
+
+  @@map("scheduled_sms")
 }
 
 model Farmer {
@@ -363,4 +379,27 @@ model TransactionSubmission {
   plan           SubscriptionPlan @relation(fields: [planId], references: [id])
 
   @@map("transaction_submissions")
+}
+
+model KnowledgeSearch {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  query     String
+  category  String?
+  crop      String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  user      User     @relation("UserKnowledgeSearches", fields: [userId], references: [id])
+
+  @@map("knowledge_searches")
+}
+
+model SearchCache {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  queryText   String   @unique @map("query_text")
+  answer      String
+  contextUsed Json     @map("context_used")
+  embedding   Float[]
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@map("search_cache")
 }

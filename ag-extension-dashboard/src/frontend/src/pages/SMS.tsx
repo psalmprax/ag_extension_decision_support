@@ -9,6 +9,7 @@ import { useLanguage } from '../lib/LanguageContext';
 import { useAppStore } from '../store/useAppStore';
 import { fetchSMSHistory, sendSMS, sendBulkSMS, translateMessage } from '../api/smsService';
 import { fetchFarmers, Farmer } from '../api/farmerService';
+import { fetchUsage } from '../api/billingService';
 
 interface SMSMessage {
     id: string;
@@ -58,6 +59,10 @@ export function SMSPage() {
     const [error, setError] = useState<string | null>(null);
     const [history, setHistory] = useState<SMSMessage[]>([]);
     
+    // Quota State - fetched from billing API
+    const [quota, setQuota] = useState({ current: 0, limit: 10000, sent: 0, failed: 0 });
+    const [isLoadingQuota, setIsLoadingQuota] = useState(false);
+    
     // Fetch History
     const loadHistory = async () => {
         try {
@@ -98,6 +103,29 @@ export function SMSPage() {
     useEffect(() => {
         loadHistory();
         loadContacts();
+        // Load quota from billing API
+        setIsLoadingQuota(true);
+        fetchUsage()
+            .then((data) => {
+                if (data?.success && data?.data) {
+                    const usageData = data.data;
+                    // Find SMS-related usage entries
+                    const smsUsage = Array.isArray(usageData)
+                        ? usageData.find((u: { type: string }) => u.type === 'sms' || u.type === 'SMS')
+                        : usageData;
+                    if (smsUsage) {
+                        setQuota(prev => ({
+                            ...prev,
+                            current: smsUsage.current || 0,
+                            limit: smsUsage.limit || 10000,
+                        }));
+                    }
+                }
+            })
+            .catch(() => {
+                // Silently fail - quota stays at defaults
+            })
+            .finally(() => setIsLoadingQuota(false));
     }, []);
 
     // Check for pending SMS on mount
@@ -444,16 +472,20 @@ export function SMSPage() {
 
                         <div className="space-y-4">
                             <div className="flex items-end justify-between">
-                                <span className="text-4xl font-extrabold text-slate-900 dark:text-white">4,821</span>
+                                <span className="text-4xl font-extrabold text-slate-900 dark:text-white">
+                                    {isLoadingQuota ? <Loader2 className="w-8 h-8 animate-spin inline" /> : quota.current.toLocaleString()}
+                                </span>
                                 <span className="text-sm font-bold text-slate-500 flex items-center gap-1 mb-1">
-                                    / 10,000
-                                    <Info className="w-3 h-3 cursor-help" />
+                                    / {quota.limit.toLocaleString()}
+                                    <span title={`SMS quota resets monthly. You've used ${quota.current} of ${quota.limit} messages.`}>
+                                        <Info className="w-3 h-3 cursor-help" />
+                                    </span>
                                 </span>
                             </div>
                             <div className="h-3 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                                 <motion.div
                                     initial={{ width: 0 }}
-                                    animate={{ width: '48%' }}
+                                    animate={{ width: `${Math.min((quota.current / quota.limit) * 100, 100)}%` }}
                                     className="h-full bg-gradient-to-r from-primary-600 to-indigo-600 rounded-full"
                                 />
                             </div>
@@ -466,11 +498,15 @@ export function SMSPage() {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <p className="text-xl font-bold text-emerald-600">124</p>
+                                    <p className="text-xl font-bold text-emerald-600">
+                                        {history.filter(m => m.status === 'success').length}
+                                    </p>
                                     <p className="text-[10px] font-bold text-slate-400 uppercase">{t('sms_stats_sent')}</p>
                                 </div>
                                 <div>
-                                    <p className="text-xl font-bold text-rose-500 font-mono">2</p>
+                                    <p className="text-xl font-bold text-rose-500 font-mono">
+                                        {history.filter(m => m.status === 'failed').length}
+                                    </p>
                                     <p className="text-[10px] font-bold text-slate-400 uppercase">{t('sms_stats_failed')}</p>
                                 </div>
                             </div>
