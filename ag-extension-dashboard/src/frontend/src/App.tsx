@@ -47,7 +47,7 @@ import { CardSkeleton } from '@/components/Skeleton';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { fetchDashboardData } from '@/api/dashboardService';
-import { askAI } from '@/api/knowledgeService';
+import { askAI, searchKnowledge } from '@/api/knowledgeService';
 import { fetchUserProfile, AuthResponse, ProfileResponse } from '@/api/authService';
 import { fetchFarmers } from '@/api/farmerService';
 import { fetchVisits } from '@/api/visitService';
@@ -209,7 +209,7 @@ function App() {
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const [userLocation, setUserLocation] = useState<string>('');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any    // Stats for charts
-    const [performanceData, setPerformanceData] = useState<any[]>([]);
+
 
     // Drag-and-drop state
     const [isDragOver, setIsDragOver] = useState(false);
@@ -1612,7 +1612,7 @@ function App() {
                                         </div>
                                         <p className="text-xs font-semibold text-primary-700 dark:text-primary-300 uppercase tracking-wide">{t('analytics_resolution_rate')}</p>
                                     </div>
-                                    <p className="text-2xl font-bold text-primary-700 dark:text-primary-300">{performanceData.metrics.resolutionRate}%</p>
+                                    <p className="text-2xl font-bold text-primary-700 dark:text-primary-300">{performanceData?.metrics?.resolutionRate || 0}%</p>
                                 </div>
 
                                 <div className="card p-5 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-900/10 border-blue-200 dark:border-blue-800">
@@ -1622,7 +1622,7 @@ function App() {
                                         </div>
                                         <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide">{t('analytics_avg_response_time')}</p>
                                     </div>
-                                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{performanceData.metrics.avgResponseTime}</p>
+                                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{performanceData?.metrics?.avgResponseTime || '0ms'}</p>
                                 </div>
 
                                 <div className="card p-5 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-900/10 border-green-200 dark:border-green-800">
@@ -1632,7 +1632,7 @@ function App() {
                                         </div>
                                         <p className="text-xs font-semibold text-green-700 dark:text-green-300 uppercase tracking-wide">{t('analytics_satisfaction_score')}</p>
                                     </div>
-                                    <p className="text-2xl font-bold text-green-700 dark:text-green-300">{performanceData.metrics.satisfactionScore}</p>
+                                    <p className="text-2xl font-bold text-green-700 dark:text-green-300">{performanceData?.metrics?.satisfactionScore || 0}</p>
                                 </div>
 
                                 <div className="card p-5 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-900/10 border-orange-200 dark:border-orange-800">
@@ -1642,7 +1642,7 @@ function App() {
                                         </div>
                                         <p className="text-xs font-semibold text-orange-700 dark:text-orange-300 uppercase tracking-wide">{t('analytics_follow_up_rate')}</p>
                                     </div>
-                                    <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">{performanceData.metrics.followUpRate}%</p>
+                                    <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">{performanceData?.metrics?.followUpRate || 0}%</p>
                                 </div>
 
                                 <div className="card p-5 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-900/10 border-purple-200 dark:border-purple-800">
@@ -1652,7 +1652,7 @@ function App() {
                                         </div>
                                         <p className="text-xs font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wide">{t('analytics_first_contact_res')}</p>
                                     </div>
-                                    <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">{performanceData.metrics.firstContactResolution}%</p>
+                                    <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">{performanceData?.metrics?.firstContactResolution || 0}%</p>
                                 </div>
                             </div>
 
@@ -1661,7 +1661,7 @@ function App() {
                                 <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">{t('analytics_activity_timeline')}</h3>
                                 <div className="h-[400px]">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={performanceData.timeline}>
+                                        <AreaChart data={performanceData?.timeline || []}>
                                             <defs>
                                                 <linearGradient id="colorVisits" x1="0" y1="0" x2="0" y2="1">
                                                     <stop offset="5%" stopColor="#22c55e" stopOpacity={0.2} />
