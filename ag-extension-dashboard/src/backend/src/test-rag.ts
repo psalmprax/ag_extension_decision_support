@@ -23,7 +23,7 @@ async function testRAG() {
         });
         
         console.log('\n3. Testing RAG Answer (Reasoning)...');
-        const ragResult = await KnowledgeService.askQuestion('What are common maize diseases and how to prevent them?');
+        const ragResult = await KnowledgeService.askQuestion('test-user', 'What are common maize diseases and how to prevent them?');
         console.log('Answer:', ragResult.answer);
         console.log('Context Items Used:', ragResult.contextUsed.length);
         

@@ -183,14 +183,16 @@ router.post('/ussd/handle', validate({ body: ussdSchema }), async (req: Request,
 });
 
 // Schedule SMS
-router.post('/schedule', validate({ body: scheduleSMSSchema }), async (req: Request, res: Response) => {
+router.post('/schedule', validate({ body: scheduleSMSSchema }), async (req: AuthRequest, res: Response) => {
     try {
         const { to, message, scheduledTime } = req.body;
+        const userId = req.user!.userId;
 
         const success = await smsService.scheduleSMS(
             to,
             message,
-            new Date(scheduledTime)
+            new Date(scheduledTime),
+            userId
         );
 
         if (success) {
