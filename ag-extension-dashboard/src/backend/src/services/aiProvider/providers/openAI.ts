@@ -208,19 +208,29 @@ Focus on precision and expert recommendations. If the context contains statistic
 
         const text = result.text ?? '';
         
-        // Extract visuals JSON from <visuals> tags
+        // Extract visuals JSON from <visuals> tags or any JSON block if tags are missed
         let visuals: any = undefined;
         try {
-            const match = text.match(/<visuals>([\s\S]*?)<\/visuals>/);
+            const match = text.match(/<visuals>([\s\S]*?)<\/visuals>/) || text.match(/```json\n([\s\S]*?)\n```/);
             if (match && match[1]) {
                 visuals = JSON.parse(match[1].trim());
+            } else if (text.includes('{') && text.includes('}')) {
+                // Secondary fallback: find the last JSON-like block
+                const lastBrace = text.lastIndexOf('}');
+                const firstBrace = text.lastIndexOf('{', lastBrace);
+                if (firstBrace !== -1 && lastBrace !== -1) {
+                    visuals = JSON.parse(text.substring(firstBrace, lastBrace + 1));
+                }
             }
         } catch (error) {
-            logger.warn('Failed to parse reasoning visuals JSON:', error);
+            // Silently fail visuals if JSON is malformed
         }
 
-        // Clean text of the visuals block for cleaner markdown rendering
-        const cleanAnswer = text.replace(/<visuals>[\s\S]*?<\/visuals>/, '').trim();
+        // Clean text of any JSON blocks for cleaner markdown rendering
+        const cleanAnswer = text
+            .replace(/<visuals>[\s\S]*?<\/visuals>/, '')
+            .replace(/```json[\s\S]*?```/, '')
+            .trim();
 
         return {
             reasoning: 'Detailed Intelligence Analysis completed.',
