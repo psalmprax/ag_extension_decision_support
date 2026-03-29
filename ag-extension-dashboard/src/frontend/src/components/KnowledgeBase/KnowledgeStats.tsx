@@ -31,15 +31,18 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
 
     const cropsData = data.crops || [];
     const categoriesData = data.categories || [];
+    const totalQueries = data.totalQueries ?? 0;
+    const cachedQueries = data.cachedQueries ?? 0;
+    const cacheHitRate = totalQueries > 0 ? `${((cachedQueries / totalQueries) * 100).toFixed(1)}%` : 'N/A';
 
     return (
         <div className="space-y-8 pb-20">
-            {/* Top Stats Cards */}
+            {/* Top Stats Cards — Real Data */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {[
-                    { label: 'Total Queries', value: '1,284', icon: TrendingUp, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-                    { label: 'Cache Hit Rate', value: '84.2%', icon: BarChart3, color: 'text-green-500', bg: 'bg-green-500/10' },
-                    { label: 'AI Confidence', value: 'High', icon: Info, color: 'text-purple-500', bg: 'bg-purple-500/10' }
+                    { label: 'Total Queries', value: totalQueries.toLocaleString(), icon: TrendingUp, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+                    { label: 'Cache Hit Rate', value: cacheHitRate, icon: BarChart3, color: 'text-green-500', bg: 'bg-green-500/10' },
+                    { label: 'Cached Answers', value: cachedQueries.toLocaleString(), icon: Info, color: 'text-purple-500', bg: 'bg-purple-500/10' }
                 ].map((stat, i) => (
                     <div key={i} className="card p-6 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/50 flex items-center gap-4 group hover:border-primary-500/50 transition-colors">
                         <div className={`p-3 rounded-2xl ${stat.bg} ${stat.color} group-hover:scale-110 transition-transform`}>

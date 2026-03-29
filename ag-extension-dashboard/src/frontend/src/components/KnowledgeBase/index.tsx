@@ -22,6 +22,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 import { KnowledgeStats } from './KnowledgeStats';
 import { KnowledgeSidebar } from './KnowledgeSidebar';
+import { ReasoningVisuals } from './ReasoningVisuals';
 
 interface Result {
     answer: string;
@@ -29,6 +30,7 @@ interface Result {
     cached?: boolean;
     query?: string;
     timestamp?: string;
+    visuals?: any;
 }
 
 export const KnowledgeBase: React.FC = () => {
@@ -220,12 +222,19 @@ export const KnowledgeBase: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {/* Markdown results would normally use a renderer, for now using refined Typography */}
+                                    {/* Markdown results with refined Typography */}
                                     <div className="prose prose-xl prose-primary dark:prose-invert max-w-none">
-                                        <div className="text-gray-800 dark:text-gray-200 leading-relaxed font-medium whitespace-pre-wrap">
+                                        <div className="text-gray-800 dark:text-gray-200 leading-relaxed font-semibold mb-10">
                                             {lastResult.answer}
                                         </div>
                                     </div>
+
+                                    {/* New Visual Intelligence Layer */}
+                                    {lastResult.visuals && (
+                                        <div className="mt-12 mb-16 p-1 bg-gradient-to-br from-primary-500/5 to-transparent rounded-[2.5rem] border border-primary-500/10">
+                                            <ReasoningVisuals visuals={lastResult.visuals} />
+                                        </div>
+                                    )}
 
                                     <div className="mt-12 pt-8 border-t border-gray-100 dark:border-gray-700/50 flex flex-col gap-6">
                                         <div className="flex items-center gap-2">

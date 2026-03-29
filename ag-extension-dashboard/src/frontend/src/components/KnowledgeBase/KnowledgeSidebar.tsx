@@ -20,14 +20,22 @@ interface KnowledgeSidebarProps {
     onToggle: () => void;
     history: any[];
     onSelect: (h: any) => void;
+    onNewQuery?: () => void;
 }
 
 export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({ 
     isOpen, 
     onToggle, 
     history,
-    onSelect
+    onSelect,
+    onNewQuery
 }) => {
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+    };
+
     return (
         <aside 
             className={`relative flex-shrink-0 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 transition-all duration-300 ease-in-out ${isOpen ? 'w-80' : 'w-0 overflow-hidden'}`}
@@ -35,7 +43,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
             <div className="h-full flex flex-col p-4 w-80">
                 {/* New Search Button */}
                 <button 
-                    onClick={() => window.location.reload()} // Simple way to clear state
+                    onClick={() => onNewQuery ? onNewQuery() : window.location.reload()}
                     className="flex items-center gap-2 w-full p-4 mb-8 bg-primary-600 hover:bg-primary-700 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-primary-500/20 transition-all transform active:scale-95"
                 >
                     <Plus className="w-5 h-5" />
@@ -102,7 +110,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
                         <p className="text-sm font-black text-gray-900 dark:text-white truncate">Extension Officer</p>
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Regional Pro</p>
                     </div>
-                    <button className="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                    <button onClick={handleLogout} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
                         <LogOut className="w-5 h-5" />
                     </button>
                 </div>
