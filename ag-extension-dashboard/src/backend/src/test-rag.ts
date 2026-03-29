@@ -1,4 +1,5 @@
 import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
+import { initializeDatabase } from '@/services/databaseService';
 import { VectorService } from '@/services/vectorService';
 import { KnowledgeService } from '@/services/knowledgeService';
 import { SearchResult } from '@/services/vectorService';
@@ -8,8 +9,9 @@ import { logger } from '@/utils/logger';
 async function testRAG() {
     console.log('--- Starting RAG Verification ---');
     
-    // Initialize factory
+    // Initialize services
     AIProviderFactory.initialize();
+    await initializeDatabase();
     
     // Seed vector store
     console.log('\n1. Seeding Vector Store...');
