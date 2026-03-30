@@ -104,6 +104,7 @@ app.get('/health/live', (_req: Request, res: Response) => res.json({ status: 'ok
 app.get('/health/ready', (_req: Request, res: Response) => res.json({ status: 'ready' }));
 
 // API Routes with i18n support
+app.use(i18nUrlMiddleware);
 app.use(i18nRouteHandler);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/knowledge', knowledgeRoutes);
@@ -136,6 +137,7 @@ app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/farmers', farmersRoutes);
 app.use('/api/visits', visitsRoutes);
+app.use('/api/alerts', alertRoutes);
 app.use('/api/external', externalRoutes);
 app.use('/api/language', languageRoutes);
 app.use('/api/ai', aiRoutes);
@@ -145,6 +147,14 @@ app.use('/api/sms', smsRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/shares', shareRouter);
 app.use('/api/public/shares', publicShareRouter);
+app.use('/api/health', (req: Request, res: Response) => {
+    res.json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        environment: process.env.NODE_ENV || 'development'
+    });
+});
 
 // Restore original path after routing
 app.use(restoreOriginalPath);

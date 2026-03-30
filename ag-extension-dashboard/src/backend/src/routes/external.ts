@@ -44,13 +44,13 @@ router.get('/satellite', async (req: Request, res: Response) => {
 });
 
 // Get weather by location
-router.get('/weather', async (req: Request, res: Response) => {
+router.get('/weather/:location?', async (req: Request, res: Response) => {
     try {
-        const location = req.query.location as string || 'Kenya';
+        const location = req.params.location || req.query.location as string || 'Kenya';
         const weather = await WeatherService.getByLocation(location);
         res.json({ success: true, data: weather });
     } catch (error) {
-        logger.error('Weather route error:', error);
+        logger.error('Weather route error:', (error as Error).message);
         res.status(500).json({ success: false, error: 'Failed to fetch weather' });
     }
 });
