@@ -122,13 +122,11 @@ export function useWebRTC(): UseWebRTCReturn {
 
         return () => {
             isMounted = false;
-            // Only close if socket is connected or connecting
+            // Only close if socket is fully connected to avoid "closed before established" errors
             if (socket.connected) {
                 socket.close();
-            } else if (socket.active) {
-                // Socket is still connecting, disconnect gracefully
-                socket.disconnect();
             }
+            // If not connected, let it fail silently - don't call close/disconnect
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
