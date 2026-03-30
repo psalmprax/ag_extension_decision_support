@@ -45,13 +45,26 @@ export function useWebRTC(): UseWebRTCReturn {
     };
 
     useEffect(() => {
+        let isMounted = true;
+        
         const socket = io(window.location.origin, {
             path: '/socket.io',
             transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
         });
 
         socket.on('connect', () => {
-            // Socket connected — ready for WebRTC signaling
+            if (isMounted) {
+                // Socket connected — ready for WebRTC signaling
+            }
+        });
+
+        socket.on('connect_error', (err) => {
+            if (isMounted) {
+                console.warn('Socket connection error:', err.message);
+            }
         });
 
         socket.on('user-joined', async (data: { userId: string; userName: string }) => {
@@ -108,7 +121,14 @@ export function useWebRTC(): UseWebRTCReturn {
         socketRef.current = socket;
 
         return () => {
-            socket.close();
+            isMounted = false;
+            // Only close if socket is connected or connecting
+            if (socket.connected) {
+                socket.close();
+            } else if (socket.active) {
+                // Socket is still connecting, disconnect gracefully
+                socket.disconnect();
+            }
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);

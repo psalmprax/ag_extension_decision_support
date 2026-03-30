@@ -745,6 +745,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
             )}
 
             <ConfirmModal
+                key="delete-profile-modal"
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={async () => {
@@ -759,7 +760,13 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                 variant="danger"
             />
             {showVideoCall && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+                <motion.div
+                    key="video-call-overlay"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+                >
                     <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden relative rounded-3xl border border-white/20 shadow-2xl">
                         <button
                             onClick={() => setShowVideoCall(false)}
@@ -777,9 +784,10 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                             />
                         </div>
                     </div>
-                </div>
+                </motion.div>
             )}
             <ConfirmModal
+                key="delete-confirm-modal"
                 isOpen={showDeleteConfirm}
                 onClose={() => setShowDeleteConfirm(false)}
                 onConfirm={async () => {
