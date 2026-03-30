@@ -583,17 +583,30 @@ class PaymentService {
     }
 
     // Create billing portal session
-    async createPortalSession(customerId: string, returnUrl: string): Promise<string> {
+    async createPortalSession(customerId: string, returnUrl: string): Promise<{ success: boolean; url?: string; errorCode?: string; message?: string }> {
         if (!this.stripe) {
-            throw new Error('Stripe not configured — set STRIPE_SECRET_KEY to enable billing portal');
+            return {
+                success: false,
+                errorCode: 'PAYMENT_GATEWAY_NOT_CONFIGURED',
+                message: 'Stripe configuration required for billing portal access'
+            };
         }
 
-        const session = await this.stripe.billingPortal.sessions.create({
-            customer: customerId,
-            return_url: returnUrl,
-        });
+        try {
+            const session = await this.stripe.billingPortal.sessions.create({
+                customer: customerId,
+                return_url: returnUrl,
+            });
 
-        return session.url;
+            return { success: true, url: session.url };
+        } catch (error: any) {
+            logger.error('Failed to create portal session:', error);
+            return {
+                success: false,
+                errorCode: 'STRIPE_ERROR',
+                message: error.message || 'Failed to initiate billing portal'
+            };
+        }
     }
 
     // Verify webhook signature

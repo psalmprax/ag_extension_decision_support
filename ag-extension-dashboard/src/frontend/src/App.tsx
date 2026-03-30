@@ -41,19 +41,22 @@ import {
     WifiOff
 } from 'lucide-react';
 import { NotificationPanel } from './components/NotificationPanel';
-import { useEffect } from 'react';
+import { ConfirmModal } from './components/ConfirmModal';
+import { useEffect, useRef } from 'react';
 import { WeatherWidget } from '@/components/WeatherWidget';
 import { CardSkeleton } from '@/components/Skeleton';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { fetchDashboardData } from '@/api/dashboardService';
 import { askAI, searchKnowledge } from '@/api/knowledgeService';
-import { fetchUserProfile, AuthResponse, ProfileResponse } from '@/api/authService';
+import { fetchUserProfile, AuthResponse, ProfileResponse, logout as apiLogout } from '@/api/authService';
 import { fetchFarmers, createFarmer } from '@/api/farmerService';
-import { fetchVisits } from '@/api/visitService';
-import { fetchReports, generateReport } from '@/api/reportService';
+import { fetchVisits, updateVisit } from '@/api/visitService';
+import { fetchReports, generateReport, downloadReport, getReportContent, Report } from '@/api/reportService';
 import { fetchPerformanceData } from '@/api/analyticsService';
 import { fetchConversations, fetchMessages, sendMessage, createConversation, createAIConversation } from '@/api/chatbotService';
+import { sendBulkSMS } from '@/api/smsService';
+import { fetchUnreadCount } from '@/api/notificationService';
 import { themes, getThemeCSS, applyTheme } from '@/theme';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import VisitModal from '@/components/forms/VisitModal';
@@ -157,12 +160,7 @@ interface Visit {
     status: string;
 }
 
-interface Report {
-    id: string;
-    title: string;
-    status: string;
-    generatedAt: string;
-}
+// Report type imported from @/api/reportService
 
 interface DashboardData {
     overview: {
@@ -197,7 +195,8 @@ function App() {
     } = useAppStore();
 
     // Logout handler
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        await apiLogout();
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setUser(null);

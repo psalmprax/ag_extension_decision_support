@@ -275,10 +275,16 @@ export const BillingDashboard: React.FC = () => {
                         ? `${response.message} ${t('confirm_next_cycle')}`
                         : `${response.message} ${t('confirm_reenable_renewal')}`;
 
-                    if (confirm(message)) {
-                        handleSubscribe(priceId, 'next');
-                        return;
-                    }
+                    setConfirmModal({
+                        title: 'Subscription Exists',
+                        message: message,
+                        variant: 'warning',
+                        confirmText: 'Schedule for Next Cycle',
+                        onConfirm: () => {
+                            setConfirmModal(null);
+                            handleSubscribe(priceId, 'next');
+                        }
+                    });
                     return;
                 }
 
@@ -286,21 +292,28 @@ export const BillingDashboard: React.FC = () => {
                     const isSamePlan = response.currentSubscription?.plan?.stripePriceId === priceId;
 
                     if (isSamePlan) {
-                        if (confirm(t('confirm_plan_continuation'))) {
-                            handleSubscribe(priceId, 'next');
-                        }
+                        setConfirmModal({
+                            title: 'Plan Continuation',
+                            message: t('confirm_plan_continuation'),
+                            variant: 'info',
+                            confirmText: 'Continue',
+                            onConfirm: () => {
+                                setConfirmModal(null);
+                                handleSubscribe(priceId, 'next');
+                            }
+                        });
                     } else {
                         // Different plan - offer switch
-                        const switchNow = confirm(
-                            `${response.message}\n\n` +
-                            t('confirm_switch_plan')
-                        );
-
-                        if (switchNow) {
-                            handleSwitch(priceId, 'current');
-                        } else {
-                            handleSwitch(priceId, 'next');
-                        }
+                        setConfirmModal({
+                            title: 'Switch Plan',
+                            message: `${response.message}\n\n${t('confirm_switch_plan')}`,
+                            variant: 'warning',
+                            confirmText: 'Switch Now',
+                            onConfirm: () => {
+                                setConfirmModal(null);
+                                handleSwitch(priceId, 'current');
+                            }
+                        });
                     }
                     return;
                 }
@@ -386,21 +399,29 @@ export const BillingDashboard: React.FC = () => {
     };
 
     const handleDeleteMethod = async (id: string) => {
-        if (!confirm(t('confirm_delete_payment_method') || 'Are you sure you want to remove this payment method?')) return;
-
-        setActionLoading(`delete-${id}`);
-        try {
-            const response = await deletePaymentMethod(id);
-            if (response.success) {
-                toast.success(response.message || 'Payment method removed');
-                fetchData(); // Refresh list
+        setConfirmModal({
+            title: 'Remove Payment Method',
+            message: t('confirm_delete_payment_method') || 'Are you sure you want to remove this payment method?',
+            variant: 'danger',
+            confirmText: 'Remove',
+            onConfirm: async () => {
+                setConfirmModal(null);
+                setActionLoading(`delete-${id}`);
+                try {
+                    const response = await deletePaymentMethod(id);
+                    if (response.success) {
+                        toast.success(response.message || 'Payment method removed');
+                        fetchData();
+                    }
+                } catch (error) {
+                    console.error('Failed to delete payment method:', error);
+                    toast.error('Failed to delete payment method');
+                } finally {
+                    setActionLoading(null);
+                }
             }
-        } catch (error) {
-            console.error('Failed to delete payment method:', error);
-            toast.error('Failed to delete payment method');
-        } finally {
-            setActionLoading(null);
-        }
+        });
+        return;
     };
 
     const handlePayPalSubscription = async (planId: string) => {
@@ -1265,6 +1286,17 @@ export const BillingDashboard: React.FC = () => {
                     )}
                 </div>
             </div>
+            {confirmModal && (
+                <ConfirmModal
+                    isOpen={!!confirmModal}
+                    onClose={() => setConfirmModal(null)}
+                    onConfirm={confirmModal.onConfirm}
+                    title={confirmModal.title}
+                    message={confirmModal.message}
+                    variant={confirmModal.variant}
+                    confirmText={confirmModal.confirmText}
+                />
+            )}
         </div>
     );
 };

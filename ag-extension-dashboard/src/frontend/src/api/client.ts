@@ -45,6 +45,10 @@ apiClient.interceptors.response.use(
             if (error.code === 'ECONNREFUSED' || error.code === 'ERR_CONNECTION_REFUSED') {
                 // Silent - backend not running
             }
+            // Suppress noisy configuration warnings
+            else if (error.response?.data && (error.response.data as any).errorCode === 'PAYMENT_GATEWAY_NOT_CONFIGURED') {
+                // Silent - expected setup state
+            }
             // Log other errors
             else if (error.response) {
                 console.warn(`API Error: ${error.response.status} - ${error.response.statusText}`);

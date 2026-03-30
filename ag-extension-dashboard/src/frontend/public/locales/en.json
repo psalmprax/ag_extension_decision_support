@@ -26,6 +26,7 @@
   "avg_response_time": "Avg Response Time",
   "billing_account_control": "Account Mission Control",
   "billing_add_method": "Add Method",
+  "billing_configuration_alert": "Billing gateway is not fully configured. Please set your Stripe or PayPal keys in the Admin Settings to enable payments and portal access.",
   "billing_admin_vault_subtitle": "Secure administrative gateway for core financial integrations",
   "billing_admin_vault_title": "Executive Billing Vault",
   "billing_ai_messages": "AI Messages Used",

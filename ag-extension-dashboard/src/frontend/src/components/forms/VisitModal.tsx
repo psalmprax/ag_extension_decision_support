@@ -132,22 +132,58 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
                             <User className="w-4 h-4 inline mr-1" />
                             {t('visit_select_farmer') || 'Select Farmer'} *
                         </label>
-                        <select
-                            value={formData.farmerId}
-                            onChange={(e) => setFormData({ ...formData, farmerId: e.target.value })}
-                            required
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                            disabled={loadingFarmers}
-                        >
-                            <option value="">
-                                {loadingFarmers ? (t('common_loading') || 'Loading...') : (t('visit_select_farmer_placeholder') || 'Choose a farmer...')}
-                            </option>
-                            {farmers.map((farmer: Farmer) => (
-                                <option key={farmer.id} value={farmer.id}>
-                                    {farmer.firstName} {farmer.lastName} - {farmer.region}
-                                </option>
-                            ))}
-                        </select>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                value={formData.farmerSearch || ''}
+                                onChange={(e) => setFormData({ ...formData, farmerSearch: e.target.value })}
+                                placeholder={loadingFarmers ? (t('common_loading') || 'Loading...') : (t('visit_select_farmer_placeholder') || 'Search farmer...')}
+                                disabled={loadingFarmers}
+                                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            />
+                            {formData.farmerSearch && !formData.farmerId && (
+                                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                                    {farmers
+                                        .filter(f =>
+                                            `${f.firstName} ${f.lastName}`.toLowerCase().includes(formData.farmerSearch!.toLowerCase()) ||
+                                            (f.region || '').toLowerCase().includes(formData.farmerSearch!.toLowerCase()) ||
+                                            (f.phone || '').includes(formData.farmerSearch!)
+                                        )
+                                        .slice(0, 10)
+                                        .map(farmer => (
+                                            <button
+                                                key={farmer.id}
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, farmerId: farmer.id, farmerSearch: `${farmer.firstName} ${farmer.lastName}` })}
+                                                className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 text-sm"
+                                            >
+                                                <span className="font-medium text-gray-900 dark:text-white">{farmer.firstName} {farmer.lastName}</span>
+                                                <span className="text-gray-500 dark:text-gray-400 ml-2">— {farmer.region}</span>
+                                            </button>
+                                        ))
+                                    }
+                                    {farmers.filter(f =>
+                                        `${f.firstName} ${f.lastName}`.toLowerCase().includes(formData.farmerSearch!.toLowerCase())
+                                    ).length === 0 && (
+                                        <div className="px-4 py-2 text-sm text-gray-500">No farmers found</div>
+                                    )}
+                                </div>
+                            )}
+                            {formData.farmerId && (
+                                <div className="mt-2 flex items-center gap-2">
+                                    <span className="text-xs text-primary-600 dark:text-primary-400 font-medium">
+                                        Selected: {formData.farmerSearch}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, farmerId: '', farmerSearch: '' })}
+                                        className="text-xs text-gray-400 hover:text-gray-600"
+                                    >
+                                        Change
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Visit Type */}

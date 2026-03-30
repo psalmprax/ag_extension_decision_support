@@ -244,9 +244,17 @@ router.post('/portal', authorize('admin', 'extension_officer', 'farmer'), async 
         if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
         const customerId = await paymentService.getOrCreateCustomer(userId, user.email);
-        const url = await paymentService.createPortalSession(customerId, `${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing`);
+        const result = await paymentService.createPortalSession(customerId, `${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing`);
 
-        res.json({ success: true, data: { url } });
+        if (!result.success) {
+            return res.status(errorStatusMap[result.errorCode as string] || 400).json({
+                success: false,
+                errorCode: result.errorCode,
+                message: result.message
+            });
+        }
+
+        res.json({ success: true, data: { url: result.url } });
     } catch (error) {
         logger.error('Failed to create portal session:', error);
         res.status(500).json({ success: false, message: 'Internal server error' });
