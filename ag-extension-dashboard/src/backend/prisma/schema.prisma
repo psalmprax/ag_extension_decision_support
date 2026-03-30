@@ -18,6 +18,8 @@ model User {
   phone         String?            @db.VarChar(20)
   avatarUrl     String?            @map("avatar_url")
   isActive      Boolean?           @default(true) @map("is_active")
+  resetToken    String?            @map("reset_token") @db.VarChar(255)
+  resetTokenExpires DateTime?      @map("reset_token_expires") @db.Timestamp(6)
   createdAt     DateTime?          @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt     DateTime?          @default(now()) @map("updated_at") @db.Timestamp(6)
   farmers       Farmer[]

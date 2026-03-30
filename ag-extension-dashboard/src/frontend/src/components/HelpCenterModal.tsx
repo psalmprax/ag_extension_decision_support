@@ -1,7 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, HelpCircle, Book, MessageSquare, Mail, ExternalLink, ChevronRight } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { X, HelpCircle, Book, MessageSquare, Mail, ExternalLink, ChevronRight, Bug } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -155,17 +154,20 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                             </div>
 
                             {/* Footer */}
-                            <div className="p-4 border-t border-gray-100 dark:border-gray-700">
+                            <div className="p-4 border-t border-gray-100 dark:border-gray-700 grid grid-cols-2 gap-2">
                                 <a
-                                    href="#"
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        toast.error('Issue reporting is not yet configured. Contact your administrator.');
-                                    }}
-                                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                    href="mailto:support@agextension.org?subject=Issue%20Report%20-%20Ag%20Extension%20Dashboard"
+                                    className="flex items-center justify-center gap-2 py-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                >
+                                    <Bug className="w-4 h-4" />
+                                    {t('help_report_issue') || 'Report an Issue'}
+                                </a>
+                                <a
+                                    href="mailto:support@agextension.org?subject=Feature%20Request%20-%20Ag%20Extension%20Dashboard"
+                                    className="flex items-center justify-center gap-2 py-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                                 >
                                     <ExternalLink className="w-4 h-4" />
-                                    {t('help_report_issue') || 'Report an Issue'}
+                                    {t('help_feature_request') || 'Feature Request'}
                                 </a>
                             </div>
                         </div>

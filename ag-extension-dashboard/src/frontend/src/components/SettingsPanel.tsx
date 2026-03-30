@@ -150,7 +150,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                                         {t('settings_data') || 'Data & Storage'}
                                     </h3>
                                     <button
-                                        onClick={() => {
+                                        onClick={async () => {
                                             const preserveKeys = ['token', 'user', 'theme', 'ag-theme-name'];
                                             const preserved: Record<string, string> = {};
                                             preserveKeys.forEach(key => {
@@ -159,7 +159,24 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                                             });
                                             localStorage.clear();
                                             Object.entries(preserved).forEach(([key, val]) => localStorage.setItem(key, val));
-                                            toast.success('All local cache cleared');
+                                            sessionStorage.clear();
+                                            try {
+                                                const dbs = await indexedDB.databases?.() || [];
+                                                for (const db of dbs) {
+                                                    if (db.name) indexedDB.deleteDatabase(db.name);
+                                                }
+                                            } catch { /* indexedDB.databases() not supported */ }
+                                            try {
+                                                const cacheNames = await caches.keys();
+                                                await Promise.all(cacheNames.map(name => caches.delete(name)));
+                                            } catch { /* caches API not available */ }
+                                            try {
+                                                const registrations = await navigator.serviceWorker?.getRegistrations?.() || [];
+                                                for (const reg of registrations) {
+                                                    await reg.update();
+                                                }
+                                            } catch { /* service worker not available */ }
+                                            toast.success('All local cache, session storage, and service worker caches cleared');
                                         }}
                                         className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                                     >

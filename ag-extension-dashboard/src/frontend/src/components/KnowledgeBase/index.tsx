@@ -17,7 +17,7 @@ import {
     Info,
     ArrowRight
 } from 'lucide-react';
-import { askAI, searchKnowledge } from '@/api/knowledgeService';
+import { askAI, searchKnowledge, fetchKnowledgeHistory, fetchKnowledgeStats } from '@/api/knowledgeService';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 import { KnowledgeStats } from './KnowledgeStats';
@@ -54,10 +54,7 @@ export const KnowledgeBase: React.FC = () => {
 
     const fetchHistory = async () => {
         try {
-            const res = await fetch('/api/knowledge/history', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-            });
-            const data = await res.json();
+            const data = await fetchKnowledgeHistory();
             if (data.success) setHistory(data.data);
         } catch (err) {
             console.error('History fetch failed', err);
@@ -66,10 +63,7 @@ export const KnowledgeBase: React.FC = () => {
 
     const fetchStats = async () => {
         try {
-            const res = await fetch('/api/knowledge/stats', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-            });
-            const data = await res.json();
+            const data = await fetchKnowledgeStats();
             if (data.success) setStats(data.data);
         } catch (err) {
             console.error('Stats fetch failed', err);

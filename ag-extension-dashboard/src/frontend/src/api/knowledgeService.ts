@@ -33,3 +33,13 @@ export const askAI = async (question: string): Promise<AskResponse> => {
     const response = await apiClient.post<AskResponse>('/knowledge/ask', { question });
     return response.data;
 };
+
+export const fetchKnowledgeHistory = async () => {
+    const { data } = await apiClient.get('/knowledge/history');
+    return data;
+};
+
+export const fetchKnowledgeStats = async () => {
+    const { data } = await apiClient.get('/knowledge/stats');
+    return data;
+};

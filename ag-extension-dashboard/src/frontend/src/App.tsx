@@ -38,7 +38,8 @@ import {
     HelpCircle,
     Upload,
     Wifi,
-    WifiOff
+    WifiOff,
+    Download
 } from 'lucide-react';
 import { NotificationPanel } from './components/NotificationPanel';
 import { ConfirmModal } from './components/ConfirmModal';
@@ -57,6 +58,8 @@ import { fetchPerformanceData } from '@/api/analyticsService';
 import { fetchConversations, fetchMessages, sendMessage, createConversation, createAIConversation, updateConversation, deleteConversation } from '@/api/chatbotService';
 import { sendBulkSMS } from '@/api/smsService';
 import { fetchUnreadCount } from '@/api/notificationService';
+// Removed redundant import
+import { uploadMultipleFiles } from '@/api/uploadService';
 import { themes, getThemeCSS, applyTheme } from '@/theme';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import VisitModal from '@/components/forms/VisitModal';
@@ -72,6 +75,8 @@ import { UsageQuota } from '@/components/UsageQuota';
 import { FarmerDetailPanel } from '@/components/FarmerDetailPanel';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { subscribeUserToPush } from '@/api/pushNotificationService';
+// Duplicate removed
+import { syncQueue } from '@/api/syncQueueService';
 import AlphaAI from './components/Cyber/AlphaAI';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { ContextMenu } from '@/components/ContextMenu';
@@ -256,23 +261,34 @@ function App() {
     const farmers = storeFarmers;
 
     // Offline sync queue
-    const syncQueueRef = useRef<Array<{ action: string; data: unknown }>>([]);
+    useEffect(() => {
+        const unsubscribe = syncQueue.onCountChange(setPendingSyncCount);
+        setPendingSyncCount(syncQueue.getPendingCount());
+        return unsubscribe;
+    }, []);
 
     // Online/offline detection with sync queue
     useEffect(() => {
-        const handleOnline = () => {
+        const handleOnline = async () => {
             setIsOnline(true);
-            const queue = syncQueueRef.current;
-            if (queue.length > 0) {
+            const count = syncQueue.getPendingCount();
+            if (count > 0) {
                 addNotification({
                     type: 'success',
-                    message: `Back online - syncing ${queue.length} queued action(s)...`
+                    message: `Back online - syncing ${count} queued action(s)...`
                 });
-                queue.forEach(item => {
-                    console.log('Syncing queued action:', item.action);
-                });
-                syncQueueRef.current = [];
-                setPendingSyncCount(0);
+                const result = await syncQueue.processQueue();
+                if (result.failed > 0) {
+                    addNotification({
+                        type: 'warning',
+                        message: `${result.success} synced, ${result.failed} failed (will retry)`
+                    });
+                } else if (result.success > 0) {
+                    addNotification({
+                        type: 'success',
+                        message: `All ${result.success} queued action(s) synced successfully`
+                    });
+                }
             } else {
                 addNotification({
                     type: 'success',
@@ -314,29 +330,12 @@ function App() {
 
         const files = Array.from(e.dataTransfer.files);
         if (files.length > 0) {
-            const formData = new FormData();
-            files.forEach(file => formData.append('file', file));
-
             try {
-                const response = await fetch('/api/upload', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
+                await uploadMultipleFiles(files);
+                addNotification({
+                    type: 'success',
+                    message: `${files.length} file(s) uploaded and processed successfully.`
                 });
-
-                if (response.ok) {
-                    addNotification({
-                        type: 'success',
-                        message: `${files.length} file(s) uploaded and processed successfully.`
-                    });
-                } else {
-                    addNotification({
-                        type: 'error',
-                        message: 'Failed to upload files. Please try again.'
-                    });
-                }
             } catch (error) {
                 console.error('Upload error:', error);
                 addNotification({
@@ -716,7 +715,7 @@ function App() {
     const { data: performanceResponse } = useQuery<{ success: boolean; data: any }>({
         queryKey: ['performance'],
         queryFn: fetchPerformanceData,
-        enabled: activeTab === 'analytics'
+        enabled: activeTab === 'analytics' || activeTab === 'dashboard'
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const performanceData = (performanceResponse as any)?.data;
@@ -1069,11 +1068,11 @@ function App() {
             onDrop={handleDrop}
         >
             {isDragOver && (
-                <div className="absolute inset-0 z-[200] bg-primary-500/10 backdrop-blur-sm border-4 border-dashed border-primary-500 rounded-lg flex items-center justify-center pointer-events-none">
-                    <div className="text-center">
-                        <Upload className="w-16 h-16 text-primary-500 mx-auto mb-4" />
-                        <p className="text-xl font-bold text-primary-600 dark:text-primary-400">Drop files to upload</p>
-                        <p className="text-sm text-gray-500 mt-1">Files will be uploaded and processed</p>
+                <div className="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-md border-8 border-dashed border-primary-500 flex items-center justify-center transition-all animate-in fade-in duration-200 pointer-events-none">
+                    <div className="text-center bg-white/10 dark:bg-black/20 p-12 rounded-3xl backdrop-blur-lg border border-white/20 shadow-2xl">
+                        <Upload className="w-24 h-24 text-primary-400 mx-auto mb-6 animate-bounce" />
+                        <h2 className="text-4xl font-black text-white tracking-tight mb-2">Drop Files to Upload</h2>
+                        <p className="text-lg text-primary-200 font-medium">Release to process CSV, PDF, or Image files</p>
                     </div>
                 </div>
             )}
@@ -1178,9 +1177,13 @@ function App() {
                             <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                             {(apiUnreadCount > 0 || notifications.some(n => !n.read)) && (
                                 <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white dark:border-gray-900 animate-pulse flex items-center justify-center">
-                                    {apiUnreadCount > 0 && (
-                                        <span className="text-[6px] text-white font-bold">{apiUnreadCount > 9 ? '9+' : apiUnreadCount}</span>
-                                    )}
+                                    {(() => {
+                                        const storeUnread = notifications.filter(n => !n.read).length;
+                                        const totalUnread = apiUnreadCount + storeUnread;
+                                        return totalUnread > 0 ? (
+                                            <span className="text-[6px] text-white font-bold">{totalUnread > 9 ? '9+' : totalUnread}</span>
+                                        ) : null;
+                                    })()}
                                 </span>
                             )}
                         </button>
@@ -1453,6 +1456,7 @@ function App() {
                                 </div>
                                 <div className="card p-8 bg-theme-bg-card dark:bg-gray-800 border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden relative">
                                     <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">{t('analytics_support_efficiency')}</h3>
+                                    {performanceData ? (
                                     <div className="space-y-6">
                                         {[
                                             { name: t('analytics_resolution_rate'), progress: performanceData?.metrics?.resolutionRate ?? 0, color: 'bg-primary-500' },
@@ -1476,6 +1480,11 @@ function App() {
                                             </div>
                                         ))}
                                     </div>
+                                    ) : (
+                                        <div className="flex items-center justify-center py-8">
+                                            <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </ErrorBoundary>
@@ -1782,9 +1791,43 @@ function App() {
                                                     {new Date(report.generatedAt).toLocaleDateString()}
                                                 </span>
                                             </div>
-                                            <div className="flex -space-x-2">
-                                                <div className="w-6 h-6 rounded-full border-2 border-white dark:border-gray-800 bg-primary-500 flex items-center justify-center text-[8px] text-white font-bold">
-                                                    {report.createdBy ? report.createdBy.substring(0, 2).toUpperCase() : user?.firstName?.[0]}{user?.lastName?.[0]}
+                                            <div className="flex items-center gap-3">
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        downloadReport(report.id).then(blob => {
+                                                            const url = window.URL.createObjectURL(blob);
+                                                            const a = document.createElement('a');
+                                                            a.href = url;
+                                                            a.download = `${report.title}.pdf`;
+                                                            a.click();
+                                                        });
+                                                    }}
+                                                    className="p-1 px-2 text-[10px] font-bold text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors flex items-center gap-1"
+                                                >
+                                                    <Download className="w-3 h-3" />
+                                                    {t('common_download') || 'PDF'}
+                                                </button>
+                                                <div className="flex -space-x-2">
+                                                    {report.createdBy === `${user?.firstName} ${user?.lastName}` && user?.avatarUrl ? (
+                                                        <img 
+                                                            src={user.avatarUrl} 
+                                                            alt="" 
+                                                            className="w-6 h-6 rounded-full border-2 border-white dark:border-gray-800 object-cover"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-6 h-6 rounded-full border-2 border-white dark:border-gray-800 bg-primary-500 flex items-center justify-center text-[8px] text-white font-bold">
+                                                            {report.createdBy
+                                                                ? report.createdBy.split(/[\s_]+/).map((s: string) => s[0]).slice(0, 2).join('').toUpperCase()
+                                                                : `${user?.firstName?.[0] || ''}${user?.lastName?.[0] || ''}`
+                                                            }
+                                                        </div>
+                                                    )}
+                                                    {report.createdBy && (
+                                                        <span className="text-[9px] text-gray-500 dark:text-gray-400 font-medium self-center ml-1 truncate max-w-[80px]">
+                                                            {report.createdBy}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -1794,13 +1837,15 @@ function App() {
                         </div>
                     )}
 
-                    {activeTab === 'analytics' && performanceData && (
+                    {activeTab === 'analytics' && (
                         <div>
                             <div className="mb-8">
                                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('analytics_title')}</h1>
                                 <p className="text-gray-500 dark:text-gray-400 mt-1">{t('analytics_subtitle')}</p>
                             </div>
 
+                            {performanceData ? (
+                            <>
                             {/* Metrics Cards - Redesigned */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
                                 <div className="card p-5 bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-900/10 border-primary-200 dark:border-primary-800">
@@ -1810,7 +1855,9 @@ function App() {
                                         </div>
                                         <p className="text-xs font-semibold text-primary-700 dark:text-primary-300 uppercase tracking-wide">{t('analytics_resolution_rate')}</p>
                                     </div>
-                                    <p className="text-2xl font-bold text-primary-700 dark:text-primary-300">{performanceData?.metrics?.resolutionRate || 0}%</p>
+                                    <p className="text-2xl font-bold text-primary-700 dark:text-primary-300">
+                                        {performanceData?.metrics?.resolutionRate ?? '—'}%
+                                    </p>
                                 </div>
 
                                 <div className="card p-5 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-900/10 border-blue-200 dark:border-blue-800">
@@ -1820,7 +1867,9 @@ function App() {
                                         </div>
                                         <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide">{t('analytics_avg_response_time')}</p>
                                     </div>
-                                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{performanceData?.metrics?.avgResponseTime || '0ms'}</p>
+                                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                                        {performanceData?.metrics?.avgResponseTime ?? '—'}
+                                    </p>
                                 </div>
 
                                 <div className="card p-5 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-900/10 border-green-200 dark:border-green-800">
@@ -1830,7 +1879,9 @@ function App() {
                                         </div>
                                         <p className="text-xs font-semibold text-green-700 dark:text-green-300 uppercase tracking-wide">{t('analytics_satisfaction_score')}</p>
                                     </div>
-                                    <p className="text-2xl font-bold text-green-700 dark:text-green-300">{performanceData?.metrics?.satisfactionScore || 0}</p>
+                                    <p className="text-2xl font-bold text-green-700 dark:text-green-300">
+                                        {performanceData?.metrics?.satisfactionScore ?? '—'}
+                                    </p>
                                 </div>
 
                                 <div className="card p-5 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-900/10 border-orange-200 dark:border-orange-800">
@@ -1840,7 +1891,9 @@ function App() {
                                         </div>
                                         <p className="text-xs font-semibold text-orange-700 dark:text-orange-300 uppercase tracking-wide">{t('analytics_follow_up_rate')}</p>
                                     </div>
-                                    <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">{performanceData?.metrics?.followUpRate || 0}%</p>
+                                    <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">
+                                        {performanceData?.metrics?.followUpRate ?? '—'}%
+                                    </p>
                                 </div>
 
                                 <div className="card p-5 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-900/10 border-purple-200 dark:border-purple-800">
@@ -1850,7 +1903,9 @@ function App() {
                                         </div>
                                         <p className="text-xs font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wide">{t('analytics_first_contact_res')}</p>
                                     </div>
-                                    <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">{performanceData?.metrics?.firstContactResolution || 0}%</p>
+                                    <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">
+                                        {performanceData?.metrics?.firstContactResolution ?? '—'}%
+                                    </p>
                                 </div>
                             </div>
 
@@ -1896,6 +1951,18 @@ function App() {
                                     </ResponsiveContainer>
                                 </div>
                             </div>
+                            </>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-20 text-center">
+                                    <BarChart3 className="w-16 h-16 text-gray-300 mb-4" />
+                                    <h3 className="text-lg font-bold text-gray-700 dark:text-gray-300 mb-2">
+                                        {t('analytics_no_data') || 'No Analytics Data Available'}
+                                    </h3>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm">
+                                        {t('analytics_no_data_desc') || 'Analytics data will appear here once there is sufficient activity. Check back later or ensure the analytics service is running.'}
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     )}
 

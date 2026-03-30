@@ -39,8 +39,9 @@ import { useNavigate } from 'react-router-dom';
 
 import { fetchSMSHistory } from '@/api/smsService';
 import { generateSynthesis } from '@/api/chatbotService';
-import { fetchPriorityScore } from '@/api/visitService';
+import { fetchPriorityScore, updateVisit } from '@/api/visitService';
 import { SatelliteInsights } from './SatelliteInsights';
+import { ConfirmModal } from './ConfirmModal';
 import toast from 'react-hot-toast';
 
 interface FarmerDetailPanelProps {
@@ -82,6 +83,13 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
     const [showVideoCall, setShowVideoCall] = React.useState(false);
     const [isSynthesizing, setIsSynthesizing] = React.useState(false);
     const [isRefreshingPriority, setIsRefreshingPriority] = React.useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
+    const [localVisits, setLocalVisits] = React.useState(visits);
+
+    React.useEffect(() => {
+        setLocalVisits(visits);
+    }, [visits]);
+    const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
 
     const loadInteractions = async () => {
         if (!farmer?.id) return;
@@ -219,7 +227,26 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
         }
     };
 
-    const nextScheduledVisit = visits
+    const handleUpdateVisitStatus = async (visitId: string, status: 'completed' | 'cancelled') => {
+        try {
+            const res = await updateVisit(visitId, { status });
+            if (res.success) {
+                setLocalVisits(prev => prev.map(v => v.id === visitId ? { ...v, status } : v));
+                addNotification({
+                    type: 'success',
+                    message: `Visit marked as ${status}`
+                });
+            }
+        } catch (err) {
+            console.error('Failed to update visit status:', err);
+            addNotification({
+                type: 'error',
+                message: `Failed to mark visit as ${status}`
+            });
+        }
+    };
+
+    const nextScheduledVisit = localVisits
         .filter(v => v.status === 'scheduled')
         .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime())[0];
 
@@ -276,13 +303,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                     <MoreVertical className="w-5 h-5" />
                                 </button>
                                 <button
-                                    onClick={async () => {
-                                        if (window.confirm(`Are you sure you want to delete ${farmer.firstName} ${farmer.lastName}?`)) {
-                                            const { removeFarmer } = useAppStore.getState();
-                                            await removeFarmer(farmer.id);
-                                            onClose();
-                                        }
-                                    }}
+                                    onClick={() => setIsDeleteModalOpen(true)}
                                     className="p-2 backdrop-blur-md rounded-full text-white transition-all bg-rose-500/20 hover:bg-rose-500/40 border border-rose-500/30"
                                     title="Delete Farmer"
                                 >
@@ -349,6 +370,21 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                                     <span>{farmer.phone || 'No phone'}</span>
                                                 )}
                                             </div>
+                                            {isEditing && (
+                                                <div className="flex items-center gap-1.5">
+                                                    <Activity className="w-4 h-4" />
+                                                    <select
+                                                        value={editData.status || 'active'}
+                                                        onChange={(e) => setEditData({ ...editData, status: e.target.value })}
+                                                        className="bg-white/10 border border-white/20 rounded px-2 py-0.5 text-white text-xs focus:outline-none focus:ring-1 focus:ring-primary-500"
+                                                    >
+                                                        <option value="active" className="text-gray-900">Active</option>
+                                                        <option value="inactive" className="text-gray-900">Inactive</option>
+                                                        <option value="pending" className="text-gray-900">Pending</option>
+                                                        <option value="suspended" className="text-gray-900">Suspended</option>
+                                                    </select>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -529,6 +565,21 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                             <div className={`w-full h-1.5 rounded-full mt-3 overflow-hidden bg-gray-100 dark:bg-gray-700`}>
                                                 <div className={`h-full rounded-full bg-secondary-500`} style={{ width: `${farmer.vitalScore || 0}%` }} />
                                             </div>
+                                            {isEditing && (
+                                                <div className="mt-4">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Status</label>
+                                                    <select
+                                                        value={editData.status || 'Active'}
+                                                        onChange={(e) => setEditData({ ...editData, status: e.target.value })}
+                                                        className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary-500"
+                                                    >
+                                                        <option value="Active">Active</option>
+                                                        <option value="Inactive">Inactive</option>
+                                                        <option value="High Priority">High Priority</option>
+                                                        <option value="Special Attention">Special Attention</option>
+                                                    </select>
+                                                </div>
+                                            )}
                                         </section>
                                     </div>
 
@@ -565,6 +616,22 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                                         <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed italic">
                                                             “{visit.reason || t('visit_routine_inspection')}”
                                                         </p>
+                                                        {visit.status === 'scheduled' && (
+                                                            <div className="flex gap-2 mt-3">
+                                                                <button
+                                                                    onClick={() => handleUpdateVisitStatus(visit.id, 'completed')}
+                                                                    className="px-3 py-1 rounded-lg bg-green-500/10 hover:bg-green-500/20 text-green-600 dark:text-green-400 text-[9px] font-black uppercase tracking-widest border border-green-500/20 transition-all"
+                                                                >
+                                                                    Complete
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleUpdateVisitStatus(visit.id, 'cancelled')}
+                                                                    className="px-3 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-[9px] font-black uppercase tracking-widest border border-red-500/20 transition-all"
+                                                                >
+                                                                    Cancel
+                                                                </button>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             )) : (
@@ -674,6 +741,21 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                     </motion.aside>
                 </>
             )}
+
+            <ConfirmModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={async () => {
+                    const { removeFarmer } = useAppStore.getState();
+                    await removeFarmer(farmer.id);
+                    setIsDeleteModalOpen(false);
+                    onClose();
+                }}
+                title="Delete Farmer Profile"
+                message={`Are you sure you want to permanently delete ${farmer.firstName} ${farmer.lastName}? This action cannot be undone.`}
+                confirmText="Delete Farmer"
+                variant="danger"
+            />
             {showVideoCall && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
                     <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden relative rounded-3xl border border-white/20 shadow-2xl">
@@ -695,6 +777,20 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                     </div>
                 </div>
             )}
+            <ConfirmModal
+                isOpen={showDeleteConfirm}
+                onClose={() => setShowDeleteConfirm(false)}
+                onConfirm={async () => {
+                    setShowDeleteConfirm(false);
+                    const { removeFarmer } = useAppStore.getState();
+                    await removeFarmer(farmer.id);
+                    onClose();
+                }}
+                title="Delete Farmer"
+                message={`Are you sure you want to delete ${farmer.firstName} ${farmer.lastName}? This action cannot be undone.`}
+                variant="danger"
+                confirmText="Delete"
+            />
         </AnimatePresence>
     );
 };

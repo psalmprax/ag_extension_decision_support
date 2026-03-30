@@ -98,9 +98,15 @@ export async function createTables(): Promise<void> {
       phone VARCHAR(20),
       avatar_url TEXT,
       is_active BOOLEAN DEFAULT true,
+      reset_token VARCHAR(255),
+      reset_token_expires TIMESTAMP,
       created_at TIMESTAMP DEFAULT NOW(),
       updated_at TIMESTAMP DEFAULT NOW()
     );
+
+    -- Ensure reset columns exist for existing databases
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255);
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expires TIMESTAMP;
 
     -- Farmers table
     CREATE TABLE IF NOT EXISTS farmers (

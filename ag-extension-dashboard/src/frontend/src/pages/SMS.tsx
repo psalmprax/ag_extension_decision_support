@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     Send, Users, Clock, CheckCircle,
     XCircle, Loader2, Search, Plus, BarChart3,
-    Layout, Bell, History, Info, ChevronRight, User, Sparkles, MapPin, AlertTriangle
+    Layout, History, Info, ChevronRight, User, Sparkles, MapPin, AlertTriangle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
@@ -36,6 +36,7 @@ export function SMSPage() {
     const [sendMode, setSendMode] = useState<'single' | 'bulk'>('single');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+    const [bulkSelectedIds, setBulkSelectedIds] = useState<string[]>([]);
 
     const templates = [
         { id: '1', title: t('sms_template_greeting'), content: "Hello, this is your Ag Extension officer. How is your crop doing?", icon: Sparkles, color: 'bg-amber-100 text-amber-600' },
@@ -191,10 +192,35 @@ export function SMSPage() {
     };
 
     const selectContact = (contact: Contact) => {
-        setSelectedContact(contact);
-        setPhoneNumber(contact.phone);
-        if (sendMode === 'bulk') setSendMode('single');
+        if (sendMode === 'bulk') {
+            setBulkSelectedIds(prev => 
+                prev.includes(contact.id) 
+                    ? prev.filter(id => id !== contact.id) 
+                    : [...prev, contact.id]
+            );
+        } else {
+            setSelectedContact(contact);
+            setPhoneNumber(contact.phone);
+        }
     };
+
+    const handleBulkSelectAll = () => {
+        if (bulkSelectedIds.length === recentContacts.length) {
+            setBulkSelectedIds([]);
+        } else {
+            setBulkSelectedIds(recentContacts.map(c => c.id));
+        }
+    };
+
+    useEffect(() => {
+        if (sendMode === 'bulk') {
+            const selectedPhones = recentContacts
+                .filter(c => bulkSelectedIds.includes(c.id))
+                .map(c => c.phone)
+                .join(', ');
+            setRecipients(selectedPhones);
+        }
+    }, [bulkSelectedIds, sendMode, recentContacts]);
 
     return (
         <div className="flex flex-col lg:flex-row h-[calc(100vh-80px)] overflow-hidden gap-4 p-4 lg:p-6 bg-slate-50 dark:bg-slate-950">
@@ -205,15 +231,26 @@ export function SMSPage() {
                         <Users className="w-5 h-5 text-primary-600" />
                         {t('sms_recent_recipients')}
                     </h2>
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <input
-                            type="text"
-                            placeholder={t('farmer_search_placeholder')}
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-primary-500 text-sm"
-                        />
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <input
+                                type="text"
+                                placeholder={t('farmer_search_placeholder')}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-primary-500 text-sm"
+                            />
+                        </div>
+                        {sendMode === 'bulk' && (
+                            <button
+                                onClick={handleBulkSelectAll}
+                                className="p-2 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-xl hover:bg-primary-200 transition-colors"
+                                title="Select All"
+                            >
+                                <CheckCircle className="w-5 h-5" />
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -229,7 +266,8 @@ export function SMSPage() {
                         <button
                             key={contact.id}
                             onClick={() => selectContact(contact)}
-                            className={`w-full flex items-center justify-between p-3 rounded-xl transition-all ${selectedContact?.id === contact.id
+                            className={`w-full flex items-center justify-between p-3 rounded-xl transition-all ${
+                                (sendMode === 'single' && selectedContact?.id === contact.id) || (sendMode === 'bulk' && bulkSelectedIds.includes(contact.id))
                                 ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-100 dark:border-primary-800'
                                 : 'hover:bg-slate-100 dark:hover:bg-slate-800'
                                 }`}

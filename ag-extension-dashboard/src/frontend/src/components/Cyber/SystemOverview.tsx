@@ -6,7 +6,7 @@ interface SystemOverviewProps {
 }
 
 const SystemOverview: React.FC<SystemOverviewProps> = ({ 
-    healthScore = 0, 
+    healthScore, 
     indicators = []
 }) => {
     const getStatusColor = (status: string) => {
@@ -36,11 +36,13 @@ const SystemOverview: React.FC<SystemOverviewProps> = ({
                 <div className="flex items-end justify-between">
                     <div>
                         <p className="text-[10px] font-black text-primary-300/20 uppercase tracking-widest mb-1">Health Score</p>
-                        <p className="text-4xl font-black text-white tabular-nums tracking-tighter">{healthScore}</p>
+                        <p className="text-4xl font-black text-white tabular-nums tracking-tighter">
+                            {healthScore !== undefined ? healthScore : '—'}
+                        </p>
                     </div>
                     <div className="w-16 h-16 rounded-2xl bg-primary-500/10 flex items-center justify-center border border-primary-500/20">
                         <span className="text-primary-400 font-black text-xl">
-                            {healthScore >= 90 ? 'A' : healthScore >= 80 ? 'B' : healthScore >= 70 ? 'C' : 'D'}
+                            {healthScore === undefined ? '—' : healthScore >= 90 ? 'A' : healthScore >= 80 ? 'B' : healthScore >= 70 ? 'C' : 'D'}
                         </span>
                     </div>
                 </div>
