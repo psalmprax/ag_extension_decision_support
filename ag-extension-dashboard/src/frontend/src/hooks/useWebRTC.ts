@@ -180,7 +180,8 @@ export function useWebRTC(): UseWebRTCReturn {
             currentUserRef.current = { id: userId, name: userName };
 
             if (!navigator.mediaDevices?.getUserMedia) {
-                throw new Error('Camera/microphone access requires HTTPS or localhost');
+                setError('Video calls require HTTPS. Please access the dashboard via https:// or use localhost for testing.');
+                return;
             }
 
             const stream = await navigator.mediaDevices.getUserMedia({
@@ -209,7 +210,8 @@ export function useWebRTC(): UseWebRTCReturn {
             currentUserRef.current = { id: userId, name: userName };
 
             if (!navigator.mediaDevices?.getUserMedia) {
-                throw new Error('Camera/microphone access requires HTTPS or localhost');
+                setError('Video calls require HTTPS. Please access the dashboard via https:// or use localhost for testing.');
+                return;
             }
 
             const stream = await navigator.mediaDevices.getUserMedia({
