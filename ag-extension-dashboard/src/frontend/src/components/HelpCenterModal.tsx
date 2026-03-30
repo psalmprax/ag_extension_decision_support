@@ -45,7 +45,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
     const quickLinks = [
         { icon: Book, label: t('help_docs') || 'Documentation', color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400', action: () => { onClose(); setActiveTab('knowledge'); } },
         { icon: MessageSquare, label: t('help_chat') || 'Live Chat', color: 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400', action: () => { onClose(); setActiveTab('aiassistant'); } },
-        { icon: Mail, label: t('help_email') || 'Email Support', color: 'bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400', action: () => { window.open('mailto:support@ag-extension.example.com', '_blank'); } },
+        { icon: Mail, label: t('help_email') || 'Email Support', color: 'bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400', action: () => { window.open('mailto:support@agextension.org', '_blank'); } },
     ];
 
     return (
@@ -133,6 +133,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                                     ))}
                                 </div>
 
+                                {/* Keyboard shortcuts are registered globally in App.tsx */}
                                 {/* Keyboard Shortcuts */}
                                 <div className="space-y-3">
                                     <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
@@ -156,9 +157,11 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                             {/* Footer */}
                             <div className="p-4 border-t border-gray-100 dark:border-gray-700">
                                 <a
-                                    href="https://github.com/Kilo-Org/kilocode/issues"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                                    href="#"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        toast.error('Issue reporting is not yet configured. Contact your administrator.');
+                                    }}
                                     className="w-full flex items-center justify-center gap-2 py-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                                 >
                                     <ExternalLink className="w-4 h-4" />

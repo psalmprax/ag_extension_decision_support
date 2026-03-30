@@ -2,14 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { X, MapPin, Calendar, FileText, User } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
+import { fetchFarmers } from '@/api/farmerService';
+import { createVisit } from '@/api/visitService';
 import toast from 'react-hot-toast';
 
 interface Farmer {
     id: string;
     firstName: string;
     lastName: string;
-    phone: string;
-    region: string;
+    phone?: string;
+    region?: string;
     village?: string;
 }
 
@@ -29,25 +31,20 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
         farmerId: '',
         type: 'routine',
         scheduledAt: '',
-        notes: ''
+        notes: '',
+        farmerSearch: ''
     });
 
     useEffect(() => {
         if (isOpen) {
-            fetchFarmers();
+            loadFarmers();
         }
     }, [isOpen]);
 
-    const fetchFarmers = async () => {
+    const loadFarmers = async () => {
         setLoadingFarmers(true);
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch('/api/farmers', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            const data = await response.json();
+            const data = await fetchFarmers();
             if (data.success && data.data?.farmers) {
                 setFarmers(data.data.farmers);
             }
@@ -64,23 +61,13 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
 
         setLoading(true);
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch('/api/visits', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    farmerId: formData.farmerId,
-                    officerId: user?.id,
-                    type: formData.type,
-                    scheduledAt: new Date(formData.scheduledAt).toISOString(),
-                    notes: formData.notes
-                })
+            const data = await createVisit({
+                farmer_id: formData.farmerId,
+                visit_type: formData.type,
+                scheduled_at: new Date(formData.scheduledAt).toISOString(),
+                notes: formData.notes
             });
 
-            const data = await response.json();
             if (data.success) {
                 onSuccess();
                 onClose();
@@ -88,10 +75,11 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
                     farmerId: '',
                     type: 'routine',
                     scheduledAt: '',
-                    notes: ''
+                    notes: '',
+                    farmerSearch: ''
                 });
             } else {
-                toast.error(data.error || t('visit_create_failed'));
+                toast.error(t('visit_create_failed'));
             }
         } catch (error) {
             console.error('Failed to create visit:', error);

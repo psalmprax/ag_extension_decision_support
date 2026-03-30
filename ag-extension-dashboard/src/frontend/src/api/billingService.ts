@@ -1,13 +1,21 @@
 import apiClient from './client';
 
 export const fetchPlans = async () => {
-    const { data } = await apiClient.get('/billing/plans');
-    return data;
+    try {
+        const { data } = await apiClient.get('/billing/plans');
+        return data;
+    } catch (err: any) {
+        return err.response?.data || { success: false, error: 'Failed to fetch plans' };
+    }
 };
 
 export const fetchSubscription = async () => {
-    const { data } = await apiClient.get('/billing/subscription');
-    return data;
+    try {
+        const { data } = await apiClient.get('/billing/subscription');
+        return data;
+    } catch (err: any) {
+        return err.response?.data || { success: false, error: 'Failed to fetch subscription' };
+    }
 };
 
 export const fetchUsage = async () => {
@@ -36,13 +44,21 @@ export const createPortalSession = async () => {
 };
 
 export const fetchInvoices = async () => {
-    const { data } = await apiClient.get('/billing/invoices');
-    return data;
+    try {
+        const { data } = await apiClient.get('/billing/invoices');
+        return data;
+    } catch (err: any) {
+        return err.response?.data || { success: false, error: 'Failed to fetch invoices' };
+    }
 };
 
 export const fetchPaymentMethods = async () => {
-    const { data } = await apiClient.get('/billing/payment-methods');
-    return data;
+    try {
+        const { data } = await apiClient.get('/billing/payment-methods');
+        return data;
+    } catch (err: any) {
+        return err.response?.data || { success: false, error: 'Failed to fetch payment methods' };
+    }
 };
 
 export const addPaymentMethod = async (type: string) => {

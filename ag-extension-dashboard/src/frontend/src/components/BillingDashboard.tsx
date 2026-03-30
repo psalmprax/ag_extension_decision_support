@@ -30,6 +30,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { fetchPlans, fetchSubscription, createCheckoutSession, createPortalSession, fetchInvoices, switchSubscription, fetchPaymentMethods, addPaymentMethod, deletePaymentMethod, updateAdminConfig, createPayPalSubscription, redeemVoucher, submitTransaction, getMyTransactions, listAllTransactions, verifyTransaction, rejectTransaction, generateVouchers, listVouchers } from '@/api/billingService';
 import { PaymentAnalyticsDashboard } from './PaymentAnalyticsDashboard';
 import { UsageQuota } from './UsageQuota';
+import { ConfirmModal } from './ConfirmModal';
 
 interface Plan {
     id: string;
@@ -82,6 +83,13 @@ export const BillingDashboard: React.FC = () => {
     const [rejectReason, setRejectReason] = useState('');
     const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
     const [configErrors, setConfigErrors] = useState<{ stripe?: boolean; paypal?: boolean }>({});
+    const [confirmModal, setConfirmModal] = useState<{
+        title: string;
+        message: string;
+        onConfirm: () => void;
+        variant?: 'danger' | 'warning' | 'info' | 'success';
+        confirmText?: string;
+    } | null>(null);
     const { user } = useAppStore();
 
     // Get success/cancel status from URL params
@@ -106,6 +114,7 @@ export const BillingDashboard: React.FC = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
+            // All these are now safe because of try-catch in billingService.ts
             const [plansRes, subRes, invoicesRes, pmRes] = await Promise.all([
                 fetchPlans(),
                 fetchSubscription(),
@@ -113,28 +122,28 @@ export const BillingDashboard: React.FC = () => {
                 fetchPaymentMethods()
             ]);
 
-            if (plansRes.success) setPlans(plansRes.data);
-            if (subRes.success) setSubscription(subRes.data);
+            if (plansRes?.success) setPlans(plansRes.data);
+            if (subRes?.success) setSubscription(subRes.data);
             
-            // Track config status
+            // Track config status for billing alert banner
             const newConfigErrors: { stripe?: boolean; paypal?: boolean } = {};
             
-            if (invoicesRes.success) {
+            if (invoicesRes?.success) {
                 setInvoices(invoicesRes.data);
-            } else if (invoicesRes.errorCode === 'PAYMENT_GATEWAY_NOT_CONFIGURED') {
+            } else if (invoicesRes?.errorCode === 'PAYMENT_GATEWAY_NOT_CONFIGURED') {
                 newConfigErrors.stripe = true;
             }
 
-            if (pmRes.success) {
+            if (pmRes?.success) {
                 setPaymentMethods(pmRes.data);
-            } else if (pmRes.errorCode === 'PAYMENT_GATEWAY_NOT_CONFIGURED') {
+            } else if (pmRes?.errorCode === 'PAYMENT_GATEWAY_NOT_CONFIGURED') {
                 newConfigErrors.stripe = true;
             }
             
             setConfigErrors(newConfigErrors);
 
             const myTxRes = await getMyTransactions();
-            if (myTxRes.success) setMyTransactions(myTxRes.data);
+            if (myTxRes?.success) setMyTransactions(myTxRes.data);
 
             // Admin data
             if (user?.role === 'admin') {
@@ -142,8 +151,8 @@ export const BillingDashboard: React.FC = () => {
                     listAllTransactions('pending'),
                     listVouchers()
                 ]);
-                if (adminTxRes.success) setAdminTransactions(adminTxRes.data);
-                if (voucherRes.success) setVouchers(voucherRes.data);
+                if (adminTxRes?.success) setAdminTransactions(adminTxRes.data);
+                if (voucherRes?.success) setVouchers(voucherRes.data);
             }
         } catch (error) {
             console.error('Failed to fetch billing data:', error);

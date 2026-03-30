@@ -335,6 +335,20 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                                     <span>{farmer.farmSize} ha</span>
                                                 )}
                                             </div>
+                                            <div className="flex items-center gap-1.5">
+                                                <Phone className="w-4 h-4" />
+                                                {isEditing ? (
+                                                    <input
+                                                        type="tel"
+                                                        value={editData.phone || ''}
+                                                        onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
+                                                        className="bg-white/10 border border-white/20 rounded px-2 py-0.5 text-white w-32 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                                                        placeholder="Phone"
+                                                    />
+                                                ) : (
+                                                    <span>{farmer.phone || 'No phone'}</span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -457,13 +471,50 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                                 <Sprout className={`w-4 h-4 text-green-500`} />
                                                 {t('table_crops')}
                                             </h3>
-                                            <div className="flex flex-wrap gap-2">
-                                                {farmer.crops?.map((crop: string) => (
-                                                    <span key={crop} className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-tighter bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400`}>
-                                                        {crop}
-                                                    </span>
-                                                ))}
-                                            </div>
+                                            {isEditing ? (
+                                                <div className="space-y-2">
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {(editData.crops || []).map((crop: string, i: number) => (
+                                                            <span key={i} className="flex items-center gap-1 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-tighter bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400">
+                                                                {crop}
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setEditData({ ...editData, crops: editData.crops?.filter((_: string, idx: number) => idx !== i) })}
+                                                                    className="ml-1 text-red-400 hover:text-red-600"
+                                                                >
+                                                                    ×
+                                                                </button>
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Add crop..."
+                                                            className="flex-1 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg"
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter') {
+                                                                    e.preventDefault();
+                                                                    const input = e.target as HTMLInputElement;
+                                                                    const val = input.value.trim();
+                                                                    if (val && !(editData.crops || []).includes(val)) {
+                                                                        setEditData({ ...editData, crops: [...(editData.crops || []), val] });
+                                                                        input.value = '';
+                                                                    }
+                                                                }
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="flex flex-wrap gap-2">
+                                                    {farmer.crops?.map((crop: string) => (
+                                                        <span key={crop} className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-tighter bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400`}>
+                                                            {crop}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </section>
 
                                         {/* Vital Stats */}
