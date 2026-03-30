@@ -113,6 +113,14 @@ class PaymentService {
         await this.initializePayPal();
     }
 
+    public isStripeConfigured(): boolean {
+        return this.stripe !== null;
+    }
+
+    public isPayPalConfigured(): boolean {
+        return this.paypalConfigured;
+    }
+
     private appendQueryParam(url: string, key: string, value: string): string {
         const separator = url.includes('?') ? '&' : '?';
         return `${url}${separator}${key}=${encodeURIComponent(value)}`;
@@ -120,95 +128,144 @@ class PaymentService {
 
     // Create a checkout session for subscription
     async createCheckoutSession(params: CreateCheckoutSessionParams): Promise<{
-        sessionId: string;
-        url: string;
+        success: boolean;
+        sessionId?: string;
+        url?: string;
+        errorCode?: string;
+        message?: string;
     }> {
         if (!this.stripe) {
-            // No mock/simulation fallback — Stripe must be configured for card payments.
-            // Voucher redemption and manual transaction flows are separate endpoints.
             logger.warn(`Stripe not configured. Card checkout unavailable for user ${params.userId}.`);
-            throw new Error('Card payment gateway (Stripe) is not configured. Please use Voucher or Mobile Money payment methods, or contact your administrator.');
+            return {
+                success: false,
+                errorCode: 'PAYMENT_GATEWAY_NOT_CONFIGURED',
+                message: 'Stripe (Credit Card) payment gateway is not configured. Please contact your administrator or set your keys in the Admin Settings.'
+            };
         }
 
-        const session = await this.stripe.checkout.sessions.create({
-            mode: 'subscription',
-            payment_method_types: ['card'],
-            line_items: [
-                {
-                    price: params.priceId,
-                    quantity: 1,
+        try {
+            const session = await this.stripe.checkout.sessions.create({
+                mode: 'subscription',
+                payment_method_types: ['card'],
+                line_items: [
+                    {
+                        price: params.priceId,
+                        quantity: 1,
+                    },
+                ],
+                success_url: params.successUrl,
+                cancel_url: params.cancelUrl,
+                subscription_data: params.trialEnd ? {
+                    trial_end: params.trialEnd,
+                } : undefined,
+                metadata: {
+                    userId: params.userId,
                 },
-            ],
-            success_url: params.successUrl,
-            cancel_url: params.cancelUrl,
-            subscription_data: params.trialEnd ? {
-                trial_end: params.trialEnd,
-            } : undefined,
-            metadata: {
-                userId: params.userId,
-            },
-        });
+            });
 
-        return {
-            sessionId: session.id,
-            url: session.url!,
-        };
+            return {
+                success: true,
+                sessionId: session.id,
+                url: session.url!,
+            };
+        } catch (error: any) {
+            logger.error('Failed to create Stripe checkout session:', error);
+            return {
+                success: false,
+                errorCode: 'STRIPE_ERROR',
+                message: error.message || 'Failed to initiate Stripe checkout'
+            };
+        }
     }
 
     // Create a setup session for adding payment methods
     async createSetupSession(userId: string, email: string, successUrl: string, cancelUrl: string): Promise<{
-        url: string;
+        success: boolean;
+        url?: string;
+        errorCode?: string;
+        message?: string;
     }> {
         if (!this.stripe) {
-            throw new Error('Stripe not configured — set STRIPE_SECRET_KEY to enable payment method setup');
+            return {
+                success: false,
+                errorCode: 'PAYMENT_GATEWAY_NOT_CONFIGURED',
+                message: 'Stripe configuration required for payment method setup'
+            };
         }
 
-        const customerId = await this.getOrCreateCustomer(userId, email);
+        try {
+            const customerId = await this.getOrCreateCustomer(userId, email);
 
-        const session = await this.stripe.checkout.sessions.create({
-            mode: 'setup',
-            customer: customerId,
-            payment_method_types: ['card'],
-            success_url: successUrl,
-            cancel_url: cancelUrl,
-            metadata: {
-                userId,
-            },
-        });
+            const session = await this.stripe.checkout.sessions.create({
+                mode: 'setup',
+                customer: customerId,
+                payment_method_types: ['card'],
+                success_url: successUrl,
+                cancel_url: cancelUrl,
+                metadata: {
+                    userId,
+                },
+            });
 
-        return {
-            url: session.url!,
-        };
+            return {
+                success: true,
+                url: session.url!,
+            };
+        } catch (error: any) {
+            logger.error('Failed to create Stripe setup session:', error);
+            return {
+                success: false,
+                errorCode: 'STRIPE_ERROR',
+                message: error.message || 'Failed to initiate payment method setup'
+            };
+        }
     }
 
     // Create a payment intent for one-time payments
     async createPaymentIntent(params: CreatePaymentIntentParams): Promise<{
-        clientSecret: string;
-        paymentIntentId: string;
+        success: boolean;
+        clientSecret?: string;
+        paymentIntentId?: string;
+        errorCode?: string;
+        message?: string;
     }> {
         if (!this.stripe) {
-            throw new Error('Stripe not configured — set STRIPE_SECRET_KEY to enable payments');
+            return {
+                success: false,
+                errorCode: 'PAYMENT_GATEWAY_NOT_CONFIGURED',
+                message: 'Stripe configuration required for payments'
+            };
         }
 
-        const paymentIntent = await this.stripe.paymentIntents.create({
-            amount: params.amount,
-            currency: params.currency || 'usd',
-            metadata: {
-                userId: params.userId,
-                ...params.metadata,
-            },
-        });
+        try {
+            const paymentIntent = await this.stripe.paymentIntents.create({
+                amount: params.amount,
+                currency: params.currency || 'usd',
+                metadata: {
+                    userId: params.userId,
+                    ...params.metadata,
+                },
+            });
 
-        return {
-            clientSecret: paymentIntent.client_secret!,
-            paymentIntentId: paymentIntent.id,
-        };
+            return {
+                success: true,
+                clientSecret: paymentIntent.client_secret!,
+                paymentIntentId: paymentIntent.id,
+            };
+        } catch (error: any) {
+            logger.error('Failed to create payment intent:', error);
+            return {
+                success: false,
+                errorCode: 'STRIPE_ERROR',
+                message: error.message || 'Failed to initiate payment intent'
+            };
+        }
     }
 
     // Create or get Stripe customer
     async getOrCreateCustomer(userId: string, email: string): Promise<string> {
         if (!this.stripe) {
-            throw new Error('Stripe not configured — set STRIPE_SECRET_KEY to enable customers');
+            throw new Error('STRIPE_CONFIG_REQUIRED');
         }
 
         // Search for existing customer
@@ -250,12 +307,19 @@ class PaymentService {
 
     // Get subscription details
     async getSubscription(subscriptionId: string): Promise<{
-        status: string;
-        currentPeriodEnd: number;
-        planName: string;
+        success: boolean;
+        status?: string;
+        currentPeriodEnd?: number;
+        planName?: string;
+        errorCode?: string;
+        message?: string;
     } | null> {
         if (!this.stripe) {
-            throw new Error('Stripe not configured — set STRIPE_SECRET_KEY to check subscription');
+            return {
+                success: false,
+                errorCode: 'PAYMENT_GATEWAY_NOT_CONFIGURED',
+                message: 'Stripe configuration required to check subscription status'
+            };
         }
 
         try {
@@ -263,13 +327,18 @@ class PaymentService {
             const price = subscription.items.data[0].price;
 
             return {
+                success: true,
                 status: subscription.status,
                 currentPeriodEnd: (subscription as unknown as StripeSubscription).current_period_end * 1000,
                 planName: price.nickname || 'Subscription',
             };
-        } catch (error) {
+        } catch (error: any) {
             logger.error('Failed to get subscription:', error);
-            return null;
+            return {
+                success: false,
+                errorCode: 'STRIPE_ERROR',
+                message: error.message || 'Failed to retrieve subscription details'
+            };
         }
     }
 
@@ -325,18 +394,27 @@ class PaymentService {
     }
 
     // Get customer's payment methods
-    async getPaymentMethods(customerId: string): Promise<Array<{
-        id: string;
-        type: string;
-        card?: {
-            brand: string;
-            last4: string;
-            expMonth: number;
-            expYear: number;
-        };
-    }>> {
+    async getPaymentMethods(customerId: string): Promise<{
+        success: boolean;
+        data?: Array<{
+            id: string;
+            type: string;
+            card?: {
+                brand: string;
+                last4: string;
+                expMonth: number;
+                expYear: number;
+            };
+        }>;
+        errorCode?: string;
+        message?: string;
+    }> {
         if (!this.stripe) {
-            throw new Error('Stripe not configured — set STRIPE_SECRET_KEY to enable payment methods');
+            return {
+                success: false,
+                errorCode: 'PAYMENT_GATEWAY_NOT_CONFIGURED',
+                message: 'Stripe configuration required to list payment methods'
+            };
         }
 
         try {
@@ -345,7 +423,7 @@ class PaymentService {
                 type: 'card',
             });
 
-            return paymentMethods.data.map(pm => ({
+            const data = paymentMethods.data.map(pm => ({
                 id: pm.id,
                 type: pm.type,
                 card: pm.card ? {
@@ -355,9 +433,15 @@ class PaymentService {
                     expYear: pm.card.exp_year,
                 } : undefined,
             }));
-        } catch (error) {
+
+            return { success: true, data };
+        } catch (error: any) {
             logger.error('Failed to get payment methods:', error);
-            return [];
+            return {
+                success: false,
+                errorCode: 'STRIPE_ERROR',
+                message: error.message || 'Failed to fetch payment methods'
+            };
         }
     }
 
@@ -602,9 +686,18 @@ class PaymentService {
 
     // Get invoices for a customer
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    async getInvoices(customerId: string): Promise<any[]> {
+    async getInvoices(customerId: string): Promise<{
+        success: boolean;
+        data?: any[];
+        errorCode?: string;
+        message?: string;
+    }> {
         if (!this.stripe) {
-            return [];
+            return {
+                success: false,
+                errorCode: 'PAYMENT_GATEWAY_NOT_CONFIGURED',
+                message: 'Stripe configuration required to fetch invoices'
+            };
         }
 
         try {
@@ -613,7 +706,7 @@ class PaymentService {
                 limit: 10,
             });
 
-            return invoices.data.map(inv => ({
+            const data = invoices.data.map(inv => ({
                 id: inv.id,
                 amount_paid: inv.amount_paid,
                 currency: inv.currency,
@@ -621,9 +714,15 @@ class PaymentService {
                 created: inv.created,
                 invoice_pdf: inv.invoice_pdf as string
             }));
-        } catch (error) {
+
+            return { success: true, data };
+        } catch (error: any) {
             logger.error('Failed to fetch invoices:', error);
-            return [];
+            return {
+                success: false,
+                errorCode: 'STRIPE_ERROR',
+                message: error.message || 'Failed to retrieve invoice history'
+            };
         }
     }
 
@@ -635,12 +734,16 @@ class PaymentService {
         description: string;
         returnUrl: string;
         cancelUrl: string;
-    }): Promise<{ paymentId: string; approvalUrl: string } | null> {
+    }): Promise<{ success: boolean; paymentId?: string; approvalUrl?: string; errorCode?: string; message?: string } | null> {
         if (!this.paypalConfigured) {
-            throw new Error('PayPal not configured — set PAYPAL_CLIENT_ID to enable PayPal payments');
+            return {
+                success: false,
+                errorCode: 'PAYMENT_GATEWAY_NOT_CONFIGURED',
+                message: 'PayPal is not configured. Please set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET in the Admin Vault.'
+            };
         }
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             const createPaymentJson = {
                 intent: 'sale',
                 payer: {
@@ -671,10 +774,15 @@ class PaymentService {
             paypal.payment.create(createPaymentJson, (error: any, payment: any) => {
                 if (error) {
                     logger.error('PayPal payment creation failed:', error);
-                    reject(error);
+                    resolve({
+                        success: false,
+                        errorCode: 'PAYPAL_ERROR',
+                        message: error.message || 'Failed to initiate PayPal payment'
+                    });
                 } else {
                     const approvalUrl = payment.links.find((link: any) => link.rel === 'approval_url').href;
                     resolve({
+                        success: true,
                         paymentId: payment.id,
                         approvalUrl
                     });

@@ -81,6 +81,7 @@ export const BillingDashboard: React.FC = () => {
     const [voucherBatch, setVoucherBatch] = useState({ planId: 'price_pro_monthly', count: 10, expiresInDays: 30 });
     const [rejectReason, setRejectReason] = useState('');
     const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
+    const [configErrors, setConfigErrors] = useState<{ stripe?: boolean; paypal?: boolean }>({});
     const { user } = useAppStore();
 
     // Get success/cancel status from URL params
@@ -114,8 +115,23 @@ export const BillingDashboard: React.FC = () => {
 
             if (plansRes.success) setPlans(plansRes.data);
             if (subRes.success) setSubscription(subRes.data);
-            if (invoicesRes.success) setInvoices(invoicesRes.data);
-            if (pmRes.success) setPaymentMethods(pmRes.data);
+            
+            // Track config status
+            const newConfigErrors: { stripe?: boolean; paypal?: boolean } = {};
+            
+            if (invoicesRes.success) {
+                setInvoices(invoicesRes.data);
+            } else if (invoicesRes.errorCode === 'PAYMENT_GATEWAY_NOT_CONFIGURED') {
+                newConfigErrors.stripe = true;
+            }
+
+            if (pmRes.success) {
+                setPaymentMethods(pmRes.data);
+            } else if (pmRes.errorCode === 'PAYMENT_GATEWAY_NOT_CONFIGURED') {
+                newConfigErrors.stripe = true;
+            }
+            
+            setConfigErrors(newConfigErrors);
 
             const myTxRes = await getMyTransactions();
             if (myTxRes.success) setMyTransactions(myTxRes.data);
@@ -434,6 +450,28 @@ export const BillingDashboard: React.FC = () => {
 
     return (
         <div className="max-w-[1400px] mx-auto py-12 px-6">
+            {/* Configuration Alert Banner */}
+            {(configErrors.stripe || configErrors.paypal) && (
+                <motion.div 
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-8 p-6 bg-amber-500/10 border-2 border-amber-500/50 rounded-2xl flex items-start gap-4"
+                >
+                    <AlertCircle className="w-6 h-6 text-amber-500 mt-1 flex-shrink-0" />
+                    <div className="flex-1">
+                        <h3 className="text-amber-500 font-black uppercase tracking-widest text-[12px] mb-1">
+                            {t('billing_configuration_alert') || 'PAYMENT GATEWAY CONFIGURATION REQUIRED'}
+                        </h3>
+                        <p className="text-amber-500/80 font-bold text-sm">
+                            {user?.role === 'admin' 
+                                ? "Action Required: Stripe or PayPal API keys are missing. Please update your credentials in the Admin Vault section below to enable card and PayPal payments."
+                                : "Note: We are currently updating our payment gateways. Some card and PayPal features may be temporarily unavailable. Please use Vouchers or Mobile Money in the meantime."
+                            }
+                        </p>
+                    </div>
+                </motion.div>
+            )}
+
             {/* Success/Cancel Messages */}
             {success && (
                 <motion.div

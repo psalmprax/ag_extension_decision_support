@@ -12,6 +12,14 @@ import { usageService } from '../services/usageService';
 const router = Router();
 const prisma = getPrisma();
 
+const errorStatusMap: Record<string, number> = {
+    'PAYMENT_GATEWAY_NOT_CONFIGURED': 400,
+    'STRIPE_ERROR': 402,
+    'PAYPAL_ERROR': 402,
+    'ACTIVE_SUBSCRIPTION_EXISTS': 409,
+    'ALREADY_SUBSCRIBED': 400
+};
+
 // Helper to check if subscription is active
 const isSubscriptionActive = (subscription: { status: string }): boolean => {
     if (!subscription) return false;
@@ -174,6 +182,14 @@ router.post('/subscribe', authorize('admin', 'extension_officer', 'farmer'), asy
             trialEnd
         });
 
+        if (!session.success) {
+            return res.status(400).json({
+                success: false,
+                errorCode: session.errorCode,
+                message: session.message
+            });
+        }
+
         res.json({ success: true, data: session });
     } catch (error) {
         logger.error('Failed to create subscription session:', error);
@@ -315,9 +331,25 @@ router.get('/payment-methods', authorize('admin', 'extension_officer', 'farmer')
         if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
         const customerId = await paymentService.getOrCreateCustomer(userId, user.email);
-        const paymentMethods = await paymentService.getPaymentMethods(customerId);
-        res.json({ success: true, data: paymentMethods });
-    } catch (error) {
+        const result = await paymentService.getPaymentMethods(customerId);
+        
+        if (!result.success) {
+            return res.status(errorStatusMap[result.errorCode as string] || 400).json({
+                success: false,
+                errorCode: result.errorCode,
+                message: result.message
+            });
+        }
+        
+        res.json({ success: true, data: result.data });
+    } catch (error: any) {
+        if (error.message === 'STRIPE_CONFIG_REQUIRED') {
+            return res.status(400).json({
+                success: false,
+                errorCode: 'PAYMENT_GATEWAY_NOT_CONFIGURED',
+                message: 'Stripe configuration required'
+            });
+        }
         logger.error('Failed to get payment methods:', error);
         res.status(500).json({ success: false, message: 'Internal server error' });
     }
@@ -334,7 +366,16 @@ router.post('/payment-methods', authorize('admin', 'extension_officer', 'farmer'
         const finalCancelUrl = cancelUrl || `${baseUrl}/billing?canceled=true`;
 
         const result = await paymentService.createSetupSession(userId, email, finalSuccessUrl, finalCancelUrl);
-        res.json({ success: true, data: result });
+        
+        if (!result.success) {
+            return res.status(errorStatusMap[result.errorCode as string] || 400).json({
+                success: false,
+                errorCode: result.errorCode,
+                message: result.message
+            });
+        }
+        
+        res.json({ success: true, data: { url: result.url } });
     } catch (error) {
         logger.error('Failed to create setup session:', error);
         res.status(500).json({ success: false, message: 'Internal server error' });
@@ -377,9 +418,25 @@ router.get('/invoices', authorize('admin', 'extension_officer', 'farmer'), async
         if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
         const customerId = await paymentService.getOrCreateCustomer(userId, user.email);
-        const invoices = await paymentService.getInvoices(customerId);
-        res.json({ success: true, data: invoices });
-    } catch (error) {
+        const result = await paymentService.getInvoices(customerId);
+        
+        if (!result.success) {
+            return res.status(errorStatusMap[result.errorCode as string] || 400).json({
+                success: false,
+                errorCode: result.errorCode,
+                message: result.message
+            });
+        }
+        
+        res.json({ success: true, data: result.data });
+    } catch (error: any) {
+        if (error.message === 'STRIPE_CONFIG_REQUIRED') {
+            return res.status(400).json({
+                success: false,
+                errorCode: 'PAYMENT_GATEWAY_NOT_CONFIGURED',
+                message: 'Stripe configuration required'
+            });
+        }
         logger.error('Failed to get invoices:', error);
         res.status(500).json({ success: false, message: 'Internal server error' });
     }
@@ -559,10 +616,14 @@ router.post('/paypal/subscribe', authorize('admin', 'extension_officer', 'farmer
             cancelUrl: `${baseUrl}/billing/paypal/cancel`
         });
 
-        if (result) {
-            res.json({ success: true, data: result });
+        if (result && result.success) {
+            res.json({ success: true, data: { paymentId: result.paymentId, approvalUrl: result.approvalUrl } });
         } else {
-            res.status(500).json({ success: false, message: 'Failed to create PayPal payment' });
+            res.status(errorStatusMap[result?.errorCode as string] || 400).json({
+                success: false,
+                errorCode: result?.errorCode || 'PAYPAL_ERROR',
+                message: result?.message || 'Failed to initiate PayPal subscription'
+            });
         }
     } catch (error) {
         logger.error('Failed to create PayPal subscription:', error);
