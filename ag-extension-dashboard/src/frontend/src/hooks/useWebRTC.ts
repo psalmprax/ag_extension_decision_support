@@ -179,6 +179,10 @@ export function useWebRTC(): UseWebRTCReturn {
             currentRoomRef.current = roomId;
             currentUserRef.current = { id: userId, name: userName };
 
+            if (!navigator.mediaDevices?.getUserMedia) {
+                throw new Error('Camera/microphone access requires HTTPS or localhost');
+            }
+
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: true,
                 audio: true,
@@ -203,6 +207,10 @@ export function useWebRTC(): UseWebRTCReturn {
             setError(null);
             currentRoomRef.current = roomId;
             currentUserRef.current = { id: userId, name: userName };
+
+            if (!navigator.mediaDevices?.getUserMedia) {
+                throw new Error('Camera/microphone access requires HTTPS or localhost');
+            }
 
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: true,
