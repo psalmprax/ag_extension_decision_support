@@ -79,7 +79,7 @@ export class KnowledgeService {
                 SELECT COUNT(*) as count FROM knowledge_searches
             `);
             const cachedResult = await query(`
-                SELECT COUNT(*) as count FROM semantic_cache
+                SELECT COUNT(*) as count FROM search_cache
             `);
             return {
                 crops: topCrops.rows,

@@ -315,8 +315,6 @@ function App() {
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
     const handleMenuAction = (action: string, entityId?: string) => {
-        console.log(`Global Menu Action: ${action} on ${entityId}`);
-        
         if (action.startsWith('share_')) {
             const type = action.split('_')[1];
             const entity = type === 'farmer' ? farmers?.find(f => f.id === entityId) : null;
@@ -573,11 +571,11 @@ function App() {
                 },
                 (error) => {
                     if (error.code === 1 && error.message.includes('Only secure origins are allowed')) {
-                        console.warn('Geolocation blocked: Not a secure origin (HTTPS/localhost). Falling back to profile region.');
+                        // Geolocation blocked by browser policy — use fallback silently
                     } else if (error.code === 1) {
-                        console.warn('Geolocation permission denied. Falling back to profile region.');
+                        // Permission denied — use fallback silently
                     } else {
-                        console.log('Geolocation error:', error.message);
+                        // Geolocation unavailable — use fallback
                     }
                     setUserLocation(storeUser?.region || 'Kenya');
                 }

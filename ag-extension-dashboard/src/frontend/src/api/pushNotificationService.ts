@@ -5,7 +5,7 @@ const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 export const subscribeUserToPush = async () => {
     try {
         if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-            console.warn('Push notifications are not supported in this browser');
+            // Push notifications not supported in this browser/context — skip
             return null;
         }
 
