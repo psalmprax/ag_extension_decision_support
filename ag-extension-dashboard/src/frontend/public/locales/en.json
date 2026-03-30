@@ -140,6 +140,7 @@
   "dashboard_overview": "Dashboard Overview",
   "dashboard_title": "Intelligence Dashboard",
   "dashboard_welcome": "Welcome back, {name}! Here is your overview.",
+  "dashboard_welcome_message": "Welcome to the dashboard.",
   "detect_location": "Detect Location",
   "empty_no_analytics": "No analytics data",
   "empty_no_analytics_desc": "Analytics data will appear once you have activity.",
@@ -402,5 +403,7 @@
   "help_center_subtitle": "Find answers and get support",
   "help_faq": "Frequently Asked Questions",
   "help_shortcuts": "Keyboard Shortcuts",
-  "help_report_issue": "Report an Issue"
+  "help_report_issue": "Report an Issue",
+  "nav_sms_history": "Communication History",
+  "no_visit_scheduled": "No visits scheduled"
 }

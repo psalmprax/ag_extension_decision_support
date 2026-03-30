@@ -30,3 +30,13 @@ export const generateSynthesis = async (params: { farmerId: string; notes: strin
     const { data } = await apiClient.post('/chatbot/synthesis', params);
     return data;
 };
+
+export const updateConversation = async (id: string, updates: { title?: string }) => {
+    const { data } = await apiClient.put(`/chatbot/conversations/${id}`, updates);
+    return data;
+};
+
+export const deleteConversation = async (id: string) => {
+    const { data } = await apiClient.delete(`/chatbot/conversations/${id}`);
+    return data;
+};

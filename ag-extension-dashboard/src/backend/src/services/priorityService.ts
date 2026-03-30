@@ -42,16 +42,29 @@ export class PriorityService {
             });
 
             if (!farmer) {
+                logger.warn(`Farmer ${farmerId} not found during priority calculation`);
                 throw new Error(`Farmer ${farmerId} not found`);
             }
 
-            // 1. Disease Alerts Signal (Weight: 40%)
-            const alerts = await FAOService.getDiseaseAlerts(farmer.region || 'Kenya');
-            const relevantAlerts = alerts.filter(a => 
-                farmer.crops.some(c => a.crop.toLowerCase().includes(c.toLowerCase()))
-            );
+            // 1. Disease Alerts Signal (Weight: 40%) - Robust check for crops
+            let diseaseScore = 0;
+            let relevantAlerts: any[] = [];
             
-            const diseaseScore = Math.min(relevantAlerts.length * 25, 100);
+            try {
+                const region = farmer.region || 'Kenya';
+                const alerts = await FAOService.getDiseaseAlerts(region);
+                
+                // Ensure farmer.crops is an array and handle case-insensitive matching safely
+                const farmerCrops = Array.isArray(farmer.crops) ? farmer.crops : [];
+                
+                relevantAlerts = alerts.filter(a => 
+                    a.crop && farmerCrops.some(c => a.crop.toLowerCase().includes(c.toLowerCase()))
+                );
+                
+                diseaseScore = Math.min(relevantAlerts.length * 25, 100);
+            } catch (err) {
+                logger.error(`Failed to process disease alerts for farmer ${farmerId}:`, err);
+            }
             const diseaseWeight = 0.4;
 
             // 2. Weather Risk Signal (Weight: 30%)
@@ -59,15 +72,18 @@ export class PriorityService {
             const reasons: string[] = [];
             
             try {
-                const weather = await WeatherService.getByLocation(`${farmer.village || farmer.region}, Kenya`);
+                const location = farmer.village || farmer.region || 'Kenya';
+                const weather = await WeatherService.getByLocation(`${location}, Kenya`);
                 const riskConditions = ['Thunderstorm', 'Heavy rain', 'Violent rain showers', 'Thunderstorm with hail'];
                 
-                if (riskConditions.includes(weather.condition)) {
-                    weatherScore = 100;
-                    reasons.push(`Extreme weather detected: ${weather.condition}`);
-                } else if (weather.condition.includes('rain')) {
-                    weatherScore = 50;
-                    reasons.push(`Moderate weather risk: ${weather.condition}`);
+                if (weather && weather.condition) {
+                    if (riskConditions.includes(weather.condition)) {
+                        weatherScore = 100;
+                        reasons.push(`Extreme weather detected: ${weather.condition}`);
+                    } else if (weather.condition.toLowerCase().includes('rain')) {
+                        weatherScore = 50;
+                        reasons.push(`Moderate weather risk: ${weather.condition}`);
+                    }
                 }
             } catch (err) {
                 logger.warn(`Could not fetch weather for priority calculation: ${err}`);

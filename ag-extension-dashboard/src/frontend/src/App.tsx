@@ -54,7 +54,7 @@ import { fetchFarmers, createFarmer } from '@/api/farmerService';
 import { fetchVisits, updateVisit } from '@/api/visitService';
 import { fetchReports, generateReport, downloadReport, getReportContent, Report } from '@/api/reportService';
 import { fetchPerformanceData } from '@/api/analyticsService';
-import { fetchConversations, fetchMessages, sendMessage, createConversation, createAIConversation } from '@/api/chatbotService';
+import { fetchConversations, fetchMessages, sendMessage, createConversation, createAIConversation, updateConversation, deleteConversation } from '@/api/chatbotService';
 import { sendBulkSMS } from '@/api/smsService';
 import { fetchUnreadCount } from '@/api/notificationService';
 import { themes, getThemeCSS, applyTheme } from '@/theme';
@@ -253,6 +253,7 @@ function App() {
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
     // Store aliases
+    const farmers = storeFarmers;
 
     // Offline sync queue
     const syncQueueRef = useRef<Array<{ action: string; data: unknown }>>([]);
@@ -384,14 +385,21 @@ function App() {
                 }
             }
         } else if (action.includes('delete')) {
-            if (window.confirm(`Are you sure you want to perform this action: ${action}?`)) {
-                if (action.startsWith('farmer') && entityId) {
-                    removeFarmer(entityId);
-                    addNotification({ type: 'success', message: 'Farmer record deleted successfully' });
-                } else {
-                    addNotification({ type: 'info', message: 'Action executed successfully' });
+            setConfirmModal({
+                title: 'Confirm Action',
+                message: `Are you sure you want to perform this action: ${action}?`,
+                variant: 'danger',
+                confirmText: 'Delete',
+                onConfirm: () => {
+                    setConfirmModal(null);
+                    if (action.startsWith('farmer') && entityId) {
+                        removeFarmer(entityId);
+                        addNotification({ type: 'success', message: 'Farmer record deleted successfully' });
+                    } else {
+                        addNotification({ type: 'info', message: 'Action executed successfully' });
+                    }
                 }
-            }
+            });
         }
     };
 
@@ -470,34 +478,21 @@ function App() {
     };
 
     const handleBulkSMS = async () => {
-        const selectedFarmersList = farmers?.filter(f => selectedFarmers.has(f.id)) || [];
+        const selectedFarmersList = effectiveFarmers?.filter(f => selectedFarmers.has(f.id)) || [];
         if (selectedFarmersList.length > 0) {
             try {
-                const response = await fetch('/api/sms/bulk', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
-                    body: JSON.stringify({
-                        recipients: selectedFarmersList.map(f => f.phone).filter(Boolean),
-                        message: "AG Extension Support: We have noticed updates in your area. Please check the USSD menu *384*100# for more info."
-                    })
+                const response = await sendBulkSMS({
+                    recipients: selectedFarmersList.map(f => f.phone).filter(Boolean) as string[],
+                    message: bulkSmsMessage || "AG Extension Support: We have noticed updates in your area. Please check the USSD menu *384*100# for more info."
                 });
-
-                if (response.ok) {
-                    setActiveTab('sms');
-                    setSelectedFarmers(new Set());
-                    addNotification({
-                        type: 'success',
-                        message: `Bulk SMS sent to ${selectedFarmersList.length} farmers.`
-                    });
-                } else {
-                    addNotification({
-                        type: 'error',
-                        message: 'Failed to send bulk SMS.'
-                    });
-                }
+                setActiveTab('sms');
+                setSelectedFarmers(new Set());
+                setShowBulkSmsComposer(false);
+                setBulkSmsMessage('');
+                addNotification({
+                    type: 'success',
+                    message: `Bulk SMS sent to ${selectedFarmersList.length} farmers.`
+                });
             } catch (error) {
                 console.error('Bulk SMS error:', error);
                 addNotification({
@@ -512,40 +507,47 @@ function App() {
         const ids = Array.from(selectedFarmers);
         if (ids.length === 0) return;
 
-        if (window.confirm(`Are you sure you want to delete ${ids.length} farmers? This action cannot be undone.`)) {
-            const farmersToRestore = farmers?.filter(f => selectedFarmers.has(f.id)) || [];
-            
-            try {
-                for (const id of ids) {
-                    removeFarmer(id);
-                }
-                setSelectedFarmers(new Set());
-                
-                addNotification({
-                    type: 'success',
-                    message: `Deleted ${ids.length} farmers.`,
-                    actionLabel: 'Undo',
-                    onAction: async () => {
-                        for (const farmer of farmersToRestore) {
-                            await createFarmer(farmer);
-                        }
-                        const refreshed = await fetchFarmers();
-                        setFarmerList(refreshed.data.farmers || []);
-                        setSelectedFarmers(new Set());
+        setConfirmModal({
+            title: 'Delete Farmers',
+            message: `Are you sure you want to delete ${ids.length} farmers? This action cannot be undone.`,
+            variant: 'danger',
+            confirmText: 'Delete All',
+            onConfirm: async () => {
+                setConfirmModal(null);
+                const farmersToRestore = effectiveFarmers?.filter(f => selectedFarmers.has(f.id)) || [];
+
+                try {
+                    for (const id of ids) {
+                        removeFarmer(id);
                     }
-                });
-            } catch (error) {
-                console.error('Bulk delete error:', error);
-                addNotification({
-                    type: 'error',
-                    message: 'Failed to delete some farmers.'
-                });
+                    setSelectedFarmers(new Set());
+
+                    addNotification({
+                        type: 'success',
+                        message: `Deleted ${ids.length} farmers.`,
+                        actionLabel: 'Undo',
+                        onAction: async () => {
+                            for (const farmer of farmersToRestore) {
+                                await createFarmer(farmer);
+                            }
+                            const refreshed = await fetchFarmers();
+                            setFarmerList(refreshed.data.farmers || []);
+                            setSelectedFarmers(new Set());
+                        }
+                    });
+                } catch (error) {
+                    console.error('Bulk delete error:', error);
+                    addNotification({
+                        type: 'error',
+                        message: 'Failed to delete some farmers.'
+                    });
+                }
             }
-        }
+        });
     };
 
     const handleBulkExport = () => {
-        const selectedFarmersList = farmers?.filter(f => selectedFarmers.has(f.id)) || [];
+        const selectedFarmersList = effectiveFarmers?.filter(f => selectedFarmers.has(f.id)) || [];
         if (selectedFarmersList.length > 0) {
             // Create CSV export
             const csvContent = [
@@ -690,7 +692,7 @@ function App() {
         enabled: activeTab === 'portfolio'
     });
     const queryFarmers = farmersResponse?.data?.farmers || [];
-    const farmers = queryFarmers.length > 0 ? queryFarmers : storeFarmers;
+    const effectiveFarmers = queryFarmers.length > 0 ? queryFarmers : storeFarmers;
 
     // Fetch Visits Data
     const { data: visitsResponse, refetch: refetchVisits } = useQuery<{ success: boolean; data: { visits: Visit[] } }>({
@@ -843,16 +845,8 @@ function App() {
 
     const updateConversationTitle = async (id: string, title: string) => {
         try {
-            const token = localStorage.getItem('token');
-            const res = await fetch(`/api/chatbot/conversations/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ title }),
-            });
-            if (res.ok) {
+            const res = await updateConversation(id, { title });
+            if (res.success) {
                 setConversations(prev => prev.map(c => c.id === id ? { ...c, title } : c));
                 setEditingConvId(null);
             }
@@ -861,16 +855,10 @@ function App() {
         }
     };
 
-    const deleteConversation = async (id: string) => {
+    const handleDeleteConversation = async (id: string) => {
         try {
-            const token = localStorage.getItem('token');
-            const res = await fetch(`/api/chatbot/conversations/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-            });
-            if (res.ok) {
+            const res = await deleteConversation(id);
+            if (res.success) {
                 setConversations(prev => prev.filter(c => c.id !== id));
                 if (activeConvId === id) {
                     setActiveConvId(null);
@@ -1074,7 +1062,21 @@ function App() {
     };
 
     return (
-        <div className={`h-screen flex flex-col ${darkMode ? 'dark' : ''} bg-theme-bg-primary transition-colors duration-300 overflow-hidden`}>
+        <div
+            className={`h-screen flex flex-col ${darkMode ? 'dark' : ''} bg-theme-bg-primary transition-colors duration-300 overflow-hidden relative`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+        >
+            {isDragOver && (
+                <div className="absolute inset-0 z-[200] bg-primary-500/10 backdrop-blur-sm border-4 border-dashed border-primary-500 rounded-lg flex items-center justify-center pointer-events-none">
+                    <div className="text-center">
+                        <Upload className="w-16 h-16 text-primary-500 mx-auto mb-4" />
+                        <p className="text-xl font-bold text-primary-600 dark:text-primary-400">Drop files to upload</p>
+                        <p className="text-sm text-gray-500 mt-1">Files will be uploaded and processed</p>
+                    </div>
+                </div>
+            )}
             {/* Top Navigation */}
             <header className="z-50 glass bg-theme-bg-card/80 border-b border-gray-200 dark:border-gray-800 transition-colors flex-shrink-0">
                 <div className="flex items-center justify-between px-6 py-4">
@@ -1403,7 +1405,7 @@ function App() {
                                             isExternalExpanded={isMapExpanded}
                                             onToggleExpand={setIsMapExpanded}
                                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                            farmers={farmers.map((f: any) => ({
+                                            farmers={effectiveFarmers.map((f: any) => ({
                                                 id: f.id,
                                                 name: f.name || `${f.firstName} ${f.lastName}`,
                                                 lat: f.latitude || f.lat || 0,
@@ -1418,10 +1420,10 @@ function App() {
                                                 if (user?.role === 'extension_officer' || user?.role === 'admin') {
                                                     setActiveTab('farmerchat');
                                                     // Map FarmerData back to Farmer for the conversation handler
-                                                    const farmer = farmers.find(f => f.id === farmerData.id) as Farmer;
+                                                    const farmer = effectiveFarmers.find(f => f.id === farmerData.id) as Farmer;
                                                     if (farmer) handleStartConversation(farmer, 'farmer');
                                                 } else {
-                                                    const farmer = farmers.find(f => f.id === farmerData.id) as Farmer;
+                                                    const farmer = effectiveFarmers.find(f => f.id === farmerData.id) as Farmer;
                                                     if (farmer) handleOpenFarmerDetail(farmer);
                                                 }
                                             }}
@@ -1453,10 +1455,10 @@ function App() {
                                     <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">{t('analytics_support_efficiency')}</h3>
                                     <div className="space-y-6">
                                         {[
-                                            { name: t('analytics_resolution_rate'), progress: performanceData?.metrics?.resolutionRate || 85, color: 'bg-primary-500' },
-                                            { name: t('analytics_satisfaction_score'), progress: (performanceData?.metrics?.satisfactionScore || 4.5) * 20, color: 'bg-secondary-500' },
-                                            { name: t('analytics_follow_up_rate'), progress: performanceData?.metrics?.followUpRate || 45, color: 'bg-purple-500' },
-                                            { name: t('analytics_first_contact_res'), progress: performanceData?.metrics?.firstContactResolution || 78, color: 'bg-orange-500' }
+                                            { name: t('analytics_resolution_rate'), progress: performanceData?.metrics?.resolutionRate ?? 0, color: 'bg-primary-500' },
+                                            { name: t('analytics_satisfaction_score'), progress: performanceData?.metrics?.satisfactionScore ? performanceData.metrics.satisfactionScore * 20 : 0, color: 'bg-secondary-500' },
+                                            { name: t('analytics_follow_up_rate'), progress: performanceData?.metrics?.followUpRate ?? 0, color: 'bg-purple-500' },
+                                            { name: t('analytics_first_contact_res'), progress: performanceData?.metrics?.firstContactResolution ?? 0, color: 'bg-orange-500' }
                                         ].map((item, i) => (
                                             <div key={i} className="space-y-2">
                                                 <div className="flex justify-between items-center">
@@ -1498,7 +1500,7 @@ function App() {
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <button
-                                                onClick={handleBulkSMS}
+                                                onClick={() => setShowBulkSmsComposer(!showBulkSmsComposer)}
                                                 className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2"
                                             >
                                                 <Send className="w-4 h-4" />
@@ -1529,6 +1531,36 @@ function App() {
                                 </div>
                             )}
 
+                            {showBulkSmsComposer && selectedFarmers.size > 0 && (
+                                <div className="mb-4 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h4 className="text-sm font-bold text-gray-900 dark:text-white">
+                                            Compose SMS for {selectedFarmers.size} farmer{selectedFarmers.size !== 1 ? 's' : ''}
+                                        </h4>
+                                        <button onClick={() => setShowBulkSmsComposer(false)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                                            <X className="w-4 h-4 text-gray-400" />
+                                        </button>
+                                    </div>
+                                    <textarea
+                                        value={bulkSmsMessage}
+                                        onChange={(e) => setBulkSmsMessage(e.target.value)}
+                                        placeholder="Type your message here... (leave empty for default message)"
+                                        rows={3}
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 resize-none text-sm"
+                                    />
+                                    <div className="flex items-center justify-between mt-3">
+                                        <span className="text-xs text-gray-400">{bulkSmsMessage.length}/160 characters</span>
+                                        <button
+                                            onClick={handleBulkSMS}
+                                            className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2"
+                                        >
+                                            <Send className="w-4 h-4" />
+                                            Send to {selectedFarmers.size} farmer{selectedFarmers.size !== 1 ? 's' : ''}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="card overflow-hidden bg-theme-bg-card dark:bg-gray-800 border-gray-100 dark:border-gray-700 shadow-sm">
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left">
@@ -1537,7 +1569,7 @@ function App() {
                                                 <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest w-12">
                                                     <input
                                                         type="checkbox"
-                                                        checked={farmers && selectedFarmers.size === farmers.length && farmers.length > 0}
+                                                        checked={effectiveFarmers && selectedFarmers.size === effectiveFarmers.length && effectiveFarmers.length > 0}
                                                         onChange={(e) => handleSelectAllFarmers(e.target.checked)}
                                                         className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                                                     />
@@ -1550,7 +1582,7 @@ function App() {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">
-                                            {farmers.map((farmer: Farmer) => (
+                                            {effectiveFarmers.map((farmer: Farmer) => (
                                                 <tr
                                                     key={farmer.id}
                                                     className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group cursor-pointer"
@@ -1641,6 +1673,40 @@ function App() {
                                                 }`}>
                                                 {visit.status}
                                             </span>
+                                            {visit.status !== 'completed' && visit.status !== 'cancelled' && (
+                                                <div className="flex gap-1">
+                                                    <button
+                                                        onClick={async (e) => {
+                                                            e.stopPropagation();
+                                                            try {
+                                                                await updateVisit(visit.id, { status: 'completed' });
+                                                                refetchVisits();
+                                                                addNotification({ type: 'success', message: `Visit marked as completed` });
+                                                            } catch {
+                                                                addNotification({ type: 'error', message: 'Failed to update visit status' });
+                                                            }
+                                                        }}
+                                                        className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded text-[9px] font-bold uppercase hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
+                                                    >
+                                                        Complete
+                                                    </button>
+                                                    <button
+                                                        onClick={async (e) => {
+                                                            e.stopPropagation();
+                                                            try {
+                                                                await updateVisit(visit.id, { status: 'cancelled' });
+                                                                refetchVisits();
+                                                                addNotification({ type: 'info', message: `Visit cancelled` });
+                                                            } catch {
+                                                                addNotification({ type: 'error', message: 'Failed to update visit status' });
+                                                            }
+                                                        }}
+                                                        className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded text-[9px] font-bold uppercase hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            )}
                                             <button
                                                 onClick={() => {
                                                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1676,7 +1742,22 @@ function App() {
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {reports.map((report: Report) => (
-                                    <div key={report.id} className="card group p-6 bg-theme-bg-card dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-400 transition-all cursor-pointer shadow-sm hover:shadow-xl">
+                                    <div key={report.id} className="card group p-6 bg-theme-bg-card dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-400 transition-all cursor-pointer shadow-sm hover:shadow-xl"
+                                        onClick={async () => {
+                                            setIsLoadingReport(true);
+                                            try {
+                                                const res = await getReportContent(report.id);
+                                                if (res.success && res.data) {
+                                                    setViewingReport(res.data);
+                                                    setReportContent(res.data.content || res.data.data?.content || null);
+                                                }
+                                            } catch {
+                                                addNotification({ type: 'error', message: 'Failed to load report' });
+                                            } finally {
+                                                setIsLoadingReport(false);
+                                            }
+                                        }}
+                                    >
                                         <div className="flex justify-between items-start mb-6">
                                             <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-2xl group-hover:bg-primary-50 dark:group-hover:bg-primary-900/30 transition-colors">
                                                 <FileText className="w-8 h-8 text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400" />
@@ -1702,8 +1783,9 @@ function App() {
                                                 </span>
                                             </div>
                                             <div className="flex -space-x-2">
-                                                <div className="w-6 h-6 rounded-full border-2 border-white dark:border-gray-800 bg-primary-500 flex items-center justify-center text-[8px] text-white font-bold">JD</div>
-                                                <div className="w-6 h-6 rounded-full border-2 border-white dark:border-gray-800 bg-secondary-500 flex items-center justify-center text-[8px] text-white font-bold">AS</div>
+                                                <div className="w-6 h-6 rounded-full border-2 border-white dark:border-gray-800 bg-primary-500 flex items-center justify-center text-[8px] text-white font-bold">
+                                                    {report.createdBy ? report.createdBy.substring(0, 2).toUpperCase() : user?.firstName?.[0]}{user?.lastName?.[0]}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -1994,6 +2076,92 @@ function App() {
                         )}
                     </AnimatePresence>
 
+                    {/* Report Viewer Modal */}
+                    {viewingReport && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-hidden flex flex-col"
+                            >
+                                <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                                    <div>
+                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">{viewingReport.title}</h3>
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Generated: {new Date(viewingReport.generatedAt).toLocaleString()} · Status: {viewingReport.status}
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => { setViewingReport(null); setReportContent(null); }}
+                                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl"
+                                    >
+                                        <X className="w-5 h-5 text-gray-500" />
+                                    </button>
+                                </div>
+                                <div className="flex-1 overflow-y-auto p-6">
+                                    {isLoadingReport ? (
+                                        <div className="flex items-center justify-center py-12">
+                                            <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+                                        </div>
+                                    ) : reportContent ? (
+                                        <div className="prose dark:prose-invert max-w-none">
+                                            <pre className="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">{reportContent}</pre>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-12">
+                                            <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                                            <p className="text-gray-500">No content available for this report.</p>
+                                            <button
+                                                onClick={async () => {
+                                                    try {
+                                                        const blob = await downloadReport(viewingReport.id);
+                                                        const url = URL.createObjectURL(blob);
+                                                        const a = document.createElement('a');
+                                                        a.href = url;
+                                                        a.download = `${viewingReport.title}.pdf`;
+                                                        a.click();
+                                                        URL.revokeObjectURL(url);
+                                                    } catch {
+                                                        addNotification({ type: 'error', message: 'Download failed' });
+                                                    }
+                                                }}
+                                                className="mt-4 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-bold"
+                                            >
+                                                Download Report
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="p-4 border-t border-gray-100 dark:border-gray-700 flex gap-3 justify-end">
+                                    <button
+                                        onClick={async () => {
+                                            try {
+                                                const blob = await downloadReport(viewingReport.id);
+                                                const url = URL.createObjectURL(blob);
+                                                const a = document.createElement('a');
+                                                a.href = url;
+                                                a.download = `${viewingReport.title}.pdf`;
+                                                a.click();
+                                                URL.revokeObjectURL(url);
+                                            } catch {
+                                                addNotification({ type: 'error', message: 'Download failed' });
+                                            }
+                                        }}
+                                        className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-bold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                    >
+                                        Download
+                                    </button>
+                                    <button
+                                        onClick={() => { setViewingReport(null); setReportContent(null); }}
+                                        className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-bold transition-colors"
+                                    >
+                                        Close
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </div>
+                    )}
+
                     {/* Farmer Selection Modal - accessible from both AI Assistant and Farmer Chat */}
                     {(activeTab === 'aiassistant' || activeTab === 'farmerchat') && showFarmerModal && (
                         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -2109,6 +2277,17 @@ function App() {
             <ProfileModal isOpen={showProfileModal} onClose={() => setShowProfileModal(false)} />
             <SettingsPanel isOpen={showSettingsPanel} onClose={() => setShowSettingsPanel(false)} />
             <HelpCenterModal isOpen={showHelpCenter} onClose={() => setShowHelpCenter(false)} />
+            {confirmModal && (
+                <ConfirmModal
+                    isOpen={!!confirmModal}
+                    onClose={() => setConfirmModal(null)}
+                    onConfirm={confirmModal.onConfirm}
+                    title={confirmModal.title}
+                    message={confirmModal.message}
+                    variant={confirmModal.variant}
+                    confirmText={confirmModal.confirmText}
+                />
+            )}
         </div>
     );
 }
