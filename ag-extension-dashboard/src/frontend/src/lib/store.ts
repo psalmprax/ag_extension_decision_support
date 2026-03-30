@@ -129,17 +129,22 @@ export const useAppStore = create<AppState>()(
                 )
             })),
 
-            addNotification: (notification) => set((state) => ({
-                notifications: [
-                    {
-                        ...notification,
-                        id: crypto.randomUUID(),
-                        timestamp: Date.now(),
-                        read: false,
-                    },
-                    ...state.notifications
-                ].slice(0, 50) // Keep max 50 notifications
-            })),
+            addNotification: (notification) => {
+                const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 
+                    Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+                
+                set((state) => ({
+                    notifications: [
+                        {
+                            ...notification,
+                            id,
+                            timestamp: Date.now(),
+                            read: false,
+                        },
+                        ...state.notifications
+                    ].slice(0, 50) // Keep max 50 notifications
+                }));
+            },
 
             markNotificationRead: (id) => set((state) => ({
                 notifications: state.notifications.map((n) =>

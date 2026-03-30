@@ -393,5 +393,13 @@
   "billing_admin_pending_reason": "Reason for rejection",
   "billing_admin_no_pending": "No pending transactions requiring audit.",
   "billing_admin_batch_count": "Voucher Count",
-  "billing_admin_expiry_days": "Expiry (Days)"
+  "billing_admin_expiry_days": "Expiry (Days)",
+  "help_docs": "Documentation",
+  "help_chat": "Live Chat",
+  "help_email": "Email Support",
+  "help_center_title": "Help Center",
+  "help_center_subtitle": "Find answers and get support",
+  "help_faq": "Frequently Asked Questions",
+  "help_shortcuts": "Keyboard Shortcuts",
+  "help_report_issue": "Report an Issue"
 }

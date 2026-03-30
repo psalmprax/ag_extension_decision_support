@@ -383,5 +383,13 @@
   "password_req_uppercase": "One uppercase letter",
   "reports_generated_success": "AI Synthesis Report generated successfully!",
   "sms_template_greeting": "Greeting",
-  "sms_template_alert": "Alert"
+  "sms_template_alert": "Alert",
+  "help_docs": "Documentazione",
+  "help_chat": "Chat dal vivo",
+  "help_email": "Supporto via email",
+  "help_center_title": "Centro Assistenza",
+  "help_center_subtitle": "Trova risposte e ottieni supporto",
+  "help_faq": "Domande frequenti",
+  "help_shortcuts": "Scorciatoie da tastiera",
+  "help_report_issue": "Segnala un problema"
 }
