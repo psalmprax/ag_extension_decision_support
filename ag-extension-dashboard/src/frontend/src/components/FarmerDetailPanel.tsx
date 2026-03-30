@@ -256,6 +256,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                 <>
                     {/* Backdrop */}
                     <motion.div
+                        key="panel-backdrop"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
@@ -265,6 +266,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
 
                     {/* Panel */}
                     <motion.aside
+                        key="panel-content"
                         initial={{ x: '100%' }}
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
