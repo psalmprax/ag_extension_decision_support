@@ -131,9 +131,11 @@ function App() {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch(`${CONFIG.API_BASE_URL}/upload`, {
+      const response = await apiQueue.makeRequest(`${CONFIG.API_BASE_URL}/upload`, {
         method: 'POST',
         body: formData,
+        // Remove content-type to let browser generate boundary
+        headers: {}, 
       });
 
       if (!response.ok) throw new Error('Upload failed');

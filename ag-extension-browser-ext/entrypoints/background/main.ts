@@ -1,3 +1,5 @@
+import CONFIG from '../../shared/config';
+
 // Types for offline queue
 interface QueuedRequest {
     id: string;
@@ -66,7 +68,7 @@ export default defineBackground(() => {
 
         // Additional connectivity check to backend
         try {
-            await fetch('http://localhost:7500/api/health', {
+            await fetch(`${CONFIG.API_BASE_URL}/health`, {
                 method: 'HEAD',
                 mode: 'no-cors',
                 cache: 'no-cache'

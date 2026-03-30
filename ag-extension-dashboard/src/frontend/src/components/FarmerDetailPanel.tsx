@@ -544,8 +544,8 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                                 </div>
                                             ) : (
                                                 <div className="flex flex-wrap gap-2">
-                                                    {farmer.crops?.map((crop: string) => (
-                                                        <span key={crop} className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-tighter bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400`}>
+                                                    {(farmer.crops || []).map((crop: string, i: number) => (
+                                                        <span key={`${crop}-${i}`} className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-tighter bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400`}>
                                                             {crop}
                                                         </span>
                                                     ))}
@@ -591,7 +591,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                         </h3>
                                         <div className="space-y-4">
                                             {visits.length > 0 ? visits.map((visit, i) => (
-                                                <div key={i} className="relative pl-8 group">
+                                                <div key={visit.id || i} className="relative pl-8 group">
                                                     {/* Line */}
                                                     {i !== visits.length - 1 && (
                                                         <div className={`absolute left-3 top-6 bottom-[-16px] w-0.5 transition-colors ${isCyber ? 'bg-primary-500/30' : 'bg-gray-100 dark:bg-gray-800 group-hover:bg-primary-500'}`} />
@@ -659,7 +659,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                         ) : interactions.length > 0 ? (
                                             interactions.map((log, i) => (
                                                 <div
-                                                    key={i}
+                                                    key={log.id || `${log.type}-${i}`}
                                                     className={`p-4 rounded-2xl border bg-gray-50/50 dark:bg-gray-800/30 border-gray-100 dark:border-gray-800`}
                                                 >
                                                     <div className="flex justify-between items-start mb-2">
