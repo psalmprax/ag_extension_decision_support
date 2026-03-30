@@ -8,7 +8,7 @@ import path from 'path';
 import { config } from './config';
 import { logger } from './utils/logger';
 import { errorHandler } from './middleware/errorHandler';
-import { i18nRouteHandler, restoreOriginalPath } from './middleware/i18nUrlMiddleware';
+import i18nUrlMiddleware, { i18nRouteHandler, restoreOriginalPath } from './middleware/i18nUrlMiddleware';
 import rateLimit from 'express-rate-limit';
 import { setupSwagger } from './utils/swagger';
 import { getPool } from './services/databaseService';
