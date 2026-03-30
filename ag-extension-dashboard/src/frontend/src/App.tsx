@@ -1742,6 +1742,12 @@ function App() {
                         </div>
                     )}
 
+                    {activeTab === 'billing' && (
+                        <ErrorBoundary>
+                            <BillingDashboard />
+                        </ErrorBoundary>
+                    )}
+
                     {activeTab === 'knowledge' && (
                         <KnowledgeBase />
                     )}

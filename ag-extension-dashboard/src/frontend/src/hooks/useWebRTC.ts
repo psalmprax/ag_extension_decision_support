@@ -44,7 +44,6 @@ export function useWebRTC(): UseWebRTCReturn {
         ],
     };
 
-    // Initialize socket connection
     useEffect(() => {
         const socket = io(window.location.origin, {
             path: '/socket.io',
@@ -52,16 +51,14 @@ export function useWebRTC(): UseWebRTCReturn {
         });
 
         socket.on('connect', () => {
-            console.log('WebRTC socket connected');
+            // Socket connected — ready for WebRTC signaling
         });
 
         socket.on('user-joined', async (data: { userId: string; userName: string }) => {
-            console.log('User joined:', data);
             await createPeerConnection(data.userId, true);
         });
 
         socket.on('user-left', (data: { userId: string }) => {
-            console.log('User left:', data);
             const pc = peerConnectionsRef.current.get(data.userId);
             if (pc) {
                 pc.close();
@@ -75,7 +72,6 @@ export function useWebRTC(): UseWebRTCReturn {
         });
 
         socket.on('offer', async (data: { offer: RTCSessionDescriptionInit; from: string }) => {
-            console.log('Received offer from:', data.from);
             const pc = await createPeerConnection(data.from, false);
             await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
             const answer = await pc.createAnswer();
@@ -84,7 +80,6 @@ export function useWebRTC(): UseWebRTCReturn {
         });
 
         socket.on('answer', async (data: { answer: RTCSessionDescriptionInit; from: string }) => {
-            console.log('Received answer from:', data.from);
             const pc = peerConnectionsRef.current.get(data.from);
             if (pc) {
                 await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
@@ -92,23 +87,21 @@ export function useWebRTC(): UseWebRTCReturn {
         });
 
         socket.on('ice-candidate', async (data: { candidate: RTCIceCandidateInit; from: string }) => {
-            console.log('Received ICE candidate from:', data.from);
             const pc = peerConnectionsRef.current.get(data.from);
             if (pc) {
                 await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
             }
         });
 
-        socket.on('audio-toggled', (data: { userId: string; enabled: boolean }) => {
-            console.log('Audio toggled:', data);
+        socket.on('audio-toggled', (_data: { userId: string; enabled: boolean }) => {
+            // Remote peer audio state updated
         });
 
-        socket.on('video-toggled', (data: { userId: string; enabled: boolean }) => {
-            console.log('Video toggled:', data);
+        socket.on('video-toggled', (_data: { userId: string; enabled: boolean }) => {
+            // Remote peer video state updated
         });
 
         socket.on('call-ended', () => {
-            console.log('Call ended by remote');
             leaveCall();
         });
 
@@ -134,7 +127,6 @@ export function useWebRTC(): UseWebRTCReturn {
         };
 
         pc.ontrack = (event) => {
-            console.log('Received track from:', peerId);
             setRemoteStreams((prev) => {
                 const newMap = new Map(prev);
                 newMap.set(peerId, event.streams[0]);
@@ -142,7 +134,6 @@ export function useWebRTC(): UseWebRTCReturn {
             });
         };
 
-        // Add local stream tracks
         if (localStream) {
             localStream.getTracks().forEach((track) => {
                 pc.addTrack(track, localStream);
@@ -170,26 +161,21 @@ export function useWebRTC(): UseWebRTCReturn {
             currentRoomRef.current = roomId;
             currentUserRef.current = { id: userId, name: userName };
 
-            // Get user media
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: true,
                 audio: true,
             });
             setLocalStream(stream);
 
-            // Register user
             socketRef.current?.emit('register', userId);
 
-            // Create room
             socketRef.current?.emit('create-room', { userId, userName }, (response: { roomId: string; success: boolean }) => {
                 if (response.success) {
                     setIsInCall(true);
                 }
             });
         } catch (err: unknown) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            setError((err as any).message);
-            console.error('Error starting call:', err);
+            setError((err as Error).message);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [localStream]);
@@ -200,17 +186,14 @@ export function useWebRTC(): UseWebRTCReturn {
             currentRoomRef.current = roomId;
             currentUserRef.current = { id: userId, name: userName };
 
-            // Get user media
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: true,
                 audio: true,
             });
             setLocalStream(stream);
 
-            // Register user
             socketRef.current?.emit('register', userId);
 
-            // Join room
             socketRef.current?.emit('join-room', { roomId, userId, userName }, (response: { success: boolean; participants: Participant[] }) => {
                 if (response.success) {
                     setParticipants(response.participants);
@@ -218,24 +201,19 @@ export function useWebRTC(): UseWebRTCReturn {
                 }
             });
         } catch (err: unknown) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            setError((err as any).message);
-            console.error('Error joining call:', err);
+            setError((err as Error).message);
         }
     }, []);
 
     const leaveCall = useCallback(() => {
-        // Stop local stream
         if (localStream) {
             localStream.getTracks().forEach((track) => track.stop());
             setLocalStream(null);
         }
 
-        // Close all peer connections
         peerConnectionsRef.current.forEach((pc) => pc.close());
         peerConnectionsRef.current.clear();
 
-        // Leave room
         if (socketRef.current && currentRoomRef.current && currentUserRef.current) {
             socketRef.current.emit('leave-room', {
                 roomId: currentRoomRef.current,
