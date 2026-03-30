@@ -160,9 +160,7 @@ class PaymentService {
         url: string;
     }> {
         if (!this.stripe) {
-            return {
-                url: this.appendQueryParam(successUrl, 'setup_id', 'mock_setup_' + Date.now()),
-            };
+            throw new Error('Stripe not configured — set STRIPE_SECRET_KEY to enable payment method setup');
         }
 
         const customerId = await this.getOrCreateCustomer(userId, email);
@@ -189,10 +187,7 @@ class PaymentService {
         paymentIntentId: string;
     }> {
         if (!this.stripe) {
-            return {
-                clientSecret: 'mock_secret_' + Date.now(),
-                paymentIntentId: 'mock_pi_' + Date.now(),
-            };
+            throw new Error('Stripe not configured — set STRIPE_SECRET_KEY to enable payments');
         }
 
         const paymentIntent = await this.stripe.paymentIntents.create({
@@ -213,7 +208,7 @@ class PaymentService {
     // Create or get Stripe customer
     async getOrCreateCustomer(userId: string, email: string): Promise<string> {
         if (!this.stripe) {
-            return 'mock_customer_' + userId;
+            throw new Error('Stripe not configured — set STRIPE_SECRET_KEY to enable customers');
         }
 
         // Search for existing customer
@@ -260,11 +255,7 @@ class PaymentService {
         planName: string;
     } | null> {
         if (!this.stripe) {
-            return {
-                status: 'active',
-                currentPeriodEnd: Date.now() + 30 * 24 * 60 * 60 * 1000,
-                planName: 'Pro Plan (Mock)',
-            };
+            throw new Error('Stripe not configured — set STRIPE_SECRET_KEY to check subscription');
         }
 
         try {
@@ -345,18 +336,7 @@ class PaymentService {
         };
     }>> {
         if (!this.stripe) {
-            return [
-                {
-                    id: 'mock_pm_1',
-                    type: 'card',
-                    card: {
-                        brand: 'visa',
-                        last4: '4242',
-                        expMonth: 12,
-                        expYear: 2025,
-                    },
-                },
-            ];
+            throw new Error('Stripe not configured — set STRIPE_SECRET_KEY to enable payment methods');
         }
 
         try {
@@ -521,7 +501,7 @@ class PaymentService {
     // Create billing portal session
     async createPortalSession(customerId: string, returnUrl: string): Promise<string> {
         if (!this.stripe) {
-            return this.appendQueryParam(returnUrl, 'mock_portal', 'true');
+            throw new Error('Stripe not configured — set STRIPE_SECRET_KEY to enable billing portal');
         }
 
         const session = await this.stripe.billingPortal.sessions.create({
@@ -623,18 +603,8 @@ class PaymentService {
     // Get invoices for a customer
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async getInvoices(customerId: string): Promise<any[]> {
-        // Return mock data if Stripe is not configured
         if (!this.stripe) {
-            return [
-                {
-                    id: 'inv_mock1',
-                    amount_paid: 2900,
-                    currency: 'usd',
-                    status: 'paid',
-                    created: Math.floor(Date.now() / 1000) - 86400 * 30,
-                    invoice_pdf: '#'
-                }
-            ];
+            return [];
         }
 
         try {
@@ -667,12 +637,7 @@ class PaymentService {
         cancelUrl: string;
     }): Promise<{ paymentId: string; approvalUrl: string } | null> {
         if (!this.paypalConfigured) {
-            // Return mock data for development
-            const id = 'mock_paypal_' + Date.now();
-            return {
-                paymentId: id,
-                approvalUrl: this.appendQueryParam(params.returnUrl, 'paymentId', id)
-            };
+            throw new Error('PayPal not configured — set PAYPAL_CLIENT_ID to enable PayPal payments');
         }
 
         return new Promise((resolve, reject) => {

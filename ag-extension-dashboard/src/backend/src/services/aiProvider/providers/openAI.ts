@@ -40,34 +40,8 @@ export class OpenAIProvider extends BaseAIProvider {
             return this.client;
         } catch (error) {
             logger.error('Failed to initialize OpenAI client:', error);
-            return this.getMockClient();
+            throw new Error('OpenAI client initialization failed — API key not configured');
         }
-    }
-
-    private getMockClient() {
-        return {
-            chat: {
-                completions: {
-                    create: async (_options: any) => ({
-                        choices: [
-                            {
-                                message: { role: 'assistant', content: 'Mock OpenAI response' },
-                                finishReason: 'stop',
-                            },
-                        ],
-                        usage: { promptTokens: 10, completionTokens: 20, totalTokens: 30 },
-                    }),
-                },
-            },
-            embeddings: {
-                create: async (_options: any) => ({
-                    data: [
-                        { embedding: Array(1536).fill(0).map(() => Math.random() - 0.5) },
-                    ],
-                    usage: { tokens: 100 },
-                }),
-            },
-        };
     }
 
     async generateText(prompt: string | any[], options?: TextGenerationOptions): Promise<TextGenerationResult> {
@@ -98,12 +72,7 @@ export class OpenAIProvider extends BaseAIProvider {
             };
         } catch (error) {
             logger.error('OpenAI generateText error:', error);
-            return {
-                text: 'Mock response - configure OpenAI API key',
-                model,
-                usage: { promptTokens: 10, completionTokens: 20, totalTokens: 30 },
-                finishReason: 'stop',
-            };
+            throw new Error(`OpenAI text generation failed: ${(error as Error).message}`);
         }
     }
 
@@ -126,7 +95,7 @@ export class OpenAIProvider extends BaseAIProvider {
             }
         } catch (error) {
             logger.error('OpenAI streamText error:', error);
-            yield 'Mock streaming response';
+            throw new Error(`OpenAI streaming failed: ${(error as Error).message}`);
         }
     }
 

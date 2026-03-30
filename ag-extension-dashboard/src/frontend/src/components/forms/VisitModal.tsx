@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, MapPin, Calendar, FileText, User } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
+import toast from 'react-hot-toast';
 
 interface Farmer {
     id: string;
@@ -90,11 +91,11 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
                     notes: ''
                 });
             } else {
-                alert(data.error || t('visit_create_failed'));
+                toast.error(data.error || t('visit_create_failed'));
             }
         } catch (error) {
             console.error('Failed to create visit:', error);
-            alert(t('visit_create_failed'));
+            toast.error(t('visit_create_failed'));
         } finally {
             setLoading(false);
         }

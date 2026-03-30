@@ -20,6 +20,7 @@ import {
     FileText,
     Loader2,
     Share2,
+    Trash2,
     MoreVertical
 } from 'lucide-react';
 import { VideoCall } from './VideoCall';
@@ -273,6 +274,19 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                     title="More Actions"
                                 >
                                     <MoreVertical className="w-5 h-5" />
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        if (window.confirm(`Are you sure you want to delete ${farmer.firstName} ${farmer.lastName}?`)) {
+                                            const { removeFarmer } = useAppStore.getState();
+                                            await removeFarmer(farmer.id);
+                                            onClose();
+                                        }
+                                    }}
+                                    className="p-2 backdrop-blur-md rounded-full text-white transition-all bg-rose-500/20 hover:bg-rose-500/40 border border-rose-500/30"
+                                    title="Delete Farmer"
+                                >
+                                    <Trash2 className="w-5 h-5" />
                                 </button>
                                 <button
                                     onClick={onClose}

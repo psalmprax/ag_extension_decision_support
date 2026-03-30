@@ -265,9 +265,8 @@ router.post('/refresh', (req: Request, res: Response) => {
     }
 });
 
-// Logout
+// Logout — clear auth on client side (server can't invalidate stateless JWT without a blocklist)
 router.post('/logout', (_req: Request, res: Response) => {
-    // In production, invalidate token
     res.json({ success: true, message: 'Logged out successfully' });
 });
 

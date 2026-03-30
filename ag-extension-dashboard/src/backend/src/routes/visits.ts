@@ -7,7 +7,6 @@ import { createVisitSchema } from '@/utils/schemas';
 import { authorize } from '@/middleware/authorize';
 import { shareService } from '@/services/shareService';
 import { bulkOperationsService } from '@/services/bulkOperationsService';
-import { GOLDEN_VISITS } from '@/utils/fallbackData';
 
 const router = Router();
 

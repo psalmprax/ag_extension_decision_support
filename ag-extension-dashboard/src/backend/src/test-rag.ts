@@ -28,6 +28,7 @@ async function testRAG() {
         console.log('\n3. Testing RAG Answer (Reasoning)...');
         const ragResult = await KnowledgeService.askQuestion('test-user', 'What are common maize diseases and how to prevent them?');
         console.log('Answer:', ragResult.answer);
+        console.log('Visuals:', JSON.stringify(ragResult.visuals, null, 2));
         console.log('Context Items Used:', ragResult.contextUsed.length);
         
         console.log('\n--- RAG Verification Complete ---');

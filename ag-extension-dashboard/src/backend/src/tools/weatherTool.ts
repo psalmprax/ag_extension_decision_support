@@ -19,33 +19,24 @@ export const weatherTool: Tool<typeof WeatherSchema> = {
   schema: WeatherSchema,
   execute: async ({ location, days }) => {
     logger.info(`Fetching weather for ${location} for ${days} days`);
-    
-    const mockFallback = [
-      { date: new Date().toISOString().split('T')[0], temp: 24, condition: 'Sunny', advice: 'Good for sun-drying crops.' },
-      { date: new Date(Date.now() + 86400000).toISOString().split('T')[0], temp: 22, condition: 'Partly Cloudy', advice: 'Ideal for manual weeding.' },
-      { date: new Date(Date.now() + 172800000).toISOString().split('T')[0], temp: 19, condition: 'Light Rain', advice: 'Perfect for top-dressing fertilizer.' },
-    ];
 
-    let forecast = mockFallback.slice(0, days);
-    let source = 'Ag-Extension Weather Service (Predictive)';
+    let forecast: { date: string; temp: number; condition: string; advice: string }[] = [];
+    let source = 'wttr.in (Real-time)';
 
     try {
-      // Use wttr.in for real weather data (no API key required)
       const response = await axios.get(`https://wttr.in/${encodeURIComponent(location)}?format=j1`);
       
       if (response.data && response.data.weather) {
-        // Map wttr.in weather to our format
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         forecast = response.data.weather.slice(0, days).map((w: any) => ({
           date: w.date,
           temp: parseInt(w.avgtempC),
           condition: w.hourly[4]?.weatherDesc[0]?.value || 'Variable',
           advice: getAgriculturalAdvice(w.hourly[4]?.weatherDesc[0]?.value || '')
         }));
-        source = 'wttr.in (Real-time)';
       }
     } catch (error) {
-      logger.error(`Weather API failed for ${location}, using fallback:`, error);
+      logger.error(`Weather API failed for ${location}:`, error);
+      throw new Error(`Weather data unavailable for ${location}`);
     }
 
     const result = {

@@ -46,43 +46,8 @@ export class AzureOpenAIProvider extends BaseAIProvider {
             return this.client;
         } catch (error) {
             logger.error('Failed to initialize Azure OpenAI client:', error);
-            // Return mock client for development
-            return this.getMockClient();
+            throw new Error('Azure OpenAI client initialization failed — API key not configured');
         }
-    }
-
-    private getMockClient() {
-        return {
-            async getChatCompletions(_deploymentName: string, _messages: any, _options: any) {
-                return {
-                    choices: [
-                        {
-                            message: {
-                                role: 'assistant',
-                                content: 'This is a mock response from Azure OpenAI. Configure your API keys for actual responses.',
-                            },
-                            finishReason: 'stop',
-                        },
-                    ],
-                    usage: {
-                        promptTokens: 10,
-                        completionTokens: 20,
-                        totalTokens: 30,
-                    },
-                };
-            },
-            async getEmbeddings(_deploymentName: string, _input: string | string[]) {
-                const input = Array.isArray(_input) ? _input : [_input];
-                return {
-                    data: input.map(() => ({
-                        embedding: Array(1536).fill(0).map(() => Math.random() - 0.5),
-                    })),
-                    usage: {
-                        tokens: input.length * 100,
-                    },
-                };
-            },
-        };
     }
 
     async generateText(prompt: string | any[], options?: TextGenerationOptions): Promise<TextGenerationResult> {
@@ -119,13 +84,7 @@ export class AzureOpenAIProvider extends BaseAIProvider {
             };
         } catch (error) {
             logger.error('Azure OpenAI generateText error:', error);
-            // Return mock response in case of error
-            return {
-                text: 'This is a mock response. Configure your Azure OpenAI API keys for actual responses.',
-                model,
-                usage: { promptTokens: 10, completionTokens: 20, totalTokens: 30 },
-                finishReason: 'stop',
-            };
+            throw new Error(`Azure OpenAI text generation failed: ${(error as Error).message}`);
         }
     }
 
@@ -155,7 +114,7 @@ export class AzureOpenAIProvider extends BaseAIProvider {
             }
         } catch (error) {
             logger.error('Azure OpenAI streamText error:', error);
-            yield 'Mock streaming response. Configure API keys for actual responses.';
+            throw new Error(`Azure OpenAI streaming failed: ${(error as Error).message}`);
         }
     }
 
@@ -172,12 +131,7 @@ export class AzureOpenAIProvider extends BaseAIProvider {
             };
         } catch (error) {
             logger.error('Azure OpenAI createEmbedding error:', error);
-            // Return mock embedding
-            return {
-                embedding: Array(1536).fill(0).map(() => Math.random() - 0.5),
-                model,
-                usage: { tokens: 100 },
-            };
+            throw new Error(`Azure OpenAI embedding failed: ${(error as Error).message}`);
         }
     }
 
@@ -194,31 +148,16 @@ export class AzureOpenAIProvider extends BaseAIProvider {
             }));
         } catch (error) {
             logger.error('Azure OpenAI createBatchEmbeddings error:', error);
-            return texts.map(() => ({
-                embedding: Array(1536).fill(0).map(() => Math.random() - 0.5),
-                model,
-                usage: { tokens: 100 },
-            }));
+            throw new Error(`Azure OpenAI batch embedding failed: ${(error as Error).message}`);
         }
     }
 
     async speechToText(audio: Buffer, options?: SpeechToTextOptions): Promise<SpeechToTextResult> {
-        logger.info('Speech to text called with audio size:', audio.length);
-        // Mock implementation - Azure Speech Services would require additional setup
-        return {
-            text: 'Mock transcription. Configure Azure Speech Services for actual transcription.',
-            language: options?.language || 'en-US',
-            confidence: 0.95,
-        };
+        throw new Error('Azure Speech-to-Text not configured — set AZURE_SPEECH_KEY to enable');
     }
 
     async textToSpeech(text: string, options?: TextToSpeechOptions): Promise<TextToSpeechResult> {
-        logger.info('Text to speech called with text length:', text.length);
-        // Mock implementation - Azure Speech Services would require additional setup
-        return {
-            audio: Buffer.from('Mock audio'),
-            format: 'audio/wav',
-        };
+        throw new Error('Azure Text-to-Speech not configured — set AZURE_SPEECH_KEY to enable');
     }
 
     async analyzeWithReasoning(context: string, query: string, options?: ReasoningOptions): Promise<ReasoningResult> {

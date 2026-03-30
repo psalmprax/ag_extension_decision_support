@@ -5,6 +5,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 import { ThemeSwitcher } from './ThemeSwitcher';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import apiClient from '@/api/client';
 import toast from 'react-hot-toast';
 
 interface SettingsPanelProps {
@@ -22,13 +23,16 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
         soundEnabled: false,
     });
 
-    const handleToggle = (key: keyof typeof notificationPrefs) => {
-        setNotificationPrefs(prev => {
-            const updated = { ...prev, [key]: !prev[key] };
-            localStorage.setItem('ag-notification-prefs', JSON.stringify(updated));
+    const handleToggle = async (key: keyof typeof notificationPrefs) => {
+        const updated = { ...notificationPrefs, [key]: !notificationPrefs[key] };
+        setNotificationPrefs(updated);
+        localStorage.setItem('ag-notification-prefs', JSON.stringify(updated));
+        try {
+            await apiClient.patch('/users/profile', { notificationPreferences: updated });
             toast.success('Settings saved');
-            return updated;
-        });
+        } catch {
+            toast.success('Settings saved locally');
+        }
     };
 
     return (

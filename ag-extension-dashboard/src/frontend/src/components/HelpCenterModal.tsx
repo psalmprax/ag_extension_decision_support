@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, HelpCircle, Book, MessageSquare, Mail, ExternalLink, ChevronRight } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
+import { useAppStore } from '@/store/useAppStore';
 
 interface HelpCenterModalProps {
     isOpen: boolean;
@@ -37,7 +38,14 @@ const faqs = [
 
 export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClose }) => {
     const { t } = useLanguage();
+    const setActiveTab = useAppStore((s) => s.setActiveTab);
     const [expandedFaq, setExpandedFaq] = React.useState<number | null>(null);
+
+    const quickLinks = [
+        { icon: Book, label: t('help_docs') || 'Documentation', color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400', action: () => { onClose(); setActiveTab('knowledge'); } },
+        { icon: MessageSquare, label: t('help_chat') || 'Live Chat', color: 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400', action: () => { onClose(); setActiveTab('aiassistant'); } },
+        { icon: Mail, label: t('help_email') || 'Email Support', color: 'bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400', action: () => { window.open('mailto:support@ag-extension.example.com', '_blank'); } },
+    ];
 
     return (
         <AnimatePresence>
@@ -82,13 +90,10 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                             <div className="flex-1 overflow-y-auto p-6 space-y-6">
                                 {/* Quick Links */}
                                 <div className="grid grid-cols-3 gap-3">
-                                    {[
-                                        { icon: Book, label: t('help_docs') || 'Documentation', color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' },
-                                        { icon: MessageSquare, label: t('help_chat') || 'Live Chat', color: 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400' },
-                                        { icon: Mail, label: t('help_email') || 'Email Support', color: 'bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400' },
-                                    ].map(({ icon: Icon, label, color }, i) => (
+                                    {quickLinks.map(({ icon: Icon, label, color, action }, i) => (
                                         <button
                                             key={i}
+                                            onClick={action}
                                             className={`p-4 rounded-2xl ${color} flex flex-col items-center gap-2 hover:scale-105 transition-transform`}
                                         >
                                             <Icon className="w-6 h-6" />

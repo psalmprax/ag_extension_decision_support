@@ -45,6 +45,8 @@ export interface Notification {
     message: string;
     timestamp: number;
     read: boolean;
+    actionLabel?: string;
+    onAction?: () => void;
 }
 
 // App Store
@@ -77,6 +79,7 @@ interface AppState {
     addFarmer: (farmer: Farmer) => void;
     updateFarmer: (id: string, updates: Partial<Farmer>) => Promise<void>;
     removeFarmer: (id: string) => Promise<void>;
+    removeFarmers: (ids: string[]) => Promise<void>;
 
     // Visits
     visits: Visit[];
@@ -205,6 +208,24 @@ export const useAppStore = create<AppState>()(
                     set({ isLoading: false });
                 }
             },
+            removeFarmers: async (ids) => {
+                set({ isLoading: true });
+                try {
+                    // Call the bulk delete API if it exists, or loop
+                    const response = await farmerService.deleteFarmers(ids);
+                    if (response.success) {
+                        set((state) => ({
+                            farmers: state.farmers.filter((f) => !ids.includes(f.id))
+                        }));
+                        toast.success(`${ids.length} farmers removed successfully`);
+                    }
+                } catch (error) {
+                    console.error('Bulk remove farmers error:', error);
+                    toast.error('Failed to remove some farmers');
+                } finally {
+                    set({ isLoading: false });
+                }
+            },
 
             setVisits: (visits) => set({ visits }),
             addVisit: async (visit) => {
@@ -256,10 +277,10 @@ export const useAppStore = create<AppState>()(
             addNotification: (notification) => set((state) => ({
                 notifications: [
                     {
-                        ...notification,
                         id: crypto.randomUUID(),
                         timestamp: Date.now(),
                         read: false,
+                        ...notification,
                     },
                     ...state.notifications
                 ].slice(0, 50)

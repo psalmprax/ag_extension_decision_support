@@ -37,10 +37,11 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
     };
 
     return (
-        <aside 
-            className={`relative flex-shrink-0 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 transition-all duration-300 ease-in-out ${isOpen ? 'w-80' : 'w-0 overflow-hidden'}`}
-        >
-            <div className="h-full flex flex-col p-4 w-80">
+        <div className={`relative h-full flex-shrink-0 transition-all duration-300 ease-in-out z-40 ${isOpen ? 'w-80' : 'w-0'}`}>
+            <aside 
+                className={`h-full w-full bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 overflow-hidden`}
+            >
+                <div className="h-full flex flex-col p-4 w-80">
                 {/* New Search Button */}
                 <button 
                     onClick={() => onNewQuery ? onNewQuery() : window.location.reload()}
@@ -116,10 +117,12 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
                 </div>
             </div>
 
+            </aside>
+
             {/* Toggle Tab */}
             <button 
                 onClick={onToggle}
-                className="absolute top-1/2 -right-4 translate-y-[-50%] p-1 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-full shadow-lg text-gray-400 hover:text-primary-500 transition-all z-50 group"
+                className={`absolute top-1/2 -right-4 translate-y-[-50%] p-1 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-full shadow-lg text-gray-400 hover:text-primary-500 transition-all z-50 group flex items-center justify-center ${!isOpen && 'translate-x-4'}`}
             >
                 {isOpen ? (
                     <ChevronLeft className="w-6 h-6 group-hover:scale-110 transition-transform" />
@@ -127,6 +130,6 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
                     <ChevronRight className="w-6 h-6 group-hover:scale-110 transition-transform" />
                 )}
             </button>
-        </aside>
+        </div>
     );
 };

@@ -41,32 +41,8 @@ export class GoogleVertexProvider extends BaseAIProvider {
             return this.client;
         } catch (error) {
             logger.error('Failed to initialize Google Vertex client:', error);
-            return this.getMockClient();
+            throw new Error('Google Vertex client initialization failed — API key not configured');
         }
-    }
-
-    private getMockClient() {
-        return {
-            getGenerativeModel: (_model: any) => ({
-                generateContent: async (_prompt: any) => ({
-                    response: {
-                        text: () => 'This is a mock response from Google Vertex. Configure your API keys for actual responses.',
-                    },
-                }),
-                startChat: () => ({
-                    sendMessage: async (_prompt: any) => ({
-                        response: {
-                            text: () => 'Mock chat response',
-                        },
-                    }),
-                }),
-                embedContent: async (_text: any) => ({
-                    embedding: {
-                        values: Array(768).fill(0).map(() => Math.random() - 0.5),
-                    },
-                }),
-            }),
-        };
     }
 
     async generateText(prompt: string | any[], options?: TextGenerationOptions): Promise<TextGenerationResult> {
@@ -86,12 +62,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
             };
         } catch (error) {
             logger.error('Google Vertex generateText error:', error);
-            return {
-                text: 'Mock response - configure Google Vertex API for actual results',
-                model: modelName,
-                usage: { promptTokens: 10, completionTokens: 20, totalTokens: 30 },
-                finishReason: 'stop',
-            };
+            throw new Error(`Google Vertex text generation failed: ${(error as Error).message}`);
         }
     }
 
@@ -108,7 +79,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
             }
         } catch (error) {
             logger.error('Google Vertex streamText error:', error);
-            yield 'Mock streaming response - configure API keys';
+            throw new Error(`Google Vertex streaming failed: ${(error as Error).message}`);
         }
     }
 
@@ -172,11 +143,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
     }
 
     async textToSpeech(_text: string, _options?: TextToSpeechOptions): Promise<TextToSpeechResult> {
-        logger.info('Google Vertex text to speech not implemented, use Azure');
-        return {
-            audio: Buffer.from('Mock audio'),
-            format: 'audio/wav',
-        };
+        throw new Error('Google Vertex Text-to-Speech not supported — use Azure or OpenAI providers');
     }
 
     async analyzeWithReasoning(context: string, query: string, options?: ReasoningOptions): Promise<ReasoningResult> {

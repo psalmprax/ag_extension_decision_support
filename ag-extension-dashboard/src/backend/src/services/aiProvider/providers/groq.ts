@@ -69,13 +69,7 @@ export class GroqProvider extends BaseAIProvider {
             };
         } catch (error) {
             logger.error('Groq generateText error:', error);
-            // Return a mock response or throw an error
-            return {
-                text: 'Mock response due to Groq API error.',
-                model,
-                usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
-                finishReason: 'error',
-            };
+            throw new Error(`Groq text generation failed: ${(error as Error).message}`);
         }
     }
 

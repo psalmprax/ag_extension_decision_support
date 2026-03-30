@@ -33,26 +33,8 @@ export class AnthropicProvider extends BaseAIProvider {
             return this.client;
         } catch (error) {
             logger.error('Failed to initialize Anthropic client:', error);
-            return this.getMockClient();
+            throw new Error('Anthropic client initialization failed — API key not configured');
         }
-    }
-
-    private getMockClient() {
-        return {
-            messages: {
-                create: async (_options: any) => ({
-                    content: [{ type: 'text', text: 'Mock Anthropic response' }],
-                    usage: { input_tokens: 10, output_tokens: 20 },
-                }),
-            },
-            embeddings: {
-                create: async (_options: any) => ({
-                    data: [
-                        { embedding: Array(1024).fill(0).map(() => Math.random() - 0.5) },
-                    ],
-                }),
-            },
-        };
     }
 
     async generateText(prompt: string | any[], options?: TextGenerationOptions): Promise<TextGenerationResult> {
@@ -80,12 +62,7 @@ export class AnthropicProvider extends BaseAIProvider {
             };
         } catch (error) {
             logger.error('Anthropic generateText error:', error);
-            return {
-                text: 'Mock response - configure Anthropic API key',
-                model,
-                usage: { promptTokens: 10, completionTokens: 20, totalTokens: 30 },
-                finishReason: 'stop',
-            };
+            throw new Error(`Anthropic text generation failed: ${(error as Error).message}`);
         }
     }
 
@@ -109,7 +86,7 @@ export class AnthropicProvider extends BaseAIProvider {
             }
         } catch (error) {
             logger.error('Anthropic streamText error:', error);
-            yield 'Mock streaming response';
+            throw new Error(`Anthropic streaming failed: ${(error as Error).message}`);
         }
     }
 

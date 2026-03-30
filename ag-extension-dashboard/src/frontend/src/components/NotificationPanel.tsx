@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, X, CheckCircle2, AlertTriangle, AlertCircle, Info, Trash2, Clock, Loader2 } from 'lucide-react';
+import { Bell, X, CheckCircle2, AlertTriangle, AlertCircle, Info, Trash2, Clock, Loader2, Undo } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import { formatDistanceToNow } from 'date-fns';
@@ -99,6 +99,8 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
             message: n.title ? `${n.title}: ${n.message}` : n.message,
             timestamp: new Date(n.createdAt).getTime(),
             read: n.isRead,
+            actionLabel: undefined,
+            onAction: undefined,
         }))
         : storeNotifications;
 
@@ -198,11 +200,25 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
                                                 <p className={`text-sm leading-relaxed ${notification.read ? 'text-gray-500' : 'text-gray-900 dark:text-white font-medium'}`}>
                                                     {notification.message}
                                                 </p>
-                                                <div className="flex items-center gap-2 mt-2">
-                                                    <Clock className="w-3 h-3 text-gray-400" />
-                                                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                                                        {formatDistanceToNow(notification.timestamp, { addSuffix: true })}
-                                                    </span>
+                                                <div className="flex items-center justify-between mt-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <Clock className="w-3 h-3 text-gray-400" />
+                                                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                                                            {formatDistanceToNow(notification.timestamp, { addSuffix: true })}
+                                                        </span>
+                                                    </div>
+                                                    {notification.actionLabel && notification.onAction && (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                notification.onAction?.();
+                                                            }}
+                                                            className="flex items-center gap-1.5 px-3 py-1 bg-white/50 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 text-[10px] font-black uppercase tracking-widest text-primary-700 dark:text-primary-400 rounded-lg transition-all border border-primary-200/50 dark:border-primary-400/20"
+                                                        >
+                                                            <Undo className="w-3 h-3" />
+                                                            {notification.actionLabel}
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                             {!notification.read && (

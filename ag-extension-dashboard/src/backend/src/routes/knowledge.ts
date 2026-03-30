@@ -181,29 +181,6 @@ router.get('/search', async (req: Request, res: Response) => {
     }
 });
 
-// Get article by ID
-router.get('/:id', async (req: Request, res: Response) => {
-    try {
-        const { id } = req.params;
-        const pool = getPool();
-
-        let article = null;
-        if (pool) {
-            const result = await query('SELECT * FROM knowledge_articles WHERE id = $1', [id]);
-            article = result.rows[0];
-        }
-
-        if (!article) {
-            return res.status(404).json({ success: false, error: 'Article not found' });
-        }
-
-        res.json({ success: true, data: article });
-    } catch (error) {
-        logger.error('Get article error:', error);
-        res.status(500).json({ success: false, error: 'Failed to get article' });
-    }
-});
-
 // Get recent search history
 router.get('/history', async (req: Request, res: Response) => {
     try {
@@ -228,36 +205,6 @@ router.get('/stats', async (_req: Request, res: Response) => {
     } catch (error) {
         logger.error('Get search stats error:', error);
         res.status(500).json({ success: false, error: 'Failed to get search statistics' });
-    }
-});
-
-// Ask AI a question (RAG-based with Semantic Caching)
-router.post('/ask', async (req: Request, res: Response) => {
-    try {
-        const { question } = req.body;
-        const userId = (req as any).user?.userId || (req as any).user?.id;
-
-        if (!question) {
-            return res.status(400).json({ success: false, error: 'Question is required' });
-        }
-
-        if (!userId) {
-            return res.status(401).json({ success: false, error: 'User not authenticated' });
-        }
-
-        const result = await KnowledgeService.askQuestion(userId, question);
-
-        res.json({
-            success: true,
-            data: {
-                answer: result.answer,
-                contextUsed: result.contextUsed,
-                cached: result.cached
-            },
-        });
-    } catch (error) {
-        logger.error('Ask question error:', error);
-        res.status(500).json({ success: false, error: 'Failed to get answer' });
     }
 });
 
@@ -304,6 +251,61 @@ router.get('/meta/crops', async (_req: Request, res: Response) => {
         res.json({ success: true, data: [] });
     }
 });
+
+// Get article by ID
+router.get('/:id', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const pool = getPool();
+
+        let article = null;
+        if (pool) {
+            const result = await query('SELECT * FROM knowledge_articles WHERE id = $1', [id]);
+            article = result.rows[0];
+        }
+
+        if (!article) {
+            return res.status(404).json({ success: false, error: 'Article not found' });
+        }
+
+        res.json({ success: true, data: article });
+    } catch (error) {
+        logger.error('Get article error:', error);
+        res.status(500).json({ success: false, error: 'Failed to get article' });
+    }
+});
+
+
+// Ask AI a question (RAG-based with Semantic Caching)
+router.post('/ask', async (req: Request, res: Response) => {
+    try {
+        const { question } = req.body;
+        const userId = (req as any).user?.userId || (req as any).user?.id;
+
+        if (!question) {
+            return res.status(400).json({ success: false, error: 'Question is required' });
+        }
+
+        if (!userId) {
+            return res.status(401).json({ success: false, error: 'User not authenticated' });
+        }
+
+        const result = await KnowledgeService.askQuestion(userId, question);
+
+        res.json({
+            success: true,
+            data: {
+                answer: result.answer,
+                contextUsed: result.contextUsed,
+                cached: result.cached
+            },
+        });
+    } catch (error) {
+        logger.error('Ask question error:', error);
+        res.status(500).json({ success: false, error: 'Failed to get answer' });
+    }
+});
+
 
 router.post("/:id/share", async (req: Request, res: Response) => {
     try {

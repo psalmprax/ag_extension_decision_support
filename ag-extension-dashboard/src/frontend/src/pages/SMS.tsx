@@ -10,6 +10,7 @@ import { useAppStore } from '../store/useAppStore';
 import { fetchSMSHistory, sendSMS, sendBulkSMS, translateMessage } from '../api/smsService';
 import { fetchFarmers, Farmer } from '../api/farmerService';
 import { fetchUsage } from '../api/billingService';
+import toast from 'react-hot-toast';
 
 interface SMSMessage {
     id: string;
@@ -253,7 +254,17 @@ export function SMSPage() {
                 </div>
 
                 <div className="p-4 border-t border-slate-200 dark:border-slate-800">
-                    <button className="w-full flex items-center justify-center gap-2 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                    <button
+                        onClick={() => {
+                            if (selectedContact) {
+                                setPhoneNumber(selectedContact.phone);
+                                toast.success(`Added ${selectedContact.name} as recipient`);
+                            } else {
+                                toast.error('Select a contact first');
+                            }
+                        }}
+                        className="w-full flex items-center justify-center gap-2 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                    >
                         <Plus className="w-4 h-4" />
                         {t('common_add')}
                     </button>

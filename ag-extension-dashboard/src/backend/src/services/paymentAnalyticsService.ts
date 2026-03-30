@@ -388,13 +388,8 @@ export class PaymentAnalyticsService {
                 }
             });
 
-            // Mock churn reasons (would need actual cancellation feedback)
-            const churnReasons = [
-                { reason: 'Price too high', count: Math.floor(recentCancellations * 0.4), percentage: 40 },
-                { reason: 'Feature not used', count: Math.floor(recentCancellations * 0.3), percentage: 30 },
-                { reason: 'Competitor', count: Math.floor(recentCancellations * 0.2), percentage: 20 },
-                { reason: 'Technical issues', count: Math.floor(recentCancellations * 0.1), percentage: 10 }
-            ];
+            // Churn reasons — requires actual cancellation feedback data
+            const churnReasons: { reason: string; count: number; percentage: number }[] = [];
 
             return {
                 predictedChurnRate,

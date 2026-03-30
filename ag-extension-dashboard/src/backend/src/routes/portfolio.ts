@@ -173,59 +173,7 @@ router.get('/recommendations', async (req: Request, res: Response) => {
 });
 
 // Update visit status
-router.patch('/visits/:id', async (req: Request, res: Response) => {
-    try {
-        const { id } = req.params;
-        const { status, notes, outcomes, startedAt, completedAt, duration } = req.body;
-        const pool = getPool();
-
-        if (!pool) {
-            return res.status(503).json({ success: false, error: 'Database connection unavailable' });
-        }
-
-        const updates: string[] = [];
-        const params: any[] = [];
-        let paramIndex = 1;
-
-        if (status) {
-            updates.push('status = $' + paramIndex++);
-            params.push(status);
-        }
-        if (notes) {
-            updates.push('notes = $' + paramIndex++);
-            params.push(notes);
-        }
-        if (outcomes) {
-            updates.push('outcomes = $' + paramIndex++);
-            params.push(outcomes);
-        }
-        if (startedAt) {
-            updates.push('started_at = $' + paramIndex++);
-            params.push(startedAt);
-        }
-        if (completedAt) {
-            updates.push('completed_at = $' + paramIndex++);
-            params.push(completedAt);
-        }
-        if (duration) {
-            updates.push('duration_minutes = $' + paramIndex++);
-            params.push(duration);
-        }
-
-        updates.push('updated_at = NOW()');
-        params.push(id);
-
-        await query('UPDATE visits SET ' + updates.join(', ') + ' WHERE id = $' + paramIndex, params);
-
-        res.json({
-            success: true,
-            data: { id, status, notes, outcomes, updatedAt: new Date().toISOString() },
-        });
-    } catch (error) {
-        logger.error('Update visit error:', error);
-        res.status(500).json({ success: false, error: 'Failed to update visit' });
-    }
-});
+// Visit updates handled by /api/v1/visits/:id (visits.ts) — duplicate removed
 
 // Get farmer details for visit
 router.get('/farmers/:id', async (req: Request, res: Response) => {

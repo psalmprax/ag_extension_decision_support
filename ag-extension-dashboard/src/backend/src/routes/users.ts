@@ -103,19 +103,7 @@ router.post('/', async (req: Request, res: Response) => {
         const pool = getPool();
 
         if (!pool) {
-            const mockId = 'u_' + Date.now();
-            return res.status(201).json({
-                success: true,
-                data: {
-                    id: mockId,
-                    name,
-                    email,
-                    role: role || 'extension_officer',
-                    region,
-                    phone,
-                    createdAt: new Date().toISOString(),
-                },
-            });
+            return res.status(503).json({ success: false, error: 'Database connection unavailable' });
         }
 
         const result = await query(`

@@ -49,7 +49,7 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchDashboardData } from '@/api/dashboardService';
 import { askAI, searchKnowledge } from '@/api/knowledgeService';
 import { fetchUserProfile, AuthResponse, ProfileResponse } from '@/api/authService';
-import { fetchFarmers } from '@/api/farmerService';
+import { fetchFarmers, createFarmer } from '@/api/farmerService';
 import { fetchVisits } from '@/api/visitService';
 import { fetchReports, generateReport } from '@/api/reportService';
 import { fetchPerformanceData } from '@/api/analyticsService';
@@ -434,6 +434,42 @@ function App() {
                 addNotification({
                     type: 'error',
                     message: 'Error connecting to SMS service.'
+                });
+            }
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        const ids = Array.from(selectedFarmers);
+        if (ids.length === 0) return;
+
+        if (window.confirm(`Are you sure you want to delete ${ids.length} farmers? This action cannot be undone.`)) {
+            const farmersToRestore = farmers?.filter(f => selectedFarmers.has(f.id)) || [];
+            
+            try {
+                for (const id of ids) {
+                    removeFarmer(id);
+                }
+                setSelectedFarmers(new Set());
+                
+                addNotification({
+                    type: 'success',
+                    message: `Deleted ${ids.length} farmers.`,
+                    actionLabel: 'Undo',
+                    onAction: async () => {
+                        for (const farmer of farmersToRestore) {
+                            await createFarmer(farmer);
+                        }
+                        const refreshed = await fetchFarmers();
+                        setFarmerList(refreshed.data.farmers || []);
+                        setSelectedFarmers(new Set());
+                    }
+                });
+            } catch (error) {
+                console.error('Bulk delete error:', error);
+                addNotification({
+                    type: 'error',
+                    message: 'Failed to delete some farmers.'
                 });
             }
         }
@@ -1401,6 +1437,13 @@ function App() {
                                             >
                                                 <FileText className="w-4 h-4" />
                                                 Export CSV
+                                            </button>
+                                            <button
+                                                onClick={handleBulkDelete}
+                                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                                Delete
                                             </button>
                                             <button
                                                 onClick={() => setSelectedFarmers(new Set())}

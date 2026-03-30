@@ -4,7 +4,6 @@ import { query, getPool } from '@/services/databaseService';
 import { cacheGet, cacheSet } from '@/services/cacheService';
 import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
-import { GOLDEN_DASHBOARD_DATA } from '@/utils/fallbackData';
 
 const router = Router();
 
@@ -104,11 +103,7 @@ router.get('/dashboard', async (req: Request, res: Response) => {
 
         const currentFarmers = parseInt((farmersCount[0] as any)?.count || '0');
 
-        // IF THE DATABASE IS EMPTY (e.g. fresh environment or dev failover), USE GOLDEN DATASET
-        if (currentFarmers === 0 && !isOfficer) {
-            logger.info('Database empty, returning synced Golden Dataset fallback');
-            return res.json({ success: true, data: GOLDEN_DASHBOARD_DATA });
-        }
+        // Return real empty state when database is empty — no mock fallback
 
         // Get regional data
         const geography = await getFromDB(`
@@ -533,14 +528,17 @@ router.get('/chatbot', async (req: Request, res: Response) => {
 
         const [
             conversations,
-            languageData
+            languageData,
+            engagementMetrics,
+            responseMetrics
         ] = await Promise.all([
             getFromDB(`
                 SELECT 
                     COUNT(*) as total,
-                    COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed,
+                    COUNT(CASE WHEN status = 'resolved' THEN 1 END) as completed,
                     COUNT(CASE WHEN status = 'active' THEN 1 END) as active,
-                    COUNT(CASE WHEN status = 'abandoned' THEN 1 END) as abandoned
+                    COUNT(CASE WHEN status = 'abandoned' THEN 1 END) as abandoned,
+                    COUNT(CASE WHEN officer_id IS NOT NULL THEN 1 END) as escalated
                 FROM chat_conversations
                 WHERE started_at > NOW() - INTERVAL '${days} days'
             `),
@@ -550,27 +548,56 @@ router.get('/chatbot', async (req: Request, res: Response) => {
                 WHERE started_at > NOW() - INTERVAL '${days} days'
                 GROUP BY language
                 ORDER BY count DESC
+            `),
+            getFromDB(`
+                SELECT 
+                    AVG(msg_count) as avg_messages,
+                    COUNT(CASE WHEN is_voice = true THEN 1 END) as voice_usage,
+                    COUNT(CASE WHEN is_voice = false THEN 1 END) as text_usage
+                FROM (
+                    SELECT c.id, 
+                           COUNT(m.id) as msg_count,
+                           bool_or(m.is_voice) as is_voice
+                    FROM chat_conversations c
+                    LEFT JOIN chat_messages m ON m.conversation_id = c.id
+                    WHERE c.started_at > NOW() - INTERVAL '${days} days'
+                    GROUP BY c.id
+                ) stats
+            `),
+            getFromDB(`
+                SELECT 
+                    AVG(EXTRACT(EPOCH FROM (first_reply - started_at))) as avg_first_response,
+                    AVG(EXTRACT(EPOCH FROM (ended_at - started_at))) as avg_resolution
+                FROM (
+                    SELECT c.id, c.started_at, c.ended_at,
+                           (SELECT MIN(created_at) FROM chat_messages WHERE conversation_id = c.id AND role IN ('assistant', 'officer')) as first_reply
+                    FROM chat_conversations c
+                    WHERE c.status = 'resolved' AND c.started_at > NOW() - INTERVAL '${days} days'
+                ) reply_stats
+                WHERE first_reply IS NOT NULL
             `)
         ]);
 
-        const total = parseInt((conversations[0]?.total as string) || '0');
+        const total = parseInt((conversations[0]?.total as string) || '1');
+        const engagement = engagementMetrics[0] || {};
+        const response = responseMetrics[0] || {};
 
         const chatbot = {
             conversations: {
-                total,
+                total: parseInt((conversations[0]?.total as string) || '0'),
                 completed: parseInt((conversations[0]?.completed as string) || '0'),
                 active: parseInt((conversations[0]?.active as string) || '0'),
                 abandoned: parseInt((conversations[0]?.abandoned as string) || '0'),
             },
             engagement: {
-                avgMessagesPerConversation: 0,
-                voiceUsage: 0,
-                textUsage: 0,
+                avgMessagesPerConversation: Math.round(parseFloat(engagement.avg_messages || '0') * 10) / 10,
+                voiceUsage: parseInt(engagement.voice_usage || '0'),
+                textUsage: parseInt(engagement.text_usage || '0'),
             },
             responseMetrics: {
-                avgFirstResponseTime: 0,
-                avgResolutionTime: 0,
-                escalationRate: 0,
+                avgFirstResponseTime: Math.round(parseFloat(response.avg_first_response || '0') / 60 * 10) / 10, // in minutes
+                avgResolutionTime: Math.round(parseFloat(response.avg_resolution || '0') / 60 * 10) / 10, // in minutes
+                escalationRate: Math.round((parseInt(conversations[0]?.escalated || '0') / total) * 100),
             },
             languages: languageData.map((row: any) => ({
                 language: row.language || 'en',

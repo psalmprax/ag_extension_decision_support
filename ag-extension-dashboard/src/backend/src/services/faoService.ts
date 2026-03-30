@@ -35,32 +35,4 @@ export class FAOService {
             return [];
         }
     }
-
-    private static getMockAlerts(region: string, crop?: string): DiseaseAlert[] {
-        const alerts: DiseaseAlert[] = [
-            {
-                id: 'fao-2024-001',
-                title: 'Maize Lethal Necrosis (MLN) Warning',
-                description: 'Increased reports of MLN in the Rift Valley region. Farmers are advised to rotate crops.',
-                severity: 'high',
-                crop: 'Maize',
-                region: 'Rift Valley',
-                publishedDate: new Date().toISOString()
-            },
-            {
-                id: 'fao-2024-002',
-                title: 'Fall Armyworm Infestation Spotted',
-                description: 'Localized infestations of Fall Armyworm detected in Western Kenya.',
-                severity: 'medium',
-                crop: 'Maize',
-                region: 'Western',
-                publishedDate: new Date().toISOString()
-            }
-        ];
-
-        return alerts.filter(a => 
-            (a.region.toLowerCase().includes(region.toLowerCase()) || region === 'Kenya') &&
-            (!crop || a.crop.toLowerCase() === crop.toLowerCase())
-        );
-    }
 }

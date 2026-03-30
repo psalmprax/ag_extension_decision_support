@@ -112,14 +112,14 @@ const AlphaAgentOps = () => {
         try {
             const { data } = await apiClient.post('/ai/execute', { agent: activeAgent });
             if (data.success) {
-                setIsRunning(true);
                 setConsoleOutput(prev => [...prev, `${ts} [OK] Agent ${activeAgent} task dispatched successfully`]);
                 addNotification({ type: 'success', message: `Agent ${activeAgent} started successfully` });
                 refetchAgents();
             }
-        } catch {
-            setConsoleOutput(prev => [...prev, `${ts} [ERR] Backend unavailable — agent not started`]);
-            addNotification({ type: 'error', message: `Failed to start ${activeAgent} — backend unavailable` });
+        } catch (error: any) {
+            const errorMsg = error.response?.data?.error || 'Backend or Agent service unavailable';
+            setConsoleOutput(prev => [...prev, `${ts} [ERR] ${errorMsg}`]);
+            addNotification({ type: 'error', message: `Failed to start ${activeAgent}: ${errorMsg}` });
         } finally {
             setIsExecuting(false);
         }
@@ -329,11 +329,11 @@ const AlphaAgentOps = () => {
                                         );
                                     })
                                 )}
-                                {isRunning && (
+                                {activeAgentData?.status === 'running' && (
                                     <div className="flex gap-3 animate-pulse">
                                         <span className="text-white/20">{now()}</span>
                                         <span className="text-primary-400">[PROC]</span>
-                                        <span className="text-white/60">Agent {activeAgent} executing tasks...</span>
+                                        <span className="text-white/60">Agent {activeAgent} maintaining active orchestration...</span>
                                     </div>
                                 )}
                             </div>

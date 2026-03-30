@@ -158,22 +158,34 @@
         @apply bg-gray-900 text-gray-100;
     }
 
-    /* Custom scrollbar */
+    /* Premium Custom Scrollbar */
     ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+        width: 10px;
+        height: 10px;
     }
 
     ::-webkit-scrollbar-track {
-        @apply bg-gray-100;
+        @apply bg-transparent;
     }
 
     ::-webkit-scrollbar-thumb {
-        @apply bg-gray-300 rounded-full;
+        @apply bg-gray-300/80 border-2 border-transparent bg-clip-padding rounded-full transition-colors duration-300;
     }
 
     ::-webkit-scrollbar-thumb:hover {
-        @apply bg-gray-400;
+        @apply bg-primary-500/80;
+    }
+
+    .dark ::-webkit-scrollbar-thumb {
+        @apply bg-gray-700/80 border-2 border-transparent bg-clip-padding rounded-full;
+    }
+
+    .dark ::-webkit-scrollbar-thumb:hover {
+        @apply bg-primary-500/80;
+    }
+    
+    ::-webkit-scrollbar-corner {
+        @apply bg-transparent;
     }
 }
 

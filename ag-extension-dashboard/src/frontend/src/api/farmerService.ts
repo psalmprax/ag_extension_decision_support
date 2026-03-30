@@ -68,6 +68,11 @@ export const deleteFarmer = async (id: string): Promise<{ success: boolean }> =>
     return response.data;
 };
 
+export const deleteFarmers = async (ids: string[]): Promise<{ success: boolean }> => {
+    const response = await apiClient.post<{ success: boolean }>('/farmers/bulk-delete', { ids });
+    return response.data;
+};
+
 export const fetchFarmerById = async (id: string): Promise<{ success: boolean; data: Farmer }> => {
     const response = await apiClient.get<{ success: boolean; data: Farmer }>(`/farmers/${id}`);
     return response.data;

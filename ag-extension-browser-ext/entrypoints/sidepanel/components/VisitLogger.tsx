@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, User, Clipboard, MapPin, Camera, Save, Loader2, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Calendar, User, Clipboard, MapPin, Camera, Save, Loader2, CheckCircle2, X } from 'lucide-react';
 import { apiQueue } from '../../../shared/apiQueue';
 import CONFIG from '../../../shared/config';
 
@@ -17,6 +17,8 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [attachedPhoto, setAttachedPhoto] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     async function loadFarmers() {
@@ -33,6 +35,24 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
     loadFarmers();
   }, []);
 
+  const handleAttachPhoto = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setAttachedPhoto(ev.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFarmerId) {
@@ -44,13 +64,18 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
     setError(null);
 
     try {
-      const payload = {
+      const payload: Record<string, unknown> = {
         farmerId: selectedFarmerId,
         visit_type: observationType,
         reason: notes,
         scheduled_at: new Date().toISOString(),
         status: 'completed'
       };
+
+      // If photo is attached, include it in the payload
+      if (attachedPhoto) {
+        payload.attachments = [attachedPhoto];
+      }
 
       const response = await apiQueue.makeRequest(`${CONFIG.API_BASE_URL}/visits`, {
         method: 'POST',
@@ -61,6 +86,7 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
       if (response.ok) {
         setIsSuccess(true);
         setNotes('');
+        setAttachedPhoto(null);
         setTimeout(() => setIsSuccess(false), 3000);
       } else {
         const result = await response.json();
@@ -68,6 +94,7 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
           setIsSuccess(true);
           setError('Offline: Visit queued for sync.');
           setNotes('');
+          setAttachedPhoto(null);
         } else {
           throw new Error('Failed to save visit');
         }
@@ -139,14 +166,39 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
           />
         </div>
 
+        {/* Photo Preview */}
+        {attachedPhoto && (
+          <div className="relative inline-block">
+            <img src={attachedPhoto} alt="Attached" className="h-20 rounded-lg border border-slate-700" />
+            <button
+              type="button"
+              onClick={() => setAttachedPhoto(null)}
+              className="absolute -top-2 -right-2 w-5 h-5 bg-rose-500 rounded-full flex items-center justify-center"
+            >
+              <X className="w-3 h-3 text-white" />
+            </button>
+          </div>
+        )}
+
+        {/* Hidden file input for photo attachment */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+
         {/* Actions */}
         <div className="flex gap-2">
           <button
             type="button"
+            onClick={handleAttachPhoto}
             className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-[10px] font-black uppercase transition-all"
           >
             <Camera className="w-4 h-4" />
-            Attach Photo
+            {attachedPhoto ? 'Change Photo' : 'Attach Photo'}
           </button>
           <button
             type="submit"
