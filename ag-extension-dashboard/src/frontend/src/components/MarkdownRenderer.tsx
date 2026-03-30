@@ -65,11 +65,12 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
                     ),
                     
                     // Code blocks
-                    code: ({ inline, children }) => (
-                        inline 
-                        ? <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-primary-600 dark:text-primary-400 font-mono text-xs">{children}</code>
-                        : <pre className="bg-gray-900 text-gray-100 p-6 rounded-2xl overflow-x-auto font-mono text-sm border-2 border-primary-500/20 shadow-2xl my-6"><code>{children}</code></pre>
-                    )
+                    code: (props) => {
+                        const { node, inline, children, ...rest } = props as any;
+                        return inline 
+                            ? <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-primary-600 dark:text-primary-400 font-mono text-xs" {...rest}>{children}</code>
+                            : <pre className="bg-gray-900 text-gray-100 p-6 rounded-2xl overflow-x-auto font-mono text-sm border-2 border-primary-500/20 shadow-2xl my-6"><code {...rest}>{children}</code></pre>
+                    }
                 }}
             >
                 {content}

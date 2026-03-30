@@ -203,25 +203,17 @@ function App() {
         window.location.href = '/login';
     };
 
-    const [searchQuery, setSearchQuery] = useState('');
     const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-    const [userLocation, setUserLocation] = useState<string>('');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any    // Stats for charts
-
-
-    // Drag-and-drop state
-    const [isDragOver, setIsDragOver] = useState(false);
-    const [isOnline, setIsOnline] = useState(navigator.onLine);
-    const [pendingSyncCount, setPendingSyncCount] = useState(0);
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [showSettingsPanel, setShowSettingsPanel] = useState(false);
     const [showHelpCenter, setShowHelpCenter] = useState(false);
-    const [globalSearchResults, setGlobalSearchResults] = useState<{ type: string; items: { id: string; label: string; sublabel?: string }[] }[]>([]);
-    const [isGlobalSearching, setIsGlobalSearching] = useState(false);
+    const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
+    const [showVisitModal, setShowVisitModal] = useState(false);
+    const [showFarmerModal, setShowFarmerModal] = useState(false);
     const [showGlobalSearch, setShowGlobalSearch] = useState(false);
-
-    // Confirm modal state
+    const [viewingReport, setViewingReport] = useState<Report | null>(null);
+    const [showBulkSmsComposer, setShowBulkSmsComposer] = useState(false);
     const [confirmModal, setConfirmModal] = useState<{
         title: string;
         message: string;
@@ -230,17 +222,37 @@ function App() {
         confirmText?: string;
     } | null>(null);
 
-    // Report viewer state
-    const [viewingReport, setViewingReport] = useState<Report | null>(null);
+    // Other UI states
+    const [searchQuery, setSearchQuery] = useState('');
+    const [userLocation, setUserLocation] = useState<string>('');
+    const [isDragOver, setIsDragOver] = useState(false);
+    const [isOnline, setIsOnline] = useState(navigator.onLine);
+    const [pendingSyncCount, setPendingSyncCount] = useState(0);
+    const [globalSearchResults, setGlobalSearchResults] = useState<{ type: string; items: { id: string; label: string; sublabel?: string }[] }[]>([]);
+    const [isGlobalSearching, setIsGlobalSearching] = useState(false);
     const [reportContent, setReportContent] = useState<string | null>(null);
     const [isLoadingReport, setIsLoadingReport] = useState(false);
-
-    // Bulk SMS message state
     const [bulkSmsMessage, setBulkSmsMessage] = useState('');
-    const [showBulkSmsComposer, setShowBulkSmsComposer] = useState(false);
-
-    // Unread notification count from API
     const [apiUnreadCount, setApiUnreadCount] = useState(0);
+    const [isMapExpanded, setIsMapExpanded] = useState(false);
+    const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+    const [selectedFarmer, setSelectedFarmer] = useState<Farmer | null>(null);
+    const [selectedFarmers, setSelectedFarmers] = useState<Set<string>>(new Set());
+    const [activeFarmerConvId, setActiveFarmerConvId] = useState<string | null>(null);
+    const [farmerChatMessages, setFarmerChatMessages] = useState<ChatMessage[]>([]);
+    const [farmerChatInput, setFarmerChatInput] = useState('');
+    const [farmerSearchQuery, setFarmerSearchQuery] = useState('');
+    const [chatInput, setChatInput] = useState('');
+    const [isTyping, setIsTyping] = useState(false);
+    const [farmerConversations, setFarmerConversations] = useState<Conversation[]>([]);
+    const [conversations, setConversations] = useState<Conversation[]>([]);
+    const [activeConvId, setActiveConvId] = useState<string | null>(null);
+    const [editingConvId, setEditingConvId] = useState<string | null>(null);
+    const [editingTitle, setEditingTitle] = useState<string>('');
+    const [deletingConvId, setDeletingConvId] = useState<string | null>(null);
+    const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+
+    // Store aliases
 
     // Offline sync queue
     const syncQueueRef = useRef<Array<{ action: string; data: unknown }>>([]);
@@ -282,59 +294,6 @@ function App() {
             window.removeEventListener('online', handleOnline);
             window.removeEventListener('offline', handleOffline);
         };
-    }, []);
-
-    // Keyboard shortcuts
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            // Ctrl+K: Focus global search
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                e.preventDefault();
-                const searchInput = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement;
-                if (searchInput) {
-                    searchInput.focus();
-                    setShowGlobalSearch(true);
-                }
-            }
-            // Ctrl+B: Toggle sidebar
-            if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
-                e.preventDefault();
-                setSidebarOpen(!sidebarOpen);
-            }
-            // Esc: Close modals
-            if (e.key === 'Escape') {
-                if (isNotificationPanelOpen) setIsNotificationPanelOpen(false);
-                else if (isProfileMenuOpen) setIsProfileMenuOpen(false);
-                else if (showProfileModal) setShowProfileModal(false);
-                else if (showSettingsPanel) setShowSettingsPanel(false);
-                else if (showHelpCenter) setShowHelpCenter(false);
-                else if (isDetailPanelOpen) setIsDetailPanelOpen(false);
-                else if (showVisitModal) setShowVisitModal(false);
-                else if (showFarmerModal) setShowFarmerModal(false);
-                else if (showGlobalSearch) setShowGlobalSearch(false);
-                else if (viewingReport) setViewingReport(null);
-                else if (showBulkSmsComposer) setShowBulkSmsComposer(false);
-                else if (confirmModal) setConfirmModal(null);
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [sidebarOpen, isNotificationPanelOpen, isProfileMenuOpen, showProfileModal, showSettingsPanel, showHelpCenter, isDetailPanelOpen, showVisitModal, showFarmerModal, showGlobalSearch, viewingReport, showBulkSmsComposer, confirmModal]);
-
-    // Fetch unread notification count
-    useEffect(() => {
-        const loadUnreadCount = async () => {
-            try {
-                const count = await fetchUnreadCount();
-                setApiUnreadCount(count);
-            } catch {
-                // Fallback to store count
-            }
-        };
-        loadUnreadCount();
-        const interval = setInterval(loadUnreadCount, 60000);
-        return () => clearInterval(interval);
     }, []);
 
     // Drag and drop handlers
@@ -386,8 +345,6 @@ function App() {
             }
         }
     };
-    const [isMapExpanded, setIsMapExpanded] = useState(false);
-    const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
     // Apply theme when it changes
     useEffect(() => {
@@ -395,18 +352,11 @@ function App() {
         localStorage.setItem('ag-theme-name', themeName);
     }, [themeName]);
 
-    // Chatbot States (AI Assistant)
-    const [conversations, setConversations] = useState<Conversation[]>([]);
-    const [activeConvId, setActiveConvId] = useState<string | null>(null);
-    const [editingConvId, setEditingConvId] = useState<string | null>(null);
-    const [editingTitle, setEditingTitle] = useState<string>('');
-    const [deletingConvId, setDeletingConvId] = useState<string | null>(null);
-    const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
     const handleMenuAction = (action: string, entityId?: string) => {
         if (action.startsWith('share_')) {
             const type = action.split('_')[1];
-            const entity = type === 'farmer' ? farmers?.find(f => f.id === entityId) : null;
+            const entity = type === 'farmer' ? storeFarmers?.find(f => f.id === entityId) : null;
             showShareModal({
                 entityType: type,
                 entityId: entityId || '',
@@ -417,7 +367,7 @@ function App() {
         } else if (action === 'export_farmer' || action.startsWith('export_')) {
             // Trigger export logic
             if (entityId) {
-                const farmer = farmers?.find(f => f.id === entityId);
+                const farmer = storeFarmers?.find(f => f.id === entityId);
                 if (farmer) {
                     const csvContent = [
                         ['Name', 'Phone', 'Region', 'Village', 'Crops', 'Farm Size (ha)'],
@@ -444,24 +394,56 @@ function App() {
             }
         }
     };
-    const [chatInput, setChatInput] = useState('');
-    const [isTyping, setIsTyping] = useState(false);
 
-    // Farmer Chat States
-    const [farmerConversations, setFarmerConversations] = useState<Conversation[]>([]);
+    // Keyboard shortcuts (registered after all state declarations)
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                const searchInput = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement;
+                if (searchInput) {
+                    searchInput.focus();
+                    setShowGlobalSearch(true);
+                }
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+                e.preventDefault();
+                setSidebarOpen(!sidebarOpen);
+            }
+            if (e.key === 'Escape') {
+                if (isNotificationPanelOpen) setIsNotificationPanelOpen(false);
+                else if (isProfileMenuOpen) setIsProfileMenuOpen(false);
+                else if (showProfileModal) setShowProfileModal(false);
+                else if (showSettingsPanel) setShowSettingsPanel(false);
+                else if (showHelpCenter) setShowHelpCenter(false);
+                else if (isDetailPanelOpen) setIsDetailPanelOpen(false);
+                else if (showVisitModal) setShowVisitModal(false);
+                else if (showFarmerModal) setShowFarmerModal(false);
+                else if (showGlobalSearch) setShowGlobalSearch(false);
+                else if (viewingReport) setViewingReport(null);
+                else if (showBulkSmsComposer) setShowBulkSmsComposer(false);
+                else if (confirmModal) setConfirmModal(null);
+            }
+        };
 
-    // Visit Modal State
-    const [showVisitModal, setShowVisitModal] = useState(false);
-    const [activeFarmerConvId, setActiveFarmerConvId] = useState<string | null>(null);
-    const [farmerChatMessages, setFarmerChatMessages] = useState<ChatMessage[]>([]);
-    const [farmerChatInput, setFarmerChatInput] = useState('');
-    const [showFarmerModal, setShowFarmerModal] = useState(false);
-    const [farmerSearchQuery, setFarmerSearchQuery] = useState('');
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isNotificationPanelOpen, isProfileMenuOpen, showProfileModal, showSettingsPanel, showHelpCenter, isDetailPanelOpen, showVisitModal, showFarmerModal, showGlobalSearch, viewingReport, showBulkSmsComposer, confirmModal]);
 
-    // Farmer Detail Panel State
-    const [selectedFarmer, setSelectedFarmer] = useState<Farmer | null>(null);
-    const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
-    const [selectedFarmers, setSelectedFarmers] = useState<Set<string>>(new Set());
+    // Fetch unread notification count
+    useEffect(() => {
+        const loadUnreadCount = async () => {
+            try {
+                const count = await fetchUnreadCount();
+                setApiUnreadCount(count);
+            } catch {
+                // Fallback to store count
+            }
+        };
+        loadUnreadCount();
+        const interval = setInterval(loadUnreadCount, 60000);
+        return () => clearInterval(interval);
+    }, []);
 
     const handleOpenFarmerDetail = (farmer: Farmer) => {
         setSelectedFarmer(farmer);
@@ -1192,8 +1174,12 @@ function App() {
                             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative"
                         >
                             <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                            {notifications.some(n => !n.read) && (
-                                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white dark:border-gray-900 animate-pulse"></span>
+                            {(apiUnreadCount > 0 || notifications.some(n => !n.read)) && (
+                                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white dark:border-gray-900 animate-pulse flex items-center justify-center">
+                                    {apiUnreadCount > 0 && (
+                                        <span className="text-[6px] text-white font-bold">{apiUnreadCount > 9 ? '9+' : apiUnreadCount}</span>
+                                    )}
+                                </span>
                             )}
                         </button>
 
