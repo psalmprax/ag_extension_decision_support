@@ -16,6 +16,7 @@ import {
   RefreshCcw
 } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
+import { createShare, ShareResponse } from '@/api/shareService';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -23,17 +24,6 @@ interface ShareModalProps {
   entityType: string;
   entityId: string;
   entityName?: string;
-}
-
-interface ShareResponse {
-  success: boolean;
-  data?: {
-    shareId: string;
-    shareUrl: string;
-    expiresAt?: string;
-    accessType: string;
-  };
-  error?: string;
 }
 
 export const ShareModal: React.FC<ShareModalProps> = ({ 
@@ -63,25 +53,16 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   const handleCreateShare = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/shares', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          entityType,
-          entityId,
-          accessType: settings.accessType,
-          expiresInDays: parseInt(settings.expiresIn),
-          permissions: {
-            canView: true,
-            canExport: settings.allowExport
-          }
-        })
+      const result = await createShare({
+        entityType,
+        entityId,
+        accessType: settings.accessType,
+        expiresInDays: parseInt(settings.expiresIn),
+        permissions: {
+          canView: true,
+          canExport: settings.allowExport
+        }
       });
-
-      const result: ShareResponse = await response.json();
       if (result.success && result.data) {
         setShareData(result.data);
       } else {

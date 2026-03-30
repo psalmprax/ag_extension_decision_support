@@ -151,13 +151,34 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                                     </h3>
                                     <button
                                         onClick={() => {
-                                            localStorage.removeItem('ag-notification-prefs');
-                                            toast.success('Cache cleared');
+                                            const preserveKeys = ['token', 'user', 'theme', 'ag-theme-name'];
+                                            const preserved: Record<string, string> = {};
+                                            preserveKeys.forEach(key => {
+                                                const val = localStorage.getItem(key);
+                                                if (val) preserved[key] = val;
+                                            });
+                                            localStorage.clear();
+                                            Object.entries(preserved).forEach(([key, val]) => localStorage.setItem(key, val));
+                                            toast.success('All local cache cleared');
                                         }}
                                         className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                                     >
                                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                             {t('settings_clear_cache') || 'Clear Local Cache'}
+                                        </span>
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const defaults = { emailAlerts: true, smsAlerts: true, pushNotifications: true, soundEnabled: false };
+                                            setNotificationPrefs(defaults);
+                                            localStorage.setItem('ag-notification-prefs', JSON.stringify(defaults));
+                                            apiClient.patch('/users/profile', { notificationPreferences: defaults }).catch(() => {});
+                                            toast.success('Settings reset to defaults');
+                                        }}
+                                        className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                    >
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Reset All Settings
                                         </span>
                                     </button>
                                 </div>

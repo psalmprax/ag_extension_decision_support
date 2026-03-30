@@ -62,3 +62,21 @@ export const demoLogin = async (): Promise<AuthResponse> => {
     const response = await apiClient.post<AuthResponse>('/auth/demo');
     return response.data;
 };
+
+export const requestPasswordReset = async (email: string): Promise<{ success: boolean; message: string }> => {
+    const response = await apiClient.post('/auth/forgot-password', { email });
+    return response.data;
+};
+
+export const resetPassword = async (token: string, newPassword: string): Promise<{ success: boolean; message: string }> => {
+    const response = await apiClient.post('/auth/reset-password', { token, newPassword });
+    return response.data;
+};
+
+export const logout = async (): Promise<void> => {
+    try {
+        await apiClient.post('/auth/logout');
+    } catch {
+        // Logout best-effort
+    }
+};

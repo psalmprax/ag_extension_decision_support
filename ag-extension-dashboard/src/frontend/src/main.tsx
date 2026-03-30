@@ -7,6 +7,7 @@ import App from './App';
 import { registerSW } from 'virtual:pwa-register';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
 import { SMSPage } from './pages/SMS';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import './index.css';
@@ -54,6 +55,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                         <Routes>
                             <Route path="/login" element={<Login />} />
                             <Route path="/register" element={<Register />} />
+                            <Route path="/forgot-password" element={<ForgotPassword />} />
                             <Route
                                 path="/sms"
                                 element={

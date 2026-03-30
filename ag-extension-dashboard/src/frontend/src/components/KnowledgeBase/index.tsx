@@ -23,8 +23,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { KnowledgeStats } from './KnowledgeStats';
 import { KnowledgeSidebar } from './KnowledgeSidebar';
 import { ReasoningVisuals } from './ReasoningVisuals';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { MarkdownRenderer } from '../MarkdownRenderer';
 
 interface Result {
     answer: string;
@@ -225,11 +224,7 @@ export const KnowledgeBase: React.FC = () => {
                                     </div>
 
                                     {/* Markdown results with refined Typography */}
-                                    <div className="prose prose-lg dark:prose-invert max-w-none prose-headings:font-black prose-headings:tracking-tighter prose-p:font-medium prose-p:leading-relaxed prose-strong:text-primary-600 dark:prose-strong:text-primary-400">
-                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                            {lastResult.answer}
-                                        </ReactMarkdown>
-                                    </div>
+                                    <MarkdownRenderer content={lastResult.answer} />
 
                                     {/* New Visual Intelligence Layer */}
                                     {lastResult.visuals && (

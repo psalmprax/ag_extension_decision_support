@@ -10,6 +10,13 @@ import { authorize } from '@/middleware/authorize';
 
 const router = Router();
 
+const errorStatusMap: Record<string, number> = {
+    'ARTICLE_NOT_FOUND': 404,
+    'SEARCH_FAILED': 500,
+    'USER_NOT_AUTHENTICATED': 401,
+    'REORDER_FAILED': 400
+};
+
 // Apply authentication to all knowledge routes
 router.use(authorize('admin', 'regional_manager', 'extension_officer', 'farmer'));
 
@@ -186,14 +193,22 @@ router.get('/history', async (req: Request, res: Response) => {
     try {
         const userId = (req as any).user?.userId || (req as any).user?.id;
         if (!userId) {
-            return res.status(401).json({ success: false, error: 'User not authenticated' });
+            return res.status(errorStatusMap['USER_NOT_AUTHENTICATED']).json({ 
+                success: false, 
+                errorCode: 'USER_NOT_AUTHENTICATED',
+                error: 'User not authenticated' 
+            });
         }
 
         const history = await KnowledgeService.getSearchHistory(userId);
         res.json({ success: true, data: history });
     } catch (error) {
         logger.error('Get search history error:', error);
-        res.status(500).json({ success: false, error: 'Failed to get search history' });
+        res.status(500).json({ 
+            success: false, 
+            errorCode: 'SEARCH_HISTORY_FAILED',
+            error: 'Failed to get search history' 
+        });
     }
 });
 
@@ -265,13 +280,21 @@ router.get('/:id', async (req: Request, res: Response) => {
         }
 
         if (!article) {
-            return res.status(404).json({ success: false, error: 'Article not found' });
+            return res.status(errorStatusMap['ARTICLE_NOT_FOUND']).json({ 
+                success: false, 
+                errorCode: 'ARTICLE_NOT_FOUND',
+                error: 'Article not found' 
+            });
         }
 
         res.json({ success: true, data: article });
     } catch (error) {
         logger.error('Get article error:', error);
-        res.status(500).json({ success: false, error: 'Failed to get article' });
+        res.status(500).json({ 
+            success: false, 
+            errorCode: 'INTERNAL_SERVER_ERROR',
+            error: 'Failed to get article' 
+        });
     }
 });
 

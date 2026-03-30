@@ -31,3 +31,20 @@ export const generateReport = async (type: string, title?: string, farmerId?: st
     });
     return response.data;
 };
+
+export const downloadReport = async (reportId: string): Promise<Blob> => {
+    const response = await apiClient.get(`/reporting/${reportId}/download`, {
+        responseType: 'blob'
+    });
+    return response.data;
+};
+
+export const getReportContent = async (reportId: string): Promise<{ success: boolean; data: Report }> => {
+    const response = await apiClient.get(`/reporting/${reportId}`);
+    return response.data;
+};
+
+export const deleteReport = async (reportId: string): Promise<{ success: boolean }> => {
+    const response = await apiClient.delete(`/reporting/${reportId}`);
+    return response.data;
+};

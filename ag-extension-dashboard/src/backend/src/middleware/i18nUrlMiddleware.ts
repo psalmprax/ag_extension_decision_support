@@ -74,8 +74,12 @@ const DEFAULT_PATH_TRANSLATIONS: Record<string, PathTranslation[]> = {
         // Nested paths
         { canonical: '/portfolio/recommendations', localized: '/portfolio/recommendations' },
         { canonical: '/knowledge/search', localized: '/knowledge/search' },
+        { canonical: '/knowledge/history', localized: '/knowledge/history' },
+        { canonical: '/knowledge/stats', localized: '/knowledge/stats' },
+        { canonical: '/knowledge/ask', localized: '/knowledge/ask' },
         { canonical: '/knowledge/meta/categories', localized: '/knowledge/meta/categories' },
         { canonical: '/knowledge/meta/crops', localized: '/knowledge/meta/crops' },
+        { canonical: '/knowledge/:id', localized: '/knowledge/:id' },
         { canonical: '/chatbot/conversations', localized: '/chatbot/conversations' },
     ],
     es: [

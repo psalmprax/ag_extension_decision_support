@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, HelpCircle, Book, MessageSquare, Mail, ExternalLink, ChevronRight } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 

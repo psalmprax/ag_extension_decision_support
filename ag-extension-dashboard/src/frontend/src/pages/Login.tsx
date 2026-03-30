@@ -155,9 +155,14 @@ export function Login({ onDemo }: LoginProps) {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            {t('login_password')}
-                        </label>
+                        <div className="flex items-center justify-between mb-1">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                {t('login_password')}
+                            </label>
+                            <Link to="/forgot-password" className="text-xs text-green-600 dark:text-green-400 font-medium hover:underline">
+                                {t('login_forgot_password') || 'Forgot password?'}
+                            </Link>
+                        </div>
                         <div className="relative">
                             <input
                                 type={showPassword ? 'text' : 'password'}

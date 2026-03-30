@@ -22,6 +22,7 @@ import {
   MoreVertical
 } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
+import { fetchContextMenu, getStaticFallbackMenu, ContextMenuData as ServiceContextMenuData } from '@/api/contextMenuService';
 
 interface ContextMenuItem {
   id: string;
@@ -87,30 +88,23 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   const { t } = useLanguage();
 
   useEffect(() => {
-    const fetchMenu = async () => {
+    const loadMenu = async () => {
       try {
-        const url = isBulk 
-          ? `/api/context-menus/bulk/${entityType}`
-          : `/api/context-menus/${entityType}/${entityId}`;
-        
-        const response = await fetch(url, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        
-        const result = await response.json();
+        const result = await fetchContextMenu(entityType, entityId, isBulk);
         if (result.success) {
           setMenuData(result.data);
+        } else {
+          setMenuData(getStaticFallbackMenu(entityType));
         }
       } catch (error) {
         console.error('Failed to fetch context menu:', error);
+        setMenuData(getStaticFallbackMenu(entityType));
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchMenu();
+    loadMenu();
   }, [entityType, entityId, isBulk]);
 
   useEffect(() => {
