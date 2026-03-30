@@ -196,6 +196,14 @@ class PaymentService {
         try {
             const customerId = await this.getOrCreateCustomer(userId, email);
 
+            if (!customerId) {
+                return {
+                    success: false,
+                    errorCode: 'PAYMENT_GATEWAY_NOT_CONFIGURED',
+                    message: 'Stripe configuration required for payment method setup'
+                };
+            }
+
             const session = await this.stripe.checkout.sessions.create({
                 mode: 'setup',
                 customer: customerId,
@@ -263,9 +271,9 @@ class PaymentService {
     }
 
     // Create or get Stripe customer
-    async getOrCreateCustomer(userId: string, email: string): Promise<string> {
+    async getOrCreateCustomer(userId: string, email: string): Promise<string | null> {
         if (!this.stripe) {
-            throw new Error('STRIPE_CONFIG_REQUIRED');
+            return null;
         }
 
         // Search for existing customer
@@ -343,10 +351,10 @@ class PaymentService {
     }
 
     // Switch subscription to a different plan
-    async switchSubscription(subscriptionId: string, newPriceId: string, scheduleNextPeriod: boolean = false): Promise<boolean> {
+    async switchSubscription(subscriptionId: string, newPriceId: string, scheduleNextPeriod: boolean = false): Promise<{ success: boolean; errorCode?: string; message?: string }> {
         if (!this.stripe) {
             logger.info(`[MOCK] Switched subscription ${subscriptionId} to price ${newPriceId} (scheduled: ${scheduleNextPeriod})`);
-            return true;
+            return { success: true, message: 'Mock subscription plan switched successfully' };
         }
 
         try {
@@ -386,10 +394,14 @@ class PaymentService {
                 });
             }
 
-            return true;
-        } catch (error) {
+            return { success: true, message: 'Plan switched successfully' };
+        } catch (error: any) {
             logger.error('Failed to switch subscription:', error);
-            return false;
+            return {
+                success: false,
+                errorCode: 'STRIPE_ERROR',
+                message: error.message || 'Failed to switch plan'
+            };
         }
     }
 
@@ -446,18 +458,22 @@ class PaymentService {
     }
 
     // Delete payment method
-    async deletePaymentMethod(paymentMethodId: string): Promise<boolean> {
+    async deletePaymentMethod(paymentMethodId: string): Promise<{ success: boolean; errorCode?: string; message?: string }> {
         if (!this.stripe) {
             logger.info(`[MOCK] Deleted payment method: ${paymentMethodId}`);
-            return true;
+            return { success: true, message: 'Mock payment method deleted' };
         }
 
         try {
             await this.stripe.paymentMethods.detach(paymentMethodId);
-            return true;
-        } catch (error) {
+            return { success: true, message: 'Payment method removed successfully' };
+        } catch (error: any) {
             logger.error('Failed to delete payment method:', error);
-            return false;
+            return {
+                success: false,
+                errorCode: 'STRIPE_ERROR',
+                message: error.message || 'Failed to remove payment method'
+            };
         }
     }
 

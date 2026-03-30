@@ -13,7 +13,7 @@ const router = Router();
 const prisma = getPrisma();
 
 const errorStatusMap: Record<string, number> = {
-    'PAYMENT_GATEWAY_NOT_CONFIGURED': 400,
+    'PAYMENT_GATEWAY_NOT_CONFIGURED': 200,
     'STRIPE_ERROR': 402,
     'PAYPAL_ERROR': 402,
     'ACTIVE_SUBSCRIPTION_EXISTS': 409,
@@ -244,6 +244,15 @@ router.post('/portal', authorize('admin', 'extension_officer', 'farmer'), async 
         if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
         const customerId = await paymentService.getOrCreateCustomer(userId, user.email);
+        
+        if (!customerId) {
+            return res.status(errorStatusMap['PAYMENT_GATEWAY_NOT_CONFIGURED'] || 200).json({
+                success: false,
+                errorCode: 'PAYMENT_GATEWAY_NOT_CONFIGURED',
+                message: 'Stripe configuration required for billing portal access'
+            });
+        }
+
         const result = await paymentService.createPortalSession(customerId, `${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing`);
 
         if (!result.success) {
@@ -339,6 +348,15 @@ router.get('/payment-methods', authorize('admin', 'extension_officer', 'farmer')
         if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
         const customerId = await paymentService.getOrCreateCustomer(userId, user.email);
+
+        if (!customerId) {
+            return res.status(errorStatusMap['PAYMENT_GATEWAY_NOT_CONFIGURED'] || 200).json({
+                success: false,
+                errorCode: 'PAYMENT_GATEWAY_NOT_CONFIGURED',
+                message: 'Stripe configuration required to list payment methods'
+            });
+        }
+
         const result = await paymentService.getPaymentMethods(customerId);
         
         if (!result.success) {
@@ -426,6 +444,15 @@ router.get('/invoices', authorize('admin', 'extension_officer', 'farmer'), async
         if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
         const customerId = await paymentService.getOrCreateCustomer(userId, user.email);
+        
+        if (!customerId) {
+            return res.status(errorStatusMap['PAYMENT_GATEWAY_NOT_CONFIGURED'] || 200).json({
+                success: false,
+                errorCode: 'PAYMENT_GATEWAY_NOT_CONFIGURED',
+                message: 'Stripe configuration required to fetch invoices'
+            });
+        }
+
         const result = await paymentService.getInvoices(customerId);
         
         if (!result.success) {

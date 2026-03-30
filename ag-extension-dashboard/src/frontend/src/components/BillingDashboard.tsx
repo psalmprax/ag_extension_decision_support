@@ -268,6 +268,12 @@ export const BillingDashboard: React.FC = () => {
             const response = await createCheckoutSession(priceId, billingCycle);
 
             if (!response.success) {
+                // Handle configuration missing - stay silent on console
+                if (response.errorCode === 'PAYMENT_GATEWAY_NOT_CONFIGURED') {
+                    toast.error(t('billing_configuration_alert') || response.message);
+                    return;
+                }
+
                 // Handle specific error codes
                 if (response.errorCode === 'ALREADY_SUBSCRIBED') {
                     const canSchedule = !response.subscription?.cancelAtPeriodEnd;
@@ -333,10 +339,10 @@ export const BillingDashboard: React.FC = () => {
                 fetchData();
             }
         } catch (error: unknown) {
-
-            console.error('Subscription failed:', error);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            toast.error((error as any).response?.data?.message || 'Subscription failed. Please try again.');
+            if (import.meta.env.DEV) {
+                console.error('Subscription failed:', error);
+            }
+            toast.error('Subscription failed. Please try again.');
         } finally {
             setActionLoading(null);
         }
@@ -350,13 +356,17 @@ export const BillingDashboard: React.FC = () => {
                 toast.success(data.message || 'Plan switched successfully!');
                 fetchData(); // Refresh data
             } else {
-                toast.error(data.message || 'Failed to switch plan');
+                if (data.errorCode === 'PAYMENT_GATEWAY_NOT_CONFIGURED') {
+                    toast.error(t('billing_configuration_alert') || data.message);
+                } else {
+                    toast.error(data.message || 'Failed to switch plan');
+                }
             }
         } catch (error: unknown) {
-
-            console.error('Switch failed:', error);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            toast.error((error as any).response?.data?.message || 'Failed to switch plan. Please try again.');
+            if (import.meta.env.DEV) {
+                console.error('Switch failed:', error);
+            }
+            toast.error('Failed to switch plan. Please try again.');
         } finally {
             setActionLoading(null);
         }
@@ -368,9 +378,18 @@ export const BillingDashboard: React.FC = () => {
             const data = await createPortalSession();
             if (data.success && data.data.url) {
                 window.location.href = data.data.url;
+            } else if (!data.success) {
+                if (data.errorCode === 'PAYMENT_GATEWAY_NOT_CONFIGURED') {
+                    toast.error(t('billing_configuration_alert') || data.message || 'Billing portal unavailable.');
+                } else {
+                    toast.error(data.message || 'Failed to open billing portal.');
+                }
             }
         } catch (error) {
-            console.error('Portal access failed:', error);
+            if (import.meta.env.DEV) {
+                console.error('Portal access failed:', error);
+            }
+            toast.error('Failed to open billing portal. Please try again.');
         } finally {
             setActionLoading(null);
         }
@@ -387,12 +406,17 @@ export const BillingDashboard: React.FC = () => {
                 toast.success(response.message || 'Payment method setup initiated successfully!');
                 fetchData();
             } else {
-                toast.error(response.error || response.message || 'Failed to initialize payment method setup');
+                if (response.errorCode === 'PAYMENT_GATEWAY_NOT_CONFIGURED') {
+                    toast.error(t('billing_configuration_alert') || response.message);
+                } else {
+                    toast.error(response.error || response.message || 'Failed to initialize payment method setup');
+                }
             }
         } catch (error: any) {
-            console.error('Failed to add payment method:', error);
-            const errorMessage = error.response?.data?.error || error.message || 'Unknown error occurred';
-            toast.error(`Failed to add payment method: ${errorMessage}`);
+            if (import.meta.env.DEV) {
+                console.error('Failed to add payment method:', error);
+            }
+            toast.error('Failed to add payment method. Please try again.');
         } finally {
             setActionLoading(null);
         }
@@ -431,11 +455,17 @@ export const BillingDashboard: React.FC = () => {
             if (response.success && response.data?.approvalUrl) {
                 // Redirect to PayPal for approval
                 window.location.href = response.data.approvalUrl;
-            } else {
-                toast.error(response.message || 'Failed to initiate PayPal subscription');
+            } else if (!response.success) {
+                if (response.errorCode === 'PAYMENT_GATEWAY_NOT_CONFIGURED') {
+                    toast.error(t('billing_configuration_alert') || response.message);
+                } else {
+                    toast.error(response.message || 'Failed to initiate PayPal subscription');
+                }
             }
         } catch (error) {
-            console.error('PayPal subscription failed:', error);
+            if (import.meta.env.DEV) {
+                console.error('PayPal subscription failed:', error);
+            }
             toast.error('Failed to create PayPal subscription. Please try again.');
         } finally {
             setActionLoading(null);

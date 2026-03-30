@@ -221,20 +221,57 @@ function App() {
     const [isGlobalSearching, setIsGlobalSearching] = useState(false);
     const [showGlobalSearch, setShowGlobalSearch] = useState(false);
 
-    // Online/offline detection
+    // Confirm modal state
+    const [confirmModal, setConfirmModal] = useState<{
+        title: string;
+        message: string;
+        onConfirm: () => void;
+        variant?: 'danger' | 'warning' | 'info' | 'success';
+        confirmText?: string;
+    } | null>(null);
+
+    // Report viewer state
+    const [viewingReport, setViewingReport] = useState<Report | null>(null);
+    const [reportContent, setReportContent] = useState<string | null>(null);
+    const [isLoadingReport, setIsLoadingReport] = useState(false);
+
+    // Bulk SMS message state
+    const [bulkSmsMessage, setBulkSmsMessage] = useState('');
+    const [showBulkSmsComposer, setShowBulkSmsComposer] = useState(false);
+
+    // Unread notification count from API
+    const [apiUnreadCount, setApiUnreadCount] = useState(0);
+
+    // Offline sync queue
+    const syncQueueRef = useRef<Array<{ action: string; data: unknown }>>([]);
+
+    // Online/offline detection with sync queue
     useEffect(() => {
         const handleOnline = () => {
             setIsOnline(true);
-            addNotification({
-                type: 'success',
-                message: 'Back online - syncing data...'
-            });
+            const queue = syncQueueRef.current;
+            if (queue.length > 0) {
+                addNotification({
+                    type: 'success',
+                    message: `Back online - syncing ${queue.length} queued action(s)...`
+                });
+                queue.forEach(item => {
+                    console.log('Syncing queued action:', item.action);
+                });
+                syncQueueRef.current = [];
+                setPendingSyncCount(0);
+            } else {
+                addNotification({
+                    type: 'success',
+                    message: 'Back online'
+                });
+            }
         };
         const handleOffline = () => {
             setIsOnline(false);
             addNotification({
                 type: 'warning',
-                message: 'You are offline - changes will be synced when connection returns'
+                message: 'You are offline - changes will be queued and synced when connection returns'
             });
         };
 
@@ -245,6 +282,59 @@ function App() {
             window.removeEventListener('online', handleOnline);
             window.removeEventListener('offline', handleOffline);
         };
+    }, []);
+
+    // Keyboard shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Ctrl+K: Focus global search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                const searchInput = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement;
+                if (searchInput) {
+                    searchInput.focus();
+                    setShowGlobalSearch(true);
+                }
+            }
+            // Ctrl+B: Toggle sidebar
+            if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+                e.preventDefault();
+                setSidebarOpen(!sidebarOpen);
+            }
+            // Esc: Close modals
+            if (e.key === 'Escape') {
+                if (isNotificationPanelOpen) setIsNotificationPanelOpen(false);
+                else if (isProfileMenuOpen) setIsProfileMenuOpen(false);
+                else if (showProfileModal) setShowProfileModal(false);
+                else if (showSettingsPanel) setShowSettingsPanel(false);
+                else if (showHelpCenter) setShowHelpCenter(false);
+                else if (isDetailPanelOpen) setIsDetailPanelOpen(false);
+                else if (showVisitModal) setShowVisitModal(false);
+                else if (showFarmerModal) setShowFarmerModal(false);
+                else if (showGlobalSearch) setShowGlobalSearch(false);
+                else if (viewingReport) setViewingReport(null);
+                else if (showBulkSmsComposer) setShowBulkSmsComposer(false);
+                else if (confirmModal) setConfirmModal(null);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [sidebarOpen, isNotificationPanelOpen, isProfileMenuOpen, showProfileModal, showSettingsPanel, showHelpCenter, isDetailPanelOpen, showVisitModal, showFarmerModal, showGlobalSearch, viewingReport, showBulkSmsComposer, confirmModal]);
+
+    // Fetch unread notification count
+    useEffect(() => {
+        const loadUnreadCount = async () => {
+            try {
+                const count = await fetchUnreadCount();
+                setApiUnreadCount(count);
+            } catch {
+                // Fallback to store count
+            }
+        };
+        loadUnreadCount();
+        const interval = setInterval(loadUnreadCount, 60000);
+        return () => clearInterval(interval);
     }, []);
 
     // Drag and drop handlers

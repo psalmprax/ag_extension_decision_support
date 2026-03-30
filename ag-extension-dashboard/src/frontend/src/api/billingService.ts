@@ -19,28 +19,48 @@ export const fetchSubscription = async () => {
 };
 
 export const fetchUsage = async () => {
-    const { data } = await apiClient.get('/billing/usage');
-    return data;
+    try {
+        const { data } = await apiClient.get('/billing/usage');
+        return data;
+    } catch (err: any) {
+        return err.response?.data || { success: false, error: 'Failed to fetch usage' };
+    }
 };
 
 export const createCheckoutSession = async (priceId: string, billingCycle: 'current' | 'next' = 'current') => {
-    const { data } = await apiClient.post('/billing/subscribe', { priceId, billingCycle });
-    return data;
+    try {
+        const { data } = await apiClient.post('/billing/subscribe', { priceId, billingCycle });
+        return data;
+    } catch (err: any) {
+        return err.response?.data || { success: false, error: 'Failed to create checkout session' };
+    }
 };
 
 export const switchSubscription = async (priceId: string, billingCycle: 'current' | 'next' = 'current') => {
-    const { data } = await apiClient.post('/billing/switch', { priceId, billingCycle });
-    return data;
+    try {
+        const { data } = await apiClient.post('/billing/switch', { priceId, billingCycle });
+        return data;
+    } catch (err: any) {
+        return err.response?.data || { success: false, error: 'Failed to switch subscription' };
+    }
 };
 
 export const cancelSubscription = async () => {
-    const { data } = await apiClient.post('/billing/cancel');
-    return data;
+    try {
+        const { data } = await apiClient.post('/billing/cancel');
+        return data;
+    } catch (err: any) {
+        return err.response?.data || { success: false, error: 'Failed to cancel subscription' };
+    }
 };
 
 export const createPortalSession = async () => {
-    const { data } = await apiClient.post('/billing/portal');
-    return data;
+    try {
+        const { data } = await apiClient.post('/billing/portal');
+        return data;
+    } catch (err: any) {
+        return err.response?.data || { success: false, error: 'Failed to create portal session' };
+    }
 };
 
 export const fetchInvoices = async () => {
@@ -62,13 +82,21 @@ export const fetchPaymentMethods = async () => {
 };
 
 export const addPaymentMethod = async (type: string) => {
-    const { data } = await apiClient.post('/billing/payment-methods', { type });
-    return data;
+    try {
+        const { data } = await apiClient.post('/billing/payment-methods', { type });
+        return data;
+    } catch (err: any) {
+        return err.response?.data || { success: false, error: 'Failed to add payment method' };
+    }
 };
 
 export const deletePaymentMethod = async (id: string) => {
-    const { data } = await apiClient.delete(`/billing/payment-methods/${id}`);
-    return data;
+    try {
+        const { data } = await apiClient.delete(`/billing/payment-methods/${id}`);
+        return data;
+    } catch (err: any) {
+        return err.response?.data || { success: false, error: 'Failed to delete payment method' };
+    }
 };
 
 export const updateAdminConfig = async (config: { stripeSecretKey?: string; paypalClientId?: string }) => {
