@@ -157,7 +157,7 @@ router.get('/search', async (req: Request, res: Response) => {
                 paramIndex++;
             }
 
-            sql += ' ORDER BY order ASC, created_at DESC LIMIT $' + paramIndex + ' OFFSET $' + (paramIndex + 1);
+            sql += ' ORDER BY "order" ASC, created_at DESC LIMIT $' + paramIndex + ' OFFSET $' + (paramIndex + 1);
             params.push(parseInt(limit as string), parseInt(offset as string));
 
             const result = await query(sql, params);
