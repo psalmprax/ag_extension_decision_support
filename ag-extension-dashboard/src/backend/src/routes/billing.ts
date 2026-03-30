@@ -183,7 +183,7 @@ router.post('/subscribe', authorize('admin', 'extension_officer', 'farmer'), asy
         });
 
         if (!session.success) {
-            return res.status(400).json({
+            return res.status(errorStatusMap[session.errorCode as string] || 400).json({
                 success: false,
                 errorCode: session.errorCode,
                 message: session.message
