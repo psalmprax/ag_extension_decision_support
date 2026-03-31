@@ -51,7 +51,7 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchDashboardData } from '@/api/dashboardService';
 import { askAI, searchKnowledge } from '@/api/knowledgeService';
 import { fetchUserProfile, AuthResponse, ProfileResponse, logout as apiLogout } from '@/api/authService';
-import { fetchFarmers, createFarmer } from '@/api/farmerService';
+import { fetchFarmers, createFarmer, updateFarmers } from '@/api/farmerService';
 import { fetchVisits, updateVisit } from '@/api/visitService';
 import { fetchReports, generateReport, downloadReport, getReportContent, Report } from '@/api/reportService';
 import { fetchPerformanceData } from '@/api/analyticsService';
@@ -244,6 +244,8 @@ function App() {
     const [reportContent, setReportContent] = useState<string | null>(null);
     const [isLoadingReport, setIsLoadingReport] = useState(false);
     const [isSendingBulkSms, setIsSendingBulkSms] = useState(false);
+    const [showBulkSmsComposer, setShowBulkSmsComposer] = useState(false);
+    const [bulkSmsMessage, setBulkSmsMessage] = useState('');
     const [isBulkUpdateModalOpen, setIsBulkUpdateModalOpen] = useState(false);
     const [isUpdatingBulk, setIsUpdatingBulk] = useState(false);
     const [apiUnreadCount, setApiUnreadCount] = useState(0);
@@ -877,7 +879,7 @@ function App() {
                     items: matchedReports.map((r: Report) => ({
                         id: r.id,
                         label: r.title,
-                        sublabel: `Generated ${new Date(r.createdAt).toLocaleDateString()}`
+                        sublabel: `Generated ${new Date(r.generatedAt).toLocaleDateString()}`
                     }))
                 });
             }
