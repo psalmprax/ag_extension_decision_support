@@ -243,7 +243,6 @@ function App() {
     const [isGlobalSearching, setIsGlobalSearching] = useState(false);
     const [reportContent, setReportContent] = useState<string | null>(null);
     const [isLoadingReport, setIsLoadingReport] = useState(false);
-    const [isBulkSmsModalOpen, setIsBulkSmsModalOpen] = useState(false);
     const [isSendingBulkSms, setIsSendingBulkSms] = useState(false);
     const [isBulkUpdateModalOpen, setIsBulkUpdateModalOpen] = useState(false);
     const [isUpdatingBulk, setIsUpdatingBulk] = useState(false);
