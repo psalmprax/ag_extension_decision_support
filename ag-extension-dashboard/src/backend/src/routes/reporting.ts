@@ -72,8 +72,12 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 // Generate report
 router.post('/generate', checkUsageLimit('report'), async (req: AuthRequest, res: Response) => {
     try {
-        const { type, startDate, endDate, officerId, region } = req.body;
+        const { type, startDate, endDate, officerId, region, title, farmerId } = req.body;
         const pool = getPool();
+
+        // Use default date range if not provided (last 30 days)
+        const effectiveStartDate = startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+        const effectiveEndDate = endDate || new Date().toISOString();
 
         const reportData: any = {};
 
@@ -86,7 +90,7 @@ router.post('/generate', checkUsageLimit('report'), async (req: AuthRequest, res
                     FROM visits 
                     WHERE scheduled_at >= $1 AND scheduled_at <= $2
                     ${officerId ? 'AND officer_id = $3' : ''}
-                `, [startDate, endDate, officerId].filter(Boolean));
+                `, [effectiveStartDate, effectiveEndDate, officerId].filter(Boolean));
 
                 reportData.visits = visitResult.rows[0];
             }
@@ -98,16 +102,18 @@ router.post('/generate', checkUsageLimit('report'), async (req: AuthRequest, res
                            AVG(satisfaction_score) as avg_satisfaction
                     FROM conversations 
                     WHERE created_at >= $1 AND created_at <= $2
-                `, [startDate, endDate]);
+                `, [effectiveStartDate, effectiveEndDate]);
 
                 reportData.conversations = convResult.rows[0];
             }
+
+            const reportTitle = title || `${type.replace('_', ' ')} - ${new Date(effectiveStartDate).toLocaleDateString()} to ${new Date(effectiveEndDate).toLocaleDateString()}`;
 
             const result = await query(`
                 INSERT INTO reports (report_type, title, officer_id, region, start_date, end_date, report_data, status, created_at)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, 'completed', NOW())
                 RETURNING *
-            `, [type, `${type.replace('_', ' ')} - ${new Date(startDate).toLocaleDateString()} to ${new Date(endDate).toLocaleDateString()}`, officerId, region, startDate, endDate, JSON.stringify(reportData)]);
+            `, [type, reportTitle, officerId, region, effectiveStartDate, effectiveEndDate, JSON.stringify(reportData)]);
 
             await usageService.incrementUsage(req.user!.userId, 'report');
 
