@@ -4,7 +4,7 @@
 
 This document provides a comprehensive gap analysis of the Ag-Extension Decision Support project across all key areas. The project has significantly matured since the initial analysis, with major improvements in AI integration, containerization, testing, and production readiness.
 
-**Last Updated:** 2026-03-10
+**Last Updated:** 2026-03-31
 
 ---
 
@@ -18,7 +18,7 @@ This document provides a comprehensive gap analysis of the Ag-Extension Decision
 | **Networking** | ⚠️ Partial | CDN, API Gateway, WebSocket scaling | Medium |
 | **Use Cases** | ✅ Good | Offline mode, push notifications | Medium |
 | **Monetization** | ⚠️ Partial | Subscription tiers, usage tracking, invoicing | High |
-| **E2E Testing** | ✅ Good | MSW mocking, visual regression | Medium |
+| **E2E Testing** | ✅ Good | MSW mocking, visual regression (8 tests) | High |
 | **Quality** | ✅ Good | Code coverage, Dependabot | Medium |
 | **Containerization** | ✅ Good | Kubernetes manifests | Low |
 | **AI Agents** | ⚠️ Partial | Monitoring, persistence, webhooks | Medium |
@@ -196,8 +196,8 @@ This document provides a comprehensive gap analysis of the Ag-Extension Decision
 | Video Calling | ✅ Done | WebRTC |
 | SMS Notifications | ✅ Done | Twilio |
 | Email Notifications | ✅ Done | Multiple providers |
-| Push Notifications | ❌ Missing | Not implemented |
-| Offline Mode | ⚠️ Partial | PWA ready, not fully tested |
+| Push Notifications | ✅ Done | web-push + pushNotificationService | Medium |
+| Offline Mode | ✅ Done | SyncQueue + PWA ready | Medium |
 | Calendar Integration | ❌ Missing | Not implemented |
 | PDF Generation | ⚠️ Partial | Basic |
 
@@ -205,8 +205,8 @@ This document provides a comprehensive gap analysis of the Ag-Extension Decision
 
 | Feature | Status | Priority | Notes |
 |---------|--------|----------|-------|
-| Push Notifications | ❌ Missing | Medium | Firebase/Web Push |
-| Offline Mode | ⚠️ Partial | Medium | Needs testing |
+| Push Notifications | ✅ Done | web-push + Service Worker | Medium |
+| Offline Mode | ✅ Done | Medium | SyncQueue + navigator.onLine |
 | Calendar Integration | ❌ Missing | Low | iCal, Google Calendar |
 | E-commerce/Marketplace | ❌ Missing | Low | Future feature |
 | Crop Disease Detection | ❌ Missing | Low | Image AI |
@@ -266,7 +266,7 @@ This document provides a comprehensive gap analysis of the Ag-Extension Decision
 |---------|--------|------------|
 | Test Framework | ✅ Done | Playwright |
 | Unit Tests | ⚠️ Partial | Vitest |
-| Test Files | ✅ Done | 5 Playwright tests |
+| Test Files | ✅ Done | 8 Playwright tests |
 | Configuration | ✅ Done | playwright.config.ts |
 
 ### Gap Analysis
