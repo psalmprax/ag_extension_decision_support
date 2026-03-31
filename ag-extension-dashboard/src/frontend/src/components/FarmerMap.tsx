@@ -380,6 +380,7 @@ export interface FarmerData {
     size: number;
     phone?: string;
     yield?: number;
+    createdAt?: string;
 }
 
 export interface FarmerMapProps {
@@ -629,7 +630,9 @@ export function FarmerMap({
                                         <Calendar className="w-4 h-4 text-gray-400" />
                                         <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('farmer_active_since')}</span>
                                     </div>
-                                    <span className="text-xs font-bold text-gray-700 dark:text-gray-300">2023</span>
+                                    <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                                        {farmer.createdAt ? new Date(farmer.createdAt).getFullYear() : '—'}
+                                    </span>
                                 </div>
 
                                 {/* Actions */}

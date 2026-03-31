@@ -58,6 +58,8 @@ import { fetchPerformanceData } from '@/api/analyticsService';
 import { fetchConversations, fetchMessages, sendMessage, createConversation, createAIConversation, updateConversation, deleteConversation } from '@/api/chatbotService';
 import { sendBulkSMS } from '@/api/smsService';
 import { fetchUnreadCount } from '@/api/notificationService';
+import { getMyTransactions, fetchInvoices } from '@/api/billingService';
+
 // Removed redundant import
 import { uploadMultipleFiles } from '@/api/uploadService';
 import { themes, getThemeCSS, applyTheme } from '@/theme';
@@ -85,6 +87,9 @@ import ProfileModal from '@/components/ProfileModal';
 import SettingsPanel from '@/components/SettingsPanel';
 import HelpCenterModal from '@/components/HelpCenterModal';
 import { KnowledgeBase } from '@/components/KnowledgeBase';
+import { BulkSmsModal } from './components/BulkSmsModal';
+import { BulkUpdateModal } from './components/BulkUpdateModal';
+
 
 // COLORS constant removed as it's unused
 
@@ -196,7 +201,7 @@ function App() {
         addNotification,
         notifications,
         contextMenu, hideContextMenu, 
-        shareModal, hideShareModal, showShareModal, removeFarmer
+        shareModal, hideShareModal, showShareModal, removeFarmer, removeFarmers
     } = useAppStore();
 
     // Logout handler
@@ -218,8 +223,9 @@ function App() {
     const [showFarmerModal, setShowFarmerModal] = useState(false);
     const [showGlobalSearch, setShowGlobalSearch] = useState(false);
     const [viewingReport, setViewingReport] = useState<Report | null>(null);
-    const [showBulkSmsComposer, setShowBulkSmsComposer] = useState(false);
+    const [isBulkSmsModalOpen, setIsBulkSmsModalOpen] = useState(false);
     const [confirmModal, setConfirmModal] = useState<{
+
         title: string;
         message: string;
         onConfirm: () => void;
@@ -237,8 +243,12 @@ function App() {
     const [isGlobalSearching, setIsGlobalSearching] = useState(false);
     const [reportContent, setReportContent] = useState<string | null>(null);
     const [isLoadingReport, setIsLoadingReport] = useState(false);
-    const [bulkSmsMessage, setBulkSmsMessage] = useState('');
+    const [isBulkSmsModalOpen, setIsBulkSmsModalOpen] = useState(false);
+    const [isSendingBulkSms, setIsSendingBulkSms] = useState(false);
+    const [isBulkUpdateModalOpen, setIsBulkUpdateModalOpen] = useState(false);
+    const [isUpdatingBulk, setIsUpdatingBulk] = useState(false);
     const [apiUnreadCount, setApiUnreadCount] = useState(0);
+
     const [isMapExpanded, setIsMapExpanded] = useState(false);
     const [isGeneratingReport, setIsGeneratingReport] = useState(false);
     const [selectedFarmer, setSelectedFarmer] = useState<Farmer | null>(null);
@@ -413,6 +423,7 @@ function App() {
                     setShowGlobalSearch(true);
                 }
             }
+
             if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
                 e.preventDefault();
                 setSidebarOpen(!sidebarOpen);
@@ -428,9 +439,10 @@ function App() {
                 else if (showFarmerModal) setShowFarmerModal(false);
                 else if (showGlobalSearch) setShowGlobalSearch(false);
                 else if (viewingReport) setViewingReport(null);
-                else if (showBulkSmsComposer) setShowBulkSmsComposer(false);
+                else if (isBulkSmsModalOpen) setIsBulkSmsModalOpen(false);
                 else if (confirmModal) setConfirmModal(null);
             }
+
         };
 
         window.addEventListener('keydown', handleKeyDown);
@@ -476,18 +488,24 @@ function App() {
         }
     };
 
-    const handleBulkSMS = async () => {
+    const handleBulkSMS = () => {
+        if (selectedFarmers.size > 0) {
+            setIsBulkSmsModalOpen(true);
+        }
+    };
+
+    const onBulkSmsSend = async (message: string) => {
         const selectedFarmersList = effectiveFarmers?.filter(f => selectedFarmers.has(f.id)) || [];
         if (selectedFarmersList.length > 0) {
+            setIsSendingBulkSms(true);
             try {
-                const response = await sendBulkSMS({
+                await sendBulkSMS({
                     recipients: selectedFarmersList.map(f => f.phone).filter(Boolean) as string[],
-                    message: bulkSmsMessage || "AG Extension Support: We have noticed updates in your area. Please check the USSD menu *384*100# for more info."
+                    message
                 });
                 setActiveTab('sms');
                 setSelectedFarmers(new Set());
-                setShowBulkSmsComposer(false);
-                setBulkSmsMessage('');
+                setIsBulkSmsModalOpen(false);
                 addNotification({
                     type: 'success',
                     message: `Bulk SMS sent to ${selectedFarmersList.length} farmers.`
@@ -498,9 +516,12 @@ function App() {
                     type: 'error',
                     message: 'Error connecting to SMS service.'
                 });
+            } finally {
+                setIsSendingBulkSms(false);
             }
         }
     };
+
 
     const handleBulkDelete = async () => {
         const ids = Array.from(selectedFarmers);
@@ -516,9 +537,7 @@ function App() {
                 const farmersToRestore = effectiveFarmers?.filter(f => selectedFarmers.has(f.id)) || [];
 
                 try {
-                    for (const id of ids) {
-                        removeFarmer(id);
-                    }
+                    await removeFarmers(ids);
                     setSelectedFarmers(new Set());
 
                     addNotification({
@@ -543,6 +562,30 @@ function App() {
                 }
             }
         });
+    };
+
+    const onBulkUpdateFarmers = async (updates: any) => {
+        const ids = Array.from(selectedFarmers);
+        if (ids.length > 0) {
+            setIsUpdatingBulk(true);
+            try {
+                await updateFarmers(ids, updates);
+                setSelectedFarmers(new Set());
+                setIsBulkUpdateModalOpen(false);
+                addNotification({
+                    type: 'success',
+                    message: `Bulk update applied to ${ids.length} farmers.`
+                });
+            } catch (error) {
+                console.error('Bulk update error:', error);
+                addNotification({
+                    type: 'error',
+                    message: 'Error applying bulk update.'
+                });
+            } finally {
+                setIsUpdatingBulk(false);
+            }
+        }
     };
 
     const handleBulkExport = () => {
@@ -720,6 +763,15 @@ function App() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const performanceData = (performanceResponse as any)?.data;
 
+    // Fetch Billing Transactions
+    const { data: transactionsResponse } = useQuery<{ success: boolean; data: any[] }>({
+        queryKey: ['transactions'],
+        queryFn: getMyTransactions,
+        enabled: activeTab === 'billing' || showGlobalSearch
+    });
+    const transactions = transactionsResponse?.data || [];
+
+
     const allNavItems = [
         { id: 'dashboard', label: t('nav_dashboard'), icon: LayoutDashboard, roles: ['extension_officer', 'admin'] },
         { id: 'farmer_dashboard', label: t('nav_dashboard'), icon: LayoutDashboard, roles: ['farmer'] },
@@ -815,6 +867,38 @@ function App() {
                     }))
                 });
             }
+            // Search Reports
+            const matchedReports = (reports || []).filter((r: Report) => 
+                r.title?.toLowerCase().includes(query.toLowerCase()) ||
+                r.type?.toLowerCase().includes(query.toLowerCase())
+            ).slice(0, 3);
+            if (matchedReports.length > 0) {
+                results.push({
+                    type: 'Reports',
+                    items: matchedReports.map((r: Report) => ({
+                        id: r.id,
+                        label: r.title,
+                        sublabel: `Generated ${new Date(r.createdAt).toLocaleDateString()}`
+                    }))
+                });
+            }
+            // Search Transactions
+            const matchedTransactions = (transactions || []).filter((tx: any) => 
+                tx.transactionId?.toLowerCase().includes(query.toLowerCase()) ||
+                tx.status?.toLowerCase().includes(query.toLowerCase()) ||
+                tx.method?.toLowerCase().includes(query.toLowerCase())
+            ).slice(0, 3);
+            if (matchedTransactions.length > 0) {
+                results.push({
+                    type: 'Billing',
+                    items: matchedTransactions.map((tx: any) => ({
+                        id: tx.id,
+                        label: `TX: ${tx.transactionId}`,
+                        sublabel: `${tx.amount} ${tx.currency} • ${tx.status}`
+                    }))
+                });
+            }
+
         } finally {
             setGlobalSearchResults(results);
             setIsGlobalSearching(false);
@@ -1417,7 +1501,8 @@ function App() {
                                                 region: f.region || f.location || 'Unknown',
                                                 size: f.farmSize || f.size || 0,
                                                 phone: f.phone,
-                                                yield: f.yield || 0
+                                                yield: f.yield || 0,
+                                                createdAt: f.createdAt || f.created_at
                                             }))}
                                             onFarmerClick={(farmerData) => {
                                                 if (user?.role === 'extension_officer' || user?.role === 'admin') {
@@ -2344,7 +2429,23 @@ function App() {
             <ProfileModal isOpen={showProfileModal} onClose={() => setShowProfileModal(false)} />
             <SettingsPanel isOpen={showSettingsPanel} onClose={() => setShowSettingsPanel(false)} />
             <HelpCenterModal isOpen={showHelpCenter} onClose={() => setShowHelpCenter(false)} />
+            <BulkSmsModal
+                isOpen={isBulkSmsModalOpen}
+                onClose={() => setIsBulkSmsModalOpen(false)}
+                onSend={onBulkSmsSend}
+                selectedCount={selectedFarmers.size}
+                isLoading={isSendingBulkSms}
+            />
+
+            <BulkUpdateModal
+                isOpen={isBulkUpdateModalOpen}
+                onClose={() => setIsBulkUpdateModalOpen(false)}
+                onUpdate={onBulkUpdateFarmers}
+                selectedCount={selectedFarmers.size}
+                isLoading={isUpdatingBulk}
+            />
             {confirmModal && (
+
                 <ConfirmModal
                     isOpen={!!confirmModal}
                     onClose={() => setConfirmModal(null)}

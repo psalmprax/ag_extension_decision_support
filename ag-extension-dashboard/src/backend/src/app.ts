@@ -34,6 +34,7 @@ import billingRoutes from './routes/billing';
 import contextMenuRoutes from './routes/contextMenus';
 import { shareRouter, publicShareRouter } from './routes/shares';
 import alertRoutes from './routes/alerts';
+import supportRoutes from './routes/support';
 
 const app: Application = express();
 
@@ -126,6 +127,7 @@ app.use('/api/v1/billing', billingRoutes);
 app.use('/api/v1/context-menus', contextMenuRoutes);
 app.use('/api/v1/shares', shareRouter);
 app.use('/api/public/shares', publicShareRouter);
+app.use('/api/v1/support', supportRoutes);
 
 // Legacy redirects
 app.use('/api/auth', authRoutes);
@@ -147,6 +149,7 @@ app.use('/api/sms', smsRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/shares', shareRouter);
 app.use('/api/public/shares', publicShareRouter);
+app.use('/api/support', supportRoutes);
 app.use('/api/health', (req: Request, res: Response) => {
     res.json({
         status: 'healthy',

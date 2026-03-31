@@ -109,15 +109,25 @@ export const PaymentAnalyticsDashboard: React.FC = () => {
     const fetchAnalytics = async () => {
         setLoading(true);
         try {
-            const [dashboardRes, revenueRes] = await Promise.all([
+            const [dashboardRes, revenueRes, customerRes, subscriptionRes, paymentMethodRes, churnRes, cohortRes] = await Promise.all([
                 getAnalyticsDashboard(),
-                getRevenueAnalytics(timeframe)
+                getRevenueAnalytics(timeframe),
+                getCustomerAnalytics().catch(() => null),
+                getSubscriptionAnalytics().catch(() => null),
+                getPaymentMethodAnalytics().catch(() => null),
+                getChurnAnalytics().catch(() => null),
+                getCohortAnalytics().catch(() => null),
             ]);
 
             if (dashboardRes.success && revenueRes.success) {
                 setAnalytics({
                     ...dashboardRes.data,
-                    revenue: revenueRes.data
+                    revenue: revenueRes.data,
+                    ...(customerRes?.success && { customers: customerRes.data }),
+                    ...(subscriptionRes?.success && { subscriptions: subscriptionRes.data }),
+                    ...(paymentMethodRes?.success && { paymentMethods: paymentMethodRes.data }),
+                    ...(churnRes?.success && { churnPrediction: churnRes.data }),
+                    ...(cohortRes?.success && { cohorts: cohortRes.data }),
                 });
             }
         } catch (error) {

@@ -69,7 +69,12 @@ export const deleteFarmer = async (id: string): Promise<{ success: boolean }> =>
 };
 
 export const deleteFarmers = async (ids: string[]): Promise<{ success: boolean }> => {
-    const response = await apiClient.post<{ success: boolean }>('/farmers/bulk-delete', { ids });
+    const response = await apiClient.post<{ success: boolean }>('/farmers/bulk/delete', { ids });
+    return response.data;
+};
+
+export const updateFarmers = async (ids: string[], updates: Partial<Farmer>): Promise<{ success: boolean }> => {
+    const response = await apiClient.post<{ success: boolean }>('/farmers/bulk/update', { ids, updates });
     return response.data;
 };
 

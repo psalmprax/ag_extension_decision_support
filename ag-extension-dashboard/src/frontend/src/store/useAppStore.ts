@@ -78,6 +78,7 @@ interface AppState {
     setFarmers: (farmers: Farmer[]) => void;
     addFarmer: (farmer: Farmer) => void;
     updateFarmer: (id: string, updates: Partial<Farmer>) => Promise<void>;
+    updateFarmers: (ids: string[], updates: Partial<Farmer>) => Promise<void>;
     removeFarmer: (id: string) => Promise<void>;
     removeFarmers: (ids: string[]) => Promise<void>;
 
@@ -187,6 +188,25 @@ export const useAppStore = create<AppState>()(
                 } catch (error) {
                     console.error('Update farmer error:', error);
                     toast.error('Failed to update farmer');
+                } finally {
+                    set({ isLoading: false });
+                }
+            },
+            updateFarmers: async (ids, updates) => {
+                set({ isLoading: true });
+                try {
+                    const response = await farmerService.updateFarmers(ids, updates);
+                    if (response.success) {
+                        set((state) => ({
+                            farmers: state.farmers.map((f) =>
+                                ids.includes(f.id) ? { ...f, ...updates } : f
+                            )
+                        }));
+                        toast.success(`${ids.length} farmers updated successfully`);
+                    }
+                } catch (error) {
+                    console.error('Bulk update farmers error:', error);
+                    toast.error('Failed to update some farmers');
                 } finally {
                     set({ isLoading: false });
                 }

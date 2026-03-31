@@ -1,50 +1,73 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, HelpCircle, Book, MessageSquare, Mail, ExternalLink, ChevronRight, Bug } from 'lucide-react';
+import { X, HelpCircle, Book, MessageSquare, Mail, ExternalLink, ChevronRight, Bug, Send, Loader2, CheckCircle } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
+import { fetchFAQs, createSupportTicket, FAQ } from '@/api/supportService';
 
 interface HelpCenterModalProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
-const faqs = [
-    {
-        question: 'How do I register a new farmer?',
-        answer: 'Navigate to "Register Farmer" in the sidebar. Fill in the farmer\'s details including name, phone, location, and crops. You can also use the "Detect Location" button to auto-fill GPS coordinates.',
-    },
-    {
-        question: 'How does the AI Advisor work?',
-        answer: 'The AI Advisor uses RAG (Retrieval-Augmented Generation) to search the knowledge base and provide contextual agricultural advice. Simply type your question in the Knowledge Search tab.',
-    },
-    {
-        question: 'How do I schedule a farm visit?',
-        answer: 'Go to the "Visits" tab and click "Schedule New Visit". Select a farmer, choose the visit type, set the date/time, and add optional notes.',
-    },
-    {
-        question: 'How do I send SMS to farmers?',
-        answer: 'Navigate to the SMS section from the sidebar. You can send individual messages or bulk SMS. Select contacts from the farmer list, compose your message, and hit Send.',
-    },
-    {
-        question: 'How do I export farmer data?',
-        answer: 'In the Farmer Portfolio view, select the farmers you want to export using checkboxes, then click "Export CSV". You can also right-click on a farmer for context menu options.',
-    },
-    {
-        question: 'How does offline mode work?',
-        answer: 'The browser extension supports offline operation. Actions are queued and synced when connectivity is restored. The dashboard shows your online/offline status in the header.',
-    },
-];
-
 export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClose }) => {
     const { t } = useLanguage();
     const setActiveTab = useAppStore((s) => s.setActiveTab);
+    const addNotification = useAppStore((s) => s.addNotification);
     const [expandedFaq, setExpandedFaq] = React.useState<number | null>(null);
+    const [faqs, setFaqs] = React.useState<FAQ[]>([]);
+    const [faqsLoading, setFaqsLoading] = React.useState(false);
+    const [showTicketForm, setShowTicketForm] = React.useState(false);
+    const [ticketSubject, setTicketSubject] = React.useState('');
+    const [ticketCategory, setTicketCategory] = React.useState('general');
+    const [ticketDescription, setTicketDescription] = React.useState('');
+    const [ticketSubmitting, setTicketSubmitting] = React.useState(false);
+    const [ticketSubmitted, setTicketSubmitted] = React.useState(false);
+
+    React.useEffect(() => {
+        if (isOpen) {
+            setFaqsLoading(true);
+            fetchFAQs()
+                .then(res => { if (res.success) setFaqs(res.data); })
+                .catch(() => { /* fallback to empty */ })
+                .finally(() => setFaqsLoading(false));
+        }
+    }, [isOpen]);
+
+    const handleTicketSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!ticketSubject.trim() || !ticketDescription.trim()) return;
+        setTicketSubmitting(true);
+        try {
+            const res = await createSupportTicket({
+                subject: ticketSubject,
+                category: ticketCategory,
+                description: ticketDescription,
+            });
+            if (res.success) {
+                setTicketSubmitted(true);
+                setTicketSubject('');
+                setTicketDescription('');
+                addNotification({ type: 'success', message: 'Support ticket submitted successfully' });
+                setTimeout(() => { setShowTicketForm(false); setTicketSubmitted(false); }, 2000);
+            }
+        } catch {
+            addNotification({ type: 'error', message: 'Failed to submit support ticket' });
+        } finally {
+            setTicketSubmitting(false);
+        }
+    };
 
     const quickLinks = [
         { icon: Book, label: t('help_docs') || 'Documentation', color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400', action: () => { onClose(); setActiveTab('knowledge'); } },
         { icon: MessageSquare, label: t('help_chat') || 'Live Chat', color: 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400', action: () => { onClose(); setActiveTab('aiassistant'); } },
-        { icon: Mail, label: t('help_email') || 'Email Support', color: 'bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400', action: () => { window.open('mailto:support@agextension.org', '_blank'); } },
+        { icon: Mail, label: 'Submit Ticket', color: 'bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400', action: () => setShowTicketForm(true) },
+    ];
+
+    const keyboardShortcuts = [
+        { key: 'Ctrl + K', action: 'Global Search' },
+        { key: 'Ctrl + B', action: 'Toggle Sidebar' },
+        { key: 'Esc', action: 'Close Modal' },
     ];
 
     return (
@@ -88,88 +111,166 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
 
                             {/* Content */}
                             <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                                {/* Quick Links */}
-                                <div className="grid grid-cols-3 gap-3">
-                                    {quickLinks.map(({ icon: Icon, label, color, action }, i) => (
-                                        <button
-                                            key={i}
-                                            onClick={action}
-                                            className={`p-4 rounded-2xl ${color} flex flex-col items-center gap-2 hover:scale-105 transition-transform`}
-                                        >
-                                            <Icon className="w-6 h-6" />
-                                            <span className="text-xs font-bold">{label}</span>
-                                        </button>
-                                    ))}
-                                </div>
-
-                                {/* FAQs */}
-                                <div className="space-y-3">
-                                    <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
-                                        {t('help_faq') || 'Frequently Asked Questions'}
-                                    </h3>
-                                    {faqs.map((faq, i) => (
-                                        <div
-                                            key={i}
-                                            className="border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden"
-                                        >
-                                            <button
-                                                onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
-                                                className="w-full p-4 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                                            >
-                                                <span className="text-sm font-bold text-gray-900 dark:text-white pr-4">{faq.question}</span>
-                                                <ChevronRight className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${expandedFaq === i ? 'rotate-90' : ''}`} />
+                                {showTicketForm ? (
+                                    /* Support Ticket Form */
+                                    <motion.div
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        className="space-y-4"
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Submit Support Ticket</h3>
+                                            <button onClick={() => setShowTicketForm(false)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                                                <X className="w-4 h-4 text-gray-400" />
                                             </button>
-                                            {expandedFaq === i && (
-                                                <motion.div
-                                                    initial={{ height: 0, opacity: 0 }}
-                                                    animate={{ height: 'auto', opacity: 1 }}
-                                                    className="px-4 pb-4"
+                                        </div>
+                                        {ticketSubmitted ? (
+                                            <div className="flex flex-col items-center justify-center py-12 text-center">
+                                                <CheckCircle className="w-16 h-16 text-green-500 mb-4" />
+                                                <h4 className="text-lg font-bold text-gray-900 dark:text-white">Ticket Submitted</h4>
+                                                <p className="text-sm text-gray-500">We'll get back to you soon.</p>
+                                            </div>
+                                        ) : (
+                                            <form onSubmit={handleTicketSubmit} className="space-y-4">
+                                                <div>
+                                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Subject</label>
+                                                    <input
+                                                        type="text"
+                                                        value={ticketSubject}
+                                                        onChange={(e) => setTicketSubject(e.target.value)}
+                                                        placeholder="Brief description of your issue"
+                                                        className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Category</label>
+                                                    <select
+                                                        value={ticketCategory}
+                                                        onChange={(e) => setTicketCategory(e.target.value)}
+                                                        className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500"
+                                                    >
+                                                        <option value="general">General</option>
+                                                        <option value="farmers">Farmer Management</option>
+                                                        <option value="visits">Visits</option>
+                                                        <option value="ai">AI Advisor</option>
+                                                        <option value="billing">Billing</option>
+                                                        <option value="bug">Bug Report</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Description</label>
+                                                    <textarea
+                                                        value={ticketDescription}
+                                                        onChange={(e) => setTicketDescription(e.target.value)}
+                                                        placeholder="Describe your issue in detail..."
+                                                        rows={4}
+                                                        className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 resize-none"
+                                                        required
+                                                    />
+                                                </div>
+                                                <button
+                                                    type="submit"
+                                                    disabled={ticketSubmitting}
+                                                    className="w-full px-4 py-3 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
                                                 >
-                                                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{faq.answer}</p>
-                                                </motion.div>
+                                                    {ticketSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                                                    {ticketSubmitting ? 'Submitting...' : 'Submit Ticket'}
+                                                </button>
+                                            </form>
+                                        )}
+                                    </motion.div>
+                                ) : (
+                                    <>
+                                        {/* Quick Links */}
+                                        <div className="grid grid-cols-3 gap-3">
+                                            {quickLinks.map(({ icon: Icon, label, color, action }, i) => (
+                                                <button
+                                                    key={i}
+                                                    onClick={action}
+                                                    className={`p-4 rounded-2xl ${color} flex flex-col items-center gap-2 hover:scale-105 transition-transform`}
+                                                >
+                                                    <Icon className="w-6 h-6" />
+                                                    <span className="text-xs font-bold">{label}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        {/* FAQs */}
+                                        <div className="space-y-3">
+                                            <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                                                {t('help_faq') || 'Frequently Asked Questions'}
+                                            </h3>
+                                            {faqsLoading ? (
+                                                <div className="flex items-center justify-center py-8">
+                                                    <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
+                                                </div>
+                                            ) : faqs.length === 0 ? (
+                                                <p className="text-sm text-gray-400 text-center py-4">No FAQs available</p>
+                                            ) : (
+                                                faqs.map((faq, i) => (
+                                                    <div
+                                                        key={faq.id || i}
+                                                        className="border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden"
+                                                    >
+                                                        <button
+                                                            onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
+                                                            className="w-full p-4 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                                                        >
+                                                            <span className="text-sm font-bold text-gray-900 dark:text-white pr-4">{faq.question}</span>
+                                                            <ChevronRight className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${expandedFaq === i ? 'rotate-90' : ''}`} />
+                                                        </button>
+                                                        {expandedFaq === i && (
+                                                            <motion.div
+                                                                initial={{ height: 0, opacity: 0 }}
+                                                                animate={{ height: 'auto', opacity: 1 }}
+                                                                className="px-4 pb-4"
+                                                            >
+                                                                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{faq.answer}</p>
+                                                            </motion.div>
+                                                        )}
+                                                    </div>
+                                                ))
                                             )}
                                         </div>
-                                    ))}
-                                </div>
 
-                                {/* Keyboard shortcuts are registered globally in App.tsx */}
-                                {/* Keyboard Shortcuts */}
-                                <div className="space-y-3">
-                                    <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
-                                        {t('help_shortcuts') || 'Keyboard Shortcuts'}
-                                    </h3>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {[
-                                            { key: 'Ctrl + K', action: 'Global Search' },
-                                            { key: 'Ctrl + B', action: 'Toggle Sidebar' },
-                                            { key: 'Esc', action: 'Close Modal' },
-                                        ].map(({ key, action }, i) => (
-                                            <div key={i} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-                                                <span className="text-sm text-gray-600 dark:text-gray-400">{action}</span>
-                                                <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-600 text-xs font-mono rounded text-gray-700 dark:text-gray-300">{key}</kbd>
+                                        {/* Keyboard Shortcuts */}
+                                        <div className="space-y-3">
+                                            <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                                                {t('help_shortcuts') || 'Keyboard Shortcuts'}
+                                            </h3>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {keyboardShortcuts.map(({ key, action }, i) => (
+                                                    <div key={i} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                                                        <span className="text-sm text-gray-600 dark:text-gray-400">{action}</span>
+                                                        <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-600 text-xs font-mono rounded text-gray-700 dark:text-gray-300">{key}</kbd>
+                                                    </div>
+                                                ))}
                                             </div>
-                                        ))}
-                                    </div>
-                                </div>
+                                        </div>
+                                    </>
+                                )}
                             </div>
 
                             {/* Footer */}
-                            <div className="p-4 border-t border-gray-100 dark:border-gray-700 grid grid-cols-2 gap-2">
-                                <a
-                                    href="mailto:support@agextension.org?subject=Issue%20Report%20-%20Ag%20Extension%20Dashboard"
-                                    className="flex items-center justify-center gap-2 py-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                >
-                                    <Bug className="w-4 h-4" />
-                                    {t('help_report_issue') || 'Report an Issue'}
-                                </a>
-                                <a
-                                    href="mailto:support@agextension.org?subject=Feature%20Request%20-%20Ag%20Extension%20Dashboard"
-                                    className="flex items-center justify-center gap-2 py-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                >
-                                    <ExternalLink className="w-4 h-4" />
-                                    {t('help_feature_request') || 'Feature Request'}
-                                </a>
-                            </div>
+                            {!showTicketForm && (
+                                <div className="p-4 border-t border-gray-100 dark:border-gray-700 grid grid-cols-2 gap-2">
+                                    <button
+                                        onClick={() => setShowTicketForm(true)}
+                                        className="flex items-center justify-center gap-2 py-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                    >
+                                        <Bug className="w-4 h-4" />
+                                        {t('help_report_issue') || 'Report an Issue'}
+                                    </button>
+                                    <button
+                                        onClick={() => setShowTicketForm(true)}
+                                        className="flex items-center justify-center gap-2 py-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                    >
+                                        <ExternalLink className="w-4 h-4" />
+                                        {t('help_feature_request') || 'Feature Request'}
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </motion.div>
                 </>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 
 interface GanttItem {
@@ -10,10 +10,53 @@ interface GanttItem {
 
 interface CropCycleGanttProps {
     items?: GanttItem[];
+    visits?: Array<{ farmer_name?: string; visit_type?: string; status?: string; scheduled_at?: string }>;
+    farmers?: Array<{ firstName?: string; lastName?: string; crops?: string[] }>;
 }
 
-const CropCycleGantt: React.FC<CropCycleGanttProps> = ({ items }) => {
-    const displayItems = items || [];
+const CropCycleGantt: React.FC<CropCycleGanttProps> = ({ items, visits = [], farmers = [] }) => {
+    const displayItems = useMemo(() => {
+        if (items && items.length > 0) return items;
+
+        // Derive crop cycle data from farmers and visits
+        const cropMap = new Map<string, { active: number; total: number }>();
+        
+        farmers.forEach(f => {
+            f.crops?.forEach(crop => {
+                const existing = cropMap.get(crop) || { active: 0, total: 0 };
+                cropMap.set(crop, { active: existing.active, total: existing.total + 1 });
+            });
+        });
+
+        const completedVisits = visits.filter(v => v.status === 'completed').length;
+        const totalVisits = visits.length;
+
+        const derived: GanttItem[] = [];
+        let idx = 0;
+
+        cropMap.forEach((data, crop) => {
+            const percent = totalVisits > 0
+                ? Math.min(100, Math.round((completedVisits / Math.max(totalVisits, 1)) * 100 * (data.total / Math.max(farmers.length, 1))))
+                : Math.round((data.total / Math.max(farmers.length, 1)) * 60);
+            derived.push({
+                id: `crop-${idx++}`,
+                label: crop,
+                value: `${data.total} farmer${data.total !== 1 ? 's' : ''}`,
+                percent: Math.max(5, percent),
+            });
+        });
+
+        if (derived.length === 0 && totalVisits > 0) {
+            derived.push({
+                id: 'visits-cycle',
+                label: 'Visit Completion',
+                value: `${completedVisits}/${totalVisits}`,
+                percent: Math.round((completedVisits / totalVisits) * 100),
+            });
+        }
+
+        return derived;
+    }, [items, visits, farmers]);
 
     return (
         <div className="glass-premium p-8 rounded-[2.5rem] border-white/5 h-full">

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAppStore } from '@/store/useAppStore';
 
 interface RoleGuardProps {
@@ -10,8 +11,7 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({ children, allowedRoles }) 
   const { user } = useAppStore();
 
   if (!user) {
-    // If no user is logged in, redirect to login (or dashboard for now if we're simulating)
-    return <>{children}</>; 
+    return <Navigate to="/login" replace />;
   }
 
   if (!allowedRoles.includes(user.role)) {

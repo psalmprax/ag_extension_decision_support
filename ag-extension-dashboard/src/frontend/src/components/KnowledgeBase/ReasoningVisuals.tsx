@@ -171,7 +171,11 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals }) =
                     </div>
                     <div>
                         <h4 className="text-sm font-black uppercase tracking-[0.2em] opacity-70 mb-1">Expert Decision Insight</h4>
-                        <p className="text-lg font-bold leading-tight">Implementing these recommendations can improve precision by up to 34%.</p>
+                        <p className="text-lg font-bold leading-tight">
+                            {visuals.kpis && visuals.kpis.length > 0
+                                ? `${visuals.kpis.filter(k => k.status === 'good').length} of ${visuals.kpis.length} indicators performing optimally. Review recommendations below.`
+                                : 'AI-powered analysis complete. Review the data and recommendations above.'}
+                        </p>
                     </div>
                     <div className="ml-auto hidden md:block">
                         <div className="px-6 py-2 bg-white text-primary-600 rounded-2xl font-black shadow-xl shadow-black/10">ALFA v2.1</div>

@@ -337,6 +337,110 @@ export default defineContentScript({
       });
     }
 
+    // Selection Overlay Bubble Logic
+    let bubble: HTMLDivElement | null = null;
+
+    const createSelectionBubble = () => {
+      if (bubble) return;
+      bubble = document.createElement('div');
+      bubble.id = 'ag-selection-bubble';
+      bubble.style.cssText = `
+        position: fixed;
+        z-index: 10000;
+        background: #0d9488;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        padding: 4px 8px;
+        display: none;
+        cursor: pointer;
+        color: white;
+        font-family: sans-serif;
+        font-weight: bold;
+        font-size: 11px;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid rgba(255,255,255,0.1);
+        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        user-select: none;
+      `;
+      bubble.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        <span>ANALYZE WITH AI</span>
+      `;
+
+      bubble.onmousedown = (e) => {
+        e.preventDefault(); // Prevent losing selection
+        e.stopPropagation();
+      };
+
+      bubble.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const selectedText = window.getSelection()?.toString() || '';
+        if (selectedText.length > 0 && browserAPI && browserAPI.runtime) {
+          browserAPI.runtime.sendMessage({ action: 'open_sidepanel' });
+          setTimeout(() => {
+            browserAPI.runtime.sendMessage({
+              action: 'analyze_selection',
+              text: selectedText
+            });
+          }, 300);
+        }
+        hideBubble();
+      };
+
+      document.body.appendChild(bubble);
+    };
+
+    const showBubble = (rect: DOMRect) => {
+      if (!bubble) createSelectionBubble();
+      if (bubble) {
+        bubble.style.display = 'flex';
+        bubble.style.top = `${rect.top - 40}px`;
+        bubble.style.left = `${rect.left + rect.width / 2 - 60}px`;
+        bubble.style.transform = 'scale(1)';
+      }
+    };
+
+    const hideBubble = () => {
+      if (bubble) {
+        bubble.style.display = 'none';
+        bubble.style.transform = 'scale(0.8)';
+      }
+    };
+
+    document.addEventListener('mouseup', (e) => {
+      const selection = window.getSelection();
+      const text = selection?.toString().trim();
+
+      if (text && text.length > 5 && selection) {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        if (rect.width > 0) {
+          showBubble(rect);
+        }
+      } else if (bubble && !bubble.contains(e.target as Node)) {
+        hideBubble();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      // Cmd/Ctrl + Shift + A
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'A') {
+        const text = window.getSelection()?.toString().trim();
+        if (text && browserAPI && browserAPI.runtime) {
+          e.preventDefault();
+          browserAPI.runtime.sendMessage({ action: 'open_sidepanel' });
+          setTimeout(() => {
+            browserAPI.runtime.sendMessage({
+              action: 'analyze_selection',
+              text: text
+            });
+          }, 300);
+        }
+      }
+    });
+
     ui.mount();
   },
 });

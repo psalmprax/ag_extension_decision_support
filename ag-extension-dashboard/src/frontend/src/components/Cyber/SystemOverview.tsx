@@ -1,14 +1,60 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import apiClient from '@/api/client';
+
+interface SystemIndicator {
+    label: string;
+    status: 'online' | 'stable' | 'warning' | 'error';
+}
 
 interface SystemOverviewProps {
     healthScore?: number;
-    indicators?: { label: string; status: 'online' | 'stable' | 'warning' | 'error' }[];
+    indicators?: SystemIndicator[];
 }
 
 const SystemOverview: React.FC<SystemOverviewProps> = ({ 
-    healthScore, 
-    indicators = []
+    healthScore: externalHealthScore, 
+    indicators: externalIndicators 
 }) => {
+    const [healthScore, setHealthScore] = useState<number | undefined>(externalHealthScore);
+    const [indicators, setIndicators] = useState<SystemIndicator[]>(externalIndicators || []);
+    const [uptime, setUptime] = useState<string>('');
+
+    useEffect(() => {
+        if (externalHealthScore !== undefined) return;
+
+        const fetchHealth = async () => {
+            try {
+                const { data } = await apiClient.get('/health');
+                const dbOk = data.services?.database === 'connected';
+                const cacheOk = data.services?.cache === 'connected';
+                const score = (dbOk ? 50 : 0) + (cacheOk ? 30 : 0) + (data.status === 'healthy' ? 20 : 0);
+                setHealthScore(score);
+                setIndicators([
+                    { label: 'Database', status: dbOk ? 'online' : 'error' },
+                    { label: 'Cache (Redis)', status: cacheOk ? 'online' : 'warning' },
+                    { label: 'API Server', status: data.status === 'healthy' ? 'stable' : 'error' },
+                ]);
+                if (data.uptime) {
+                    const d = Math.floor(data.uptime / 86400);
+                    const h = Math.floor((data.uptime % 86400) / 3600);
+                    const m = Math.floor((data.uptime % 3600) / 60);
+                    setUptime(d > 0 ? `${d}d ${h}h ${m}m` : h > 0 ? `${h}h ${m}m` : `${m}m`);
+                }
+            } catch {
+                setHealthScore(0);
+                setIndicators([
+                    { label: 'Database', status: 'error' },
+                    { label: 'Cache (Redis)', status: 'error' },
+                    { label: 'API Server', status: 'error' },
+                ]);
+            }
+        };
+
+        fetchHealth();
+        const interval = setInterval(fetchHealth, 30000);
+        return () => clearInterval(interval);
+    }, [externalHealthScore]);
+
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'online':
@@ -39,6 +85,9 @@ const SystemOverview: React.FC<SystemOverviewProps> = ({
                         <p className="text-4xl font-black text-white tabular-nums tracking-tighter">
                             {healthScore !== undefined ? healthScore : '—'}
                         </p>
+                        {uptime && (
+                            <p className="text-[10px] font-bold text-white/30 mt-1">Uptime: {uptime}</p>
+                        )}
                     </div>
                     <div className="w-16 h-16 rounded-2xl bg-primary-500/10 flex items-center justify-center border border-primary-500/20">
                         <span className="text-primary-400 font-black text-xl">

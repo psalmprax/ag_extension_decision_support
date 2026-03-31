@@ -14,6 +14,8 @@ import {
     Target
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { useAppStore } from '@/store/useAppStore';
+import { logout as apiLogout } from '@/api/authService';
 
 interface KnowledgeSidebarProps {
     isOpen: boolean;
@@ -30,7 +32,10 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
     onSelect,
     onNewQuery
 }) => {
-    const handleLogout = () => {
+    const { user } = useAppStore();
+
+    const handleLogout = async () => {
+        await apiLogout();
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/login';
@@ -105,11 +110,19 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
                 {/* Sidebar Footer */}
                 <div className="mt-auto pt-6 border-t border-gray-100 dark:border-gray-800 flex items-center gap-4 px-2">
                     <div className="w-10 h-10 bg-indigo-500 rounded-2xl flex items-center justify-center text-white font-black">
-                        <User className="w-6 h-6" />
+                        {user ? (
+                            <span className="text-sm font-bold">{user.firstName?.[0]}{user.lastName?.[0]}</span>
+                        ) : (
+                            <User className="w-6 h-6" />
+                        )}
                     </div>
                     <div className="flex-1 overflow-hidden">
-                        <p className="text-sm font-black text-gray-900 dark:text-white truncate">Extension Officer</p>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Regional Pro</p>
+                        <p className="text-sm font-black text-gray-900 dark:text-white truncate">
+                            {user ? `${user.firstName} ${user.lastName}` : 'User'}
+                        </p>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">
+                            {user?.role?.replace('_', ' ') || 'Member'}
+                        </p>
                     </div>
                     <button onClick={handleLogout} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
                         <LogOut className="w-5 h-5" />
