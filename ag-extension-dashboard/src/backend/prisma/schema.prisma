@@ -387,6 +387,9 @@ model KnowledgeSearch {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId    String   @map("user_id") @db.Uuid
   query     String
+  answer    String?
+  reasoning String?
+  visuals   Json?
   category  String?
   crop      String?
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)

@@ -24,12 +24,20 @@ export class KnowledgeService {
     /**
      * Log a new search query for analytics and history
      */
-    static async logSearch(userId: string, queryText: string, category?: string, crop?: string): Promise<void> {
+    static async logSearch(
+        userId: string, 
+        queryText: string, 
+        category?: string, 
+        crop?: string,
+        answer?: string,
+        reasoning?: string,
+        visuals?: any
+    ): Promise<void> {
         try {
             await query(`
-                INSERT INTO knowledge_searches (user_id, query, category, crop, created_at)
-                VALUES ($1, $2, $3, $4, NOW())
-            `, [userId, queryText, category, crop]);
+                INSERT INTO knowledge_searches (user_id, query, category, crop, answer, reasoning, visuals, created_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+            `, [userId, queryText, category, crop, answer, reasoning, visuals ? JSON.stringify(visuals) : null]);
         } catch (error) {
             logger.error('Failed to log knowledge search:', error);
         }
@@ -42,9 +50,9 @@ export class KnowledgeService {
         try {
             // Using a subquery with ROW_NUMBER to only return the latest instance of each unique query
             const result = await query(`
-                SELECT id, query as "queryText", category, crop, created_at as "createdAt"
+                SELECT id, query as "queryText", answer, reasoning, visuals, category, crop, created_at as "createdAt"
                 FROM (
-                    SELECT id, query, category, crop, created_at,
+                    SELECT id, query, answer, reasoning, visuals, category, crop, created_at,
                            ROW_NUMBER() OVER (PARTITION BY query ORDER BY created_at DESC) as rn
                     FROM knowledge_searches
                     WHERE user_id = $1
@@ -109,9 +117,8 @@ export class KnowledgeService {
     ): Promise<ReasoningResult & { cached: boolean; contextUsed: SearchResult[] }> {
         logger.info(`Getting RAG-based answer for query: "${queryText}" (User: ${userId}, Attachments: ${attachments?.length || 0})`);
 
-        // 1. Log the search activity
+        // Categorize for categorization field (async)
         const categories = await this.categorizeQuery(queryText);
-        await this.logSearch(userId, queryText, categories[0]);
 
         // 2. Check semantic cache (only for text-only queries for now)
         if (!attachments || attachments.length === 0) {
@@ -174,6 +181,17 @@ export class KnowledgeService {
             if (!attachments || attachments.length === 0) {
                 await SemanticCacheService.save(queryText, response.answer, response.contextUsed, response.visuals);
             }
+
+            // 7. Log the FULL search results for user history
+            await this.logSearch(
+                userId, 
+                queryText, 
+                categories[0], 
+                undefined, // crop - extracted from context if needed
+                response.answer,
+                response.reasoning,
+                response.visuals
+            );
 
             return response;
         } catch (error) {

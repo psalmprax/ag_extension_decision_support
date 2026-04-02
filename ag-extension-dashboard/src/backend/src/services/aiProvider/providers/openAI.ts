@@ -272,6 +272,8 @@ Note: Providing the <visuals> block is MANDATORY for every intelligence report.
     private extractVisualsHeuristically(text: string): any {
         const kpis: any[] = [];
         const charts: any[] = [];
+        const images: any[] = [];
+        const videos: any[] = [];
 
         // Regex for pH (e.g., pH 6.5 or pH: 7.0)
         const phMatch = text.match(/pH\s*[:\s]?\s*(\d+\.?\d*)/i);
@@ -291,7 +293,7 @@ Note: Providing the <visuals> block is MANDATORY for every intelligence report.
             kpis.push({ label: 'Intelligence Layer', value: 'ALFA v2.2', status: 'good' });
         }
 
-        return { kpis, charts };
+        return { kpis, charts, images, videos };
     }
 
     async speechToText(audio: Buffer, options?: SpeechToTextOptions): Promise<SpeechToTextResult> {
