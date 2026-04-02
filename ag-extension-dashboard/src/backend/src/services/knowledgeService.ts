@@ -109,14 +109,15 @@ export class KnowledgeService {
             return {
                 answer: cachedResult.answer,
                 contextUsed: cachedResult.contextUsed,
-                cached: true
+                cached: true,
+                visuals: cachedResult.visuals
             };
         }
 
         // 3. Retrieve relevant context
         const contextResults = await this.searchKnowledge(queryText);
         const contextText = contextResults
-            .map(res => `[Source: ${res.metadata.crop}/${res.metadata.category}]\n${res.content}`)
+            .map(res => `[Source: ${res.metadata.crop}/${res.metadata.category}] (Type: ${res.metadata.contentType}, URL: ${res.metadata.sourceUrl})\n${res.content}`)
             .join('\n\n---\n\n');
 
         // 4. Generate answer using Reasoning capability of ALFA
@@ -130,11 +131,12 @@ export class KnowledgeService {
             const response = {
                 answer: reasoningResult.answer,
                 contextUsed: contextResults,
-                cached: false
+                cached: false,
+                visuals: reasoningResult.visuals
             };
 
             // 5. Store in semantic cache for future requests
-            await SemanticCacheService.save(queryText, response.answer, response.contextUsed);
+            await SemanticCacheService.save(queryText, response.answer, response.contextUsed, response.visuals);
 
             return response;
         } catch (error) {

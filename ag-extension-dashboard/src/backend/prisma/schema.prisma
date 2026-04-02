@@ -399,6 +399,7 @@ model SearchCache {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   queryText   String   @unique @map("query_text")
   answer      String
+  visuals     Json?    @map("visuals")
   contextUsed Json     @map("context_used")
   embedding   Float[]
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(6)

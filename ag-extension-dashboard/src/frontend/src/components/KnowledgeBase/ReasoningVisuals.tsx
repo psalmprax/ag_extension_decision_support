@@ -22,7 +22,10 @@ import {
     AlertTriangle, 
     Info,
     TrendingUp,
-    Zap
+    Zap,
+    Play,
+    Image as ImageIcon,
+    ExternalLink
 } from 'lucide-react';
 
 interface KPI {
@@ -37,10 +40,17 @@ interface Chart {
     data: Array<{ label: string; value: number }>;
 }
 
+interface MediaAsset {
+    url: string;
+    caption?: string;
+}
+
 interface ReasoningVisualsProps {
     visuals: {
         kpis?: KPI[];
         charts?: Chart[];
+        images?: MediaAsset[];
+        videos?: MediaAsset[];
     };
 }
 
@@ -121,7 +131,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals }) =
         <div className="space-y-6 mt-8">
             {/* KPI Metrics Grid */}
             {visuals.kpis && visuals.kpis.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {visuals.kpis.map((kpi, idx) => (
                         <motion.div 
                             key={idx}
@@ -146,6 +156,51 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals }) =
                 </div>
             )}
 
+            {/* Media Assets (Images/Videos) */}
+            {(visuals.images || visuals.videos) && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {visuals.images?.map((img, idx) => (
+                        <motion.div 
+                            key={`img-${idx}`}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="bg-white/50 dark:bg-gray-900/40 p-4 rounded-3xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-xl group overflow-hidden"
+                        >
+                            <div className="relative aspect-video rounded-2xl overflow-hidden mb-3">
+                                <img src={img.url} alt={img.caption} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                <div className="absolute top-3 left-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-[10px] font-black uppercase tracking-widest">
+                                    <ImageIcon className="w-3 h-3" />
+                                    Image
+                                </div>
+                            </div>
+                            {img.caption && <p className="text-sm font-bold text-gray-600 dark:text-gray-400 px-2">{img.caption}</p>}
+                        </motion.div>
+                    ))}
+                    {visuals.videos?.map((vid, idx) => (
+                        <motion.div 
+                            key={`vid-${idx}`}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="bg-white/50 dark:bg-gray-900/40 p-4 rounded-3xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-xl group overflow-hidden"
+                        >
+                            <div className="relative aspect-video rounded-2xl overflow-hidden mb-3 bg-black/10 flex items-center justify-center">
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <Play className="w-12 h-12 text-white/80 group-hover:scale-110 transition-transform" />
+                                </div>
+                                <div className="absolute top-3 left-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-[10px] font-black uppercase tracking-widest">
+                                    <Play className="w-3 h-3" />
+                                    Video Analysis
+                                </div>
+                                <a href={vid.url} target="_blank" rel="noopener noreferrer" className="absolute bottom-3 right-3 p-2 bg-primary-600 rounded-xl text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <ExternalLink className="w-4 h-4" />
+                                </a>
+                            </div>
+                            {vid.caption && <p className="text-sm font-bold text-gray-600 dark:text-gray-400 px-2">{vid.caption}</p>}
+                        </motion.div>
+                    ))}
+                </div>
+            )}
+
             {/* Charts Section */}
             {visuals.charts && visuals.charts.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -154,7 +209,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals }) =
                             key={idx}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: (visuals.kpis?.length || 0) * 0.1 + idx * 0.1 }}
+                            transition={{ delay: idx * 0.1 }}
                         >
                             {renderChart(chart)}
                         </motion.div>
@@ -169,16 +224,16 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals }) =
                     <div className="p-4 bg-white/20 backdrop-blur-md rounded-2xl">
                         <Zap className="w-10 h-10 fill-current" />
                     </div>
-                    <div>
+                    <div className="flex-1">
                         <h4 className="text-sm font-black uppercase tracking-[0.2em] opacity-70 mb-1">Expert Decision Insight</h4>
                         <p className="text-lg font-bold leading-tight">
                             {visuals.kpis && visuals.kpis.length > 0
                                 ? `${visuals.kpis.filter(k => k.status === 'good').length} of ${visuals.kpis.length} indicators performing optimally. Review recommendations below.`
-                                : 'AI-powered analysis complete. Review the data and recommendations above.'}
+                                : 'Multimodal analysis complete. Review the synthesized intelligence above.'}
                         </p>
                     </div>
-                    <div className="ml-auto hidden md:block">
-                        <div className="px-6 py-2 bg-white text-primary-600 rounded-2xl font-black shadow-xl shadow-black/10">ALFA v2.1</div>
+                    <div className="hidden md:block">
+                        <div className="px-6 py-2 bg-white text-primary-600 rounded-2xl font-black shadow-xl shadow-black/10">ALFA v2.2</div>
                     </div>
                 </div>
             </div>

@@ -29,13 +29,15 @@ export class VectorService {
             const vector = `{${embeddingResult.embedding.join(',')}}`;
 
             await query(`
-                INSERT INTO knowledge_articles (id, title, content, category, crops, embedding, updated_at)
-                VALUES ($1, $2, $3, $4, $5, $6, NOW())
+                INSERT INTO knowledge_articles (id, title, content, category, crops, source_url, content_type, embedding, updated_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
                 ON CONFLICT (id) DO UPDATE SET
                     title = EXCLUDED.title,
                     content = EXCLUDED.content,
                     category = EXCLUDED.category,
                     crops = EXCLUDED.crops,
+                    source_url = EXCLUDED.source_url,
+                    content_type = EXCLUDED.content_type,
                     embedding = EXCLUDED.embedding,
                     updated_at = NOW()
             `, [
@@ -44,6 +46,8 @@ export class VectorService {
                 content,
                 metadata.category,
                 metadata.crops || [],
+                metadata.sourceUrl || null,
+                metadata.contentType || 'text',
                 vector
             ]);
         } catch (error) {
@@ -66,7 +70,7 @@ export class VectorService {
 
             // Use our custom cosine_similarity function for maximum compatibility
             const result = await query(`
-                SELECT id, title, content, category, crops, 
+                SELECT id, title, content, category, crops, source_url, content_type,
                        cosine_similarity(embedding::float8[], $1::float8[]) as score
                 FROM knowledge_articles
                 ORDER BY score DESC
@@ -80,7 +84,9 @@ export class VectorService {
                 metadata: {
                     title: row.title,
                     category: row.category,
-                    crop: row.crops?.[0]
+                    crop: row.crops?.[0],
+                    sourceUrl: row.source_url,
+                    contentType: row.content_type
                 },
                 score: parseFloat(row.score)
             }));

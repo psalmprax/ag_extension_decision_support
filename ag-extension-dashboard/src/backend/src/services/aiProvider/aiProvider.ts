@@ -91,6 +91,8 @@ export interface ReasoningResult {
             title: string;
             data: Array<{ label: string; value: number }>;
         }>;
+        images?: Array<{ url: string; caption?: string }>;
+        videos?: Array<{ url: string; caption?: string }>;
     };
 }
 

@@ -163,7 +163,9 @@ Your response MUST follow this structure:
 <visuals>
 {
   "kpis": [{"label": "string", "value": "string", "status": "good|warning|critical"}],
-  "charts": [{"type": "bar|line|pie|area", "title": "string", "data": [{"label": "string", "value": "number"}]}]
+  "charts": [{"type": "bar|line|pie|area", "title": "string", "data": [{"label": "string", "value": "number"}]}],
+  "images": [{"url": "string", "caption": "string"}],
+  "videos": [{"url": "string", "caption": "string"}]
 }
 </visuals>
 

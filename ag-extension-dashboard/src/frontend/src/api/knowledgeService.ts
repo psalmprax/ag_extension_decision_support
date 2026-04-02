@@ -16,6 +16,12 @@ export interface AskResponse {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         contextUsed: any[];
         cached?: boolean;
+        visuals?: {
+            kpis?: any[];
+            charts?: any[];
+            images?: Array<{ url: string; caption?: string }>;
+            videos?: Array<{ url: string; caption?: string }>;
+        };
     };
 }
 
