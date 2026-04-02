@@ -214,11 +214,13 @@ Focus on precision and expert recommendations. If the context contains statistic
         });
 
         const text = result.text ?? '';
+        logger.debug(`Raw reasoning result (length: ${text.length}): ${text.substring(0, 100)}...`);
         
         // Extract visuals JSON from <visuals> tags (case-insensitive) or any JSON block if tags are missed
         let visuals: any = undefined;
         try {
-            const match = text.match(/<visuals>([\s\S]*?)<\/visuals>/i) || text.match(/```json\n([\s\S]*?)\n```/i);
+            // Updated regex to handle potential whitespace inside the tags more gracefully
+            const match = text.match(/<visuals>\s*([\s\S]*?)\s*<\/visuals>/i) || text.match(/```json\n([\s\S]*?)\n```/i);
             if (match && match[1]) {
                 visuals = JSON.parse(match[1].trim());
             } else if (text.includes('{') && text.includes('}')) {
@@ -234,6 +236,9 @@ Focus on precision and expert recommendations. If the context contains statistic
             }
         } catch (error) {
             logger.warn('Failed to parse visuals JSON from AI response:', error);
+            // If parsing failed, let's log the snippet
+            const snippetMatch = text.match(/<visuals>([\s\S]{0,200})/i);
+            if (snippetMatch) logger.debug(`Failed parsing snippet: ${snippetMatch[1]}`);
         }
 
         // Clean text of any JSON blocks and specific "Visual Data" headers to avoid empty sections
