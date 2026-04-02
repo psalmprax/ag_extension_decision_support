@@ -215,27 +215,36 @@ Focus on precision and expert recommendations. If the context contains statistic
 
         const text = result.text ?? '';
         
-        // Extract visuals JSON from <visuals> tags or any JSON block if tags are missed
+        // Extract visuals JSON from <visuals> tags (case-insensitive) or any JSON block if tags are missed
         let visuals: any = undefined;
         try {
-            const match = text.match(/<visuals>([\s\S]*?)<\/visuals>/) || text.match(/```json\n([\s\S]*?)\n```/);
+            const match = text.match(/<visuals>([\s\S]*?)<\/visuals>/i) || text.match(/```json\n([\s\S]*?)\n```/i);
             if (match && match[1]) {
                 visuals = JSON.parse(match[1].trim());
             } else if (text.includes('{') && text.includes('}')) {
+                // Secondary fallback: find the most likely JSON block
                 const lastBrace = text.lastIndexOf('}');
                 const firstBrace = text.lastIndexOf('{', lastBrace);
                 if (firstBrace !== -1 && lastBrace !== -1) {
-                    visuals = JSON.parse(text.substring(firstBrace, lastBrace + 1));
+                    const possibleJson = text.substring(firstBrace, lastBrace + 1);
+                    if (possibleJson.includes('"kpis"') || possibleJson.includes('"charts"')) {
+                        visuals = JSON.parse(possibleJson);
+                    }
                 }
             }
         } catch (error) {
-            // Silently fail visuals if JSON is malformed
+            logger.warn('Failed to parse visuals JSON from AI response:', error);
         }
 
-        const cleanAnswer = text
-            .replace(/<visuals>[\s\S]*?<\/visuals>/, '')
-            .replace(/```json[\s\S]*?```/, '')
+        // Clean text of any JSON blocks and specific "Visual Data" headers to avoid empty sections
+        let cleanAnswer = text
+            .replace(/<visuals>[\s\S]*?<\/visuals>/gi, '')
+            .replace(/```json[\s\S]*?```/gi, '')
+            .replace(/#{1,6}\s*(Visual Data|Visual Insights|Charts|Expert Data|Insight Analysis)[^\n]*/gi, '')
             .trim();
+
+        // If visuals exists and we still see empty segments, clean them up
+        cleanAnswer = cleanAnswer.replace(/\n\s*\n\s*\n/g, '\n\n'); 
 
         return {
             reasoning: 'Detailed Intelligence Analysis completed.',
