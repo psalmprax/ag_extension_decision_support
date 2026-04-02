@@ -319,6 +319,9 @@ router.post('/ask', async (req: Request, res: Response) => {
             success: true,
             data: {
                 answer: result.answer,
+                reasoning: result.reasoning,
+                visuals: result.visuals,
+                audio: (result as any).audio,
                 contextUsed: result.contextUsed,
                 cached: result.cached
             },
