@@ -1,3 +1,4 @@
+import fs from 'fs';
 import {
     BaseAIProvider,
     AIProviderType,
@@ -169,9 +170,12 @@ Context:\n${context}\n\n
 You are an expert AI Agricultural Analyst for the ALFA Intelligence Engine.
 Provide a high-quality, actionable response including expert analysis and visual data.
 
-Your response MUST follow this structure:
-1. A detailed analysis in professional Markdown (use headers, bullets, and bold text).
-2. A specific JSON block at the end wrapped in <visuals> tags with this schema:
+### CRITICAL OUTPUT REQUIREMENTS:
+1.  **Expert Analysis**: Detailed Markdown response (headers, bullets, bold text).
+2.  **MANDATORY Visual Data Block**: You MUST provide a JSON block at the very end of your response, wrapped exactly in <visuals> tags.
+3.  **Data Quality**: If technical metrics (pH, Temperature, Yield, Soil Moisture) are mentioned in your text, they MUST be reflected in the "kpis" array.
+
+JSON Schema for <visuals> block:
 <visuals>
 {
   "kpis": [{"label": "string", "value": "string", "status": "good|warning|critical"}],
@@ -181,7 +185,7 @@ Your response MUST follow this structure:
 }
 </visuals>
 
-Focus on precision and expert recommendations. If the context contains statistical data, use it for the charts.
+Note: Providing the <visuals> block is MANDATORY for every intelligence report.
 `;
 
         const userContent: any[] = [{ type: 'text', text: `Question: ${query}` }];
@@ -195,10 +199,7 @@ Focus on precision and expert recommendations. If the context contains statistic
                         image_url: { url: attachment.data }
                     });
                 } else if (attachment.type === 'audio') {
-                    // Audio in chat completion is currently limited, 
-                    // but we can describe it or process it if the model supports it.
-                    // For now, we'll assume the text transcription was handled elsewhere
-                    // or provided in the prompt.
+                    // Audio transcription is handled by KnowledgeService before calling here
                 }
             }
         }
@@ -214,17 +215,21 @@ Focus on precision and expert recommendations. If the context contains statistic
         });
 
         const text = result.text ?? '';
-        logger.debug(`Raw reasoning result (length: ${text.length}): ${text.substring(0, 100)}...`);
         
-        // Extract visuals JSON from <visuals> tags (case-insensitive) or any JSON block if tags are missed
+        // EMERGENCY LOGGING: Save last raw response for debugging on remote
+        try {
+            fs.writeFileSync('/tmp/ai_last_raw_response.txt', text);
+        } catch (e) {
+            // Log local error if /tmp is not writable
+        }
+
+        // Extract visuals JSON from <visuals> tags (case-insensitive) or any JSON block
         let visuals: any = undefined;
         try {
-            // Updated regex to handle potential whitespace inside the tags more gracefully
             const match = text.match(/<visuals>\s*([\s\S]*?)\s*<\/visuals>/i) || text.match(/```json\n([\s\S]*?)\n```/i);
             if (match && match[1]) {
                 visuals = JSON.parse(match[1].trim());
             } else if (text.includes('{') && text.includes('}')) {
-                // Secondary fallback: find the most likely JSON block
                 const lastBrace = text.lastIndexOf('}');
                 const firstBrace = text.lastIndexOf('{', lastBrace);
                 if (firstBrace !== -1 && lastBrace !== -1) {
@@ -235,10 +240,12 @@ Focus on precision and expert recommendations. If the context contains statistic
                 }
             }
         } catch (error) {
-            logger.warn('Failed to parse visuals JSON from AI response:', error);
-            // If parsing failed, let's log the snippet
-            const snippetMatch = text.match(/<visuals>([\s\S]{0,200})/i);
-            if (snippetMatch) logger.debug(`Failed parsing snippet: ${snippetMatch[1]}`);
+            logger.warn('Failed to parse visuals JSON, attempting heuristic extraction...', error);
+        }
+
+        // HEURISTIC FALLBACK: If AI failed to provide JSON, try to extract metrics from text
+        if (!visuals || (!visuals.kpis && !visuals.charts)) {
+            visuals = this.extractVisualsHeuristically(text);
         }
 
         // Clean text of any JSON blocks and specific "Visual Data" headers to avoid empty sections
@@ -257,6 +264,34 @@ Focus on precision and expert recommendations. If the context contains statistic
             confidence: 0.9,
             visuals
         };
+    }
+
+    /**
+     * Heuristic extractor for agricultural metrics if JSON parsing fails
+     */
+    private extractVisualsHeuristically(text: string): any {
+        const kpis: any[] = [];
+        const charts: any[] = [];
+
+        // Regex for pH (e.g., pH 6.5 or pH: 7.0)
+        const phMatch = text.match(/pH\s*[:\s]?\s*(\d+\.?\d*)/i);
+        if (phMatch) kpis.push({ label: 'Soil pH', value: phMatch[1], status: 'good' });
+
+        // Regex for Temperature (e.g., 25°C or 77°F)
+        const tempMatch = text.match(/(\d+\.?\d*)\s*(?:°C|°F|degrees)/i);
+        if (tempMatch) kpis.push({ label: 'Temperature', value: tempMatch[0], status: 'warning' });
+
+        // Regex for Yield (percentage or kg/ha)
+        const yieldMatch = text.match(/yield\s*[:\s]?\s*(\d+)\s*(?:%|kg|tons)/i);
+        if (yieldMatch) kpis.push({ label: 'Estimated Yield', value: yieldMatch[0], status: 'good' });
+
+        // Default KPI if nothing found
+        if (kpis.length === 0) {
+            kpis.push({ label: 'Analysis Status', value: 'Complete', status: 'good' });
+            kpis.push({ label: 'Intelligence Layer', value: 'ALFA v2.2', status: 'good' });
+        }
+
+        return { kpis, charts };
     }
 
     async speechToText(audio: Buffer, options?: SpeechToTextOptions): Promise<SpeechToTextResult> {

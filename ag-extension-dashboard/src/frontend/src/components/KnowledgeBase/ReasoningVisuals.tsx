@@ -58,6 +58,8 @@ interface ReasoningVisualsProps {
 const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
 
 export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, audio }) => {
+    // Robust empty state initialization
+    const safeVisuals = visuals || { kpis: [], charts: [], images: [], videos: [] };
     if (!visuals && !audio) return null;
 
     const [isPlaying, setIsPlaying] = React.useState(false);
@@ -184,9 +186,9 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
             )}
 
             {/* KPI Metrics Grid */}
-            {visuals?.kpis && visuals.kpis.length > 0 && (
+            {visuals?.kpis && safeVisuals.kpis.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {visuals.kpis.map((kpi, idx) => (
+                    {safeVisuals.kpis.map((kpi, idx) => (
                         <motion.div 
                             key={idx}
                             initial={{ opacity: 0, scale: 0.95 }}
@@ -211,9 +213,9 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
             )}
 
             {/* Media Assets (Images/Videos) */}
-            {(visuals.images || visuals.videos) && (
+            {(safeVisuals.images || safeVisuals.videos) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {visuals.images?.map((img, idx) => (
+                    {safeVisuals.images?.map((img, idx) => (
                         <motion.div 
                             key={`img-${idx}`}
                             initial={{ opacity: 0, y: 10 }}
@@ -230,7 +232,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                             {img.caption && <p className="text-sm font-bold text-gray-600 dark:text-gray-400 px-2">{img.caption}</p>}
                         </motion.div>
                     ))}
-                    {visuals.videos?.map((vid, idx) => (
+                    {safeVisuals.videos?.map((vid, idx) => (
                         <motion.div 
                             key={`vid-${idx}`}
                             initial={{ opacity: 0, y: 10 }}
@@ -256,9 +258,9 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
             )}
 
             {/* Charts Section */}
-            {visuals.charts && visuals.charts.length > 0 && (
+            {safeVisuals.charts && safeVisuals.charts.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {visuals.charts.map((chart, idx) => (
+                    {safeVisuals.charts.map((chart, idx) => (
                         <motion.div 
                             key={idx}
                             initial={{ opacity: 0, y: 10 }}
@@ -281,8 +283,8 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                     <div className="flex-1">
                         <h4 className="text-sm font-black uppercase tracking-[0.2em] opacity-70 mb-1">Expert Decision Insight</h4>
                         <p className="text-lg font-bold leading-tight">
-                            {visuals.kpis && visuals.kpis.length > 0
-                                ? `${visuals.kpis.filter(k => k.status === 'good').length} of ${visuals.kpis.length} indicators performing optimally. Review recommendations below.`
+                            {safeVisuals.kpis && safeVisuals.kpis.length > 0
+                                ? `${safeVisuals.kpis.filter(k => k.status === 'good').length} of ${safeVisuals.kpis.length} indicators performing optimally. Review recommendations below.`
                                 : 'Multimodal analysis complete. Review the synthesized intelligence above.'}
                         </p>
                     </div>
