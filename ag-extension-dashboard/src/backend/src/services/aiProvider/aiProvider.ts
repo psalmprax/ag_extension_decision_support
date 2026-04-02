@@ -78,12 +78,14 @@ export interface ClassificationResult {
 export interface ReasoningOptions {
     maxTokens?: number;
     temperature?: number;
+    attachments?: Array<{ type: 'image' | 'file' | 'audio'; data: string; mimeType?: string }>;
 }
 
 export interface ReasoningResult {
     reasoning: string;
     answer: string;
     confidence?: number;
+    audio?: string; // Base64 or URL for TTS
     visuals?: {
         kpis?: Array<{ label: string; value: string; status: 'good' | 'warning' | 'critical' }>;
         charts?: Array<{

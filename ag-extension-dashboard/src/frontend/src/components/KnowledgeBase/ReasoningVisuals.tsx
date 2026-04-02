@@ -52,12 +52,26 @@ interface ReasoningVisualsProps {
         images?: MediaAsset[];
         videos?: MediaAsset[];
     };
+    audio?: string; // Base64 or URL
 }
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
 
-export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals }) => {
-    if (!visuals) return null;
+export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, audio }) => {
+    if (!visuals && !audio) return null;
+
+    const [isPlaying, setIsPlaying] = React.useState(false);
+    const audioRef = React.useRef<HTMLAudioElement | null>(null);
+
+    const togglePlayback = () => {
+        if (!audioRef.current) return;
+        if (isPlaying) {
+            audioRef.current.pause();
+        } else {
+            audioRef.current.play();
+        }
+        setIsPlaying(!isPlaying);
+    };
 
     const renderChart = (chart: Chart) => {
         const { type, data, title } = chart;
@@ -129,8 +143,48 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals }) =
 
     return (
         <div className="space-y-6 mt-8">
+            {/* Audio Abstraction Layer */}
+            {audio && (
+                <div className="p-8 bg-gradient-to-r from-primary-600 to-indigo-600 rounded-[2.5rem] text-white overflow-hidden relative group shadow-2xl shadow-primary-500/20">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32 group-hover:scale-110 transition-transform"></div>
+                    <div className="relative flex flex-col md:flex-row items-center gap-8">
+                        <motion.button 
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={togglePlayback}
+                            className="p-6 bg-white/20 backdrop-blur-md rounded-3xl text-white hover:bg-white/30 transition-all shadow-xl"
+                        >
+                            <Zap className={`w-12 h-12 ${isPlaying ? 'animate-pulse fill-current' : 'fill-none'}`} />
+                        </motion.button>
+                        <div className="flex-1 text-center md:text-left">
+                            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] opacity-70 mb-2">ALFA Voice Synthesis</h4>
+                            <p className="text-xl font-bold leading-tight mb-4">
+                                Listen to the AI's synthesized expert recommendation.
+                            </p>
+                            <div className="flex items-center gap-4 justify-center md:justify-start">
+                                <div className="h-1 flex-1 bg-white/20 rounded-full overflow-hidden max-w-[200px]">
+                                    <motion.div 
+                                        initial={{ width: 0 }}
+                                        animate={{ width: isPlaying ? '100%' : '0%' }}
+                                        transition={{ duration: 15, ease: "linear" }}
+                                        className="h-full bg-white"
+                                    />
+                                </div>
+                                <span className="text-[10px] font-black uppercase">{isPlaying ? 'Playing...' : 'Click to Play'}</span>
+                            </div>
+                        </div>
+                        <audio 
+                            ref={audioRef} 
+                            src={audio.startsWith('data:') ? audio : `data:audio/mp3;base64,${audio}`} 
+                            onEnded={() => setIsPlaying(false)}
+                            className="hidden" 
+                        />
+                    </div>
+                </div>
+            )}
+
             {/* KPI Metrics Grid */}
-            {visuals.kpis && visuals.kpis.length > 0 && (
+            {visuals?.kpis && visuals.kpis.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {visuals.kpis.map((kpi, idx) => (
                         <motion.div 

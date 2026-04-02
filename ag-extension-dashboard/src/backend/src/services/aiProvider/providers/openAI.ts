@@ -5,6 +5,10 @@ import {
     TextGenerationResult,
     EmbeddingOptions,
     EmbeddingResult,
+    SpeechToTextOptions,
+    SpeechToTextResult,
+    TextToSpeechOptions,
+    TextToSpeechResult,
     ClassificationOptions,
     ClassificationResult,
     ReasoningOptions,
@@ -152,8 +156,8 @@ export class OpenAIProvider extends BaseAIProvider {
     }
 
     async analyzeWithReasoning(context: string, query: string, options?: ReasoningOptions): Promise<ReasoningResult> {
-        const prompt = `
-Context:\n${context}\n\nQuestion: ${query}\n\n
+        const systemPrompt = `
+Context:\n${context}\n\n
 You are an expert AI Agricultural Analyst for the ALFA Intelligence Engine.
 Provide a high-quality, actionable response including expert analysis and visual data.
 
@@ -172,7 +176,31 @@ Your response MUST follow this structure:
 Focus on precision and expert recommendations. If the context contains statistical data, use it for the charts.
 `;
 
-        const result = await this.generateText(prompt, {
+        const userContent: any[] = [{ type: 'text', text: `Question: ${query}` }];
+
+        // Add attachments if present (Multimodal)
+        if (options?.attachments && options.attachments.length > 0) {
+            for (const attachment of options.attachments) {
+                if (attachment.type === 'image') {
+                    userContent.push({
+                        type: 'image_url',
+                        image_url: { url: attachment.data }
+                    });
+                } else if (attachment.type === 'audio') {
+                    // Audio in chat completion is currently limited, 
+                    // but we can describe it or process it if the model supports it.
+                    // For now, we'll assume the text transcription was handled elsewhere
+                    // or provided in the prompt.
+                }
+            }
+        }
+
+        const messages = [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userContent }
+        ];
+
+        const result = await this.generateText(messages as any, {
             temperature: options?.temperature ?? 0.2,
             maxTokens: options?.maxTokens ?? 2000,
         });
@@ -186,7 +214,6 @@ Focus on precision and expert recommendations. If the context contains statistic
             if (match && match[1]) {
                 visuals = JSON.parse(match[1].trim());
             } else if (text.includes('{') && text.includes('}')) {
-                // Secondary fallback: find the last JSON-like block
                 const lastBrace = text.lastIndexOf('}');
                 const firstBrace = text.lastIndexOf('{', lastBrace);
                 if (firstBrace !== -1 && lastBrace !== -1) {
@@ -197,7 +224,6 @@ Focus on precision and expert recommendations. If the context contains statistic
             // Silently fail visuals if JSON is malformed
         }
 
-        // Clean text of any JSON blocks for cleaner markdown rendering
         const cleanAnswer = text
             .replace(/<visuals>[\s\S]*?<\/visuals>/, '')
             .replace(/```json[\s\S]*?```/, '')
@@ -209,6 +235,52 @@ Focus on precision and expert recommendations. If the context contains statistic
             confidence: 0.9,
             visuals
         };
+    }
+
+    async speechToText(audio: Buffer, options?: SpeechToTextOptions): Promise<SpeechToTextResult> {
+        const client = await this.getClient();
+        try {
+            // OpenAI transcription using Whisper
+            // We need to provide a file-like object
+            const transcription = await client.audio.transcriptions.create({
+                file: await (async () => {
+                    // Create a dummy filename for the buffer
+                    const f: any = audio;
+                    f.name = 'audio.wav';
+                    return f;
+                })(),
+                model: options?.model || 'whisper-1',
+                language: options?.language,
+            });
+
+            return {
+                text: transcription.text,
+                language: options?.language,
+            };
+        } catch (error: any) {
+            logger.error('OpenAI speechToText error:', error);
+            throw new Error(`OpenAI speech-to-text failed: ${error.message}`);
+        }
+    }
+
+    async textToSpeech(text: string, options?: TextToSpeechOptions): Promise<TextToSpeechResult> {
+        const client = await this.getClient();
+        try {
+            const mp3 = await client.audio.speech.create({
+                model: 'tts-1',
+                voice: (options?.voice as any) || 'alloy',
+                input: text,
+            });
+
+            const buffer = Buffer.from(await mp3.arrayBuffer());
+            return {
+                audio: buffer,
+                format: 'mp3',
+            };
+        } catch (error: any) {
+            logger.error('OpenAI textToSpeech error:', error);
+            throw new Error(`OpenAI text-to-speech failed: ${error.message}`);
+        }
     }
 
     async classify(input: string, options: ClassificationOptions): Promise<ClassificationResult> {

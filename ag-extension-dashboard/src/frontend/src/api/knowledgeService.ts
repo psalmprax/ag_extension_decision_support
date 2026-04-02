@@ -35,8 +35,18 @@ export const searchKnowledge = async (query: string, category?: string, crop?: s
     return response.data;
 };
 
-export const askAI = async (question: string): Promise<AskResponse> => {
-    const response = await apiClient.post<AskResponse>('/knowledge/ask', { question });
+export interface Attachment {
+    type: 'image' | 'file' | 'audio';
+    data: string;
+    name?: string;
+    mimeType?: string;
+}
+
+export const askAI = async (question: string, attachments?: Attachment[]): Promise<AskResponse> => {
+    const response = await apiClient.post<AskResponse>('/knowledge/ask', { 
+        question,
+        attachments
+    });
     return response.data;
 };
 

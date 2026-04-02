@@ -15,9 +15,14 @@ import {
     TrendingUp,
     PieChart,
     Info,
-    ArrowRight
+    ArrowRight,
+    Paperclip,
+    Mic,
+    X,
+    File as FileIcon,
+    Volume2
 } from 'lucide-react';
-import { askAI, searchKnowledge, fetchKnowledgeHistory, fetchKnowledgeStats } from '@/api/knowledgeService';
+import { askAI, searchKnowledge, fetchKnowledgeHistory, fetchKnowledgeStats, Attachment } from '@/api/knowledgeService';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 import { KnowledgeStats } from './KnowledgeStats';
@@ -32,6 +37,7 @@ interface Result {
     query?: string;
     timestamp?: string;
     visuals?: any;
+    audio?: string;
 }
 
 export const KnowledgeBase: React.FC = () => {
@@ -39,7 +45,9 @@ export const KnowledgeBase: React.FC = () => {
     const { addNotification } = useAppStore();
     
     const [searchQuery, setSearchQuery] = useState('');
+    const [attachments, setAttachments] = useState<Attachment[]>([]);
     const [isAsking, setIsAsking] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
     const [lastResult, setLastResult] = useState<Result | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [showStats, setShowStats] = useState(false);
@@ -70,22 +78,49 @@ export const KnowledgeBase: React.FC = () => {
         }
     };
 
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files) return;
+
+        Array.from(files).forEach(file => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64String = reader.result as string;
+                setAttachments(prev => [
+                    ...prev, 
+                    { 
+                        type: file.type.startsWith('image/') ? 'image' : 'file', 
+                        data: base64String, 
+                        name: file.name,
+                        mimeType: file.type
+                    }
+                ]);
+            };
+            reader.readAsDataURL(file);
+        });
+    };
+
+    const removeAttachment = (index: number) => {
+        setAttachments(prev => prev.filter((_, i) => i !== index));
+    };
+
     const handleSearch = async (queryToSearch: string) => {
         const queryText = queryToSearch || searchQuery;
-        if (!queryText.trim()) return;
+        if (!queryText.trim() && attachments.length === 0) return;
 
         setIsAsking(true);
         setLastResult(null);
         
         try {
-            const res = await askAI(queryText);
+            const res = await askAI(queryText, attachments);
             if (res.success) {
                 const result = {
                     ...res.data,
-                    query: queryText,
+                    query: queryText || 'Multimodal Search',
                     timestamp: new Date().toISOString()
                 };
                 setLastResult(result);
+                setAttachments([]); // Clear attachments after successful search
                 fetchHistory(); // Refresh history
                 
                 if (result.cached) {
@@ -139,40 +174,72 @@ export const KnowledgeBase: React.FC = () => {
                     {/* Premium Search Bar */}
                     <div className="relative group mb-12">
                         <div className="absolute -inset-1 bg-gradient-to-r from-primary-600 to-indigo-600 rounded-3xl blur opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                        <div className="relative flex items-center bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/50 rounded-3xl p-1.5 shadow-2xl">
-                            <div className="pl-5 text-primary-500">
-                                <Search className="w-6 h-6" />
-                            </div>
-                            <input 
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleSearch(searchQuery)}
-                                placeholder="How can I help you today?"
-                                className="flex-1 bg-transparent border-none focus:ring-0 py-4 px-4 text-xl font-medium text-gray-900 dark:text-white placeholder-gray-400"
-                            />
-                            <div className="flex gap-2 pr-2">
-                                <button 
-                                    onClick={() => setShowStats(!showStats)}
-                                    className={`p-3 rounded-2xl transition-all ${showStats ? 'bg-indigo-100 text-indigo-600' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-400'}`}
-                                    title="Insights"
-                                >
-                                    <BarChart3 className="w-6 h-6" />
-                                </button>
-                                <button 
-                                    onClick={() => handleSearch(searchQuery)}
-                                    disabled={isAsking || !searchQuery.trim()}
-                                    className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white p-3 md:px-8 rounded-2xl font-bold shadow-lg shadow-primary-500/20 flex items-center gap-2 transition-all transform active:scale-95"
-                                >
-                                    {isAsking ? (
-                                        <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                                    ) : (
-                                        <>
-                                            <span className="hidden md:inline">Generate</span>
-                                            <ArrowRight className="w-5 h-5" />
-                                        </>
-                                    )}
-                                </button>
+                        <div className="relative bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/50 rounded-3xl p-1.5 shadow-2xl">
+                            {/* Attachment Previews */}
+                            {attachments.length > 0 && (
+                                <div className="flex flex-wrap gap-2 px-4 py-3 border-b border-gray-100 dark:border-gray-700/50">
+                                    {attachments.map((att, i) => (
+                                        <div key={i} className="flex items-center gap-2 bg-primary-50 dark:bg-primary-900/40 px-3 py-1.5 rounded-xl border border-primary-100 dark:border-primary-800 group/att">
+                                            {att.type === 'image' ? (
+                                                <img src={att.data} className="w-5 h-5 object-cover rounded-md" />
+                                            ) : (
+                                                <FileIcon className="w-4 h-4 text-primary-500" />
+                                            )}
+                                            <span className="text-[10px] font-bold text-primary-700 dark:text-primary-300 max-w-[100px] truncate">{att.name}</span>
+                                            <button onClick={() => removeAttachment(i)} className="text-primary-400 hover:text-rose-500 transition-colors">
+                                                <X className="w-3 h-3" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            <div className="flex items-center">
+                                <div className="pl-5 text-primary-500">
+                                    <Search className="w-6 h-6" />
+                                </div>
+                                <input 
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSearch(searchQuery)}
+                                    placeholder="Ask ALFA anything... (Try uploading a crop photo)"
+                                    className="flex-1 bg-transparent border-none focus:ring-0 py-4 px-4 text-xl font-medium text-gray-900 dark:text-white placeholder-gray-400"
+                                />
+                                <div className="flex gap-2 pr-2">
+                                    <label className="p-3 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-400 cursor-pointer transition-all">
+                                        <Paperclip className="w-6 h-6" />
+                                        <input type="file" multiple className="hidden" onChange={handleFileUpload} />
+                                    </label>
+                                    <button 
+                                        onClick={() => setIsRecording(!isRecording)}
+                                        className={`p-3 rounded-2xl transition-all ${isRecording ? 'bg-rose-100 text-rose-600 animate-pulse' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-400'}`}
+                                        title="Voice Input"
+                                    >
+                                        <Mic className="w-6 h-6" />
+                                    </button>
+                                    <button 
+                                        onClick={() => setShowStats(!showStats)}
+                                        className={`p-3 rounded-2xl transition-all ${showStats ? 'bg-indigo-100 text-indigo-600' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-400'}`}
+                                        title="Insights"
+                                    >
+                                        <BarChart3 className="w-6 h-6" />
+                                    </button>
+                                    <button 
+                                        onClick={() => handleSearch(searchQuery)}
+                                        disabled={isAsking || (!searchQuery.trim() && attachments.length === 0)}
+                                        className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white p-3 md:px-8 rounded-2xl font-bold shadow-lg shadow-primary-500/20 flex items-center gap-2 transition-all transform active:scale-95"
+                                    >
+                                        {isAsking ? (
+                                            <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                                        ) : (
+                                            <>
+                                                <span className="hidden md:inline">Generate</span>
+                                                <ArrowRight className="w-5 h-5" />
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -221,9 +288,9 @@ export const KnowledgeBase: React.FC = () => {
                                     <MarkdownRenderer content={lastResult.answer} />
 
                                     {/* New Visual Intelligence Layer */}
-                                    {lastResult.visuals && (
+                                    {(lastResult.visuals || lastResult.audio) && (
                                         <div className="mt-12 mb-16 p-1 bg-gradient-to-br from-primary-500/5 to-transparent rounded-[2.5rem] border border-primary-500/10">
-                                            <ReasoningVisuals visuals={lastResult.visuals} />
+                                            <ReasoningVisuals visuals={lastResult.visuals} audio={lastResult.audio} />
                                         </div>
                                     )}
 
