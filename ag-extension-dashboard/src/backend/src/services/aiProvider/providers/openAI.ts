@@ -52,13 +52,21 @@ export class OpenAIProvider extends BaseAIProvider {
         const client = await this.getClient();
         const model = options?.model || config.ai.primary.model || 'gpt-4';
 
+        // Intelligently handle both string prompts and complex messages arrays
+        let messages: any[] = [];
+        if (Array.isArray(prompt) && prompt.length > 0 && typeof prompt[0] === 'object' && 'role' in prompt[0]) {
+            messages = prompt;
+        } else {
+            messages = [
+                { role: 'system', content: 'You are a helpful agricultural extension assistant.' },
+                { role: 'user', content: prompt }
+            ];
+        }
+
         try {
             const response = await client.chat.completions.create({
                 model,
-                messages: [
-                    { role: 'system', content: 'You are a helpful agricultural extension assistant.' },
-                    { role: 'user', content: prompt },
-                ],
+                messages,
                 temperature: options?.temperature ?? 0.7,
                 max_tokens: options?.maxTokens ?? 1000,
                 top_p: options?.topP,
