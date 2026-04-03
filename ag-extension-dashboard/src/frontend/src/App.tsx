@@ -1407,7 +1407,7 @@ function App() {
             </AnimatePresence>
 
                 {/* Content Area */}
-                <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+                <div className={`flex-1 flex flex-col min-w-0 overflow-hidden transition-all duration-300 ${sidebarOpen ? 'lg:pl-[260px]' : ''}`}>
                     {/* Breadcrumb Navigation - Sticky within the content area */}
                     <div className="z-40 bg-theme-bg-primary/80 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-800/50 flex-shrink-0">
                         <div className="px-6 py-3">
