@@ -1168,33 +1168,30 @@ function App() {
             )}
             {/* A/B Test Banner */}
             <ABTestBanner />
-            {/* Top Navigation - Floating Executive Island */}
+            {/* Top Navigation - Minimalist Executive Island (V4) */}
             <header className="fixed inset-x-0 top-0 z-50 p-4 lg:p-6 pointer-events-none">
-                <div className="max-w-screen-2xl mx-auto flex items-center justify-between gap-6 px-8 py-4 bg-white/70 dark:bg-gray-900/70 backdrop-blur-3xl border border-white/20 dark:border-white/5 shadow-2xl pointer-events-auto transition-all duration-500 hover:shadow-primary-500/10" style={{ borderRadius: '40px' }}>
-                    <div className="flex items-center gap-6">
+                <div className="max-w-screen-2xl mx-auto flex items-center justify-between gap-6 px-6 py-2.5 bg-white/70 dark:bg-gray-900/80 backdrop-blur-3xl border border-white/20 dark:border-white/5 shadow-xl pointer-events-auto transition-all duration-500 hover:shadow-primary-500/5" style={{ borderRadius: '24px' }}>
+                    <div className="flex items-center gap-5">
                         <button
                             onClick={() => setSidebarOpen(!sidebarOpen)}
-                            className="p-3 rounded-2xl hover:bg-white/50 dark:hover:bg-white/5 transition-all text-gray-600 dark:text-gray-400 group/menu"
+                            className="p-2.5 rounded-xl hover:bg-white/50 dark:hover:bg-white/5 transition-all text-gray-600 dark:text-gray-400"
                         >
-                            {sidebarOpen ? <X className="w-5 h-5 transition-transform group-hover:rotate-90" /> : <Menu className="w-5 h-5" />}
+                            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5 transition-transform group-hover:scale-110" />}
                         </button>
-                        <div className="flex items-center gap-4 border-l border-gray-100 dark:border-white/10 pl-6">
-                            <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center shadow-xl shadow-primary-500/30 ring-4 ring-primary-500/10">
-                                <span className="text-white font-black text-xl tracking-tighter">Ag</span>
+                        <div className="flex items-center gap-4 border-l border-gray-100 dark:border-white/10 pl-5">
+                            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/20">
+                                <span className="text-white font-black text-lg tracking-tighter">Ag</span>
                             </div>
                             <div className="hidden sm:block">
-                                <h1 className="text-xl font-black text-gray-900 dark:text-white tracking-tight leading-none mb-1" style={{ fontFamily: 'var(--font-heading)' }}>
+                                <h1 className="text-lg font-black text-gray-900 dark:text-white tracking-tight leading-none mb-1" style={{ fontFamily: 'var(--font-heading)' }}>
                                     {t('app_title')}
                                 </h1>
-                                <div className="flex items-center gap-1.5">
-                                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                                    <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em]">{t('app_subtitle')}</p>
-                                </div>
+                                <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">{t('app_subtitle')}</p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="hidden xl:block flex-1 max-w-2xl mx-12">
+                    <div className="hidden xl:block flex-1 max-w-xl mx-8">
                         <WeatherWidget location={userLocation || storeUser?.region || 'Kenya'} />
                     </div>
 
@@ -1420,7 +1417,7 @@ function App() {
                     </div>
 
                     {/* Main Content Scrollable */}
-                    <main className="flex-1 overflow-y-auto bg-theme-bg-secondary p-8 pt-32 custom-scrollbar">
+                    <main className="flex-1 overflow-y-auto bg-theme-bg-secondary p-8 pt-24 custom-scrollbar">
                         <div className="p-8">
                     <div className=''>
                         <ErrorBoundary>
