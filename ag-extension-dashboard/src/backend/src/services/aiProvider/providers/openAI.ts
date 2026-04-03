@@ -164,20 +164,55 @@ export class OpenAIProvider extends BaseAIProvider {
         }
     }
 
+const ASSET_LIBRARY = {
+    images: {
+        maize: "photo-1523348837708-15d4a09cfac2",
+        farming: "photo-1560493676-04071c5f467b",
+        irrigation: "photo-1592919016382-748af858ef7e",
+        soil: "photo-1500382017468-9049fee74a62",
+        tractor: "photo-1586771107445-d3ca888129ff",
+        harvest: "photo-1574323347407-f5e1ad6d020b",
+        pests: "photo-1560493676-04071c5f467b"
+    },
+    videos: {
+        climate_smart: "https://www.youtube.com/watch?v=R9KToL2zE3s",
+        soil_basics: "https://www.youtube.com/watch?v=5V_f5r0X8I8",
+        sustainable_ag: "https://www.youtube.com/watch?v=Qf6zVp0N0A0",
+        drought_management: "https://www.youtube.com/watch?v=0_n5oV3pD-k"
+    }
+};
+
+export class OpenAIProvider implements AIProvider {
+    private client: OpenAI | null = null;
+    
+    // ... other methods ...
+
     async analyzeWithReasoning(context: string, query: string, options?: ReasoningOptions): Promise<ReasoningResult> {
         const systemPrompt = `
 Context:\n${context}\n\n
 You are an expert AI Agricultural Analyst for the ALFA Intelligence Engine.
 Provide a high-quality, actionable response including expert analysis and visual data.
 
+### ALFA VERIFIED ASSET LIBRARY (MANDATORY):
+You MUST ONLY use the following Asset IDs/URLs. DO NOT hallucinate any others.
+- IMAGES: 
+  - Maize: photo-1523348837708-15d4a09cfac2
+  - Farming: photo-1560493676-04071c5f467b
+  - Irrigation: photo-1592919016382-748af858ef7e
+  - Soil: photo-1500382017468-9049fee74a62
+  - Tractor: photo-1586771107445-d3ca888129ff
+  - Harvest: photo-1574323347407-f5e1ad6d020b
+- VIDEOS (YouTube):
+  - Climate Smart Ag: https://www.youtube.com/watch?v=R9KToL2zE3s
+  - Soil Basics: https://www.youtube.com/watch?v=5V_f5r0X8I8
+  - Sustainable Intensification: https://www.youtube.com/watch?v=Qf6zVp0N0A0
+
 ### CRITICAL OUTPUT REQUIREMENTS:
 1.  **Expert Analysis**: Detailed Markdown with multiple headers, bullets, and bold text. 
-2.  **MANDATORY Visual Data Block**: You MUST provide a JSON block at the very end of your response, wrapped exactly in <visuals> tags.
-3.  **Data Quality**: If technical metrics (pH, Temperature, Yield, Soil Moisture) are mentioned in your text, they MUST be reflected in the "kpis" array.
-4.  **REAl-WORLD ASSETS**: 
-    - Every IMAGE must be a real Unsplash URL (e.g. https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?q=80&w=800 for maize).
-    - Every CITATION or LINK must point to actual research, ministries of agriculture, or international organizations (FAO, CGIAR).
-    - Use dynamic, realistic data points for charts.
+2.  **Visual Data JSON**: Wrapped in <visuals> tags.
+3.  **MANDATORY ASSETS**: Use the URLs/IDs from the library above for "images" and "videos".
+    - Image Format: https://images.unsplash.com/[ID]?q=80&w=800
+4.  **REAl-WORLD CITATIONS**: Every external link MUST point to a verified resource (FAO, Ministry, or Research paper).
 
 JSON Schema for <visuals> block:
 <visuals>
