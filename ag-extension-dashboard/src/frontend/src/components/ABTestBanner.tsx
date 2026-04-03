@@ -8,14 +8,19 @@ interface ABTestBannerProps {
 }
 
 export const ABTestBanner: React.FC<ABTestBannerProps> = ({ onClose }) => {
-  const { designVariant, setDesignVariant, shouldShowABTest } = useFeatureFlags();
+  const { designVariant, setDesignVariant, shouldShowABTest, setShowABTest } = useFeatureFlags();
   const { t } = useLanguage();
 
   if (!shouldShowABTest) return null;
 
+  const handleClose = () => {
+    setShowABTest(false);
+    if (onClose) onClose();
+  };
+
   const handleSelect = (variant: 'current' | 'new') => {
     setDesignVariant(variant);
-    if (onClose) onClose();
+    handleClose();
   };
 
   return (
@@ -30,14 +35,12 @@ export const ABTestBanner: React.FC<ABTestBannerProps> = ({ onClose }) => {
               Select your preferred design experience
             </p>
           </div>
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-            >
-              <X className="w-4 h-4 text-gray-400" />
-            </button>
-          )}
+          <button
+            onClick={handleClose}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+          >
+            <X className="w-4 h-4 text-gray-400" />
+          </button>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -86,7 +89,7 @@ export const ABTestBanner: React.FC<ABTestBannerProps> = ({ onClose }) => {
 
         <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
           >
             Skip for now →
