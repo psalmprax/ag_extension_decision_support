@@ -33,10 +33,10 @@ ssh -i $SSH_KEY -o StrictHostKeyChecking=no -o PasswordAuthentication=no root@$R
     
     if [ -n "\$DB_STATUS" ] && [ -n "\$REDIS_STATUS" ]; then
         echo "✅ Postgres and Redis are UP. Deploying backend and frontend only..."
-        docker-compose up -d --build backend frontend
+        docker compose up -d --build backend frontend
     else
         echo "⚠️ Postgres or Redis is DOWN/Missing. Performing FULL deployment..."
-        docker-compose up -d --build
+        docker compose up -d --build
     fi
     
     echo "🧹 Cleaning up unused Docker resources..."
