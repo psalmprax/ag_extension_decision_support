@@ -20,7 +20,25 @@ import {
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
 
-export class OpenAIProvider extends BaseAIProvider {
+const ASSET_LIBRARY = {
+    images: {
+        maize: "photo-1523348837708-15d4a09cfac2",
+        farming: "photo-1560493676-04071c5f467b",
+        irrigation: "photo-1592919016382-748af858ef7e",
+        soil: "photo-1500382017468-9049fee74a62",
+        tractor: "photo-1586771107445-d3ca888129ff",
+        harvest: "photo-1574323347407-f5e1ad6d020b",
+        pests: "photo-1560493676-04071c5f467b"
+    },
+    videos: {
+        climate_smart: "https://www.youtube.com/watch?v=R9KToL2zE3s",
+        soil_basics: "https://www.youtube.com/watch?v=5V_f5r0X8I8",
+        sustainable_ag: "https://www.youtube.com/watch?v=Qf6zVp0N0A0",
+        drought_management: "https://www.youtube.com/watch?v=0_n5oV3pD-k"
+    }
+};
+
+export class OpenAIProvider extends BaseAIProvider implements AIProvider {
     readonly provider: AIProviderType = 'openai';
     readonly capabilities = [
         'text-generation',
@@ -30,11 +48,11 @@ export class OpenAIProvider extends BaseAIProvider {
         'vision',
     ];
 
+    private client: any = null;
+
     isConfigured(): boolean {
         return !!config.openAI.apiKey && config.openAI.apiKey !== 'sk-...';
     }
-
-    private client: any = null;
 
     private async getClient(): Promise<any> {
         if (this.client) return this.client;
@@ -53,7 +71,6 @@ export class OpenAIProvider extends BaseAIProvider {
         const client = await this.getClient();
         const model = options?.model || config.ai.primary.model || 'gpt-4';
 
-        // Intelligently handle both string prompts and complex messages arrays
         let messages: any[] = [];
         if (Array.isArray(prompt) && prompt.length > 0 && typeof prompt[0] === 'object' && 'role' in prompt[0]) {
             messages = prompt;
@@ -70,10 +87,6 @@ export class OpenAIProvider extends BaseAIProvider {
                 messages,
                 temperature: options?.temperature ?? 0.7,
                 max_tokens: options?.maxTokens ?? 1000,
-                top_p: options?.topP,
-                frequency_penalty: options?.frequencyPenalty,
-                presence_penalty: options?.presencePenalty,
-                stop: options?.stop,
             });
 
             const choice = response.choices[0];
@@ -164,29 +177,6 @@ export class OpenAIProvider extends BaseAIProvider {
         }
     }
 
-const ASSET_LIBRARY = {
-    images: {
-        maize: "photo-1523348837708-15d4a09cfac2",
-        farming: "photo-1560493676-04071c5f467b",
-        irrigation: "photo-1592919016382-748af858ef7e",
-        soil: "photo-1500382017468-9049fee74a62",
-        tractor: "photo-1586771107445-d3ca888129ff",
-        harvest: "photo-1574323347407-f5e1ad6d020b",
-        pests: "photo-1560493676-04071c5f467b"
-    },
-    videos: {
-        climate_smart: "https://www.youtube.com/watch?v=R9KToL2zE3s",
-        soil_basics: "https://www.youtube.com/watch?v=5V_f5r0X8I8",
-        sustainable_ag: "https://www.youtube.com/watch?v=Qf6zVp0N0A0",
-        drought_management: "https://www.youtube.com/watch?v=0_n5oV3pD-k"
-    }
-};
-
-export class OpenAIProvider implements AIProvider {
-    private client: OpenAI | null = null;
-    
-    // ... other methods ...
-
     async analyzeWithReasoning(context: string, query: string, options?: ReasoningOptions): Promise<ReasoningResult> {
         const systemPrompt = `
 Context:\n${context}\n\n
@@ -229,7 +219,6 @@ Note: Providing the <visuals> block is MANDATORY for every intelligence report.
 
         const userContent: any[] = [{ type: 'text', text: `Question: ${query}` }];
 
-        // Add attachments if present (Multimodal)
         if (options?.attachments && options.attachments.length > 0) {
             for (const attachment of options.attachments) {
                 if (attachment.type === 'image') {
@@ -237,8 +226,6 @@ Note: Providing the <visuals> block is MANDATORY for every intelligence report.
                         type: 'image_url',
                         image_url: { url: attachment.data }
                     });
-                } else if (attachment.type === 'audio') {
-                    // Audio transcription is handled by KnowledgeService before calling here
                 }
             }
         }
@@ -255,24 +242,19 @@ Note: Providing the <visuals> block is MANDATORY for every intelligence report.
 
         const text = result.text ?? '';
         
-        // EMERGENCY LOGGING: Save last raw response for debugging on remote
         try {
             fs.writeFileSync('/tmp/ai_last_raw_response.txt', text);
-        } catch (e) {
-            // Log local error if /tmp is not writable
-        }
+        } catch (e) {}
 
-        // Extract visuals JSON from <visuals> tags (case-insensitive) or any JSON block
         let visuals: any = undefined;
         try {
             const match = text.match(/<visuals>\s*([\s\S]*?)\s*<\/visuals>/i) || text.match(/```json\n([\s\S]*?)\n```/i);
             if (match && match[1]) {
                 visuals = JSON.parse(match[1].trim());
             } else if (text.includes('{') && text.includes('}')) {
-                const lastBrace = text.lastIndexOf('}');
-                const firstBrace = text.lastIndexOf('{', lastBrace);
-                if (firstBrace !== -1 && lastBrace !== -1) {
-                    const possibleJson = text.substring(firstBrace, lastBrace + 1);
+                const firstBrace = text.lastIndexOf('{', text.lastIndexOf('}'));
+                if (firstBrace !== -1) {
+                    const possibleJson = text.substring(firstBrace, text.lastIndexOf('}') + 1);
                     if (possibleJson.includes('"kpis"') || possibleJson.includes('"charts"')) {
                         visuals = JSON.parse(possibleJson);
                     }
@@ -282,19 +264,16 @@ Note: Providing the <visuals> block is MANDATORY for every intelligence report.
             logger.warn('Failed to parse visuals JSON, attempting heuristic extraction...', error);
         }
 
-        // HEURISTIC FALLBACK: If AI failed to provide JSON, try to extract metrics from text
         if (!visuals || (!visuals.kpis && !visuals.charts)) {
             visuals = this.extractVisualsHeuristically(text);
         }
 
-        // Clean text of any JSON blocks and specific "Visual Data" headers to avoid empty sections
         let cleanAnswer = text
             .replace(/<visuals>[\s\S]*?<\/visuals>/gi, '')
             .replace(/```json[\s\S]*?```/gi, '')
             .replace(/#{1,6}\s*(Visual Data|Visual Insights|Charts|Expert Data|Insight Analysis)[^\n]*/gi, '')
             .trim();
 
-        // If visuals exists and we still see empty segments, clean them up
         cleanAnswer = cleanAnswer.replace(/\n\s*\n\s*\n/g, '\n\n'); 
 
         return {
@@ -305,44 +284,27 @@ Note: Providing the <visuals> block is MANDATORY for every intelligence report.
         };
     }
 
-    /**
-     * Heuristic extractor for agricultural metrics if JSON parsing fails
-     */
     private extractVisualsHeuristically(text: string): any {
         const kpis: any[] = [];
-        const charts: any[] = [];
-        const images: any[] = [];
-        const videos: any[] = [];
-
-        // Regex for pH (e.g., pH 6.5 or pH: 7.0)
         const phMatch = text.match(/pH\s*[:\s]?\s*(\d+\.?\d*)/i);
         if (phMatch) kpis.push({ label: 'Soil pH', value: phMatch[1], status: 'good' });
 
-        // Regex for Temperature (e.g., 25°C or 77°F)
         const tempMatch = text.match(/(\d+\.?\d*)\s*(?:°C|°F|degrees)/i);
         if (tempMatch) kpis.push({ label: 'Temperature', value: tempMatch[0], status: 'warning' });
 
-        // Regex for Yield (percentage or kg/ha)
-        const yieldMatch = text.match(/yield\s*[:\s]?\s*(\d+)\s*(?:%|kg|tons)/i);
-        if (yieldMatch) kpis.push({ label: 'Estimated Yield', value: yieldMatch[0], status: 'good' });
-
-        // Default KPI if nothing found
         if (kpis.length === 0) {
             kpis.push({ label: 'Analysis Status', value: 'Complete', status: 'good' });
             kpis.push({ label: 'Intelligence Layer', value: 'ALFA v2.2', status: 'good' });
         }
 
-        return { kpis, charts, images, videos };
+        return { kpis, charts: [], images: [], videos: [] };
     }
 
     async speechToText(audio: Buffer, options?: SpeechToTextOptions): Promise<SpeechToTextResult> {
         const client = await this.getClient();
         try {
-            // OpenAI transcription using Whisper
-            // We need to provide a file-like object
             const transcription = await client.audio.transcriptions.create({
                 file: await (async () => {
-                    // Create a dummy filename for the buffer
                     const f: any = audio;
                     f.name = 'audio.wav';
                     return f;
@@ -399,28 +361,23 @@ Note: Providing the <visuals> block is MANDATORY for every intelligence report.
 
     async analyzeImage(imageData: string | Buffer, prompt?: string, options?: ImageAnalysisOptions): Promise<ImageAnalysisResult> {
         const client = await this.getClient();
-        const model = options?.model || 'gpt-4o'; // Default to vision-capable model
+        const model = options?.model || 'gpt-4o';
 
         try {
-            // Convert imageData to base64 if it's a Buffer
             let base64Image: string;
             if (Buffer.isBuffer(imageData)) {
                 base64Image = imageData.toString('base64');
             } else if (typeof imageData === 'string' && imageData.startsWith('data:image/')) {
-                // Extract base64 from data URL
-                const parts = imageData.split(',');
-                base64Image = parts[1];
+                base64Image = imageData.split(',')[1];
             } else {
                 base64Image = imageData as string;
             }
-
-            const defaultPrompt = 'Analyze this agricultural image. Identify any plants, crops, diseases, pests, or agricultural features. Provide detailed analysis including crop health assessment, disease identification, and recommendations for farmers.';
 
             const messages = [
                 {
                     role: 'user',
                     content: [
-                        { type: 'text', text: prompt || defaultPrompt },
+                        { type: 'text', text: prompt || 'Analyze this agricultural image.' },
                         {
                             type: 'image_url',
                             image_url: {
@@ -438,17 +395,15 @@ Note: Providing the <visuals> block is MANDATORY for every intelligence report.
                 max_tokens: options?.maxTokens ?? 1000,
             });
 
-            const choice = response.choices[0];
             return {
-                analysis: choice.message.content || 'Unable to analyze image',
+                analysis: response.choices[0].message.content || 'Unable to analyze image',
                 model,
                 usage: response.usage,
             };
         } catch (error: any) {
             logger.error('OpenAI analyzeImage error:', error);
-            const errorMessage = error.message || 'Unknown error';
             return {
-                analysis: `Error during image analysis: ${errorMessage}. Please check your OpenAI API key and usage limits.`,
+                analysis: `Error: ${error.message}`,
                 model,
                 usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
             };
@@ -465,12 +420,7 @@ Note: Providing the <visuals> block is MANDATORY for every intelligence report.
             });
             return true;
         } catch (error: any) {
-            logger.error('OpenAI healthCheck error:', {
-                message: error.message,
-                status: error.status,
-                type: error.type,
-                code: error.code
-            });
+            logger.error('OpenAI healthCheck error:', error);
             return false;
         }
     }
