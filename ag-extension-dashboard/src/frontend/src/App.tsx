@@ -90,6 +90,10 @@ import { KnowledgeBase } from '@/components/KnowledgeBase';
 import { BulkSmsModal } from './components/BulkSmsModal';
 import { BulkUpdateModal } from './components/BulkUpdateModal';
 
+// A/B Test Imports
+import { ABTestBanner, DesignToggle } from '@/components/ABTestBanner';
+import { useFeatureFlags } from '@/store/useFeatureFlags';
+
 
 // COLORS constant removed as it's unused
 
@@ -1161,6 +1165,8 @@ function App() {
                     </div>
                 </div>
             )}
+            {/* A/B Test Banner */}
+            <ABTestBanner />
             {/* Top Navigation */}
             <header className="z-50 glass bg-theme-bg-card/80 border-b border-gray-200 dark:border-gray-800 transition-colors flex-shrink-0">
                 <div className="flex items-center justify-between px-6 py-4">

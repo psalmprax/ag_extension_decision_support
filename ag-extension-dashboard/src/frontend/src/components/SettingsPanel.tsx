@@ -5,6 +5,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 import { ThemeSwitcher } from './ThemeSwitcher';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { DesignToggle } from './ABTestBanner';
 import apiClient from '@/api/client';
 import toast from 'react-hot-toast';
 
@@ -112,10 +113,18 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                                             </div>
                                             <LanguageSwitcher />
                                         </div>
+                                        {/* Design Preference */}
+                                        <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                                            <div className="flex items-center gap-3 mb-3">
+                                                <Palette className="w-4 h-4 text-gray-400" />
+                                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                    {t('settings_design') || 'Design'}
+                                                </span>
+                                            </div>
+                                            <DesignToggle />
+                                        </div>
                                     </div>
                                 </div>
-
-                                {/* Notifications */}
                                 <div className="space-y-3">
                                     <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest flex items-center gap-2">
                                         <Bell className="w-4 h-4" />
