@@ -1168,38 +1168,43 @@ function App() {
             )}
             {/* A/B Test Banner */}
             <ABTestBanner />
-            {/* Top Navigation */}
-            <header className="z-50 glass bg-theme-bg-card/80 border-b border-gray-200 dark:border-gray-800 transition-colors flex-shrink-0">
-                <div className="flex items-center justify-between px-6 py-4">
-                    <div className="flex items-center gap-4">
+            {/* Top Navigation - Floating Executive Island */}
+            <header className="fixed inset-x-0 top-0 z-50 p-4 lg:p-6 pointer-events-none">
+                <div className="max-w-screen-2xl mx-auto flex items-center justify-between gap-6 px-8 py-4 bg-white/70 dark:bg-gray-900/70 backdrop-blur-3xl border border-white/20 dark:border-white/5 shadow-2xl pointer-events-auto transition-all duration-500 hover:shadow-primary-500/10" style={{ borderRadius: '40px' }}>
+                    <div className="flex items-center gap-6">
                         <button
                             onClick={() => setSidebarOpen(!sidebarOpen)}
-                            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-400"
+                            className="p-3 rounded-2xl hover:bg-white/50 dark:hover:bg-white/5 transition-all text-gray-600 dark:text-gray-400 group/menu"
                         >
-                            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                            {sidebarOpen ? <X className="w-5 h-5 transition-transform group-hover:rotate-90" /> : <Menu className="w-5 h-5" />}
                         </button>
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/20" style={{ borderRadius: 'var(--radius-card)' }}>
-                                <span className="text-white font-bold text-lg">Ag</span>
+                        <div className="flex items-center gap-4 border-l border-gray-100 dark:border-white/10 pl-6">
+                            <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center shadow-xl shadow-primary-500/30 ring-4 ring-primary-500/10">
+                                <span className="text-white font-black text-xl tracking-tighter">Ag</span>
                             </div>
-                            <div>
-                                <h1 className="text-lg font-bold text-gray-900 dark:text-white" style={{ fontFamily: 'var(--font-heading)' }}>{t('app_title')}</h1>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('app_subtitle')}</p>
+                            <div className="hidden sm:block">
+                                <h1 className="text-xl font-black text-gray-900 dark:text-white tracking-tight leading-none mb-1" style={{ fontFamily: 'var(--font-heading)' }}>
+                                    {t('app_title')}
+                                </h1>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                                    <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em]">{t('app_subtitle')}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="hidden lg:block flex-1 max-w-xl mx-8">
+                    <div className="hidden xl:block flex-1 max-w-2xl mx-12">
                         <WeatherWidget location={userLocation || storeUser?.region || 'Kenya'} />
                     </div>
 
-                    <div className="flex items-center gap-4">
-                        <div className="relative hidden sm:block">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <div className="flex items-center gap-6">
+                        <div className="relative hidden md:block">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 transition-colors group-focus-within/search:text-primary-500" />
                             <input
                                 type="text"
                                 placeholder={t('common_search') + "..."}
-                                className="input dark:bg-gray-800 dark:border-gray-700 dark:text-white pl-10 w-48 xl:w-64"
+                                className="w-64 lg:w-80 bg-white/50 dark:bg-black/20 border border-gray-100 dark:border-white/5 rounded-2xl pl-12 pr-4 py-3 text-sm font-medium focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-all outline-none dark:text-white placeholder:text-gray-400/60"
                                 value={searchQuery}
                                 onChange={(e) => {
                                     setSearchQuery(e.target.value);
@@ -1208,6 +1213,10 @@ function App() {
                                 onFocus={() => { if (searchQuery.trim()) setShowGlobalSearch(true); }}
                                 onBlur={() => { setTimeout(() => setShowGlobalSearch(false), 200); }}
                             />
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 hidden lg:flex items-center gap-1 px-1.5 py-0.5 rounded border border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/5 text-[10px] font-black text-gray-400">
+                                <span>⌘</span>
+                                <span>K</span>
+                            </div>
                             {showGlobalSearch && globalSearchResults.length > 0 && (
                                 <div className="absolute top-full mt-2 left-0 right-0 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 z-50 max-h-80 overflow-y-auto">
                                     {isGlobalSearching ? (
@@ -1411,7 +1420,7 @@ function App() {
                     </div>
 
                     {/* Main Content Scrollable */}
-                    <main className="flex-1 overflow-y-auto scrollbar-hide">
+                    <main className="flex-1 overflow-y-auto bg-theme-bg-secondary p-8 pt-32 custom-scrollbar">
                         <div className="p-8">
                     <div className=''>
                         <ErrorBoundary>
