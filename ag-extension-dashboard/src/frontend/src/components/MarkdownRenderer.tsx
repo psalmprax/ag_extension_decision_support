@@ -58,9 +58,10 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
                             href={href} 
                             target="_blank" 
                             rel="noopener noreferrer" 
-                            className="text-primary-500 hover:text-primary-600 underline font-bold decoration-2 underline-offset-2"
+                            className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary-500/10 hover:bg-primary-500/20 text-primary-600 dark:text-primary-400 rounded-lg no-underline font-black transition-all group/link"
                         >
-                            {children}
+                            <span>{children}</span>
+                            <ExternalLink className="w-3 h-3 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
                         </a>
                     ),
                     

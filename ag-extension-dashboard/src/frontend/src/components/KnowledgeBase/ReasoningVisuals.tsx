@@ -15,7 +15,7 @@ import {
     ResponsiveContainer,
     Cell
 } from 'recharts';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
     AlertCircle, 
     CheckCircle2, 
@@ -25,7 +25,9 @@ import {
     Zap,
     Play,
     Image as ImageIcon,
-    ExternalLink
+    ExternalLink,
+    X,
+    Maximize2
 } from 'lucide-react';
 
 interface KPI {
@@ -63,6 +65,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
     if (!visuals && !audio) return null;
 
     const [isPlaying, setIsPlaying] = React.useState(false);
+    const [selectedImage, setSelectedImage] = React.useState<string | null>(null);
     const audioRef = React.useRef<HTMLAudioElement | null>(null);
 
     const togglePlayback = () => {
@@ -75,41 +78,96 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
         setIsPlaying(!isPlaying);
     };
 
+    // Helper to convert YouTube Watch URLs to Embed URLs
+    const getYoutubeEmbedUrl = (url: string) => {
+        if (!url) return '';
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+        if (match && match[2].length === 11) {
+            return `https://www.youtube.com/embed/${match[2]}?autoplay=0&rel=0`;
+        }
+        return url;
+    };
+
     const renderChart = (chart: Chart) => {
         const { type, data, title } = chart;
         
         return (
-            <div className="bg-white/50 dark:bg-gray-900/40 p-6 rounded-3xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-xl h-[300px] flex flex-col">
-                <div className="flex items-center gap-2 mb-6">
-                    <TrendingUp className="w-4 h-4 text-primary-500" />
-                    <h3 className="text-sm font-black text-gray-500 uppercase tracking-widest">{title}</h3>
+            <motion.div 
+                whileHover={{ y: -5 }}
+                className="bg-white/40 dark:bg-gray-900/30 p-8 rounded-[2.5rem] border border-white/20 dark:border-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.1)] backdrop-blur-3xl h-[350px] flex flex-col group transition-all"
+            >
+                <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary-500/20 rounded-xl text-primary-500">
+                            <TrendingUp className="w-5 h-5" />
+                        </div>
+                        <h3 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-[0.2em]">{title}</h3>
+                    </div>
+                    <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(59,130,246,0.8)]"></div>
                 </div>
                 
-                <div className="flex-1 w-full">
+                <div className="flex-1 w-full -ml-6">
                     <ResponsiveContainer width="100%" height="100%">
                         {type === 'bar' ? (
                             <BarChart data={data}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} />
+                                <defs>
+                                    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor="#3b82f6" stopOpacity={1}/>
+                                        <stop offset="100%" stopColor="#6366f1" stopOpacity={0.8}/>
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
+                                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: '#94a3b8' }} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: '#94a3b8' }} />
                                 <Tooltip 
-                                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
                                     cursor={{ fill: 'rgba(59, 130, 246, 0.05)' }}
+                                    content={({ active, payload }) => {
+                                        if (active && payload && payload.length) {
+                                            return (
+                                                <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md p-3 rounded-2xl shadow-2xl border border-white/20">
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{payload[0].payload.label}</p>
+                                                    <p className="text-lg font-black text-primary-600 dark:text-primary-400">{payload[0].value}</p>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    }}
                                 />
-                                <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={24} />
+                                <Bar dataKey="value" fill="url(#barGradient)" radius={[6, 6, 0, 0]} barSize={32} />
                             </BarChart>
                         ) : type === 'area' ? (
                             <AreaChart data={data}>
                                 <defs>
-                                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                                    <linearGradient id="colorArea" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4}/>
                                         <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                                     </linearGradient>
                                 </defs>
                                 <XAxis dataKey="label" hide />
                                 <YAxis hide />
-                                <Tooltip />
-                                <Area type="monotone" dataKey="value" stroke="#3b82f6" fillOpacity={1} fill="url(#colorValue)" strokeWidth={3} />
+                                <Tooltip 
+                                    content={({ active, payload }) => {
+                                        if (active && payload && payload.length) {
+                                            return (
+                                                <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md p-3 rounded-2xl shadow-2xl border border-white/20">
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{payload[0].payload.label}</p>
+                                                    <p className="text-lg font-black text-primary-600 dark:text-primary-400">{payload[0].value}</p>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    }}
+                                />
+                                <Area 
+                                    type="monotone" 
+                                    dataKey="value" 
+                                    stroke="#3b82f6" 
+                                    strokeWidth={4}
+                                    fillOpacity={1} 
+                                    fill="url(#colorArea)" 
+                                    animationDuration={2000}
+                                />
                             </AreaChart>
                         ) : type === 'pie' ? (
                             <PieChart>
@@ -117,29 +175,62 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                                     data={data}
                                     cx="50%"
                                     cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={80}
-                                    paddingAngle={5}
+                                    innerRadius={70}
+                                    outerRadius={95}
+                                    paddingAngle={8}
                                     dataKey="value"
+                                    stroke="none"
                                 >
                                     {data.map((_, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} cornerRadius={4} />
                                     ))}
                                 </Pie>
-                                <Tooltip />
+                                <Tooltip 
+                                    content={({ active, payload }) => {
+                                        if (active && payload && payload.length) {
+                                            return (
+                                                <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md p-3 rounded-2xl shadow-2xl border border-white/20">
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{payload[0].name}</p>
+                                                    <p className="text-lg font-black text-primary-600 dark:text-primary-400">{payload[0].value}</p>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    }}
+                                />
                             </PieChart>
                         ) : (
                             <LineChart data={data}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
                                 <XAxis dataKey="label" hide />
                                 <YAxis hide />
-                                <Tooltip />
-                                <Line type="monotone" dataKey="value" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4, fill: '#8b5cf6' }} activeDot={{ r: 6 }} />
+                                <Tooltip 
+                                    content={({ active, payload }) => {
+                                        if (active && payload && payload.length) {
+                                            return (
+                                                <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md p-3 rounded-2xl shadow-2xl border border-white/20">
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{payload[0].payload.label}</p>
+                                                    <p className="text-lg font-black text-primary-600 dark:text-primary-400">{payload[0].value}</p>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    }}
+                                />
+                                <Line 
+                                    type="monotone" 
+                                    dataKey="value" 
+                                    stroke="#8b5cf6" 
+                                    strokeWidth={5} 
+                                    dot={{ r: 6, fill: '#8b5cf6', strokeWidth: 0 }} 
+                                    activeDot={{ r: 10, stroke: 'white', strokeWidth: 3 }}
+                                    animationDuration={2500}
+                                />
                             </LineChart>
                         )}
                     </ResponsiveContainer>
                 </div>
-            </div>
+            </motion.div>
         );
     };
 
@@ -220,16 +311,29 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                             key={`img-${idx}`}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="bg-white/50 dark:bg-gray-900/40 p-4 rounded-3xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-xl group overflow-hidden"
+                            className="bg-white/50 dark:bg-gray-900/40 p-4 rounded-3xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-xl group overflow-hidden cursor-pointer"
+                            onClick={() => setSelectedImage(img.url)}
                         >
                             <div className="relative aspect-video rounded-2xl overflow-hidden mb-3">
                                 <img src={img.url} alt={img.caption} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <div className="p-3 bg-white/20 backdrop-blur-md rounded-2xl text-white">
+                                        <Maximize2 className="w-6 h-6" />
+                                    </div>
+                                </div>
                                 <div className="absolute top-3 left-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-[10px] font-black uppercase tracking-widest">
                                     <ImageIcon className="w-3 h-3" />
                                     Image
                                 </div>
+                                <div className="absolute bottom-3 left-3 px-3 py-1 bg-primary-600/90 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-[8px] font-black uppercase tracking-widest">
+                                    <CheckCircle2 className="w-2.5 h-2.5" />
+                                    Verified ALFA Asset
+                                </div>
                             </div>
-                            {img.caption && <p className="text-sm font-bold text-gray-600 dark:text-gray-400 px-2">{img.caption}</p>}
+                            {img.caption && <p className="text-sm font-bold text-gray-600 dark:text-gray-400 px-2 flex items-center justify-between">
+                                <span>{img.caption}</span>
+                                <span className="text-[10px] text-primary-500 uppercase font-black opacity-0 group-hover:opacity-100 transition-opacity">Click to Enlarge</span>
+                            </p>}
                         </motion.div>
                     ))}
                     {safeVisuals.videos?.map((vid, idx) => (
@@ -239,17 +343,32 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                             animate={{ opacity: 1, y: 0 }}
                             className="bg-white/50 dark:bg-gray-900/40 p-4 rounded-3xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-xl group overflow-hidden"
                         >
-                            <div className="relative aspect-video rounded-2xl overflow-hidden mb-3 bg-black/10 flex items-center justify-center">
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <Play className="w-12 h-12 text-white/80 group-hover:scale-110 transition-transform" />
+                            <div className="relative aspect-video rounded-2xl overflow-hidden mb-3 bg-black flex items-center justify-center shadow-inner">
+                                {vid.url.includes('youtube.com') || vid.url.includes('youtu.be') ? (
+                                    <iframe 
+                                        src={getYoutubeEmbedUrl(vid.url)}
+                                        className="w-full h-full border-none"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowFullScreen
+                                    />
+                                ) : (
+                                    <>
+                                        <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+                                            <Play className="w-12 h-12 text-white/80 group-hover:scale-110 transition-transform" />
+                                        </div>
+                                        <div className="absolute top-3 left-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-[10px] font-black uppercase tracking-widest">
+                                            <Play className="w-3 h-3" />
+                                            External Video
+                                        </div>
+                                        <a href={vid.url} target="_blank" rel="noopener noreferrer" className="absolute bottom-3 right-3 p-3 bg-primary-600 rounded-2xl text-white shadow-xl transform active:scale-95 transition-all">
+                                            <ExternalLink className="w-5 h-5" />
+                                        </a>
+                                    </>
+                                )}
+                                <div className="absolute bottom-3 left-3 px-3 py-1 bg-primary-600/90 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-[8px] font-black uppercase tracking-widest pointer-events-none">
+                                    <CheckCircle2 className="w-2.5 h-2.5" />
+                                    Verified Source
                                 </div>
-                                <div className="absolute top-3 left-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-[10px] font-black uppercase tracking-widest">
-                                    <Play className="w-3 h-3" />
-                                    Video Analysis
-                                </div>
-                                <a href={vid.url} target="_blank" rel="noopener noreferrer" className="absolute bottom-3 right-3 p-2 bg-primary-600 rounded-xl text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <ExternalLink className="w-4 h-4" />
-                                </a>
                             </div>
                             {vid.caption && <p className="text-sm font-bold text-gray-600 dark:text-gray-400 px-2">{vid.caption}</p>}
                         </motion.div>
@@ -273,6 +392,36 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                 </div>
             )}
             
+            {/* Lightbox Overlay */}
+            <AnimatePresence>
+                {selectedImage && (
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-12 bg-gray-950/90 backdrop-blur-3xl"
+                        onClick={() => setSelectedImage(null)}
+                    >
+                        <motion.button 
+                            className="absolute top-8 right-8 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+                            onClick={() => setSelectedImage(null)}
+                        >
+                            <X className="w-8 h-8" />
+                        </motion.button>
+                        
+                        <motion.div 
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="relative max-w-7xl max-h-full rounded-[2.5rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.5)] border border-white/10"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <img src={selectedImage} className="w-full h-auto max-h-[85vh] object-contain" />
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Insight Analysis Modeling (Icon Representation) */}
             <div className="p-8 bg-primary-600 rounded-3xl text-white overflow-hidden relative group">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32 group-hover:scale-110 transition-transform"></div>
