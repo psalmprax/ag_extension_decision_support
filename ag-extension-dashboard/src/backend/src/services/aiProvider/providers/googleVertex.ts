@@ -14,6 +14,7 @@ import {
     ReasoningOptions,
     ReasoningResult,
 } from '../aiProvider';
+import { REASONING_SYSTEM_PROMPT, extractVisuals } from '../assetLibrary';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
 
@@ -147,17 +148,55 @@ export class GoogleVertexProvider extends BaseAIProvider {
     }
 
     async analyzeWithReasoning(context: string, query: string, options?: ReasoningOptions): Promise<ReasoningResult> {
-        const prompt = `Context: ${context}\n\nQuestion: ${query}\n\nProvide a detailed analysis.`;
-        const result = await this.generateText(prompt, {
-            temperature: options?.temperature ?? 0.3,
-            maxTokens: options?.maxTokens ?? 1500,
-        });
+        const client = await this.getClient();
+        const modelName = options?.model || config.ai.fallback.model || 'gemini-1.5-flash';
+        const model = client.getGenerativeModel({ model: modelName });
 
-        return {
-            reasoning: 'Analysis based on provided context.',
-            answer: result.text ?? '',
-            confidence: 0.85,
-        };
+        const systemPrompt = REASONING_SYSTEM_PROMPT;
+        
+        // Construct the prompt for Gemini
+        // We'll combine system prompt and user context
+        const fullPrompt = `${systemPrompt}\n\nContext: ${context}\n\nQuestion: ${query}`;
+        
+        const contents: any[] = [{ role: 'user', parts: [{ text: fullPrompt }] }];
+
+        if (options?.attachments && options.attachments.length > 0) {
+            for (const attachment of options.attachments) {
+                if (attachment.type === 'image') {
+                    // Gemini format for base64 images
+                    contents[0].parts.push({
+                        inlineData: {
+                            mimeType: attachment.mimeType || 'image/jpeg',
+                            data: attachment.data.includes('base64,') ? attachment.data.split('base64,')[1] : attachment.data
+                        }
+                    });
+                }
+            }
+        }
+
+        try {
+            const result = await model.generateContent({ contents });
+            const text = result.response.text();
+            const visuals = extractVisuals(text);
+
+            let cleanAnswer = text
+                .replace(/<visuals>[\s\S]*?<\/visuals>/gi, '')
+                .replace(/```json[\s\S]*?```/gi, '')
+                .replace(/#{1,6}\s*(Visual Data|Visual Insights|Charts|Expert Data|Insight Analysis)[^\n]*/gi, '')
+                .trim();
+
+            cleanAnswer = cleanAnswer.replace(/\n\s*\n\s*\n/g, '\n\n');
+
+            return {
+                reasoning: 'Detailed Gemini-based Intelligence Analysis completed.',
+                answer: cleanAnswer,
+                confidence: 0.9,
+                visuals
+            };
+        } catch (error) {
+            logger.error('Google Vertex analyzeWithReasoning error:', error);
+            throw new Error(`Google Vertex reasoning analysis failed: ${(error as Error).message}`);
+        }
     }
 
     async classify(input: string, options: ClassificationOptions): Promise<ClassificationResult> {

@@ -20,25 +20,9 @@ import {
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
 
-const ASSET_LIBRARY = {
-    images: {
-        maize: "photo-1523348837708-15d4a09cfac2",
-        farming: "photo-1560493676-04071c5f467b",
-        irrigation: "photo-1592919016382-748af858ef7e",
-        soil: "photo-1500382017468-9049fee74a62",
-        tractor: "photo-1586771107445-d3ca888129ff",
-        harvest: "photo-1574323347407-f5e1ad6d020b",
-        pests: "photo-1560493676-04071c5f467b"
-    },
-    videos: {
-        climate_smart: "https://www.youtube.com/watch?v=R9KToL2zE3s",
-        soil_basics: "https://www.youtube.com/watch?v=5V_f5r0X8I8",
-        sustainable_ag: "https://www.youtube.com/watch?v=Qf6zVp0N0A0",
-        drought_management: "https://www.youtube.com/watch?v=0_n5oV3pD-k"
-    }
-};
+import { REASONING_SYSTEM_PROMPT, extractVisuals } from '../assetLibrary';
 
-export class OpenAIProvider extends BaseAIProvider implements AIProvider {
+export class OpenAIProvider extends BaseAIProvider {
     readonly provider: AIProviderType = 'openai';
     readonly capabilities = [
         'text-generation',
@@ -178,44 +162,7 @@ export class OpenAIProvider extends BaseAIProvider implements AIProvider {
     }
 
     async analyzeWithReasoning(context: string, query: string, options?: ReasoningOptions): Promise<ReasoningResult> {
-        const systemPrompt = `
-Context:\n${context}\n\n
-You are an expert AI Agricultural Analyst for the ALFA Intelligence Engine.
-Provide a high-quality, actionable response including expert analysis and visual data.
-
-### ALFA VERIFIED ASSET LIBRARY (MANDATORY):
-You MUST ONLY use the following Asset IDs/URLs. DO NOT hallucinate any others.
-- IMAGES: 
-  - Maize: photo-1523348837708-15d4a09cfac2
-  - Farming: photo-1560493676-04071c5f467b
-  - Irrigation: photo-1592919016382-748af858ef7e
-  - Soil: photo-1500382017468-9049fee74a62
-  - Tractor: photo-1586771107445-d3ca888129ff
-  - Harvest: photo-1574323347407-f5e1ad6d020b
-- VIDEOS (YouTube):
-  - Climate Smart Ag: https://www.youtube.com/watch?v=R9KToL2zE3s
-  - Soil Basics: https://www.youtube.com/watch?v=5V_f5r0X8I8
-  - Sustainable Intensification: https://www.youtube.com/watch?v=Qf6zVp0N0A0
-
-### CRITICAL OUTPUT REQUIREMENTS:
-1.  **Expert Analysis**: Detailed Markdown with multiple headers, bullets, and bold text. 
-2.  **Visual Data JSON**: Wrapped in <visuals> tags.
-3.  **MANDATORY ASSETS**: Use the URLs/IDs from the library above for "images" and "videos".
-    - Image Format: https://images.unsplash.com/[ID]?q=80&w=800
-4.  **REAl-WORLD CITATIONS**: Every external link MUST point to a verified resource (FAO, Ministry, or Research paper).
-
-JSON Schema for <visuals> block:
-<visuals>
-{
-  "kpis": [{"label": "string", "value": "string", "status": "good|warning|critical"}],
-  "charts": [{"type": "bar|line|pie|area", "title": "string", "data": [{"label": "string", "value": "number"}]}],
-  "images": [{"url": "string", "caption": "string"}],
-  "videos": [{"url": "string", "caption": "string"}]
-}
-</visuals>
-
-Note: Providing the <visuals> block is MANDATORY for every intelligence report.
-`;
+        const systemPrompt = REASONING_SYSTEM_PROMPT;
 
         const userContent: any[] = [{ type: 'text', text: `Question: ${query}` }];
 
@@ -246,23 +193,7 @@ Note: Providing the <visuals> block is MANDATORY for every intelligence report.
             fs.writeFileSync('/tmp/ai_last_raw_response.txt', text);
         } catch (e) {}
 
-        let visuals: any = undefined;
-        try {
-            const match = text.match(/<visuals>\s*([\s\S]*?)\s*<\/visuals>/i) || text.match(/```json\n([\s\S]*?)\n```/i);
-            if (match && match[1]) {
-                visuals = JSON.parse(match[1].trim());
-            } else if (text.includes('{') && text.includes('}')) {
-                const firstBrace = text.lastIndexOf('{', text.lastIndexOf('}'));
-                if (firstBrace !== -1) {
-                    const possibleJson = text.substring(firstBrace, text.lastIndexOf('}') + 1);
-                    if (possibleJson.includes('"kpis"') || possibleJson.includes('"charts"')) {
-                        visuals = JSON.parse(possibleJson);
-                    }
-                }
-            }
-        } catch (error) {
-            logger.warn('Failed to parse visuals JSON, attempting heuristic extraction...', error);
-        }
+        let visuals = extractVisuals(text);
 
         if (!visuals || (!visuals.kpis && !visuals.charts)) {
             visuals = this.extractVisualsHeuristically(text);

@@ -76,6 +76,7 @@ export interface ClassificationResult {
 }
 
 export interface ReasoningOptions {
+    model?: string;
     maxTokens?: number;
     temperature?: number;
     attachments?: Array<{ type: 'image' | 'file' | 'audio'; data: string; mimeType?: string }>;

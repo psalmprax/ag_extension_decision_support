@@ -14,6 +14,7 @@ import {
     ReasoningOptions,
     ReasoningResult,
 } from '../aiProvider';
+import { REASONING_SYSTEM_PROMPT, extractVisuals } from '../assetLibrary';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
 
@@ -161,17 +162,62 @@ export class AzureOpenAIProvider extends BaseAIProvider {
     }
 
     async analyzeWithReasoning(context: string, query: string, options?: ReasoningOptions): Promise<ReasoningResult> {
-        const prompt = `Given the following context about agricultural practices:\n\n${context}\n\nQuestion: ${query}\n\nPlease provide a detailed analysis and answer.`;
-        const result = await this.generateText(prompt, {
-            temperature: options?.temperature ?? 0.3,
-            maxTokens: options?.maxTokens ?? 1500,
-        });
+        const client = await this.getClient();
+        const systemPrompt = REASONING_SYSTEM_PROMPT;
 
-        return {
-            reasoning: 'Analysis based on provided context and agricultural knowledge.',
-            answer: result.text ?? '',
-            confidence: 0.85,
+        const userContent: any[] = [
+            { type: 'text', text: `Context: ${context}\n\nQuestion: ${query}` }
+        ];
+
+        if (options?.attachments && options.attachments.length > 0) {
+            for (const attachment of options.attachments) {
+                if (attachment.type === 'image') {
+                    userContent.push({
+                        type: 'image_url',
+                        image_url: { url: attachment.data }
+                    });
+                }
+            }
+        }
+
+        const messages = [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userContent }
+        ];
+
+        const requestOptions = {
+            temperature: options?.temperature ?? 0.2,
+            maxTokens: options?.maxTokens ?? 2000,
         };
+
+        try {
+            const response = await client.getChatCompletions(
+                config.azureOpenAI.deploymentName,
+                messages,
+                requestOptions
+            );
+
+            const text = response.choices[0].message.content ?? '';
+            const visuals = extractVisuals(text);
+
+            let cleanAnswer = text
+                .replace(/<visuals>[\s\S]*?<\/visuals>/gi, '')
+                .replace(/```json[\s\S]*?```/gi, '')
+                .replace(/#{1,6}\s*(Visual Data|Visual Insights|Charts|Expert Data|Insight Analysis)[^\n]*/gi, '')
+                .trim();
+
+            cleanAnswer = cleanAnswer.replace(/\n\s*\n\s*\n/g, '\n\n');
+
+            return {
+                reasoning: 'Detailed Azure-based Intelligence Analysis completed.',
+                answer: cleanAnswer,
+                confidence: 0.9,
+                visuals
+            };
+        } catch (error) {
+            logger.error('Azure OpenAI analyzeWithReasoning error:', error);
+            throw new Error(`Azure OpenAI reasoning analysis failed: ${(error as Error).message}`);
+        }
     }
 
     async classify(input: string, options: ClassificationOptions): Promise<ClassificationResult> {
