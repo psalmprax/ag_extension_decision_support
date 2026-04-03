@@ -118,7 +118,7 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
     };
 
     return (
-        <div className={`relative overflow-hidden transition-all duration-500 ${compact ? '' : 'p-8 bg-white dark:bg-gray-900 border border-gray-100 dark:border-white/10 rounded-3xl shadow-2xl group'}`}>
+        <div className={`relative overflow-hidden transition-all duration-500 ${compact ? '' : 'p-8 bg-white dark:bg-gray-900 border border-gray-100 dark:border-white/10 shadow-2xl group'}`} style={{ borderRadius: compact ? '0' : 'var(--radius-card)' }}>
             {!compact && (
                 <>
                     <div className="absolute top-0 right-0 w-48 h-48 bg-primary-500/5 rounded-full blur-[80px] -translate-y-24 translate-x-24 group-hover:bg-primary-500/10 transition-colors duration-700" aria-hidden="true" />

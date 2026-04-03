@@ -173,8 +173,8 @@ export const KnowledgeBase: React.FC = () => {
 
                     {/* Premium Search Bar */}
                     <div className="relative group mb-12">
-                        <div className="absolute -inset-1 bg-gradient-to-r from-primary-600 to-indigo-600 rounded-3xl blur opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                        <div className="relative bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/50 rounded-3xl p-1.5 shadow-2xl">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-primary-600 to-indigo-600 blur opacity-20 group-hover:opacity-40 transition-opacity" style={{ borderRadius: 'calc(var(--radius-card) + 4px)' }}></div>
+                        <div className="relative bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/50 p-1.5 shadow-2xl" style={{ borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-premium)' }}>
                             {/* Attachment Previews */}
                             {attachments.length > 0 && (
                                 <div className="flex flex-wrap gap-2 px-4 py-3 border-b border-gray-100 dark:border-gray-700/50">
@@ -325,7 +325,8 @@ export const KnowledgeBase: React.FC = () => {
                                             setSearchQuery(suggestion);
                                             handleSearch(suggestion);
                                         }}
-                                        className="p-6 bg-theme-bg-card rounded-3xl border border-gray-100 dark:border-gray-700 hover:border-primary-500 transition-all text-left flex items-start gap-4 group"
+                                        className="p-6 bg-theme-bg-card border border-gray-100 dark:border-gray-700 hover:border-primary-500 transition-all text-left flex items-start gap-4 group"
+                                        style={{ borderRadius: 'var(--radius-card)' }}
                                     >
                                         <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-xl group-hover:bg-primary-500 group-hover:text-white transition-colors">
                                             <Lightbulb className="w-5 h-5" />

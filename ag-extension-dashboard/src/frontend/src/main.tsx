@@ -52,27 +52,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                     }}
                 >
                     <LanguageProvider>
-                        <Routes>
-                            <Route path="/login" element={<Login />} />
-                            <Route path="/register" element={<Register />} />
-                            <Route path="/forgot-password" element={<ForgotPassword />} />
-                            <Route
-                                path="/sms"
-                                element={
-                                    <ProtectedRoute>
-                                        <SMSPage />
-                                    </ProtectedRoute>
-                                }
-                            />
-                            <Route
-                                path="/*"
-                                element={
-                                    <ProtectedRoute>
-                                        <App />
-                                    </ProtectedRoute>
-                                }
-                            />
-                        </Routes>
                         <Toaster
                             position="top-right"
                             toastOptions={{

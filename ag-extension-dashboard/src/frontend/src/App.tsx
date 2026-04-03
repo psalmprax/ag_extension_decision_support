@@ -113,6 +113,7 @@ const StatCard = ({ title, value, change, icon: Icon, delay }: StatCardProps) =>
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay }}
             className="card p-6 bg-theme-bg-card dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300"
+            style={{ borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-premium)' }}
         >
             <div className="flex items-start justify-between">
                 <div>
@@ -1178,11 +1179,11 @@ function App() {
                             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                         </button>
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/20">
+                            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/20" style={{ borderRadius: 'var(--radius-card)' }}>
                                 <span className="text-white font-bold text-lg">Ag</span>
                             </div>
                             <div>
-                                <h1 className="text-lg font-bold text-gray-900 dark:text-white">{t('app_title')}</h1>
+                                <h1 className="text-lg font-bold text-gray-900 dark:text-white" style={{ fontFamily: 'var(--font-heading)' }}>{t('app_title')}</h1>
                                 <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('app_subtitle')}</p>
                             </div>
                         </div>

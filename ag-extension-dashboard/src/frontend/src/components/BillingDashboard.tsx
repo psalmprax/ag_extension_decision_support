@@ -585,7 +585,8 @@ export const BillingDashboard: React.FC = () => {
                             aria-labelledby="subscription-status-title"
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="relative card p-8 group bg-gray-900 border-none shadow-2xl overflow-hidden min-h-[480px] flex flex-col justify-between rounded-[2.5rem]"
+                            className="relative card p-8 group bg-gray-900 border-none shadow-2xl overflow-hidden min-h-[480px] flex flex-col justify-between"
+                            style={{ borderRadius: 'var(--radius-card)' }}
                         >
                             {/* Mesh Gradient Background */}
                             <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -700,10 +701,11 @@ export const BillingDashboard: React.FC = () => {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: idx * 0.15 }}
                                 key={plan.id}
-                                className={`relative card group p-12 bg-white dark:bg-gray-900 border-none rounded-[2.5rem] shadow-2xl flex flex-col justify-between overflow-hidden transition-all duration-700 ${subscription?.plan.id === plan.id
+                                className={`relative card group p-12 bg-white dark:bg-gray-900 border-none shadow-2xl flex flex-col justify-between overflow-hidden transition-all duration-700 ${subscription?.plan.id === plan.id
                                     ? 'ring-2 ring-primary-500 border-primary-500 shadow-primary-500/20'
                                     : 'hover:-translate-y-3 hover:shadow-primary-500/10'
                                     }`}
+                                style={{ borderRadius: 'var(--radius-card)' }}
                             >
                                 {/* Subtle Mesh for each card */}
                                 <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-1000">
