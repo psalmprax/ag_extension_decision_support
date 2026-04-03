@@ -426,26 +426,31 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                 )}
             </AnimatePresence>
 
-            {/* Insight Analysis Modeling (Icon Representation) */}
-            <div className="p-8 bg-primary-600 rounded-3xl text-white overflow-hidden relative group">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32 group-hover:scale-110 transition-transform"></div>
-                <div className="relative flex items-center gap-6">
-                    <div className="p-4 bg-white/20 backdrop-blur-md rounded-2xl">
-                        <Zap className="w-10 h-10 fill-current" />
-                    </div>
-                    <div className="flex-1">
-                        <h4 className="text-sm font-black uppercase tracking-[0.2em] opacity-70 mb-1">Expert Decision Insight</h4>
-                        <p className="text-lg font-bold leading-tight">
-                            {safeVisuals.kpis && safeVisuals.kpis.length > 0
-                                ? `${safeVisuals.kpis.filter(k => k.status === 'good').length} of ${safeVisuals.kpis.length} indicators performing optimally. Review recommendations below.`
-                                : 'Multimodal analysis complete. Review the synthesized intelligence above.'}
-                        </p>
-                    </div>
-                    <div className="hidden md:block">
-                        <div className="px-6 py-2 bg-white text-primary-600 rounded-2xl font-black shadow-xl shadow-black/10">ALFA v2.2</div>
+            {/* Insight Analysis Modeling (Only show if there's metrics or assets) */}
+            {((safeVisuals.kpis && safeVisuals.kpis.length > 0) || 
+              (safeVisuals.charts && safeVisuals.charts.length > 0) || 
+              (safeVisuals.images && safeVisuals.images.length > 0) || 
+              (safeVisuals.videos && safeVisuals.videos.length > 0)) && (
+                <div className="p-8 bg-primary-600 rounded-3xl text-white overflow-hidden relative group shadow-2xl shadow-primary-500/20">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32 group-hover:scale-110 transition-transform"></div>
+                    <div className="relative flex items-center gap-6">
+                        <div className="p-4 bg-white/20 backdrop-blur-md rounded-2xl">
+                            <Zap className="w-10 h-10 fill-current" />
+                        </div>
+                        <div className="flex-1">
+                            <h4 className="text-sm font-black uppercase tracking-[0.2em] opacity-70 mb-1">Expert Decision Insight</h4>
+                            <p className="text-lg font-bold leading-tight">
+                                {safeVisuals.kpis && safeVisuals.kpis.length > 0
+                                    ? `${safeVisuals.kpis.filter(k => k.status === 'good').length} of ${safeVisuals.kpis.length} indicators performing optimally. Review recommendations below.`
+                                    : 'Multimodal analysis complete. Review the synthesized intelligence above.'}
+                            </p>
+                        </div>
+                        <div className="hidden md:block">
+                            <div className="px-6 py-2 bg-white text-primary-600 rounded-2xl font-black shadow-xl shadow-black/10">ALFA v2.2</div>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };

@@ -293,8 +293,7 @@ Note: Providing the <visuals> block is MANDATORY for every intelligence report.
         if (tempMatch) kpis.push({ label: 'Temperature', value: tempMatch[0], status: 'warning' });
 
         if (kpis.length === 0) {
-            kpis.push({ label: 'Analysis Status', value: 'Complete', status: 'good' });
-            kpis.push({ label: 'Intelligence Layer', value: 'ALFA v2.2', status: 'good' });
+            // No specific data found, return empty set to stay strictly data-driven
         }
 
         return { kpis, charts: [], images: [], videos: [] };
