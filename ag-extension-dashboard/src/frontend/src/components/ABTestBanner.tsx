@@ -19,7 +19,7 @@ export const ABTestBanner: React.FC<ABTestBannerProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 animate-slide-up">
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[9999] animate-slide-up">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 max-w-2xl">
         <div className="flex items-start justify-between mb-4">
           <div>
