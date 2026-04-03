@@ -62,6 +62,17 @@ export default {
                     card: 'rgb(var(--color-bg-card-rgb) / <alpha-value>)',
                 }
             },
+            borderRadius: {
+                'card': 'var(--radius-card)',
+                '2xl': 'var(--radius-card)',
+                '3xl': 'var(--radius-card)',
+                'full': '9999px',
+            },
+            boxShadow: {
+                'premium': 'var(--shadow-premium)',
+                'xl': 'var(--shadow-premium)',
+                '2xl': 'var(--shadow-premium)',
+            },
             fontFamily: {
                 sans: ['Inter', 'system-ui', 'sans-serif'],
             },

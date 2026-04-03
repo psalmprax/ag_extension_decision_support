@@ -74,19 +74,20 @@
 
     /* Design Variant Specific Overrides */
     --font-heading: 'Inter', system-ui, sans-serif;
-    --radius-card: 1rem;
-    --shadow-premium: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
-
-:root[data-design-variant="new"] {
-    --font-heading: 'Outfit', 'Inter', system-ui, sans-serif;
-    --radius-card: 1.5rem;
-    --shadow-premium: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --radius-card: 0.75rem;
+    --shadow-premium: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
 :root[data-design-variant="current"] {
     --font-heading: 'Inter', system-ui, sans-serif;
-    --radius-card: 1rem;
+    --radius-card: 0.75rem;
+    --shadow-premium: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+:root[data-design-variant="new"] {
+    --font-heading: 'Outfit', 'Inter', system-ui, sans-serif;
+    --radius-card: 2.5rem;
+    --shadow-premium: 0 35px 60px -15px rgba(0, 0, 0, 0.35);
 }
 
 /* Dark mode CSS variables */
