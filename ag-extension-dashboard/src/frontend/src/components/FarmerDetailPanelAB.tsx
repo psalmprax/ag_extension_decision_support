@@ -21,7 +21,7 @@ interface FarmerDetailPanelProps {
   onMessage?: () => void;
 }
 
-const CurrentFarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({ farmer, onEdit, onDelete, onMessage }) => (
+const CurrentFarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({ farmer, onEdit, onDelete: _onDelete, onMessage }) => (
   <div className="w-96 bg-white border-l border-gray-200 h-full p-4">
     <div className="flex justify-between items-center mb-4">
       <div className="text-lg font-semibold">Farmer Details</div>
@@ -48,7 +48,7 @@ const CurrentFarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({ farmer, on
   </div>
 );
 
-const NewFarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({ farmer, onEdit, onDelete, onMessage }) => (
+const NewFarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({ farmer, onEdit, onDelete: _onDelete, onMessage }) => (
   <div className="w-96 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 h-full flex flex-col">
     <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
       <h2 className="text-lg font-bold text-gray-900 dark:text-white">Farmer Profile</h2>

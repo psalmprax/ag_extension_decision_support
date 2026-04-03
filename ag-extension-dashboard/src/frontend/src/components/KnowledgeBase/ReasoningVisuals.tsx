@@ -185,7 +185,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                                     stroke="none"
                                 >
                                     {data.map((_, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} cornerRadius={4} />
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>
                                 <Tooltip 
