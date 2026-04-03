@@ -1166,9 +1166,9 @@ function App() {
                     </div>
                 </div>
             )}
-            {/* Top Navigation - Minimalist Executive Island (V4) */}
-            <header className="fixed inset-x-0 top-0 z-50 p-4 lg:p-6 pointer-events-none">
-                <div className="max-w-screen-2xl mx-auto flex items-center justify-between gap-6 px-6 py-2.5 bg-white/70 dark:bg-gray-900/80 backdrop-blur-3xl border border-white/20 dark:border-white/5 shadow-xl pointer-events-auto transition-all duration-500 hover:shadow-primary-500/5" style={{ borderRadius: '24px' }}>
+            {/* Top Navigation - Traditional Fixed Header (V5) */}
+            <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-100 dark:border-white/5 h-16 lg:h-20 flex items-center transition-colors">
+                <div className="w-full flex items-center justify-between gap-6 px-6 lg:px-8">
                     <div className="flex items-center gap-5">
                         <button
                             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -1208,7 +1208,7 @@ function App() {
                                 onFocus={() => { if (searchQuery.trim()) setShowGlobalSearch(true); }}
                                 onBlur={() => { setTimeout(() => setShowGlobalSearch(false), 200); }}
                             />
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 hidden lg:flex items-center gap-1 px-1.5 py-0.5 rounded border border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/5 text-[10px] font-black text-gray-400">
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 hidden lg:flex items-center gap-1 px-1.5 py-0.5 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-[10px] font-black text-gray-400">
                                 <span>⌘</span>
                                 <span>K</span>
                             </div>
@@ -1370,7 +1370,7 @@ function App() {
                         initial={{ width: 0, opacity: 0 }}
                         animate={{ width: 260, opacity: 1 }}
                         exit={{ width: 0, opacity: 0 }}
-                        className="h-full z-40 bg-theme-bg-card border-r border-gray-200 dark:border-gray-800 overflow-y-auto transition-colors flex-shrink-0"
+                        className="fixed inset-y-0 left-0 pt-16 lg:pt-20 z-40 bg-theme-bg-card border-r border-gray-200 dark:border-gray-800 overflow-y-auto transition-colors flex-shrink-0"
                     >
                         <nav className="p-4 space-y-2">
                             {navItems.map((item) => (
@@ -1416,7 +1416,7 @@ function App() {
                     </div>
 
                     {/* Main Content Scrollable */}
-                    <main className="flex-1 overflow-y-auto bg-theme-bg-secondary p-8 pt-24 custom-scrollbar">
+                    <main className="flex-1 overflow-y-auto bg-theme-bg-secondary p-8 pt-24 lg:pt-28 custom-scrollbar">
                         <div className="p-8">
                     <div className=''>
                         <ErrorBoundary>
