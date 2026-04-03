@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { 
     BarChart, 
     Bar, 
@@ -64,21 +64,24 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
     const safeVisuals = visuals || { kpis: [], charts: [], images: [], videos: [] };
     if (!visuals && !audio) return null;
 
-    const [isPlaying, setIsPlaying] = React.useState(false);
-    const [selectedImage, setSelectedImage] = React.useState<string | null>(null);
-    const audioRef = React.useRef<HTMLAudioElement | null>(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
 
     const togglePlayback = () => {
         if (!audioRef.current) return;
-        if (isPlaying) {
-            audioRef.current.pause();
-        } else {
-            audioRef.current.play();
+        try {
+            if (isPlaying) {
+                audioRef.current.pause();
+            } else {
+                audioRef.current.play().catch(e => console.warn('Playback blocked:', e));
+            }
+            setIsPlaying(!isPlaying);
+        } catch (e) {
+            console.error('Audio playback error:', e);
         }
-        setIsPlaying(!isPlaying);
     };
 
-    // Helper to convert YouTube Watch URLs to Embed URLs
     const getYoutubeEmbedUrl = (url: string) => {
         if (!url) return '';
         const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -277,11 +280,11 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
             )}
 
             {/* KPI Metrics Grid */}
-            {visuals?.kpis && safeVisuals.kpis.length > 0 && (
+            {safeVisuals.kpis && safeVisuals.kpis.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {safeVisuals.kpis.map((kpi, idx) => (
                         <motion.div 
-                            key={idx}
+                            key={`kpi-${idx}`}
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: idx * 0.1 }}
@@ -304,7 +307,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
             )}
 
             {/* Media Assets (Images/Videos) */}
-            {(safeVisuals.images || safeVisuals.videos) && (
+            {((safeVisuals.images && safeVisuals.images.length > 0) || (safeVisuals.videos && safeVisuals.videos.length > 0)) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {safeVisuals.images?.map((img, idx) => (
                         <motion.div 
@@ -315,7 +318,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                             onClick={() => setSelectedImage(img.url)}
                         >
                             <div className="relative aspect-video rounded-2xl overflow-hidden mb-3">
-                                <img src={img.url} alt={img.caption} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                <img src={img.url} alt={img.caption || 'Agricultural insight'} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                     <div className="p-3 bg-white/20 backdrop-blur-md rounded-2xl text-white">
                                         <Maximize2 className="w-6 h-6" />
@@ -344,9 +347,10 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                             className="bg-white/50 dark:bg-gray-900/40 p-4 rounded-3xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-xl group overflow-hidden"
                         >
                             <div className="relative aspect-video rounded-2xl overflow-hidden mb-3 bg-black flex items-center justify-center shadow-inner">
-                                {vid.url.includes('youtube.com') || vid.url.includes('youtu.be') ? (
+                                {vid.url && (vid.url.includes('youtube.com') || vid.url.includes('youtu.be')) ? (
                                     <iframe 
                                         src={getYoutubeEmbedUrl(vid.url)}
+                                        title={vid.caption || "Video analysis"}
                                         className="w-full h-full border-none"
                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                         allowFullScreen
@@ -381,7 +385,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {safeVisuals.charts.map((chart, idx) => (
                         <motion.div 
-                            key={idx}
+                            key={`chart-${idx}`}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: idx * 0.1 }}
@@ -416,7 +420,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                             className="relative max-w-7xl max-h-full rounded-[2.5rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.5)] border border-white/10"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <img src={selectedImage} className="w-full h-auto max-h-[85vh] object-contain" />
+                            <img src={selectedImage} alt="Enlarged visualization" className="w-full h-auto max-h-[85vh] object-contain" />
                         </motion.div>
                     </motion.div>
                 )}
