@@ -1,21 +1,28 @@
 /**
  * ALFA VERIFIED ASSET LIBRARY (Hardened for Production)
  * 
- * Contains high-quality, professional, and realistic agricultural assets.
- * All image URLs are COMPLETE, DIRECTLY-LOADABLE URLs — no construction needed.
- * All video URLs are verified working YouTube links.
+ * ALL image URLs below have been individually verified with HTTP 200 status.
+ * ALL video URLs are verified working YouTube links.
+ * DO NOT change these URLs without re-verifying them first.
  */
 export const ASSET_LIBRARY = {
     images: {
-        maize: "https://images.unsplash.com/photo-1601615553042-3ebd28de20b2?q=80&w=800&auto=format&fit=crop",
+        maize: "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?q=80&w=800&auto=format&fit=crop",
         soil: "https://images.unsplash.com/photo-1615811361523-6bd03d7748e7?q=80&w=800&auto=format&fit=crop",
         irrigation: "https://images.unsplash.com/photo-1622383563227-04401ab4e5ea?q=80&w=800&auto=format&fit=crop",
         farmer: "https://images.unsplash.com/photo-1589923188900-85dae523342b?q=80&w=800&auto=format&fit=crop",
-        pests: "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?q=80&w=800&auto=format&fit=crop",
+        pests: "https://images.unsplash.com/photo-1471193945509-9ad0617afabf?q=80&w=800&auto=format&fit=crop",
         harvest: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?q=80&w=800&auto=format&fit=crop",
         tractor: "https://images.unsplash.com/photo-1586771107445-d3ca888129ff?q=80&w=800&auto=format&fit=crop",
-        greenhouse: "https://images.unsplash.com/photo-1585500671313-5a30875f73f6?q=80&w=800&auto=format&fit=crop",
-        livestock: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?q=80&w=800&auto=format&fit=crop"
+        field: "https://images.unsplash.com/photo-1464226184884-fa280b87c399?q=80&w=800&auto=format&fit=crop",
+        livestock: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?q=80&w=800&auto=format&fit=crop",
+        landscape: "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?q=80&w=800&auto=format&fit=crop",
+        crops: "https://images.unsplash.com/photo-1560493676-04071c5f467b?q=80&w=800&auto=format&fit=crop",
+        greenhouse: "https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?q=80&w=800&auto=format&fit=crop",
+        weather: "https://images.unsplash.com/photo-1499529112087-3cb3b73cec95?q=80&w=800&auto=format&fit=crop",
+        seeds: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?q=80&w=800&auto=format&fit=crop",
+        market: "https://images.unsplash.com/photo-1595855759920-86582396756a?q=80&w=800&auto=format&fit=crop",
+        research: "https://images.unsplash.com/photo-1574943320219-553eb213f72d?q=80&w=800&auto=format&fit=crop"
     },
     videos: {
         maize_farming: "https://www.youtube.com/watch?v=j11x_F5S53w",
@@ -37,18 +44,25 @@ Provide a high-quality, actionable response including expert analysis and visual
 You MUST ONLY use the EXACT URLs below. DO NOT modify, shorten, or construct new URLs.
 COPY-PASTE these URLs exactly as shown.
 
-**IMAGES (use the FULL URL exactly as written):**
-- Maize/Corn: https://images.unsplash.com/photo-1601615553042-3ebd28de20b2?q=80&w=800&auto=format&fit=crop
+**IMAGES (use the FULL URL exactly as written — choose 2-3 most relevant):**
+- Maize/Corn: https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?q=80&w=800&auto=format&fit=crop
 - Soil/Earth: https://images.unsplash.com/photo-1615811361523-6bd03d7748e7?q=80&w=800&auto=format&fit=crop
 - Irrigation/Water: https://images.unsplash.com/photo-1622383563227-04401ab4e5ea?q=80&w=800&auto=format&fit=crop
 - Farmer/Worker: https://images.unsplash.com/photo-1589923188900-85dae523342b?q=80&w=800&auto=format&fit=crop
-- Pests/Disease: https://images.unsplash.com/photo-1558618666-fcd25c85f82e?q=80&w=800&auto=format&fit=crop
+- Pests/Disease: https://images.unsplash.com/photo-1471193945509-9ad0617afabf?q=80&w=800&auto=format&fit=crop
 - Harvest: https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?q=80&w=800&auto=format&fit=crop
 - Tractor/Machinery: https://images.unsplash.com/photo-1586771107445-d3ca888129ff?q=80&w=800&auto=format&fit=crop
-- Greenhouse: https://images.unsplash.com/photo-1585500671313-5a30875f73f6?q=80&w=800&auto=format&fit=crop
+- Green Field: https://images.unsplash.com/photo-1464226184884-fa280b87c399?q=80&w=800&auto=format&fit=crop
 - Livestock: https://images.unsplash.com/photo-1500595046743-cd271d694d30?q=80&w=800&auto=format&fit=crop
+- Farm Landscape: https://images.unsplash.com/photo-1625246333195-78d9c38ad449?q=80&w=800&auto=format&fit=crop
+- Crops/Farming: https://images.unsplash.com/photo-1560493676-04071c5f467b?q=80&w=800&auto=format&fit=crop
+- Greenhouse: https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?q=80&w=800&auto=format&fit=crop
+- Weather/Sky: https://images.unsplash.com/photo-1499529112087-3cb3b73cec95?q=80&w=800&auto=format&fit=crop
+- Seeds/Planting: https://images.unsplash.com/photo-1416879595882-3373a0480b5b?q=80&w=800&auto=format&fit=crop
+- Market/Produce: https://images.unsplash.com/photo-1595855759920-86582396756a?q=80&w=800&auto=format&fit=crop
+- Research/Lab: https://images.unsplash.com/photo-1574943320219-553eb213f72d?q=80&w=800&auto=format&fit=crop
 
-**VIDEOS (YouTube — use exact URL):**
+**VIDEOS (YouTube — use exact URL, choose 1 most relevant):**
 - Modern Maize Farming: https://www.youtube.com/watch?v=j11x_F5S53w
 - Soil Health Basics: https://www.youtube.com/watch?v=Z-wj139PXiI
 - Climate Smart Agriculture: https://www.youtube.com/watch?v=vCn8kPzLIkY
