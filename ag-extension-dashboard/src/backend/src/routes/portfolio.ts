@@ -4,6 +4,7 @@ import { query, getPool } from '@/services/databaseService';
 import { cacheGet, cacheSet } from '@/services/cacheService';
 import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
+import * as XLSX from 'xlsx';
 
 const router = Router();
 
@@ -219,6 +220,100 @@ router.get('/farmers/:id', async (req: Request, res: Response) => {
     } catch (error) {
         logger.error('Get farmer error:', error);
         res.status(500).json({ success: false, error: 'Failed to get farmer' });
+    }
+});
+
+// Export portfolio as Excel
+router.get('/export/excel', async (req: Request, res: Response) => {
+    try {
+        const { officerId } = req.query;
+        const oId = officerId || 'current';
+        const pool = getPool();
+
+        if (!pool) {
+            return res.status(503).json({ success: false, error: 'Database connection unavailable' });
+        }
+
+        // Get all farmers for this officer
+        const farmersResult = await query(`
+            SELECT f.*, 
+                   (SELECT COUNT(*) FROM visits v WHERE v.farmer_id = f.id AND v.status = 'completed') as total_visits,
+                   (SELECT MAX(v.completed_at) FROM visits v WHERE v.farmer_id = f.id AND v.status = 'completed') as last_visit_date
+            FROM farmers f 
+            WHERE f.user_id = $1
+            ORDER BY f.last_name, f.first_name
+        `, [oId]);
+
+        const farmers = farmersResult.rows;
+        const wb = XLSX.utils.book_new();
+
+        // Summary sheet
+        const summaryData = [
+            ['Portfolio Summary'],
+            [''],
+            ['Extension Officer', oId],
+            ['Export Date', new Date().toLocaleString()],
+            [''],
+            ['Metric', 'Value'],
+            ['Total Farmers', farmers.length],
+            ['Farmers with Visits', farmers.filter((f: any) => f.total_visits > 0).length],
+            ['Total Visits', farmers.reduce((sum: number, f: any) => sum + parseInt(f.total_visits || '0'), 0)],
+        ];
+        const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+        XLSX.utils.book_append_sheet(wb, summarySheet, 'Summary');
+
+        // Farmers list sheet
+        const farmerRows = [
+            ['First Name', 'Last Name', 'Phone', 'Village', 'District', 'Region', 'Farm Size (ha)', 'Crops', 'Total Visits', 'Last Visit']
+        ];
+        for (const farmer of farmers) {
+            farmerRows.push([
+                farmer.first_name || '',
+                farmer.last_name || '',
+                farmer.phone || '',
+                farmer.village || '',
+                farmer.district || '',
+                farmer.region || '',
+                farmer.farm_size_hectares || 0,
+                (farmer.crops || []).join(', '),
+                farmer.total_visits || 0,
+                farmer.last_visit_date ? new Date(farmer.last_visit_date).toLocaleDateString() : 'Never'
+            ]);
+        }
+        const farmerSheet = XLSX.utils.aoa_to_sheet(farmerRows);
+        XLSX.utils.book_append_sheet(wb, farmerSheet, 'Farmers');
+
+        // Get upcoming visits
+        const visitsResult = await query(`
+            SELECT v.*, f.first_name, f.last_name, f.village
+            FROM visits v
+            JOIN farmers f ON f.id = v.farmer_id
+            WHERE v.officer_id = $1 AND v.status = 'scheduled' AND v.scheduled_at > NOW()
+            ORDER BY v.scheduled_at
+            LIMIT 50
+        `, [oId]);
+
+        const visitsRows = [
+            ['Farmer Name', 'Village', 'Scheduled Date', 'Type', 'Notes']
+        ];
+        for (const visit of visitsResult.rows) {
+            visitsRows.push([
+                `${visit.first_name} ${visit.last_name}`,
+                visit.village || '',
+                visit.scheduled_at ? new Date(visit.scheduled_at).toLocaleString() : '',
+                visit.type || 'routine',
+                visit.notes || ''
+            ]);
+        }
+        const visitsSheet = XLSX.utils.aoa_to_sheet(visitsRows);
+        XLSX.utils.book_append_sheet(wb, visitsSheet, 'Upcoming Visits');
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="portfolio_${oId}_${new Date().toISOString().split('T')[0]}.xlsx"`);
+        res.send(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }));
+    } catch (error) {
+        logger.error('Export portfolio error:', error);
+        res.status(500).json({ success: false, error: 'Failed to export portfolio' });
     }
 });
 

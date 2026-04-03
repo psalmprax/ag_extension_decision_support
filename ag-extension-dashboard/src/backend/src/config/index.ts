@@ -26,6 +26,7 @@ export interface AppConfig {
     externalApis: {
         weather: { apiKey: string; url: string };
         fao: { url: string };
+        tavily: { apiKey: string };
     };
     cors: { origin: string };
 }
@@ -113,6 +114,9 @@ export const config: AppConfig = {
         },
         fao: {
             url: getEnv('FAO_API_URL', 'https://fenixservices.fao.org/fao/v1'),
+        },
+        tavily: {
+            apiKey: getEnv('TAVILY_API_KEY'),
         },
     },
 

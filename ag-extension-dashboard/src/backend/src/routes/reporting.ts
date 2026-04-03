@@ -7,6 +7,8 @@ import { authorize, AuthRequest } from '@/middleware/authorize';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { usageService } from '../services/usageService';
 import { bulkOperationsService } from '@/services/bulkOperationsService';
+import PDFDocument from 'pdfkit';
+import * as XLSX from 'xlsx';
 
 const router = Router();
 
@@ -203,6 +205,140 @@ router.get('/:id/download', async (req: Request, res: Response) => {
     } catch (error) {
         logger.error('Download report error:', error);
         res.status(500).json({ success: false, error: 'Failed to download report' });
+    }
+});
+
+// Download report as PDF
+router.get('/:id/download/pdf', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const result = await query('SELECT * FROM reports WHERE id = $1', [id]);
+        const report = result.rows[0];
+
+        if (!report) {
+            return res.status(404).json({ success: false, error: 'Report not found' });
+        }
+
+        const doc = new PDFDocument({ margin: 50 });
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="report_${id}.pdf"`);
+
+        doc.pipe(res);
+
+        // Header
+        doc.fontSize(20).fillColor('#2c3e50').text('Agricultural Extension Report', { align: 'center' });
+        doc.moveDown(0.5);
+        doc.fontSize(14).fillColor('#34495e').text(report.title || 'Activity Report', { align: 'center' });
+        doc.moveDown(0.3);
+        doc.fontSize(10).fillColor('#7f8c8d').text(`Generated: ${new Date(report.created_at).toLocaleString()}`, { align: 'center' });
+        doc.moveDown(2);
+
+        // Report Details
+        doc.fontSize(12).fillColor('#2c3e50').text('Report Details', { underline: true });
+        doc.moveDown(0.5);
+        doc.fontSize(10).fillColor('#34495e');
+        doc.text(`Report Type: ${report.report_type}`);
+        doc.text(`Status: ${report.status}`);
+        doc.text(`Period: ${report.start_date ? new Date(report.start_date).toLocaleDateString() : 'N/A'} - ${report.end_date ? new Date(report.end_date).toLocaleDateString() : 'N/A'}`);
+        doc.moveDown(1);
+
+        // Visit Data
+        const data = report.report_data as any;
+        if (data.visits) {
+            doc.fontSize(12).fillColor('#2c3e50').text('Visit Statistics', { underline: true });
+            doc.moveDown(0.5);
+            doc.fontSize(10).fillColor('#34495e');
+            doc.text(`Total Visits: ${data.visits.total || 0}`);
+            doc.text(`Completed Visits: ${data.visits.completed || 0}`);
+            doc.text(`Total Minutes: ${data.visits.total_minutes || 0}`);
+            doc.moveDown(1);
+        }
+
+        // Conversation Data
+        if (data.conversations) {
+            doc.fontSize(12).fillColor('#2c3e50').text('Conversation Statistics', { underline: true });
+            doc.moveDown(0.5);
+            doc.fontSize(10).fillColor('#34495e');
+            doc.text(`Total Conversations: ${data.conversations.total_conversations || 0}`);
+            doc.text(`Rated Conversations: ${data.conversations.rated || 0}`);
+            doc.text(`Average Satisfaction: ${data.conversations.avg_satisfaction ? data.conversations.avg_satisfaction.toFixed(1) + '/5' : 'N/A'}`);
+            doc.moveDown(1);
+        }
+
+        // Footer
+        doc.moveDown(2);
+        doc.fontSize(8).fillColor('#95a5a6').text('Agricultural Extension Decision Support System', { align: 'center' });
+
+        doc.end();
+    } catch (error) {
+        logger.error('Download PDF error:', error);
+        res.status(500).json({ success: false, error: 'Failed to download PDF' });
+    }
+});
+
+// Download report as Excel
+router.get('/:id/download/excel', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const result = await query('SELECT * FROM reports WHERE id = $1', [id]);
+        const report = result.rows[0];
+
+        if (!report) {
+            return res.status(404).json({ success: false, error: 'Report not found' });
+        }
+
+        const data = report.report_data as any;
+        const wb = XLSX.utils.book_new();
+
+        // Summary Sheet
+        const summaryData = [
+            ['Agricultural Extension Report'],
+            [''],
+            ['Report Title', report.title || 'Activity Report'],
+            ['Report Type', report.report_type],
+            ['Status', report.status],
+            ['Generated', new Date(report.created_at).toLocaleString()],
+            ['Period Start', report.start_date ? new Date(report.start_date).toLocaleDateString() : 'N/A'],
+            ['Period End', report.end_date ? new Date(report.end_date).toLocaleDateString() : 'N/A'],
+        ];
+        const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+        XLSX.utils.book_append_sheet(wb, summarySheet, 'Summary');
+
+        // Visits Sheet
+        if (data.visits) {
+            const visitsData = [
+                ['Visit Statistics'],
+                [''],
+                ['Metric', 'Value'],
+                ['Total Visits', data.visits.total || 0],
+                ['Completed Visits', data.visits.completed || 0],
+                ['Total Minutes', data.visits.total_minutes || 0],
+            ];
+            const visitsSheet = XLSX.utils.aoa_to_sheet(visitsData);
+            XLSX.utils.book_append_sheet(wb, visitsSheet, 'Visits');
+        }
+
+        // Conversations Sheet
+        if (data.conversations) {
+            const convData = [
+                ['Conversation Statistics'],
+                [''],
+                ['Metric', 'Value'],
+                ['Total Conversations', data.conversations.total_conversations || 0],
+                ['Rated Conversations', data.conversations.rated || 0],
+                ['Average Satisfaction', data.conversations.avg_satisfaction || 0],
+            ];
+            const convSheet = XLSX.utils.aoa_to_sheet(convData);
+            XLSX.utils.book_append_sheet(wb, convSheet, 'Conversations');
+        }
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="report_${id}.xlsx"`);
+        XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+        res.send(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }));
+    } catch (error) {
+        logger.error('Download Excel error:', error);
+        res.status(500).json({ success: false, error: 'Failed to download Excel' });
     }
 });
 

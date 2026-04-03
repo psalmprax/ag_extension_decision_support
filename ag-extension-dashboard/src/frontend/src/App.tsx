@@ -1166,8 +1166,6 @@ function App() {
                     </div>
                 </div>
             )}
-            {/* A/B Test Banner */}
-            <ABTestBanner />
             {/* Top Navigation - Minimalist Executive Island (V4) */}
             <header className="fixed inset-x-0 top-0 z-50 p-4 lg:p-6 pointer-events-none">
                 <div className="max-w-screen-2xl mx-auto flex items-center justify-between gap-6 px-6 py-2.5 bg-white/70 dark:bg-gray-900/80 backdrop-blur-3xl border border-white/20 dark:border-white/5 shadow-xl pointer-events-auto transition-all duration-500 hover:shadow-primary-500/5" style={{ borderRadius: '24px' }}>
@@ -1391,7 +1389,8 @@ function App() {
                                 </button>
                             ))}
 
-                            <div className="mt-8 pt-8 border-t border-gray-100 dark:border-gray-800">
+                             <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800 space-y-4">
+                                <ABTestBanner inline />
                                 <UsageQuota />
                             </div>
 

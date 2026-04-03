@@ -7,6 +7,7 @@ import { getPool, query } from '@/services/databaseService';
 import { getPrisma } from '@/services/prismaService';
 import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
+import { tavilyService } from '@/services/tavilyService';
 
 const router = Router();
 
@@ -220,6 +221,44 @@ router.get('/stats', async (_req: Request, res: Response) => {
     } catch (error) {
         logger.error('Get search stats error:', error);
         res.status(500).json({ success: false, error: 'Failed to get search statistics' });
+    }
+});
+
+// Search external agricultural data via Tavily
+router.get('/search/external', async (req: Request, res: Response) => {
+    try {
+        const { q, limit = '5' } = req.query;
+
+        if (!q) {
+            return res.status(400).json({ success: false, error: 'Query is required' });
+        }
+
+        if (!tavilyService.isConfigured()) {
+            return res.status(503).json({ 
+                success: false, 
+                error: 'Web search not configured',
+                message: 'Add TAVILY_API_KEY to enable external agricultural data search'
+            });
+        }
+
+        const results = await tavilyService.search(q as string, parseInt(limit as string));
+
+        if (!results) {
+            return res.status(500).json({ success: false, error: 'Search failed' });
+        }
+
+        res.json({
+            success: true,
+            data: {
+                query: q,
+                answer: results.answer,
+                results: results.results,
+                source: 'tavily',
+            },
+        });
+    } catch (error) {
+        logger.error('External search error:', error);
+        res.status(500).json({ success: false, error: 'Failed to search external sources' });
     }
 });
 
