@@ -10,6 +10,7 @@ interface WeatherWidgetProps {
 
 interface WeatherData {
     temp: number;
+    temperature: number;
     condition: string;
     humidity: number;
     windSpeed: number;
