@@ -6,6 +6,10 @@ import { Tool } from './types';
 import { getDateTool } from './getDate';
 import { weatherTool } from './weatherTool';
 import { scheduleVisitTool } from './scheduleVisit';
+import { marketPriceTool } from './marketPriceTool';
+import { diseaseAlertTool } from './diseaseAlertTool';
+import { researchTool } from './researchTool';
+import { registerAlertTool } from './registerAlertTool';
 
 /**
  * A registry of all available tools for the AI agent.
@@ -15,6 +19,10 @@ export const toolRegistry: Tool<any>[] = [
   getDateTool as Tool<any>,
   weatherTool as Tool<any>,
   scheduleVisitTool as Tool<any>,
+  marketPriceTool as Tool<any>,
+  diseaseAlertTool as Tool<any>,
+  researchTool as Tool<any>,
+  registerAlertTool as Tool<any>,
 ];
 
 /**

@@ -307,14 +307,18 @@ const ActionableAI = () => {
                         <h4 className="text-[10px] font-black text-primary-400 uppercase tracking-[0.3em] mb-4">Performance Index</h4>
                         {performanceData?.metrics ? (
                             <div className="flex items-center justify-center gap-4">
-                                <div className="text-5xl font-black text-white tracking-tighter">{performanceData.metrics.resolutionRate || '—'}%</div>
+                                <div className="text-5xl font-black text-white tracking-tighter">
+                                    {performanceData.metrics.resolutionRate > 0 ? performanceData.metrics.resolutionRate : 0}%
+                                </div>
                                 <div className="text-left">
-                                    <span className="block text-[8px] font-black text-green-400 uppercase">{performanceData.metrics.satisfactionScore || '—'}/5 satisfaction</span>
+                                    <span className="block text-[8px] font-black text-green-400 uppercase">
+                                        {performanceData.metrics.satisfactionScore || 0}/5 satisfaction
+                                    </span>
                                     <span className="block text-[10px] font-black text-white/60 uppercase">Resolution Rate</span>
                                 </div>
                             </div>
                         ) : (
-                            <div className="text-3xl font-black text-white/40">—</div>
+                            <div className="text-3xl font-black text-white/40">0%</div>
                         )}
                         <button
                             onClick={handleGenerateStrategy}

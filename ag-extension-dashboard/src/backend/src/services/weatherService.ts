@@ -2,7 +2,7 @@ import axios from 'axios';
 import { logger } from '@/utils/logger';
 
 export interface WeatherData {
-    temp: number;
+    temperature: number;
     condition: string;
     humidity: number;
     windSpeed: number;
@@ -91,7 +91,7 @@ export class WeatherService {
             const daily = weatherResponse.data.daily;
 
             return {
-                temp: Math.round(current.temperature_2m),
+                temperature: Math.round(current.temperature_2m),
                 condition: getCondition(current.weather_code),
                 humidity: Math.round(current.relative_humidity_2m),
                 windSpeed: Math.round(current.wind_speed_10m),

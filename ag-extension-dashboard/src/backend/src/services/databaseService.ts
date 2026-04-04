@@ -32,10 +32,89 @@ export async function initializeDatabase(): Promise<void> {
 
     // Create tables if they don't exist (legacy fallback)
     await createTables();
+
+    // Seed initial data if tables are empty
+    await seedInitialData();
   } catch (error) {
     logger.error('Failed to initialize database:', error);
     // Continue without database for development
     logger.warn('Continuing without database connection');
+  }
+}
+
+/**
+ * Seeds the database with initial "Real-First" data for the dashboard.
+ * Only seeds if the tables are empty.
+ */
+export async function seedInitialData(): Promise<void> {
+  if (!pool) return;
+
+  try {
+    // Check if we already have any users
+    const userCount = await pool.query('SELECT COUNT(*) FROM users');
+    if (parseInt(userCount.rows[0].count) > 0) {
+      logger.info('Database already has data, skipping initial seed');
+      return;
+    }
+
+    logger.info('Database empty, seeding "Real-First" dashboard data...');
+
+    // 1. Seed Default Admin/Officer
+    const officerId = '00000000-0000-0000-0000-000000000001';
+    await pool.query(`
+      INSERT INTO users (id, email, password_hash, first_name, last_name, role, region, phone, is_active)
+      VALUES ($1, 'demo@ag-extension.com', 'hashed_password', 'Demo', 'User', 'admin', 'Central Region', '+254712345678', true)
+    `, [officerId]);
+
+    // 2. Seed Farmers
+    const farmerId = '00000000-0000-0000-0000-000000000002';
+    await pool.query(`
+      INSERT INTO farmers (id, user_id, first_name, last_name, location, village, region, crops, farm_size_hectares, temperature, soil_moisture, ph_level, ai_confidence)
+      VALUES ($1, $2, 'John', 'Kariuki', 'Kiambu County', 'Limuru', 'Central Region', ARRAY['Maize', 'Beans'], 2.5, 22.5, 45.0, 6.5, 88.0)
+    `, [farmerId, officerId]);
+
+    // 3. Seed Market Prices
+    await pool.query(`
+      INSERT INTO market_prices (crop, price, trend)
+      VALUES 
+      ('White Maize (90kg)', 'KES 4,200', '+5%'),
+      ('Dry Beans (90kg)', 'KES 12,500', '-2%'),
+      ('Sorghum (90kg)', 'KES 3,800', '+1%'),
+      ('Finger Millet (90kg)', 'KES 9,200', 'Stable')
+    `);
+
+    // 4. Seed Alerts
+    await pool.query(`
+      INSERT INTO alerts (type, severity, title, description, location, affected_farmers, is_active)
+      VALUES 
+      ('pest', 'high', 'Fall Armyworm Outbreak', 'High infestation reported in Kiambu. Immediate scouting and localized spraying recommended.', 'Central Region', $1, true),
+      ('weather', 'medium', 'Late Season Frost Warning', 'Predicted temperature drop below 5°C on Tuesday night. Protective mulching advised.', 'Central Region', $1, true)
+    `, [[farmerId]]);
+
+    // 5. Seed Visits (Yield History source)
+    await pool.query(`
+      INSERT INTO visits (officer_id, farmer_id, visit_type, status, scheduled_at, completed_at, notes, outcomes)
+      VALUES 
+      ($1, $2, 'routine', 'completed', NOW() - INTERVAL '30 days', NOW() - INTERVAL '30 days', 'Initial planting check.', 'Excellent seedbed preparation. Advised on spacing.'),
+      ($1, $2, 'pest_control', 'completed', NOW() - INTERVAL '15 days', NOW() - INTERVAL '15 days', 'Mid-season health scan.', 'Slight nitrogen deficiency detected. Top-dressing applied.')
+    `, [officerId, farmerId]);
+
+    // 6. Seed Conversations (Performance Index source)
+    const convId = '00000000-0000-0000-0000-000000000003';
+    await pool.query(`
+      INSERT INTO chat_conversations (id, farmer_id, officer_id, status, satisfaction_score, language)
+      VALUES ($1, $2, $3, 'resolved', 5, 'en')
+    `, [convId, farmerId, officerId]);
+
+    await pool.query(`
+      INSERT INTO chat_messages (conversation_id, role, content)
+      VALUES ($1, 'farmer', 'When should I apply the first top-dressing for maize?'),
+             ($1, 'assistant', 'Top-dressing should typically be applied when the maize is knee-high, roughly 3-4 weeks after planting.')
+    `, [convId]);
+
+    logger.info('Dashboard data seeding completed successfully');
+  } catch (error) {
+    logger.error('Error seeding initial data:', error);
   }
 }
 
@@ -234,17 +313,17 @@ export async function createTables(): Promise<void> {
       created_at TIMESTAMP DEFAULT NOW()
     );
 
+    -- market_prices table
+    CREATE TABLE IF NOT EXISTS market_prices (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      crop VARCHAR(100) NOT NULL,
+      price VARCHAR(50) NOT NULL,
+      trend VARCHAR(20) NOT NULL,
+      updated_at TIMESTAMP DEFAULT NOW()
+    );
+
     -- SMS history table
     CREATE TABLE IF NOT EXISTS sms_history (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      sender_id UUID REFERENCES users(id),
-      recipient_phone VARCHAR(20) NOT NULL,
-      farmer_id UUID REFERENCES farmers(id),
-      message TEXT NOT NULL,
-      status VARCHAR(50) DEFAULT 'sent',
-      provider VARCHAR(50),
-      created_at TIMESTAMP DEFAULT NOW()
-    );
 
     -- Create indexes
     CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
