@@ -60,7 +60,7 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location = 'Kenya'
                 {WeatherIconComponent}
                 <div className="flex items-baseline gap-1">
                     <span className="text-sm font-black text-gray-900 dark:text-white tracking-tighter">
-                        {Math.round(weather.temp)}°
+                        {Math.round(weather.temperature ?? weather.temp ?? 0)}°
                     </span>
                     <span className="text-[10px] font-black text-primary-500/60 uppercase">C</span>
                 </div>

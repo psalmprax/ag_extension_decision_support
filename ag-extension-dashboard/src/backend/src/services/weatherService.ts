@@ -3,6 +3,7 @@ import { logger } from '@/utils/logger';
 
 export interface WeatherData {
     temperature: number;
+    temp: number;
     condition: string;
     humidity: number;
     windSpeed: number;
@@ -92,6 +93,7 @@ export class WeatherService {
 
             return {
                 temperature: Math.round(current.temperature_2m),
+                temp: Math.round(current.temperature_2m),
                 condition: getCondition(current.weather_code),
                 humidity: Math.round(current.relative_humidity_2m),
                 windSpeed: Math.round(current.wind_speed_10m),

@@ -50,69 +50,92 @@ export async function seedInitialData(): Promise<void> {
   if (!pool) return;
 
   try {
-    // Check if we already have any users
+    // 1. Seed Default Admin/Officer if no users exist
     const userCount = await pool.query('SELECT COUNT(*) FROM users');
-    if (parseInt(userCount.rows[0].count) > 0) {
-      logger.info('Database already has data, skipping initial seed');
-      return;
+    let officerId = '00000000-0000-0000-0000-000000000001';
+    
+    if (parseInt(userCount.rows[0].count) === 0) {
+      logger.info('Seeding default officer...');
+      await pool.query(`
+        INSERT INTO users (id, email, password_hash, first_name, last_name, role, region, phone, is_active)
+        VALUES ($1, 'demo@ag-extension.com', 'hashed_password', 'Demo', 'User', 'admin', 'Central Region', '+254712345678', true)
+      `, [officerId]);
+    } else {
+      // Get existing user ID if it's the demo one or just pick first one
+      const existingUser = await pool.query('SELECT id FROM users LIMIT 1');
+      officerId = existingUser.rows[0].id;
     }
 
-    logger.info('Database empty, seeding "Real-First" dashboard data...');
+    // 2. Seed Farmers if empty
+    const farmerCount = await pool.query('SELECT COUNT(*) FROM farmers');
+    let farmerId = '00000000-0000-0000-0000-000000000002';
+    if (parseInt(farmerCount.rows[0].count) === 0) {
+      logger.info('Seeding initial farmers...');
+      await pool.query(`
+        INSERT INTO farmers (id, user_id, first_name, last_name, location, village, region, crops, farm_size_hectares, temperature, soil_moisture, ph_level, ai_confidence)
+        VALUES ($1, $2, 'John', 'Kariuki', 'Kiambu County', 'Limuru', 'Central Region', ARRAY['Maize', 'Beans'], 2.5, 22.5, 45.0, 6.5, 88.0)
+      `, [farmerId, officerId]);
+    } else {
+      const existingFarmer = await pool.query('SELECT id FROM farmers LIMIT 1');
+      farmerId = existingFarmer.rows[0].id;
+    }
 
-    // 1. Seed Default Admin/Officer
-    const officerId = '00000000-0000-0000-0000-000000000001';
-    await pool.query(`
-      INSERT INTO users (id, email, password_hash, first_name, last_name, role, region, phone, is_active)
-      VALUES ($1, 'demo@ag-extension.com', 'hashed_password', 'Demo', 'User', 'admin', 'Central Region', '+254712345678', true)
-    `, [officerId]);
+    // 3. Seed Market Prices if empty
+    const priceCount = await pool.query('SELECT COUNT(*) FROM market_prices');
+    if (parseInt(priceCount.rows[0].count) === 0) {
+      logger.info('Seeding initial market prices...');
+      await pool.query(`
+        INSERT INTO market_prices (crop, price, trend)
+        VALUES 
+        ('White Maize (90kg)', 'KES 4,200', '+5%'),
+        ('Dry Beans (90kg)', 'KES 12,500', '-2%'),
+        ('Sorghum (90kg)', 'KES 3,800', '+1%'),
+        ('Finger Millet (90kg)', 'KES 9,200', 'Stable')
+      `);
+    }
 
-    // 2. Seed Farmers
-    const farmerId = '00000000-0000-0000-0000-000000000002';
-    await pool.query(`
-      INSERT INTO farmers (id, user_id, first_name, last_name, location, village, region, crops, farm_size_hectares, temperature, soil_moisture, ph_level, ai_confidence)
-      VALUES ($1, $2, 'John', 'Kariuki', 'Kiambu County', 'Limuru', 'Central Region', ARRAY['Maize', 'Beans'], 2.5, 22.5, 45.0, 6.5, 88.0)
-    `, [farmerId, officerId]);
+    // 4. Seed Alerts if empty
+    const alertCount = await pool.query('SELECT COUNT(*) FROM alerts');
+    if (parseInt(alertCount.rows[0].count) === 0) {
+      logger.info('Seeding initial alerts...');
+      await pool.query(`
+        INSERT INTO alerts (type, severity, title, description, location, affected_farmers, is_active)
+        VALUES 
+        ('pest', 'high', 'Fall Armyworm Outbreak', 'High infestation reported in Kiambu. Immediate scouting and localized spraying recommended.', 'Central Region', $1, true),
+        ('weather', 'medium', 'Late Season Frost Warning', 'Predicted temperature drop below 5°C on Tuesday night. Protective mulching advised.', 'Central Region', $1, true)
+      `, [[farmerId]]);
+    }
 
-    // 3. Seed Market Prices
-    await pool.query(`
-      INSERT INTO market_prices (crop, price, trend)
-      VALUES 
-      ('White Maize (90kg)', 'KES 4,200', '+5%'),
-      ('Dry Beans (90kg)', 'KES 12,500', '-2%'),
-      ('Sorghum (90kg)', 'KES 3,800', '+1%'),
-      ('Finger Millet (90kg)', 'KES 9,200', 'Stable')
-    `);
+    // 5. Seed Visits if empty
+    const visitCount = await pool.query('SELECT COUNT(*) FROM visits');
+    if (parseInt(visitCount.rows[0].count) === 0) {
+      logger.info('Seeding initial visits and yield history...');
+      await pool.query(`
+        INSERT INTO visits (officer_id, farmer_id, visit_type, status, scheduled_at, completed_at, notes, outcomes)
+        VALUES 
+        ($1, $2, 'routine', 'completed', NOW() - INTERVAL '30 days', NOW() - INTERVAL '30 days', 'Initial planting check.', 'Excellent seedbed preparation. Advised on spacing.'),
+        ($1, $2, 'pest_control', 'completed', NOW() - INTERVAL '15 days', NOW() - INTERVAL '15 days', 'Mid-season health scan.', 'Slight nitrogen deficiency detected. Top-dressing applied.')
+      `, [officerId, farmerId]);
+    }
 
-    // 4. Seed Alerts
-    await pool.query(`
-      INSERT INTO alerts (type, severity, title, description, location, affected_farmers, is_active)
-      VALUES 
-      ('pest', 'high', 'Fall Armyworm Outbreak', 'High infestation reported in Kiambu. Immediate scouting and localized spraying recommended.', 'Central Region', $1, true),
-      ('weather', 'medium', 'Late Season Frost Warning', 'Predicted temperature drop below 5°C on Tuesday night. Protective mulching advised.', 'Central Region', $1, true)
-    `, [[farmerId]]);
+    // 6. Seed Conversations if empty
+    const chatCount = await pool.query('SELECT COUNT(*) FROM chat_conversations');
+    if (parseInt(chatCount.rows[0].count) === 0) {
+      logger.info('Seeding initial chat history for performance index...');
+      const convId = '00000000-0000-0000-0000-000000000003';
+      await pool.query(`
+        INSERT INTO chat_conversations (id, farmer_id, officer_id, status, satisfaction_score, language)
+        VALUES ($1, $2, $3, 'resolved', 5, 'en')
+      `, [convId, farmerId, officerId]);
 
-    // 5. Seed Visits (Yield History source)
-    await pool.query(`
-      INSERT INTO visits (officer_id, farmer_id, visit_type, status, scheduled_at, completed_at, notes, outcomes)
-      VALUES 
-      ($1, $2, 'routine', 'completed', NOW() - INTERVAL '30 days', NOW() - INTERVAL '30 days', 'Initial planting check.', 'Excellent seedbed preparation. Advised on spacing.'),
-      ($1, $2, 'pest_control', 'completed', NOW() - INTERVAL '15 days', NOW() - INTERVAL '15 days', 'Mid-season health scan.', 'Slight nitrogen deficiency detected. Top-dressing applied.')
-    `, [officerId, farmerId]);
+      await pool.query(`
+        INSERT INTO chat_messages (conversation_id, role, content)
+        VALUES ($1, 'farmer', 'When should I apply the first top-dressing for maize?'),
+               ($1, 'assistant', 'Top-dressing should typically be applied when the maize is knee-high, roughly 3-4 weeks after planting.')
+      `, [convId]);
+    }
 
-    // 6. Seed Conversations (Performance Index source)
-    const convId = '00000000-0000-0000-0000-000000000003';
-    await pool.query(`
-      INSERT INTO chat_conversations (id, farmer_id, officer_id, status, satisfaction_score, language)
-      VALUES ($1, $2, $3, 'resolved', 5, 'en')
-    `, [convId, farmerId, officerId]);
-
-    await pool.query(`
-      INSERT INTO chat_messages (conversation_id, role, content)
-      VALUES ($1, 'farmer', 'When should I apply the first top-dressing for maize?'),
-             ($1, 'assistant', 'Top-dressing should typically be applied when the maize is knee-high, roughly 3-4 weeks after planting.')
-    `, [convId]);
-
-    logger.info('Dashboard data seeding completed successfully');
+    logger.info('Dashboard data verification and seeding completed successfully');
   } catch (error) {
     logger.error('Error seeding initial data:', error);
   }

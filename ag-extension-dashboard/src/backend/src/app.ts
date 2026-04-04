@@ -76,7 +76,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
 setupSwagger(app);
 
 // Health check
-app.get('/health', async (_req: Request, res: Response) => {
+const healthHandler = async (_req: Request, res: Response) => {
     let dbStatus = 'unknown';
     let cacheStatus = 'unknown';
     try {
@@ -108,7 +108,10 @@ app.get('/health', async (_req: Request, res: Response) => {
         environment: config.nodeEnv,
         services: { database: dbStatus, cache: cacheStatus }
     });
-});
+};
+
+app.get('/health', healthHandler);
+app.get('/api/health', healthHandler);
 
 app.get('/health/live', (_req: Request, res: Response) => res.json({ status: 'ok' }));
 app.get('/health/ready', (_req: Request, res: Response) => res.json({ status: 'ready' }));
@@ -159,15 +162,6 @@ app.use('/api/billing', billingRoutes);
 app.use('/api/shares', shareRouter);
 app.use('/api/public/shares', publicShareRouter);
 app.use('/api/support', supportRoutes);
-app.use('/api/health', (req: Request, res: Response) => {
-    res.json({
-        status: 'healthy',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-        environment: process.env.NODE_ENV || 'development'
-    });
-});
-
 // Restore original path after routing
 app.use(restoreOriginalPath);
 
