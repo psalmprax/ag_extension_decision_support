@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -869,9 +870,9 @@ export function FarmerMap({
             </div>
 
             {/* Fullscreen Modal */}
-            {isExpanded && (
-                <div className={`fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-0 '`}>
-                    <div className={`' bg-white dark:bg-gray-900 rounded-none shadow-2xl w-screen h-screen max-w-none flex flex-col overflow-hidden border-0`} style={{ width: '100vw', height: '100vh' }}>
+            {isExpanded && document.body && createPortal(
+                <div className={`fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-0 `}>
+                    <div className={` bg-white dark:bg-gray-900 rounded-none shadow-2xl w-screen h-screen max-w-none flex flex-col overflow-hidden border-0`} style={{ width: '100vw', height: '100vh' }}>
                         {/* Modal Header */}
                         <div className={`flex items-center justify-between px-8 py-5 border-b 'border-gray-100 dark:border-gray-800' 'bg-white dark:bg-gray-900'`}>
                             <div className="flex items-center gap-4">
@@ -1000,7 +1001,8 @@ export function FarmerMap({
                             </div>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Context Menu */}
