@@ -93,6 +93,7 @@ import { BulkUpdateModal } from './components/BulkUpdateModal';
 // A/B Test Imports
 import { ABTestBanner, DesignToggle } from '@/components/ABTestBanner';
 import { useFeatureFlags } from '@/store/useFeatureFlags';
+import { Login } from './pages/Login';
 
 
 // COLORS constant removed as it's unused
@@ -457,6 +458,7 @@ function App() {
 
     // Fetch unread notification count
     useEffect(() => {
+        if (!storeUser) return;
         const loadUnreadCount = async () => {
             try {
                 const count = await fetchUnreadCount();
@@ -468,7 +470,7 @@ function App() {
         loadUnreadCount();
         const interval = setInterval(loadUnreadCount, 60000);
         return () => clearInterval(interval);
-    }, []);
+    }, [storeUser]);
 
     const handleOpenFarmerDetail = (farmer: Farmer) => {
         setSelectedFarmer(farmer);
@@ -719,16 +721,17 @@ function App() {
     const { data: userResponse } = useQuery<ProfileResponse>({
         queryKey: ['user-profile'],
         queryFn: fetchUserProfile,
+        enabled: !!storeUser
     });
 
-    const user = userResponse?.data;
+    const user = storeUser || userResponse?.data;
     const isOfficer = user?.role === 'extension_officer';
 
     // Fetch Dashboard Data
     const { data: dashboardResponse, isLoading, isError } = useQuery<any>({
         queryKey: ['dashboard'],
         queryFn: fetchDashboardData,
-        enabled: activeTab === 'dashboard'
+        enabled: activeTab === 'dashboard' && !!user
     });
 
     const dashboardData = dashboardResponse?.data;
@@ -737,7 +740,7 @@ function App() {
     const { data: farmersResponse } = useQuery<{ success: boolean; data: { farmers: Farmer[] } }>({
         queryKey: ['farmers'],
         queryFn: fetchFarmers,
-        enabled: activeTab === 'portfolio'
+        enabled: activeTab === 'portfolio' && !!user
     });
     const queryFarmers = farmersResponse?.data?.farmers || [];
     const effectiveFarmers = queryFarmers.length > 0 ? queryFarmers : storeFarmers;
@@ -746,7 +749,7 @@ function App() {
     const { data: visitsResponse, refetch: refetchVisits } = useQuery<{ success: boolean; data: { visits: Visit[] } }>({
         queryKey: ['visits'],
         queryFn: fetchVisits,
-        enabled: activeTab === 'visits'
+        enabled: activeTab === 'visits' && !!user
     });
     const visits = visitsResponse?.data?.visits || [];
 
@@ -754,7 +757,7 @@ function App() {
     const { data: reportsResponse, refetch: refetchReports } = useQuery<{ success: boolean; data: { reports: Report[] } }>({
         queryKey: ['reports'],
         queryFn: fetchReports,
-        enabled: activeTab === 'reports'
+        enabled: activeTab === 'reports' && !!user
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const reports = (reportsResponse as any)?.data?.reports || [];
@@ -764,7 +767,7 @@ function App() {
     const { data: performanceResponse } = useQuery<{ success: boolean; data: any }>({
         queryKey: ['performance'],
         queryFn: fetchPerformanceData,
-        enabled: activeTab === 'analytics' || activeTab === 'dashboard'
+        enabled: (activeTab === 'analytics' || activeTab === 'dashboard') && !!user
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const performanceData = (performanceResponse as any)?.data;
@@ -773,7 +776,7 @@ function App() {
     const { data: transactionsResponse } = useQuery<{ success: boolean; data: any[] }>({
         queryKey: ['transactions'],
         queryFn: getMyTransactions,
-        enabled: activeTab === 'billing' || showGlobalSearch
+        enabled: (activeTab === 'billing' || showGlobalSearch) && !!user
     });
     const transactions = transactionsResponse?.data || [];
 
@@ -1092,21 +1095,23 @@ function App() {
     };
 
     useEffect(() => {
+        if (!user) return;
         if (activeTab === 'aiassistant') {
             loadConversations();
         }
         if (activeTab === 'farmerchat') {
             loadFarmerConversations();
         }
-    }, [activeTab, loadConversations, loadFarmerConversations]);
+    }, [activeTab, loadConversations, loadFarmerConversations, user]);
 
     useEffect(() => {
+        if (!user) return;
         if (activeConvId) {
             loadMessages(activeConvId);
         }
-    }, [activeConvId, loadMessages]);
+    }, [activeConvId, loadMessages, user]);
 
-    if (isError) return <div className="flex items-center justify-center min-h-screen text-red-500 bg-gray-50 dark:bg-gray-900">{t('error_loading')}</div>;
+    if (user && isError) return <div className="flex items-center justify-center min-h-screen text-red-500 bg-gray-50 dark:bg-gray-900">{t('error_loading')}</div>;
 
     const ThemeToggle = () => (
         <button
@@ -1149,6 +1154,14 @@ function App() {
 
         return items;
     };
+
+    if (!user) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+                <Login />
+            </div>
+        );
+    }
 
     return (
         <div

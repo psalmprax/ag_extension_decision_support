@@ -22,6 +22,7 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location = 'Kenya'
         queryKey: ['weather', location],
         queryFn: () => fetchWeather(location),
         refetchInterval: 1000 * 60 * 30, // 30 mins
+        enabled: !!localStorage.getItem('token')
     });
 
     if (isLoading) {
