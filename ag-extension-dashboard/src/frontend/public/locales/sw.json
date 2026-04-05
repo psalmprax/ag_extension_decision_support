@@ -17,6 +17,8 @@
   "analytics_disease_alerts": "Tahadhari za Magonjwa",
   "analytics_first_contact_res": "Matokeo ya Mawasiliano ya Kwanza",
   "analytics_follow_up_rate": "Kiwango cha Kufuatilia",
+  "analytics_no_data": "No Data",
+  "analytics_no_data_desc": "No data available for analytics.",
   "analytics_resolution_rate": "Kiashiria cha Utatuzi",
   "analytics_satisfaction_score": "Alama ya Kutosheka",
   "analytics_subtitle": "Fuata utendaji na maarifa",

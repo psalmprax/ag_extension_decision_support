@@ -17,6 +17,8 @@
   "analytics_disease_alerts": "Ziekte-Alarmen",
   "analytics_first_contact_res": "Eerste Contact Res.",
   "analytics_follow_up_rate": "Opvolgingspercentage",
+  "analytics_no_data": "No Data",
+  "analytics_no_data_desc": "No data available for analytics.",
   "analytics_resolution_rate": "Oplossingspercentage",
   "analytics_satisfaction_score": "Tevredenheidsscore",
   "analytics_subtitle": "Prestaties en inzichten bijhouden",

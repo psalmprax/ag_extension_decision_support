@@ -17,6 +17,8 @@
   "analytics_disease_alerts": "बीमारी के अलर्ट",
   "analytics_first_contact_res": "पहली संपर्क प्रतिक्रिया",
   "analytics_follow_up_rate": "फॉलो-अप दर",
+  "analytics_no_data": "No Data",
+  "analytics_no_data_desc": "No data available for analytics.",
   "analytics_resolution_rate": "समाधान दर",
   "analytics_satisfaction_score": "संतुष्टि स्कोर",
   "analytics_subtitle": "प्रदर्शन और विश्लेषण का पालन करें",

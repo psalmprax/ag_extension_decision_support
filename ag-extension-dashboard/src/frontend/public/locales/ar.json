@@ -17,6 +17,8 @@
   "analytics_disease_alerts": "تنبيهات الأمراض",
   "analytics_first_contact_res": "استجابة الاتصال الأول",
   "analytics_follow_up_rate": "معدل المتابعة",
+  "analytics_no_data": "No Data",
+  "analytics_no_data_desc": "No data available for analytics.",
   "analytics_resolution_rate": "معدل الحل",
   "analytics_satisfaction_score": "درجة الرضا",
   "analytics_subtitle": "تتبع الأداء والرؤى",

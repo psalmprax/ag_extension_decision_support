@@ -17,6 +17,8 @@
   "analytics_disease_alerts": "Предупреждения за болести",
   "analytics_first_contact_res": "Първи контакт резултат",
   "analytics_follow_up_rate": "Ставка на последващи контакти",
+  "analytics_no_data": "No Data",
+  "analytics_no_data_desc": "No data available for analytics.",
   "analytics_resolution_rate": "Ставка на решаване",
   "analytics_satisfaction_score": "Счупка на задоволство",
   "analytics_subtitle": "Тръгвай по извлечения и прозрения",

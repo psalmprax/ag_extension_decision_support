@@ -17,6 +17,8 @@
   "analytics_disease_alerts": "Повідомлення про хвороби",
   "analytics_first_contact_res": "Перша контактна відповідь",
   "analytics_follow_up_rate": "Швидкість повторного зв",
+  "analytics_no_data": "No Data",
+  "analytics_no_data_desc": "No data available for analytics.",
   "analytics_resolution_rate": "Швидкість вирішення",
   "analytics_satisfaction_score": "Оцінка задоволення",
   "analytics_subtitle": "Відслідковуйте виконання та дані",

@@ -17,6 +17,8 @@
   "analytics_disease_alerts": "Krankheitswarnungen",
   "analytics_first_contact_res": "Erster Kontakt Erfolg",
   "analytics_follow_up_rate": "Nachverfolgungsrate",
+  "analytics_no_data": "No Data",
+  "analytics_no_data_desc": "No data available for analytics.",
   "analytics_resolution_rate": "Aufklärungsrate",
   "analytics_satisfaction_score": "Zufriedenheitswert",
   "analytics_subtitle": "Leistung und Einblicke verfolgen",

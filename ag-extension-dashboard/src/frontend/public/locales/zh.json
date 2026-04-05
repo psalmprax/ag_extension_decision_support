@@ -17,6 +17,8 @@
   "analytics_disease_alerts": "疾病警报",
   "analytics_first_contact_res": "首次联系解决率",
   "analytics_follow_up_rate": "跟进率",
+  "analytics_no_data": "No Data",
+  "analytics_no_data_desc": "No data available for analytics.",
   "analytics_resolution_rate": "解决率",
   "analytics_satisfaction_score": "满意度评分",
   "analytics_subtitle": "跟踪绩效和洞察",

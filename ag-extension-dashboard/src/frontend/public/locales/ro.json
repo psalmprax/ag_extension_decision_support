@@ -18,6 +18,8 @@
   "analytics_disease_alerts": "Avertizări de boli",
   "analytics_first_contact_res": "Prima contactare rezolvată",
   "analytics_follow_up_rate": "Rata de urmărire",
+  "analytics_no_data": "No Data",
+  "analytics_no_data_desc": "No data available for analytics.",
   "analytics_resolution_rate": "Rata de rezolvare",
   "analytics_satisfaction_score": "Scorul de satisfacție",
   "analytics_subtitle": "Urmează performanța și obține informații",

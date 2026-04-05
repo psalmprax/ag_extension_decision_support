@@ -17,6 +17,8 @@
   "analytics_disease_alerts": "Betegségfigyelmeztetések",
   "analytics_first_contact_res": "Először Kapcsolat Feloldás",
   "analytics_follow_up_rate": "Kapcsolatfelvételi Arány",
+  "analytics_no_data": "No Data",
+  "analytics_no_data_desc": "No data available for analytics.",
   "analytics_resolution_rate": "Megoldási Arány",
   "analytics_satisfaction_score": "Kielégítettségi Pontszám",
   "analytics_subtitle": "Teljesítmény és belátás nyomon követése",

@@ -17,6 +17,8 @@
   "analytics_disease_alerts": "Ukungena Kwe-Induku",
   "analytics_first_contact_res": "Ukungena Kwenye Mfumo Kusuka",
   "analytics_follow_up_rate": "Izinhlobo Zokudala Kusuka",
+  "analytics_no_data": "No Data",
+  "analytics_no_data_desc": "No data available for analytics.",
   "analytics_resolution_rate": "Izinhlobo Zokudala Kusuka",
   "analytics_satisfaction_score": "Izinhlobo Zokudala Kusuka",
   "analytics_subtitle": "Tshela Umsebenzi Wokuthuthukisa Nokuthetha",

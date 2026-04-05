@@ -68,6 +68,10 @@ model Farmer {
    farmSizeHectares         Decimal?           @map("farm_size_hectares") @db.Decimal(10, 2)
    crops                    String[]
    vitalScore               Decimal?           @map("vital_score") @db.Decimal(5, 2)
+   soilMoisture             Decimal?           @map("soil_moisture") @db.Decimal(5, 2)
+   temperature              Decimal?           @db.Decimal(5, 2)
+   phLevel                  Decimal?           @map("ph_level") @db.Decimal(4, 2)
+   aiConfidence             Decimal?           @map("ai_confidence") @db.Decimal(5, 2)
    yieldHistory             Json?              @map("yield_history")
    locationLat              Decimal?           @map("location_lat") @db.Decimal(10, 8)
    locationLng              Decimal?           @map("location_lng") @db.Decimal(11, 8)
@@ -409,3 +413,17 @@ model SearchCache {
 
   @@map("search_cache")
 }
+
+model SmsHistory {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  senderId       String?   @map("sender_id") @db.Uuid
+  recipientPhone String    @map("recipient_phone") @db.VarChar(20)
+  farmerId       String?   @map("farmer_id") @db.Uuid
+  message        String
+  status         String?   @default("pending") @db.VarChar(50)
+  provider       String?   @db.VarChar(50)
+  createdAt      DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@map("sms_history")
+}
+

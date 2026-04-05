@@ -17,6 +17,8 @@
   "analytics_disease_alerts": "Предупреждения о болезнях",
   "analytics_first_contact_res": "Первый контакт, решенный",
   "analytics_follow_up_rate": "Соотношение повторных контактов",
+  "analytics_no_data": "No Data",
+  "analytics_no_data_desc": "No data available for analytics.",
   "analytics_resolution_rate": "Соотношение решенных проблем",
   "analytics_satisfaction_score": "Оценка удовлетворенности",
   "analytics_subtitle": "Отслеживайте результаты и инсайты",

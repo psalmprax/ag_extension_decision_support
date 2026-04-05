@@ -347,6 +347,15 @@ export async function createTables(): Promise<void> {
 
     -- SMS history table
     CREATE TABLE IF NOT EXISTS sms_history (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      sender_id UUID REFERENCES users(id),
+      recipient_phone VARCHAR(20) NOT NULL,
+      farmer_id UUID REFERENCES farmers(id),
+      message TEXT NOT NULL,
+      status VARCHAR(50) DEFAULT 'pending',
+      provider VARCHAR(50),
+      created_at TIMESTAMP DEFAULT NOW()
+    );
 
     -- Create indexes
     CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);

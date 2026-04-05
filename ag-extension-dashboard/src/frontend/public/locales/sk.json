@@ -17,6 +17,8 @@
   "analytics_disease_alerts": "Pozorovanie chorôb",
   "analytics_first_contact_res": "Prvý kontakt úspech",
   "analytics_follow_up_rate": "Rate nasledovania",
+  "analytics_no_data": "No Data",
+  "analytics_no_data_desc": "No data available for analytics.",
   "analytics_resolution_rate": "Riadielnosť riešení",
   "analytics_satisfaction_score": "Skóre spokojnosti",
   "analytics_subtitle": "sledujte výkon a poznatky",

@@ -17,6 +17,8 @@
   "analytics_disease_alerts": "Alertes de maladies",
   "analytics_first_contact_res": "Premier contact résolu",
   "analytics_follow_up_rate": "Taux de suivi",
+  "analytics_no_data": "No Data",
+  "analytics_no_data_desc": "No data available for analytics.",
   "analytics_resolution_rate": "Taux de résolution",
   "analytics_satisfaction_score": "Score de satisfaction",
   "analytics_subtitle": "Suivre les performances et les insights",

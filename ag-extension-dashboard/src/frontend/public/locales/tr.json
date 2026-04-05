@@ -17,6 +17,8 @@
   "analytics_disease_alerts": "Hastalık Uyarıları",
   "analytics_first_contact_res": "İlk İletişim Çözümü",
   "analytics_follow_up_rate": "Takip Oranı",
+  "analytics_no_data": "No Data",
+  "analytics_no_data_desc": "No data available for analytics.",
   "analytics_resolution_rate": "Çözüm Oranı",
   "analytics_satisfaction_score": "Memnuniyet Puanı",
   "analytics_subtitle": "Performans ve içgörüler takip edin",

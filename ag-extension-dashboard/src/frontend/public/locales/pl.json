@@ -17,6 +17,8 @@
   "analytics_disease_alerts": "Alarmy chorób",
   "analytics_first_contact_res": "Pierwsze kontaktowe rozwiązanie",
   "analytics_follow_up_rate": "Stopień realizacji konsultacji",
+  "analytics_no_data": "No Data",
+  "analytics_no_data_desc": "No data available for analytics.",
   "analytics_resolution_rate": "Stopień rozwiązywania problemów",
   "analytics_satisfaction_score": "Stopień zadowolenia",
   "analytics_subtitle": "Śledź wydajność i wgląd",

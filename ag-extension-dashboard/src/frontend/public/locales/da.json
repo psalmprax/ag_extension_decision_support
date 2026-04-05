@@ -17,6 +17,8 @@
   "analytics_disease_alerts": "Sygdomsvarsel",
   "analytics_first_contact_res": "Første Kontakt Res.",
   "analytics_follow_up_rate": "Følg-oplysning Hensigt",
+  "analytics_no_data": "No Data",
+  "analytics_no_data_desc": "No data available for analytics.",
   "analytics_resolution_rate": "Løsning Hensigt",
   "analytics_satisfaction_score": "Tilfredshed Score",
   "analytics_subtitle": "Følg performance og indsigt",

@@ -17,6 +17,8 @@
   "analytics_disease_alerts": "Επιβεβλημένες Ασθένειες",
   "analytics_first_contact_res": "Απάντηση στο Πρώτο Επικοινωνήσιμο",
   "analytics_follow_up_rate": "Τιμή Ακολουθίας",
+  "analytics_no_data": "No Data",
+  "analytics_no_data_desc": "No data available for analytics.",
   "analytics_resolution_rate": "Τιμή Λύσης",
   "analytics_satisfaction_score": "Σκορ Ευχαριστίας",
   "analytics_subtitle": "Ακολουθήστε την απόδοση και τις πληροφορίες",
