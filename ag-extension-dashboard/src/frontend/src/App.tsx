@@ -112,8 +112,8 @@ const StatCard = ({ title, value, change, icon: Icon, delay }: StatCardProps) =>
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay }}
-            className="card p-6 bg-theme-bg-card dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300"
+            transition={{ delay, type: "spring", stiffness: 300, damping: 24 }}
+            className="card p-6 border-white/20 hover:scale-[1.02] transition-transform duration-300"
             style={{ borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-premium)' }}
         >
             <div className="flex items-start justify-between">
@@ -1165,11 +1165,29 @@ function App() {
 
     return (
         <div
-            className={`h-screen flex flex-col ${darkMode ? 'dark' : ''} bg-theme-bg-primary transition-colors duration-300 overflow-hidden relative`}
+            className={`h-screen flex flex-col ${darkMode ? 'dark' : ''} bg-theme-bg-primary transition-colors duration-300 overflow-hidden relative z-0`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
         >
+            {/* Ambient Aurora Glass Background */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10 hidden dark:block">
+                <motion.div
+                    animate={{ x: [0, 100, 0], y: [0, -50, 0], scale: [1, 1.1, 1] }}
+                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                    className="absolute -top-[10%] -left-[10%] w-[800px] h-[800px] bg-blue-600/30 mix-blend-screen rounded-full blur-[150px]"
+                />
+                <motion.div
+                    animate={{ x: [0, -100, 0], y: [0, 50, 0], scale: [1, 1.2, 1] }}
+                    transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                    className="absolute top-[20%] -right-[10%] w-[600px] h-[600px] bg-purple-600/30 mix-blend-screen rounded-full blur-[180px]"
+                />
+                <motion.div
+                    animate={{ x: [0, 50, 0], y: [0, 100, 0], scale: [1, 1.1, 1] }}
+                    transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+                    className="absolute bottom-[-10%] left-[20%] w-[500px] h-[500px] bg-green-500/20 mix-blend-screen rounded-full blur-[150px]"
+                />
+            </div>
             {isDragOver && (
                 <div className="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-md border-8 border-dashed border-primary-500 flex items-center justify-center transition-all animate-in fade-in duration-200 pointer-events-none">
                     <div className="text-center bg-white/10 dark:bg-black/20 p-12 rounded-3xl backdrop-blur-lg border border-white/20 shadow-2xl">
@@ -1179,8 +1197,8 @@ function App() {
                     </div>
                 </div>
             )}
-            {/* Top Navigation - Traditional Fixed Header (V5) */}
-            <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-100 dark:border-white/5 h-16 lg:h-20 flex items-center transition-colors">
+            {/* Top Navigation - Floating Glass Header */}
+            <header className="fixed top-4 left-4 right-4 z-50 glass rounded-[2rem] h-16 lg:h-20 flex items-center transition-all duration-300">
                 <div className="w-full flex items-center justify-between gap-6 px-6 lg:px-8">
                     <div className="flex items-center gap-5">
                         <button
@@ -1380,10 +1398,10 @@ function App() {
             <AnimatePresence>
                 {sidebarOpen && (
                     <motion.aside
-                        initial={{ width: 0, opacity: 0 }}
-                        animate={{ width: 260, opacity: 1 }}
-                        exit={{ width: 0, opacity: 0 }}
-                        className="fixed inset-y-0 left-0 pt-16 lg:pt-20 z-40 bg-theme-bg-card border-r border-gray-200 dark:border-gray-800 overflow-y-auto transition-colors flex-shrink-0"
+                        initial={{ width: 0, opacity: 0, x: -20 }}
+                        animate={{ width: 280, opacity: 1, x: 0 }}
+                        exit={{ width: 0, opacity: 0, x: -20 }}
+                        className="fixed inset-y-24 left-4 lg:top-28 z-40 glass rounded-[2rem] overflow-y-auto transition-colors flex-shrink-0 mb-4 pb-4"
                     >
                         <nav className="p-4 space-y-2">
                             {navItems.map((item) => (
@@ -1420,17 +1438,15 @@ function App() {
             </AnimatePresence>
 
                 {/* Content Area */}
-                <div className={`flex-1 flex flex-col min-w-0 overflow-hidden transition-all duration-300 ${sidebarOpen ? 'lg:pl-[260px]' : ''}`}>
+                <div className={`flex-1 flex flex-col min-w-0 overflow-hidden transition-all duration-300 ${sidebarOpen ? 'lg:pl-[300px]' : ''} pt-24 lg:pt-28 pb-4 pr-4 pl-4 h-full`}>
                     {/* Breadcrumb Navigation - Sticky within the content area */}
-                    <div className="z-40 bg-theme-bg-primary/80 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-800/50 flex-shrink-0">
-                        <div className="px-6 py-3">
-                            <BreadcrumbNavigation items={getBreadcrumbItems()} />
-                        </div>
+                    <div className="z-40 glass rounded-full px-6 py-3 mb-4 flex-shrink-0 w-fit">
+                        <BreadcrumbNavigation items={getBreadcrumbItems()} />
                     </div>
 
                     {/* Main Content Scrollable */}
-                    <main className="flex-1 overflow-y-auto bg-theme-bg-secondary p-8 pt-24 lg:pt-28 custom-scrollbar">
-                        <div className="p-8">
+                    <main className="flex-1 overflow-y-auto glass p-6 lg:p-8 rounded-[2rem] custom-scrollbar relative z-10 transition-all duration-300">
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className=''>
                         <ErrorBoundary>
                             {activeTab === 'farmer_dashboard' && <FarmerDashboard />}
@@ -1681,73 +1697,85 @@ function App() {
                                 </div>
                             )}
 
-                            <div className="card overflow-hidden bg-theme-bg-card dark:bg-gray-800 border-gray-100 dark:border-gray-700 shadow-sm">
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left">
-                                        <thead className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700">
-                                            <tr>
-                                                <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest w-12">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-2">
+                                <AnimatePresence>
+                                    {effectiveFarmers.map((farmer: Farmer, idx: number) => (
+                                        <motion.div
+                                            layout
+                                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                                            exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                                            transition={{ duration: 0.4, type: "spring", bounce: 0.3, delay: Math.min(idx * 0.05, 0.5) }}
+                                            key={farmer.id}
+                                            className="card glass p-6 hover:shadow-2xl transition-all duration-300 relative group flex flex-col justify-between"
+                                            onClick={() => handleOpenFarmerDetail(farmer)}
+                                        >
+                                            {/* Top Section: Avatar and Select Checkbox */}
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary-500 to-blue-500 shadow-lg shadow-primary-500/20 flex flex-shrink-0 items-center justify-center text-white font-black text-lg">
+                                                        {farmer.firstName?.[0]}
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="font-bold text-gray-900 dark:text-white text-lg leading-tight truncate">{farmer.firstName} {farmer.lastName}</h3>
+                                                        <p className="text-xs text-gray-400 dark:text-gray-500 font-medium">#{farmer.id.slice(0, 8)}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="pt-1 pr-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 focus-within:opacity-100" onClick={(e) => e.stopPropagation()}>
                                                     <input
                                                         type="checkbox"
-                                                        checked={effectiveFarmers && selectedFarmers.size === effectiveFarmers.length && effectiveFarmers.length > 0}
-                                                        onChange={(e) => handleSelectAllFarmers(e.target.checked)}
-                                                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                                                        checked={selectedFarmers.has(farmer.id)}
+                                                        onChange={(e) => handleSelectFarmer(farmer.id, e.target.checked)}
+                                                        className="w-5 h-5 rounded-md border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
                                                     />
-                                                </th>
-                                                <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest ">{t('table_farmer_details')}</th>
-                                                <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest ">{t('table_region_village')}</th>
-                                                <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest ">{t('table_crops')}</th>
-                                                <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest ">{t('table_farm_size')}</th>
-                                                <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest ">{t('table_status')}</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">
-                                            {effectiveFarmers.map((farmer: Farmer) => (
-                                                <tr
-                                                    key={farmer.id}
-                                                    className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group cursor-pointer"
-                                                >
-                                                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selectedFarmers.has(farmer.id)}
-                                                            onChange={(e) => handleSelectFarmer(farmer.id, e.target.checked)}
-                                                            className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                                                        />
-                                                    </td>
-                                                    <td className="px-6 py-4" onClick={() => handleOpenFarmerDetail(farmer)}>
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-xs">
-                                                                {farmer.firstName?.[0]}
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-sm font-bold text-gray-900 dark:text-white">{farmer.firstName} {farmer.lastName}</p>
-                                                                <p className="text-[10px] text-gray-500">ID: #{farmer.id.slice(0, 8)}</p>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">{farmer.region}</p>
-                                                        <p className="text-[10px] text-gray-500">{farmer.village}</p>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex flex-wrap gap-1">
-                                                            {farmer.crops?.map((crop: string) => (
-                                                                <span key={crop} className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded text-[9px] font-bold uppercase tracking-tighter">
-                                                                    {crop}
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 font-bold">{farmer.farmSize} <span className="text-gray-400 font-medium">ha</span></td>
-                                                    <td className="px-6 py-4">
-                                                        <span className="px-2 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 rounded-full text-[10px] font-bold uppercase tracking-wider">{t('table_active')}</span>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Middle Section: Details */}
+                                            <div className="flex-1 space-y-4 my-2">
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{t('table_region_village')}</p>
+                                                        <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate">{farmer.region}</p>
+                                                        <p className="text-xs text-gray-500 truncate">{farmer.village}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{t('table_farm_size')}</p>
+                                                        <p className="text-sm font-bold text-gray-800 dark:text-gray-100">{farmer.farmSize} <span className="text-xs text-gray-500 font-medium tracking-normal">ha</span></p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="flex flex-wrap gap-1.5 min-h-[30px]">
+                                                    {farmer.crops?.map((crop: string) => (
+                                                        <span key={crop} className="px-2.5 py-1 bg-gray-100/50 dark:bg-gray-800 text-primary-600 dark:text-primary-300 rounded-lg text-[10px] font-bold uppercase tracking-tight border border-gray-200 dark:border-gray-700 shadow-sm">
+                                                            {crop}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Footer Section */}
+                                            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/10 flex justify-between items-center">
+                                                <span className="px-3 py-1 bg-green-500/10 text-green-600 dark:text-green-400 rounded-full text-[10px] font-black uppercase tracking-widest shadow-inner shadow-green-500/20">{t('table_active')}</span>
+                                                <div className="flex -space-x-2">
+                                                    <div className="w-6 h-6 rounded-full bg-blue-100 border-2 border-white dark:border-gray-800 flex items-center justify-center text-[10px] font-bold text-blue-600">SMS</div>
+                                                </div>
+                                            </div>
+
+                                            {/* Permanent Checkbox if selected, so it doesnt vanish when un-hovered */}
+                                            {selectedFarmers.has(farmer.id) && (
+                                                <div className="absolute top-6 right-6" onClick={(e) => e.stopPropagation()}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedFarmers.has(farmer.id)}
+                                                        onChange={(e) => handleSelectFarmer(farmer.id, e.target.checked)}
+                                                        className="w-5 h-5 rounded-md border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                                                    />
+                                                </div>
+                                            )}
+                                        </motion.div>
+                                    ))}
+                                </AnimatePresence>
                             </div>
                         </div>
                     )}
@@ -1766,80 +1794,98 @@ function App() {
                                     {t('visits_schedule_new')}
                                 </button>
                             </div>
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                {visits.map((visit: Visit) => (
-                                    <div key={visit.id} className="card p-6 flex items-center justify-between bg-theme-bg-card dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:shadow-md transition-all group">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-secondary-50 dark:bg-secondary-900/30 rounded-2xl flex items-center justify-center transition-colors group-hover:bg-secondary-100 dark:group-hover:bg-secondary-900/50">
-                                                <MapPin className="w-6 h-6 text-secondary-600 dark:text-secondary-400" />
-                                            </div>
-                                            <div>
-                                                <h4 className="font-bold text-gray-900 dark:text-white">{visit.farmer_name}</h4>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <Clock className="w-3 h-3 text-gray-400" />
-                                                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
-                                                        {new Date(visit.scheduled_at).toLocaleDateString()} at {new Date(visit.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                    </p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 p-2">
+                                <AnimatePresence>
+                                    {visits.map((visit: Visit, idx: number) => (
+                                        <motion.div
+                                            layout
+                                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                                            exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                                            transition={{ duration: 0.4, type: "spring", bounce: 0.3, delay: Math.min(idx * 0.05, 0.5) }}
+                                            key={visit.id}
+                                            className="card glass p-6 flex flex-col justify-between hover:shadow-2xl transition-all duration-300 relative group min-h-[180px]"
+                                        >
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-12 h-12 bg-secondary-900/10 dark:bg-white/10 rounded-2xl flex items-center justify-center transition-colors shadow-inner">
+                                                        <MapPin className="w-6 h-6 text-secondary-600 dark:text-secondary-300" />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-bold text-gray-900 dark:text-white text-lg tracking-tight truncate max-w-[150px]">{visit.farmer_name}</h4>
+                                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">
+                                                            {visit.visit_type}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 font-medium bg-gray-50 dark:bg-gray-700/50 w-fit px-2 py-0.5 rounded uppercase tracking-tighter">
-                                                    {visit.visit_type}
+                                                <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border shadow-sm ${visit.status === 'completed'
+                                                        ? 'bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-400'
+                                                        : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-700 dark:text-yellow-400'
+                                                    }`}>
+                                                    {visit.status}
+                                                </span>
+                                            </div>
+
+                                            <div className="flex items-center gap-2 mb-4">
+                                                <div className="w-8 h-8 rounded-full bg-white/50 dark:bg-black/20 flex items-center justify-center">
+                                                    <Clock className="w-4 h-4 text-primary-500" />
+                                                </div>
+                                                <p className="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                                                    {new Date(visit.scheduled_at).toLocaleDateString()} <span className="opacity-50">@</span> {new Date(visit.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </p>
                                             </div>
-                                        </div>
-                                        <div className="flex flex-col items-end gap-3">
-                                            <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${visit.status === 'completed'
-                                                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
-                                                : 'bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-400'
-                                                }`}>
-                                                {visit.status}
-                                            </span>
-                                            {visit.status !== 'completed' && visit.status !== 'cancelled' && (
-                                                <div className="flex gap-1">
-                                                    <button
-                                                        onClick={async (e) => {
-                                                            e.stopPropagation();
-                                                            try {
-                                                                await updateVisit(visit.id, { status: 'completed' });
-                                                                refetchVisits();
-                                                                addNotification({ type: 'success', message: `Visit marked as completed` });
-                                                            } catch {
-                                                                addNotification({ type: 'error', message: 'Failed to update visit status' });
-                                                            }
-                                                        }}
-                                                        className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded text-[9px] font-bold uppercase hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
-                                                    >
-                                                        Complete
-                                                    </button>
-                                                    <button
-                                                        onClick={async (e) => {
-                                                            e.stopPropagation();
-                                                            try {
-                                                                await updateVisit(visit.id, { status: 'cancelled' });
-                                                                refetchVisits();
-                                                                addNotification({ type: 'info', message: `Visit cancelled` });
-                                                            } catch {
-                                                                addNotification({ type: 'error', message: 'Failed to update visit status' });
-                                                            }
-                                                        }}
-                                                        className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded text-[9px] font-bold uppercase hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
-                                                    >
-                                                        Cancel
-                                                    </button>
+
+                                            <div className="mt-auto pt-4 border-t border-gray-100 dark:border-white/10 flex justify-between items-center group-hover:border-primary-500/30 transition-colors">
+                                                <div className="flex gap-2">
+                                                    {visit.status !== 'completed' && visit.status !== 'cancelled' && (
+                                                        <>
+                                                            <button
+                                                                onClick={async (e) => {
+                                                                    e.stopPropagation();
+                                                                    try {
+                                                                        await updateVisit(visit.id, { status: 'completed' });
+                                                                        refetchVisits();
+                                                                        addNotification({ type: 'success', message: `Visit marked as completed` });
+                                                                    } catch {
+                                                                        addNotification({ type: 'error', message: 'Failed to update visit status' });
+                                                                    }
+                                                                }}
+                                                                className="px-3 py-1.5 bg-green-500/20 text-green-700 dark:text-green-400 rounded-lg text-[10px] font-black uppercase hover:bg-green-500/30 transition-colors shadow-sm"
+                                                            >
+                                                                Complete
+                                                            </button>
+                                                            <button
+                                                                onClick={async (e) => {
+                                                                    e.stopPropagation();
+                                                                    try {
+                                                                        await updateVisit(visit.id, { status: 'cancelled' });
+                                                                        refetchVisits();
+                                                                        addNotification({ type: 'info', message: `Visit cancelled` });
+                                                                    } catch {
+                                                                        addNotification({ type: 'error', message: 'Failed to update visit status' });
+                                                                    }
+                                                                }}
+                                                                className="px-3 py-1.5 bg-red-500/10 text-red-700 dark:text-red-400 rounded-lg text-[10px] font-black uppercase hover:bg-red-500/20 transition-colors"
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                        </>
+                                                    )}
                                                 </div>
-                                            )}
-                                            <button
-                                                onClick={() => {
-                                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                    const farmerData = farmers.find((f: any) => f.id === visit.farmer_id || f.name === visit.farmer_name);
-                                                    if (farmerData) handleOpenFarmerDetail(farmerData);
-                                                }}
-                                                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                                            >
-                                                <ChevronRight className="w-5 h-5 text-gray-400" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
+                                                <button
+                                                    onClick={() => {
+                                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                        const farmerData = farmers.find((f: any) => f.id === visit.farmer_id || f.name === visit.farmer_name);
+                                                        if (farmerData) handleOpenFarmerDetail(farmerData);
+                                                    }}
+                                                    className="w-8 h-8 flex items-center justify-center glass rounded-full hover:bg-primary-500 hover:text-white transition-colors"
+                                                >
+                                                    <ChevronRight className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    ))}
+                                </AnimatePresence>
                             </div>
                         </div>
                     )}

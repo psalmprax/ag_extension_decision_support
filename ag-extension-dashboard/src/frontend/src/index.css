@@ -149,16 +149,16 @@
     --color-primary-50: #14532d;
     --color-primary-100: #166534;
     --color-primary-200: #15803d;
-    --color-primary-300: #16a34a;
-    --color-primary-400: #22c55e;
-    --color-primary-500: #4ade80;
+    --color-primary-300: #10B981; /* Neons */
+    --color-primary-400: #3B82F6; /* Neons */
+    --color-primary-500: #8B5CF6; /* Neons */
     --color-primary-600: #86efac;
     --color-primary-700: #bbf7d0;
     --color-primary-800: #dcfce7;
     --color-primary-900: #f0fdf4;
-    --color-bg-primary: #111827;
-    --color-bg-secondary: #1f2937;
-    --color-bg-card: #1f2937;
+    --color-bg-primary: #090A0F; /* Deep space cyber black */
+    --color-bg-secondary: #0D111A; 
+    --color-bg-card: #FFFFFF05; /* Barely there glass */
 }
 
 @layer base {
@@ -168,11 +168,11 @@
     }
 
     body {
-        @apply bg-gray-50 text-gray-900 antialiased;
+        @apply bg-gray-50 text-gray-900 antialiased overflow-x-hidden;
     }
 
     .dark body {
-        @apply bg-gray-900 text-gray-100;
+        @apply bg-[#090A0F] text-gray-100 overflow-x-hidden;
     }
 
     /* Premium Custom Scrollbar */
@@ -210,7 +210,11 @@
 
     /* Card styles */
     .card {
-        @apply bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden;
+        @apply bg-white/90 backdrop-blur-xl border border-white/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] rounded-3xl overflow-hidden;
+    }
+
+    .dark .card {
+        @apply bg-[#FFFFFF03] backdrop-blur-3xl border border-[#FFFFFF10] shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] rounded-3xl overflow-hidden;
     }
 
     .card-hover {
@@ -323,15 +327,15 @@
 
 @layer utilities {
     .text-gradient {
-        @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-secondary-600;
+        @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-purple-500 to-green-400;
     }
 
     .glass {
-        @apply bg-white/80 backdrop-blur-lg;
+        @apply bg-white/60 backdrop-blur-2xl border border-white/50 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)];
     }
 
     .dark .glass {
-        @apply bg-gray-900/80 backdrop-blur-lg;
+        @apply bg-[#FFFFFF0A] backdrop-blur-2xl border border-[#FFFFFF20] shadow-[0_8px_32px_0_rgba(0,0,0,0.4)];
     }
 
     .pattern-dots {
