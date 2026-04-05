@@ -331,6 +331,8 @@ export async function createTables(): Promise<void> {
       location VARCHAR(255),
       affected_farmers UUID[],
       is_active BOOLEAN DEFAULT true,
+      notification_sent BOOLEAN DEFAULT false,
+      alert_notification_sent BOOLEAN DEFAULT false,
       triggered_at TIMESTAMP DEFAULT NOW(),
       resolved_at TIMESTAMP,
       created_at TIMESTAMP DEFAULT NOW()

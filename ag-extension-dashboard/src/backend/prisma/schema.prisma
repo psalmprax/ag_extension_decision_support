@@ -209,6 +209,7 @@ model Alert {
   affectedFarmers String[]  @map("affected_farmers") @db.Uuid
   isActive        Boolean?  @default(true) @map("is_active")
   notificationSent Boolean? @default(false) @map("notification_sent")
+  alertNotificationSent Boolean? @default(false) @map("alert_notification_sent")
   triggeredAt     DateTime? @default(now()) @map("triggered_at") @db.Timestamp(6)
   resolvedAt      DateTime? @map("resolved_at") @db.Timestamp(6)
   createdAt       DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
