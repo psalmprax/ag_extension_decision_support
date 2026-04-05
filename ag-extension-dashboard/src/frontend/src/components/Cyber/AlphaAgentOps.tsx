@@ -57,6 +57,7 @@ const AlphaAgentOps = () => {
             return data;
         },
         refetchInterval: 30000,
+        enabled: !!localStorage.getItem('token'),
     });
 
     // Fetch real agent data from backend
@@ -66,6 +67,7 @@ const AlphaAgentOps = () => {
             const { data } = await apiClient.get('/ai/agents');
             return data.data || [];
         },
+        enabled: !!localStorage.getItem('token'),
     });
 
     // Fetch real knowledge count
@@ -75,6 +77,7 @@ const AlphaAgentOps = () => {
             const res = await searchKnowledge('');
             return res.data?.total || 0;
         },
+        enabled: !!localStorage.getItem('token'),
     });
 
     // Fetch real farmer count
@@ -84,6 +87,7 @@ const AlphaAgentOps = () => {
             const res = await fetchFarmers();
             return res.data?.total || 0;
         },
+        enabled: !!localStorage.getItem('token'),
     });
 
     // Fetch real alerts count
@@ -98,6 +102,7 @@ const AlphaAgentOps = () => {
                 return 0;
             }
         },
+        enabled: !!localStorage.getItem('token'),
     });
 
     const agents = (agentsData || []).map(a => ({

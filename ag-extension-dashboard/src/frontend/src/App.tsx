@@ -718,13 +718,22 @@ function App() {
         }
     }, [setActiveTab]);
 
-    const { data: userResponse } = useQuery<ProfileResponse>({
+    const { data: userResponse, error: userError } = useQuery<ProfileResponse>({
         queryKey: ['user-profile'],
         queryFn: fetchUserProfile,
         enabled: !!storeUser
     });
 
-    const user = storeUser || userResponse?.data;
+    // Clear invalid user session
+    useEffect(() => {
+        if (userError && storeUser) {
+            setUser(null);
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+        }
+    }, [userError, storeUser, setUser]);
+
+    const user = userResponse?.data;
     const isOfficer = user?.role === 'extension_officer';
 
     // Fetch Dashboard Data

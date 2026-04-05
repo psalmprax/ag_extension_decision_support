@@ -71,6 +71,7 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
         queryKey: ['usage'],
         queryFn: fetchUsage,
         refetchInterval: 60000,
+        enabled: !!localStorage.getItem('token'),
     });
 
     const usageData = usageResponse?.data?.usage || [];

@@ -45,6 +45,7 @@ const AlphaAI = () => {
             return data;
         },
         refetchInterval: 30000,
+        enabled: !!localStorage.getItem('token'),
     });
 
     const modes = [

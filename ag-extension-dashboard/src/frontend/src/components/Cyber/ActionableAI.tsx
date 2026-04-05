@@ -47,6 +47,7 @@ const ActionableAI = () => {
     const { data: pricesData } = useQuery({
         queryKey: ['actionable-prices'],
         queryFn: fetchMarketPrices,
+        enabled: !!localStorage.getItem('token'),
     });
 
     // Fetch real farmer stats for yield data
@@ -68,6 +69,7 @@ const ActionableAI = () => {
                 return null;
             }
         },
+        enabled: !!localStorage.getItem('token'),
     });
 
     // Fetch real alerts
@@ -81,6 +83,7 @@ const ActionableAI = () => {
                 return [];
             }
         },
+        enabled: !!localStorage.getItem('token'),
     });
 
     // Fetch real performance data for economic index
@@ -94,6 +97,7 @@ const ActionableAI = () => {
                 return null;
             }
         },
+        enabled: !!localStorage.getItem('token'),
     });
 
     const farmerStats = statsData?.data;
