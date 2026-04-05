@@ -94,6 +94,7 @@ import { BulkUpdateModal } from './components/BulkUpdateModal';
 import { ABTestBanner, DesignToggle } from '@/components/ABTestBanner';
 import { useFeatureFlags } from '@/store/useFeatureFlags';
 import { Login } from './pages/Login';
+import { SMSPage } from './pages/SMS';
 
 
 // COLORS constant removed as it's unused
@@ -1416,7 +1417,7 @@ function App() {
                             {navItems.map((item) => (
                                 <button
                                     key={item.id}
-                                    onClick={() => item.id === 'sms' ? navigate('/sms') : setActiveTab(item.id)}
+                                    onClick={() => setActiveTab(item.id)}
                                     aria-label={item.label}
                                     aria-current={activeTab === item.id ? 'page' : undefined}
                                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-left ${activeTab === item.id
@@ -1473,6 +1474,12 @@ function App() {
                             )}
                         </ErrorBoundary>
                     </div>
+
+                    {activeTab === 'sms' && (
+                        <ErrorBoundary>
+                            <SMSPage />
+                        </ErrorBoundary>
+                    )}
 
                     {activeTab === 'dashboard' && (
                         <ErrorBoundary>
