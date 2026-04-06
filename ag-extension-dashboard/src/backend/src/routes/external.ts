@@ -11,7 +11,7 @@ import { SatelliteService } from '@/services/satelliteService';
 const router = Router();
 
 // Apply authentication to all external routes
-router.use(authorize('admin', 'regional_manager', 'extension_officer', 'farmer'));
+router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
 // Get priority score for a farmer
 router.get('/priority/:farmerId', async (req: Request, res: Response) => {

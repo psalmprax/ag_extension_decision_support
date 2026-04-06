@@ -9,7 +9,7 @@ import * as XLSX from 'xlsx';
 const router = Router();
 
 // Apply authentication to all portfolio routes
-router.use(authorize('admin', 'regional_manager', 'extension_officer', 'farmer'));
+router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
 // Portfolio overview for extension officer
 router.get('/', async (req: Request, res: Response) => {

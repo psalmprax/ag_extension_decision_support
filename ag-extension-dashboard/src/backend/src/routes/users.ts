@@ -7,7 +7,7 @@ import { authorize } from '@/middleware/authorize';
 const router = Router();
 
 // Apply authentication to all users routes
-router.use(authorize('admin', 'regional_manager', 'extension_officer'));
+router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
 
 // Get all users (extension officers)
 router.get('/', async (req: Request, res: Response) => {

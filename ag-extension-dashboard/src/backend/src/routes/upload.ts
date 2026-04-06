@@ -50,7 +50,7 @@ const upload = multer({
 });
 
 // Apply authentication to all routes
-router.use(authorize('admin', 'regional_manager', 'extension_officer'));
+router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
 
 // Upload single file
 router.post('/upload', upload.single('file'), (req: Request, res: Response) => {

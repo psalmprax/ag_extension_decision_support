@@ -15,7 +15,7 @@ import { agentTelemetry } from '@/services/agentTelemetry';
 const router = Router();
 
 // Apply authentication to all chatbot routes
-router.use(authorize('admin', 'regional_manager', 'extension_officer', 'farmer'));
+router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
 // Helper to get conversations from DB
 async function getConversationsFromDB(limit = 50): Promise<any[]> {

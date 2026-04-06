@@ -12,7 +12,7 @@ import { emitToUser } from '@/services/socketService';
 const router = Router();
 
 // Apply authentication to all farmers routes
-router.use(authorize('admin', 'regional_manager', 'extension_officer', 'farmer'));
+router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
 /**
  * @openapi

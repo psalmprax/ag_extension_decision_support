@@ -37,7 +37,7 @@ router.get('/', async (_req: Request, res: Response) => {
  *     summary: Create a new alert
  *     tags: [Alerts]
  */
-router.post('/', authorize('extension_officer', 'admin'), async (req: Request, res: Response) => {
+router.post('/', authorize(['extension_officer', 'admin']), async (req: Request, res: Response) => {
     const { type, severity, title, description, location, affectedFarmers } = req.body;
     
     // Check permissions (redundant with authorize but kept for safety)
@@ -67,7 +67,7 @@ router.post('/', authorize('extension_officer', 'admin'), async (req: Request, r
  *     summary: Resolve an alert
  *     tags: [Alerts]
  */
-router.patch('/:id/resolve', authorize('extension_officer', 'admin'), async (req: Request, res: Response) => {
+router.patch('/:id/resolve', authorize(['extension_officer', 'admin']), async (req: Request, res: Response) => {
     const { id } = req.params;
     
     if (req.user?.role !== 'extension_officer' && req.user?.role !== 'admin') {

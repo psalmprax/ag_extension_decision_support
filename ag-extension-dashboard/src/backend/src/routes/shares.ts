@@ -6,7 +6,7 @@ import { shareService } from '@/services/shareService';
 const router = Router();
 
 // Apply authentication to all share management routes
-router.use(authorize('admin', 'regional_manager', 'extension_officer'));
+router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
 
 /**
  * @openapi

@@ -469,8 +469,9 @@ export function FarmerMap({
             return acc;
         }, {} as Record<string, number>);
 
-        const totalSize = farmers.reduce((sum, f) => sum + f.size, 0);
-        const avgYield = farmers.reduce((sum, f) => sum + (f.yield || 0), 0) / farmers.length;
+        const totalSize = farmers.reduce((sum, f) => sum + (Number(f.size) || 0), 0);
+        const validYields = farmers.filter(f => f.yield && !isNaN(Number(f.yield)));
+        const avgYield = validYields.length > 0 ? validYields.reduce((sum, f) => sum + Number(f.yield), 0) / validYields.length : 0;
 
         const topCrops = Object.entries(cropCounts)
             .sort(([, a], [, b]) => b - a)
@@ -815,7 +816,7 @@ export function FarmerMap({
                                     <Wheat className="w-3 h-3 text-blue-500" />
                                     <span className="text-[9px] uppercase font-bold text-blue-600 dark:text-blue-400">{t('map_hectares') || 'Hectares'}</span>
                                 </div>
-                                <span className="text-lg font-black text-blue-700 dark:text-blue-300">{stats.totalSize.toFixed(0)}</span>
+                                <span className="text-lg font-black text-blue-700 dark:text-blue-300">{(Number(stats.totalSize) || 0).toFixed(0)}</span>
                             </div>
                         </div>
                         {/* Top Crops Mini Bar */}

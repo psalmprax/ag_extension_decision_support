@@ -8,7 +8,7 @@ import { authorize } from '@/middleware/authorize';
 const router = Router();
 
 // Apply authentication to all analytics routes
-router.use(authorize('admin', 'regional_manager', 'extension_officer', 'farmer'));
+router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
 // Helper to safely execute database queries with fallback
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

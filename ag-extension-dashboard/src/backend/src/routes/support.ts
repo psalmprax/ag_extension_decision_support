@@ -50,7 +50,7 @@ router.get('/faq', (_req: Request, res: Response) => {
 });
 
 // Apply authentication to remaining routes
-router.use(authorize('admin', 'regional_manager', 'extension_officer', 'farmer'));
+router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
 // Submit a support ticket
 router.post('/tickets', async (req: Request, res: Response) => {

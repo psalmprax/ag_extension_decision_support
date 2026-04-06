@@ -19,7 +19,7 @@ const errorStatusMap: Record<string, number> = {
 };
 
 // Apply authentication to all knowledge routes
-router.use(authorize('admin', 'regional_manager', 'extension_officer', 'farmer'));
+router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
 // Mock knowledge articles for vector store seeding
 export const mockKnowledgeArticles = [

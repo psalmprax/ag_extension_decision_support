@@ -10,7 +10,7 @@ import { usageService } from '@/services/usageService';
 const router = Router();
 
 // Apply authentication to all AI routes
-router.use(authorize('admin', 'regional_manager', 'extension_officer', 'farmer'));
+router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
 /**
  * @swagger

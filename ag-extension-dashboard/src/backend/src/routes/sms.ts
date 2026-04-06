@@ -13,7 +13,7 @@ import { query } from '../services/databaseService';
 const router = Router();
 
 // Apply authentication to all SMS routes
-router.use(authorize('admin', 'regional_manager', 'extension_officer'));
+router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
 
 // SMS Schema
 const sendSMSSchema = z.object({

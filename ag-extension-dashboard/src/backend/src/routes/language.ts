@@ -4,7 +4,7 @@ import { authorize } from '@/middleware/authorize';
 const router = Router();
 
 // Apply authentication to all language routes
-router.use(authorize('admin', 'regional_manager', 'extension_officer', 'farmer'));
+router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
 // Supported languages configuration
 const supportedLanguages = [

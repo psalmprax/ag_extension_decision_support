@@ -11,7 +11,7 @@ import { bulkOperationsService } from '@/services/bulkOperationsService';
 const router = Router();
 
 // Apply authentication to all visits routes
-router.use(authorize('admin', 'regional_manager', 'extension_officer', 'farmer'));
+router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
 // Get all visits
 router.get('/', async (req: Request, res: Response) => {

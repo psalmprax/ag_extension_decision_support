@@ -7,7 +7,7 @@ import { authorize, UserRole } from '@/middleware/authorize';
 const router = Router();
 
 // Apply authentication to all context menu routes
-router.use(authorize('admin', 'regional_manager', 'extension_officer', 'farmer'));
+router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
 // Helper function to extract user permissions
 const getUserPermissions = (req: Request): UserPermissions => {

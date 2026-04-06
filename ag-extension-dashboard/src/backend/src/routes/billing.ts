@@ -51,7 +51,7 @@ router.get('/plans', async (req, res) => {
  *     summary: Get current user subscription
  *     tags: [Billing]
  */
-router.get('/subscription', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
+router.get('/subscription', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
     try {
         const userId = req.user!.userId;
 
@@ -78,7 +78,7 @@ router.get('/subscription', authorize('admin', 'extension_officer', 'farmer'), a
  *     summary: Get user usage statistics
  *     tags: [Billing]
  */
-router.get('/usage', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
+router.get('/usage', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
     try {
         const usageData = await usageService.getUsageStatus(req.user!.userId);
         res.json({ success: true, data: usageData });
@@ -95,7 +95,7 @@ router.get('/usage', authorize('admin', 'extension_officer', 'farmer'), async (r
  *     summary: Create a checkout session
  *     tags: [Billing]
  */
-router.post('/subscribe', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
+router.post('/subscribe', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
     try {
         const { priceId, billingCycle = 'current' } = req.body;
         const userId = req.user!.userId;
@@ -204,7 +204,7 @@ router.post('/subscribe', authorize('admin', 'extension_officer', 'farmer'), asy
  *     summary: Cancel current subscription
  *     tags: [Billing]
  */
-router.post('/cancel', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
+router.post('/cancel', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
     try {
         const userId = req.user!.userId;
         const subscription = await prisma.subscription.findUnique({ where: { userId } });
@@ -237,7 +237,7 @@ router.post('/cancel', authorize('admin', 'extension_officer', 'farmer'), async 
  *     summary: Create Stripe Customer Portal session
  *     tags: [Billing]
  */
-router.post('/portal', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
+router.post('/portal', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
     try {
         const userId = req.user!.userId;
         const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -277,7 +277,7 @@ router.post('/portal', authorize('admin', 'extension_officer', 'farmer'), async 
  *     summary: Switch to a different subscription plan
  *     tags: [Billing]
  */
-router.post('/switch', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
+router.post('/switch', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
     try {
         const { priceId, billingCycle } = req.body;
         const userId = req.user!.userId;
@@ -341,7 +341,7 @@ router.post('/switch', authorize('admin', 'extension_officer', 'farmer'), async 
  *     summary: Add a new payment method
  *     tags: [Billing]
  */
-router.get('/payment-methods', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
+router.get('/payment-methods', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
     try {
         const userId = req.user!.userId;
         const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -381,7 +381,7 @@ router.get('/payment-methods', authorize('admin', 'extension_officer', 'farmer')
     }
 });
 
-router.post('/payment-methods', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
+router.post('/payment-methods', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
     try {
         const userId = req.user!.userId;
         const email = req.user!.email;
@@ -415,7 +415,7 @@ router.post('/payment-methods', authorize('admin', 'extension_officer', 'farmer'
  *     summary: Delete a payment method
  *     tags: [Billing]
  */
-router.delete('/payment-methods/:id', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
+router.delete('/payment-methods/:id', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
     try {
         const { id } = req.params;
         const success = await paymentService.deletePaymentMethod(id);
@@ -437,7 +437,7 @@ router.delete('/payment-methods/:id', authorize('admin', 'extension_officer', 'f
  *     summary: Get user invoices
  *     tags: [Billing]
  */
-router.get('/invoices', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
+router.get('/invoices', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
     try {
         const userId = req.user!.userId;
         const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -484,7 +484,7 @@ router.get('/invoices', authorize('admin', 'extension_officer', 'farmer'), async
  *     summary: Get comprehensive payment analytics dashboard data (Admin only)
  *     tags: [Billing]
  */
-router.get('/analytics/dashboard', authorize('admin'), async (req: AuthRequest, res) => {
+router.get('/analytics/dashboard', authorize(['admin']), async (req: AuthRequest, res) => {
     try {
         const analytics = await paymentAnalyticsService.getAnalyticsDashboard();
         res.json({ success: true, data: analytics });
@@ -501,7 +501,7 @@ router.get('/analytics/dashboard', authorize('admin'), async (req: AuthRequest, 
  *     summary: Get revenue metrics (Admin only)
  *     tags: [Billing]
  */
-router.get('/analytics/revenue', authorize('admin'), async (req: AuthRequest, res) => {
+router.get('/analytics/revenue', authorize(['admin']), async (req: AuthRequest, res) => {
     try {
         const timeframe = (req.query.timeframe as 'month' | 'quarter' | 'year') || 'month';
         const metrics = await paymentAnalyticsService.getRevenueMetrics(timeframe);
@@ -519,7 +519,7 @@ router.get('/analytics/revenue', authorize('admin'), async (req: AuthRequest, re
  *     summary: Get customer analytics (Admin only)
  *     tags: [Billing]
  */
-router.get('/analytics/customers', authorize('admin'), async (req: AuthRequest, res) => {
+router.get('/analytics/customers', authorize(['admin']), async (req: AuthRequest, res) => {
     try {
         const metrics = await paymentAnalyticsService.getCustomerMetrics();
         res.json({ success: true, data: metrics });
@@ -536,7 +536,7 @@ router.get('/analytics/customers', authorize('admin'), async (req: AuthRequest, 
  *     summary: Get subscription analytics (Admin only)
  *     tags: [Billing]
  */
-router.get('/analytics/subscriptions', authorize('admin'), async (req: AuthRequest, res) => {
+router.get('/analytics/subscriptions', authorize(['admin']), async (req: AuthRequest, res) => {
     try {
         const metrics = await paymentAnalyticsService.getSubscriptionMetrics();
         res.json({ success: true, data: metrics });
@@ -553,7 +553,7 @@ router.get('/analytics/subscriptions', authorize('admin'), async (req: AuthReque
  *     summary: Get payment method analytics (Admin only)
  *     tags: [Billing]
  */
-router.get('/analytics/payment-methods', authorize('admin'), async (req: AuthRequest, res) => {
+router.get('/analytics/payment-methods', authorize(['admin']), async (req: AuthRequest, res) => {
     try {
         const analytics = await paymentAnalyticsService.getPaymentMethodAnalytics();
         res.json({ success: true, data: analytics });
@@ -570,7 +570,7 @@ router.get('/analytics/payment-methods', authorize('admin'), async (req: AuthReq
  *     summary: Get churn prediction analytics (Admin only)
  *     tags: [Billing]
  */
-router.get('/analytics/churn', authorize('admin'), async (req: AuthRequest, res) => {
+router.get('/analytics/churn', authorize(['admin']), async (req: AuthRequest, res) => {
     try {
         const prediction = await paymentAnalyticsService.getChurnPrediction();
         res.json({ success: true, data: prediction });
@@ -587,7 +587,7 @@ router.get('/analytics/churn', authorize('admin'), async (req: AuthRequest, res)
  *     summary: Get cohort analysis (Admin only)
  *     tags: [Billing]
  */
-router.get('/analytics/cohorts', authorize('admin'), async (req: AuthRequest, res) => {
+router.get('/analytics/cohorts', authorize(['admin']), async (req: AuthRequest, res) => {
     try {
         const cohorts = await paymentAnalyticsService.getCohortAnalysis();
         res.json({ success: true, data: cohorts });
@@ -604,7 +604,7 @@ router.get('/analytics/cohorts', authorize('admin'), async (req: AuthRequest, re
  *     summary: Update billing configuration (Admin only)
  *     tags: [Billing]
  */
-router.patch('/admin/config', authorize('admin'), async (req: AuthRequest, res) => {
+router.patch('/admin/config', authorize(['admin']), async (req: AuthRequest, res) => {
     try {
         const { stripeSecretKey, paypalClientId } = req.body;
         if (stripeSecretKey) await systemConfigService.set('STRIPE_SECRET_KEY', stripeSecretKey, true);
@@ -625,7 +625,7 @@ router.patch('/admin/config', authorize('admin'), async (req: AuthRequest, res) 
  *     summary: Create PayPal subscription
  *     tags: [Billing]
  */
-router.post('/paypal/subscribe', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
+router.post('/paypal/subscribe', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
     try {
         const { planId } = req.body;
         const userId = req.user!.userId;
@@ -673,7 +673,7 @@ router.post('/paypal/subscribe', authorize('admin', 'extension_officer', 'farmer
  *     summary: Handle PayPal payment success
  *     tags: [Billing]
  */
-router.get('/paypal/success', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
+router.get('/paypal/success', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
     try {
         const { paymentId, PayerID } = req.query;
         const userId = req.user!.userId;
@@ -732,7 +732,7 @@ router.get('/paypal/success', authorize('admin', 'extension_officer', 'farmer'),
  *     summary: Handle PayPal payment cancellation
  *     tags: [Billing]
  */
-router.get('/paypal/cancel', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
+router.get('/paypal/cancel', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
         res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?canceled=true&payment=paypal`);
 });
 
@@ -747,7 +747,7 @@ router.get('/paypal/cancel', authorize('admin', 'extension_officer', 'farmer'), 
  *     summary: Redeem a voucher code to activate a subscription
  *     tags: [Billing]
  */
-router.post('/voucher/redeem', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
+router.post('/voucher/redeem', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
     try {
         const { code } = req.body;
         const userId = req.user!.userId;
@@ -775,7 +775,7 @@ router.post('/voucher/redeem', authorize('admin', 'extension_officer', 'farmer')
  *     summary: Generate voucher codes for a plan (Admin only)
  *     tags: [Billing]
  */
-router.post('/voucher/generate', authorize('admin'), async (req: AuthRequest, res) => {
+router.post('/voucher/generate', authorize(['admin']), async (req: AuthRequest, res) => {
     try {
         const { planId, count = 1, expiresInDays } = req.body;
 
@@ -798,7 +798,7 @@ router.post('/voucher/generate', authorize('admin'), async (req: AuthRequest, re
  *     summary: List all vouchers (Admin only)
  *     tags: [Billing]
  */
-router.get('/voucher/list', authorize('admin'), async (req: AuthRequest, res) => {
+router.get('/voucher/list', authorize(['admin']), async (req: AuthRequest, res) => {
     try {
         const { planId, isRedeemed } = req.query;
         const vouchers = await voucherService.listVouchers({
@@ -823,7 +823,7 @@ router.get('/voucher/list', authorize('admin'), async (req: AuthRequest, res) =>
  *     summary: Submit a manual payment transaction for verification
  *     tags: [Billing]
  */
-router.post('/transaction/submit', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
+router.post('/transaction/submit', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
     try {
         const { planId, method, transactionId, amount, currency } = req.body;
         const userId = req.user!.userId;
@@ -864,7 +864,7 @@ router.post('/transaction/submit', authorize('admin', 'extension_officer', 'farm
  *     summary: Get the current user's transaction submissions
  *     tags: [Billing]
  */
-router.get('/transaction/my', authorize('admin', 'extension_officer', 'farmer'), async (req: AuthRequest, res) => {
+router.get('/transaction/my', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
     try {
         const submissions = await transactionService.getUserSubmissions(req.user!.userId);
         res.json({ success: true, data: submissions });
@@ -881,7 +881,7 @@ router.get('/transaction/my', authorize('admin', 'extension_officer', 'farmer'),
  *     summary: List all transaction submissions (Admin only)
  *     tags: [Billing]
  */
-router.get('/transaction/list', authorize('admin'), async (req: AuthRequest, res) => {
+router.get('/transaction/list', authorize(['admin']), async (req: AuthRequest, res) => {
     try {
         const { status } = req.query;
         const transactions = await transactionService.listTransactions({
@@ -901,7 +901,7 @@ router.get('/transaction/list', authorize('admin'), async (req: AuthRequest, res
  *     summary: Verify (approve) a transaction submission (Admin only)
  *     tags: [Billing]
  */
-router.post('/transaction/verify/:id', authorize('admin'), async (req: AuthRequest, res) => {
+router.post('/transaction/verify/:id', authorize(['admin']), async (req: AuthRequest, res) => {
     try {
         const { id } = req.params;
         const adminUserId = req.user!.userId;
@@ -925,7 +925,7 @@ router.post('/transaction/verify/:id', authorize('admin'), async (req: AuthReque
  *     summary: Reject a transaction submission (Admin only)
  *     tags: [Billing]
  */
-router.post('/transaction/reject/:id', authorize('admin'), async (req: AuthRequest, res) => {
+router.post('/transaction/reject/:id', authorize(['admin']), async (req: AuthRequest, res) => {
     try {
         const { id } = req.params;
         const { reason } = req.body;

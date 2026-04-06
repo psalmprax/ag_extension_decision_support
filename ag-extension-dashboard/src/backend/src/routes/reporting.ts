@@ -13,7 +13,7 @@ import * as XLSX from 'xlsx';
 const router = Router();
 
 // Apply authentication to all reporting routes
-router.use(authorize('admin', 'regional_manager', 'extension_officer', 'farmer'));
+router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
 // Get reports
 router.get('/', async (req: AuthRequest, res: Response) => {
