@@ -53,13 +53,22 @@ export class MCPAdapter {
       let shape: any = null;
 
       try {
+        console.log(`Tool ${tool.name}: Raw schema:`, zodSchema);
+        console.log(`Tool ${tool.name}: Schema _def:`, zodSchema?._def);
+        console.log(`Tool ${tool.name}: Schema type:`, zodSchema?.constructor?.name);
+
         // For Zod v3, shape is a function that returns the shape object
         if (zodSchema && zodSchema._def && typeof zodSchema._def.shape === 'function') {
           shape = zodSchema._def.shape();
+          console.log(`Tool ${tool.name}: Called shape() function, result:`, shape);
         } else if (zodSchema && zodSchema._def && zodSchema._def.shape) {
           // Fallback for other versions
           shape = zodSchema._def.shape;
+          console.log(`Tool ${tool.name}: Used direct shape property, result:`, shape);
         }
+
+        console.log(`Tool ${tool.name}: Final shape:`, shape);
+        console.log(`Tool ${tool.name}: Shape type:`, typeof shape);
 
         if (shape && typeof shape === 'object') {
           for (const [key, value] of Object.entries(shape)) {
