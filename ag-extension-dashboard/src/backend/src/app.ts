@@ -37,7 +37,7 @@ import contextMenuRoutes from './routes/contextMenus';
 import { shareRouter, publicShareRouter } from './routes/shares';
 import alertRoutes from './routes/alerts';
 import supportRoutes from './routes/support';
-import { createMCPRouter } from './services/mcpAdapter';
+// MCP router will be created dynamically to avoid path alias issues in production
 import telemetryRoutes from './routes/telemetry';
 import emailWorkflowRoutes from './routes/emailWorkflows';
 import agentRoutes from './routes/agents';
@@ -156,8 +156,25 @@ app.use('/api/v1/ai/agents', agentRoutes);
 app.use('/api/v1/system/health', systemHealthRoutes);
 app.use('/api/v1/ai/memories', memoryRoutes);
 app.use('/api/v1/ai/diseases', diseaseRoutes);
-const mcpRouter = createMCPRouter();
-app.use('/api/v1/mcp', mcpRouter);
+// MCP router - created lazily to avoid path alias issues
+let mcpRouter: any = null;
+const getMCPRouter = async () => {
+  if (!mcpRouter) {
+    const { createMCPRouter } = await import('./services/mcpAdapter');
+    mcpRouter = createMCPRouter();
+  }
+  return mcpRouter;
+};
+
+// MCP middleware wrapper
+app.use('/api/v1/mcp', async (req, res, next) => {
+  try {
+    const router = await getMCPRouter();
+    router(req, res, next);
+  } catch (error) {
+    next(error);
+  }
+});
 
 // Legacy redirects
 app.use('/api/auth', authRoutes);
@@ -186,7 +203,14 @@ app.use('/api/ai/agents', agentRoutes);
 app.use('/api/system/health', systemHealthRoutes);
 app.use('/api/ai/memories', memoryRoutes);
 app.use('/api/ai/diseases', diseaseRoutes);
-app.use('/api/mcp', mcpRouter);
+app.use('/api/mcp', async (req, res, next) => {
+  try {
+    const router = await getMCPRouter();
+    router(req, res, next);
+  } catch (error) {
+    next(error);
+  }
+});
 // Restore original path after routing
 app.use(restoreOriginalPath);
 
