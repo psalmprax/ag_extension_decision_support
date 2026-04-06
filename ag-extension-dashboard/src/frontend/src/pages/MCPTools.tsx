@@ -86,6 +86,13 @@ export function MCPTools() {
             return value === undefined || value === null || value === '';
         });
 
+        console.log('Tool execution:', {
+            toolName: selectedTool.name,
+            required,
+            toolArgs,
+            missing
+        });
+
         if (missing.length > 0) {
             addNotification({
                 type: 'error',
@@ -97,7 +104,9 @@ export function MCPTools() {
         setIsExecuting(true);
         setExecutionResult(null);
         try {
-            const res = await callMCPTool(selectedTool.name, Object.keys(toolArgs).length > 0 ? toolArgs : undefined);
+            const argsToSend = Object.keys(toolArgs).length > 0 ? toolArgs : undefined;
+            console.log('Sending args to backend:', argsToSend);
+            const res = await callMCPTool(selectedTool.name, argsToSend);
             if (res.success) {
                 setExecutionResult(res.data);
                 // Add to history
@@ -365,7 +374,9 @@ export function MCPTools() {
                                 }`}
                                 onClick={() => {
                                     setSelectedTool(tool);
-                                    setToolArgs(getDefaultArgs(tool));
+                                    const defaults = getDefaultArgs(tool);
+                                    console.log('Setting defaults for tool:', tool.name, defaults);
+                                    setToolArgs(defaults);
                                     setExecutionResult(null);
                                 }}
                             >
