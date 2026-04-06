@@ -1,6 +1,7 @@
 import { query, getPool } from '@/services/databaseService';
 import { emailService } from '@/services/emailService';
 import { logger } from '@/utils/logger';
+import { t, loadTranslations } from '@/utils/translations';
 
 export interface EmailTemplate {
   id: string;
@@ -42,6 +43,9 @@ export class EmailWorkflowService {
 
   async initialize(): Promise<void> {
     try {
+      // Load translations for template seeding
+      loadTranslations();
+
       const pool = getPool();
       if (!pool) return;
 
@@ -82,94 +86,36 @@ export class EmailWorkflowService {
     const templates = [
       {
         name: 'farmer_visit_confirmation',
-        subject: 'Farm Visit Confirmed - {{farmerName}} on {{visitDate}}',
-        body: `Dear {{officerName}},
-
-Your farm visit has been confirmed:
-
-Farmer: {{farmerName}}
-Location: {{location}}
-Date: {{visitDate}}
-Time: {{visitTime}}
-Purpose: {{purpose}}
-
-Please bring your field kit and ensure GPS tracking is enabled.
-
-Best regards,
-Ag Extension Team`,
+        subject: t('email_template_farmer_visit_confirmation_subject'),
+        body: t('email_template_farmer_visit_confirmation_body'),
         category: 'visits',
         variables: ['farmerName', 'officerName', 'location', 'visitDate', 'visitTime', 'purpose'],
       },
       {
         name: 'disease_alert_notification',
-        subject: '⚠️ {{diseaseName}} Alert - {{region}} Region',
-        body: `URGENT AGRICULTURAL ALERT
-
-A {{diseaseName}} outbreak has been detected in the {{region}} region.
-
-Affected Crops: {{affectedCrops}}
-Severity: {{severity}}
-Recommended Actions:
-{{recommendations}}
-
-Please inspect your fields immediately and report any signs of infection.
-
-Contact your extension officer for assistance.`,
+        subject: t('email_template_disease_alert_subject'),
+        body: t('email_template_disease_alert_body'),
         category: 'alerts',
         variables: ['diseaseName', 'region', 'affectedCrops', 'severity', 'recommendations'],
       },
       {
         name: 'market_price_update',
-        subject: 'Market Price Update - {{cropName}} at {{price}}/{{unit}}',
-        body: `Dear Farmer,
-
-Current market prices for your area:
-
-{{priceTable}}
-
-Market: {{marketName}}
-Date: {{date}}
-
-For more details, visit your dashboard or contact your extension officer.`,
+        subject: t('email_template_market_price_subject'),
+        body: t('email_template_market_price_body'),
         category: 'market',
         variables: ['cropName', 'price', 'unit', 'priceTable', 'marketName', 'date'],
       },
       {
         name: 'weather_advisory',
-        subject: 'Weather Advisory - {{region}} ({{dateRange}})',
-        body: `Weather Advisory for {{region}}
-
-Forecast Period: {{dateRange}}
-
-{{weatherSummary}}
-
-Recommendations:
-{{recommendations}}
-
-Stay safe and plan your farming activities accordingly.`,
+        subject: t('email_template_weather_advisory_subject'),
+        body: t('email_template_weather_advisory_body'),
         category: 'weather',
         variables: ['region', 'dateRange', 'weatherSummary', 'recommendations'],
       },
       {
         name: 'training_invitation',
-        subject: 'Training Invitation: {{trainingTopic}} on {{date}}',
-        body: `Dear {{recipientName}},
-
-You are invited to attend a training session:
-
-Topic: {{trainingTopic}}
-Date: {{date}}
-Time: {{time}}
-Location: {{location}}
-Trainer: {{trainerName}}
-
-Agenda:
-{{agenda}}
-
-Please confirm your attendance by replying to this email.
-
-Best regards,
-Ag Extension Training Team`,
+        subject: t('email_template_training_invitation_subject'),
+        body: t('email_template_training_invitation_body'),
         category: 'training',
         variables: ['recipientName', 'trainingTopic', 'date', 'time', 'location', 'trainerName', 'agenda'],
       },
