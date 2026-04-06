@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: ag-extension-backend
+    runtime: node
+    buildCommand: npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          type: postgresql
+          name: ag-extension-db
+          property: connectionString
+      - key: AI_PRIMARY_PROVIDER
+        value: groq
+      - key: GROQ_API_KEY
+        sync: false # Set manually in dashboard
+      - key: CORS_ORIGIN
+        value: https://ag-extension-decision-support.onrender.com
+
+databases:
+  - name: ag-extension-db
+    type: postgresql
+    ipAllowList: [] # Only accessible by Render services

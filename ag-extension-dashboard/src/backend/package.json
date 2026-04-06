@@ -1,6 +1,6 @@
 {
   "name": "ag-extension-backend",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Ag-Extension Decision Support Dashboard Backend",
   "main": "dist/index.js",
   "scripts": {
