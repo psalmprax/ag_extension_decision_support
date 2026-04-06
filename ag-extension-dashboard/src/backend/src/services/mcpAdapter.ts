@@ -49,23 +49,50 @@ export class MCPAdapter {
       const properties: Record<string, unknown> = {};
       const required: string[] = [];
 
-      const shape = zodSchema?._def?.shape;
+      // Try to extract shape from Zod schema
+      let shape: any = null;
+
+      try {
+        // For Zod v3, try different ways to access the shape
+        if (zodSchema && zodSchema._def) {
+          shape = zodSchema._def.shape;
+          console.log(`Tool ${tool.name}: Found shape via _def.shape`);
+        }
+
+        // Alternative access methods
+        if (!shape && zodSchema && (zodSchema as any).shape) {
+          shape = (zodSchema as any).shape;
+          console.log(`Tool ${tool.name}: Found shape via direct property`);
+        }
+
+        console.log(`Tool ${tool.name}: Schema type:`, zodSchema?.constructor?.name);
+        console.log(`Tool ${tool.name}: Full schema:`, JSON.stringify(zodSchema, null, 2));
+      } catch (error) {
+        console.error(`Tool ${tool.name}: Error extracting schema:`, error);
+      }
+
       if (shape) {
         for (const [key, value] of Object.entries(shape)) {
-          const zodDef = (value as any)?._def;
-          properties[key] = {
-            type: this.getZodType(zodDef),
-            description: zodDef?.description || '',
-          };
+          try {
+            const zodDef = (value as any)?._def;
+            properties[key] = {
+              type: this.getZodType(zodDef),
+              description: zodDef?.description || '',
+            };
 
-          // Check if field is required (not optional)
-          const isOptional = zodDef?.typeName === 'ZodOptional' || zodDef?.isOptional;
-          if (!isOptional) {
-            required.push(key);
+            // Check if field is required (not optional)
+            const isOptional = zodDef?.typeName === 'ZodOptional' || zodDef?.isOptional;
+            if (!isOptional) {
+              required.push(key);
+            }
+
+            console.log(`Tool ${tool.name}, field ${key}: isOptional=${isOptional}, type=${zodDef?.typeName}, required=${!isOptional}`);
+          } catch (fieldError) {
+            console.error(`Tool ${tool.name}, field ${key}: Error processing field:`, fieldError);
           }
-
-          console.log(`Tool ${tool.name}, field ${key}: isOptional=${isOptional}, type=${zodDef?.typeName}`);
         }
+      } else {
+        console.warn(`Tool ${tool.name}: No shape found in schema`);
       }
 
       const result = {
