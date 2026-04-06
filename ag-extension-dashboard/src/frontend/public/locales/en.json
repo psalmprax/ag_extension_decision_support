@@ -576,5 +576,22 @@
   "email_template_weather_advisory_body": "Weather Advisory for {{region}}\n\nForecast Period: {{dateRange}}\n\n{{weatherSummary}}\n\nRecommendations:\n{{recommendations}}\n\nStay safe and plan your farming activities accordingly.",
 
   "email_template_training_invitation_subject": "Training Invitation: {{trainingTopic}} on {{date}}",
-  "email_template_training_invitation_body": "Dear {{recipientName}},\n\nYou are invited to attend a training session:\n\nTopic: {{trainingTopic}}\nDate: {{date}}\nTime: {{time}}\nLocation: {{location}}\nTrainer: {{trainerName}}\n\nAgenda:\n{{agenda}}\n\nPlease confirm your attendance by replying to this email.\n\nBest regards,\nAg Extension Training Team"
+  "email_template_training_invitation_body": "Dear {{recipientName}},\n\nYou are invited to attend a training session:\n\nTopic: {{trainingTopic}}\nDate: {{date}}\nTime: {{time}}\nLocation: {{location}}\nTrainer: {{trainerName}}\n\nAgenda:\n{{agenda}}\n\nPlease confirm your attendance by replying to this email.\n\nBest regards,\nAg Extension Training Team",
+
+  "email_workflows_edit": "Edit",
+  "email_workflows_no_templates_found": "No email templates found",
+  "email_workflows_no_templates_category": "No templates in this category",
+  "email_workflows_create_first": "Start by creating your first email template",
+  "email_workflows_pending_approval": "Pending Approval",
+  "email_workflows_to": "To:",
+  "email_workflows_review_email": "Review Email",
+  "email_workflows_subject": "Subject",
+  "email_workflows_recipients": "Recipients",
+  "email_workflows_content": "Content",
+  "email_workflows_review_comment": "Review Comment (Optional)",
+  "email_workflows_add_comment": "Add a comment for your decision...",
+  "email_workflows_approving": "Approving...",
+  "email_workflows_approve_send": "Approve & Send",
+  "email_workflows_rejecting": "Rejecting...",
+  "email_workflows_reject": "Reject"
 }

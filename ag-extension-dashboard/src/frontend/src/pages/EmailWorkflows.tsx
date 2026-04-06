@@ -319,7 +319,7 @@ export function EmailWorkflows() {
                                     </button>
                                     <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm">
                                         <Edit className="w-4 h-4" />
-                                        Edit
+                                        {t('email_workflows_edit')}
                                     </button>
                                 </div>
                             </motion.div>
@@ -329,11 +329,11 @@ export function EmailWorkflows() {
                     {templates.length === 0 && (
                         <div className="text-center py-12">
                             <Mail className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No email templates found</h3>
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('email_workflows_no_templates_found')}</h3>
                             <p className="text-gray-600 dark:text-gray-400">
                                 {selectedCategory !== 'all'
-                                    ? 'No templates in this category'
-                                    : 'Start by creating your first email template'
+                                    ? t('email_workflows_no_templates_category')
+                                    : t('email_workflows_create_first')
                                 }
                             </p>
                         </div>
@@ -358,14 +358,14 @@ export function EmailWorkflows() {
                                             <div className="flex items-center gap-2 mb-2">
                                                 <Clock className="w-5 h-5 text-yellow-600" />
                                                 <span className="text-sm font-medium text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20 px-2 py-1 rounded">
-                                                    Pending Approval
+                                                    {t('email_workflows_pending_approval')}
                                                 </span>
                                             </div>
                                             <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
                                                 {approval.emailData.subject}
                                             </h3>
                                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                                                To: {approval.emailData.to.join(', ')}
+                                                {t('email_workflows_to')} {approval.emailData.to.join(', ')}
                                             </p>
                                         </div>
                                         <div className="text-right">
@@ -429,7 +429,7 @@ export function EmailWorkflows() {
                     >
                         <div className="p-6">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Review Email</h3>
+                                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{t('email_workflows_review_email')}</h3>
                                 <button
                                     onClick={() => {
                                         setShowApprovalModal(null);
@@ -444,21 +444,21 @@ export function EmailWorkflows() {
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Subject
+                                        {t('email_workflows_subject')}
                                     </label>
                                     <p className="text-gray-900 dark:text-white font-medium">{showApprovalModal.emailData.subject}</p>
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Recipients
+                                        {t('email_workflows_recipients')}
                                     </label>
                                     <p className="text-gray-900 dark:text-white">{showApprovalModal.emailData.to.join(', ')}</p>
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Content
+                                        {t('email_workflows_content')}
                                     </label>
                                     <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4 max-h-60 overflow-y-auto">
                                         <div
@@ -470,12 +470,12 @@ export function EmailWorkflows() {
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Review Comment (Optional)
+                                        {t('email_workflows_review_comment')}
                                     </label>
                                     <textarea
                                         value={approvalComment}
                                         onChange={(e) => setApprovalComment(e.target.value)}
-                                        placeholder="Add a comment for your decision..."
+                                        placeholder={t('email_workflows_add_comment')}
                                         rows={3}
                                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
                                     />
@@ -488,7 +488,7 @@ export function EmailWorkflows() {
                                         className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
                                     >
                                         <UserCheck className="w-4 h-4" />
-                                        {isProcessingApproval ? 'Approving...' : 'Approve & Send'}
+                                        {isProcessingApproval ? t('email_workflows_approving') : t('email_workflows_approve_send')}
                                     </button>
                                     <button
                                         onClick={handleRejectEmail}
@@ -496,7 +496,7 @@ export function EmailWorkflows() {
                                         className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
                                     >
                                         <UserX className="w-4 h-4" />
-                                        {isProcessingApproval ? 'Rejecting...' : 'Reject'}
+                                        {isProcessingApproval ? t('email_workflows_rejecting') : t('email_workflows_reject')}
                                     </button>
                                 </div>
                             </div>
