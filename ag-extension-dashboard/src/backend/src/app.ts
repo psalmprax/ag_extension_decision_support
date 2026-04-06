@@ -156,23 +156,29 @@ app.use('/api/v1/ai/agents', agentRoutes);
 app.use('/api/v1/system/health', systemHealthRoutes);
 app.use('/api/v1/ai/memories', memoryRoutes);
 app.use('/api/v1/ai/diseases', diseaseRoutes);
-// MCP router - created lazily to avoid path alias issues
+// Create MCP router synchronously to ensure it loads properly
 let mcpRouter: any = null;
-const getMCPRouter = async () => {
-  if (!mcpRouter) {
-    const { createMCPRouter } = await import('./services/mcpAdapter');
-    mcpRouter = createMCPRouter();
-  }
-  return mcpRouter;
-};
+try {
+  // Import synchronously for Docker deployment
+  const { createMCPRouter } = require('./services/mcpAdapter');
+  mcpRouter = createMCPRouter();
+} catch (error) {
+  console.error('Failed to create MCP router:', error);
+}
 
-// MCP middleware wrapper
-app.use('/api/v1/mcp', async (req, res, next) => {
-  try {
-    const router = await getMCPRouter();
-    router(req, res, next);
-  } catch (error) {
-    next(error);
+// MCP middleware wrapper - synchronous
+app.use('/api/v1/mcp', (req, res, next) => {
+  if (mcpRouter) {
+    mcpRouter(req, res, next);
+  } else {
+    res.status(503).json({ error: 'MCP service not available' });
+  }
+});
+app.use('/api/mcp', (req, res, next) => {
+  if (mcpRouter) {
+    mcpRouter(req, res, next);
+  } else {
+    res.status(503).json({ error: 'MCP service not available' });
   }
 });
 
@@ -203,12 +209,11 @@ app.use('/api/ai/agents', agentRoutes);
 app.use('/api/system/health', systemHealthRoutes);
 app.use('/api/ai/memories', memoryRoutes);
 app.use('/api/ai/diseases', diseaseRoutes);
-app.use('/api/mcp', async (req, res, next) => {
-  try {
-    const router = await getMCPRouter();
-    router(req, res, next);
-  } catch (error) {
-    next(error);
+app.use('/api/mcp', (req, res, next) => {
+  if (mcpRouter) {
+    mcpRouter(req, res, next);
+  } else {
+    res.status(503).json({ error: 'MCP service not available' });
   }
 });
 // Restore original path after routing
