@@ -58,10 +58,13 @@ export class MCPAdapter {
         console.log(`Tool ${tool.name}: Schema type:`, zodSchema?.constructor?.name);
 
         // For Zod v3, shape is a function that returns the shape object
+        console.log(`Tool ${tool.name}: Checking shape - exists:`, !!zodSchema._def.shape, 'type:', typeof zodSchema._def.shape);
+
         if (zodSchema && zodSchema._def && zodSchema._def.shape) {
           if (typeof zodSchema._def.shape === 'function') {
+            console.log(`Tool ${tool.name}: CALLING shape() function now...`);
             shape = zodSchema._def.shape();
-            console.log(`Tool ${tool.name}: Called shape() function, result:`, shape);
+            console.log(`Tool ${tool.name}: SUCCESS - Called shape() function, result keys:`, Object.keys(shape));
           } else {
             // Fallback: if shape is already an object
             shape = zodSchema._def.shape;
