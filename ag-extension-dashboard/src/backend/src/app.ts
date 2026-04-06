@@ -9,10 +9,12 @@ import { config } from './config';
 import { logger } from './utils/logger';
 import { errorHandler } from './middleware/errorHandler';
 import i18nUrlMiddleware, { i18nRouteHandler, restoreOriginalPath } from './middleware/i18nUrlMiddleware';
+import { securityGate } from './middleware/securityGate';
 import rateLimit from 'express-rate-limit';
 import { setupSwagger } from './utils/swagger';
 import { getPool } from './services/databaseService';
 import { getCache } from './services/cacheService';
+import { persistentMemory } from './services/persistentMemory';
 
 // Routes
 import authRoutes from './routes/auth';
@@ -35,6 +37,7 @@ import contextMenuRoutes from './routes/contextMenus';
 import { shareRouter, publicShareRouter } from './routes/shares';
 import alertRoutes from './routes/alerts';
 import supportRoutes from './routes/support';
+import { createMCPRouter } from './services/mcpAdapter';
 
 const app: Application = express();
 
@@ -68,6 +71,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(limiter);
+app.use(securityGate);
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
@@ -140,6 +144,8 @@ app.use('/api/v1/context-menus', contextMenuRoutes);
 app.use('/api/v1/shares', shareRouter);
 app.use('/api/public/shares', publicShareRouter);
 app.use('/api/v1/support', supportRoutes);
+const mcpRouter = createMCPRouter();
+app.use('/api/v1/mcp', mcpRouter);
 
 // Legacy redirects
 app.use('/api/auth', authRoutes);
@@ -162,6 +168,7 @@ app.use('/api/billing', billingRoutes);
 app.use('/api/shares', shareRouter);
 app.use('/api/public/shares', publicShareRouter);
 app.use('/api/support', supportRoutes);
+app.use('/api/mcp', mcpRouter);
 // Restore original path after routing
 app.use(restoreOriginalPath);
 

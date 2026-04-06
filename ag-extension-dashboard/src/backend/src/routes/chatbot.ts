@@ -7,6 +7,10 @@ import { logger } from '@/utils/logger';
 import { z } from 'zod';
 import { authorize, AuthRequest } from '@/middleware/authorize';
 import { usageService } from '../services/usageService';
+import { aegisShield } from '@/services/security/aegisShield';
+import { sanitizeToolResult } from '@/middleware/securityGate';
+import { skillVetter } from '@/services/security/skillVetter';
+import { agentTelemetry } from '@/services/agentTelemetry';
 
 const router = Router();
 
@@ -185,6 +189,16 @@ router.post('/message', async (req: AuthRequest, res: Response) => {
     if (!message) {
         return res.status(400).json({ error: 'message is required' });
     }
+
+    const inputCheck = aegisShield.sanitizeInput(message);
+    if (inputCheck.severity === 'critical') {
+        logger.warn(`Critical injection attempt in chatbot message: ${inputCheck.threats.join('; ')}`);
+        return res.status(403).json({
+            success: false,
+            error: 'Request blocked: potential security threat detected',
+        });
+    }
+    const sanitizedMessage = inputCheck.sanitizedInput;
 
     // AI Check
     if (mode === 'ai') {
@@ -388,28 +402,43 @@ router.post('/message', async (req: AuthRequest, res: Response) => {
         el: 'Greek', oro: 'Oromo', lug: 'Luganda', zu: 'Zulu'
     };
     const langName = languageNames[language] || 'English';
-    const systemMessage = {
-        role: 'system',
-        content: `You are a "Real-First" AI agricultural assistant helping extension officers and farmers with expert advice.
+    const baseSystemPrompt = `You are a "Real-First" AI agricultural assistant helping extension officers and farmers with expert advice.
         
         CRITICAL OPERATING GUIDELINES:
         1. DATA DRIFT: Do NOT rely on your internal training data for volatile information like Market Prices or Weather. ALWAYS use the provided tools (get_market_prices, get_weather_forecast) to get current data.
         2. DISEASE VIGILANCE: Regularly check for regional threats using (get_disease_alerts). If you discover a critical threat through research or alerts, proactively suggest using (register_agricultural_alert) to update the system and warn others.
-        3. DEEP RESEARCH: For complex technical questions about crop diseases or new farming methods, use (research_agricultural_data) to fetch the latest scientific findings.
-        4. SYSTEM UPDATES: You have the authority to schedule visits (schedule_visit) and register system-wide alerts (register_agricultural_alert). Use these skills when a situation requires human intervention or broad notification.
+        3. PLANT DISEASE: Use (diagnose_plant_disease) when farmers describe symptoms, (analyze_plant_image) when they upload photos, and (get_disease_information) to learn about specific diseases.
+        4. DEEP RESEARCH: For complex technical questions about crop diseases or new farming methods, use (deep_agricultural_research) for multi-source analysis or (research_agricultural_data) for quick web search.
+        5. YIELD FORECASTING: Use (crop_yield_forecast) when asked about expected harvest volumes, production estimates, or agricultural output planning.
+        6. SATELLITE ANALYSIS: Use (satellite_ndvi_analysis) when asked about crop health from space, vegetation monitoring, or field condition assessment via satellite imagery.
+        7. TRANSLATION: Use (translate_text) to communicate with farmers in their preferred language. Supports Swahili, Luganda, Oromo, Zulu, Arabic, Hindi, French, Spanish, and more.
+        8. MEMORY: Use (memory_store) to save important context across sessions, (memory_recall) to retrieve past information, and (memory_forget) to remove outdated data.
+        9. MULTI-AGENT: Use (dispatch_agent_task) to delegate specialized work to other AI agents, (handoff_agent_task) to transfer tasks between agents, and (check_task_status) to monitor progress.
+        10. BUDGET: Use (check_api_budget) to monitor API costs and provider status.
+        11. SYSTEM UPDATES: You have the authority to schedule visits (schedule_visit) and register system-wide alerts (register_agricultural_alert). Use these skills when a situation requires human intervention or broad notification.
         
-        Provide accurate, practical, and location-specific advice. ALWAYS respond in ${langName} language.`
+        Provide accurate, practical, and location-specific advice. ALWAYS respond in ${langName} language.`;
+
+    const systemMessage = {
+        role: 'system',
+        content: aegisShield.buildProtectedSystemPrompt(baseSystemPrompt)
     };
 
     // Build messages array with system message first
-    const messages = [systemMessage, ...history, { role: 'user', content: message }];
+    const messages = [systemMessage, ...history, { role: 'user', content: sanitizedMessage }];
 
     try {
         // Try Groq first (fastest), fallback to others
         const provider = await AIProviderFactory.getProvider('groq');
 
+        const aiStartTime = Date.now();
         // First call to the model
         const response = await provider.generateText(messages, { tools: toolRegistry });
+        const aiDuration = Date.now() - aiStartTime;
+
+        if (response.usage) {
+            await agentTelemetry.recordAgentRequest('groq', req.user!.userId, response.usage.totalTokens, 0, aiDuration);
+        }
 
         const responseMessage = {
             role: 'assistant',
@@ -429,13 +458,20 @@ router.post('/message', async (req: AuthRequest, res: Response) => {
                     try {
                         const args = JSON.parse(toolCall.function.arguments);
                         const validatedArgs = tool.schema.parse(args);
+                        const startTime = Date.now();
                         const result = await tool.execute(validatedArgs);
+                        const duration = Date.now() - startTime;
+                        const sanitized = sanitizeToolResult(result);
                         toolResults.push({
                             tool_call_id: toolCall.id,
                             role: 'tool',
                             name: toolCall.function.name,
-                            content: result,
+                            content: sanitized.sanitized,
                         });
+                        await agentTelemetry.recordToolCall(toolCall.function.name, req.user!.userId, duration, 'success');
+                        if (!sanitized.clean) {
+                            logger.warn(`Tool result sanitized for ${toolCall.function.name}: ${sanitized.threats.join('; ')}`);
+                        }
                     } catch (error) {
                         let errorMessage = 'Error executing tool';
                         if (error instanceof z.ZodError) {
@@ -444,6 +480,7 @@ router.post('/message', async (req: AuthRequest, res: Response) => {
                             errorMessage = error.message;
                         }
                         logger.error(errorMessage);
+                        await agentTelemetry.recordError(toolCall.function.name, req.user!.userId, errorMessage);
                         toolResults.push({
                             tool_call_id: toolCall.id,
                             role: 'tool',
