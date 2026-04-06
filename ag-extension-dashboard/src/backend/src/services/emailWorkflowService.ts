@@ -43,7 +43,7 @@ export class EmailWorkflowService {
 
   async initialize(): Promise<void> {
     try {
-      // Load translations for template seeding
+      // Load translations for template seeding and display
       loadTranslations();
 
       const pool = getPool();
@@ -148,7 +148,7 @@ export class EmailWorkflowService {
     }
 
     // Translate subjects and add display names
-    return result.rows.map(template => ({
+    return result.rows.map((template: any) => ({
       ...template,
       displayName: this.getTemplateDisplayName(template.name),
       subject: this.translateTemplateField(template.subject)
@@ -176,8 +176,15 @@ export class EmailWorkflowService {
     try {
       const translated = t(field);
       // If translation is different from the key, return it
-      return translated !== field ? translated : field;
-    } catch {
+      if (translated !== field && translated) {
+        console.log(`✅ Translated: ${field} -> ${translated}`);
+        return translated;
+      } else {
+        console.warn(`⚠️ Translation not found for key: ${field}`);
+        return field;
+      }
+    } catch (error) {
+      console.error(`❌ Translation error for ${field}:`, error);
       return field;
     }
   }
