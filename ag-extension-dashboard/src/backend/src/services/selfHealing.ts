@@ -122,11 +122,11 @@ export class SelfHealingService {
         }
         case 'agent-zero':
         case 'crew-ai':
-        case 'openclaw': {
+        case 'agent-zero':
+        case 'crew-ai': {
           const urls: Record<string, string> = {
-            'agent-zero': process.env.AGENT_ZERO_URL || 'http://ag-agent-zero:8000',
-            'crew-ai': process.env.AGENT_CREW_AI_URL || 'http://ag-crew-ai:8001',
-            'openclaw': 'http://localhost:8002',
+            'agent-zero': 'http://localhost:8000',
+            'crew-ai': 'http://localhost:8001',
           };
           const url = urls[component];
           if (!url) return false;
@@ -166,7 +166,6 @@ export class SelfHealingService {
         break;
       case 'agent-zero':
       case 'crew-ai':
-      case 'openclaw':
         await this.recoverAgent(component);
         break;
       default:
@@ -222,7 +221,7 @@ export class SelfHealingService {
       const urls: Record<string, string> = {
         'agent-zero': process.env.AGENT_ZERO_URL || 'http://ag-agent-zero:8000',
         'crew-ai': process.env.AGENT_CREW_AI_URL || 'http://ag-crew-ai:8001',
-        'openclaw': 'http://localhost:8002',
+
       };
 
       const url = urls[agentId];

@@ -139,12 +139,13 @@ async function bootstrap() {
             capabilities: ['market_analysis', 'disease_diagnosis', 'policy_research', '*'],
             maxConcurrentTasks: 5,
         });
-        agentOrchestrator.registerAgent({
-            agentId: 'openclaw',
-            name: 'OpenClaw',
-            capabilities: ['bug_fixes', 'unit_testing', 'doc_gen', '*'],
-            maxConcurrentTasks: 3,
-        });
+        // OpenClaw agent - temporarily disabled
+        // agentOrchestrator.registerAgent({
+        //     agentId: 'openclaw',
+        //     name: 'OpenClaw',
+        //     capabilities: ['bug_fixes', 'unit_testing', 'doc_gen', '*'],
+        //     maxConcurrentTasks: 3,
+        // });
         logger.info('Agents registered in orchestrator');
 
         // Initialize email workflow service
@@ -161,7 +162,7 @@ async function bootstrap() {
         selfHealingService.registerComponent('cache');
         selfHealingService.registerComponent('agent-zero');
         selfHealingService.registerComponent('crew-ai');
-        selfHealingService.registerComponent('openclaw');
+        // selfHealingService.registerComponent('openclaw'); // Temporarily disabled
         selfHealingService.startMonitoring(60000);
         logger.info('Self-healing monitoring started');
 
