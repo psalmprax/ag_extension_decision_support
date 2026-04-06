@@ -6,7 +6,7 @@ import { logger } from '@/utils/logger';
 const router = Router();
 
 // Get all available diseases
-router.get('/', authorize(['extension_officer', 'admin']), async (req: Request, res: Response) => {
+router.get('/', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
     try {
         const diseases = plantDiseaseService.getAllDiseases();
         res.json({ success: true, data: diseases });
@@ -17,7 +17,7 @@ router.get('/', authorize(['extension_officer', 'admin']), async (req: Request, 
 });
 
 // Get specific disease information
-router.get('/:diseaseName', authorize(['extension_officer', 'admin']), async (req: Request, res: Response) => {
+router.get('/:diseaseName', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
     try {
         const { diseaseName } = req.params;
         const diseaseInfo = plantDiseaseService.getDiseaseInfo(diseaseName);
@@ -34,7 +34,7 @@ router.get('/:diseaseName', authorize(['extension_officer', 'admin']), async (re
 });
 
 // Diagnose diseases from symptoms
-router.post('/diagnose', authorize(['extension_officer', 'admin']), async (req: Request, res: Response) => {
+router.post('/diagnose', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
     try {
         const { symptoms, cropType } = req.body;
 
@@ -51,7 +51,7 @@ router.post('/diagnose', authorize(['extension_officer', 'admin']), async (req: 
 });
 
 // Analyze plant image
-router.post('/diagnose/image', authorize(['extension_officer', 'admin']), async (req: Request, res: Response) => {
+router.post('/diagnose/image', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
     try {
         const { imageData, cropType } = req.body;
 
@@ -59,7 +59,7 @@ router.post('/diagnose/image', authorize(['extension_officer', 'admin']), async 
             return res.status(400).json({ success: false, error: 'Image data is required' });
         }
 
-        const analysis = await plantDiseaseService.analyzeImage(imageData, cropType);
+        const analysis = await plantDiseaseService.analyzeImage(imageData);
         res.json({ success: true, data: analysis });
     } catch (error) {
         logger.error('Failed to analyze image:', error);

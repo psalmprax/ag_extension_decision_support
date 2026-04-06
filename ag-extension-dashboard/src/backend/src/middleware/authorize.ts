@@ -12,7 +12,7 @@ export type AuthRequest = Request;
  * Authorization middleware factory
  * Checks if the user has the required role(s)
  */
-export const authorize = (...allowedRoles: UserRole[]) => {
+export const authorize = (allowedRoles: UserRole[]) => {
     return (req: Request, res: Response, next: NextFunction): void => {
         try {
             // Get token from Authorization header

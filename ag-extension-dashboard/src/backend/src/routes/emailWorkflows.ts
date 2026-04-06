@@ -5,7 +5,7 @@ import { logger } from '@/utils/logger';
 
 const router = Router();
 
-router.get('/templates', authorize(['extension_officer', 'admin']), async (req: Request, res: Response) => {
+router.get('/templates', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
     try {
         const category = req.query.category as string | undefined;
         const templates = await emailWorkflowService.getTemplates(category);
@@ -16,7 +16,7 @@ router.get('/templates', authorize(['extension_officer', 'admin']), async (req: 
     }
 });
 
-router.get('/approvals/pending', authorize(['extension_officer', 'admin']), async (req: Request, res: Response) => {
+router.get('/approvals/pending', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
     try {
         const approvals = await emailWorkflowService.getPendingApprovals();
         res.json({ success: true, data: approvals });
@@ -26,7 +26,7 @@ router.get('/approvals/pending', authorize(['extension_officer', 'admin']), asyn
     }
 });
 
-router.post('/approvals/:id/approve', authorize(['extension_officer', 'admin']), async (req: Request, res: Response) => {
+router.post('/approvals/:id/approve', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
     try {
         const { comment } = req.body;
         const success = await emailWorkflowService.reviewApproval(req.params.id, 'approved', (req as AuthRequest).user!.userId, comment);
@@ -37,7 +37,7 @@ router.post('/approvals/:id/approve', authorize(['extension_officer', 'admin']),
     }
 });
 
-router.post('/approvals/:id/reject', authorize(['extension_officer', 'admin']), async (req: Request, res: Response) => {
+router.post('/approvals/:id/reject', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
     try {
         const { comment } = req.body;
         const success = await emailWorkflowService.reviewApproval(req.params.id, 'rejected', (req as AuthRequest).user!.userId, comment);

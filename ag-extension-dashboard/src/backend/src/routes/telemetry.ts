@@ -5,7 +5,7 @@ import { logger } from '@/utils/logger';
 
 const router = Router();
 
-router.get('/summary', authorize(['extension_officer', 'admin']), async (req: Request, res: Response) => {
+router.get('/summary', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
     try {
         const hours = parseInt((req.query.hours as string) || '24');
         const summary = await agentTelemetry.getSummary(hours);
@@ -16,7 +16,7 @@ router.get('/summary', authorize(['extension_officer', 'admin']), async (req: Re
     }
 });
 
-router.get('/events', authorize(['extension_officer', 'admin']), async (req: Request, res: Response) => {
+router.get('/events', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
     try {
         const limit = parseInt((req.query.limit as string) || '50');
         const events = await agentTelemetry.getRecentEvents(limit);

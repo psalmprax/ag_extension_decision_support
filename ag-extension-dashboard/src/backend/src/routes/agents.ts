@@ -5,7 +5,7 @@ import { logger } from '@/utils/logger';
 
 const router = Router();
 
-router.get('/status', authorize(['extension_officer', 'admin']), async (req: Request, res: Response) => {
+router.get('/status', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
     try {
         const agents = agentOrchestrator.getAgentStatus();
         res.json({ success: true, data: agents });
@@ -15,7 +15,7 @@ router.get('/status', authorize(['extension_officer', 'admin']), async (req: Req
     }
 });
 
-router.get('/queue', authorize(['extension_officer', 'admin']), async (req: Request, res: Response) => {
+router.get('/queue', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
     try {
         const queue = agentOrchestrator.getQueueStatus();
         res.json({ success: true, data: queue });
@@ -25,7 +25,7 @@ router.get('/queue', authorize(['extension_officer', 'admin']), async (req: Requ
     }
 });
 
-router.get('/handoffs', authorize(['extension_officer', 'admin']), async (req: Request, res: Response) => {
+router.get('/handoffs', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
     try {
         const handoffs = agentOrchestrator.getHandoffLog();
         res.json({ success: true, data: handoffs });
@@ -35,7 +35,7 @@ router.get('/handoffs', authorize(['extension_officer', 'admin']), async (req: R
     }
 });
 
-router.post('/dispatch', authorize(['extension_officer', 'admin']), async (req: Request, res: Response) => {
+router.post('/dispatch', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
     try {
         const { type, payload, priority, agentId } = req.body;
         const task = await agentOrchestrator.dispatchTask({
