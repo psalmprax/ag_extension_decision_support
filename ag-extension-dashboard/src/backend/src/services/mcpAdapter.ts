@@ -53,20 +53,22 @@ export class MCPAdapter {
       let shape: any = null;
 
       try {
+        console.log(`Tool ${tool.name}: Raw schema:`, zodSchema);
+        console.log(`Tool ${tool.name}: Schema _def:`, zodSchema?._def);
+
         // For Zod v3, try different ways to access the shape
         if (zodSchema && zodSchema._def) {
           shape = zodSchema._def.shape;
-          console.log(`Tool ${tool.name}: Found shape via _def.shape`);
+          console.log(`Tool ${tool.name}: Found shape via _def.shape:`, shape);
         }
 
         // Alternative access methods
         if (!shape && zodSchema && (zodSchema as any).shape) {
           shape = (zodSchema as any).shape;
-          console.log(`Tool ${tool.name}: Found shape via direct property`);
+          console.log(`Tool ${tool.name}: Found shape via direct property:`, shape);
         }
 
         console.log(`Tool ${tool.name}: Schema type:`, zodSchema?.constructor?.name);
-        console.log(`Tool ${tool.name}: Full schema:`, JSON.stringify(zodSchema, null, 2));
       } catch (error) {
         console.error(`Tool ${tool.name}: Error extracting schema:`, error);
       }
