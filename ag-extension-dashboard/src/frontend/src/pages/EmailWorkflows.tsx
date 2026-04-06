@@ -53,7 +53,7 @@ export function EmailWorkflows() {
             console.error('Failed to load email workflow data:', error);
             addNotification({
                 type: 'error',
-                message: 'Failed to load email workflow data'
+                message: t('email_workflows_failed_load')
             });
         } finally {
             setIsLoading(false);
@@ -78,7 +78,7 @@ export function EmailWorkflows() {
             if (res.success) {
                 addNotification({
                     type: 'success',
-                    message: 'Email approved and sent successfully'
+                    message: t('email_workflows_approved')
                 });
                 setShowApprovalModal(null);
                 setApprovalComment('');
@@ -178,8 +178,8 @@ export function EmailWorkflows() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Email Workflow Manager</h1>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">Manage email templates and approval workflows</p>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('email_workflows_title')}</h1>
+                    <p className="text-gray-600 dark:text-gray-400 mt-1">{t('email_workflows_subtitle')}</p>
                 </div>
                 <button
                     onClick={handleRefresh}
@@ -194,25 +194,25 @@ export function EmailWorkflows() {
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard
-                    title="Email Templates"
+                        title={t('email_workflows_templates')}
                     value={templates.length}
                     icon={Mail}
                     color="blue"
                 />
                 <StatCard
-                    title="Pending Approvals"
+                        title={t('email_workflows_pending_approvals')}
                     value={approvals.length}
                     icon={Clock}
                     color="yellow"
                 />
                 <StatCard
-                    title="Categories"
+                        title={t('email_workflows_categories')}
                     value={categories.length}
                     icon={Filter}
                     color="green"
                 />
                 <StatCard
-                    title="Total Variables"
+                        title={t('email_workflows_total_variables')}
                     value={templates.reduce((acc, t) => acc + t.variables.length, 0)}
                     icon={AlertTriangle}
                     color="purple"

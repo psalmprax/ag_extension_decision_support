@@ -53,7 +53,7 @@ export function Memory() {
             console.error('Failed to load memory data:', error);
             addNotification({
                 type: 'error',
-                message: 'Failed to load memory data'
+                message: t('memory_failed_load')
             });
         } finally {
             setIsLoading(false);
@@ -77,7 +77,7 @@ export function Memory() {
             if (res.success) {
                 addNotification({
                     type: 'success',
-                    message: 'Memory stored successfully'
+                    message: t('memory_stored_success')
                 });
                 setNewMemory({ category: '', key: '', value: '', importance: 0.5 });
                 setShowAddModal(false);
@@ -85,10 +85,10 @@ export function Memory() {
             }
         } catch (error) {
             console.error('Failed to store memory:', error);
-            addNotification({
-                type: 'error',
-                message: 'Failed to store memory'
-            });
+                addNotification({
+                    type: 'error',
+                    message: t('memory_failed_store')
+                });
         }
     };
 
@@ -98,10 +98,10 @@ export function Memory() {
         try {
             const res = await deleteMemory(category, key);
             if (res.success) {
-                addNotification({
-                    type: 'success',
-                    message: 'Memory deleted successfully'
-                });
+                    addNotification({
+                        type: 'success',
+                        message: t('memory_deleted_success')
+                    });
                 loadData();
             }
         } catch (error) {
@@ -133,10 +133,10 @@ export function Memory() {
             const res = await storeMemory(newMemory.category, newMemory.key, newMemory.value, newMemory.importance);
 
             if (res.success) {
-                addNotification({
-                    type: 'success',
-                    message: 'Memory updated successfully'
-                });
+                    addNotification({
+                        type: 'success',
+                        message: t('memory_updated_success')
+                    });
                 setNewMemory({ category: '', key: '', value: '', importance: 0.5 });
                 setShowAddModal(false);
                 setEditingMemory(null);
@@ -214,8 +214,8 @@ export function Memory() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Memory Manager</h1>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">Manage AI persistent memory and knowledge</p>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('memory_title')}</h1>
+                    <p className="text-gray-600 dark:text-gray-400 mt-1">{t('memory_subtitle')}</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <button
@@ -239,25 +239,25 @@ export function Memory() {
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard
-                    title="Total Memories"
+                        title={t('memory_total_memories')}
                     value={memories.length}
                     icon={Brain}
                     color="blue"
                 />
                 <StatCard
-                    title="Categories"
+                        title={t('memory_categories')}
                     value={categories.length}
                     icon={Tag}
                     color="green"
                 />
                 <StatCard
-                    title="Avg Importance"
+                        title={t('memory_avg_importance')}
                     value={memorySummary.length > 0 ? (memorySummary.reduce((acc, cat) => acc + cat.avgImportance, 0) / memorySummary.length).toFixed(2) : '0.00'}
                     icon={BarChart3}
                     color="purple"
                 />
                 <StatCard
-                    title="Most Used"
+                        title={t('memory_most_used')}
                     value={memories.length > 0 ? Math.max(...memories.map(m => m.accessCount)) : 0}
                     icon={Clock}
                     color="orange"
@@ -272,7 +272,7 @@ export function Memory() {
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                             <input
                                 type="text"
-                                placeholder="Search memories..."
+                                placeholder={t('memory_search_placeholder')}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -297,7 +297,7 @@ export function Memory() {
 
             {/* Memory List */}
             <div className="card p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Memory Entries</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">{t('memory_title')}</h3>
 
                 {filteredMemories.length > 0 ? (
                     <div className="space-y-4">
@@ -375,7 +375,7 @@ export function Memory() {
             {/* Category Summary */}
             {memorySummary.length > 0 && (
                 <div className="card p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Category Summary</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">{t('memory_category_summary')}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {memorySummary.map((category) => (
                             <div key={category.category} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
@@ -403,7 +403,7 @@ export function Memory() {
                         <div className="p-6">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                                    {editingMemory ? 'Edit Memory' : 'Add New Memory'}
+                                    {editingMemory ? t('memory_edit') : t('memory_add_new')}
                                 </h3>
                                 <button
                                     onClick={() => {
@@ -439,7 +439,7 @@ export function Memory() {
                                         type="text"
                                         value={newMemory.key}
                                         onChange={(e) => setNewMemory(prev => ({ ...prev, key: e.target.value }))}
-                                        placeholder="Unique identifier"
+                                        placeholder={t('memory_unique_identifier')}
                                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                                     />
                                 </div>
@@ -451,7 +451,7 @@ export function Memory() {
                                     <textarea
                                         value={newMemory.value}
                                         onChange={(e) => setNewMemory(prev => ({ ...prev, value: e.target.value }))}
-                                        placeholder="Memory content"
+                                        placeholder={t('memory_content')}
                                         rows={4}
                                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
                                     />
@@ -478,7 +478,7 @@ export function Memory() {
                                         disabled={!newMemory.category || !newMemory.key || !newMemory.value}
                                         className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
                                     >
-                                        {editingMemory ? 'Update Memory' : 'Add Memory'}
+                                        {editingMemory ? t('memory_edit') : t('memory_add_new')}
                                     </button>
                                     <button
                                         onClick={() => {

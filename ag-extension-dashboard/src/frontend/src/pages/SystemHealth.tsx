@@ -42,7 +42,7 @@ export function SystemHealth() {
             console.error('Failed to load health data:', error);
             addNotification({
                 type: 'error',
-                message: 'Failed to load system health data'
+                message: t('system_health_failed_load')
             });
         } finally {
             setIsLoading(false);
@@ -173,8 +173,8 @@ export function SystemHealth() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Self-Healing Monitor</h1>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">Monitor system health and automatic recovery</p>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('system_health_title')}</h1>
+                    <p className="text-gray-600 dark:text-gray-400 mt-1">{t('system_health_subtitle')}</p>
                 </div>
                 <button
                     onClick={handleRefresh}
@@ -188,35 +188,35 @@ export function SystemHealth() {
 
             {/* Overall Health Stats */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard
-                    title="Healthy Components"
-                    value={overallHealth.healthy}
-                    icon={CheckCircle}
-                    color="green"
-                />
-                <StatCard
-                    title="Degraded"
-                    value={overallHealth.degraded}
-                    icon={AlertTriangle}
-                    color="yellow"
-                />
-                <StatCard
-                    title="Unhealthy"
-                    value={overallHealth.unhealthy}
-                    icon={XCircle}
-                    color="red"
-                />
-                <StatCard
-                    title="Offline"
-                    value={overallHealth.offline}
-                    icon={XCircle}
-                    color="gray"
-                />
+                    <StatCard
+                        title={t('system_health_healthy_components')}
+                        value={overallHealth.healthy}
+                        icon={CheckCircle}
+                        color="green"
+                    />
+                    <StatCard
+                        title={t('system_health_degraded')}
+                        value={overallHealth.degraded}
+                        icon={AlertTriangle}
+                        color="yellow"
+                    />
+                    <StatCard
+                        title={t('system_health_unhealthy')}
+                        value={overallHealth.unhealthy}
+                        icon={XCircle}
+                        color="red"
+                    />
+                    <StatCard
+                        title={t('system_health_offline')}
+                        value={overallHealth.offline}
+                        icon={XCircle}
+                        color="gray"
+                    />
             </div>
 
             {/* Component Health Grid */}
             <div className="card p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Component Health Status</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">{t('system_health_component_status')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {healthChecks.map((check) => {
                         const StatusIcon = getStatusIcon(check.status);
@@ -275,7 +275,7 @@ export function SystemHealth() {
                                             className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 text-sm"
                                         >
                                             <RotateCcw className={`w-4 h-4 ${triggeringRecovery === check.component ? 'animate-spin' : ''}`} />
-                                            Trigger Recovery
+                                            {t('system_health_trigger_recovery')}
                                         </button>
                                     )}
                                 </div>
@@ -287,7 +287,7 @@ export function SystemHealth() {
 
             {/* Recovery Log */}
             <div className="card p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Recovery Actions Log</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">{t('system_health_recovery_log')}</h3>
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                     {recoveryLog.slice(0, 20).map((action, index) => (
                         <motion.div
@@ -314,7 +314,7 @@ export function SystemHealth() {
                                         : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300'
                                 }`}>
                                     {action.success ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-                                    {action.success ? 'Success' : 'Failed'}
+                                    {action.success ? t('system_health_success') : t('system_health_failed')}
                                 </div>
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                     {new Date(action.triggeredAt).toLocaleString()}

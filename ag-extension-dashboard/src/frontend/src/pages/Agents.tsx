@@ -47,7 +47,7 @@ export function Agents() {
             console.error('Failed to load agent data:', error);
             addNotification({
                 type: 'error',
-                message: 'Failed to load agent data'
+                message: t('agents_failed_load')
             });
         } finally {
             setIsLoading(false);
@@ -146,8 +146,8 @@ export function Agents() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Agent Orchestration Status</h1>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">Monitor and manage AI agents</p>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('agents_title')}</h1>
+                    <p className="text-gray-600 dark:text-gray-400 mt-1">{t('agents_subtitle')}</p>
                 </div>
                 <button
                     onClick={handleRefresh}
@@ -163,25 +163,25 @@ export function Agents() {
             {queueStatus && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <StatCard
-                        title="Queued Tasks"
+                        title={t('agents_queued_tasks')}
                         value={queueStatus.queued}
                         icon={Clock}
                         color="yellow"
                     />
                     <StatCard
-                        title="Active Tasks"
+                        title={t('agents_active_tasks')}
                         value={queueStatus.active}
                         icon={Activity}
                         color="blue"
                     />
                     <StatCard
-                        title="Completed"
+                        title={t('agents_completed')}
                         value={queueStatus.completed}
                         icon={CheckCircle}
                         color="green"
                     />
                     <StatCard
-                        title="Failed"
+                        title={t('agents_failed')}
                         value={queueStatus.failed}
                         icon={XCircle}
                         color="red"
@@ -193,7 +193,7 @@ export function Agents() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Queue Status Pie Chart */}
                 <div className="card p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Task Queue Status</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t('agents_task_queue_status')}</h3>
                     <ResponsiveContainer width="100%" height={300}>
                         <PieChart>
                             <Pie
@@ -216,7 +216,7 @@ export function Agents() {
 
                 {/* Agent Load Chart */}
                 <div className="card p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Agent Load Distribution</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t('agents_agent_load_distribution')}</h3>
                     <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={agents.map(agent => ({
                             name: agent.name,
@@ -235,7 +235,7 @@ export function Agents() {
 
             {/* Agent Status Grid */}
             <div className="card p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Agent Status</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">{t('agents_agent_status')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {agents.map((agent) => {
                         const HealthIcon = getHealthIcon(agent.health);
@@ -287,7 +287,7 @@ export function Agents() {
 
             {/* Handoff Log */}
             <div className="card p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Recent Handoffs</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">{t('agents_recent_handoffs')}</h3>
                 <div className="space-y-3 max-h-80 overflow-y-auto">
                     {handoffLog.slice(0, 10).map((handoff, index) => (
                         <motion.div

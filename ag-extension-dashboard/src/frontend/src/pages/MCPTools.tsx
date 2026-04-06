@@ -60,7 +60,7 @@ export function MCPTools() {
             console.error('Failed to load MCP data:', error);
             addNotification({
                 type: 'error',
-                message: 'Failed to load MCP tools data'
+                message: t('mcp_tools_failed_load')
             });
         } finally {
             setIsLoading(false);
@@ -96,12 +96,12 @@ export function MCPTools() {
                 if (res.data.isError) {
                     addNotification({
                         type: 'error',
-                        message: `Tool execution failed: ${res.data.content[0]?.text || 'Unknown error'}`
+                        message: t('mcp_tools_execution_failed')
                     });
                 } else {
                     addNotification({
                         type: 'success',
-                        message: 'Tool executed successfully'
+                        message: t('mcp_tools_executed_success')
                     });
                 }
             } else {
@@ -231,8 +231,8 @@ export function MCPTools() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">MCP Tools Browser</h1>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">Explore and execute Model Context Protocol tools</p>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('mcp_tools_title')}</h1>
+                    <p className="text-gray-600 dark:text-gray-400 mt-1">{t('mcp_tools_subtitle')}</p>
                 </div>
                 <button
                     onClick={handleRefresh}
@@ -248,7 +248,7 @@ export function MCPTools() {
             {health && (
                 <div className="card p-6">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">MCP Server Status</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('mcp_tools_server_status')}</h3>
                         <div className={`px-3 py-1 rounded-full text-sm font-medium ${
                             health.status === 'healthy'
                                 ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300'
@@ -279,19 +279,19 @@ export function MCPTools() {
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard
-                    title="Available Tools"
+                        title={t('mcp_tools_available_tools')}
                     value={tools.length}
                     icon={Wrench}
                     color="blue"
                 />
                 <StatCard
-                    title="Executed Today"
+                        title={t('mcp_tools_executed_today')}
                     value={executionHistory.filter(h => new Date(h.timestamp).toDateString() === new Date().toDateString()).length}
                     icon={Play}
                     color="green"
                 />
                 <StatCard
-                    title="Success Rate"
+                        title={t('mcp_tools_success_rate')}
                     value={executionHistory.length > 0
                         ? `${Math.round((executionHistory.filter(h => !h.result?.isError).length / executionHistory.length) * 100)}%`
                         : '100%'
@@ -300,7 +300,7 @@ export function MCPTools() {
                     color="purple"
                 />
                 <StatCard
-                    title="Total Executions"
+                        title={t('mcp_tools_total_executions')}
                     value={executionHistory.length}
                     icon={Terminal}
                     color="orange"
@@ -311,7 +311,7 @@ export function MCPTools() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Tools List */}
                 <div className="card p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Available Tools</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">{t('mcp_tools_available_tools')}</h3>
                     <div className="space-y-4 max-h-96 overflow-y-auto">
                         {tools.map((tool) => (
                             <motion.div
@@ -351,7 +351,7 @@ export function MCPTools() {
 
                 {/* Tool Execution Panel */}
                 <div className="card p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Tool Execution</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">{t('mcp_tools_tool_execution')}</h3>
 
                     {selectedTool ? (
                         <div className="space-y-6">
@@ -391,12 +391,12 @@ export function MCPTools() {
                                 {isExecuting ? (
                                     <>
                                         <Loader2 className="w-4 h-4 animate-spin" />
-                                        Executing...
+                                        {t('mcp_tools_executing')}
                                     </>
                                 ) : (
                                     <>
                                         <Play className="w-4 h-4" />
-                                        Execute Tool
+                                        {t('mcp_tools_execute')}
                                     </>
                                 )}
                             </button>
@@ -445,7 +445,7 @@ export function MCPTools() {
             {/* Execution History */}
             {executionHistory.length > 0 && (
                 <div className="card p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Recent Executions</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">{t('mcp_tools_recent_executions')}</h3>
                     <div className="space-y-3 max-h-64 overflow-y-auto">
                         {executionHistory.map((execution, index) => (
                             <motion.div

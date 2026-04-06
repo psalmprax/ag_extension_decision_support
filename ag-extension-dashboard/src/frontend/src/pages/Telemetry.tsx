@@ -44,7 +44,7 @@ export function Telemetry() {
             console.error('Failed to load telemetry data:', error);
             addNotification({
                 type: 'error',
-                message: 'Failed to load telemetry data'
+                message: t('telemetry_failed_load')
             });
         } finally {
             setIsLoading(false);
@@ -132,8 +132,8 @@ export function Telemetry() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Agent Telemetry Dashboard</h1>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">Monitor AI agent performance and usage</p>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('telemetry_title')}</h1>
+                    <p className="text-gray-600 dark:text-gray-400 mt-1">{t('telemetry_subtitle')}</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <select
@@ -161,25 +161,25 @@ export function Telemetry() {
             {summary && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <StatCard
-                        title="Total Requests"
+                        title={t('telemetry_total_requests')}
                         value={summary.totalRequests.toLocaleString()}
                         icon={Activity}
                         color="blue"
                     />
                     <StatCard
-                        title="Avg Response Time"
+                        title={t('telemetry_avg_response_time')}
                         value={`${summary.avgResponseTimeMs.toFixed(0)}ms`}
                         icon={Clock}
                         color="green"
                     />
                     <StatCard
-                        title="Error Rate"
+                        title={t('telemetry_error_rate')}
                         value={`${(summary.errorRate * 100).toFixed(1)}%`}
                         icon={AlertTriangle}
                         color="red"
                     />
                     <StatCard
-                        title="Total Cost"
+                        title={t('telemetry_total_cost')}
                         value={`$${summary.totalCostUsd.toFixed(2)}`}
                         icon={DollarSign}
                         color="purple"
@@ -191,12 +191,12 @@ export function Telemetry() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Status Distribution */}
                 <div className="card p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Request Status Distribution</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t('telemetry_request_distribution')}</h3>
                     <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={[
-                            { name: 'Success', value: statusStats.success, color: '#10b981' },
-                            { name: 'Error', value: statusStats.error, color: '#ef4444' },
-                            { name: 'Pending', value: statusStats.pending, color: '#f59e0b' }
+                            { name: t('telemetry_success'), value: statusStats.success, color: '#10b981' },
+                            { name: t('telemetry_error'), value: statusStats.error, color: '#ef4444' },
+                            { name: t('telemetry_pending'), value: statusStats.pending, color: '#f59e0b' }
                         ]}>
                             <XAxis dataKey="name" />
                             <YAxis />
@@ -209,7 +209,7 @@ export function Telemetry() {
                 {/* Agent Usage */}
                 {summary?.agentUsage && (
                     <div className="card p-6">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Agent Usage</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t('telemetry_agent_usage')}</h3>
                         <ResponsiveContainer width="100%" height={300}>
                             <BarChart data={Object.entries(summary.agentUsage).map(([agent, count]) => ({
                                 name: agent,
@@ -228,7 +228,7 @@ export function Telemetry() {
             {/* Recent Events */}
             <div className="card p-6">
                 <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Events</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('telemetry_recent_events')}</h3>
                     <div className="flex items-center gap-2">
                         <select
                             value={filterStatus}

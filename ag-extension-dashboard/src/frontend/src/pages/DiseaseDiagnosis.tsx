@@ -79,17 +79,17 @@ export function DiseaseDiagnosis() {
             if (res.success) {
                 setDiagnosis(res.data);
             } else {
-                addNotification({
-                    type: 'error',
-                    message: 'Failed to diagnose disease'
-                });
+            addNotification({
+                type: 'error',
+                message: t('disease_diagnosis_failed_load')
+            });
             }
         } catch (error) {
             console.error('Diagnosis error:', error);
-            addNotification({
-                type: 'error',
-                message: 'Failed to diagnose disease'
-            });
+                addNotification({
+                    type: 'error',
+                    message: t('disease_diagnosis_failed_diagnose')
+                });
         } finally {
             setIsDiagnosing(false);
         }
@@ -137,7 +137,7 @@ export function DiseaseDiagnosis() {
                 } else {
                     addNotification({
                         type: 'error',
-                        message: 'Failed to analyze image'
+                        message: t('disease_diagnosis_failed_analyze')
                     });
                 }
             };
@@ -167,8 +167,8 @@ export function DiseaseDiagnosis() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Plant Disease Diagnosis</h1>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">Diagnose plant diseases using symptoms or images</p>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('disease_diagnosis_title')}</h1>
+                    <p className="text-gray-600 dark:text-gray-400 mt-1">{t('disease_diagnosis_subtitle')}</p>
                 </div>
             </div>
 
@@ -203,7 +203,7 @@ export function DiseaseDiagnosis() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Input Section */}
                     <div className="card p-6">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Enter Symptoms</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t('disease_diagnosis_symptom_diagnosis')}</h3>
 
                         <div className="space-y-4">
                             <div>
@@ -229,7 +229,7 @@ export function DiseaseDiagnosis() {
                                         value={currentSymptom}
                                         onChange={(e) => setCurrentSymptom(e.target.value)}
                                         onKeyPress={(e) => e.key === 'Enter' && handleAddSymptom()}
-                                        placeholder="Enter symptom (e.g., yellow leaves)"
+                                        placeholder={t('disease_diagnosis_enter_symptom')}
                                         className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                                     />
                                     <button
@@ -278,7 +278,7 @@ export function DiseaseDiagnosis() {
 
                     {/* Results Section */}
                     <div className="card p-6">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Diagnosis Results</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t('disease_diagnosis_diagnosis_results')}</h3>
 
                         {diagnosis.length > 0 ? (
                             <div className="space-y-4">
@@ -324,7 +324,7 @@ export function DiseaseDiagnosis() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Image Upload Section */}
                     <div className="card p-6">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Upload Plant Image</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t('disease_diagnosis_image_analysis')}</h3>
 
                         <div className="space-y-4">
                             <div>
@@ -405,21 +405,21 @@ export function DiseaseDiagnosis() {
 
                     {/* Analysis Results */}
                     <div className="card p-6">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Analysis Results</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t('disease_diagnosis_analysis_results')}</h3>
 
                         {imageAnalysis ? (
                             <div className="space-y-4">
                                 <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                                     <div className="flex items-center gap-2 mb-2">
                                         <CheckCircle className="w-5 h-5 text-green-600" />
-                                        <h4 className="font-semibold text-green-800 dark:text-green-200">Overall Health</h4>
+                                        <h4 className="font-semibold text-green-800 dark:text-green-200">{t('disease_diagnosis_overall_health')}</h4>
                                     </div>
                                     <p className="text-green-700 dark:text-green-300">{imageAnalysis.overallHealth}</p>
                                 </div>
 
                                 {imageAnalysis.diseases.length > 0 && (
                                     <div>
-                                        <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Detected Diseases</h4>
+                                        <h4 className="font-semibold text-gray-900 dark:text-white mb-3">{t('disease_diagnosis_detected_diseases')}</h4>
                                         <div className="space-y-3">
                                             {imageAnalysis.diseases.map((disease, index) => (
                                                 <div key={index} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
@@ -440,7 +440,7 @@ export function DiseaseDiagnosis() {
 
                                 {imageAnalysis.recommendations.length > 0 && (
                                     <div>
-                                        <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Recommendations</h4>
+                                        <h4 className="font-semibold text-gray-900 dark:text-white mb-3">{t('disease_diagnosis_recommendations')}</h4>
                                         <ul className="space-y-2">
                                             {imageAnalysis.recommendations.map((rec, index) => (
                                                 <li key={index} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
