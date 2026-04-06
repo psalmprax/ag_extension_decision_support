@@ -32,6 +32,16 @@ export function EmailWorkflows() {
     const [approvalComment, setApprovalComment] = useState('');
     const [isProcessingApproval, setIsProcessingApproval] = useState(false);
 
+    // Preview and Edit modals
+    const [showPreviewModal, setShowPreviewModal] = useState<EmailTemplate | null>(null);
+    const [showEditModal, setShowEditModal] = useState<EmailTemplate | null>(null);
+    const [editForm, setEditForm] = useState({
+        subject: '',
+        body: '',
+        category: '',
+        variables: [] as string[]
+    });
+
     // Load data
     const loadData = async (showRefresh = false) => {
         try {
@@ -104,7 +114,7 @@ export function EmailWorkflows() {
             if (res.success) {
                 addNotification({
                     type: 'success',
-                    message: 'Email rejected'
+                    message: t('email_workflows_rejected')
                 });
                 setShowApprovalModal(null);
                 setApprovalComment('');
@@ -114,11 +124,76 @@ export function EmailWorkflows() {
             console.error('Failed to reject email:', error);
             addNotification({
                 type: 'error',
-                message: 'Failed to reject email'
+                message: t('email_workflows_failed_reject')
             });
         } finally {
             setIsProcessingApproval(false);
         }
+    };
+
+    const handlePreviewTemplate = (template: EmailTemplate) => {
+        setShowPreviewModal(template);
+    };
+
+    const handleEditTemplate = (template: EmailTemplate) => {
+        setShowEditModal(template);
+        setEditForm({
+            subject: template.subject,
+            body: template.body,
+            category: template.category,
+            variables: template.variables
+        });
+    };
+
+    const handleSaveTemplate = () => {
+        // TODO: Implement template update functionality
+        addNotification({
+            type: 'info',
+            message: 'Template editing functionality will be implemented in the next update'
+        });
+        setShowEditModal(null);
+    };
+
+    const renderTemplatePreview = (template: EmailTemplate) => {
+        // Create sample data for preview
+        const sampleData: Record<string, string> = {
+            farmerName: 'John Doe',
+            officerName: 'Dr. Sarah Johnson',
+            location: 'Kampala District',
+            visitDate: '2026-04-15',
+            visitTime: '10:00 AM',
+            purpose: 'Crop disease assessment',
+            diseaseName: 'Late Blight',
+            region: 'Central Region',
+            affectedCrops: 'Tomatoes, Potatoes',
+            severity: 'High',
+            recommendations: 'Apply copper-based fungicide immediately',
+            cropName: 'Tomatoes',
+            price: '2500',
+            unit: 'UGX/kg',
+            priceTable: 'Tomatoes: 2500 UGX/kg\nPotatoes: 1800 UGX/kg',
+            marketName: 'Kampala Market',
+            date: '2026-04-06',
+            dateRange: '2026-04-06 to 2026-04-10',
+            weatherSummary: 'Heavy rainfall expected with winds up to 25 km/h',
+            recipientName: 'Jane Smith',
+            trainingTopic: 'Sustainable Farming Practices',
+            time: '2:00 PM',
+            trainerName: 'Prof. Michael Brown'
+        };
+
+        let previewSubject = template.subject;
+        let previewBody = template.body;
+
+        // Replace variables with sample data
+        template.variables.forEach(variable => {
+            const regex = new RegExp(`{{${variable}}}`, 'g');
+            const sampleValue = sampleData[variable] || `[${variable}]`;
+            previewSubject = previewSubject.replace(regex, sampleValue);
+            previewBody = previewBody.replace(regex, sampleValue);
+        });
+
+        return { subject: previewSubject, body: previewBody };
     };
 
     const categories = [...new Set(templates.map(t => t.category))];
@@ -313,11 +388,17 @@ export function EmailWorkflows() {
                                 </div>
 
                                 <div className="flex gap-2 mt-4">
-                                    <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm">
+                                    <button
+                                        onClick={() => handlePreviewTemplate(template)}
+                                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm"
+                                    >
                                         <Eye className="w-4 h-4" />
                                         Preview
                                     </button>
-                                    <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm">
+                                    <button
+                                        onClick={() => handleEditTemplate(template)}
+                                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm"
+                                    >
                                         <Edit className="w-4 h-4" />
                                         {t('email_workflows_edit')}
                                     </button>
@@ -499,6 +580,170 @@ export function EmailWorkflows() {
                                         {isProcessingApproval ? t('email_workflows_rejecting') : t('email_workflows_reject')}
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
+
+            {/* Preview Template Modal */}
+            {showPreviewModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[80vh] overflow-y-auto"
+                    >
+                        <div className="p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                                    Template Preview: {showPreviewModal.displayName || showPreviewModal.name}
+                                </h3>
+                                <button
+                                    onClick={() => setShowPreviewModal(null)}
+                                    className="text-gray-400 hover:text-gray-600 text-2xl"
+                                >
+                                    ×
+                                </button>
+                            </div>
+
+                            {(() => {
+                                const preview = renderTemplatePreview(showPreviewModal);
+                                return (
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                Subject
+                                            </label>
+                                            <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded border font-medium">
+                                                {preview.subject}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                Body
+                                            </label>
+                                            <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded border whitespace-pre-wrap font-mono text-sm">
+                                                {preview.body}
+                                            </div>
+                                        </div>
+
+                                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                                            <strong>Note:</strong> Variables in {"{{"}brackets{"}"} have been replaced with sample data for preview.
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+
+                            <div className="flex justify-end mt-6">
+                                <button
+                                    onClick={() => setShowPreviewModal(null)}
+                                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
+
+            {/* Edit Template Modal */}
+            {showEditModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[80vh] overflow-y-auto"
+                    >
+                        <div className="p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                                    Edit Template: {showEditModal.displayName || showEditModal.name}
+                                </h3>
+                                <button
+                                    onClick={() => setShowEditModal(null)}
+                                    className="text-gray-400 hover:text-gray-600 text-2xl"
+                                >
+                                    ×
+                                </button>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Category
+                                    </label>
+                                    <select
+                                        value={editForm.category}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, category: e.target.value }))}
+                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                    >
+                                        <option value="visits">Visits</option>
+                                        <option value="alerts">Alerts</option>
+                                        <option value="market">Market</option>
+                                        <option value="weather">Weather</option>
+                                        <option value="training">Training</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Subject
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={editForm.subject}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, subject: e.target.value }))}
+                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                        placeholder="Email subject line"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Body
+                                    </label>
+                                    <textarea
+                                        value={editForm.body}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, body: e.target.value }))}
+                                        rows={12}
+                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-mono text-sm resize-none"
+                                        placeholder="Email body content"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Variables (comma-separated)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={editForm.variables.join(', ')}
+                                        onChange={(e) => setEditForm(prev => ({
+                                            ...prev,
+                                            variables: e.target.value.split(',').map(v => v.trim()).filter(v => v)
+                                        }))}
+                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                        placeholder="farmerName, location, visitDate"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    onClick={() => setShowEditModal(null)}
+                                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleSaveTemplate}
+                                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                                >
+                                    Save Changes
+                                </button>
                             </div>
                         </div>
                     </motion.div>
