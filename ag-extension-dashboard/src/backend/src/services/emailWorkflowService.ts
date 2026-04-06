@@ -138,15 +138,48 @@ export class EmailWorkflowService {
     const pool = getPool();
     if (!pool) return [];
 
+    let result;
     if (category) {
-      const result = await query(`
+      result = await query(`
         SELECT * FROM email_templates WHERE category = $1 ORDER BY name
       `, [category]);
-      return result.rows;
+    } else {
+      result = await query('SELECT * FROM email_templates ORDER BY category, name');
     }
 
-    const result = await query('SELECT * FROM email_templates ORDER BY category, name');
-    return result.rows;
+    // Translate subjects and add display names
+    return result.rows.map(template => ({
+      ...template,
+      displayName: this.getTemplateDisplayName(template.name),
+      subject: this.translateTemplateField(template.subject)
+    }));
+  }
+
+  private getTemplateDisplayName(templateName: string): string {
+    const displayNames: Record<string, string> = {
+      'farmer_visit_confirmation': 'Farmer Visit Confirmation',
+      'disease_alert_notification': 'Disease Alert Notification',
+      'market_price_update': 'Market Price Update',
+      'weather_advisory': 'Weather Advisory',
+      'training_invitation': 'Training Invitation'
+    };
+    return displayNames[templateName] || templateName;
+  }
+
+  private translateTemplateField(field: string): string {
+    // If it's already translated (doesn't start with email_template_), return as is
+    if (!field.startsWith('email_template_')) {
+      return field;
+    }
+
+    // Try to translate using our translation function
+    try {
+      const translated = t(field);
+      // If translation is different from the key, return it
+      return translated !== field ? translated : field;
+    } catch {
+      return field;
+    }
   }
 
   async renderTemplate(templateId: string, variables: Record<string, string>): Promise<{ subject: string; body: string } | null> {

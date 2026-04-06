@@ -280,7 +280,7 @@ export function EmailWorkflows() {
                                                 {template.category}
                                             </span>
                                         </div>
-                                        <h3 className="font-semibold text-gray-900 dark:text-white mb-1">{template.name}</h3>
+                                        <h3 className="font-semibold text-gray-900 dark:text-white mb-1">{template.displayName || template.name}</h3>
                                         <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{template.subject}</p>
                                     </div>
                                 </div>
@@ -308,7 +308,7 @@ export function EmailWorkflows() {
                                     )}
 
                                     <div className="text-xs text-gray-500 dark:text-gray-400">
-                                        Created by {template.createdBy} • {new Date(template.createdAt).toLocaleDateString()}
+                                        Created by {template.createdBy || 'System'} • {template.createdAt ? new Date(template.createdAt).toLocaleDateString() : 'Recently'}
                                     </div>
                                 </div>
 

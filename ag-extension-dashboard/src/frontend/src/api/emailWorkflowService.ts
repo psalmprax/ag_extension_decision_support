@@ -3,12 +3,13 @@ import apiClient from './client';
 export interface EmailTemplate {
     id: string;
     name: string;
+    displayName?: string;
     subject: string;
     body: string;
     category: string;
     variables: string[];
-    createdBy: string;
-    createdAt: string;
+    createdBy?: string;
+    createdAt?: string;
 }
 
 export interface EmailApproval {
