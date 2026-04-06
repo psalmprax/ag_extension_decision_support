@@ -61,110 +61,158 @@ const io = new SocketServer(httpServer, {
 async function bootstrap() {
     try {
         // Initialize database
-        await initializeDatabase();
-        logger.info('Database initialized');
+        try {
+            await initializeDatabase();
+            logger.info('Database initialized');
+        } catch (error) {
+            logger.error('Failed to initialize database, continuing without:', error);
+        }
 
         // Initialize cache
-        await initializeCache();
-        logger.info('Cache initialized');
+        try {
+            await initializeCache();
+            logger.info('Cache initialized');
+        } catch (error) {
+            logger.error('Failed to initialize cache, continuing without:', error);
+        }
 
         // Initialize Socket.IO handlers
-        initializeSocketHandlers(io);
-        webrtcService.initialize(io);
-        logger.info('WebRTC service initialized');
+        try {
+            initializeSocketHandlers(io);
+            webrtcService.initialize(io);
+            logger.info('WebRTC service initialized');
+        } catch (error) {
+            logger.error('Failed to initialize WebRTC service:', error);
+        }
 
         // Initialize AI Provider Factory
-        AIProviderFactory.initialize();
-        logger.info('AI Provider Factory initialized');
+        try {
+            AIProviderFactory.initialize();
+            logger.info('AI Provider Factory initialized');
+        } catch (error) {
+            logger.error('Failed to initialize AI Provider Factory:', error);
+        }
 
         // Seed Knowledge Articles (async)
-        const { seedKnowledgeArticles, mockKnowledgeArticles } = await import('./routes/knowledge');
-        seedKnowledgeArticles().catch(err => 
-            logger.error('Failed to seed knowledge articles:', err)
-        );
+        try {
+            const { seedKnowledgeArticles, mockKnowledgeArticles } = await import('./routes/knowledge');
+            seedKnowledgeArticles().catch(err =>
+                logger.error('Failed to seed knowledge articles:', err)
+            );
 
-        // Seed Vector Knowledge Base (async)
-        VectorService.seedKnowledge(mockKnowledgeArticles).catch(err =>
-            logger.error('Failed to seed vector knowledge:', err)
-        );
+            // Seed Vector Knowledge Base (async)
+            VectorService.seedKnowledge(mockKnowledgeArticles).catch(err =>
+                logger.error('Failed to seed vector knowledge:', err)
+            );
+        } catch (error) {
+            logger.error('Failed to import knowledge routes:', error);
+        }
 
         // Initialize persistent memory layer
-        await persistentMemory.initialize();
-        logger.info('Persistent memory layer initialized');
+        try {
+            await persistentMemory.initialize();
+            logger.info('Persistent memory layer initialized');
+        } catch (error) {
+            logger.error('Failed to initialize persistent memory:', error);
+        }
 
         // Register internal tools as vetted in the skill vetter
-        const { toolRegistry } = await import('./tools/registry');
-        for (const tool of toolRegistry) {
-            skillVetter.registerVettedSkill({
-                name: tool.name,
-                source: 'internal',
-                version: '1.0.0',
-                author: 'ag-extension-team',
-                description: tool.description,
-                permissions: [],
-                dependencies: [],
-                installDate: new Date().toISOString(),
-                hash: skillVetter.computeHash(tool.description),
-                trustScore: 95,
-                riskLevel: 'low',
-                vetted: true,
-                vettedAt: new Date().toISOString(),
-                flags: [],
-            });
+        try {
+            const { toolRegistry } = await import('./tools/registry');
+            for (const tool of toolRegistry) {
+                skillVetter.registerVettedSkill({
+                    name: tool.name,
+                    source: 'internal',
+                    version: '1.0.0',
+                    author: 'ag-extension-team',
+                    description: tool.description,
+                    permissions: [],
+                    dependencies: [],
+                    installDate: new Date().toISOString(),
+                    hash: skillVetter.computeHash(tool.description),
+                    trustScore: 95,
+                    riskLevel: 'low',
+                    vetted: true,
+                    vettedAt: new Date().toISOString(),
+                    flags: [],
+                });
+            }
+            logger.info(`${toolRegistry.length} internal tools registered as vetted`);
+        } catch (error) {
+            logger.error('Failed to register internal tools:', error);
         }
-        logger.info(`${toolRegistry.length} internal tools registered as vetted`);
 
         // Seed credentials from environment into secure vault
-        if (process.env.OPENAI_API_KEY) {
-            credentialVault.storeCredential('openai_api_key', 'ai_provider', process.env.OPENAI_API_KEY, 90);
+        try {
+            if (process.env.OPENAI_API_KEY) {
+                credentialVault.storeCredential('openai_api_key', 'ai_provider', process.env.OPENAI_API_KEY, 90);
+            }
+            if (process.env.GROQ_API_KEY) {
+                credentialVault.storeCredential('groq_api_key', 'ai_provider', process.env.GROQ_API_KEY, 90);
+            }
+            if (process.env.TAVILY_API_KEY) {
+                credentialVault.storeCredential('tavily_api_key', 'search', process.env.TAVILY_API_KEY, 90);
+            }
+            logger.info('Credentials migrated to secure vault');
+        } catch (error) {
+            logger.error('Failed to migrate credentials:', error);
         }
-        if (process.env.GROQ_API_KEY) {
-            credentialVault.storeCredential('groq_api_key', 'ai_provider', process.env.GROQ_API_KEY, 90);
-        }
-        if (process.env.TAVILY_API_KEY) {
-            credentialVault.storeCredential('tavily_api_key', 'search', process.env.TAVILY_API_KEY, 90);
-        }
-        logger.info('Credentials migrated to secure vault');
 
         // Register agents in orchestrator
-        agentOrchestrator.registerAgent({
-            agentId: 'agent-zero',
-            name: 'Agent Zero',
-            capabilities: ['farmer_outreach', 'data_collection', 'weather_monitoring', '*'],
-            maxConcurrentTasks: 3,
-        });
-        agentOrchestrator.registerAgent({
-            agentId: 'crew-ai',
-            name: 'Crew AI',
-            capabilities: ['market_analysis', 'disease_diagnosis', 'policy_research', '*'],
-            maxConcurrentTasks: 5,
-        });
-        // OpenClaw agent - planned for future implementation
-        agentOrchestrator.registerAgent({
-            agentId: 'openclaw',
-            name: 'OpenClaw',
-            capabilities: ['bug_fixes', 'unit_testing', 'doc_gen', '*'],
-            maxConcurrentTasks: 3,
-        });
-        logger.info('Agents registered in orchestrator');
+        try {
+            agentOrchestrator.registerAgent({
+                agentId: 'agent-zero',
+                name: 'Agent Zero',
+                capabilities: ['farmer_outreach', 'data_collection', 'weather_monitoring', '*'],
+                maxConcurrentTasks: 3,
+            });
+            agentOrchestrator.registerAgent({
+                agentId: 'crew-ai',
+                name: 'Crew AI',
+                capabilities: ['market_analysis', 'disease_diagnosis', 'policy_research', '*'],
+                maxConcurrentTasks: 5,
+            });
+            // OpenClaw agent - planned for future implementation
+            agentOrchestrator.registerAgent({
+                agentId: 'openclaw',
+                name: 'OpenClaw',
+                capabilities: ['bug_fixes', 'unit_testing', 'doc_gen', '*'],
+                maxConcurrentTasks: 3,
+            });
+            logger.info('Agents registered in orchestrator');
+        } catch (error) {
+            logger.error('Failed to register agents:', error);
+        }
 
         // Initialize email workflow service
-        await emailWorkflowService.initialize();
-        logger.info('Email workflow service initialized');
+        try {
+            await emailWorkflowService.initialize();
+            logger.info('Email workflow service initialized');
+        } catch (error) {
+            logger.error('Failed to initialize email workflow service:', error);
+        }
 
         // Initialize agent telemetry
-        await agentTelemetry.initialize();
-        logger.info('Agent telemetry initialized');
+        try {
+            await agentTelemetry.initialize();
+            logger.info('Agent telemetry initialized');
+        } catch (error) {
+            logger.error('Failed to initialize agent telemetry:', error);
+        }
 
         // Register components for self-healing monitoring
-        selfHealingService.registerComponent('ai-provider');
-        selfHealingService.registerComponent('database');
-        selfHealingService.registerComponent('cache');
-        selfHealingService.registerComponent('agent-zero');
-        selfHealingService.registerComponent('crew-ai');
-        selfHealingService.registerComponent('openclaw');
-        selfHealingService.startMonitoring(60000);
-        logger.info('Self-healing monitoring started');
+        try {
+            selfHealingService.registerComponent('ai-provider');
+            selfHealingService.registerComponent('database');
+            selfHealingService.registerComponent('cache');
+            selfHealingService.registerComponent('agent-zero');
+            selfHealingService.registerComponent('crew-ai');
+            selfHealingService.registerComponent('openclaw');
+            selfHealingService.startMonitoring(60000);
+            logger.info('Self-healing monitoring started');
+        } catch (error) {
+            logger.error('Failed to start self-healing monitoring:', error);
+        }
 
         // Start server
         httpServer.listen(config.port, '0.0.0.0', () => {
@@ -172,7 +220,15 @@ async function bootstrap() {
         });
     } catch (error) {
         logger.error('Failed to start server:', error);
-        process.exit(1);
+        // Don't exit, try to start server anyway
+        try {
+            httpServer.listen(config.port, '0.0.0.0', () => {
+                logger.info(`Server running on port ${config.port} in ${config.nodeEnv} mode (with errors)`);
+            });
+        } catch (serverError) {
+            logger.error('Failed to start server even with minimal config:', serverError);
+            process.exit(1);
+        }
     }
 }
 

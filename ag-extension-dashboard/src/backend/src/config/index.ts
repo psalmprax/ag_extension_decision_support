@@ -48,15 +48,15 @@ export const config: AppConfig = {
     nodeEnv: getEnv('NODE_ENV', 'development'),
 
     database: {
-        url: getEnv('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/ag_extension', true),
+        url: getEnv('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/ag_extension', false),
     },
 
     redis: {
-        url: getEnv('REDIS_URL', 'redis://localhost:6379', true),
+        url: getEnv('REDIS_URL', 'redis://localhost:6379', false),
     },
 
     jwt: {
-        secret: getEnv('JWT_SECRET', 'your-super-secret-jwt-key-change-in-production', true),
+        secret: getEnv('JWT_SECRET', 'your-super-secret-jwt-key-change-in-production', false),
         expiresIn: getEnv('JWT_EXPIRES_IN', '7d'),
     },
 
