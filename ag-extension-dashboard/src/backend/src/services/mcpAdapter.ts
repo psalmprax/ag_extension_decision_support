@@ -165,7 +165,7 @@ export function createMCPRouter(): Router {
 
   router.get('/tools', (_req: Request, res: Response) => {
     const mcpTools = mcpAdapter.convertToMCPTools();
-    res.json({ tools: mcpTools });
+    res.json({ success: true, data: mcpTools });
   });
 
   router.post('/tools/call', async (req: Request, res: Response) => {
@@ -177,7 +177,7 @@ export function createMCPRouter(): Router {
       }
 
       const result = await mcpAdapter.callTool(name, args);
-      res.json(result);
+      res.json({ success: true, data: result });
     } catch (error) {
       logger.error('MCP tool call error:', error);
       res.status(500).json({ error: 'Internal server error' });
@@ -186,11 +186,14 @@ export function createMCPRouter(): Router {
 
   router.get('/health', (_req: Request, res: Response) => {
     res.json({
-      status: 'healthy',
-      protocol: 'MCP',
-      version: '1.0.0',
-      toolsAvailable: toolRegistry.length,
-      tools: toolRegistry.map(t => t.name),
+      success: true,
+      data: {
+        status: 'healthy',
+        protocol: 'MCP',
+        version: '1.0.0',
+        toolsAvailable: toolRegistry.length,
+        tools: toolRegistry.map(t => t.name),
+      }
     });
   });
 
