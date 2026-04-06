@@ -79,6 +79,18 @@ export function MCPTools() {
     const handleExecuteTool = async () => {
         if (!selectedTool) return;
 
+        // Validate required parameters
+        const required = selectedTool.inputSchema.required || [];
+        const missing = required.filter(param => !toolArgs[param] || toolArgs[param] === '');
+
+        if (missing.length > 0) {
+            addNotification({
+                type: 'error',
+                message: `Please fill in the required parameters: ${missing.join(', ')}`
+            });
+            return;
+        }
+
         setIsExecuting(true);
         setExecutionResult(null);
         try {
@@ -119,6 +131,27 @@ export function MCPTools() {
         } finally {
             setIsExecuting(false);
         }
+    };
+
+    const getDefaultArgs = (tool: MCPTool): Record<string, any> => {
+        const defaults: Record<string, any> = {};
+
+        // Set defaults for common parameters
+        if (tool.inputSchema.properties) {
+            for (const [key, schema] of Object.entries(tool.inputSchema.properties)) {
+                const schemaTyped = schema as { type?: string };
+                if (key === 'location' && !tool.inputSchema.required?.includes(key)) {
+                    defaults[key] = 'Kampala, Uganda'; // Default location for agricultural context
+                } else if (key === 'days' && schemaTyped.type === 'number') {
+                    defaults[key] = 3; // Default 3 days forecast
+                } else if (key === 'limit' && schemaTyped.type === 'number') {
+                    defaults[key] = 10; // Default limit
+                }
+                // Add more defaults as needed for other tools
+            }
+        }
+
+        return defaults;
     };
 
     const renderInputField = (propertyName: string, schema: any) => {
@@ -318,14 +351,14 @@ export function MCPTools() {
                                 key={tool.name}
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                                    selectedTool?.name === tool.name
-                                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                                        : 'border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700'
+                            className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                                selectedTool?.name === tool.name
+                                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                                    : 'border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700'
                                 }`}
                                 onClick={() => {
                                     setSelectedTool(tool);
-                                    setToolArgs({});
+                                    setToolArgs(getDefaultArgs(tool));
                                     setExecutionResult(null);
                                 }}
                             >
