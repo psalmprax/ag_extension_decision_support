@@ -72,6 +72,9 @@ export class MCPAdapter {
       }
 
       if (shape) {
+        console.log(`Tool ${tool.name}: Shape keys:`, Object.keys(shape));
+        console.log(`Tool ${tool.name}: Shape entries count:`, Object.entries(shape).length);
+
         for (const [key, value] of Object.entries(shape)) {
           try {
             const zodDef = (value as any)?._def;
@@ -95,7 +98,7 @@ export class MCPAdapter {
         console.warn(`Tool ${tool.name}: No shape found in schema`);
       }
 
-      const result = {
+      return {
         name: tool.name,
         description: tool.description,
         inputSchema: {
@@ -104,9 +107,6 @@ export class MCPAdapter {
           required: required.length > 0 ? required : undefined,
         },
       };
-
-      console.log(`Tool ${tool.name} schema:`, JSON.stringify(result.inputSchema, null, 2));
-      return result;
     });
   }
 
