@@ -41,6 +41,9 @@ import { createMCPRouter } from './services/mcpAdapter';
 import telemetryRoutes from './routes/telemetry';
 import emailWorkflowRoutes from './routes/emailWorkflows';
 import agentRoutes from './routes/agents';
+import systemHealthRoutes from './routes/systemHealth';
+import memoryRoutes from './routes/memories';
+import diseaseRoutes from './routes/diseases';
 
 const app: Application = express();
 
@@ -150,6 +153,9 @@ app.use('/api/v1/support', supportRoutes);
 app.use('/api/v1/ai/telemetry', telemetryRoutes);
 app.use('/api/v1/email', emailWorkflowRoutes);
 app.use('/api/v1/ai/agents', agentRoutes);
+app.use('/api/v1/system/health', systemHealthRoutes);
+app.use('/api/v1/ai/memories', memoryRoutes);
+app.use('/api/v1/ai/diseases', diseaseRoutes);
 const mcpRouter = createMCPRouter();
 app.use('/api/v1/mcp', mcpRouter);
 
@@ -177,6 +183,9 @@ app.use('/api/support', supportRoutes);
 app.use('/api/ai/telemetry', telemetryRoutes);
 app.use('/api/email', emailWorkflowRoutes);
 app.use('/api/ai/agents', agentRoutes);
+app.use('/api/system/health', systemHealthRoutes);
+app.use('/api/ai/memories', memoryRoutes);
+app.use('/api/ai/diseases', diseaseRoutes);
 app.use('/api/mcp', mcpRouter);
 // Restore original path after routing
 app.use(restoreOriginalPath);
