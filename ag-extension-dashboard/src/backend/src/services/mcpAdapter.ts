@@ -73,10 +73,13 @@ export class MCPAdapter {
                 description: description,
               };
 
-              // Check if field is required (not optional/default)
+              // Check if field is required (not optional)
               const isOptional = this.isFieldOptional(zodDef);
+              console.log(`Tool ${tool.name}, field ${key}: type=${zodDef?.typeName}, isOptional=${isOptional}, description=${description}`);
+
               if (!isOptional) {
                 required.push(key);
+                console.log(`Tool ${tool.name}: Marked ${key} as required`);
               }
             } catch (fieldError) {
               console.error(`Tool ${tool.name}, field ${key}: Error processing field:`, fieldError);
@@ -139,6 +142,8 @@ export class MCPAdapter {
     // Check if the field has isOptional property (for some Zod versions)
     if (zodDef.isOptional === true) return true;
 
+    // If it's a direct type (ZodString, ZodNumber, etc.) without optional wrapper, it's required
+    // Only mark as optional if explicitly wrapped
     return false;
   }
 
