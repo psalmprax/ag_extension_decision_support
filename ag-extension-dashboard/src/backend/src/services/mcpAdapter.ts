@@ -53,51 +53,38 @@ export class MCPAdapter {
       let shape: any = null;
 
       try {
-        console.log(`Tool ${tool.name}: Raw schema:`, zodSchema);
-        console.log(`Tool ${tool.name}: Schema _def:`, zodSchema?._def);
-
-        // For Zod v3, try different ways to access the shape
-        if (zodSchema && zodSchema._def) {
+        // For Zod v3, shape is a function that returns the shape object
+        if (zodSchema && zodSchema._def && typeof zodSchema._def.shape === 'function') {
+          shape = zodSchema._def.shape();
+        } else if (zodSchema && zodSchema._def && zodSchema._def.shape) {
+          // Fallback for other versions
           shape = zodSchema._def.shape;
-          console.log(`Tool ${tool.name}: Found shape via _def.shape:`, shape);
         }
 
-        // Alternative access methods
-        if (!shape && zodSchema && (zodSchema as any).shape) {
-          shape = (zodSchema as any).shape;
-          console.log(`Tool ${tool.name}: Found shape via direct property:`, shape);
-        }
+        if (shape && typeof shape === 'object') {
+          for (const [key, value] of Object.entries(shape)) {
+            try {
+              const zodDef = (value as any)?._def;
+              const fieldType = this.getZodType(zodDef);
+              const description = zodDef?.description || '';
 
-        console.log(`Tool ${tool.name}: Schema type:`, zodSchema?.constructor?.name);
-      } catch (error) {
-        console.error(`Tool ${tool.name}: Error extracting schema:`, error);
-      }
+              properties[key] = {
+                type: fieldType,
+                description: description,
+              };
 
-      if (shape) {
-        console.log(`Tool ${tool.name}: Shape keys:`, Object.keys(shape));
-        console.log(`Tool ${tool.name}: Shape entries count:`, Object.entries(shape).length);
-
-        for (const [key, value] of Object.entries(shape)) {
-          try {
-            const zodDef = (value as any)?._def;
-            properties[key] = {
-              type: this.getZodType(zodDef),
-              description: zodDef?.description || '',
-            };
-
-            // Check if field is required (not optional)
-            const isOptional = zodDef?.typeName === 'ZodOptional' || zodDef?.isOptional;
-            if (!isOptional) {
-              required.push(key);
+              // Check if field is required (not optional/default)
+              const isOptional = this.isFieldOptional(zodDef);
+              if (!isOptional) {
+                required.push(key);
+              }
+            } catch (fieldError) {
+              console.error(`Tool ${tool.name}, field ${key}: Error processing field:`, fieldError);
             }
-
-            console.log(`Tool ${tool.name}, field ${key}: isOptional=${isOptional}, type=${zodDef?.typeName}, required=${!isOptional}`);
-          } catch (fieldError) {
-            console.error(`Tool ${tool.name}, field ${key}: Error processing field:`, fieldError);
           }
         }
-      } else {
-        console.warn(`Tool ${tool.name}: No shape found in schema`);
+      } catch (error) {
+        console.error(`Tool ${tool.name}: Error extracting schema:`, error);
       }
 
       return {
@@ -138,6 +125,23 @@ export class MCPAdapter {
     }
   }
 
+  private isFieldOptional(zodDef: any): boolean {
+    if (!zodDef) return false;
+
+    const typeName = zodDef.typeName;
+
+    // Direct optional types
+    if (typeName === 'ZodOptional') return true;
+
+    // Default values make fields effectively optional
+    if (typeName === 'ZodDefault') return true;
+
+    // Check if the field has isOptional property (for some Zod versions)
+    if (zodDef.isOptional === true) return true;
+
+    return false;
+  }
+
   private getZodType(zodDef: any): string {
     if (!zodDef) return 'string';
     const typeName = zodDef.typeName;
@@ -149,6 +153,7 @@ export class MCPAdapter {
       case 'ZodObject': return 'object';
       case 'ZodEnum': return 'string';
       case 'ZodOptional': return this.getZodType(zodDef.innerType?._def);
+      case 'ZodDefault': return this.getZodType(zodDef.innerType?._def);
       default: return 'string';
     }
   }

@@ -322,17 +322,36 @@ export default defineContentScript({
     if (browserAPI && browserAPI.runtime) {
       browserAPI.runtime.onMessage.addListener((message: any, sender: any, sendResponse: any) => {
         if (message.action === 'get_page_context') {
-          // Extract page context
           const context = {
             title: document.title,
             url: window.location.href,
             selectedText: window.getSelection()?.toString() || '',
             metaDescription: (document.querySelector('meta[name="description"]') as HTMLMetaElement)?.content || '',
-            // Extract main content text (simplified)
-            mainContent: extractMainContent()
+            mainContent: extractMainContent(),
+            structuredData: extractStructuredData(),
+            forms: extractForms(),
+            tables: extractTables(),
+            lists: extractLists(),
+            agriculturalData: extractAgriculturalData(),
           };
           sendResponse(context);
-          return true; // Keep channel open for async response
+          return true;
+        }
+        if (message.action === 'extract_structured') {
+          sendResponse(extractStructuredData());
+          return true;
+        }
+        if (message.action === 'extract_forms') {
+          sendResponse(extractForms());
+          return true;
+        }
+        if (message.action === 'extract_tables') {
+          sendResponse(extractTables());
+          return true;
+        }
+        if (message.action === 'extract_agricultural_data') {
+          sendResponse(extractAgriculturalData());
+          return true;
         }
       });
     }
@@ -447,16 +466,131 @@ export default defineContentScript({
 
 // Helper function to extract main content from the page
 function extractMainContent(): string {
-  // Try to find main content areas
   const selectors = ['main', 'article', '[role="main"]', '.content', '#content', '.post', '.entry'];
   for (const selector of selectors) {
     const element = document.querySelector(selector);
     if (element && element.textContent) {
-      return element.textContent.trim().substring(0, 2000); // Limit to 2000 chars
+      return element.textContent.trim().substring(0, 5000);
     }
   }
-
-  // Fallback: extract from body, excluding scripts and styles
   const bodyText = document.body?.textContent || '';
-  return bodyText.replace(/\s+/g, ' ').trim().substring(0, 2000);
+  return bodyText.replace(/\s+/g, ' ').trim().substring(0, 5000);
+}
+
+function extractStructuredData(): { headings: string[]; links: Array<{ text: string; url: string }>; images: Array<{ alt: string; src: string }>; metadata: Record<string, string> } {
+  const headings = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6'))
+    .map(h => ({ tag: h.tagName, text: h.textContent?.trim() || '' }))
+    .filter(h => h.text.length > 0);
+
+  const links = Array.from(document.querySelectorAll('a[href]'))
+    .slice(0, 50)
+    .map(a => ({ text: a.textContent?.trim() || '', url: a.getAttribute('href') || '' }))
+    .filter(l => l.text.length > 0 || l.url.length > 0);
+
+  const images = Array.from(document.querySelectorAll('img[src]'))
+    .slice(0, 30)
+    .map(img => ({ alt: img.getAttribute('alt') || '', src: img.getAttribute('src') || '' }));
+
+  const metadata: Record<string, string> = {};
+  document.querySelectorAll('meta[name], meta[property]').forEach(meta => {
+    const name = meta.getAttribute('name') || meta.getAttribute('property') || '';
+    const content = meta.getAttribute('content') || '';
+    if (name && content) metadata[name] = content;
+  });
+
+  return { headings, links, images, metadata };
+}
+
+function extractForms(): Array<{ id: string; action: string; method: string; fields: Array<{ name: string; type: string; label: string; required: boolean }> }> {
+  return Array.from(document.querySelectorAll('form')).map((form, idx) => ({
+    id: form.id || `form_${idx}`,
+    action: form.getAttribute('action') || window.location.href,
+    method: form.getAttribute('method') || 'get',
+    fields: Array.from(form.querySelectorAll('input, select, textarea')).map(field => ({
+      name: field.getAttribute('name') || field.getAttribute('id') || '',
+      type: field.getAttribute('type') || field.tagName.toLowerCase(),
+      label: getFieldLabel(field),
+      required: field.hasAttribute('required'),
+    })),
+  }));
+}
+
+function extractTables(): Array<{ id: string; headers: string[]; rows: string[][]; rowCount: number }> {
+  return Array.from(document.querySelectorAll('table')).map((table, idx) => {
+    const headers = Array.from(table.querySelectorAll('th')).map(th => th.textContent?.trim() || '');
+    const rows = Array.from(table.querySelectorAll('tbody tr, tr')).map(row =>
+      Array.from(row.querySelectorAll('td, th')).map(cell => cell.textContent?.trim() || '')
+    );
+    return {
+      id: table.id || `table_${idx}`,
+      headers,
+      rows,
+      rowCount: rows.length,
+    };
+  });
+}
+
+function extractLists(): Array<{ type: 'ordered' | 'unordered'; items: string[] }> {
+  return Array.from(document.querySelectorAll('ul, ol')).map(list => ({
+    type: list.tagName === 'OL' ? 'ordered' : 'unordered',
+    items: Array.from(list.querySelectorAll('li')).map(li => li.textContent?.trim() || ''),
+  }));
+}
+
+function extractAgriculturalData(): {
+  cropNames: string[];
+  prices: Array<{ crop: string; price: string; unit: string; location?: string }>;
+  weatherData: { temperature?: string; condition?: string; location?: string };
+  contactInfo: Array<{ name: string; phone?: string; email?: string; address?: string }>;
+  dates: string[];
+  locations: string[];
+} {
+  const text = document.body?.textContent || '';
+  const cropPatterns = ['maize', 'wheat', 'rice', 'coffee', 'beans', 'sorghum', 'cassava', 'potatoes', 'tomatoes', 'cotton', 'tea', 'sugarcane', 'millet', 'groundnuts', 'sunflower'];
+  const cropNames = cropPatterns.filter(crop => text.toLowerCase().includes(crop));
+
+  const prices: Array<{ crop: string; price: string; unit: string; location?: string }> = [];
+  const priceRegex = /(\w+)\s*[:\-]?\s*\$?(\d[\d,.]*)\s*(per|\/|for)?\s*(kg|ton|bag|bushel|tonne)?/gi;
+  let match;
+  while ((match = priceRegex.exec(text)) !== null) {
+    prices.push({ crop: match[1], price: match[2], unit: match[4] || 'unit', location: undefined });
+  }
+
+  const weatherElements = document.querySelectorAll('[class*="weather"], [class*="temperature"], [class*="forecast"], [id*="weather"]');
+  const weatherData: { temperature?: string; condition?: string; location?: string } = {};
+  weatherElements.forEach(el => {
+    const tempMatch = el.textContent?.match(/(-?\d+)\s*°?\s*[CF]/);
+    if (tempMatch) weatherData.temperature = tempMatch[0];
+  });
+
+  const contactInfo: Array<{ name: string; phone?: string; email?: string; address?: string }> = [];
+  const phoneRegex = /[\+]?[\d\s\-\(\)]{7,20}/g;
+  const emailRegex = /[\w.-]+@[\w.-]+\.\w+/g;
+  const phones = text.match(phoneRegex) || [];
+  const emails = text.match(emailRegex) || [];
+  if (phones.length > 0 || emails.length > 0) {
+    contactInfo.push({ name: 'Page Contact', phone: phones[0], email: emails[0] });
+  }
+
+  const dateRegex = /\b(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}|\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4})\b/gi;
+  const dates = (text.match(dateRegex) || []).slice(0, 10);
+
+  const locationRegex = /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:,\s*[A-Z][a-z]+)*)\b/g;
+  const locations = [...new Set((text.match(locationRegex) || []).filter(l => l.length > 3))].slice(0, 10);
+
+  return { cropNames, prices, weatherData, contactInfo, dates, locations };
+}
+
+function getFieldLabel(field: Element): string {
+  const id = field.getAttribute('id');
+  if (id) {
+    const label = document.querySelector(`label[for="${id}"]`);
+    if (label) return label.textContent?.trim() || '';
+  }
+  const parentLabel = field.closest('label');
+  if (parentLabel) return parentLabel.textContent?.trim() || '';
+  const placeholder = field.getAttribute('placeholder');
+  if (placeholder) return placeholder;
+  const name = field.getAttribute('name');
+  return name ? name.replace(/[_-]/g, ' ') : '';
 }

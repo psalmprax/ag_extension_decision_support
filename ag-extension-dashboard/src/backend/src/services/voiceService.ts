@@ -188,7 +188,7 @@ class VoiceService {
       throw new Error(`OpenAI STT error: ${response.status} - ${error}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as { text: string };
     return {
       text: data.text,
       language: options?.language || this.config.language,
@@ -215,7 +215,7 @@ class VoiceService {
       throw new Error(`Deepgram STT error: ${response.status} - ${error}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as { results?: { channels?: { alternatives?: { transcript?: string; confidence?: number }[] }[] } };
     return {
       text: data.results?.channels?.[0]?.alternatives?.[0]?.transcript || '',
       confidence: data.results?.channels?.[0]?.alternatives?.[0]?.confidence,
