@@ -57,13 +57,18 @@ export class MCPAdapter {
             type: this.getZodType(zodDef),
             description: zodDef?.description || '',
           };
-          if (!zodDef?.isOptional) {
+
+          // Check if field is required (not optional)
+          const isOptional = zodDef?.typeName === 'ZodOptional' || zodDef?.isOptional;
+          if (!isOptional) {
             required.push(key);
           }
+
+          console.log(`Tool ${tool.name}, field ${key}: isOptional=${isOptional}, type=${zodDef?.typeName}`);
         }
       }
 
-      return {
+      const result = {
         name: tool.name,
         description: tool.description,
         inputSchema: {
@@ -72,6 +77,9 @@ export class MCPAdapter {
           required: required.length > 0 ? required : undefined,
         },
       };
+
+      console.log(`Tool ${tool.name} schema:`, JSON.stringify(result.inputSchema, null, 2));
+      return result;
     });
   }
 
