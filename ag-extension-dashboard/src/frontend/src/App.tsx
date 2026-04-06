@@ -39,7 +39,11 @@ import {
     Upload,
     Wifi,
     WifiOff,
-    Download
+    Download,
+    Brain,
+    Mail,
+    Wrench,
+    Leaf
 } from 'lucide-react';
 import { NotificationPanel } from './components/NotificationPanel';
 import { ConfirmModal } from './components/ConfirmModal';
@@ -89,6 +93,15 @@ import HelpCenterModal from '@/components/HelpCenterModal';
 import { KnowledgeBase } from '@/components/KnowledgeBase';
 import { BulkSmsModal } from './components/BulkSmsModal';
 import { BulkUpdateModal } from './components/BulkUpdateModal';
+
+// Import new pages
+import Telemetry from './pages/Telemetry';
+import Agents from './pages/Agents';
+import SystemHealth from './pages/SystemHealth';
+import { DiseaseDiagnosis as DiseaseDiagnosisPage } from './pages/DiseaseDiagnosis';
+import Memory from './pages/Memory';
+import EmailWorkflows from './pages/EmailWorkflows';
+import MCPTools from './pages/MCPTools';
 
 // A/B Test Imports
 import { ABTestBanner, DesignToggle } from '@/components/ABTestBanner';
@@ -805,6 +818,14 @@ function App() {
         { id: 'sms', label: t('nav_sms'), icon: Send, roles: ['extension_officer', 'admin'] },
         { id: 'analytics', label: t('analytics_title'), icon: BarChart3, roles: ['extension_officer', 'admin'] },
         { id: 'billing', label: t('nav_billing'), icon: CreditCard, roles: ['extension_officer', 'admin', 'farmer'] },
+        // Advanced/Technical Pages (Admin only)
+        { id: 'telemetry', label: 'Agent Telemetry', icon: Activity, roles: ['admin'] },
+        { id: 'agents', label: 'Agent Orchestration', icon: Settings, roles: ['admin'] },
+        { id: 'system_health', label: 'System Health', icon: Shield, roles: ['admin'] },
+        { id: 'disease_diagnosis', label: 'Disease Diagnosis', icon: Leaf, roles: ['extension_officer', 'admin'] },
+        { id: 'memory', label: 'Memory Manager', icon: Brain, roles: ['admin'] },
+        { id: 'email_workflows', label: 'Email Workflows', icon: Mail, roles: ['admin'] },
+        { id: 'mcp_tools', label: 'MCP Tools', icon: Wrench, roles: ['admin'] },
     ];
 
     const navItems = allNavItems.filter(item => !user || item.roles.includes(user.role));
@@ -2400,6 +2421,49 @@ function App() {
                                 </div>
                             </motion.div>
                         </div>
+                    )}
+
+                    {/* New Advanced Pages */}
+                    {activeTab === 'telemetry' && (
+                        <ErrorBoundary>
+                            <Telemetry />
+                        </ErrorBoundary>
+                    )}
+
+                    {activeTab === 'agents' && (
+                        <ErrorBoundary>
+                            <Agents />
+                        </ErrorBoundary>
+                    )}
+
+                    {activeTab === 'system_health' && (
+                        <ErrorBoundary>
+                            <SystemHealth />
+                        </ErrorBoundary>
+                    )}
+
+                    {activeTab === 'disease_diagnosis' && (
+                        <ErrorBoundary>
+                            <DiseaseDiagnosisPage />
+                        </ErrorBoundary>
+                    )}
+
+                    {activeTab === 'memory' && (
+                        <ErrorBoundary>
+                            <Memory />
+                        </ErrorBoundary>
+                    )}
+
+                    {activeTab === 'email_workflows' && (
+                        <ErrorBoundary>
+                            <EmailWorkflows />
+                        </ErrorBoundary>
+                    )}
+
+                    {activeTab === 'mcp_tools' && (
+                        <ErrorBoundary>
+                            <MCPTools />
+                        </ErrorBoundary>
                     )}
 
                     {/* Farmer Selection Modal - accessible from both AI Assistant and Farmer Chat */}

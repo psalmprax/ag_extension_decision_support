@@ -38,6 +38,9 @@ import { shareRouter, publicShareRouter } from './routes/shares';
 import alertRoutes from './routes/alerts';
 import supportRoutes from './routes/support';
 import { createMCPRouter } from './services/mcpAdapter';
+import telemetryRoutes from './routes/telemetry';
+import emailWorkflowRoutes from './routes/emailWorkflows';
+import agentRoutes from './routes/agents';
 
 const app: Application = express();
 
@@ -144,6 +147,9 @@ app.use('/api/v1/context-menus', contextMenuRoutes);
 app.use('/api/v1/shares', shareRouter);
 app.use('/api/public/shares', publicShareRouter);
 app.use('/api/v1/support', supportRoutes);
+app.use('/api/v1/ai/telemetry', telemetryRoutes);
+app.use('/api/v1/email', emailWorkflowRoutes);
+app.use('/api/v1/ai/agents', agentRoutes);
 const mcpRouter = createMCPRouter();
 app.use('/api/v1/mcp', mcpRouter);
 
@@ -168,6 +174,9 @@ app.use('/api/billing', billingRoutes);
 app.use('/api/shares', shareRouter);
 app.use('/api/public/shares', publicShareRouter);
 app.use('/api/support', supportRoutes);
+app.use('/api/ai/telemetry', telemetryRoutes);
+app.use('/api/email', emailWorkflowRoutes);
+app.use('/api/ai/agents', agentRoutes);
 app.use('/api/mcp', mcpRouter);
 // Restore original path after routing
 app.use(restoreOriginalPath);
