@@ -132,16 +132,16 @@ export class SelfHealingService {
           if (!url) return false;
 
           try {
-            logger.debug(`Checking health for ${component} at ${url}/health`);
+            logger.info(`Checking health for ${component} at ${url}/health`);
             const response = await fetch(`${url}/health`, { signal: AbortSignal.timeout(10000) });
             const isHealthy = response.ok;
-            logger.debug(`Health check for ${component}: ${isHealthy ? 'healthy' : 'unhealthy'} (${response.status})`);
+            logger.info(`Health check for ${component}: ${isHealthy ? 'healthy' : 'unhealthy'} (${response.status})`);
             return isHealthy;
           } catch (error) {
             logger.warn(`Health check failed for ${component}: ${error instanceof Error ? error.message : 'Unknown error'}`);
             // For planned agents that aren't running yet, don't count as failures
             if (component === 'openclaw') {
-              logger.debug(`OpenClaw agent not running yet (expected for planned agent)`);
+              logger.info(`OpenClaw agent not running yet (expected for planned agent)`);
               return true; // Consider it "healthy" since it's planned but not implemented
             }
             return false;
