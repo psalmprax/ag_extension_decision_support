@@ -81,7 +81,10 @@ export function MCPTools() {
 
         // Validate required parameters
         const required = selectedTool.inputSchema.required || [];
-        const missing = required.filter(param => !toolArgs[param] || toolArgs[param] === '');
+        const missing = required.filter(param => {
+            const value = toolArgs[param];
+            return value === undefined || value === null || value === '';
+        });
 
         if (missing.length > 0) {
             addNotification({
@@ -140,12 +143,16 @@ export function MCPTools() {
         if (tool.inputSchema.properties) {
             for (const [key, schema] of Object.entries(tool.inputSchema.properties)) {
                 const schemaTyped = schema as { type?: string };
-                if (key === 'location' && !tool.inputSchema.required?.includes(key)) {
+                if (key === 'location') {
                     defaults[key] = 'Kampala, Uganda'; // Default location for agricultural context
                 } else if (key === 'days' && schemaTyped.type === 'number') {
                     defaults[key] = 3; // Default 3 days forecast
                 } else if (key === 'limit' && schemaTyped.type === 'number') {
                     defaults[key] = 10; // Default limit
+                } else if (key === 'crop' || key === 'cropName') {
+                    defaults[key] = 'Maize'; // Default crop for agricultural context
+                } else if (key === 'region') {
+                    defaults[key] = 'Central Region'; // Default region
                 }
                 // Add more defaults as needed for other tools
             }
