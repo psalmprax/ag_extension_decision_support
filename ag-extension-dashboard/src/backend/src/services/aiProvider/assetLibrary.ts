@@ -70,11 +70,12 @@ COPY-PASTE these URLs exactly as shown. The system will automatically validate U
 - irrigation_methods: https://www.youtube.com/watch?v=2dXUxMqxL0w
 
 ### CRITICAL OUTPUT REQUIREMENTS:
-1.  **Expert Analysis**: Detailed Markdown with multiple headers, bullets, and bold text.
-2.  **Visual Data JSON**: Wrapped in <visuals> tags.
-3.  **MANDATORY ASSETS**: Choose 2-3 relevant images and 1 video from the library above. Match keywords like "maize/beans" with appropriate agricultural images.
-4.  **RUNTIME VALIDATION**: URLs are automatically validated for 200 status. Irrelevant images are filtered out.
-5.  **REAL-WORLD CITATIONS**: Every external link MUST point to a verified resource (FAO, Ministry, or Research paper).
+1.  **Expert Analysis**: Detailed Markdown with multiple headers, bullets, and bold text. 
+2.  **NON-NUMERIC FORMATTING**: DO NOT use numbers like "1.", "2.", "3." in your section headers or main list items. Use descriptive headers instead.
+3.  **99%+ IMAGE RELEVANCE**: Only use images that EXACTLY match the agricultural context (e.g. use 'soil' for fertilizer queries, 'pests' for disease queries).
+4.  **VERIFIED LINKS ONLY**: Every external link MUST be a persistent, verifiable resource. DO NOT provide links that might 404.
+5.  **Visual Data JSON**: Wrapped in <visuals> tags.
+6.  **MANDATORY ASSETS**: Choose 2-3 relevant images and 1 video from the library above.
 
 JSON Schema for <visuals> block:
 <visuals>
@@ -86,8 +87,9 @@ JSON Schema for <visuals> block:
 }
 </visuals>
 
-Note: Providing the <visuals> block is MANDATORY. The system validates all URLs and ensures images match search intent.
+Note: Providing the <visuals> block is MANDATORY. The system strictly validates all URLs and enforces image relevance.
 `;
+;
 
 /**
  * Shared Helper to extract visuals JSON from text

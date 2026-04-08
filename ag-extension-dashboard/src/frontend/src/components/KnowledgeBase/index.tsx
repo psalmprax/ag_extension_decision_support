@@ -304,7 +304,7 @@ export const KnowledgeBase: React.FC = () => {
                                                 <div key={i} className="px-4 py-2 bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700/50 rounded-2xl flex items-center gap-2 group hover:border-primary-500/50 transition-colors cursor-pointer">
                                                     <div className="w-2 h-2 bg-primary-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
                                                     <div className="flex flex-col">
-                                                        <span className="text-[10px] font-black text-gray-400 uppercase leading-none mb-1">Source {i + 1}</span>
+                                                        <span className="text-[10px] font-black text-gray-400 uppercase leading-none mb-1">Source</span>
                                                         <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
                                                             {ctx.metadata?.crop || 'General'} / {ctx.metadata?.category || 'Expert Advice'}
                                                         </span>

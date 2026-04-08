@@ -205,9 +205,18 @@ export class OpenAIProvider extends BaseAIProvider {
             .replace(/<visuals>[\s\S]*?<\/visuals>/gi, '')
             .replace(/```json[\s\S]*?```/gi, '')
             .replace(/#{1,6}\s*(Visual Data|Visual Insights|Charts|Expert Data|Insight Analysis)[^\n]*/gi, '')
+            .replace(/^(#{1,6}\s+)\d+\.\s+/gm, '$1') // Strip numeric prefixes from markdown headers (e.g. ### 1. Title -> ### Title)
+            .replace(/^\d+\.\s+(?=[A-Z])/gm, '') // Strip numeric list prefixes that look like section titles
             .trim();
 
         cleanAnswer = cleanAnswer.replace(/\n\s*\n\s*\n/g, '\n\n'); 
+
+        // Link Validation: Sanitize any malformed URLs or common placeholder error patterns
+        if (visuals && visuals.images) {
+            visuals.images = visuals.images.filter((img: any) => 
+                img.url && img.url.startsWith('http') && !img.url.includes('example.com')
+            );
+        }
 
         return {
             reasoning: 'Detailed Intelligence Analysis completed.',
