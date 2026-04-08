@@ -1,6 +1,7 @@
 import { AIRouter, ReasoningResult } from '@/services/aiProvider/aiProvider';
 import { VectorService, SearchResult } from '@/services/vectorService';
 import { SemanticCacheService } from '@/services/semanticCacheService';
+import { AssetValidationService } from '@/services/assetValidationService';
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 
@@ -158,9 +159,9 @@ export class KnowledgeService {
                     options: { maxTokens: 100 }
                 });
                 if (ttsResult.text) {
-                    const audioResult = await AIRouter.routeRequest('speech', { 
+                    const audioResult = await AIRouter.routeRequest('speech', {
                         text: ttsResult.text,
-                        options: { voice: 'en-US-AriaNeural' } 
+                        options: { voice: 'en-US-AriaNeural' }
                     });
                     if (audioResult && audioResult.audio) {
                         audioBase64 = audioResult.audio.toString('base64');
@@ -168,6 +169,11 @@ export class KnowledgeService {
                 }
             } catch (ttsError) {
                 logger.warn('Failed to generate audio abstraction:', ttsError);
+            }
+
+            // 5.5. Validate and enhance visual assets with runtime checks
+            if (reasoningResult.visuals) {
+                reasoningResult.visuals = await this.validateAndEnhanceVisuals(reasoningResult.visuals, queryText);
             }
 
             const response = {
@@ -220,5 +226,75 @@ export class KnowledgeService {
             logger.error('Query classification failed:', error);
             return ['general'];
         }
+    }
+
+    /**
+     * Validates and enhances visual assets with runtime checks
+     */
+    static async validateAndEnhanceVisuals(visuals: any, searchQuery: string): Promise<any> {
+        const enhancedVisuals = { ...visuals };
+
+        // Validate image URLs
+        if (enhancedVisuals.images && enhancedVisuals.images.length > 0) {
+            const validImageUrls = await AssetValidationService.validateAssetUrls(
+                enhancedVisuals.images.map((img: any) => img.url)
+            );
+
+            // Filter to only valid images
+            enhancedVisuals.images = enhancedVisuals.images.filter((img: any) =>
+                validImageUrls.includes(img.url)
+            );
+
+            // If we have fewer than desired images, try to get more relevant ones
+            if (enhancedVisuals.images.length < 2) {
+                try {
+                    const additionalImages = await AssetValidationService.getRelevantImages(searchQuery, 3);
+                    const existingUrls = new Set(enhancedVisuals.images.map((img: any) => img.url));
+
+                    for (const additional of additionalImages) {
+                        if (!existingUrls.has(additional.url)) {
+                            enhancedVisuals.images.push({
+                                url: additional.url,
+                                caption: `Verified agricultural image (${additional.category})`
+                            });
+                            if (enhancedVisuals.images.length >= 3) break;
+                        }
+                    }
+                } catch (error) {
+                    logger.warn('Failed to get additional relevant images:', error);
+                }
+            }
+        }
+
+        // Validate video URLs
+        if (enhancedVisuals.videos && enhancedVisuals.videos.length > 0) {
+            const validVideoUrls = await AssetValidationService.validateAssetUrls(
+                enhancedVisuals.videos.map((vid: any) => vid.url)
+            );
+
+            enhancedVisuals.videos = enhancedVisuals.videos.filter((vid: any) =>
+                validVideoUrls.includes(vid.url)
+            );
+        }
+
+        // Ensure we have at least some visuals if possible
+        if ((!enhancedVisuals.images || enhancedVisuals.images.length === 0) &&
+            (!enhancedVisuals.charts || enhancedVisuals.charts.length === 0)) {
+            try {
+                logger.info(`No visuals found for query "${searchQuery}", attempting to get relevant images`);
+                const relevantImages = await AssetValidationService.getRelevantImages(searchQuery, 2);
+
+                if (relevantImages.length > 0) {
+                    enhancedVisuals.images = relevantImages.map(img => ({
+                        url: img.url,
+                        caption: `Agricultural reference image (${img.category})`
+                    }));
+                }
+            } catch (error) {
+                logger.warn('Failed to get fallback images:', error);
+            }
+        }
+
+        return enhancedVisuals;
     }
 }
