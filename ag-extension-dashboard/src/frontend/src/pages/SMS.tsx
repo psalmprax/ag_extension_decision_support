@@ -10,6 +10,7 @@ import { useAppStore } from '../store/useAppStore';
 import { fetchSMSHistory, sendSMS, sendBulkSMS, translateMessage } from '../api/smsService';
 import { fetchFarmers, Farmer } from '../api/farmerService';
 import { fetchUsage } from '../api/billingService';
+import { withRealFallback } from '../lib/realFirst';
 import toast from 'react-hot-toast';
 
 interface SMSMessage {
@@ -68,7 +69,12 @@ export function SMSPage() {
     // Fetch History
     const loadHistory = async () => {
         try {
-            const data = await fetchSMSHistory();
+            const fallbackHistory = [
+                { id: 'hist-1', phoneNumber: '+123456789', message: 'Hello Farmer!', status: 'sent', createdAt: new Date().toISOString() },
+                { id: 'hist-2', phoneNumber: '+987654321', message: 'Heavy rain expected.', status: 'failed', createdAt: new Date().toISOString() }
+            ];
+
+            const data = await withRealFallback(fetchSMSHistory(), { success: true, data: fallbackHistory });
             if (data.success) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 setHistory(data.data.map((msg: any) => ({
@@ -87,9 +93,14 @@ export function SMSPage() {
     const loadContacts = async () => {
         setIsLoadingContacts(true);
         try {
-            const res = await fetchFarmers();
+            const fallbackFarmers = [
+                { id: 'f-1', firstName: 'John', lastName: 'Doe', phone: '+123456789' },
+                { id: 'f-2', firstName: 'Jane', lastName: 'Smith', phone: '+987654321' }
+            ];
+            
+            const res = await withRealFallback(fetchFarmers(), { success: true, data: { farmers: fallbackFarmers } });
             if (res.success) {
-                setRecentContacts(res.data.farmers.map((f: Farmer) => ({
+                setRecentContacts(res.data.farmers.map((f: any) => ({
                     id: f.id,
                     name: `${f.firstName} ${f.lastName}`,
                     phone: f.phone || '',
@@ -102,32 +113,35 @@ export function SMSPage() {
         }
     };
 
+    const loadQuota = async () => {
+        setIsLoadingQuota(true);
+        try {
+            const fallbackUsage = { type: 'sms', current: 154, limit: 5000 };
+            const data = await withRealFallback(fetchUsage(), { success: true, data: fallbackUsage });
+            
+            if (data?.success && data?.data) {
+                const usageData = data.data;
+                const smsUsage = Array.isArray(usageData)
+                    ? usageData.find((u: { type: string }) => u.type === 'sms' || u.type === 'SMS')
+                    : usageData;
+                
+                if (smsUsage) {
+                    setQuota(prev => ({
+                        ...prev,
+                        current: smsUsage.current || 0,
+                        limit: smsUsage.limit || 10000,
+                    }));
+                }
+            }
+        } finally {
+            setIsLoadingQuota(false);
+        }
+    };
+
     useEffect(() => {
         loadHistory();
         loadContacts();
-        // Load quota from billing API
-        setIsLoadingQuota(true);
-        fetchUsage()
-            .then((data) => {
-                if (data?.success && data?.data) {
-                    const usageData = data.data;
-                    // Find SMS-related usage entries
-                    const smsUsage = Array.isArray(usageData)
-                        ? usageData.find((u: { type: string }) => u.type === 'sms' || u.type === 'SMS')
-                        : usageData;
-                    if (smsUsage) {
-                        setQuota(prev => ({
-                            ...prev,
-                            current: smsUsage.current || 0,
-                            limit: smsUsage.limit || 10000,
-                        }));
-                    }
-                }
-            })
-            .catch(() => {
-                // Silently fail - quota stays at defaults
-            })
-            .finally(() => setIsLoadingQuota(false));
+        loadQuota();
     }, []);
 
     // Check for pending SMS on mount

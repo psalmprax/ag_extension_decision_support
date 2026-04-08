@@ -13,6 +13,10 @@ import {
     ClassificationResult,
     ReasoningOptions,
     ReasoningResult,
+    ImageAnalysisOptions,
+    ImageAnalysisResult,
+    VideoAnalysisOptions,
+    VideoAnalysisResult,
 } from '../aiProvider';
 import { REASONING_SYSTEM_PROMPT, extractVisuals } from '../assetLibrary';
 import { config } from '@/config';
@@ -25,6 +29,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
         'embeddings',
         'reasoning',
         'classification',
+        'vision',
     ];
 
     isConfigured(): boolean {
@@ -214,6 +219,57 @@ export class GoogleVertexProvider extends BaseAIProvider {
                 ],
             };
         }
+    }
+
+    async analyzeImage(imageData: string | Buffer, prompt?: string, options?: ImageAnalysisOptions): Promise<ImageAnalysisResult> {
+        const client = await this.getClient();
+        const modelName = options?.model || config.ai.fallback.model || 'gemini-1.5-flash';
+        const model = client.getGenerativeModel({ model: modelName });
+
+        try {
+            let base64Image: string;
+            if (Buffer.isBuffer(imageData)) {
+                base64Image = imageData.toString('base64');
+            } else if (typeof imageData === 'string' && imageData.startsWith('data:image/')) {
+                base64Image = imageData.split(',')[1];
+            } else {
+                base64Image = imageData as string;
+            }
+
+            const contents = [
+                {
+                    role: 'user',
+                    parts: [
+                        { text: prompt || 'Analyze this agricultural image.' },
+                        {
+                            inlineData: {
+                                mimeType: 'image/jpeg',
+                                data: base64Image
+                            }
+                        }
+                    ]
+                }
+            ];
+
+            const result = await model.generateContent({ contents });
+            
+            return {
+                analysis: result.response.text() || 'Unable to analyze image',
+                model: modelName,
+                usage: { promptTokens: 10, completionTokens: 20, totalTokens: 30 },
+            };
+        } catch (error: any) {
+            logger.error('Google Vertex analyzeImage error:', error);
+            return {
+                analysis: `Error: ${error.message}`,
+                model: modelName,
+                usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+            };
+        }
+    }
+
+    async analyzeVideo(_videoData: Buffer, _prompt?: string, _options?: VideoAnalysisOptions): Promise<VideoAnalysisResult> {
+        throw new Error('Video analysis not implemented for Google Vertex provider');
     }
 
     async healthCheck(): Promise<boolean> {

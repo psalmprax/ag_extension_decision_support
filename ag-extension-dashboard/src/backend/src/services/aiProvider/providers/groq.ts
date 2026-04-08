@@ -3,6 +3,10 @@ import {
     AIProviderType,
     TextGenerationOptions,
     TextGenerationResult,
+    ImageAnalysisOptions,
+    ImageAnalysisResult,
+    VideoAnalysisOptions,
+    VideoAnalysisResult,
 } from '../aiProvider';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
@@ -92,6 +96,14 @@ export class GroqProvider extends BaseAIProvider {
             logger.error('Groq createEmbedding error:', error);
             throw error;
         }
+    }
+
+    async analyzeImage(_imageData: string | Buffer, _prompt?: string, _options?: ImageAnalysisOptions): Promise<ImageAnalysisResult> {
+        throw new Error('Image analysis not implemented for Groq provider');
+    }
+
+    async analyzeVideo(_videoData: Buffer, _prompt?: string, _options?: VideoAnalysisOptions): Promise<VideoAnalysisResult> {
+        throw new Error('Video analysis not implemented for Groq provider');
     }
 
     async healthCheck(): Promise<boolean> {

@@ -29,6 +29,7 @@ export interface AppConfig {
         tavily: { apiKey: string };
     };
     cors: { origin: string };
+    demo: { password: string };
 }
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -122,5 +123,9 @@ export const config: AppConfig = {
 
     cors: {
         origin: getEnv('CORS_ORIGIN', 'http://localhost:5173'),
+    },
+
+    demo: {
+        password: getEnv('DEMO_PASSWORD', 'demo-password-123'),
     },
 };

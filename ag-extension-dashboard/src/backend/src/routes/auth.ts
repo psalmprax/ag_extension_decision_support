@@ -174,12 +174,12 @@ router.post('/demo', async (req: Request, res: Response) => {
         const userResult = await query('SELECT * FROM users WHERE email = $1', [email]);
         let user = userResult.rows[0];
         if (!user) {
-            const passwordHash = await bcrypt.hash('demo-password-123', 10);
+            const passwordHash = await bcrypt.hash(config.demo.password, 10);
             const insertResult = await query(`
                 INSERT INTO users (email, password_hash, first_name, last_name, role, region, phone, created_at)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
                 RETURNING id, email, first_name, last_name, role, region, phone
-            `, [email, passwordHash, 'Demo', 'User', 'admin', 'Lilongwe', '+265880000000']);
+            `, [email, passwordHash, 'Demo', 'User', 'extension_officer', 'Lilongwe', '+265880000000']);
             
             user = insertResult.rows[0];
         }

@@ -74,6 +74,70 @@ router.post('/synthesize-visit', [checkUsageLimit('ai_chat'), validate({ body: a
     }
 });
 
+/**
+ * @swagger
+ * /api/ai/analyze-image:
+ *   post:
+ *     summary: Analyze an image using AI vision capabilities
+ *     tags: [AI]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post('/analyze-image', [checkUsageLimit('ai_vision')], async (req: AuthRequest, res: Response) => {
+    try {
+        const { image, prompt } = req.body;
+        const userId = req.user!.userId;
+
+        const result = await AIRouter.routeRequest('vision', {
+            imageData: image,
+            prompt,
+            options: { temperature: 0.3 }
+        });
+
+        await usageService.incrementUsage(userId, 'ai_vision');
+
+        res.json({
+            success: true,
+            data: result
+        });
+    } catch (error) {
+        logger.error('Image analysis failed:', error);
+        res.status(500).json({ success: false, error: 'Failed to analyze image' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/ai/analyze-video:
+ *   post:
+ *     summary: Analyze a video using AI vision capabilities
+ *     tags: [AI]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post('/analyze-video', [checkUsageLimit('ai_vision')], async (req: AuthRequest, res: Response) => {
+    try {
+        const { video, prompt } = req.body;
+        const userId = req.user!.userId;
+
+        const result = await AIRouter.routeRequest('video', {
+            videoData: Buffer.from(video, 'base64'),
+            prompt,
+            options: { temperature: 0.3 }
+        });
+
+        await usageService.incrementUsage(userId, 'ai_vision');
+
+        res.json({
+            success: true,
+            data: result
+        });
+    } catch (error) {
+        logger.error('Video analysis failed:', error);
+        res.status(500).json({ success: false, error: 'Failed to analyze video' });
+    }
+});
+
 export default router;
 
 import axios from 'axios';

@@ -97,7 +97,8 @@ const healthHandler = async (_req: Request, res: Response) => {
         } else {
             dbStatus = 'not configured';
         }
-    } catch {
+    } catch (error) {
+        logger.error('Database health check failed:', error);
         dbStatus = 'error';
     }
     try {
@@ -107,7 +108,8 @@ const healthHandler = async (_req: Request, res: Response) => {
         } else {
             cacheStatus = 'not connected';
         }
-    } catch {
+    } catch (error) {
+        logger.error('Cache health check failed:', error);
         cacheStatus = 'error';
     }
     const isHealthy = dbStatus === 'connected';

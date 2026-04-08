@@ -16,6 +16,7 @@ import {
     type EmailApproval
 } from '../api/emailWorkflowService';
 import toast from 'react-hot-toast';
+import DOMPurify from 'dompurify';
 
 export function EmailWorkflows() {
     const { t } = useLanguage();
@@ -463,9 +464,9 @@ export function EmailWorkflows() {
                                         <div
                                             className="text-sm text-gray-900 dark:text-white prose prose-sm max-w-none dark:prose-invert"
                                             dangerouslySetInnerHTML={{
-                                                __html: approval.emailData.html.length > 300
+                                                __html: DOMPurify.sanitize(approval.emailData.html.length > 300
                                                     ? approval.emailData.html.substring(0, 300) + '...'
-                                                    : approval.emailData.html
+                                                    : approval.emailData.html)
                                             }}
                                         />
                                     </div>

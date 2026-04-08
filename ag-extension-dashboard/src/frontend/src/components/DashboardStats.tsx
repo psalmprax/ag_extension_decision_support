@@ -1,6 +1,9 @@
+import React, { useState, useEffect } from 'react';
 import { useDesign } from '@/hooks/useDesignVariant';
 import { useLanguage } from '@/lib/LanguageContext';
 import { Users, Calendar, MessageSquare, TrendingUp } from 'lucide-react';
+import { fetchDashboardData, DashboardResponse } from '@/api/dashboardService';
+import { withRealFallback } from '@/lib/realFirst';
 
 interface StatCardProps {
   title: string;
@@ -44,12 +47,56 @@ const NewStatCard: React.FC<StatCardProps> = ({ title, value, change, icon: Icon
 
 export const DashboardStats: React.FC = () => {
   const { t } = useLanguage();
+  const [stats, setStats] = useState([
+    { title: 'Total Farmers', value: '...', change: '', icon: Users },
+    { title: 'Visits This Month', value: '...', change: '', icon: Calendar },
+    { title: 'Active Chats', value: '...', change: '', icon: MessageSquare },
+  ]);
 
-  const stats = [
-    { title: 'Total Farmers', value: '1,247', change: '+12% from last month', icon: Users },
-    { title: 'Visits This Month', value: '89', change: '+5% from last month', icon: Calendar },
-    { title: 'Active Chats', value: '342', change: '+8% from last month', icon: MessageSquare },
-  ];
+  useEffect(() => {
+    const loadStats = async () => {
+      const fallbackData = {
+          overview: {
+              totalFarmers: 1247,
+              visitsThisMonth: 89,
+              activeConversations: 342
+          },
+          trends: {
+              farmersGrowth: 12,
+              visitsGrowth: 5,
+              conversationsGrowth: 8
+          }
+      };
+
+      const dashboardData = await withRealFallback(fetchDashboardData(), fallbackData);
+      
+      if (dashboardData && dashboardData.overview) {
+          const { overview, trends } = dashboardData;
+          setStats([
+            { 
+                title: t('dashboard_total_farmers'), 
+                value: overview.totalFarmers.toLocaleString(), 
+                change: `+${trends.farmersGrowth}% from last month`, 
+                icon: Users 
+            },
+            { 
+                title: t('dashboard_visits_this_month'), 
+                value: overview.visitsThisMonth.toLocaleString(), 
+                change: `+${trends.visitsGrowth}% from last month`, 
+                icon: Calendar 
+            },
+            { 
+                title: t('dashboard_active_chats'), 
+                value: overview.activeConversations.toLocaleString(), 
+                change: `+${trends.conversationsGrowth}% from last month`, 
+                icon: MessageSquare 
+            },
+          ]);
+      }
+    };
+
+    loadStats();
+  }, [t]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -65,3 +112,4 @@ export const DashboardStats: React.FC = () => {
 };
 
 export default DashboardStats;
+

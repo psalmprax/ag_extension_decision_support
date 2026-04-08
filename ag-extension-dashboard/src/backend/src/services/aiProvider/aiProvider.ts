@@ -115,6 +115,25 @@ export interface ImageAnalysisResult {
     };
 }
 
+export interface VideoAnalysisOptions {
+    model?: string;
+    maxTokens?: number;
+    temperature?: number;
+    frameInterval?: number; // Seconds between frames
+    maxFrames?: number;
+}
+
+export interface VideoAnalysisResult {
+    analysis: string;
+    framesAnalyzed: number;
+    model: string;
+    usage?: {
+        promptTokens: number;
+        completionTokens: number;
+        totalTokens: number;
+    };
+}
+
 // Base capability interface
 export interface AICapability {
     readonly provider: AIProviderType;
@@ -144,6 +163,9 @@ export interface AICapability {
 
     // Image analysis
     analyzeImage(imageData: string | Buffer, prompt?: string, options?: ImageAnalysisOptions): Promise<ImageAnalysisResult>;
+    
+    // Video analysis
+    analyzeVideo(videoData: Buffer, prompt?: string, options?: VideoAnalysisOptions): Promise<VideoAnalysisResult>;
 
     // Health check
     healthCheck(): Promise<boolean>;
@@ -191,6 +213,10 @@ export abstract class BaseAIProvider implements AICapability {
     }
 
     async analyzeImage(_imageData: string | Buffer, _prompt?: string, _options?: ImageAnalysisOptions): Promise<ImageAnalysisResult> {
+        throw new Error('Method not implemented');
+    }
+
+    async analyzeVideo(_videoData: Buffer, _prompt?: string, _options?: VideoAnalysisOptions): Promise<VideoAnalysisResult> {
         throw new Error('Method not implemented');
     }
 
@@ -305,7 +331,7 @@ export class AIRouter {
     }
 
     static async routeRequest(
-        requestType: 'generate' | 'embed' | 'speech' | 'classify' | 'reason' | 'weather' | 'disease_alerts' | 'vision',
+        requestType: 'generate' | 'embed' | 'speech' | 'classify' | 'reason' | 'weather' | 'disease_alerts' | 'vision' | 'video',
         params: any
     ): Promise<any> {
         return AIProviderFactory.getWithFallback(async (provider) => {
@@ -328,6 +354,8 @@ export class AIRouter {
                     return FAOService.getDiseaseAlerts(params.region, params.crop);
                 case 'vision':
                     return provider.analyzeImage(params.imageData, params.prompt, params.options);
+                case 'video':
+                    return provider.analyzeVideo(params.videoData, params.prompt, params.options);
                 default:
                     throw new Error(`Unknown request type: ${requestType}`);
             }

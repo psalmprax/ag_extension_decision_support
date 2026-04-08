@@ -29,19 +29,47 @@ export const FarmerDashboard: React.FC = () => {
   const farmerStats = statsResponse?.data;
   const isCyber = themeName === 'cyber';
 
+  // Derived metrics for Cyber view to avoid absolute hardcoding
+  const dashboardMetrics = [
+    { 
+        label: 'SOIL MOISTURE', 
+        value: farmerStats?.soilMoisture || '\u2014', 
+        icon: Zap, 
+        trend: farmerStats?.soilMoisture ? (Number(farmerStats.soilMoisture.replace('%','')) > 30 ? 'Optimal' : 'Low') : 'No data' 
+    },
+    { 
+        label: 'AVG TEMP', 
+        value: farmerStats?.avgTemp || '\u2014', 
+        icon: TrendingUp, 
+        trend: farmerStats?.avgTemp ? 'Stable' : 'No data' 
+    },
+    { 
+        label: 'PH LEVEL', 
+        value: farmerStats?.phLevel || '\u2014', 
+        icon: LineChart, 
+        trend: farmerStats?.phLevel ? (Number(farmerStats.phLevel) > 6 && Number(farmerStats.phLevel) < 8 ? 'Optimal' : 'Checking') : 'No data' 
+    },
+    { 
+        label: 'AI CONFIDENCE', 
+        value: farmerStats?.aiConfidence || '\u2014', 
+        icon: ShieldAlert, 
+        trend: farmerStats?.aiConfidence ? (Number(farmerStats.aiConfidence.replace('%','')) > 80 ? 'High' : 'Normal') : 'No data' 
+    }
+  ];
+
   const stats = [
     {
       title: t('farmer_my_crops'),
       value: farmerStats?.crops && farmerStats.crops.length > 0
         ? farmerStats.crops.join(', ')
-        : '',
+        : 'N/A',
       icon: Sprout,
       color: 'text-primary-600',
       bg: 'bg-primary-100'
     },
-    { title: t('farmer_next_visit'), value: farmerStats?.nextVisitDate || '', icon: Calendar, color: 'text-secondary-600', bg: 'bg-secondary-100' },
-    { title: t('farmer_ai_advisory'), value: farmerStats?.aiTipsCount ? t('farmer_new_tips', { count: farmerStats.aiTipsCount }) : '', icon: MessageSquare, color: 'text-accent-600', bg: 'bg-accent-100' },
-    { title: t('farmer_alerts'), value: farmerStats?.alertsCount ? `${farmerStats.alertsCount} ${t('farmer_active_status', { defaultValue: 'Active' })}` : '', icon: Bell, color: 'text-amber-600', bg: 'bg-amber-100' },
+    { title: t('farmer_next_visit'), value: farmerStats?.nextVisitDate || 'TBD', icon: Calendar, color: 'text-secondary-600', bg: 'bg-secondary-100' },
+    { title: t('farmer_ai_advisory'), value: farmerStats?.aiTipsCount ? t('farmer_new_tips', { count: farmerStats.aiTipsCount }) : '0 updates', icon: MessageSquare, color: 'text-accent-600', bg: 'bg-accent-100' },
+    { title: t('farmer_alerts'), value: farmerStats?.alertsCount ? `${farmerStats.alertsCount} ${t('farmer_active_status', { defaultValue: 'Active' })}` : 'No alerts', icon: Bell, color: 'text-amber-600', bg: 'bg-amber-100' },
   ];
 
   if (isCyber) {
@@ -74,7 +102,7 @@ export const FarmerDashboard: React.FC = () => {
                 <CropCycleGantt 
                     items={farmerStats?.yieldHistory?.map((y: any, i: number) => ({
                         id: String(i),
-                        label: `PHASE_${i+1}: ${y.crop || 'GROWTH'}`,
+                        label: `${y.crop || 'PHASE_' + (i+1)}`,
                         value: `${y.yield || 0} t/ha`,
                         percent: Math.min((y.yield || 0) * 10, 100)
                     }))}
@@ -88,20 +116,15 @@ export const FarmerDashboard: React.FC = () => {
                     indicators={[
                         { label: 'SOIL_ANALYSIS', status: farmerStats?.soilMoisture ? 'online' : 'warning' },
                         { label: 'AI_AGENT', status: farmerStats?.aiConfidence ? 'stable' : 'online' },
-                        { label: 'PERSISTENCE', status: 'online' }
+                        { label: 'PERSISTENCE', status: farmerStats ? 'online' : 'warning' }
                     ]}
                 />
             </div>
         </div>
 
-        {/* Legacy Stats converted to Cyber Grid */}
+        {/* Dynamic Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-                { label: 'SOIL MOISTURE', value: farmerStats?.soilMoisture || '\u2014', icon: Zap, trend: farmerStats?.soilMoisture ? '+2%' : 'No data' },
-                { label: 'AVG TEMP', value: farmerStats?.avgTemp || '\u2014', icon:TrendingUp, trend: farmerStats?.avgTemp ? 'Stable' : 'No data' },
-                { label: 'PH LEVEL', value: farmerStats?.phLevel || '\u2014', icon: LineChart, trend: farmerStats?.phLevel ? 'Optimal' : 'No data' },
-                { label: 'AI CONFIDENCE', value: farmerStats?.aiConfidence || '\u2014', icon: ShieldAlert, trend: farmerStats?.aiConfidence ? 'High' : 'No data' }
-            ].map((stat, i) => (
+            {dashboardMetrics.map((stat, i) => (
                 <div 
                     key={i} 
                     className="glass-premium p-6 rounded-2xl border-white/5 group hover:border-primary-500/30 transition-all cursor-context-menu"
@@ -122,6 +145,7 @@ export const FarmerDashboard: React.FC = () => {
       </div>
     );
   }
+
 
   if (statsLoading) {
     return (

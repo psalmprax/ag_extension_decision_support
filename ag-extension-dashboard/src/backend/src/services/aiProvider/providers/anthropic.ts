@@ -9,6 +9,10 @@ import {
     ClassificationResult,
     ReasoningOptions,
     ReasoningResult,
+    ImageAnalysisOptions,
+    ImageAnalysisResult,
+    VideoAnalysisOptions,
+    VideoAnalysisResult,
 } from '../aiProvider';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
@@ -20,6 +24,7 @@ export class AnthropicProvider extends BaseAIProvider {
         'embeddings',
         'reasoning',
         'classification',
+        'vision',
     ];
 
     private client: any = null;
@@ -140,20 +145,6 @@ export class AnthropicProvider extends BaseAIProvider {
         }
     }
 
-    async analyzeWithReasoning(context: string, query: string, options?: ReasoningOptions): Promise<ReasoningResult> {
-        const prompt = `Context:\n${context}\n\nQuestion: ${query}\n\nProvide a detailed analysis with reasoning.`;
-        const result = await this.generateText(prompt, {
-            temperature: options?.temperature ?? 0.3,
-            maxTokens: options?.maxTokens ?? 1500,
-        });
-
-        return {
-            reasoning: 'Analysis completed using Claude.',
-            answer: result.text ?? '',
-            confidence: 0.9,
-        };
-    }
-
     async classify(input: string, options: ClassificationOptions): Promise<ClassificationResult> {
         const prompt = `Classify: "${input}"\n\nTaxonomy: ${options.taxonomy}\n\nRespond with JSON array of labels and scores.`;
         const result = await this.generateText(prompt, { temperature: 0.3, maxTokens: 500 });
@@ -168,6 +159,111 @@ export class AnthropicProvider extends BaseAIProvider {
                 ],
             };
         }
+    }
+
+    async analyzeWithReasoning(context: string, query: string, options?: ReasoningOptions): Promise<ReasoningResult> {
+        const client = await this.getClient();
+        const model = options?.model || 'claude-3-5-sonnet-20241022';
+        
+        const userContent: any[] = [
+            { type: 'text', text: `Context: ${context}\n\nQuestion: ${query}` }
+        ];
+
+        if (options?.attachments && options.attachments.length > 0) {
+            for (const attachment of options.attachments) {
+                if (attachment.type === 'image') {
+                    let base64Image = attachment.data;
+                    if (attachment.data.includes('base64,')) {
+                        base64Image = attachment.data.split('base64,')[1];
+                    }
+                    
+                    userContent.push({
+                        type: 'image',
+                        source: {
+                            type: 'base64',
+                            media_type: attachment.mimeType || 'image/jpeg',
+                            data: base64Image
+                        }
+                    });
+                }
+            }
+        }
+
+        const response = await client.messages.create({
+            model,
+            max_tokens: options?.maxTokens ?? 2000,
+            temperature: options?.temperature ?? 0.3,
+            messages: [{ role: 'user', content: userContent }],
+        });
+
+        const text = response.content[0].type === 'text' ? response.content[0].text : '';
+        
+        return {
+            reasoning: 'Analysis completed using Claude.',
+            answer: text,
+            confidence: 0.9,
+        };
+    }
+
+    async analyzeImage(imageData: string | Buffer, prompt?: string, options?: ImageAnalysisOptions): Promise<ImageAnalysisResult> {
+        const client = await this.getClient();
+        const model = options?.model || 'claude-3-5-sonnet-20241022';
+
+        try {
+            let base64Image: string;
+            if (Buffer.isBuffer(imageData)) {
+                base64Image = imageData.toString('base64');
+            } else if (typeof imageData === 'string' && imageData.startsWith('data:image/')) {
+                base64Image = imageData.split(',')[1];
+            } else {
+                base64Image = imageData as string;
+            }
+
+            const response = await client.messages.create({
+                model,
+                max_tokens: options?.maxTokens ?? 1000,
+                temperature: options?.temperature ?? 0.3,
+                messages: [
+                    {
+                        role: 'user',
+                        content: [
+                            { type: 'text', text: prompt || 'Analyze this agricultural image.' },
+                            {
+                                type: 'image',
+                                source: {
+                                    type: 'base64',
+                                    media_type: 'image/jpeg',
+                                    data: base64Image
+                                }
+                            }
+                        ]
+                    }
+                ],
+            });
+
+            const text = response.content[0].type === 'text' ? response.content[0].text : '';
+            
+            return {
+                analysis: text || 'Unable to analyze image',
+                model,
+                usage: {
+                    promptTokens: response.usage.input_tokens,
+                    completionTokens: response.usage.output_tokens,
+                    totalTokens: response.usage.input_tokens + response.usage.output_tokens,
+                },
+            };
+        } catch (error: any) {
+            logger.error('Anthropic analyzeImage error:', error);
+            return {
+                analysis: `Error: ${error.message}`,
+                model,
+                usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+            };
+        }
+    }
+
+    async analyzeVideo(_videoData: Buffer, _prompt?: string, _options?: VideoAnalysisOptions): Promise<VideoAnalysisResult> {
+        throw new Error('Video analysis not implemented for Anthropic provider');
     }
 
     async healthCheck(): Promise<boolean> {

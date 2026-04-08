@@ -13,6 +13,10 @@ import {
     ClassificationResult,
     ReasoningOptions,
     ReasoningResult,
+    ImageAnalysisOptions,
+    ImageAnalysisResult,
+    VideoAnalysisOptions,
+    VideoAnalysisResult,
 } from '../aiProvider';
 import { REASONING_SYSTEM_PROMPT, extractVisuals } from '../assetLibrary';
 import { config } from '@/config';
@@ -27,6 +31,7 @@ export class AzureOpenAIProvider extends BaseAIProvider {
         'text-to-speech',
         'reasoning',
         'classification',
+        'vision',
     ];
 
     isConfigured(): boolean {
@@ -237,6 +242,65 @@ export class AzureOpenAIProvider extends BaseAIProvider {
                 ],
             };
         }
+    }
+
+    async analyzeImage(imageData: string | Buffer, prompt?: string, options?: ImageAnalysisOptions): Promise<ImageAnalysisResult> {
+        const client = await this.getClient();
+        const model = options?.model || config.ai.primary.model;
+
+        try {
+            let base64Image: string;
+            if (Buffer.isBuffer(imageData)) {
+                base64Image = imageData.toString('base64');
+            } else if (typeof imageData === 'string' && imageData.startsWith('data:image/')) {
+                base64Image = imageData.split(',')[1];
+            } else {
+                base64Image = imageData as string;
+            }
+
+            const messages = [
+                {
+                    role: 'user',
+                    content: [
+                        { type: 'text', text: prompt || 'Analyze this agricultural image.' },
+                        {
+                            type: 'image_url',
+                            image_url: {
+                                url: `data:image/jpeg;base64,${base64Image}`,
+                            },
+                        },
+                    ],
+                },
+            ];
+
+            const requestOptions = {
+                temperature: options?.temperature ?? 0.3,
+                maxTokens: options?.maxTokens ?? 1000,
+            };
+
+            const response = await client.getChatCompletions(
+                config.azureOpenAI.deploymentName,
+                messages,
+                requestOptions
+            );
+
+            return {
+                analysis: response.choices[0].message.content || 'Unable to analyze image',
+                model,
+                usage: response.usage,
+            };
+        } catch (error: any) {
+            logger.error('Azure OpenAI analyzeImage error:', error);
+            return {
+                analysis: `Error: ${error.message}`,
+                model,
+                usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+            };
+        }
+    }
+
+    async analyzeVideo(_videoData: Buffer, _prompt?: string, _options?: VideoAnalysisOptions): Promise<VideoAnalysisResult> {
+        throw new Error('Video analysis not implemented for Azure OpenAI provider');
     }
 
     async healthCheck(): Promise<boolean> {
