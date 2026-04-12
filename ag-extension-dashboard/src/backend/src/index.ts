@@ -48,8 +48,8 @@ const io = new SocketServer(httpServer, {
             if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
                 callback(null, true);
             } else {
-                // Also allow the current origin if it's a valid IP/port combo matching the server
-                callback(null, true); // Fallback to true for now to fix the reported issue
+                logger.warn(`Socket.IO: Rejected connection from origin: ${origin}`);
+                callback(new Error('Not allowed by CORS'), false);
             }
         },
         methods: ['GET', 'POST'],
@@ -242,6 +242,36 @@ process.on('unhandledRejection', (reason) => {
     logger.error('Unhandled Rejection:', reason);
     process.exit(1);
 });
+
+// Graceful shutdown handling
+async function gracefulShutdown(signal: string) {
+    logger.info(`Received ${signal}, starting graceful shutdown...`);
+    
+    try {
+        // Close HTTP server
+        httpServer.close(() => {
+            logger.info('HTTP server closed');
+        });
+        
+        // Close database connection
+        const { closeDatabase } = await import('./services/databaseService');
+        await closeDatabase();
+        logger.info('Database connection closed');
+        
+        // Close cache connection
+        const { closeCache } = await import('./services/cacheService');
+        await closeCache();
+        logger.info('Cache connection closed');
+        
+        process.exit(0);
+    } catch (error) {
+        logger.error('Error during graceful shutdown:', error);
+        process.exit(1);
+    }
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 if (process.env.NODE_ENV !== 'test') {
     bootstrap();

@@ -57,7 +57,7 @@ export const config: AppConfig = {
     },
 
     jwt: {
-        secret: getEnv('JWT_SECRET', 'your-super-secret-jwt-key-change-in-production', false),
+        secret: getEnv('JWT_SECRET', undefined, true),
         expiresIn: getEnv('JWT_EXPIRES_IN', '7d'),
     },
 

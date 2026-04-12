@@ -44,10 +44,16 @@ export async function initializeDatabase(): Promise<void> {
 
 /**
  * Seeds the database with initial "Real-First" data for the dashboard.
- * Only seeds if the tables are empty.
+ * Only seeds in development/test environments, never in production.
  */
 export async function seedInitialData(): Promise<void> {
   if (!pool) return;
+
+  const isProduction = process.env.NODE_ENV === 'production';
+  if (isProduction) {
+    logger.info('Skipping seed data in production environment');
+    return;
+  }
 
   try {
     // 1. Seed Default Admin/Officer if no users exist

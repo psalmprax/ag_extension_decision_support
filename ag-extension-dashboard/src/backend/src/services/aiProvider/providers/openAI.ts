@@ -129,11 +129,7 @@ export class OpenAIProvider extends BaseAIProvider {
             };
         } catch (error) {
             logger.error('OpenAI createEmbedding error:', error);
-            return {
-                embedding: Array(1536).fill(0).map(() => Math.random() - 0.5),
-                model,
-                usage: { tokens: 100 },
-            };
+            throw new Error(`OpenAI embedding creation failed: ${(error as Error).message}`);
         }
     }
 
@@ -155,11 +151,7 @@ export class OpenAIProvider extends BaseAIProvider {
             }));
         } catch (error) {
             logger.error('OpenAI createBatchEmbeddings error:', error);
-            return texts.map(() => ({
-                embedding: Array(1536).fill(0).map(() => Math.random() - 0.5),
-                model,
-                usage: { tokens: 100 },
-            }));
+            throw new Error(`OpenAI batch embedding creation failed: ${(error as Error).message}`);
         }
     }
 
