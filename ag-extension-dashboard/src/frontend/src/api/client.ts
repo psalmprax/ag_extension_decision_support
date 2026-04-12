@@ -72,7 +72,9 @@ apiClient.interceptors.response.use(
             if (!publicRoutes.includes(window.location.pathname)) {
                 window.location.href = '/login';
             }
-            return Promise.reject(error);
+            // Return a never-resolving promise to prevent React Query from retrying
+            // This avoids duplicate 401 errors in console
+            return new Promise(() => {});
         }
 
         // Check if we should retry
