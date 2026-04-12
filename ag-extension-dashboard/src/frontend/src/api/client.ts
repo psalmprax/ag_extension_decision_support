@@ -68,7 +68,8 @@ apiClient.interceptors.response.use(
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             // Use window.location for redirect to ensure it works from anywhere
-            if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+            const publicRoutes = ['/login', '/register', '/forgot-password'];
+            if (!publicRoutes.includes(window.location.pathname)) {
                 window.location.href = '/login';
             }
             return Promise.reject(error);
