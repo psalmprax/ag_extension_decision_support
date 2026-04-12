@@ -30,6 +30,7 @@ export function Register() {
     ];
 
     const handleSubmit = async (e: React.FormEvent) => {
+        console.log('Register form submitted', e);
         e.preventDefault();
         setError('');
 
@@ -46,7 +47,7 @@ export function Register() {
         setIsLoading(true);
 
         try {
-            await register({
+            const result = await register({
                 firstName: formData.firstName,
                 lastName: formData.lastName,
                 email: formData.email,
@@ -54,6 +55,12 @@ export function Register() {
                 role: formData.role,
                 region: formData.region,
             });
+
+            // Save auth credentials
+            if (result.data?.token) {
+                localStorage.setItem('token', result.data.token);
+                localStorage.setItem('user', JSON.stringify(result.data.user));
+            }
 
             // Success - redirect to login
             navigate('/login', { state: { registered: true } });
@@ -76,6 +83,7 @@ export function Register() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 w-full max-w-md"
+                style={{ pointerEvents: 'auto', touchAction: 'auto' }}
             >
                 {/* Logo */}
                 <div className="text-center mb-6">

@@ -1,5 +1,9 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Routes, Route } from 'react-router-dom';
+import { Login } from './pages/Login';
+import { Register } from './pages/Register';
+import { ForgotPassword } from './pages/ForgotPassword';
+import ProtectedRoute from './components/ProtectedRoute';
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import FarmerMap from '@/components/FarmerMap';
@@ -1186,10 +1190,16 @@ function App() {
         return items;
     };
 
+    // Public routes - accessible without authentication
     if (!user) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-                <Login />
+                <Routes>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="*" element={<Login />} />
+                </Routes>
             </div>
         );
     }
