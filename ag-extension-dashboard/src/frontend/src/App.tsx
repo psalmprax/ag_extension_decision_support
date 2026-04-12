@@ -741,12 +741,16 @@ function App() {
         enabled: !!storeUser
     });
 
-    // Clear invalid user session
+    // Clear invalid user session only on 401 (unauthorized) errors
     useEffect(() => {
         if (userError && storeUser) {
-            setUser(null);
-            localStorage.removeItem('user');
-            localStorage.removeItem('token');
+            const error = userError as any;
+            const status = error?.response?.status;
+            if (status === 401) {
+                setUser(null);
+                localStorage.removeItem('user');
+                localStorage.removeItem('token');
+            }
         }
     }, [userError, storeUser, setUser]);
 
