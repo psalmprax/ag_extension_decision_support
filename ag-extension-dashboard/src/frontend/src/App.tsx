@@ -475,7 +475,7 @@ function App() {
 
     // Fetch unread notification count
     useEffect(() => {
-        if (!storeUser) return;
+        if (!storeUser || !localStorage.getItem('token')) return;
         const loadUnreadCount = async () => {
             try {
                 const count = await fetchUnreadCount();
@@ -735,10 +735,12 @@ function App() {
         }
     }, [setActiveTab]);
 
+    const hasToken = !!localStorage.getItem('token');
+
     const { data: userResponse, error: userError } = useQuery<ProfileResponse>({
         queryKey: ['user-profile'],
         queryFn: fetchUserProfile,
-        enabled: !!storeUser
+        enabled: !!storeUser && hasToken
     });
 
     // Clear invalid user session only on 401 (unauthorized) errors
@@ -753,6 +755,17 @@ function App() {
             }
         }
     }, [userError, storeUser, setUser]);
+
+    // Handle the custom auth-unauthorized event from the API client
+    useEffect(() => {
+        const handleUnauthorized = () => {
+            setUser(null);
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+        };
+        window.addEventListener('auth-unauthorized', handleUnauthorized);
+        return () => window.removeEventListener('auth-unauthorized', handleUnauthorized);
+    }, [setUser]);
 
     const user = userResponse?.data;
     const isOfficer = user?.role === 'extension_officer';

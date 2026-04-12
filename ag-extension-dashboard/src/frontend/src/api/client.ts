@@ -67,6 +67,10 @@ apiClient.interceptors.response.use(
         if (error.response?.status === 401) {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
+            
+            // Dispatch event for App component to clear Zustand state
+            window.dispatchEvent(new Event('auth-unauthorized'));
+            
             // Use window.location for redirect to ensure it works from anywhere
             const publicRoutes = ['/login', '/register', '/forgot-password'];
             if (!publicRoutes.includes(window.location.pathname)) {
