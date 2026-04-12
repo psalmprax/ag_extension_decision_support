@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Mail, ArrowLeft, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { requestPasswordReset } from '@/api/authService';
 
-const ForgotPassword: React.FC = () => {
+export const ForgotPassword: React.FC = () => {
     const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -105,6 +105,4 @@ const ForgotPassword: React.FC = () => {
             </div>
         </div>
     );
-};
-
-export default ForgotPassword;
+// Removed default export
