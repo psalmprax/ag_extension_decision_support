@@ -1,4 +1,5 @@
 import winston from 'winston';
+import * as util from 'util';
 
 const logFormat = winston.format.combine(
     winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
@@ -8,7 +9,7 @@ const logFormat = winston.format.combine(
     winston.format.printf(({ timestamp, level, message, ...metadata }) => {
         let msg = `${timestamp} [${level.toUpperCase()}]: ${message}`;
         if (Object.keys(metadata).length > 0) {
-            msg += ` ${JSON.stringify(metadata)}`;
+            msg += ` ${util.inspect(metadata, { depth: 3 })}`;
         }
         return msg;
     })
@@ -24,7 +25,7 @@ export const logger = winston.createLogger({
                 winston.format.printf(({ timestamp, level, message, ...metadata }) => {
                     let msg = `${timestamp} ${level}: ${message}`;
                     if (Object.keys(metadata).length > 0) {
-                        msg += ` ${JSON.stringify(metadata)}`;
+                        msg += ` ${util.inspect(metadata, { depth: 3, colors: true })}`;
                     }
                     return msg;
                 })
