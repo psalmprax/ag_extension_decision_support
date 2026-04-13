@@ -138,15 +138,8 @@ export function errorHandler(
     res.status(statusCode).json(response);
 }
 
-/**
- * Async handler wrapper to catch promise rejections
- * Usage: router.get('/', asyncHandler(async (req, res) => { ... }))
- */
-export function asyncHandler(fn: Function) {
-    return (req: Request, res: Response, next: NextFunction) => {
-        Promise.resolve(fn(req, res, next)).catch(next);
-    };
-}
+// Use asyncWrapper below - this is kept for backward compatibility
+export const asyncHandler = asyncWrapper;
 
 /**
  * 404 Not Found handler

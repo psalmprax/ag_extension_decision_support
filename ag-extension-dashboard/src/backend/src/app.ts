@@ -77,6 +77,16 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(limiter);
+
+// Request timeout middleware - 30s timeout for all requests
+app.use((req, res, next) => {
+    res.setTimeout(30000, () => {
+        logger.warn(`Request timeout: ${req.method} ${req.path}`);
+        res.status(408).json({ success: false, error: 'Request timeout' });
+    });
+    next();
+});
+
 app.use(securityGate);
 
 // Serve uploaded files

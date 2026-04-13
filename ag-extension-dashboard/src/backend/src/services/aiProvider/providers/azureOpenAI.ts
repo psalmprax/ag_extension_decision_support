@@ -104,18 +104,21 @@ export class AzureOpenAIProvider extends BaseAIProvider {
         const requestOptions = {
             temperature: options?.temperature ?? 0.7,
             maxTokens: options?.maxTokens ?? 1000,
+            stream: true,
         };
 
         try {
-            const events = await client.getChatCompletions(
+            const events = await client.streamChatCompletions(
                 config.azureOpenAI.deploymentName,
                 messages,
                 requestOptions
             );
 
-            for (const choice of events.choices) {
-                if (choice.delta?.content) {
-                    yield choice.delta.content;
+            for await (const event of events) {
+                for (const choice of event.choices) {
+                    if (choice.delta?.content) {
+                        yield choice.delta.content;
+                    }
                 }
             }
         } catch (error) {

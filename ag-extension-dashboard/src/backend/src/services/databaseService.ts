@@ -149,7 +149,15 @@ export async function seedInitialData(): Promise<void> {
 
 async function syncPrismaSchema(): Promise<void> {
   try {
-    logger.info('Syncing Prisma schema with database...');
+    // Only run schema sync in development/test environments
+    // In production, this must be run manually as part of deployment pipeline
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (isProduction) {
+      logger.info('Skipping Prisma schema sync in production (run manually during deployment)');
+      return;
+    }
+
+    logger.info('Syncing Prisma schema with database (development only)...');
     const { PrismaClient } = await import('@prisma/client');
     const prisma = new PrismaClient({
       datasourceUrl: process.env.DATABASE_URL,
@@ -157,8 +165,8 @@ async function syncPrismaSchema(): Promise<void> {
     await prisma.$executeRaw`SELECT 1`; // Test connection
     await prisma.$disconnect();
 
-    // Use child_process to run prisma db push
-    execSync('npx prisma db push --accept-data-loss', {
+    // Only run schema push in development, without dangerous flags
+    execSync('npx prisma db push', {
       stdio: 'pipe',
       env: { ...process.env }
     });

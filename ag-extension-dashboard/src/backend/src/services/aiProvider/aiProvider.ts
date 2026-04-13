@@ -167,8 +167,6 @@ export interface AICapability {
     // Video analysis
     analyzeVideo(videoData: Buffer, prompt?: string, options?: VideoAnalysisOptions): Promise<VideoAnalysisResult>;
 
-    // Health check
-    healthCheck(): Promise<boolean>;
 }
 
 // Abstract base class for AI providers
