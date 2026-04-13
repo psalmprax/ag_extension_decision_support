@@ -35,7 +35,7 @@ export const FarmerDashboard: React.FC = () => {
         label: 'SOIL MOISTURE', 
         value: farmerStats?.soilMoisture || '\u2014', 
         icon: Zap, 
-        trend: farmerStats?.soilMoisture ? (Number(farmerStats.soilMoisture.replace('%','')) > 30 ? 'Optimal' : 'Low') : 'No data' 
+        trend: farmerStats?.soilMoisture ? (Number(String(farmerStats.soilMoisture).replace('%','')) > 30 ? 'Optimal' : 'Low') : 'No data' 
     },
     { 
         label: 'AVG TEMP', 
@@ -53,14 +53,14 @@ export const FarmerDashboard: React.FC = () => {
         label: 'AI CONFIDENCE', 
         value: farmerStats?.aiConfidence || '\u2014', 
         icon: ShieldAlert, 
-        trend: farmerStats?.aiConfidence ? (Number(farmerStats.aiConfidence.replace('%','')) > 80 ? 'High' : 'Normal') : 'No data' 
+        trend: farmerStats?.aiConfidence ? (Number(String(farmerStats.aiConfidence).replace('%','')) > 80 ? 'High' : 'Normal') : 'No data' 
     }
   ];
 
   const stats = [
     {
       title: t('farmer_my_crops'),
-      value: farmerStats?.crops && farmerStats.crops.length > 0
+      value: Array.isArray(farmerStats?.crops) && farmerStats.crops.length > 0
         ? farmerStats.crops.join(', ')
         : 'N/A',
       icon: Sprout,
@@ -100,19 +100,19 @@ export const FarmerDashboard: React.FC = () => {
             {/* Crop Cycle Widget */}
             <div className="lg:col-span-2 animate-slide-up" style={{ animationDelay: '100ms' }}>
                 <CropCycleGantt 
-                    items={farmerStats?.yieldHistory?.map((y: any, i: number) => ({
+                    items={Array.isArray(farmerStats?.yieldHistory) ? farmerStats.yieldHistory.map((y: { crop?: string; yield?: number }, i: number) => ({
                         id: String(i),
                         label: `${y.crop || 'PHASE_' + (i+1)}`,
                         value: `${y.yield || 0} t/ha`,
                         percent: Math.min((y.yield || 0) * 10, 100)
-                    }))}
+                    })) : []}
                 />
             </div>
 
             {/* Diagnostics Widget */}
             <div className="animate-slide-up" style={{ animationDelay: '200ms' }}>
                 <SystemOverview 
-                    healthScore={farmerStats?.vitalScore ? Number((farmerStats.vitalScore * 10).toFixed(1)) : undefined}
+                    healthScore={farmerStats?.vitalScore !== undefined ? Number((farmerStats.vitalScore * 10).toFixed(1)) : undefined}
                     indicators={[
                         { label: 'SOIL_ANALYSIS', status: farmerStats?.soilMoisture ? 'online' : 'warning' },
                         { label: 'AI_AGENT', status: farmerStats?.aiConfidence ? 'stable' : 'online' },
@@ -202,7 +202,7 @@ export const FarmerDashboard: React.FC = () => {
                         <span className="font-bold text-gray-700 dark:text-gray-300">{item.crop}</span>
                         <div className="text-right">
                             <p className="font-black text-gray-900 dark:text-white">{item.price}</p>
-                            <p className={`text-[10px] font-bold ${item.trend.startsWith('+') ? 'text-emerald-500' : 'text-rose-500'} uppercase tracking-widest`}>{item.trend}</p>
+                            <p className={`text-[10px] font-bold ${String(item.trend || '').startsWith('+') ? 'text-emerald-500' : 'text-rose-500'} uppercase tracking-widest`}>{item.trend}</p>
                         </div>
                     </div>
                 ))
