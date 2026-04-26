@@ -1266,7 +1266,7 @@ function App() {
                     <nav className="hidden md:flex gap-6">
                         <button onClick={() => setActiveTab('dashboard')} className={`font-headline tracking-tight transition-all px-2 py-1 rounded ${activeTab === 'dashboard' ? 'text-cyan-600 dark:text-cyan-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300 hover:bg-black/5 dark:hover:bg-white/5'}`}>Dashboard</button>
                         <button onClick={() => setActiveTab('analytics')} className={`font-headline tracking-tight transition-all px-2 py-1 rounded ${activeTab === 'analytics' ? 'text-cyan-600 dark:text-cyan-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300 hover:bg-black/5 dark:hover:bg-white/5'}`}>Analytics</button>
-                        <button onClick={() => setActiveTab('logistics')} className={`font-headline tracking-tight transition-all px-2 py-1 rounded ${activeTab === 'logistics' ? 'text-cyan-600 dark:text-cyan-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300 hover:bg-black/5 dark:hover:bg-white/5'}`}>Logistics</button>
+                        <button onClick={() => setActiveTab('reports')} className={`font-headline tracking-tight transition-all px-2 py-1 rounded ${activeTab === 'reports' ? 'text-cyan-600 dark:text-cyan-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300 hover:bg-black/5 dark:hover:bg-white/5'}`}>Reports</button>
                     </nav>
                 </div>
 
