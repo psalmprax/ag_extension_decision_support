@@ -199,14 +199,14 @@ export class EmailWorkflowService {
       const translated = t(field);
       // If translation is different from the key, return it
       if (translated !== field && translated) {
-        console.log(`✅ Translated: ${field} -> ${translated}`);
+        logger.info(`✅ Translated: ${field} -> ${translated}`);
         return translated;
       } else {
-        console.warn(`⚠️ Translation not found for key: ${field}`);
+        logger.warn(`⚠️ Translation not found for key: ${field}`);
         return field;
       }
     } catch (error) {
-      console.error(`❌ Translation error for ${field}:`, error);
+      logger.error(`❌ Translation error for ${field}:`, error);
       return field;
     }
   }
