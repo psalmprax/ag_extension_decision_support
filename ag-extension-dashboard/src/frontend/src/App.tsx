@@ -255,7 +255,7 @@ function App() {
 
     // Other UI states
     const [searchQuery, setSearchQuery] = useState('');
-    const [userLocation, setUserLocation] = useState<string>('');
+    const [weatherLocation, setWeatherLocation] = useState<string>(storeUser?.region || 'Nairobi, KE');
     const [isDragOver, setIsDragOver] = useState(false);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [pendingSyncCount, setPendingSyncCount] = useState(0);
@@ -701,9 +701,9 @@ function App() {
                         const data = await response.json();
                         const location = data.address?.city || data.address?.town || data.address?.village || data.address?.county || 'Unknown';
                         const country = data.address?.country || '';
-                        setUserLocation(location + (country ? `, ${country}` : ''));
+                        setWeatherLocation(location + (country ? `, ${country}` : ''));
                     } catch {
-                        setUserLocation(`${latitude.toFixed(2)}, ${longitude.toFixed(2)}`);
+                        setWeatherLocation(`${latitude.toFixed(2)}, ${longitude.toFixed(2)}`);
                     }
                 },
                 (error) => {
@@ -714,11 +714,11 @@ function App() {
                     } else {
                         // Geolocation unavailable — use fallback
                     }
-                    setUserLocation(storeUser?.region || 'Kenya');
+                    setWeatherLocation(storeUser?.region || 'Kenya');
                 }
             );
         } else {
-            setUserLocation(storeUser?.region || 'Kenya');
+            setWeatherLocation(storeUser?.region || 'Kenya');
         }
     }, [storeUser]);
 
@@ -1261,7 +1261,7 @@ function App() {
                         >
                             <Menu className="w-5 h-5" />
                         </button>
-                        <span className="text-2xl font-black tracking-tighter text-cyan-400 drop-shadow-[0_0_8px_rgba(0,245,255,0.5)] font-headline">AgriLogic</span>
+                        <span className="text-2xl font-black tracking-tighter text-cyan-400 drop-shadow-[0_0_8px_rgba(0,245,255,0.5)] font-headline">ALPHA AI</span>
                     </div>
                     <nav className="hidden md:flex gap-6">
                         <button onClick={() => setActiveTab('dashboard')} className={`font-headline tracking-tight transition-all px-2 py-1 rounded ${activeTab === 'dashboard' ? 'text-cyan-600 dark:text-cyan-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300 hover:bg-black/5 dark:hover:bg-white/5'}`}>Dashboard</button>
@@ -1275,12 +1275,21 @@ function App() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
                         <input
                             type="text"
-                            placeholder="Search system..."
-                            className="bg-white/5 border border-white/10 rounded-full pl-10 pr-4 py-1.5 text-xs focus:ring-1 focus:ring-cyan-400 outline-none w-64 transition-all text-white"
+                            placeholder="Search system or location..."
+                            className="bg-white/5 border border-white/10 rounded-full pl-10 pr-4 py-1.5 text-xs focus:ring-1 focus:ring-cyan-400 outline-none w-64 transition-all text-gray-900 dark:text-white"
                             value={searchQuery}
                             onChange={(e) => {
                                 setSearchQuery(e.target.value);
                                 handleGlobalSearch(e.target.value);
+                            }}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && searchQuery.trim() && globalSearchResults.length === 0) {
+                                    setWeatherLocation(searchQuery);
+                                    addNotification({
+                                        message: `Weather now showing for ${searchQuery}`,
+                                        type: 'info'
+                                    });
+                                }
                             }}
                             onFocus={() => { if (searchQuery.trim()) setShowGlobalSearch(true); }}
                             onBlur={() => { setTimeout(() => setShowGlobalSearch(false), 200); }}
@@ -1328,7 +1337,7 @@ function App() {
 
                     {/* Weather & Location */}
                     <div className="hidden xl:block ml-2">
-                        <WeatherWidget location="Nairobi, KE" />
+                        <WeatherWidget location={weatherLocation} />
                     </div>
 
                     <div className="flex items-center gap-3 border-r border-gray-200 dark:border-white/10 pr-4">
