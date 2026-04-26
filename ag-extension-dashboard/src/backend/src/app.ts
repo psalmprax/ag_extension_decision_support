@@ -78,13 +78,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(limiter);
 
-// Request timeout middleware - 30s timeout for most, 120s for AI routes
+// Request timeout middleware - 120s timeout for all requests during AI stabilization
 app.use((req, res, next) => {
-    const isAiRoute = req.path.includes('/ask') || req.path.includes('/chatbot') || req.path.includes('/ai');
-    const timeout = isAiRoute ? 120000 : 30000;
-    
-    res.setTimeout(timeout, () => {
-        logger.warn(`Request timeout (${timeout}ms): ${req.method} ${req.path}`);
+    res.setTimeout(120000, () => {
+        logger.warn(`Request timeout (120000ms): ${req.method} ${req.path}`);
         if (!res.headersSent) {
             res.status(408).json({ success: false, error: 'Request timeout' });
         }
