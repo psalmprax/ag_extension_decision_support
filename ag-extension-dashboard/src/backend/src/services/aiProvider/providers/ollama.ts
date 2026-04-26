@@ -5,16 +5,23 @@ import {
     TextGenerationResult,
     ReasoningOptions,
     ReasoningResult,
+    ClassificationOptions,
+    ClassificationResult,
+    EmbeddingOptions,
+    EmbeddingResult,
 } from '../aiProvider';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
 import { REASONING_SYSTEM_PROMPT, extractVisuals } from '../assetLibrary';
+import axios from 'axios';
 
 export class OllamaProvider extends BaseAIProvider {
     readonly provider: AIProviderType = 'ollama';
     readonly capabilities = [
         'text-generation',
         'reasoning',
+        'classification',
+        'embeddings',
     ];
 
     isConfigured(): boolean {
@@ -36,27 +43,19 @@ export class OllamaProvider extends BaseAIProvider {
         }
 
         try {
-            // Using global fetch as it's available in Node 18+ and Bun
-            const response = await fetch(`${host}/api/chat`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model,
-                    messages,
-                    stream: false,
-                    options: {
-                        temperature: options?.temperature ?? 0.7,
-                        num_predict: options?.maxTokens ?? 1000,
-                    }
-                })
+            const response = await axios.post(`${host}/api/chat`, {
+                model,
+                messages,
+                stream: false,
+                options: {
+                    temperature: options?.temperature ?? 0.7,
+                    num_predict: options?.maxTokens ?? 1000,
+                }
+            }, {
+                timeout: 60000, // 60s timeout for local LLM
             });
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Ollama API error: ${response.statusText} - ${errorText}`);
-            }
-
-            const data: any = await response.json();
+            const data = response.data;
             return {
                 text: data.message?.content || '',
                 model,
@@ -64,6 +63,51 @@ export class OllamaProvider extends BaseAIProvider {
         } catch (error) {
             logger.error('Ollama generateText error:', error);
             throw new Error(`Ollama text generation failed: ${(error as Error).message}`);
+        }
+    }
+
+    async createEmbedding(text: string, options?: EmbeddingOptions): Promise<EmbeddingResult> {
+        const host = config.ollama.host;
+        const model = options?.model || 'nomic-embed-text';
+
+        try {
+            const response = await axios.post(`${host}/api/embeddings`, {
+                model,
+                prompt: text,
+            }, {
+                timeout: 10000,
+            });
+
+            return {
+                embedding: response.data.embedding,
+                model,
+            };
+        } catch (error) {
+            logger.error('Ollama createEmbedding error:', error);
+            // Return zero vector if embedding fails to prevent RAG from crashing
+            return {
+                embedding: new Array(1536).fill(0),
+                model,
+            };
+        }
+    }
+
+    async classify(input: string, options: ClassificationOptions): Promise<ClassificationResult> {
+        const prompt = `Classify the following agricultural query into one of these categories: ${options.taxonomy}. 
+        Return ONLY a JSON array of objects with "label" and "score" (0-1).
+        Query: "${input}"`;
+
+        try {
+            const result = await this.generateText(prompt, { temperature: 0.1, maxTokens: 200 });
+            const text = result.text.trim();
+            const jsonMatch = text.match(/\[.*\]/s);
+            if (jsonMatch) {
+                return { labels: JSON.parse(jsonMatch[0]) };
+            }
+            return { labels: [{ label: 'general', score: 1.0 }] };
+        } catch (error) {
+            logger.error('Ollama classify error:', error);
+            return { labels: [{ label: 'general', score: 1.0 }] };
         }
     }
 
@@ -99,8 +143,8 @@ export class OllamaProvider extends BaseAIProvider {
 
     async healthCheck(): Promise<boolean> {
         try {
-            const response = await fetch(`${config.ollama.host}/api/tags`);
-            return response.ok;
+            const response = await axios.get(`${config.ollama.host}/api/tags`, { timeout: 2000 });
+            return response.status === 200;
         } catch (error) {
             return false;
         }
