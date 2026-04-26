@@ -124,10 +124,11 @@ interface StatCardProps {
     icon: React.ElementType;
     delay: number;
     cardClass?: string;
-    textClass?: string;
+    headingClass?: string;
+    dataClass?: string;
 }
 
-const StatCard = ({ title, value, change, icon: Icon, delay, cardClass, textClass }: StatCardProps) => {
+const StatCard = ({ title, value, change, icon: Icon, delay, cardClass, headingClass, dataClass }: StatCardProps) => {
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -146,8 +147,8 @@ const StatCard = ({ title, value, change, icon: Icon, delay, cardClass, textClas
                     </span>
                 )}
             </div>
-            <h3 className="text-slate-500 dark:text-slate-400 font-headline text-[10px] uppercase tracking-widest mb-1">{title}</h3>
-            <div className={`text-3xl font-headline ${textClass} text-gray-900 dark:text-white`}>
+            <h3 className={`text-slate-500 dark:text-slate-400 font-headline uppercase mb-1 ${headingClass}`}>{title}</h3>
+            <div className={`text-3xl font-headline ${dataClass}`}>
                 {value !== undefined && value !== null ? value.toLocaleString() : '0'}
             </div>
         </motion.div>
@@ -230,11 +231,20 @@ function App() {
     } = useAppStore();
 
     const isModern = designSystemMode === 'modern';
-    const radiusClass = isModern ? 'rounded-xl' : 'rounded';
-    const panelClass = isModern ? 'glass-panel' : 'bg-white dark:bg-slate-900 border border-gray-200 dark:border-white/10 shadow-sm';
-    const headerOpacity = isModern ? 'bg-white/40 dark:bg-slate-950/40' : 'bg-white/90 dark:bg-slate-950/90';
-    const btnClass = isModern ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_0_20px_rgba(34,211,238,0.15)]' : 'rounded hover:bg-black/5 dark:hover:bg-white/5';
-    const textClass = isModern ? 'font-medium tracking-tight' : 'font-bold tracking-normal';
+    const radiusClass = isModern ? 'rounded-2xl' : 'rounded-none';
+    const panelClass = isModern 
+        ? 'glass-panel shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] border-white/10' 
+        : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-none';
+    const headerOpacity = isModern ? 'bg-white/30 dark:bg-slate-950/30' : 'bg-white dark:bg-slate-950 border-b-2 border-slate-100 dark:border-slate-800';
+    const btnClass = isModern 
+        ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_0_20px_rgba(34,211,238,0.2)]' 
+        : 'rounded-none border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-mono text-[10px] uppercase tracking-widest';
+    const headingClass = isModern 
+        ? 'bg-clip-text text-transparent bg-gradient-to-br from-white via-cyan-200 to-emerald-400 font-black tracking-tighter' 
+        : 'font-bold text-gray-900 dark:text-white uppercase tracking-widest text-xs';
+    const dataClass = isModern 
+        ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] font-black tracking-tighter' 
+        : 'font-mono text-emerald-500 font-bold tracking-normal';
     const cardClass = `${panelClass} ${radiusClass} p-6 relative overflow-hidden transition-all duration-300 ${isModern ? 'hover:scale-[1.01] hover:shadow-2xl' : ''}`;
 
     // Logout handler
@@ -1274,12 +1284,12 @@ function App() {
                         >
                             <Menu className="w-5 h-5" />
                         </button>
-                        <span className="text-2xl font-black tracking-tighter text-cyan-400 drop-shadow-[0_0_8px_rgba(0,245,255,0.5)] font-headline uppercase">AG-extension</span>
+                        <span className={`text-2xl font-headline ${headingClass}`}>AG-extension</span>
                     </div>
-                    <nav className="hidden md:flex gap-6">
-                        <button onClick={() => setActiveTab('dashboard')} className={`font-headline tracking-tight transition-all px-2 py-1 ${btnClass} ${activeTab === 'dashboard' ? 'text-cyan-600 dark:text-cyan-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300 hover:bg-black/5 dark:hover:bg-white/5'}`}>Dashboard</button>
-                        <button onClick={() => setActiveTab('analytics')} className={`font-headline tracking-tight transition-all px-2 py-1 ${btnClass} ${activeTab === 'analytics' ? 'text-cyan-600 dark:text-cyan-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300 hover:bg-black/5 dark:hover:bg-white/5'}`}>Analytics</button>
-                        <button onClick={() => setActiveTab('reports')} className={`font-headline tracking-tight transition-all px-2 py-1 ${btnClass} ${activeTab === 'reports' ? 'text-cyan-600 dark:text-cyan-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300 hover:bg-black/5 dark:hover:bg-white/5'}`}>Reports</button>
+                    <nav className="hidden md:flex items-center gap-1">
+                        <button onClick={() => setActiveTab('dashboard')} className={`font-headline tracking-tight transition-all px-4 py-2 ${btnClass} ${activeTab === 'dashboard' ? (isModern ? 'text-cyan-400 font-black' : 'bg-slate-900 text-white') : 'text-slate-500'}`}>Dashboard</button>
+                        <button onClick={() => setActiveTab('analytics')} className={`font-headline tracking-tight transition-all px-4 py-2 ${btnClass} ${activeTab === 'analytics' ? (isModern ? 'text-cyan-400 font-black' : 'bg-slate-900 text-white') : 'text-slate-500'}`}>Analytics</button>
+                        <button onClick={() => setActiveTab('reports')} className={`font-headline tracking-tight transition-all px-4 py-2 ${btnClass} ${activeTab === 'reports' ? (isModern ? 'text-cyan-400 font-black' : 'bg-slate-900 text-white') : 'text-slate-500'}`}>Reports</button>
                     </nav>
                 </div>
 
@@ -1464,10 +1474,10 @@ function App() {
                         <div className="mt-auto flex flex-col gap-2 pt-6 border-t border-white/5">
                             <button
                                 onClick={() => setIsGeneratingReport(true)}
-                                className={`bg-cyan-400 text-[#003739] px-4 py-3 ${btnClass} font-headline font-bold uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:brightness-110 transition-all shadow-[0_0_20px_rgba(0,245,255,0.2)]`}
+                                className={`bg-cyan-500 text-white px-4 py-3 ${btnClass} flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 transition-all`}
                             >
                                 <FileText className="w-3 h-3" />
-                                Generate Report
+                                <span className={headingClass}>Generate Report</span>
                             </button>
                             <button
                                 onClick={() => setShowHelpCenter(true)}
@@ -1539,7 +1549,8 @@ function App() {
                                             icon={Users}
                                             delay={0}
                                             cardClass={cardClass}
-                                            textClass={textClass}
+                                            headingClass={headingClass}
+                                            dataClass={dataClass}
                                         />
                                         <StatCard
                                             title={isOfficer ? "My Active Chats" : t('stat_active_conversations')}
@@ -1548,7 +1559,8 @@ function App() {
                                             icon={MessageSquare}
                                             delay={0.05}
                                             cardClass={cardClass}
-                                            textClass={textClass}
+                                            headingClass={headingClass}
+                                            dataClass={dataClass}
                                         />
                                         <StatCard
                                             title={isOfficer ? "My Visits (30d)" : t('stat_visits_this_month')}
@@ -1557,7 +1569,8 @@ function App() {
                                             icon={MapPin}
                                             delay={0.1}
                                             cardClass={cardClass}
-                                            textClass={textClass}
+                                            headingClass={headingClass}
+                                            dataClass={dataClass}
                                         />
                                         <StatCard
                                             title={isOfficer ? "Avg. Conversations" : t('stat_avg_satisfaction')}
@@ -1566,7 +1579,8 @@ function App() {
                                             icon={isOfficer ? MessageSquare : Sparkles}
                                             delay={0.15}
                                             cardClass={cardClass}
-                                            textClass={textClass}
+                                            headingClass={headingClass}
+                                            dataClass={dataClass}
                                         />
                                     </>
                                 ) : null}
