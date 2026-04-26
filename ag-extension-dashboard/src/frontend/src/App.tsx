@@ -124,9 +124,10 @@ interface StatCardProps {
     icon: React.ElementType;
     delay: number;
     cardClass?: string;
+    textClass?: string;
 }
 
-const StatCard = ({ title, value, change, icon: Icon, delay, cardClass }: StatCardProps) => {
+const StatCard = ({ title, value, change, icon: Icon, delay, cardClass, textClass }: StatCardProps) => {
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -1538,6 +1539,7 @@ function App() {
                                             icon={Users}
                                             delay={0}
                                             cardClass={cardClass}
+                                            textClass={textClass}
                                         />
                                         <StatCard
                                             title={isOfficer ? "My Active Chats" : t('stat_active_conversations')}
@@ -1546,6 +1548,7 @@ function App() {
                                             icon={MessageSquare}
                                             delay={0.05}
                                             cardClass={cardClass}
+                                            textClass={textClass}
                                         />
                                         <StatCard
                                             title={isOfficer ? "My Visits (30d)" : t('stat_visits_this_month')}
@@ -1554,6 +1557,7 @@ function App() {
                                             icon={MapPin}
                                             delay={0.1}
                                             cardClass={cardClass}
+                                            textClass={textClass}
                                         />
                                         <StatCard
                                             title={isOfficer ? "Avg. Conversations" : t('stat_avg_satisfaction')}
@@ -1562,6 +1566,7 @@ function App() {
                                             icon={isOfficer ? MessageSquare : Sparkles}
                                             delay={0.15}
                                             cardClass={cardClass}
+                                            textClass={textClass}
                                         />
                                     </>
                                 ) : null}
