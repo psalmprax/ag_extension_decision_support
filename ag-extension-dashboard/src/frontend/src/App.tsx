@@ -1413,7 +1413,7 @@ function App() {
                             <p className="text-[10px] text-slate-500 font-medium">{storeUser?.region || 'Sector 7G - Midwest'}</p>
                         </div>
 
-                        <nav className="flex flex-col gap-2 grow">
+                        <nav className="flex flex-col gap-2 grow overflow-y-auto custom-scrollbar pr-2">
                             {navItems.map((item) => (
                                 <button
                                     key={item.id}
