@@ -1287,9 +1287,15 @@ function App() {
                         <span className={`text-2xl font-headline ${headingClass}`}>AG-extension</span>
                     </div>
                     <nav className="hidden md:flex items-center gap-1">
-                        <button onClick={() => setActiveTab('dashboard')} className={`font-headline tracking-tight transition-all px-4 py-2 ${btnClass} ${activeTab === 'dashboard' ? (isModern ? 'text-cyan-400 font-black' : 'bg-slate-900 text-white') : 'text-slate-500'}`}>Strategic Intelligence</button>
-                        <button onClick={() => setActiveTab('analytics')} className={`font-headline tracking-tight transition-all px-4 py-2 ${btnClass} ${activeTab === 'analytics' ? (isModern ? 'text-cyan-400 font-black' : 'bg-slate-900 text-white') : 'text-slate-500'}`}>Growth Optimization</button>
-                        <button onClick={() => setActiveTab('reports')} className={`font-headline tracking-tight transition-all px-4 py-2 ${btnClass} ${activeTab === 'reports' ? (isModern ? 'text-cyan-400 font-black' : 'bg-slate-900 text-white') : 'text-slate-500'}`}>Executive Reporting</button>
+                        <button onClick={() => setActiveTab('dashboard')} className={`font-headline tracking-tight transition-all px-4 py-2 ${btnClass} ${activeTab === 'dashboard' ? (isModern ? 'text-cyan-400 font-black' : 'bg-slate-900 text-white') : 'text-slate-500'}`}>
+                            {isModern ? 'Strategic Intelligence' : 'Operations Dashboard'}
+                        </button>
+                        <button onClick={() => setActiveTab('analytics')} className={`font-headline tracking-tight transition-all px-4 py-2 ${btnClass} ${activeTab === 'analytics' ? (isModern ? 'text-cyan-400 font-black' : 'bg-slate-900 text-white') : 'text-slate-500'}`}>
+                            {isModern ? 'Growth Optimization' : 'System Analytics'}
+                        </button>
+                        <button onClick={() => setActiveTab('reports')} className={`font-headline tracking-tight transition-all px-4 py-2 ${btnClass} ${activeTab === 'reports' ? (isModern ? 'text-cyan-400 font-black' : 'bg-slate-900 text-white') : 'text-slate-500'}`}>
+                            {isModern ? 'Executive Reporting' : 'Data Reports'}
+                        </button>
                     </nav>
                 </div>
 
@@ -1525,7 +1531,7 @@ function App() {
                         <ErrorBoundary>
                             <div className='mb-12'>
                                 <h1 className={`text-5xl font-black tracking-tighter font-headline mb-2 drop-shadow-[0_0_15px_rgba(0,245,255,0.1)] dark:drop-shadow-[0_0_15px_rgba(0,245,255,0.3)] ${headingClass}`}>
-                                    Global Operations Command
+                                    {isModern ? 'Global Operations Command' : 'Dashboard Overview'}
                                 </h1>
                                 <p className='text-slate-400 font-headline font-medium text-lg'>
                                     {t('dashboard_welcome').replace('{name}', user?.firstName || 'Extension Officer')}
@@ -1988,8 +1994,12 @@ function App() {
                         <div>
                             <div className="mb-8 flex justify-between items-center">
                                 <div>
-                                    <h1 className={`text-3xl font-bold ${headingClass}`}>Strategic Governance & Reports</h1>
-                                    <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">Enterprise-grade performance documentation</p>
+                                    <h1 className={`text-3xl font-bold ${headingClass}`}>
+                                        {isModern ? 'Strategic Governance & Reports' : 'System Compliance & Reports'}
+                                    </h1>
+                                    <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">
+                                        {isModern ? 'Enterprise-grade performance documentation' : 'Operational audit logs and data exports'}
+                                    </p>
                                 </div>
                                 <button
                                     onClick={handleGenerateReport}
@@ -2091,8 +2101,12 @@ function App() {
                     {activeTab === 'analytics' && (
                         <div>
                             <div className="mb-8">
-                                <h1 className={`text-3xl font-bold ${headingClass}`}>Predictive Intelligence & Optimization</h1>
-                                <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">Real-time yield modeling and resource allocation metrics</p>
+                                <h1 className={`text-3xl font-bold ${headingClass}`}>
+                                    {isModern ? 'Predictive Intelligence & Optimization' : 'Analytical Performance Metrics'}
+                                </h1>
+                                <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">
+                                    {isModern ? 'Real-time yield modeling and resource allocation metrics' : 'Detailed breakdown of system throughput and regional activity'}
+                                </p>
                             </div>
 
                             {performanceData ? (
