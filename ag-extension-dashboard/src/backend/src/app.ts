@@ -78,10 +78,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(limiter);
 
-// Request timeout middleware - 120s timeout for all requests during AI stabilization
+// Request timeout middleware - 300s timeout for all requests during AI stabilization (Slow local LLM)
 app.use((req, res, next) => {
-    res.setTimeout(120000, () => {
-        logger.warn(`Request timeout (120000ms): ${req.method} ${req.path}`);
+    res.setTimeout(300000, () => {
+        logger.warn(`Request timeout (300000ms): ${req.method} ${req.path}`);
         if (!res.headersSent) {
             res.status(408).json({ success: false, error: 'Request timeout' });
         }
