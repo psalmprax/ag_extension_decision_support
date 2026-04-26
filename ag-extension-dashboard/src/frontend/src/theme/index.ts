@@ -488,6 +488,12 @@ export function applyTheme(themeName: ThemeName): void {
     });
 
     // Dark mode backgrounds
+    darkVars.push(`--color-bg-primary: #0a0f1e;`);
+    darkVars.push(`--color-bg-secondary: #111827;`);
+    darkVars.push(`--color-bg-card: rgba(255, 255, 255, 0.05);`);
+    darkVars.push(`--color-bg-primary-rgb: ${hexToRgb('#0a0f1e')};`);
+    darkVars.push(`--color-bg-secondary-rgb: ${hexToRgb('#111827')};`);
+    darkVars.push(`--color-bg-card-rgb: 255 255 255;`);
 
     styleElement.textContent = `:root {\n${css}\n}\n.dark {\n${darkVars.join('\n')}\n}`;
 }

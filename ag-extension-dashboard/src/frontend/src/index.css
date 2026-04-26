@@ -214,7 +214,7 @@
 @layer components {
     /* Glass Panel */
     .glass-panel {
-        @apply backdrop-blur-xl bg-white/5 border border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.1)];
+        @apply backdrop-blur-xl bg-white/70 dark:bg-white/5 border border-gray-200 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.1)];
     }
 
     .neon-glow {

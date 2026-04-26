@@ -142,8 +142,8 @@ const StatCard = ({ title, value, change, icon: Icon, delay }: StatCardProps) =>
                     </span>
                 )}
             </div>
-            <h3 className="text-slate-400 font-headline text-[10px] uppercase tracking-widest mb-1">{title}</h3>
-            <div className="text-3xl font-headline font-bold text-white">
+            <h3 className="text-slate-500 dark:text-slate-400 font-headline text-[10px] uppercase tracking-widest mb-1">{title}</h3>
+            <div className="text-3xl font-headline font-bold text-gray-900 dark:text-white">
                 {value !== undefined && value !== null ? value.toLocaleString() : '0'}
             </div>
         </motion.div>
@@ -1252,7 +1252,7 @@ function App() {
                 </div>
             )}
             {/* Top Navigation - Cinematic Glass Header */}
-            <header className="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-slate-950/60 backdrop-blur-xl border-b border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
+            <header className="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-white/60 dark:bg-slate-950/60 backdrop-blur-xl border-b border-gray-200 dark:border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
                 <div className="flex items-center gap-8">
                     <div className="flex items-center gap-3">
                         <button
@@ -1264,9 +1264,9 @@ function App() {
                         <span className="text-2xl font-black tracking-tighter text-cyan-400 drop-shadow-[0_0_8px_rgba(0,245,255,0.5)] font-headline">AgriLogic</span>
                     </div>
                     <nav className="hidden md:flex gap-6">
-                        <button onClick={() => setActiveTab('dashboard')} className={`font-headline tracking-tight transition-all px-2 py-1 rounded ${activeTab === 'dashboard' ? 'text-cyan-400 font-bold' : 'text-slate-400 hover:text-cyan-300 hover:bg-white/5'}`}>Dashboard</button>
-                        <button onClick={() => setActiveTab('analytics')} className={`font-headline tracking-tight transition-all px-2 py-1 rounded ${activeTab === 'analytics' ? 'text-cyan-400 font-bold' : 'text-slate-400 hover:text-cyan-300 hover:bg-white/5'}`}>Analytics</button>
-                        <button onClick={() => setActiveTab('logistics')} className={`font-headline tracking-tight transition-all px-2 py-1 rounded ${activeTab === 'logistics' ? 'text-cyan-400 font-bold' : 'text-slate-400 hover:text-cyan-300 hover:bg-white/5'}`}>Logistics</button>
+                        <button onClick={() => setActiveTab('dashboard')} className={`font-headline tracking-tight transition-all px-2 py-1 rounded ${activeTab === 'dashboard' ? 'text-cyan-600 dark:text-cyan-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300 hover:bg-black/5 dark:hover:bg-white/5'}`}>Dashboard</button>
+                        <button onClick={() => setActiveTab('analytics')} className={`font-headline tracking-tight transition-all px-2 py-1 rounded ${activeTab === 'analytics' ? 'text-cyan-600 dark:text-cyan-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300 hover:bg-black/5 dark:hover:bg-white/5'}`}>Analytics</button>
+                        <button onClick={() => setActiveTab('logistics')} className={`font-headline tracking-tight transition-all px-2 py-1 rounded ${activeTab === 'logistics' ? 'text-cyan-600 dark:text-cyan-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300 hover:bg-black/5 dark:hover:bg-white/5'}`}>Logistics</button>
                     </nav>
                 </div>
 
@@ -1313,7 +1313,7 @@ function App() {
                                                     }}
                                                 >
                                                     <div className="flex-1">
-                                                        <p className="text-sm font-bold text-white truncate">{item.label}</p>
+                                                        <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{item.label}</p>
                                                         {item.sublabel && <p className="text-xs text-slate-500 truncate">{item.sublabel}</p>}
                                                     </div>
                                                     <ChevronRight className="w-4 h-4 text-slate-500" />
@@ -1326,7 +1326,12 @@ function App() {
                         )}
                     </div>
 
-                    <div className="flex items-center gap-3 border-r border-white/10 pr-4">
+                    {/* Weather & Location */}
+                    <div className="hidden xl:block ml-2">
+                        <WeatherWidget location="Nairobi, KE" />
+                    </div>
+
+                    <div className="flex items-center gap-3 border-r border-gray-200 dark:border-white/10 pr-4">
                         <div className="hidden lg:flex items-center gap-2 scale-90 origin-right">
                             <LanguageSwitcher compact />
                             <ThemeSwitcher currentTheme={themeName} onThemeChange={setThemeName} />
@@ -1355,7 +1360,7 @@ function App() {
                                 <span className="text-[10px] text-cyan-400 font-bold">{storeUser?.firstName?.[0]}{storeUser?.lastName?.[0]}</span>
                             </div>
                             <div className="hidden xl:block text-left">
-                                <p className="text-xs font-bold text-white leading-none">
+                                <p className="text-xs font-bold text-gray-900 dark:text-white leading-none">
                                     {storeUser?.firstName} {storeUser?.lastName}
                                 </p>
                             </div>
@@ -1373,7 +1378,7 @@ function App() {
                                     >
                                         <div className="p-3 mb-2 border-b border-white/10">
                                             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Account Info</p>
-                                            <p className="text-xs font-bold text-white truncate">{storeUser?.email}</p>
+                                            <p className="text-xs font-bold text-gray-900 dark:text-white truncate">{storeUser?.email}</p>
                                         </div>
 
                                         <button onClick={() => { setIsProfileMenuOpen(false); setShowProfileModal(true); }} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300">
@@ -1401,7 +1406,7 @@ function App() {
                         initial={{ width: 0, opacity: 0, x: -20 }}
                         animate={{ width: 256, opacity: 1, x: 0 }}
                         exit={{ width: 0, opacity: 0, x: -20 }}
-                        className="fixed left-0 top-0 h-full flex flex-col pt-20 pb-8 px-4 bg-slate-950/40 backdrop-blur-2xl border-r border-white/10 w-64 z-40"
+                        className="fixed left-0 top-0 h-full flex flex-col pt-20 pb-8 px-4 bg-white/70 dark:bg-slate-950/40 backdrop-blur-2xl border-r border-gray-200 dark:border-white/10 w-64 z-40"
                     >
                         <div className="px-4 mb-8">
                             <h3 className="font-headline text-cyan-400 text-sm tracking-widest uppercase mb-1">Ag-Extension</h3>
@@ -1414,8 +1419,8 @@ function App() {
                                     key={item.id}
                                     onClick={() => setActiveTab(item.id)}
                                     className={`flex items-center gap-3 px-4 py-3 rounded transition-all duration-200 text-left ${activeTab === item.id
-                                        ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400 shadow-[inset_0_0_15px_rgba(0,245,255,0.1)]'
-                                        : 'text-slate-500 hover:bg-white/5 hover:text-cyan-200'
+                                        ? 'bg-cyan-600/10 dark:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-r-2 border-cyan-600 dark:border-cyan-400 shadow-[inset_0_0_15px_rgba(0,245,255,0.1)]'
+                                        : 'text-slate-500 hover:bg-black/5 dark:hover:bg-white/5 hover:text-cyan-600 dark:hover:text-cyan-200'
                                         }`}
                                 >
                                     <item.icon className="w-4 h-4 flex-shrink-0" />
@@ -1477,7 +1482,7 @@ function App() {
                     {activeTab === 'dashboard' && (
                         <ErrorBoundary>
                             <div className='mb-12'>
-                                <h1 className='text-5xl font-black text-white tracking-tighter font-headline mb-2 drop-shadow-[0_0_15px_rgba(0,245,255,0.3)]'>
+                                <h1 className='text-5xl font-black text-gray-900 dark:text-white tracking-tighter font-headline mb-2 drop-shadow-[0_0_15px_rgba(0,245,255,0.1)] dark:drop-shadow-[0_0_15px_rgba(0,245,255,0.3)]'>
                                     {t('dashboard_overview')}
                                 </h1>
                                 <p className='text-slate-400 font-headline font-medium text-lg'>
@@ -1530,7 +1535,7 @@ function App() {
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                                 <div className="lg:col-span-2 glass-panel p-6 rounded-xl relative overflow-hidden group">
                                     <div className="flex justify-between items-center mb-6">
-                                        <h3 className="text-lg font-headline font-bold text-white flex items-center gap-2">
+                                        <h3 className="text-lg font-headline font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                             <MapPin className="w-5 h-5 text-cyan-400" />
                                             {t('stat_regional_distribution')}
                                         </h3>
@@ -1596,7 +1601,7 @@ function App() {
                                 </div>
                                 <div className="space-y-6">
                                     <div className="glass-panel p-8 rounded-xl overflow-hidden relative">
-                                        <h3 className="text-lg font-headline font-bold text-white mb-6">{t('analytics_support_efficiency')}</h3>
+                                        <h3 className="text-lg font-headline font-bold text-gray-900 dark:text-white mb-6">{t('analytics_support_efficiency')}</h3>
                                         {performanceData ? (
                                         <div className="space-y-6">
                                             {[
@@ -1629,7 +1634,7 @@ function App() {
                                     <div className="glass-panel p-6 rounded-xl relative overflow-hidden">
                                         <div className="flex items-center gap-3 mb-6">
                                             <div className="w-2 h-2 bg-cyan-400 rounded-full animate-ping"></div>
-                                            <h3 className="text-sm font-headline font-bold text-white uppercase tracking-widest">Active Pulse</h3>
+                                            <h3 className="text-sm font-headline font-bold text-gray-900 dark:text-white uppercase tracking-widest">Active Pulse</h3>
                                         </div>
                                         <div className="space-y-4">
                                             {[
@@ -1639,7 +1644,7 @@ function App() {
                                             ].map((item, i) => (
                                                 <div key={i} className="flex justify-between items-center border-b border-white/5 pb-3 last:border-0 last:pb-0">
                                                     <div>
-                                                        <p className="text-xs font-bold text-white uppercase tracking-tight">{item.label}</p>
+                                                        <p className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-tight">{item.label}</p>
                                                         <p className="text-[10px] text-slate-500">{item.time}</p>
                                                     </div>
                                                     <span className="text-[10px] font-black text-cyan-400 uppercase">{item.status}</span>
