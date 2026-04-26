@@ -146,7 +146,7 @@ const StatCard = ({ title, value, change, icon: Icon, delay, cardClass }: StatCa
                 )}
             </div>
             <h3 className="text-slate-500 dark:text-slate-400 font-headline text-[10px] uppercase tracking-widest mb-1">{title}</h3>
-            <div className="text-3xl font-headline font-bold text-gray-900 dark:text-white">
+            <div className={`text-3xl font-headline ${textClass} text-gray-900 dark:text-white`}>
                 {value !== undefined && value !== null ? value.toLocaleString() : '0'}
             </div>
         </motion.div>
@@ -230,10 +230,11 @@ function App() {
 
     const isModern = designSystemMode === 'modern';
     const radiusClass = isModern ? 'rounded-xl' : 'rounded';
-    const panelClass = isModern ? 'glass-panel' : 'bg-white dark:bg-slate-900 border border-gray-200 dark:border-white/10';
+    const panelClass = isModern ? 'glass-panel' : 'bg-white dark:bg-slate-900 border border-gray-200 dark:border-white/10 shadow-sm';
     const headerOpacity = isModern ? 'bg-white/40 dark:bg-slate-950/40' : 'bg-white/90 dark:bg-slate-950/90';
-    const btnClass = isModern ? 'rounded-xl' : 'rounded';
-    const cardClass = `${panelClass} ${radiusClass} p-6 relative overflow-hidden transition-all duration-300`;
+    const btnClass = isModern ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_0_20px_rgba(34,211,238,0.15)]' : 'rounded hover:bg-black/5 dark:hover:bg-white/5';
+    const textClass = isModern ? 'font-medium tracking-tight' : 'font-bold tracking-normal';
+    const cardClass = `${panelClass} ${radiusClass} p-6 relative overflow-hidden transition-all duration-300 ${isModern ? 'hover:scale-[1.01] hover:shadow-2xl' : ''}`;
 
     // Logout handler
     const handleLogout = async () => {
@@ -1462,7 +1463,7 @@ function App() {
                         <div className="mt-auto flex flex-col gap-2 pt-6 border-t border-white/5">
                             <button
                                 onClick={() => setIsGeneratingReport(true)}
-                                className="bg-cyan-400 text-[#003739] px-4 py-3 rounded font-headline font-bold uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:brightness-110 active:scale-95 transition-all shadow-[0_0_20px_rgba(0,245,255,0.2)]"
+                                className={`bg-cyan-400 text-[#003739] px-4 py-3 ${btnClass} font-headline font-bold uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:brightness-110 transition-all shadow-[0_0_20px_rgba(0,245,255,0.2)]`}
                             >
                                 <FileText className="w-3 h-3" />
                                 Generate Report
