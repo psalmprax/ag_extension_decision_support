@@ -259,14 +259,14 @@ export class AIProviderFactory {
         operation: (provider: AICapability) => Promise<any>
     ): Promise<any> {
         // Define all available providers for cascading fallback
-        const allProviders: AIProviderType[] = [
+        const allProviders: AIProviderType[] = Array.from(new Set([
             this.primaryProvider,
             this.fallbackProvider,
-            'openai',     // Third fallback
-            'anthropic',  // Fourth fallback
-            'groq',       // Fifth fallback
-            'ollama'      // Sixth fallback
-        ];
+            'openai',
+            'anthropic',
+            'groq',
+            'ollama'
+        ]));
 
         let lastError: Error | null = null;
 
