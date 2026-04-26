@@ -1595,7 +1595,7 @@ function App() {
                                         </h3>
                                         <div className="flex gap-2">
                                             <span className="px-2 py-1 bg-cyan-400/10 text-cyan-400 rounded text-[10px] font-bold uppercase tracking-widest border border-cyan-400/20">
-                                                {t('stat_malawi_overview')}
+                                                {t('stat_kenya_overview') || "Kenya Overview"}
                                             </span>
                                         </div>
                                     </div>
@@ -1609,8 +1609,8 @@ function App() {
                                             farmers={effectiveFarmers.map((f: any) => ({
                                                 id: f.id,
                                                 name: f.name || `${f.firstName} ${f.lastName}`,
-                                                lat: f.latitude || f.lat || 0,
-                                                lng: f.longitude || f.lng || 0,
+                                                lat: f.latitude || f.lat || -1.2863,
+                                                lng: f.longitude || f.lng || 36.8172,
                                                 crop: f.crops?.[0] || f.crop || 'Maize',
                                                 region: f.region || f.location || 'Unknown',
                                                 size: f.farmSize || f.size || 0,

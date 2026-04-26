@@ -225,9 +225,9 @@ const CROP_ICONS: Record<string, string> = {
     default: '📍',
 };
 
-// Default starting coordinates for the map (Malawi)
-const DEFAULT_CENTER: [number, number] = [-13.5, 34];
-const DEFAULT_ZOOM = 7;
+// Default starting coordinates for the map (Kenya)
+const DEFAULT_CENTER: [number, number] = [-1.2863, 36.8172];
+const DEFAULT_ZOOM = 6;
 
 // Map tile layer types
 type MapLayer = 'street' | 'satellite' | 'terrain';

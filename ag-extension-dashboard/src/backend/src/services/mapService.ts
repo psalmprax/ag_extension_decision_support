@@ -51,16 +51,20 @@ export const getMapData = async (): Promise<MapFeature[]> => {
             }
         }));
 
-        // Map alerts (using simple geocoding or specific alert coordinates if we had them)
-        // For now, we use the region-based coordinates if specific lat/lng isn't in Alert model
+        // Map alerts (using simple geocoding or specific alert coordinates)
         const regionCoords: Record<string, [number, number]> = {
-            'Central': [-13.9626, 33.7741],
-            'Northern': [-11.4172, 34.0094],
-            'Southern': [-15.7861, 35.0058]
+            'Central Region': [-0.4167, 36.9500],
+            'Rift Valley': [-0.2833, 36.0667],
+            'Coast Region': [-4.0500, 39.6667],
+            'Nairobi': [-1.2863, 36.8172],
+            'Western': [0.2833, 34.7500],
+            'Eastern': [-0.5833, 37.5000],
+            'Nyanza': [-0.1000, 34.7500],
+            'North Eastern': [0.3500, 40.1667]
         };
 
         alertsResult.rows.forEach((a: any) => {
-            const coords = regionCoords[a.location] || [-13.2543, 34.3015];
+            const coords = regionCoords[a.location] || [-1.2863, 36.8172];
             features.push({
                 id: a.id,
                 type: 'alert',
