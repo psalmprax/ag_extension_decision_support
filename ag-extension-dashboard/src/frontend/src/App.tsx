@@ -1289,6 +1289,8 @@ function App() {
                                         message: `Weather now showing for ${searchQuery}`,
                                         type: 'info'
                                     });
+                                    setSearchQuery('');
+                                    setShowGlobalSearch(false);
                                 }
                             }}
                             onFocus={() => { if (searchQuery.trim()) setShowGlobalSearch(true); }}

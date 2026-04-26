@@ -18,10 +18,6 @@
         "moduleResolution": "node",
         "allowSyntheticDefaultImports": true,
         "baseUrl": "./src",
-        "types": [
-            "node",
-            "jest"
-        ],
         "paths": {
             "@/*": [
                 "./*"
