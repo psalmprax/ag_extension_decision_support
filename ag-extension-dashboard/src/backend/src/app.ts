@@ -78,6 +78,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(limiter);
 
+/*
 // Request timeout middleware - 300s timeout for all requests during AI stabilization (Slow local LLM)
 app.use((req, res, next) => {
     res.setTimeout(300000, () => {
@@ -88,6 +89,7 @@ app.use((req, res, next) => {
     });
     next();
 });
+*/
 
 app.use(securityGate);
 
