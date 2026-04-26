@@ -1526,7 +1526,7 @@ function App() {
                         <ErrorBoundary>
                             <div className='mb-12'>
                                 <h1 className={`text-5xl font-black tracking-tighter font-headline mb-2 drop-shadow-[0_0_15px_rgba(0,245,255,0.1)] dark:drop-shadow-[0_0_15px_rgba(0,245,255,0.3)] ${headingClass}`}>
-                                    {isModern ? 'Global Operations Command' : 'Dashboard Overview'}
+                                    {isModern ? 'Strategic Intelligence' : 'Operations Dashboard'}
                                 </h1>
                                 <p className='text-slate-400 font-headline font-medium text-lg'>
                                     {t('dashboard_welcome').replace('{name}', user?.firstName || 'Extension Officer')}
@@ -1990,7 +1990,7 @@ function App() {
                             <div className="mb-8 flex justify-between items-center">
                                 <div>
                                     <h1 className={`text-3xl font-bold ${headingClass}`}>
-                                        {isModern ? 'Strategic Governance & Reports' : 'System Compliance & Reports'}
+                                        {isModern ? 'Executive Reporting' : 'Data Reports'}
                                     </h1>
                                     <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">
                                         {isModern ? 'Enterprise-grade performance documentation' : 'Operational audit logs and data exports'}
@@ -2097,7 +2097,7 @@ function App() {
                         <div>
                             <div className="mb-8">
                                 <h1 className={`text-3xl font-bold ${headingClass}`}>
-                                    {isModern ? 'Predictive Intelligence & Optimization' : 'Analytical Performance Metrics'}
+                                    {isModern ? 'Growth Optimization' : 'System Analytics'}
                                 </h1>
                                 <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">
                                     {isModern ? 'Real-time yield modeling and resource allocation metrics' : 'Detailed breakdown of system throughput and regional activity'}
