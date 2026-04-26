@@ -52,7 +52,7 @@ export class EmailWorkflowService {
       await query(`
         CREATE TABLE IF NOT EXISTS email_templates (
           id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-          name VARCHAR(255) NOT NULL,
+          name VARCHAR(255) NOT NULL UNIQUE,
           subject TEXT NOT NULL,
           body TEXT NOT NULL,
           category VARCHAR(100) DEFAULT 'general',
@@ -61,6 +61,28 @@ export class EmailWorkflowService {
           created_at TIMESTAMP DEFAULT NOW()
         )
       `);
+
+      // Migration: Add UNIQUE constraint if it doesn't exist and cleanup duplicates
+      try {
+        // Cleanup duplicates first (keep the one with the smallest ID)
+        await query(`
+          DELETE FROM email_templates a 
+          USING email_templates b 
+          WHERE a.id > b.id AND a.name = b.name
+        `);
+        
+        // Add constraint if it doesn't exist (Postgres 9.1+)
+        await query(`
+          DO $$ 
+          BEGIN 
+            IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'email_templates_name_unique') THEN
+              ALTER TABLE email_templates ADD CONSTRAINT email_templates_name_unique UNIQUE (name);
+            END IF;
+          END $$;
+        `);
+      } catch (err) {
+        logger.warn('Email templates migration warning:', err);
+      }
 
       await query(`
         CREATE TABLE IF NOT EXISTS email_approvals (
