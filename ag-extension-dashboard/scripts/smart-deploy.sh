@@ -3,7 +3,7 @@
 # Configuration
 REMOTE_HOST="149.104.110.122"
 SSH_KEY="/home/psalmprax/Music/id_rsa"
-REMOTE_PATH="/root/ag-extension-dashboard"
+REMOTE_PATH="/root/ag-extension-dashboard/ag-extension-dashboard"
 
 echo "----------------------------------------------------"
 echo "🚀 Starting Smart Deployment Workflow"
