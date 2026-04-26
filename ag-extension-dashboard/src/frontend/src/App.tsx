@@ -9,6 +9,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import FarmerMap from '@/components/FarmerMap';
 import {
     LayoutDashboard,
+    Layout,
+    Layers,
     MessageSquare,
     FileText,
     BarChart3,
@@ -121,15 +123,16 @@ interface StatCardProps {
     change?: number;
     icon: React.ElementType;
     delay: number;
+    cardClass?: string;
 }
 
-const StatCard = ({ title, value, change, icon: Icon, delay }: StatCardProps) => {
+const StatCard = ({ title, value, change, icon: Icon, delay, cardClass }: StatCardProps) => {
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay, type: "spring", stiffness: 300, damping: 24 }}
-            className="glass-panel p-6 rounded-xl relative overflow-hidden group hover:scale-[1.02] transition-all duration-300"
+            className={cardClass}
         >
             <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-400/5 blur-3xl -mr-12 -mt-12 group-hover:bg-cyan-400/20 transition-all"></div>
             <div className="flex justify-between items-start mb-4">
@@ -221,8 +224,16 @@ function App() {
         addNotification,
         notifications,
         contextMenu, hideContextMenu, 
-        shareModal, hideShareModal, showShareModal, removeFarmer, removeFarmers
+        shareModal, hideShareModal, showShareModal, removeFarmer, removeFarmers,
+        designSystemMode, toggleDesignSystemMode
     } = useAppStore();
+
+    const isModern = designSystemMode === 'modern';
+    const radiusClass = isModern ? 'rounded-xl' : 'rounded';
+    const panelClass = isModern ? 'glass-panel' : 'bg-white dark:bg-slate-900 border border-gray-200 dark:border-white/10';
+    const headerOpacity = isModern ? 'bg-white/40 dark:bg-slate-950/40' : 'bg-white/90 dark:bg-slate-950/90';
+    const btnClass = isModern ? 'rounded-xl' : 'rounded';
+    const cardClass = `${panelClass} ${radiusClass} p-6 relative overflow-hidden transition-all duration-300`;
 
     // Logout handler
     const handleLogout = async () => {
@@ -1252,7 +1263,7 @@ function App() {
                 </div>
             )}
             {/* Top Navigation - Cinematic Glass Header */}
-            <header className="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-white/60 dark:bg-slate-950/60 backdrop-blur-xl border-b border-gray-200 dark:border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
+            <header className={`fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 ${headerOpacity} backdrop-blur-xl border-b border-gray-200 dark:border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.1)]`}>
                 <div className="flex items-center gap-8">
                     <div className="flex items-center gap-3">
                         <button
@@ -1264,9 +1275,9 @@ function App() {
                         <span className="text-2xl font-black tracking-tighter text-cyan-400 drop-shadow-[0_0_8px_rgba(0,245,255,0.5)] font-headline uppercase">AG-extension</span>
                     </div>
                     <nav className="hidden md:flex gap-6">
-                        <button onClick={() => setActiveTab('dashboard')} className={`font-headline tracking-tight transition-all px-2 py-1 rounded ${activeTab === 'dashboard' ? 'text-cyan-600 dark:text-cyan-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300 hover:bg-black/5 dark:hover:bg-white/5'}`}>Dashboard</button>
-                        <button onClick={() => setActiveTab('analytics')} className={`font-headline tracking-tight transition-all px-2 py-1 rounded ${activeTab === 'analytics' ? 'text-cyan-600 dark:text-cyan-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300 hover:bg-black/5 dark:hover:bg-white/5'}`}>Analytics</button>
-                        <button onClick={() => setActiveTab('reports')} className={`font-headline tracking-tight transition-all px-2 py-1 rounded ${activeTab === 'reports' ? 'text-cyan-600 dark:text-cyan-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300 hover:bg-black/5 dark:hover:bg-white/5'}`}>Reports</button>
+                        <button onClick={() => setActiveTab('dashboard')} className={`font-headline tracking-tight transition-all px-2 py-1 ${btnClass} ${activeTab === 'dashboard' ? 'text-cyan-600 dark:text-cyan-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300 hover:bg-black/5 dark:hover:bg-white/5'}`}>Dashboard</button>
+                        <button onClick={() => setActiveTab('analytics')} className={`font-headline tracking-tight transition-all px-2 py-1 ${btnClass} ${activeTab === 'analytics' ? 'text-cyan-600 dark:text-cyan-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300 hover:bg-black/5 dark:hover:bg-white/5'}`}>Analytics</button>
+                        <button onClick={() => setActiveTab('reports')} className={`font-headline tracking-tight transition-all px-2 py-1 ${btnClass} ${activeTab === 'reports' ? 'text-cyan-600 dark:text-cyan-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300 hover:bg-black/5 dark:hover:bg-white/5'}`}>Reports</button>
                     </nav>
                 </div>
 
@@ -1344,6 +1355,14 @@ function App() {
 
                     <div className="flex items-center gap-3 border-r border-gray-200 dark:border-white/10 pr-4">
                         <div className="hidden lg:flex items-center gap-2 scale-90 origin-right">
+                            <button 
+                                onClick={toggleDesignSystemMode}
+                                className={`flex items-center gap-2 px-3 py-1.5 ${btnClass} text-[10px] font-bold uppercase tracking-widest transition-all ${isModern ? 'bg-cyan-500/10 text-cyan-400' : 'bg-gray-100 dark:bg-white/5 text-gray-500'}`}
+                                title="Toggle Design Aesthetic"
+                            >
+                                <Layout className="w-3.5 h-3.5" />
+                                {isModern ? 'Modern' : 'Classic'}
+                            </button>
                             <LanguageSwitcher compact />
                             <ThemeSwitcher currentTheme={themeName} onThemeChange={setThemeName} />
                         </div>
@@ -1417,7 +1436,7 @@ function App() {
                         initial={{ width: 0, opacity: 0, x: -20 }}
                         animate={{ width: 256, opacity: 1, x: 0 }}
                         exit={{ width: 0, opacity: 0, x: -20 }}
-                        className="fixed left-0 top-0 h-full flex flex-col pt-20 pb-8 px-4 bg-white/70 dark:bg-slate-950/40 backdrop-blur-2xl border-r border-gray-200 dark:border-white/10 w-64 z-40"
+                        className={`fixed left-0 top-0 h-full flex flex-col pt-20 pb-8 px-4 ${isModern ? 'bg-white/70 dark:bg-slate-950/40 backdrop-blur-2xl' : 'bg-white dark:bg-slate-900 shadow-xl'} border-r border-gray-200 dark:border-white/10 w-64 z-40`}
                     >
                         <div className="px-4 mb-8">
                             <h3 className="font-headline text-cyan-400 text-sm tracking-widest uppercase mb-1">Ag-Extension</h3>
@@ -1429,7 +1448,7 @@ function App() {
                                 <button
                                     key={item.id}
                                     onClick={() => setActiveTab(item.id)}
-                                    className={`flex items-center gap-3 px-4 py-3 rounded transition-all duration-200 text-left ${activeTab === item.id
+                                    className={`flex items-center gap-3 px-4 py-3 ${btnClass} transition-all duration-200 text-left ${activeTab === item.id
                                         ? 'bg-cyan-600/10 dark:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-r-2 border-cyan-600 dark:border-cyan-400 shadow-[inset_0_0_15px_rgba(0,245,255,0.1)]'
                                         : 'text-slate-500 hover:bg-black/5 dark:hover:bg-white/5 hover:text-cyan-600 dark:hover:text-cyan-200'
                                         }`}
@@ -1517,6 +1536,7 @@ function App() {
                                             change={dashboardData.trends.farmersGrowth}
                                             icon={Users}
                                             delay={0}
+                                            cardClass={cardClass}
                                         />
                                         <StatCard
                                             title={isOfficer ? "My Active Chats" : t('stat_active_conversations')}
@@ -1524,6 +1544,7 @@ function App() {
                                             change={dashboardData.trends.conversationsGrowth}
                                             icon={MessageSquare}
                                             delay={0.05}
+                                            cardClass={cardClass}
                                         />
                                         <StatCard
                                             title={isOfficer ? "My Visits (30d)" : t('stat_visits_this_month')}
@@ -1531,6 +1552,7 @@ function App() {
                                             change={dashboardData.trends.visitsGrowth}
                                             icon={MapPin}
                                             delay={0.1}
+                                            cardClass={cardClass}
                                         />
                                         <StatCard
                                             title={isOfficer ? "Avg. Conversations" : t('stat_avg_satisfaction')}
@@ -1538,13 +1560,14 @@ function App() {
                                             change={isOfficer ? undefined : dashboardData.trends.satisfactionChange}
                                             icon={isOfficer ? MessageSquare : Sparkles}
                                             delay={0.15}
+                                            cardClass={cardClass}
                                         />
                                     </>
                                 ) : null}
                             </div>
 
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                                <div className="lg:col-span-2 glass-panel p-6 rounded-xl relative overflow-hidden group">
+                                <div className={`lg:col-span-2 ${cardClass} group`}>
                                     <div className="flex justify-between items-center mb-6">
                                         <h3 className="text-lg font-headline font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                             <MapPin className="w-5 h-5 text-cyan-400" />
@@ -1611,7 +1634,7 @@ function App() {
                                     </div>
                                 </div>
                                 <div className="space-y-6">
-                                    <div className="glass-panel p-8 rounded-xl overflow-hidden relative">
+                                    <div className={`${cardClass} p-8`}>
                                         <h3 className="text-lg font-headline font-bold text-gray-900 dark:text-white mb-6">{t('analytics_support_efficiency')}</h3>
                                         {performanceData ? (
                                         <div className="space-y-6">
@@ -1642,7 +1665,7 @@ function App() {
                                         )}
                                     </div>
 
-                                    <div className="glass-panel p-6 rounded-xl relative overflow-hidden">
+                                    <div className={cardClass}>
                                         <div className="flex items-center gap-3 mb-6">
                                             <div className="w-2 h-2 bg-cyan-400 rounded-full animate-ping"></div>
                                             <h3 className="text-sm font-headline font-bold text-gray-900 dark:text-white uppercase tracking-widest">Active Pulse</h3>

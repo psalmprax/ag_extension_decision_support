@@ -126,6 +126,11 @@ interface AppState {
     shareModal: { entityType: string; entityId: string; entityName?: string } | null;
     showShareModal: (data: AppState['shareModal']) => void;
     hideShareModal: () => void;
+
+    // Design System Mode
+    designSystemMode: 'classic' | 'modern';
+    setDesignSystemMode: (mode: 'classic' | 'modern') => void;
+    toggleDesignSystemMode: () => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -326,6 +331,12 @@ export const useAppStore = create<AppState>()(
 
             showShareModal: (shareModal) => set({ shareModal }),
             hideShareModal: () => set({ shareModal: null }),
+
+            designSystemMode: 'modern',
+            setDesignSystemMode: (designSystemMode) => set({ designSystemMode }),
+            toggleDesignSystemMode: () => set((state) => ({ 
+                designSystemMode: state.designSystemMode === 'classic' ? 'modern' : 'classic' 
+            })),
         }),
         {
             name: 'ag-extension-storage',
@@ -335,6 +346,7 @@ export const useAppStore = create<AppState>()(
                 sidebarOpen: state.sidebarOpen,
                 activeTab: state.activeTab,
                 user: state.user,
+                designSystemMode: state.designSystemMode,
             }),
         }
     )
