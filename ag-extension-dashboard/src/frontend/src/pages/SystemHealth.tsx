@@ -7,11 +7,13 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
 import { useAppStore } from '../store/useAppStore';
+import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
 import { fetchHealthStatus, fetchRecoveryLog, triggerRecovery, HealthCheck, RecoveryAction } from '../api/systemHealthService';
 import toast from 'react-hot-toast';
 
 export function SystemHealth() {
     const { t } = useLanguage();
+    const { headingClass } = useDesignSystemMode();
     const { addNotification } = useAppStore();
 
     // State
@@ -173,7 +175,7 @@ export function SystemHealth() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('system_health_title')}</h1>
+                    <h1 className={`text-2xl ${headingClass}`}>{t('system_health_title')}</h1>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">{t('system_health_subtitle')}</p>
                 </div>
                 <button

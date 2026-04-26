@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
+import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
 import { useAppStore } from '../store/useAppStore';
 import { fetchTelemetrySummary, fetchTelemetryEvents, TelemetrySummary, TelemetryEvent } from '../api/telemetryService';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, LineChart, Line } from 'recharts';
@@ -13,6 +14,7 @@ import toast from 'react-hot-toast';
 
 export function Telemetry() {
     const { t } = useLanguage();
+    const { headingClass } = useDesignSystemMode();
     const { addNotification } = useAppStore();
 
     // State
@@ -132,7 +134,7 @@ export function Telemetry() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('telemetry_title')}</h1>
+                    <h1 className={`text-2xl ${headingClass}`}>{t('telemetry_title')}</h1>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">{t('telemetry_subtitle')}</p>
                 </div>
                 <div className="flex items-center gap-3">

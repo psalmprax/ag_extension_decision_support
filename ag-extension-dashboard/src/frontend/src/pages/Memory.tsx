@@ -6,12 +6,14 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
+import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
 import { useAppStore } from '../store/useAppStore';
 import { fetchMemories, storeMemory, deleteMemory, fetchMemorySummary, type MemoryEntry } from '../api/memoryService';
 import toast from 'react-hot-toast';
 
 export function Memory() {
     const { t } = useLanguage();
+    const { headingClass } = useDesignSystemMode();
     const { addNotification } = useAppStore();
 
     // State
@@ -214,7 +216,7 @@ export function Memory() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('memory_title')}</h1>
+                    <h1 className={`text-2xl ${headingClass}`}>{t('memory_title')}</h1>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">{t('memory_subtitle')}</p>
                 </div>
                 <div className="flex items-center gap-3">

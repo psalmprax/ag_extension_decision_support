@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
+import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
 import { useAppStore } from '../store/useAppStore';
 import {
     fetchEmailTemplates,
@@ -20,6 +21,7 @@ import DOMPurify from 'dompurify';
 
 export function EmailWorkflows() {
     const { t } = useLanguage();
+    const { headingClass } = useDesignSystemMode();
     const { addNotification } = useAppStore();
 
     // State
@@ -254,7 +256,7 @@ export function EmailWorkflows() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('email_workflows_title')}</h1>
+                    <h1 className={`text-2xl ${headingClass}`}>{t('email_workflows_title')}</h1>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">{t('email_workflows_subtitle')}</p>
                 </div>
                 <button
