@@ -1164,7 +1164,7 @@ function App() {
     const ThemeToggle = () => (
         <button
             onClick={() => setDarkMode(!darkMode)}
-            className="p-2 rounded-xl bg-gray-100/80 dark:bg-gray-800/80 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-gray-600 dark:text-gray-400 backdrop-blur-sm"
+            className="p-2 rounded-lg bg-white/5 border border-white/10 hover:border-cyan-400/50 hover:bg-white/10 transition-all text-slate-400 hover:text-cyan-400 backdrop-blur-sm"
             title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
         >
             {darkMode ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
@@ -1324,6 +1324,14 @@ function App() {
                                 )}
                             </div>
                         )}
+                    </div>
+
+                    <div className="flex items-center gap-3 border-r border-white/10 pr-4">
+                        <div className="hidden lg:flex items-center gap-2 scale-90 origin-right">
+                            <LanguageSwitcher compact />
+                            <ThemeSwitcher currentTheme={themeName} onThemeChange={setThemeName} />
+                        </div>
+                        <ThemeToggle />
                     </div>
 
                     <div className="flex items-center gap-2">

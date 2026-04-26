@@ -26,11 +26,11 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
             <select
                 value={language}
                 onChange={handleChange}
-                className={`bg-white/50 dark:bg-gray-800/50 border border-gray-200 dark:border-white/10 rounded-xl px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-white backdrop-blur-xl ${className}`}
+                className={`bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest focus:outline-none focus:ring-1 focus:ring-cyan-400/50 text-slate-300 hover:text-white transition-all backdrop-blur-xl ${className}`}
                 aria-label={t('common_select_language')}
             >
                 {languages.map((lang) => (
-                    <option key={lang.code} value={lang.code} className="dark:bg-gray-900">
+                    <option key={lang.code} value={lang.code} className="bg-slate-900 text-white">
                         {showFlag ? `${lang.flag} ${lang.code.toUpperCase()}` : lang.name}
                     </option>
                 ))}
