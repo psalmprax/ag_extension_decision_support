@@ -2,7 +2,7 @@ import { config } from '@/config';
 import { logger } from '@/utils/logger';
 
 // Provider types
-export type AIProviderType = 'azure_openai' | 'google_vertex' | 'openai' | 'anthropic' | 'groq';
+export type AIProviderType = 'azure_openai' | 'google_vertex' | 'openai' | 'anthropic' | 'groq' | 'ollama';
 
 // Capability interfaces
 export interface TextGenerationOptions {
@@ -264,7 +264,8 @@ export class AIProviderFactory {
             this.fallbackProvider,
             'openai',     // Third fallback
             'anthropic',  // Fourth fallback
-            'groq'        // Fifth fallback
+            'groq',       // Fifth fallback
+            'ollama'      // Sixth fallback
         ];
 
         let lastError: Error | null = null;
@@ -314,6 +315,9 @@ export class AIProviderFactory {
             case 'groq':
                 const { GroqProvider } = await import('./providers/groq');
                 return new GroqProvider();
+            case 'ollama':
+                const { OllamaProvider } = await import('./providers/ollama');
+                return new OllamaProvider();
             default:
                 throw new Error(`Unknown AI provider type: ${type}`);
         }

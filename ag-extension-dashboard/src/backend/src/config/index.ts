@@ -30,6 +30,7 @@ export interface AppConfig {
     };
     cors: { origin: string };
     demo: { password: string };
+    ollama: { host: string; model: string };
 }
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -127,5 +128,9 @@ export const config: AppConfig = {
 
     demo: {
         password: getEnv('DEMO_PASSWORD', 'demo-password-123'),
+    },
+    ollama: {
+        host: getEnv('OLLAMA_HOST', 'http://localhost:11434'),
+        model: getEnv('OLLAMA_MODEL', 'llama3'),
     },
 };
