@@ -339,21 +339,21 @@ export const themes: Record<ThemeName, ThemeColors> = {
     },
 
     /**
-     * Cyber Theme - High-contrast dark theme with neon accents
-     * Best for: Tech-forward users, night operations
+     * Cyber Theme - High-contrast dark theme with glassmorphism and neon cyan accents
+     * Based on High-Contrast Glass design proposal
      */
     cyber: {
         primary: {
-            50: '#ecfeff',
-            100: '#cffafe',
-            200: '#a5f3fc',
-            300: '#67e8f9',
-            400: '#22d3ee',
-            500: '#06b6d4',
-            600: '#0891b2',
-            700: '#0e7490',
-            800: '#155e75',
-            900: '#164e63',
+            50: '#e9feff',
+            100: '#d1f9ff',
+            200: '#a3f3ff',
+            300: '#63f7ff',
+            400: '#00f5ff',
+            500: '#00dce5',
+            600: '#00b4bb',
+            700: '#008b91',
+            800: '#006267',
+            900: '#003a3d',
         },
         secondary: {
             50: '#f5f3ff',
@@ -368,21 +368,21 @@ export const themes: Record<ThemeName, ThemeColors> = {
             900: '#4c1d95',
         },
         accent: {
-            50: '#ecfeff',
-            100: '#cffafe',
-            200: '#a5f3fc',
-            300: '#67e8f9',
-            400: '#22d3ee',
-            500: '#06b6d4',
-            600: '#0891b2',
-            700: '#0e7490',
-            800: '#155e75',
-            900: '#164e63',
+            50: '#e9feff',
+            100: '#d1f9ff',
+            200: '#a3f3ff',
+            300: '#63f7ff',
+            400: '#00f5ff',
+            500: '#00dce5',
+            600: '#00b4bb',
+            700: '#008b91',
+            800: '#006267',
+            900: '#003a3d',
         },
         background: {
-            primary: '#0e172a',
-            secondary: '#1e293b',
-            card: '#1e293b',
+            primary: '#0c1324',
+            secondary: '#151b2d',
+            card: 'rgba(255, 255, 255, 0.05)',
         },
     },
 

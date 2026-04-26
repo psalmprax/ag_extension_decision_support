@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AgriLogic | Agricultural Intelligence Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "background": "#0c1324",
+                        "on-primary-container": "#006c71",
+                        "surface-container-low": "#151b2d",
+                        "on-tertiary": "#2f3131",
+                        "primary-fixed": "#63f7ff",
+                        "surface-dim": "#0c1324",
+                        "on-primary": "#003739",
+                        "secondary-fixed-dim": "#d1bcff",
+                        "on-error-container": "#ffdad6",
+                        "on-primary-fixed-variant": "#004f53",
+                        "primary": "#e9feff",
+                        "on-secondary": "#3c0090",
+                        "on-secondary-fixed-variant": "#5700c9",
+                        "error-container": "#93000a",
+                        "inverse-on-surface": "#2a3043",
+                        "surface-container-lowest": "#070d1f",
+                        "on-secondary-fixed": "#23005b",
+                        "on-primary-fixed": "#002021",
+                        "on-tertiary-fixed": "#1a1c1c",
+                        "on-secondary-container": "#ddcdff",
+                        "outline-variant": "#3a494a",
+                        "tertiary-fixed": "#e2e2e2",
+                        "surface-bright": "#33394c",
+                        "surface-tint": "#00dce5",
+                        "on-error": "#690005",
+                        "surface-container-high": "#23293c",
+                        "primary-container": "#00f5ff",
+                        "secondary-container": "#7000ff",
+                        "surface-variant": "#2e3447",
+                        "tertiary-container": "#dddddd",
+                        "on-surface": "#dce1fb",
+                        "inverse-primary": "#00696e",
+                        "on-surface-variant": "#b9caca",
+                        "surface-container-highest": "#2e3447",
+                        "on-tertiary-container": "#606162",
+                        "secondary": "#d1bcff",
+                        "error": "#ffb4ab",
+                        "on-tertiary-fixed-variant": "#454747",
+                        "surface": "#0c1324",
+                        "tertiary": "#f9fafa",
+                        "tertiary-fixed-dim": "#c6c6c7",
+                        "outline": "#849495",
+                        "secondary-fixed": "#e9ddff",
+                        "primary-fixed-dim": "#00dce5",
+                        "on-background": "#dce1fb",
+                        "inverse-surface": "#dce1fb",
+                        "surface-container": "#191f31"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "margin": "32px",
+                        "md": "24px",
+                        "xs": "4px",
+                        "xl": "80px",
+                        "sm": "12px",
+                        "container-max": "1440px",
+                        "base": "8px",
+                        "lg": "48px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Space Grotesk"],
+                        "label-md": ["Space Grotesk"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Space Grotesk"],
+                        "label-sm": ["Space Grotesk"],
+                        "headline-xl": ["Space Grotesk"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "label-md": ["14px", {"lineHeight": "1", "letterSpacing": "0.1em", "fontWeight": "500"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-lg": ["40px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "headline-xl": ["64px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0c1324;
+            color: #dce1fb;
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-panel {
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .neon-glow {
+            box-shadow: 0 0 15px rgba(0, 245, 255, 0.3);
+        }
+        .rim-lighting {
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glass-edge {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface selection:bg-primary-container selection:text-on-primary-fixed">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-slate-950/60 backdrop-blur-xl border-b border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-black tracking-tighter text-cyan-400 drop-shadow-[0_0_8px_rgba(0,245,255,0.5)] font-['Space_Grotesk']">AgriLogic</span>
+<nav class="hidden md:flex gap-6">
+<a class="text-cyan-400 font-bold font-['Space_Grotesk'] tracking-tight transition-all hover:text-cyan-300" href="#">Dashboard</a>
+<a class="text-slate-400 font-['Space_Grotesk'] tracking-tight hover:text-cyan-300 hover:bg-white/5 transition-all px-2 py-1 rounded" href="#">Analytics</a>
+<a class="text-slate-400 font-['Space_Grotesk'] tracking-tight hover:text-cyan-300 hover:bg-white/5 transition-all px-2 py-1 rounded" href="#">Logistics</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">search</span>
+<input class="bg-white/5 border border-white/10 rounded-full pl-10 pr-4 py-1.5 text-xs focus:ring-1 focus:ring-cyan-400 outline-none w-64 transition-all" placeholder="Search system..." type="text"/>
+</div>
+<button class="text-slate-400 hover:text-cyan-400 transition-colors p-2 rounded-full hover:bg-white/5">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-slate-400 hover:text-cyan-400 transition-colors p-2 rounded-full hover:bg-white/5">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full border border-cyan-400/30 overflow-hidden ml-2 ring-2 ring-cyan-400/10">
+<img alt="Chief Agronomist Profile" class="w-full h-full object-cover" data-alt="professional headshot of a senior agronomist with a clean cinematic look and neutral background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQI5a8rgapzJy3PvTVUUFXbVwzDWklTkwZJJD8lN9gix_AZDRkKitNnra-nYcVcnPSrOQvCLAXi5rI_ywbnJ1Z5rdg3OT3dQi6JywpCJHgbRvmNWMvJVtmyZT4ObSBQTqgqoMas8RbF9Ab9-WSDQQANo5jukq6kPiFVlRnTGM4rTJI_LGtN3cDtDvRKePO7uZvgAiu04-vsqOHGgbHvg2JsbQbOOn61wnhrw8fmNDjm2xv1oKrwzOQ1Mm2GDFAt5kIzAhA_CBNAs6x"/>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full flex flex-col pt-20 pb-8 px-4 bg-slate-950/40 backdrop-blur-2xl border-r border-white/10 w-64 z-40 hidden lg:flex">
+<div class="px-4 mb-8">
+<h3 class="font-headline-md text-cyan-400 text-sm tracking-widest uppercase mb-1">Ag-Extension</h3>
+<p class="text-[10px] text-slate-500 font-medium">Sector 7G - Midwest</p>
+</div>
+<nav class="flex flex-col gap-2 grow">
+<a class="flex items-center gap-3 px-4 py-3 rounded bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400 shadow-[inset_0_0_15px_rgba(0,245,255,0.1)] transition-all" href="#">
+<span class="material-symbols-outlined" data-weight="fill">grid_view</span>
+<span class="font-label-sm uppercase tracking-widest text-[10px]">Field Overview</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-slate-500 hover:bg-white/5 hover:text-cyan-200 transition-all" href="#">
+<span class="material-symbols-outlined">layers</span>
+<span class="font-label-sm uppercase tracking-widest text-[10px]">Soil Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-slate-500 hover:bg-white/5 hover:text-cyan-200 transition-all" href="#">
+<span class="material-symbols-outlined">psychology</span>
+<span class="font-label-sm uppercase tracking-widest text-[10px]">Crop Health</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-slate-500 hover:bg-white/5 hover:text-cyan-200 transition-all" href="#">
+<span class="material-symbols-outlined">trending_up</span>
+<span class="font-label-sm uppercase tracking-widest text-[10px]">Yield Forecast</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-slate-500 hover:bg-white/5 hover:text-cyan-200 transition-all" href="#">
+<span class="material-symbols-outlined">satellite_alt</span>
+<span class="font-label-sm uppercase tracking-widest text-[10px]">Satellite Feed</span>
+</a>
+</nav>
+<div class="mt-auto flex flex-col gap-2 pt-6 border-t border-white/5">
+<button class="bg-primary-container text-on-primary-fixed px-4 py-3 rounded font-label-sm uppercase tracking-tighter flex items-center justify-center gap-2 hover:brightness-110 active:scale-95 transition-all shadow-[0_0_20px_rgba(0,245,255,0.2)]">
+<span class="material-symbols-outlined text-sm">description</span>
+                Generate Report
+            </button>
+<a class="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-200 text-[10px] uppercase font-bold tracking-widest" href="#">
+<span class="material-symbols-outlined text-sm">help</span>
+                Support
+            </a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="lg:pl-64 pt-20 p-8 min-h-screen">
+<div class="max-w-container-max mx-auto">
+<!-- Header Section -->
+<section class="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+<div>
+<h1 class="font-headline-lg text-white mb-2">Agricultural Overview</h1>
+<p class="text-on-surface-variant font-body-md max-w-xl">Real-time telemetric data and logistical insights from the Midwest agricultural corridor.</p>
+</div>
+<div class="flex gap-3">
+<div class="bg-surface-container border border-white/10 px-4 py-2 rounded-xl flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div>
+<span class="text-xs font-label-md text-cyan-400 uppercase tracking-widest">Live System Feed</span>
+</div>
+</div>
+</section>
+<!-- Stats Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+<div class="glass-panel p-6 rounded-xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-24 h-24 bg-cyan-400/5 blur-3xl -mr-12 -mt-12 group-hover:bg-cyan-400/20 transition-all"></div>
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-cyan-400 bg-cyan-400/10 p-2 rounded-lg">groups</span>
+<span class="text-xs text-cyan-400 font-bold">+12%</span>
+</div>
+<h3 class="text-on-surface-variant font-label-sm uppercase tracking-widest mb-1">Total Farmers</h3>
+<div class="text-3xl font-headline-md text-white">12,842</div>
+</div>
+<div class="glass-panel p-6 rounded-xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-24 h-24 bg-primary-container/5 blur-3xl -mr-12 -mt-12 group-hover:bg-primary-container/20 transition-all"></div>
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-cyan-400 bg-cyan-400/10 p-2 rounded-lg">forum</span>
+<span class="text-xs text-cyan-400 font-bold">Live</span>
+</div>
+<h3 class="text-on-surface-variant font-label-sm uppercase tracking-widest mb-1">Active Conversations</h3>
+<div class="text-3xl font-headline-md text-white">431</div>
+</div>
+<div class="glass-panel p-6 rounded-xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-24 h-24 bg-cyan-400/5 blur-3xl -mr-12 -mt-12 group-hover:bg-cyan-400/20 transition-all"></div>
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-cyan-400 bg-cyan-400/10 p-2 rounded-lg">visibility</span>
+<span class="text-xs text-slate-500 font-bold">MTD</span>
+</div>
+<h3 class="text-on-surface-variant font-label-sm uppercase tracking-widest mb-1">Visits This Month</h3>
+<div class="text-3xl font-headline-md text-white">85.2k</div>
+</div>
+<div class="glass-panel p-6 rounded-xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-24 h-24 bg-secondary/5 blur-3xl -mr-12 -mt-12 group-hover:bg-secondary/20 transition-all"></div>
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-secondary bg-secondary/10 p-2 rounded-lg">star</span>
+<span class="text-xs text-secondary font-bold">98%</span>
+</div>
+<h3 class="text-on-surface-variant font-label-sm uppercase tracking-widest mb-1">Avg Satisfaction</h3>
+<div class="text-3xl font-headline-md text-white">4.92</div>
+</div>
+</section>
+<!-- Main Features Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Regional Distribution Map Section -->
+<section class="lg:col-span-2 glass-panel rounded-2xl overflow-hidden flex flex-col">
+<div class="p-6 border-b border-white/5 flex justify-between items-center">
+<div>
+<h2 class="font-headline-md text-white text-lg">Regional Distribution</h2>
+<p class="text-xs text-slate-500 font-medium uppercase tracking-widest">Satellite Deployment Nodes</p>
+</div>
+<div class="flex gap-2">
+<span class="bg-cyan-500/20 text-cyan-400 text-[10px] font-bold px-2 py-1 rounded border border-cyan-400/30">H-DENSITY</span>
+<span class="bg-white/5 text-slate-400 text-[10px] font-bold px-2 py-1 rounded border border-white/10">MIDWEST-7</span>
+</div>
+</div>
+<div class="relative grow min-h-[450px] bg-slate-900">
+<img class="w-full h-full object-cover opacity-60" data-alt="dark high-contrast satellite topographical map of rural farmland with neon blue grid overlays and glowing data points" data-location="Midwest United States" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDca7oBg6sA_XX360jVi2v6p7f4sb4HQ6UMfEIG0zGV-Em2A98qn5E8ov8WQxyEA6qdjT2bW4aZLJWTn67iAlayBti4vMpHL7rSTkU4z2wQW4rY1DSRfueb8Zcv3LfushStUtO0hyl1KyGbsV-VV-u925x-AK8ypQNwVCrnqqu5uyJXUdpDCZ-RXy_jS1N36GryV21WYw09NEKeKPZKmbHHI35djd54A9LSUC8YuB3IF4nF2G0pvbYVCIB2xPjkEpGSC_9k6lWyoDln"/>
+<!-- Tech Overlays -->
+<div class="absolute inset-0 pointer-events-none p-6">
+<div class="w-full h-full border border-cyan-400/20 rounded-lg flex flex-col justify-between">
+<div class="p-4 flex justify-between">
+<div class="text-[10px] font-mono text-cyan-400/60 uppercase">Coord. 41.8781° N, 87.6298° W</div>
+<div class="text-[10px] font-mono text-cyan-400/60 uppercase">ALT: 12,000m MSL</div>
+</div>
+<div class="p-4 flex items-end justify-between">
+<div class="flex gap-4">
+<div class="flex flex-col gap-1">
+<div class="w-32 h-1 bg-white/10 rounded-full overflow-hidden">
+<div class="w-3/4 h-full bg-cyan-400"></div>
+</div>
+<span class="text-[8px] font-mono text-white/40">SIGNAL STRENGTH</span>
+</div>
+</div>
+<div class="flex gap-2">
+<div class="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(0,245,255,1)]"></div>
+<div class="w-2 h-2 rounded-full bg-white/20"></div>
+<div class="w-2 h-2 rounded-full bg-white/20"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Data Callouts -->
+<div class="absolute top-1/4 left-1/3 bg-slate-950/80 backdrop-blur-md border border-cyan-400/40 p-2 rounded flex flex-col gap-1">
+<span class="text-[10px] font-bold text-white">Zone Alpha</span>
+<span class="text-[10px] text-cyan-400">82% Yield Target</span>
+</div>
+</div>
+</section>
+<!-- Support Efficiency & Sidebar Details -->
+<section class="flex flex-col gap-8">
+<!-- Support Efficiency Glass Card -->
+<div class="glass-panel rounded-2xl p-6 flex flex-col">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-cyan-400">speed</span>
+<h2 class="font-headline-md text-white text-lg">Support Efficiency</h2>
+</div>
+<div class="flex flex-col gap-6">
+<div class="space-y-2">
+<div class="flex justify-between items-center text-xs">
+<span class="text-slate-400 font-medium">Initial Response</span>
+<span class="text-white font-bold">1.2m</span>
+</div>
+<div class="h-2 bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-cyan-600 to-cyan-400 w-[92%] rounded-full neon-glow"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center text-xs">
+<span class="text-slate-400 font-medium">Issue Resolution</span>
+<span class="text-white font-bold">14m</span>
+</div>
+<div class="h-2 bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-secondary-container to-secondary w-[78%] rounded-full"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center text-xs">
+<span class="text-slate-400 font-medium">Farmer Satisfaction</span>
+<span class="text-white font-bold">98.4%</span>
+</div>
+<div class="h-2 bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-cyan-400 to-primary-fixed w-[98%] rounded-full"></div>
+</div>
+</div>
+</div>
+<div class="mt-8 p-4 rounded-xl bg-cyan-400/5 border border-cyan-400/10">
+<div class="flex items-center gap-3 mb-2">
+<span class="material-symbols-outlined text-cyan-400 text-sm">auto_awesome</span>
+<span class="text-xs font-bold text-cyan-400 uppercase tracking-tighter">AI Insight</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">System optimization has reduced response times by <span class="text-white font-bold">14%</span> compared to last quarter in the Midwest sector.</p>
+</div>
+</div>
+<!-- Conversation Feed Preview -->
+<div class="glass-panel rounded-2xl p-6 flex flex-col grow">
+<div class="flex justify-between items-center mb-6">
+<h2 class="font-headline-md text-white text-lg">Active Pulse</h2>
+<button class="text-[10px] font-bold text-cyan-400 hover:underline uppercase tracking-widest">View All</button>
+</div>
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer group">
+<div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-cyan-400">
+<span class="material-symbols-outlined" data-weight="fill">account_circle</span>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-bold text-white group-hover:text-cyan-400 transition-colors">Jacob Miller</span>
+<span class="text-[10px] text-slate-500">Soil moisture alert in Sector 4...</span>
+</div>
+<span class="ml-auto text-[8px] text-slate-600 font-mono">2m ago</span>
+</div>
+<div class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer group">
+<div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-weight="fill">account_circle</span>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-bold text-white group-hover:text-secondary transition-colors">Sarah Chen</span>
+<span class="text-[10px] text-slate-500">Yield report confirmation req...</span>
+</div>
+<span class="ml-auto text-[8px] text-slate-600 font-mono">15m ago</span>
+</div>
+<div class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer group">
+<div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-cyan-400">
+<span class="material-symbols-outlined" data-weight="fill">account_circle</span>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-bold text-white group-hover:text-cyan-400 transition-colors">Marcus Thorne</span>
+<span class="text-[10px] text-slate-500">Drone flight plan approved.</span>
+</div>
+<span class="ml-auto text-[8px] text-slate-600 font-mono">1h ago</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation for Mobile -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 flex justify-around items-center px-4 h-16 bg-slate-950/80 backdrop-blur-xl border-t border-white/10">
+<button class="flex flex-col items-center gap-1 text-cyan-400">
+<span class="material-symbols-outlined">grid_view</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Home</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Stats</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-symbols-outlined">map</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Map</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Profile</span>
+</button>
+</nav>
+</body></html>

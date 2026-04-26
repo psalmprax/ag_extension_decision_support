@@ -124,30 +124,27 @@ interface StatCardProps {
 }
 
 const StatCard = ({ title, value, change, icon: Icon, delay }: StatCardProps) => {
-    const { t } = useLanguage();
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay, type: "spring", stiffness: 300, damping: 24 }}
-            className="card p-6 border-white/20 hover:scale-[1.02] transition-transform duration-300"
-            style={{ borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-premium)' }}
+            className="glass-panel p-6 rounded-xl relative overflow-hidden group hover:scale-[1.02] transition-all duration-300"
         >
-            <div className="flex items-start justify-between">
-                <div>
-                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{title}</p>
-                    <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{value !== undefined && value !== null ? value.toLocaleString() : '0'}</p>
-                    {change !== undefined && (
-                        <div className={`flex items-center gap-1 text-xs font-bold mt-2 ${change >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                            {change >= 0 ? <TrendingUp className="w-3 h-3" /> : <Activity className="w-3 h-3" />}
-                            <span>{change >= 0 ? '+' : ''}{change}%</span>
-                            <span className="text-gray-400 font-medium ml-1">{t('stat_vs_last_month')}</span>
-                        </div>
-                    )}
+            <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-400/5 blur-3xl -mr-12 -mt-12 group-hover:bg-cyan-400/20 transition-all"></div>
+            <div className="flex justify-between items-start mb-4">
+                <div className="p-2 bg-cyan-400/10 rounded-lg text-cyan-400">
+                    <Icon className="w-5 h-5" />
                 </div>
-                <div className="p-3 bg-primary-50 dark:bg-primary-900/30 rounded-xl">
-                    <Icon className="w-6 h-6 text-primary-600 dark:text-primary-400" />
-                </div>
+                {change !== undefined && (
+                    <span className={`text-xs font-bold ${change >= 0 ? 'text-cyan-400' : 'text-red-400'}`}>
+                        {change >= 0 ? '+' : ''}{change}%
+                    </span>
+                )}
+            </div>
+            <h3 className="text-slate-400 font-headline text-[10px] uppercase tracking-widest mb-1">{title}</h3>
+            <div className="text-3xl font-headline font-bold text-white">
+                {value !== undefined && value !== null ? value.toLocaleString() : '0'}
             </div>
         </motion.div>
     );
@@ -480,7 +477,7 @@ function App() {
             try {
                 const count = await fetchUnreadCount();
                 setApiUnreadCount(count);
-            } catch {
+            } catch (error) {
                 // Fallback to store count
             }
         };
@@ -1254,197 +1251,135 @@ function App() {
                     </div>
                 </div>
             )}
-            {/* Top Navigation - Floating Glass Header */}
-            <header className="fixed top-4 left-4 right-4 z-50 glass rounded-[2rem] h-16 lg:h-20 flex items-center transition-all duration-300">
-                <div className="w-full flex items-center justify-between gap-6 px-6 lg:px-8">
-                    <div className="flex items-center gap-5">
+            {/* Top Navigation - Cinematic Glass Header */}
+            <header className="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-slate-950/60 backdrop-blur-xl border-b border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
+                <div className="flex items-center gap-8">
+                    <div className="flex items-center gap-3">
                         <button
                             onClick={() => setSidebarOpen(!sidebarOpen)}
-                            className="p-2.5 rounded-xl hover:bg-white/50 dark:hover:bg-white/5 transition-all text-gray-600 dark:text-gray-400"
+                            className="p-2 rounded-lg hover:bg-white/5 transition-all text-gray-400"
                         >
-                            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5 transition-transform group-hover:scale-110" />}
+                            <Menu className="w-5 h-5" />
                         </button>
-                        <div className="flex items-center gap-4 border-l border-gray-100 dark:border-white/10 pl-5">
-                            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/20">
-                                <span className="text-white font-black text-lg tracking-tighter">Ag</span>
-                            </div>
-                            <div className="hidden sm:block">
-                                <h1 className="text-lg font-black text-gray-900 dark:text-white tracking-tight leading-none mb-1" style={{ fontFamily: 'var(--font-heading)' }}>
-                                    {t('app_title')}
-                                </h1>
-                                <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">{t('app_subtitle')}</p>
-                            </div>
-                        </div>
+                        <span className="text-2xl font-black tracking-tighter text-cyan-400 drop-shadow-[0_0_8px_rgba(0,245,255,0.5)] font-headline">AgriLogic</span>
                     </div>
+                    <nav className="hidden md:flex gap-6">
+                        <button onClick={() => setActiveTab('dashboard')} className={`font-headline tracking-tight transition-all px-2 py-1 rounded ${activeTab === 'dashboard' ? 'text-cyan-400 font-bold' : 'text-slate-400 hover:text-cyan-300 hover:bg-white/5'}`}>Dashboard</button>
+                        <button onClick={() => setActiveTab('analytics')} className={`font-headline tracking-tight transition-all px-2 py-1 rounded ${activeTab === 'analytics' ? 'text-cyan-400 font-bold' : 'text-slate-400 hover:text-cyan-300 hover:bg-white/5'}`}>Analytics</button>
+                        <button onClick={() => setActiveTab('logistics')} className={`font-headline tracking-tight transition-all px-2 py-1 rounded ${activeTab === 'logistics' ? 'text-cyan-400 font-bold' : 'text-slate-400 hover:text-cyan-300 hover:bg-white/5'}`}>Logistics</button>
+                    </nav>
+                </div>
 
-                    <div className="hidden xl:block flex-1 max-w-xl mx-8">
-                        <WeatherWidget location={userLocation || storeUser?.region || 'Kenya'} />
-                    </div>
-
-                    <div className="flex items-center gap-6">
-                        <div className="relative hidden md:block">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 transition-colors group-focus-within/search:text-primary-500" />
-                            <input
-                                type="text"
-                                placeholder={t('common_search') + "..."}
-                                className="w-64 lg:w-80 bg-white/50 dark:bg-black/20 border border-gray-100 dark:border-white/5 rounded-2xl pl-12 pr-4 py-3 text-sm font-medium focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-all outline-none dark:text-white placeholder:text-gray-400/60"
-                                value={searchQuery}
-                                onChange={(e) => {
-                                    setSearchQuery(e.target.value);
-                                    handleGlobalSearch(e.target.value);
-                                }}
-                                onFocus={() => { if (searchQuery.trim()) setShowGlobalSearch(true); }}
-                                onBlur={() => { setTimeout(() => setShowGlobalSearch(false), 200); }}
-                            />
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 hidden lg:flex items-center gap-1 px-1.5 py-0.5 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-[10px] font-black text-gray-400">
-                                <span>⌘</span>
-                                <span>K</span>
-                            </div>
-                            {showGlobalSearch && globalSearchResults.length > 0 && (
-                                <div className="absolute top-full mt-2 left-0 right-0 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 z-50 max-h-80 overflow-y-auto">
-                                    {isGlobalSearching ? (
-                                        <div className="p-4 text-center text-sm text-gray-500">
-                                            <Loader2 className="w-4 h-4 animate-spin inline mr-2" />Searching...
+                <div className="flex items-center gap-4">
+                    <div className="relative hidden sm:block">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
+                        <input
+                            type="text"
+                            placeholder="Search system..."
+                            className="bg-white/5 border border-white/10 rounded-full pl-10 pr-4 py-1.5 text-xs focus:ring-1 focus:ring-cyan-400 outline-none w-64 transition-all text-white"
+                            value={searchQuery}
+                            onChange={(e) => {
+                                setSearchQuery(e.target.value);
+                                handleGlobalSearch(e.target.value);
+                            }}
+                            onFocus={() => { if (searchQuery.trim()) setShowGlobalSearch(true); }}
+                            onBlur={() => { setTimeout(() => setShowGlobalSearch(false), 200); }}
+                        />
+                        {showGlobalSearch && globalSearchResults.length > 0 && (
+                            <div className="absolute top-full mt-2 left-0 right-0 glass-panel rounded-xl shadow-2xl z-50 max-h-80 overflow-y-auto">
+                                {isGlobalSearching ? (
+                                    <div className="p-4 text-center text-sm text-gray-500">
+                                        <Loader2 className="w-4 h-4 animate-spin inline mr-2" />Searching...
+                                    </div>
+                                ) : (
+                                    globalSearchResults.map((group) => (
+                                        <div key={group.type}>
+                                            <div className="px-4 pt-3 pb-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{group.type}</div>
+                                            {group.items.map((item) => (
+                                                <button
+                                                    key={item.id}
+                                                    className="w-full px-4 py-2.5 text-left hover:bg-white/5 flex items-center gap-3"
+                                                    onClick={() => {
+                                                        if (group.type === 'Farmers') {
+                                                            const farmer = farmers?.find((f: Farmer) => f.id === item.id);
+                                                            if (farmer) handleOpenFarmerDetail(farmer);
+                                                        } else if (group.type === 'Visits') {
+                                                            setActiveTab('visits');
+                                                        } else {
+                                                            setActiveTab('knowledge');
+                                                            setSearchQuery(item.label);
+                                                        }
+                                                        setShowGlobalSearch(false);
+                                                    }}
+                                                >
+                                                    <div className="flex-1">
+                                                        <p className="text-sm font-bold text-white truncate">{item.label}</p>
+                                                        {item.sublabel && <p className="text-xs text-slate-500 truncate">{item.sublabel}</p>}
+                                                    </div>
+                                                    <ChevronRight className="w-4 h-4 text-slate-500" />
+                                                </button>
+                                            ))}
                                         </div>
-                                    ) : (
-                                        globalSearchResults.map((group) => (
-                                            <div key={group.type}>
-                                                <div className="px-4 pt-3 pb-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{group.type}</div>
-                                                {group.items.map((item) => (
-                                                    <button
-                                                        key={item.id}
-                                                        className="w-full px-4 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center gap-3"
-                                                        onClick={() => {
-                                                            if (group.type === 'Farmers') {
-                                                                const farmer = farmers?.find((f: Farmer) => f.id === item.id);
-                                                                if (farmer) handleOpenFarmerDetail(farmer);
-                                                            } else if (group.type === 'Visits') {
-                                                                setActiveTab('visits');
-                                                            } else {
-                                                                setActiveTab('knowledge');
-                                                                setSearchQuery(item.label);
-                                                            }
-                                                            setShowGlobalSearch(false);
-                                                        }}
-                                                    >
-                                                        <div className="flex-1">
-                                                            <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{item.label}</p>
-                                                            {item.sublabel && <p className="text-xs text-gray-500 truncate">{item.sublabel}</p>}
-                                                        </div>
-                                                        <ChevronRight className="w-4 h-4 text-gray-400" />
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                        <ThemeSwitcher currentTheme={themeName} onThemeChange={setThemeName} />
-                        <LanguageSwitcher compact />
-                        <ThemeToggle />
-                        {/* Sync Status Indicator */}
-                        <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-100/80 dark:bg-gray-800/80 text-xs font-bold">
-                            {isOnline ? (
-                                <Wifi className="w-3 h-3 text-green-600" />
-                            ) : (
-                                <WifiOff className="w-3 h-3 text-red-600" />
-                            )}
-                            <span className={isOnline ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}>
-                                {isOnline ? 'Online' : 'Offline'}
-                            </span>
-                        </div>
-                        <button
-                            onClick={() => setIsNotificationPanelOpen(true)}
-                            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative"
-                        >
-                            <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                            {(apiUnreadCount > 0 || notifications.some(n => !n.read)) && (
-                                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white dark:border-gray-900 animate-pulse flex items-center justify-center">
-                                    {(() => {
-                                        const storeUnread = notifications.filter(n => !n.read).length;
-                                        const totalUnread = apiUnreadCount + storeUnread;
-                                        return totalUnread > 0 ? (
-                                            <span className="text-[6px] text-white font-bold">{totalUnread > 9 ? '9+' : totalUnread}</span>
-                                        ) : null;
-                                    })()}
-                                </span>
+                                    ))
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <button onClick={() => setIsNotificationPanelOpen(true)} className="text-slate-400 hover:text-cyan-400 transition-colors p-2 rounded-full hover:bg-white/5 relative">
+                            <Bell className="w-5 h-5" />
+                            {apiUnreadCount > 0 && (
+                                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></span>
                             )}
                         </button>
+                        <button onClick={() => setShowSettingsPanel(true)} className="text-slate-400 hover:text-cyan-400 transition-colors p-2 rounded-full hover:bg-white/5">
+                            <Settings className="w-5 h-5" />
+                        </button>
+                    </div>
 
-                        <div className="relative">
-                            <button
-                                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                                className="flex items-center gap-3 pl-4 border-l border-gray-200 dark:border-gray-700 hover:opacity-80 transition-opacity"
-                            >
-                                <div className="w-10 h-10 bg-gradient-to-br from-secondary-500 to-secondary-700 rounded-full flex items-center justify-center shadow-lg shadow-secondary-500/20">
-                                    <span className="text-white font-medium">{storeUser?.firstName?.[0]}{storeUser?.lastName?.[0] || 'U'}</span>
-                                </div>
-                                <div className="hidden xl:block text-left">
-                                    <p className="text-sm font-black text-gray-900 dark:text-white tracking-tight flex items-center gap-1">
-                                        {storeUser?.firstName} {storeUser?.lastName || 'User'}
-                                        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
-                                    </p>
-                                    <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-widest font-black leading-none mt-1">{storeUser?.role?.replace('_', ' ') || 'Extension Officer'}</p>
-                                </div>
-                            </button>
+                    <div className="relative">
+                        <button
+                            onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                            className="flex items-center gap-3 pl-4 border-l border-white/10 hover:opacity-80 transition-opacity"
+                        >
+                            <div className="w-8 h-8 rounded-full border border-cyan-400/30 overflow-hidden ring-2 ring-cyan-400/10 flex items-center justify-center bg-slate-800">
+                                <span className="text-[10px] text-cyan-400 font-bold">{storeUser?.firstName?.[0]}{storeUser?.lastName?.[0]}</span>
+                            </div>
+                            <div className="hidden xl:block text-left">
+                                <p className="text-xs font-bold text-white leading-none">
+                                    {storeUser?.firstName} {storeUser?.lastName}
+                                </p>
+                            </div>
+                        </button>
 
-                            <AnimatePresence>
-                                {isProfileMenuOpen && (
-                                    <>
-                                        <div
-                                            className="fixed inset-0 z-40"
-                                            onClick={() => setIsProfileMenuOpen(false)}
-                                        />
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                            className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 p-2 z-50 backdrop-blur-xl"
-                                        >
-                                            <div className="p-3 mb-2 border-b border-gray-100 dark:border-gray-700">
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Account Info</p>
-                                                <p className="text-xs font-bold text-gray-900 dark:text-white truncate">{storeUser?.email}</p>
-                                            </div>
+                        <AnimatePresence>
+                            {isProfileMenuOpen && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setIsProfileMenuOpen(false)} />
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        className="absolute right-0 mt-2 w-56 glass-panel rounded-xl shadow-2xl p-2 z-50"
+                                    >
+                                        <div className="p-3 mb-2 border-b border-white/10">
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Account Info</p>
+                                            <p className="text-xs font-bold text-white truncate">{storeUser?.email}</p>
+                                        </div>
 
-                                            <button
-                                                onClick={() => { setIsProfileMenuOpen(false); setShowProfileModal(true); }}
-                                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-600 dark:text-gray-300 group"
-                                            >
-                                                <User className="w-4 h-4 text-gray-400 group-hover:text-primary-500" />
-                                                <span className="text-xs font-bold uppercase tracking-widest">My Profile</span>
-                                            </button>
-
-                                            <button
-                                                onClick={() => { setIsProfileMenuOpen(false); setShowSettingsPanel(true); }}
-                                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-600 dark:text-gray-300 group"
-                                            >
-                                                <Settings className="w-4 h-4 text-gray-400 group-hover:text-primary-500" />
-                                                <span className="text-xs font-bold uppercase tracking-widest">Settings</span>
-                                            </button>
-
-                                            <button
-                                                onClick={() => { setIsProfileMenuOpen(false); setShowHelpCenter(true); }}
-                                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-600 dark:text-gray-300 group"
-                                            >
-                                                <HelpCircle className="w-4 h-4 text-gray-400 group-hover:text-primary-500" />
-                                                <span className="text-xs font-bold uppercase tracking-widest">Help Center</span>
-                                            </button>
-
-                                            <div className="h-px bg-gray-100 dark:bg-gray-700 my-2" />
-
-                                            <button
-                                                onClick={handleLogout}
-                                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors text-gray-600 dark:text-gray-300 group"
-                                            >
-                                                <LogOut className="w-4 h-4 text-gray-400 group-hover:text-rose-500" />
-                                                <span className="text-xs font-bold uppercase tracking-widest group-hover:text-rose-500">Sign Out</span>
-                                            </button>
-                                        </motion.div>
-                                    </>
-                                )}
-                            </AnimatePresence>
-                        </div>
+                                        <button onClick={() => { setIsProfileMenuOpen(false); setShowProfileModal(true); }} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300">
+                                            <User className="w-4 h-4 text-cyan-400" />
+                                            <span className="text-xs font-bold uppercase tracking-widest">Profile</span>
+                                        </button>
+                                        <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-rose-500/10 text-rose-400">
+                                            <LogOut className="w-4 h-4" />
+                                            <span className="text-xs font-bold uppercase tracking-widest">Sign Out</span>
+                                        </button>
+                                    </motion.div>
+                                </>
+                            )}
+                        </AnimatePresence>
                     </div>
                 </div>
             </header>
@@ -1456,53 +1391,56 @@ function App() {
                 {sidebarOpen && (
                     <motion.aside
                         initial={{ width: 0, opacity: 0, x: -20 }}
-                        animate={{ width: 280, opacity: 1, x: 0 }}
+                        animate={{ width: 256, opacity: 1, x: 0 }}
                         exit={{ width: 0, opacity: 0, x: -20 }}
-                        className="fixed inset-y-24 left-4 lg:top-28 z-40 glass rounded-[2rem] overflow-y-auto transition-colors flex-shrink-0 mb-4 pb-4"
+                        className="fixed left-0 top-0 h-full flex flex-col pt-20 pb-8 px-4 bg-slate-950/40 backdrop-blur-2xl border-r border-white/10 w-64 z-40"
                     >
-                        <nav className="p-4 space-y-2">
+                        <div className="px-4 mb-8">
+                            <h3 className="font-headline text-cyan-400 text-sm tracking-widest uppercase mb-1">Ag-Extension</h3>
+                            <p className="text-[10px] text-slate-500 font-medium">{storeUser?.region || 'Sector 7G - Midwest'}</p>
+                        </div>
+
+                        <nav className="flex flex-col gap-2 grow">
                             {navItems.map((item) => (
                                 <button
                                     key={item.id}
                                     onClick={() => setActiveTab(item.id)}
-                                    aria-label={item.label}
-                                    aria-current={activeTab === item.id ? 'page' : undefined}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-left ${activeTab === item.id
-                                        ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 shadow-sm'
-                                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                    className={`flex items-center gap-3 px-4 py-3 rounded transition-all duration-200 text-left ${activeTab === item.id
+                                        ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400 shadow-[inset_0_0_15px_rgba(0,245,255,0.1)]'
+                                        : 'text-slate-500 hover:bg-white/5 hover:text-cyan-200'
                                         }`}
                                 >
-                                    <item.icon className={`w-5 h-5 flex-shrink-0 ${activeTab === item.id ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'}`} />
-                                    <span className="font-semibold text-sm truncate">{item.label}</span>
+                                    <item.icon className="w-4 h-4 flex-shrink-0" />
+                                    <span className="font-headline font-bold uppercase tracking-widest text-[10px]">{item.label}</span>
                                 </button>
                             ))}
-
-                             <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800 space-y-4">
-                                <ABTestBanner inline />
-                                <UsageQuota />
-                            </div>
-
-                            <div className="mt-auto pt-6 flex flex-col items-center border-t border-gray-100 dark:border-gray-800">
-                                <div className="px-3 py-1 bg-gray-100 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                                    <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">
-                                        v1.0.2 [Hardened]
-                                    </span>
-                                </div>
-                            </div>
                         </nav>
+
+                        <div className="mt-auto flex flex-col gap-2 pt-6 border-t border-white/5">
+                            <button
+                                onClick={() => setIsGeneratingReport(true)}
+                                className="bg-cyan-400 text-[#003739] px-4 py-3 rounded font-headline font-bold uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:brightness-110 active:scale-95 transition-all shadow-[0_0_20px_rgba(0,245,255,0.2)]"
+                            >
+                                <FileText className="w-3 h-3" />
+                                Generate Report
+                            </button>
+                            <button
+                                onClick={() => setShowHelpCenter(true)}
+                                className="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-200 text-[10px] uppercase font-bold tracking-widest"
+                            >
+                                <HelpCircle className="w-3 h-3" />
+                                Support
+                            </button>
+                        </div>
                     </motion.aside>
                 )}
             </AnimatePresence>
 
                 {/* Content Area */}
-                <div className={`flex-1 flex flex-col min-w-0 overflow-hidden transition-all duration-300 ${sidebarOpen ? 'lg:pl-[300px]' : ''} pt-24 lg:pt-28 pb-4 pr-4 pl-4 h-full`}>
-                    {/* Breadcrumb Navigation - Sticky within the content area */}
-                    <div className="z-40 glass rounded-full px-6 py-3 mb-4 flex-shrink-0 w-fit">
-                        <BreadcrumbNavigation items={getBreadcrumbItems()} />
-                    </div>
-
+                <div className={`flex-1 flex flex-col min-w-0 overflow-hidden transition-all duration-300 ${sidebarOpen ? 'lg:pl-64' : ''} pt-16 h-full`}>
+                    
                     {/* Main Content Scrollable */}
-                    <main className="flex-1 overflow-y-auto glass p-6 lg:p-8 rounded-[2rem] custom-scrollbar relative z-10 transition-all duration-300">
+                    <main className="flex-1 overflow-y-auto p-8 custom-scrollbar relative z-10">
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className=''>
                         <ErrorBoundary>
@@ -1530,9 +1468,13 @@ function App() {
 
                     {activeTab === 'dashboard' && (
                         <ErrorBoundary>
-                            <div className='mb-8'>
-                                <h1 className='text-3xl font-bold text-gray-900 dark:text-white'>{t('dashboard_overview')}</h1>
-                                <p className={'text-gray-500 dark:text-gray-400 mt-1 font-medium'}>{t('dashboard_welcome').replace('{name}', user?.firstName || 'Extension Officer')}</p>
+                            <div className='mb-12'>
+                                <h1 className='text-5xl font-black text-white tracking-tighter font-headline mb-2 drop-shadow-[0_0_15px_rgba(0,245,255,0.3)]'>
+                                    {t('dashboard_overview')}
+                                </h1>
+                                <p className='text-slate-400 font-headline font-medium text-lg'>
+                                    {t('dashboard_welcome').replace('{name}', user?.firstName || 'Extension Officer')}
+                                </p>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -1578,20 +1520,20 @@ function App() {
                             </div>
 
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                                <div className={`lg:col-span-2 card p-6 bg-theme-bg-card dark:bg-gray-800 border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden group`}>
+                                <div className="lg:col-span-2 glass-panel p-6 rounded-xl relative overflow-hidden group">
                                     <div className="flex justify-between items-center mb-6">
-                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                            <MapPin className="w-5 h-5 text-primary-500" />
+                                        <h3 className="text-lg font-headline font-bold text-white flex items-center gap-2">
+                                            <MapPin className="w-5 h-5 text-cyan-400" />
                                             {t('stat_regional_distribution')}
                                         </h3>
                                         <div className="flex gap-2">
-                                            <span className="px-2 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded text-[10px] font-bold uppercase tracking-widest">
+                                            <span className="px-2 py-1 bg-cyan-400/10 text-cyan-400 rounded text-[10px] font-bold uppercase tracking-widest border border-cyan-400/20">
                                                 {t('stat_malawi_overview')}
                                             </span>
                                         </div>
                                     </div>
 
-                                    <div className="relative h-[400px] bg-theme-bg-primary dark:bg-gray-900/50 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800">
+                                    <div className="relative h-[400px] bg-slate-950/50 rounded-lg overflow-hidden border border-white/5 shadow-inner">
                                         <FarmerMap
                                             height="400px"
                                             isExternalExpanded={isMapExpanded}
@@ -1623,20 +1565,20 @@ function App() {
                                         />
 
                                         {!isMapExpanded && (
-                                            <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center bg-white/10 dark:bg-black/20 backdrop-blur-md p-3 rounded-xl border border-white/20">
+                                            <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center bg-slate-900/80 backdrop-blur-md p-3 rounded-xl border border-white/10">
                                                 <div className="flex gap-4">
                                                     <div className="flex items-center gap-2">
-                                                        <div className="w-2 h-2 bg-primary-500 rounded-full"></div>
-                                                        <span className="text-[10px] font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest">{t('table_active')}</span>
+                                                        <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
+                                                        <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">{t('table_active')}</span>
                                                     </div>
                                                     <div className="flex items-center gap-2">
-                                                        <div className="w-2 h-2 bg-secondary-500 rounded-full"></div>
-                                                        <span className="text-[10px] font-bold text-gray-600 dark:text-gray-300 uppercase tracking-widest">{t('analytics_disease_alerts')}</span>
+                                                        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                                                        <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">{t('analytics_disease_alerts')}</span>
                                                     </div>
                                                 </div>
                                                 <button
                                                     onClick={() => setIsMapExpanded(true)}
-                                                    className="text-[10px] font-black text-primary-600 dark:text-primary-400 uppercase bg-primary-50 dark:bg-primary-900/30 px-3 py-1 rounded-lg hover:bg-primary-100 transition-colors"
+                                                    className="text-[10px] font-black text-cyan-400 uppercase bg-cyan-400/10 px-3 py-1 rounded-lg border border-cyan-400/20 hover:bg-cyan-400/20 transition-colors"
                                                 >
                                                     {t('viz_detail_view')}
                                                 </button>
@@ -1644,37 +1586,59 @@ function App() {
                                         )}
                                     </div>
                                 </div>
-                                <div className="card p-8 bg-theme-bg-card dark:bg-gray-800 border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden relative">
-                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">{t('analytics_support_efficiency')}</h3>
-                                    {performanceData ? (
-                                    <div className="space-y-6">
-                                        {[
-                                            { name: t('analytics_resolution_rate'), progress: performanceData?.metrics?.resolutionRate ?? 0, color: 'bg-primary-500' },
-                                            { name: t('analytics_satisfaction_score'), progress: performanceData?.metrics?.satisfactionScore ? performanceData.metrics.satisfactionScore * 20 : 0, color: 'bg-secondary-500' },
-                                            { name: t('analytics_follow_up_rate'), progress: performanceData?.metrics?.followUpRate ?? 0, color: 'bg-purple-500' },
-                                            { name: t('analytics_first_contact_res'), progress: performanceData?.metrics?.firstContactResolution ?? 0, color: 'bg-orange-500' }
-                                        ].map((item, i) => (
-                                            <div key={i} className="space-y-2">
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{item.name}</span>
-                                                    <span className="text-xs font-black text-gray-400">{Math.round(item.progress)}%</span>
+                                <div className="space-y-6">
+                                    <div className="glass-panel p-8 rounded-xl overflow-hidden relative">
+                                        <h3 className="text-lg font-headline font-bold text-white mb-6">{t('analytics_support_efficiency')}</h3>
+                                        {performanceData ? (
+                                        <div className="space-y-6">
+                                            {[
+                                                { name: t('analytics_resolution_rate'), progress: performanceData?.metrics?.resolutionRate ?? 0, color: 'bg-cyan-400' },
+                                                { name: t('analytics_satisfaction_score'), progress: performanceData?.metrics?.satisfactionScore ? performanceData.metrics.satisfactionScore * 20 : 0, color: 'bg-purple-500' },
+                                            ].map((item, i) => (
+                                                <div key={i} className="space-y-2">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-sm font-bold text-slate-300">{item.name}</span>
+                                                        <span className="text-xs font-black text-cyan-400">{Math.round(item.progress)}%</span>
+                                                    </div>
+                                                    <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                                                        <motion.div
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: `${item.progress}%` }}
+                                                            transition={{ duration: 1, delay: i * 0.1 }}
+                                                            className={`h-full ${item.color} rounded-full shadow-[0_0_10px_rgba(0,245,255,0.3)]`}
+                                                        />
+                                                    </div>
                                                 </div>
-                                                <div className="w-full h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                                                    <motion.div
-                                                        initial={{ width: 0 }}
-                                                        animate={{ width: `${item.progress}%` }}
-                                                        transition={{ duration: 1, delay: i * 0.1 }}
-                                                        className={`h-full ${item.color} rounded-full`}
-                                                    />
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    ) : (
-                                        <div className="flex items-center justify-center py-8">
-                                            <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
+                                            ))}
                                         </div>
-                                    )}
+                                        ) : (
+                                            <div className="flex items-center justify-center py-8">
+                                                <Loader2 className="w-6 h-6 animate-spin text-cyan-400" />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="glass-panel p-6 rounded-xl relative overflow-hidden">
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <div className="w-2 h-2 bg-cyan-400 rounded-full animate-ping"></div>
+                                            <h3 className="text-sm font-headline font-bold text-white uppercase tracking-widest">Active Pulse</h3>
+                                        </div>
+                                        <div className="space-y-4">
+                                            {[
+                                                { label: 'Sensor Node 04', status: 'Optimal', time: '2m ago' },
+                                                { label: 'Drone Survey', status: 'In Progress', time: 'Active' },
+                                                { label: 'Satellite Sync', status: 'Complete', time: '1h ago' }
+                                            ].map((item, i) => (
+                                                <div key={i} className="flex justify-between items-center border-b border-white/5 pb-3 last:border-0 last:pb-0">
+                                                    <div>
+                                                        <p className="text-xs font-bold text-white uppercase tracking-tight">{item.label}</p>
+                                                        <p className="text-[10px] text-slate-500">{item.time}</p>
+                                                    </div>
+                                                    <span className="text-[10px] font-black text-cyan-400 uppercase">{item.status}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </ErrorBoundary>
