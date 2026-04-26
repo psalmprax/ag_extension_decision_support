@@ -780,7 +780,7 @@ function App() {
     const { data: farmersResponse } = useQuery<{ success: boolean; data: { farmers: Farmer[] } }>({
         queryKey: ['farmers'],
         queryFn: fetchFarmers,
-        enabled: activeTab === 'portfolio' && !!user
+        enabled: (activeTab === 'portfolio' || activeTab === 'dashboard') && !!user
     });
     const queryFarmers = farmersResponse?.data?.farmers || [];
     const effectiveFarmers = queryFarmers.length > 0 ? queryFarmers : storeFarmers;
