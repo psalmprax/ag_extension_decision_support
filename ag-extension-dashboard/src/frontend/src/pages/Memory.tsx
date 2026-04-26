@@ -13,7 +13,7 @@ import toast from 'react-hot-toast';
 
 export function Memory() {
     const { t } = useLanguage();
-    const { headingClass } = useDesignSystemMode();
+    const { headingClass, isModern, radiusClass, btnClass } = useDesignSystemMode();
     const { addNotification } = useAppStore();
 
     // State
@@ -178,7 +178,7 @@ export function Memory() {
                     <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{title}</p>
                     <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
                 </div>
-                <div className={`p-3 bg-${color}-50 dark:bg-${color}-900/30 rounded-xl`}>
+                <div className={`p-3 bg-${color}-50 dark:bg-${color}-900/30 ${radiusClass}`}>
                     <Icon className={`w-6 h-6 text-${color}-600 dark:text-${color}-400`} />
                 </div>
             </div>
@@ -216,13 +216,13 @@ export function Memory() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className={`text-2xl ${headingClass}`}>{t('memory_title')}</h1>
+                    <h1 className={`text-2xl ${headingClass}`}>{isModern ? 'Cognitive Persistence' : 'Memory Manager'}</h1>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">{t('memory_subtitle')}</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => setShowAddModal(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                        className={`flex items-center gap-2 px-4 py-2 bg-primary-600 text-white ${btnClass} hover:bg-primary-700`}
                     >
                         <Plus className="w-4 h-4" />
                         Add Memory
@@ -230,7 +230,7 @@ export function Memory() {
                     <button
                         onClick={handleRefresh}
                         disabled={isRefreshing}
-                        className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
+                        className={`flex items-center gap-2 px-4 py-2 bg-gray-600 text-white ${btnClass} hover:bg-gray-700 disabled:opacity-50`}
                     >
                         <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                         Refresh
@@ -277,7 +277,7 @@ export function Memory() {
                                 placeholder={t('memory_search_placeholder')}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 ${radiusClass} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}
                             />
                         </div>
                     </div>
@@ -286,7 +286,7 @@ export function Memory() {
                         <select
                             value={selectedCategory}
                             onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                            className={`px-3 py-2 border border-gray-300 dark:border-gray-600 ${radiusClass} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}
                         >
                             <option value="all">All Categories</option>
                             {categories.map(category => (
@@ -308,7 +308,7 @@ export function Memory() {
                                 key={`${memory.category}-${memory.key}`}
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800"
+                                className={`p-4 border border-gray-200 dark:border-gray-700 ${radiusClass} bg-white dark:bg-gray-800`}
                             >
                                 <div className="flex items-start justify-between mb-3">
                                     <div className="flex-1">
@@ -380,7 +380,7 @@ export function Memory() {
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">{t('memory_category_summary')}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {memorySummary.map((category) => (
-                            <div key={category.category} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <div key={category.category} className={`p-4 bg-gray-50 dark:bg-gray-800 ${radiusClass}`}>
                                 <div className="flex items-center justify-between mb-2">
                                     <h4 className="font-medium text-gray-900 dark:text-white">{category.category}</h4>
                                     <span className="text-2xl font-bold text-primary-600">{category.count}</span>
@@ -400,7 +400,7 @@ export function Memory() {
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full"
+                        className={`bg-white dark:bg-gray-800 ${radiusClass} max-w-md w-full`}
                     >
                         <div className="p-6">
                             <div className="flex items-center justify-between mb-4">
@@ -429,7 +429,7 @@ export function Memory() {
                                         value={newMemory.category}
                                         onChange={(e) => setNewMemory(prev => ({ ...prev, category: e.target.value }))}
                                         placeholder="e.g., farming, weather, crops"
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                        className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 ${radiusClass} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}
                                     />
                                 </div>
 
@@ -442,7 +442,7 @@ export function Memory() {
                                         value={newMemory.key}
                                         onChange={(e) => setNewMemory(prev => ({ ...prev, key: e.target.value }))}
                                         placeholder={t('memory_unique_identifier')}
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                        className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 ${radiusClass} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}
                                     />
                                 </div>
 
@@ -455,7 +455,7 @@ export function Memory() {
                                         onChange={(e) => setNewMemory(prev => ({ ...prev, value: e.target.value }))}
                                         placeholder={t('memory_content')}
                                         rows={4}
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
+                                        className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 ${radiusClass} bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none`}
                                     />
                                 </div>
 
@@ -478,7 +478,7 @@ export function Memory() {
                                     <button
                                         onClick={editingMemory ? handleUpdateMemory : handleAddMemory}
                                         disabled={!newMemory.category || !newMemory.key || !newMemory.value}
-                                        className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                                        className={`flex-1 px-4 py-2 bg-primary-600 text-white ${btnClass} hover:bg-primary-700 disabled:opacity-50`}
                                     >
                                         {editingMemory ? t('memory_edit') : t('memory_add_new')}
                                     </button>
@@ -488,7 +488,7 @@ export function Memory() {
                                             setEditingMemory(null);
                                             setNewMemory({ category: '', key: '', value: '', importance: 0.5 });
                                         }}
-                                        className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                                        className={`px-4 py-2 bg-gray-600 text-white ${btnClass} hover:bg-gray-700`}
                                     >
                                         Cancel
                                     </button>

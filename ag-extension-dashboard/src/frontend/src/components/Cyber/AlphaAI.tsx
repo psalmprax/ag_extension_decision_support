@@ -20,6 +20,7 @@ import AlphaAgentOps from './AlphaAgentOps';
 import { useAppStore } from '@/store/useAppStore';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '@/api/client';
+import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
 
 const formatUptime = (seconds: number): string => {
     const d = Math.floor(seconds / 86400);
@@ -31,6 +32,7 @@ const formatUptime = (seconds: number): string => {
 };
 
 const AlphaAI = () => {
+    const { radiusClass, btnClass, isModern } = useDesignSystemMode();
     const setActiveTab = useAppStore((s) => s.setActiveTab);
     const [activeMode, setActiveMode] = React.useState<'actionable' | 'ops'>('actionable');
     const [showTerminal, setShowTerminal] = React.useState(false);
@@ -152,7 +154,7 @@ const AlphaAI = () => {
             <div className="flex items-center justify-between mb-12">
                 <div className="flex items-center gap-6">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/20">
+                        <div className={`w-10 h-10 bg-primary-500 ${radiusClass} flex items-center justify-center shadow-lg shadow-primary-500/20`}>
                             <Brain className="w-6 h-6 text-white" />
                         </div>
                         <div>
@@ -166,7 +168,7 @@ const AlphaAI = () => {
                             <button
                                 key={mode.id}
                                 onClick={() => setActiveMode(mode.id as 'actionable' | 'ops')}
-                                className={`px-6 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+                                className={`px-6 py-2.5 ${btnClass} border text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
                                     activeMode === mode.id
                                         ? 'bg-white/10 border-white/20 text-white shadow-xl'
                                         : 'bg-transparent border-transparent text-white/40 hover:text-white/60'
@@ -180,7 +182,7 @@ const AlphaAI = () => {
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl">
+                    <div className={`flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 ${radiusClass}`}>
                         <div className={`w-2 h-2 rounded-full animate-pulse ${healthData?.status === 'healthy' ? 'bg-green-500' : 'bg-yellow-500'}`} />
                         <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">
                             {healthData?.status === 'healthy' ? 'System Online' : healthLoading ? 'Checking...' : 'Status Unknown'}
@@ -188,7 +190,7 @@ const AlphaAI = () => {
                     </div>
                     <button
                         onClick={() => setShowTerminal(!showTerminal)}
-                        className={`p-2.5 border rounded-xl transition-all ${showTerminal ? 'bg-primary-500/20 border-primary-500/30 text-primary-400' : 'bg-white/5 border-white/10 text-white/60 hover:text-white'}`}
+                        className={`p-2.5 border ${radiusClass} transition-all ${showTerminal ? 'bg-primary-500/20 border-primary-500/30 text-primary-400' : 'bg-white/5 border-white/10 text-white/60 hover:text-white'}`}
                     >
                         <Terminal className="w-5 h-5" />
                     </button>
@@ -202,7 +204,7 @@ const AlphaAI = () => {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="mb-8 bg-black/60 border border-white/10 rounded-2xl overflow-hidden"
+                        className={`mb-8 bg-black/60 border border-white/10 ${radiusClass} overflow-hidden`}
                     >
                         <div className="p-3 border-b border-white/5 flex items-center justify-between">
                             <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">Terminal</span>
@@ -240,7 +242,7 @@ const AlphaAI = () => {
             {/* Real System Health Stats */}
             <div className="grid grid-cols-4 gap-4 mb-12">
                 {systemStats.map((stat, i) => (
-                    <div key={i} className="p-6 bg-white/5 border border-white/5 rounded-3xl group hover:border-white/10 transition-all cursor-default relative overflow-hidden">
+                    <div key={i} className={`p-6 bg-white/5 border border-white/5 ${radiusClass} group hover:border-white/10 transition-all cursor-default relative overflow-hidden`}>
                         <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                             <stat.icon className="w-12 h-12" />
                         </div>
@@ -276,7 +278,7 @@ const AlphaAI = () => {
             <div className="fixed bottom-8 right-8 z-50">
                 <button
                     onClick={() => setActiveTab('knowledge')}
-                    className="p-5 bg-primary-500 rounded-2xl shadow-2xl shadow-primary-500/40 text-black hover:bg-primary-400 hover:scale-105 active:scale-95 transition-all outline outline-8 outline-primary-500/10"
+                    className={`p-5 bg-primary-500 ${radiusClass} shadow-2xl shadow-primary-500/40 text-black hover:bg-primary-400 hover:scale-105 active:scale-95 transition-all outline outline-8 outline-primary-500/10`}
                 >
                     <Search className="w-6 h-6 stroke-[3]" />
                 </button>

@@ -25,6 +25,7 @@ import {
 import { askAI, searchKnowledge, fetchKnowledgeHistory, fetchKnowledgeStats, Attachment } from '@/api/knowledgeService';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
+import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
 import { KnowledgeStats } from './KnowledgeStats';
 import { KnowledgeSidebar } from './KnowledgeSidebar';
 import { ReasoningVisuals } from './ReasoningVisuals';
@@ -43,6 +44,7 @@ interface Result {
 export const KnowledgeBase: React.FC = () => {
     const { t } = useLanguage();
     const { addNotification } = useAppStore();
+    const { isModern, headingClass, radiusClass, btnClass } = useDesignSystemMode();
     
     const [searchQuery, setSearchQuery] = useState('');
     const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -163,8 +165,8 @@ export const KnowledgeBase: React.FC = () => {
                             <Sparkles className="w-3 h-3" />
                             ALFA reasoning engine active
                         </motion.div>
-                        <h1 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-4 tracking-tighter">
-                            {t('knowledge_title')}
+                        <h1 className={`text-4xl md:text-5xl font-black mb-4 tracking-tighter ${headingClass}`}>
+                            {isModern ? 'Ontological Repository' : 'Knowledge Base'}
                         </h1>
                         <p className="text-gray-500 dark:text-gray-400 font-medium text-lg max-w-2xl mx-auto">
                             {t('knowledge_subtitle')}
@@ -179,7 +181,7 @@ export const KnowledgeBase: React.FC = () => {
                             {attachments.length > 0 && (
                                 <div className="flex flex-wrap gap-2 px-4 py-3 border-b border-gray-100 dark:border-gray-700/50">
                                     {attachments.map((att, i) => (
-                                        <div key={i} className="flex items-center gap-2 bg-primary-50 dark:bg-primary-900/40 px-3 py-1.5 rounded-xl border border-primary-100 dark:border-primary-800 group/att">
+                                        <div key={i} className={`flex items-center gap-2 bg-primary-50 dark:bg-primary-900/40 px-3 py-1.5 ${radiusClass} border border-primary-100 dark:border-primary-800 group/att`}>
                                             {att.type === 'image' ? (
                                                 <img src={att.data} className="w-5 h-5 object-cover rounded-md" />
                                             ) : (
@@ -207,20 +209,20 @@ export const KnowledgeBase: React.FC = () => {
                                     className="flex-1 bg-transparent border-none focus:ring-0 py-4 px-4 text-xl font-medium text-gray-900 dark:text-white placeholder-gray-400"
                                 />
                                 <div className="flex gap-2 pr-2">
-                                    <label className="p-3 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-400 cursor-pointer transition-all">
+                                    <label className={`p-3 ${radiusClass} hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-400 cursor-pointer transition-all`}>
                                         <Paperclip className="w-6 h-6" />
                                         <input type="file" multiple className="hidden" onChange={handleFileUpload} />
                                     </label>
                                     <button 
                                         onClick={() => setIsRecording(!isRecording)}
-                                        className={`p-3 rounded-2xl transition-all ${isRecording ? 'bg-rose-100 text-rose-600 animate-pulse' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-400'}`}
+                                        className={`p-3 ${radiusClass} transition-all ${isRecording ? 'bg-rose-100 text-rose-600 animate-pulse' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-400'}`}
                                         title="Voice Input"
                                     >
                                         <Mic className="w-6 h-6" />
                                     </button>
                                     <button 
                                         onClick={() => setShowStats(!showStats)}
-                                        className={`p-3 rounded-2xl transition-all ${showStats ? 'bg-indigo-100 text-indigo-600' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-400'}`}
+                                        className={`p-3 ${radiusClass} transition-all ${showStats ? 'bg-indigo-100 text-indigo-600' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-400'}`}
                                         title="Insights"
                                     >
                                         <BarChart3 className="w-6 h-6" />
@@ -228,7 +230,7 @@ export const KnowledgeBase: React.FC = () => {
                                     <button 
                                         onClick={() => handleSearch(searchQuery)}
                                         disabled={isAsking || (!searchQuery.trim() && attachments.length === 0)}
-                                        className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white p-3 md:px-8 rounded-2xl font-bold shadow-lg shadow-primary-500/20 flex items-center gap-2 transition-all transform active:scale-95"
+                                        className={`bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white p-3 md:px-8 ${radiusClass} font-bold shadow-lg shadow-primary-500/20 flex items-center gap-2 transition-all transform active:scale-95`}
                                     >
                                         {isAsking ? (
                                             <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
@@ -271,7 +273,7 @@ export const KnowledgeBase: React.FC = () => {
                                      )}
                                     
                                     <div className="flex items-start gap-4 mb-8">
-                                        <div className="p-3 bg-primary-100 dark:bg-primary-900/40 rounded-2xl text-primary-600 dark:text-primary-400">
+                                        <div className={`p-3 bg-primary-100 dark:bg-primary-900/40 ${radiusClass} text-primary-600 dark:text-primary-400`}>
                                             <Brain className="w-8 h-8" />
                                         </div>
                                         <div>
@@ -301,7 +303,7 @@ export const KnowledgeBase: React.FC = () => {
                                         </div>
                                         <div className="flex flex-wrap gap-3">
                                             {lastResult.contextUsed.map((ctx: any, i: number) => (
-                                                <div key={i} className="px-4 py-2 bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700/50 rounded-2xl flex items-center gap-2 group hover:border-primary-500/50 transition-colors cursor-pointer">
+                                                <div key={i} className={`px-4 py-2 bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700/50 ${radiusClass} flex items-center gap-2 group hover:border-primary-500/50 transition-colors cursor-pointer`}>
                                                     <div className="w-2 h-2 bg-primary-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
                                                     <div className="flex flex-col">
                                                         <span className="text-[10px] font-black text-gray-400 uppercase leading-none mb-1">Source</span>
@@ -328,7 +330,7 @@ export const KnowledgeBase: React.FC = () => {
                                         className="p-6 bg-theme-bg-card border border-gray-100 dark:border-gray-700 hover:border-primary-500 transition-all text-left flex items-start gap-4 group"
                                         style={{ borderRadius: 'var(--radius-card)' }}
                                     >
-                                        <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-xl group-hover:bg-primary-500 group-hover:text-white transition-colors">
+                                        <div className={`p-2 bg-gray-100 dark:bg-gray-700 ${radiusClass} group-hover:bg-primary-500 group-hover:text-white transition-colors`}>
                                             <Lightbulb className="w-5 h-5" />
                                         </div>
                                         <span className="font-bold text-gray-700 dark:text-gray-300">{suggestion}</span>

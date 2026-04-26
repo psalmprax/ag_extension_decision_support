@@ -840,27 +840,27 @@ function App() {
 
 
     const allNavItems = [
-        { id: 'dashboard', label: t('nav_dashboard'), icon: LayoutDashboard, roles: ['extension_officer', 'admin'] },
-        { id: 'farmer_dashboard', label: t('nav_dashboard'), icon: LayoutDashboard, roles: ['farmer'] },
-        { id: 'aiassistant', label: t('chat_ai_advisor'), icon: MessageSquare, roles: ['extension_officer', 'admin', 'farmer'] },
-        { id: 'farmerchat', label: t('chat_farmer_chats'), icon: Users, roles: ['extension_officer', 'admin'] },
-        { id: 'knowledge', label: t('nav_knowledge'), icon: Search, roles: ['extension_officer', 'admin', 'farmer'] },
-        { id: 'portfolio', label: t('portfolio_title'), icon: Users, roles: ['extension_officer', 'admin'] },
-        { id: 'register_farmer', label: t('farmer_register_title'), icon: UserPlus, roles: ['extension_officer', 'admin'] },
-        { id: 'visit_synthesis', label: t('visit_synthesis_title'), icon: Sparkles, roles: ['extension_officer', 'admin'] },
-        { id: 'visits', label: t('nav_visits'), icon: MapPin, roles: ['extension_officer', 'admin', 'farmer'] },
-        { id: 'reports', label: t('reports_title'), icon: FileText, roles: ['extension_officer', 'admin'] },
-        { id: 'sms', label: t('nav_sms'), icon: Send, roles: ['extension_officer', 'admin'] },
-        { id: 'analytics', label: t('analytics_title'), icon: BarChart3, roles: ['extension_officer', 'admin'] },
-        { id: 'billing', label: t('nav_billing'), icon: CreditCard, roles: ['extension_officer', 'admin', 'farmer'] },
+        { id: 'dashboard', label: isModern ? 'Strategic Intelligence' : 'Operations Dashboard', icon: LayoutDashboard, roles: ['extension_officer', 'admin'] },
+        { id: 'farmer_dashboard', label: isModern ? 'Strategic Intelligence' : 'Operations Dashboard', icon: LayoutDashboard, roles: ['farmer'] },
+        { id: 'aiassistant', label: isModern ? 'Cognitive Synthesizer' : 'AI Assistant', icon: MessageSquare, roles: ['extension_officer', 'admin', 'farmer'] },
+        { id: 'farmerchat', label: isModern ? 'Network Communications' : 'Farmer Chat', icon: Users, roles: ['extension_officer', 'admin'] },
+        { id: 'knowledge', label: isModern ? 'Ontological Repository' : 'Knowledge Base', icon: Search, roles: ['extension_officer', 'admin', 'farmer'] },
+        { id: 'portfolio', label: isModern ? 'Human Capital Network' : 'Client Portfolio', icon: Users, roles: ['extension_officer', 'admin'] },
+        { id: 'register_farmer', label: isModern ? 'Node Provisioning' : 'Register Client', icon: UserPlus, roles: ['extension_officer', 'admin'] },
+        { id: 'visit_synthesis', label: isModern ? 'Encounter Analysis' : 'Visit Synthesis', icon: Sparkles, roles: ['extension_officer', 'admin'] },
+        { id: 'visits', label: isModern ? 'Field Telemetry' : 'Field Visits', icon: MapPin, roles: ['extension_officer', 'admin', 'farmer'] },
+        { id: 'reports', label: isModern ? 'Executive Reporting' : 'Data Reports', icon: FileText, roles: ['extension_officer', 'admin'] },
+        { id: 'sms', label: isModern ? 'Omnichannel Broadcasting' : 'SMS Campaigns', icon: Send, roles: ['extension_officer', 'admin'] },
+        { id: 'analytics', label: isModern ? 'Growth Optimization' : 'System Analytics', icon: BarChart3, roles: ['extension_officer', 'admin'] },
+        { id: 'billing', label: isModern ? 'Capital Utilization' : 'Billing & Subscriptions', icon: CreditCard, roles: ['extension_officer', 'admin', 'farmer'] },
         // Advanced/Technical Pages (Admin only)
-        { id: 'telemetry', label: 'Agent Telemetry', icon: Activity, roles: ['admin'] },
-        { id: 'agents', label: 'Agent Orchestration', icon: Settings, roles: ['admin'] },
-        { id: 'system_health', label: 'System Health', icon: Shield, roles: ['admin'] },
-        { id: 'disease_diagnosis', label: 'Disease Diagnosis', icon: Leaf, roles: ['extension_officer', 'admin'] },
-        { id: 'memory', label: 'Memory Manager', icon: Brain, roles: ['admin'] },
-        { id: 'email_workflows', label: 'Email Workflows', icon: Mail, roles: ['admin'] },
-        { id: 'mcp_tools', label: 'MCP Tools', icon: Wrench, roles: ['admin'] },
+        { id: 'telemetry', label: isModern ? 'Neural Telemetry' : 'System Telemetry', icon: Activity, roles: ['admin'] },
+        { id: 'agents', label: isModern ? 'Autonomous Orchestration' : 'Agent Manager', icon: Settings, roles: ['admin'] },
+        { id: 'system_health', label: isModern ? 'Infrastructure Vitality' : 'System Health', icon: Shield, roles: ['admin'] },
+        { id: 'disease_diagnosis', label: isModern ? 'Pathological Diagnostics' : 'Disease Checker', icon: Leaf, roles: ['extension_officer', 'admin'] },
+        { id: 'memory', label: isModern ? 'Cognitive Persistence' : 'Memory Manager', icon: Brain, roles: ['admin'] },
+        { id: 'email_workflows', label: isModern ? 'Automated Dispatch' : 'Email Workflows', icon: Mail, roles: ['admin'] },
+        { id: 'mcp_tools', label: isModern ? 'Protocol Toolchain' : 'System Tools', icon: Wrench, roles: ['admin'] },
     ];
 
     const navItems = allNavItems.filter(item => !user || item.roles.includes(user.role));
@@ -1498,7 +1498,7 @@ function App() {
                     {/* Main Content Scrollable */}
                     <main className="flex-1 overflow-y-auto p-8 custom-scrollbar relative z-10">
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className=''>
+                            <div className=''>
                         <ErrorBoundary>
                             {activeTab === 'farmer_dashboard' && <FarmerDashboard />}
 
@@ -1514,7 +1514,7 @@ function App() {
                                 </RoleGuard>
                             )}
                         </ErrorBoundary>
-                    </div>
+
 
                     {activeTab === 'sms' && (
                         <ErrorBoundary>
@@ -1595,13 +1595,13 @@ function App() {
                                             {t('stat_regional_distribution')}
                                         </h3>
                                         <div className="flex gap-2">
-                                            <span className="px-2 py-1 bg-cyan-400/10 text-cyan-400 rounded text-[10px] font-bold uppercase tracking-widest border border-cyan-400/20">
+                                            <span className={`px-2 py-1 bg-cyan-400/10 text-cyan-400 ${radiusClass} text-[10px] font-bold uppercase tracking-widest border border-cyan-400/20`}>
                                                 {t('stat_kenya_overview') || "Kenya Overview"}
                                             </span>
                                         </div>
                                     </div>
 
-                                    <div className="relative h-[400px] bg-slate-950/50 rounded-lg overflow-hidden border border-white/5 shadow-inner">
+                                    <div className={`relative h-[400px] bg-slate-950/50 ${radiusClass} overflow-hidden border border-white/5 shadow-inner`}>
                                         <FarmerMap
                                             height="400px"
                                             isExternalExpanded={isMapExpanded}
@@ -1633,7 +1633,7 @@ function App() {
                                         />
 
                                         {!isMapExpanded && (
-                                            <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center bg-slate-900/80 backdrop-blur-md p-3 rounded-xl border border-white/10">
+                                            <div className={`absolute bottom-4 left-4 right-4 flex justify-between items-center bg-slate-900/80 backdrop-blur-md p-3 ${radiusClass} border border-white/10`}>
                                                 <div className="flex gap-4">
                                                     <div className="flex items-center gap-2">
                                                         <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
@@ -1646,7 +1646,7 @@ function App() {
                                                 </div>
                                                 <button
                                                     onClick={() => setIsMapExpanded(true)}
-                                                    className="text-[10px] font-black text-cyan-400 uppercase bg-cyan-400/10 px-3 py-1 rounded-lg border border-cyan-400/20 hover:bg-cyan-400/20 transition-colors"
+                                                    className={`text-[10px] font-black text-cyan-400 uppercase bg-cyan-400/10 px-3 py-1 ${radiusClass} border border-cyan-400/20 hover:bg-cyan-400/20 transition-colors`}
                                                 >
                                                     {t('viz_detail_view')}
                                                 </button>
@@ -1714,12 +1714,14 @@ function App() {
                     {activeTab === 'portfolio' && (
                         <div>
                             <div className="mb-8">
-                                <h1 className={`text-3xl ${headingClass}`}>{t('portfolio_title')}</h1>
+                                    <h1 className={`text-3xl ${headingClass}`}>
+                                        {isModern ? 'Human Capital Network' : 'Client Portfolio'}
+                                    </h1>
                                 <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">{t('portfolio_subtitle')}</p>
                             </div>
                             {/* Bulk Actions Bar */}
                             {selectedFarmers.size > 0 && (
-                                <div className="mb-4 p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-xl">
+                                <div className={`mb-4 p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 ${radiusClass}`}>
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                             <div className="flex items-center gap-2">
@@ -1732,28 +1734,28 @@ function App() {
                                         <div className="flex items-center gap-2">
                                             <button
                                                 onClick={() => setShowBulkSmsComposer(!showBulkSmsComposer)}
-                                                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2"
+                                                className={`px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold ${btnClass} transition-colors flex items-center gap-2`}
                                             >
                                                 <Send className="w-4 h-4" />
                                                 Send SMS
                                             </button>
                                             <button
                                                 onClick={handleBulkExport}
-                                                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2"
+                                                className={`px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold ${btnClass} transition-colors flex items-center gap-2`}
                                             >
                                                 <FileText className="w-4 h-4" />
                                                 Export CSV
                                             </button>
                                             <button
                                                 onClick={handleBulkDelete}
-                                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2"
+                                                className={`px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-bold ${btnClass} transition-colors flex items-center gap-2`}
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                                 Delete
                                             </button>
                                             <button
                                                 onClick={() => setSelectedFarmers(new Set())}
-                                                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-bold rounded-lg transition-colors"
+                                                className={`px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-bold ${btnClass} transition-colors`}
                                             >
                                                 Clear Selection
                                             </button>
@@ -1763,7 +1765,7 @@ function App() {
                             )}
 
                             {showBulkSmsComposer && selectedFarmers.size > 0 && (
-                                <div className="mb-4 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
+                                <div className={`mb-4 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 ${radiusClass} shadow-sm`}>
                                     <div className="flex items-center justify-between mb-3">
                                         <h4 className="text-sm font-bold text-gray-900 dark:text-white">
                                             Compose SMS for {selectedFarmers.size} farmer{selectedFarmers.size !== 1 ? 's' : ''}
@@ -1777,13 +1779,13 @@ function App() {
                                         onChange={(e) => setBulkSmsMessage(e.target.value)}
                                         placeholder="Type your message here... (leave empty for default message)"
                                         rows={3}
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 resize-none text-sm"
+                                        className={`w-full px-4 py-3 ${radiusClass} border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 resize-none text-sm`}
                                     />
                                     <div className="flex items-center justify-between mt-3">
                                         <span className="text-xs text-gray-400">{bulkSmsMessage.length}/160 characters</span>
                                         <button
                                             onClick={handleBulkSMS}
-                                            className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2"
+                                            className={`px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold ${btnClass} transition-colors flex items-center gap-2`}
                                         >
                                             <Send className="w-4 h-4" />
                                             Send to {selectedFarmers.size} farmer{selectedFarmers.size !== 1 ? 's' : ''}
@@ -1808,7 +1810,7 @@ function App() {
                                             {/* Top Section: Avatar and Select Checkbox */}
                                             <div className="flex justify-between items-start mb-4">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary-500 to-blue-500 shadow-lg shadow-primary-500/20 flex flex-shrink-0 items-center justify-center text-white font-black text-lg">
+                                                    <div className={`w-12 h-12 ${radiusClass} bg-gradient-to-br from-primary-500 to-blue-500 shadow-lg shadow-primary-500/20 flex flex-shrink-0 items-center justify-center text-white font-black text-lg`}>
                                                         {farmer.firstName?.[0]}
                                                     </div>
                                                     <div>
@@ -1821,7 +1823,7 @@ function App() {
                                                         type="checkbox"
                                                         checked={selectedFarmers.has(farmer.id)}
                                                         onChange={(e) => handleSelectFarmer(farmer.id, e.target.checked)}
-                                                        className="w-5 h-5 rounded-md border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                                                        className={`w-5 h-5 ${radiusClass} border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer`}
                                                     />
                                                 </div>
                                             </div>
@@ -1842,7 +1844,7 @@ function App() {
                                                 
                                                 <div className="flex flex-wrap gap-1.5 min-h-[30px]">
                                                     {farmer.crops?.map((crop: string) => (
-                                                        <span key={crop} className="px-2.5 py-1 bg-gray-100/50 dark:bg-gray-800 text-primary-600 dark:text-primary-300 rounded-lg text-[10px] font-bold uppercase tracking-tight border border-gray-200 dark:border-gray-700 shadow-sm">
+                                                        <span key={crop} className={`px-2.5 py-1 bg-gray-100/50 dark:bg-gray-800 text-primary-600 dark:text-primary-300 ${radiusClass} text-[10px] font-bold uppercase tracking-tight border border-gray-200 dark:border-gray-700 shadow-sm`}>
                                                             {crop}
                                                         </span>
                                                     ))}
@@ -1864,7 +1866,7 @@ function App() {
                                                         type="checkbox"
                                                         checked={selectedFarmers.has(farmer.id)}
                                                         onChange={(e) => handleSelectFarmer(farmer.id, e.target.checked)}
-                                                        className="w-5 h-5 rounded-md border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                                                        className={`w-5 h-5 ${radiusClass} border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer`}
                                                     />
                                                 </div>
                                             )}
@@ -1879,12 +1881,14 @@ function App() {
                         <div>
                             <div className="mb-8 flex justify-between items-center">
                                 <div>
-                                    <h1 className={`text-3xl ${headingClass}`}>{t('nav_visits')}</h1>
+                                    <h1 className={`text-3xl ${headingClass}`}>
+                                        {isModern ? 'Field Telemetry' : 'Field Visits'}
+                                    </h1>
                                     <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">{t('visits_subtitle')}</p>
                                 </div>
                                 <button
                                     onClick={() => setShowVisitModal(true)}
-                                    className="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-primary-500/20 transition-all flex items-center gap-2">
+                                    className={`px-6 py-3 ${isModern ? 'bg-primary-600 hover:bg-primary-700 shadow-primary-500/20 shadow-lg' : 'bg-white dark:bg-slate-900 border-2 border-slate-800 dark:border-slate-200 text-slate-900 dark:text-white'} ${btnClass} transition-all flex items-center gap-2`}>
                                     <MapPin className="w-4 h-4" />
                                     {t('visits_schedule_new')}
                                 </button>
@@ -1903,7 +1907,7 @@ function App() {
                                         >
                                             <div className="flex justify-between items-start mb-4">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 bg-secondary-900/10 dark:bg-white/10 rounded-2xl flex items-center justify-center transition-colors shadow-inner">
+                                                    <div className={`w-12 h-12 bg-secondary-900/10 dark:bg-white/10 ${radiusClass} flex items-center justify-center transition-colors shadow-inner`}>
                                                         <MapPin className="w-6 h-6 text-secondary-600 dark:text-secondary-300" />
                                                     </div>
                                                     <div>
@@ -1913,7 +1917,7 @@ function App() {
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border shadow-sm ${visit.status === 'completed'
+                                                <span className={`px-2 py-1 ${radiusClass} text-[9px] font-black uppercase tracking-widest border shadow-sm ${visit.status === 'completed'
                                                         ? 'bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-400'
                                                         : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-700 dark:text-yellow-400'
                                                     }`}>
@@ -1945,7 +1949,7 @@ function App() {
                                                                         addNotification({ type: 'error', message: 'Failed to update visit status' });
                                                                     }
                                                                 }}
-                                                                className="px-3 py-1.5 bg-green-500/20 text-green-700 dark:text-green-400 rounded-lg text-[10px] font-black uppercase hover:bg-green-500/30 transition-colors shadow-sm"
+                                                                className={`px-3 py-1.5 bg-green-500/20 text-green-700 dark:text-green-400 ${btnClass} text-[10px] font-black uppercase hover:bg-green-500/30 transition-colors shadow-sm`}
                                                             >
                                                                 Complete
                                                             </button>
@@ -1960,7 +1964,7 @@ function App() {
                                                                         addNotification({ type: 'error', message: 'Failed to update visit status' });
                                                                     }
                                                                 }}
-                                                                className="px-3 py-1.5 bg-red-500/10 text-red-700 dark:text-red-400 rounded-lg text-[10px] font-black uppercase hover:bg-red-500/20 transition-colors"
+                                                                className={`px-3 py-1.5 bg-red-500/10 text-red-700 dark:text-red-400 ${btnClass} text-[10px] font-black uppercase hover:bg-red-500/20 transition-colors`}
                                                             >
                                                                 Cancel
                                                             </button>
@@ -1999,7 +2003,7 @@ function App() {
                                 <button
                                     onClick={handleGenerateReport}
                                     disabled={isGeneratingReport}
-                                    className="px-6 py-3 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-xl font-bold text-sm shadow-lg shadow-primary-500/20 transition-all flex items-center gap-2"
+                                    className={`px-6 py-3 ${isModern ? 'bg-primary-600 hover:bg-primary-700 shadow-primary-500/20 shadow-lg' : 'bg-white dark:bg-slate-900 border-2 border-slate-800 dark:border-slate-200 text-slate-900 dark:text-white'} ${btnClass} transition-all flex items-center gap-2`}
                                 >
                                     {isGeneratingReport ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
                                     {isGeneratingReport ? t('reports_generating') || 'Generating...' : t('reports_generate_new')}
@@ -2024,10 +2028,10 @@ function App() {
                                         }}
                                     >
                                         <div className="flex justify-between items-start mb-6">
-                                            <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-2xl group-hover:bg-primary-50 dark:group-hover:bg-primary-900/30 transition-colors">
+                                            <div className={`p-3 bg-gray-50 dark:bg-gray-700 ${radiusClass} group-hover:bg-primary-50 dark:group-hover:bg-primary-900/30 transition-colors`}>
                                                 <FileText className="w-8 h-8 text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400" />
                                             </div>
-                                            <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${report.status === 'ready'
+                                            <span className={`px-2 py-1 ${radiusClass} text-[10px] font-black uppercase tracking-widest ${report.status === 'ready'
                                                 ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
                                                 : 'bg-secondary-100 dark:bg-secondary-700 text-secondary-700 dark:text-secondary-400'
                                                 }`}>
@@ -2059,7 +2063,7 @@ function App() {
                                                             a.click();
                                                         });
                                                     }}
-                                                    className="p-1 px-2 text-[10px] font-bold text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors flex items-center gap-1"
+                                                    className={`p-1 px-2 text-[10px] font-bold text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 ${btnClass} transition-colors flex items-center gap-1`}
                                                 >
                                                     <Download className="w-3 h-3" />
                                                     {t('common_download') || 'PDF'}
@@ -2110,7 +2114,7 @@ function App() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
                                 <div className="card p-5 bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-900/10 border-primary-200 dark:border-primary-800">
                                     <div className="flex items-center gap-3 mb-2">
-                                        <div className="p-2 bg-primary-500/10 rounded-lg">
+                                        <div className={`p-2 bg-primary-500/10 ${radiusClass}`}>
                                             <TrendingUp className="w-4 h-4 text-primary-600 dark:text-primary-400" />
                                         </div>
                                         <p className="text-xs font-semibold text-primary-700 dark:text-primary-300 uppercase tracking-wide">{t('analytics_resolution_rate')}</p>
@@ -2122,7 +2126,7 @@ function App() {
 
                                 <div className="card p-5 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-900/10 border-blue-200 dark:border-blue-800">
                                     <div className="flex items-center gap-3 mb-2">
-                                        <div className="p-2 bg-secondary-500/10 rounded-lg">
+                                        <div className={`p-2 bg-secondary-500/10 ${radiusClass}`}>
                                             <Clock className="w-4 h-4 text-secondary-600 dark:text-secondary-400" />
                                         </div>
                                         <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide">{t('analytics_avg_response_time')}</p>
@@ -2134,7 +2138,7 @@ function App() {
 
                                 <div className="card p-5 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-900/10 border-green-200 dark:border-green-800">
                                     <div className="flex items-center gap-3 mb-2">
-                                        <div className="p-2 bg-primary-500/10 rounded-lg">
+                                        <div className={`p-2 bg-primary-500/10 ${radiusClass}`}>
                                             <Activity className="w-4 h-4 text-primary-600 dark:text-primary-400" />
                                         </div>
                                         <p className="text-xs font-semibold text-green-700 dark:text-green-300 uppercase tracking-wide">{t('analytics_satisfaction_score')}</p>
@@ -2146,7 +2150,7 @@ function App() {
 
                                 <div className="card p-5 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-900/10 border-orange-200 dark:border-orange-800">
                                     <div className="flex items-center gap-3 mb-2">
-                                        <div className="p-2 bg-orange-500/10 rounded-lg">
+                                        <div className={`p-2 bg-orange-500/10 ${radiusClass}`}>
                                             <AlertTriangle className="w-4 h-4 text-orange-600 dark:text-orange-400" />
                                         </div>
                                         <p className="text-xs font-semibold text-orange-700 dark:text-orange-300 uppercase tracking-wide">{t('analytics_follow_up_rate')}</p>
@@ -2158,7 +2162,7 @@ function App() {
 
                                 <div className="card p-5 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-900/10 border-purple-200 dark:border-purple-800">
                                     <div className="flex items-center gap-3 mb-2">
-                                        <div className="p-2 bg-purple-500/10 rounded-lg">
+                                        <div className={`p-2 bg-purple-500/10 ${radiusClass}`}>
                                             <MessageSquare className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                                         </div>
                                         <p className="text-xs font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wide">{t('analytics_first_contact_res')}</p>
@@ -2228,30 +2232,53 @@ function App() {
 
                     {activeTab === 'billing' && (
                         <ErrorBoundary>
+                            <div className="mb-8">
+                                <h1 className={`text-3xl font-bold ${headingClass}`}>
+                                    {isModern ? 'Capital Utilization' : 'Billing & Subscriptions'}
+                                </h1>
+                                <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">{t('billing_subtitle')}</p>
+                            </div>
                             <BillingDashboard />
                         </ErrorBoundary>
                     )}
 
                     {activeTab === 'knowledge' && (
-                        <KnowledgeBase />
+                        <>
+                            <h1 className={`text-3xl font-bold ${headingClass} mb-8`}>
+                                {isModern ? 'Ontological Repository' : 'Knowledge Base'}
+                            </h1>
+                            <KnowledgeBase />
+                        </>
                     )}
 
                     {activeTab === 'aiassistant' && (
-                        <AlphaAI />
+                        <>
+                            <h1 className={`text-3xl font-bold ${headingClass} mb-8`}>
+                                {isModern ? 'Cognitive Synthesizer' : 'AI Assistant'}
+                            </h1>
+                            <AlphaAI />
+                        </>
                     )}
 
                     {/* Farmer Chat Section */}
 
                     {/* Farmer Chat Section */}
                     {activeTab === 'farmerchat' && (
-                        <div className="flex h-[calc(100vh-140px)] gap-6">
+                        <div className="flex flex-col h-[calc(100vh-140px)] gap-6">
+                            <div className="mb-2">
+                                <h1 className={`text-3xl font-bold ${headingClass}`}>
+                                    {isModern ? 'Network Communications' : 'Farmer Chat'}
+                                </h1>
+                                <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">{t('chat_subtitle')}</p>
+                            </div>
+                            <div className="flex flex-1 gap-6 overflow-hidden">
                             {/* Farmer Conversations Sidebar */}
-                            <div className="w-80 flex flex-col bg-theme-bg-card dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+                            <div className={`w-80 flex flex-col bg-theme-bg-card dark:bg-gray-800 ${radiusClass} border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden`}>
                                 <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                                     <h3 className="font-bold text-gray-900 dark:text-white">{t('chat_farmer_chats')}</h3>
                                     <button
                                         onClick={() => { loadFarmers(); setShowFarmerModal(true); }}
-                                        className="p-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+                                        className={`p-2 bg-primary-600 hover:bg-primary-700 text-white ${btnClass} transition-colors`}
                                         title={t('common_new_conversation')}
                                     >
                                         <Plus className="w-4 h-4" />
@@ -2270,7 +2297,7 @@ function App() {
                                                     setActiveFarmerConvId(conv.id);
                                                     loadFarmerMessages(conv.id);
                                                 }}
-                                                className={`w-full p-3 rounded-xl text-left transition-all ${activeFarmerConvId === conv.id
+                                                className={`w-full p-3 ${radiusClass} text-left transition-all ${activeFarmerConvId === conv.id
                                                     ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-100 dark:border-primary-800'
                                                     : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}
                                             >
@@ -2344,7 +2371,7 @@ function App() {
                                                 <button
                                                     type="submit"
                                                     disabled={!farmerChatInput.trim()}
-                                                    className="p-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl shadow-lg shadow-primary-500/20 transition-all disabled:opacity-50"
+                                                    className={`p-3 ${isModern ? 'bg-primary-600 hover:bg-primary-700 shadow-primary-500/20 shadow-lg' : 'bg-white dark:bg-slate-900 border-2 border-slate-800 dark:border-slate-200 text-slate-900 dark:text-white'} ${btnClass} transition-all disabled:opacity-50`}
                                                 >
                                                     <Send className="w-5 h-5" />
                                                 </button>
@@ -2353,7 +2380,7 @@ function App() {
                                     </>
                                 ) : (
                                     <div className="flex-1 flex flex-col items-center justify-center p-8">
-                                        <div className="w-20 h-20 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-600 dark:text-primary-400 mb-4">
+                                        <div className={`w-20 h-20 ${radiusClass} bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-600 dark:text-primary-400 mb-4`}>
                                             <Users className="w-10 h-10" />
                                         </div>
                                         <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t('chat_select_conversation')}</h3>
@@ -2362,7 +2389,8 @@ function App() {
                                 )}
                             </div>
                         </div>
-                    )}
+                    </div>
+                )}
 
                     {/* Report Generation Overlay */}
                     <AnimatePresence>
@@ -2452,7 +2480,7 @@ function App() {
                                                         addNotification({ type: 'error', message: 'Download failed' });
                                                     }
                                                 }}
-                                                className="mt-4 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-bold"
+                                                className={`mt-4 px-4 py-2 ${isModern ? 'bg-primary-600 hover:bg-primary-700' : 'bg-white dark:bg-slate-900 border-2 border-slate-800 dark:border-slate-200 text-slate-900 dark:text-white'} ${btnClass} text-sm font-bold`}
                                             >
                                                 Download Report
                                             </button>
@@ -2474,13 +2502,13 @@ function App() {
                                                 addNotification({ type: 'error', message: 'Download failed' });
                                             }
                                         }}
-                                        className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-bold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                        className={`px-4 py-2 ${isModern ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300' : 'bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 text-gray-700 dark:text-gray-300'} ${btnClass} text-sm font-bold transition-colors`}
                                     >
                                         Download
                                     </button>
                                     <button
                                         onClick={() => { setViewingReport(null); setReportContent(null); }}
-                                        className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-bold transition-colors"
+                                        className={`px-4 py-2 ${isModern ? 'bg-primary-600 hover:bg-primary-700' : 'bg-white dark:bg-slate-900 border-2 border-slate-800 dark:border-slate-200 text-slate-900 dark:text-white'} ${btnClass} text-sm font-bold transition-colors`}
                                     >
                                         Close
                                     </button>
@@ -2492,12 +2520,24 @@ function App() {
                     {/* New Advanced Pages */}
                     {activeTab === 'telemetry' && (
                         <ErrorBoundary>
+                            <div className="mb-8">
+                                <h1 className={`text-3xl font-bold ${headingClass}`}>
+                                    {isModern ? 'Neural Telemetry' : 'System Telemetry'}
+                                </h1>
+                                <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">Real-time system health and performance monitoring</p>
+                            </div>
                             <Telemetry />
                         </ErrorBoundary>
                     )}
 
                     {activeTab === 'agents' && (
                         <ErrorBoundary>
+                            <div className="mb-8">
+                                <h1 className={`text-3xl font-bold ${headingClass}`}>
+                                    {isModern ? 'Autonomous Orchestration' : 'Agent Manager'}
+                                </h1>
+                                <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">Configure and monitor autonomous AI agents</p>
+                            </div>
                             <Agents />
                         </ErrorBoundary>
                     )}
@@ -2536,7 +2576,7 @@ function App() {
                     {(activeTab === 'aiassistant' || activeTab === 'farmerchat') && showFarmerModal && (
                         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowFarmerModal(false)} />
-                            <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden">
+                            <div className={`relative bg-white dark:bg-gray-800 ${radiusClass} shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden`}>
                                 <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                                     <div>
                                         <h3 className="font-bold text-gray-900 dark:text-white">{t('chat_start_new')}</h3>
@@ -2554,7 +2594,7 @@ function App() {
                                             placeholder={t('common_search_farmers')}
                                             value={farmerSearchQuery}
                                             onChange={(e) => setFarmerSearchQuery(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 dark:text-white"
+                                            className={`w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 ${radiusClass} focus:ring-2 focus:ring-primary-500 dark:text-white`}
                                         />
                                     </div>
                                 </div>
@@ -2599,10 +2639,10 @@ function App() {
                             </div>
                         </div>
                     )}
-                    </div>
+                        </div>
+                        </div>
                     </main>
                 </div>
-            </div>
 
             {/* Visit Modal */}
             <VisitModal
@@ -2663,7 +2703,6 @@ function App() {
                 isLoading={isUpdatingBulk}
             />
             {confirmModal && (
-
                 <ConfirmModal
                     isOpen={!!confirmModal}
                     onClose={() => setConfirmModal(null)}
@@ -2674,6 +2713,7 @@ function App() {
                     confirmText={confirmModal.confirmText}
                 />
             )}
+            </div>
         </div>
     );
 }

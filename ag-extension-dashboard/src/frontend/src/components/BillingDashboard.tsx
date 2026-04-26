@@ -24,6 +24,7 @@ import {
     Ticket
 } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
+import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAppStore } from '@/store/useAppStore';
@@ -59,6 +60,7 @@ interface Invoice {
 
 export const BillingDashboard: React.FC = () => {
     const { t } = useLanguage();
+    const { isModern, headingClass, radiusClass, btnClass } = useDesignSystemMode();
     const [searchParams, setSearchParams] = useSearchParams();
     const [plans, setPlans] = useState<Plan[]>([]);
     const [subscription, setSubscription] = useState<Subscription | null>(null);
@@ -515,7 +517,7 @@ export const BillingDashboard: React.FC = () => {
                 <motion.div 
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-8 p-6 bg-amber-500/10 border-2 border-amber-500/50 rounded-2xl flex items-start gap-4"
+                    className={`mb-8 p-6 bg-amber-500/10 border-2 border-amber-500/50 ${radiusClass} flex items-start gap-4`}
                 >
                     <AlertCircle className="w-6 h-6 text-amber-500 mt-1 flex-shrink-0" />
                     <div className="flex-1">
@@ -535,9 +537,9 @@ export const BillingDashboard: React.FC = () => {
             {/* Success/Cancel Messages */}
             {success && (
                 <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg flex items-center gap-3"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className={`mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 ${radiusClass} flex items-center gap-3`}
                 >
                     <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
                     <span className="text-green-800 dark:text-green-200 font-medium">
@@ -547,9 +549,9 @@ export const BillingDashboard: React.FC = () => {
             )}
             {canceled && (
                 <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg flex items-center gap-3"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className={`mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 ${radiusClass} flex items-center gap-3`}
                 >
                     <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
                     <span className="text-yellow-800 dark:text-yellow-200 font-medium">
@@ -568,8 +570,8 @@ export const BillingDashboard: React.FC = () => {
                         <span className="w-12 h-1 text-primary-500 bg-primary-500 rounded-full inline-block"></span>
                         <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary-500">{t('billing_account_control')}</span>
                     </motion.div>
-                    <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter mb-4 leading-none">
-                        {t('billing_title')}
+                    <h1 className={`text-4xl font-black tracking-tighter mb-4 leading-none ${headingClass}`}>
+                        {isModern ? 'Capital Utilization' : 'Billing & Subscriptions'}
                     </h1>
                     <p className="text-gray-500 dark:text-gray-400 text-xl font-medium max-w-2xl leading-relaxed">
                         {t('billing_subtitle')}
@@ -614,7 +616,7 @@ export const BillingDashboard: React.FC = () => {
 
                             <div className="relative z-10">
                                 <div className="flex items-center justify-between mb-8">
-                                    <div className="p-4 bg-white/10 rounded-2xl backdrop-blur-xl border border-white/20 shadow-xl" aria-hidden="true">
+                                    <div className={`p-4 bg-white/10 ${radiusClass} backdrop-blur-xl border border-white/20 shadow-xl`} aria-hidden="true">
                                         <Zap className="w-8 h-8 text-primary-400 transition-transform group-hover:rotate-12 duration-500" />
                                     </div>
                                     <div className="flex flex-col items-end">
@@ -641,7 +643,7 @@ export const BillingDashboard: React.FC = () => {
                                 <button
                                     onClick={handlePortal}
                                     disabled={actionLoading === 'portal'}
-                                    className="w-full h-16 bg-white text-gray-900 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary-500 hover:text-white transition-all duration-500 flex items-center justify-center gap-3 shadow-2xl active:scale-[0.98] disabled:opacity-50"
+                                    className={`w-full h-16 bg-white text-gray-900 ${radiusClass} font-black uppercase tracking-widest text-xs hover:bg-primary-500 hover:text-white transition-all duration-500 flex items-center justify-center gap-3 shadow-2xl active:scale-[0.98] disabled:opacity-50`}
                                 >
                                     {actionLoading === 'portal' ? (
                                         <div className="w-5 h-5 border-3 border-gray-900/20 border-t-gray-900 rounded-full animate-spin" />
@@ -656,11 +658,11 @@ export const BillingDashboard: React.FC = () => {
                         <motion.section
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="relative p-10 bg-gray-900 rounded-[2.5rem] border border-white/5 shadow-2xl overflow-hidden min-h-[480px] flex flex-col justify-between"
+                            className={`relative p-10 bg-gray-900 ${radiusClass} border border-white/5 shadow-2xl overflow-hidden min-h-[480px] flex flex-col justify-between`}
                         >
                             <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full blur-[100px] -translate-y-32 translate-x-32" />
                             <div className="relative z-10">
-                                <div className="p-5 bg-primary-500/10 rounded-2xl border border-primary-500/20 w-fit mb-8 shadow-inner">
+                                <div className={`p-5 bg-primary-500/10 ${radiusClass} border border-primary-500/20 w-fit mb-8 shadow-inner`}>
                                     <TrendingUp className="w-10 h-10 text-primary-500" />
                                 </div>
                                 <h3 className="text-3xl font-black text-white leading-tight tracking-tighter mb-6">
@@ -670,7 +672,7 @@ export const BillingDashboard: React.FC = () => {
                                     {t('billing_promo_desc')}
                                 </p>
                             </div>
-                            <div className="relative z-10 p-6 bg-white/5 rounded-2xl border border-white/5 backdrop-blur-sm">
+                            <div className={`relative z-10 p-6 bg-white/5 ${radiusClass} border border-white/5 backdrop-blur-sm`}>
                                 <div className="flex items-center gap-3 text-primary-400 font-black text-[10px] uppercase tracking-widest mb-2">
                                     <Zap className="w-3.5 h-3.5" />
                                     {t('billing_instant_activation')}
@@ -714,13 +716,13 @@ export const BillingDashboard: React.FC = () => {
                                 </div>
 
                                 {plan.id === 'price_pro_monthly' && (
-                                    <div className="mb-6 inline-flex px-4 py-1.5 bg-indigo-500/10 text-indigo-500 text-[10px] font-black rounded-xl uppercase tracking-[0.2em] border border-indigo-500/20 backdrop-blur-md relative z-10 w-fit">
+                                    <div className={`mb-6 inline-flex px-4 py-1.5 bg-indigo-500/10 text-indigo-500 text-[10px] font-black ${radiusClass} uppercase tracking-[0.2em] border border-indigo-500/20 backdrop-blur-md relative z-10 w-fit`}>
                                         <Shield className="w-3.5 h-3.5 mr-2" />
                                         {t('plan_badge_officer') || 'Recommended for Extension Officers'}
                                     </div>
                                 )}
                                 {plan.id === 'price_free' && (
-                                    <div className="mb-6 inline-flex px-4 py-1.5 bg-primary-500/10 text-primary-500 text-[10px] font-black rounded-xl uppercase tracking-[0.2em] border border-primary-500/20 backdrop-blur-md relative z-10 w-fit">
+                                    <div className={`mb-6 inline-flex px-4 py-1.5 bg-primary-500/10 text-primary-500 text-[10px] font-black ${radiusClass} uppercase tracking-[0.2em] border border-primary-500/20 backdrop-blur-md relative z-10 w-fit`}>
                                         <Zap className="w-3.5 h-3.5 mr-2" />
                                         {t('plan_badge_farmer') || 'Ideal for Individual Farmers'}
                                     </div>
@@ -746,7 +748,7 @@ export const BillingDashboard: React.FC = () => {
                                     <div className="space-y-6 mb-16">
                                         {plan.features.map((feature, i) => (
                                             <div key={i} className="flex items-center gap-5 group/feature">
-                                                <div className="shrink-0 p-1.5 rounded-xl bg-primary-500/10 border border-primary-500/20 group-hover/feature:bg-primary-500 group-hover/feature:scale-110 transition-all duration-500">
+                                                <div className={`shrink-0 p-1.5 ${radiusClass} bg-primary-500/10 border border-primary-500/20 group-hover/feature:bg-primary-500 group-hover/feature:scale-110 transition-all duration-500`}>
                                                     <CheckCircle className="w-4 h-4 text-primary-500 group-hover/feature:text-white" />
                                                 </div>
                                                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 group-hover/feature:text-gray-900 dark:group-hover/feature:text-white transition-colors duration-300">
@@ -762,7 +764,7 @@ export const BillingDashboard: React.FC = () => {
                                     whileTap={{ scale: 0.98 }}
                                     onClick={() => handleSubscribe(plan.id)}
                                     disabled={subscription?.plan.id === plan.id || (actionLoading !== null)}
-                                    className={`relative z-10 w-full h-16 rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all duration-500 flex items-center justify-center gap-3 overflow-hidden ${subscription?.plan.id === plan.id
+                                    className={`relative z-10 w-full h-16 ${radiusClass} font-black uppercase tracking-[0.2em] text-xs transition-all duration-500 flex items-center justify-center gap-3 overflow-hidden ${subscription?.plan.id === plan.id
                                         ? 'bg-gray-100 dark:bg-white/5 text-white/20 cursor-default grayscale'
                                         : 'bg-primary-600 hover:bg-gray-900 dark:hover:bg-white dark:hover:text-gray-900 text-white shadow-2xl shadow-primary-500/30'
                                         }`}
@@ -788,12 +790,12 @@ export const BillingDashboard: React.FC = () => {
                     </section>
 
                     {/* Payment Methods Section */}
-                    <section aria-labelledby="payment-methods-title" className="card p-10 bg-white dark:bg-gray-900 border-none shadow-2xl rounded-[2.5rem] group overflow-hidden relative">
+                    <section aria-labelledby="payment-methods-title" className={`card p-10 bg-white dark:bg-gray-900 border-none shadow-2xl ${radiusClass} group overflow-hidden relative`}>
                         <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/5 rounded-full blur-[80px] -translate-y-32 translate-x-32" />
 
                         <div className="flex justify-between items-center mb-10 relative z-10">
                             <div className="flex items-center gap-4">
-                                <div className="p-3 bg-primary-500/10 rounded-2xl shadow-inner group-hover:bg-primary-500 transition-colors duration-500">
+                                <div className={`p-3 bg-primary-500/10 ${radiusClass} shadow-inner group-hover:bg-primary-500 transition-colors duration-500`}>
                                     <CardIcon className="w-6 h-6 text-primary-500 group-hover:text-white" />
                                 </div>
                                 <div className="space-y-1">
@@ -806,7 +808,7 @@ export const BillingDashboard: React.FC = () => {
                             <button
                                 onClick={handleAddMethod}
                                 disabled={actionLoading !== null}
-                                className="flex items-center gap-2 px-6 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary-500 dark:hover:bg-primary-500 dark:hover:text-white transition-all shadow-xl active:scale-95 disabled:opacity-50"
+                                className={`flex items-center gap-2 px-6 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 ${radiusClass} text-[10px] font-black uppercase tracking-widest hover:bg-primary-500 dark:hover:bg-primary-500 dark:hover:text-white transition-all shadow-xl active:scale-95 disabled:opacity-50`}
                             >
                                 {actionLoading === 'add-pm' ? (
                                     <div className="w-4 h-4 border-2 border-primary-500/20 border-t-primary-500 rounded-full animate-spin" />
@@ -819,13 +821,13 @@ export const BillingDashboard: React.FC = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
                             {/* Regional Mobile Money */}
-                            <div className="p-6 rounded-2xl bg-green-500/5 border border-green-500/20 group/pm hover:border-green-500/40 transition-all duration-300 relative overflow-hidden">
+                            <div className={`p-6 ${radiusClass} bg-green-500/5 border border-green-500/20 group/pm hover:border-green-500/40 transition-all duration-300 relative overflow-hidden`}>
                                 <div className="absolute top-0 right-0 p-2 opacity-10">
                                     <Smartphone className="w-12 h-12 text-green-500" />
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-4 relative z-10">
-                                        <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/20">
+                                        <div className={`w-12 h-12 bg-green-500 ${radiusClass} flex items-center justify-center shadow-lg shadow-green-500/20`}>
                                             <Smartphone className="w-6 h-6 text-white" />
                                         </div>
                                         <div className="space-y-0.5">
@@ -838,7 +840,7 @@ export const BillingDashboard: React.FC = () => {
                                     </div>
                                     <button
                                         onClick={() => { setShowMobilePayForm(!showMobilePayForm); setFormMessage(null); }}
-                                        className="px-4 py-2 bg-white dark:bg-gray-800 border border-green-200 dark:border-green-800 text-green-600 dark:text-green-400 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-green-500 hover:text-white transition-all shadow-sm"
+                                        className={`px-4 py-2 bg-white dark:bg-gray-800 border border-green-200 dark:border-green-800 text-green-600 dark:text-green-400 ${btnClass} text-[10px] font-black uppercase tracking-widest hover:bg-green-500 hover:text-white transition-all shadow-sm`}
                                     >
                                         {t('action_pay_mobile') || 'Pay'}
                                     </button>
@@ -849,7 +851,7 @@ export const BillingDashboard: React.FC = () => {
                                             <select
                                                 value={mobilePayData.method}
                                                 onChange={(e) => setMobilePayData({ ...mobilePayData, method: e.target.value as 'mpesa' | 'airtel' | 'bank' })}
-                                                className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
+                                                className={`px-3 py-2 ${radiusClass} border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm`}
                                             >
                                                 <option value="mpesa">M-Pesa</option>
                                                 <option value="airtel">Airtel Money</option>
@@ -861,7 +863,7 @@ export const BillingDashboard: React.FC = () => {
                                                     const p = plans.find(pl => pl.id === e.target.value);
                                                     setMobilePayData({ ...mobilePayData, planId: e.target.value, amount: p ? (p.price / 100).toString() : '' });
                                                 }}
-                                                className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
+                                                className={`px-3 py-2 ${radiusClass} border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm`}
                                             >
                                                 <option value="">Select Plan</option>
                                                 {plans.filter(p => p.price > 0).map(p => (
@@ -874,14 +876,14 @@ export const BillingDashboard: React.FC = () => {
                                             value={mobilePayData.transactionId}
                                             onChange={(e) => setMobilePayData({ ...mobilePayData, transactionId: e.target.value })}
                                             placeholder="Enter M-Pesa/Airtel Transaction ID"
-                                            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
+                                            className={`w-full px-3 py-2 ${radiusClass} border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm`}
                                         />
                                         <div className="flex items-center justify-between">
                                             <p className="text-[10px] text-gray-400">Admin will verify your payment before activation.</p>
                                             <button
                                                 onClick={handleSubmitTransaction}
                                                 disabled={actionLoading === 'mobile-pay' || !mobilePayData.transactionId || !mobilePayData.planId}
-                                                className="px-4 py-2 bg-green-500 text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-green-600 transition-all shadow-sm disabled:opacity-50"
+                                                className={`px-4 py-2 bg-green-500 text-white ${btnClass} text-[10px] font-black uppercase tracking-widest hover:bg-green-600 transition-all shadow-sm disabled:opacity-50`}
                                             >
                                                 {actionLoading === 'mobile-pay' ? 'Submitting...' : 'Submit Transaction'}
                                             </button>
@@ -896,13 +898,13 @@ export const BillingDashboard: React.FC = () => {
                             </div>
 
                             {/* AgriVoucher Option */}
-                            <div className="p-6 rounded-2xl bg-indigo-500/5 border border-indigo-500/20 group/pm hover:border-indigo-500/40 transition-all duration-300 relative overflow-hidden">
+                            <div className={`p-6 ${radiusClass} bg-indigo-500/5 border border-indigo-500/20 group/pm hover:border-indigo-500/40 transition-all duration-300 relative overflow-hidden`}>
                                 <div className="absolute top-0 right-0 p-2 opacity-10">
                                     <Ticket className="w-12 h-12 text-indigo-500" />
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-4 relative z-10">
-                                        <div className="w-12 h-12 bg-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                                        <div className={`w-12 h-12 bg-indigo-500 ${radiusClass} flex items-center justify-center shadow-lg shadow-indigo-500/20`}>
                                             <Ticket className="w-6 h-6 text-white" />
                                         </div>
                                         <div className="space-y-0.5">
@@ -912,7 +914,7 @@ export const BillingDashboard: React.FC = () => {
                                     </div>
                                     <button
                                         onClick={() => { setShowVoucherForm(!showVoucherForm); setFormMessage(null); }}
-                                        className="px-4 py-2 bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-indigo-500 hover:text-white transition-all shadow-sm"
+                                        className={`px-4 py-2 bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 ${btnClass} text-[10px] font-black uppercase tracking-widest hover:bg-indigo-500 hover:text-white transition-all shadow-sm`}
                                     >
                                         {t('action_redeem') || 'Redeem'}
                                     </button>
@@ -924,14 +926,14 @@ export const BillingDashboard: React.FC = () => {
                                             value={voucherCode}
                                             onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
                                             placeholder="Enter voucher code (e.g. AGV-A1B2C3D4)"
-                                            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-mono tracking-wider"
+                                            className={`w-full px-3 py-2 ${radiusClass} border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-mono tracking-wider`}
                                         />
                                         <div className="flex items-center justify-between">
                                             <p className="text-[10px] text-gray-400">Instantly activates your subscription.</p>
                                             <button
                                                 onClick={handleRedeemVoucher}
                                                 disabled={actionLoading === 'voucher' || !voucherCode.trim()}
-                                                className="px-4 py-2 bg-indigo-500 text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-sm disabled:opacity-50"
+                                                className={`px-4 py-2 bg-indigo-500 text-white ${btnClass} text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-sm disabled:opacity-50`}
                                             >
                                                 {actionLoading === 'voucher' ? 'Redeeming...' : 'Activate Voucher'}
                                             </button>
@@ -947,9 +949,9 @@ export const BillingDashboard: React.FC = () => {
 
                             {paymentMethods.length > 0 ? (
                                 paymentMethods.map((pm) => (
-                                    <div key={pm.id} className="p-6 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 flex items-center justify-between group/pm hover:border-primary-500/30 transition-all duration-300">
+                                    <div key={pm.id} className={`p-6 ${radiusClass} bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 flex items-center justify-between group/pm hover:border-primary-500/30 transition-all duration-300`}>
                                         <div className="flex items-center gap-4">
-                                            <div className="w-12 h-8 bg-gray-900 rounded-md flex items-center justify-center text-[8px] font-black text-white uppercase tracking-tighter">
+                                            <div className={`w-12 h-8 bg-gray-900 ${radiusClass} flex items-center justify-center text-[8px] font-black text-white uppercase tracking-tighter`}>
                                                 {pm.card?.brand || 'Card'}
                                             </div>
                                             <div className="space-y-1">
@@ -971,7 +973,7 @@ export const BillingDashboard: React.FC = () => {
                                     </div>
                                 ))
                             ) : (
-                                <div className="col-span-2 p-10 border-2 border-dashed border-gray-100 dark:border-white/5 rounded-3xl flex flex-col items-center justify-center gap-4 opacity-40">
+                                <div className={`col-span-2 p-10 border-2 border-dashed border-gray-100 dark:border-white/5 ${radiusClass} flex flex-col items-center justify-center gap-4 opacity-40`}>
                                     <Lock className="w-8 h-8" />
                                     <p className="text-[10px] font-black uppercase tracking-[0.2em]">{t('billing_no_secure_methods')}</p>
                                 </div>

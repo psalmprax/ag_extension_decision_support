@@ -6,6 +6,7 @@ import { Sparkles, Loader2, FileText, CheckCircle2, AlertCircle, Calendar } from
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '@/lib/LanguageContext';
+import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
 
 export const VisitSynthesisForm: React.FC = () => {
   const [notes, setNotes] = useState('');
@@ -14,6 +15,7 @@ export const VisitSynthesisForm: React.FC = () => {
   const [result, setResult] = useState<BoxUpdateData | null>(null);
   const { setLoading, user } = useAppStore();
   const { t } = useLanguage();
+  const { isModern, headingClass } = useDesignSystemMode();
 
   const handleSynthesize = async () => {
     if (notes.length < 10) {
@@ -84,7 +86,7 @@ export const VisitSynthesisForm: React.FC = () => {
             <Sparkles className="w-6 h-6 text-purple-600 dark:text-purple-400" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t('visit_synthesis_title')}</h2>
+            <h2 className={`text-2xl font-bold ${headingClass}`}>{isModern ? 'Encounter Analysis' : 'Visit Synthesis'}</h2>
             <p className="text-slate-500 dark:text-slate-400">{t('visit_synthesis_subtitle')}</p>
           </div>
         </div>

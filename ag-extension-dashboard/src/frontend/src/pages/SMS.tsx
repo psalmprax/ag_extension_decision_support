@@ -11,6 +11,7 @@ import { fetchSMSHistory, sendSMS, sendBulkSMS, translateMessage } from '../api/
 import { fetchFarmers, Farmer } from '../api/farmerService';
 import { fetchUsage } from '../api/billingService';
 import { withRealFallback } from '../lib/realFirst';
+import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
 import toast from 'react-hot-toast';
 
 interface SMSMessage {
@@ -30,6 +31,7 @@ interface Contact {
 
 export function SMSPage() {
     const { t, language } = useLanguage();
+    const { headingClass, isModern, radiusClass, btnClass } = useDesignSystemMode();
     const { pendingSMS, setPendingSMS } = useAppStore();
 
     // UI State
@@ -239,7 +241,7 @@ export function SMSPage() {
     return (
         <div className="flex flex-col lg:flex-row h-[calc(100vh-80px)] overflow-hidden gap-4 p-4 lg:p-6 bg-slate-50 dark:bg-slate-950">
             {/* LEFT PANEL: Contacts & Search */}
-            <div className="w-full lg:w-1/4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col shadow-sm">
+            <div className={`w-full lg:w-1/4 bg-white dark:bg-slate-900 ${radiusClass} border border-slate-200 dark:border-slate-800 flex flex-col shadow-sm`}>
                 <div className="p-4 border-b border-slate-200 dark:border-slate-800">
                     <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                         <Users className="w-5 h-5 text-primary-600" />
@@ -253,13 +255,13 @@ export function SMSPage() {
                                 placeholder={t('farmer_search_placeholder')}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-primary-500 text-sm"
+                                className={`w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none ${radiusClass} focus:ring-2 focus:ring-primary-500 text-sm`}
                             />
                         </div>
                         {sendMode === 'bulk' && (
                             <button
                                 onClick={handleBulkSelectAll}
-                                className="p-2 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-xl hover:bg-primary-200 transition-colors"
+                                className={`p-2 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 ${radiusClass} hover:bg-primary-200 transition-colors`}
                                 title="Select All"
                             >
                                 <CheckCircle className="w-5 h-5" />
@@ -280,7 +282,7 @@ export function SMSPage() {
                         <button
                             key={contact.id}
                             onClick={() => selectContact(contact)}
-                            className={`w-full flex items-center justify-between p-3 rounded-xl transition-all ${
+                            className={`w-full flex items-center justify-between p-3 ${radiusClass} transition-all ${
                                 (sendMode === 'single' && selectedContact?.id === contact.id) || (sendMode === 'bulk' && bulkSelectedIds.includes(contact.id))
                                 ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-100 dark:border-primary-800'
                                 : 'hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -315,7 +317,7 @@ export function SMSPage() {
                                 toast.error('Select a contact first');
                             }
                         }}
-                        className="w-full flex items-center justify-center gap-2 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                        className={`w-full flex items-center justify-center gap-2 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 ${radiusClass} font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors`}
                     >
                         <Plus className="w-4 h-4" />
                         {t('common_add')}
@@ -324,12 +326,12 @@ export function SMSPage() {
             </div>
 
             {/* MIDDLE PANEL: Composer */}
-            <div className="flex-1 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col shadow-sm">
+            <div className={`flex-1 bg-white dark:bg-slate-900 ${radiusClass} border border-slate-200 dark:border-slate-800 flex flex-col shadow-sm`}>
                 <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800">
-                    <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                    <div className={`flex bg-slate-100 dark:bg-slate-800 p-1 ${radiusClass}`}>
                         <button
                             onClick={() => setActiveTab('compose')}
-                            className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-all ${activeTab === 'compose' ? 'bg-white dark:bg-slate-700 text-primary-600 shadow-sm' : 'text-slate-500 dark:text-slate-400'
+                            className={`px-4 py-1.5 text-sm font-bold ${radiusClass} transition-all ${activeTab === 'compose' ? 'bg-white dark:bg-slate-700 text-primary-600 shadow-sm' : 'text-slate-500 dark:text-slate-400'
                                 }`}
                         >
                             <Layout className="w-4 h-4 inline-block mr-2" />
@@ -337,7 +339,7 @@ export function SMSPage() {
                         </button>
                         <button
                             onClick={() => setActiveTab('history')}
-                            className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-all ${activeTab === 'history' ? 'bg-white dark:bg-slate-700 text-primary-600 shadow-sm' : 'text-slate-500 dark:text-slate-400'
+                            className={`px-4 py-1.5 text-sm font-bold ${radiusClass} transition-all ${activeTab === 'history' ? 'bg-white dark:bg-slate-700 text-primary-600 shadow-sm' : 'text-slate-500 dark:text-slate-400'
                                 }`}
                         >
                             <History className="w-4 h-4 inline-block mr-2" />
@@ -346,17 +348,17 @@ export function SMSPage() {
                     </div>
 
                     {activeTab === 'compose' && (
-                        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                        <div className={`flex bg-slate-100 dark:bg-slate-800 p-1 ${radiusClass}`}>
                             <button
                                 onClick={() => setSendMode('single')}
-                                className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${sendMode === 'single' ? 'bg-white dark:bg-slate-700 text-emerald-600 shadow-sm' : 'text-slate-500 dark:text-slate-400'
+                                className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider ${radiusClass} transition-all ${sendMode === 'single' ? 'bg-white dark:bg-slate-700 text-emerald-600 shadow-sm' : 'text-slate-500 dark:text-slate-400'
                                     }`}
                             >
                                 {t('sms_single_tab')}
                             </button>
                             <button
                                 onClick={() => setSendMode('bulk')}
-                                className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${sendMode === 'bulk' ? 'bg-white dark:bg-slate-700 text-emerald-600 shadow-sm' : 'text-slate-500 dark:text-slate-400'
+                                className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider ${radiusClass} transition-all ${sendMode === 'bulk' ? 'bg-white dark:bg-slate-700 text-emerald-600 shadow-sm' : 'text-slate-500 dark:text-slate-400'
                                     }`}
                             >
                                 {t('sms_bulk_tab')}
@@ -366,7 +368,7 @@ export function SMSPage() {
 
                     <button
                         onClick={() => setShowRightPanel(!showRightPanel)}
-                        className={`p-2 rounded-xl transition-all ml-auto ${showRightPanel ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+                        className={`p-2 ${radiusClass} transition-all ml-auto ${showRightPanel ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
                         title="Toggle Sidebar"
                     >
                         <Info className="w-5 h-5" />
@@ -395,7 +397,7 @@ export function SMSPage() {
                                                     value={phoneNumber}
                                                     onChange={(e) => setPhoneNumber(e.target.value)}
                                                     placeholder="+254 --- --- ---"
-                                                    className="w-full bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-4 focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-mono text-lg"
+                                                    className={`w-full bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-100 dark:border-slate-800 ${radiusClass} px-5 py-4 focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-mono text-lg`}
                                                 />
                                                 <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-500">
                                                     <Plus className="w-5 h-5 pointer-events-none" />
@@ -412,7 +414,7 @@ export function SMSPage() {
                                                 onChange={(e) => setRecipients(e.target.value)}
                                                 placeholder="+2541, +2542, +2543..."
                                                 rows={3}
-                                                className="w-full bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-4 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-mono"
+                                                className={`w-full bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-100 dark:border-slate-800 ${radiusClass} px-5 py-4 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-mono`}
                                             />
                                         </div>
                                     )}
@@ -445,7 +447,7 @@ export function SMSPage() {
                                             onChange={(e) => setMessage(e.target.value)}
                                             placeholder="..."
                                             rows={6}
-                                            className="w-full bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-4 focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all text-lg leading-relaxed resize-none"
+                                            className={`w-full bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-100 dark:border-slate-800 ${radiusClass} px-5 py-4 focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all text-lg leading-relaxed resize-none`}
                                         />
                                     </div>
 
@@ -463,7 +465,7 @@ export function SMSPage() {
                                     <button
                                         disabled={isSending || !message || (sendMode === 'single' ? !phoneNumber : !recipients)}
                                         onClick={handleSend}
-                                        className={`w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-lg shadow-primary-500/20 active:scale-[0.98] transition-all ${isSending ? 'bg-slate-200 dark:bg-slate-800' : 'bg-primary-600 hover:bg-primary-500 text-white'
+                                        className={`w-full py-4 ${radiusClass} font-bold flex items-center justify-center gap-3 shadow-lg shadow-primary-500/20 active:scale-[0.98] transition-all ${isSending ? 'bg-slate-200 dark:bg-slate-800' : 'bg-primary-600 hover:bg-primary-500 text-white'
                                             }`}
                                     >
                                         {isSending ? (
@@ -494,7 +496,7 @@ export function SMSPage() {
                                     </div>
                                 ) : (
                                     history.map((msg) => (
-                                        <div key={msg.id} className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-start justify-between">
+                                        <div key={msg.id} className={`p-4 bg-slate-50 dark:bg-slate-800/50 ${radiusClass} border border-slate-100 dark:border-slate-800 flex items-start justify-between`}>
                                             <div className="flex items-start gap-4">
                                                 <div className={`mt-1 p-2 rounded-lg ${msg.status === 'success' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
                                                     {msg.status === 'success' ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
@@ -520,7 +522,7 @@ export function SMSPage() {
             {showRightPanel && (
                 <div className="w-full lg:w-1/4 space-y-4 overflow-y-auto pr-1">
                     {/* GLASS DASHBOARD CARD */}
-                    <div className="relative overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 dark:border-slate-800/50 rounded-3xl p-6 shadow-xl space-y-6">
+                    <div className={`relative overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 dark:border-slate-800/50 ${radiusClass} p-6 shadow-xl space-y-6`}>
                         <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary-500/10 rounded-full blur-3xl"></div>
 
                         <div className="flex items-center justify-between">
@@ -554,7 +556,7 @@ export function SMSPage() {
                             </div>
                         </div>
 
-                        <div className="p-4 bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl">
+                        <div className={`p-4 bg-slate-100/50 dark:bg-slate-800/50 ${radiusClass}`}>
                             <div className="flex items-center justify-between mb-2">
                                 <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{t('sms_stats_title')}</span>
                                 <BarChart3 className="w-4 h-4 text-indigo-500" />
@@ -577,7 +579,7 @@ export function SMSPage() {
                     </div>
 
                     {/* TEMPLATES CARD */}
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 flex flex-col shadow-sm">
+                    <div className={`bg-white dark:bg-slate-900 ${radiusClass} border border-slate-200 dark:border-slate-800 p-6 flex flex-col shadow-sm`}>
                         <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                             <Plus className="w-4 h-4" />
                             {t('sms_template_title')}
@@ -587,7 +589,7 @@ export function SMSPage() {
                                 <button
                                     key={tpl.id}
                                     onClick={() => applyTemplate(tpl.content)}
-                                    className="w-full group p-3 text-left border border-slate-100 dark:border-slate-800 hover:border-primary-200 dark:hover:border-primary-900 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all active:scale-[0.98]"
+                                    className={`w-full group p-3 text-left border border-slate-100 dark:border-slate-800 hover:border-primary-200 dark:hover:border-primary-900 ${radiusClass} hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all active:scale-[0.98]`}
                                 >
                                     <div className="flex items-center gap-3 mb-1.5">
                                         <div className={`p-1.5 rounded-lg ${tpl.color}`}>

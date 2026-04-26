@@ -21,7 +21,7 @@ import DOMPurify from 'dompurify';
 
 export function EmailWorkflows() {
     const { t } = useLanguage();
-    const { headingClass } = useDesignSystemMode();
+    const { headingClass, isModern, radiusClass, btnClass } = useDesignSystemMode();
     const { addNotification } = useAppStore();
 
     // State
@@ -218,7 +218,7 @@ export function EmailWorkflows() {
                     <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{title}</p>
                     <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
                 </div>
-                <div className={`p-3 bg-${color}-50 dark:bg-${color}-900/30 rounded-xl`}>
+                <div className={`p-3 bg-${color}-50 dark:bg-${color}-900/30 ${radiusClass}`}>
                     <Icon className={`w-6 h-6 text-${color}-600 dark:text-${color}-400`} />
                 </div>
             </div>
@@ -256,13 +256,13 @@ export function EmailWorkflows() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className={`text-2xl ${headingClass}`}>{t('email_workflows_title')}</h1>
+                    <h1 className={`text-2xl ${headingClass}`}>{isModern ? 'Automated Dispatch' : 'Email Workflows'}</h1>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">{t('email_workflows_subtitle')}</p>
                 </div>
                 <button
                     onClick={handleRefresh}
                     disabled={isRefreshing}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                    className={`flex items-center gap-2 px-4 py-2 bg-primary-600 text-white ${btnClass} hover:bg-primary-700 disabled:opacity-50`}
                 >
                     <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                     Refresh
@@ -302,7 +302,7 @@ export function EmailWorkflows() {
                 <div className="flex space-x-1">
                     <button
                         onClick={() => setActiveTab('templates')}
-                        className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-all ${
+                        className={`flex-1 py-2 px-4 ${radiusClass} font-medium text-sm transition-all ${
                             activeTab === 'templates'
                                 ? 'bg-primary-600 text-white shadow-lg'
                                 : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -312,7 +312,7 @@ export function EmailWorkflows() {
                     </button>
                     <button
                         onClick={() => setActiveTab('approvals')}
-                        className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-all ${
+                        className={`flex-1 py-2 px-4 ${radiusClass} font-medium text-sm transition-all ${
                             activeTab === 'approvals'
                                 ? 'bg-primary-600 text-white shadow-lg'
                                 : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -332,7 +332,7 @@ export function EmailWorkflows() {
                         <select
                             value={selectedCategory}
                             onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                            className={`px-3 py-2 border border-gray-300 dark:border-gray-600 ${radiusClass} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}
                         >
                             <option value="all">All Categories</option>
                             {categories.map(category => (
@@ -393,14 +393,14 @@ export function EmailWorkflows() {
                                 <div className="flex gap-2 mt-4">
                                     <button
                                         onClick={() => handlePreviewTemplate(template)}
-                                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm"
+                                        className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-primary-600 text-white ${btnClass} hover:bg-primary-700 text-sm`}
                                     >
                                         <Eye className="w-4 h-4" />
                                         Preview
                                     </button>
                                     <button
                                         onClick={() => handleEditTemplate(template)}
-                                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm"
+                                        className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-600 text-white ${btnClass} hover:bg-gray-700 text-sm`}
                                     >
                                         <Edit className="w-4 h-4" />
                                         {t('email_workflows_edit')}
@@ -462,7 +462,7 @@ export function EmailWorkflows() {
                                         </div>
                                     </div>
 
-                                    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 mb-4">
+                                    <div className={`bg-gray-50 dark:bg-gray-800/50 ${radiusClass} p-4 mb-4`}>
                                         <div
                                             className="text-sm text-gray-900 dark:text-white prose prose-sm max-w-none dark:prose-invert"
                                             dangerouslySetInnerHTML={{
@@ -476,16 +476,16 @@ export function EmailWorkflows() {
                                     <div className="flex gap-3">
                                         <button
                                             onClick={() => setShowApprovalModal(approval)}
-                                            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                                            className={`flex items-center gap-2 px-4 py-2 bg-primary-600 text-white ${btnClass} hover:bg-primary-700`}
                                         >
                                             <Eye className="w-4 h-4" />
                                             Review
                                         </button>
-                                        <button className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                                        <button className={`flex items-center gap-2 px-4 py-2 bg-green-600 text-white ${btnClass} hover:bg-green-700`}>
                                             <CheckCircle className="w-4 h-4" />
                                             Quick Approve
                                         </button>
-                                        <button className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                                        <button className={`flex items-center gap-2 px-4 py-2 bg-red-600 text-white ${btnClass} hover:bg-red-700`}>
                                             <XCircle className="w-4 h-4" />
                                             Quick Reject
                                         </button>

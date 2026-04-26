@@ -6,11 +6,13 @@ import { useAppStore } from '@/store/useAppStore';
 import { Loader2, UserPlus, MapPin, Phone, Maximize, Activity } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/lib/LanguageContext';
+import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
 import { createFarmer } from '@/api/farmerService';
 
 export const FarmerRegistrationForm: React.FC = () => {
   const { addFarmer, isLoading, setLoading } = useAppStore();
   const { t } = useLanguage();
+  const { isModern, headingClass } = useDesignSystemMode();
 
   const {
     register,
@@ -73,7 +75,7 @@ export const FarmerRegistrationForm: React.FC = () => {
           <UserPlus className="w-6 h-6 text-primary-600 dark:text-primary-400" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t('farmer_register_title')}</h2>
+          <h2 className={`text-2xl font-bold ${headingClass}`}>{isModern ? 'Node Provisioning' : 'Register Client'}</h2>
           <p className="text-slate-500 dark:text-slate-400">{t('farmer_register_subtitle')}</p>
         </div>
       </div>

@@ -1,6 +1,5 @@
-import { useDesign } from '@/hooks/useDesignVariant';
-import { useLanguage } from '@/lib/LanguageContext';
 import { Search, Filter, Download, Plus } from 'lucide-react';
+import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
 
 interface FarmerTableProps {
   farmers: Array<{
@@ -13,13 +12,15 @@ interface FarmerTableProps {
   onSelect?: (id: string) => void;
 }
 
-const CurrentFarmerTable: React.FC<FarmerTableProps> = ({ farmers }) => (
-  <div className="bg-white rounded-lg border border-gray-200">
+const CurrentFarmerTable: React.FC<FarmerTableProps> = ({ farmers }) => {
+  const { radiusClass, btnClass } = useDesignSystemMode();
+  return (
+  <div className={`bg-white ${radiusClass} border border-gray-200`}>
     <div className="flex items-center justify-between p-3 bg-gray-50 border-b border-gray-200">
-      <div className="w-48 h-8 bg-white border border-gray-300 rounded" />
+      <div className={`w-48 h-8 bg-white border border-gray-300 ${radiusClass}`} />
       <div className="flex gap-2">
-        <div className="w-20 h-8 bg-gray-300 rounded" />
-        <div className="w-20 h-8 bg-gray-300 rounded" />
+        <div className={`w-20 h-8 bg-gray-300 ${radiusClass}`} />
+        <div className={`w-20 h-8 bg-gray-300 ${radiusClass}`} />
       </div>
     </div>
     <table className="w-full">
@@ -43,26 +44,29 @@ const CurrentFarmerTable: React.FC<FarmerTableProps> = ({ farmers }) => (
       </tbody>
     </table>
   </div>
-);
+  );
+};
 
-const NewFarmerTable: React.FC<FarmerTableProps> = ({ farmers }) => (
-  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg shadow-black/5 overflow-hidden">
-    <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700">
+const NewFarmerTable: React.FC<FarmerTableProps> = ({ farmers }) => {
+  const { radiusClass, btnClass } = useDesignSystemMode();
+  return (
+  <div className={`bg-white dark:bg-gray-800 ${radiusClass} shadow-lg shadow-black/5 overflow-hidden`}>
+    <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 border-b border-100 dark:border-gray-700">
       <div className="flex items-center gap-3">
-        <div className="w-64 h-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 flex items-center gap-2">
+        <div className={`w-64 h-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 ${radiusClass} px-4 flex items-center gap-2`}>
           <Search className="w-4 h-4 text-gray-400" />
           <span className="text-sm text-gray-400">Search farmers...</span>
         </div>
-        <button className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+        <button className={`p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 ${btnClass}`}>
           <Filter className="w-4 h-4 text-gray-500" />
         </button>
       </div>
       <div className="flex gap-2">
-        <button className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">
+        <button className={`flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 ${btnClass} text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600`}>
           <Download className="w-4 h-4" />
           Export
         </button>
-        <button className="flex items-center gap-2 px-4 py-2.5 bg-green-500 hover:bg-green-600 rounded-xl text-sm font-semibold text-white shadow-lg shadow-green-500/25">
+        <button className={`flex items-center gap-2 px-4 py-2.5 bg-green-500 hover:bg-green-600 ${btnClass} text-sm font-semibold text-white shadow-lg shadow-green-500/25`}>
           <Plus className="w-4 h-4" />
           Add Farmer
         </button>
@@ -72,7 +76,7 @@ const NewFarmerTable: React.FC<FarmerTableProps> = ({ farmers }) => (
       <thead>
         <tr className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50/50 dark:bg-gray-900/50">
           <th className="p-4 w-12">
-            <div className="w-5 h-5 bg-gray-100 dark:bg-gray-700 rounded" />
+            <div className={`w-5 h-5 bg-gray-100 dark:bg-gray-700 ${radiusClass}`} />
           </th>
           <th className="p-4">Farmer</th>
           <th className="p-4">Contact</th>
@@ -85,7 +89,7 @@ const NewFarmerTable: React.FC<FarmerTableProps> = ({ farmers }) => (
         {farmers.map((farmer) => (
           <tr key={farmer.id} className="border-t border-gray-100 dark:border-gray-700/50 hover:bg-green-50/30 dark:hover:bg-green-900/10 transition-colors">
             <td className="p-4">
-              <div className="w-5 h-5 bg-gray-100 dark:bg-gray-700 rounded" />
+              <div className={`w-5 h-5 bg-gray-100 dark:bg-gray-700 ${radiusClass}`} />
             </td>
             <td className="p-4">
               <div className="flex items-center gap-3">
@@ -106,8 +110,8 @@ const NewFarmerTable: React.FC<FarmerTableProps> = ({ farmers }) => (
             </td>
             <td className="p-4">
               <div className="flex gap-1">
-                <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-lg" />
-                <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-lg" />
+                <div className={`w-8 h-8 bg-gray-100 dark:bg-gray-700 ${radiusClass}`} />
+                <div className={`w-8 h-8 bg-gray-100 dark:bg-gray-700 ${radiusClass}`} />
               </div>
             </td>
           </tr>
@@ -115,14 +119,12 @@ const NewFarmerTable: React.FC<FarmerTableProps> = ({ farmers }) => (
       </tbody>
     </table>
   </div>
-);
+  );
+};
 
 export const FarmerTable: React.FC<FarmerTableProps> = (props) => {
-  const Table = useDesign({
-    current: CurrentFarmerTable,
-    new: NewFarmerTable,
-  });
-  return <Table {...props} />;
+  const { isModern } = useDesignSystemMode();
+  return isModern ? <NewFarmerTable {...props} /> : <CurrentFarmerTable {...props} />;
 };
 
 export default FarmerTable;

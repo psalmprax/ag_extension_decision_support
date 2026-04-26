@@ -14,7 +14,7 @@ import toast from 'react-hot-toast';
 
 export function Telemetry() {
     const { t } = useLanguage();
-    const { headingClass } = useDesignSystemMode();
+    const { headingClass, isModern, radiusClass, btnClass } = useDesignSystemMode();
     const { addNotification } = useAppStore();
 
     // State
@@ -134,14 +134,14 @@ export function Telemetry() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className={`text-2xl ${headingClass}`}>{t('telemetry_title')}</h1>
+                    <h1 className={`text-2xl ${headingClass}`}>{isModern ? 'Neural Telemetry' : 'System Telemetry'}</h1>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">{t('telemetry_subtitle')}</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <select
                         value={timeRange}
                         onChange={(e) => setTimeRange(Number(e.target.value))}
-                        className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm"
+                        className={`px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 ${radiusClass} text-sm`}
                     >
                         <option value={1}>Last Hour</option>
                         <option value={24}>Last 24 Hours</option>
@@ -151,7 +151,7 @@ export function Telemetry() {
                     <button
                         onClick={handleRefresh}
                         disabled={isRefreshing}
-                        className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                        className={`flex items-center gap-2 px-4 py-2 bg-primary-600 text-white ${btnClass} hover:bg-primary-700 disabled:opacity-50`}
                     >
                         <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                         Refresh
@@ -235,7 +235,7 @@ export function Telemetry() {
                         <select
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
-                            className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm"
+                            className={`px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 ${radiusClass} text-sm`}
                         >
                             <option value="all">All Status</option>
                             <option value="success">Success</option>
@@ -251,7 +251,7 @@ export function Telemetry() {
                             key={event.id}
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
-                            className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
+                            className={`flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 ${radiusClass}`}
                         >
                             <div className="flex items-center gap-4">
                                 <div className={`w-3 h-3 rounded-full ${

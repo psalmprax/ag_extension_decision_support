@@ -36,6 +36,7 @@ import {
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 import { useNavigate } from 'react-router-dom';
+import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
 
 import { fetchSMSHistory } from '@/api/smsService';
 import { generateSynthesis } from '@/api/chatbotService';
@@ -72,7 +73,8 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
         showShareModal
     } = useAppStore();
     
-    const isCyber = themeName === 'cyber';
+    const { radiusClass, btnClass, isModern } = useDesignSystemMode();
+    const isCyber = themeName === 'cyber' && isModern;
     const navigate = useNavigate();
     
     const [activeTab, setActiveTab] = React.useState<'overview' | 'history' | 'insights'>('overview');
@@ -322,8 +324,8 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
 
                             <div className="absolute bottom-0 left-0 right-0 p-8 pt-20 bg-gradient-to-t from-black/60 to-transparent">
                                 <div className="flex items-end gap-6">
-                                    <div className={`w-24 h-24 rounded-2xl p-1 shadow-2xl bg-white`}>
-                                        <div className={`w-full h-full rounded-xl flex items-center justify-center font-black text-4xl bg-primary-100 text-primary-600`}>
+                                    <div className={`w-24 h-24 ${radiusClass} p-1 shadow-2xl bg-white`}>
+                                        <div className={`w-full h-full ${radiusClass} flex items-center justify-center font-black text-4xl bg-primary-100 text-primary-600`}>
                                             {farmer.firstName?.[0]}{farmer.lastName?.[0]}
                                         </div>
                                     </div>
@@ -446,7 +448,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                                 }}
                                                 className="flex flex-col items-center gap-2 group"
                                             >
-                                                <div className={`w-12 h-12 rounded-2xl ${action.color} flex items-center justify-center shadow-lg transition-all group-hover:scale-110 group-hover:rotate-3 outline outline-4 outline-transparent hover:outline-white/20`}>
+                                                <div className={`w-12 h-12 ${radiusClass} ${action.color} flex items-center justify-center shadow-lg transition-all group-hover:scale-110 group-hover:rotate-3 outline outline-4 outline-transparent hover:outline-white/20`}>
                                                     <action.icon className="w-6 h-6" />
                                                 </div>
                                                 <span className={`text-[10px] font-black uppercase tracking-widest transition-colors ${isCyber ? 'text-primary-300' : 'text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-200'}`}>
@@ -467,7 +469,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                                 {t('viz_growth_positive')}
                                             </span>
                                         </div>
-                                        <div className={`h-48 w-full rounded-3xl p-4 border bg-gray-50/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800`}>
+                                        <div className={`h-48 w-full ${radiusClass} p-4 border bg-gray-50/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800`}>
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <AreaChart data={farmer.yieldHistory || []}>
                                                     <defs>
@@ -505,7 +507,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
 
                                     <div className="grid grid-cols-2 gap-6">
                                         {/* Crops Section */}
-                                        <section className={`p-6 rounded-3xl border shadow-sm bg-theme-bg-card dark:bg-gray-800/80 border-gray-100 dark:border-gray-700`}>
+                                        <section className={`p-6 ${radiusClass} border shadow-sm bg-theme-bg-card dark:bg-gray-800/80 border-gray-100 dark:border-gray-700`}>
                                             <h3 className={`text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2 text-gray-400`}>
                                                 <Sprout className={`w-4 h-4 text-green-500`} />
                                                 {t('table_crops')}
@@ -514,7 +516,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                                 <div className="space-y-2">
                                                     <div className="flex flex-wrap gap-2">
                                                         {(editData.crops || []).map((crop: string, i: number) => (
-                                                            <span key={i} className="flex items-center gap-1 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-tighter bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400">
+                                                            <span key={i} className={`flex items-center gap-1 px-3 py-1 ${radiusClass} text-[10px] font-black uppercase tracking-tighter bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400`}>
                                                                 {crop}
                                                                 <button
                                                                     type="button"
@@ -530,7 +532,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                                         <input
                                                             type="text"
                                                             placeholder="Add crop..."
-                                                            className="flex-1 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg"
+                                                            className={`flex-1 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 ${radiusClass}`}
                                                             onKeyDown={(e) => {
                                                                 if (e.key === 'Enter') {
                                                                     e.preventDefault();
@@ -548,7 +550,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                             ) : (
                                                 <div className="flex flex-wrap gap-2">
                                                     {(farmer.crops || []).map((crop: string, i: number) => (
-                                                        <span key={`${crop}-${i}`} className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-tighter bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400`}>
+                                                        <span key={`${crop}-${i}`} className={`px-3 py-1 ${radiusClass} text-[10px] font-black uppercase tracking-tighter bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400`}>
                                                             {crop}
                                                         </span>
                                                     ))}
@@ -557,7 +559,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                         </section>
 
                                         {/* Vital Stats */}
-                                        <section className={`p-6 rounded-3xl border shadow-sm bg-theme-bg-card dark:bg-gray-800/80 border-gray-100 dark:border-gray-700`}>
+                                        <section className={`p-6 ${radiusClass} border shadow-sm bg-theme-bg-card dark:bg-gray-800/80 border-gray-100 dark:border-gray-700`}>
                                             <h3 className={`text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2 text-gray-400`}>
                                                 <Activity className={`w-4 h-4 text-secondary-500`} />
                                                 {t('farmer_vital_score')}
@@ -574,7 +576,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                                     <select
                                                         value={editData.status || 'Active'}
                                                         onChange={(e) => setEditData({ ...editData, status: e.target.value })}
-                                                        className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary-500"
+                                                        className={`w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 ${radiusClass} px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary-500`}
                                                     >
                                                         <option value="Active">Active</option>
                                                         <option value="Inactive">Inactive</option>
@@ -604,7 +606,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                                          ${visit.status === 'completed' ? (isCyber ? 'bg-primary-500 neon-glow-primary' : 'bg-primary-500') : 'bg-accent-500'}`} />
 
                                                     <div
-                                                        className={`p-4 rounded-2xl border transition-all cursor-pointer ${isCyber ? 'bg-primary-500/5 hover:border-primary-500/30'
+                                                        className={`p-4 ${radiusClass} border transition-all cursor-pointer ${isCyber ? 'bg-primary-500/5 hover:border-primary-500/30'
                                                                 : 'bg-gray-50/50 dark:bg-gray-800/30 border-gray-100 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-800'
                                                             }`}
                                                     >
@@ -623,13 +625,13 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                                             <div className="flex gap-2 mt-3">
                                                                 <button
                                                                     onClick={() => handleUpdateVisitStatus(visit.id, 'completed')}
-                                                                    className="px-3 py-1 rounded-lg bg-green-500/10 hover:bg-green-500/20 text-green-600 dark:text-green-400 text-[9px] font-black uppercase tracking-widest border border-green-500/20 transition-all"
+                                                                    className={`px-3 py-1 ${btnClass} bg-green-500/10 hover:bg-green-500/20 text-green-600 dark:text-green-400 text-[9px] font-black uppercase tracking-widest border border-green-500/20 transition-all`}
                                                                 >
                                                                     Complete
                                                                 </button>
                                                                 <button
                                                                     onClick={() => handleUpdateVisitStatus(visit.id, 'cancelled')}
-                                                                    className="px-3 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-[9px] font-black uppercase tracking-widest border border-red-500/20 transition-all"
+                                                                    className={`px-3 py-1 ${btnClass} bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-[9px] font-black uppercase tracking-widest border border-red-500/20 transition-all`}
                                                                 >
                                                                     Cancel
                                                                 </button>
@@ -638,7 +640,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                                     </div>
                                                 </div>
                                             )) : (
-                                                <div className={`p-8 text-center rounded-3xl border border-dashed bg-gray-50/50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700`}>
+                                                <div className={`p-8 text-center ${radiusClass} border border-dashed bg-gray-50/50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700`}>
                                                     <Calendar className={`w-8 h-8 mx-auto mb-2 text-gray-300`} />
                                                     <p className={`text-xs font-bold uppercase tracking-widest text-gray-400`}>{t('visit_no_history')}</p>
                                                 </div>
@@ -663,7 +665,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                             interactions.map((log, i) => (
                                                 <div
                                                     key={log.id || `${log.type}-${i}`}
-                                                    className={`p-4 rounded-2xl border bg-gray-50/50 dark:bg-gray-800/30 border-gray-100 dark:border-gray-800`}
+                                                    className={`p-4 ${radiusClass} border bg-gray-50/50 dark:bg-gray-800/30 border-gray-100 dark:border-gray-800`}
                                                 >
                                                     <div className="flex justify-between items-start mb-2">
                                                         <div className="flex items-center gap-2">
@@ -711,7 +713,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                 <button
                                     onClick={handleRefreshPriority}
                                     disabled={isRefreshingPriority}
-                                    className={`px-4 py-3 rounded-2xl font-black text-xs transition-all flex items-center gap-2 border ${isCyber ? 'border-primary-500/30 text-primary-400 hover:bg-primary-500/10' : 'border-primary-200 dark:border-primary-800 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20'
+                                    className={`px-4 py-3 ${radiusClass} font-black text-xs transition-all flex items-center gap-2 border ${isCyber ? 'border-primary-500/30 text-primary-400 hover:bg-primary-500/10' : 'border-primary-200 dark:border-primary-800 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20'
                                         } ${isRefreshingPriority ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
                                     {isRefreshingPriority ? (
@@ -724,7 +726,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                 <button
                                     onClick={handleStartSynthesis}
                                     disabled={isSynthesizing}
-                                    className={`px-6 py-3 rounded-2xl font-black text-xs shadow-xl transition-all flex items-center gap-2 ${isCyber ? 'bg-primary-400 shadow-primary-500/20 text-white' : 'bg-primary-600 hover:bg-primary-700 text-white shadow-primary-500/20'
+                                    className={`px-6 py-3 ${radiusClass} font-black text-xs shadow-xl transition-all flex items-center gap-2 ${isCyber ? 'bg-primary-400 shadow-primary-500/20 text-white' : 'bg-primary-600 hover:bg-primary-700 text-white shadow-primary-500/20'
                                         } ${isSynthesizing ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
                                     {isSynthesizing ? (
@@ -768,7 +770,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                     exit={{ opacity: 0 }}
                     className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
                 >
-                    <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden relative rounded-3xl border border-white/20 shadow-2xl">
+                    <div className={`w-full max-w-4xl max-h-[90vh] overflow-hidden relative ${radiusClass} border border-white/20 shadow-2xl`}>
                         <button
                             onClick={() => setShowVideoCall(false)}
                             className="absolute top-4 right-4 z-[110] p-2 bg-black/50 hover:bg-black/70 text-white rounded-full backdrop-blur-md transition-all"

@@ -13,7 +13,7 @@ import toast from 'react-hot-toast';
 
 export function SystemHealth() {
     const { t } = useLanguage();
-    const { headingClass } = useDesignSystemMode();
+    const { headingClass, isModern, radiusClass, btnClass } = useDesignSystemMode();
     const { addNotification } = useAppStore();
 
     // State
@@ -137,7 +137,7 @@ export function SystemHealth() {
                     <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{title}</p>
                     <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
                 </div>
-                <div className={`p-3 bg-${color}-50 dark:bg-${color}-900/30 rounded-xl`}>
+                <div className={`p-3 bg-${color}-50 dark:bg-${color}-900/30 ${radiusClass}`}>
                     <Icon className={`w-6 h-6 text-${color}-600 dark:text-${color}-400`} />
                 </div>
             </div>
@@ -175,13 +175,13 @@ export function SystemHealth() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className={`text-2xl ${headingClass}`}>{t('system_health_title')}</h1>
+                    <h1 className={`text-2xl ${headingClass}`}>{isModern ? 'Infrastructure Vitality' : 'System Health'}</h1>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">{t('system_health_subtitle')}</p>
                 </div>
                 <button
                     onClick={handleRefresh}
                     disabled={isRefreshing}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                    className={`flex items-center gap-2 px-4 py-2 bg-primary-600 text-white ${btnClass} hover:bg-primary-700 disabled:opacity-50`}
                 >
                     <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                     Refresh
@@ -230,7 +230,7 @@ export function SystemHealth() {
                                 key={check.component}
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                className={`p-6 border-2 rounded-xl bg-white dark:bg-gray-800 ${getStatusColor(check.status)}`}
+                                className={`p-6 border-2 ${radiusClass} bg-white dark:bg-gray-800 ${getStatusColor(check.status)}`}
                             >
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="flex items-center gap-3">
@@ -264,7 +264,7 @@ export function SystemHealth() {
                                     </div>
 
                                     {check.error && (
-                                        <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                                        <div className={`mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 ${radiusClass}`}>
                                             <p className="text-sm text-red-700 dark:text-red-300 font-medium">Error:</p>
                                             <p className="text-xs text-red-600 dark:text-red-400 mt-1">{check.error}</p>
                                         </div>
@@ -274,7 +274,7 @@ export function SystemHealth() {
                                         <button
                                             onClick={() => handleTriggerRecovery(check.component)}
                                             disabled={triggeringRecovery === check.component}
-                                            className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 text-sm"
+                                            className={`w-full mt-3 flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white ${btnClass} hover:bg-primary-700 disabled:opacity-50 text-sm`}
                                         >
                                             <RotateCcw className={`w-4 h-4 ${triggeringRecovery === check.component ? 'animate-spin' : ''}`} />
                                             {t('system_health_trigger_recovery')}
@@ -296,7 +296,7 @@ export function SystemHealth() {
                             key={index}
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
-                            className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
+                            className={`flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 ${radiusClass}`}
                         >
                             <div className="flex items-center gap-4">
                                 <Shield className={`w-5 h-5 ${action.success ? 'text-green-600' : 'text-red-600'}`} />

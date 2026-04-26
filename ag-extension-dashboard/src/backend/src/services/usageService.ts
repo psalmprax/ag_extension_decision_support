@@ -6,12 +6,13 @@ const prisma = new PrismaClient({
     datasourceUrl: process.env.DATABASE_URL,
 });
 
-export type UsageType = 'sms' | 'ai_chat' | 'report';
+export type UsageType = 'sms' | 'ai_chat' | 'report' | 'ai_vision';
 
 export interface PlanLimits {
     smsLimit: number;
     aiChatLimit: number;
     reportLimit: number;
+    aiVisionLimit: number;
 }
 
 class UsageService {
@@ -63,6 +64,7 @@ class UsageService {
             if (type === 'sms') updateData.smsCount = { increment: 1 };
             if (type === 'ai_chat') updateData.aiChatCount = { increment: 1 };
             if (type === 'report') updateData.reportCount = { increment: 1 };
+            if (type === 'ai_vision') updateData.aiVisionCount = { increment: 1 };
 
             await prisma.usage.update({
                 where: { id: subscription.usage.id },
@@ -102,6 +104,9 @@ class UsageService {
             } else if (type === 'report') {
                 current = data.usage.reportCount;
                 limit = features.reportLimit || 0;
+            } else if (type === 'ai_vision') {
+                current = (data.usage as any).aiVisionCount || 0;
+                limit = features.aiVisionLimit || 0;
             }
 
             return {

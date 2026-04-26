@@ -269,7 +269,7 @@ export function handleMulterError(error: any): AppError {
  * This ensures all async errors are properly caught and passed to the error handler
  */
 export const asyncWrapper = (fn: Function) => (req: Request, res: Response, next: NextFunction) => {
-    Promise.resolve(fn(req, res, next)).catch((err) => {
+    Promise.resolve(fn(req, res, next)).catch((err: any) => {
         // Handle specific error types
         if (err.name === 'JsonWebTokenError') {
             return next(createAuthenticationError('Invalid token'));

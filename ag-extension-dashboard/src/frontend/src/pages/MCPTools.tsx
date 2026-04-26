@@ -13,7 +13,7 @@ import toast from 'react-hot-toast';
 
 export function MCPTools() {
     const { t } = useLanguage();
-    const { headingClass } = useDesignSystemMode();
+    const { headingClass, isModern, radiusClass, btnClass } = useDesignSystemMode();
     const { addNotification } = useAppStore();
 
     // State
@@ -183,7 +183,7 @@ export function MCPTools() {
                         value={value}
                         onChange={(e) => setToolArgs(prev => ({ ...prev, [propertyName]: e.target.value }))}
                         placeholder={schema.description || `Enter ${propertyName}`}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 ${radiusClass} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}
                     />
                 );
             case 'number':
@@ -193,7 +193,7 @@ export function MCPTools() {
                         value={value}
                         onChange={(e) => setToolArgs(prev => ({ ...prev, [propertyName]: parseFloat(e.target.value) || 0 }))}
                         placeholder={schema.description || `Enter ${propertyName}`}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 ${radiusClass} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}
                     />
                 );
             case 'boolean':
@@ -201,7 +201,7 @@ export function MCPTools() {
                     <select
                         value={value.toString()}
                         onChange={(e) => setToolArgs(prev => ({ ...prev, [propertyName]: e.target.value === 'true' }))}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 ${radiusClass} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}
                     >
                         <option value="false">False</option>
                         <option value="true">True</option>
@@ -221,7 +221,7 @@ export function MCPTools() {
                         }}
                         placeholder={schema.description || `Enter ${propertyName} (JSON)`}
                         rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-mono text-sm resize-none"
+                        className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 ${radiusClass} bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono text-sm resize-none`}
                     />
                 );
         }
@@ -244,7 +244,7 @@ export function MCPTools() {
                     <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{title}</p>
                     <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
                 </div>
-                <div className={`p-3 bg-${color}-50 dark:bg-${color}-900/30 rounded-xl`}>
+                <div className={`p-3 bg-${color}-50 dark:bg-${color}-900/30 ${radiusClass}`}>
                     <Icon className={`w-6 h-6 text-${color}-600 dark:text-${color}-400`} />
                 </div>
             </div>
@@ -282,13 +282,13 @@ export function MCPTools() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className={`text-2xl ${headingClass}`}>{t('mcp_tools_title')}</h1>
+                    <h1 className={`text-2xl ${headingClass}`}>{isModern ? 'Protocol Toolchain' : 'System Tools'}</h1>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">{t('mcp_tools_subtitle')}</p>
                 </div>
                 <button
                     onClick={handleRefresh}
                     disabled={isRefreshing}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                    className={`flex items-center gap-2 px-4 py-2 bg-primary-600 text-white ${btnClass} hover:bg-primary-700 disabled:opacity-50`}
                 >
                     <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                     Refresh
@@ -369,7 +369,7 @@ export function MCPTools() {
                                 key={tool.name}
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
-                            className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                            className={`p-4 border ${radiusClass} cursor-pointer transition-all ${
                                 selectedTool?.name === tool.name
                                     ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
                                     : 'border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700'
@@ -409,7 +409,7 @@ export function MCPTools() {
                     {selectedTool ? (
                         <div className="space-y-6">
                             {/* Tool Info */}
-                            <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                            <div className={`p-4 bg-gray-50 dark:bg-gray-800/50 ${radiusClass}`}>
                                 <h4 className="font-semibold text-gray-900 dark:text-white mb-1">{selectedTool.name}</h4>
                                 <p className="text-sm text-gray-600 dark:text-gray-400">{selectedTool.description}</p>
                             </div>
@@ -439,7 +439,7 @@ export function MCPTools() {
                             <button
                                 onClick={handleExecuteTool}
                                 disabled={isExecuting}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                                className={`w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary-600 text-white ${btnClass} hover:bg-primary-700 disabled:opacity-50`}
                             >
                                 {isExecuting ? (
                                     <>
@@ -456,7 +456,7 @@ export function MCPTools() {
 
                             {/* Execution Result */}
                             {executionResult && (
-                                <div className={`p-4 rounded-lg ${
+                                <div className={`p-4 ${radiusClass} ${
                                     executionResult.isError
                                         ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
                                         : 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
@@ -475,7 +475,7 @@ export function MCPTools() {
                                         {executionResult.content.map((item, index) => (
                                             <div key={index} className="text-sm">
                                                 {item.type === 'text' && (
-                                                    <pre className="whitespace-pre-wrap font-mono text-gray-900 dark:text-white bg-white dark:bg-gray-800 p-2 rounded border">
+                                                    <pre className={`whitespace-pre-wrap font-mono text-gray-900 dark:text-white bg-white dark:bg-gray-800 p-2 border ${radiusClass}`}>
                                                         {item.text}
                                                     </pre>
                                                 )}
@@ -505,7 +505,7 @@ export function MCPTools() {
                                 key={index}
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
+                                className={`flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 ${radiusClass}`}
                             >
                                 <div className="flex items-center gap-3">
                                     {execution.result?.isError ? (
