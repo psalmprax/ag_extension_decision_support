@@ -1261,7 +1261,7 @@ function App() {
                         >
                             <Menu className="w-5 h-5" />
                         </button>
-                        <span className="text-2xl font-black tracking-tighter text-cyan-400 drop-shadow-[0_0_8px_rgba(0,245,255,0.5)] font-headline">ALPHA AI</span>
+                        <span className="text-2xl font-black tracking-tighter text-cyan-400 drop-shadow-[0_0_8px_rgba(0,245,255,0.5)] font-headline uppercase">AG-extension</span>
                     </div>
                     <nav className="hidden md:flex gap-6">
                         <button onClick={() => setActiveTab('dashboard')} className={`font-headline tracking-tight transition-all px-2 py-1 rounded ${activeTab === 'dashboard' ? 'text-cyan-600 dark:text-cyan-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300 hover:bg-black/5 dark:hover:bg-white/5'}`}>Dashboard</button>

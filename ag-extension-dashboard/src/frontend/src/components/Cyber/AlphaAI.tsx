@@ -156,8 +156,8 @@ const AlphaAI = () => {
                             <Brain className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-xl font-black uppercase tracking-[0.2em] leading-none">Alpha AI</h1>
-                            <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest mt-1">Core Intelligence Core v4.2</p>
+                            <h1 className="text-xl font-black uppercase tracking-[0.2em] leading-none">AG-extension</h1>
+                            <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest mt-1">Strategic Decision Support Core v4.2</p>
                         </div>
                     </div>
                     <div className="h-8 w-px bg-white/10" />
