@@ -146,6 +146,7 @@ export class OllamaProvider extends BaseAIProvider {
             const response = await axios.get(`${config.ollama.host}/api/tags`, { timeout: 2000 });
             return response.status === 200;
         } catch (error) {
+            logger.warn(`Ollama health check failed for ${config.ollama.host}:`, (error as Error).message);
             return false;
         }
     }
