@@ -361,6 +361,7 @@
   "stat_ai_insights": "AI Insights",
   "stat_avg_satisfaction": "Avg Satisfaction",
   "stat_malawi_overview": "Malawi Overview",
+  "stat_kenya_overview": "Kenya Overview",
   "stat_pending_visits": "Pending Visits",
   "stat_recent_activity": "Recent Activity",
   "stat_regional_distribution": "Regional Distribution",
@@ -429,6 +430,7 @@
   "weather_celsius": "Celsius",
   "weather_humidity": "Humidity",
   "weather_malawi": "Malawi Weather",
+  "weather_kenya": "Kenya Weather",
   "weather_title": "Weather",
   "weather_wind": "Wind Speed",
 

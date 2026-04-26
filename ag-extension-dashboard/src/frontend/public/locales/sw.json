@@ -344,6 +344,7 @@
   "stat_ai_insights": "Maelezo ya AI",
   "stat_avg_satisfaction": "Kuridhika ya Wastani",
   "stat_malawi_overview": "Muhtasari wa Malawi",
+  "stat_kenya_overview": "Muhtasari wa Kenya",
   "stat_pending_visits": "Ziara Zinazosubiri",
   "stat_recent_activity": "Shughuli za Hivi Punde",
   "stat_regional_distribution": "Ugawaji wa Kikanda",
@@ -407,6 +408,7 @@
   "weather_celsius": "Safari",
   "weather_humidity": "Unyevunyevu",
   "weather_malawi": "Hali ya Hewa ya Malawi",
+  "weather_kenya": "Hali ya Hewa ya Kenya",
   "weather_title": "Hali ya Hewa",
   "weather_wind": "Kasi ya Upepo"
 }
