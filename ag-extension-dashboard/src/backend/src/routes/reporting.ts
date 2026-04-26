@@ -56,11 +56,11 @@ router.get('/', async (req: AuthRequest, res: Response) => {
             data: {
                 reports: result.rows.map((r: any) => ({
                     id: r.id,
-                    type: r.report_type,
+                    type: r.type,
                     title: r.title,
                     generatedAt: r.created_at,
                     status: r.status,
-                    data: r.report_data,
+                    data: r.content,
                 })),
                 total: result.rows.length,
             },
@@ -111,11 +111,22 @@ router.post('/generate', checkUsageLimit('report'), async (req: AuthRequest, res
 
             const reportTitle = title || `${type.replace('_', ' ')} - ${new Date(effectiveStartDate).toLocaleDateString()} to ${new Date(effectiveEndDate).toLocaleDateString()}`;
 
+            // Combine all metadata into the content JSONB column as per schema
+            const fullReportContent = {
+                ...reportData,
+                metadata: {
+                    region,
+                    startDate: effectiveStartDate,
+                    endDate: effectiveEndDate,
+                    officerId
+                }
+            };
+
             const result = await query(`
-                INSERT INTO reports (report_type, title, officer_id, region, start_date, end_date, report_data, status, created_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, 'completed', NOW())
+                INSERT INTO reports (type, title, generated_by, content, status, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, 'completed', NOW(), NOW())
                 RETURNING *
-            `, [type, reportTitle, officerId, region, effectiveStartDate, effectiveEndDate, JSON.stringify(reportData)]);
+            `, [type, reportTitle, officerId || req.user!.userId, JSON.stringify(fullReportContent)]);
 
             await usageService.incrementUsage(req.user!.userId, 'report');
 
@@ -123,11 +134,11 @@ router.post('/generate', checkUsageLimit('report'), async (req: AuthRequest, res
                 success: true,
                 data: {
                     id: result.rows[0].id,
-                    type: result.rows[0].report_type,
+                    type: result.rows[0].type,
                     title: result.rows[0].title,
                     generatedAt: result.rows[0].created_at,
                     status: result.rows[0].status,
-                    data: reportData,
+                    data: fullReportContent,
                 },
             });
         }
@@ -161,11 +172,11 @@ router.get('/:id', async (req: Request, res: Response) => {
             success: true,
             data: {
                 id: report.id,
-                type: report.report_type,
+                type: report.type,
                 title: report.title,
                 generatedAt: report.created_at,
                 status: report.status,
-                data: report.report_data,
+                data: report.content,
             },
         });
     } catch (error) {
@@ -185,7 +196,7 @@ router.get('/:id/download', async (req: Request, res: Response) => {
             return res.status(404).json({ success: false, error: 'Report not found' });
         }
 
-        const data = report.report_data;
+        const data = report.content;
         let csv = 'Metric,Value\n';
         
         // Flatten the JSON report data into CSV rows
@@ -233,17 +244,18 @@ router.get('/:id/download/pdf', async (req: Request, res: Response) => {
         doc.fontSize(10).fillColor('#7f8c8d').text(`Generated: ${new Date(report.created_at).toLocaleString()}`, { align: 'center' });
         doc.moveDown(2);
 
+        const data = report.content as any;
+
         // Report Details
         doc.fontSize(12).fillColor('#2c3e50').text('Report Details', { underline: true });
         doc.moveDown(0.5);
         doc.fontSize(10).fillColor('#34495e');
-        doc.text(`Report Type: ${report.report_type}`);
+        doc.text(`Report Type: ${report.type}`);
         doc.text(`Status: ${report.status}`);
-        doc.text(`Period: ${report.start_date ? new Date(report.start_date).toLocaleDateString() : 'N/A'} - ${report.end_date ? new Date(report.end_date).toLocaleDateString() : 'N/A'}`);
+        doc.text(`Period: ${data.metadata?.startDate ? new Date(data.metadata.startDate).toLocaleDateString() : 'N/A'} - ${data.metadata?.endDate ? new Date(data.metadata.endDate).toLocaleDateString() : 'N/A'}`);
         doc.moveDown(1);
 
         // Visit Data
-        const data = report.report_data as any;
         if (data.visits) {
             doc.fontSize(12).fillColor('#2c3e50').text('Visit Statistics', { underline: true });
             doc.moveDown(0.5);
@@ -287,7 +299,7 @@ router.get('/:id/download/excel', async (req: Request, res: Response) => {
             return res.status(404).json({ success: false, error: 'Report not found' });
         }
 
-        const data = report.report_data as any;
+        const data = report.content as any;
         const wb = XLSX.utils.book_new();
 
         // Summary Sheet
@@ -295,11 +307,11 @@ router.get('/:id/download/excel', async (req: Request, res: Response) => {
             ['Agricultural Extension Report'],
             [''],
             ['Report Title', report.title || 'Activity Report'],
-            ['Report Type', report.report_type],
+            ['Report Type', report.type],
             ['Status', report.status],
             ['Generated', new Date(report.created_at).toLocaleString()],
-            ['Period Start', report.start_date ? new Date(report.start_date).toLocaleDateString() : 'N/A'],
-            ['Period End', report.end_date ? new Date(report.end_date).toLocaleDateString() : 'N/A'],
+            ['Period Start', data.metadata?.startDate ? new Date(data.metadata.startDate).toLocaleDateString() : 'N/A'],
+            ['Period End', data.metadata?.endDate ? new Date(data.metadata.endDate).toLocaleDateString() : 'N/A'],
         ];
         const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
         XLSX.utils.book_append_sheet(wb, summarySheet, 'Summary');
