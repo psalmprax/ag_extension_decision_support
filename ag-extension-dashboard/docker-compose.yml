@@ -44,7 +44,7 @@ services:
       - AI_PRIMARY_MODEL=gpt-4o
       - AI_EMBEDDINGS_PROVIDER=openai
       - OLLAMA_HOST=${OLLAMA_HOST:-http://ettametta-ollama:11434}
-      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-hermes3:latest}
       - AI_FALLBACK_PROVIDER=ollama
     depends_on:
       - app-db
