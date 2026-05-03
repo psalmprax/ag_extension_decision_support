@@ -12,7 +12,7 @@ const apiClient = axios.create({
         'Content-Type': 'application/json',
     },
     withCredentials: true,
-    timeout: 30000, // Explicitly set 30s timeout for AI/RAG queries
+    timeout: 300000, // Explicitly set 5m timeout for AI/RAG queries on CPU
 });
 
 // Request interceptor to add JWT token to all requests
