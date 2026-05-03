@@ -52,7 +52,7 @@ export class OllamaProvider extends BaseAIProvider {
                     num_predict: options?.maxTokens ?? 1000,
                 }
             }, {
-                timeout: 60000, // 60s timeout for local LLM
+                timeout: 300000, // 5 min timeout for local LLM on CPU
             });
 
             const data = response.data;
