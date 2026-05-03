@@ -16,15 +16,14 @@ export function useDesignSystemMode() {
         ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_0_20px_rgba(34,211,238,0.2)]' 
         : 'rounded-none border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-mono text-[10px] uppercase tracking-widest';
     const headingClass = isModern 
-        ? (darkMode 
-            ? 'bg-clip-text text-transparent bg-gradient-to-br from-white via-cyan-200 to-emerald-400 font-black tracking-tighter' 
-            : 'bg-clip-text text-transparent bg-gradient-to-r from-cyan-700 to-emerald-700 font-black tracking-tighter')
-        : 'font-bold text-gray-900 dark:text-white uppercase tracking-widest text-xs';
+        ? `${darkMode ? 'text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-200 to-emerald-200 drop-shadow-[0_0_15px_rgba(34,211,238,0.4)]' : 'text-cyan-900'} font-black tracking-tighter`
+        : 'text-slate-900 dark:text-white font-bold';
     const dataClass = isModern 
-        ? (darkMode
-            ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] font-black tracking-tighter' 
-            : 'text-cyan-800 font-black tracking-tighter')
-        : 'font-mono text-emerald-500 font-bold tracking-normal';
+        ? `${darkMode ? 'text-cyan-400' : 'text-cyan-900'} font-black tracking-tighter drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]`
+        : 'text-slate-900 dark:text-white font-bold';
+    const subtextClass = isModern 
+        ? `${darkMode ? 'text-slate-400' : 'text-slate-600'}`
+        : 'text-slate-500 dark:text-slate-400';
     const cardClass = `${panelClass} ${radiusClass} p-6 relative overflow-hidden transition-all duration-300 ${isModern ? 'hover:scale-[1.01] hover:shadow-2xl' : ''}`;
 
     return { 
@@ -35,6 +34,7 @@ export function useDesignSystemMode() {
         btnClass, 
         headingClass, 
         dataClass, 
+        subtextClass,
         cardClass 
     };
 }

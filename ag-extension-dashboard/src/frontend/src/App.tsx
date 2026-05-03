@@ -128,9 +128,10 @@ interface StatCardProps {
     headingClass?: string;
     dataClass?: string;
     isModern?: boolean;
+    subtextClass?: string;
 }
 
-const StatCard = ({ title, value, change, icon: Icon, delay, cardClass, headingClass, dataClass, isModern }: StatCardProps) => {
+const StatCard = ({ title, value, change, icon: Icon, delay, cardClass, headingClass, dataClass, subtextClass, isModern }: StatCardProps) => {
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -149,7 +150,7 @@ const StatCard = ({ title, value, change, icon: Icon, delay, cardClass, headingC
                     </span>
                 )}
             </div>
-            <h3 className={`text-slate-500 dark:text-slate-400 font-headline uppercase mb-1 ${isModern ? headingClass : ''}`}>{title}</h3>
+            <h3 className={`font-headline uppercase mb-1 ${isModern ? headingClass : (subtextClass || 'text-slate-500 dark:text-slate-400')}`}>{title}</h3>
             <div className={`text-3xl font-headline ${dataClass}`}>
                 {value !== undefined && value !== null ? value.toLocaleString() : '0'}
             </div>
@@ -240,6 +241,7 @@ function App() {
         btnClass,
         headingClass,
         dataClass,
+        subtextClass,
         cardClass
     } = useDesignSystemMode();
 
@@ -1371,7 +1373,7 @@ function App() {
                         <div className="hidden lg:flex items-center gap-2 scale-90 origin-right">
                                 <button 
                                     onClick={toggleDesignSystemMode}
-                                    className={`flex items-center gap-2 px-3 py-1.5 ${btnClass} text-[10px] font-bold uppercase tracking-widest transition-all ${isModern ? (darkMode ? 'bg-cyan-500/10 text-cyan-400' : 'bg-cyan-600/10 text-cyan-700') : 'bg-gray-100 dark:bg-white/5 text-gray-500'}`}
+                                    className={`flex items-center gap-2 px-3 py-1.5 ${btnClass} text-[10px] font-bold uppercase tracking-widest transition-all ${isModern ? (darkMode ? 'bg-cyan-500/10 text-cyan-400' : 'bg-cyan-600/10 text-cyan-700') : `bg-gray-100 dark:bg-white/5 ${subtextClass}`}`}
                                     title="Toggle Design Aesthetic"
                                 >
                                     <Layout className="w-3.5 h-3.5" />
@@ -1421,7 +1423,7 @@ function App() {
                                         className="absolute right-0 mt-2 w-56 glass-panel rounded-xl shadow-2xl p-2 z-50"
                                     >
                                         <div className="p-3 mb-2 border-b border-white/10">
-                                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Account Info</p>
+                                            <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${subtextClass}`}>Account Info</p>
                                             <p className="text-xs font-bold text-gray-900 dark:text-white truncate">{storeUser?.email}</p>
                                         </div>
 
@@ -1454,7 +1456,7 @@ function App() {
                     >
                         <div className="px-4 mb-8">
                             <h3 className={`font-headline text-sm tracking-widest uppercase mb-1 ${isModern ? (darkMode ? 'text-cyan-400' : 'text-cyan-700') : 'text-slate-400'}`}>Ag-Extension</h3>
-                            <p className="text-[10px] text-slate-500 font-medium">{storeUser?.region || 'Sector 7G - Midwest'}</p>
+                            <p className={`text-[10px] font-medium ${subtextClass}`}>{storeUser?.region || 'Sector 7G - Midwest'}</p>
                         </div>
 
                         <nav className="flex flex-col gap-2 grow overflow-y-auto custom-scrollbar pr-2">
@@ -1464,7 +1466,7 @@ function App() {
                                     onClick={() => setActiveTab(item.id)}
                                     className={`flex items-center gap-3 px-4 py-3 ${btnClass} transition-all duration-200 text-left ${activeTab === item.id
                                         ? 'bg-cyan-600/10 dark:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-r-2 border-cyan-600 dark:border-cyan-400 shadow-[inset_0_0_15px_rgba(0,245,255,0.1)]'
-                                        : 'text-slate-500 hover:bg-black/5 dark:hover:bg-white/5 hover:text-cyan-600 dark:hover:text-cyan-200'
+                                        : `${subtextClass} hover:bg-black/5 dark:hover:bg-white/5 hover:text-cyan-600 dark:hover:text-cyan-200`
                                         }`}
                                 >
                                     <item.icon className="w-4 h-4 flex-shrink-0" />
@@ -1553,6 +1555,7 @@ function App() {
                                             cardClass={cardClass}
                                             headingClass={headingClass}
                                             dataClass={dataClass}
+                                            subtextClass={subtextClass}
                                             isModern={isModern}
                                         />
                                         <StatCard
@@ -1564,6 +1567,7 @@ function App() {
                                             cardClass={cardClass}
                                             headingClass={headingClass}
                                             dataClass={dataClass}
+                                            subtextClass={subtextClass}
                                             isModern={isModern}
                                         />
                                         <StatCard
@@ -1575,6 +1579,7 @@ function App() {
                                             cardClass={cardClass}
                                             headingClass={headingClass}
                                             dataClass={dataClass}
+                                            subtextClass={subtextClass}
                                             isModern={isModern}
                                         />
                                         <StatCard
@@ -1586,6 +1591,7 @@ function App() {
                                             cardClass={cardClass}
                                             headingClass={headingClass}
                                             dataClass={dataClass}
+                                            subtextClass={subtextClass}
                                             isModern={isModern}
                                         />
                                     </>
