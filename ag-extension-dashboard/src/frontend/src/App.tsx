@@ -127,9 +127,10 @@ interface StatCardProps {
     cardClass?: string;
     headingClass?: string;
     dataClass?: string;
+    isModern?: boolean;
 }
 
-const StatCard = ({ title, value, change, icon: Icon, delay, cardClass, headingClass, dataClass }: StatCardProps) => {
+const StatCard = ({ title, value, change, icon: Icon, delay, cardClass, headingClass, dataClass, isModern }: StatCardProps) => {
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -139,16 +140,16 @@ const StatCard = ({ title, value, change, icon: Icon, delay, cardClass, headingC
         >
             <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-400/5 blur-3xl -mr-12 -mt-12 group-hover:bg-cyan-400/20 transition-all"></div>
             <div className="flex justify-between items-start mb-4">
-                <div className="p-2 bg-cyan-400/10 rounded-lg text-cyan-400">
+                <div className={`p-2 ${isModern ? 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400'} rounded-lg`}>
                     <Icon className="w-5 h-5" />
                 </div>
                 {change !== undefined && (
-                    <span className={`text-xs font-bold ${change >= 0 ? 'text-cyan-400' : 'text-red-400'}`}>
+                    <span className={`text-xs font-bold ${change >= 0 ? (isModern ? 'text-emerald-600 dark:text-cyan-400' : 'text-emerald-500') : 'text-rose-500'}`}>
                         {change >= 0 ? '+' : ''}{change}%
                     </span>
                 )}
             </div>
-            <h3 className={`text-slate-500 dark:text-slate-400 font-headline uppercase mb-1 ${headingClass}`}>{title}</h3>
+            <h3 className={`text-slate-500 dark:text-slate-400 font-headline uppercase mb-1 ${isModern ? headingClass : ''}`}>{title}</h3>
             <div className={`text-3xl font-headline ${dataClass}`}>
                 {value !== undefined && value !== null ? value.toLocaleString() : '0'}
             </div>
@@ -1282,13 +1283,13 @@ function App() {
                         <span className={`text-2xl font-headline ${headingClass}`}>AG-extension</span>
                     </div>
                     <nav className="hidden md:flex items-center gap-1">
-                        <button onClick={() => setActiveTab('dashboard')} className={`font-headline tracking-tight transition-all px-4 py-2 ${btnClass} ${activeTab === 'dashboard' ? (isModern ? 'text-cyan-400 font-black' : 'bg-slate-900 text-white') : 'text-slate-500'}`}>
+                        <button onClick={() => setActiveTab('dashboard')} className={`font-headline tracking-tight transition-all px-4 py-2 ${btnClass} ${activeTab === 'dashboard' ? (isModern ? (darkMode ? 'text-cyan-400 font-black' : 'text-cyan-700 font-black') : 'bg-slate-900 text-white') : 'text-slate-500'}`}>
                             {isModern ? 'Strategic Intelligence' : 'Operations Dashboard'}
                         </button>
-                        <button onClick={() => setActiveTab('analytics')} className={`font-headline tracking-tight transition-all px-4 py-2 ${btnClass} ${activeTab === 'analytics' ? (isModern ? 'text-cyan-400 font-black' : 'bg-slate-900 text-white') : 'text-slate-500'}`}>
+                        <button onClick={() => setActiveTab('analytics')} className={`font-headline tracking-tight transition-all px-4 py-2 ${btnClass} ${activeTab === 'analytics' ? (isModern ? (darkMode ? 'text-cyan-400 font-black' : 'text-cyan-700 font-black') : 'bg-slate-900 text-white') : 'text-slate-500'}`}>
                             {isModern ? 'Growth Optimization' : 'System Analytics'}
                         </button>
-                        <button onClick={() => setActiveTab('reports')} className={`font-headline tracking-tight transition-all px-4 py-2 ${btnClass} ${activeTab === 'reports' ? (isModern ? 'text-cyan-400 font-black' : 'bg-slate-900 text-white') : 'text-slate-500'}`}>
+                        <button onClick={() => setActiveTab('reports')} className={`font-headline tracking-tight transition-all px-4 py-2 ${btnClass} ${activeTab === 'reports' ? (isModern ? (darkMode ? 'text-cyan-400 font-black' : 'text-cyan-700 font-black') : 'bg-slate-900 text-white') : 'text-slate-500'}`}>
                             {isModern ? 'Executive Reporting' : 'Data Reports'}
                         </button>
                     </nav>
@@ -1368,14 +1369,14 @@ function App() {
 
                     <div className="flex items-center gap-3 border-r border-gray-200 dark:border-white/10 pr-4">
                         <div className="hidden lg:flex items-center gap-2 scale-90 origin-right">
-                            <button 
-                                onClick={toggleDesignSystemMode}
-                                className={`flex items-center gap-2 px-3 py-1.5 ${btnClass} text-[10px] font-bold uppercase tracking-widest transition-all ${isModern ? 'bg-cyan-500/10 text-cyan-400' : 'bg-gray-100 dark:bg-white/5 text-gray-500'}`}
-                                title="Toggle Design Aesthetic"
-                            >
-                                <Layout className="w-3.5 h-3.5" />
-                                {isModern ? 'Modern' : 'Classic'}
-                            </button>
+                                <button 
+                                    onClick={toggleDesignSystemMode}
+                                    className={`flex items-center gap-2 px-3 py-1.5 ${btnClass} text-[10px] font-bold uppercase tracking-widest transition-all ${isModern ? (darkMode ? 'bg-cyan-500/10 text-cyan-400' : 'bg-cyan-600/10 text-cyan-700') : 'bg-gray-100 dark:bg-white/5 text-gray-500'}`}
+                                    title="Toggle Design Aesthetic"
+                                >
+                                    <Layout className="w-3.5 h-3.5" />
+                                    {isModern ? 'Modern' : 'Classic'}
+                                </button>
                             <LanguageSwitcher compact />
                             <ThemeSwitcher currentTheme={themeName} onThemeChange={setThemeName} />
                         </div>
@@ -1452,7 +1453,7 @@ function App() {
                         className={`fixed left-0 top-0 h-full flex flex-col pt-20 pb-8 px-4 ${isModern ? 'bg-white/70 dark:bg-slate-950/40 backdrop-blur-2xl' : 'bg-white dark:bg-slate-900 shadow-xl'} border-r border-gray-200 dark:border-white/10 w-64 z-40`}
                     >
                         <div className="px-4 mb-8">
-                            <h3 className="font-headline text-cyan-400 text-sm tracking-widest uppercase mb-1">Ag-Extension</h3>
+                            <h3 className={`font-headline text-sm tracking-widest uppercase mb-1 ${isModern ? (darkMode ? 'text-cyan-400' : 'text-cyan-700') : 'text-slate-400'}`}>Ag-Extension</h3>
                             <p className="text-[10px] text-slate-500 font-medium">{storeUser?.region || 'Sector 7G - Midwest'}</p>
                         </div>
 
@@ -1552,6 +1553,7 @@ function App() {
                                             cardClass={cardClass}
                                             headingClass={headingClass}
                                             dataClass={dataClass}
+                                            isModern={isModern}
                                         />
                                         <StatCard
                                             title={isOfficer ? "My Active Chats" : t('stat_active_conversations')}
@@ -1562,6 +1564,7 @@ function App() {
                                             cardClass={cardClass}
                                             headingClass={headingClass}
                                             dataClass={dataClass}
+                                            isModern={isModern}
                                         />
                                         <StatCard
                                             title={isOfficer ? "My Visits (30d)" : t('stat_visits_this_month')}
@@ -1572,6 +1575,7 @@ function App() {
                                             cardClass={cardClass}
                                             headingClass={headingClass}
                                             dataClass={dataClass}
+                                            isModern={isModern}
                                         />
                                         <StatCard
                                             title={isOfficer ? "Avg. Conversations" : t('stat_avg_satisfaction')}
@@ -1582,6 +1586,7 @@ function App() {
                                             cardClass={cardClass}
                                             headingClass={headingClass}
                                             dataClass={dataClass}
+                                            isModern={isModern}
                                         />
                                     </>
                                 ) : null}

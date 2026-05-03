@@ -1,7 +1,10 @@
-import { useAppStore } from '@/store/useAppStore';
+import { useAppStore, AppState } from '@/store/useAppStore';
 
 export function useDesignSystemMode() {
-    const designSystemMode = useAppStore((state) => state.designSystemMode);
+    const { designSystemMode, darkMode } = useAppStore((state: AppState) => ({
+        designSystemMode: state.designSystemMode,
+        darkMode: state.darkMode
+    }));
     const isModern = designSystemMode === 'modern';
     
     const radiusClass = isModern ? 'rounded-2xl' : 'rounded-none';
@@ -13,10 +16,14 @@ export function useDesignSystemMode() {
         ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_0_20px_rgba(34,211,238,0.2)]' 
         : 'rounded-none border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-mono text-[10px] uppercase tracking-widest';
     const headingClass = isModern 
-        ? 'bg-clip-text text-transparent bg-gradient-to-br from-white via-cyan-200 to-emerald-400 font-black tracking-tighter' 
+        ? (darkMode 
+            ? 'bg-clip-text text-transparent bg-gradient-to-br from-white via-cyan-200 to-emerald-400 font-black tracking-tighter' 
+            : 'bg-clip-text text-transparent bg-gradient-to-r from-cyan-700 to-emerald-700 font-black tracking-tighter')
         : 'font-bold text-gray-900 dark:text-white uppercase tracking-widest text-xs';
     const dataClass = isModern 
-        ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] font-black tracking-tighter' 
+        ? (darkMode
+            ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] font-black tracking-tighter' 
+            : 'text-cyan-800 font-black tracking-tighter')
         : 'font-mono text-emerald-500 font-bold tracking-normal';
     const cardClass = `${panelClass} ${radiusClass} p-6 relative overflow-hidden transition-all duration-300 ${isModern ? 'hover:scale-[1.01] hover:shadow-2xl' : ''}`;
 

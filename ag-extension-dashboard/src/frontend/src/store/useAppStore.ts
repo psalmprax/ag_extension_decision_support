@@ -50,7 +50,7 @@ export interface Notification {
 }
 
 // App Store
-interface AppState {
+export interface AppState {
     // User
     user: User | null;
     setUser: (user: User | null) => void;
