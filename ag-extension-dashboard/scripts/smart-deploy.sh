@@ -3,7 +3,7 @@
 # Configuration
 REMOTE_HOST="145.223.97.248"
 SSH_KEY="/home/psalmprax/Videos/id_key"
-REMOTE_PATH="/root/ag-extension-dashboard/ag-extension-dashboard"
+REMOTE_PATH="/root/ag_extension_decision_support/ag-extension-dashboard"
 
 echo "----------------------------------------------------"
 echo "🚀 Starting Smart Deployment Workflow"
