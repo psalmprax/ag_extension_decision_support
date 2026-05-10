@@ -57,9 +57,22 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
           script: |
+            if [ ! -d "/root/ag_extension_decision_support" ]; then
+              echo "🚀 Project directory missing. Cloning repository..."
+              cd /root
+              git clone https://github.com/${{ github.repository }}.git
+            fi
+            
             cd /root/ag_extension_decision_support/ag-extension-dashboard
             git fetch origin
-            git checkout ${{ github.ref_name }}
+            
+            # Ensure branch exists and is checked out
+            if git show-ref --verify --quiet refs/heads/${{ github.ref_name }}; then
+              git checkout ${{ github.ref_name }}
+            else
+              git checkout -b ${{ github.ref_name }} origin/${{ github.ref_name }}
+            fi
+            
             git pull origin ${{ github.ref_name }}
             
             # Check if databases are UP
@@ -88,10 +101,17 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
           script: |
+            if [ ! -d "/root/ag_extension_decision_support" ]; then
+              echo "🚀 Project directory missing. Cloning repository..."
+              cd /root
+              git clone https://github.com/${{ github.repository }}.git
+            fi
+            
             cd /root/ag_extension_decision_support/ag-extension-dashboard
             git fetch origin master
             git checkout master
             git pull origin master
             # The orchestration script already handles "App-only" deployment if DBs are running
+            chmod +x ./scripts/orchestrate-migration.sh
             ./scripts/orchestrate-migration.sh deploy
             docker image prune -f
