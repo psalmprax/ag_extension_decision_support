@@ -13,8 +13,8 @@ langchain>=0.1.4
 langchain-openai>=0.0.2
 
 # Crew AI (optional - for multi-agent workflows)
-crewai>=0.11.0
-crewai-tools>=0.0.1
+crewai==0.22.5
+crewai-tools==0.0.1
 
 # JWT authentication
 PyJWT==2.8.0
