@@ -42,6 +42,15 @@ export interface Farmer {
     phone?: string;
     yield?: number;
     status?: string;
+    district?: string;
+}
+
+export interface Report {
+    id: string;
+    title: string;
+    type: string;
+    generatedAt: string;
+    url?: string;
 }
 
 export interface Visit {

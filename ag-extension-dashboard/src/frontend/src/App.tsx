@@ -123,6 +123,8 @@ import {
 import { useAppSync } from './hooks/useAppSync';
 import { useAppShortcuts } from './hooks/useAppShortcuts';
 import { useBulkActions } from './hooks/useBulkActions';
+import { useAppSearch } from './hooks/useAppSearch';
+import { useAppChat } from './hooks/useAppChat';
 import { ABTestBanner, DesignToggle } from '@/components/ABTestBanner';
 import { useFeatureFlags } from '@/store/useFeatureFlags';
 
@@ -173,7 +175,6 @@ function App() {
     const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
     const [showVisitModal, setShowVisitModal] = useState(false);
     const [showFarmerModal, setShowFarmerModal] = useState(false);
-    const [showGlobalSearch, setShowGlobalSearch] = useState(false);
     const [viewingReport, setViewingReport] = useState<Report | null>(null);
     const [showBulkSmsComposer, setShowBulkSmsComposer] = useState(false);
     const [bulkSmsMessage, setBulkSmsMessage] = useState('');
@@ -194,27 +195,13 @@ function App() {
     const [selectedFarmer, setSelectedFarmer] = useState<Farmer | null>(null);
     const [selectedFarmers, setSelectedFarmers] = useState<Set<string>>(new Set());
     const [isLoadingReport, setIsLoadingReport] = useState(false);
-    const [isGlobalSearching, setIsGlobalSearching] = useState(false);
-    const [globalSearchResults, setGlobalSearchResults] = useState<{ type: string; items: { id: string; label: string; sublabel?: string }[] }[]>([]);
     const [reportContent, setReportContent] = useState<string | null>(null);
     const [apiUnreadCount, setApiUnreadCount] = useState(0);
     const [isBulkUpdateModalOpen, setIsBulkUpdateModalOpen] = useState(false);
     const [isUpdatingBulk, setIsUpdatingBulk] = useState(false);
     const [farmerList, setFarmerList] = useState<any[]>([]);
     const [isLoadingFarmers, setIsLoadingFarmers] = useState(false);
-    const [activeFarmerConvId, setActiveFarmerConvId] = useState<string | null>(null);
-    const [farmerChatMessages, setFarmerChatMessages] = useState<ChatMessage[]>([]);
-    const [farmerChatInput, setFarmerChatInput] = useState('');
     const [farmerSearchQuery, setFarmerSearchQuery] = useState('');
-    const [chatInput, setChatInput] = useState('');
-    const [isTyping, setIsTyping] = useState(false);
-    const [farmerConversations, setFarmerConversations] = useState<Conversation[]>([]);
-    const [conversations, setConversations] = useState<Conversation[]>([]);
-    const [activeConvId, setActiveConvId] = useState<string | null>(null);
-    const [editingConvId, setEditingConvId] = useState<string | null>(null);
-    const [editingTitle, setEditingTitle] = useState<string>('');
-    const [deletingConvId, setDeletingConvId] = useState<string | null>(null);
-    const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
     // Store aliases
     const farmers = storeFarmers;
@@ -229,7 +216,7 @@ function App() {
     const handleMenuAction = (action: string, entityId?: string) => {
         if (action.startsWith('share_')) {
             const type = action.split('_')[1];
-            const entity = type === 'farmer' ? storeFarmers?.find(f => f.id === entityId) : null;
+            const entity = storeFarmers?.find(f => f.id === entityId);
             showShareModal({
                 entityType: type,
                 entityId: entityId || '',
@@ -451,44 +438,6 @@ function App() {
         handleDrop 
     } = useAppSync(addNotification);
 
-    useAppShortcuts({
-        sidebarOpen, setSidebarOpen,
-        isNotificationPanelOpen, setIsNotificationPanelOpen,
-        isProfileMenuOpen, setIsProfileMenuOpen,
-        showProfileModal, setShowProfileModal,
-        showSettingsPanel, setShowSettingsPanel,
-        showHelpCenter, setShowHelpCenter,
-        isDetailPanelOpen, setIsDetailPanelOpen,
-        showVisitModal, setShowVisitModal,
-        showFarmerModal, setShowFarmerModal,
-        showGlobalSearch, setShowGlobalSearch,
-        viewingReport, setViewingReport,
-        showBulkSmsComposer: showBulkSmsComposer, setShowBulkSmsComposer: setShowBulkSmsComposer,
-        confirmModal, setConfirmModal
-    });
-
-    const {
-        isSendingBulkSms,
-        handleSelectFarmer,
-        handleSelectAllFarmers,
-        handleBulkSMS,
-        onBulkSmsSend,
-        handleBulkDelete,
-        onBulkUpdateFarmers,
-        handleBulkExport
-    } = useBulkActions({
-        effectiveFarmers,
-        selectedFarmers,
-        setSelectedFarmers,
-        addNotification,
-        setActiveTab,
-        setShowBulkSmsComposer: setShowBulkSmsComposer,
-        setConfirmModal,
-        setIsUpdatingBulk,
-        setIsBulkUpdateModalOpen,
-        removeFarmers,
-        setFarmerList
-    });
 
     // Fetch Visits Data
     const { data: visitsResponse, refetch: refetchVisits } = useQuery<{ success: boolean; data: { visits: Visit[] } }>({
@@ -521,9 +470,88 @@ function App() {
     const { data: transactionsResponse } = useQuery<{ success: boolean; data: any[] }>({
         queryKey: ['transactions'],
         queryFn: getMyTransactions,
-        enabled: (activeTab === 'billing' || showGlobalSearch) && !!user
+        enabled: (activeTab === 'billing' || searchQuery.trim().length > 0) && !!user
     });
     const transactions = transactionsResponse?.data || [];
+
+    // Search Logic
+    const {
+        showGlobalSearch,
+        setShowGlobalSearch,
+        isGlobalSearching,
+        globalSearchResults,
+        handleGlobalSearch
+    } = useAppSearch(
+        effectiveFarmers,
+        visits,
+        reports,
+        transactions
+    );
+
+    // Chat Logic
+    const {
+        conversations, setConversations,
+        activeConvId, setActiveConvId,
+        chatMessages, setChatMessages,
+        chatInput, setChatInput,
+        isTyping, setIsTyping,
+        editingConvId, setEditingConvId,
+        editingTitle, setEditingTitle,
+        deletingConvId, setDeletingConvId,
+        loadConversations,
+        loadMessages,
+        updateConversationTitle,
+        handleDeleteConversation,
+        farmerConversations, setFarmerConversations,
+        activeFarmerConvId, setActiveFarmerConvId,
+        farmerChatMessages, setFarmerChatMessages,
+        farmerChatInput, setFarmerChatInput,
+        loadFarmerConversations,
+        loadFarmerMessages,
+        handleFarmerChatSend,
+        handleStartConversation
+    } = useAppChat(language);
+
+    // Bulk Actions Logic
+    const {
+        isSendingBulkSms,
+        handleSelectFarmer,
+        handleSelectAllFarmers,
+        handleBulkSMS,
+        onBulkSmsSend,
+        handleBulkDelete,
+        onBulkUpdateFarmers,
+        handleBulkExport
+    } = useBulkActions({
+        effectiveFarmers,
+        selectedFarmers,
+        setSelectedFarmers,
+        addNotification,
+        setActiveTab,
+        setShowBulkSmsComposer: setShowBulkSmsComposer,
+        setConfirmModal,
+        setIsUpdatingBulk,
+        setIsBulkUpdateModalOpen,
+        removeFarmers,
+        setFarmerList
+    });
+
+    // Shortcuts Logic
+    useAppShortcuts({
+        sidebarOpen, setSidebarOpen,
+        isNotificationPanelOpen, setIsNotificationPanelOpen,
+        isProfileMenuOpen, setIsProfileMenuOpen,
+        showProfileModal, setShowProfileModal,
+        showSettingsPanel, setShowSettingsPanel,
+        showHelpCenter, setShowHelpCenter,
+        isDetailPanelOpen, setIsDetailPanelOpen,
+        showVisitModal, setShowVisitModal,
+        showFarmerModal, setShowFarmerModal,
+        showGlobalSearch, setShowGlobalSearch,
+        viewingReport, setViewingReport,
+        showBulkSmsComposer, setShowBulkSmsComposer,
+        confirmModal, setConfirmModal
+    });
 
 
     const allNavItems = [
@@ -553,6 +581,24 @@ function App() {
     const navItems = allNavItems.filter(item => !user || item.roles.includes(user.role));
 
     // Report Generation
+    // Chat Data Load Effects
+    useEffect(() => {
+        if (!user) return;
+        if (activeTab === 'aiassistant') {
+            loadConversations();
+        }
+        if (activeTab === 'farmerchat') {
+            loadFarmerConversations();
+        }
+    }, [activeTab, loadConversations, loadFarmerConversations, user]);
+
+    useEffect(() => {
+        if (!user) return;
+        if (activeConvId) {
+            loadMessages(activeConvId);
+        }
+    }, [activeConvId, loadMessages, user]);
+
     const handleGenerateReport = async () => {
         setIsGeneratingReport(true);
         try {
@@ -573,198 +619,6 @@ function App() {
         }
     };
 
-    // Global search handler — searches farmers, knowledge, visits
-    const handleGlobalSearch = async (query: string) => {
-        if (!query.trim()) {
-            setGlobalSearchResults([]);
-            setShowGlobalSearch(false);
-            return;
-        }
-        setIsGlobalSearching(true);
-        setShowGlobalSearch(true);
-        const results: { type: string; items: { id: string; label: string; sublabel?: string }[] }[] = [];
-        try {
-            // Search farmers
-            const matchedFarmers = (farmers || []).filter((f: Farmer) =>
-                `${f.firstName} ${f.lastName}`.toLowerCase().includes(query.toLowerCase()) ||
-                (f.region || '').toLowerCase().includes(query.toLowerCase()) ||
-                (f.phone || '').includes(query)
-            ).slice(0, 5);
-            if (matchedFarmers.length > 0) {
-                results.push({
-                    type: 'Farmers',
-                    items: matchedFarmers.map((f: Farmer) => ({
-                        id: f.id,
-                        label: `${f.firstName} ${f.lastName}`,
-                        sublabel: f.region || f.village || '',
-                    }))
-                });
-            }
-            // Search knowledge
-            try {
-                const knowledgeResults = await searchKnowledge(query);
-                if (knowledgeResults.success && knowledgeResults.data?.articles?.length > 0) {
-                    results.push({
-                        type: 'Knowledge',
-                        items: knowledgeResults.data.articles.slice(0, 3).map((a: { id: string; title: string; category?: string }) => ({
-                            id: a.id,
-                            label: a.title,
-                            sublabel: a.category || '',
-                        }))
-                    });
-                }
-            } catch { /* knowledge search optional */ }
-            // Search visits
-            const matchedVisits = (visits || []).filter((v: Visit) =>
-                v.farmer_name?.toLowerCase().includes(query.toLowerCase()) ||
-                v.visit_type?.toLowerCase().includes(query.toLowerCase())
-            ).slice(0, 3);
-            if (matchedVisits.length > 0) {
-                results.push({
-                    type: 'Visits',
-                    items: matchedVisits.map((v: Visit) => ({
-                        id: v.id,
-                        label: `${v.farmer_name} — ${v.visit_type}`,
-                        sublabel: new Date(v.scheduled_at).toLocaleDateString(),
-                    }))
-                });
-            }
-            // Search Reports
-            const matchedReports = (reports || []).filter((r: Report) => 
-                r.title?.toLowerCase().includes(query.toLowerCase()) ||
-                r.type?.toLowerCase().includes(query.toLowerCase())
-            ).slice(0, 3);
-            if (matchedReports.length > 0) {
-                results.push({
-                    type: 'Reports',
-                    items: matchedReports.map((r: Report) => ({
-                        id: r.id,
-                        label: r.title,
-                        sublabel: `Generated ${new Date(r.generatedAt).toLocaleDateString()}`
-                    }))
-                });
-            }
-            // Search Transactions
-            const matchedTransactions = (transactions || []).filter((tx: any) => 
-                tx.transactionId?.toLowerCase().includes(query.toLowerCase()) ||
-                tx.status?.toLowerCase().includes(query.toLowerCase()) ||
-                tx.method?.toLowerCase().includes(query.toLowerCase())
-            ).slice(0, 3);
-            if (matchedTransactions.length > 0) {
-                results.push({
-                    type: 'Billing',
-                    items: matchedTransactions.map((tx: any) => ({
-                        id: tx.id,
-                        label: `TX: ${tx.transactionId}`,
-                        sublabel: `${tx.amount} ${tx.currency} • ${tx.status}`
-                    }))
-                });
-            }
-
-        } finally {
-            setGlobalSearchResults(results);
-            setIsGlobalSearching(false);
-        }
-    };
-
-    const loadConversations = useCallback(async () => {
-        try {
-            const res = await fetchConversations();
-            setConversations(res.data);
-            if (res.data.length > 0 && !activeConvId) {
-                setActiveConvId(res.data[0].id);
-            }
-        } catch (error) {
-            console.error('Failed to load conversations:', error);
-        }
-    }, [activeConvId]);
-
-    const loadMessages = useCallback(async (id: string) => {
-        try {
-            const res = await fetchMessages(id);
-            setChatMessages(res.data);
-        } catch (error) {
-            console.error('Failed to load messages:', error);
-        }
-    }, []);
-
-    const updateConversationTitle = async (id: string, title: string) => {
-        try {
-            const res = await updateConversation(id, { title });
-            if (res.success) {
-                setConversations(prev => prev.map(c => c.id === id ? { ...c, title } : c));
-                setEditingConvId(null);
-            }
-        } catch (error) {
-            console.error('Failed to update conversation:', error);
-        }
-    };
-
-    const handleDeleteConversation = async (id: string) => {
-        try {
-            const res = await deleteConversation(id);
-            if (res.success) {
-                setConversations(prev => prev.filter(c => c.id !== id));
-                if (activeConvId === id) {
-                    setActiveConvId(null);
-                    setChatMessages([]);
-                }
-                setDeletingConvId(null);
-            }
-        } catch (error) {
-            console.error('Failed to delete conversation:', error);
-        }
-    };
-
-    // Farmer Chat functions
-    const loadFarmerConversations = useCallback(async () => {
-        try {
-            const res = await fetchConversations();
-            setFarmerConversations(res.data);
-            if (res.data.length > 0 && !activeFarmerConvId) {
-                setActiveFarmerConvId(res.data[0].id);
-            }
-        } catch (error) {
-            console.error('Failed to load farmer conversations:', error);
-        }
-    }, [activeFarmerConvId]);
-
-    const loadFarmerMessages = useCallback(async (id: string) => {
-        try {
-            const res = await fetchMessages(id);
-            setFarmerChatMessages(res.data);
-        } catch (error) {
-            console.error('Failed to load farmer messages:', error);
-        }
-    }, []);
-
-    const handleFarmerChatSend = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!farmerChatInput.trim()) return;
-
-        const userMsg: ChatMessage = { role: 'officer', content: farmerChatInput, timestamp: new Date().toISOString() };
-        setFarmerChatMessages(prev => [...prev, userMsg]);
-        setFarmerChatInput('');
-
-        try {
-            const res = await sendMessage({
-                conversationId: activeFarmerConvId || undefined,
-                message: farmerChatInput,
-                mode: 'farmer',
-                language
-            });
-            if (res.success) {
-                // Reload messages to get the saved message
-                if (activeFarmerConvId) {
-                    loadFarmerMessages(activeFarmerConvId);
-                }
-            }
-        } catch (error) {
-            console.error('Failed to send farmer message:', error);
-        }
-    };
-
-
     const loadFarmers = async () => {
         try {
             setIsLoadingFarmers(true);
@@ -778,50 +632,9 @@ function App() {
         }
     };
 
-    const handleStartConversation = async (farmer: Farmer, chatType: 'ai' | 'farmer' = 'ai') => {
-        try {
-            // Check if conversation already exists with this farmer
-            const existingConversations = chatType === 'farmer' ? farmerConversations : conversations;
-            const existingConv = existingConversations.find((c: Conversation) => c.farmerId === farmer.id);
 
-            if (existingConv) {
-                // Redirect to existing conversation
-                if (chatType === 'farmer') {
-                    setActiveFarmerConvId(existingConv.id);
-                    loadFarmerMessages(existingConv.id);
-                } else {
-                    setActiveConvId(existingConv.id);
-                    loadMessages(existingConv.id);
-                }
-                setShowFarmerModal(false);
-                setFarmerSearchQuery('');
-                return;
-            }
 
-            const res = await createConversation({
-                farmerId: farmer.id,
-                farmerName: `${farmer.firstName} ${farmer.lastName}`,
-                language: 'en'
-            });
-            if (res.success && res.data) {
-                if (chatType === 'farmer') {
-                    // Add to Farmer Chat list
-                    setFarmerConversations(prev => [res.data, ...prev]);
-                    setActiveFarmerConvId(res.data.id);
-                    setFarmerChatMessages([]);
-                } else {
-                    // Add to AI Assistant list
-                    setConversations(prev => [res.data, ...prev]);
-                    setActiveConvId(res.data.id);
-                    setChatMessages([]);
-                }
-                setShowFarmerModal(false);
-                setFarmerSearchQuery('');
-            }
-        } catch (error) {
-            console.error('Failed to start conversation:', error);
-        }
-    };
+
 
     const handleChatSend = async (e: React.FormEvent) => {
         e.preventDefault();
