@@ -1,0 +1,95 @@
+name: AG-Extension Multi-Server Deployment
+
+on:
+  push:
+    branches:
+      - stage
+      - 'feature/*'
+  pull_request:
+    branches:
+      - master
+    types: [closed]
+
+jobs:
+  # 1. CI Checks (Runs for all triggers)
+  ci-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ag-extension-dashboard/package-lock.json
+
+      - name: Install Dependencies
+        run: |
+          cd ag-extension-dashboard
+          npm install
+
+      - name: Build Frontend
+        run: |
+          cd ag-extension-dashboard/src/frontend
+          npm ci
+          npm run build
+
+      - name: Build Backend
+        run: |
+          cd ag-extension-dashboard/src/backend
+          npm ci
+          npm run build
+
+  # 2. Deploy to Testing (Old Server)
+  deploy-testing:
+    needs: ci-checks
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/stage' || startsWith(github.ref, 'refs/heads/feature/'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Old Server (Testing)
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.TEST_SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
+          script: |
+            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            git fetch origin
+            git checkout ${{ github.ref_name }}
+            git pull origin ${{ github.ref_name }}
+            
+            # Check if databases are UP
+            DB_UP=$(docker ps --filter "name=ag-dashboard-db" --filter "status=running" -q)
+            REDIS_UP=$(docker ps --filter "name=ag-dashboard-redis" --filter "status=running" -q)
+            
+            if [ -z "$DB_UP" ] || [ -z "$REDIS_UP" ]; then
+              echo "⚠️ Databases DOWN. Full deploy..."
+              docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --build
+            else
+              echo "✅ Databases UP. App deploy only..."
+              docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --build backend frontend agent-zero crew-ai
+            fi
+            docker image prune -f
+
+  # 3. Deploy to Production (New Server)
+  deploy-production:
+    needs: ci-checks
+    if: github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.base_ref == 'master'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to New Server (Production)
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
+          script: |
+            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            git fetch origin master
+            git checkout master
+            git pull origin master
+            # The orchestration script already handles "App-only" deployment if DBs are running
+            ./scripts/orchestrate-migration.sh deploy
+            docker image prune -f

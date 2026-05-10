@@ -53,9 +53,9 @@ import {
 } from 'lucide-react';
 import { NotificationPanel } from './components/NotificationPanel';
 import { ConfirmModal } from './components/ConfirmModal';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, Suspense, lazy } from 'react';
 import { WeatherWidget } from '@/components/WeatherWidget';
-import { CardSkeleton } from '@/components/Skeleton';
+import { CardSkeleton, MetricCardSkeleton, ChartSkeleton } from '@/components/Skeleton';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { fetchDashboardData } from '@/api/dashboardService';
@@ -70,6 +70,23 @@ import { sendBulkSMS } from '@/api/smsService';
 import { fetchUnreadCount } from '@/api/notificationService';
 import { getMyTransactions, fetchInvoices } from '@/api/billingService';
 
+// Lazy loaded components
+const FarmerMap = lazy(() => import('@/components/FarmerMap'));
+const FarmerDashboard = lazy(() => import('@/components/FarmerDashboard').then(m => ({ default: m.FarmerDashboard })));
+const BillingDashboard = lazy(() => import('@/components/BillingDashboard').then(m => ({ default: m.BillingDashboard })));
+const VisitSynthesisForm = lazy(() => import('@/components/forms/VisitSynthesisForm').then(m => ({ default: m.VisitSynthesisForm })));
+const FarmerRegistrationForm = lazy(() => import('@/components/forms/FarmerRegistrationForm').then(m => ({ default: m.FarmerRegistrationForm })));
+
+// Lazy loaded pages
+const Telemetry = lazy(() => import('./pages/Telemetry'));
+const Agents = lazy(() => import('./pages/Agents'));
+const SystemHealth = lazy(() => import('./pages/SystemHealth'));
+const DiseaseDiagnosisPage = lazy(() => import('./pages/DiseaseDiagnosis').then(m => ({ default: m.DiseaseDiagnosis })));
+const Memory = lazy(() => import('./pages/Memory'));
+const EmailWorkflows = lazy(() => import('./pages/EmailWorkflows'));
+const MCPTools = lazy(() => import('./pages/MCPTools'));
+const SMSPage = lazy(() => import('./pages/SMS').then(m => ({ default: m.SMSPage })));
+
 // Removed redundant import
 import { uploadMultipleFiles } from '@/api/uploadService';
 import { themes, getThemeCSS, applyTheme } from '@/theme';
@@ -79,16 +96,11 @@ import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
 import { useAppStore } from '@/store/useAppStore';
-import { FarmerRegistrationForm } from '@/components/forms/FarmerRegistrationForm';
-import { FarmerDashboard } from '@/components/FarmerDashboard';
 import { RoleGuard } from '@/components/RoleGuard';
-import { VisitSynthesisForm } from '@/components/forms/VisitSynthesisForm';
-import { BillingDashboard } from '@/components/BillingDashboard';
 import { UsageQuota } from '@/components/UsageQuota';
 import { FarmerDetailPanel } from '@/components/FarmerDetailPanel';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { subscribeUserToPush } from '@/api/pushNotificationService';
-// Duplicate removed
 import { syncQueue } from '@/api/syncQueueService';
 import AlphaAI from './components/Cyber/AlphaAI';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -101,19 +113,9 @@ import { KnowledgeBase } from '@/components/KnowledgeBase';
 import { BulkSmsModal } from './components/BulkSmsModal';
 import { BulkUpdateModal } from './components/BulkUpdateModal';
 
-// Import new pages
-import Telemetry from './pages/Telemetry';
-import Agents from './pages/Agents';
-import SystemHealth from './pages/SystemHealth';
-import { DiseaseDiagnosis as DiseaseDiagnosisPage } from './pages/DiseaseDiagnosis';
-import Memory from './pages/Memory';
-import EmailWorkflows from './pages/EmailWorkflows';
-import MCPTools from './pages/MCPTools';
-
 // A/B Test Imports
 import { ABTestBanner, DesignToggle } from '@/components/ABTestBanner';
 import { useFeatureFlags } from '@/store/useFeatureFlags';
-import { SMSPage } from './pages/SMS';
 
 
 // COLORS constant removed as it's unused
@@ -1227,14 +1229,16 @@ function App() {
     // Public routes - accessible without authentication
     if (!user) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-                <Routes>
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
-                    <Route path="*" element={<Login />} />
-                </Routes>
-            </div>
+            <ErrorBoundary componentName="PublicAuth">
+                <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+                    <Routes>
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
+                        <Route path="/forgot-password" element={<ForgotPassword />} />
+                        <Route path="*" element={<Login />} />
+                    </Routes>
+                </div>
+            </ErrorBoundary>
         );
     }
 
@@ -1502,20 +1506,22 @@ function App() {
                     <main className="flex-1 overflow-y-auto p-8 custom-scrollbar relative z-10">
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <div className=''>
-                        <ErrorBoundary>
-                            {activeTab === 'farmer_dashboard' && <FarmerDashboard />}
+                        <ErrorBoundary componentName="MainContent">
+                            <Suspense fallback={<div className="flex items-center justify-center min-h-[400px]"><Loader2 className="w-8 h-8 text-cyan-500 animate-spin" /></div>}>
+                                {activeTab === 'farmer_dashboard' && <FarmerDashboard />}
 
-                            {activeTab === 'register_farmer' && (
-                                <RoleGuard allowedRoles={['extension_officer', 'admin']}>
-                                    <FarmerRegistrationForm />
-                                </RoleGuard>
-                            )}
+                                {activeTab === 'register_farmer' && (
+                                    <RoleGuard allowedRoles={['extension_officer', 'admin']}>
+                                        <FarmerRegistrationForm />
+                                    </RoleGuard>
+                                )}
 
-                            {activeTab === 'visit_synthesis' && (
-                                <RoleGuard allowedRoles={['extension_officer', 'admin']}>
-                                    <VisitSynthesisForm />
-                                </RoleGuard>
-                            )}
+                                {activeTab === 'visit_synthesis' && (
+                                    <RoleGuard allowedRoles={['extension_officer', 'admin']}>
+                                        <VisitSynthesisForm />
+                                    </RoleGuard>
+                                )}
+                            </Suspense>
                         </ErrorBoundary>
 
 
@@ -1613,35 +1619,37 @@ function App() {
                                     </div>
 
                                     <div className={`relative h-[400px] bg-slate-950/50 ${radiusClass} overflow-hidden border border-white/5 shadow-inner`}>
-                                        <FarmerMap
-                                            height="400px"
-                                            isExternalExpanded={isMapExpanded}
-                                            onToggleExpand={setIsMapExpanded}
-                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                            farmers={effectiveFarmers.map((f: any) => ({
-                                                id: f.id,
-                                                name: f.name || `${f.firstName} ${f.lastName}`,
-                                                lat: f.latitude || f.lat || -1.2863,
-                                                lng: f.longitude || f.lng || 36.8172,
-                                                crop: f.crops?.[0] || f.crop || 'Maize',
-                                                region: f.region || f.location || 'Unknown',
-                                                size: f.farmSize || f.size || 0,
-                                                phone: f.phone,
-                                                yield: f.yield || 0,
-                                                createdAt: f.createdAt || f.created_at
-                                            }))}
-                                            onFarmerClick={(farmerData) => {
-                                                if (user?.role === 'extension_officer' || user?.role === 'admin') {
-                                                    setActiveTab('farmerchat');
-                                                    // Map FarmerData back to Farmer for the conversation handler
-                                                    const farmer = effectiveFarmers.find(f => f.id === farmerData.id) as Farmer;
-                                                    if (farmer) handleStartConversation(farmer, 'farmer');
-                                                } else {
-                                                    const farmer = effectiveFarmers.find(f => f.id === farmerData.id) as Farmer;
-                                                    if (farmer) handleOpenFarmerDetail(farmer);
-                                                }
-                                            }}
-                                        />
+                                        <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="w-8 h-8 text-cyan-500 animate-spin" /></div>}>
+                                            <FarmerMap
+                                                height="400px"
+                                                isExternalExpanded={isMapExpanded}
+                                                onToggleExpand={setIsMapExpanded}
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                farmers={effectiveFarmers.map((f: any) => ({
+                                                    id: f.id,
+                                                    name: f.name || `${f.firstName} ${f.lastName}`,
+                                                    lat: f.latitude || f.lat || -1.2863,
+                                                    lng: f.longitude || f.lng || 36.8172,
+                                                    crop: f.crops?.[0] || f.crop || 'Maize',
+                                                    region: f.region || f.location || 'Unknown',
+                                                    size: f.farmSize || f.size || 0,
+                                                    phone: f.phone,
+                                                    yield: f.yield || 0,
+                                                    createdAt: f.createdAt || f.created_at
+                                                }))}
+                                                onFarmerClick={(farmerData) => {
+                                                    if (user?.role === 'extension_officer' || user?.role === 'admin') {
+                                                        setActiveTab('farmerchat');
+                                                        // Map FarmerData back to Farmer for the conversation handler
+                                                        const farmer = effectiveFarmers.find(f => f.id === farmerData.id) as Farmer;
+                                                        if (farmer) handleStartConversation(farmer, 'farmer');
+                                                    } else {
+                                                        const farmer = effectiveFarmers.find(f => f.id === farmerData.id) as Farmer;
+                                                        if (farmer) handleOpenFarmerDetail(farmer);
+                                                    }
+                                                }}
+                                            />
+                                        </Suspense>
 
                                         {!isMapExpanded && (
                                             <div className={`absolute bottom-4 left-4 right-4 flex justify-between items-center bg-slate-900/80 backdrop-blur-md p-3 ${radiusClass} border border-white/10`}>

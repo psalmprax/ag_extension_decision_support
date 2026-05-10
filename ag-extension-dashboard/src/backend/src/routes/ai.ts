@@ -6,6 +6,7 @@ import { logger } from '@/utils/logger';
 import { authorize, AuthRequest } from '@/middleware/authorize';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { usageService } from '@/services/usageService';
+import { SemanticCacheService } from '@/services/semanticCacheService';
 
 const router = Router();
 
@@ -25,6 +26,16 @@ router.post('/synthesize-visit', [checkUsageLimit('ai_chat'), validate({ body: a
     try {
         const { notes } = req.body;
         const userId = req.user!.userId;
+
+        // 1. Check Semantic Cache first
+        const cachedResult = await SemanticCacheService.findSimilar(notes);
+        if (cachedResult) {
+            return res.json({
+                success: true,
+                data: JSON.parse(cachedResult.answer),
+                source: 'cache'
+            });
+        }
 
         const prompt = `
             You are an expert Agricultural Extension Officer Assistant. 
@@ -56,6 +67,9 @@ router.post('/synthesize-visit', [checkUsageLimit('ai_chat'), validate({ body: a
             // Basic extraction if the model adds markdown backticks
             const jsonText = result.text.match(/\{[\s\S]*\}/)?.[0] || result.text;
             structuredData = JSON.parse(jsonText);
+            
+            // 2. Save to Semantic Cache for future similar queries
+            await SemanticCacheService.save(notes, JSON.stringify(structuredData), { userId, type: 'visit_synthesis' });
         } catch (e) {
             logger.error('Failed to parse AI JSON response:', e);
             structuredData = { rawResponse: result.text };
@@ -66,7 +80,8 @@ router.post('/synthesize-visit', [checkUsageLimit('ai_chat'), validate({ body: a
 
         res.json({
             success: true,
-            data: structuredData
+            data: structuredData,
+            source: 'llm'
         });
     } catch (error) {
         logger.error('Visit synthesis failed:', error);
