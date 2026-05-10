@@ -6,7 +6,6 @@ import { ForgotPassword } from './pages/ForgotPassword';
 import ProtectedRoute from './components/ProtectedRoute';
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import FarmerMap from '@/components/FarmerMap';
 import {
     LayoutDashboard,
     Layout,
