@@ -316,6 +316,31 @@ router.post('/', validate(createFarmerSchema), async (req: Request, res: Respons
     }
 });
 
+/**
+ * @swagger
+ * /api/farmers/{id}:
+ *   patch:
+ *     summary: Update farmer details
+ *     tags: [Farmers]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Farmer'
+ *     responses:
+ *       200:
+ *         description: Farmer updated
+ *       404:
+ *         description: Farmer not found
+ */
 // Update farmer
 router.patch('/:id', async (req: Request, res: Response) => {
     try {

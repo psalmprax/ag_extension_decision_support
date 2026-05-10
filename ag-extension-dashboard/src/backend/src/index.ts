@@ -1,3 +1,6 @@
+import { initTelemetry } from './utils/telemetry';
+initTelemetry();
+
 import { createServer } from 'http';
 import { Server as SocketServer } from 'socket.io';
 import { config } from './config';
