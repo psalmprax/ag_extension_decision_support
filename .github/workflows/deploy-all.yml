@@ -23,7 +23,9 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: ag-extension-dashboard/package-lock.json
+          cache-dependency-path: |
+            ag-extension-dashboard/src/frontend/package-lock.json
+            ag-extension-dashboard/src/backend/package-lock.json
 
       - name: Install Dependencies
         run: |
