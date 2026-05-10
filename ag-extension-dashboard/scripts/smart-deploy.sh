@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Configuration
-REMOTE_HOST="149.104.110.122"
-SSH_KEY="/home/psalmprax/Music/id_rsa"
+REMOTE_HOST="145.223.97.248"
+SSH_KEY="/home/psalmprax/Videos/id_key"
 REMOTE_PATH="/root/ag-extension-dashboard/ag-extension-dashboard"
 
 echo "----------------------------------------------------"
