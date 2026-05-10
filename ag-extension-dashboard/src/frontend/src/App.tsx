@@ -111,111 +111,21 @@ import HelpCenterModal from '@/components/HelpCenterModal';
 import { KnowledgeBase } from '@/components/KnowledgeBase';
 import { BulkSmsModal } from './components/BulkSmsModal';
 import { BulkUpdateModal } from './components/BulkUpdateModal';
-
-// A/B Test Imports
+import { StatCard } from './components/StatCard';
+import { 
+    Farmer, 
+    Visit, 
+    Conversation, 
+    ChatMessage, 
+    DashboardData, 
+    StatCardProps 
+} from './types/dashboard';
+import { useAppSync } from './hooks/useAppSync';
+import { useAppShortcuts } from './hooks/useAppShortcuts';
+import { useBulkActions } from './hooks/useBulkActions';
 import { ABTestBanner, DesignToggle } from '@/components/ABTestBanner';
 import { useFeatureFlags } from '@/store/useFeatureFlags';
 
-
-// COLORS constant removed as it's unused
-
-interface StatCardProps {
-    title: string;
-    value: number | string;
-    change?: number;
-    icon: React.ElementType;
-    delay: number;
-    cardClass?: string;
-    headingClass?: string;
-    dataClass?: string;
-    isModern?: boolean;
-    subtextClass?: string;
-}
-
-const StatCard = ({ title, value, change, icon: Icon, delay, cardClass, headingClass, dataClass, subtextClass, isModern }: StatCardProps) => {
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay, type: "spring", stiffness: 300, damping: 24 }}
-            className={cardClass}
-        >
-            <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-400/5 blur-3xl -mr-12 -mt-12 group-hover:bg-cyan-400/20 transition-all"></div>
-            <div className="flex justify-between items-start mb-4">
-                <div className={`p-2 ${isModern ? 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400'} rounded-lg`}>
-                    <Icon className="w-5 h-5" />
-                </div>
-                {change !== undefined && (
-                    <span className={`text-xs font-bold ${change >= 0 ? (isModern ? 'text-emerald-600 dark:text-cyan-400' : 'text-emerald-500') : 'text-rose-500'}`}>
-                        {change >= 0 ? '+' : ''}{change}%
-                    </span>
-                )}
-            </div>
-            <h3 className={`font-headline uppercase mb-1 ${isModern ? headingClass : (subtextClass || 'text-slate-500 dark:text-slate-400')}`}>{title}</h3>
-            <div className={`text-3xl font-headline ${dataClass}`}>
-                {value !== undefined && value !== null ? value.toLocaleString() : '0'}
-            </div>
-        </motion.div>
-    );
-};
-
-interface Conversation {
-    id: string;
-    title: string;
-    farmerId?: string;
-    farmerName?: string;
-    lastMessage?: string;
-    updatedAt: string;
-    startedAt: string;
-}
-
-interface ChatMessage {
-    role: 'user' | 'assistant' | 'officer';
-    content: string;
-    timestamp: string;
-}
-
-interface Farmer {
-    id: string;
-    firstName: string;
-    lastName: string;
-    region?: string;
-    village?: string;
-    farmSize?: number;
-    crops?: string[];
-    latitude?: number;
-    longitude?: number;
-    phone?: string;
-    yield?: number;
-    status?: string;
-}
-
-interface Visit {
-    id: string;
-    farmer_id: string;
-    farmer_name: string;
-    scheduled_at: string;
-    visit_type: string;
-    status: string;
-}
-
-// Report type imported from @/api/reportService
-
-interface DashboardData {
-    overview: {
-        totalFarmers: number;
-        activeConversations: number;
-        visitsThisMonth: number;
-        avgSatisfaction: number;
-        avgConversationsPerFarmer: number;
-    };
-    trends: {
-        farmersGrowth: number;
-        conversationsGrowth: number;
-        visitsGrowth: number;
-        satisfactionChange: number;
-    };
-}
 
 function App() {
     const { t, language } = useLanguage();
@@ -265,7 +175,8 @@ function App() {
     const [showFarmerModal, setShowFarmerModal] = useState(false);
     const [showGlobalSearch, setShowGlobalSearch] = useState(false);
     const [viewingReport, setViewingReport] = useState<Report | null>(null);
-    const [isBulkSmsModalOpen, setIsBulkSmsModalOpen] = useState(false);
+    const [showBulkSmsComposer, setShowBulkSmsComposer] = useState(false);
+    const [bulkSmsMessage, setBulkSmsMessage] = useState('');
     const [confirmModal, setConfirmModal] = useState<{
 
         title: string;
@@ -278,24 +189,19 @@ function App() {
     // Other UI states
     const [searchQuery, setSearchQuery] = useState('');
     const [weatherLocation, setWeatherLocation] = useState<string>(storeUser?.region || 'Nairobi, KE');
-    const [isDragOver, setIsDragOver] = useState(false);
-    const [isOnline, setIsOnline] = useState(navigator.onLine);
-    const [pendingSyncCount, setPendingSyncCount] = useState(0);
-    const [globalSearchResults, setGlobalSearchResults] = useState<{ type: string; items: { id: string; label: string; sublabel?: string }[] }[]>([]);
-    const [isGlobalSearching, setIsGlobalSearching] = useState(false);
-    const [reportContent, setReportContent] = useState<string | null>(null);
-    const [isLoadingReport, setIsLoadingReport] = useState(false);
-    const [isSendingBulkSms, setIsSendingBulkSms] = useState(false);
-    const [showBulkSmsComposer, setShowBulkSmsComposer] = useState(false);
-    const [bulkSmsMessage, setBulkSmsMessage] = useState('');
-    const [isBulkUpdateModalOpen, setIsBulkUpdateModalOpen] = useState(false);
-    const [isUpdatingBulk, setIsUpdatingBulk] = useState(false);
-    const [apiUnreadCount, setApiUnreadCount] = useState(0);
-
     const [isMapExpanded, setIsMapExpanded] = useState(false);
     const [isGeneratingReport, setIsGeneratingReport] = useState(false);
     const [selectedFarmer, setSelectedFarmer] = useState<Farmer | null>(null);
     const [selectedFarmers, setSelectedFarmers] = useState<Set<string>>(new Set());
+    const [isLoadingReport, setIsLoadingReport] = useState(false);
+    const [isGlobalSearching, setIsGlobalSearching] = useState(false);
+    const [globalSearchResults, setGlobalSearchResults] = useState<{ type: string; items: { id: string; label: string; sublabel?: string }[] }[]>([]);
+    const [reportContent, setReportContent] = useState<string | null>(null);
+    const [apiUnreadCount, setApiUnreadCount] = useState(0);
+    const [isBulkUpdateModalOpen, setIsBulkUpdateModalOpen] = useState(false);
+    const [isUpdatingBulk, setIsUpdatingBulk] = useState(false);
+    const [farmerList, setFarmerList] = useState<any[]>([]);
+    const [isLoadingFarmers, setIsLoadingFarmers] = useState(false);
     const [activeFarmerConvId, setActiveFarmerConvId] = useState<string | null>(null);
     const [farmerChatMessages, setFarmerChatMessages] = useState<ChatMessage[]>([]);
     const [farmerChatInput, setFarmerChatInput] = useState('');
@@ -312,92 +218,6 @@ function App() {
 
     // Store aliases
     const farmers = storeFarmers;
-
-    // Offline sync queue
-    useEffect(() => {
-        const unsubscribe = syncQueue.onCountChange(setPendingSyncCount);
-        setPendingSyncCount(syncQueue.getPendingCount());
-        return unsubscribe;
-    }, []);
-
-    // Online/offline detection with sync queue
-    useEffect(() => {
-        const handleOnline = async () => {
-            setIsOnline(true);
-            const count = syncQueue.getPendingCount();
-            if (count > 0) {
-                addNotification({
-                    type: 'success',
-                    message: `Back online - syncing ${count} queued action(s)...`
-                });
-                const result = await syncQueue.processQueue();
-                if (result.failed > 0) {
-                    addNotification({
-                        type: 'warning',
-                        message: `${result.success} synced, ${result.failed} failed (will retry)`
-                    });
-                } else if (result.success > 0) {
-                    addNotification({
-                        type: 'success',
-                        message: `All ${result.success} queued action(s) synced successfully`
-                    });
-                }
-            } else {
-                addNotification({
-                    type: 'success',
-                    message: 'Back online'
-                });
-            }
-        };
-        const handleOffline = () => {
-            setIsOnline(false);
-            addNotification({
-                type: 'warning',
-                message: 'You are offline - changes will be queued and synced when connection returns'
-            });
-        };
-
-        window.addEventListener('online', handleOnline);
-        window.addEventListener('offline', handleOffline);
-
-        return () => {
-            window.removeEventListener('online', handleOnline);
-            window.removeEventListener('offline', handleOffline);
-        };
-    }, []);
-
-    // Drag and drop handlers
-    const handleDragOver = (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragOver(true);
-    };
-
-    const handleDragLeave = (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragOver(false);
-    };
-
-    const handleDrop = async (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragOver(false);
-
-        const files = Array.from(e.dataTransfer.files);
-        if (files.length > 0) {
-            try {
-                await uploadMultipleFiles(files);
-                addNotification({
-                    type: 'success',
-                    message: `${files.length} file(s) uploaded and processed successfully.`
-                });
-            } catch (error) {
-                console.error('Upload error:', error);
-                addNotification({
-                    type: 'error',
-                    message: 'An error occurred during file upload.'
-                });
-            }
-        }
-    };
 
     // Apply theme when it changes
     useEffect(() => {
@@ -455,42 +275,6 @@ function App() {
         }
     };
 
-    // Keyboard shortcuts (registered after all state declarations)
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                e.preventDefault();
-                const searchInput = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement;
-                if (searchInput) {
-                    searchInput.focus();
-                    setShowGlobalSearch(true);
-                }
-            }
-
-            if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
-                e.preventDefault();
-                setSidebarOpen(!sidebarOpen);
-            }
-            if (e.key === 'Escape') {
-                if (isNotificationPanelOpen) setIsNotificationPanelOpen(false);
-                else if (isProfileMenuOpen) setIsProfileMenuOpen(false);
-                else if (showProfileModal) setShowProfileModal(false);
-                else if (showSettingsPanel) setShowSettingsPanel(false);
-                else if (showHelpCenter) setShowHelpCenter(false);
-                else if (isDetailPanelOpen) setIsDetailPanelOpen(false);
-                else if (showVisitModal) setShowVisitModal(false);
-                else if (showFarmerModal) setShowFarmerModal(false);
-                else if (showGlobalSearch) setShowGlobalSearch(false);
-                else if (viewingReport) setViewingReport(null);
-                else if (isBulkSmsModalOpen) setIsBulkSmsModalOpen(false);
-                else if (confirmModal) setConfirmModal(null);
-            }
-
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isNotificationPanelOpen, isProfileMenuOpen, showProfileModal, showSettingsPanel, showHelpCenter, isDetailPanelOpen, showVisitModal, showFarmerModal, showGlobalSearch, viewingReport, showBulkSmsComposer, confirmModal]);
 
     // Fetch unread notification count
     useEffect(() => {
@@ -513,156 +297,6 @@ function App() {
         setIsDetailPanelOpen(true);
     };
 
-    // Bulk Actions
-    const handleSelectFarmer = (farmerId: string, checked: boolean) => {
-        const newSelected = new Set(selectedFarmers);
-        if (checked) {
-            newSelected.add(farmerId);
-        } else {
-            newSelected.delete(farmerId);
-        }
-        setSelectedFarmers(newSelected);
-    };
-
-    const handleSelectAllFarmers = (checked: boolean) => {
-        if (checked && farmers) {
-            setSelectedFarmers(new Set(farmers.map(f => f.id)));
-        } else {
-            setSelectedFarmers(new Set());
-        }
-    };
-
-    const handleBulkSMS = () => {
-        if (selectedFarmers.size > 0) {
-            setIsBulkSmsModalOpen(true);
-        }
-    };
-
-    const onBulkSmsSend = async (message: string) => {
-        const selectedFarmersList = effectiveFarmers?.filter(f => selectedFarmers.has(f.id)) || [];
-        if (selectedFarmersList.length > 0) {
-            setIsSendingBulkSms(true);
-            try {
-                await sendBulkSMS({
-                    recipients: selectedFarmersList.map(f => f.phone).filter(Boolean) as string[],
-                    message
-                });
-                setActiveTab('sms');
-                setSelectedFarmers(new Set());
-                setIsBulkSmsModalOpen(false);
-                addNotification({
-                    type: 'success',
-                    message: `Bulk SMS sent to ${selectedFarmersList.length} farmers.`
-                });
-            } catch (error) {
-                console.error('Bulk SMS error:', error);
-                addNotification({
-                    type: 'error',
-                    message: 'Error connecting to SMS service.'
-                });
-            } finally {
-                setIsSendingBulkSms(false);
-            }
-        }
-    };
-
-
-    const handleBulkDelete = async () => {
-        const ids = Array.from(selectedFarmers);
-        if (ids.length === 0) return;
-
-        setConfirmModal({
-            title: 'Delete Farmers',
-            message: `Are you sure you want to delete ${ids.length} farmers? This action cannot be undone.`,
-            variant: 'danger',
-            confirmText: 'Delete All',
-            onConfirm: async () => {
-                setConfirmModal(null);
-                const farmersToRestore = effectiveFarmers?.filter(f => selectedFarmers.has(f.id)) || [];
-
-                try {
-                    await removeFarmers(ids);
-                    setSelectedFarmers(new Set());
-
-                    addNotification({
-                        type: 'success',
-                        message: `Deleted ${ids.length} farmers.`,
-                        actionLabel: 'Undo',
-                        onAction: async () => {
-                            for (const farmer of farmersToRestore) {
-                                await createFarmer(farmer);
-                            }
-                            const refreshed = await fetchFarmers();
-                            setFarmerList(refreshed.data.farmers || []);
-                            setSelectedFarmers(new Set());
-                        }
-                    });
-                } catch (error) {
-                    console.error('Bulk delete error:', error);
-                    addNotification({
-                        type: 'error',
-                        message: 'Failed to delete some farmers.'
-                    });
-                }
-            }
-        });
-    };
-
-    const onBulkUpdateFarmers = async (updates: any) => {
-        const ids = Array.from(selectedFarmers);
-        if (ids.length > 0) {
-            setIsUpdatingBulk(true);
-            try {
-                await updateFarmers(ids, updates);
-                setSelectedFarmers(new Set());
-                setIsBulkUpdateModalOpen(false);
-                addNotification({
-                    type: 'success',
-                    message: `Bulk update applied to ${ids.length} farmers.`
-                });
-            } catch (error) {
-                console.error('Bulk update error:', error);
-                addNotification({
-                    type: 'error',
-                    message: 'Error applying bulk update.'
-                });
-            } finally {
-                setIsUpdatingBulk(false);
-            }
-        }
-    };
-
-    const handleBulkExport = () => {
-        const selectedFarmersList = effectiveFarmers?.filter(f => selectedFarmers.has(f.id)) || [];
-        if (selectedFarmersList.length > 0) {
-            // Create CSV export
-            const csvContent = [
-                ['Name', 'Phone', 'Region', 'Village', 'Crops', 'Farm Size (ha)'],
-                ...selectedFarmersList.map(f => [
-                    `${f.firstName} ${f.lastName}`,
-                    f.phone || '',
-                    f.region || '',
-                    f.village || '',
-                    f.crops?.join(', ') || '',
-                    f.farmSize?.toString() || ''
-                ])
-            ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
-
-            const blob = new Blob([csvContent], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `farmers_export_${new Date().toISOString().split('T')[0]}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
-            setSelectedFarmers(new Set());
-
-            addNotification({
-                type: 'success',
-                message: `Exported ${selectedFarmersList.length} farmers to CSV`
-            });
-        }
-    };
 
     useEffect(() => {
         if (darkMode) {
@@ -806,6 +440,55 @@ function App() {
     });
     const queryFarmers = farmersResponse?.data?.farmers || [];
     const effectiveFarmers = queryFarmers.length > 0 ? queryFarmers : storeFarmers;
+
+    // Custom Hooks logic
+    const { 
+        isOnline, 
+        pendingSyncCount, 
+        isDragOver, 
+        handleDragOver, 
+        handleDragLeave, 
+        handleDrop 
+    } = useAppSync(addNotification);
+
+    useAppShortcuts({
+        sidebarOpen, setSidebarOpen,
+        isNotificationPanelOpen, setIsNotificationPanelOpen,
+        isProfileMenuOpen, setIsProfileMenuOpen,
+        showProfileModal, setShowProfileModal,
+        showSettingsPanel, setShowSettingsPanel,
+        showHelpCenter, setShowHelpCenter,
+        isDetailPanelOpen, setIsDetailPanelOpen,
+        showVisitModal, setShowVisitModal,
+        showFarmerModal, setShowFarmerModal,
+        showGlobalSearch, setShowGlobalSearch,
+        viewingReport, setViewingReport,
+        showBulkSmsComposer: showBulkSmsComposer, setShowBulkSmsComposer: setShowBulkSmsComposer,
+        confirmModal, setConfirmModal
+    });
+
+    const {
+        isSendingBulkSms,
+        handleSelectFarmer,
+        handleSelectAllFarmers,
+        handleBulkSMS,
+        onBulkSmsSend,
+        handleBulkDelete,
+        onBulkUpdateFarmers,
+        handleBulkExport
+    } = useBulkActions({
+        effectiveFarmers,
+        selectedFarmers,
+        setSelectedFarmers,
+        addNotification,
+        setActiveTab,
+        setShowBulkSmsComposer: setShowBulkSmsComposer,
+        setConfirmModal,
+        setIsUpdatingBulk,
+        setIsBulkUpdateModalOpen,
+        removeFarmers,
+        setFarmerList
+    });
 
     // Fetch Visits Data
     const { data: visitsResponse, refetch: refetchVisits } = useQuery<{ success: boolean; data: { visits: Visit[] } }>({
@@ -1081,10 +764,6 @@ function App() {
         }
     };
 
-    // Farmer state for new conversation
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [farmerList, setFarmerList] = useState<any[]>([]);
-    const [isLoadingFarmers, setIsLoadingFarmers] = useState(false);
 
     const loadFarmers = async () => {
         try {
@@ -2706,8 +2385,8 @@ function App() {
             <SettingsPanel isOpen={showSettingsPanel} onClose={() => setShowSettingsPanel(false)} />
             <HelpCenterModal isOpen={showHelpCenter} onClose={() => setShowHelpCenter(false)} />
             <BulkSmsModal
-                isOpen={isBulkSmsModalOpen}
-                onClose={() => setIsBulkSmsModalOpen(false)}
+                isOpen={showBulkSmsComposer}
+                onClose={() => setShowBulkSmsComposer(false)}
                 onSend={onBulkSmsSend}
                 selectedCount={selectedFarmers.size}
                 isLoading={isSendingBulkSms}
