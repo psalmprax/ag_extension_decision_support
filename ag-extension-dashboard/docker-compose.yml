@@ -40,12 +40,12 @@ services:
       - NODE_ENV=development
       - JWT_SECRET=${JWT_SECRET:-dev-secret-key-for-local-only}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - AI_PRIMARY_PROVIDER=openai
-      - AI_PRIMARY_MODEL=gpt-4o
-      - AI_EMBEDDINGS_PROVIDER=openai
+      - AI_PRIMARY_PROVIDER=${AI_PRIMARY_PROVIDER:-openai}
+      - AI_PRIMARY_MODEL=${AI_PRIMARY_MODEL:-gpt-4o}
+      - AI_EMBEDDINGS_PROVIDER=${AI_EMBEDDINGS_PROVIDER:-openai}
       - OLLAMA_HOST=${OLLAMA_HOST:-http://ettametta-ollama:11434}
       - OLLAMA_MODEL=${OLLAMA_MODEL:-hermes3:latest}
-      - AI_FALLBACK_PROVIDER=ollama
+      - AI_FALLBACK_PROVIDER=${AI_FALLBACK_PROVIDER:-ollama}
     depends_on:
       - app-db
       - redis
