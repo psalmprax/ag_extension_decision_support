@@ -21,7 +21,7 @@ export const weatherTool: Tool<typeof WeatherSchema> = {
     logger.info(`Fetching weather for ${location} for ${days} days`);
 
     let forecast: { date: string; temp: number; condition: string; advice: string }[] = [];
-    let source = 'wttr.in (Real-time)';
+    const source = 'wttr.in (Real-time)';
 
     try {
       const response = await axios.get(`https://wttr.in/${encodeURIComponent(location)}?format=j1`);
