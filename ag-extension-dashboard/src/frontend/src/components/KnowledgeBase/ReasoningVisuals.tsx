@@ -60,13 +60,13 @@ interface ReasoningVisualsProps {
 const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
 
 export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, audio }) => {
-    // Robust empty state initialization
-    const safeVisuals = visuals || { kpis: [], charts: [], images: [], videos: [] };
-    if (!visuals && !audio) return null;
-
     const [isPlaying, setIsPlaying] = useState(false);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
+
+    // Robust empty state initialization
+    const safeVisuals = visuals || { kpis: [], charts: [], images: [], videos: [] };
+    if (!visuals && !audio) return null;
 
     const togglePlayback = () => {
         if (!audioRef.current) return;
@@ -84,7 +84,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
 
     const getYoutubeEmbedUrl = (url: string) => {
         if (!url) return '';
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
         const match = url.match(regExp);
         if (match && match[2].length === 11) {
             return `https://www.youtube.com/embed/${match[2]}?autoplay=0&rel=0`;

@@ -298,13 +298,11 @@ export const useErrorBoundary = (): ErrorBoundaryContextType => {
     return context;
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
 interface ErrorBoundaryProviderProps {
     children: ReactNode;
     onError?: (error: Error, errorInfo: ErrorInfo) => void;
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const ErrorBoundaryProvider: React.FC<ErrorBoundaryProviderProps> = ({ children, onError }) => {
     const [hasError, setHasError] = React.useState(false);
     const [lastError, setLastError] = React.useState<Error | null>(null);
