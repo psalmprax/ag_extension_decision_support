@@ -6,7 +6,6 @@ import { ForgotPassword } from './pages/ForgotPassword';
 import ProtectedRoute from './components/ProtectedRoute';
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import FarmerMap from '@/components/FarmerMap';
 import {
     LayoutDashboard,
     Layout,
@@ -53,9 +52,9 @@ import {
 } from 'lucide-react';
 import { NotificationPanel } from './components/NotificationPanel';
 import { ConfirmModal } from './components/ConfirmModal';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, Suspense, lazy } from 'react';
 import { WeatherWidget } from '@/components/WeatherWidget';
-import { CardSkeleton } from '@/components/Skeleton';
+import { CardSkeleton, MetricCardSkeleton, ChartSkeleton } from '@/components/Skeleton';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { fetchDashboardData } from '@/api/dashboardService';
@@ -70,6 +69,23 @@ import { sendBulkSMS } from '@/api/smsService';
 import { fetchUnreadCount } from '@/api/notificationService';
 import { getMyTransactions, fetchInvoices } from '@/api/billingService';
 
+// Lazy loaded components
+const FarmerMap = lazy(() => import('@/components/FarmerMap'));
+const FarmerDashboard = lazy(() => import('@/components/FarmerDashboard').then(m => ({ default: m.FarmerDashboard })));
+const BillingDashboard = lazy(() => import('@/components/BillingDashboard').then(m => ({ default: m.BillingDashboard })));
+const VisitSynthesisForm = lazy(() => import('@/components/forms/VisitSynthesisForm').then(m => ({ default: m.VisitSynthesisForm })));
+const FarmerRegistrationForm = lazy(() => import('@/components/forms/FarmerRegistrationForm').then(m => ({ default: m.FarmerRegistrationForm })));
+
+// Lazy loaded pages
+const Telemetry = lazy(() => import('./pages/Telemetry'));
+const Agents = lazy(() => import('./pages/Agents'));
+const SystemHealth = lazy(() => import('./pages/SystemHealth'));
+const DiseaseDiagnosisPage = lazy(() => import('./pages/DiseaseDiagnosis').then(m => ({ default: m.DiseaseDiagnosis })));
+const Memory = lazy(() => import('./pages/Memory'));
+const EmailWorkflows = lazy(() => import('./pages/EmailWorkflows'));
+const MCPTools = lazy(() => import('./pages/MCPTools'));
+const SMSPage = lazy(() => import('./pages/SMS').then(m => ({ default: m.SMSPage })));
+
 // Removed redundant import
 import { uploadMultipleFiles } from '@/api/uploadService';
 import { themes, getThemeCSS, applyTheme } from '@/theme';
@@ -79,16 +95,11 @@ import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
 import { useAppStore } from '@/store/useAppStore';
-import { FarmerRegistrationForm } from '@/components/forms/FarmerRegistrationForm';
-import { FarmerDashboard } from '@/components/FarmerDashboard';
 import { RoleGuard } from '@/components/RoleGuard';
-import { VisitSynthesisForm } from '@/components/forms/VisitSynthesisForm';
-import { BillingDashboard } from '@/components/BillingDashboard';
 import { UsageQuota } from '@/components/UsageQuota';
 import { FarmerDetailPanel } from '@/components/FarmerDetailPanel';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { subscribeUserToPush } from '@/api/pushNotificationService';
-// Duplicate removed
 import { syncQueue } from '@/api/syncQueueService';
 import AlphaAI from './components/Cyber/AlphaAI';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -100,121 +111,23 @@ import HelpCenterModal from '@/components/HelpCenterModal';
 import { KnowledgeBase } from '@/components/KnowledgeBase';
 import { BulkSmsModal } from './components/BulkSmsModal';
 import { BulkUpdateModal } from './components/BulkUpdateModal';
-
-// Import new pages
-import Telemetry from './pages/Telemetry';
-import Agents from './pages/Agents';
-import SystemHealth from './pages/SystemHealth';
-import { DiseaseDiagnosis as DiseaseDiagnosisPage } from './pages/DiseaseDiagnosis';
-import Memory from './pages/Memory';
-import EmailWorkflows from './pages/EmailWorkflows';
-import MCPTools from './pages/MCPTools';
-
-// A/B Test Imports
+import { StatCard } from './components/StatCard';
+import { 
+    Farmer, 
+    Visit, 
+    Conversation, 
+    ChatMessage, 
+    DashboardData, 
+    StatCardProps 
+} from './types/dashboard';
+import { useAppSync } from './hooks/useAppSync';
+import { useAppShortcuts } from './hooks/useAppShortcuts';
+import { useBulkActions } from './hooks/useBulkActions';
+import { useAppSearch } from './hooks/useAppSearch';
+import { useAppChat } from './hooks/useAppChat';
 import { ABTestBanner, DesignToggle } from '@/components/ABTestBanner';
 import { useFeatureFlags } from '@/store/useFeatureFlags';
-import { SMSPage } from './pages/SMS';
 
-
-// COLORS constant removed as it's unused
-
-interface StatCardProps {
-    title: string;
-    value: number | string;
-    change?: number;
-    icon: React.ElementType;
-    delay: number;
-    cardClass?: string;
-    headingClass?: string;
-    dataClass?: string;
-    isModern?: boolean;
-    subtextClass?: string;
-}
-
-const StatCard = ({ title, value, change, icon: Icon, delay, cardClass, headingClass, dataClass, subtextClass, isModern }: StatCardProps) => {
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay, type: "spring", stiffness: 300, damping: 24 }}
-            className={cardClass}
-        >
-            <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-400/5 blur-3xl -mr-12 -mt-12 group-hover:bg-cyan-400/20 transition-all"></div>
-            <div className="flex justify-between items-start mb-4">
-                <div className={`p-2 ${isModern ? 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400'} rounded-lg`}>
-                    <Icon className="w-5 h-5" />
-                </div>
-                {change !== undefined && (
-                    <span className={`text-xs font-bold ${change >= 0 ? (isModern ? 'text-emerald-600 dark:text-cyan-400' : 'text-emerald-500') : 'text-rose-500'}`}>
-                        {change >= 0 ? '+' : ''}{change}%
-                    </span>
-                )}
-            </div>
-            <h3 className={`font-headline uppercase mb-1 ${isModern ? headingClass : (subtextClass || 'text-slate-500 dark:text-slate-400')}`}>{title}</h3>
-            <div className={`text-3xl font-headline ${dataClass}`}>
-                {value !== undefined && value !== null ? value.toLocaleString() : '0'}
-            </div>
-        </motion.div>
-    );
-};
-
-interface Conversation {
-    id: string;
-    title: string;
-    farmerId?: string;
-    farmerName?: string;
-    lastMessage?: string;
-    updatedAt: string;
-    startedAt: string;
-}
-
-interface ChatMessage {
-    role: 'user' | 'assistant' | 'officer';
-    content: string;
-    timestamp: string;
-}
-
-interface Farmer {
-    id: string;
-    firstName: string;
-    lastName: string;
-    region?: string;
-    village?: string;
-    farmSize?: number;
-    crops?: string[];
-    latitude?: number;
-    longitude?: number;
-    phone?: string;
-    yield?: number;
-    status?: string;
-}
-
-interface Visit {
-    id: string;
-    farmer_id: string;
-    farmer_name: string;
-    scheduled_at: string;
-    visit_type: string;
-    status: string;
-}
-
-// Report type imported from @/api/reportService
-
-interface DashboardData {
-    overview: {
-        totalFarmers: number;
-        activeConversations: number;
-        visitsThisMonth: number;
-        avgSatisfaction: number;
-        avgConversationsPerFarmer: number;
-    };
-    trends: {
-        farmersGrowth: number;
-        conversationsGrowth: number;
-        visitsGrowth: number;
-        satisfactionChange: number;
-    };
-}
 
 function App() {
     const { t, language } = useLanguage();
@@ -262,9 +175,9 @@ function App() {
     const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
     const [showVisitModal, setShowVisitModal] = useState(false);
     const [showFarmerModal, setShowFarmerModal] = useState(false);
-    const [showGlobalSearch, setShowGlobalSearch] = useState(false);
     const [viewingReport, setViewingReport] = useState<Report | null>(null);
-    const [isBulkSmsModalOpen, setIsBulkSmsModalOpen] = useState(false);
+    const [showBulkSmsComposer, setShowBulkSmsComposer] = useState(false);
+    const [bulkSmsMessage, setBulkSmsMessage] = useState('');
     const [confirmModal, setConfirmModal] = useState<{
 
         title: string;
@@ -277,126 +190,21 @@ function App() {
     // Other UI states
     const [searchQuery, setSearchQuery] = useState('');
     const [weatherLocation, setWeatherLocation] = useState<string>(storeUser?.region || 'Nairobi, KE');
-    const [isDragOver, setIsDragOver] = useState(false);
-    const [isOnline, setIsOnline] = useState(navigator.onLine);
-    const [pendingSyncCount, setPendingSyncCount] = useState(0);
-    const [globalSearchResults, setGlobalSearchResults] = useState<{ type: string; items: { id: string; label: string; sublabel?: string }[] }[]>([]);
-    const [isGlobalSearching, setIsGlobalSearching] = useState(false);
-    const [reportContent, setReportContent] = useState<string | null>(null);
-    const [isLoadingReport, setIsLoadingReport] = useState(false);
-    const [isSendingBulkSms, setIsSendingBulkSms] = useState(false);
-    const [showBulkSmsComposer, setShowBulkSmsComposer] = useState(false);
-    const [bulkSmsMessage, setBulkSmsMessage] = useState('');
-    const [isBulkUpdateModalOpen, setIsBulkUpdateModalOpen] = useState(false);
-    const [isUpdatingBulk, setIsUpdatingBulk] = useState(false);
-    const [apiUnreadCount, setApiUnreadCount] = useState(0);
-
     const [isMapExpanded, setIsMapExpanded] = useState(false);
     const [isGeneratingReport, setIsGeneratingReport] = useState(false);
     const [selectedFarmer, setSelectedFarmer] = useState<Farmer | null>(null);
     const [selectedFarmers, setSelectedFarmers] = useState<Set<string>>(new Set());
-    const [activeFarmerConvId, setActiveFarmerConvId] = useState<string | null>(null);
-    const [farmerChatMessages, setFarmerChatMessages] = useState<ChatMessage[]>([]);
-    const [farmerChatInput, setFarmerChatInput] = useState('');
+    const [isLoadingReport, setIsLoadingReport] = useState(false);
+    const [reportContent, setReportContent] = useState<string | null>(null);
+    const [apiUnreadCount, setApiUnreadCount] = useState(0);
+    const [isBulkUpdateModalOpen, setIsBulkUpdateModalOpen] = useState(false);
+    const [isUpdatingBulk, setIsUpdatingBulk] = useState(false);
+    const [farmerList, setFarmerList] = useState<any[]>([]);
+    const [isLoadingFarmers, setIsLoadingFarmers] = useState(false);
     const [farmerSearchQuery, setFarmerSearchQuery] = useState('');
-    const [chatInput, setChatInput] = useState('');
-    const [isTyping, setIsTyping] = useState(false);
-    const [farmerConversations, setFarmerConversations] = useState<Conversation[]>([]);
-    const [conversations, setConversations] = useState<Conversation[]>([]);
-    const [activeConvId, setActiveConvId] = useState<string | null>(null);
-    const [editingConvId, setEditingConvId] = useState<string | null>(null);
-    const [editingTitle, setEditingTitle] = useState<string>('');
-    const [deletingConvId, setDeletingConvId] = useState<string | null>(null);
-    const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
     // Store aliases
     const farmers = storeFarmers;
-
-    // Offline sync queue
-    useEffect(() => {
-        const unsubscribe = syncQueue.onCountChange(setPendingSyncCount);
-        setPendingSyncCount(syncQueue.getPendingCount());
-        return unsubscribe;
-    }, []);
-
-    // Online/offline detection with sync queue
-    useEffect(() => {
-        const handleOnline = async () => {
-            setIsOnline(true);
-            const count = syncQueue.getPendingCount();
-            if (count > 0) {
-                addNotification({
-                    type: 'success',
-                    message: `Back online - syncing ${count} queued action(s)...`
-                });
-                const result = await syncQueue.processQueue();
-                if (result.failed > 0) {
-                    addNotification({
-                        type: 'warning',
-                        message: `${result.success} synced, ${result.failed} failed (will retry)`
-                    });
-                } else if (result.success > 0) {
-                    addNotification({
-                        type: 'success',
-                        message: `All ${result.success} queued action(s) synced successfully`
-                    });
-                }
-            } else {
-                addNotification({
-                    type: 'success',
-                    message: 'Back online'
-                });
-            }
-        };
-        const handleOffline = () => {
-            setIsOnline(false);
-            addNotification({
-                type: 'warning',
-                message: 'You are offline - changes will be queued and synced when connection returns'
-            });
-        };
-
-        window.addEventListener('online', handleOnline);
-        window.addEventListener('offline', handleOffline);
-
-        return () => {
-            window.removeEventListener('online', handleOnline);
-            window.removeEventListener('offline', handleOffline);
-        };
-    }, []);
-
-    // Drag and drop handlers
-    const handleDragOver = (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragOver(true);
-    };
-
-    const handleDragLeave = (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragOver(false);
-    };
-
-    const handleDrop = async (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragOver(false);
-
-        const files = Array.from(e.dataTransfer.files);
-        if (files.length > 0) {
-            try {
-                await uploadMultipleFiles(files);
-                addNotification({
-                    type: 'success',
-                    message: `${files.length} file(s) uploaded and processed successfully.`
-                });
-            } catch (error) {
-                console.error('Upload error:', error);
-                addNotification({
-                    type: 'error',
-                    message: 'An error occurred during file upload.'
-                });
-            }
-        }
-    };
 
     // Apply theme when it changes
     useEffect(() => {
@@ -408,7 +216,7 @@ function App() {
     const handleMenuAction = (action: string, entityId?: string) => {
         if (action.startsWith('share_')) {
             const type = action.split('_')[1];
-            const entity = type === 'farmer' ? storeFarmers?.find(f => f.id === entityId) : null;
+            const entity = storeFarmers?.find(f => f.id === entityId);
             showShareModal({
                 entityType: type,
                 entityId: entityId || '',
@@ -454,42 +262,6 @@ function App() {
         }
     };
 
-    // Keyboard shortcuts (registered after all state declarations)
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                e.preventDefault();
-                const searchInput = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement;
-                if (searchInput) {
-                    searchInput.focus();
-                    setShowGlobalSearch(true);
-                }
-            }
-
-            if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
-                e.preventDefault();
-                setSidebarOpen(!sidebarOpen);
-            }
-            if (e.key === 'Escape') {
-                if (isNotificationPanelOpen) setIsNotificationPanelOpen(false);
-                else if (isProfileMenuOpen) setIsProfileMenuOpen(false);
-                else if (showProfileModal) setShowProfileModal(false);
-                else if (showSettingsPanel) setShowSettingsPanel(false);
-                else if (showHelpCenter) setShowHelpCenter(false);
-                else if (isDetailPanelOpen) setIsDetailPanelOpen(false);
-                else if (showVisitModal) setShowVisitModal(false);
-                else if (showFarmerModal) setShowFarmerModal(false);
-                else if (showGlobalSearch) setShowGlobalSearch(false);
-                else if (viewingReport) setViewingReport(null);
-                else if (isBulkSmsModalOpen) setIsBulkSmsModalOpen(false);
-                else if (confirmModal) setConfirmModal(null);
-            }
-
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isNotificationPanelOpen, isProfileMenuOpen, showProfileModal, showSettingsPanel, showHelpCenter, isDetailPanelOpen, showVisitModal, showFarmerModal, showGlobalSearch, viewingReport, showBulkSmsComposer, confirmModal]);
 
     // Fetch unread notification count
     useEffect(() => {
@@ -512,156 +284,6 @@ function App() {
         setIsDetailPanelOpen(true);
     };
 
-    // Bulk Actions
-    const handleSelectFarmer = (farmerId: string, checked: boolean) => {
-        const newSelected = new Set(selectedFarmers);
-        if (checked) {
-            newSelected.add(farmerId);
-        } else {
-            newSelected.delete(farmerId);
-        }
-        setSelectedFarmers(newSelected);
-    };
-
-    const handleSelectAllFarmers = (checked: boolean) => {
-        if (checked && farmers) {
-            setSelectedFarmers(new Set(farmers.map(f => f.id)));
-        } else {
-            setSelectedFarmers(new Set());
-        }
-    };
-
-    const handleBulkSMS = () => {
-        if (selectedFarmers.size > 0) {
-            setIsBulkSmsModalOpen(true);
-        }
-    };
-
-    const onBulkSmsSend = async (message: string) => {
-        const selectedFarmersList = effectiveFarmers?.filter(f => selectedFarmers.has(f.id)) || [];
-        if (selectedFarmersList.length > 0) {
-            setIsSendingBulkSms(true);
-            try {
-                await sendBulkSMS({
-                    recipients: selectedFarmersList.map(f => f.phone).filter(Boolean) as string[],
-                    message
-                });
-                setActiveTab('sms');
-                setSelectedFarmers(new Set());
-                setIsBulkSmsModalOpen(false);
-                addNotification({
-                    type: 'success',
-                    message: `Bulk SMS sent to ${selectedFarmersList.length} farmers.`
-                });
-            } catch (error) {
-                console.error('Bulk SMS error:', error);
-                addNotification({
-                    type: 'error',
-                    message: 'Error connecting to SMS service.'
-                });
-            } finally {
-                setIsSendingBulkSms(false);
-            }
-        }
-    };
-
-
-    const handleBulkDelete = async () => {
-        const ids = Array.from(selectedFarmers);
-        if (ids.length === 0) return;
-
-        setConfirmModal({
-            title: 'Delete Farmers',
-            message: `Are you sure you want to delete ${ids.length} farmers? This action cannot be undone.`,
-            variant: 'danger',
-            confirmText: 'Delete All',
-            onConfirm: async () => {
-                setConfirmModal(null);
-                const farmersToRestore = effectiveFarmers?.filter(f => selectedFarmers.has(f.id)) || [];
-
-                try {
-                    await removeFarmers(ids);
-                    setSelectedFarmers(new Set());
-
-                    addNotification({
-                        type: 'success',
-                        message: `Deleted ${ids.length} farmers.`,
-                        actionLabel: 'Undo',
-                        onAction: async () => {
-                            for (const farmer of farmersToRestore) {
-                                await createFarmer(farmer);
-                            }
-                            const refreshed = await fetchFarmers();
-                            setFarmerList(refreshed.data.farmers || []);
-                            setSelectedFarmers(new Set());
-                        }
-                    });
-                } catch (error) {
-                    console.error('Bulk delete error:', error);
-                    addNotification({
-                        type: 'error',
-                        message: 'Failed to delete some farmers.'
-                    });
-                }
-            }
-        });
-    };
-
-    const onBulkUpdateFarmers = async (updates: any) => {
-        const ids = Array.from(selectedFarmers);
-        if (ids.length > 0) {
-            setIsUpdatingBulk(true);
-            try {
-                await updateFarmers(ids, updates);
-                setSelectedFarmers(new Set());
-                setIsBulkUpdateModalOpen(false);
-                addNotification({
-                    type: 'success',
-                    message: `Bulk update applied to ${ids.length} farmers.`
-                });
-            } catch (error) {
-                console.error('Bulk update error:', error);
-                addNotification({
-                    type: 'error',
-                    message: 'Error applying bulk update.'
-                });
-            } finally {
-                setIsUpdatingBulk(false);
-            }
-        }
-    };
-
-    const handleBulkExport = () => {
-        const selectedFarmersList = effectiveFarmers?.filter(f => selectedFarmers.has(f.id)) || [];
-        if (selectedFarmersList.length > 0) {
-            // Create CSV export
-            const csvContent = [
-                ['Name', 'Phone', 'Region', 'Village', 'Crops', 'Farm Size (ha)'],
-                ...selectedFarmersList.map(f => [
-                    `${f.firstName} ${f.lastName}`,
-                    f.phone || '',
-                    f.region || '',
-                    f.village || '',
-                    f.crops?.join(', ') || '',
-                    f.farmSize?.toString() || ''
-                ])
-            ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
-
-            const blob = new Blob([csvContent], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `farmers_export_${new Date().toISOString().split('T')[0]}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
-            setSelectedFarmers(new Set());
-
-            addNotification({
-                type: 'success',
-                message: `Exported ${selectedFarmersList.length} farmers to CSV`
-            });
-        }
-    };
 
     useEffect(() => {
         if (darkMode) {
@@ -806,6 +428,17 @@ function App() {
     const queryFarmers = farmersResponse?.data?.farmers || [];
     const effectiveFarmers = queryFarmers.length > 0 ? queryFarmers : storeFarmers;
 
+    // Custom Hooks logic
+    const { 
+        isOnline, 
+        pendingSyncCount, 
+        isDragOver, 
+        handleDragOver, 
+        handleDragLeave, 
+        handleDrop 
+    } = useAppSync(addNotification);
+
+
     // Fetch Visits Data
     const { data: visitsResponse, refetch: refetchVisits } = useQuery<{ success: boolean; data: { visits: Visit[] } }>({
         queryKey: ['visits'],
@@ -837,9 +470,88 @@ function App() {
     const { data: transactionsResponse } = useQuery<{ success: boolean; data: any[] }>({
         queryKey: ['transactions'],
         queryFn: getMyTransactions,
-        enabled: (activeTab === 'billing' || showGlobalSearch) && !!user
+        enabled: (activeTab === 'billing' || searchQuery.trim().length > 0) && !!user
     });
     const transactions = transactionsResponse?.data || [];
+
+    // Search Logic
+    const {
+        showGlobalSearch,
+        setShowGlobalSearch,
+        isGlobalSearching,
+        globalSearchResults,
+        handleGlobalSearch
+    } = useAppSearch(
+        effectiveFarmers,
+        visits,
+        reports,
+        transactions
+    );
+
+    // Chat Logic
+    const {
+        conversations, setConversations,
+        activeConvId, setActiveConvId,
+        chatMessages, setChatMessages,
+        chatInput, setChatInput,
+        isTyping, setIsTyping,
+        editingConvId, setEditingConvId,
+        editingTitle, setEditingTitle,
+        deletingConvId, setDeletingConvId,
+        loadConversations,
+        loadMessages,
+        updateConversationTitle,
+        handleDeleteConversation,
+        farmerConversations, setFarmerConversations,
+        activeFarmerConvId, setActiveFarmerConvId,
+        farmerChatMessages, setFarmerChatMessages,
+        farmerChatInput, setFarmerChatInput,
+        loadFarmerConversations,
+        loadFarmerMessages,
+        handleFarmerChatSend,
+        handleStartConversation
+    } = useAppChat(language);
+
+    // Bulk Actions Logic
+    const {
+        isSendingBulkSms,
+        handleSelectFarmer,
+        handleSelectAllFarmers,
+        handleBulkSMS,
+        onBulkSmsSend,
+        handleBulkDelete,
+        onBulkUpdateFarmers,
+        handleBulkExport
+    } = useBulkActions({
+        effectiveFarmers,
+        selectedFarmers,
+        setSelectedFarmers,
+        addNotification,
+        setActiveTab,
+        setShowBulkSmsComposer: setShowBulkSmsComposer,
+        setConfirmModal,
+        setIsUpdatingBulk,
+        setIsBulkUpdateModalOpen,
+        removeFarmers,
+        setFarmerList
+    });
+
+    // Shortcuts Logic
+    useAppShortcuts({
+        sidebarOpen, setSidebarOpen,
+        isNotificationPanelOpen, setIsNotificationPanelOpen,
+        isProfileMenuOpen, setIsProfileMenuOpen,
+        showProfileModal, setShowProfileModal,
+        showSettingsPanel, setShowSettingsPanel,
+        showHelpCenter, setShowHelpCenter,
+        isDetailPanelOpen, setIsDetailPanelOpen,
+        showVisitModal, setShowVisitModal,
+        showFarmerModal, setShowFarmerModal,
+        showGlobalSearch, setShowGlobalSearch,
+        viewingReport, setViewingReport,
+        showBulkSmsComposer, setShowBulkSmsComposer,
+        confirmModal, setConfirmModal
+    });
 
 
     const allNavItems = [
@@ -869,6 +581,24 @@ function App() {
     const navItems = allNavItems.filter(item => !user || item.roles.includes(user.role));
 
     // Report Generation
+    // Chat Data Load Effects
+    useEffect(() => {
+        if (!user) return;
+        if (activeTab === 'aiassistant') {
+            loadConversations();
+        }
+        if (activeTab === 'farmerchat') {
+            loadFarmerConversations();
+        }
+    }, [activeTab, loadConversations, loadFarmerConversations, user]);
+
+    useEffect(() => {
+        if (!user) return;
+        if (activeConvId) {
+            loadMessages(activeConvId);
+        }
+    }, [activeConvId, loadMessages, user]);
+
     const handleGenerateReport = async () => {
         setIsGeneratingReport(true);
         try {
@@ -889,202 +619,6 @@ function App() {
         }
     };
 
-    // Global search handler — searches farmers, knowledge, visits
-    const handleGlobalSearch = async (query: string) => {
-        if (!query.trim()) {
-            setGlobalSearchResults([]);
-            setShowGlobalSearch(false);
-            return;
-        }
-        setIsGlobalSearching(true);
-        setShowGlobalSearch(true);
-        const results: { type: string; items: { id: string; label: string; sublabel?: string }[] }[] = [];
-        try {
-            // Search farmers
-            const matchedFarmers = (farmers || []).filter((f: Farmer) =>
-                `${f.firstName} ${f.lastName}`.toLowerCase().includes(query.toLowerCase()) ||
-                (f.region || '').toLowerCase().includes(query.toLowerCase()) ||
-                (f.phone || '').includes(query)
-            ).slice(0, 5);
-            if (matchedFarmers.length > 0) {
-                results.push({
-                    type: 'Farmers',
-                    items: matchedFarmers.map((f: Farmer) => ({
-                        id: f.id,
-                        label: `${f.firstName} ${f.lastName}`,
-                        sublabel: f.region || f.village || '',
-                    }))
-                });
-            }
-            // Search knowledge
-            try {
-                const knowledgeResults = await searchKnowledge(query);
-                if (knowledgeResults.success && knowledgeResults.data?.articles?.length > 0) {
-                    results.push({
-                        type: 'Knowledge',
-                        items: knowledgeResults.data.articles.slice(0, 3).map((a: { id: string; title: string; category?: string }) => ({
-                            id: a.id,
-                            label: a.title,
-                            sublabel: a.category || '',
-                        }))
-                    });
-                }
-            } catch { /* knowledge search optional */ }
-            // Search visits
-            const matchedVisits = (visits || []).filter((v: Visit) =>
-                v.farmer_name?.toLowerCase().includes(query.toLowerCase()) ||
-                v.visit_type?.toLowerCase().includes(query.toLowerCase())
-            ).slice(0, 3);
-            if (matchedVisits.length > 0) {
-                results.push({
-                    type: 'Visits',
-                    items: matchedVisits.map((v: Visit) => ({
-                        id: v.id,
-                        label: `${v.farmer_name} — ${v.visit_type}`,
-                        sublabel: new Date(v.scheduled_at).toLocaleDateString(),
-                    }))
-                });
-            }
-            // Search Reports
-            const matchedReports = (reports || []).filter((r: Report) => 
-                r.title?.toLowerCase().includes(query.toLowerCase()) ||
-                r.type?.toLowerCase().includes(query.toLowerCase())
-            ).slice(0, 3);
-            if (matchedReports.length > 0) {
-                results.push({
-                    type: 'Reports',
-                    items: matchedReports.map((r: Report) => ({
-                        id: r.id,
-                        label: r.title,
-                        sublabel: `Generated ${new Date(r.generatedAt).toLocaleDateString()}`
-                    }))
-                });
-            }
-            // Search Transactions
-            const matchedTransactions = (transactions || []).filter((tx: any) => 
-                tx.transactionId?.toLowerCase().includes(query.toLowerCase()) ||
-                tx.status?.toLowerCase().includes(query.toLowerCase()) ||
-                tx.method?.toLowerCase().includes(query.toLowerCase())
-            ).slice(0, 3);
-            if (matchedTransactions.length > 0) {
-                results.push({
-                    type: 'Billing',
-                    items: matchedTransactions.map((tx: any) => ({
-                        id: tx.id,
-                        label: `TX: ${tx.transactionId}`,
-                        sublabel: `${tx.amount} ${tx.currency} • ${tx.status}`
-                    }))
-                });
-            }
-
-        } finally {
-            setGlobalSearchResults(results);
-            setIsGlobalSearching(false);
-        }
-    };
-
-    const loadConversations = useCallback(async () => {
-        try {
-            const res = await fetchConversations();
-            setConversations(res.data);
-            if (res.data.length > 0 && !activeConvId) {
-                setActiveConvId(res.data[0].id);
-            }
-        } catch (error) {
-            console.error('Failed to load conversations:', error);
-        }
-    }, [activeConvId]);
-
-    const loadMessages = useCallback(async (id: string) => {
-        try {
-            const res = await fetchMessages(id);
-            setChatMessages(res.data);
-        } catch (error) {
-            console.error('Failed to load messages:', error);
-        }
-    }, []);
-
-    const updateConversationTitle = async (id: string, title: string) => {
-        try {
-            const res = await updateConversation(id, { title });
-            if (res.success) {
-                setConversations(prev => prev.map(c => c.id === id ? { ...c, title } : c));
-                setEditingConvId(null);
-            }
-        } catch (error) {
-            console.error('Failed to update conversation:', error);
-        }
-    };
-
-    const handleDeleteConversation = async (id: string) => {
-        try {
-            const res = await deleteConversation(id);
-            if (res.success) {
-                setConversations(prev => prev.filter(c => c.id !== id));
-                if (activeConvId === id) {
-                    setActiveConvId(null);
-                    setChatMessages([]);
-                }
-                setDeletingConvId(null);
-            }
-        } catch (error) {
-            console.error('Failed to delete conversation:', error);
-        }
-    };
-
-    // Farmer Chat functions
-    const loadFarmerConversations = useCallback(async () => {
-        try {
-            const res = await fetchConversations();
-            setFarmerConversations(res.data);
-            if (res.data.length > 0 && !activeFarmerConvId) {
-                setActiveFarmerConvId(res.data[0].id);
-            }
-        } catch (error) {
-            console.error('Failed to load farmer conversations:', error);
-        }
-    }, [activeFarmerConvId]);
-
-    const loadFarmerMessages = useCallback(async (id: string) => {
-        try {
-            const res = await fetchMessages(id);
-            setFarmerChatMessages(res.data);
-        } catch (error) {
-            console.error('Failed to load farmer messages:', error);
-        }
-    }, []);
-
-    const handleFarmerChatSend = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!farmerChatInput.trim()) return;
-
-        const userMsg: ChatMessage = { role: 'officer', content: farmerChatInput, timestamp: new Date().toISOString() };
-        setFarmerChatMessages(prev => [...prev, userMsg]);
-        setFarmerChatInput('');
-
-        try {
-            const res = await sendMessage({
-                conversationId: activeFarmerConvId || undefined,
-                message: farmerChatInput,
-                mode: 'farmer',
-                language
-            });
-            if (res.success) {
-                // Reload messages to get the saved message
-                if (activeFarmerConvId) {
-                    loadFarmerMessages(activeFarmerConvId);
-                }
-            }
-        } catch (error) {
-            console.error('Failed to send farmer message:', error);
-        }
-    };
-
-    // Farmer state for new conversation
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [farmerList, setFarmerList] = useState<any[]>([]);
-    const [isLoadingFarmers, setIsLoadingFarmers] = useState(false);
-
     const loadFarmers = async () => {
         try {
             setIsLoadingFarmers(true);
@@ -1098,50 +632,9 @@ function App() {
         }
     };
 
-    const handleStartConversation = async (farmer: Farmer, chatType: 'ai' | 'farmer' = 'ai') => {
-        try {
-            // Check if conversation already exists with this farmer
-            const existingConversations = chatType === 'farmer' ? farmerConversations : conversations;
-            const existingConv = existingConversations.find((c: Conversation) => c.farmerId === farmer.id);
 
-            if (existingConv) {
-                // Redirect to existing conversation
-                if (chatType === 'farmer') {
-                    setActiveFarmerConvId(existingConv.id);
-                    loadFarmerMessages(existingConv.id);
-                } else {
-                    setActiveConvId(existingConv.id);
-                    loadMessages(existingConv.id);
-                }
-                setShowFarmerModal(false);
-                setFarmerSearchQuery('');
-                return;
-            }
 
-            const res = await createConversation({
-                farmerId: farmer.id,
-                farmerName: `${farmer.firstName} ${farmer.lastName}`,
-                language: 'en'
-            });
-            if (res.success && res.data) {
-                if (chatType === 'farmer') {
-                    // Add to Farmer Chat list
-                    setFarmerConversations(prev => [res.data, ...prev]);
-                    setActiveFarmerConvId(res.data.id);
-                    setFarmerChatMessages([]);
-                } else {
-                    // Add to AI Assistant list
-                    setConversations(prev => [res.data, ...prev]);
-                    setActiveConvId(res.data.id);
-                    setChatMessages([]);
-                }
-                setShowFarmerModal(false);
-                setFarmerSearchQuery('');
-            }
-        } catch (error) {
-            console.error('Failed to start conversation:', error);
-        }
-    };
+
 
     const handleChatSend = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -1227,14 +720,16 @@ function App() {
     // Public routes - accessible without authentication
     if (!user) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-                <Routes>
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
-                    <Route path="*" element={<Login />} />
-                </Routes>
-            </div>
+            <ErrorBoundary componentName="PublicAuth">
+                <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+                    <Routes>
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
+                        <Route path="/forgot-password" element={<ForgotPassword />} />
+                        <Route path="*" element={<Login />} />
+                    </Routes>
+                </div>
+            </ErrorBoundary>
         );
     }
 
@@ -1502,20 +997,22 @@ function App() {
                     <main className="flex-1 overflow-y-auto p-8 custom-scrollbar relative z-10">
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <div className=''>
-                        <ErrorBoundary>
-                            {activeTab === 'farmer_dashboard' && <FarmerDashboard />}
+                        <ErrorBoundary componentName="MainContent">
+                            <Suspense fallback={<div className="flex items-center justify-center min-h-[400px]"><Loader2 className="w-8 h-8 text-cyan-500 animate-spin" /></div>}>
+                                {activeTab === 'farmer_dashboard' && <FarmerDashboard />}
 
-                            {activeTab === 'register_farmer' && (
-                                <RoleGuard allowedRoles={['extension_officer', 'admin']}>
-                                    <FarmerRegistrationForm />
-                                </RoleGuard>
-                            )}
+                                {activeTab === 'register_farmer' && (
+                                    <RoleGuard allowedRoles={['extension_officer', 'admin']}>
+                                        <FarmerRegistrationForm />
+                                    </RoleGuard>
+                                )}
 
-                            {activeTab === 'visit_synthesis' && (
-                                <RoleGuard allowedRoles={['extension_officer', 'admin']}>
-                                    <VisitSynthesisForm />
-                                </RoleGuard>
-                            )}
+                                {activeTab === 'visit_synthesis' && (
+                                    <RoleGuard allowedRoles={['extension_officer', 'admin']}>
+                                        <VisitSynthesisForm />
+                                    </RoleGuard>
+                                )}
+                            </Suspense>
                         </ErrorBoundary>
 
 
@@ -1613,35 +1110,37 @@ function App() {
                                     </div>
 
                                     <div className={`relative h-[400px] bg-slate-950/50 ${radiusClass} overflow-hidden border border-white/5 shadow-inner`}>
-                                        <FarmerMap
-                                            height="400px"
-                                            isExternalExpanded={isMapExpanded}
-                                            onToggleExpand={setIsMapExpanded}
-                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                            farmers={effectiveFarmers.map((f: any) => ({
-                                                id: f.id,
-                                                name: f.name || `${f.firstName} ${f.lastName}`,
-                                                lat: f.latitude || f.lat || -1.2863,
-                                                lng: f.longitude || f.lng || 36.8172,
-                                                crop: f.crops?.[0] || f.crop || 'Maize',
-                                                region: f.region || f.location || 'Unknown',
-                                                size: f.farmSize || f.size || 0,
-                                                phone: f.phone,
-                                                yield: f.yield || 0,
-                                                createdAt: f.createdAt || f.created_at
-                                            }))}
-                                            onFarmerClick={(farmerData) => {
-                                                if (user?.role === 'extension_officer' || user?.role === 'admin') {
-                                                    setActiveTab('farmerchat');
-                                                    // Map FarmerData back to Farmer for the conversation handler
-                                                    const farmer = effectiveFarmers.find(f => f.id === farmerData.id) as Farmer;
-                                                    if (farmer) handleStartConversation(farmer, 'farmer');
-                                                } else {
-                                                    const farmer = effectiveFarmers.find(f => f.id === farmerData.id) as Farmer;
-                                                    if (farmer) handleOpenFarmerDetail(farmer);
-                                                }
-                                            }}
-                                        />
+                                        <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="w-8 h-8 text-cyan-500 animate-spin" /></div>}>
+                                            <FarmerMap
+                                                height="400px"
+                                                isExternalExpanded={isMapExpanded}
+                                                onToggleExpand={setIsMapExpanded}
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                farmers={effectiveFarmers.map((f: any) => ({
+                                                    id: f.id,
+                                                    name: f.name || `${f.firstName} ${f.lastName}`,
+                                                    lat: f.latitude || f.lat || -1.2863,
+                                                    lng: f.longitude || f.lng || 36.8172,
+                                                    crop: f.crops?.[0] || f.crop || 'Maize',
+                                                    region: f.region || f.location || 'Unknown',
+                                                    size: f.farmSize || f.size || 0,
+                                                    phone: f.phone,
+                                                    yield: f.yield || 0,
+                                                    createdAt: f.createdAt || f.created_at
+                                                }))}
+                                                onFarmerClick={(farmerData) => {
+                                                    if (user?.role === 'extension_officer' || user?.role === 'admin') {
+                                                        setActiveTab('farmerchat');
+                                                        // Map FarmerData back to Farmer for the conversation handler
+                                                        const farmer = effectiveFarmers.find(f => f.id === farmerData.id) as Farmer;
+                                                        if (farmer) handleStartConversation(farmer, 'farmer');
+                                                    } else {
+                                                        const farmer = effectiveFarmers.find(f => f.id === farmerData.id) as Farmer;
+                                                        if (farmer) handleOpenFarmerDetail(farmer);
+                                                    }
+                                                }}
+                                            />
+                                        </Suspense>
 
                                         {!isMapExpanded && (
                                             <div className={`absolute bottom-4 left-4 right-4 flex justify-between items-center bg-slate-900/80 backdrop-blur-md p-3 ${radiusClass} border border-white/10`}>
@@ -2699,8 +2198,8 @@ function App() {
             <SettingsPanel isOpen={showSettingsPanel} onClose={() => setShowSettingsPanel(false)} />
             <HelpCenterModal isOpen={showHelpCenter} onClose={() => setShowHelpCenter(false)} />
             <BulkSmsModal
-                isOpen={isBulkSmsModalOpen}
-                onClose={() => setIsBulkSmsModalOpen(false)}
+                isOpen={showBulkSmsComposer}
+                onClose={() => setShowBulkSmsComposer(false)}
                 onSend={onBulkSmsSend}
                 selectedCount={selectedFarmers.size}
                 isLoading={isSendingBulkSms}

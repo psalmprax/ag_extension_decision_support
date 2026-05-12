@@ -10,11 +10,11 @@ import { logger } from './utils/logger';
 import { errorHandler } from './middleware/errorHandler';
 import i18nUrlMiddleware, { i18nRouteHandler, restoreOriginalPath } from './middleware/i18nUrlMiddleware';
 import { securityGate } from './middleware/securityGate';
-import rateLimit from 'express-rate-limit';
 import { setupSwagger } from './utils/swagger';
 import { getPool } from './services/databaseService';
 import { getCache } from './services/cacheService';
 import { persistentMemory } from './services/persistentMemory';
+import { perUserRateLimit } from './middleware/rateLimitMiddleware';
 
 // Routes
 import authRoutes from './routes/auth';
@@ -47,13 +47,7 @@ import diseaseRoutes from './routes/diseases';
 
 const app: Application = express();
 
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: process.env.NODE_ENV === 'production' ? 100 : 1000, // Higher limit for development
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: { success: false, error: 'Too many requests, please try again later.' },
-});
+const limiter = perUserRateLimit;
 
 // Middleware
 app.use(helmet({

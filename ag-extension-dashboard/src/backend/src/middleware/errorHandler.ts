@@ -138,6 +138,29 @@ export function errorHandler(
     res.status(statusCode).json(response);
 }
 
+/**
+ * Error handling for Express async routes
+ * This ensures all async errors are properly caught and passed to the error handler
+ */
+export const asyncWrapper = (fn: Function) => (req: Request, res: Response, next: NextFunction) => {
+    Promise.resolve(fn(req, res, next)).catch((err: any) => {
+        // Handle specific error types
+        if (err.name === 'JsonWebTokenError') {
+            return next(createAuthenticationError('Invalid token'));
+        }
+        if (err.name === 'TokenExpiredError') {
+            return next(createAuthenticationError('Token expired'));
+        }
+        if (err.code === 'P2000' || err.code?.startsWith('P2')) {
+            return next(handlePrismaError(err));
+        }
+        if (err.name === 'MulterError') {
+            return next(handleMulterError(err));
+        }
+        next(err);
+    });
+};
+
 // Use asyncWrapper below - this is kept for backward compatibility
 export const asyncHandler = asyncWrapper;
 
@@ -263,26 +286,3 @@ export function handleMulterError(error: any): AppError {
         ErrorTypes.VALIDATION_ERROR
     );
 }
-
-/**
- * Error handling for Express async routes
- * This ensures all async errors are properly caught and passed to the error handler
- */
-export const asyncWrapper = (fn: Function) => (req: Request, res: Response, next: NextFunction) => {
-    Promise.resolve(fn(req, res, next)).catch((err: any) => {
-        // Handle specific error types
-        if (err.name === 'JsonWebTokenError') {
-            return next(createAuthenticationError('Invalid token'));
-        }
-        if (err.name === 'TokenExpiredError') {
-            return next(createAuthenticationError('Token expired'));
-        }
-        if (err.code === 'P2000' || err.code?.startsWith('P2')) {
-            return next(handlePrismaError(err));
-        }
-        if (err.name === 'MulterError') {
-            return next(handleMulterError(err));
-        }
-        next(err);
-    });
-};

@@ -16,16 +16,16 @@ jobs:
         with:
           node-version: '18.x'
           cache: 'npm'
-          cache-dependency-path: src/backend/package-lock.json
+          cache-dependency-path: ag-extension-dashboard/src/backend/package-lock.json
       - name: Install dependencies
         run: npm ci
-        working-directory: src/backend
+        working-directory: ag-extension-dashboard/src/backend
       - name: Lint
         run: npm run lint
-        working-directory: src/backend
+        working-directory: ag-extension-dashboard/src/backend
       - name: Build
         run: npm run build
-        working-directory: src/backend
+        working-directory: ag-extension-dashboard/src/backend
 
   frontend-ci:
     runs-on: ubuntu-latest
@@ -36,13 +36,13 @@ jobs:
         with:
           node-version: '18.x'
           cache: 'npm'
-          cache-dependency-path: src/frontend/package-lock.json
+          cache-dependency-path: ag-extension-dashboard/src/frontend/package-lock.json
       - name: Install dependencies
         run: npm ci
-        working-directory: src/frontend
+        working-directory: ag-extension-dashboard/src/frontend
       - name: Lint
         run: npm run lint
-        working-directory: src/frontend
+        working-directory: ag-extension-dashboard/src/frontend
       - name: Build
         run: npm run build
-        working-directory: src/frontend
+        working-directory: ag-extension-dashboard/src/frontend

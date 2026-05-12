@@ -1,0 +1,117 @@
+name: AG-Extension Multi-Server Deployment
+
+on:
+  push:
+    branches:
+      - stage
+      - 'feature/*'
+  pull_request:
+    branches:
+      - master
+    types: [closed]
+
+jobs:
+  # 1. CI Checks (Runs for all triggers)
+  ci-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: |
+            ag-extension-dashboard/src/frontend/package-lock.json
+            ag-extension-dashboard/src/backend/package-lock.json
+
+      - name: Install Dependencies
+        run: |
+          cd ag-extension-dashboard
+          npm install
+
+      - name: Build Frontend
+        run: |
+          cd ag-extension-dashboard/src/frontend
+          npm ci
+          npm run build
+
+      - name: Build Backend
+        run: |
+          cd ag-extension-dashboard/src/backend
+          npm ci
+          npm run build
+
+  # 2. Deploy to Testing (Old Server)
+  deploy-testing:
+    needs: ci-checks
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/stage' || startsWith(github.ref, 'refs/heads/feature/'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Old Server (Testing)
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.TEST_SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
+          script: |
+            if [ ! -d "/root/ag_extension_decision_support" ]; then
+              echo "🚀 Project directory missing. Cloning repository..."
+              cd /root
+              git clone https://github.com/${{ github.repository }}.git
+            fi
+            
+            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            git fetch origin
+            
+            # Ensure branch exists and is checked out
+            if git show-ref --verify --quiet refs/heads/${{ github.ref_name }}; then
+              git checkout ${{ github.ref_name }}
+            else
+              git checkout -b ${{ github.ref_name }} origin/${{ github.ref_name }}
+            fi
+            
+            git pull origin ${{ github.ref_name }}
+            
+            # Check if databases are UP
+            DB_UP=$(docker ps --filter "name=ag-dashboard-db" --filter "status=running" -q)
+            REDIS_UP=$(docker ps --filter "name=ag-dashboard-redis" --filter "status=running" -q)
+            
+            if [ -z "$DB_UP" ] || [ -z "$REDIS_UP" ]; then
+              echo "⚠️ Databases DOWN. Full deploy..."
+              docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --build
+            else
+              echo "✅ Databases UP. App deploy only..."
+              docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --build backend frontend agent-zero crew-ai
+            fi
+            docker image prune -f
+
+  # 3. Deploy to Production (New Server)
+  deploy-production:
+    needs: ci-checks
+    if: github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.base_ref == 'master'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to New Server (Production)
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
+          script: |
+            if [ ! -d "/root/ag_extension_decision_support" ]; then
+              echo "🚀 Project directory missing. Cloning repository..."
+              cd /root
+              git clone https://github.com/${{ github.repository }}.git
+            fi
+            
+            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            git fetch origin master
+            git checkout master
+            git pull origin master
+            # The orchestration script already handles "App-only" deployment if DBs are running
+            chmod +x ./scripts/orchestrate-migration.sh
+            ./scripts/orchestrate-migration.sh deploy
+            docker image prune -f

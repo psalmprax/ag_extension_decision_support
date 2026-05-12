@@ -9,6 +9,7 @@ import { fetchMarketPrices, MarketPrice } from '@/api/priceService';
 import IsometricFarmOverview from './Cyber/IsometricFarmOverview';
 import CropCycleGantt from './Cyber/CropCycleGantt';
 import SystemOverview from './Cyber/SystemOverview';
+import { MetricCardSkeleton, ChartSkeleton } from './Skeleton';
 
 export const FarmerDashboard: React.FC = () => {
   const { user, themeName, showContextMenu, setActiveTab } = useAppStore();
@@ -149,8 +150,22 @@ export const FarmerDashboard: React.FC = () => {
 
   if (statsLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+      <div className="space-y-8 animate-fade-in">
+        <header>
+          <div className="h-9 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse mb-2" />
+          <div className="h-5 w-48 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />
+        </header>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <MetricCardSkeleton key={i} />
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <ChartSkeleton />
+            <div className="bg-gray-200 dark:bg-gray-700 h-[300px] rounded-[2.5rem] animate-pulse" />
+        </div>
       </div>
     );
   }

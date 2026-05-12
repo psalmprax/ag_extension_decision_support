@@ -99,7 +99,7 @@ export class OllamaProvider extends BaseAIProvider {
 
         try {
             const result = await this.generateText(prompt, { temperature: 0.1, maxTokens: 200 });
-            const text = result.text.trim();
+            const text = (result.text || '').trim();
             const jsonMatch = text.match(/\[.*\]/s);
             if (jsonMatch) {
                 return { labels: JSON.parse(jsonMatch[0]) };
