@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Activity, CheckCircle, AlertTriangle, XCircle,
     RotateCcw, Clock, RefreshCw, Shield,
@@ -16,15 +16,20 @@ export function SystemHealth() {
     const { headingClass, isModern, radiusClass, btnClass } = useDesignSystemMode();
     const { addNotification } = useAppStore();
 
-    // State
     const [healthChecks, setHealthChecks] = useState<HealthCheck[]>([]);
     const [recoveryLog, setRecoveryLog] = useState<RecoveryAction[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [triggeringRecovery, setTriggeringRecovery] = useState<string | null>(null);
+    const isFetchingRef = useRef(false);
+    const lastErrorTimeRef = useRef<number>(0);
+    const ERROR_COOLDOWN = 10000; // 10s cooldown for repetitive error notifications
 
     // Load data
     const loadData = async (showRefresh = false) => {
+        if (isFetchingRef.current) return;
+        isFetchingRef.current = true;
+
         try {
             if (showRefresh) setIsRefreshing(true);
             else setIsLoading(true);
@@ -40,15 +45,24 @@ export function SystemHealth() {
             if (recoveryRes.success) {
                 setRecoveryLog(recoveryRes.data);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to load health data:', error);
-            addNotification({
-                type: 'error',
-                message: t('system_health_failed_load')
-            });
+            
+            // Only show notification if not in cooldown (to prevent 429 spam UI loops)
+            const now = Date.now();
+            if (now - lastErrorTimeRef.current > ERROR_COOLDOWN) {
+                addNotification({
+                    type: 'error',
+                    message: error?.response?.status === 429 
+                        ? 'Too many health check requests. Please wait.' 
+                        : t('system_health_failed_load')
+                });
+                lastErrorTimeRef.current = now;
+            }
         } finally {
             setIsLoading(false);
             setIsRefreshing(false);
+            isFetchingRef.current = false;
         }
     };
 

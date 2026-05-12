@@ -12,7 +12,7 @@ const embeddedTranslations: Record<string, string> = {
   "email_template_training_invitation_body": "Dear {{recipientName}},\n\nYou are invited to attend a training session:\n\nTopic: {{trainingTopic}}\nDate: {{date}}\nTime: {{time}}\nLocation: {{location}}\nTrainer: {{trainerName}}\n\nAgenda:\n{{agenda}}\n\nPlease confirm your attendance by replying to this email.\n\nBest regards,\nAg Extension Training Team"
 };
 
-let translations: Record<string, string> = { ...embeddedTranslations };
+const translations: Record<string, string> = { ...embeddedTranslations };
 
 export function loadTranslations(): void {
   console.log(`✅ Loaded ${Object.keys(translations).length} embedded translations`);

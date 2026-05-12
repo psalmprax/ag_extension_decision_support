@@ -999,21 +999,33 @@ function App() {
                             <div className=''>
                         <ErrorBoundary componentName="MainContent">
                             <Suspense fallback={<div className="flex items-center justify-center min-h-[400px]"><Loader2 className="w-8 h-8 text-cyan-500 animate-spin" /></div>}>
-                                {activeTab === 'farmer_dashboard' && <FarmerDashboard />}
+                                {activeTab === 'farmer_dashboard' && (
+                                    <Suspense fallback={<div className="p-6 space-y-4"><CardSkeleton /><ChartSkeleton /></div>}>
+                                        <FarmerDashboard />
+                                    </Suspense>
+                                )}
 
                                 {activeTab === 'register_farmer' && (
                                     <RoleGuard allowedRoles={['extension_officer', 'admin']}>
-                                        <FarmerRegistrationForm />
+                                        <Suspense fallback={<div className="p-6"><Loader2 className="w-8 h-8 animate-spin" /></div>}>
+                                            <FarmerRegistrationForm />
+                                        </Suspense>
                                     </RoleGuard>
                                 )}
 
                                 {activeTab === 'visit_synthesis' && (
                                     <RoleGuard allowedRoles={['extension_officer', 'admin']}>
-                                        <VisitSynthesisForm />
+                                        <Suspense fallback={<div className="p-6"><Loader2 className="w-8 h-8 animate-spin" /></div>}>
+                                            <VisitSynthesisForm />
+                                        </Suspense>
                                     </RoleGuard>
                                 )}
 
-                                {activeTab === 'sms' && <SMSPage />}
+                                {activeTab === 'sms' && (
+                                    <Suspense fallback={<div className="p-6"><Loader2 className="w-8 h-8 animate-spin" /></div>}>
+                                        <SMSPage />
+                                    </Suspense>
+                                )}
 
                                 {activeTab === 'dashboard' && (
                                     <div className="animate-in fade-in duration-500">
@@ -2048,15 +2060,35 @@ function App() {
                                     </div>
                                 )}
 
-                                {activeTab === 'system_health' && <SystemHealth />}
+                                {activeTab === 'system_health' && (
+                                    <Suspense fallback={<div className="p-6 space-y-4"><MetricCardSkeleton /><CardSkeleton /></div>}>
+                                        <SystemHealth />
+                                    </Suspense>
+                                )}
 
-                                {activeTab === 'disease_diagnosis' && <DiseaseDiagnosisPage />}
+                                {activeTab === 'disease_diagnosis' && (
+                                    <Suspense fallback={<div className="p-6"><Loader2 className="w-8 h-8 animate-spin" /></div>}>
+                                        <DiseaseDiagnosisPage />
+                                    </Suspense>
+                                )}
 
-                                {activeTab === 'memory' && <Memory />}
+                                {activeTab === 'memory' && (
+                                    <Suspense fallback={<div className="p-6"><Loader2 className="w-8 h-8 animate-spin" /></div>}>
+                                        <Memory />
+                                    </Suspense>
+                                )}
 
-                                {activeTab === 'email_workflows' && <EmailWorkflows />}
+                                {activeTab === 'email_workflows' && (
+                                    <Suspense fallback={<div className="p-6"><Loader2 className="w-8 h-8 animate-spin" /></div>}>
+                                        <EmailWorkflows />
+                                    </Suspense>
+                                )}
 
-                                {activeTab === 'mcp_tools' && <MCPTools />}
+                                {activeTab === 'mcp_tools' && (
+                                    <Suspense fallback={<div className="p-6"><Loader2 className="w-8 h-8 animate-spin" /></div>}>
+                                        <MCPTools />
+                                    </Suspense>
+                                )}
                             </Suspense>
                         </ErrorBoundary>
 
