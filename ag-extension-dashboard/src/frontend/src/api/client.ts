@@ -38,8 +38,8 @@ const shouldRetry = (error: AxiosError): boolean => {
     const retryCount = (config as any).__retryCount || 0;
     if (retryCount >= MAX_RETRIES) return false;
 
-    // Only retry on specific status codes
-    const retryStatusCodes = [408, 429, 500, 502, 503, 504];
+    // Only retry on specific status codes (excluding 429 to prevent rate-limit loops)
+    const retryStatusCodes = [408, 500, 502, 503, 504];
     if (error.response && retryStatusCodes.includes(error.response.status)) {
         return true;
     }
