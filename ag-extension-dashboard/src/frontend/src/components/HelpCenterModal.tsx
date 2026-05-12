@@ -59,8 +59,8 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
     };
 
     const quickLinks = [
-        { icon: Book, label: t('help_docs') || 'Documentation', color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400', action: () => { onClose(); setActiveTab('knowledge'); } },
-        { icon: MessageSquare, label: t('help_chat') || 'Live Chat', color: 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400', action: () => { onClose(); setActiveTab('aiassistant'); } },
+        { icon: Book, label: t('help_docs') || 'Documentation', color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400', action: () => { onClose(); React.startTransition(() => setActiveTab('knowledge')); } },
+        { icon: MessageSquare, label: t('help_chat') || 'Live Chat', color: 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400', action: () => { onClose(); React.startTransition(() => setActiveTab('aiassistant')); } },
         { icon: Mail, label: 'Submit Ticket', color: 'bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400', action: () => setShowTicketForm(true) },
     ];
 
