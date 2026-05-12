@@ -16,7 +16,7 @@ export async function withRealFallback<T>(
         }
         
         // Handle direct data return if the service doesn't use the success wrapper
-        if (response !== undefined && !response.hasOwnProperty('success')) {
+        if (response !== undefined && !('success' in response)) {
             return response;
         }
 

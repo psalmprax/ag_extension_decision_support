@@ -2,7 +2,7 @@
 
 # Configuration
 REMOTE_HOST="145.223.97.248"
-SSH_KEY="/home/psalmprax/Videos/id_key"
+SSH_KEY="${HOME}/.ssh/id_rsa"
 REMOTE_PATH="/root/ag_extension_decision_support/ag-extension-dashboard"
 
 echo "----------------------------------------------------"

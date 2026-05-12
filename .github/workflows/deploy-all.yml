@@ -113,5 +113,5 @@ jobs:
             git pull origin master
             # The orchestration script already handles "App-only" deployment if DBs are running
             chmod +x ./scripts/orchestrate-migration.sh
-            ./scripts/orchestrate-migration.sh deploy
+            DEST_HOST=localhost ./scripts/orchestrate-migration.sh deploy
             docker image prune -f

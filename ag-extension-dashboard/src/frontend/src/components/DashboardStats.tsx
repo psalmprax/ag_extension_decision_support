@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDesign } from '@/hooks/useDesignVariant';
 import { useLanguage } from '@/lib/LanguageContext';
 import { Users, Calendar, MessageSquare, TrendingUp } from 'lucide-react';
-import { fetchDashboardData, DashboardResponse } from '@/api/dashboardService';
+import { fetchDashboardData } from '@/api/dashboardService';
 import { withRealFallback } from '@/lib/realFirst';
 
 interface StatCardProps {
@@ -47,6 +47,11 @@ const NewStatCard: React.FC<StatCardProps> = ({ title, value, change, icon: Icon
 
 export const DashboardStats: React.FC = () => {
   const { t } = useLanguage();
+  const StatCard = useDesign({
+    current: CurrentStatCard,
+    new: NewStatCard,
+  });
+
   const [stats, setStats] = useState([
     { title: 'Total Farmers', value: '...', change: '', icon: Users },
     { title: 'Visits This Month', value: '...', change: '', icon: Calendar },
@@ -100,16 +105,11 @@ export const DashboardStats: React.FC = () => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {stats.map((stat, index) => {
-        const StatCard = useDesign({
-          current: CurrentStatCard,
-          new: NewStatCard,
-        });
-        return <StatCard key={index} {...stat} />;
-      })}
+      {stats.map((stat, index) => (
+        <StatCard key={index} {...stat} />
+      ))}
     </div>
   );
 };
 
 export default DashboardStats;
-
