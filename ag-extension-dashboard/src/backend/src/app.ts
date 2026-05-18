@@ -15,6 +15,8 @@ import { getPool } from './services/databaseService';
 import { getCache } from './services/cacheService';
 import { persistentMemory } from './services/persistentMemory';
 import { perUserRateLimit } from './middleware/rateLimitMiddleware';
+import { AIProviderFactory } from './services/aiProvider/aiProvider';
+import { selfHealingService } from './services/selfHealing';
 
 // Routes
 import authRoutes from './routes/auth';
@@ -44,6 +46,7 @@ import agentRoutes from './routes/agents';
 import systemHealthRoutes from './routes/systemHealth';
 import memoryRoutes from './routes/memories';
 import diseaseRoutes from './routes/diseases';
+import whatsappRoutes from './routes/whatsapp';
 
 const app: Application = express();
 
@@ -93,10 +96,16 @@ app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
 // Setup Swagger
 setupSwagger(app);
 
-// Health check
+// Health check handler with full dependency checks
 const healthHandler = async (_req: Request, res: Response) => {
     let dbStatus = 'unknown';
     let cacheStatus = 'unknown';
+    let aiProviderStatus = 'unknown';
+    let externalApiStatus = 'unknown';
+    let agentStatus = 'unknown';
+    const errors: string[] = [];
+
+    // Check database
     try {
         const pool = getPool();
         if (pool) {
@@ -108,7 +117,10 @@ const healthHandler = async (_req: Request, res: Response) => {
     } catch (error) {
         logger.error('Database health check failed:', error);
         dbStatus = 'error';
+        errors.push(`database: ${(error as Error).message}`);
     }
+
+    // Check cache (Redis)
     try {
         const redis = getCache();
         if (redis && redis.isOpen) {
@@ -119,14 +131,93 @@ const healthHandler = async (_req: Request, res: Response) => {
     } catch (error) {
         logger.error('Cache health check failed:', error);
         cacheStatus = 'error';
+        errors.push(`cache: ${(error as Error).message}`);
     }
-    const isHealthy = dbStatus === 'connected';
-    res.status(isHealthy ? 200 : 503).json({
-        status: isHealthy ? 'healthy' : 'unhealthy',
+
+    // Check AI provider (primary + fallback)
+    try {
+        const primaryProvider = await AIProviderFactory.getPrimaryProvider();
+        const primaryHealthy = primaryProvider.isConfigured() && await primaryProvider.healthCheck();
+        
+        let fallbackHealthy = false;
+        try {
+            const fallbackProvider = await AIProviderFactory.getFallbackProvider();
+            fallbackHealthy = fallbackProvider.isConfigured() && await fallbackProvider.healthCheck();
+        } catch {
+            fallbackHealthy = false;
+        }
+
+        if (primaryHealthy) {
+            aiProviderStatus = 'healthy';
+        } else if (fallbackHealthy) {
+            aiProviderStatus = 'degraded (fallback active)';
+        } else if (!primaryProvider.isConfigured() && !await (await AIProviderFactory.getFallbackProvider()).isConfigured()) {
+            aiProviderStatus = 'not configured';
+        } else {
+            aiProviderStatus = 'unhealthy';
+            errors.push('ai_provider: primary and fallback both unhealthy');
+        }
+    } catch (error) {
+        aiProviderStatus = 'error';
+        errors.push(`ai_provider: ${(error as Error).message}`);
+    }
+
+    // Check external APIs (weather, NASA POWER, FAO)
+    try {
+        const weatherKey = config.externalApis.weather.apiKey;
+        const faoConfigured = !!config.externalApis.fao.url;
+        const nasaConfigured = true; // NASA POWER is always available
+        
+        if (weatherKey || faoConfigured || nasaConfigured) {
+            externalApiStatus = `${['weather', 'fao', 'nasa'].filter(k => 
+                (k === 'weather' && weatherKey) ||
+                (k === 'fao' && faoConfigured) ||
+                (k === 'nasa')
+            ).length}/3 configured`;
+        } else {
+            externalApiStatus = 'none configured';
+        }
+    } catch (error) {
+        externalApiStatus = 'error';
+        errors.push(`external_apis: ${(error as Error).message}`);
+    }
+
+    // Check agent services
+    try {
+        const agentHealth = selfHealingService.getHealthStatus();
+        const registeredCount = agentHealth.size;
+        const unhealthyCount = Array.from(agentHealth.values()).filter(h => h.status === 'unhealthy' || h.status === 'offline').length;
+        
+        if (registeredCount === 0) {
+            agentStatus = 'not initialized';
+        } else if (unhealthyCount === 0) {
+            agentStatus = `${registeredCount} registered, all healthy`;
+        } else {
+            agentStatus = `${registeredCount} registered, ${unhealthyCount} unhealthy`;
+            if (unhealthyCount > 0) errors.push(`agents: ${unhealthyCount} unhealthy`);
+        }
+    } catch (error) {
+        agentStatus = 'error';
+        errors.push(`agents: ${(error as Error).message}`);
+    }
+
+    const isHealthy = dbStatus === 'connected' && aiProviderStatus !== 'unhealthy';
+    const isDegraded = dbStatus === 'connected' && errors.length > 0;
+
+    res.status(isHealthy ? 200 : isDegraded ? 200 : 503).json({
+        status: isHealthy ? 'healthy' : isDegraded ? 'degraded' : 'unhealthy',
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
         environment: config.nodeEnv,
-        services: { database: dbStatus, cache: cacheStatus }
+        version: '1.0.1',
+        services: {
+            database: dbStatus,
+            cache: cacheStatus,
+            ai_provider: aiProviderStatus,
+            external_apis: externalApiStatus,
+            agent_orchestrator: agentStatus,
+        },
+        errors: errors.length > 0 ? errors : undefined,
     });
 };
 
@@ -166,6 +257,7 @@ app.use('/api/v1/ai/agents', agentRoutes);
 app.use('/api/v1/system/health', systemHealthRoutes);
 app.use('/api/v1/ai/memories', memoryRoutes);
 app.use('/api/v1/ai/diseases', diseaseRoutes);
+app.use('/api/v1/whatsapp', whatsappRoutes);
 // Create MCP router synchronously to ensure it loads properly
 let mcpRouter: any = null;
 try {
@@ -219,6 +311,7 @@ app.use('/api/ai/agents', agentRoutes);
 app.use('/api/system/health', systemHealthRoutes);
 app.use('/api/ai/memories', memoryRoutes);
 app.use('/api/ai/diseases', diseaseRoutes);
+app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/mcp', (req, res, next) => {
   if (mcpRouter) {
     mcpRouter(req, res, next);

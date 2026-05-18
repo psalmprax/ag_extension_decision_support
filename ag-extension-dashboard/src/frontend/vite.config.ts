@@ -65,6 +65,7 @@ export default defineConfig({
     },
     server: {
         port: 5173,
+        allowedHosts: ['www.gpexts.com'],
         proxy: {
             '/api': {
                 target: 'http://backend:3001',

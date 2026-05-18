@@ -1,6 +1,8 @@
 services:
   app-db:
-    image: postgres:15-alpine
+    build:
+      context: .
+      dockerfile: Dockerfile.db
     container_name: ag-dashboard-db
     restart: always
     environment:
