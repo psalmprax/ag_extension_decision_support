@@ -14,10 +14,10 @@ BRANCH=${1:-$(git branch --show-current)}
 
 # Configuration
 TEST_SERVER="149.104.110.122"
-TEST_KEY="${HOME}/.ssh/id_rsa"
+TEST_KEY="/home/psalmprax/Music/id_rsa"
 
 PROD_SERVER="145.223.97.248"
-PROD_KEY="${HOME}/.ssh/id_rsa"
+PROD_KEY="/home/psalmprax/Videos/id_key"
 
 REMOTE_PATH="/root/ag_extension_decision_support/ag-extension-dashboard"
 
