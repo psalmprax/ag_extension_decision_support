@@ -58,6 +58,7 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+            "upgrade-insecure-requests": null, // Disable automatic upgrading of HTTP requests to HTTPS on development/staging ports
             "img-src": ["'self'", "data:", "https://images.unsplash.com", "https://*.ytimg.com"],
             "frame-src": ["'self'", "https://www.youtube.com", "https://www.youtube-nocookie.com"],
             "connect-src": ["'self'", "https://api.openai.com", "https://*.azure.com", "https://*.google.com"],
