@@ -16,9 +16,9 @@
 
 # --- Configuration ---
 SOURCE_HOST=${SOURCE_HOST:-"149.104.110.122"}
-SOURCE_KEY=${SOURCE_KEY:-"$HOME/.ssh/id_rsa"}
+SOURCE_KEY=${SOURCE_KEY:-"/home/psalmprax/Music/id_rsa"}
 DEST_HOST=${DEST_HOST:-"145.223.97.248"}
-DEST_KEY=${DEST_KEY:-"$HOME/.ssh/id_rsa"}
+DEST_KEY=${DEST_KEY:-"/home/psalmprax/Videos/id_key"}
 REMOTE_PATH="/root/ag_extension_decision_support/ag-extension-dashboard"
 
 # Docker Names
