@@ -2,6 +2,7 @@ import { AIRouter, ReasoningResult } from '@/services/aiProvider/aiProvider';
 import { VectorService, SearchResult } from '@/services/vectorService';
 import { SemanticCacheService } from '@/services/semanticCacheService';
 import { AssetValidationService } from '@/services/assetValidationService';
+import { cacheGet, cacheSet } from '@/services/cacheService';
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 
@@ -118,24 +119,73 @@ export class KnowledgeService {
     ): Promise<ReasoningResult & { cached: boolean; contextUsed: SearchResult[] }> {
         logger.info(`Getting RAG-based answer for query: "${queryText}" (User: ${userId}, Attachments: ${attachments?.length || 0})`);
 
-        // Categorize for categorization field (async)
-        const categories = await this.categorizeQuery(queryText);
+        const redisKey = `rag:exact:${queryText.toLowerCase().trim()}`;
 
-        // 2. Check semantic cache (only for text-only queries for now)
+        // 1. Check exact match cache (Redis + SQL) first (super fast, 0-1ms, zero LLM calls)
         if (!attachments || attachments.length === 0) {
+            // A. Check Redis
+            const cachedResponse = await cacheGet(redisKey);
+            if (cachedResponse) {
+                try {
+                    const parsed = JSON.parse(cachedResponse);
+                    logger.info(`Redis exact match HIT for query: "${queryText}"`);
+                    return {
+                        ...parsed,
+                        cached: true
+                    };
+                } catch (e) {
+                    logger.error('Failed to parse cached Redis response:', e);
+                }
+            }
+
+            // B. Check exact match in database (fast, no embedding API call required)
+            try {
+                const dbExact = await query(`
+                    SELECT query_text as "queryText", answer, context_used as "contextUsed", visuals
+                    FROM search_cache
+                    WHERE LOWER(TRIM(query_text)) = LOWER(TRIM($1))
+                    LIMIT 1
+                `, [queryText]);
+
+                if (dbExact.rows.length > 0) {
+                    const cached = dbExact.rows[0];
+                    const resPayload = {
+                        reasoning: 'Retrieved from exact search cache.',
+                        answer: cached.answer,
+                        contextUsed: typeof cached.contextUsed === 'string' ? JSON.parse(cached.contextUsed) : cached.contextUsed,
+                        visuals: typeof cached.visuals === 'string' ? JSON.parse(cached.visuals) : cached.visuals
+                    };
+                    logger.info(`Database exact match HIT for query: "${queryText}"`);
+                    // Populate Redis for subsequent hits
+                    await cacheSet(redisKey, JSON.stringify(resPayload), 3600 * 24);
+                    return {
+                        ...resPayload,
+                        cached: true
+                    };
+                }
+            } catch (dbError) {
+                logger.error('Exact DB cache search failed:', dbError);
+            }
+
+            // 2. Check semantic vector cache (requires 1 embedding call)
             const cachedResult = await SemanticCacheService.findSimilar(queryText);
             if (cachedResult) {
-                return {
+                const resPayload = {
                     reasoning: 'Retrieved from semantic cache.',
                     answer: cachedResult.answer,
                     contextUsed: cachedResult.contextUsed,
-                    cached: true,
                     visuals: cachedResult.visuals
+                };
+                // Populate Redis for subsequent exact hits
+                await cacheSet(redisKey, JSON.stringify(resPayload), 3600 * 24);
+                return {
+                    ...resPayload,
+                    cached: true
                 };
             }
         }
 
-        // 3. Retrieve relevant context
+        // 3. Retrieve relevant context (cache miss)
         const contextResults = await this.searchKnowledge(queryText);
         const contextText = contextResults
             .map(res => `[Source: ${res.metadata.crop}/${res.metadata.category}] (Type: ${res.metadata.contentType}, URL: ${res.metadata.sourceUrl})\n${res.content}`)
@@ -150,54 +200,70 @@ export class KnowledgeService {
                 options: { temperature: 0.2 }
             });
 
-            // 5. Generate TTS for audio abstraction (if requested/enabled)
-            // We'll generate a short summary for audio playback
-            let audioBase64 = undefined;
-            try {
-                const ttsResult = await AIRouter.routeRequest('generate', {
-                    prompt: `Summarize this answer in 2 short, enticing sentences for audio playback: ${reasoningResult.answer}`,
-                    options: { maxTokens: 100 }
-                });
-                if (ttsResult.text) {
-                    const audioResult = await AIRouter.routeRequest('speech', {
-                        text: ttsResult.text,
-                        options: { voice: 'en-US-AriaNeural' }
-                    });
-                    if (audioResult && audioResult.audio) {
-                        audioBase64 = audioResult.audio.toString('base64');
-                    }
-                }
-            } catch (ttsError) {
-                logger.warn('Failed to generate audio abstraction:', ttsError);
-            }
+            // 5. Generate TTS and validate visuals in parallel using Promise.all (saves ~2-3 seconds!)
+            let audioBase64: string | undefined = undefined;
+            let enhancedVisuals = reasoningResult.visuals;
 
-            // 5.5. Validate and enhance visual assets with runtime checks
-            if (reasoningResult.visuals) {
-                reasoningResult.visuals = await this.validateAndEnhanceVisuals(reasoningResult.visuals, queryText);
-            }
+            await Promise.all([
+                // A. Visual validation & enhancement
+                (async () => {
+                    if (reasoningResult.visuals) {
+                        enhancedVisuals = await this.validateAndEnhanceVisuals(reasoningResult.visuals, queryText);
+                    }
+                })(),
+                // B. Audio summary and voice generation
+                (async () => {
+                    try {
+                        const ttsResult = await AIRouter.routeRequest('generate', {
+                            prompt: `Summarize this answer in 2 short, enticing sentences for audio playback: ${reasoningResult.answer}`,
+                            options: { maxTokens: 100 }
+                        });
+                        if (ttsResult.text) {
+                            const audioResult = await AIRouter.routeRequest('speech', {
+                                text: ttsResult.text,
+                                options: { voice: 'en-US-AriaNeural' }
+                            });
+                            if (audioResult && audioResult.audio) {
+                                audioBase64 = audioResult.audio.toString('base64');
+                            }
+                        }
+                    } catch (ttsError) {
+                        logger.warn('Failed to generate audio abstraction in parallel:', ttsError);
+                    }
+                })()
+            ]);
 
             const response = {
                 ...reasoningResult,
+                visuals: enhancedVisuals,
                 audio: audioBase64,
                 contextUsed: contextResults,
                 cached: false
             };
 
-            // 6. Store in semantic cache for future requests (only if no attachments)
+            // 6. Asynchronously store in semantic and Redis caches (non-blocking!)
             if (!attachments || attachments.length === 0) {
-                await SemanticCacheService.save(queryText, response.answer, response.contextUsed, response.visuals);
+                cacheSet(redisKey, JSON.stringify(response), 3600 * 24).catch(e => logger.error('Failed to set Redis exact cache:', e));
+                SemanticCacheService.save(queryText, response.answer, response.contextUsed, response.visuals).catch(e => logger.error('Failed to save semantic cache:', e));
             }
 
-            // 7. Log the FULL search results for user history
-            await this.logSearch(
-                userId, 
-                queryText, 
-                categories[0], 
-                undefined, // crop - extracted from context if needed
-                response.answer,
-                response.reasoning,
-                response.visuals
-            );
+            // 7. Asynchronously categorize the query and log search for user history in the background (non-blocking!)
+            (async () => {
+                try {
+                    const categories = await this.categorizeQuery(queryText);
+                    await this.logSearch(
+                        userId, 
+                        queryText, 
+                        categories[0], 
+                        undefined, 
+                        response.answer,
+                        response.reasoning,
+                        response.visuals
+                    );
+                } catch (logError) {
+                    logger.error('Background classification or logging failed:', logError);
+                }
+            })();
 
             return response;
         } catch (error) {
