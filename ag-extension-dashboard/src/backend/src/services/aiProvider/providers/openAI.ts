@@ -1,4 +1,3 @@
-import fs from 'fs';
 import {
     BaseAIProvider,
     AIProviderType,
@@ -158,7 +157,8 @@ export class OpenAIProvider extends BaseAIProvider {
     async analyzeWithReasoning(context: string, query: string, options?: ReasoningOptions): Promise<ReasoningResult> {
         const systemPrompt = REASONING_SYSTEM_PROMPT;
 
-        const userContent: any[] = [{ type: 'text', text: `Question: ${query}` }];
+        const groundedPrompt = `Use the context below as the authoritative source for this answer. If the context is incomplete, say what is missing before adding general agricultural guidance. Cite source titles or URLs when available.\n\nContext:\n${context || 'No specific context found in knowledge base.'}\n\nQuestion: ${query}`;
+        const userContent: any[] = [{ type: 'text', text: groundedPrompt }];
 
         if (options?.attachments && options.attachments.length > 0) {
             for (const attachment of options.attachments) {
@@ -183,10 +183,6 @@ export class OpenAIProvider extends BaseAIProvider {
 
         const text = result.text ?? '';
         
-        try {
-            fs.writeFileSync('/tmp/ai_last_raw_response.txt', text);
-        } catch (e) {}
-
         let visuals = extractVisuals(text);
 
         if (!visuals || (!visuals.kpis && !visuals.charts)) {
@@ -350,8 +346,17 @@ export class OpenAIProvider extends BaseAIProvider {
     async healthCheck(): Promise<boolean> {
         try {
             const client = await this.getClient();
+            
+            // Resolve the best OpenAI model to test with
+            let testModel = 'gpt-4o-mini';
+            if (config.ai.primary.provider === 'openai' && config.ai.primary.model.startsWith('gpt')) {
+                testModel = config.ai.primary.model;
+            } else if (config.ai.fallback.provider === 'openai' && config.ai.fallback.model.startsWith('gpt')) {
+                testModel = config.ai.fallback.model;
+            }
+
             await client.chat.completions.create({
-                model: config.ai.fallback.model || 'gpt-4',
+                model: testModel,
                 messages: [{ role: 'user', content: 'test' }],
                 max_tokens: 1,
             });

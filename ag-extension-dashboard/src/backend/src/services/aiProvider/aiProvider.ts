@@ -343,6 +343,9 @@ export class AIRouter {
                 case 'embed':
                     return await provider.createEmbedding(params.text, params.options);
                 case 'speech':
+                    if (params.text) {
+                        return provider.textToSpeech(params.text, params.options);
+                    }
                     return provider.speechToText(params.audio, params.options);
                 case 'classify':
                     return provider.classify(params.input, params.options);

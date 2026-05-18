@@ -29,13 +29,16 @@ export class VectorService {
             const vector = `{${embeddingResult.embedding.join(',')}}`;
 
             await query(`
-                INSERT INTO knowledge_articles (id, title, content, category, crops, source_url, content_type, embedding, updated_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+                INSERT INTO knowledge_articles (id, title, content, category, tags, crops, regions, source, source_url, content_type, embedding, updated_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
                 ON CONFLICT (id) DO UPDATE SET
                     title = EXCLUDED.title,
                     content = EXCLUDED.content,
                     category = EXCLUDED.category,
+                    tags = EXCLUDED.tags,
                     crops = EXCLUDED.crops,
+                    regions = EXCLUDED.regions,
+                    source = EXCLUDED.source,
                     source_url = EXCLUDED.source_url,
                     content_type = EXCLUDED.content_type,
                     embedding = EXCLUDED.embedding,
@@ -45,7 +48,10 @@ export class VectorService {
                 metadata.title || id,
                 content,
                 metadata.category,
+                metadata.tags || [],
                 metadata.crops || [],
+                metadata.regions || [],
+                metadata.source || null,
                 metadata.sourceUrl || null,
                 metadata.contentType || 'text',
                 vector
@@ -59,7 +65,7 @@ export class VectorService {
     /**
      * Search for similar documents using pgvector or fallback function
      */
-    static async search(queryText: string, limit: number = 5): Promise<SearchResult[]> {
+    static async search(queryText: string, limit: number = 5, filters: { category?: string; crop?: string } = {}): Promise<SearchResult[]> {
         logger.info(`Searching persistent vector store for: "${queryText}"`);
 
         try {
@@ -68,14 +74,30 @@ export class VectorService {
             // Convert to PostgreSQL array format: {val1,val2,val3}
             const vector = `{${queryEmbeddingResult.embedding.join(',')}}`;
 
+            const params: any[] = [vector];
+            const where: string[] = ['embedding IS NOT NULL'];
+
+            if (filters.category) {
+                params.push(filters.category);
+                where.push(`category = $${params.length}`);
+            }
+
+            if (filters.crop) {
+                params.push(filters.crop);
+                where.push(`$${params.length} = ANY(crops)`);
+            }
+
+            params.push(limit);
+
             // Use our custom cosine_similarity function for maximum compatibility
             const result = await query(`
                 SELECT id, title, content, category, crops, source_url, content_type,
                        cosine_similarity(embedding::float8[], $1::float8[]) as score
                 FROM knowledge_articles
+                WHERE ${where.join(' AND ')}
                 ORDER BY score DESC
-                LIMIT $2
-            `, [vector, limit]);
+                LIMIT $${params.length}
+            `, params);
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return result.rows.map((row: any) => ({
@@ -109,7 +131,12 @@ export class VectorService {
                 {
                     title: article.title,
                     category: article.category,
-                    crops: [article.crop]
+                    tags: article.tags || [],
+                    crops: [article.crop],
+                    regions: article.regions || (article.crop === 'maize' ? ['East Africa'] : ['tropical']),
+                    source: article.source || 'AG Extension Tropical Agronomy Seed',
+                    sourceUrl: article.sourceUrl || null,
+                    contentType: 'text'
                 }
             );
         }

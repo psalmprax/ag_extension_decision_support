@@ -6,10 +6,24 @@ import { cacheGet, cacheSet } from '@/services/cacheService';
 import { getPool, query } from '@/services/databaseService';
 import { getPrisma } from '@/services/prismaService';
 import { logger } from '@/utils/logger';
-import { authorize } from '@/middleware/authorize';
+import { authorize, UserRole } from '@/middleware/authorize';
 import { tavilyService } from '@/services/tavilyService';
+import { VectorService } from '@/services/vectorService';
 
 const router = Router();
+const knowledgeAdminRoles: UserRole[] = ['admin', 'regional_manager', 'extension_officer'];
+
+function sanitizeKnowledgeContent(content: string, contentType: string): string {
+    if (contentType !== 'html') return content;
+
+    return content
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+        .replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, '')
+        .replace(/<object[^>]*>[\s\S]*?<\/object>/gi, '')
+        .replace(/<embed[^>]*>[\s\S]*?<\/embed>/gi, '')
+        .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+        .replace(/(href|src)\s*=\s*(['"])\s*javascript:[\s\S]*?\2/gi, '$1="#"');
+}
 
 const errorStatusMap: Record<string, number> = {
     'ARTICLE_NOT_FOUND': 404,
@@ -63,6 +77,86 @@ export const mockKnowledgeArticles = [
         tags: ['harvest', 'storage', 'processing'],
         crop: 'all',
     },
+    {
+        id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb06',
+        title: 'Cassava Crop Management & Irrigation',
+        content: 'Cassava (Manihot esculenta) is a staple tropical root crop. Soil Diagnostics: Grows best in deep, well-drained sandy loam or silt loam soils with a pH of 5.5 to 6.5. Highly sensitive to waterlogging. Irrigation Guidelines: Evapotranspiration demand is 3-4mm/day. Requires moderate but consistent watering (about 250mm to 350mm total) during the first 3 months (tuber initiation phase) for maximum starch build-up. Once established, cassava is extremely drought-tolerant and can survive 4-6 months with minimal moisture, although yields will be reduced. Drip irrigation emitters should be placed 30cm from the stem base, delivering 2 liters/hour in 1-hour cycles twice per week during dry spells.',
+        category: 'Crop Management',
+        tags: ['cassava', 'irrigation', 'soil', 'tropics'],
+        crop: 'cassava',
+    },
+    {
+        id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb07',
+        title: 'Yam Cultivation & Staking',
+        content: 'Yam (Dioscorea spp.) cultivation requires rich, loose, deep soils (such as clay loam or alluvial silt loam) with a high concentration of organic compost and a pH range of 5.5 to 6.5. Yam tubers require active staking (height 2-3 meters) to maximize sunlight interception. Water Requirements: Yams are water-intensive, requiring 1200mm to 1500mm of water distributed evenly over their 7-8 month growing cycle. Starch accumulation occurs during the bulking stage (4-6 months after planting), where a moisture deficit can drop yields by up to 60%. Drip irrigation must maintain soil moisture above 60% field capacity.',
+        category: 'Soil & Water',
+        tags: ['yam', 'staking', 'organic', 'tropics'],
+        crop: 'yam',
+    },
+    {
+        id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb08',
+        title: 'Cocoa Tree Agronomy & Shade Control',
+        content: 'Cocoa (Theobroma cacao) is a delicate tropical tree requiring highly structured clay-loam soils with a pH of 5.0 to 7.5 and a minimum soil depth of 1.5 meters. Soil Diagnostics: High levels of calcium, potassium, and magnesium are critical. Evapotranspiration is 4-5mm/day. Irrigation: Cocoa requires 1500mm to 2000mm of rain or micro-sprinkler irrigation annually. Avoid heavy sprinkler watering on leaves to prevent Black Pod Disease (Phytophthora megakarya). Shade management: Cocoa seedlings need 50% shade cover, reducing to 30% for mature trees. Pruning should be completed at the start of the dry season to improve ventilation and reduce pest habitats.',
+        category: 'Pest & Crop Management',
+        tags: ['cocoa', 'shade', 'black pod', 'tropics'],
+        crop: 'cocoa',
+    },
+    {
+        id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb09',
+        title: 'Coffee Agronomy (Arabica vs Robusta)',
+        content: 'Coffee (Coffea arabica & Coffea canephora/robusta) grows best in deep, acidic volcanic soils (Ferralsols, Nitisols) with a pH of 5.0 to 6.0. Arabica prefers higher altitudes (1000-2000m) and cooler climates, whereas Robusta thrives in warmer, lower elevation zones. Nutrition Diagnostics: High nitrogen (N) and potassium (K) are required. Apply NPK 15-15-15 in split applications during the rainy seasons. Irrigation: Drip irrigation delivering 15-20 liters per tree weekly during dry flowering periods stabilizes berry size and prevents fruit drop. Maintain strict pruning rules (single-stem vs multi-stem systems) to optimize yields.',
+        category: 'Crop Management',
+        tags: ['coffee', 'arabica', 'robusta', 'pruning', 'fertilizer'],
+        crop: 'coffee',
+    },
+    {
+        id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb10',
+        title: 'Rice Cultivation and Water Submergence Systems',
+        content: 'Rice (Oryza sativa) requires heavy, poorly drained clay or clay-loam soils to retain a standing water layer (flooding depth of 5cm to 10cm). Soil pH should ideally range from 6.0 to 7.0. Water Management: Traditional lowland rice requires continuous submergence from transplanting until 2 weeks before harvest. Alternate Wetting and Drying (AWD) is an advanced water-saving irrigation method where the field is allowed to dry until the water table drops to 15cm below the soil surface before re-flooding, reducing water consumption by up to 30% without yield loss.',
+        category: 'Water Management',
+        tags: ['rice', 'awd', 'flooding', 'water conservation'],
+        crop: 'rice',
+    },
+    {
+        id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb11',
+        title: 'Plantain & Banana Nutrient Management',
+        content: 'Plantain and Banana (Musa spp.) require fertile, deep, well-aerated soils (volcanic or alluvial loams) with high organic matter, excellent drainage, and a pH between 5.5 and 7.0. Water requirements are extremely high (100-150mm per month). Moisture stress triggers immediate leaf yellowing, reduced bunch weight, and long fruit-filling times. Fertilization: Heavy potassium feeding is vital for bunch formation. Apply nitrogen (urea) and potassium (muriate of potash) monthly. Drip irrigation systems should use dual lateral lines on either side of the plant row to cover the dense feeder root zone.',
+        category: 'Soil & Water',
+        tags: ['plantain', 'banana', 'potassium', 'fertilizer'],
+        crop: 'plantain',
+    },
+    {
+        id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb12',
+        title: 'Sandy Loam Soil Diagnostics & Aeration',
+        content: 'Sandy Loam soil consists of 60% sand, 20% silt, and 20% clay. Diagnostics: Excellent aeration and drainage but extremely low nutrient holding capacity (Cation Exchange Capacity of 5-15 meq/100g) and low water retention. Water management: Requires frequent, low-volume irrigation (micro-drip cycles of 20-30 minutes daily) to prevent nutrient leaching. Soil improvement: Incorporate green manures, cover crops, and mature organic compost (at least 10 tons per hectare annually) to increase soil carbon and water retention.',
+        category: 'Soil Health',
+        tags: ['soil', 'sandy loam', 'compost', 'aeration'],
+        crop: 'all',
+    },
+    {
+        id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb13',
+        title: 'Clay Loam Soil Management & Drainage',
+        content: 'Clay Loam soil consists of 30-40% clay, 20-40% sand, and 20-40% silt. Diagnostics: High nutrient retention capacity (CEC of 20-30 meq/100g) but prone to compaction, slow drainage, and waterlogging. Management: Perform subsoiling or deep ripping to break up hardpans. Add gypsum (calcium sulfate) at 2-5 tons/hectare to improve structure and promote flocculation of clay particles. Irrigation: Sprinkler or drip systems must use low application rates (less than 10mm/hour) to prevent runoff and ponding.',
+        category: 'Soil Health',
+        tags: ['soil', 'clay loam', 'drainage', 'compaction'],
+        crop: 'all',
+    },
+    {
+        id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb14',
+        title: 'Acidic Volcanic Soils (Ferralsols & Acrisols)',
+        content: 'Acidic volcanic soils, common in high-altitude tropical zones, suffer from intense leaching and phosphorus (P) fixation (phosphorus binds tightly to iron and aluminum oxides, making it unavailable to plants). Diagnostics: pH levels are often below 5.0. Lime requirements: Apply agricultural lime (calcium carbonate) or dolomite to raise pH above 5.5, which unlocks bound phosphorus. Fertilizer guidelines: Apply rock phosphate or triple superphosphate (TSP) in banded rows directly next to plant roots to minimize soil contact and fixation.',
+        category: 'Soil Health',
+        tags: ['soil', 'acidic', 'lime', 'volcanic', 'phosphorus'],
+        crop: 'all',
+    },
+    {
+        id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb15',
+        title: 'Precision Irrigation Calculations',
+        content: 'Effective crop irrigation requires calculating the daily water requirement using the equation: ETc = ETo x Kc. ETc is the crop evapotranspiration, ETo is the reference evapotranspiration (based on local temperature, solar radiation, wind, and humidity), and Kc is the crop coefficient (which varies by growth stage). For example, Maize has a Kc of 0.4 at emergence, rising to 1.15 during tasseling/silking, and dropping to 0.5 at maturity. During tasseling in a dry region with an ETo of 5mm/day, the crop requires: 5 x 1.15 = 5.75mm of water daily.',
+        category: 'Water Management',
+        tags: ['irrigation', 'math', 'evapotranspiration', 'kc'],
+        crop: 'all',
+    },
 ];
 
 // Seed knowledge articles into database
@@ -70,62 +164,44 @@ export async function seedKnowledgeArticles(): Promise<void> {
     const pool = getPool();
     if (!pool) return;
 
-    const articles = [
-        {
-            title: 'Maize Disease Management',
-            content: 'Common maize diseases include Northern leaf blight, Southern rust, and Grey leaf spot. Prevention strategies include crop rotation, using resistant varieties, and proper plant spacing. For Northern leaf blight, apply fungicides at the first sign of symptoms.',
-            category: 'Crop Management',
-            tags: ['maize', 'diseases', 'prevention'],
-            crops: ['maize'],
-            regions: ['East Africa'],
-        },
-        {
-            title: 'Soil Fertility Management',
-            content: 'Regular soil testing helps determine nutrient requirements. Organic matter addition through compost or manure improves soil structure and water retention. Apply nitrogen in split doses for optimal uptake.',
-            category: 'Soil Health',
-            tags: ['soil', 'fertility', 'organic'],
-            crops: ['all'],
-            regions: ['all'],
-        },
-        {
-            title: 'Climate-Smart Agriculture',
-            content: 'Climate-smart agriculture practices include conservation agriculture, agroforestry, and water harvesting techniques. These methods help adapt to changing weather patterns while reducing greenhouse gas emissions.',
-            category: 'Climate',
-            tags: ['climate', 'weather', 'adaptation'],
-            crops: ['all'],
-            regions: ['all'],
-        },
-        {
-            title: 'Pest Control in Vegetables',
-            content: 'Integrated Pest Management (IPM) combines biological, cultural, and chemical methods. Common vegetable pests include aphids, whiteflies, and fruit borers. Use neem oil for organic control.',
-            category: 'Pest Management',
-            tags: ['pests', 'vegetables', 'IPM'],
-            crops: ['vegetables'],
-            regions: ['all'],
-        },
-        {
-            title: 'Post-Harvest Handling',
-            content: 'Proper post-harvest practices include timely harvesting, appropriate storage conditions, and processing techniques. Store produce at cool temperatures when possible. Use proper packaging to prevent damage.',
-            category: 'Post-Harvest',
-            tags: ['harvest', 'storage', 'processing'],
-            crops: ['all'],
-            regions: ['all'],
-        },
-    ];
+    const articles = mockKnowledgeArticles.map(art => ({
+        id: art.id,
+        title: art.title,
+        content: art.content,
+        category: art.category,
+        tags: art.tags,
+        crops: [art.crop],
+        regions: art.crop === 'maize' ? ['East Africa'] : ['tropical'],
+        source: 'AG Extension Tropical Agronomy Seed'
+    }));
 
     try {
-        const result = await query('SELECT COUNT(*) as count FROM knowledge_articles');
-        const count = result?.rows?.[0]?.count;
+        logger.info(`Upserting ${articles.length} standard seed articles to database`);
+        await query(`
+            DELETE FROM knowledge_articles
+            WHERE id <> ALL($1::uuid[])
+              AND title = ANY($2::text[])
+              AND source IS NULL
+              AND embedding IS NULL
+        `, [articles.map(article => article.id), articles.map(article => article.title)]);
 
-        if (count === '0' || count === 0) {
-            for (const article of articles) {
-                await query(
-                    'INSERT INTO knowledge_articles (title, content, category, tags, crops, regions) VALUES ($1, $2, $3, $4, $5, $6)',
-                    [article.title, article.content, article.category, article.tags, article.crops, article.regions]
-                );
-            }
-            logger.info('Knowledge articles seeded successfully');
+        for (const article of articles) {
+            await query(`
+                INSERT INTO knowledge_articles (id, title, content, category, tags, crops, regions, source, content_type)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'text')
+                ON CONFLICT (id) DO UPDATE SET
+                    title = EXCLUDED.title,
+                    content = EXCLUDED.content,
+                    category = EXCLUDED.category,
+                    tags = EXCLUDED.tags,
+                    crops = EXCLUDED.crops,
+                    regions = EXCLUDED.regions,
+                    source = EXCLUDED.source,
+                    content_type = EXCLUDED.content_type,
+                    updated_at = NOW()
+            `, [article.id, article.title, article.content, article.category, article.tags, article.crops, article.regions, article.source]);
         }
+        logger.info('Knowledge articles upserted successfully');
     } catch (error) {
         logger.error('Error seeding knowledge articles:', error);
     }
@@ -146,23 +222,37 @@ router.get('/search', async (req: Request, res: Response) => {
         const pool = getPool();
 
         if (pool && q) {
-            articles = await KnowledgeService.searchKnowledge(q as string, parseInt(limit as string));
+            articles = await KnowledgeService.searchKnowledge(q as string, parseInt(limit as string), {
+                category: category as string | undefined,
+                crop: crop as string | undefined
+            });
         } else if (pool) {
             let sql = 'SELECT * FROM knowledge_articles WHERE 1=1';
+            let countSql = 'SELECT COUNT(*) as count FROM knowledge_articles WHERE 1=1';
             const params: any[] = [];
             let paramIndex = 1;
 
             if (category) {
                 sql += ' AND category = $' + paramIndex;
+                countSql += ' AND category = $' + paramIndex;
                 params.push(category);
                 paramIndex++;
             }
 
+            if (crop) {
+                sql += ' AND $' + paramIndex + ' = ANY(crops)';
+                countSql += ' AND $' + paramIndex + ' = ANY(crops)';
+                params.push(crop);
+                paramIndex++;
+            }
+
             sql += ' ORDER BY "order" ASC, created_at DESC LIMIT $' + paramIndex + ' OFFSET $' + (paramIndex + 1);
+            const countResult = await query(countSql, params);
             params.push(parseInt(limit as string), parseInt(offset as string));
 
             const result = await query(sql, params);
             articles = result.rows;
+            (articles as any).totalCount = parseInt(countResult.rows[0]?.count || '0', 10);
         }
 
         // Fallback or empty if no results
@@ -170,7 +260,7 @@ router.get('/search', async (req: Request, res: Response) => {
             articles = [];
         }
 
-        const total = articles.length;
+        const total = (articles as any).totalCount ?? articles.length;
         const response = {
             success: true,
             data: {
@@ -376,7 +466,7 @@ router.post("/:id/share", async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { isPublic, expiresAt, permissions } = req.body;
-        const createdBy = req.user?.id;
+        const createdBy = (req as any).user?.id;
 
         const shareLink = await shareService.createShare({
             entityType: "knowledge",
@@ -428,7 +518,7 @@ router.post("/:id/share", async (req: Request, res: Response) => {
  *       400:
  *         description: Invalid request data
  */
-router.post('/reorder', async (req: Request, res: Response) => {
+router.post('/reorder', authorize(knowledgeAdminRoles), async (req: Request, res: Response) => {
     try {
         const { items } = req.body;
         const prisma = getPrisma();
@@ -520,7 +610,7 @@ router.post('/reorder', async (req: Request, res: Response) => {
  *       201:
  *         description: Article created
  */
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', authorize(knowledgeAdminRoles), async (req: Request, res: Response) => {
     try {
         const {
             title, content, contentType = 'text', summary, category,
@@ -545,15 +635,7 @@ router.post('/', async (req: Request, res: Response) => {
             });
         }
 
-        // Sanitize HTML content if contentType is html
-        let sanitizedContent = content;
-        if (contentType === 'html') {
-            // Basic HTML sanitization - remove dangerous tags
-            sanitizedContent = content.replace(/<script[^>]*>.*?<\/script>/gi, '')
-                .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '')
-                .replace(/<object[^>]*>.*?<\/object>/gi, '')
-                .replace(/<embed[^>]*>.*?<\/embed>/gi, '');
-        }
+        const sanitizedContent = sanitizeKnowledgeContent(content, contentType);
 
         const article = await prisma.knowledgeArticle.create({
             data: {
@@ -568,6 +650,17 @@ router.post('/', async (req: Request, res: Response) => {
                 source,
                 sourceUrl,
             },
+        });
+
+        await VectorService.upsertDocument(article.id, article.content, {
+            title: article.title,
+            category: article.category,
+            tags: article.tags,
+            crops: article.crops,
+            regions: article.regions,
+            source: article.source,
+            sourceUrl: article.sourceUrl,
+            contentType: article.contentType
         });
 
         res.status(201).json({
@@ -619,7 +712,7 @@ router.post('/', async (req: Request, res: Response) => {
  *       200:
  *         description: Article updated
  */
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', authorize(knowledgeAdminRoles), async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const {
@@ -650,14 +743,7 @@ router.put('/:id', async (req: Request, res: Response) => {
             });
         }
 
-        // Sanitize HTML content if contentType is html
-        let sanitizedContent = content;
-        if ((contentType === 'html' || existingArticle.contentType === 'html') && content) {
-            sanitizedContent = content.replace(/<script[^>]*>.*?<\/script>/gi, '')
-                .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '')
-                .replace(/<object[^>]*>.*?<\/object>/gi, '')
-                .replace(/<embed[^>]*>.*?<\/embed>/gi, '');
-        }
+        const sanitizedContent = content === undefined ? undefined : sanitizeKnowledgeContent(content, contentType || existingArticle.contentType || 'text');
 
         const updateData: any = {};
         if (title !== undefined) updateData.title = title;
@@ -675,6 +761,17 @@ router.put('/:id', async (req: Request, res: Response) => {
         const article = await prisma.knowledgeArticle.update({
             where: { id },
             data: updateData,
+        });
+
+        await VectorService.upsertDocument(article.id, article.content, {
+            title: article.title,
+            category: article.category,
+            tags: article.tags,
+            crops: article.crops,
+            regions: article.regions,
+            source: article.source,
+            sourceUrl: article.sourceUrl,
+            contentType: article.contentType
         });
 
         res.json({

@@ -21,7 +21,8 @@ export const nasaPowerTool: Tool<typeof NasaPowerSchema> = {
 
     try {
       const end = new Date();
-      const start = new Date();
+      end.setDate(end.getDate() - 1);
+      const start = new Date(end);
       start.setDate(end.getDate() - Math.min(days, 30));
 
       const formatString = (d: Date) => d.toISOString().split('T')[0].replace(/-/g, '');

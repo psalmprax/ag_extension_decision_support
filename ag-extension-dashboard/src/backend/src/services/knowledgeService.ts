@@ -2,8 +2,10 @@ import { AIRouter, ReasoningResult } from '@/services/aiProvider/aiProvider';
 import { VectorService, SearchResult } from '@/services/vectorService';
 import { SemanticCacheService } from '@/services/semanticCacheService';
 import { AssetValidationService } from '@/services/assetValidationService';
+import { cacheGet, cacheSet } from '@/services/cacheService';
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
+import { tavilyService } from '@/services/tavilyService';
 
 export interface KnowledgeArticle {
     id: string;
@@ -18,8 +20,8 @@ export class KnowledgeService {
     /**
      * Search for knowledge articles using RAG (Vector Search)
      */
-    static async searchKnowledge(queryText: string, limit: number = 3): Promise<SearchResult[]> {
-        return VectorService.search(queryText, limit);
+    static async searchKnowledge(queryText: string, limit: number = 3, filters: { category?: string; crop?: string } = {}): Promise<SearchResult[]> {
+        return VectorService.search(queryText, limit, filters);
     }
 
     /**
@@ -118,27 +120,101 @@ export class KnowledgeService {
     ): Promise<ReasoningResult & { cached: boolean; contextUsed: SearchResult[] }> {
         logger.info(`Getting RAG-based answer for query: "${queryText}" (User: ${userId}, Attachments: ${attachments?.length || 0})`);
 
-        // Categorize for categorization field (async)
-        const categories = await this.categorizeQuery(queryText);
+        const redisKey = `rag:exact:${queryText.toLowerCase().trim()}`;
 
-        // 2. Check semantic cache (only for text-only queries for now)
+        // 1. Check exact match cache (Redis + SQL) first (super fast, 0-1ms, zero LLM calls)
         if (!attachments || attachments.length === 0) {
+            // A. Check Redis
+            const cachedResponse = await cacheGet(redisKey);
+            if (cachedResponse) {
+                try {
+                    const parsed = JSON.parse(cachedResponse);
+                    logger.info(`Redis exact match HIT for query: "${queryText}"`);
+                    return {
+                        ...parsed,
+                        cached: true
+                    };
+                } catch (e) {
+                    logger.error('Failed to parse cached Redis response:', e);
+                }
+            }
+
+            // B. Check exact match in database (fast, no embedding API call required)
+            try {
+                const dbExact = await query(`
+                    SELECT query_text as "queryText", answer, context_used as "contextUsed", visuals
+                    FROM search_cache
+                    WHERE LOWER(TRIM(query_text)) = LOWER(TRIM($1))
+                    LIMIT 1
+                `, [queryText]);
+
+                if (dbExact.rows.length > 0) {
+                    const cached = dbExact.rows[0];
+                    const resPayload = {
+                        reasoning: 'Retrieved from exact search cache.',
+                        answer: cached.answer,
+                        contextUsed: typeof cached.contextUsed === 'string' ? JSON.parse(cached.contextUsed) : cached.contextUsed,
+                        visuals: typeof cached.visuals === 'string' ? JSON.parse(cached.visuals) : cached.visuals
+                    };
+                    logger.info(`Database exact match HIT for query: "${queryText}"`);
+                    // Populate Redis for subsequent hits
+                    await cacheSet(redisKey, JSON.stringify(resPayload), 3600 * 24);
+                    return {
+                        ...resPayload,
+                        cached: true
+                    };
+                }
+            } catch (dbError) {
+                logger.error('Exact DB cache search failed:', dbError);
+            }
+
+            // 2. Check semantic vector cache (requires 1 embedding call)
             const cachedResult = await SemanticCacheService.findSimilar(queryText);
             if (cachedResult) {
-                return {
+                const resPayload = {
                     reasoning: 'Retrieved from semantic cache.',
                     answer: cachedResult.answer,
                     contextUsed: cachedResult.contextUsed,
-                    cached: true,
                     visuals: cachedResult.visuals
+                };
+                // Populate Redis for subsequent exact hits
+                await cacheSet(redisKey, JSON.stringify(resPayload), 3600 * 24);
+                return {
+                    ...resPayload,
+                    cached: true
                 };
             }
         }
 
-        // 3. Retrieve relevant context
-        const contextResults = await this.searchKnowledge(queryText);
+        // 3. Retrieve relevant context (cache miss)
+        let contextResults = await this.searchKnowledge(queryText);
+        const bestScore = contextResults.length > 0 ? contextResults[0].score : 0;
+        if ((contextResults.length === 0 || bestScore < 0.65) && tavilyService.isConfigured()) {
+            logger.info(`No high-scoring local matches found (best score: ${bestScore}). Querying Tavily for: "${queryText}"`);
+            try {
+                const webResults = await tavilyService.search(queryText, 3);
+                if (webResults && webResults.results && webResults.results.length > 0) {
+                    const mappedWebResults: SearchResult[] = webResults.results.map((r, index) => ({
+                        id: `web-${index}-${Date.now()}`,
+                        content: r.content,
+                        metadata: {
+                            title: r.title,
+                            category: 'External Reference',
+                            crop: 'All',
+                            sourceUrl: r.url,
+                            contentType: 'text'
+                        },
+                        score: r.score
+                    }));
+                    contextResults = [...mappedWebResults, ...contextResults].slice(0, 4);
+                }
+            } catch (webError) {
+                logger.error('Failed to retrieve external search fallback:', webError);
+            }
+        }
+
         const contextText = contextResults
-            .map(res => `[Source: ${res.metadata.crop}/${res.metadata.category}] (Type: ${res.metadata.contentType}, URL: ${res.metadata.sourceUrl})\n${res.content}`)
+            .map(res => `[Source: ${res.metadata.crop}/${res.metadata.category}] (Type: ${res.metadata.contentType || 'text'}, URL: ${res.metadata.sourceUrl || ''})\n${res.content}`)
             .join('\n\n---\n\n');
 
         // 4. Generate answer using Reasoning capability of ALFA
@@ -147,63 +223,128 @@ export class KnowledgeService {
                 context: contextText || 'No specific context found in knowledge base.',
                 query: queryText,
                 attachments: attachments, // Pass multimodal context
-                options: { temperature: 0.2 }
+                options: { temperature: 0.2, maxTokens: 900 }
             });
 
-            // 5. Generate TTS for audio abstraction (if requested/enabled)
-            // We'll generate a short summary for audio playback
-            let audioBase64 = undefined;
-            try {
-                const ttsResult = await AIRouter.routeRequest('generate', {
-                    prompt: `Summarize this answer in 2 short, enticing sentences for audio playback: ${reasoningResult.answer}`,
-                    options: { maxTokens: 100 }
-                });
-                if (ttsResult.text) {
-                    const audioResult = await AIRouter.routeRequest('speech', {
-                        text: ttsResult.text,
-                        options: { voice: 'en-US-AriaNeural' }
-                    });
-                    if (audioResult && audioResult.audio) {
-                        audioBase64 = audioResult.audio.toString('base64');
-                    }
-                }
-            } catch (ttsError) {
-                logger.warn('Failed to generate audio abstraction:', ttsError);
-            }
+            // 5. Generate TTS and validate visuals in parallel using Promise.all (saves ~2-3 seconds!)
+            let audioBase64: string | undefined = undefined;
+            let enhancedVisuals = reasoningResult.visuals;
 
-            // 5.5. Validate and enhance visual assets with runtime checks
-            if (reasoningResult.visuals) {
-                reasoningResult.visuals = await this.validateAndEnhanceVisuals(reasoningResult.visuals, queryText);
-            }
+            await Promise.all([
+                // A. Visual validation & enhancement
+                (async () => {
+                    if (reasoningResult.visuals) {
+                        enhancedVisuals = await this.validateAndEnhanceVisuals(reasoningResult.visuals, queryText);
+                    }
+                })(),
+                // B. Audio summary and voice generation
+                (async () => {
+                    if (process.env.KNOWLEDGE_TTS_ENABLED !== 'true') {
+                        return;
+                    }
+
+                    try {
+                        const ttsResult = await AIRouter.routeRequest('generate', {
+                            prompt: `Summarize this answer in 2 short, enticing sentences for audio playback: ${reasoningResult.answer}`,
+                            options: { maxTokens: 100 }
+                        });
+                        if (ttsResult.text) {
+                            const audioResult = await AIRouter.routeRequest('speech', {
+                                text: ttsResult.text,
+                                options: { voice: 'en-US-AriaNeural' }
+                            });
+                            if (audioResult && audioResult.audio) {
+                                audioBase64 = audioResult.audio.toString('base64');
+                            }
+                        }
+                    } catch (ttsError) {
+                        logger.warn('Failed to generate audio abstraction in parallel:', ttsError);
+                    }
+                })()
+            ]);
 
             const response = {
                 ...reasoningResult,
+                visuals: enhancedVisuals,
                 audio: audioBase64,
                 contextUsed: contextResults,
                 cached: false
             };
 
-            // 6. Store in semantic cache for future requests (only if no attachments)
+            // 6. Asynchronously store in semantic and Redis caches (non-blocking!)
             if (!attachments || attachments.length === 0) {
-                await SemanticCacheService.save(queryText, response.answer, response.contextUsed, response.visuals);
+                cacheSet(redisKey, JSON.stringify(response), 3600 * 24).catch(e => logger.error('Failed to set Redis exact cache:', e));
+                SemanticCacheService.save(queryText, response.answer, response.contextUsed, response.visuals).catch(e => logger.error('Failed to save semantic cache:', e));
             }
 
-            // 7. Log the FULL search results for user history
-            await this.logSearch(
-                userId, 
-                queryText, 
-                categories[0], 
-                undefined, // crop - extracted from context if needed
-                response.answer,
-                response.reasoning,
-                response.visuals
-            );
+            // 7. Asynchronously categorize the query and log search for user history in the background (non-blocking!)
+            (async () => {
+                try {
+                    const categories = await this.categorizeQuery(queryText);
+                    await this.logSearch(
+                        userId, 
+                        queryText, 
+                        categories[0], 
+                        undefined, 
+                        response.answer,
+                        response.reasoning,
+                        response.visuals
+                    );
+                } catch (logError) {
+                    logger.error('Background classification or logging failed:', logError);
+                }
+            })();
 
             return response;
         } catch (error) {
             logger.error('RAG analysis failed:', error);
+
+            if (contextResults.length > 0) {
+                const fallback = this.buildExtractiveAnswer(queryText, contextResults);
+                this.logSearch(
+                    userId,
+                    queryText,
+                    contextResults[0]?.metadata?.category,
+                    contextResults[0]?.metadata?.crop,
+                    fallback.answer,
+                    fallback.reasoning,
+                    fallback.visuals
+                ).catch(logError => logger.error('Fallback search logging failed:', logError));
+                return fallback;
+            }
+
             throw error;
         }
+    }
+
+    private static buildExtractiveAnswer(queryText: string, contextResults: SearchResult[]): ReasoningResult & { cached: boolean; contextUsed: SearchResult[] } {
+        const primary = contextResults[0];
+        const sourceTitle = primary.metadata?.title || `${primary.metadata?.crop || 'Agricultural'} ${primary.metadata?.category || 'Knowledge'}`;
+        const sourceUrl = primary.metadata?.sourceUrl ? ` (${primary.metadata.sourceUrl})` : '';
+        const contextSummary = contextResults
+            .slice(0, 3)
+            .map((result, index) => {
+                const title = result.metadata?.title || `Source ${index + 1}`;
+                return `${index + 1}. ${title}: ${result.content}`;
+            })
+            .join('\n\n');
+
+        return {
+            reasoning: 'Generated from retrieved knowledge-base context because the configured AI provider did not complete in time.',
+            answer: `I found source-backed guidance for: "${queryText}".\n\nPrimary source: ${sourceTitle}${sourceUrl}\n\n${contextSummary}\n\nThe answer above is extracted directly from the local knowledge base so it remains available even when the AI reasoning provider is slow or unavailable.`,
+            confidence: Math.max(0.5, Math.min(primary.score || 0.7, 0.95)),
+            visuals: {
+                kpis: [
+                    { label: 'Source Matches', value: String(contextResults.length), status: 'good' },
+                    { label: 'Top Match Score', value: (primary.score ?? 0).toFixed(2), status: (primary.score ?? 0) >= 0.65 ? 'good' : 'warning' }
+                ],
+                charts: [],
+                images: [],
+                videos: []
+            },
+            contextUsed: contextResults,
+            cached: false
+        };
     }
 
     /**

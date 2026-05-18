@@ -1,4 +1,4 @@
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { AuthRequest } from './authorize';
 import { Response } from 'express';
 import { logger } from '@/utils/logger';
@@ -18,7 +18,7 @@ export const perUserRateLimit = rateLimit({
         return 50;
     },
     keyGenerator: (req: AuthRequest) => {
-        return req.user?.userId || req.ip || 'anonymous';
+        return req.user?.userId || ipKeyGenerator(req.ip || 'anonymous');
     },
     handler: (req: AuthRequest, res: Response) => {
         logger.warn(`Rate limit exceeded for user: ${req.user?.userId || req.ip}`);
