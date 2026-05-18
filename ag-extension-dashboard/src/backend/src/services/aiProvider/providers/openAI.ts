@@ -351,7 +351,7 @@ export class OpenAIProvider extends BaseAIProvider {
         try {
             const client = await this.getClient();
             await client.chat.completions.create({
-                model: 'gpt-4o-mini',
+                model: config.ai.fallback.model || 'gpt-4',
                 messages: [{ role: 'user', content: 'test' }],
                 max_tokens: 1,
             });

@@ -20,6 +20,7 @@ import { agentTelemetry } from './services/agentTelemetry';
 import { selfHealingService } from './services/selfHealing';
 import * as Sentry from '@sentry/node';
 import app from './app';
+import { validateStartupConfiguration, logStartupWarnings, shouldProceedAtStartup } from './utils/startupValidation';
 
 // Sentry error tracking
 if (process.env.SENTRY_DSN) {
@@ -63,6 +64,14 @@ const io = new SocketServer(httpServer, {
 // Initialize services and start server
 async function bootstrap() {
     try {
+        // Run startup configuration validation
+        const startupWarnings = validateStartupConfiguration();
+        logStartupWarnings(startupWarnings);
+
+        if (!shouldProceedAtStartup(startupWarnings)) {
+            logger.error('Critical configuration issues detected. Server will start but some features may be unavailable.');
+        }
+
         // Initialize database
         try {
             await initializeDatabase();

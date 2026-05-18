@@ -18,6 +18,7 @@ import { dispatchTaskTool, handoffTaskTool, taskStatusTool } from './agentOrches
 import { apiBudgetTool } from './apiBudgetTool';
 import { translationTool } from './translationTool';
 import { diagnoseFromSymptomsTool, analyzePlantImageTool, getDiseaseInfoTool } from './plantDiseaseTools';
+import { nasaPowerTool } from './nasaPowerTool';
 
 /**
  * A registry of all available tools for the AI agent.
@@ -25,6 +26,7 @@ import { diagnoseFromSymptomsTool, analyzePlantImageTool, getDiseaseInfoTool } f
  */
 export const toolRegistry: Tool<any>[] = [
   getDateTool as Tool<any>,
+  nasaPowerTool as Tool<any>,
   weatherTool as Tool<any>,
   scheduleVisitTool as Tool<any>,
   marketPriceTool as Tool<any>,
