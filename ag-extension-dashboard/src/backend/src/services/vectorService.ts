@@ -110,7 +110,7 @@ export class VectorService {
                     sourceUrl: row.source_url,
                     contentType: row.content_type
                 },
-                score: parseFloat(row.score)
+                score: Number.parseFloat(row.score)
             }));
         } catch (error) {
             logger.error('Database vector search failed:', error);
@@ -123,6 +123,17 @@ export class VectorService {
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     static async seedKnowledge(articles: any[]): Promise<void> {
+        try {
+            const countResult = await query(`SELECT COUNT(*)::integer as count FROM knowledge_articles`);
+            const count = countResult.rows[0]?.count || 0;
+            if (count >= 15) {
+                logger.info(`Vector store already has ${count} articles. Skipping seeding.`);
+                return;
+            }
+        } catch (err) {
+            logger.warn(`Could not check knowledge_articles count (table might not exist yet):`, err);
+        }
+
         logger.info(`Seeding persistent vector store with ${articles.length} articles`);
         for (const article of articles) {
             await this.upsertDocument(

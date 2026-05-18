@@ -15,6 +15,10 @@ import { WeatherService } from '@/services/weatherService';
 import { FAOService } from '@/services/faoService';
 import { marketPriceService } from '@/services/marketPriceService';
 import { usageService } from '@/services/usageService';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
 const knowledgeAdminRoles: UserRole[] = ['admin', 'regional_manager', 'extension_officer'];
@@ -482,6 +486,16 @@ router.get('/live-context', async (req: Request, res: Response) => {
                     context.sources.push('nasa_power');
                 } catch (error) {
                     context.agroclimateError = (error as Error).message;
+                }
+            })());
+
+            tasks.push((async () => {
+                try {
+                    const { soilGridsService } = await import('@/services/data/soilGridsService');
+                    context.soilProperties = await soilGridsService.fetchSoilProperties(parseFloat(lat as string), parseFloat(lng as string));
+                    context.sources.push('soilgrids_isric');
+                } catch (error) {
+                    context.soilPropertiesError = (error as Error).message;
                 }
             })());
         }
@@ -1037,6 +1051,179 @@ router.put('/:id', authorize(knowledgeAdminRoles), async (req: Request, res: Res
             success: false,
             error: 'Failed to update article',
             aria: { role: 'alert', label: 'Article update failed: Internal server error' }
+        });
+    }
+});
+
+
+// Configure upload for knowledge ingestion
+const knowledgeStorage = multer.diskStorage({
+    destination: (_req, _file, cb) => {
+        const uploadDir = path.join(__dirname, '../../uploads');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: (_req, file, cb) => {
+        const uniqueName = `${uuidv4()}${path.extname(file.originalname)}`;
+        cb(null, uniqueName);
+    }
+});
+
+const knowledgeFileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+    const allowedTypes = [
+        'text/plain',
+        'text/markdown',
+        'application/pdf'
+    ];
+    if (allowedTypes.includes(file.mimetype) || file.originalname.endsWith('.md') || file.originalname.endsWith('.txt')) {
+        cb(null, true);
+    } else {
+        cb(new Error('Invalid file type. Only PDF, TXT, and MD files are allowed.'));
+    }
+};
+
+const knowledgeUpload = multer({
+    storage: knowledgeStorage,
+    fileFilter: knowledgeFileFilter,
+    limits: {
+        fileSize: 10 * 1024 * 1024 // 10MB limit
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/knowledge/ingest:
+ *   post:
+ *     summary: Ingest and vectorize a PDF, TXT, or MD file dynamically
+ *     security:
+ *       - BearerAuth: []
+ *     consumes:
+ *       - multipart/form-data
+ *     parameters:
+ *       - in: formData
+ *         name: file
+ *         type: file
+ *         description: The file to upload and vectorize
+ *       - in: formData
+ *         name: title
+ *         type: string
+ *         description: Optional custom title
+ *       - in: formData
+ *         name: category
+ *         type: string
+ *         description: Optional category
+ *       - in: formData
+ *         name: crops
+ *         type: string
+ *         description: Optional comma-separated crop names
+ *       - in: formData
+ *         name: regions
+ *         type: string
+ *         description: Optional comma-separated region names
+ *       - in: formData
+ *         name: tags
+ *         type: string
+ *         description: Optional comma-separated tags
+ */
+router.post('/ingest', authorize(knowledgeAdminRoles), knowledgeUpload.single('file'), async (req: Request, res: Response) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, error: 'No file uploaded' });
+        }
+
+        const { title, category = 'General', crops, regions, tags } = req.body;
+        const filePath = req.file.path;
+        const ext = path.extname(req.file.originalname).toLowerCase();
+        let content = '';
+
+        if (ext === '.pdf') {
+            // @ts-ignore
+            const pdfParse = await import('pdf-parse');
+            const buffer = fs.readFileSync(filePath);
+            const pdfData = await pdfParse.default(buffer);
+            content = pdfData.text;
+        } else if (ext === '.txt' || ext === '.md') {
+            content = fs.readFileSync(filePath, 'utf-8');
+        } else {
+            // Clean up the uploaded file if extension check failed
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+            return res.status(400).json({ success: false, error: 'Unsupported file type. Only .pdf, .txt, and .md files are supported.' });
+        }
+
+        if (!content || content.trim().length === 0) {
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+            return res.status(400).json({ success: false, error: 'The uploaded file contains no readable text.' });
+        }
+
+        // Clean up the uploaded file from local disk as we are storing it in the database
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
+
+        const prisma = getPrisma();
+        const articleId = uuidv4();
+        const articleTitle = title || path.basename(req.file.originalname, ext).replace(/[-_]/g, ' ');
+        const articleCrops = crops ? crops.split(',').map((c: string) => c.trim()) : [];
+        const articleRegions = regions ? regions.split(',').map((r: string) => r.trim()) : ['tropical'];
+        const articleTags = tags ? tags.split(',').map((t: string) => t.trim()) : [];
+
+        // Truncate summary
+        const summary = content.substring(0, 300).trim() + (content.length > 300 ? '...' : '');
+
+        // Create the database record
+        const article = await prisma.knowledgeArticle.create({
+            data: {
+                id: articleId,
+                title: articleTitle,
+                content: content,
+                contentType: 'text',
+                summary: summary,
+                category: category,
+                tags: articleTags,
+                crops: articleCrops,
+                regions: articleRegions,
+                source: 'Dynamic Ingestion',
+                sourceUrl: `/uploads/${req.file.filename}`
+            }
+        });
+
+        // Compute vector embedding and save to Postgres pgvector
+        await VectorService.upsertDocument(article.id, article.content, {
+            title: article.title,
+            category: article.category,
+            tags: article.tags,
+            crops: article.crops,
+            regions: article.regions,
+            source: article.source,
+            sourceUrl: article.sourceUrl,
+            contentType: article.contentType
+        });
+
+        res.status(201).json({
+            success: true,
+            data: {
+                id: article.id,
+                title: article.title,
+                category: article.category,
+                crops: article.crops,
+                regions: article.regions,
+                tags: article.tags,
+                summary: article.summary
+            },
+            aria: { role: 'status', label: 'Document ingested and vectorized successfully' }
+        });
+    } catch (error) {
+        logger.error('Document ingestion error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to ingest and vectorize document',
+            aria: { role: 'alert', label: 'Document ingestion failed' }
         });
     }
 });

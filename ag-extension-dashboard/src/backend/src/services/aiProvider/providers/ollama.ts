@@ -78,8 +78,16 @@ export class OllamaProvider extends BaseAIProvider {
                 timeout: 10000,
             });
 
+            let embedding: number[] = response.data.embedding;
+            if (embedding.length < 1536) {
+                const padding = new Array(1536 - embedding.length).fill(0);
+                embedding = [...embedding, ...padding];
+            } else if (embedding.length > 1536) {
+                embedding = embedding.slice(0, 1536);
+            }
+
             return {
-                embedding: response.data.embedding,
+                embedding,
                 model,
             };
         } catch (error) {
