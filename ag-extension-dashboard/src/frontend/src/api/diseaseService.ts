@@ -34,7 +34,29 @@ export const getAllDiseases = async (): Promise<{ success: boolean; data: string
     return response.data;
 };
 
-export const analyzePlantImage = async (imageData: string, cropType?: string): Promise<{ success: boolean; data: { overallHealth: string; diseases: DiseaseDiagnosis[]; recommendations: string[] } }> => {
+export const analyzePlantImage = async (imageData: string, cropType?: string): Promise<{ success: boolean; data: { overallHealth: string; diseases: DiseaseDiagnosis[]; recommendations: string[]; reportId?: string } }> => {
     const response = await apiClient.post('/ai/diagnose/image', { imageData, cropType });
+    return response.data;
+};
+
+export interface SoilAnalysisResult {
+    overallHealthScore: number;
+    texture: string;
+    estimatedMoisture: string;
+    drainageClass: string;
+    colorDiscoloration: string;
+    npkDeficiencies: {
+        nitrogen: 'low' | 'optimal' | 'high';
+        phosphorus: 'low' | 'optimal' | 'high';
+        potassium: 'low' | 'optimal' | 'high';
+    };
+    recommendations: string[];
+    cropSuitability: string[];
+    confidence: number;
+    reportId?: string;
+}
+
+export const analyzeSoilImage = async (imageData: string, cropType?: string, details?: any): Promise<{ success: boolean; data: SoilAnalysisResult }> => {
+    const response = await apiClient.post('/ai/diagnose/soil', { imageData, cropType, details });
     return response.data;
 };

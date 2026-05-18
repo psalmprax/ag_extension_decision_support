@@ -15,6 +15,7 @@ import { getPool } from './services/databaseService';
 import { getCache } from './services/cacheService';
 import { persistentMemory } from './services/persistentMemory';
 import { perUserRateLimit } from './middleware/rateLimitMiddleware';
+import { optionalAuth } from './middleware/authorize';
 import { AIProviderFactory } from './services/aiProvider/aiProvider';
 import { selfHealingService } from './services/selfHealing';
 
@@ -51,6 +52,7 @@ import apiClientRoutes from './routes/apiClients';
 import commercialKnowledgeRoutes from './routes/commercialKnowledge';
 
 const app: Application = express();
+app.set('trust proxy', true); // Trust reverse proxy headers (e.g. X-Forwarded-For) to get real client IP for rate limiting
 
 const limiter = perUserRateLimit;
 
@@ -77,6 +79,7 @@ app.use(morgan('combined', { stream: { write: (message) => logger.info(message) 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(optionalAuth); // Parse optional user credentials before applying rate limiting
 app.use(limiter);
 
 /*

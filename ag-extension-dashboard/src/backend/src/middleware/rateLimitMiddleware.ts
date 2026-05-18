@@ -2,6 +2,7 @@ import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { AuthRequest } from './authorize';
 import { Response } from 'express';
 import { logger } from '@/utils/logger';
+import { config } from '@/config';
 
 /**
  * Professional Rate Limiter that prioritizes authenticated users.
@@ -10,15 +11,19 @@ import { logger } from '@/utils/logger';
 export const perUserRateLimit = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: (req: AuthRequest) => {
-        // Admins get unlimited
-        if (req.user?.role === 'admin') return 10000;
-        // Authenticated users get 500 requests per 15 mins
-        if (req.user) return 500;
-        // Anonymous users get 50
-        return 50;
+        // Admins get virtual unlimited
+        if (req.user?.role === 'admin') return 100000;
+        // Authenticated users get 1000 requests per 15 mins
+        if (req.user) return 1000;
+        // Anonymous users get 150
+        return 150;
     },
     keyGenerator: (req: AuthRequest) => {
         return req.user?.userId || ipKeyGenerator(req.ip || 'anonymous');
+    },
+    skip: (req: AuthRequest) => {
+        // Skip rate limit entirely in dev/test environments
+        return config.nodeEnv === 'development' || config.nodeEnv === 'test';
     },
     handler: (req: AuthRequest, res: Response) => {
         logger.warn(`Rate limit exceeded for user: ${req.user?.userId || req.ip}`);
@@ -31,3 +36,4 @@ export const perUserRateLimit = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
 });
+

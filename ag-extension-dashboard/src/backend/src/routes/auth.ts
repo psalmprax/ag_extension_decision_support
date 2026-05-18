@@ -208,7 +208,23 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
     }
 });
 
-// Demo Login
+/**
+ * @swagger
+ * /api/v1/auth/demo:
+ *   post:
+ *     summary: Demo login
+ *     description: Automatically signs in as a demo user (creating the account if it does not exist) and returns a JWT session token. Perfect for quick API testing.
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: Demo login successful and token generated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *       500:
+ *         description: Demo login failed
+ */
 router.post('/demo', async (req: Request, res: Response) => {
     try {
         const email = 'demo@agridemo.com';

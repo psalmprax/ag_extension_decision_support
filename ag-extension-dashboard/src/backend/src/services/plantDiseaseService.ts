@@ -1,4 +1,5 @@
 import { logger } from '@/utils/logger';
+import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
 
 export interface DiseaseDiagnosis {
   disease: string;
@@ -16,6 +17,22 @@ export interface PlantImageAnalysis {
   diseases: DiseaseDiagnosis[];
   nutrientDeficiencies: string[];
   recommendations: string[];
+  confidence: number;
+}
+
+export interface SoilAnalysisResult {
+  overallHealthScore: number;
+  texture: string;
+  estimatedMoisture: string;
+  drainageClass: string;
+  colorDiscoloration: string;
+  npkDeficiencies: {
+    nitrogen: 'low' | 'optimal' | 'high';
+    phosphorus: 'low' | 'optimal' | 'high';
+    potassium: 'low' | 'optimal' | 'high';
+  };
+  recommendations: string[];
+  cropSuitability: string[];
   confidence: number;
 }
 
@@ -66,18 +83,134 @@ class PlantDiseaseService {
 
   async analyzeImage(imageData: string | Buffer): Promise<PlantImageAnalysis> {
     try {
-      if (typeof imageData === 'string' && imageData.startsWith('data:')) {
-        const base64Data = imageData.split(',')[1];
-        if (!base64Data) {
-          return this.generateFallbackAnalysis('Invalid image data');
-        }
+      let base64Image: string;
+      if (Buffer.isBuffer(imageData)) {
+        base64Image = imageData.toString('base64');
+      } else if (typeof imageData === 'string' && imageData.startsWith('data:image/')) {
+        base64Image = imageData.split(',')[1];
+      } else {
+        base64Image = imageData as string;
       }
 
-      return this.generateFallbackAnalysis('Image analysis requires vision model integration');
+      const provider = await AIProviderFactory.getProvider();
+      const prompt = `You are a professional agricultural plant pathologist. Analyze this plant leaf image.
+Provide a diagnostic analysis in JSON format. The JSON MUST strictly match the following schema:
+{
+  "overallHealth": "healthy" | "stressed" | "diseased",
+  "diseases": [
+    {
+      "disease": "Disease Name",
+      "confidence": number (between 0 and 100),
+      "severity": "mild" | "moderate" | "severe",
+      "description": "Short explanation",
+      "symptoms": ["symptom 1", "symptom 2"],
+      "treatment": ["treatment 1", "treatment 2"],
+      "prevention": ["prevention 1", "prevention 2"]
+    }
+  ],
+  "nutrientDeficiencies": ["Deficiency 1"],
+  "recommendations": ["Recommendation 1"],
+  "confidence": number (overall analysis confidence, 0 to 100)
+}
+IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do not write any conversational text.`;
+
+      const result = await provider.analyzeImage(base64Image, prompt);
+      const parsed = this.parseJSONResponse<PlantImageAnalysis>(result.analysis);
+
+      if (parsed) {
+        return parsed;
+      }
+
+      return this.generateFallbackAnalysis('Failed to parse LLM vision analysis');
     } catch (error) {
       logger.error('Plant disease analysis failed:', error);
       return this.generateFallbackAnalysis(error instanceof Error ? error.message : 'Unknown error');
     }
+  }
+
+  async analyzeSoilImage(imageData: string | Buffer, details?: any): Promise<SoilAnalysisResult> {
+    try {
+      let base64Image: string;
+      if (Buffer.isBuffer(imageData)) {
+        base64Image = imageData.toString('base64');
+      } else if (typeof imageData === 'string' && imageData.startsWith('data:image/')) {
+        base64Image = imageData.split(',')[1];
+      } else {
+        base64Image = imageData as string;
+      }
+
+      const provider = await AIProviderFactory.getProvider();
+      const prompt = `You are an expert soil scientist and agronomist. Analyze this soil sample photo.
+Optional farm / regional details: ${JSON.stringify(details || {})}
+Provide a detailed soil analysis in JSON format. The JSON MUST strictly match the following schema:
+{
+  "overallHealthScore": number (0 to 100),
+  "texture": "Texture class (e.g. Sandy Loam, Clay, Silt, etc.)",
+  "estimatedMoisture": "Estimated moisture level (e.g. Optimal, Dry, Waterlogged)",
+  "drainageClass": "Drainage class (e.g. Well-drained, Poorly-drained)",
+  "colorDiscoloration": "Color and discoloration details",
+  "npkDeficiencies": {
+    "nitrogen": "low" | "optimal" | "high",
+    "phosphorus": "low" | "optimal" | "high",
+    "potassium": "low" | "optimal" | "high"
+  },
+  "recommendations": ["Recommendation 1", "Recommendation 2"],
+  "cropSuitability": ["Suitable Crop 1", "Suitable Crop 2"],
+  "confidence": number (overall analysis confidence, 0 to 100)
+}
+IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do not write any conversational text.`;
+
+      const result = await provider.analyzeImage(base64Image, prompt);
+      const parsed = this.parseJSONResponse<SoilAnalysisResult>(result.analysis);
+
+      if (parsed) {
+        return parsed;
+      }
+
+      return this.generateFallbackSoilAnalysis('Failed to parse LLM soil analysis');
+    } catch (error) {
+      logger.error('Soil analysis failed:', error);
+      return this.generateFallbackSoilAnalysis(error instanceof Error ? error.message : 'Unknown error');
+    }
+  }
+
+  private parseJSONResponse<T>(content: string): T | null {
+    try {
+      let rawJson = content;
+      const jsonBlockRegex = /```json\s*([\s\S]*?)\s*```/;
+      const match = content.match(jsonBlockRegex);
+      if (match && match[1]) {
+        rawJson = match[1];
+      } else {
+        rawJson = content.replace(/```/g, '').trim();
+      }
+      return JSON.parse(rawJson) as T;
+    } catch (e) {
+      logger.error('JSON parsing from vision provider response failed. Content:', content, e);
+      return null;
+    }
+  }
+
+  private generateFallbackSoilAnalysis(error: string): SoilAnalysisResult {
+    return {
+      overallHealthScore: 50,
+      texture: 'Loamy Soil (Estimated)',
+      estimatedMoisture: 'Moderate (Estimated)',
+      drainageClass: 'Well-drained (Estimated)',
+      colorDiscoloration: `Analyzed with note: ${error}`,
+      npkDeficiencies: {
+        nitrogen: 'optimal',
+        phosphorus: 'optimal',
+        potassium: 'optimal',
+      },
+      recommendations: [
+        'Ensure the image clearly shows the soil sample with good lighting',
+        'Avoid extreme camera flash, glare, or heavy shadows',
+        'Consider getting a physical laboratory NPK test for 100% accurate results',
+      ],
+      cropSuitability: ['Maize', 'Beans', 'Potatoes'],
+      confidence: 30,
+    };
   }
 
   async diagnoseFromSymptoms(symptoms: string[], cropType?: string): Promise<DiseaseDiagnosis[]> {
