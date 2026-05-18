@@ -307,8 +307,8 @@ export const KnowledgeBase: React.FC = () => {
                                                     <div className="w-2 h-2 bg-primary-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
                                                     <div className="flex flex-col">
                                                         <span className="text-[10px] font-black text-gray-400 uppercase leading-none mb-1">Source</span>
-                                                        <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
-                                                            {ctx.metadata?.crop || 'General'} / {ctx.metadata?.category || 'Expert Advice'}
+                                                        <span className="text-xs font-bold text-gray-700 dark:text-gray-300 max-w-[220px] truncate" title={ctx.metadata?.sourceUrl || ctx.metadata?.title || ''}>
+                                                            {ctx.metadata?.title || `${ctx.metadata?.crop || 'General'} / ${ctx.metadata?.category || 'Expert Advice'}`}
                                                         </span>
                                                     </div>
                                                 </div>

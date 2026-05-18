@@ -35,6 +35,7 @@ model User {
   redeemedVouchers Voucher[] @relation("RedeemedVouchers")
   scheduledSMS  ScheduledSMS[]
   knowledgeSearches KnowledgeSearch[] @relation("UserKnowledgeSearches")
+  apiClients    ApiClient[]
 
   @@map("users")
 }
@@ -415,6 +416,54 @@ model SearchCache {
   @@map("search_cache")
 }
 
+model ApiClient {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerUserId        String   @map("owner_user_id") @db.Uuid
+  name               String   @db.VarChar(120)
+  status             String   @default("active") @db.VarChar(30)
+  monthlyQuota       Int      @default(1000) @map("monthly_quota")
+  currentPeriodStart DateTime @default(now()) @map("current_period_start") @db.Timestamp(6)
+  currentPeriodEnd   DateTime @map("current_period_end") @db.Timestamp(6)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt          DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
+  owner              User     @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  keys               ApiKey[]
+  usageEvents        ApiUsageEvent[]
+
+  @@map("api_clients")
+}
+
+model ApiKey {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clientId     String    @map("client_id") @db.Uuid
+  name         String    @db.VarChar(120)
+  keyPrefix    String    @map("key_prefix") @db.VarChar(80)
+  keyHash      String    @unique @map("key_hash") @db.VarChar(128)
+  status       String    @default("active") @db.VarChar(30)
+  lastUsedAt   DateTime? @map("last_used_at") @db.Timestamp(6)
+  expiresAt    DateTime? @map("expires_at") @db.Timestamp(6)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt    DateTime  @default(now()) @map("updated_at") @db.Timestamp(6)
+  client       ApiClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  usageEvents  ApiUsageEvent[]
+
+  @@map("api_keys")
+}
+
+model ApiUsageEvent {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clientId  String    @map("client_id") @db.Uuid
+  apiKeyId  String?   @map("api_key_id") @db.Uuid
+  endpoint  String    @db.VarChar(160)
+  units     Int       @default(1)
+  metadata  Json?
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  client    ApiClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  apiKey    ApiKey?   @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+
+  @@map("api_usage_events")
+}
+
 model SmsHistory {
   id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   senderId       String?   @map("sender_id") @db.Uuid
@@ -427,4 +476,3 @@ model SmsHistory {
 
   @@map("sms_history")
 }
-

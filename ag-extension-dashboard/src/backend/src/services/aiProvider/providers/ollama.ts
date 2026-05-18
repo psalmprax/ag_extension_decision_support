@@ -52,7 +52,7 @@ export class OllamaProvider extends BaseAIProvider {
                     num_predict: options?.maxTokens ?? 1000,
                 }
             }, {
-                timeout: 300000, // 5 min timeout for local LLM on CPU
+                timeout: parseInt(process.env.OLLAMA_REQUEST_TIMEOUT_MS || '60000', 10),
             });
 
             const data = response.data;
@@ -113,7 +113,7 @@ export class OllamaProvider extends BaseAIProvider {
 
     async analyzeWithReasoning(context: string, query: string, options?: ReasoningOptions): Promise<ReasoningResult> {
         const systemPrompt = REASONING_SYSTEM_PROMPT;
-        const promptText = `Context: ${context}\n\nQuestion: ${query}`;
+        const promptText = `Use the context below as the authoritative source for this answer. If the context is incomplete, say what is missing before adding general agricultural guidance. Cite source titles or URLs when available.\n\nContext:\n${context || 'No specific context found in knowledge base.'}\n\nQuestion: ${query}`;
         
         const messages = [
             { role: 'system', content: systemPrompt },
@@ -122,7 +122,7 @@ export class OllamaProvider extends BaseAIProvider {
 
         const result = await this.generateText(messages, {
             temperature: options?.temperature ?? 0.2,
-            maxTokens: options?.maxTokens ?? 2000,
+            maxTokens: options?.maxTokens ?? 900,
         });
 
         const text = result.text ?? '';

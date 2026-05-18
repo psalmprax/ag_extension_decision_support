@@ -5,6 +5,7 @@ import { AssetValidationService } from '@/services/assetValidationService';
 import { cacheGet, cacheSet } from '@/services/cacheService';
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
+import { tavilyService } from '@/services/tavilyService';
 
 export interface KnowledgeArticle {
     id: string;
@@ -19,8 +20,8 @@ export class KnowledgeService {
     /**
      * Search for knowledge articles using RAG (Vector Search)
      */
-    static async searchKnowledge(queryText: string, limit: number = 3): Promise<SearchResult[]> {
-        return VectorService.search(queryText, limit);
+    static async searchKnowledge(queryText: string, limit: number = 3, filters: { category?: string; crop?: string } = {}): Promise<SearchResult[]> {
+        return VectorService.search(queryText, limit, filters);
     }
 
     /**
@@ -186,9 +187,34 @@ export class KnowledgeService {
         }
 
         // 3. Retrieve relevant context (cache miss)
-        const contextResults = await this.searchKnowledge(queryText);
+        let contextResults = await this.searchKnowledge(queryText);
+        const bestScore = contextResults.length > 0 ? contextResults[0].score : 0;
+        if ((contextResults.length === 0 || bestScore < 0.65) && tavilyService.isConfigured()) {
+            logger.info(`No high-scoring local matches found (best score: ${bestScore}). Querying Tavily for: "${queryText}"`);
+            try {
+                const webResults = await tavilyService.search(queryText, 3);
+                if (webResults && webResults.results && webResults.results.length > 0) {
+                    const mappedWebResults: SearchResult[] = webResults.results.map((r, index) => ({
+                        id: `web-${index}-${Date.now()}`,
+                        content: r.content,
+                        metadata: {
+                            title: r.title,
+                            category: 'External Reference',
+                            crop: 'All',
+                            sourceUrl: r.url,
+                            contentType: 'text'
+                        },
+                        score: r.score
+                    }));
+                    contextResults = [...mappedWebResults, ...contextResults].slice(0, 4);
+                }
+            } catch (webError) {
+                logger.error('Failed to retrieve external search fallback:', webError);
+            }
+        }
+
         const contextText = contextResults
-            .map(res => `[Source: ${res.metadata.crop}/${res.metadata.category}] (Type: ${res.metadata.contentType}, URL: ${res.metadata.sourceUrl})\n${res.content}`)
+            .map(res => `[Source: ${res.metadata.crop}/${res.metadata.category}] (Type: ${res.metadata.contentType || 'text'}, URL: ${res.metadata.sourceUrl || ''})\n${res.content}`)
             .join('\n\n---\n\n');
 
         // 4. Generate answer using Reasoning capability of ALFA
@@ -197,7 +223,7 @@ export class KnowledgeService {
                 context: contextText || 'No specific context found in knowledge base.',
                 query: queryText,
                 attachments: attachments, // Pass multimodal context
-                options: { temperature: 0.2 }
+                options: { temperature: 0.2, maxTokens: 900 }
             });
 
             // 5. Generate TTS and validate visuals in parallel using Promise.all (saves ~2-3 seconds!)
@@ -213,6 +239,10 @@ export class KnowledgeService {
                 })(),
                 // B. Audio summary and voice generation
                 (async () => {
+                    if (process.env.KNOWLEDGE_TTS_ENABLED !== 'true') {
+                        return;
+                    }
+
                     try {
                         const ttsResult = await AIRouter.routeRequest('generate', {
                             prompt: `Summarize this answer in 2 short, enticing sentences for audio playback: ${reasoningResult.answer}`,
@@ -268,8 +298,53 @@ export class KnowledgeService {
             return response;
         } catch (error) {
             logger.error('RAG analysis failed:', error);
+
+            if (contextResults.length > 0) {
+                const fallback = this.buildExtractiveAnswer(queryText, contextResults);
+                this.logSearch(
+                    userId,
+                    queryText,
+                    contextResults[0]?.metadata?.category,
+                    contextResults[0]?.metadata?.crop,
+                    fallback.answer,
+                    fallback.reasoning,
+                    fallback.visuals
+                ).catch(logError => logger.error('Fallback search logging failed:', logError));
+                return fallback;
+            }
+
             throw error;
         }
+    }
+
+    private static buildExtractiveAnswer(queryText: string, contextResults: SearchResult[]): ReasoningResult & { cached: boolean; contextUsed: SearchResult[] } {
+        const primary = contextResults[0];
+        const sourceTitle = primary.metadata?.title || `${primary.metadata?.crop || 'Agricultural'} ${primary.metadata?.category || 'Knowledge'}`;
+        const sourceUrl = primary.metadata?.sourceUrl ? ` (${primary.metadata.sourceUrl})` : '';
+        const contextSummary = contextResults
+            .slice(0, 3)
+            .map((result, index) => {
+                const title = result.metadata?.title || `Source ${index + 1}`;
+                return `${index + 1}. ${title}: ${result.content}`;
+            })
+            .join('\n\n');
+
+        return {
+            reasoning: 'Generated from retrieved knowledge-base context because the configured AI provider did not complete in time.',
+            answer: `I found source-backed guidance for: "${queryText}".\n\nPrimary source: ${sourceTitle}${sourceUrl}\n\n${contextSummary}\n\nThe answer above is extracted directly from the local knowledge base so it remains available even when the AI reasoning provider is slow or unavailable.`,
+            confidence: Math.max(0.5, Math.min(primary.score || 0.7, 0.95)),
+            visuals: {
+                kpis: [
+                    { label: 'Source Matches', value: String(contextResults.length), status: 'good' },
+                    { label: 'Top Match Score', value: (primary.score ?? 0).toFixed(2), status: (primary.score ?? 0) >= 0.65 ? 'good' : 'warning' }
+                ],
+                charts: [],
+                images: [],
+                videos: []
+            },
+            contextUsed: contextResults,
+            cached: false
+        };
     }
 
     /**

@@ -47,6 +47,8 @@ import systemHealthRoutes from './routes/systemHealth';
 import memoryRoutes from './routes/memories';
 import diseaseRoutes from './routes/diseases';
 import whatsappRoutes from './routes/whatsapp';
+import apiClientRoutes from './routes/apiClients';
+import commercialKnowledgeRoutes from './routes/commercialKnowledge';
 
 const app: Application = express();
 
@@ -61,7 +63,7 @@ app.use(helmet({
             "upgrade-insecure-requests": null, // Disable automatic upgrading of HTTP requests to HTTPS on development/staging ports
             "img-src": ["'self'", "data:", "https://images.unsplash.com", "https://*.ytimg.com"],
             "frame-src": ["'self'", "https://www.youtube.com", "https://www.youtube-nocookie.com"],
-            "connect-src": ["'self'", "https://api.openai.com", "https://*.azure.com", "https://*.google.com"],
+            "connect-src": ["'self'", "http://localhost:*", "http://127.0.0.1:*", "ws://localhost:*", "ws://127.0.0.1:*", "https://api.openai.com", "https://*.azure.com", "https://*.google.com"],
         },
     },
 }));
@@ -136,28 +138,49 @@ const healthHandler = async (_req: Request, res: Response) => {
         errors.push(`cache: ${(error as Error).message}`);
     }
 
-    // Check AI provider (primary + fallback)
+    // Check AI provider (primary + fallback + cascading fallback)
     try {
         const primaryProvider = await AIProviderFactory.getPrimaryProvider();
         const primaryHealthy = primaryProvider.isConfigured() && await primaryProvider.healthCheck();
         
         let fallbackHealthy = false;
+        let fallbackActiveName = 'none';
         try {
             const fallbackProvider = await AIProviderFactory.getFallbackProvider();
             fallbackHealthy = fallbackProvider.isConfigured() && await fallbackProvider.healthCheck();
+            if (fallbackHealthy) {
+                fallbackActiveName = fallbackProvider.provider;
+            }
         } catch {
             fallbackHealthy = false;
+        }
+
+        let anyCascadingHealthy = false;
+        if (!primaryHealthy && !fallbackHealthy) {
+            const cascadeTypes: any[] = ['groq', 'ollama', 'openai', 'anthropic'];
+            for (const type of cascadeTypes) {
+                try {
+                    const p = await AIProviderFactory.getProvider(type);
+                    if (p.isConfigured() && await p.healthCheck()) {
+                        anyCascadingHealthy = true;
+                        fallbackActiveName = p.provider;
+                        break;
+                    }
+                } catch {}
+            }
         }
 
         if (primaryHealthy) {
             aiProviderStatus = 'healthy';
         } else if (fallbackHealthy) {
             aiProviderStatus = 'degraded (fallback active)';
+        } else if (anyCascadingHealthy) {
+            aiProviderStatus = `degraded (fell back to ${fallbackActiveName})`;
         } else if (!primaryProvider.isConfigured() && !await (await AIProviderFactory.getFallbackProvider()).isConfigured()) {
             aiProviderStatus = 'not configured';
         } else {
             aiProviderStatus = 'unhealthy';
-            errors.push('ai_provider: primary and fallback both unhealthy');
+            errors.push('ai_provider: primary, fallback, and cascade options are all unhealthy');
         }
     } catch (error) {
         aiProviderStatus = 'error';
@@ -259,7 +282,10 @@ app.use('/api/v1/ai/agents', agentRoutes);
 app.use('/api/v1/system/health', systemHealthRoutes);
 app.use('/api/v1/ai/memories', memoryRoutes);
 app.use('/api/v1/ai/diseases', diseaseRoutes);
+app.use('/api/v1/ai', diseaseRoutes);
 app.use('/api/v1/whatsapp', whatsappRoutes);
+app.use('/api/v1/api-clients', apiClientRoutes);
+app.use('/api/v1/commercial/knowledge', commercialKnowledgeRoutes);
 // Create MCP router synchronously to ensure it loads properly
 let mcpRouter: any = null;
 try {
@@ -313,7 +339,10 @@ app.use('/api/ai/agents', agentRoutes);
 app.use('/api/system/health', systemHealthRoutes);
 app.use('/api/ai/memories', memoryRoutes);
 app.use('/api/ai/diseases', diseaseRoutes);
+app.use('/api/ai', diseaseRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
+app.use('/api/api-clients', apiClientRoutes);
+app.use('/api/commercial/knowledge', commercialKnowledgeRoutes);
 app.use('/api/mcp', (req, res, next) => {
   if (mcpRouter) {
     mcpRouter(req, res, next);
