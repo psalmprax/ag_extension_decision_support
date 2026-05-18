@@ -54,6 +54,7 @@ const limiter = perUserRateLimit;
 
 // Middleware
 app.use(helmet({
+    hsts: false, // Disable HSTS to allow development and staging access over plain HTTP ports without ERR_SSL_PROTOCOL_ERROR
     contentSecurityPolicy: {
         directives: {
             ...helmet.contentSecurityPolicy.getDefaultDirectives(),
