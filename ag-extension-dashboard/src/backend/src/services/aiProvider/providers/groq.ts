@@ -98,8 +98,55 @@ export class GroqProvider extends BaseAIProvider {
         }
     }
 
-    async analyzeImage(_imageData: string | Buffer, _prompt?: string, _options?: ImageAnalysisOptions): Promise<ImageAnalysisResult> {
-        throw new Error('Image analysis not implemented for Groq provider');
+    async analyzeImage(imageData: string | Buffer, prompt?: string, options?: ImageAnalysisOptions): Promise<ImageAnalysisResult> {
+        const model = options?.model || 'llama-3.2-11b-vision-preview';
+        try {
+            let base64Image: string;
+            if (Buffer.isBuffer(imageData)) {
+                base64Image = imageData.toString('base64');
+            } else if (typeof imageData === 'string' && imageData.startsWith('data:image/')) {
+                base64Image = imageData.split(',')[1];
+            } else {
+                base64Image = imageData as string;
+            }
+
+            const response = await this.client.chat.completions.create({
+                model,
+                messages: [
+                    {
+                        role: 'user',
+                        content: [
+                            { type: 'text', text: prompt || 'Analyze this agricultural image.' },
+                            {
+                                type: 'image_url',
+                                image_url: {
+                                    url: `data:image/jpeg;base64,${base64Image}`,
+                                },
+                            },
+                        ],
+                    },
+                ],
+                temperature: options?.temperature ?? 0.2,
+                max_tokens: options?.maxTokens ?? 1000,
+            });
+
+            return {
+                analysis: response.choices[0].message.content || 'Unable to analyze image',
+                model,
+                usage: {
+                    promptTokens: response.usage?.prompt_tokens || 0,
+                    completionTokens: response.usage?.completion_tokens || 0,
+                    totalTokens: response.usage?.total_tokens || 0,
+                },
+            };
+        } catch (error: any) {
+            logger.error('Groq analyzeImage error:', error);
+            return {
+                analysis: `Error: ${error.message}`,
+                model,
+                usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+            };
+        }
     }
 
     async analyzeVideo(_videoData: Buffer, _prompt?: string, _options?: VideoAnalysisOptions): Promise<VideoAnalysisResult> {

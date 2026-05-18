@@ -1,12 +1,16 @@
 import { Router, Request, Response } from 'express';
-import { authorize } from '@/middleware/authorize';
+import { authorize, AuthRequest } from '@/middleware/authorize';
 import { plantDiseaseService } from '@/services/plantDiseaseService';
+import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 
 const router = Router();
 
+// Apply authorization
+const allowedRoles = authorize(['extension_officer', 'admin', 'farmer']);
+
 // Get all available diseases
-router.get('/', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
+router.get('/', allowedRoles, async (req: Request, res: Response) => {
     try {
         const diseases = plantDiseaseService.getAllDiseases();
         res.json({ success: true, data: diseases });
@@ -17,7 +21,7 @@ router.get('/', authorize(['extension_officer', 'admin', 'farmer']), async (req:
 });
 
 // Get specific disease information
-router.get('/:diseaseName', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
+router.get('/:diseaseName', allowedRoles, async (req: Request, res: Response) => {
     try {
         const { diseaseName } = req.params;
         const diseaseInfo = plantDiseaseService.getDiseaseInfo(diseaseName);
@@ -34,7 +38,7 @@ router.get('/:diseaseName', authorize(['extension_officer', 'admin', 'farmer']),
 });
 
 // Diagnose diseases from symptoms
-router.post('/diagnose', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
+router.post('/diagnose', allowedRoles, async (req: Request, res: Response) => {
     try {
         const { symptoms, cropType } = req.body;
 
@@ -42,7 +46,7 @@ router.post('/diagnose', authorize(['extension_officer', 'admin', 'farmer']), as
             return res.status(400).json({ success: false, error: 'Symptoms array is required' });
         }
 
-        const diagnosis = plantDiseaseService.diagnoseFromSymptoms(symptoms, cropType);
+        const diagnosis = await plantDiseaseService.diagnoseFromSymptoms(symptoms, cropType);
         res.json({ success: true, data: diagnosis });
     } catch (error) {
         logger.error('Failed to diagnose disease:', error);
@@ -50,8 +54,8 @@ router.post('/diagnose', authorize(['extension_officer', 'admin', 'farmer']), as
     }
 });
 
-// Analyze plant image
-router.post('/diagnose/image', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
+// Analyze plant image with database log telemetry
+router.post('/diagnose/image', allowedRoles, async (req: AuthRequest, res: Response) => {
     try {
         const { imageData, cropType } = req.body;
 
@@ -60,10 +64,73 @@ router.post('/diagnose/image', authorize(['extension_officer', 'admin', 'farmer'
         }
 
         const analysis = await plantDiseaseService.analyzeImage(imageData);
-        res.json({ success: true, data: analysis });
+
+        // Save report telemetry
+        let reportId: string | null = null;
+        try {
+            const reportTitle = `Plant Leaf Diagnosis - ${cropType || 'Unspecified Crop'}`;
+            const userId = req.user?.userId || null;
+            const dbResult = await query(`
+                INSERT INTO reports (type, title, generated_by, content, status, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, 'completed', NOW(), NOW())
+                RETURNING id
+            `, [
+                'disease_diagnosis',
+                reportTitle,
+                userId,
+                JSON.stringify({ ...analysis, metadata: { cropType, generatedAt: new Date().toISOString() } })
+            ]);
+            if (dbResult.rows && dbResult.rows.length > 0) {
+                reportId = dbResult.rows[0].id;
+            }
+        } catch (dbError) {
+            logger.error('Failed to save disease diagnosis report telemetry:', dbError);
+        }
+
+        res.json({ success: true, data: { ...analysis, reportId } });
     } catch (error) {
         logger.error('Failed to analyze image:', error);
         res.status(500).json({ success: false, error: 'Failed to analyze image' });
+    }
+});
+
+// Analyze soil image with database log telemetry
+router.post('/diagnose/soil', allowedRoles, async (req: AuthRequest, res: Response) => {
+    try {
+        const { imageData, cropType, details } = req.body;
+
+        if (!imageData) {
+            return res.status(400).json({ success: false, error: 'Soil image data is required' });
+        }
+
+        const analysis = await plantDiseaseService.analyzeSoilImage(imageData, details);
+
+        // Save report telemetry
+        let reportId: string | null = null;
+        try {
+            const reportTitle = `Soil Diagnostics - ${cropType || 'General Farm'}`;
+            const userId = req.user?.userId || null;
+            const dbResult = await query(`
+                INSERT INTO reports (type, title, generated_by, content, status, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, 'completed', NOW(), NOW())
+                RETURNING id
+            `, [
+                'soil_diagnostic',
+                reportTitle,
+                userId,
+                JSON.stringify({ ...analysis, metadata: { cropType, details, generatedAt: new Date().toISOString() } })
+            ]);
+            if (dbResult.rows && dbResult.rows.length > 0) {
+                reportId = dbResult.rows[0].id;
+            }
+        } catch (dbError) {
+            logger.error('Failed to save soil diagnostic report telemetry:', dbError);
+        }
+
+        res.json({ success: true, data: { ...analysis, reportId } });
+    } catch (error) {
+        logger.error('Failed to analyze soil image:', error);
+        res.status(500).json({ success: false, error: 'Failed to analyze soil image' });
     }
 });
 

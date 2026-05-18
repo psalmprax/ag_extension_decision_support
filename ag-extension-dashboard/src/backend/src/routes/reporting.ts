@@ -219,6 +219,355 @@ router.get('/:id/download', async (req: Request, res: Response) => {
     }
 });
 
+function generateDiseaseDiagnosisPDF(doc: any, report: any, data: any) {
+    // Elegant Dark Green Header
+    doc.rect(0, 0, doc.page.width, 110).fill('#1b5e20');
+    
+    doc.fillColor('#ffffff')
+       .fontSize(20)
+       .font('Helvetica-Bold')
+       .text('Agricultural Decision-Support System', 50, 30);
+    
+    doc.fontSize(13)
+       .font('Helvetica')
+       .text('Plant Pathology & Leaf Diagnosis Report', 50, 60);
+
+    // Decorative separator
+    doc.rect(0, 110, doc.page.width, 5).fill('#81c784');
+
+    doc.y = 135;
+
+    // Report Title & Metadata Section
+    doc.fillColor('#1b5e20')
+       .fontSize(15)
+       .font('Helvetica-Bold')
+       .text(report.title || 'Plant Pathology Scan', 50, doc.y);
+    doc.moveDown(0.5);
+
+    const crop = data.metadata?.cropType || 'Unspecified Crop';
+    const generatedDate = new Date(report.created_at).toLocaleString();
+
+    // Draw Metadata Table
+    const startY = doc.y;
+    doc.fontSize(9)
+       .fillColor('#455a64')
+       .font('Helvetica-Bold')
+       .text('Target Crop:', 50, startY)
+       .font('Helvetica')
+       .text(crop.toUpperCase(), 150, startY)
+       .font('Helvetica-Bold')
+       .text('Analysis Date:', 300, startY)
+       .font('Helvetica')
+       .text(generatedDate, 400, startY);
+
+    doc.moveDown(1.5);
+    
+    // Overall Health Banner
+    const health = data.overallHealth || 'healthy';
+    let bannerBg = '#e8f5e9';
+    let bannerText = '#1b5e20';
+    if (health === 'stressed') {
+        bannerBg = '#fff3e0';
+        bannerText = '#e65100';
+    } else if (health === 'diseased') {
+        bannerBg = '#ffebee';
+        bannerText = '#b71c1c';
+    }
+
+    doc.rect(50, doc.y, doc.page.width - 100, 45).fill(bannerBg);
+    
+    const bannerY = doc.y + 15;
+    doc.fillColor(bannerText)
+       .fontSize(11)
+       .font('Helvetica-Bold')
+       .text(`OVERALL CROP HEALTH STATUS:  ${health.toUpperCase()}`, 70, bannerY);
+    
+    if (data.confidence) {
+        doc.font('Helvetica')
+           .fontSize(9)
+           .text(`Confidence Score: ${data.confidence}%`, doc.page.width - 200, bannerY, { align: 'right' });
+    }
+
+    doc.y = bannerY + 45;
+
+    // Diagnosed Pathologies
+    doc.fillColor('#263238')
+       .fontSize(13)
+       .font('Helvetica-Bold')
+       .text('Detected Pathologies & Issues', 50, doc.y);
+    
+    doc.moveDown(0.5);
+
+    if (data.diseases && data.diseases.length > 0) {
+        data.diseases.forEach((dis: any, idx: number) => {
+            const disY = doc.y;
+            
+            // Background Card
+            doc.rect(50, disY, doc.page.width - 100, 140).stroke('#cfd8dc');
+            
+            doc.fillColor('#b71c1c')
+               .fontSize(11)
+               .font('Helvetica-Bold')
+               .text(`${idx + 1}. ${dis.disease}`, 65, disY + 12);
+            
+            doc.fillColor('#455a64')
+               .fontSize(9)
+               .font('Helvetica-Bold')
+               .text(`Severity: ${dis.severity?.toUpperCase() || 'MODERATE'}`, doc.page.width - 250, disY + 12)
+               .text(`Confidence: ${dis.confidence}%`, doc.page.width - 150, disY + 12);
+
+            doc.fillColor('#263238')
+               .font('Helvetica')
+               .fontSize(9)
+               .text(dis.description || 'No description provided.', 65, disY + 32, { width: doc.page.width - 130 });
+
+            // Columns for Symptoms & Treatments
+            const listY = disY + 65;
+            doc.fillColor('#1b5e20')
+               .font('Helvetica-Bold')
+               .fontSize(9)
+               .text('Observed Symptoms:', 65, listY)
+               .text('Recommended Treatments:', 300, listY);
+
+            // Lists
+            doc.fillColor('#37474f')
+               .font('Helvetica')
+               .fontSize(8);
+            
+            const symptoms = (dis.symptoms || []).slice(0, 3);
+            symptoms.forEach((sym: string, sIdx: number) => {
+                doc.text(`• ${sym}`, 65, listY + 15 + (sIdx * 10), { width: 220 });
+            });
+
+            const treatments = (dis.treatment || []).slice(0, 3);
+            treatments.forEach((treat: string, tIdx: number) => {
+                doc.text(`• ${treat}`, 300, listY + 15 + (tIdx * 10), { width: 250 });
+            });
+
+            doc.y = disY + 155;
+        });
+    } else {
+        doc.fillColor('#455a64')
+           .font('Helvetica-Oblique')
+           .fontSize(10)
+           .text('No active crop diseases or visual pathogens detected in this sample.', 60, doc.y);
+        doc.moveDown(1);
+    }
+
+    // Nutrient Deficiencies
+    if (data.nutrientDeficiencies && data.nutrientDeficiencies.length > 0) {
+        doc.fillColor('#263238')
+           .font('Helvetica-Bold')
+           .fontSize(12)
+           .text('Nutrient & Chemical Observations', 50, doc.y);
+        doc.moveDown(0.5);
+        
+        data.nutrientDeficiencies.forEach((def: string) => {
+            doc.fillColor('#e65100')
+               .font('Helvetica-Bold')
+               .fontSize(9)
+               .text('⚠  POTENTIAL NUTRIENT DEFICIENCY: ', 65, doc.y)
+               .font('Helvetica')
+               .fillColor('#37474f')
+               .text(def, doc.x + 5, doc.y);
+            doc.moveDown(0.3);
+        });
+        doc.moveDown(0.5);
+    }
+
+    // General Recommendations
+    if (data.recommendations && data.recommendations.length > 0) {
+        doc.fillColor('#1b5e20')
+           .font('Helvetica-Bold')
+           .fontSize(12)
+           .text('Agronomic Advisory & Actions', 50, doc.y);
+        doc.moveDown(0.5);
+
+        doc.fillColor('#37474f')
+           .font('Helvetica')
+           .fontSize(9);
+        
+        data.recommendations.forEach((rec: string) => {
+            doc.text(`✓   ${rec}`, 65, doc.y);
+            doc.moveDown(0.4);
+        });
+    }
+
+    // Footer
+    doc.fontSize(8)
+       .fillColor('#95a5a6')
+       .text('This pathology analysis represents an AI-assisted diagnostic estimate and should be validated through direct agronomic inspection.', 50, doc.page.height - 40, { align: 'center', width: doc.page.width - 100 });
+}
+
+function generateSoilDiagnosticPDF(doc: any, report: any, data: any) {
+    // Elegant Earth Brown Header
+    doc.rect(0, 0, doc.page.width, 110).fill('#3e2723');
+    
+    doc.fillColor('#ffffff')
+       .fontSize(20)
+       .font('Helvetica-Bold')
+       .text('Agricultural Decision-Support System', 50, 30);
+    
+    doc.fontSize(13)
+       .font('Helvetica')
+       .text('High-Fidelity Soil Diagnostics & Advisory Report', 50, 60);
+
+    // Decorative separator
+    doc.rect(0, 110, doc.page.width, 5).fill('#8d6e63');
+
+    doc.y = 135;
+
+    // Report Title & Metadata Section
+    doc.fillColor('#3e2723')
+       .fontSize(15)
+       .font('Helvetica-Bold')
+       .text(report.title || 'Soil Diagnostics Scan', 50, doc.y);
+    doc.moveDown(0.5);
+
+    const crop = data.metadata?.cropType || 'General Suitability';
+    const generatedDate = new Date(report.created_at).toLocaleString();
+
+    // Draw Metadata Table
+    const startY = doc.y;
+    doc.fontSize(9)
+       .fillColor('#455a64')
+       .font('Helvetica-Bold')
+       .text('Target Crop Focus:', 50, startY)
+       .font('Helvetica')
+       .text(crop.toUpperCase(), 170, startY)
+       .font('Helvetica-Bold')
+       .text('Diagnostics Date:', 300, startY)
+       .font('Helvetica')
+       .text(generatedDate, 410, startY);
+
+    doc.moveDown(1.5);
+    
+    // Overall Health Score Bar
+    const score = data.overallHealthScore || 50;
+    let scoreColor = '#1b5e20'; // Green
+    let scoreBg = '#e8f5e9';
+    if (score < 50) {
+        scoreColor = '#b71c1c'; // Red
+        scoreBg = '#ffebee';
+    } else if (score < 80) {
+        scoreColor = '#e65100'; // Orange
+        scoreBg = '#fff3e0';
+    }
+
+    doc.rect(50, doc.y, doc.page.width - 100, 45).fill(scoreBg);
+    
+    const bannerY = doc.y + 15;
+    doc.fillColor(scoreColor)
+       .fontSize(11)
+       .font('Helvetica-Bold')
+       .text(`SOIL DIAGNOSTIC QUALITY RATING:  ${score} / 100`, 70, bannerY);
+    
+    if (data.confidence) {
+        doc.font('Helvetica')
+           .fontSize(9)
+           .text(`Confidence Score: ${data.confidence}%`, doc.page.width - 200, bannerY, { align: 'right' });
+    }
+
+    doc.y = bannerY + 45;
+
+    // Soil Physical Attributes
+    doc.fillColor('#263238')
+       .fontSize(13)
+       .font('Helvetica-Bold')
+       .text('Estimated Soil Physical Attributes', 50, doc.y);
+    doc.moveDown(0.5);
+
+    const tableY = doc.y;
+    // Draw 2x2 grid for Texture, Moisture, Drainage, Observation
+    doc.rect(50, tableY, doc.page.width - 100, 80).stroke('#d7ccc8');
+
+    doc.fontSize(9).fillColor('#3e2723');
+    doc.font('Helvetica-Bold').text('Estimated Texture:', 65, tableY + 12)
+       .font('Helvetica').fillColor('#37474f').text(data.texture || 'N/A', 170, tableY + 12);
+       
+    doc.font('Helvetica-Bold').fillColor('#3e2723').text('Moisture Class:', 300, tableY + 12)
+       .font('Helvetica').fillColor('#37474f').text(data.estimatedMoisture || 'N/A', 410, tableY + 12);
+
+    doc.font('Helvetica-Bold').fillColor('#3e2723').text('Drainage Class:', 65, tableY + 35)
+       .font('Helvetica').fillColor('#37474f').text(data.drainageClass || 'N/A', 170, tableY + 35);
+       
+    doc.font('Helvetica-Bold').fillColor('#3e2723').text('Soil Observations:', 65, tableY + 58)
+       .font('Helvetica').fillColor('#37474f').text(data.colorDiscoloration || 'N/A', 170, tableY + 58, { width: doc.page.width - 240 });
+
+    doc.y = tableY + 95;
+
+    // Chemical NPK Profile
+    doc.fillColor('#263238')
+       .fontSize(13)
+       .font('Helvetica-Bold')
+       .text('Estimated NPK Nutrient Profile', 50, doc.y);
+    doc.moveDown(0.5);
+
+    const npkY = doc.y;
+    doc.rect(50, npkY, doc.page.width - 100, 45).stroke('#d7ccc8');
+
+    const getNutrientColor = (level: string) => {
+        if (!level) return '#757575';
+        if (level.toLowerCase() === 'low') return '#b71c1c';
+        if (level.toLowerCase() === 'high') return '#e65100';
+        return '#2e7d32'; // Optimal
+    };
+
+    const nLevel = data.npkDeficiencies?.nitrogen || 'optimal';
+    const pLevel = data.npkDeficiencies?.phosphorus || 'optimal';
+    const kLevel = data.npkDeficiencies?.potassium || 'optimal';
+
+    doc.fontSize(10);
+    doc.font('Helvetica-Bold').fillColor('#3e2723').text('Nitrogen (N):', 70, npkY + 16)
+       .fillColor(getNutrientColor(nLevel)).text(nLevel.toUpperCase(), 160, npkY + 16);
+
+    doc.font('Helvetica-Bold').fillColor('#3e2723').text('Phosphorus (P):', 230, npkY + 16)
+       .fillColor(getNutrientColor(pLevel)).text(pLevel.toUpperCase(), 330, npkY + 16);
+
+    doc.font('Helvetica-Bold').fillColor('#3e2723').text('Potassium (K):', 390, npkY + 16)
+       .fillColor(getNutrientColor(kLevel)).text(kLevel.toUpperCase(), 490, npkY + 16);
+
+    doc.y = npkY + 65;
+
+    // Crop Suitability
+    if (data.cropSuitability && data.cropSuitability.length > 0) {
+        doc.fillColor('#263238')
+           .fontSize(12)
+           .font('Helvetica-Bold')
+           .text('Target Crop Suitability', 50, doc.y);
+        doc.moveDown(0.5);
+
+        doc.fillColor('#37474f')
+           .font('Helvetica')
+           .fontSize(9)
+           .text(`Based on soil attributes, these crops are highly recommended:  ${data.cropSuitability.join(', ')}`, 65, doc.y, { width: doc.page.width - 130 });
+        doc.moveDown(1.2);
+    }
+
+    // Amendments & Soil Management
+    if (data.recommendations && data.recommendations.length > 0) {
+        doc.fillColor('#3e2723')
+           .font('Helvetica-Bold')
+           .fontSize(12)
+           .text('Soil Amendments & Management Advisory', 50, doc.y);
+        doc.moveDown(0.5);
+
+        doc.fillColor('#37474f')
+           .font('Helvetica')
+           .fontSize(9);
+        
+        data.recommendations.forEach((rec: string) => {
+            doc.text(`✓   ${rec}`, 65, doc.y, { width: doc.page.width - 130 });
+            doc.moveDown(0.4);
+        });
+    }
+
+    // Footer
+    doc.fontSize(8)
+       .fillColor('#95a5a6')
+       .text('This soil analysis represents an AI-assisted diagnostic estimate and should be validated through direct soil core sampling.', 50, doc.page.height - 40, { align: 'center', width: doc.page.width - 100 });
+}
+
 // Download report as PDF
 router.get('/:id/download/pdf', async (req: Request, res: Response) => {
     try {
@@ -236,6 +585,21 @@ router.get('/:id/download/pdf', async (req: Request, res: Response) => {
 
         doc.pipe(res);
 
+        const data = report.content as any;
+
+        // Custom router for visual diagnostics PDF
+        if (report.type === 'disease_diagnosis') {
+            generateDiseaseDiagnosisPDF(doc, report, data);
+            doc.end();
+            return;
+        }
+
+        if (report.type === 'soil_diagnostic') {
+            generateSoilDiagnosticPDF(doc, report, data);
+            doc.end();
+            return;
+        }
+
         // Header
         doc.fontSize(20).fillColor('#2c3e50').text('Agricultural Extension Report', { align: 'center' });
         doc.moveDown(0.5);
@@ -243,8 +607,6 @@ router.get('/:id/download/pdf', async (req: Request, res: Response) => {
         doc.moveDown(0.3);
         doc.fontSize(10).fillColor('#7f8c8d').text(`Generated: ${new Date(report.created_at).toLocaleString()}`, { align: 'center' });
         doc.moveDown(2);
-
-        const data = report.content as any;
 
         // Report Details
         doc.fontSize(12).fillColor('#2c3e50').text('Report Details', { underline: true });
