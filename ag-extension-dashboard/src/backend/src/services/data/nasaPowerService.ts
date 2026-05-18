@@ -85,6 +85,67 @@ export class NasaPowerService {
             throw new Error(`Failed to fetch NASA POWER data: ${error.message}`);
         }
     }
+
+    async getAgroclimateSummary(latitude: number, longitude: number, days: number = 7): Promise<any> {
+        const end = new Date();
+        end.setDate(end.getDate() - 1);
+        const start = new Date(end);
+        start.setDate(end.getDate() - Math.min(days, 30));
+
+        const formatString = (d: Date) => d.toISOString().split('T')[0].replace(/-/g, '');
+        const data = await this.fetchMeteorologicalData({
+            latitude,
+            longitude,
+            start: formatString(start),
+            end: formatString(end)
+        });
+
+        const params = data?.properties?.parameter || {};
+
+        return {
+            source: 'NASA POWER API (Agroclimatology)',
+            location: { latitude, longitude },
+            elevation: data?.geometry?.coordinates?.[2] || 'Unknown',
+            period: `${formatString(start)} to ${formatString(end)}`,
+            metrics: {
+                avg_temp_C: calculateAverage(params.T2M),
+                max_temp_C: calculateMax(params.T2M_MAX),
+                min_temp_C: calculateMin(params.T2M_MIN),
+                total_precipitation_mm: calculateSum(params.PRECTOTCORR),
+                avg_solar_irradiance: calculateAverage(params.ALLSKY_SFC_SW_DWN),
+                avg_profile_soil_moisture: calculateAverage(params.GWETPROF)
+            }
+        };
+    }
+}
+
+function validValues(dataObj?: Record<string, number>): number[] {
+    if (!dataObj) return [];
+    return Object.values(dataObj).filter(v => v !== -999 && Number.isFinite(v));
+}
+
+function calculateAverage(dataObj?: Record<string, number>): number | string {
+    const values = validValues(dataObj);
+    if (values.length === 0) return 'N/A';
+    return Number((values.reduce((a, b) => a + b, 0) / values.length).toFixed(2));
+}
+
+function calculateSum(dataObj?: Record<string, number>): number | string {
+    const values = validValues(dataObj);
+    if (values.length === 0) return 'N/A';
+    return Number(values.reduce((a, b) => a + b, 0).toFixed(2));
+}
+
+function calculateMax(dataObj?: Record<string, number>): number | string {
+    const values = validValues(dataObj);
+    if (values.length === 0) return 'N/A';
+    return Number(Math.max(...values).toFixed(2));
+}
+
+function calculateMin(dataObj?: Record<string, number>): number | string {
+    const values = validValues(dataObj);
+    if (values.length === 0) return 'N/A';
+    return Number(Math.min(...values).toFixed(2));
 }
 
 export const nasaPowerService = new NasaPowerService();

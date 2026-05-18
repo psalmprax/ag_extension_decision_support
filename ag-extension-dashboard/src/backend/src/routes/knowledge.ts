@@ -9,9 +9,16 @@ import { logger } from '@/utils/logger';
 import { authorize, UserRole } from '@/middleware/authorize';
 import { tavilyService } from '@/services/tavilyService';
 import { VectorService } from '@/services/vectorService';
+import { TropicalKnowledgeSourceService } from '@/services/data/tropicalKnowledgeSources';
+import { NasaPowerService } from '@/services/data/nasaPowerService';
+import { WeatherService } from '@/services/weatherService';
+import { FAOService } from '@/services/faoService';
+import { marketPriceService } from '@/services/marketPriceService';
+import { usageService } from '@/services/usageService';
 
 const router = Router();
 const knowledgeAdminRoles: UserRole[] = ['admin', 'regional_manager', 'extension_officer'];
+const commercialApiRoles: UserRole[] = ['admin', 'regional_manager', 'extension_officer', 'farmer'];
 
 function sanitizeKnowledgeContent(content: string, contentType: string): string {
     if (contentType !== 'html') return content;
@@ -393,6 +400,251 @@ router.get('/meta/crops', async (_req: Request, res: Response) => {
     } catch (error) {
         logger.error('Get crops error:', error);
         res.json({ success: true, data: [] });
+    }
+});
+
+// List configured static and dynamic tropical knowledge sources for the Knowledge Base menu
+router.get('/sources', async (_req: Request, res: Response) => {
+    try {
+        res.json({
+            success: true,
+            data: {
+                sources: TropicalKnowledgeSourceService.listSources(),
+                curatedArticles: TropicalKnowledgeSourceService.listArticleSeeds().map(article => ({
+                    id: article.id,
+                    title: article.title,
+                    category: article.category,
+                    crops: article.crops,
+                    regions: article.regions,
+                    source: article.source,
+                    sourceUrl: article.sourceUrl
+                }))
+            }
+        });
+    } catch (error) {
+        logger.error('Get knowledge sources error:', error);
+        res.status(500).json({ success: false, error: 'Failed to load knowledge sources' });
+    }
+});
+
+// Admin sync endpoint for curated free tropical source-backed articles
+router.post('/sources/sync-curated', authorize(knowledgeAdminRoles), async (_req: Request, res: Response) => {
+    try {
+        const result = await TropicalKnowledgeSourceService.syncCuratedArticles();
+        res.json({
+            success: true,
+            data: result,
+            message: `Synced ${result.synced} curated tropical knowledge articles into the vector knowledge base.`
+        });
+    } catch (error) {
+        logger.error('Curated tropical source sync error:', error);
+        res.status(500).json({ success: false, error: 'Failed to sync curated tropical sources' });
+    }
+});
+
+// Live context endpoint: dynamic data should augment answers without becoming static articles
+router.get('/live-context', async (req: Request, res: Response) => {
+    try {
+        const { location = 'Kenya', region = 'Kenya', crop, lat, lng, includeMarket = 'true' } = req.query;
+        const context: Record<string, any> = {
+            location,
+            region,
+            crop,
+            generatedAt: new Date().toISOString(),
+            sources: []
+        };
+
+        const tasks: Array<Promise<void>> = [];
+
+        tasks.push((async () => {
+            try {
+                context.weather = await WeatherService.getByLocation(location as string);
+                context.sources.push('weather_forecast');
+            } catch (error) {
+                context.weatherError = (error as Error).message;
+            }
+        })());
+
+        tasks.push((async () => {
+            try {
+                context.diseaseAlerts = await FAOService.getDiseaseAlerts(region as string, crop as string | undefined);
+                context.sources.push('fao_disease_alerts');
+            } catch (error) {
+                context.diseaseAlertsError = (error as Error).message;
+            }
+        })());
+
+        if (lat && lng) {
+            tasks.push((async () => {
+                try {
+                    const nasa = new NasaPowerService();
+                    context.agroclimate = await nasa.getAgroclimateSummary(parseFloat(lat as string), parseFloat(lng as string), 7);
+                    context.sources.push('nasa_power');
+                } catch (error) {
+                    context.agroclimateError = (error as Error).message;
+                }
+            })());
+        }
+
+        if (includeMarket === 'true') {
+            tasks.push((async () => {
+                try {
+                    context.marketPrices = await marketPriceService.getLatestPrices();
+                    context.sources.push('market_prices');
+                } catch (error) {
+                    context.marketPricesError = (error as Error).message;
+                }
+            })());
+        }
+
+        await Promise.all(tasks);
+        res.json({ success: true, data: context });
+    } catch (error) {
+        logger.error('Live context error:', error);
+        res.status(500).json({ success: false, error: 'Failed to load live agricultural context' });
+    }
+});
+
+// Commercial API catalog: expose sellable knowledge/API products to subscribed clients
+router.get('/commercial/catalog', async (_req: Request, res: Response) => {
+    res.json({
+        success: true,
+        data: {
+            products: [
+                {
+                    id: 'knowledge-search-api',
+                    name: 'Tropical Knowledge Search API',
+                    endpoint: 'GET /api/v1/knowledge/commercial/search',
+                    description: 'Semantic search over source-backed tropical agronomy knowledge articles.',
+                    billableUnit: '1 ai_chat credit per request',
+                    useCases: ['advisory apps', 'extension officer tools', 'crop-specific search']
+                },
+                {
+                    id: 'knowledge-ask-api',
+                    name: 'Source-Backed Advisory API',
+                    endpoint: 'POST /api/v1/knowledge/commercial/ask',
+                    description: 'RAG answer API with context citations and fallback extractive answers.',
+                    billableUnit: '1 ai_chat credit per request',
+                    useCases: ['white-label advisory chatbot', 'call center scripts', 'farmer app backend']
+                },
+                {
+                    id: 'live-context-api',
+                    name: 'Live Agricultural Context API',
+                    endpoint: 'GET /api/v1/knowledge/commercial/live-context',
+                    description: 'Weather, NASA POWER agroclimate, alerts and market context for a location/crop.',
+                    billableUnit: '1 ai_chat credit per request',
+                    useCases: ['irrigation scheduling', 'regional alerts', 'farm dashboard context']
+                }
+            ],
+            access: {
+                authentication: 'Bearer JWT from subscribed user/client account',
+                monetization: 'Uses subscription usage limits and ai_chat credits. Plans can map aiChatLimit to API request allowance.',
+                upgradeEndpoint: '/api/v1/billing/plans'
+            }
+        }
+    });
+});
+
+router.get('/commercial/search', authorize(commercialApiRoles), async (req: Request, res: Response) => {
+    try {
+        const userId = req.user!.userId;
+        if (req.user!.role !== 'admin') {
+            const limit = await usageService.checkLimit(userId, 'ai_chat');
+            if (!limit.allowed) {
+                return res.status(402).json({ success: false, error: 'API usage limit exceeded', details: limit });
+            }
+        }
+
+        const { q, category, crop, limit = '5' } = req.query;
+        if (!q) return res.status(400).json({ success: false, error: 'Query parameter q is required' });
+
+        const articles = await KnowledgeService.searchKnowledge(q as string, parseInt(limit as string), {
+            category: category as string | undefined,
+            crop: crop as string | undefined
+        });
+        await usageService.incrementUsage(userId, 'ai_chat');
+
+        res.json({
+            success: true,
+            data: {
+                query: q,
+                articles,
+                billing: { metered: true, usageType: 'ai_chat', units: 1 }
+            }
+        });
+    } catch (error) {
+        logger.error('Commercial knowledge search error:', error);
+        res.status(500).json({ success: false, error: 'Commercial knowledge search failed' });
+    }
+});
+
+router.post('/commercial/ask', authorize(commercialApiRoles), async (req: Request, res: Response) => {
+    try {
+        const userId = req.user!.userId;
+        if (req.user!.role !== 'admin') {
+            const limit = await usageService.checkLimit(userId, 'ai_chat');
+            if (!limit.allowed) {
+                return res.status(402).json({ success: false, error: 'API usage limit exceeded', details: limit });
+            }
+        }
+
+        const { question, attachments } = req.body;
+        if (!question) return res.status(400).json({ success: false, error: 'question is required' });
+
+        const answer = await KnowledgeService.askQuestion(question, userId, attachments);
+        await usageService.incrementUsage(userId, 'ai_chat');
+
+        res.json({
+            success: true,
+            data: {
+                ...answer,
+                billing: { metered: true, usageType: 'ai_chat', units: 1 }
+            }
+        });
+    } catch (error) {
+        logger.error('Commercial knowledge ask error:', error);
+        res.status(500).json({ success: false, error: 'Commercial knowledge ask failed' });
+    }
+});
+
+router.get('/commercial/live-context', authorize(commercialApiRoles), async (req: Request, res: Response) => {
+    try {
+        const userId = req.user!.userId;
+        if (req.user!.role !== 'admin') {
+            const limit = await usageService.checkLimit(userId, 'ai_chat');
+            if (!limit.allowed) {
+                return res.status(402).json({ success: false, error: 'API usage limit exceeded', details: limit });
+            }
+        }
+
+        const { location = 'Kenya', region = 'Kenya', crop, lat, lng } = req.query;
+        const context: any = { location, region, crop, generatedAt: new Date().toISOString(), sources: [] };
+
+        const [weather, alerts, prices] = await Promise.allSettled([
+            WeatherService.getByLocation(location as string),
+            FAOService.getDiseaseAlerts(region as string, crop as string | undefined),
+            marketPriceService.getLatestPrices()
+        ]);
+
+        if (weather.status === 'fulfilled') { context.weather = weather.value; context.sources.push('weather_forecast'); }
+        if (alerts.status === 'fulfilled') { context.diseaseAlerts = alerts.value; context.sources.push('fao_disease_alerts'); }
+        if (prices.status === 'fulfilled') { context.marketPrices = prices.value; context.sources.push('market_prices'); }
+
+        if (lat && lng) {
+            try {
+                const nasa = new NasaPowerService();
+                context.agroclimate = await nasa.getAgroclimateSummary(parseFloat(lat as string), parseFloat(lng as string), 7);
+                context.sources.push('nasa_power');
+            } catch (error) {
+                context.agroclimateError = (error as Error).message;
+            }
+        }
+
+        await usageService.incrementUsage(userId, 'ai_chat');
+        res.json({ success: true, data: { ...context, billing: { metered: true, usageType: 'ai_chat', units: 1 } } });
+    } catch (error) {
+        logger.error('Commercial live context error:', error);
+        res.status(500).json({ success: false, error: 'Commercial live context failed' });
     }
 });
 
