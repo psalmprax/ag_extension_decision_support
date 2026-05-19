@@ -296,6 +296,14 @@
 
 :root[data-design-mode="classic"] .card,
 :root[data-design-mode="classic"] .btn,
-:root[data-design-mode="classic"] .input {
+:root[data-design-mode="classic"] .input,
+:root[data-design-mode="classic"] .rounded,
+:root[data-design-mode="classic"] .rounded-sm,
+:root[data-design-mode="classic"] .rounded-md,
+:root[data-design-mode="classic"] .rounded-lg,
+:root[data-design-mode="classic"] .rounded-xl,
+:root[data-design-mode="classic"] .rounded-2xl,
+:root[data-design-mode="classic"] .rounded-3xl,
+:root[data-design-mode="classic"] [class*="rounded-["] {
     border-radius: 0px !important;
 }
