@@ -214,29 +214,93 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
     };
   }
 
+  private tokenize(text: string): string[] {
+    const stopwords = new Set(['on', 'of', 'and', 'the', 'with', 'a', 'or', 'in', 'to', 'for', 'at', 'by', 'from', 'is', 'are', 'was', 'were', 'be', 'an']);
+    return text
+      .toLowerCase()
+      .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, ' ')
+      .split(/\s+/)
+      .filter(word => word.length > 2 && !stopwords.has(word));
+  }
+
+  private vectorize(tokens: string[], vocab: string[], idf: Record<string, number>): number[] {
+    const tf: Record<string, number> = {};
+    for (const t of tokens) {
+      tf[t] = (tf[t] || 0) + 1;
+    }
+    return vocab.map(term => {
+      const termTf = tf[term] || 0;
+      return termTf * (idf[term] || 0);
+    });
+  }
+
+  private buildTFIDFVectors() {
+    const documents = Object.entries(PlantDiseaseService.DISEASE_DATABASE).map(([id, info]) => {
+      const tokens = this.tokenize(info.symptoms.join(' ') + ' ' + info.description);
+      return { id, tokens, info };
+    });
+
+    const vocabularySet = new Set<string>();
+    for (const doc of documents) {
+      for (const token of doc.tokens) {
+        vocabularySet.add(token);
+      }
+    }
+    const vocab = Array.from(vocabularySet);
+
+    const N = documents.length;
+    const idf: Record<string, number> = {};
+    for (const term of vocab) {
+      const df = documents.filter(doc => doc.tokens.includes(term)).length;
+      idf[term] = Math.log((N + 1) / (df + 1)) + 1;
+    }
+
+    const docVectors: Record<string, number[]> = {};
+    for (const doc of documents) {
+      docVectors[doc.id] = this.vectorize(doc.tokens, vocab, idf);
+    }
+
+    return { vocab, idf, docVectors };
+  }
+
+  private cosineSimilarity(v1: number[], v2: number[]): number {
+    let dotProduct = 0;
+    let mag1 = 0;
+    let mag2 = 0;
+    for (let i = 0; i < v1.length; i++) {
+      dotProduct += v1[i] * v2[i];
+      mag1 += v1[i] * v1[i];
+      mag2 += v2[i] * v2[i];
+    }
+    if (mag1 === 0 || mag2 === 0) return 0;
+    return dotProduct / (Math.sqrt(mag1) * Math.sqrt(mag2));
+  }
+
   async diagnoseFromSymptoms(symptoms: string[], _cropType?: string): Promise<DiseaseDiagnosis[]> {
+    const queryText = symptoms.join(' ');
+    const queryTokens = this.tokenize(queryText);
+    
+    const { vocab, idf, docVectors } = this.buildTFIDFVectors();
+    const queryVector = this.vectorize(queryTokens, vocab, idf);
+
     const diagnoses: DiseaseDiagnosis[] = [];
-    const symptomText = symptoms.join(' ').toLowerCase();
 
     for (const [diseaseId, diseaseInfo] of Object.entries(PlantDiseaseService.DISEASE_DATABASE)) {
-      let matchScore = 0;
-      const matchedSymptoms: string[] = [];
+      const docVector = docVectors[diseaseId];
+      const similarity = this.cosineSimilarity(queryVector, docVector);
 
-      for (const symptom of diseaseInfo.symptoms) {
-        if (symptomText.includes(symptom.toLowerCase().split(' ')[0])) {
-          matchScore++;
-          matchedSymptoms.push(symptom);
-        }
-      }
+      if (similarity > 0.05) {
+        const matchedSymptoms = diseaseInfo.symptoms.filter(symptom => {
+          const symptomTokens = this.tokenize(symptom);
+          return symptomTokens.some(tok => queryTokens.includes(tok));
+        });
 
-      if (matchScore > 0) {
-        const confidence = Math.min(matchScore / diseaseInfo.symptoms.length, 1);
         diagnoses.push({
           disease: diseaseId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-          confidence: Math.round(confidence * 100),
-          severity: confidence > 0.7 ? 'severe' : confidence > 0.4 ? 'moderate' : 'mild',
+          confidence: Math.round(similarity * 100),
+          severity: similarity > 0.7 ? 'severe' : similarity > 0.4 ? 'moderate' : 'mild',
           description: diseaseInfo.description,
-          symptoms: matchedSymptoms,
+          symptoms: matchedSymptoms.length > 0 ? matchedSymptoms : [diseaseInfo.symptoms[0]],
           treatment: diseaseInfo.treatment,
           prevention: diseaseInfo.prevention,
         });

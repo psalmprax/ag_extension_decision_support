@@ -14,6 +14,7 @@ import {
     Area
 } from 'recharts';
 import { TrendingUp, PieChart as PieIcon, BarChart3, Info } from 'lucide-react';
+import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
 
 const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -22,6 +23,8 @@ interface KnowledgeStatsProps {
 }
 
 export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
+    const { isModern, radiusClass } = useDesignSystemMode();
+
     if (!data) return (
         <div className="flex items-center justify-center p-20 text-gray-400">
             <div className="animate-spin w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full mr-3"></div>
@@ -45,7 +48,7 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
                     { label: 'Cached Answers', value: cachedQueries.toLocaleString(), icon: Info, color: 'text-purple-500', bg: 'bg-purple-500/10' }
                 ].map((stat, i) => (
                     <div key={i} className="card p-6 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/50 flex items-center gap-4 group hover:border-primary-500/50 transition-colors">
-                        <div className={`p-3 rounded-2xl ${stat.bg} ${stat.color} group-hover:scale-110 transition-transform`}>
+                        <div className={`p-3 ${isModern ? 'rounded-2xl' : 'rounded-none'} ${stat.bg} ${stat.color} group-hover:scale-110 transition-transform`}>
                             <stat.icon className="w-6 h-6" />
                         </div>
                         <div>
@@ -78,14 +81,14 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
                                     contentStyle={{ 
                                         backgroundColor: '#1f2937', 
                                         border: 'none', 
-                                        borderRadius: '12px',
+                                        borderRadius: isModern ? '12px' : '0px',
                                         color: '#fff',
                                         fontSize: '10px',
                                         fontWeight: 'bold',
                                         boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
                                     }}
                                 />
-                                <Bar dataKey="count" fill="#3b82f6" radius={[6, 6, 0, 0]} />
+                                <Bar dataKey="count" fill="#3b82f6" radius={isModern ? [6, 6, 0, 0] : [0, 0, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>

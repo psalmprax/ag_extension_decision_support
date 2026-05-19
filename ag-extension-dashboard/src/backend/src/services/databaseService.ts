@@ -179,8 +179,26 @@ async function syncPrismaSchema(): Promise<void> {
 export async function createTables(): Promise<void> {
   if (!pool) return;
 
-  const createTablesSQL = `
-    -- Fallback cosine similarity function
+  let hasVector = false;
+  try {
+    const res = await pool.query("SELECT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'vector') as has_vector");
+    hasVector = res.rows[0].has_vector;
+  } catch (err) {
+    logger.debug('Error checking for vector type: ' + err);
+  }
+
+  const cosineSimilaritySQL = hasVector
+    ? `
+    CREATE OR REPLACE FUNCTION cosine_similarity(a float8[], b float8[]) RETURNS float8 AS $$
+    BEGIN
+        IF a IS NULL OR b IS NULL OR array_length(a, 1) != array_length(b, 1) THEN
+            RETURN 0;
+        END IF;
+        RETURN 1 - (a::real[]::vector <=> b::real[]::vector);
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+    `
+    : `
     CREATE OR REPLACE FUNCTION cosine_similarity(a float8[], b float8[]) RETURNS float8 AS $$
     DECLARE
         dot_product float8 := 0;
@@ -201,7 +219,9 @@ export async function createTables(): Promise<void> {
         RETURN dot_product / (sqrt(mag_a) * sqrt(mag_b));
     END;
     $$ LANGUAGE plpgsql IMMUTABLE;
+    `;
 
+  const createTablesSQL = `
     -- Users table
     CREATE TABLE IF NOT EXISTS users (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -388,6 +408,7 @@ export async function createTables(): Promise<void> {
   `;
 
   try {
+    await pool.query(cosineSimilaritySQL);
     await pool.query(createTablesSQL);
     logger.info('Database tables and functions created');
   } catch (error) {

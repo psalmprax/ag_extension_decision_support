@@ -1721,7 +1721,7 @@ function App() {
                                                 contentStyle={{
                                                     backgroundColor: darkMode ? '#1f2937' : '#ffffff',
                                                     borderColor: darkMode ? '#374151' : '#f3f4f6',
-                                                    borderRadius: '12px',
+                                                    borderRadius: isModern ? '12px' : '0px',
                                                     fontSize: '12px',
                                                     fontWeight: 'bold'
                                                 }}

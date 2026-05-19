@@ -483,7 +483,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                                     <YAxis hide />
                                                     <Tooltip
                                                         contentStyle={{
-                                                            borderRadius: '16px',
+                                                            borderRadius: isModern ? '16px' : '0px',
                                                             border: 'none',
                                                             backgroundColor: isCyber ? 'rgba(0,0,0,0.8)' : undefined,
                                                             boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
