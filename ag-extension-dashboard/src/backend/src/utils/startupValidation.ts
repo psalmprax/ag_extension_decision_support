@@ -1,4 +1,4 @@
-import { config, AppConfig } from '@/config';
+import { config } from '@/config';
 import { logger } from './logger';
 
 export interface ValidationWarning {

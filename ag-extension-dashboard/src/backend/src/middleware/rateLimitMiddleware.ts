@@ -21,7 +21,7 @@ export const perUserRateLimit = rateLimit({
     keyGenerator: (req: AuthRequest) => {
         return req.user?.userId || ipKeyGenerator(req.ip || 'anonymous');
     },
-    skip: (req: AuthRequest) => {
+    skip: (_req: AuthRequest) => {
         // Skip rate limit entirely in dev/test environments
         return config.nodeEnv === 'development' || config.nodeEnv === 'test';
     },

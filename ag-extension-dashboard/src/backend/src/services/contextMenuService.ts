@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { UserRole } from '@/middleware/authorize';
 import { ContextMenu, ContextMenuItem, ContextMenuSection } from '@/types.d';
 import { logger } from '@/utils/logger';

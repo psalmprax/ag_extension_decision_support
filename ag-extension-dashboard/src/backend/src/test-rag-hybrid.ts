@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { AIProviderFactory, AIRouter } from '@/services/aiProvider/aiProvider';
 import { initializeDatabase, closeDatabase } from '@/services/databaseService';
 import { VectorService } from '@/services/vectorService';
 import { KnowledgeService } from '@/services/knowledgeService';
 import { mockKnowledgeArticles, seedKnowledgeArticles } from '@/routes/knowledge';
 import { tavilyService } from '@/services/tavilyService';
-import { logger } from '@/utils/logger';
+
 
 async function testRagHybrid() {
     console.log('=== Starting Ultra-RAG & Hybrid Search Verification with Mocks ===');
@@ -78,7 +79,7 @@ async function testRagHybrid() {
 
     // 2. Mock Tavily Service to simulate live web queries
     tavilyService.isConfigured = () => true;
-    tavilyService.search = async (query: string, numResults?: number) => {
+    tavilyService.search = async (query: string, _numResults?: number) => {
         console.log(`[Mock Tavily API] Live web search executed for query: "${query}"`);
         return {
             results: [

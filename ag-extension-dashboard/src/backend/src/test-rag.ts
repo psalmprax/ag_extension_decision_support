@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
 import { initializeDatabase } from '@/services/databaseService';
 import { VectorService } from '@/services/vectorService';
 import { KnowledgeService } from '@/services/knowledgeService';
-import { SearchResult } from '@/services/vectorService';
+
 import { mockKnowledgeArticles } from '@/routes/knowledge';
-import { logger } from '@/utils/logger';
+
 
 async function testRAG() {
     console.log('--- Starting RAG Verification ---');

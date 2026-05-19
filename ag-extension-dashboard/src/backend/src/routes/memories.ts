@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, Request, Response } from 'express';
 import { authorize } from '@/middleware/authorize';
 import { persistentMemory } from '@/services/persistentMemory';
@@ -41,7 +42,7 @@ router.get('/summary', authorize(['admin']), async (req: Request, res: Response)
 // Store a new memory
 router.post('/', authorize(['admin', 'farmer']), async (req: Request, res: Response) => {
     try {
-        const { category, key, value, importance } = req.body;
+        const { category, key, value } = req.body;
         const userId = (req as any).user?.userId || 'system';
 
         if (!category || !key || !value) {

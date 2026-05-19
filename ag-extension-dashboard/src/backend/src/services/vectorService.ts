@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { AIRouter } from '@/services/aiProvider/aiProvider';
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';

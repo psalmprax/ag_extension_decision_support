@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import express, { Router } from 'express';
 import { paymentService } from '../services/paymentService';
 import { systemConfigService } from '../services/systemConfigService';

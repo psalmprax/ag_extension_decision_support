@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, Request, Response } from 'express';
 import { whatsappService } from '../services/whatsappService';
 import { authorize, AuthRequest } from '@/middleware/authorize';
@@ -185,7 +186,7 @@ router.get('/status', async (_req: Request, res: Response) => {
  */
 router.post('/webhook', async (req: Request, res: Response) => {
     try {
-        const { From, Body, MessageSid } = req.body;
+        const { From, Body } = req.body;
 
         logger.info(`WhatsApp webhook received: from=${From}, message=${Body?.substring(0, 100)}`);
 

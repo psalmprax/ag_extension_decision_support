@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Stripe from 'stripe';
 import paypal from 'paypal-rest-sdk';
 

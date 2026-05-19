@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, Request, Response } from 'express';
 import { toolRegistry, toolMap } from '@/tools/registry';
 import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
@@ -170,7 +171,7 @@ export function createMCPRouter(): Router {
 
   router.post('/message', async (req: Request, res: Response) => {
     try {
-      const { message, tools, model, stream } = req.body;
+      const { message, tools } = req.body;
 
       if (!message) {
         return res.status(400).json({ error: 'message is required' });

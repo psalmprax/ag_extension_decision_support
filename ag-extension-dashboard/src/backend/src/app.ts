@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -13,7 +14,7 @@ import { securityGate } from './middleware/securityGate';
 import { setupSwagger } from './utils/swagger';
 import { getPool } from './services/databaseService';
 import { getCache } from './services/cacheService';
-import { persistentMemory } from './services/persistentMemory';
+
 import { perUserRateLimit } from './middleware/rateLimitMiddleware';
 import { optionalAuth } from './middleware/authorize';
 import { AIProviderFactory } from './services/aiProvider/aiProvider';
@@ -169,7 +170,7 @@ const healthHandler = async (_req: Request, res: Response) => {
                         fallbackActiveName = p.provider;
                         break;
                     }
-                } catch {}
+                } catch { /* provider unavailable */ }
             }
         }
 
@@ -293,6 +294,7 @@ app.use('/api/v1/commercial/knowledge', commercialKnowledgeRoutes);
 let mcpRouter: any = null;
 try {
   // Import synchronously for Docker deployment
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { createMCPRouter } = require('./services/mcpAdapter');
   mcpRouter = createMCPRouter();
 } catch (error) {

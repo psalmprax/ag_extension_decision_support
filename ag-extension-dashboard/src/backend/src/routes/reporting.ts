@@ -6,7 +6,6 @@ import { logger } from '@/utils/logger';
 import { authorize, AuthRequest } from '@/middleware/authorize';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { usageService } from '../services/usageService';
-import { bulkOperationsService } from '@/services/bulkOperationsService';
 import PDFDocument from 'pdfkit';
 import * as XLSX from 'xlsx';
 
@@ -74,7 +73,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 // Generate report
 router.post('/generate', checkUsageLimit('report'), async (req: AuthRequest, res: Response) => {
     try {
-        const { type, startDate, endDate, officerId, region, title, farmerId } = req.body;
+        const { type, startDate, endDate, officerId, region, title } = req.body;
         const pool = getPool();
 
         // Use default date range if not provided (last 30 days)

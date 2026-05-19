@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
 import { initializeDatabase, query } from '@/services/databaseService';
 import { KnowledgeService } from '@/services/knowledgeService';
