@@ -46,7 +46,7 @@ services:
       - AI_PRIMARY_MODEL=${AI_PRIMARY_MODEL:-gpt-4o}
       - AI_EMBEDDINGS_PROVIDER=${AI_EMBEDDINGS_PROVIDER:-openai}
       - OLLAMA_HOST=${OLLAMA_HOST:-http://ettametta-ollama:11434}
-      - OLLAMA_MODEL=${OLLAMA_MODEL:-hermes3:latest}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.2:3b}
       - AI_FALLBACK_PROVIDER=${AI_FALLBACK_PROVIDER:-ollama}
     depends_on:
       - app-db
@@ -75,10 +75,26 @@ services:
     networks:
       - ag-network
 
+  ettametta-ollama:
+    image: ollama/ollama:latest
+    container_name: ettametta-ollama
+    ports:
+      - "11435:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+      - OLLAMA_KEEP_ALIVE=5m
+    entrypoint: /bin/sh -c "ollama serve & sleep 10 && ollama pull llama3.2:3b && wait"
+    restart: unless-stopped
+    networks:
+      - ag-network
+      - ettametta_ettametta
+
 volumes:
   postgres_data:
   redis_data:
-
+  ollama_data:
 
 networks:
   ag-network:
