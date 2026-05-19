@@ -16,6 +16,7 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { useAppStore } from '@/store/useAppStore';
 import { logout as apiLogout } from '@/api/authService';
+import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
 
 interface KnowledgeSidebarProps {
     isOpen: boolean;
@@ -33,6 +34,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
     onNewQuery
 }) => {
     const { user } = useAppStore();
+    const { isModern, radiusClass } = useDesignSystemMode();
 
     const handleLogout = async () => {
         await apiLogout();
@@ -50,7 +52,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
                 {/* New Search Button */}
                 <button 
                     onClick={() => onNewQuery ? onNewQuery() : window.location.reload()}
-                    className="flex items-center gap-2 w-full p-4 mb-8 bg-primary-600 hover:bg-primary-700 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-primary-500/20 transition-all transform active:scale-95"
+                    className={`flex items-center gap-2 w-full p-4 mb-8 bg-primary-600 hover:bg-primary-700 text-white ${radiusClass} font-black text-sm uppercase tracking-widest shadow-lg shadow-primary-500/20 transition-all transform active:scale-95`}
                 >
                     <Plus className="w-5 h-5" />
                     New Expert Query
@@ -77,10 +79,10 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
                                     animate={{ opacity: 1, x:0 }}
                                     transition={{ delay: i * 0.05 }}
                                     onClick={() => onSelect(h)}
-                                    className="w-full text-left p-4 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 group transition-all border border-transparent hover:border-primary-500/10"
+                                    className={`w-full text-left p-4 ${radiusClass} hover:bg-gray-50 dark:hover:bg-gray-800 group transition-all border border-transparent hover:border-primary-500/10`}
                                 >
                                     <div className="flex items-start gap-4">
-                                        <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-xl group-hover:bg-primary-500/10 group-hover:text-primary-500 transition-colors">
+                                        <div className={`p-2 bg-gray-100 dark:bg-gray-800 ${isModern ? 'rounded-xl' : 'rounded-none'} group-hover:bg-primary-500/10 group-hover:text-primary-500 transition-colors`}>
                                             <MessageSquare className="w-4 h-4" />
                                         </div>
                                         <div className="flex-1 min-w-0">
@@ -109,7 +111,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
 
                 {/* Sidebar Footer */}
                 <div className="mt-auto pt-6 border-t border-gray-100 dark:border-gray-800 flex items-center gap-4 px-2">
-                    <div className="w-10 h-10 bg-indigo-500 rounded-2xl flex items-center justify-center text-white font-black">
+                    <div className={`w-10 h-10 bg-indigo-500 ${radiusClass} flex items-center justify-center text-white font-black`}>
                         {user ? (
                             <span className="text-sm font-bold">{user.firstName?.[0]}{user.lastName?.[0]}</span>
                         ) : (

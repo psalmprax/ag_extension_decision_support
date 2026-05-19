@@ -23,7 +23,7 @@ interface ThemeProviderProps {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const { designVariant } = useFeatureFlags();
-  const { themeName, darkMode } = useAppStore();
+  const { themeName, darkMode, designSystemMode } = useAppStore();
 
   useEffect(() => {
     // Determine the active theme based on design variant
@@ -57,8 +57,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     
     // Track variant in data attribute for CSS selectors
     root.setAttribute('data-design-variant', designVariant);
+    root.setAttribute('data-design-mode', designSystemMode);
     
-  }, [designVariant, themeName, darkMode]);
+  }, [designVariant, themeName, darkMode, designSystemMode]);
 
   return (
     <ThemeContext.Provider value={{ variant: designVariant }}>

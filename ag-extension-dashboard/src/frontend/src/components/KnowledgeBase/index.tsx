@@ -175,8 +175,8 @@ export const KnowledgeBase: React.FC = () => {
 
                     {/* Premium Search Bar */}
                     <div className="relative group mb-12">
-                        <div className="absolute -inset-1 bg-gradient-to-r from-primary-600 to-indigo-600 blur opacity-20 group-hover:opacity-40 transition-opacity" style={{ borderRadius: 'calc(var(--radius-card) + 4px)' }}></div>
-                        <div className="relative bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/50 p-1.5 shadow-2xl" style={{ borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-premium)' }}>
+                        <div className="absolute -inset-1 bg-gradient-to-r from-primary-600 to-indigo-600 blur opacity-20 group-hover:opacity-40 transition-opacity" style={{ borderRadius: isModern ? 'calc(var(--radius-card) + 4px)' : '0px' }}></div>
+                        <div className="relative bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/50 p-1.5 shadow-2xl" style={{ borderRadius: isModern ? 'var(--radius-card)' : '0px', boxShadow: isModern ? 'var(--shadow-premium)' : 'none' }}>
                             {/* Attachment Previews */}
                             {attachments.length > 0 && (
                                 <div className="flex flex-wrap gap-2 px-4 py-3 border-b border-gray-100 dark:border-gray-700/50">
@@ -291,7 +291,7 @@ export const KnowledgeBase: React.FC = () => {
 
                                     {/* New Visual Intelligence Layer */}
                                     {(lastResult.visuals || lastResult.audio) && (
-                                        <div className="mt-12 mb-16 p-1 bg-gradient-to-br from-primary-500/5 to-transparent rounded-[2.5rem] border border-primary-500/10">
+                                        <div className={`mt-12 mb-16 p-1 bg-gradient-to-br from-primary-500/5 to-transparent ${isModern ? 'rounded-[2.5rem]' : 'rounded-none'} border border-primary-500/10`}>
                                             <ReasoningVisuals visuals={lastResult.visuals} audio={lastResult.audio} />
                                         </div>
                                     )}
@@ -328,7 +328,7 @@ export const KnowledgeBase: React.FC = () => {
                                             handleSearch(suggestion);
                                         }}
                                         className="p-6 bg-theme-bg-card border border-gray-100 dark:border-gray-700 hover:border-primary-500 transition-all text-left flex items-start gap-4 group"
-                                        style={{ borderRadius: 'var(--radius-card)' }}
+                                        style={{ borderRadius: isModern ? 'var(--radius-card)' : '0px' }}
                                     >
                                         <div className={`p-2 bg-gray-100 dark:bg-gray-700 ${radiusClass} group-hover:bg-primary-500 group-hover:text-white transition-colors`}>
                                             <Lightbulb className="w-5 h-5" />

@@ -288,3 +288,14 @@
         font-family: 'Space Grotesk', sans-serif;
     }
 }
+
+/* Classic Design System Mode Overrides */
+:root[data-design-mode="classic"] {
+    --radius-card: 0px !important;
+}
+
+:root[data-design-mode="classic"] .card,
+:root[data-design-mode="classic"] .btn,
+:root[data-design-mode="classic"] .input {
+    border-radius: 0px !important;
+}
