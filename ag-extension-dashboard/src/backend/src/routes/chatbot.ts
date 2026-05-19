@@ -9,7 +9,6 @@ import { authorize, AuthRequest } from '@/middleware/authorize';
 import { usageService } from '../services/usageService';
 import { aegisShield } from '@/services/security/aegisShield';
 import { sanitizeToolResult } from '@/middleware/securityGate';
-import { skillVetter } from '@/services/security/skillVetter';
 import { agentTelemetry } from '@/services/agentTelemetry';
 
 const router = Router();

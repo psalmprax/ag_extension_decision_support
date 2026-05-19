@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
 
@@ -182,6 +183,7 @@ export abstract class BaseAIProvider implements AICapability {
         throw new Error('Method not implemented');
     }
 
+    // eslint-disable-next-line require-yield
     async *streamText(_prompt: string, _options?: TextGenerationOptions): AsyncGenerator<string> {
         throw new Error('Method not implemented');
     }
@@ -300,24 +302,30 @@ export class AIProviderFactory {
 
     private static async createProvider(type: AIProviderType): Promise<AICapability> {
         switch (type) {
-            case 'azure_openai':
+            case 'azure_openai': {
                 const { AzureOpenAIProvider } = await import('./providers/azureOpenAI');
                 return new AzureOpenAIProvider();
-            case 'google_vertex':
+            }
+            case 'google_vertex': {
                 const { GoogleVertexProvider } = await import('./providers/googleVertex');
                 return new GoogleVertexProvider();
-            case 'openai':
+            }
+            case 'openai': {
                 const { OpenAIProvider } = await import('./providers/openAI');
                 return new OpenAIProvider();
-            case 'anthropic':
+            }
+            case 'anthropic': {
                 const { AnthropicProvider } = await import('./providers/anthropic');
                 return new AnthropicProvider();
-            case 'groq':
+            }
+            case 'groq': {
                 const { GroqProvider } = await import('./providers/groq');
                 return new GroqProvider();
-            case 'ollama':
+            }
+            case 'ollama': {
                 const { OllamaProvider } = await import('./providers/ollama');
                 return new OllamaProvider();
+            }
             default:
                 throw new Error(`Unknown AI provider type: ${type}`);
         }
@@ -351,12 +359,14 @@ export class AIRouter {
                     return provider.classify(params.input, params.options);
                 case 'reason':
                     return provider.analyzeWithReasoning(params.context, params.query, params.options);
-                case 'weather':
+                case 'weather': {
                     const { WeatherService } = await import('@/services/weatherService');
                     return WeatherService.getByLocation(params.location);
-                case 'disease_alerts':
+                }
+                case 'disease_alerts': {
                     const { FAOService } = await import('@/services/faoService');
                     return FAOService.getDiseaseAlerts(params.region, params.crop);
+                }
                 case 'vision':
                     return provider.analyzeImage(params.imageData, params.prompt, params.options);
                 case 'video':

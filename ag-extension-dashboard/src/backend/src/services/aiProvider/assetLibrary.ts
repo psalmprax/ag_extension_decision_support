@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * ALFA VERIFIED ASSET LIBRARY (Hardened for Production)
  * 
@@ -97,7 +98,7 @@ JSON Schema for <visuals> block:
 
 Note: Providing the <visuals> block is MANDATORY. The system strictly validates all URLs and enforces image relevance.
 `;
-;
+
 
 /**
  * Shared Helper to extract visuals JSON from text

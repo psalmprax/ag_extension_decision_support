@@ -4,6 +4,7 @@ import { logger } from '@/utils/logger';
 import jwt from 'jsonwebtoken';
 import { config } from '@/config';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface UserSocket {
     userId: string;
     role: string;

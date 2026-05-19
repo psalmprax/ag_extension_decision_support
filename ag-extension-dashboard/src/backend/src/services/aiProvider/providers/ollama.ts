@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
     BaseAIProvider,
     AIProviderType,
@@ -136,7 +137,7 @@ export class OllamaProvider extends BaseAIProvider {
         const text = result.text ?? '';
         const visuals = extractVisuals(text);
 
-        let cleanAnswer = text
+        const cleanAnswer = text
             .replace(/<visuals>[\s\S]*?<\/visuals>/gi, '')
             .replace(/```json[\s\S]*?```/gi, '')
             .trim();

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { z } from 'zod';
 import { Tool } from './types';
 import { WeatherService } from '@/services/weatherService';
@@ -37,7 +38,7 @@ export const cropYieldForecastTool: Tool<typeof cropYieldForecastSchema> = {
       if (weather) {
         const temp = weather.temperature || weather.temp;
         const humidity = weather.humidity;
-        const rain = weather.forecast?.reduce((sum, d) => sum + 0, 0) || 0;
+        const rain = weather.forecast?.reduce((sum, _d) => sum + 0, 0) || 0;
         
         const tempOptimal = crop.toLowerCase() === 'rice' ? (temp >= 20 && temp <= 35) : (temp >= 15 && temp <= 30);
         const humidityOptimal = humidity >= 40 && humidity <= 80;

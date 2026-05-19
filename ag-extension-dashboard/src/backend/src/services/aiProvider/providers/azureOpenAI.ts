@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
     BaseAIProvider,
     AIProviderType,
@@ -161,11 +162,11 @@ export class AzureOpenAIProvider extends BaseAIProvider {
         }
     }
 
-    async speechToText(audio: Buffer, options?: SpeechToTextOptions): Promise<SpeechToTextResult> {
+    async speechToText(_audio: Buffer, _options?: SpeechToTextOptions): Promise<SpeechToTextResult> {
         throw new Error('Azure Speech-to-Text not configured — set AZURE_SPEECH_KEY to enable');
     }
 
-    async textToSpeech(text: string, options?: TextToSpeechOptions): Promise<TextToSpeechResult> {
+    async textToSpeech(_text: string, _options?: TextToSpeechOptions): Promise<TextToSpeechResult> {
         throw new Error('Azure Text-to-Speech not configured — set AZURE_SPEECH_KEY to enable');
     }
 

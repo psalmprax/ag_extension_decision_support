@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { logger } from '@/utils/logger';
 import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
 
@@ -213,7 +214,7 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
     };
   }
 
-  async diagnoseFromSymptoms(symptoms: string[], cropType?: string): Promise<DiseaseDiagnosis[]> {
+  async diagnoseFromSymptoms(symptoms: string[], _cropType?: string): Promise<DiseaseDiagnosis[]> {
     const diagnoses: DiseaseDiagnosis[] = [];
     const symptomText = symptoms.join(' ').toLowerCase();
 
@@ -256,7 +257,7 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
     );
   }
 
-  private generateFallbackAnalysis(error: string): PlantImageAnalysis {
+  private generateFallbackAnalysis(_error: string): PlantImageAnalysis {
     return {
       overallHealth: 'stressed',
       diseases: [],

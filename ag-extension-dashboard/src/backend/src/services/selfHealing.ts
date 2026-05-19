@@ -1,5 +1,5 @@
 import { logger } from '@/utils/logger';
-import { AIProviderFactory, AIProviderType } from '@/services/aiProvider/aiProvider';
+import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
 
 export interface HealthCheck {
   component: string;

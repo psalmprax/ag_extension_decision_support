@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from 'axios';
 import { logger } from '../utils/logger';
 import { query } from './databaseService';

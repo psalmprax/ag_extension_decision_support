@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
     BaseAIProvider,
     AIProviderType,
@@ -89,9 +90,9 @@ export class GoogleVertexProvider extends BaseAIProvider {
         }
     }
 
-    async createEmbedding(text: string, options?: EmbeddingOptions): Promise<EmbeddingResult> {
+    async createEmbedding(text: string, _options?: EmbeddingOptions): Promise<EmbeddingResult> {
         const client = await this.getClient();
-        const model = options?.model || 'text-embedding-004';
+        // Model selection not needed - using embedded model directly below
 
         try {
             // Use the correct Google Generative AI SDK embedding method

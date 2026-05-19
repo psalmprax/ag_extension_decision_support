@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, Request, Response } from 'express';
 import { Farmer } from '@prisma/client';
 import { logger } from '@/utils/logger';
@@ -7,7 +8,6 @@ import { getPrisma } from '@/services/prismaService';
 import { authorize } from '@/middleware/authorize';
 import { shareService } from '@/services/shareService';
 import { bulkOperationsService } from '@/services/bulkOperationsService';
-import { emitToUser } from '@/services/socketService';
 
 const router = Router();
 

@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { authorize, AuthRequest } from '@/middleware/authorize';
+import { authorize } from '@/middleware/authorize';
 import { agentOrchestrator } from '@/services/agentOrchestrator';
 import { logger } from '@/utils/logger';
 
