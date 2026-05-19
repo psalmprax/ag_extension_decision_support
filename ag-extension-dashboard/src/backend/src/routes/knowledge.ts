@@ -1139,7 +1139,7 @@ router.post('/ingest', authorize(knowledgeAdminRoles), knowledgeUpload.single('f
         let content = '';
 
         if (ext === '.pdf') {
-            // @ts-ignore
+            // @ts-expect-error pdf-parse has no TypeScript types
             const pdfParse = await import('pdf-parse');
             const buffer = fs.readFileSync(filePath);
             const pdfData = await pdfParse.default(buffer);
