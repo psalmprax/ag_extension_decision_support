@@ -127,6 +127,7 @@
   "common_cancel": "Cancel",
   "common_close": "Close",
   "common_delete": "Delete",
+  "common_download": "Download",
   "common_edit": "Edit",
   "common_error": "Error",
   "common_export": "Export",
@@ -583,18 +584,8 @@
 
   "email_workflows_edit": "Edit",
   "email_workflows_no_templates_found": "No email templates found",
-  "email_workflows_no_templates_category": "No templates in this category",
-  "email_workflows_create_first": "Start by creating your first email template",
   "email_workflows_pending_approval": "Pending Approval",
   "email_workflows_to": "To:",
   "email_workflows_review_email": "Review Email",
-  "email_workflows_subject": "Subject",
-  "email_workflows_recipients": "Recipients",
-  "email_workflows_content": "Content",
-  "email_workflows_review_comment": "Review Comment (Optional)",
-  "email_workflows_add_comment": "Add a comment for your decision...",
-  "email_workflows_approving": "Approving...",
-  "email_workflows_approve_send": "Approve & Send",
-  "email_workflows_rejecting": "Rejecting...",
-  "email_workflows_reject": "Reject"
+  "email_workflows_add_comment": "Add a comment for your decision..."
 }
