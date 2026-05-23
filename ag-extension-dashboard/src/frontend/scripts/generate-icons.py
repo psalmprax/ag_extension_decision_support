@@ -36,12 +36,12 @@ def create_icon(size):
     # Left leaf (rotated -25 degrees)
     ll_cx = cx - leaf_w * 0.30
     ll_cy = cy - leaf_h * 0.05
-    _draw_leaf(img, draw, ll_cx, ll_cy, leaf_w, leaf_h, -25, leaf1_color)
+    _draw_leaf(img, ll_cx, ll_cy, leaf_w, leaf_h, -25, leaf1_color)
 
     # Right leaf (rotated +25 degrees)
     rl_cx = cx + leaf_w * 0.30
     rl_cy = cy - leaf_h * 0.05
-    _draw_leaf(img, draw, rl_cx, rl_cy, leaf_w, leaf_h, 25, leaf2_color)
+    _draw_leaf(img, rl_cx, rl_cy, leaf_w, leaf_h, 25, leaf2_color)
 
     # Stem
     stem_top = cy + leaf_h * 0.15
@@ -62,12 +62,8 @@ def create_icon(size):
     return img
 
 
-def _draw_leaf(img, draw, cx, cy, w, h, angle_deg, color):
+def _draw_leaf(img, cx, cy, w, h, angle_deg, color):
     """Draw a leaf shape (teardrop/oval) at given position and angle."""
-    angle = math.radians(angle_deg)
-    cos_a = math.cos(angle)
-    sin_a = math.sin(angle)
-
     # Create a temporary image for the leaf
     leaf_r = max(w, h) * 0.6
     leaf_size = int(leaf_r * 2.5) + 4
