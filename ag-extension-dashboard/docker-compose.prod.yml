@@ -51,8 +51,6 @@ services:
     build:
       context: ./src/frontend
       target: production
-    ports:
-      - "7503:80"
     labels:
       # Routes: HTTPS entrypoint + Let's Encrypt TLS
       - "traefik.http.routers.frontend.entrypoints=web,websecure"
