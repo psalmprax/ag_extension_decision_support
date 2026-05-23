@@ -48,6 +48,9 @@ services:
       # Routes: HTTPS entrypoint + Let's Encrypt TLS
       - "traefik.http.routers.backend.entrypoints=web,websecure"
       - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
+      # Secondary router: localhost/IP on HTTP only (for health checks / debugging)
+      - "traefik.http.routers.backend-local.rule=(Host(`localhost`) || Host(`145.223.97.248`)) && (PathPrefix(`/api`) || PathPrefix(`/api-docs`) || PathPrefix(`/socket.io`) || PathPrefix(`/health`))"
+      - "traefik.http.routers.backend-local.entrypoints=web"
 
   frontend:
     build:
@@ -59,6 +62,9 @@ services:
       # Routes: HTTPS entrypoint + Let's Encrypt TLS
       - "traefik.http.routers.frontend.entrypoints=web,websecure"
       - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
+      # Secondary router: localhost/IP on HTTP only (for health checks / debugging)
+      - "traefik.http.routers.frontend-local.rule=Host(`localhost`) || Host(`145.223.97.248`)"
+      - "traefik.http.routers.frontend-local.entrypoints=web"
 
 volumes:
   traefik_letsencrypt:
