@@ -52,8 +52,6 @@ services:
       # Router 3: localhost/IP on HTTP only (for health checks / debugging)
       - "traefik.http.routers.backend-local.rule=(Host(`localhost`) || Host(`145.223.97.248`)) && (PathPrefix(`/api`) || PathPrefix(`/api-docs`) || PathPrefix(`/socket.io`) || PathPrefix(`/health`))"
       - "traefik.http.routers.backend-local.entrypoints=web"
-      # HTTP→HTTPS redirect middleware
-      - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
 
   frontend:
     build:
