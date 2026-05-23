@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="leaf-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#16a34a"/>
+      <stop offset="100%" stop-color="#22c55e"/>
+    </linearGradient>
+    <linearGradient id="stem-grad" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#15803d"/>
+      <stop offset="100%" stop-color="#16a34a"/>
+    </linearGradient>
+  </defs>
+  <!-- Background circle -->
+  <circle cx="16" cy="16" r="15" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.5"/>
+  <!-- Leaf -->
+  <path d="M16 18 C16 14, 12 10, 8 12 C6 13, 6 16, 8 18 C10 20, 14 20, 16 18Z" 
+        fill="url(#leaf-grad)" transform="rotate(-15, 12, 15)"/>
+  <!-- Second leaf -->
+  <path d="M16 18 C16 14, 20 10, 24 12 C26 13, 26 16, 24 18 C22 20, 18 20, 16 18Z" 
+        fill="url(#leaf-grad)" transform="rotate(15, 20, 15)"/>
+  <!-- Stem -->
+  <path d="M16 18 L16 26" stroke="url(#stem-grad)" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Small dot/seed at bottom -->
+  <circle cx="16" cy="26" r="1.5" fill="#15803d"/>
+</svg>
