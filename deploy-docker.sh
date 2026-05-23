@@ -31,7 +31,7 @@ docker network create ag-network || true
 
 # 2.5 Force Remove conflicting containers (Hardening)
 echo "🛡️ Cleaning up any conflicting container names..."
-docker rm -f ag-dashboard-db ag-dashboard-redis ag-dashboard-backend ag-dashboard-frontend ag-crew-ai ag-agent-zero || true
+docker rm -f ag-dashboard-db ag-dashboard-redis ag-dashboard-backend ag-dashboard-frontend ag-crew-ai ag-agent-zero ag-traefik || true
 
 # 3. Deep Clean (Clear volumes and stop containers)
 echo "🧹 Performing Deep Clean (Removing volumes to purge stale cache)..."

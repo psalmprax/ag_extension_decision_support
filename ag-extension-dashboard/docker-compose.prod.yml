@@ -1,0 +1,62 @@
+# ============================================================
+# Production Override — HTTPS + Let's Encrypt + Nginx Frontend
+# ============================================================
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+#     -f docker-compose.agents.yml up -d --build
+#
+# Ensure these are set in .env:
+#   ACME_EMAIL=admin@gpexts.com     (required for Let's Encrypt)
+#   DOMAIN=www.gpexts.com           (your production domain)
+#
+# Architecture:
+#   www.gpexts.com:443 ─→ Traefik ─→ frontend:80 (Nginx, SPA)
+#                        ─→ Traefik ─→ backend:3001 (API)
+#   HTTP :80 redirects to HTTPS :443
+# ============================================================
+
+services:
+  traefik:
+    command:
+      # Docker provider
+      - "--providers.docker=true"
+      - "--providers.docker.exposedByDefault=false"
+      - "--providers.docker.network=ag-network"
+      # HTTP entrypoint (redirects to HTTPS)
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      # HTTPS entrypoint with Let's Encrypt
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_letsencrypt:/letsencrypt
+    networks:
+      - ag-network
+    restart: always
+
+  backend:
+    labels:
+      # Routes: HTTPS entrypoint + Let's Encrypt TLS
+      - "traefik.http.routers.backend.entrypoints=web,websecure"
+      - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
+
+  frontend:
+    build:
+      context: ./src/frontend
+      target: production
+    ports:
+      - "7503:80"
+    labels:
+      # Routes: HTTPS entrypoint + Let's Encrypt TLS
+      - "traefik.http.routers.frontend.entrypoints=web,websecure"
+      - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
+
+volumes:
+  traefik_letsencrypt:
