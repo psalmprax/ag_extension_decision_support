@@ -53,6 +53,10 @@ services:
       # - "--api.debug=false"
     ports:
       - "80:80"
+    environment:
+      # Explicit Docker API version — fixes "client version too old" errors
+      # on servers with Docker Engine 25+ (API v1.44+)
+      - DOCKER_API_VERSION=1.40
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
