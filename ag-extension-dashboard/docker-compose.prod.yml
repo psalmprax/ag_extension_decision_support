@@ -43,6 +43,8 @@ services:
 
   backend:
     labels:
+      # Override router rule — only production domain (Let's Encrypt rejects IPs)
+      - "traefik.http.routers.backend.rule=(Host(`${DOMAIN:-www.gpexts.com}`)) && (PathPrefix(`/api`) || PathPrefix(`/api-docs`) || PathPrefix(`/socket.io`) || PathPrefix(`/health`))"
       # Routes: HTTPS entrypoint + Let's Encrypt TLS
       - "traefik.http.routers.backend.entrypoints=web,websecure"
       - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
@@ -52,6 +54,8 @@ services:
       context: ./src/frontend
       target: production
     labels:
+      # Override router rule — only production domain (Let's Encrypt rejects IPs)
+      - "traefik.http.routers.frontend.rule=Host(`${DOMAIN:-www.gpexts.com}`)"
       # Routes: HTTPS entrypoint + Let's Encrypt TLS
       - "traefik.http.routers.frontend.entrypoints=web,websecure"
       - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
