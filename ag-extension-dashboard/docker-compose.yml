@@ -39,7 +39,9 @@ services:
   #   DOMAIN=www.gpexts.com     (default)
   # ============================================================
   traefik:
-    image: traefik:v3.0
+    # v3.7+ required for Docker Engine 29+ (API 1.54). v3.0 is hardcoded
+    # to API 1.24 and fails with "client version too old".
+    image: traefik:v3.7
     container_name: ag-traefik
     command:
       # Docker provider — auto-discovers services via labels
@@ -53,10 +55,6 @@ services:
       # - "--api.debug=false"
     ports:
       - "80:80"
-    environment:
-      # Explicit Docker API version — fixes "client version too old" errors
-      # on servers with Docker Engine 25+ (API v1.44+)
-      - DOCKER_API_VERSION=1.40
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:

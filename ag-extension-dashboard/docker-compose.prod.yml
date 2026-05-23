@@ -31,9 +31,6 @@ services:
       - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
       - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
       - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
-    environment:
-      # Explicit Docker API version — fixes "client version too old" errors
-      - DOCKER_API_VERSION=1.40
     ports:
       - "80:80"
       - "443:443"
