@@ -214,6 +214,212 @@ export class KnowledgeService {
             }
         }
 
+        // Detect crop and location context for real-time APIs
+        const cropKeywords = ['maize', 'cassava', 'beans', 'rice', 'banana', 'plantain', 'cocoa', 'coffee', 'yam', 'cowpea', 'soybean', 'groundnut', 'sorghum', 'millet', 'vegetables'];
+        let finalCrop = cropKeywords.find(c => queryText.toLowerCase().includes(c));
+        let finalLocation = 'Kenya';
+        let finalRegion = 'Kenya';
+        let finalLat: number | undefined = undefined;
+        let finalLng: number | undefined = undefined;
+
+        if (userId) {
+            try {
+                const userResult = await query('SELECT region FROM users WHERE id = $1', [userId]);
+                if (userResult.rows.length > 0 && userResult.rows[0].region) {
+                    finalRegion = userResult.rows[0].region;
+                    finalLocation = userResult.rows[0].region;
+                }
+
+                const farmersResult = await query(`
+                    SELECT location, region, location_lat, location_lng, crops 
+                    FROM farmers 
+                    WHERE assigned_officer_id = $1 OR user_id = $1
+                    LIMIT 5
+                `, [userId]);
+
+                if (farmersResult.rows.length > 0) {
+                    const firstFarmer = farmersResult.rows[0];
+                    if (!finalCrop) {
+                        const allCrops = farmersResult.rows.flatMap((f: any) => f.crops || []);
+                        if (allCrops.length > 0) {
+                            finalCrop = allCrops[0];
+                        }
+                    }
+                    if (firstFarmer.location) {
+                        finalLocation = firstFarmer.location;
+                    }
+                    if (firstFarmer.region) {
+                        finalRegion = firstFarmer.region;
+                    }
+                    if (firstFarmer.location_lat && firstFarmer.location_lng) {
+                        finalLat = parseFloat(firstFarmer.location_lat);
+                        finalLng = parseFloat(firstFarmer.location_lng);
+                    }
+                }
+            } catch (err) {
+                logger.error('Error fetching context metadata for user/farmer:', err);
+            }
+        }
+
+        const liveContextResults: SearchResult[] = [];
+        const tasks: Array<Promise<void>> = [];
+
+        // A. Weather Forecast
+        tasks.push((async () => {
+            try {
+                const { WeatherService } = await import('@/services/weatherService');
+                const weather = await WeatherService.getByLocation(finalLocation);
+                if (weather) {
+                    const temp = weather.temperature ?? weather.temp;
+                    const condition = weather.condition || 'Clear';
+                    const wind = weather.windSpeed;
+                    
+                    let forecastText = 'No forecast data';
+                    if (weather.forecast && Array.isArray(weather.forecast)) {
+                        forecastText = weather.forecast.map(f => {
+                            return `  - ${f.date}: Max ${f.maxTemp}°C, Min ${f.minTemp}°C, ${f.condition}`;
+                        }).join('\n');
+                    }
+                    
+                    liveContextResults.push({
+                        id: `live-weather-${Date.now()}`,
+                        content: `Live Weather for ${finalLocation}:
+- Current Temp: ${temp !== undefined ? temp : 'N/A'}°C
+- Description: ${condition}
+- Wind Speed: ${wind !== undefined ? wind : 'N/A'} km/h
+- 3-Day Forecast:
+${forecastText}`,
+                        metadata: {
+                            title: `Live Weather Forecast for ${finalLocation}`,
+                            category: 'Weather Forecast',
+                            crop: finalCrop || 'All',
+                            sourceUrl: 'https://open-meteo.com',
+                            contentType: 'text'
+                        },
+                        score: 1.0
+                    });
+                }
+            } catch (err) {
+                logger.warn('Failed to fetch weather in askQuestion:', err);
+            }
+        })());
+
+        // B. FAO Alerts
+        tasks.push((async () => {
+            try {
+                const { FAOService } = await import('@/services/faoService');
+                const alerts = await FAOService.getDiseaseAlerts(finalRegion, finalCrop);
+                if (alerts && alerts.length > 0) {
+                    liveContextResults.push({
+                        id: `live-fao-alerts-${Date.now()}`,
+                        content: `FAO Disease Alerts for ${finalRegion} (Crop: ${finalCrop || 'All'}):
+${alerts.map((a: any) => `- [${a.severity.toUpperCase()}] ${a.title}: ${a.description}`).join('\n')}`,
+                        metadata: {
+                            title: `FAO Pest & Disease Alerts (${finalRegion})`,
+                            category: 'Disease Alerts',
+                            crop: finalCrop || 'All',
+                            sourceUrl: 'https://www.fao.org',
+                            contentType: 'text'
+                        },
+                        score: 1.0
+                    });
+                }
+            } catch (err) {
+                logger.warn('Failed to fetch FAO alerts in askQuestion:', err);
+            }
+        })());
+
+        // C. NASA POWER & SoilGrids if lat/lng are present
+        if (finalLat && finalLng) {
+            tasks.push((async () => {
+                try {
+                    const { NasaPowerService } = await import('@/services/data/nasaPowerService');
+                    const nasa = new NasaPowerService();
+                    const agro = await nasa.getAgroclimateSummary(finalLat!, finalLng!, 7);
+                    if (agro) {
+                        liveContextResults.push({
+                            id: `live-nasa-agro-${Date.now()}`,
+                            content: `NASA POWER Agroclimate Summary for lat: ${finalLat}, lng: ${finalLng}:
+- Temp Range: ${agro.temperatureRange?.min ?? 'N/A'} to ${agro.temperatureRange?.max ?? 'N/A'}°C
+- Avg Relative Humidity: ${agro.relativeHumidity ?? 'N/A'}%
+- Precipitation Sum: ${agro.precipitationSum ?? 'N/A'} mm
+- Avg Solar Radiation: ${agro.solarRadiationAvg ?? 'N/A'} MJ/m²/day`,
+                            metadata: {
+                                title: `Agroclimatic Solar & Rainfall Context (NASA POWER)`,
+                                category: 'Agroclimatology',
+                                crop: finalCrop || 'All',
+                                sourceUrl: 'https://power.larc.nasa.gov/',
+                                contentType: 'text'
+                            },
+                            score: 1.0
+                        });
+                    }
+                } catch (err) {
+                    logger.warn('Failed to fetch NASA agroclimate in askQuestion:', err);
+                }
+            })());
+
+            tasks.push((async () => {
+                try {
+                    const { soilGridsService } = await import('@/services/data/soilGridsService');
+                    const soil = (await soilGridsService.fetchSoilProperties(finalLat!, finalLng!)) as any;
+                    if (soil) {
+                        liveContextResults.push({
+                            id: `live-soil-properties-${Date.now()}`,
+                            content: `SoilGrids ISRIC Soil Properties for lat: ${finalLat}, lng: ${finalLng}:
+- pH at 0-5cm: ${soil.ph_h2o ?? 'N/A'}
+- Clay content: ${soil.clay ?? 'N/A'}%
+- Organic Carbon: ${soil.soc ?? 'N/A'} dg/kg`,
+                            metadata: {
+                                title: `Location-Specific Soil Properties (ISRIC SoilGrids)`,
+                                category: 'Soil Properties',
+                                crop: finalCrop || 'All',
+                                sourceUrl: 'https://soilgrids.org/',
+                                contentType: 'text'
+                            },
+                            score: 1.0
+                        });
+                    }
+                } catch (err) {
+                    logger.warn('Failed to fetch SoilGrids in askQuestion:', err);
+                }
+            })());
+        }
+
+        // D. Market Prices
+        tasks.push((async () => {
+            try {
+                const { marketPriceService } = await import('@/services/marketPriceService');
+                const prices = await marketPriceService.getLatestPrices();
+                if (prices && prices.length > 0) {
+                    const relevantPrices = finalCrop 
+                        ? prices.filter((p: any) => p.crop.toLowerCase().includes(finalCrop!.toLowerCase()))
+                        : prices;
+                    const priceList = relevantPrices.length > 0 ? relevantPrices : prices;
+                    liveContextResults.push({
+                        id: `live-market-prices-${Date.now()}`,
+                        content: `Latest Market Prices:
+${priceList.map((p: any) => `- ${p.crop}: ${p.price} (${p.trend})`).join('\n')}`,
+                        metadata: {
+                            title: 'Latest Market Prices Context',
+                            category: 'Market Prices',
+                            crop: finalCrop || 'All',
+                            sourceUrl: 'https://www.ratin.net',
+                            contentType: 'text'
+                        },
+                        score: 1.0
+                    });
+                }
+            } catch (err) {
+                logger.warn('Failed to fetch market prices in askQuestion:', err);
+            }
+        })());
+
+        await Promise.all(tasks);
+
+        // Prepend dynamic live context to semantic search results
+        contextResults = [...liveContextResults, ...contextResults];
+
         const contextText = contextResults
             .map(res => `[Source: ${res.metadata.crop}/${res.metadata.category}] (Type: ${res.metadata.contentType || 'text'}, URL: ${res.metadata.sourceUrl || ''})\n${res.content}`)
             .join('\n\n---\n\n');
@@ -326,13 +532,14 @@ export class KnowledgeService {
             .slice(0, 3)
             .map((result, index) => {
                 const title = result.metadata?.title || `Source ${index + 1}`;
-                return `${index + 1}. ${title}: ${result.content}`;
+                const content = this.formatMarkdownContent(result.content);
+                return `### ${index + 1}. ${title}\n${content}`;
             })
             .join('\n\n');
 
         return {
             reasoning: 'Generated from retrieved knowledge-base context because the configured AI provider did not complete in time.',
-            answer: `I found source-backed guidance for: "${queryText}".\n\nPrimary source: ${sourceTitle}${sourceUrl}\n\n${contextSummary}\n\nThe answer above is extracted directly from the local knowledge base so it remains available even when the AI reasoning provider is slow or unavailable.`,
+            answer: `I found source-backed guidance for: **"${queryText}"**.\n\n*Primary Source Reference: ${sourceTitle}${sourceUrl}*\n\n---\n\n${contextSummary}\n\n---\n\n*Note: The recommendations above are extracted directly from the local verified agricultural knowledge base.*`,
             confidence: Math.max(0.5, Math.min(primary.score || 0.7, 0.95)),
             visuals: {
                 kpis: [
@@ -346,6 +553,42 @@ export class KnowledgeService {
             contextUsed: contextResults,
             cached: false
         };
+    }
+
+    private static formatMarkdownContent(text: string): string {
+        const trimmed = text.trim();
+        const lines = trimmed.split('\n');
+        const resultLines: string[] = [];
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            resultLines.push(line);
+            
+            if (i < lines.length - 1) {
+                const nextLine = lines[i + 1];
+                
+                const isCurrentList = /^\s*([-*+^]|\d+\.)\s+/.test(line);
+                const isNextList = /^\s*([-*+^]|\d+\.)\s+/.test(nextLine);
+                
+                if (isCurrentList && isNextList) {
+                    continue;
+                }
+                
+                const isCurrentIndented = /^\s+\S/.test(line);
+                const isNextIndented = /^\s+\S/.test(nextLine);
+                if (isCurrentIndented || isNextIndented) {
+                    continue;
+                }
+                
+                if (line.trim() === '' || nextLine.trim() === '') {
+                    continue;
+                }
+                
+                resultLines.push('');
+            }
+        }
+        
+        return resultLines.join('\n');
     }
 
     /**

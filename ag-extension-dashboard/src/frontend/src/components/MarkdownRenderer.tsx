@@ -10,7 +10,7 @@ interface MarkdownRendererProps {
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, className = '' }) => {
     return (
-        <div className={`prose prose-slate dark:prose-invert max-w-none ${className}`}>
+        <div className={`markdown-content prose prose-slate dark:prose-invert max-w-none ${className}`}>
             <ReactMarkdown 
                 remarkPlugins={[remarkGfm]}
                 components={{
@@ -21,9 +21,9 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
                     
                     // Style paragraphs and lists
                     p: ({ children }) => <p className="mb-4 leading-relaxed text-gray-700 dark:text-gray-300 font-medium">{children}</p>,
-                    ul: ({ children }) => <ul className="list-disc list-inside mb-4 space-y-1 text-gray-700 dark:text-gray-300">{children}</ul>,
-                    ol: ({ children }) => <ol className="list-decimal list-inside mb-4 space-y-1 text-gray-700 dark:text-gray-300">{children}</ol>,
-                    li: ({ children }) => <li className="ml-2">{children}</li>,
+                    ul: ({ children }) => <ul className="list-disc pl-5 mb-4 space-y-1.5 text-gray-700 dark:text-gray-300">{children}</ul>,
+                    ol: ({ children }) => <ol className="list-decimal pl-5 mb-4 space-y-1.5 text-gray-700 dark:text-gray-300">{children}</ol>,
+                    li: ({ children }) => <li className="pl-1 mb-1">{children}</li>,
                     
                     // Style blockquotes as "Insights"
                     blockquote: ({ children }) => (

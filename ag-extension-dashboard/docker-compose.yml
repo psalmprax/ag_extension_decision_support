@@ -27,6 +27,40 @@ services:
     networks:
       - ag-network
 
+  # ============================================================
+  # Traefik — Reverse Proxy (Port 80)
+  # Provides clean URLs without :7503 suffix
+  #
+  # Base setup: HTTP only (works on any server, no TLS needed)
+  # For HTTPS + Let's Encrypt, add docker-compose.prod.yml:
+  #   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+  #
+  # Environment variables (set in .env):
+  #   DOMAIN=www.gpexts.com     (default)
+  # ============================================================
+  traefik:
+    # v3.7+ required for Docker Engine 29+ (API 1.54). v3.0 is hardcoded
+    # to API 1.24 and fails with "client version too old".
+    image: traefik:v3.7
+    container_name: ag-traefik
+    command:
+      # Docker provider — auto-discovers services via labels
+      - "--providers.docker=true"
+      - "--providers.docker.exposedByDefault=false"
+      - "--providers.docker.network=ag-network"
+      # HTTP entrypoint (port 80)
+      - "--entrypoints.web.address=:80"
+      # Disable dashboard in production (optional, uncomment to enable)
+      # - "--api.dashboard=true"
+      # - "--api.debug=false"
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - ag-network
+    restart: always
+
   backend:
     build:
       context: ./src/backend
@@ -51,12 +85,15 @@ services:
     depends_on:
       - app-db
       - redis
-    # volumes:
-    #   - ./src/backend:/app
-    #   - /app/node_modules
     networks:
       - ag-network
       - ettametta_ettametta
+    labels:
+      # Traefik routing: DOMAIN/IP/api/* → backend:3001
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=(Host(`${DOMAIN:-www.gpexts.com}`) || Host(`localhost`) || Host(`145.223.97.248`)) && (PathPrefix(`/api`) || PathPrefix(`/api-docs`) || PathPrefix(`/socket.io`) || PathPrefix(`/health`))"
+      - "traefik.http.routers.backend.entrypoints=web"
+      - "traefik.http.services.backend.loadbalancer.server.port=3001"
 
   frontend:
     build:
@@ -69,11 +106,14 @@ services:
       - VITE_API_URL=/api
     depends_on:
       - backend
-    # volumes:
-    #   - ./src/frontend:/app
-    #   - /app/node_modules
     networks:
       - ag-network
+    labels:
+      # Traefik routing: DOMAIN/IP/ → frontend (SPA)
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`${DOMAIN:-www.gpexts.com}`) || Host(`localhost`) || Host(`145.223.97.248`)"
+      - "traefik.http.routers.frontend.entrypoints=web"
+      # Port auto-detected from container EXPOSE
 
   ettametta-ollama:
     image: ollama/ollama:latest

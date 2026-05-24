@@ -13,7 +13,7 @@ echo "----------------------------------------------------"
 echo "📝 Step 1: Committing and pushing local changes..."
 git add .
 git commit -m "Auto-deploy: Multimodal RAG Hardening & Smart Deploy [$(date '+%Y-%m-%d %H:%M:%S')]"
-git push origin master
+git push origin stage
 if [ $? -ne 0 ]; then
     echo "❌ Git push failed. Aborting deployment."
     exit 1
@@ -23,8 +23,8 @@ fi
 echo "🌐 Step 2: Connecting to remote server ($REMOTE_HOST)..."
 ssh -i $SSH_KEY -o StrictHostKeyChecking=no -o PasswordAuthentication=no root@$REMOTE_HOST << EOF
     cd $REMOTE_PATH
-    echo "📥 Pulling latest changes from master..."
-    git pull origin master
+    echo "📥 Pulling latest changes from stage..."
+    git pull origin stage
     
     echo "🔍 Checking database and redis availability..."
     # Check if containers are running

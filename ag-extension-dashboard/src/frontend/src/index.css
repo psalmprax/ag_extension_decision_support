@@ -307,3 +307,26 @@
 :root[data-design-mode="classic"] [class*="rounded-["] {
     border-radius: 0px !important;
 }
+
+/* Premium Markdown Content Typography Polish */
+.markdown-content li p {
+    display: inline;
+    margin: 0;
+}
+
+.markdown-content li {
+    margin-bottom: 0.5rem;
+}
+
+.markdown-content p {
+    margin-bottom: 1rem;
+    line-height: 1.625;
+}
+
+.markdown-content h1, 
+.markdown-content h2, 
+.markdown-content h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    font-weight: 800;
+}
