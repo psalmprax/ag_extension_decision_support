@@ -5,21 +5,21 @@
 set -e
 
 PROJECT_DIR="ag-extension-dashboard"
-COMPOSE_PROJECT_NAME="ag-extension"
+COMPOSE_PROJECT_NAME="ag-extension-dashboard"
 
 echo "🚀 Starting Manual Deployment..."
 
 # 1. Pull latest changes
-echo "📥 Pulling latest changes from master (Root)..."
-git fetch origin master
-git reset --hard origin/master
+echo "📥 Pulling latest changes from stage (Root)..."
+git fetch origin stage
+git reset --hard origin/stage
 
 # Update nested repository if it exists (Fix for stale builds)
 if [ -d "ag-extension-dashboard" ] && [ -d "ag-extension-dashboard/.git" ]; then
     echo "📥 Updating NESTED repository clone..."
     pushd ag-extension-dashboard > /dev/null
-    git fetch origin master
-    git reset --hard origin/master
+    git fetch origin stage
+    git reset --hard origin/stage
     popd > /dev/null
 else
     echo "⚠️  Nested repository not found or not a git repo, skipping nested sync."
