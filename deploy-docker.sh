@@ -38,6 +38,7 @@ echo "🧹 Performing Deep Clean (Removing volumes to purge stale cache)..."
 docker compose -p ${COMPOSE_PROJECT_NAME} \
     --env-file .env \
     -f ${PROJECT_DIR}/docker-compose.yml \
+    -f ${PROJECT_DIR}/docker-compose.prod.yml \
     -f ${PROJECT_DIR}/docker-compose.agents.yml \
     down -v --remove-orphans || true
 
@@ -46,6 +47,7 @@ echo "🏗️ Building and Starting Containers..."
 docker compose -p ${COMPOSE_PROJECT_NAME} \
     --env-file .env \
     -f ${PROJECT_DIR}/docker-compose.yml \
+    -f ${PROJECT_DIR}/docker-compose.prod.yml \
     -f ${PROJECT_DIR}/docker-compose.agents.yml \
     up -d --build --force-recreate
 
