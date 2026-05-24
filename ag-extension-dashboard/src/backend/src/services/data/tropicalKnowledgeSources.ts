@@ -214,9 +214,65 @@ export const tropicalArticleSeeds: TropicalKnowledgeArticleSeed[] = [
     }
 ];
 
+import { query } from '@/services/databaseService';
+
 export class TropicalKnowledgeSourceService {
-    static listSources(): TropicalKnowledgeSource[] {
-        return tropicalKnowledgeSources;
+    static async listSources(): Promise<TropicalKnowledgeSource[]> {
+        try {
+            const dbResult = await query('SELECT * FROM tropical_knowledge_sources WHERE is_active = true');
+            if (dbResult.rows.length > 0) {
+                return dbResult.rows.map((row: any) => ({
+                    id: row.id,
+                    name: row.name,
+                    provider: row.provider,
+                    type: row.type as any,
+                    license: row.license,
+                    url: row.url,
+                    syncMode: row.sync_mode as any,
+                    topics: row.topics,
+                    crops: row.crops,
+                    regions: row.regions,
+                    description: row.description,
+                    priority: row.priority as any
+                }));
+            }
+            await this.seedSourcesFromStatic();
+            return tropicalKnowledgeSources;
+        } catch (error) {
+            logger.warn('Failed to fetch tropical sources from DB, falling back to static seeds:', error);
+            return tropicalKnowledgeSources;
+        }
+    }
+
+    static async seedSourcesFromStatic(): Promise<void> {
+        try {
+            logger.info('Seeding tropical knowledge sources from static array...');
+            for (const source of tropicalKnowledgeSources) {
+                await query(`
+                    INSERT INTO tropical_knowledge_sources 
+                        (id, name, provider, type, license, url, sync_mode, topics, crops, regions, description, priority, is_active)
+                    VALUES 
+                        ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, true)
+                    ON CONFLICT (id) DO NOTHING
+                `, [
+                    source.id,
+                    source.name,
+                    source.provider,
+                    source.type,
+                    source.license,
+                    source.url,
+                    source.syncMode,
+                    source.topics,
+                    source.crops,
+                    source.regions,
+                    source.description,
+                    source.priority
+                ]);
+            }
+            logger.info('Seeding of tropical knowledge sources complete.');
+        } catch (error) {
+            logger.error('Failed to seed tropical sources:', error);
+        }
     }
 
     static listArticleSeeds(): TropicalKnowledgeArticleSeed[] {

@@ -93,7 +93,7 @@ router.post('/ask', async (req: CommercialAuthRequest, res: Response) => {
         if (!question) return res.status(400).json({ success: false, error: 'question is required' });
         if (!await meter(req, res, 'commercial.knowledge.ask', { question })) return;
 
-        const answer = await KnowledgeService.askQuestion(question, req.commercialAuth!.userId, attachments);
+        const answer = await KnowledgeService.askQuestion(req.commercialAuth!.userId, question, attachments);
         res.json({ success: true, data: { ...answer, billing: (req as any).commercialUsage } });
     } catch (error) {
         logger.error('Commercial ask API failed:', error);

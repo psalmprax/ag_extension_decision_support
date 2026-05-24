@@ -476,3 +476,24 @@ model SmsHistory {
 
   @@map("sms_history")
 }
+
+model TropicalKnowledgeSource {
+  id          String   @id @db.VarChar(100)
+  name        String   @db.VarChar(255)
+  provider    String   @db.VarChar(255)
+  type        String   @db.VarChar(50)
+  license     String?  @db.Text
+  url         String   @db.Text
+  syncMode    String   @map("sync_mode") @db.VarChar(50)
+  topics      String[]
+  crops       String[]
+  regions     String[]
+  description String?  @db.Text
+  priority    String   @default("medium") @db.VarChar(20)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
+
+  @@map("tropical_knowledge_sources")
+}
+

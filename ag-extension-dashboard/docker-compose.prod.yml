@@ -11,8 +11,11 @@
 #
 # Architecture:
 #   www.gpexts.com:443 ─→ Traefik ─→ frontend:80 (Nginx, SPA)
-#                        ─→ Traefik ─→ backend:3001 (API)
+#   gpexts.com:443     ─→         ─→ backend:3001 (API)
 #   HTTP :80 redirects to HTTPS :443
+#
+# Note: Let's Encrypt cert covers both www.gpexts.com and gpexts.com
+# via tls.domains SAN configuration.
 # ============================================================
 
 services:
@@ -42,13 +45,15 @@ services:
   backend:
     labels:
       # Router 1: API domain on HTTP → HTTPS redirect
-      - "traefik.http.routers.backend-redirect.rule=(Host(`${DOMAIN:-www.gpexts.com}`)) && (PathPrefix(`/api`) || PathPrefix(`/api-docs`) || PathPrefix(`/socket.io`) || PathPrefix(`/health`))"
+      - "traefik.http.routers.backend-redirect.rule=(Host(`${DOMAIN:-www.gpexts.com}`) || Host(`gpexts.com`)) && (PathPrefix(`/api`) || PathPrefix(`/api-docs`) || PathPrefix(`/socket.io`) || PathPrefix(`/health`))"
       - "traefik.http.routers.backend-redirect.entrypoints=web"
       - "traefik.http.routers.backend-redirect.middlewares=https-redirect"
       # Router 2: API domain on HTTPS + Let's Encrypt TLS
-      - "traefik.http.routers.backend.rule=(Host(`${DOMAIN:-www.gpexts.com}`)) && (PathPrefix(`/api`) || PathPrefix(`/api-docs`) || PathPrefix(`/socket.io`) || PathPrefix(`/health`))"
+      - "traefik.http.routers.backend.rule=(Host(`${DOMAIN:-www.gpexts.com}`) || Host(`gpexts.com`)) && (PathPrefix(`/api`) || PathPrefix(`/api-docs`) || PathPrefix(`/socket.io`) || PathPrefix(`/health`))"
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.backend.tls.domains[0].main=www.gpexts.com"
+      - "traefik.http.routers.backend.tls.domains[0].sans=gpexts.com"
       # Router 3: localhost/IP on HTTP only (for health checks / debugging)
       - "traefik.http.routers.backend-local.rule=(Host(`localhost`) || Host(`145.223.97.248`)) && (PathPrefix(`/api`) || PathPrefix(`/api-docs`) || PathPrefix(`/socket.io`) || PathPrefix(`/health`))"
       - "traefik.http.routers.backend-local.entrypoints=web"
@@ -61,13 +66,15 @@ services:
       target: production
     labels:
       # Router 1: domain on HTTP → HTTPS redirect
-      - "traefik.http.routers.frontend-redirect.rule=Host(`${DOMAIN:-www.gpexts.com}`)"
+      - "traefik.http.routers.frontend-redirect.rule=Host(`${DOMAIN:-www.gpexts.com}`) || Host(`gpexts.com`)"
       - "traefik.http.routers.frontend-redirect.entrypoints=web"
       - "traefik.http.routers.frontend-redirect.middlewares=https-redirect"
       # Router 2: domain on HTTPS + Let's Encrypt TLS
-      - "traefik.http.routers.frontend.rule=Host(`${DOMAIN:-www.gpexts.com}`)"
+      - "traefik.http.routers.frontend.rule=Host(`${DOMAIN:-www.gpexts.com}`) || Host(`gpexts.com`)"
       - "traefik.http.routers.frontend.entrypoints=websecure"
       - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.frontend.tls.domains[0].main=www.gpexts.com"
+      - "traefik.http.routers.frontend.tls.domains[0].sans=gpexts.com"
       # Router 3: localhost/IP on HTTP only (for health checks / debugging)
       - "traefik.http.routers.frontend-local.rule=Host(`localhost`) || Host(`145.223.97.248`)"
       - "traefik.http.routers.frontend-local.entrypoints=web"

@@ -393,6 +393,25 @@ export async function createTables(): Promise<void> {
       created_at TIMESTAMP DEFAULT NOW()
     );
 
+    -- Tropical knowledge sources table
+    CREATE TABLE IF NOT EXISTS tropical_knowledge_sources (
+      id VARCHAR(100) PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      provider VARCHAR(255) NOT NULL,
+      type VARCHAR(50) NOT NULL,
+      license TEXT,
+      url TEXT NOT NULL,
+      sync_mode VARCHAR(50) NOT NULL,
+      topics TEXT[],
+      crops TEXT[],
+      regions TEXT[],
+      description TEXT,
+      priority VARCHAR(20) DEFAULT 'medium',
+      is_active BOOLEAN DEFAULT true,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+
     -- Create indexes
     CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
     CREATE INDEX IF NOT EXISTS idx_farmers_region ON farmers(region);
