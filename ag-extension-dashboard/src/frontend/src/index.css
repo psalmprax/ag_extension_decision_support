@@ -309,7 +309,7 @@
 }
 
 /* Premium Markdown Content Typography Polish */
-.markdown-content li > p {
+.markdown-content li p {
     display: inline;
     margin: 0;
 }

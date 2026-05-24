@@ -268,15 +268,27 @@ export class KnowledgeService {
         tasks.push((async () => {
             try {
                 const { WeatherService } = await import('@/services/weatherService');
-                const weather = (await WeatherService.getByLocation(finalLocation)) as any;
+                const weather = await WeatherService.getByLocation(finalLocation);
                 if (weather) {
+                    const temp = weather.temperature ?? weather.temp;
+                    const condition = weather.condition || 'Clear';
+                    const wind = weather.windSpeed;
+                    
+                    let forecastText = 'No forecast data';
+                    if (weather.forecast && Array.isArray(weather.forecast)) {
+                        forecastText = weather.forecast.map(f => {
+                            return `  - ${f.date}: Max ${f.maxTemp}°C, Min ${f.minTemp}°C, ${f.condition}`;
+                        }).join('\n');
+                    }
+                    
                     liveContextResults.push({
                         id: `live-weather-${Date.now()}`,
                         content: `Live Weather for ${finalLocation}:
-- Current Temp: ${weather.current?.temperature_2m ?? weather.current_weather?.temperature ?? 'N/A'}°C
-- Description: ${weather.current?.weather_code ?? weather.current_weather?.weathercode ?? 'Clear'}
-- Wind Speed: ${weather.current?.wind_speed_10m ?? weather.current_weather?.windspeed ?? 'N/A'} km/h
-- Full Daily Forecast: ${JSON.stringify(weather.daily || weather)}`,
+- Current Temp: ${temp !== undefined ? temp : 'N/A'}°C
+- Description: ${condition}
+- Wind Speed: ${wind !== undefined ? wind : 'N/A'} km/h
+- 3-Day Forecast:
+${forecastText}`,
                         metadata: {
                             title: `Live Weather Forecast for ${finalLocation}`,
                             category: 'Weather Forecast',
@@ -520,7 +532,7 @@ ${priceList.map((p: any) => `- ${p.crop}: ${p.price} (${p.trend})`).join('\n')}`
             .slice(0, 3)
             .map((result, index) => {
                 const title = result.metadata?.title || `Source ${index + 1}`;
-                const content = result.content.trim().replace(/\n+/g, '\n\n');
+                const content = this.formatMarkdownContent(result.content);
                 return `### ${index + 1}. ${title}\n${content}`;
             })
             .join('\n\n');
@@ -541,6 +553,42 @@ ${priceList.map((p: any) => `- ${p.crop}: ${p.price} (${p.trend})`).join('\n')}`
             contextUsed: contextResults,
             cached: false
         };
+    }
+
+    private static formatMarkdownContent(text: string): string {
+        const trimmed = text.trim();
+        const lines = trimmed.split('\n');
+        const resultLines: string[] = [];
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            resultLines.push(line);
+            
+            if (i < lines.length - 1) {
+                const nextLine = lines[i + 1];
+                
+                const isCurrentList = /^\s*([-*+^]|\d+\.)\s+/.test(line);
+                const isNextList = /^\s*([-*+^]|\d+\.)\s+/.test(nextLine);
+                
+                if (isCurrentList && isNextList) {
+                    continue;
+                }
+                
+                const isCurrentIndented = /^\s+\S/.test(line);
+                const isNextIndented = /^\s+\S/.test(nextLine);
+                if (isCurrentIndented || isNextIndented) {
+                    continue;
+                }
+                
+                if (line.trim() === '' || nextLine.trim() === '') {
+                    continue;
+                }
+                
+                resultLines.push('');
+            }
+        }
+        
+        return resultLines.join('\n');
     }
 
     /**
