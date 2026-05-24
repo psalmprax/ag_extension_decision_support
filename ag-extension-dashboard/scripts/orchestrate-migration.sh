@@ -63,7 +63,7 @@ deploy_code() {
     echo "----------------------------------------------------"
     echo "🚀 Deploying latest code to $DEST_HOST..."
     echo "----------------------------------------------------"
-    dest_ssh "cd $REMOTE_PATH && git pull origin master"
+    dest_ssh "cd $REMOTE_PATH && git fetch origin && git reset --hard origin/stage"
     echo "🔍 Checking database status..."
     DB_UP=$(dest_ssh "docker ps --filter 'name=$DB_CONTAINER' --filter 'status=running' -q")
     REDIS_UP=$(dest_ssh "docker ps --filter 'name=$REDIS_CONTAINER' --filter 'status=running' -q")
