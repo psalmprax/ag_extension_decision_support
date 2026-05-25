@@ -150,16 +150,19 @@ class CloakBrowserScanner(DiscoveryScannerBase):
         region: Optional[str],
     ) -> list[ContentCandidate]:
         """Execute a single scrape attempt against the discovery-scraper service."""
+        # Enforce exact match to prevent generic/loose search results
+        exact_niche = f'"{niche}"' if not niche.startswith('"') else niche
+
         params = {
-            "niche": niche,
+            "niche": exact_niche,
             "region": region or "US",
             "max_results": config.max_results,
             **config.extra_params,
         }
 
         if config.use_generic_endpoint:
-            query = niche.replace(" ", "+")
-            query_no_spaces = niche.replace(" ", "")
+            query = exact_niche.replace(" ", "+").replace('"', '%22')
+            query_no_spaces = niche.replace(" ", "").replace('"', '')
             url = config.search_url_template.format(
                 query=query, query_no_spaces=query_no_spaces
             )
