@@ -100,6 +100,7 @@ import { UsageQuota } from '@/components/UsageQuota';
 import { FarmerDetailPanel } from '@/components/FarmerDetailPanel';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { subscribeUserToPush } from '@/api/pushNotificationService';
+import { registerServiceWorker } from '@/lib/swRegistration';
 import { syncQueue } from '@/api/syncQueueService';
 import AlphaAI from './components/Cyber/AlphaAI';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -315,6 +316,21 @@ function App() {
             }
         });
     }, [themeName]);
+
+    // Service Worker Registration
+    const swRegistrationAttempted = useRef(false);
+    useEffect(() => {
+        if (swRegistrationAttempted.current) return;
+        swRegistrationAttempted.current = true;
+
+        try {
+            // registerServiceWorker returns the update function; registration
+            // errors are handled internally via onRegisterError callback
+            registerServiceWorker();
+        } catch (err) {
+            console.warn('[SW] Failed to register service worker gracefully:', err instanceof Error ? err.message : err);
+        }
+    }, []);
 
     // Push Notification Subscription
     useEffect(() => {

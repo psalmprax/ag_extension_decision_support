@@ -1,0 +1,180 @@
+import { Router, Request, Response } from 'express';
+import { logger } from '../utils/logger';
+import { authorize } from '../middleware/authorize';
+import * as dns from 'dns/promises';
+import { connectTCP, checkHTTP, checkSSL } from '../services/diagnosticsHelpers';
+
+const router = Router();
+
+// All diagnostics endpoints require admin authorization
+router.use(authorize(['admin']));
+
+// ─── Diagnostics Endpoint ────────────────────────────────────────────────
+// GET /api/health/diagnostics
+// Runs comprehensive infrastructure checks to diagnose why www.gpexts.com is unreachable.
+// Results are cached for 60 seconds to avoid flooding.
+let cachedResult: any = null;
+let cacheTime = 0;
+// Disable caching in test mode so each test gets fresh results
+const CACHE_TTL = process.env.NODE_ENV === 'test' ? -1 : 60_000;
+
+router.get('/', async (_req: Request, res: Response) => {
+    // Return cached result if still fresh
+    if (cachedResult && Date.now() - cacheTime < CACHE_TTL) {
+        return res.json({ success: true, cached: true, timestamp: new Date().toISOString(), ...cachedResult });
+    }
+
+    const results: any = {
+        timestamp: new Date().toISOString(),
+        hostname: process.env.HOSTNAME || '',
+        node_env: process.env.NODE_ENV || 'development',
+        domain: 'www.gpexts.com',
+        server_ip: '145.223.97.248',
+    };
+
+    // ── 1. DNS Resolution ──────────────────────────────────────────────
+    try {
+        const dnsResults: any = {};
+        for (const name of ['www.gpexts.com', 'gpexts.com']) {
+            try {
+                const addresses = await dns.resolve4(name);
+                dnsResults[name] = { resolved: true, ips: addresses };
+            } catch {
+                dnsResults[name] = { resolved: false, ips: [], error: 'DNS resolution failed' };
+            }
+        }
+        results.dns = dnsResults;
+    } catch (err) {
+        results.dns = { error: `DNS check failed: ${(err as Error).message}` };
+    }
+
+    // ── 2. Port Connectivity ───────────────────────────────────────────
+    const portsToCheck = [
+        { port: 80, name: 'HTTP (Traefik)', host: 'localhost' },
+        { port: 443, name: 'HTTPS', host: 'localhost' },
+        { port: 3001, name: 'Backend API', host: 'localhost' },
+        { port: 5432, name: 'PostgreSQL', host: 'app-db' },
+        { port: 6379, name: 'Redis', host: 'redis' },
+        { port: process.env.NODE_ENV === 'production' ? 80 : 5173, name: process.env.NODE_ENV === 'production' ? 'Frontend (Nginx)' : 'Frontend (Vite)', host: 'localhost' },
+    ];
+
+    const portResults: any[] = [];
+    for (const p of portsToCheck) {
+        const open = await connectTCP(p.host, p.port);
+        portResults.push({ ...p, open });
+    }
+    results.ports = portResults;
+
+    // ── 3. Traefik Routing Check ──────────────────────────────────────
+    try {
+        const traefikHealth = await checkHTTP('http://localhost:80/api/health');
+        const traefikFrontend = await checkHTTP('http://localhost:80/');
+        results.traefik = {
+            backend_via_traefik: traefikHealth.ok ? 'reachable' : 'unreachable',
+            backend_http_status: traefikHealth.status,
+            frontend_via_traefik: traefikFrontend.ok ? 'reachable' : 'unreachable',
+            frontend_http_status: traefikFrontend.status,
+            backend_health_response: traefikHealth.body ? tryParseJSON(traefikHealth.body) : undefined,
+        };
+    } catch (err) {
+        results.traefik = { error: `Traefik check failed: ${(err as Error).message}` };
+    }
+
+    // ── 4. Container Network Checks ────────────────────────────────────
+    const containersToCheck = [
+        { name: 'app-db', port: 5432 },
+        { name: 'redis', port: 6379 },
+        { name: 'ag-dashboard-backend', port: 3001 },
+        { name: 'ag-dashboard-frontend', port: process.env.NODE_ENV === 'production' ? 80 : 5173 },
+        { name: 'ag-extension-dashboard-traefik-1', port: 80 },
+    ];
+
+    const containerResults: any[] = [];
+    for (const c of containersToCheck) {
+        const reachable = await connectTCP(c.name, c.port);
+        containerResults.push({ ...c, reachable });
+    }
+    results.container_network = containerResults;
+
+    // ── 5. SSL Certificate ─────────────────────────────────────────────        results.ssl = { checked: true, note: 'SSL check runs from inside the container — may fail if the container cannot reach the public domain. This does not necessarily mean SSL is broken.' };
+    const sslResult = await checkSSL('www.gpexts.com');
+    if (sslResult.ok) {
+        results.ssl = sslResult;
+    } else {
+        // SSL check failed — could be container networking, not actual SSL misconfiguration
+        results.ssl = {
+            ok: false,
+            error: sslResult.error || 'Connection failed (this may be a container networking limitation)',
+            container_network_note: 'The SSL check runs inside the Docker container. If the container cannot resolve or reach the public domain, the check reports as failed even when SSL is correctly configured on the host. Verify SSL independently via: openssl s_client -connect www.gpexts.com:443',
+        };
+    }
+
+    // ── 6. Docker Compose & Deployment Detection ──────────────────────
+    const isProduction = process.env.NODE_ENV === 'production';
+    const hasACMEEmail = !!process.env.ACME_EMAIL;
+    results.deployment = {
+        node_env: process.env.NODE_ENV || 'development',
+        docker_hostname: process.env.HOSTNAME || '',
+        acme_email_configured: hasACMEEmail,
+        // Heuristic: if port 443 is open and HTTPS works, prod override is active
+        https_active: sslResult.ok,
+        prod_override_detected: sslResult.ok || (isProduction && hasACMEEmail),
+        recommendation: '',
+    };
+
+    // ── 7. Summary & Recommendations ────────────────────────────────────
+    const issues: string[] = [];
+    const recommendations: string[] = [];
+
+    if (results.dns?.['www.gpexts.com'] && !results.dns['www.gpexts.com'].resolved) {
+        issues.push('DNS resolution failed for www.gpexts.com');
+        recommendations.push('Check DNS A record for www.gpexts.com — should point to 145.223.97.248');
+    }
+
+    const port80 = results.ports?.find((p: any) => p.port === 80);
+    const port443 = results.ports?.find((p: any) => p.port === 443);
+
+    if (port80 && !port80.open) {
+        issues.push('Port 80 (HTTP) is closed — Traefik may not be running');
+        recommendations.push('Ensure Traefik container is up: docker ps | grep traefik');
+    }
+
+    if (port443 && !port443.open) {
+        issues.push('Port 443 (HTTPS) is closed — docker-compose.prod.yml is likely not deployed');
+        recommendations.push([
+            'Deploy with production override:',
+            '  docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build',
+            '',
+            'Ensure .env has ACME_EMAIL set for Let\'s Encrypt.',
+        ].join('\n'));
+    }
+
+    if (results.traefik?.backend_via_traefik === 'unreachable') {
+        issues.push('Backend is not reachable through Traefik on port 80');
+        recommendations.push('Check Traefik labels and Docker provider configuration in docker-compose.yml');
+    }
+
+    results.issues = issues;
+    results.recommendations = recommendations;
+
+    results.summary = issues.length === 0
+        ? 'All checks passed. The server appears healthy. Check DNS propagation and firewall settings on the network level.'
+        : `Found ${issues.length} issue(s). See recommendations for remediation.`;
+
+    // Cache result
+    cachedResult = results;
+    cacheTime = Date.now();
+
+    const isHealthy = issues.length === 0;
+    res.status(isHealthy ? 200 : 200).json({ success: true, cached: false, timestamp: results.timestamp, ...results });
+});
+
+function tryParseJSON(str: string): any {
+    try {
+        return JSON.parse(str);
+    } catch {
+        return str.slice(0, 200);
+    }
+}
+
+export default router;

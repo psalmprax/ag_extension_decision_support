@@ -17,9 +17,14 @@
 # Note: Let's Encrypt cert covers both www.gpexts.com and gpexts.com
 # via tls.domains SAN configuration.
 # ============================================================
+#
+# IMPORTANT: Docker Compose v5 replaces (not merges) the `labels:` list
+# from the base compose file. This override MUST include ALL required
+# labels including traefik.enable and loadbalancer.server.port.
 
 services:
   traefik:
+    image: traefik:v3.7
     command:
       # Docker provider
       - "--providers.docker=true"
@@ -44,6 +49,10 @@ services:
 
   backend:
     labels:
+      # Enable Traefik discovery (must be explicit — labels list replaces base)
+      - "traefik.enable=true"
+      # Service port for load balancing
+      - "traefik.http.services.backend.loadbalancer.server.port=3001"
       # Router 1: API domain on HTTP → HTTPS redirect
       - "traefik.http.routers.backend-redirect.rule=(Host(`${DOMAIN:-www.gpexts.com}`) || Host(`gpexts.com`)) && (PathPrefix(`/api`) || PathPrefix(`/api-docs`) || PathPrefix(`/socket.io`) || PathPrefix(`/health`))"
       - "traefik.http.routers.backend-redirect.entrypoints=web"
@@ -65,6 +74,10 @@ services:
       context: ./src/frontend
       target: production
     labels:
+      # Enable Traefik discovery (must be explicit — labels list replaces base)
+      - "traefik.enable=true"
+      # Service port for load balancing (Nginx serves on 80)
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
       # Router 1: domain on HTTP → HTTPS redirect
       - "traefik.http.routers.frontend-redirect.rule=Host(`${DOMAIN:-www.gpexts.com}`) || Host(`gpexts.com`)"
       - "traefik.http.routers.frontend-redirect.entrypoints=web"

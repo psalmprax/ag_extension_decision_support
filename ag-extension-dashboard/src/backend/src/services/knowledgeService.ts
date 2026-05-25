@@ -7,6 +7,7 @@ import { cacheGet, cacheSet } from '@/services/cacheService';
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { tavilyService } from '@/services/tavilyService';
+import { StealthScraperService } from '@/services/stealthScraperService';
 
 export interface KnowledgeArticle {
     id: string;
@@ -211,6 +212,55 @@ export class KnowledgeService {
                 }
             } catch (webError) {
                 logger.error('Failed to retrieve external search fallback:', webError);
+            }
+        }
+
+        // 3.5. Real-time Stealth Scraper Fallback (Tropical Knowledge Sources)
+        const stealthKeywords = ['disease', 'pest', 'climate', 'fao', 'cabi', 'guidance', 'yield', 'drought', 'weather', 'scientific', 'validated'];
+        const needsStealthScrape = stealthKeywords.some(kw => queryText.toLowerCase().includes(kw));
+
+        if ((contextResults.length === 0 || bestScore < 0.65) && needsStealthScrape) {
+            logger.info(`Query hints at scientific/tropical data. Triggering StealthScraperService for: "${queryText}"`);
+            try {
+                // Determine platform heuristically based on tropical sources
+                let platform = 'fao_crop_guides'; // Default general agronomy
+                const lowerQuery = queryText.toLowerCase();
+                
+                if (lowerQuery.includes('pest') || lowerQuery.includes('disease') || lowerQuery.includes('cabi')) {
+                    platform = 'cabi_plantwise';
+                } else if (lowerQuery.includes('climate') || lowerQuery.includes('drought') || lowerQuery.includes('fews')) {
+                    platform = 'fews_net';
+                } else if (lowerQuery.includes('cassava') || lowerQuery.includes('yam') || lowerQuery.includes('iita')) {
+                    platform = 'iita_agronomy';
+                } else if (lowerQuery.includes('rice') || lowerQuery.includes('africarice')) {
+                    platform = 'africarice';
+                }
+                
+                // Extract possible niche (query string for the platform)
+                const nicheWords = queryText.split(' ').filter(w => !stealthKeywords.includes(w.toLowerCase()) && w.length > 3);
+                const niche = nicheWords.length > 0 ? nicheWords.join(' ') : 'tropical agriculture';
+
+                const stealthResults = await StealthScraperService.scrapeKnowledge(niche, platform, 'Global Tropics');
+                
+                if (stealthResults && stealthResults.length > 0) {
+                    const mappedStealthResults: SearchResult[] = stealthResults.map((r, index) => ({
+                        id: `stealth-${index}-${Date.now()}`,
+                        content: `Stealth Scrape (${platform}): Topic: ${r.topic}. Summary: ${r.summary || 'N/A'}. Keywords: ${r.keywords.join(', ')}`,
+                        metadata: {
+                            title: `Tropical DB: ${r.topic}`,
+                            category: 'Validated Scientific Guidance',
+                            crop: 'Dynamic',
+                            sourceUrl: r.url || `https://tropical-database-search`,
+                            contentType: 'text'
+                        },
+                        score: 0.95 // High confidence since it's freshly scraped for this explicit purpose
+                    }));
+                    
+                    // Prioritize stealth results by putting them at the top of the context
+                    contextResults = [...mappedStealthResults, ...contextResults].slice(0, 4);
+                }
+            } catch (stealthError) {
+                logger.error('Failed to retrieve stealth scraper fallback:', stealthError);
             }
         }
 
