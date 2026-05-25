@@ -548,7 +548,7 @@ async def handle_stealth_scrape(params: Dict[str, Any]) -> Dict[str, Any]:
     try:
         scanner = CloakBrowserScanner(platform=platform)
         # Scan trends usually returns a list of results
-        results = scanner.scan_trends(niche=niche, region=region)
+        results = await scanner.scan_trends(niche=niche, region=region)
         return {
             "success": True,
             "platform": platform,
