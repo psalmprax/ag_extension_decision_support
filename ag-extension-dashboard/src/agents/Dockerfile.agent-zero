@@ -26,6 +26,7 @@ RUN pip install --no-cache-dir \
 # Copy agent code
 COPY main.py .
 COPY requirements.txt .
+COPY tools/ ./tools/
 
 # Install Python requirements
 RUN pip install --no-cache-dir -r requirements.txt
