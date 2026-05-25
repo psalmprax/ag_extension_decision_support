@@ -310,12 +310,21 @@
 
 /* Premium Markdown Content Typography Polish */
 .markdown-content li p {
-    display: inline;
-    margin: 0;
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+    display: block;
+}
+
+.markdown-content li p:first-child {
+    margin-top: 0;
+}
+
+.markdown-content li p:last-child {
+    margin-bottom: 0;
 }
 
 .markdown-content li {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
 }
 
 .markdown-content p {

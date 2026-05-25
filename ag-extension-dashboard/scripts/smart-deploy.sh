@@ -33,10 +33,10 @@ ssh -i $SSH_KEY -o StrictHostKeyChecking=no -o PasswordAuthentication=no root@$R
     
     if [ -n "\$DB_STATUS" ] && [ -n "\$REDIS_STATUS" ]; then
         echo "✅ Postgres and Redis are UP. Deploying backend and frontend only..."
-        docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --build backend frontend agent-zero crew-ai
+        docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --build backend frontend agent-zero crew-ai
     else
         echo "⚠️ Postgres or Redis is DOWN/Missing. Performing FULL deployment..."
-        docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --build
+        docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --build
     fi
     
     echo "🧹 Cleaning up unused Docker resources..."

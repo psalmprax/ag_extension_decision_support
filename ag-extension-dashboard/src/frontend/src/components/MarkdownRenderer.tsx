@@ -21,9 +21,9 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
                     
                     // Style paragraphs and lists
                     p: ({ children }) => <p className="mb-4 leading-relaxed text-gray-700 dark:text-gray-300 font-medium">{children}</p>,
-                    ul: ({ children }) => <ul className="list-disc pl-5 mb-4 space-y-1.5 text-gray-700 dark:text-gray-300">{children}</ul>,
-                    ol: ({ children }) => <ol className="list-decimal pl-5 mb-4 space-y-1.5 text-gray-700 dark:text-gray-300">{children}</ol>,
-                    li: ({ children }) => <li className="pl-1 mb-1">{children}</li>,
+                    ul: ({ children }) => <ul className="list-disc pl-6 mb-6 space-y-2 text-gray-700 dark:text-gray-300 marker:text-primary-500">{children}</ul>,
+                    ol: ({ children }) => <ol className="list-decimal pl-6 mb-6 space-y-2 text-gray-700 dark:text-gray-300 marker:text-primary-500 marker:font-bold">{children}</ol>,
+                    li: ({ children }) => <li className="pl-1 leading-relaxed">{children}</li>,
                     
                     // Style blockquotes as "Insights"
                     blockquote: ({ children }) => (
