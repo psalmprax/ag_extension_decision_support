@@ -216,7 +216,7 @@ export class KnowledgeService {
         }
 
         // 3.5. Real-time Stealth Scraper Fallback (Tropical Knowledge Sources)
-        const stealthKeywords = ['disease', 'pest', 'climate', 'fao', 'cabi', 'guidance', 'yield', 'drought', 'weather', 'scientific', 'validated'];
+        const stealthKeywords = ['disease', 'pest', 'climate', 'fao', 'cabi', 'guidance', 'yield', 'drought', 'weather', 'scientific', 'validated', 'armyworm', 'worm', 'insect', 'weed', 'rot', 'blight', 'virus', 'fungus', 'manage', 'control'];
         const needsStealthScrape = stealthKeywords.some(kw => queryText.toLowerCase().includes(kw));
 
         if ((contextResults.length === 0 || bestScore < 0.65) && needsStealthScrape) {
