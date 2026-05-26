@@ -73,7 +73,7 @@ services:
       - DATABASE_URL=postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@app-db:5432/${DATABASE_NAME:-ag_extension}?schema=public
       - REDIS_URL=redis://redis:6379
       - PORT=3001
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV:-development}
       - JWT_SECRET=${JWT_SECRET:-dev-secret-key-for-local-only}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - AI_PRIMARY_PROVIDER=${AI_PRIMARY_PROVIDER:-openai}

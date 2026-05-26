@@ -44,8 +44,15 @@ const shouldRetry = (error: AxiosError): boolean => {
         return true;
     }
 
-    // Retry on network errors
-    if (!error.response && error.code !== 'ECONNABORTED') {
+    // Retry on network errors, but skip timeouts — retrying connection timeouts
+    // only adds noise since the server is likely down
+    const skipCodes = ['ECONNABORTED', 'ERR_CONNECTION_TIMED_OUT', 'ETIMEDOUT', 'ENOTFOUND'];
+    if (!error.response && error.code && skipCodes.includes(error.code)) {
+        return false;
+    }
+
+    // Retry on other network errors (e.g., transient connectivity blips)
+    if (!error.response) {
         return true;
     }
 
@@ -102,9 +109,10 @@ apiClient.interceptors.response.use(
 
         // Only log warnings in development
         if (import.meta.env.DEV) {
-            // Suppress connection refused errors - they're expected when backend isn't running
-            if (error.code === 'ECONNREFUSED' || error.code === 'ERR_CONNECTION_REFUSED') {
-                // Silent - backend not running
+            // Suppress connection errors — expected when backend isn't running
+            const silentCodes = ['ECONNREFUSED', 'ERR_CONNECTION_REFUSED', 'ERR_CONNECTION_TIMED_OUT', 'ETIMEDOUT', 'ENOTFOUND'];
+            if (error.code && silentCodes.includes(error.code)) {
+                // Silent - backend not running or unreachable
             }
             // Suppress noisy configuration warnings
             else if (error.response?.data && (error.response.data as any).errorCode === 'PAYMENT_GATEWAY_NOT_CONFIGURED') {

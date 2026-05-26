@@ -11,8 +11,12 @@ from typing import List, Optional, Dict, Any
 import os
 import json
 import logging
+import logging
 from datetime import datetime, timedelta
 from enum import Enum
+
+# Import Stealth Scraper
+from tools.cloakbrowser.cloak_scanner import CloakBrowserScanner
 
 # Configure logging
 logging.basicConfig(
@@ -127,6 +131,7 @@ class TaskType(str, Enum):
     OUTREACH = "outreach"
     ANALYSIS = "analysis"
     REPORT = "report"
+    STEALTH_SCRAPE = "stealth_scrape"
 
 
 class TaskRequest(BaseModel):
@@ -440,6 +445,8 @@ async def execute_task(request: TaskRequest, current_user: dict = Depends(verify
             return await handle_analysis(request.parameters)
         elif task_type == "report":
             return await handle_report(request.parameters)
+        elif task_type == "stealth_scrape":
+            return await handle_stealth_scrape(request.parameters)
         else:
             raise HTTPException(status_code=400, detail=f"Unknown task type: {task_type}")
             
@@ -531,6 +538,33 @@ async def handle_report(params: Dict[str, Any]) -> Dict[str, Any]:
         params.get("sections")
     )
 
+
+async def handle_stealth_scrape(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Handle stealth scraping task for tropical data retrieval"""
+    platform = params.get("platform", "facebook")
+    niche = params.get("niche", "agriculture")
+    region = params.get("region", "Kenya")
+    
+    try:
+        scanner = CloakBrowserScanner(platform=platform)
+        # Scan trends usually returns a list of results
+        results = await scanner.scan_trends(niche=niche, region=region)
+        return {
+            "success": True,
+            "platform": platform,
+            "niche": niche,
+            "region": region,
+            "results": results,
+            "count": len(results) if isinstance(results, list) else 0
+        }
+    except Exception as e:
+        logger.error(f"Stealth scrape failed: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "platform": platform,
+            "niche": niche
+        }
 
 # Startup and shutdown events
 @app.on_event("startup")

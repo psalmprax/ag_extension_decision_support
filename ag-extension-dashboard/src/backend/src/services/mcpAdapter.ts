@@ -210,6 +210,38 @@ export function createMCPRouter(): Router {
     }
   });
 
+  /**
+   * @swagger
+   * /api/v1/mcp/tools:
+   *   get:
+   *     summary: List available Model Context Protocol (MCP) tools
+   *     description: Retrieve a list of registered MCP tools that AI agents can execute.
+   *     tags:
+   *       - AI Tools (MCP)
+   *     security:
+   *       - bearerAuth: []
+   *     responses:
+   *       200:
+   *         description: A list of registered MCP tools
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       name:
+   *                         type: string
+   *                       description:
+   *                         type: string
+   *                       inputSchema:
+   *                         type: object
+   */
   router.get('/tools', (_req: Request, res: Response) => {
     const mcpTools = mcpAdapter.convertToMCPTools();
     res.json({ success: true, data: mcpTools });

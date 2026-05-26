@@ -40,7 +40,7 @@ const options: swaggerJsdoc.Options = {
             },
         ],
     },
-    apis: ['./src/routes/*.ts', './src/utils/schemas.ts'], // Path to the API docs
+    apis: ['./src/routes/*.ts', './src/utils/schemas.ts', './src/services/mcpAdapter.ts'], // Path to the API docs
 };
 
 const specs = swaggerJsdoc(options);

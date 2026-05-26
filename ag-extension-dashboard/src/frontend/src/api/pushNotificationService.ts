@@ -9,6 +9,12 @@ export const subscribeUserToPush = async () => {
             return null;
         }
 
+        // VAPID key must be configured for push to work
+        if (!VAPID_PUBLIC_KEY) {
+            console.warn('VAPID_PUBLIC_KEY not configured. Push notifications will not work.');
+            return null;
+        }
+
         const registration = await navigator.serviceWorker.ready;
 
         // Check if already subscribed
@@ -18,7 +24,7 @@ export const subscribeUserToPush = async () => {
             // Subscribe the user
             subscription = await registration.pushManager.subscribe({
                 userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+                applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as unknown as BufferSource
             });
         }
 
@@ -52,7 +58,10 @@ export const unsubscribeFromPush = async () => {
 };
 
 // Helper function to convert VAPID key
-function urlBase64ToUint8Array(base64String: string) {
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+    if (!base64String) {
+        throw new Error('VAPID public key is empty or undefined');
+    }
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
     const base64 = (base64String + padding)
         .replace(/-/g, '+')
