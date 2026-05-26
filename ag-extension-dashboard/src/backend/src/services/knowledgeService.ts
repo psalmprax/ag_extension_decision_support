@@ -191,76 +191,76 @@ export class KnowledgeService {
         // 3. Retrieve relevant context (cache miss)
         let contextResults = await this.searchKnowledge(queryText);
         const bestScore = contextResults.length > 0 ? contextResults[0].score : 0;
-        if ((contextResults.length === 0 || bestScore < 0.65) && tavilyService.isConfigured()) {
-            logger.info(`No high-scoring local matches found (best score: ${bestScore}). Querying Tavily for: "${queryText}"`);
-            try {
-                const webResults = await tavilyService.search(queryText, 3);
-                if (webResults && webResults.results && webResults.results.length > 0) {
-                    const mappedWebResults: SearchResult[] = webResults.results.map((r, index) => ({
-                        id: `web-${index}-${Date.now()}`,
-                        content: r.content,
-                        metadata: {
-                            title: r.title,
-                            category: 'External Reference',
-                            crop: 'All',
-                            sourceUrl: r.url,
-                            contentType: 'text'
-                        },
-                        score: r.score
-                    }));
-                    contextResults = [...mappedWebResults, ...contextResults].slice(0, 4);
-                }
-            } catch (webError) {
-                logger.error('Failed to retrieve external search fallback:', webError);
-            }
-        }
+        let queryCategories: string[] = [];
 
-        // 3.5. Real-time Stealth Scraper Fallback (Tropical Knowledge Sources)
-        const stealthKeywords = ['disease', 'pest', 'climate', 'fao', 'cabi', 'guidance', 'yield', 'drought', 'weather', 'scientific', 'validated', 'armyworm', 'worm', 'insect', 'weed', 'rot', 'blight', 'virus', 'fungus', 'manage', 'control'];
-        const needsStealthScrape = stealthKeywords.some(kw => queryText.toLowerCase().includes(kw));
+        if (contextResults.length === 0 || bestScore < 0.65) {
+            logger.info(`Low local match score (${bestScore}). Performing AI intent classification for fallback routing...`);
+            queryCategories = await this.categorizeQuery(queryText);
+            
+            const isAgriIntent = queryCategories.some(c => ['pest_and_disease', 'agronomy_and_yield', 'climate_and_weather'].includes(c));
 
-        if ((contextResults.length === 0 || bestScore < 0.65) && needsStealthScrape) {
-            logger.info(`Query hints at scientific/tropical data. Triggering StealthScraperService for: "${queryText}"`);
-            try {
-                // Determine platform heuristically based on tropical sources
-                let platform = 'fao_crop_guides'; // Default general agronomy
-                const lowerQuery = queryText.toLowerCase();
-                
-                if (lowerQuery.includes('pest') || lowerQuery.includes('disease') || lowerQuery.includes('cabi')) {
-                    platform = 'cabi_plantwise';
-                } else if (lowerQuery.includes('climate') || lowerQuery.includes('drought') || lowerQuery.includes('fews')) {
-                    platform = 'fews_net';
-                } else if (lowerQuery.includes('cassava') || lowerQuery.includes('yam') || lowerQuery.includes('iita')) {
-                    platform = 'iita_agronomy';
-                } else if (lowerQuery.includes('rice') || lowerQuery.includes('africarice')) {
-                    platform = 'africarice';
-                }
-                
-                // Extract possible niche (query string for the platform)
-                const nicheWords = queryText.split(' ').filter(w => !stealthKeywords.includes(w.toLowerCase()) && w.length > 3);
-                const niche = nicheWords.length > 0 ? nicheWords.join(' ') : 'tropical agriculture';
-
-                const stealthResults = await StealthScraperService.scrapeKnowledge(niche, platform, 'Global Tropics');
-                
-                if (stealthResults && stealthResults.length > 0) {
-                    const mappedStealthResults: SearchResult[] = stealthResults.map((r, index) => ({
-                        id: `stealth-${index}-${Date.now()}`,
-                        content: `Stealth Scrape (${platform}): Topic: ${r.topic}. Summary: ${r.summary || 'N/A'}. Keywords: ${r.keywords.join(', ')}`,
-                        metadata: {
-                            title: `Tropical DB: ${r.topic}`,
-                            category: 'Validated Scientific Guidance',
-                            crop: 'Dynamic',
-                            sourceUrl: r.url || `https://tropical-database-search`,
-                            contentType: 'text'
-                        },
-                        score: 0.95 // High confidence since it's freshly scraped for this explicit purpose
-                    }));
+            if (isAgriIntent) {
+                logger.info(`Query intent classified as agricultural [${queryCategories.join(', ')}]. Triggering StealthScraperService for: "${queryText}"`);
+                try {
+                    // Determine platform heuristically based on tropical sources and intent
+                    let platform = 'fao_crop_guides'; // Default general agronomy
+                    const lowerQuery = queryText.toLowerCase();
                     
-                    // Prioritize stealth results by putting them at the top of the context
-                    contextResults = [...mappedStealthResults, ...contextResults].slice(0, 4);
+                    if (queryCategories.includes('pest_and_disease') || lowerQuery.includes('cabi')) {
+                        platform = 'cabi_plantwise';
+                    } else if (queryCategories.includes('climate_and_weather') || lowerQuery.includes('fews')) {
+                        platform = 'fews_net';
+                    } else if (lowerQuery.includes('cassava') || lowerQuery.includes('yam') || lowerQuery.includes('iita')) {
+                        platform = 'iita_agronomy';
+                    } else if (lowerQuery.includes('rice') || lowerQuery.includes('africarice')) {
+                        platform = 'africarice';
+                    }
+                    
+                    // Note: Instead of a generic 'niche' word split, we pass the full exact query to the exact match stealth scraper
+                    const stealthResults = await StealthScraperService.scrapeKnowledge(queryText, platform, 'Global Tropics');
+                    
+                    if (stealthResults && stealthResults.length > 0) {
+                        const mappedStealthResults: SearchResult[] = stealthResults.map((r, index) => ({
+                            id: `stealth-${index}-${Date.now()}`,
+                            content: `Stealth Scrape (${platform}): Topic: ${r.topic}. Summary: ${r.summary || 'N/A'}. Keywords: ${r.keywords.join(', ')}`,
+                            metadata: {
+                                title: `Tropical DB: ${r.topic}`,
+                                category: 'Validated Scientific Guidance',
+                                crop: 'Dynamic',
+                                sourceUrl: r.url || `https://tropical-database-search`,
+                                contentType: 'text'
+                            },
+                            score: 0.95 // High confidence since it's freshly scraped for this explicit purpose
+                        }));
+                        
+                        // Prioritize stealth results by putting them at the top of the context
+                        contextResults = [...mappedStealthResults, ...contextResults].slice(0, 4);
+                    }
+                } catch (stealthError) {
+                    logger.error('Failed to retrieve stealth scraper fallback:', stealthError);
                 }
-            } catch (stealthError) {
-                logger.error('Failed to retrieve stealth scraper fallback:', stealthError);
+            } else if (tavilyService.isConfigured()) {
+                logger.info(`Query intent [${queryCategories.join(', ')}] is general. Querying Tavily for: "${queryText}"`);
+                try {
+                    const webResults = await tavilyService.search(queryText, 3);
+                    if (webResults && webResults.results && webResults.results.length > 0) {
+                        const mappedWebResults: SearchResult[] = webResults.results.map((r, index) => ({
+                            id: `web-${index}-${Date.now()}`,
+                            content: r.content,
+                            metadata: {
+                                title: r.title,
+                                category: 'External Reference',
+                                crop: 'All',
+                                sourceUrl: r.url,
+                                contentType: 'text'
+                            },
+                            score: r.score
+                        }));
+                        contextResults = [...mappedWebResults, ...contextResults].slice(0, 4);
+                    }
+                } catch (webError) {
+                    logger.error('Failed to retrieve external search fallback:', webError);
+                }
             }
         }
 
@@ -537,7 +537,7 @@ ${priceList.map((p: any) => `- ${p.crop}: ${p.price} (${p.trend})`).join('\n')}`
             // 7. Asynchronously categorize the query and log search for user history in the background (non-blocking!)
             (async () => {
                 try {
-                    const categories = await this.categorizeQuery(queryText);
+                    const categories = queryCategories.length > 0 ? queryCategories : await this.categorizeQuery(queryText);
                     await this.logSearch(
                         userId, 
                         queryText, 
@@ -649,17 +649,17 @@ ${priceList.map((p: any) => `- ${p.crop}: ${p.price} (${p.trend})`).join('\n')}`
             const classification = await AIRouter.routeRequest('classify', {
                 input: queryText,
                 options: {
-                    taxonomy: 'crop_types, pest_control, soil_health, weather_advisory, market_prices',
+                    taxonomy: 'pest_and_disease, agronomy_and_yield, climate_and_weather, market_prices, general_inquiry',
                     multiLabel: true
                 }
             });
 
             return classification.labels
-                .filter((l: any) => l.score > 0.5)
+                .filter((l: any) => l.score > 0.4)
                 .map((l: any) => l.label);
         } catch (error) {
             logger.error('Query classification failed:', error);
-            return ['general'];
+            return ['general_inquiry'];
         }
     }
 
