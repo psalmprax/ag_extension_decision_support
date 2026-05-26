@@ -31,6 +31,10 @@ export interface AppConfig {
     cors: { origin: string };
     demo: { password: string };
     ollama: { host: string; model: string };
+    ingestion: {
+        enabled: boolean;
+        schedule: 'daily' | 'weekly';
+    };
 }
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -132,5 +136,9 @@ export const config: AppConfig = {
     ollama: {
         host: getEnv('OLLAMA_HOST', 'http://localhost:11434'),
         model: getEnv('OLLAMA_MODEL', 'llama3'),
+    },
+    ingestion: {
+        enabled: getEnv('INGESTION_ENABLED', 'true') === 'true',
+        schedule: getEnv('INGESTION_SCHEDULE', 'weekly') as 'daily' | 'weekly',
     },
 };
