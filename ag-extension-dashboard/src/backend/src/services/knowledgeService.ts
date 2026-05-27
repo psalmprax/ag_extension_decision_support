@@ -23,7 +23,7 @@ export class KnowledgeService {
      * Search for knowledge articles using RAG (Vector Search)
      */
     static async searchKnowledge(queryText: string, limit: number = 3, filters: { category?: string; crop?: string } = {}): Promise<SearchResult[]> {
-        return VectorService.search(queryText, limit, filters);
+        return VectorService.hybridSearch(queryText, limit, filters);
     }
 
     /**
@@ -318,72 +318,76 @@ export class KnowledgeService {
 
         if (isAgriQuery) {
             // A. Weather Forecast
-            tasks.push((async () => {
-                try {
-                    const { WeatherService } = await import('@/services/weatherService');
-                    const weather = await WeatherService.getByLocation(finalLocation);
-                    if (weather) {
-                        const temp = weather.temperature ?? weather.temp;
-                        const condition = weather.condition || 'Clear';
-                        const wind = weather.windSpeed;
-                        
-                        let forecastText = 'No forecast data';
-                        if (weather.forecast && Array.isArray(weather.forecast)) {
-                            forecastText = weather.forecast.map(f => {
-                                return `  - ${f.date}: Max ${f.maxTemp}°C, Min ${f.minTemp}°C, ${f.condition}`;
-                            }).join('\n');
-                        }
-                        
-                        liveContextResults.push({
-                            id: `live-weather-${Date.now()}`,
-                            content: `Live Weather for ${finalLocation}:
+            if (queryCategories.length === 0 || queryCategories.includes('climate_and_weather')) {
+                tasks.push((async () => {
+                    try {
+                        const { WeatherService } = await import('@/services/weatherService');
+                        const weather = await WeatherService.getByLocation(finalLocation);
+                        if (weather) {
+                            const temp = weather.temperature ?? weather.temp;
+                            const condition = weather.condition || 'Clear';
+                            const wind = weather.windSpeed;
+                            
+                            let forecastText = 'No forecast data';
+                            if (weather.forecast && Array.isArray(weather.forecast)) {
+                                forecastText = weather.forecast.map(f => {
+                                    return `  - ${f.date}: Max ${f.maxTemp}°C, Min ${f.minTemp}°C, ${f.condition}`;
+                                }).join('\n');
+                            }
+                            
+                            liveContextResults.push({
+                                id: `live-weather-${Date.now()}`,
+                                content: `Live Weather for ${finalLocation}:
 - Current Temp: ${temp !== undefined ? temp : 'N/A'}°C
 - Description: ${condition}
 - Wind Speed: ${wind !== undefined ? wind : 'N/A'} km/h
 - 3-Day Forecast:
 ${forecastText}`,
-                            metadata: {
-                                title: `Live Weather Forecast for ${finalLocation}`,
-                                category: 'Weather Forecast',
-                                crop: finalCrop || 'All',
-                                sourceUrl: 'https://open-meteo.com',
-                                contentType: 'text'
-                            },
-                            score: 1.0
-                        });
+                                metadata: {
+                                    title: `Live Weather Forecast for ${finalLocation}`,
+                                    category: 'Weather Forecast',
+                                    crop: finalCrop || 'All',
+                                    sourceUrl: 'https://open-meteo.com',
+                                    contentType: 'text'
+                                },
+                                score: 1.0
+                            });
+                        }
+                    } catch (err) {
+                        logger.warn('Failed to fetch weather in askQuestion:', err);
                     }
-                } catch (err) {
-                    logger.warn('Failed to fetch weather in askQuestion:', err);
-                }
-            })());
+                })());
+            }
 
             // B. FAO Alerts
-            tasks.push((async () => {
-                try {
-                    const { FAOService } = await import('@/services/faoService');
-                    const alerts = await FAOService.getDiseaseAlerts(finalRegion, finalCrop);
-                    if (alerts && alerts.length > 0) {
-                        liveContextResults.push({
-                            id: `live-fao-alerts-${Date.now()}`,
-                            content: `FAO Disease Alerts for ${finalRegion} (Crop: ${finalCrop || 'All'}):
+            if (queryCategories.length === 0 || queryCategories.includes('pest_and_disease')) {
+                tasks.push((async () => {
+                    try {
+                        const { FAOService } = await import('@/services/faoService');
+                        const alerts = await FAOService.getDiseaseAlerts(finalRegion, finalCrop);
+                        if (alerts && alerts.length > 0) {
+                            liveContextResults.push({
+                                id: `live-fao-alerts-${Date.now()}`,
+                                content: `FAO Disease Alerts for ${finalRegion} (Crop: ${finalCrop || 'All'}):
 ${alerts.map((a: any) => `- [${a.severity.toUpperCase()}] ${a.title}: ${a.description}`).join('\n')}`,
-                            metadata: {
-                                title: `FAO Pest & Disease Alerts (${finalRegion})`,
-                                category: 'Disease Alerts',
-                                crop: finalCrop || 'All',
-                                sourceUrl: 'https://www.fao.org',
-                                contentType: 'text'
-                            },
-                            score: 1.0
-                        });
+                                metadata: {
+                                    title: `FAO Pest & Disease Alerts (${finalRegion})`,
+                                    category: 'Disease Alerts',
+                                    crop: finalCrop || 'All',
+                                    sourceUrl: 'https://www.fao.org',
+                                    contentType: 'text'
+                                },
+                                score: 1.0
+                            });
+                        }
+                    } catch (err) {
+                        logger.warn('Failed to fetch FAO alerts in askQuestion:', err);
                     }
-                } catch (err) {
-                    logger.warn('Failed to fetch FAO alerts in askQuestion:', err);
-                }
-            })());
+                })());
+            }
 
             // C. NASA POWER & SoilGrids if lat/lng are present
-            if (finalLat && finalLng) {
+            if (finalLat && finalLng && (queryCategories.length === 0 || queryCategories.includes('agronomy_and_yield') || queryCategories.includes('climate_and_weather'))) {
                 tasks.push((async () => {
                     try {
                         const { NasaPowerService } = await import('@/services/data/nasaPowerService');
@@ -440,33 +444,35 @@ ${alerts.map((a: any) => `- [${a.severity.toUpperCase()}] ${a.title}: ${a.descri
             }
 
             // D. Market Prices
-            tasks.push((async () => {
-                try {
-                    const { marketPriceService } = await import('@/services/marketPriceService');
-                    const prices = await marketPriceService.getLatestPrices();
-                    if (prices && prices.length > 0) {
-                        const relevantPrices = finalCrop 
-                            ? prices.filter((p: any) => p.crop.toLowerCase().includes(finalCrop!.toLowerCase()))
-                            : prices;
-                        const priceList = relevantPrices.length > 0 ? relevantPrices : prices;
-                        liveContextResults.push({
-                            id: `live-market-prices-${Date.now()}`,
-                            content: `Latest Market Prices:
+            if (queryCategories.length === 0 || queryCategories.includes('market_prices')) {
+                tasks.push((async () => {
+                    try {
+                        const { marketPriceService } = await import('@/services/marketPriceService');
+                        const prices = await marketPriceService.getLatestPrices();
+                        if (prices && prices.length > 0) {
+                            const relevantPrices = finalCrop 
+                                ? prices.filter((p: any) => p.crop.toLowerCase().includes(finalCrop!.toLowerCase()))
+                                : prices;
+                            const priceList = relevantPrices.length > 0 ? relevantPrices : prices;
+                            liveContextResults.push({
+                                id: `live-market-prices-${Date.now()}`,
+                                content: `Latest Market Prices:
 ${priceList.map((p: any) => `- ${p.crop}: ${p.price} (${p.trend})`).join('\n')}`,
-                            metadata: {
-                                title: 'Latest Market Prices Context',
-                                category: 'Market Prices',
-                                crop: finalCrop || 'All',
-                                sourceUrl: 'https://www.ratin.net',
-                                contentType: 'text'
-                            },
-                            score: 1.0
-                        });
+                                metadata: {
+                                    title: 'Latest Market Prices Context',
+                                    category: 'Market Prices',
+                                    crop: finalCrop || 'All',
+                                    sourceUrl: 'https://www.ratin.net',
+                                    contentType: 'text'
+                                },
+                                score: 1.0
+                            });
+                        }
+                    } catch (err) {
+                        logger.warn('Failed to fetch market prices in askQuestion:', err);
                     }
-                } catch (err) {
-                    logger.warn('Failed to fetch market prices in askQuestion:', err);
-                }
-            })());
+                })());
+            }
 
             await Promise.all(tasks);
         }
@@ -475,13 +481,16 @@ ${priceList.map((p: any) => `- ${p.crop}: ${p.price} (${p.trend})`).join('\n')}`
         contextResults = [...liveContextResults, ...contextResults];
 
         const contextText = contextResults
-            .map(res => `[Source: ${res.metadata.crop}/${res.metadata.category}] (Type: ${res.metadata.contentType || 'text'}, URL: ${res.metadata.sourceUrl || ''})\n${res.content}`)
+            .map(res => `[Source: ${res.metadata.crop}/${res.metadata.category}] (Type: ${res.metadata.contentType || 'text'}, Score: ${res.score !== undefined ? res.score.toFixed(2) : '1.0'}, URL: ${res.metadata.sourceUrl || ''})\n${res.content}`)
             .join('\n\n---\n\n');
 
         // 4. Generate answer using Reasoning capability of ALFA
         try {
             const reasoningResult: ReasoningResult = await AIRouter.routeRequest('reason', {
-                context: contextText || 'No specific context found in knowledge base.',
+                context: `${contextText || 'No specific context found in knowledge base.'}\n\nGrounding Guidelines:
+- Prioritize context sources with high similarity scores (e.g. 0.70+).
+- Treat context with lower scores (< 0.50) as supplementary or less relevant context.
+- Explicitly base your answer on the provided context. If the context does not contain enough information to answer the question, state that.`,
                 query: queryText,
                 attachments: attachments, // Pass multimodal context
                 options: { temperature: 0.2, maxTokens: 900 }

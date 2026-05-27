@@ -66,12 +66,37 @@ export class VectorService {
     /**
      * Search for similar documents using pgvector or fallback function
      */
-    static async search(queryText: string, limit: number = 5, filters: { category?: string; crop?: string } = {}): Promise<SearchResult[]> {
-        logger.info(`Searching persistent vector store for: "${queryText}"`);
+    static async search(
+        queryText: string, 
+        limit: number = 5, 
+        filters: { category?: string; crop?: string } = {},
+        minScore: number = 0.4
+    ): Promise<SearchResult[]> {
+        logger.info(`Searching persistent vector store for: "${queryText}" (minScore: ${minScore})`);
 
         try {
             // Generate query embedding
             const queryEmbeddingResult = await AIRouter.routeRequest('embed', { text: queryText });
+            const queryDim = queryEmbeddingResult.embedding.length;
+
+            // Optional dimension validation against stored database embeddings
+            try {
+                const dimCheck = await query(`
+                    SELECT array_length(embedding, 1) as dim 
+                    FROM knowledge_articles 
+                    WHERE embedding IS NOT NULL 
+                    LIMIT 1
+                `);
+                if (dimCheck.rows.length > 0) {
+                    const storedDim = dimCheck.rows[0].dim;
+                    if (storedDim && storedDim !== queryDim) {
+                        logger.warn(`Vector dimension mismatch! Stored: ${storedDim}, Query: ${queryDim}. Search may fail or return zero similarity.`);
+                    }
+                }
+            } catch (dimErr) {
+                logger.warn('Failed to perform database vector dimension check:', dimErr);
+            }
+
             // Convert to PostgreSQL array format: {val1,val2,val3}
             const vector = `{${queryEmbeddingResult.embedding.join(',')}}`;
 
@@ -88,14 +113,19 @@ export class VectorService {
                 where.push(`$${params.length} = ANY(crops)`);
             }
 
+            params.push(minScore);
             params.push(limit);
 
             // Use our custom cosine_similarity function for maximum compatibility
+            // and wrap in a subquery to support filtering by minScore alias
             const result = await query(`
-                SELECT id, title, content, category, crops, source_url, content_type,
-                       cosine_similarity(embedding::float8[], $1::float8[]) as score
-                FROM knowledge_articles
-                WHERE ${where.join(' AND ')}
+                SELECT * FROM (
+                    SELECT id, title, content, category, crops, source_url, content_type,
+                           cosine_similarity(embedding::float8[], $1::float8[]) as score
+                    FROM knowledge_articles
+                    WHERE ${where.join(' AND ')}
+                ) sub
+                WHERE score >= $${params.length - 1}
                 ORDER BY score DESC
                 LIMIT $${params.length}
             `, params);
@@ -109,13 +139,146 @@ export class VectorService {
                     category: row.category,
                     crop: row.crops?.[0],
                     sourceUrl: row.source_url,
-                    contentType: row.content_type
+                    contentType: row.content_type || 'text'
                 },
                 score: Number.parseFloat(row.score)
             }));
         } catch (error) {
             logger.error('Database vector search failed:', error);
             return [];
+        }
+    }
+
+    /**
+     * Search for knowledge articles using PostgreSQL full-text search (keyword-based)
+     */
+    static async keywordSearch(
+        queryText: string,
+        limit: number = 5,
+        filters: { category?: string; crop?: string } = {}
+    ): Promise<SearchResult[]> {
+        logger.info(`Searching database via keyword search for: "${queryText}"`);
+        try {
+            // Sanitize query text for tsquery - simple words split by &
+            const cleanQuery = queryText
+                .replace(/[^a-zA-Z0-9\s]/g, ' ')
+                .trim()
+                .split(/\s+/)
+                .filter(word => word.length > 2)
+                .join(' & ');
+
+            if (!cleanQuery) {
+                return [];
+            }
+
+            const params: any[] = [cleanQuery];
+            const where: string[] = ["to_tsvector('english', title || ' ' || content) @@ to_tsquery('english', $1)"];
+
+            if (filters.category) {
+                params.push(filters.category);
+                where.push(`category = $${params.length}`);
+            }
+
+            if (filters.crop) {
+                params.push(filters.crop);
+                where.push(`$${params.length} = ANY(crops)`);
+            }
+
+            params.push(limit);
+
+            const result = await query(`
+                SELECT id, title, content, category, crops, source_url, content_type,
+                       ts_rank_cd(to_tsvector('english', title || ' ' || content), to_tsquery('english', $1)) as score
+                FROM knowledge_articles
+                WHERE ${where.join(' AND ')}
+                ORDER BY score DESC
+                LIMIT $${params.length}
+            `, params);
+
+            return result.rows.map((row: any) => ({
+                id: row.id,
+                content: row.content,
+                metadata: {
+                    title: row.title,
+                    category: row.category,
+                    crop: row.crops?.[0],
+                    sourceUrl: row.source_url,
+                    contentType: row.content_type || 'text'
+                },
+                score: Number.parseFloat(row.score)
+            }));
+        } catch (error) {
+            logger.error('Database keyword search failed:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Search using both vector and keyword search, merged using Reciprocal Rank Fusion (RRF)
+     */
+    static async hybridSearch(
+        queryText: string,
+        limit: number = 5,
+        filters: { category?: string; crop?: string } = {},
+        minScore: number = 0.4
+    ): Promise<SearchResult[]> {
+        logger.info(`Performing hybrid search (Vector + Keyword) for: "${queryText}"`);
+
+        try {
+            // Get vector matches (use a lower minScore threshold or none here to allow blending)
+            const vectorResults = await this.search(queryText, limit * 2, filters, 0.0);
+            
+            // Get keyword matches
+            const keywordResults = await this.keywordSearch(queryText, limit * 2, filters);
+
+            if (vectorResults.length === 0 && keywordResults.length === 0) {
+                return [];
+            }
+
+            // Reciprocal Rank Fusion (RRF)
+            const k = 60;
+            const rrfMap = new Map<string, { doc: SearchResult; score: number; cosineScore: number }>();
+
+            vectorResults.forEach((doc, idx) => {
+                const rank = idx + 1;
+                rrfMap.set(doc.id, {
+                    doc,
+                    score: 1 / (k + rank),
+                    cosineScore: doc.score
+                });
+            });
+
+            keywordResults.forEach((doc, idx) => {
+                const rank = idx + 1;
+                const rrfWeight = 1 / (k + rank);
+                const existing = rrfMap.get(doc.id);
+                if (existing) {
+                    existing.score += rrfWeight;
+                    // Keep the cosine score
+                } else {
+                    rrfMap.set(doc.id, {
+                        doc,
+                        score: rrfWeight,
+                        cosineScore: 0.5 // Default baseline score for keyword-only matches
+                    });
+                }
+            });
+
+            // Sort by RRF score descending
+            const merged = Array.from(rrfMap.values())
+                .sort((a, b) => b.score - a.score)
+                .map(item => {
+                    // Update the final score field to cosine similarity (or the 0.5 keyword fallback)
+                    item.doc.score = item.cosineScore;
+                    return item.doc;
+                });
+
+            // Apply minScore check and limit
+            return merged.filter(doc => doc.score >= minScore).slice(0, limit);
+        } catch (error) {
+            logger.error('Hybrid search execution failed:', error);
+            // Fall back to simple search on error
+            return this.search(queryText, limit, filters, minScore);
         }
     }
 
