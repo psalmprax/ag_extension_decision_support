@@ -56,6 +56,7 @@ jest.mock('../services/prismaService', () => ({
                 village: 'Village A',
                 farmSizeHectares: 2.5,
                 crops: ['maize'],
+                assignedOfficerId: 'off-1',
                 createdAt: new Date()
             }))
         }
@@ -106,6 +107,6 @@ describe('Extended Farmers API Tests', () => {
         expect(response.status).toBe(200);
         expect(response.body.data.vitalScore).toBe(85);
         expect(response.body.data.yieldHistory).toBeDefined();
-        expect(response.body.data.location.lat).toBe(-1.2833);
+        expect(response.body.data.locationLat).toBe(-1.2833);
     });
 });

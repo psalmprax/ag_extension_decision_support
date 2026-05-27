@@ -321,70 +321,70 @@ describe('Error Handler Middleware', () => {
     });
 
     describe('asyncWrapper', () => {
-        it('should handle JsonWebTokenError', () => {
+        it('should handle JsonWebTokenError', async () => {
             const error = { name: 'JsonWebTokenError' };
-            const fn = jest.fn().mockImplementation(() => {
-                throw error;
-            });
+            const fn = jest.fn().mockRejectedValue(error);
 
             const wrapped = asyncWrapper(fn);
             wrapped(mockRequest as Request, mockResponse as Response, mockNext);
+
+            await new Promise(process.nextTick);
 
             expect(mockNext).toHaveBeenCalled();
             const passedError = (mockNext as jest.Mock).mock.calls[0][0];
             expect(passedError.code).toBe(ErrorTypes.AUTHENTICATION_ERROR);
         });
 
-        it('should handle TokenExpiredError', () => {
+        it('should handle TokenExpiredError', async () => {
             const error = { name: 'TokenExpiredError' };
-            const fn = jest.fn().mockImplementation(() => {
-                throw error;
-            });
+            const fn = jest.fn().mockRejectedValue(error);
 
             const wrapped = asyncWrapper(fn);
             wrapped(mockRequest as Request, mockResponse as Response, mockNext);
+
+            await new Promise(process.nextTick);
 
             expect(mockNext).toHaveBeenCalled();
             const passedError = (mockNext as jest.Mock).mock.calls[0][0];
             expect(passedError.message).toBe('Token expired');
         });
 
-        it('should handle Prisma errors', () => {
+        it('should handle Prisma errors', async () => {
             const error = { code: 'P2002' };
-            const fn = jest.fn().mockImplementation(() => {
-                throw error;
-            });
+            const fn = jest.fn().mockRejectedValue(error);
 
             const wrapped = asyncWrapper(fn);
             wrapped(mockRequest as Request, mockResponse as Response, mockNext);
+
+            await new Promise(process.nextTick);
 
             expect(mockNext).toHaveBeenCalled();
             const passedError = (mockNext as jest.Mock).mock.calls[0][0];
             expect(passedError.code).toBe(ErrorTypes.DATABASE_ERROR);
         });
 
-        it('should handle MulterError', () => {
+        it('should handle MulterError', async () => {
             const error = { name: 'MulterError', code: 'LIMIT_FILE_SIZE' };
-            const fn = jest.fn().mockImplementation(() => {
-                throw error;
-            });
+            const fn = jest.fn().mockRejectedValue(error);
 
             const wrapped = asyncWrapper(fn);
             wrapped(mockRequest as Request, mockResponse as Response, mockNext);
+
+            await new Promise(process.nextTick);
 
             expect(mockNext).toHaveBeenCalled();
             const passedError = (mockNext as jest.Mock).mock.calls[0][0];
             expect(passedError.code).toBe(ErrorTypes.VALIDATION_ERROR);
         });
 
-        it('should pass through other errors', () => {
+        it('should pass through other errors', async () => {
             const error = new Error('Random error');
-            const fn = jest.fn().mockImplementation(() => {
-                throw error;
-            });
+            const fn = jest.fn().mockRejectedValue(error);
 
             const wrapped = asyncWrapper(fn);
             wrapped(mockRequest as Request, mockResponse as Response, mockNext);
+
+            await new Promise(process.nextTick);
 
             expect(mockNext).toHaveBeenCalledWith(error);
         });

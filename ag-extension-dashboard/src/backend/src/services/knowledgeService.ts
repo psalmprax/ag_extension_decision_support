@@ -191,15 +191,17 @@ export class KnowledgeService {
         // 3. Retrieve relevant context (cache miss)
         let contextResults = await this.searchKnowledge(queryText);
         const bestScore = contextResults.length > 0 ? contextResults[0].score : 0;
-        let queryCategories: string[] = [];
+
+        // Categorize query upfront to understand if it's agricultural or general inquiry
+        const queryCategories = await this.categorizeQuery(queryText);
+        const isAgriQuery = queryCategories.length === 0 || queryCategories.some(c =>
+            ['pest_and_disease', 'agronomy_and_yield', 'climate_and_weather', 'market_prices'].includes(c)
+        );
 
         if (contextResults.length === 0 || bestScore < 0.65) {
-            logger.info(`Low local match score (${bestScore}). Performing AI intent classification for fallback routing...`);
-            queryCategories = await this.categorizeQuery(queryText);
-            
-            const isAgriIntent = queryCategories.some(c => ['pest_and_disease', 'agronomy_and_yield', 'climate_and_weather'].includes(c));
+            logger.info(`Low local match score (${bestScore}). Performing fallback routing based on intent...`);
 
-            if (isAgriIntent) {
+            if (isAgriQuery) {
                 logger.info(`Query intent classified as agricultural [${queryCategories.join(', ')}]. Triggering StealthScraperService for: "${queryText}"`);
                 try {
                     // Determine platform heuristically based on tropical sources and intent
@@ -314,158 +316,160 @@ export class KnowledgeService {
         const liveContextResults: SearchResult[] = [];
         const tasks: Array<Promise<void>> = [];
 
-        // A. Weather Forecast
-        tasks.push((async () => {
-            try {
-                const { WeatherService } = await import('@/services/weatherService');
-                const weather = await WeatherService.getByLocation(finalLocation);
-                if (weather) {
-                    const temp = weather.temperature ?? weather.temp;
-                    const condition = weather.condition || 'Clear';
-                    const wind = weather.windSpeed;
-                    
-                    let forecastText = 'No forecast data';
-                    if (weather.forecast && Array.isArray(weather.forecast)) {
-                        forecastText = weather.forecast.map(f => {
-                            return `  - ${f.date}: Max ${f.maxTemp}°C, Min ${f.minTemp}°C, ${f.condition}`;
-                        }).join('\n');
-                    }
-                    
-                    liveContextResults.push({
-                        id: `live-weather-${Date.now()}`,
-                        content: `Live Weather for ${finalLocation}:
+        if (isAgriQuery) {
+            // A. Weather Forecast
+            tasks.push((async () => {
+                try {
+                    const { WeatherService } = await import('@/services/weatherService');
+                    const weather = await WeatherService.getByLocation(finalLocation);
+                    if (weather) {
+                        const temp = weather.temperature ?? weather.temp;
+                        const condition = weather.condition || 'Clear';
+                        const wind = weather.windSpeed;
+                        
+                        let forecastText = 'No forecast data';
+                        if (weather.forecast && Array.isArray(weather.forecast)) {
+                            forecastText = weather.forecast.map(f => {
+                                return `  - ${f.date}: Max ${f.maxTemp}°C, Min ${f.minTemp}°C, ${f.condition}`;
+                            }).join('\n');
+                        }
+                        
+                        liveContextResults.push({
+                            id: `live-weather-${Date.now()}`,
+                            content: `Live Weather for ${finalLocation}:
 - Current Temp: ${temp !== undefined ? temp : 'N/A'}°C
 - Description: ${condition}
 - Wind Speed: ${wind !== undefined ? wind : 'N/A'} km/h
 - 3-Day Forecast:
 ${forecastText}`,
-                        metadata: {
-                            title: `Live Weather Forecast for ${finalLocation}`,
-                            category: 'Weather Forecast',
-                            crop: finalCrop || 'All',
-                            sourceUrl: 'https://open-meteo.com',
-                            contentType: 'text'
-                        },
-                        score: 1.0
-                    });
+                            metadata: {
+                                title: `Live Weather Forecast for ${finalLocation}`,
+                                category: 'Weather Forecast',
+                                crop: finalCrop || 'All',
+                                sourceUrl: 'https://open-meteo.com',
+                                contentType: 'text'
+                            },
+                            score: 1.0
+                        });
+                    }
+                } catch (err) {
+                    logger.warn('Failed to fetch weather in askQuestion:', err);
                 }
-            } catch (err) {
-                logger.warn('Failed to fetch weather in askQuestion:', err);
-            }
-        })());
+            })());
 
-        // B. FAO Alerts
-        tasks.push((async () => {
-            try {
-                const { FAOService } = await import('@/services/faoService');
-                const alerts = await FAOService.getDiseaseAlerts(finalRegion, finalCrop);
-                if (alerts && alerts.length > 0) {
-                    liveContextResults.push({
-                        id: `live-fao-alerts-${Date.now()}`,
-                        content: `FAO Disease Alerts for ${finalRegion} (Crop: ${finalCrop || 'All'}):
-${alerts.map((a: any) => `- [${a.severity.toUpperCase()}] ${a.title}: ${a.description}`).join('\n')}`,
-                        metadata: {
-                            title: `FAO Pest & Disease Alerts (${finalRegion})`,
-                            category: 'Disease Alerts',
-                            crop: finalCrop || 'All',
-                            sourceUrl: 'https://www.fao.org',
-                            contentType: 'text'
-                        },
-                        score: 1.0
-                    });
-                }
-            } catch (err) {
-                logger.warn('Failed to fetch FAO alerts in askQuestion:', err);
-            }
-        })());
-
-        // C. NASA POWER & SoilGrids if lat/lng are present
-        if (finalLat && finalLng) {
+            // B. FAO Alerts
             tasks.push((async () => {
                 try {
-                    const { NasaPowerService } = await import('@/services/data/nasaPowerService');
-                    const nasa = new NasaPowerService();
-                    const agro = await nasa.getAgroclimateSummary(finalLat!, finalLng!, 7);
-                    if (agro) {
+                    const { FAOService } = await import('@/services/faoService');
+                    const alerts = await FAOService.getDiseaseAlerts(finalRegion, finalCrop);
+                    if (alerts && alerts.length > 0) {
                         liveContextResults.push({
-                            id: `live-nasa-agro-${Date.now()}`,
-                            content: `NASA POWER Agroclimate Summary for lat: ${finalLat}, lng: ${finalLng}:
+                            id: `live-fao-alerts-${Date.now()}`,
+                            content: `FAO Disease Alerts for ${finalRegion} (Crop: ${finalCrop || 'All'}):
+${alerts.map((a: any) => `- [${a.severity.toUpperCase()}] ${a.title}: ${a.description}`).join('\n')}`,
+                            metadata: {
+                                title: `FAO Pest & Disease Alerts (${finalRegion})`,
+                                category: 'Disease Alerts',
+                                crop: finalCrop || 'All',
+                                sourceUrl: 'https://www.fao.org',
+                                contentType: 'text'
+                            },
+                            score: 1.0
+                        });
+                    }
+                } catch (err) {
+                    logger.warn('Failed to fetch FAO alerts in askQuestion:', err);
+                }
+            })());
+
+            // C. NASA POWER & SoilGrids if lat/lng are present
+            if (finalLat && finalLng) {
+                tasks.push((async () => {
+                    try {
+                        const { NasaPowerService } = await import('@/services/data/nasaPowerService');
+                        const nasa = new NasaPowerService();
+                        const agro = await nasa.getAgroclimateSummary(finalLat!, finalLng!, 7);
+                        if (agro) {
+                            liveContextResults.push({
+                                id: `live-nasa-agro-${Date.now()}`,
+                                content: `NASA POWER Agroclimate Summary for lat: ${finalLat}, lng: ${finalLng}:
 - Temp Range: ${agro.temperatureRange?.min ?? 'N/A'} to ${agro.temperatureRange?.max ?? 'N/A'}°C
 - Avg Relative Humidity: ${agro.relativeHumidity ?? 'N/A'}%
 - Precipitation Sum: ${agro.precipitationSum ?? 'N/A'} mm
 - Avg Solar Radiation: ${agro.solarRadiationAvg ?? 'N/A'} MJ/m²/day`,
-                            metadata: {
-                                title: `Agroclimatic Solar & Rainfall Context (NASA POWER)`,
-                                category: 'Agroclimatology',
-                                crop: finalCrop || 'All',
-                                sourceUrl: 'https://power.larc.nasa.gov/',
-                                contentType: 'text'
-                            },
-                            score: 1.0
-                        });
+                                metadata: {
+                                    title: `Agroclimatic Solar & Rainfall Context (NASA POWER)`,
+                                    category: 'Agroclimatology',
+                                    crop: finalCrop || 'All',
+                                    sourceUrl: 'https://power.larc.nasa.gov/',
+                                    contentType: 'text'
+                                },
+                                score: 1.0
+                            });
+                        }
+                    } catch (err) {
+                        logger.warn('Failed to fetch NASA agroclimate in askQuestion:', err);
                     }
-                } catch (err) {
-                    logger.warn('Failed to fetch NASA agroclimate in askQuestion:', err);
-                }
-            })());
+                })());
 
-            tasks.push((async () => {
-                try {
-                    const { soilGridsService } = await import('@/services/data/soilGridsService');
-                    const soil = (await soilGridsService.fetchSoilProperties(finalLat!, finalLng!)) as any;
-                    if (soil) {
-                        liveContextResults.push({
-                            id: `live-soil-properties-${Date.now()}`,
-                            content: `SoilGrids ISRIC Soil Properties for lat: ${finalLat}, lng: ${finalLng}:
+                tasks.push((async () => {
+                    try {
+                        const { soilGridsService } = await import('@/services/data/soilGridsService');
+                        const soil = (await soilGridsService.fetchSoilProperties(finalLat!, finalLng!)) as any;
+                        if (soil) {
+                            liveContextResults.push({
+                                id: `live-soil-properties-${Date.now()}`,
+                                content: `SoilGrids ISRIC Soil Properties for lat: ${finalLat}, lng: ${finalLng}:
 - pH at 0-5cm: ${soil.ph_h2o ?? 'N/A'}
 - Clay content: ${soil.clay ?? 'N/A'}%
 - Organic Carbon: ${soil.soc ?? 'N/A'} dg/kg`,
+                                metadata: {
+                                    title: `Location-Specific Soil Properties (ISRIC SoilGrids)`,
+                                    category: 'Soil Properties',
+                                    crop: finalCrop || 'All',
+                                    sourceUrl: 'https://soilgrids.org/',
+                                    contentType: 'text'
+                                },
+                                score: 1.0
+                            });
+                        }
+                    } catch (err) {
+                        logger.warn('Failed to fetch SoilGrids in askQuestion:', err);
+                    }
+                })());
+            }
+
+            // D. Market Prices
+            tasks.push((async () => {
+                try {
+                    const { marketPriceService } = await import('@/services/marketPriceService');
+                    const prices = await marketPriceService.getLatestPrices();
+                    if (prices && prices.length > 0) {
+                        const relevantPrices = finalCrop 
+                            ? prices.filter((p: any) => p.crop.toLowerCase().includes(finalCrop!.toLowerCase()))
+                            : prices;
+                        const priceList = relevantPrices.length > 0 ? relevantPrices : prices;
+                        liveContextResults.push({
+                            id: `live-market-prices-${Date.now()}`,
+                            content: `Latest Market Prices:
+${priceList.map((p: any) => `- ${p.crop}: ${p.price} (${p.trend})`).join('\n')}`,
                             metadata: {
-                                title: `Location-Specific Soil Properties (ISRIC SoilGrids)`,
-                                category: 'Soil Properties',
+                                title: 'Latest Market Prices Context',
+                                category: 'Market Prices',
                                 crop: finalCrop || 'All',
-                                sourceUrl: 'https://soilgrids.org/',
+                                sourceUrl: 'https://www.ratin.net',
                                 contentType: 'text'
                             },
                             score: 1.0
                         });
                     }
                 } catch (err) {
-                    logger.warn('Failed to fetch SoilGrids in askQuestion:', err);
+                    logger.warn('Failed to fetch market prices in askQuestion:', err);
                 }
             })());
+
+            await Promise.all(tasks);
         }
-
-        // D. Market Prices
-        tasks.push((async () => {
-            try {
-                const { marketPriceService } = await import('@/services/marketPriceService');
-                const prices = await marketPriceService.getLatestPrices();
-                if (prices && prices.length > 0) {
-                    const relevantPrices = finalCrop 
-                        ? prices.filter((p: any) => p.crop.toLowerCase().includes(finalCrop!.toLowerCase()))
-                        : prices;
-                    const priceList = relevantPrices.length > 0 ? relevantPrices : prices;
-                    liveContextResults.push({
-                        id: `live-market-prices-${Date.now()}`,
-                        content: `Latest Market Prices:
-${priceList.map((p: any) => `- ${p.crop}: ${p.price} (${p.trend})`).join('\n')}`,
-                        metadata: {
-                            title: 'Latest Market Prices Context',
-                            category: 'Market Prices',
-                            crop: finalCrop || 'All',
-                            sourceUrl: 'https://www.ratin.net',
-                            contentType: 'text'
-                        },
-                        score: 1.0
-                    });
-                }
-            } catch (err) {
-                logger.warn('Failed to fetch market prices in askQuestion:', err);
-            }
-        })());
-
-        await Promise.all(tasks);
 
         // Prepend dynamic live context to semantic search results
         contextResults = [...liveContextResults, ...contextResults];
