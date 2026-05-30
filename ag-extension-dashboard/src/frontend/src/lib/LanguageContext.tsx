@@ -30,7 +30,9 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
             const data = await response.json();
             setTranslationsCache(prev => ({ ...prev, [lang]: data }));
         } catch (error) {
-            console.error(`[i18n] Error loading language ${lang}:`, error);
+            if (import.meta.env.DEV) {
+                console.error(`[i18n] Error loading language ${lang}:`, error);
+            }
             // If failed and not English, ensure we at least have English fallback locally
             if (lang !== 'en' && !translationsCache['en']) {
                 await loadLanguage('en');

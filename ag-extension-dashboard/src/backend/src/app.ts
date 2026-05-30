@@ -170,7 +170,7 @@ const healthHandler = async (_req: Request, res: Response) => {
                         break;
                     }
                 } catch (error) {
-                    logger.debug(`Provider ${provider.provider} unavailable:`, (error as Error).message);
+                    logger.debug(`Provider ${type} unavailable:`, (error as Error).message);
                 }
             }
         }
@@ -293,16 +293,16 @@ app.use('/api/v1/ai', diseaseRoutes);
 app.use('/api/v1/whatsapp', whatsappRoutes);
 app.use('/api/v1/api-clients', apiClientRoutes);
 app.use('/api/v1/commercial/knowledge', commercialKnowledgeRoutes);
-// Create MCP router synchronously to ensure it loads properly
+// Create MCP router dynamically to support modern module standards and tree-shaking
 let mcpRouter: any = null;
-try {
-  // Import synchronously for Docker deployment
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { createMCPRouter } = require('./services/mcpAdapter');
-  mcpRouter = createMCPRouter();
-} catch (error) {
-  console.error('Failed to create MCP router:', error);
-}
+import('./services/mcpAdapter')
+  .then(({ createMCPRouter }) => {
+    mcpRouter = createMCPRouter();
+  })
+  .catch((error) => {
+    logger.error('Failed to create MCP router dynamically:', error);
+  });
+
 
 // MCP middleware wrapper - synchronous
 app.use('/api/v1/mcp', (req, res, next) => {

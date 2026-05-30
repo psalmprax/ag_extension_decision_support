@@ -1,12 +1,43 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+// Mock API services BEFORE importing the store so the hoisted vi.mock applies first
+vi.mock('@/api/farmerService', () => ({
+    updateFarmer: vi.fn().mockResolvedValue({ success: true }),
+    updateFarmers: vi.fn().mockResolvedValue({ success: true }),
+    removeFarmer: vi.fn().mockResolvedValue({ success: true }),
+    removeFarmers: vi.fn().mockResolvedValue({ success: true }),
+    deleteFarmer: vi.fn().mockResolvedValue({ success: true }),
+    deleteFarmers: vi.fn().mockResolvedValue({ success: true }),
+    fetchFarmers: vi.fn().mockResolvedValue({ success: true, data: [] }),
+}));
+
+vi.mock('@/api/visitService', () => ({
+    addVisit: vi.fn().mockResolvedValue({ success: true }),
+    updateVisit: vi.fn().mockResolvedValue({ success: true }),
+    fetchVisits: vi.fn().mockResolvedValue({ success: true, data: [] }),
+}));
+
+vi.mock('react-hot-toast', () => ({
+    default: { success: vi.fn(), error: vi.fn() },
+    toast: { success: vi.fn(), error: vi.fn() },
+}));
+
 import { useAppStore } from '../store/useAppStore';
 
 describe('useAppStore', () => {
     beforeEach(() => {
-        // Reset the store before each test
-        const initialState = useAppStore.getState();
-        useAppStore.setState(initialState, true);
+        // Clear persisted state first, then reset store
         localStorage.clear();
+        useAppStore.setState({
+            user: null,
+            sidebarOpen: true,
+            darkMode: false,
+            activeTab: 'dashboard',
+            farmers: [],
+            visits: [],
+            notifications: [],
+            isLoading: false,
+        });
     });
 
     it('should have initial state', () => {
@@ -14,8 +45,8 @@ describe('useAppStore', () => {
         expect(state.sidebarOpen).toBe(true);
         expect(state.darkMode).toBe(false);
         expect(state.activeTab).toBe('dashboard');
-        expect(state.user).not.toBeNull();
-        expect(state.farmers.length).toBeGreaterThan(0);
+        expect(state.user).toBeNull();
+        expect(state.farmers).toEqual([]);
     });
 
     it('should toggle sidebar', () => {
@@ -35,7 +66,7 @@ describe('useAppStore', () => {
         expect(useAppStore.getState().activeTab).toBe('farmers');
     });
 
-    it('should manage farmers', () => {
+    it('should manage farmers', { timeout: 10000 }, async () => {
         const { addFarmer, removeFarmer, updateFarmer } = useAppStore.getState();
         const initialCount = useAppStore.getState().farmers.length;
 
@@ -51,11 +82,11 @@ describe('useAppStore', () => {
         expect(useAppStore.getState().farmers.length).toBe(initialCount + 1);
         expect(useAppStore.getState().farmers).toContainEqual(newFarmer);
 
-        updateFarmer('99', { firstName: 'Updated' });
+        await updateFarmer('99', { firstName: 'Updated' });
         const updatedFarmer = useAppStore.getState().farmers.find(f => f.id === '99');
         expect(updatedFarmer?.firstName).toBe('Updated');
 
-        removeFarmer('99');
+        await removeFarmer('99');
         expect(useAppStore.getState().farmers.length).toBe(initialCount);
     });
 

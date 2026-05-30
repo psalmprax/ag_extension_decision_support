@@ -17,6 +17,7 @@ import {
 } from '../aiProvider';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
+import { extractVisuals } from '../assetLibrary';
 
 export class AnthropicProvider extends BaseAIProvider {
     readonly provider: AIProviderType = 'anthropic';
