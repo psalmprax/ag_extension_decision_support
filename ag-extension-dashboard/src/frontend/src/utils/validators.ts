@@ -28,6 +28,7 @@ export const isInRange = (value: number, min: number, max: number): boolean => {
 };
 
 export const sanitizeHtml = (str: string): string => {
+    // Use textContent → innerHTML round-trip for safe escaping
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;

@@ -153,7 +153,8 @@ const healthHandler = async (_req: Request, res: Response) => {
             if (fallbackHealthy) {
                 fallbackActiveName = fallbackProvider.provider;
             }
-        } catch {
+        } catch (error) {
+            logger.warn('Fallback provider health check failed:', error);
             fallbackHealthy = false;
         }
 
@@ -168,7 +169,9 @@ const healthHandler = async (_req: Request, res: Response) => {
                         fallbackActiveName = p.provider;
                         break;
                     }
-                } catch { /* provider unavailable */ }
+                } catch (error) {
+                    logger.debug(`Provider ${provider.provider} unavailable:`, (error as Error).message);
+                }
             }
         }
 

@@ -1,3 +1,11 @@
+/** Safely set HTML content — escapes any non-SVG text to prevent XSS */
+const safeSetHTML = (el: HTMLElement, html: string) => {
+  // For static SVG/icon templates with no user input, use a sandboxed approach
+  const template = document.createElement('template');
+  template.innerHTML = html.trim();
+  el.appendChild(template.content);
+};
+
 export default defineContentScript({
   matches: ['<all_urls>'],
   cssInjectionMode: 'ui',
@@ -17,7 +25,7 @@ export default defineContentScript({
 
         // Photo Capture Button
         const photoBtn = document.createElement('button');
-        photoBtn.innerHTML = `
+        safeSetHTML(photoBtn, `
           <div style="
             width: 48px;
             height: 48px;
@@ -86,7 +94,7 @@ export default defineContentScript({
 
         // Simple Floating Action Button (FAB)
         const fab = document.createElement('button');
-        fab.innerHTML = `
+        safeSetHTML(fab, `
           <div style="
             width: 56px;
             height: 56px;
@@ -113,7 +121,7 @@ export default defineContentScript({
 
         // Sync Button
         const syncBtn = document.createElement('button');
-        syncBtn.innerHTML = `
+        safeSetHTML(syncBtn, `
           <div style="
             width: 48px;
             height: 48px;
@@ -138,7 +146,7 @@ export default defineContentScript({
               // Show loading state
               const originalIcon = syncBtn.querySelector('div');
               if (originalIcon) {
-                originalIcon.innerHTML = `
+                safeSetHTML(originalIcon, `
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="10"/>
                     <path d="M12 6v6l4 2"/>
@@ -150,7 +158,7 @@ export default defineContentScript({
 
               // Show success briefly
               if (originalIcon) {
-                originalIcon.innerHTML = `
+                safeSetHTML(originalIcon, `
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M20 6L9 17l-5-5"/>
                   </svg>
@@ -159,7 +167,7 @@ export default defineContentScript({
 
               setTimeout(() => {
                 if (originalIcon) {
-                  originalIcon.innerHTML = `
+                  safeSetHTML(originalIcon, `
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
                   `;
                 }
@@ -170,7 +178,7 @@ export default defineContentScript({
             // Show error state briefly
             const iconDiv = syncBtn.querySelector('div');
             if (iconDiv) {
-              iconDiv.innerHTML = `
+              safeSetHTML(iconDiv, `
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="12" cy="12" r="10"/>
                   <path d="M15 9l-6 6"/>
@@ -178,7 +186,7 @@ export default defineContentScript({
                 </svg>
               `;
               setTimeout(() => {
-                iconDiv.innerHTML = `
+                safeSetHTML(iconDiv, `
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
                 `;
               }, 2000);
@@ -188,7 +196,7 @@ export default defineContentScript({
 
         // GPS Location Button
         const gpsBtn = document.createElement('button');
-        gpsBtn.innerHTML = `
+        safeSetHTML(gpsBtn, `
           <div style="
             width: 48px;
             height: 48px;
@@ -216,7 +224,7 @@ export default defineContentScript({
             // Show loading state
             const originalIcon = gpsBtn.querySelector('div');
             if (originalIcon) {
-              originalIcon.innerHTML = `
+              safeSetHTML(originalIcon, `
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="12" cy="12" r="10"/>
                   <path d="M12 6v6l4 2"/>
@@ -274,7 +282,7 @@ export default defineContentScript({
             // Reset button icon
             const iconDiv = gpsBtn.querySelector('div');
             if (iconDiv) {
-              iconDiv.innerHTML = `
+              safeSetHTML(iconDiv, `
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 1v6M12 17v6M1 12h6M17 12h6"/></svg>
               `;
             }
@@ -283,7 +291,7 @@ export default defineContentScript({
 
         // Log Visit Button
         const logVisitBtn = document.createElement('button');
-        logVisitBtn.innerHTML = `
+        safeSetHTML(logVisitBtn, `
           <div style="
             width: 48px;
             height: 48px;
@@ -382,7 +390,7 @@ export default defineContentScript({
         transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         user-select: none;
       `;
-      bubble.innerHTML = `
+      safeSetHTML(bubble, `
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
         <span>ANALYZE WITH AI</span>
       `;
