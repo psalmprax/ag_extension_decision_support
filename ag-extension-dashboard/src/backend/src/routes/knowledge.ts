@@ -283,6 +283,13 @@ router.get('/search', async (req: Request, res: Response) => {
         };
 
         await cacheSet(cacheKey, JSON.stringify(response), 300);
+
+        // Log search for history/analytics (non-blocking)
+        const userId = (req as any).user?.userId || (req as any).user?.id;
+        if (userId && q) {
+            KnowledgeService.logSearch(userId, q as string, category as string | undefined, crop as string | undefined).catch(() => {});
+        }
+
         res.json(response);
     } catch (error) {
         logger.error('Knowledge search error:', error);

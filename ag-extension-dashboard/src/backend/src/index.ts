@@ -3,6 +3,8 @@ initTelemetry();
 
 import { createServer } from 'http';
 import { Server as SocketServer } from 'socket.io';
+import { createAdapter } from '@socket.io/redis-adapter';
+import { createClient } from 'redis';
 import { config } from './config';
 import { logger } from './utils/logger';
 import { initializeSocketHandlers } from './services/socketService';
@@ -87,6 +89,17 @@ async function bootstrap() {
             logger.info('Cache initialized');
         } catch (error) {
             logger.error('Failed to initialize cache, continuing without:', error);
+        }
+
+        // Attach Redis adapter to Socket.IO for multi-instance scaling
+        try {
+            const pubClient = createClient({ url: config.redis.url });
+            const subClient = pubClient.duplicate();
+            await Promise.all([pubClient.connect(), subClient.connect()]);
+            io.adapter(createAdapter(pubClient, subClient));
+            logger.info('Socket.IO Redis adapter attached');
+        } catch (error) {
+            logger.warn('Socket.IO Redis adapter not available, using in-memory adapter:', error);
         }
 
         // Initialize Socket.IO handlers
