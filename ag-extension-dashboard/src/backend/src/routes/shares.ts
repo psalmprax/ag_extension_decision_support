@@ -57,7 +57,7 @@ router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
 router.post('/', async (req: Request, res: Response) => {
     try {
         const { entityType, entityId, isPublic, expiresAt, permissions } = req.body;
-        const createdBy = req.user?.id;
+        const createdBy = req.user?.userId;
 
         const shareLink = await shareService.createShare({
             entityType,
@@ -114,7 +114,7 @@ router.post('/', async (req: Request, res: Response) => {
  */
 router.get('/', async (req: Request, res: Response) => {
     try {
-        const creatorId = req.user?.id;
+        const creatorId = req.user?.userId;
         if (!creatorId) {
             return res.status(401).json({
                 success: false,
@@ -162,7 +162,7 @@ router.get('/', async (req: Request, res: Response) => {
 router.delete('/:token', async (req: Request, res: Response) => {
     try {
         const { token } = req.params;
-        const creatorId = req.user?.id;
+        const creatorId = req.user?.userId;
 
         if (!creatorId) {
             return res.status(401).json({

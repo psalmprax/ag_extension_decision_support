@@ -232,7 +232,7 @@ export class KnowledgeService {
                                 sourceUrl: r.url || `https://tropical-database-search`,
                                 contentType: 'text'
                             },
-                            score: 0.95 // High confidence since it's freshly scraped for this explicit purpose
+                            score: 0.5 // Baseline score for unvalidated web-scraped content
                         }));
                         
                         // Prioritize stealth results by putting them at the top of the context

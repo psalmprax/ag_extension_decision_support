@@ -60,6 +60,13 @@ export class OllamaProvider extends BaseAIProvider {
             return {
                 text: data.message?.content || '',
                 model,
+                usage: {
+                    promptTokens: data.prompt_eval_count ?? 0,
+                    completionTokens: data.eval_count ?? 0,
+                    totalTokens: (data.prompt_eval_count ?? 0) + (data.eval_count ?? 0),
+                },
+                finishReason: 'stop',
+                toolCalls: undefined,
             };
         } catch (error) {
             logger.error('Ollama generateText error:', error);

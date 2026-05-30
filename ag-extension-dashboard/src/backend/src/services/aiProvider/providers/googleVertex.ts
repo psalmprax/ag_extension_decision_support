@@ -64,7 +64,11 @@ export class GoogleVertexProvider extends BaseAIProvider {
             return {
                 text,
                 model: modelName,
-                usage: { promptTokens: 10, completionTokens: 20, totalTokens: 30 },
+                usage: {
+                    promptTokens: result.response.usageMetadata?.promptTokenCount ?? 0,
+                    completionTokens: result.response.usageMetadata?.candidatesTokenCount ?? 0,
+                    totalTokens: result.response.usageMetadata?.totalTokenCount ?? 0,
+                },
                 finishReason: 'stop',
             };
         } catch (error) {
@@ -111,17 +115,17 @@ export class GoogleVertexProvider extends BaseAIProvider {
 
     async createBatchEmbeddings(texts: string[], options?: EmbeddingOptions): Promise<EmbeddingResult[]> {
         const client = await this.getClient();
-        const model = options?.model || 'text-embedding-004';
-        const embedder = client.getEmbedder({ model });
+        const model = options?.model || 'embedding-001';
+        const embedModel = client.getGenerativeModel({ model });
 
         try {
             const results = await Promise.all(
                 texts.map(async (text) => {
-                    const result = await embedder.embedContent(text);
+                    const result = await embedModel.embedContent(text);
                     return {
                         embedding: result.embedding.values,
                         model,
-                        usage: { tokens: 100 },
+                        usage: { tokens: 0 },
                     };
                 })
             );
@@ -133,12 +137,7 @@ export class GoogleVertexProvider extends BaseAIProvider {
     }
 
     async speechToText(_audio: Buffer, _options?: SpeechToTextOptions): Promise<SpeechToTextResult> {
-        logger.info('Google Vertex speech to text not implemented, use Azure');
-        return {
-            text: 'Speech to text via Google Vertex not configured',
-            language: 'en-US',
-            confidence: 0,
-        };
+        throw new Error('Google Vertex speech-to-text not supported — use Azure or OpenAI providers');
     }
 
     async textToSpeech(_text: string, _options?: TextToSpeechOptions): Promise<TextToSpeechResult> {
@@ -249,7 +248,11 @@ export class GoogleVertexProvider extends BaseAIProvider {
             return {
                 analysis: result.response.text() || 'Unable to analyze image',
                 model: modelName,
-                usage: { promptTokens: 10, completionTokens: 20, totalTokens: 30 },
+                usage: {
+                    promptTokens: result.response.usageMetadata?.promptTokenCount ?? 0,
+                    completionTokens: result.response.usageMetadata?.candidatesTokenCount ?? 0,
+                    totalTokens: result.response.usageMetadata?.totalTokenCount ?? 0,
+                },
             };
         } catch (error: any) {
             logger.error('Google Vertex analyzeImage error:', error);

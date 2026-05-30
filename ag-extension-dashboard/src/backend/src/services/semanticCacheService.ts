@@ -23,12 +23,13 @@ export class SemanticCacheService {
 
             // 2. Search for similar queries in the cache table
             // We use cosine_similarity for vector comparison
+            // Limit scan to most recent 500 entries to avoid full table scan
             const result = await query(`
                 SELECT query_text as "queryText", answer, context_used as "contextUsed", visuals,
                        cosine_similarity(embedding::float8[], $1::float8[]) as similarity
                 FROM search_cache
-                ORDER BY similarity DESC
-                LIMIT 1
+                ORDER BY created_at DESC
+                LIMIT 500
             `, [vector]);
 
             if (result.rows.length > 0 && parseFloat(result.rows[0].similarity) >= threshold) {

@@ -96,46 +96,13 @@ export class AnthropicProvider extends BaseAIProvider {
         }
     }
 
-    async createEmbedding(text: string, options?: EmbeddingOptions): Promise<EmbeddingResult> {
-        const client = await this.getClient();
-        const model = options?.model || 'claude-embedding-3';
-
-        try {
-            const response = await client.embeddings.create({
-                model,
-                input: text,
-            });
-
-            return {
-                embedding: response.data[0].embedding,
-                model,
-                usage: { tokens: 100 },
-            };
-        } catch (error) {
-            logger.error('Anthropic createEmbedding error:', error);
-            throw new Error(`Anthropic embedding creation failed: ${(error as Error).message}`);
-        }
+    async createEmbedding(_text: string, _options?: EmbeddingOptions): Promise<EmbeddingResult> {
+        // Anthropic does not offer an embedding API — fail explicitly so fallback chain skips this provider
+        throw new Error('Anthropic does not support embeddings. Use OpenAI, Ollama, or Google Vertex instead.');
     }
 
-    async createBatchEmbeddings(texts: string[], options?: EmbeddingOptions): Promise<EmbeddingResult[]> {
-        const client = await this.getClient();
-        const model = options?.model || 'claude-embedding-3';
-
-        try {
-            const response = await client.embeddings.create({
-                model,
-                input: texts,
-            });
-
-            return response.data.map((item: any) => ({
-                embedding: item.embedding,
-                model,
-                usage: { tokens: 100 },
-            }));
-        } catch (error) {
-            logger.error('Anthropic createBatchEmbeddings error:', error);
-            throw new Error(`Anthropic batch embedding creation failed: ${(error as Error).message}`);
-        }
+    async createBatchEmbeddings(_texts: string[], _options?: EmbeddingOptions): Promise<EmbeddingResult[]> {
+        throw new Error('Anthropic does not support embeddings. Use OpenAI, Ollama, or Google Vertex instead.');
     }
 
     async classify(input: string, options: ClassificationOptions): Promise<ClassificationResult> {
@@ -190,11 +157,18 @@ export class AnthropicProvider extends BaseAIProvider {
         });
 
         const text = response.content[0].type === 'text' ? response.content[0].text : '';
-        
+        const visuals = extractVisuals(text);
+
+        const cleanAnswer = text
+            .replace(/<visuals>[\s\S]*?<\/visuals>/gi, '')
+            .replace(/```json[\s\S]*?```/gi, '')
+            .trim();
+
         return {
             reasoning: 'Analysis completed using Claude.',
-            answer: text,
+            answer: cleanAnswer,
             confidence: 0.9,
+            visuals,
         };
     }
 

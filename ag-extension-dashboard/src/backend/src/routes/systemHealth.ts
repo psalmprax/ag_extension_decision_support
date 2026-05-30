@@ -6,7 +6,7 @@ import { logger } from '@/utils/logger';
 const router = Router();
 
 // Get health status of all components
-router.get('/components', authorize(['admin', 'farmer']), async (req: Request, res: Response) => {
+router.get('/components', authorize(['admin']), async (req: Request, res: Response) => {
     try {
         const healthChecks = Array.from(selfHealingService.getHealthStatus().values());
         res.json({ success: true, data: healthChecks });
@@ -28,7 +28,7 @@ router.get('/recovery-log', authorize(['admin']), async (req: Request, res: Resp
 });
 
 // Trigger recovery for a specific component
-router.post('/recover/:component', authorize(['admin', 'farmer']), async (req: Request, res: Response) => {
+router.post('/recover/:component', authorize(['admin']), async (req: Request, res: Response) => {
     try {
         const { component } = req.params;
         // Note: Manual recovery triggering not implemented in service yet

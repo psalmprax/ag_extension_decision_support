@@ -15,6 +15,12 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - ag-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   redis:
     image: redis:alpine
@@ -26,6 +32,11 @@ services:
       - redis_data:/data
     networks:
       - ag-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # ============================================================
   # Traefik — Reverse Proxy (Port 80)
@@ -83,8 +94,10 @@ services:
       - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.2:3b}
       - AI_FALLBACK_PROVIDER=${AI_FALLBACK_PROVIDER:-ollama}
     depends_on:
-      - app-db
-      - redis
+      app-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - ag-network
       - ettametta_ettametta

@@ -77,6 +77,8 @@ export class SelfHealingService {
           health.status = 'healthy';
           health.consecutiveFailures = 0;
           health.lastSuccess = new Date().toISOString();
+          // Reset recovery attempts on successful check
+          this.recoveryAttempts.set(component, 0);
         } else {
           health.consecutiveFailures++;
           health.status = health.consecutiveFailures >= this.maxConsecutiveFailures ? 'unhealthy' : 'degraded';
@@ -271,7 +273,7 @@ export class SelfHealingService {
     };
     this.recoveryLog.push(recovery);
 
-    if (recoveryLog.length > 100) {
+    if (this.recoveryLog.length > 100) {
       this.recoveryLog = this.recoveryLog.slice(-100);
     }
 
@@ -296,7 +298,5 @@ export class SelfHealingService {
       .map(h => h.component);
   }
 }
-
-const recoveryLog: RecoveryAction[] = [];
 
 export const selfHealingService = SelfHealingService.getInstance();

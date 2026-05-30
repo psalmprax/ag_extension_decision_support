@@ -264,17 +264,17 @@ export class VectorService {
                 }
             });
 
-            // Sort by RRF score descending
+            // Sort by RRF score descending, preserve RRF score as the relevance score
             const merged = Array.from(rrfMap.values())
                 .sort((a, b) => b.score - a.score)
                 .map(item => {
-                    // Update the final score field to cosine similarity (or the 0.5 keyword fallback)
-                    item.doc.score = item.cosineScore;
+                    // Use the RRF fusion score (not cosine) as the final relevance score
+                    item.doc.score = item.score;
                     return item.doc;
                 });
 
-            // Apply minScore check and limit
-            return merged.filter(doc => doc.score >= minScore).slice(0, limit);
+            // Apply limit (minScore filtering is less meaningful for RRF scores which are small fractions)
+            return merged.slice(0, limit);
         } catch (error) {
             logger.error('Hybrid search execution failed:', error);
             // Fall back to simple search on error

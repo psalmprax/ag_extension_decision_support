@@ -226,6 +226,10 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
  *         description: Demo login failed
  */
 router.post('/demo', async (req: Request, res: Response) => {
+    // SECURITY: Disable demo endpoint in production
+    if (config.nodeEnv === 'production') {
+        return res.status(404).json({ success: false, error: 'Not found' });
+    }
     try {
         const email = 'demo@agridemo.com';
         
