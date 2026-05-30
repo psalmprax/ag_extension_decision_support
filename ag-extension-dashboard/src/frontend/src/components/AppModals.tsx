@@ -33,7 +33,7 @@ interface AppModalsProps {
     setIsNotificationPanelOpen: (open: boolean) => void;
 
     // Context Menu
-    contextMenu: { x: number; y: number; entityType: any; entityId?: string; isBulk?: boolean } | null;
+    contextMenu: { x: number; y: number; entityType: 'farmer' | 'visit' | 'report' | 'knowledge' | 'user' | 'stat'; entityId?: string; isBulk?: boolean } | null;
     hideContextMenu: () => void;
     handleMenuAction: (action: string, entityId?: string) => void;
 
@@ -94,7 +94,7 @@ interface AppModalsProps {
     isModern: boolean;
     btnClass: string;
     radiusClass: string;
-    addNotification: (n: any) => void;
+    addNotification: (n: { type: 'info' | 'warning' | 'error' | 'success'; message: string; actionLabel?: string; onAction?: () => void }) => void;
 }
 
 export const AppModals: React.FC<AppModalsProps> = (props) => {

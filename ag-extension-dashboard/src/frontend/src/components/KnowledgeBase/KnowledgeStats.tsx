@@ -18,8 +18,15 @@ import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
 
 const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6'];
 
+interface KnowledgeStatsData {
+    crops?: { name: string; count: number }[];
+    categories?: { name: string; count: number }[];
+    totalQueries?: number;
+    cachedQueries?: number;
+}
+
 interface KnowledgeStatsProps {
-    data: any;
+    data: KnowledgeStatsData;
 }
 
 export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {

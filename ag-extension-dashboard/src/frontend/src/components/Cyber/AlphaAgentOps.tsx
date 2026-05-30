@@ -121,8 +121,9 @@ const AlphaAgentOps = () => {
                 addNotification({ type: 'success', message: `Agent ${activeAgent} started successfully` });
                 refetchAgents();
             }
-        } catch (error: any) {
-            const errorMsg = error.response?.data?.error || 'Backend or Agent service unavailable';
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { error?: string } } };
+            const errorMsg = err.response?.data?.error || 'Backend or Agent service unavailable';
             setConsoleOutput(prev => [...prev, `${ts} [ERR] ${errorMsg}`]);
             addNotification({ type: 'error', message: `Failed to start ${activeAgent}: ${errorMsg}` });
         } finally {

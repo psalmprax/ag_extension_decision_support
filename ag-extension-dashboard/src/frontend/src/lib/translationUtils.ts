@@ -142,7 +142,6 @@ export async function translateToLanguage(targetLang: string): Promise<Record<st
         // Keep placeholders like {name} as-is
         const translated = await translateText(value, targetLang);
         translations[key] = translated;
-        console.log(`  ${key}: ${value} -> ${translated}`);
 
         // Add small delay to avoid rate limiting
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -161,7 +160,6 @@ export async function generateAllTranslations(): Promise<Record<string, Record<s
     const languages = Object.keys(languageMap);
 
     for (const lang of languages) {
-        console.log(`\n🌐 Translating to ${lang}...`);
         allTranslations[lang] = await translateToLanguage(lang);
     }
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Farmer, Visit } from '@/types/dashboard';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     X,
@@ -48,10 +49,8 @@ import toast from 'react-hot-toast';
 interface FarmerDetailPanelProps {
     isOpen: boolean;
     onClose: () => void;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    farmer: any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    visits?: any[];
+    farmer: Farmer | null;
+    visits?: Visit[];
 }
 
 
@@ -79,8 +78,8 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
     
     const [activeTab, setActiveTab] = React.useState<'overview' | 'history' | 'insights'>('overview');
     const [isEditing, setIsEditing] = React.useState(false);
-    const [editData, setEditData] = React.useState(farmer);
-    const [interactions, setInteractions] = React.useState<any[]>([]);
+    const [editData, setEditData] = React.useState<Farmer>(farmer!);
+    const [interactions, setInteractions] = React.useState<{ id?: string; type: string; date: string; status: string; content: string; duration?: string }[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = React.useState(false);
     const [showVideoCall, setShowVideoCall] = React.useState(false);
     const [isSynthesizing, setIsSynthesizing] = React.useState(false);
@@ -99,9 +98,10 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
         try {
             const res = await fetchSMSHistory(farmer.id);
             if (res.success) {
-                setInteractions(res.data.map((msg: any) => ({
+                setInteractions(res.data.map((msg) => ({
+                    id: msg.id,
                     type: 'SMS',
-                    date: new Date(msg.createdAt).toLocaleDateString(),
+                    date: new Date(msg.created_at).toLocaleDateString(),
                     status: msg.status === 'sent' ? 'delivered' : msg.status,
                     content: msg.message
                 })));
@@ -114,13 +114,14 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
     };
 
     React.useEffect(() => {
-        setEditData(farmer);
+        if (farmer) setEditData(farmer);
         if (activeTab === 'history') {
             loadInteractions();
         }
     }, [farmer, activeTab]);
 
     const handleSave = () => {
+        if (!farmer) return;
         updateFarmer(farmer.id, editData);
         setIsEditing(false);
         addNotification({
@@ -130,20 +131,22 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
     };
 
     const handleShare = () => {
-        showShareModal({ 
-            entityType: 'farmer', 
-            entityId: farmer.id, 
-            entityName: `${farmer.firstName} ${farmer.lastName}` 
+        if (!farmer) return;
+        showShareModal({
+            entityType: 'farmer',
+            entityId: farmer.id,
+            entityName: `${farmer.firstName} ${farmer.lastName}`
         });
     };
 
     const handleContextMenu = (e: React.MouseEvent) => {
+        if (!farmer) return;
         e.preventDefault();
-        showContextMenu({ 
-            x: e.clientX, 
-            y: e.clientY, 
-            entityType: 'farmer', 
-            entityId: farmer.id 
+        showContextMenu({
+            x: e.clientX,
+            y: e.clientY,
+            entityType: 'farmer',
+            entityId: farmer.id
         });
     };
 
@@ -406,7 +409,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                 ].map((tab) => (
                                     <button
                                         key={tab.id}
-                                        onClick={() => setActiveTab(tab.id as any)}
+                                        onClick={() => setActiveTab(tab.id as 'overview' | 'history' | 'insights')}
                                         className={`pb-4 text-[10px] font-black uppercase tracking-[0.2em] relative transition-all ${activeTab === tab.id
                                             ? (isCyber ? 'text-primary-400' : 'text-primary-600')
                                             : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
@@ -441,7 +444,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                         ].map((action) => (
                                             <button
                                                 key={action.id}
-                                                onClick={() => handleAction(action.id as any)}
+                                                onClick={() => handleAction(action.id as 'chat' | 'sms' | 'call' | 'video')}
                                                 onContextMenu={(e) => {
                                                     e.preventDefault();
                                                     showContextMenu({ x: e.clientX, y: e.clientY, entityType: 'farmer', entityId: farmer.id });

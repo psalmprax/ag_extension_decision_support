@@ -47,7 +47,7 @@ interface ContextMenuData {
 interface ContextMenuProps {
   x: number;
   y: number;
-  entityType: 'farmer' | 'visit' | 'report' | 'knowledge' | 'user';
+  entityType: 'farmer' | 'visit' | 'report' | 'knowledge' | 'user' | 'stat';
   entityId?: string;
   isBulk?: boolean;
   onClose: () => void;

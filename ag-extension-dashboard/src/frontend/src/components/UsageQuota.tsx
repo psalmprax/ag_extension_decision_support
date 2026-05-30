@@ -111,8 +111,7 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
         );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const typeConfig: Record<string, { icon: any, color: string, glow: string }> = {
+    const typeConfig: Record<string, { icon: React.ComponentType<{ className?: string }>, color: string, glow: string }> = {
         'sms': { icon: Send, color: "from-primary-400 to-primary-600", glow: "rgba(34, 197, 94, 0.4)" },
         'ai_chat': { icon: MessageSquare, color: "from-blue-400 to-indigo-600", glow: "rgba(59, 130, 246, 0.4)" },
         'report': { icon: FileText, color: "from-purple-400 to-fuchsia-600", glow: "rgba(168, 85, 247, 0.4)" }
@@ -146,8 +145,7 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
             )}
 
             <div className={`grid gap-10 ${compact ? 'space-y-4' : 'grid-cols-1'}`}>
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                {usageData.map((item: any) => {
+                {usageData.map((item: { type: string; label: string; current: number; limit: number }) => {
                     const config = typeConfig[item.type] || typeConfig['sms'];
                     return (
                         <QuotaBar
@@ -164,8 +162,7 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
             </div>
 
             {(() => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const smsUsage = usageData.find((u: any) => u.type === 'sms');
+                const smsUsage = usageData.find((u: { type: string; current: number; limit: number }) => u.type === 'sms');
                 if (!compact && smsUsage && smsUsage.limit > 0 && smsUsage.current / smsUsage.limit > 0.9) {
                     return (
                         <motion.div

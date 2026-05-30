@@ -32,7 +32,6 @@ export function Register() {
     ];
 
     const handleSubmit = async (e: React.FormEvent) => {
-        console.log('Register form submitted', e);
         e.preventDefault();
         setError('');
 

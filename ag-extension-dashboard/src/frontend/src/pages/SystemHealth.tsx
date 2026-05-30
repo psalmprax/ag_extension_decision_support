@@ -4,13 +4,12 @@ import {
     RotateCcw, Clock, RefreshCw, Shield,
     Server, Database, Zap, Wifi
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
 import { useAppStore } from '../store/useAppStore';
 import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
 import { fetchHealthStatus, fetchRecoveryLog, triggerRecovery, HealthCheck, RecoveryAction } from '../api/systemHealthService';
 import { runDiagnostics, DiagnosticResult } from '../api/diagnosticsService';
-import toast from 'react-hot-toast';
 
 export function SystemHealth() {
     const { t } = useLanguage();
@@ -48,16 +47,17 @@ export function SystemHealth() {
             if (recoveryRes.success) {
                 setRecoveryLog(recoveryRes.data);
             }
-        } catch (error: any) {
+        } catch (error) {
             console.error('Failed to load health data:', error);
-            
+
             // Only show notification if not in cooldown (to prevent 429 spam UI loops)
             const now = Date.now();
             if (now - lastErrorTimeRef.current > ERROR_COOLDOWN) {
+                const axiosError = error as { response?: { status?: number } };
                 addNotification({
                     type: 'error',
-                    message: error?.response?.status === 429 
-                        ? 'Too many health check requests. Please wait.' 
+                    message: axiosError?.response?.status === 429
+                        ? 'Too many health check requests. Please wait.'
                         : t('system_health_failed_load')
                 });
                 lastErrorTimeRef.current = now;
@@ -108,11 +108,11 @@ export function SystemHealth() {
         try {
             const result = await runDiagnostics();
             setDiagnostics(result);
-        } catch (error: any) {
+        } catch (error) {
             console.error('Diagnostics failed:', error);
             addNotification({
                 type: 'error',
-                message: error?.message || 'Failed to run diagnostics'
+                message: error instanceof Error ? error.message : 'Failed to run diagnostics'
             });
         } finally {
             setIsRunningDiagnostics(false);
@@ -156,7 +156,7 @@ export function SystemHealth() {
     const StatCard = ({ title, value, icon: Icon, color = 'blue' }: {
         title: string;
         value: string | number;
-        icon: any;
+        icon: React.ComponentType<{ className?: string }>;
         color?: string;
     }) => (
         <motion.div

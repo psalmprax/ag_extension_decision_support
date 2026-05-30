@@ -21,7 +21,7 @@ interface Metric {
     label: string;
     value: string;
     status: string;
-    icon: any;
+    icon: React.ComponentType<{ className?: string }>;
     color: string;
 }
 
