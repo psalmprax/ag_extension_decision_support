@@ -2,6 +2,7 @@ import React from 'react';
 import { Users, Plus, Send } from 'lucide-react';
 import { Conversation, ChatMessage, Farmer } from '../types/dashboard';
 import { useLanguage } from '@/lib/LanguageContext';
+import { useThemeClasses } from '@/hooks/useThemeClasses';
 
 interface FarmerChatPageProps {
     farmerConversations: Conversation[];
@@ -14,19 +15,15 @@ interface FarmerChatPageProps {
     handleFarmerChatSend: (e: React.FormEvent) => void;
     loadFarmers: () => void;
     setShowFarmerModal: (show: boolean) => void;
-    isModern: boolean;
-    headingClass: string;
-    btnClass: string;
-    radiusClass: string;
 }
 
 export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
     farmerConversations, activeFarmerConvId, setActiveFarmerConvId,
     loadFarmerMessages, farmerChatMessages, farmerChatInput, setFarmerChatInput,
     handleFarmerChatSend, loadFarmers, setShowFarmerModal,
-    isModern, headingClass, btnClass, radiusClass,
 }) => {
     const { t } = useLanguage();
+    const { isModern, headingClass, btnClass, radiusClass } = useThemeClasses();
 
     return (
         <div className="flex flex-col h-[calc(100vh-140px)] gap-6">

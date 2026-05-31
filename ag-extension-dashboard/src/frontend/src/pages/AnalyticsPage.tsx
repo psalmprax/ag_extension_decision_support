@@ -2,6 +2,8 @@ import React from 'react';
 import { TrendingUp, Clock, Activity, AlertTriangle, MessageSquare, BarChart3 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useLanguage } from '@/lib/LanguageContext';
+import { useThemeClasses } from '@/hooks/useThemeClasses';
+import { useAppStore } from '@/store/useAppStore';
 
 interface AnalyticsPageProps {
     performanceData: {
@@ -14,16 +16,14 @@ interface AnalyticsPageProps {
         };
         timeline?: { date: string; visits: number; queries: number }[];
     } | undefined;
-    darkMode: boolean;
-    isModern: boolean;
-    headingClass: string;
-    radiusClass: string;
 }
 
 export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({
-    performanceData, darkMode, isModern, headingClass, radiusClass,
+    performanceData,
 }) => {
     const { t } = useLanguage();
+    const { isModern, headingClass, radiusClass } = useThemeClasses();
+    const darkMode = useAppStore((s) => s.darkMode);
 
     return (
         <div>

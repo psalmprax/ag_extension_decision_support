@@ -372,9 +372,7 @@ function App() {
                                         performanceData={performanceData} effectiveFarmers={effectiveFarmers}
                                         isMapExpanded={isMapExpanded} setIsMapExpanded={setIsMapExpanded}
                                         handleStartConversation={handleStartConversation} handleOpenFarmerDetail={handleOpenFarmerDetail}
-                                        user={user} isModern={isModern} darkMode={darkMode}
-                                        cardClass={cardClass} headingClass={headingClass} dataClass={dataClass}
-                                        subtextClass={subtextClass} radiusClass={radiusClass}
+                                        user={user}
                                         addNotification={addNotification}
                                     />
                                 )}
@@ -386,7 +384,6 @@ function App() {
                                         bulkSmsMessage={bulkSmsMessage} setBulkSmsMessage={setBulkSmsMessage}
                                         handleBulkSMS={handleBulkSMS} handleBulkExport={handleBulkExport}
                                         handleBulkDelete={handleBulkDelete} setSelectedFarmers={setSelectedFarmers}
-                                        isModern={isModern} headingClass={headingClass} btnClass={btnClass} radiusClass={radiusClass}
                                     />
                                 )}
                                 {activeTab === 'visits' && (
@@ -394,7 +391,6 @@ function App() {
                                         visits={visits} setShowVisitModal={setShowVisitModal} refetchVisits={refetchVisits}
                                         handleOpenFarmerDetail={handleOpenFarmerDetail} farmers={effectiveFarmers}
                                         addNotification={addNotification}
-                                        isModern={isModern} headingClass={headingClass} btnClass={btnClass} radiusClass={radiusClass}
                                     />
                                 )}
                                 {activeTab === 'reports' && (
@@ -405,13 +401,11 @@ function App() {
                                         reportContent={reportContent} setReportContent={setReportContent}
                                         isLoadingReport={isLoadingReport} setIsLoadingReport={setIsLoadingReport}
                                         addNotification={addNotification} user={user}
-                                        isModern={isModern} headingClass={headingClass} btnClass={btnClass} radiusClass={radiusClass}
                                     />
                                 )}
                                 {activeTab === 'analytics' && (
                                     <AnalyticsPage
-                                        performanceData={performanceData} darkMode={darkMode} isModern={isModern}
-                                        headingClass={headingClass} radiusClass={radiusClass}
+                                        performanceData={performanceData}
                                     />
                                 )}
                                 {activeTab === 'billing' && <BillingDashboard />}
@@ -424,7 +418,6 @@ function App() {
                                         farmerChatMessages={farmerChatMessages} farmerChatInput={farmerChatInput}
                                         setFarmerChatInput={setFarmerChatInput} handleFarmerChatSend={handleFarmerChatSend}
                                         loadFarmers={loadFarmers} setShowFarmerModal={setShowFarmerModal}
-                                        isModern={isModern} headingClass={headingClass} btnClass={btnClass} radiusClass={radiusClass}
                                     />
                                 )}
                                 {activeTab === 'farmer_dashboard' && <FarmerDashboard />}
