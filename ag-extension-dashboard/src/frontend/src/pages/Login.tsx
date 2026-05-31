@@ -114,7 +114,8 @@ export function Login({ onDemo }: LoginProps) {
                     </div>
                 </div>
 
-                {/* Demo Banner */}
+                {/* Demo Banner — hidden in production */}
+                {!import.meta.env.PROD && (
                 <div className={`mb-6 p-4 bg-blue-50 dark:bg-blue-900/30 ${radiusClass} border border-blue-200 dark:border-blue-800`}>
                     <p className="text-sm text-blue-700 dark:text-blue-300 text-center">
                         {t('login_want_explore')}{' '}
@@ -127,6 +128,7 @@ export function Login({ onDemo }: LoginProps) {
                         </button>
                     </p>
                 </div>
+                )}
 
                 {/* Divider */}
                 <div className="flex items-center gap-4 mb-6">
