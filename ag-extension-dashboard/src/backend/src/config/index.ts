@@ -29,7 +29,7 @@ export interface AppConfig {
         tavily: { apiKey: string };
     };
     cors: { origin: string };
-    demo: { password: string };
+    demo: { password: string; enabled: boolean };
     ollama: { host: string; model: string };
     ingestion: {
         enabled: boolean;
@@ -131,7 +131,8 @@ export const config: AppConfig = {
     },
 
     demo: {
-        password: getEnv('DEMO_PASSWORD', ''),
+        password: getEnv('DEMO_PASSWORD', 'demo-trial-2024'),
+        enabled: getEnv('DEMO_ENABLED', 'false') === 'true',
     },
     ollama: {
         host: getEnv('OLLAMA_HOST', 'http://localhost:11434'),

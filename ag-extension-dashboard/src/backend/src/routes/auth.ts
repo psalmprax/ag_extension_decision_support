@@ -225,10 +225,27 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
  *       500:
  *         description: Demo login failed
  */
+// Simple in-memory rate limiter for demo endpoint (per IP)
+const demoAttempts = new Map<string, { count: number; resetAt: number }>();
+const DEMO_RATE_LIMIT = 5; // max attempts per window
+const DEMO_RATE_WINDOW = 60 * 60 * 1000; // 1 hour
+
 router.post('/demo', async (req: Request, res: Response) => {
-    // SECURITY: Disable demo endpoint in production
-    if (config.nodeEnv === 'production') {
-        return res.status(404).json({ success: false, error: 'Not found' });
+    if (!config.demo.enabled) {
+        return res.status(404).json({ success: false, error: 'Demo access is not enabled' });
+    }
+
+    // Rate limit by IP
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+    const now = Date.now();
+    const entry = demoAttempts.get(ip);
+    if (entry && now < entry.resetAt) {
+        if (entry.count >= DEMO_RATE_LIMIT) {
+            return res.status(429).json({ success: false, error: 'Too many demo attempts. Try again later.' });
+        }
+        entry.count++;
+    } else {
+        demoAttempts.set(ip, { count: 1, resetAt: now + DEMO_RATE_WINDOW });
     }
     try {
         const email = 'demo@agridemo.com';
