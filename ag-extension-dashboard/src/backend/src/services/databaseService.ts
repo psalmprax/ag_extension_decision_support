@@ -423,6 +423,24 @@ export async function createTables(): Promise<void> {
       embedding float8[],
       created_at TIMESTAMP DEFAULT NOW()
     );
+    -- Add normalized_query column if table already existed without it (migration safety)
+    DO $$ BEGIN
+      IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'search_cache' AND column_name = 'normalized_query') THEN
+        ALTER TABLE search_cache ADD COLUMN normalized_query TEXT NOT NULL DEFAULT '';
+        UPDATE search_cache SET normalized_query = LOWER(TRIM(query_text)) WHERE normalized_query = '';
+      END IF;
+    END $$;
+    -- Convert embedding columns to pgvector native type if still float8[]
+    DO $$ BEGIN
+      IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'knowledge_articles' AND column_name = 'embedding' AND data_type = 'ARRAY') THEN
+        ALTER TABLE knowledge_articles ALTER COLUMN embedding TYPE vector(1536) USING embedding::real[]::vector;
+      END IF;
+    END $$;
+    DO $$ BEGIN
+      IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'search_cache' AND column_name = 'embedding' AND data_type = 'ARRAY') THEN
+        ALTER TABLE search_cache ALTER COLUMN embedding TYPE vector(1536) USING embedding::real[]::vector;
+      END IF;
+    END $$;
     -- Unique index on normalized query for O(1) exact match lookups
     CREATE UNIQUE INDEX IF NOT EXISTS idx_search_cache_normalized ON search_cache(normalized_query);
 
