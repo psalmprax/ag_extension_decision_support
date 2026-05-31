@@ -74,8 +74,7 @@ function App() {
     } = useAppStore();
 
     const {
-        isModern, radiusClass, panelClass, headerOpacity,
-        btnClass, headingClass, dataClass, subtextClass, cardClass
+        isModern, headingClass
     } = useDesignSystemMode();
 
     // Theme, auth, and bootstrap hooks

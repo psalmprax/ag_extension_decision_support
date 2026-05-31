@@ -188,7 +188,7 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
                                                 props.addNotification({ type: 'error', message: 'Download failed' });
                                             }
                                         }}
-                                        className={`mt-4 px-4 py-2 ${props.isModern ? 'bg-primary-600 hover:bg-primary-700' : 'bg-white dark:bg-slate-900 border-2 border-slate-800 dark:border-slate-200 text-slate-900 dark:text-white'} ${props.btnClass} text-sm font-bold`}
+                                        className={`mt-4 px-4 py-2 ${isModern ? 'bg-primary-600 hover:bg-primary-700' : 'bg-white dark:bg-slate-900 border-2 border-slate-800 dark:border-slate-200 text-slate-900 dark:text-white'} ${btnClass} text-sm font-bold`}
                                     >
                                         Download Report
                                     </button>
@@ -210,13 +210,13 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
                                         props.addNotification({ type: 'error', message: 'Download failed' });
                                     }
                                 }}
-                                className={`px-4 py-2 ${props.isModern ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300' : 'bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 text-gray-700 dark:text-gray-300'} ${props.btnClass} text-sm font-bold transition-colors`}
+                                className={`px-4 py-2 ${isModern ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300' : 'bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 text-gray-700 dark:text-gray-300'} ${btnClass} text-sm font-bold transition-colors`}
                             >
                                 Download
                             </button>
                             <button
                                 onClick={() => { props.setViewingReport(null); props.setReportContent(null); }}
-                                className={`px-4 py-2 ${props.isModern ? 'bg-primary-600 hover:bg-primary-700' : 'bg-white dark:bg-slate-900 border-2 border-slate-800 dark:border-slate-200 text-slate-900 dark:text-white'} ${props.btnClass} text-sm font-bold transition-colors`}
+                                className={`px-4 py-2 ${isModern ? 'bg-primary-600 hover:bg-primary-700' : 'bg-white dark:bg-slate-900 border-2 border-slate-800 dark:border-slate-200 text-slate-900 dark:text-white'} ${btnClass} text-sm font-bold transition-colors`}
                             >
                                 Close
                             </button>
@@ -229,7 +229,7 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
             {(props.activeTab === 'aiassistant' || props.activeTab === 'farmerchat') && props.showFarmerModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => props.setShowFarmerModal(false)} />
-                    <div className={`relative bg-white dark:bg-gray-800 ${props.radiusClass} shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden`}>
+                    <div className={`relative bg-white dark:bg-gray-800 ${radiusClass} shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden`}>
                         <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                             <div>
                                 <h3 className="font-bold text-gray-900 dark:text-white">{t('chat_start_new')}</h3>
@@ -246,7 +246,7 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
                                     placeholder={t('common_search_farmers')}
                                     value={props.farmerSearchQuery}
                                     onChange={(e) => props.setFarmerSearchQuery(e.target.value)}
-                                    className={`w-full pl-4 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 ${props.radiusClass} focus:ring-2 focus:ring-primary-500 dark:text-white`}
+                                    className={`w-full pl-4 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 ${radiusClass} focus:ring-2 focus:ring-primary-500 dark:text-white`}
                                 />
                             </div>
                         </div>
