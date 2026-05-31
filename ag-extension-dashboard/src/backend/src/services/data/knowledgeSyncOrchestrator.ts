@@ -48,7 +48,7 @@ export class KnowledgeSyncOrchestrator {
             const faostatArticles = await faostatService.generateCountryArticles();
             for (const article of faostatArticles) {
                 await VectorService.upsertDocument(
-                    `faostat-${article.title.toLowerCase().replace(/\s+/g, '-')}`,
+                    uuidv4(),
                     article.content,
                     {
                         title: article.title,
