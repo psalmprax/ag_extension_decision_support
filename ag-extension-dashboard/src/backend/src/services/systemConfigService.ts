@@ -5,6 +5,7 @@ export class SystemConfigService {
     async get(key: string): Promise<string | null> {
         try {
             const prisma = getPrisma();
+            if (!prisma) return null;
             const config = await prisma.systemConfig.findUnique({
                 where: { key },
             });
@@ -18,6 +19,7 @@ export class SystemConfigService {
     async set(key: string, value: string, isSecret: boolean = false): Promise<boolean> {
         try {
             const prisma = getPrisma();
+            if (!prisma) return false;
             await prisma.systemConfig.upsert({
                 where: { key },
                 update: { value, isSecret, updatedAt: new Date() },

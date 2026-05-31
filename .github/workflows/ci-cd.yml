@@ -81,7 +81,19 @@ jobs:
         run: |
           cd ag-extension-dashboard/src/backend
           npm ci
-      
+
+      - name: Generate Prisma client
+        run: |
+          cd ag-extension-dashboard/src/backend
+          npx prisma generate
+
+      - name: Push database schema
+        run: |
+          cd ag-extension-dashboard/src/backend
+          npx prisma db push --skip-generate
+        env:
+          DATABASE_URL: postgres://psalmprax:password@localhost:5432/ag_extension
+
       - name: Lint backend
         run: |
           cd ag-extension-dashboard/src/backend
