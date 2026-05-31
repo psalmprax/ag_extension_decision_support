@@ -338,9 +338,6 @@ function App() {
             <AppHeader
                 sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}
                 activeTab={activeTab} setActiveTab={setActiveTab}
-                darkMode={darkMode} setDarkMode={setDarkMode}
-                themeName={themeName} setThemeName={setThemeName}
-                isModern={isModern} toggleDesignSystemMode={toggleDesignSystemMode}
                 searchQuery={searchQuery} setSearchQuery={setSearchQuery}
                 showGlobalSearch={showGlobalSearch} setShowGlobalSearch={setShowGlobalSearch}
                 isGlobalSearching={isGlobalSearching} globalSearchResults={globalSearchResults}
@@ -353,7 +350,6 @@ function App() {
                 setIsNotificationPanelOpen={setIsNotificationPanelOpen}
                 isProfileMenuOpen={isProfileMenuOpen} setIsProfileMenuOpen={setIsProfileMenuOpen}
                 setShowProfileModal={setShowProfileModal} setShowSettingsPanel={setShowSettingsPanel}
-                headerOpacity={headerOpacity} btnClass={btnClass} headingClass={headingClass} subtextClass={subtextClass}
             />
 
             <div className="flex flex-1 overflow-hidden pt-16">
@@ -361,8 +357,7 @@ function App() {
                     sidebarOpen={sidebarOpen} navItems={navItems}
                     activeTab={activeTab} setActiveTab={setActiveTab}
                     setShowHelpCenter={setShowHelpCenter}
-                    storeUser={storeUser} isModern={isModern} darkMode={darkMode}
-                    subtextClass={subtextClass} headingClass={headingClass} btnClass={btnClass}
+                    storeUser={storeUser}
                     onGenerateReport={handleGenerateReport}
                 />
 
