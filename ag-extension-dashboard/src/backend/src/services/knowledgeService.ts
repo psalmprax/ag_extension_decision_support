@@ -125,14 +125,15 @@ export class KnowledgeService {
                 }
             }
 
-            // B. Check exact match in database (fast, no embedding API call required)
+            // B. Check exact match in database using normalized_query index (O(1) lookup)
             try {
+                const normalized = queryText.trim().toLowerCase();
                 const dbExact = await query(`
                     SELECT query_text as "queryText", answer, context_used as "contextUsed", visuals
                     FROM search_cache
-                    WHERE LOWER(TRIM(query_text)) = LOWER(TRIM($1))
+                    WHERE normalized_query = $1
                     LIMIT 1
-                `, [queryText]);
+                `, [normalized]);
 
 
                 if (dbExact.rows.length > 0) {

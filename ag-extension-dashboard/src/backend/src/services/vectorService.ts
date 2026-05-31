@@ -2,6 +2,7 @@
 import { AIRouter } from '@/services/aiProvider/aiProvider';
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
+import { getEmbedding } from '@/services/embeddingCache';
 
 export interface VectorDocument {
     id: string;
@@ -24,10 +25,10 @@ export class VectorService {
         logger.info(`Upserting document to persistent vector store: ${id}`);
 
         try {
-            // Generate embedding using ALFA
-            const embeddingResult = await AIRouter.routeRequest('embed', { text: content });
-            // Convert to PostgreSQL array format: {val1,val2,val3}
-            const vector = `{${embeddingResult.embedding.join(',')}}`;
+            // Generate embedding (uses cache for repeated content)
+            const embedding = await getEmbedding(content);
+            // Convert to pgvector format: [val1,val2,val3]
+            const vector = `[${embedding.join(',')}]`;
 
             await query(`
                 INSERT INTO knowledge_articles (id, title, content, category, tags, crops, regions, source, source_url, content_type, embedding, updated_at)
@@ -75,11 +76,11 @@ export class VectorService {
         logger.info(`Searching persistent vector store for: "${queryText}" (minScore: ${minScore})`);
 
         try {
-            // Generate query embedding
-            const queryEmbeddingResult = await AIRouter.routeRequest('embed', { text: queryText });
+            // Generate query embedding (uses cache for repeated queries)
+            const embedding = await getEmbedding(queryText);
 
-            // Convert to PostgreSQL array format: {val1,val2,val3}
-            const vector = `{${queryEmbeddingResult.embedding.join(',')}}`;
+            // Convert to pgvector format: [val1,val2,val3]
+            const vector = `[${embedding.join(',')}]`;
 
             const params: any[] = [vector];
             const where: string[] = ['embedding IS NOT NULL'];
@@ -97,12 +98,11 @@ export class VectorService {
             params.push(minScore);
             params.push(limit);
 
-            // Use our custom cosine_similarity function for maximum compatibility
-            // and wrap in a subquery to support filtering by minScore alias
+            // Use native pgvector cosine distance operator for O(log n) search with IVFFlat index
             const result = await query(`
                 SELECT * FROM (
                     SELECT id, title, content, category, crops, source_url, content_type,
-                           cosine_similarity(embedding::float8[], $1::float8[]) as score
+                           (1 - (embedding <=> $1::vector)) as score
                     FROM knowledge_articles
                     WHERE ${where.join(' AND ')}
                 ) sub

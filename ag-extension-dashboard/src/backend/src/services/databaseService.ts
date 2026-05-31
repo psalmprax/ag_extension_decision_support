@@ -415,13 +415,16 @@ export async function createTables(): Promise<void> {
     -- Search cache table for RAG answer caching
     CREATE TABLE IF NOT EXISTS search_cache (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      query_text TEXT UNIQUE NOT NULL,
+      query_text TEXT NOT NULL,
+      normalized_query TEXT NOT NULL,
       answer TEXT,
       context_used JSONB,
       visuals JSONB,
       embedding float8[],
       created_at TIMESTAMP DEFAULT NOW()
     );
+    -- Unique index on normalized query for O(1) exact match lookups
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_search_cache_normalized ON search_cache(normalized_query);
 
     -- Knowledge search history table
     CREATE TABLE IF NOT EXISTS knowledge_searches (
