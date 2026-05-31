@@ -1,9 +1,8 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-    Cpu, 
-    Zap, 
-    Brain, 
+    Cpu,
+    Zap,
     LineChart, 
     ShieldCheck, 
     Search,
@@ -154,13 +153,7 @@ const AlphaAI = () => {
             <div className="flex items-center justify-between mb-12">
                 <div className="flex items-center gap-6">
                     <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 bg-primary-500 ${radiusClass} flex items-center justify-center shadow-lg shadow-primary-500/20`}>
-                            <Brain className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                            <h1 className="text-xl font-black uppercase tracking-[0.2em] leading-none">AG-extension</h1>
-                            <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest mt-1">Strategic Decision Support Core v4.2</p>
-                        </div>
+                        <img src="/logo.png" alt="Logo" className="w-10 h-10 rounded-lg shadow-lg" />
                     </div>
                     <div className="h-8 w-px bg-white/10" />
                     <div className="flex gap-2">

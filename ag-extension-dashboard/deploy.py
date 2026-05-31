@@ -215,11 +215,12 @@ def main():
                 run_remote_command(ssh, f"pm2 start {app_path} --name ag-extension-backend")
                 logger.info("Application started successfully with PM2")
 
-            # Step 9: Rebuild and restart frontend Docker container
+            # Step 9: Rebuild and restart frontend Docker container (with prod override for HTTPS)
             logger.info("Rebuilding frontend Docker container...")
             compose_dir = f"{deploy_dir}/ag-extension-dashboard"
-            run_remote_command(ssh, "docker compose build --no-cache frontend", cwd=compose_dir)
-            run_remote_command(ssh, "docker compose up -d frontend", cwd=compose_dir)
+            compose_cmd = "docker compose -f docker-compose.yml -f docker-compose.prod.yml"
+            run_remote_command(ssh, f"{compose_cmd} build --no-cache frontend", cwd=compose_dir)
+            run_remote_command(ssh, f"{compose_cmd} up -d frontend", cwd=compose_dir)
             logger.info("Frontend container rebuilt and restarted")
 
             logger.info("Deployment completed successfully!")
