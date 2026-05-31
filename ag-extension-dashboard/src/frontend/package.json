@@ -63,7 +63,7 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
     "husky": "^9.1.7",
-    "jsdom": "^28.1.0",
+    "jsdom": "^27.0.0",
     "msw": "^2.12.10",
     "postcss": "^8.4.32",
     "prettier": "^3.8.1",
