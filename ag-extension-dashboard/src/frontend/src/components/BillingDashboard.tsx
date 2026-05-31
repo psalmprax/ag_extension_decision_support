@@ -240,7 +240,6 @@ export const BillingDashboard: React.FC = () => {
                 setFormMessage({ type: 'error', text: res.message || 'Submission failed.' });
             }
         } catch (error) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const err = error as { response?: { data?: { message?: string } } };
             setFormMessage({ type: 'error', text: err.response?.data?.message || 'Submission failed.' });
         } finally {
