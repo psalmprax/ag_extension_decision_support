@@ -290,7 +290,7 @@ router.post('/message', async (req: AuthRequest, res: Response) => {
                         return res.status(503).json({ error: 'Database connection unavailable' });
                     }
                 } catch (error) {
-                    convId = `conv_${Date.now()}`;
+                    return res.status(400).json({ error: 'Failed to create conversation. Please try again.' });
                 }
             }
 
@@ -344,7 +344,7 @@ router.post('/message', async (req: AuthRequest, res: Response) => {
                 return res.status(503).json({ error: 'Database connection unavailable' });
             }
         } catch (error) {
-            convId = `conv_${Date.now()}`;
+            return res.status(400).json({ error: 'Failed to create conversation. Please try again.' });
         }
     }
 

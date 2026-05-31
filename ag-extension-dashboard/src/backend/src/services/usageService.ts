@@ -2,9 +2,13 @@
 import { PrismaClient } from '@prisma/client';
 import { logger } from '../utils/logger';
 
-const prisma = new PrismaClient({
-    datasourceUrl: process.env.DATABASE_URL,
-});
+let prisma: PrismaClient;
+function getPrisma() {
+    if (!prisma) {
+        prisma = new PrismaClient({ datasourceUrl: process.env.DATABASE_URL });
+    }
+    return prisma;
+}
 
 export type UsageType = 'sms' | 'ai_chat' | 'report' | 'ai_vision';
 
@@ -18,7 +22,7 @@ export interface PlanLimits {
 class UsageService {
     async getUsage(userId: string) {
         try {
-            const subscription = await prisma.subscription.findUnique({
+            const subscription = await getPrisma().subscription.findUnique({
                 where: { userId },
                 include: {
                     plan: true,
@@ -32,7 +36,7 @@ class UsageService {
 
             // If no usage record exists, create one
             if (!subscription.usage) {
-                const usage = await prisma.usage.create({
+                const usage = await getPrisma().usage.create({
                     data: {
                         subscriptionId: subscription.id,
                     },
@@ -47,9 +51,43 @@ class UsageService {
         }
     }
 
+    async incrementUsageBy(userId: string, type: UsageType, count: number) {
+        try {
+            const subscription = await getPrisma().subscription.findUnique({
+                where: { userId },
+                include: { usage: true },
+            });
+
+            if (!subscription || !subscription.usage) {
+                logger.warn(`No subscription or usage record found for user ${userId}`);
+                return false;
+            }
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const updateData: any = {};
+            if (type === 'sms') updateData.smsCount = { increment: count };
+            if (type === 'ai_chat') updateData.aiChatCount = { increment: count };
+            if (type === 'report') updateData.reportCount = { increment: count };
+            if (type === 'ai_vision') updateData.aiVisionCount = { increment: count };
+
+            await getPrisma().usage.update({
+                where: { id: subscription.usage.id },
+                data: {
+                    ...updateData,
+                    updatedAt: new Date(),
+                },
+            });
+
+            return true;
+        } catch (error) {
+            logger.error(`Failed to increment ${type} usage by ${count}:`, error);
+            return false;
+        }
+    }
+
     async incrementUsage(userId: string, type: UsageType) {
         try {
-            const subscription = await prisma.subscription.findUnique({
+            const subscription = await getPrisma().subscription.findUnique({
                 where: { userId },
                 include: { usage: true },
             });
@@ -66,7 +104,7 @@ class UsageService {
             if (type === 'report') updateData.reportCount = { increment: 1 };
             if (type === 'ai_vision') updateData.aiVisionCount = { increment: 1 };
 
-            await prisma.usage.update({
+            await getPrisma().usage.update({
                 where: { id: subscription.usage.id },
                 data: {
                     ...updateData,
@@ -163,7 +201,7 @@ class UsageService {
 
     async resetUsage(subscriptionId: string) {
         try {
-            await prisma.usage.update({
+            await getPrisma().usage.update({
                 where: { subscriptionId },
                 data: {
                     smsCount: 0,

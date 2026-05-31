@@ -66,7 +66,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 
         let user = null;
         if (pool) {
-            const result = await query('SELECT * FROM users WHERE id = $1', [id]);
+            const result = await query('SELECT id, first_name, last_name, email, role, region, phone, created_at FROM users WHERE id = $1', [id]);
             user = result.rows[0];
         }
 
@@ -122,12 +122,15 @@ router.post('/', async (req: Request, res: Response) => {
 // Get current user profile
 router.get('/me', async (req: Request, res: Response) => {
     try {
-        const userId = (req as any).user?.userId || 'u1';
+        const userId = (req as any).user?.userId;
+        if (!userId) {
+            return res.status(401).json({ success: false, error: 'Authentication required' });
+        }
         const pool = getPool();
 
         let user = null;
         if (pool) {
-            const result = await query('SELECT * FROM users WHERE id = $1', [userId]);
+            const result = await query('SELECT id, first_name, last_name, email, role, region, phone, created_at FROM users WHERE id = $1', [userId]);
             user = result.rows[0];
         }
 
