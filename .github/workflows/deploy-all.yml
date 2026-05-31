@@ -44,6 +44,7 @@ jobs:
         run: |
           cd ag-extension-dashboard/src/backend
           npm ci
+          npx prisma generate
           npm run lint
           npm run build
           npm test -- --forceExit
@@ -84,10 +85,11 @@ jobs:
             REDIS_UP=$(docker ps --filter "name=ag-dashboard-redis" --filter "status=running" -q)
             
             if [ -z "$DB_UP" ] || [ -z "$REDIS_UP" ]; then
-              echo "⚠️ Databases DOWN. Full deploy..."
+              echo "Databases DOWN. Full deploy..."
               docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --build
             else
-              echo "✅ Databases UP. App deploy only..."
+              echo "Databases UP. Running migrations then deploying app services..."
+              docker compose -f docker-compose.yml -f docker-compose.agents.yml run --rm backend npx prisma migrate deploy
               docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --build backend frontend agent-zero crew-ai
             fi
             docker image prune -f
@@ -98,7 +100,7 @@ jobs:
     if: github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.base_ref == 'master'
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to New Server (Production)
+      - name: Deploy to Production Server
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
@@ -106,16 +108,26 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
           script: |
             if [ ! -d "/root/ag_extension_decision_support" ]; then
-              echo "🚀 Project directory missing. Cloning repository..."
+              echo "Project directory missing. Cloning repository..."
               cd /root
               git clone https://github.com/${{ github.repository }}.git
             fi
-            
+
             cd /root/ag_extension_decision_support/ag-extension-dashboard
             git fetch origin master
             git checkout master
             git pull origin master
-            # The orchestration script already handles "App-only" deployment if DBs are running
-            chmod +x ./scripts/orchestrate-migration.sh
-            DEST_HOST=localhost ./scripts/orchestrate-migration.sh deploy
+
+            echo "Checking database and redis status..."
+            DB_UP=$(docker ps --filter "name=ag-dashboard-db" --filter "status=running" -q)
+            REDIS_UP=$(docker ps --filter "name=ag-dashboard-redis" --filter "status=running" -q)
+
+            if [ -z "$DB_UP" ] || [ -z "$REDIS_UP" ]; then
+              echo "Databases DOWN. Full deploy..."
+              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --build
+            else
+              echo "Databases UP. Running migrations then deploying app services..."
+              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml run --rm backend npx prisma migrate deploy
+              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --build backend frontend agent-zero crew-ai
+            fi
             docker image prune -f
