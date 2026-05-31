@@ -453,6 +453,8 @@ export async function createTables(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_search_cache_query ON search_cache(LOWER(TRIM(query_text)));
     -- GIN index for full-text search on knowledge articles (avoids computing to_tsvector per row)
     CREATE INDEX IF NOT EXISTS idx_knowledge_fts ON knowledge_articles USING gin(to_tsvector('english', title || ' ' || content));
+    -- GIN index on crops array for = ANY(crops) queries
+    CREATE INDEX IF NOT EXISTS idx_knowledge_crops ON knowledge_articles USING gin(crops);
   `;
 
   try {
