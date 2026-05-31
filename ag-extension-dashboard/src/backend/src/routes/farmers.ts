@@ -85,8 +85,8 @@ router.get('/', async (req: Request, res: Response) => {
             where.userId = userId;
         }
 
-        // Search and manual region filters
-        if (queryRegion) {
+        // Manual region filter (only for admin — other roles already filtered above)
+        if (queryRegion && role === 'admin') {
             where.region = queryRegion as string;
         }
         if (search) {

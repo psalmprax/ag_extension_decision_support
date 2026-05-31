@@ -83,7 +83,7 @@ services:
       - "7500:3001"
     environment:
       - DATABASE_URL=postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@app-db:5432/${DATABASE_NAME:-ag_extension}?schema=public
-      - REDIS_URL=redis://redis:6379
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-agext_redis_2024}@redis:6379
       - PORT=3001
       - NODE_ENV=${NODE_ENV:-development}
       - JWT_SECRET=${JWT_SECRET:-dev-secret-key-for-local-only}
@@ -94,6 +94,8 @@ services:
       - OLLAMA_HOST=${OLLAMA_HOST:-http://ettametta-ollama:11434}
       - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.2:3b}
       - AI_FALLBACK_PROVIDER=${AI_FALLBACK_PROVIDER:-ollama}
+      - DEMO_ENABLED=${DEMO_ENABLED:-false}
+      - DEMO_PASSWORD=${DEMO_PASSWORD:-demo-trial-2024}
     depends_on:
       app-db:
         condition: service_healthy
