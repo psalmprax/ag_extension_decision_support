@@ -10,7 +10,7 @@ export interface Farmer {
     crops?: string[];
     farmSize?: number;
     vitalScore?: number;
-    yieldHistory?: any;
+    yieldHistory?: Array<{ month: string; yield: number }>;
     locationLat?: number;
     locationLng?: number;
     languagePreference?: string;
@@ -38,7 +38,7 @@ export interface FarmerStats {
     crops: string[];
     farmSize: number;
     vitalScore: number;
-    yieldHistory: any[];
+    yieldHistory: Array<{ month: string; yield: number }>;
     soilMoisture: string;
     avgTemp: string;
     phLevel: string;

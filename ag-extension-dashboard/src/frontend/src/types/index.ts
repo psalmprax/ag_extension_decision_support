@@ -318,7 +318,7 @@ export interface ApiResponse<T = any> {
 export interface ApiError {
     code: string;
     message: string;
-    details?: any;
+    details?: Record<string, unknown>;
 }
 
 export interface Pagination {
@@ -352,7 +352,7 @@ export interface DashboardTrends {
 export interface DashboardData {
     overview: DashboardOverview;
     trends: DashboardTrends;
-    recentActivity?: any[];
+    recentActivity?: Array<Record<string, unknown>>;
 }
 
 // ============================================================================
@@ -374,11 +374,11 @@ export interface BreadcrumbItem {
     icon?: React.ElementType;
 }
 
-export interface TableColumn<T = any> {
+export interface TableColumn<T = Record<string, unknown>> {
     key: keyof T | string;
     label: string;
     sortable?: boolean;
-    render?: (value: any, item: T, index: number) => React.ReactNode;
+    render?: (value: unknown, item: T, index: number) => React.ReactNode;
     width?: string | number;
 }
 
@@ -394,12 +394,12 @@ export interface FormField {
     required?: boolean;
     validation?: ValidationRule[];
     options?: { value: string; label: string }[];
-    defaultValue?: any;
+    defaultValue?: string | number | boolean;
 }
 
 export interface ValidationRule {
     type: 'required' | 'email' | 'minLength' | 'maxLength' | 'pattern' | 'custom';
-    value?: any;
+    value?: string | number;
     message: string;
 }
 
@@ -433,7 +433,7 @@ export interface SyncQueueItem {
     type: 'create' | 'update' | 'delete';
     entityType: string;
     entityId: string;
-    data: any;
+    data: Record<string, unknown>;
     timestamp: number;
     status: 'pending' | 'processing' | 'completed' | 'failed';
     retryCount: number;

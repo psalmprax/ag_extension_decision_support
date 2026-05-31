@@ -58,7 +58,8 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                                 const res = await getReportContent(report.id);
                                 if (res.success && res.data) {
                                     setViewingReport(res.data);
-                                    setReportContent(res.data.content || res.data.data?.content || null);
+                                    const content = res.data.content || (typeof res.data.data?.content === 'string' ? res.data.data.content : null);
+                                    setReportContent(content);
                                 }
                             } catch {
                                 addNotification({ type: 'error', message: 'Failed to load report' });

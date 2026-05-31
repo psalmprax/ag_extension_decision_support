@@ -164,7 +164,7 @@ export function Memory() {
     const StatCard = ({ title, value, icon: Icon, color = 'blue' }: {
         title: string;
         value: string | number;
-        icon: any;
+        icon: React.ComponentType<{ className?: string }>;
         color?: string;
     }) => (
         <motion.div

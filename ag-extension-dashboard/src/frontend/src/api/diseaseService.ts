@@ -56,7 +56,7 @@ export interface SoilAnalysisResult {
     reportId?: string;
 }
 
-export const analyzeSoilImage = async (imageData: string, cropType?: string, details?: any): Promise<{ success: boolean; data: SoilAnalysisResult }> => {
+export const analyzeSoilImage = async (imageData: string, cropType?: string, details?: Record<string, unknown>): Promise<{ success: boolean; data: SoilAnalysisResult }> => {
     const response = await apiClient.post('/ai/diagnose/soil', { imageData, cropType, details });
     return response.data;
 };

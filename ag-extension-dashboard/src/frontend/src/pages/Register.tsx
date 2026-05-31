@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Loader2, Sprout, Check } from 'lucide-react';
+import { AxiosError } from 'axios';
 import { useLanguage } from '@/lib/LanguageContext';
 import { register } from '@/api/authService';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
@@ -65,12 +66,13 @@ export function Register() {
 
             // Success - redirect to login
             navigate('/login', { state: { registered: true } });
-        } catch (err: any) {
-            // Error handling is managed by apiClient interceptors, 
+        } catch (err: unknown) {
+            // Error handling is managed by apiClient interceptors,
             // but we can extract more detail if available
-            const errorMsg = err.response?.data?.details?.[0]?.message || 
-                            err.response?.data?.error || 
-                            err.message || 
+            const axiosErr = err instanceof AxiosError ? err : null;
+            const errorMsg = axiosErr?.response?.data?.details?.[0]?.message ||
+                            axiosErr?.response?.data?.error ||
+                            (err instanceof Error ? err.message : null) ||
                             t('register_failed');
             setError(errorMsg);
         } finally {

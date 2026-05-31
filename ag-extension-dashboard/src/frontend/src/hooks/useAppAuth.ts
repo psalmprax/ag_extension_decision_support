@@ -4,7 +4,7 @@ import { fetchUserProfile, ProfileResponse } from '@/api/authService';
 
 export const useAppAuth = (
     storeUser: unknown,
-    setUser: (user: any) => void
+    setUser: (user: Record<string, unknown> | null) => void
 ) => {
     const hasToken = !!localStorage.getItem('token');
 

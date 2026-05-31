@@ -78,8 +78,7 @@ export function SMSPage() {
 
             const data = await withRealFallback(fetchSMSHistory(), { success: true, data: fallbackHistory });
             if (data.success) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                setHistory(data.data.map((msg: any) => ({
+                setHistory(data.data.map((msg: Record<string, string>) => ({
                     id: msg.id,
                     to: msg.phoneNumber,
                     message: msg.message,
@@ -102,7 +101,7 @@ export function SMSPage() {
             
             const res = await withRealFallback(fetchFarmers(), { success: true, data: { farmers: fallbackFarmers } });
             if (res.success) {
-                setRecentContacts(res.data.farmers.map((f: any) => ({
+                setRecentContacts(res.data.farmers.map((f: Record<string, string>) => ({
                     id: f.id,
                     name: `${f.firstName} ${f.lastName}`,
                     phone: f.phone || '',

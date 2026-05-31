@@ -10,10 +10,8 @@ export interface PerformanceResponse {
             followUpRate: number;
             firstContactResolution: number;
         };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        timeline: any[];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        byOfficer: any[];
+        timeline: Array<Record<string, string | number>>;
+        byOfficer: Array<Record<string, string | number>>;
     };
 }
 

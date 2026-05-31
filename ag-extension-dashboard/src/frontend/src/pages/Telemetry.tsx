@@ -75,7 +75,7 @@ export function Telemetry() {
     const StatCard = ({ title, value, icon: Icon, change, color = 'blue' }: {
         title: string;
         value: string | number;
-        icon: any;
+        icon: React.ComponentType<{ className?: string }>;
         change?: number;
         color?: string;
     }) => (

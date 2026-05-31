@@ -6,8 +6,7 @@ interface SyncQueueItem {
     entity: string;
     endpoint: string;
     method: 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    data?: any;
+    data?: Record<string, unknown>;
     timestamp: number;
     retryCount: number;
 }

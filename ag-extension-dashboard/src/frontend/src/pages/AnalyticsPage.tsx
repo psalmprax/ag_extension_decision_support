@@ -14,7 +14,7 @@ interface AnalyticsPageProps {
             followUpRate?: number;
             firstContactResolution?: number;
         };
-        timeline?: { date: string; visits: number; queries: number }[];
+        timeline?: Array<Record<string, string | number>>;
     } | undefined;
 }
 

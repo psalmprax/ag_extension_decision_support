@@ -17,21 +17,46 @@ export interface DashboardTrends {
     satisfactionChange: number;
 }
 
+export interface DashboardTimelineEntry {
+    date: string;
+    [metric: string]: string | number;
+}
+
+export interface DashboardGeographyEntry {
+    region: string;
+    farmers: number;
+    officers: number;
+}
+
+export interface DashboardCropEntry {
+    name: string;
+    count: number;
+}
+
+export interface DashboardActivityEntry {
+    type: string;
+    description: string;
+    time_diff: string;
+}
+
+export interface DashboardPriorityEntry {
+    farmerId: string;
+    name: string;
+    reason: string;
+    severity: string;
+    crop: string;
+}
+
 export interface DashboardResponse {
     success: boolean;
     data: {
         overview: DashboardOverview;
         trends: DashboardTrends;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        timeline: any[];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        geography: any[];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        crops: any[];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        recentActivity: any[];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        priorityQueue: any[];
+        timeline: DashboardTimelineEntry[];
+        geography: DashboardGeographyEntry[];
+        crops: DashboardCropEntry[];
+        recentActivity: DashboardActivityEntry[];
+        priorityQueue: DashboardPriorityEntry[];
     };
 }
 
