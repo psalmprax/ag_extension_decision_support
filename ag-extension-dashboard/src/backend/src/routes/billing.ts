@@ -626,6 +626,9 @@ router.patch('/admin/config', authorize(['admin']), async (req: AuthRequest, res
  *     summary: Create PayPal subscription
  *     tags: [Billing]
  */
+// Pending PayPal payments: paymentId → { planId, amount }
+const pendingPayPalPayments = new Map<string, { planId: string; amount: number }>();
+
 router.post('/paypal/subscribe', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
     try {
         const { planId } = req.body;
@@ -653,6 +656,12 @@ router.post('/paypal/subscribe', authorize(['admin', 'extension_officer', 'farme
         });
 
         if (result && result.success) {
+            // Store plan details for the success callback
+            if (result.paymentId) {
+                pendingPayPalPayments.set(result.paymentId, { planId: selectedPlan.id, amount: selectedPlan.price });
+                // Auto-expire after 1 hour
+                setTimeout(() => pendingPayPalPayments.delete(result.paymentId!), 3600_000);
+            }
             res.json({ success: true, data: { paymentId: result.paymentId, approvalUrl: result.approvalUrl } });
         } else {
             res.status(errorStatusMap[result?.errorCode as string] || 400).json({
@@ -686,17 +695,27 @@ router.get('/paypal/success', authorize(['admin', 'extension_officer', 'farmer']
         const success = await paymentService.executePayPalPayment(paymentId as string, PayerID as string);
 
         if (success) {
+            // Look up plan details from pending payment
+            const pending = pendingPayPalPayments.get(paymentId as string);
+            pendingPayPalPayments.delete(paymentId as string);
+
+            if (!pending) {
+                logger.error(`PayPal payment ${paymentId} succeeded but no pending plan found`);
+                return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=plan_not_found`);
+            }
+
             // Update subscription in database
             const subscription = await prisma.subscription.upsert({
                 where: { userId },
                 update: {
                     status: 'active',
+                    planId: pending.planId,
                     currentPeriodStart: new Date(),
                     currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
                 },
                 create: {
                     userId,
-                    planId: 'price_pro_monthly', // Default to pro plan
+                    planId: pending.planId,
                     status: 'active',
                     currentPeriodStart: new Date(),
                     currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
@@ -707,7 +726,7 @@ router.get('/paypal/success', authorize(['admin', 'extension_officer', 'farmer']
             await prisma.payment.create({
                 data: {
                     subscriptionId: subscription.id,
-                    amount: 29.00, // Should be dynamic based on plan
+                    amount: pending.amount,
                     currency: 'USD',
                     status: 'completed',
                     paymentMethod: 'paypal',

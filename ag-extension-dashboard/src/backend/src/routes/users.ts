@@ -96,21 +96,35 @@ router.get('/:id', async (req: Request, res: Response) => {
     }
 });
 
+const ALLOWED_ROLES = ['admin', 'regional_manager', 'extension_officer', 'farmer'] as const;
+
 // Create user
 router.post('/', async (req: Request, res: Response) => {
     try {
-        const { name, email, role, region, phone } = req.body;
+        const { name, email, password, role, region, phone } = req.body;
         const pool = getPool();
 
         if (!pool) {
             return res.status(503).json({ success: false, error: 'Database connection unavailable' });
         }
 
+        if (!email || !password) {
+            return res.status(400).json({ success: false, error: 'Email and password are required' });
+        }
+
+        const userRole = role || 'extension_officer';
+        if (!ALLOWED_ROLES.includes(userRole)) {
+            return res.status(400).json({ success: false, error: `Invalid role. Allowed: ${ALLOWED_ROLES.join(', ')}` });
+        }
+
+        const bcrypt = await import('bcryptjs');
+        const passwordHash = await bcrypt.hash(password, 10);
+
         const result = await query(`
-            INSERT INTO users (name, email, role, region, phone, created_at)
-            VALUES ($1, $2, $3, $4, $5, NOW())
+            INSERT INTO users (name, email, password_hash, role, region, phone, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, NOW())
             RETURNING id, name, email, role, region, phone
-        `, [name, email, role || 'extension_officer', region, phone]);
+        `, [name, email, passwordHash, userRole, region, phone]);
 
         res.status(201).json({ success: true, data: result.rows[0] });
     } catch (error) {

@@ -345,6 +345,23 @@ router.post('/', validate(createFarmerSchema), async (req: Request, res: Respons
 router.patch('/:id', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
+        const userRole = (req as any).user?.role;
+        const userId = (req as any).user?.userId;
+
+        // Ownership check: admin/regional_manager can edit any, others only their own or assigned
+        if (userRole !== 'admin' && userRole !== 'regional_manager') {
+            const prisma = getPrisma();
+            const existing = await prisma.farmer.findUnique({ where: { id } });
+            if (!existing) {
+                return res.status(404).json({ success: false, error: 'Farmer not found' });
+            }
+            const isOwner = existing.userId === userId;
+            const isAssignedOfficer = existing.assignedOfficerId === userId;
+            if (!isOwner && !isAssignedOfficer) {
+                return res.status(403).json({ success: false, error: 'Not authorized to update this farmer' });
+            }
+        }
+
         const {
             firstName, lastName, phone, region, village,
             farmSize, crops, languagePreference,
