@@ -58,6 +58,43 @@ interface Invoice {
     invoice_pdf: string;
 }
 
+interface PaymentMethod {
+    id: string;
+    type: string;
+    brand?: string;
+    last4?: string;
+    isDefault?: boolean;
+    card?: {
+        brand?: string;
+        last4?: string;
+        exp_month?: number;
+        exp_year?: number;
+    };
+}
+
+interface Transaction {
+    id: string;
+    transactionId?: string;
+    amount: number;
+    currency: string;
+    status: string;
+    method: string;
+    createdAt: string;
+    userId?: string;
+    userName?: string;
+    userEmail?: string;
+    planId?: string;
+}
+
+interface Voucher {
+    id: string;
+    code: string;
+    planId: string;
+    status: string;
+    expiresAt: string;
+    redeemedBy?: string;
+}
+
 export const BillingDashboard: React.FC = () => {
     const { t } = useLanguage();
     const { isModern, headingClass, radiusClass, btnClass } = useDesignSystemMode();
@@ -65,8 +102,7 @@ export const BillingDashboard: React.FC = () => {
     const [plans, setPlans] = useState<Plan[]>([]);
     const [subscription, setSubscription] = useState<Subscription | null>(null);
     const [invoices, setInvoices] = useState<Invoice[]>([]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+    const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [adminKeys, setAdminKeys] = useState({ stripeSecretKey: '', paypalClientId: '' });
@@ -75,12 +111,9 @@ export const BillingDashboard: React.FC = () => {
     const [mobilePayData, setMobilePayData] = useState({ method: 'mpesa' as 'mpesa' | 'airtel' | 'bank', transactionId: '', planId: '', amount: '' });
     const [voucherCode, setVoucherCode] = useState('');
     const [formMessage, setFormMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [myTransactions, setMyTransactions] = useState<any[]>([]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [adminTransactions, setAdminTransactions] = useState<any[]>([]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [vouchers, setVouchers] = useState<any[]>([]);
+    const [myTransactions, setMyTransactions] = useState<Transaction[]>([]);
+    const [adminTransactions, setAdminTransactions] = useState<Transaction[]>([]);
+    const [vouchers, setVouchers] = useState<Voucher[]>([]);
     const [voucherBatch, setVoucherBatch] = useState({ planId: 'price_pro_monthly', count: 10, expiresInDays: 30 });
     const [rejectReason, setRejectReason] = useState('');
     const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
@@ -179,8 +212,8 @@ export const BillingDashboard: React.FC = () => {
                 setFormMessage({ type: 'error', text: res.message || 'Voucher redemption failed.' });
             }
         } catch (error) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            setFormMessage({ type: 'error', text: (error as any).response?.data?.message || 'Voucher redemption failed.' });
+            const err = error as { response?: { data?: { message?: string } } };
+            setFormMessage({ type: 'error', text: err.response?.data?.message || 'Voucher redemption failed.' });
         } finally {
             setActionLoading(null);
         }
@@ -207,8 +240,8 @@ export const BillingDashboard: React.FC = () => {
                 setFormMessage({ type: 'error', text: res.message || 'Submission failed.' });
             }
         } catch (error) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            setFormMessage({ type: 'error', text: (error as any).response?.data?.message || 'Submission failed.' });
+            const err = error as { response?: { data?: { message?: string } } };
+            setFormMessage({ type: 'error', text: err.response?.data?.message || 'Submission failed.' });
         } finally {
             setActionLoading(null);
         }
@@ -414,7 +447,7 @@ export const BillingDashboard: React.FC = () => {
                     toast.error(response.error || response.message || 'Failed to initialize payment method setup');
                 }
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             if (import.meta.env.DEV) {
                 console.error('Failed to add payment method:', error);
             }
@@ -956,7 +989,7 @@ export const BillingDashboard: React.FC = () => {
                                             </div>
                                             <div className="space-y-1">
                                                 <p className="text-sm font-black text-gray-900 dark:text-white tracking-tight">•••• •••• •••• {pm.card?.last4}</p>
-                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('billing_expires').replace('{date}', `${pm.card?.expMonth}/${pm.card?.expYear}`)}</p>
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('billing_expires').replace('{date}', `${pm.card?.exp_month}/${pm.card?.exp_year}`)}</p>
                                             </div>
                                         </div>
                                         <button

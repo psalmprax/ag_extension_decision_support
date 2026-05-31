@@ -6,7 +6,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 interface BulkUpdateModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onUpdate: (updates: any) => void;
+    onUpdate: (updates: Partial<{ region: string; languagePreference: string; crops: string[] }>) => void;
     selectedCount: number;
     isLoading?: boolean;
 }
@@ -41,7 +41,7 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
 
     const handleUpdate = () => {
         // Only include fields that have been set
-        const finalUpdates: any = {};
+        const finalUpdates: Record<string, unknown> = {};
         if (updates.region) finalUpdates.region = updates.region;
         if (updates.languagePreference) finalUpdates.languagePreference = updates.languagePreference;
         if (updates.crops.length > 0) finalUpdates.crops = updates.crops;

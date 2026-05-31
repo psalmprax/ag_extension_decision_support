@@ -139,10 +139,14 @@ export const ownershipOrAdmin = (
         return next();
     }
 
-    // Regional manager can access resources in their region
+    // Regional managers are denied until region-based access control is implemented
     if (req.user.role === 'regional_manager') {
-        // This would need additional logic to check region
-        return next();
+        logger.warn(`Regional manager ${req.user.userId} denied access to resource ${userId} — region check not yet implemented`);
+        res.status(403).json({
+            success: false,
+            error: 'Regional manager access requires region-based authorization (not yet implemented)',
+        });
+        return;
     }
 
     res.status(403).json({

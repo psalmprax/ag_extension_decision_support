@@ -31,13 +31,50 @@ import { KnowledgeSidebar } from './KnowledgeSidebar';
 import { ReasoningVisuals } from './ReasoningVisuals';
 import { MarkdownRenderer } from '../MarkdownRenderer';
 
+interface ContextItem {
+    content: string;
+    source?: string;
+    score?: number;
+    metadata?: {
+        title?: string;
+        sourceUrl?: string;
+        crop?: string;
+        category?: string;
+    };
+}
+
+interface KPI {
+    label: string;
+    value: string;
+    status: 'good' | 'warning' | 'critical';
+    trend?: string;
+}
+
+interface Chart {
+    type: 'bar' | 'line' | 'pie' | 'area';
+    title: string;
+    data: Array<{ label: string; value: number }>;
+}
+
+interface MediaAsset {
+    url: string;
+    caption?: string;
+}
+
+type VisualData = {
+    kpis?: KPI[];
+    charts?: Chart[];
+    images?: MediaAsset[];
+    videos?: MediaAsset[];
+};
+
 interface Result {
     answer: string;
-    contextUsed: any[];
+    contextUsed: ContextItem[];
     cached?: boolean;
     query?: string;
     timestamp?: string;
-    visuals?: any;
+    visuals?: VisualData;
     audio?: string;
 }
 
@@ -53,8 +90,8 @@ export const KnowledgeBase: React.FC = () => {
     const [lastResult, setLastResult] = useState<Result | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [showStats, setShowStats] = useState(false);
-    const [history, setHistory] = useState<any[]>([]);
-    const [stats, setStats] = useState<any>(null);
+    const [history, setHistory] = useState<{ id: string; query?: string; queryText?: string; crop?: string; category?: string; timestamp?: string; createdAt?: string }[]>([]);
+    const [stats, setStats] = useState<{ crops?: { name: string; count: number }[]; categories?: { name: string; count: number }[]; totalQueries?: number; cachedQueries?: number } | null>(null);
 
     // Fetch history and stats on mount
     useEffect(() => {
@@ -147,8 +184,9 @@ export const KnowledgeBase: React.FC = () => {
                 onToggle={() => setSidebarOpen(!sidebarOpen)}
                 history={history}
                 onSelect={(h) => {
-                    setSearchQuery(h.queryText);
-                    handleSearch(h.queryText);
+                    const query = h.queryText || h.query || '';
+                    setSearchQuery(query);
+                    handleSearch(query);
                 }}
             />
 
@@ -254,7 +292,7 @@ export const KnowledgeBase: React.FC = () => {
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -20 }}
                             >
-                                <KnowledgeStats data={stats} />
+                                {stats && <KnowledgeStats data={stats} />}
                             </motion.div>
                         ) : lastResult ? (
                             <motion.div
@@ -292,7 +330,7 @@ export const KnowledgeBase: React.FC = () => {
                                     {/* New Visual Intelligence Layer */}
                                     {(lastResult.visuals || lastResult.audio) && (
                                         <div className={`mt-12 mb-16 p-1 bg-gradient-to-br from-primary-500/5 to-transparent ${isModern ? 'rounded-[2.5rem]' : 'rounded-none'} border border-primary-500/10`}>
-                                            <ReasoningVisuals visuals={lastResult.visuals} audio={lastResult.audio} />
+                                            <ReasoningVisuals visuals={lastResult.visuals || {}} audio={lastResult.audio} />
                                         </div>
                                     )}
 
@@ -302,7 +340,7 @@ export const KnowledgeBase: React.FC = () => {
                                             <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Contextual Verification Sources</span>
                                         </div>
                                         <div className="flex flex-wrap gap-3">
-                                            {lastResult.contextUsed.map((ctx: any, i: number) => (
+                                            {lastResult.contextUsed.map((ctx, i) => (
                                                 <div key={i} className={`px-4 py-2 bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700/50 ${radiusClass} flex items-center gap-2 group hover:border-primary-500/50 transition-colors cursor-pointer`}>
                                                     <div className="w-2 h-2 bg-primary-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
                                                     <div className="flex flex-col">

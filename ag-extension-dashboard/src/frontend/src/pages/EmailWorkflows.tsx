@@ -204,7 +204,7 @@ export function EmailWorkflows() {
     const StatCard = ({ title, value, icon: Icon, color = 'blue' }: {
         title: string;
         value: string | number;
-        icon: any;
+        icon: React.ComponentType<{ className?: string }>;
         color?: string;
     }) => (
         <motion.div
@@ -547,7 +547,7 @@ export function EmailWorkflows() {
                                     <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4 max-h-60 overflow-y-auto">
                                         <div
                                             className="prose prose-sm max-w-none dark:prose-invert"
-                                            dangerouslySetInnerHTML={{ __html: showApprovalModal.emailData.html }}
+                                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(showApprovalModal.emailData.html) }}
                                         />
                                     </div>
                                 </div>

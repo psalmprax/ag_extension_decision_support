@@ -43,6 +43,9 @@ export interface Farmer {
     yield?: number;
     status?: string;
     district?: string;
+    yieldHistory?: { month: string; yield: number }[];
+    vitalScore?: number;
+    languagePreference?: string;
 }
 
 export interface Report {
@@ -60,6 +63,8 @@ export interface Visit {
     scheduled_at: string;
     visit_type: string;
     status: string;
+    reason?: string;
+    notes?: string;
 }
 
 export interface DashboardData {

@@ -5,26 +5,38 @@ import { logger } from '@/utils/logger';
 export function securityGate(req: Request, res: Response, next: NextFunction) {
   const method = req.method;
 
+  // Scan GET query params and URL params for threats
+  if (method === 'GET') {
+    const queryStr = JSON.stringify(req.query || {});
+    const paramsStr = JSON.stringify(req.params || {});
+    const combined = queryStr + paramsStr;
+    if (combined.length > 2) { // Skip empty objects
+      const check = aegisShield.sanitizeInput(combined);
+      if (!check.clean) {
+        logger.warn(`Security gate blocked GET request to ${req.path}: ${check.threats.join('; ')}`);
+        return res.status(403).json({
+          success: false,
+          error: 'Request blocked by security filter',
+          details: 'Potential security threat detected in query parameters',
+        });
+      }
+    }
+  }
+
+  // Scan POST/PUT/PATCH bodies for threats
   if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
-    const bodyStr = JSON.stringify(req.body || '');
+    const bodyStr = JSON.stringify(req.body || {});
     const check = aegisShield.sanitizeInput(bodyStr);
 
     if (!check.clean) {
       logger.warn(`Security gate blocked request to ${req.path}: ${check.threats.join('; ')}`);
 
-      if (check.severity === 'critical' || check.severity === 'high') {
-        return res.status(403).json({
-          success: false,
-          error: 'Request blocked by security filter',
-          details: 'Potential security threat detected',
-        });
-      }
-
-      try {
-        req.body = JSON.parse(check.sanitizedInput);
-      } catch {
-        req.body = { ...req.body, _sanitized: true };
-      }
+      // Block all threats regardless of severity
+      return res.status(403).json({
+        success: false,
+        error: 'Request blocked by security filter',
+        details: 'Potential security threat detected',
+      });
     }
   }
 

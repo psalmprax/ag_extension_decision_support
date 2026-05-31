@@ -119,7 +119,7 @@ export interface AppState {
     setPendingSMS: (data: { phone: string; name: string } | null) => void;
 
     // UI Elements
-    contextMenu: { x: number; y: number; entityType: any; entityId?: string; isBulk?: boolean } | null;
+    contextMenu: { x: number; y: number; entityType: 'farmer' | 'visit' | 'report' | 'knowledge' | 'user' | 'stat'; entityId?: string; isBulk?: boolean } | null;
     showContextMenu: (data: AppState['contextMenu']) => void;
     hideContextMenu: () => void;
 
@@ -258,14 +258,15 @@ export const useAppStore = create<AppState>()(
                 try {
                     const response = await visitService.createVisit(visit);
                     if (response.success && response.data) {
-                        // Map backend visit to frontend visit interface
+                        // Map backend visit (snake_case) to frontend Visit (camelCase)
+                        const backendVisit = response.data;
                         const newVisit: Visit = {
-                            id: response.data.id,
-                            farmerId: response.data.farmer_id || (visit as any).farmerId,
-                            farmerName: (response.data as any).farmer_name || (visit as any).farmerName,
-                            scheduledDate: response.data.scheduled_at,
-                            status: response.data.status as any,
-                            notes: response.data.notes
+                            id: backendVisit.id,
+                            farmerId: backendVisit.farmer_id || '',
+                            farmerName: backendVisit.farmer_name || '',
+                            scheduledDate: backendVisit.scheduled_at,
+                            status: (backendVisit.status as Visit['status']) || 'pending',
+                            notes: backendVisit.notes
                         };
                         set((state) => ({
                             visits: [newVisit, ...state.visits]

@@ -2,14 +2,13 @@ import React, { useState, useEffect } from 'react';
 import {
     Wrench, Play, Code, Eye, RefreshCw,
     CheckCircle, XCircle, Loader2, Terminal,
-    Settings, Zap, AlertTriangle
+    Zap, AlertTriangle
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
 import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
 import { useAppStore } from '../store/useAppStore';
 import { fetchMCPTools, callMCPTool, fetchMCPHealth, type MCPTool } from '../api/mcpService';
-import toast from 'react-hot-toast';
 
 export function MCPTools() {
     const { t } = useLanguage();
@@ -28,7 +27,7 @@ export function MCPTools() {
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [selectedTool, setSelectedTool] = useState<MCPTool | null>(null);
-    const [toolArgs, setToolArgs] = useState<Record<string, any>>({});
+    const [toolArgs, setToolArgs] = useState<Record<string, unknown>>({});
     const [isExecuting, setIsExecuting] = useState(false);
     const [executionResult, setExecutionResult] = useState<{
         content: Array<{ type: string; text: string }>;
@@ -36,8 +35,8 @@ export function MCPTools() {
     } | null>(null);
     const [executionHistory, setExecutionHistory] = useState<Array<{
         tool: string;
-        args: Record<string, any>;
-        result: any;
+        args: Record<string, unknown>;
+        result: { isError?: boolean; content?: Array<{ type: string; text: string }> } | null;
         timestamp: string;
     }>>([]);
 
@@ -88,13 +87,6 @@ export function MCPTools() {
             return value === undefined || value === null || value === '';
         });
 
-        console.log('Tool execution:', {
-            toolName: selectedTool.name,
-            required,
-            toolArgs,
-            missing
-        });
-
         if (missing.length > 0) {
             addNotification({
                 type: 'error',
@@ -107,7 +99,6 @@ export function MCPTools() {
         setExecutionResult(null);
         try {
             const argsToSend = Object.keys(toolArgs).length > 0 ? toolArgs : undefined;
-            console.log('Sending args to backend:', argsToSend);
             const res = await callMCPTool(selectedTool.name, argsToSend);
             if (res.success) {
                 setExecutionResult(res.data);
@@ -147,8 +138,8 @@ export function MCPTools() {
         }
     };
 
-    const getDefaultArgs = (tool: MCPTool): Record<string, any> => {
-        const defaults: Record<string, any> = {};
+    const getDefaultArgs = (tool: MCPTool): Record<string, unknown> => {
+        const defaults: Record<string, unknown> = {};
 
         // Set defaults for common parameters
         if (tool.inputSchema.properties) {
@@ -172,8 +163,9 @@ export function MCPTools() {
         return defaults;
     };
 
-    const renderInputField = (propertyName: string, schema: any) => {
-        const value = toolArgs[propertyName] || '';
+    const renderInputField = (propertyName: string, schema: { type?: string; description?: string }) => {
+        const rawValue = toolArgs[propertyName];
+        const value = typeof rawValue === 'object' ? JSON.stringify(rawValue ?? '') : String(rawValue ?? '');
 
         switch (schema.type) {
             case 'string':
@@ -230,7 +222,7 @@ export function MCPTools() {
     const StatCard = ({ title, value, icon: Icon, color = 'blue' }: {
         title: string;
         value: string | number;
-        icon: any;
+        icon: React.ComponentType<{ className?: string }>;
         color?: string;
     }) => (
         <motion.div
@@ -377,7 +369,6 @@ export function MCPTools() {
                                 onClick={() => {
                                     setSelectedTool(tool);
                                     const defaults = getDefaultArgs(tool);
-                                    console.log('Setting defaults for tool:', tool.name, defaults);
                                     setToolArgs(defaults);
                                     setExecutionResult(null);
                                 }}

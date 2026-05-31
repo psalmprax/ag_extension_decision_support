@@ -110,7 +110,7 @@ export const ExampleDashboardPage: React.FC = () => {
       </div>
       
       <div className="mt-8 h-96">
-        <ChatInterface messages={sampleMessages} onSend={(msg) => console.log('Send:', msg)} />
+        <ChatInterface messages={sampleMessages} onSend={() => {}} />
       </div>
       
       <div className="mt-8 h-96">

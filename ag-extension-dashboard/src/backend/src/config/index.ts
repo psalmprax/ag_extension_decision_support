@@ -131,7 +131,7 @@ export const config: AppConfig = {
     },
 
     demo: {
-        password: getEnv('DEMO_PASSWORD', 'demo-password-123'),
+        password: getEnv('DEMO_PASSWORD', ''),
     },
     ollama: {
         host: getEnv('OLLAMA_HOST', 'http://localhost:11434'),

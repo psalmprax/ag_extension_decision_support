@@ -5,6 +5,10 @@ build/
 .env
 .env.local
 *.log
+*.tsbuildinfo
+server.log
+
+# AI assistant directories
 .gemini/
 .agents/
 .agent/
@@ -14,3 +18,10 @@ brain/
 tmp/
 .output/
 .wxt/
+
+# One-off fix/translate scripts
+fix_*.js
+translate_*.js
+
+# Prisma build artifacts
+prisma/migrations/*.sql.bak

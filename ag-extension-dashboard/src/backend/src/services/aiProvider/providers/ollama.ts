@@ -60,6 +60,13 @@ export class OllamaProvider extends BaseAIProvider {
             return {
                 text: data.message?.content || '',
                 model,
+                usage: {
+                    promptTokens: data.prompt_eval_count ?? 0,
+                    completionTokens: data.eval_count ?? 0,
+                    totalTokens: (data.prompt_eval_count ?? 0) + (data.eval_count ?? 0),
+                },
+                finishReason: 'stop',
+                toolCalls: undefined,
             };
         } catch (error) {
             logger.error('Ollama generateText error:', error);
@@ -79,12 +86,9 @@ export class OllamaProvider extends BaseAIProvider {
                 timeout: 10000,
             });
 
-            let embedding: number[] = response.data.embedding;
-            if (embedding.length < 1536) {
-                const padding = new Array(1536 - embedding.length).fill(0);
-                embedding = [...embedding, ...padding];
-            } else if (embedding.length > 1536) {
-                embedding = embedding.slice(0, 1536);
+            const embedding: number[] = response.data.embedding;
+            if (!embedding || !Array.isArray(embedding)) {
+                throw new Error('Ollama returned an empty or invalid embedding format');
             }
 
             return {
@@ -93,11 +97,7 @@ export class OllamaProvider extends BaseAIProvider {
             };
         } catch (error) {
             logger.error('Ollama createEmbedding error:', error);
-            // Return zero vector if embedding fails to prevent RAG from crashing
-            return {
-                embedding: new Array(1536).fill(0),
-                model,
-            };
+            throw error;
         }
     }
 

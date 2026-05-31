@@ -11,10 +11,12 @@ export const registerServiceWorker = () => {
     return registerSW({
         immediate: true,
         onRegisterError(err) {
-            console.warn('[SW] Service worker registration failed — continuing without PWA features:', err.message);
+            if (import.meta.env.DEV) {
+                console.warn('[SW] Service worker registration failed — continuing without PWA features:', err.message);
+            }
         },
         onRegistered(registration) {
-            if (registration) {
+            if (registration && import.meta.env.DEV) {
                 console.log('[SW] Service worker registered successfully');
             }
         },

@@ -1,9 +1,48 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { BillingDashboard } from '../BillingDashboard';
 import { LanguageProvider } from '../../lib/LanguageContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
+
+// Mock billing service to prevent real API calls
+vi.mock('@/api/billingService', () => ({
+    fetchPlans: vi.fn().mockResolvedValue({
+        success: true,
+        data: [
+            { id: 'price_free', name: 'Free', price: 0, interval: 'month', features: ['plan_feature_basic_analytics'] },
+            { id: 'price_pro_monthly', name: 'Pro', price: 29, interval: 'month', features: ['plan_feature_advanced_analytics'] },
+        ],
+    }),
+    fetchSubscription: vi.fn().mockResolvedValue({
+        success: true,
+        data: {
+            id: 'sub_1',
+            status: 'active',
+            currentPeriodEnd: '2026-06-30',
+            cancelAtPeriodEnd: false,
+            plan: { id: 'price_pro_monthly', name: 'Pro', price: 29, interval: 'month', features: [] },
+        },
+    }),
+    fetchInvoices: vi.fn().mockResolvedValue({ success: true, data: [] }),
+    fetchPaymentMethods: vi.fn().mockResolvedValue({ success: true, data: [] }),
+    createCheckoutSession: vi.fn(),
+    createPortalSession: vi.fn(),
+    switchSubscription: vi.fn(),
+    getMyTransactions: vi.fn().mockResolvedValue({ success: true, data: [] }),
+    listAllTransactions: vi.fn().mockResolvedValue({ success: true, data: [] }),
+    verifyTransaction: vi.fn(),
+    rejectTransaction: vi.fn(),
+    generateVouchers: vi.fn(),
+    listVouchers: vi.fn().mockResolvedValue({ success: true, data: [] }),
+    redeemVoucher: vi.fn(),
+    submitTransaction: vi.fn(),
+    updateAdminConfig: vi.fn(),
+    createPayPalSubscription: vi.fn(),
+    addPaymentMethod: vi.fn(),
+    deletePaymentMethod: vi.fn(),
+    fetchUsage: vi.fn().mockResolvedValue({ success: true, data: [] }),
+}));
 
 // Mock framer-motion to avoid animation issues in tests
 vi.mock('framer-motion', () => {
@@ -48,9 +87,13 @@ const renderComponent = () => {
 };
 
 describe('BillingDashboard', () => {
-    it('renders loading state initially', () => {
+    it('renders loading state initially', async () => {
         renderComponent();
         expect(screen.getByRole('status')).toBeInTheDocument();
+
+        await act(async () => {
+            await new Promise(resolve => setTimeout(resolve, 0));
+        });
     });
 
     it('renders subscription details after loading', async () => {

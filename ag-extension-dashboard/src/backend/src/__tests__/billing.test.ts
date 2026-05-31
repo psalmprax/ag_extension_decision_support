@@ -79,9 +79,10 @@ jest.mock('../services/paymentService', () => ({
         getSubscription: jest.fn(() => Promise.resolve(null)),
         cancelSubscription: jest.fn(() => Promise.resolve({ success: true })),
         switchSubscription: jest.fn(() => Promise.resolve({ success: true })),
-        getPaymentMethods: jest.fn(() => Promise.resolve([
-            { id: 'pm_1', brand: 'visa', last4: '4242', expMonth: 12, expYear: 2025 }
-        ])),
+        getPaymentMethods: jest.fn(() => Promise.resolve({
+            success: true,
+            data: [{ id: 'pm_1', brand: 'visa', last4: '4242', expMonth: 12, expYear: 2025 }]
+        })),
         getOrCreateCustomer: jest.fn(() => Promise.resolve('cus_123')),
         getInvoices: jest.fn(() => Promise.resolve([])),
         createPortalSession: jest.fn(() => Promise.resolve('https://billing.stripe.com/test'))

@@ -26,6 +26,9 @@ jobs:
       - name: Build
         run: npm run build
         working-directory: ag-extension-dashboard/src/backend
+      - name: Test
+        run: npm test -- --forceExit
+        working-directory: ag-extension-dashboard/src/backend
 
   frontend-ci:
     runs-on: ubuntu-latest
@@ -45,4 +48,7 @@ jobs:
         working-directory: ag-extension-dashboard/src/frontend
       - name: Build
         run: npm run build
+        working-directory: ag-extension-dashboard/src/frontend
+      - name: Test
+        run: npm test
         working-directory: ag-extension-dashboard/src/frontend

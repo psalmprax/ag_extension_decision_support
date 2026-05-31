@@ -35,7 +35,7 @@ const shouldRetry = (error: AxiosError): boolean => {
     if (!config) return false;
 
     // Don't retry if retry count exceeds max or if it's a non-idempotent method with a body
-    const retryCount = (config as any).__retryCount || 0;
+    const retryCount = (config as unknown as Record<string, unknown>).__retryCount as number || 0;
     if (retryCount >= MAX_RETRIES) return false;
 
     // Only retry on specific status codes (excluding 429 to prevent rate-limit loops)
@@ -83,15 +83,15 @@ apiClient.interceptors.response.use(
             if (!publicRoutes.includes(window.location.pathname)) {
                 window.location.href = '/login';
             }
-            // Return a never-resolving promise to prevent React Query from retrying
-            // This avoids duplicate 401 errors in console
-            return new Promise(() => {});
+            // Reject with a non-retryable flag so React Query won't retry
+            const nonRetryable = Object.assign(error, { __nonRetryable: true });
+            return Promise.reject(nonRetryable);
         }
 
         // Check if we should retry
         if (config && shouldRetry(error)) {
-            const retryCount = (config as any).__retryCount || 0;
-            (config as any).__retryCount = retryCount + 1;
+            const retryCount = (config as unknown as Record<string, unknown>).__retryCount as number || 0;
+            (config as unknown as Record<string, unknown>).__retryCount = retryCount + 1;
 
             const delay = getRetryDelay(retryCount);
 
@@ -115,7 +115,7 @@ apiClient.interceptors.response.use(
                 // Silent - backend not running or unreachable
             }
             // Suppress noisy configuration warnings
-            else if (error.response?.data && (error.response.data as any).errorCode === 'PAYMENT_GATEWAY_NOT_CONFIGURED') {
+            else if (error.response?.data && (error.response.data as Record<string, unknown>).errorCode === 'PAYMENT_GATEWAY_NOT_CONFIGURED') {
                 // Silent - expected setup state
             }
             // Log other errors

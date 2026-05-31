@@ -2,6 +2,7 @@
 import { AIRouter } from '@/services/aiProvider/aiProvider';
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
+import { getEmbedding } from '@/services/embeddingCache';
 
 export interface VectorDocument {
     id: string;
@@ -24,10 +25,10 @@ export class VectorService {
         logger.info(`Upserting document to persistent vector store: ${id}`);
 
         try {
-            // Generate embedding using ALFA
-            const embeddingResult = await AIRouter.routeRequest('embed', { text: content });
-            // Convert to PostgreSQL array format: {val1,val2,val3}
-            const vector = `{${embeddingResult.embedding.join(',')}}`;
+            // Generate embedding (uses cache for repeated content)
+            const embedding = await getEmbedding(content);
+            // Convert to pgvector format: [val1,val2,val3]
+            const vector = `[${embedding.join(',')}]`;
 
             await query(`
                 INSERT INTO knowledge_articles (id, title, content, category, tags, crops, regions, source, source_url, content_type, embedding, updated_at)
@@ -66,14 +67,20 @@ export class VectorService {
     /**
      * Search for similar documents using pgvector or fallback function
      */
-    static async search(queryText: string, limit: number = 5, filters: { category?: string; crop?: string } = {}): Promise<SearchResult[]> {
-        logger.info(`Searching persistent vector store for: "${queryText}"`);
+    static async search(
+        queryText: string, 
+        limit: number = 5, 
+        filters: { category?: string; crop?: string } = {},
+        minScore: number = 0.4
+    ): Promise<SearchResult[]> {
+        logger.info(`Searching persistent vector store for: "${queryText}" (minScore: ${minScore})`);
 
         try {
-            // Generate query embedding
-            const queryEmbeddingResult = await AIRouter.routeRequest('embed', { text: queryText });
-            // Convert to PostgreSQL array format: {val1,val2,val3}
-            const vector = `{${queryEmbeddingResult.embedding.join(',')}}`;
+            // Generate query embedding (uses cache for repeated queries)
+            const embedding = await getEmbedding(queryText);
+
+            // Convert to pgvector format: [val1,val2,val3]
+            const vector = `[${embedding.join(',')}]`;
 
             const params: any[] = [vector];
             const where: string[] = ['embedding IS NOT NULL'];
@@ -88,14 +95,19 @@ export class VectorService {
                 where.push(`$${params.length} = ANY(crops)`);
             }
 
+            params.push(minScore);
             params.push(limit);
 
-            // Use our custom cosine_similarity function for maximum compatibility
+            // Use native pgvector cosine distance operator for O(log n) search with IVFFlat index
+            // Only select needed columns — avoid fetching the large embedding vector
             const result = await query(`
-                SELECT id, title, content, category, crops, source_url, content_type,
-                       cosine_similarity(embedding::float8[], $1::float8[]) as score
-                FROM knowledge_articles
-                WHERE ${where.join(' AND ')}
+                SELECT * FROM (
+                    SELECT id, title, content, category, crops, source_url, content_type,
+                           (1 - (embedding <=> $1::vector)) as score
+                    FROM knowledge_articles
+                    WHERE ${where.join(' AND ')}
+                ) sub
+                WHERE score >= $${params.length - 1}
                 ORDER BY score DESC
                 LIMIT $${params.length}
             `, params);
@@ -109,13 +121,146 @@ export class VectorService {
                     category: row.category,
                     crop: row.crops?.[0],
                     sourceUrl: row.source_url,
-                    contentType: row.content_type
+                    contentType: row.content_type || 'text'
                 },
                 score: Number.parseFloat(row.score)
             }));
         } catch (error) {
             logger.error('Database vector search failed:', error);
             return [];
+        }
+    }
+
+    /**
+     * Search for knowledge articles using PostgreSQL full-text search (keyword-based)
+     */
+    static async keywordSearch(
+        queryText: string,
+        limit: number = 5,
+        filters: { category?: string; crop?: string } = {}
+    ): Promise<SearchResult[]> {
+        logger.info(`Searching database via keyword search for: "${queryText}"`);
+        try {
+            // Sanitize query text for tsquery - simple words split by &
+            const cleanQuery = queryText
+                .replace(/[^a-zA-Z0-9\s]/g, ' ')
+                .trim()
+                .split(/\s+/)
+                .filter(word => word.length > 2)
+                .join(' & ');
+
+            if (!cleanQuery) {
+                return [];
+            }
+
+            const params: any[] = [cleanQuery];
+            const where: string[] = ["to_tsvector('english', title || ' ' || content) @@ to_tsquery('english', $1)"];
+
+            if (filters.category) {
+                params.push(filters.category);
+                where.push(`category = $${params.length}`);
+            }
+
+            if (filters.crop) {
+                params.push(filters.crop);
+                where.push(`$${params.length} = ANY(crops)`);
+            }
+
+            params.push(limit);
+
+            const result = await query(`
+                SELECT id, title, content, category, crops, source_url, content_type,
+                       ts_rank_cd(to_tsvector('english', title || ' ' || content), to_tsquery('english', $1)) as score
+                FROM knowledge_articles
+                WHERE ${where.join(' AND ')}
+                ORDER BY score DESC
+                LIMIT $${params.length}
+            `, params);
+
+            return result.rows.map((row: any) => ({
+                id: row.id,
+                content: row.content,
+                metadata: {
+                    title: row.title,
+                    category: row.category,
+                    crop: row.crops?.[0],
+                    sourceUrl: row.source_url,
+                    contentType: row.content_type || 'text'
+                },
+                score: Number.parseFloat(row.score)
+            }));
+        } catch (error) {
+            logger.error('Database keyword search failed:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Search using both vector and keyword search, merged using Reciprocal Rank Fusion (RRF)
+     */
+    static async hybridSearch(
+        queryText: string,
+        limit: number = 5,
+        filters: { category?: string; crop?: string } = {},
+        minScore: number = 0.4
+    ): Promise<SearchResult[]> {
+        logger.info(`Performing hybrid search (Vector + Keyword) for: "${queryText}"`);
+
+        try {
+            // Run both searches in parallel for faster response
+            const [vectorResults, keywordResults] = await Promise.all([
+                this.search(queryText, limit * 2, filters, 0.0),
+                this.keywordSearch(queryText, limit * 2, filters)
+            ]);
+
+            if (vectorResults.length === 0 && keywordResults.length === 0) {
+                return [];
+            }
+
+            // Reciprocal Rank Fusion (RRF)
+            const k = 60;
+            const rrfMap = new Map<string, { doc: SearchResult; score: number; cosineScore: number }>();
+
+            vectorResults.forEach((doc, idx) => {
+                const rank = idx + 1;
+                rrfMap.set(doc.id, {
+                    doc,
+                    score: 1 / (k + rank),
+                    cosineScore: doc.score
+                });
+            });
+
+            keywordResults.forEach((doc, idx) => {
+                const rank = idx + 1;
+                const rrfWeight = 1 / (k + rank);
+                const existing = rrfMap.get(doc.id);
+                if (existing) {
+                    existing.score += rrfWeight;
+                    // Keep the cosine score
+                } else {
+                    rrfMap.set(doc.id, {
+                        doc,
+                        score: rrfWeight,
+                        cosineScore: 0.5 // Default baseline score for keyword-only matches
+                    });
+                }
+            });
+
+            // Sort by RRF score descending, preserve RRF score as the relevance score
+            const merged = Array.from(rrfMap.values())
+                .sort((a, b) => b.score - a.score)
+                .map(item => {
+                    // Use the RRF fusion score (not cosine) as the final relevance score
+                    item.doc.score = item.score;
+                    return item.doc;
+                });
+
+            // Apply limit (minScore filtering is less meaningful for RRF scores which are small fractions)
+            return merged.slice(0, limit);
+        } catch (error) {
+            logger.error('Hybrid search execution failed:', error);
+            // Fall back to simple search on error
+            return this.search(queryText, limit, filters, minScore);
         }
     }
 

@@ -9,6 +9,9 @@ import { logger } from '@/utils/logger';
 import { tavilyService } from '@/services/tavilyService';
 import { StealthScraperService } from '@/services/stealthScraperService';
 
+const STATS_CACHE_KEY = 'knowledge:search:stats';
+const STATS_CACHE_TTL = 300; // 5 minutes
+
 export interface KnowledgeArticle {
     id: string;
     title: string;
@@ -23,7 +26,7 @@ export class KnowledgeService {
      * Search for knowledge articles using RAG (Vector Search)
      */
     static async searchKnowledge(queryText: string, limit: number = 3, filters: { category?: string; crop?: string } = {}): Promise<SearchResult[]> {
-        return VectorService.search(queryText, limit, filters);
+        return VectorService.hybridSearch(queryText, limit, filters);
     }
 
     /**
@@ -75,37 +78,37 @@ export class KnowledgeService {
 
     /**
      * Get knowledge search statistics for visuals
+     * Cached in Redis for 5 minutes to avoid repeated expensive queries
      */
     static async getSearchStats(): Promise<any> {
         try {
-            const topCrops = await query(`
-                SELECT crop, COUNT(*) as count 
-                FROM knowledge_searches 
-                WHERE crop IS NOT NULL 
-                GROUP BY crop 
-                ORDER BY count DESC 
-                LIMIT 5
-            `);
-            const topCategories = await query(`
-                SELECT category, COUNT(*) as count 
-                FROM knowledge_searches 
-                WHERE category IS NOT NULL 
-                GROUP BY category 
-                ORDER BY count DESC 
-                LIMIT 5
-            `);
-            const totalQueriesResult = await query(`
-                SELECT COUNT(*) as count FROM knowledge_searches
-            `);
-            const cachedResult = await query(`
-                SELECT COUNT(*) as count FROM search_cache
-            `);
-            return {
+            // Check Redis cache first
+            const cachedStats = await cacheGet(STATS_CACHE_KEY);
+            if (cachedStats) {
+                logger.debug('Search stats cache HIT');
+                return JSON.parse(cachedStats);
+            }
+
+            logger.debug('Search stats cache MISS — querying database');
+            const [topCrops, topCategories, totalQueriesResult, cachedResult] = await Promise.all([
+                query(`SELECT crop, COUNT(*) as count FROM knowledge_searches WHERE crop IS NOT NULL GROUP BY crop ORDER BY count DESC LIMIT 5`),
+                query(`SELECT category, COUNT(*) as count FROM knowledge_searches WHERE category IS NOT NULL GROUP BY category ORDER BY count DESC LIMIT 5`),
+                query(`SELECT COUNT(*) as count FROM knowledge_searches`),
+                query(`SELECT COUNT(*) as count FROM search_cache`),
+            ]);
+
+            const stats = {
                 crops: topCrops.rows,
                 categories: topCategories.rows,
                 totalQueries: totalQueriesResult.rows[0]?.count || 0,
                 cachedQueries: cachedResult.rows[0]?.count || 0,
             };
+
+            // Cache in Redis with 5-minute TTL (non-blocking)
+            cacheSet(STATS_CACHE_KEY, JSON.stringify(stats), STATS_CACHE_TTL)
+                .catch(e => logger.error('Failed to cache search stats:', e));
+
+            return stats;
         } catch (error) {
             logger.error('Failed to get search stats:', error);
             return { crops: [], categories: [], totalQueries: 0, cachedQueries: 0 };
@@ -141,14 +144,16 @@ export class KnowledgeService {
                 }
             }
 
-            // B. Check exact match in database (fast, no embedding API call required)
+            // B. Check exact match in database using normalized_query index (O(1) lookup)
             try {
+                const normalized = queryText.trim().toLowerCase();
                 const dbExact = await query(`
                     SELECT query_text as "queryText", answer, context_used as "contextUsed", visuals
                     FROM search_cache
-                    WHERE LOWER(TRIM(query_text)) = LOWER(TRIM($1))
+                    WHERE normalized_query = $1
                     LIMIT 1
-                `, [queryText]);
+                `, [normalized]);
+
 
                 if (dbExact.rows.length > 0) {
                     const cached = dbExact.rows[0];
@@ -191,15 +196,17 @@ export class KnowledgeService {
         // 3. Retrieve relevant context (cache miss)
         let contextResults = await this.searchKnowledge(queryText);
         const bestScore = contextResults.length > 0 ? contextResults[0].score : 0;
-        let queryCategories: string[] = [];
+
+        // Categorize query upfront to understand if it's agricultural or general inquiry
+        const queryCategories = await this.categorizeQuery(queryText);
+        const isAgriQuery = queryCategories.length === 0 || queryCategories.some(c =>
+            ['pest_and_disease', 'agronomy_and_yield', 'climate_and_weather', 'market_prices'].includes(c)
+        );
 
         if (contextResults.length === 0 || bestScore < 0.65) {
-            logger.info(`Low local match score (${bestScore}). Performing AI intent classification for fallback routing...`);
-            queryCategories = await this.categorizeQuery(queryText);
-            
-            const isAgriIntent = queryCategories.some(c => ['pest_and_disease', 'agronomy_and_yield', 'climate_and_weather'].includes(c));
+            logger.info(`Low local match score (${bestScore}). Performing fallback routing based on intent...`);
 
-            if (isAgriIntent) {
+            if (isAgriQuery) {
                 logger.info(`Query intent classified as agricultural [${queryCategories.join(', ')}]. Triggering StealthScraperService for: "${queryText}"`);
                 try {
                     // Determine platform heuristically based on tropical sources and intent
@@ -230,7 +237,7 @@ export class KnowledgeService {
                                 sourceUrl: r.url || `https://tropical-database-search`,
                                 contentType: 'text'
                             },
-                            score: 0.95 // High confidence since it's freshly scraped for this explicit purpose
+                            score: 0.5 // Baseline score for unvalidated web-scraped content
                         }));
                         
                         // Prioritize stealth results by putting them at the top of the context
@@ -274,18 +281,14 @@ export class KnowledgeService {
 
         if (userId) {
             try {
-                const userResult = await query('SELECT region FROM users WHERE id = $1', [userId]);
+                const [userResult, farmersResult] = await Promise.all([
+                    query('SELECT region FROM users WHERE id = $1', [userId]),
+                    query(`SELECT location, region, location_lat, location_lng, crops FROM farmers WHERE assigned_officer_id = $1 OR user_id = $1 LIMIT 5`, [userId])
+                ]);
                 if (userResult.rows.length > 0 && userResult.rows[0].region) {
                     finalRegion = userResult.rows[0].region;
                     finalLocation = userResult.rows[0].region;
                 }
-
-                const farmersResult = await query(`
-                    SELECT location, region, location_lat, location_lng, crops 
-                    FROM farmers 
-                    WHERE assigned_officer_id = $1 OR user_id = $1
-                    LIMIT 5
-                `, [userId]);
 
                 if (farmersResult.rows.length > 0) {
                     const firstFarmer = farmersResult.rows[0];
@@ -314,170 +317,181 @@ export class KnowledgeService {
         const liveContextResults: SearchResult[] = [];
         const tasks: Array<Promise<void>> = [];
 
-        // A. Weather Forecast
-        tasks.push((async () => {
-            try {
-                const { WeatherService } = await import('@/services/weatherService');
-                const weather = await WeatherService.getByLocation(finalLocation);
-                if (weather) {
-                    const temp = weather.temperature ?? weather.temp;
-                    const condition = weather.condition || 'Clear';
-                    const wind = weather.windSpeed;
-                    
-                    let forecastText = 'No forecast data';
-                    if (weather.forecast && Array.isArray(weather.forecast)) {
-                        forecastText = weather.forecast.map(f => {
-                            return `  - ${f.date}: Max ${f.maxTemp}°C, Min ${f.minTemp}°C, ${f.condition}`;
-                        }).join('\n');
-                    }
-                    
-                    liveContextResults.push({
-                        id: `live-weather-${Date.now()}`,
-                        content: `Live Weather for ${finalLocation}:
+        if (isAgriQuery) {
+            // A. Weather Forecast
+            if (queryCategories.length === 0 || queryCategories.includes('climate_and_weather')) {
+                tasks.push((async () => {
+                    try {
+                        const { WeatherService } = await import('@/services/weatherService');
+                        const weather = await WeatherService.getByLocation(finalLocation);
+                        if (weather) {
+                            const temp = weather.temperature ?? weather.temp;
+                            const condition = weather.condition || 'Clear';
+                            const wind = weather.windSpeed;
+                            
+                            let forecastText = 'No forecast data';
+                            if (weather.forecast && Array.isArray(weather.forecast)) {
+                                forecastText = weather.forecast.map(f => {
+                                    return `  - ${f.date}: Max ${f.maxTemp}°C, Min ${f.minTemp}°C, ${f.condition}`;
+                                }).join('\n');
+                            }
+                            
+                            liveContextResults.push({
+                                id: `live-weather-${Date.now()}`,
+                                content: `Live Weather for ${finalLocation}:
 - Current Temp: ${temp !== undefined ? temp : 'N/A'}°C
 - Description: ${condition}
 - Wind Speed: ${wind !== undefined ? wind : 'N/A'} km/h
 - 3-Day Forecast:
 ${forecastText}`,
-                        metadata: {
-                            title: `Live Weather Forecast for ${finalLocation}`,
-                            category: 'Weather Forecast',
-                            crop: finalCrop || 'All',
-                            sourceUrl: 'https://open-meteo.com',
-                            contentType: 'text'
-                        },
-                        score: 1.0
-                    });
-                }
-            } catch (err) {
-                logger.warn('Failed to fetch weather in askQuestion:', err);
+                                metadata: {
+                                    title: `Live Weather Forecast for ${finalLocation}`,
+                                    category: 'Weather Forecast',
+                                    crop: finalCrop || 'All',
+                                    sourceUrl: 'https://open-meteo.com',
+                                    contentType: 'text'
+                                },
+                                score: 1.0
+                            });
+                        }
+                    } catch (err) {
+                        logger.warn('Failed to fetch weather in askQuestion:', err);
+                    }
+                })());
             }
-        })());
 
-        // B. FAO Alerts
-        tasks.push((async () => {
-            try {
-                const { FAOService } = await import('@/services/faoService');
-                const alerts = await FAOService.getDiseaseAlerts(finalRegion, finalCrop);
-                if (alerts && alerts.length > 0) {
-                    liveContextResults.push({
-                        id: `live-fao-alerts-${Date.now()}`,
-                        content: `FAO Disease Alerts for ${finalRegion} (Crop: ${finalCrop || 'All'}):
+            // B. FAO Alerts
+            if (queryCategories.length === 0 || queryCategories.includes('pest_and_disease')) {
+                tasks.push((async () => {
+                    try {
+                        const { FAOService } = await import('@/services/faoService');
+                        const alerts = await FAOService.getDiseaseAlerts(finalRegion, finalCrop);
+                        if (alerts && alerts.length > 0) {
+                            liveContextResults.push({
+                                id: `live-fao-alerts-${Date.now()}`,
+                                content: `FAO Disease Alerts for ${finalRegion} (Crop: ${finalCrop || 'All'}):
 ${alerts.map((a: any) => `- [${a.severity.toUpperCase()}] ${a.title}: ${a.description}`).join('\n')}`,
-                        metadata: {
-                            title: `FAO Pest & Disease Alerts (${finalRegion})`,
-                            category: 'Disease Alerts',
-                            crop: finalCrop || 'All',
-                            sourceUrl: 'https://www.fao.org',
-                            contentType: 'text'
-                        },
-                        score: 1.0
-                    });
-                }
-            } catch (err) {
-                logger.warn('Failed to fetch FAO alerts in askQuestion:', err);
+                                metadata: {
+                                    title: `FAO Pest & Disease Alerts (${finalRegion})`,
+                                    category: 'Disease Alerts',
+                                    crop: finalCrop || 'All',
+                                    sourceUrl: 'https://www.fao.org',
+                                    contentType: 'text'
+                                },
+                                score: 1.0
+                            });
+                        }
+                    } catch (err) {
+                        logger.warn('Failed to fetch FAO alerts in askQuestion:', err);
+                    }
+                })());
             }
-        })());
 
-        // C. NASA POWER & SoilGrids if lat/lng are present
-        if (finalLat && finalLng) {
-            tasks.push((async () => {
-                try {
-                    const { NasaPowerService } = await import('@/services/data/nasaPowerService');
-                    const nasa = new NasaPowerService();
-                    const agro = await nasa.getAgroclimateSummary(finalLat!, finalLng!, 7);
-                    if (agro) {
-                        liveContextResults.push({
-                            id: `live-nasa-agro-${Date.now()}`,
-                            content: `NASA POWER Agroclimate Summary for lat: ${finalLat}, lng: ${finalLng}:
+            // C. NASA POWER & SoilGrids if lat/lng are present
+            if (finalLat && finalLng && (queryCategories.length === 0 || queryCategories.includes('agronomy_and_yield') || queryCategories.includes('climate_and_weather'))) {
+                tasks.push((async () => {
+                    try {
+                        const { NasaPowerService } = await import('@/services/data/nasaPowerService');
+                        const nasa = new NasaPowerService();
+                        const agro = await nasa.getAgroclimateSummary(finalLat!, finalLng!, 7);
+                        if (agro) {
+                            liveContextResults.push({
+                                id: `live-nasa-agro-${Date.now()}`,
+                                content: `NASA POWER Agroclimate Summary for lat: ${finalLat}, lng: ${finalLng}:
 - Temp Range: ${agro.temperatureRange?.min ?? 'N/A'} to ${agro.temperatureRange?.max ?? 'N/A'}°C
 - Avg Relative Humidity: ${agro.relativeHumidity ?? 'N/A'}%
 - Precipitation Sum: ${agro.precipitationSum ?? 'N/A'} mm
 - Avg Solar Radiation: ${agro.solarRadiationAvg ?? 'N/A'} MJ/m²/day`,
-                            metadata: {
-                                title: `Agroclimatic Solar & Rainfall Context (NASA POWER)`,
-                                category: 'Agroclimatology',
-                                crop: finalCrop || 'All',
-                                sourceUrl: 'https://power.larc.nasa.gov/',
-                                contentType: 'text'
-                            },
-                            score: 1.0
-                        });
+                                metadata: {
+                                    title: `Agroclimatic Solar & Rainfall Context (NASA POWER)`,
+                                    category: 'Agroclimatology',
+                                    crop: finalCrop || 'All',
+                                    sourceUrl: 'https://power.larc.nasa.gov/',
+                                    contentType: 'text'
+                                },
+                                score: 1.0
+                            });
+                        }
+                    } catch (err) {
+                        logger.warn('Failed to fetch NASA agroclimate in askQuestion:', err);
                     }
-                } catch (err) {
-                    logger.warn('Failed to fetch NASA agroclimate in askQuestion:', err);
-                }
-            })());
+                })());
 
-            tasks.push((async () => {
-                try {
-                    const { soilGridsService } = await import('@/services/data/soilGridsService');
-                    const soil = (await soilGridsService.fetchSoilProperties(finalLat!, finalLng!)) as any;
-                    if (soil) {
-                        liveContextResults.push({
-                            id: `live-soil-properties-${Date.now()}`,
-                            content: `SoilGrids ISRIC Soil Properties for lat: ${finalLat}, lng: ${finalLng}:
+                tasks.push((async () => {
+                    try {
+                        const { soilGridsService } = await import('@/services/data/soilGridsService');
+                        const soil = (await soilGridsService.fetchSoilProperties(finalLat!, finalLng!)) as any;
+                        if (soil) {
+                            liveContextResults.push({
+                                id: `live-soil-properties-${Date.now()}`,
+                                content: `SoilGrids ISRIC Soil Properties for lat: ${finalLat}, lng: ${finalLng}:
 - pH at 0-5cm: ${soil.ph_h2o ?? 'N/A'}
 - Clay content: ${soil.clay ?? 'N/A'}%
 - Organic Carbon: ${soil.soc ?? 'N/A'} dg/kg`,
-                            metadata: {
-                                title: `Location-Specific Soil Properties (ISRIC SoilGrids)`,
-                                category: 'Soil Properties',
-                                crop: finalCrop || 'All',
-                                sourceUrl: 'https://soilgrids.org/',
-                                contentType: 'text'
-                            },
-                            score: 1.0
-                        });
+                                metadata: {
+                                    title: `Location-Specific Soil Properties (ISRIC SoilGrids)`,
+                                    category: 'Soil Properties',
+                                    crop: finalCrop || 'All',
+                                    sourceUrl: 'https://soilgrids.org/',
+                                    contentType: 'text'
+                                },
+                                score: 1.0
+                            });
+                        }
+                    } catch (err) {
+                        logger.warn('Failed to fetch SoilGrids in askQuestion:', err);
                     }
-                } catch (err) {
-                    logger.warn('Failed to fetch SoilGrids in askQuestion:', err);
-                }
-            })());
-        }
-
-        // D. Market Prices
-        tasks.push((async () => {
-            try {
-                const { marketPriceService } = await import('@/services/marketPriceService');
-                const prices = await marketPriceService.getLatestPrices();
-                if (prices && prices.length > 0) {
-                    const relevantPrices = finalCrop 
-                        ? prices.filter((p: any) => p.crop.toLowerCase().includes(finalCrop!.toLowerCase()))
-                        : prices;
-                    const priceList = relevantPrices.length > 0 ? relevantPrices : prices;
-                    liveContextResults.push({
-                        id: `live-market-prices-${Date.now()}`,
-                        content: `Latest Market Prices:
-${priceList.map((p: any) => `- ${p.crop}: ${p.price} (${p.trend})`).join('\n')}`,
-                        metadata: {
-                            title: 'Latest Market Prices Context',
-                            category: 'Market Prices',
-                            crop: finalCrop || 'All',
-                            sourceUrl: 'https://www.ratin.net',
-                            contentType: 'text'
-                        },
-                        score: 1.0
-                    });
-                }
-            } catch (err) {
-                logger.warn('Failed to fetch market prices in askQuestion:', err);
+                })());
             }
-        })());
 
-        await Promise.all(tasks);
+            // D. Market Prices
+            if (queryCategories.length === 0 || queryCategories.includes('market_prices')) {
+                tasks.push((async () => {
+                    try {
+                        const { marketPriceService } = await import('@/services/marketPriceService');
+                        const prices = await marketPriceService.getLatestPrices();
+                        if (prices && prices.length > 0) {
+                            const relevantPrices = finalCrop 
+                                ? prices.filter((p: any) => p.crop.toLowerCase().includes(finalCrop!.toLowerCase()))
+                                : prices;
+                            const priceList = relevantPrices.length > 0 ? relevantPrices : prices;
+                            liveContextResults.push({
+                                id: `live-market-prices-${Date.now()}`,
+                                content: `Latest Market Prices:
+${priceList.map((p: any) => `- ${p.crop}: ${p.price} (${p.trend})`).join('\n')}`,
+                                metadata: {
+                                    title: 'Latest Market Prices Context',
+                                    category: 'Market Prices',
+                                    crop: finalCrop || 'All',
+                                    sourceUrl: 'https://www.ratin.net',
+                                    contentType: 'text'
+                                },
+                                score: 1.0
+                            });
+                        }
+                    } catch (err) {
+                        logger.warn('Failed to fetch market prices in askQuestion:', err);
+                    }
+                })());
+            }
+
+            await Promise.all(tasks);
+        }
 
         // Prepend dynamic live context to semantic search results
         contextResults = [...liveContextResults, ...contextResults];
 
         const contextText = contextResults
-            .map(res => `[Source: ${res.metadata.crop}/${res.metadata.category}] (Type: ${res.metadata.contentType || 'text'}, URL: ${res.metadata.sourceUrl || ''})\n${res.content}`)
+            .map(res => `[Source: ${res.metadata.crop}/${res.metadata.category}] (Type: ${res.metadata.contentType || 'text'}, Score: ${res.score !== undefined ? res.score.toFixed(2) : '1.0'}, URL: ${res.metadata.sourceUrl || ''})\n${res.content}`)
             .join('\n\n---\n\n');
 
         // 4. Generate answer using Reasoning capability of ALFA
         try {
             const reasoningResult: ReasoningResult = await AIRouter.routeRequest('reason', {
-                context: contextText || 'No specific context found in knowledge base.',
+                context: `${contextText || 'No specific context found in knowledge base.'}\n\nGrounding Guidelines:
+- Prioritize context sources with high similarity scores (e.g. 0.70+).
+- Treat context with lower scores (< 0.50) as supplementary or less relevant context.
+- Explicitly base your answer on the provided context. If the context does not contain enough information to answer the question, state that.`,
                 query: queryText,
                 attachments: attachments, // Pass multimodal context
                 options: { temperature: 0.2, maxTokens: 900 }
@@ -534,23 +548,17 @@ ${priceList.map((p: any) => `- ${p.crop}: ${p.price} (${p.trend})`).join('\n')}`
                 SemanticCacheService.save(queryText, response.answer, response.contextUsed, response.visuals).catch(e => logger.error('Failed to save semantic cache:', e));
             }
 
-            // 7. Asynchronously categorize the query and log search for user history in the background (non-blocking!)
-            (async () => {
-                try {
-                    const categories = queryCategories.length > 0 ? queryCategories : await this.categorizeQuery(queryText);
-                    await this.logSearch(
-                        userId, 
-                        queryText, 
-                        categories[0], 
-                        undefined, 
-                        response.answer,
-                        response.reasoning,
-                        response.visuals
-                    );
-                } catch (logError) {
-                    logger.error('Background classification or logging failed:', logError);
-                }
-            })();
+            // 7. Asynchronously log search for user history in the background (non-blocking!)
+            // Reuse already-computed queryCategories instead of calling categorizeQuery again
+            this.logSearch(
+                userId,
+                queryText,
+                queryCategories[0] || 'general_inquiry',
+                undefined,
+                response.answer,
+                response.reasoning,
+                response.visuals
+            ).catch(logError => logger.error('Background logging failed:', logError));
 
             return response;
         } catch (error) {

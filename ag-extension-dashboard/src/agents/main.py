@@ -11,7 +11,7 @@ from typing import List, Optional, Dict, Any
 import os
 import json
 import logging
-import logging
+import asyncio
 from datetime import datetime, timedelta
 from enum import Enum
 
@@ -25,12 +25,15 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+NODE_ENV = os.getenv("NODE_ENV", "development")
+ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "https://www.gpexts.com,http://localhost:7503,http://localhost:5173").split(",")
+
 app = FastAPI(title="Agent Zero Service", version="2.0.0")
 
-# CORS middleware
+# CORS middleware - not wildcard with credentials
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -44,12 +47,12 @@ JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret")
 if not OPENAI_API_KEY:
     logger.warning("OPENAI_API_KEY not configured - AI features will be limited")
 
-# Import OpenAI for real AI processing
+# Import OpenAI for real AI processing (async client)
 try:
-    from openai import OpenAI
-    client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+    from openai import AsyncOpenAI
+    async_client = AsyncOpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 except ImportError:
-    client = None
+    async_client = None
     logger.warning("OpenAI library not installed - AI features unavailable")
 
 
@@ -58,14 +61,18 @@ async def verify_token(authorization: Optional[str] = Header(None)):
     """Verify JWT token from Authorization header"""
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
-    
+
     token = authorization.split(" ")[1]
-    
-    # In production, implement proper JWT verification
-    # For now, accept any non-empty token for development
-    if not token or token == "dev-token":
+
+    # SECURITY: Only accept dev-token in development
+    if token == "dev-token":
+        if NODE_ENV == "production":
+            raise HTTPException(status_code=401, detail="dev-token not accepted in production")
         return {"user_id": "dev-user", "role": "admin"}
-    
+
+    if not token:
+        raise HTTPException(status_code=401, detail="Empty token")
+
     try:
         import jwt
         payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
@@ -75,53 +82,66 @@ async def verify_token(authorization: Optional[str] = Header(None)):
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
 
-# Database connection
+# Database connection pool (thread-safe)
 class DatabaseManager:
-    """Simple database manager for PostgreSQL"""
-    
+    """Thread-safe database manager using connection pool"""
+
     def __init__(self):
-        self.connection = None
-        
+        self.pool = None
+
     def connect(self):
-        """Establish database connection"""
+        """Establish database connection pool"""
         if not DATABASE_URL:
             logger.warning("DATABASE_URL not configured")
             return None
-            
+
         try:
-            import psycopg2
-            self.connection = psycopg2.connect(DATABASE_URL)
-            logger.info("Database connection established")
-            return self.connection
+            import psycopg2.pool
+            self.pool = psycopg2.pool.ThreadedConnectionPool(
+                minconn=1,
+                maxconn=10,
+                dsn=DATABASE_URL
+            )
+            logger.info("Database connection pool established")
+            return self.pool
         except ImportError:
             logger.warning("psycopg2 not installed - database features unavailable")
             return None
         except Exception as e:
-            logger.error(f"Database connection failed: {e}")
+            logger.error(f"Database connection pool failed: {e}")
             return None
-    
+
     def execute_query(self, query: str, params: tuple = None):
-        """Execute a database query"""
-        if not self.connection:
+        """Execute a database query using a pooled connection"""
+        if not self.pool:
             self.connect()
-            
-        if not self.connection:
+
+        if not self.pool:
             return None
-            
+
+        conn = self.pool.getconn()
         try:
-            cursor = self.connection.cursor()
+            cursor = conn.cursor()
             cursor.execute(query, params)
-            self.connection.commit()
-            return cursor.fetchall()
+            # Only fetch results for SELECT queries
+            if cursor.description:
+                result = cursor.fetchall()
+            else:
+                conn.commit()
+                result = None
+            return result
         except Exception as e:
+            conn.rollback()
             logger.error(f"Query execution failed: {e}")
             return None
-    
+        finally:
+            self.pool.putconn(conn)
+
     def close(self):
-        """Close database connection"""
-        if self.connection:
-            self.connection.close()
-            self.connection = None
+        """Close all pool connections"""
+        if self.pool:
+            self.pool.closeall()
+            self.pool = None
 
 db = DatabaseManager()
 
@@ -176,21 +196,21 @@ class AnalysisResult(BaseModel):
 # AI Processing Service
 class AIProcessingService:
     """Service for AI-powered analysis and generation"""
-    
+
     @staticmethod
     async def analyze_data(region: str, data_type: str, time_period: str) -> AnalysisResult:
         """Perform real AI-powered data analysis"""
-        
-        # Build context for AI analysis
+
         context = f"""
         Analyze agricultural conditions for {region} focusing on {data_type} over the last {time_period}.
         Consider weather patterns, crop conditions, market trends, and soil health.
         Provide actionable insights and recommendations for farmers.
         """
-        
-        if client:
+
+        if async_client:
             try:
-                response = client.chat.completions.create(
+                # Use async client — does not block event loop
+                response = await async_client.chat.completions.create(
                     model="gpt-4",
                     messages=[
                         {"role": "system", "content": "You are an expert agricultural analyst providing insights for farmers."},
@@ -199,76 +219,71 @@ class AIProcessingService:
                     temperature=0.3,
                     max_tokens=1500
                 )
-                
+
                 analysis_text = response.choices[0].message.content
-                
-                # Parse the AI response into structured data
+
                 return AIProcessingService._parse_analysis_response(
                     region, data_type, time_period, analysis_text
                 )
-                
+
             except Exception as e:
                 logger.error(f"AI analysis failed: {e}")
                 return AIProcessingService._get_fallback_analysis(region, data_type, time_period)
         else:
             return AIProcessingService._get_fallback_analysis(region, data_type, time_period)
-    
+
     @staticmethod
     def _parse_analysis_response(region: str, data_type: str, time_period: str, text: str) -> AnalysisResult:
         """Parse AI text response into structured AnalysisResult"""
-        
-        # Extract key information from the analysis text
-        # In production, use more sophisticated NLP or structured output
-        
+
         risk_level = "medium"
         if "high risk" in text.lower() or "critical" in text.lower():
             risk_level = "high"
         elif "low risk" in text.lower() or "minimal" in text.lower():
             risk_level = "low"
-        
-        # Extract recommendations (simple parsing)
+
         recommendations = []
         for line in text.split('\n'):
             line = line.strip()
             if line and any(keyword in line.lower() for keyword in ['recommend', 'suggest', 'consider', 'should']):
                 recommendations.append(line)
-        
+
         if not recommendations:
             recommendations = [
                 "Monitor weather conditions regularly",
                 "Check soil moisture levels",
                 "Review market prices before selling"
             ]
-        
+
         return AnalysisResult(
             region=region,
             data_type=data_type,
             time_period=time_period,
             summary={
                 "analysis": text[:500] + "..." if len(text) > 500 else text,
-                "total_farmers": 150,  # Would come from database
+                "total_farmers": 150,
                 "avg_yield": "3.2 tons/ha",
                 "weather_impact": "positive"
             },
-            recommendations=recommendations[:5],  # Top 5 recommendations
+            recommendations=recommendations[:5],
             risk_level=risk_level,
             confidence=0.85,
             generated_at=datetime.utcnow().isoformat(),
             data_sources=["weather_stations", "satellite_data", "market_reports"]
         )
-    
+
     @staticmethod
     def _get_fallback_analysis(region: str, data_type: str, time_period: str) -> AnalysisResult:
-        """Fallback analysis when AI is unavailable"""
+        """Fallback analysis when AI is unavailable — clearly marked as fallback"""
         return AnalysisResult(
             region=region,
             data_type=data_type,
             time_period=time_period,
             summary={
-                "analysis": f"Analysis for {region} focusing on {data_type} over {time_period}.",
-                "total_farmers": 150,
-                "avg_yield": "3.2 tons/ha",
-                "weather_impact": "neutral"
+                "analysis": f"[FALLBACK] Analysis for {region} focusing on {data_type} over {time_period}. AI provider unavailable.",
+                "total_farmers": 0,
+                "avg_yield": "N/A",
+                "weather_impact": "unknown"
             },
             recommendations=[
                 "Monitor local weather forecasts",
@@ -277,27 +292,26 @@ class AIProcessingService:
                 "Plan for upcoming planting season",
                 "Consider crop rotation strategies"
             ],
-            risk_level="medium",
-            confidence=0.6,
+            risk_level="unknown",
+            confidence=0.0,
             generated_at=datetime.utcnow().isoformat(),
-            data_sources=["historical_data", "regional_averages"]
+            data_sources=["fallback_stub"]
         )
 
 
 # Outreach Service
 class OutreachService:
     """Service for managing farmer outreach"""
-    
+
     @staticmethod
     async def send_outreach(farmers: List[Dict], message: str, channel: str, priority: str) -> Dict:
         """Send outreach messages to farmers"""
-        
+
         results = []
         failed = []
-        
+
         for farmer in farmers:
             try:
-                # In production, integrate with actual SMS/Email/WhatsApp services
                 result = {
                     "farmer_id": farmer.get("id"),
                     "farmer_name": f"{farmer.get('first_name', '')} {farmer.get('last_name', '')}",
@@ -308,25 +322,24 @@ class OutreachService:
                     "priority": priority,
                     "timestamp": datetime.utcnow().isoformat()
                 }
-                
+
                 # Log to database if available
-                if db.connection:
-                    db.execute_query(
-                        """INSERT INTO outreach_messages 
-                           (farmer_id, message, channel, status, priority, created_at) 
-                           VALUES (%s, %s, %s, %s, %s, NOW())""",
-                        (farmer.get("id"), message, channel, "queued", priority)
-                    )
-                
+                db.execute_query(
+                    """INSERT INTO outreach_messages
+                       (farmer_id, message, channel, status, priority, created_at)
+                       VALUES (%s, %s, %s, %s, %s, NOW())""",
+                    (farmer.get("id"), message, channel, "queued", priority)
+                )
+
                 results.append(result)
-                
+
             except Exception as e:
                 logger.error(f"Failed to queue outreach for farmer {farmer.get('id')}: {e}")
                 failed.append({
                     "farmer_id": farmer.get("id"),
                     "error": str(e)
                 })
-        
+
         return {
             "success": True,
             "total": len(farmers),
@@ -340,23 +353,23 @@ class OutreachService:
 # Report Generation Service
 class ReportService:
     """Service for generating agricultural reports"""
-    
+
     @staticmethod
     async def generate_report(region: str, period: str, sections: List[str]) -> Dict:
         """Generate comprehensive agricultural report"""
-        
+
         if not sections:
             sections = ["Executive Summary", "Weather Overview", "Crop Status", "Market Prices", "Recommendations"]
-        
+
         report_sections = []
-        
+
         for section in sections:
             section_content = await ReportService._generate_section(region, period, section)
             report_sections.append({
                 "title": section,
                 "content": section_content
             })
-        
+
         report = {
             "id": f"report-{datetime.utcnow().timestamp()}",
             "region": region,
@@ -366,25 +379,24 @@ class ReportService:
             "sections": report_sections,
             "status": "completed"
         }
-        
+
         # Store in database if available
-        if db.connection:
-            db.execute_query(
-                """INSERT INTO reports 
-                   (type, title, content, status, created_at, updated_at) 
-                   VALUES (%s, %s, %s, %s, NOW(), NOW())""",
-                ("automated", f"{period} Report - {region}", json.dumps(report), "completed")
-            )
-        
+        db.execute_query(
+            """INSERT INTO reports
+               (type, title, content, status, created_at, updated_at)
+               VALUES (%s, %s, %s, %s, NOW(), NOW())""",
+            ("automated", f"{period} Report - {region}", json.dumps(report), "completed")
+        )
+
         return report
-    
+
     @staticmethod
     async def _generate_section(region: str, period: str, section: str) -> str:
         """Generate content for a specific report section"""
-        
-        if client:
+
+        if async_client:
             try:
-                response = client.chat.completions.create(
+                response = await async_client.chat.completions.create(
                     model="gpt-4",
                     messages=[
                         {"role": "system", "content": "You are an expert agricultural report writer."},
@@ -396,14 +408,13 @@ class ReportService:
                 return response.choices[0].message.content
             except Exception as e:
                 logger.error(f"AI section generation failed: {e}")
-        
-        # Fallback content
+
         return ReportService._get_fallback_section_content(region, period, section)
-    
+
     @staticmethod
     def _get_fallback_section_content(region: str, period: str, section: str) -> str:
         """Fallback section content when AI is unavailable"""
-        
+
         content_map = {
             "Executive Summary": f"This {period} report covers agricultural activities and conditions in {region}. Key highlights include stable weather patterns and favorable market conditions.",
             "Weather Overview": f"Weather conditions in {region} during this {period} were generally favorable with adequate rainfall and moderate temperatures.",
@@ -411,7 +422,7 @@ class ReportService:
             "Market Prices": f"Market prices in {region} remain stable with slight increases in cereal crops due to seasonal demand.",
             "Recommendations": f"Farmers in {region} should continue monitoring weather conditions and prepare for upcoming planting activities."
         }
-        
+
         return content_map.get(section, f"Content for {section} in {region} during {period}.")
 
 
@@ -425,8 +436,8 @@ async def health_check():
         "version": "2.0.0",
         "timestamp": datetime.utcnow().isoformat(),
         "dependencies": {
-            "openai": "configured" if client else "not_configured",
-            "database": "connected" if db.connection else "not_connected"
+            "openai": "configured" if async_client else "not_configured",
+            "database": "connected" if db.pool else "not_connected"
         }
     }
 
@@ -435,10 +446,10 @@ async def health_check():
 async def execute_task(request: TaskRequest, current_user: dict = Depends(verify_token)):
     """Execute a general task using Agent Zero"""
     logger.info(f"Executing task: {request.task_type} for user: {current_user.get('user_id')}")
-    
+
     try:
         task_type = request.task_type
-        
+
         if task_type == "outreach":
             return await handle_outreach(request.parameters)
         elif task_type == "analysis":
@@ -449,7 +460,7 @@ async def execute_task(request: TaskRequest, current_user: dict = Depends(verify
             return await handle_stealth_scrape(request.parameters)
         else:
             raise HTTPException(status_code=400, detail=f"Unknown task type: {task_type}")
-            
+
     except HTTPException:
         raise
     except Exception as e:
@@ -461,12 +472,12 @@ async def execute_task(request: TaskRequest, current_user: dict = Depends(verify
 async def schedule_outreach(request: OutreachRequest, current_user: dict = Depends(verify_token)):
     """Schedule automated farmer outreach"""
     logger.info(f"Scheduling outreach for {len(request.farmers)} farmers via {request.channel}")
-    
+
     try:
         return await OutreachService.send_outreach(
-            request.farmers, 
-            request.message, 
-            request.channel, 
+            request.farmers,
+            request.message,
+            request.channel,
             request.priority
         )
     except Exception as e:
@@ -478,14 +489,14 @@ async def schedule_outreach(request: OutreachRequest, current_user: dict = Depen
 async def run_analysis(request: AnalysisRequest, current_user: dict = Depends(verify_token)):
     """Run data analysis for a region"""
     logger.info(f"Running {request.data_type} analysis for {request.region}")
-    
+
     try:
         result = await AIProcessingService.analyze_data(
             request.region,
             request.data_type,
             request.time_period
         )
-        
+
         return result.dict()
     except Exception as e:
         logger.error(f"Analysis failed: {e}")
@@ -496,14 +507,14 @@ async def run_analysis(request: AnalysisRequest, current_user: dict = Depends(ve
 async def generate_report(request: ReportRequest, current_user: dict = Depends(verify_token)):
     """Generate automated reports"""
     logger.info(f"Generating {request.period} report for {request.region}")
-    
+
     try:
         report = await ReportService.generate_report(
             request.region,
             request.period,
             request.sections
         )
-        
+
         return report
     except Exception as e:
         logger.error(f"Report generation failed: {e}")
@@ -517,7 +528,7 @@ async def handle_outreach(params: Dict[str, Any]) -> Dict[str, Any]:
     message = params.get("message", "")
     channel = params.get("channel", "sms")
     priority = params.get("priority", "normal")
-    
+
     return await OutreachService.send_outreach(farmers, message, channel, priority)
 
 
@@ -544,10 +555,9 @@ async def handle_stealth_scrape(params: Dict[str, Any]) -> Dict[str, Any]:
     platform = params.get("platform", "facebook")
     niche = params.get("niche", "agriculture")
     region = params.get("region", "Kenya")
-    
+
     try:
         scanner = CloakBrowserScanner(platform=platform)
-        # Scan trends usually returns a list of results
         results = await scanner.scan_trends(niche=niche, region=region)
         return {
             "success": True,

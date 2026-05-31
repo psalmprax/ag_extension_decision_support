@@ -405,13 +405,14 @@ model KnowledgeSearch {
 }
 
 model SearchCache {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  queryText   String   @unique @map("query_text")
-  answer      String
-  visuals     Json?    @map("visuals")
-  contextUsed Json     @map("context_used")
-  embedding   Float[]
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  queryText       String   @map("query_text")
+  normalizedQuery String   @unique @map("normalized_query")
+  answer          String
+  visuals         Json?    @map("visuals")
+  contextUsed     Json     @map("context_used")
+  embedding       Float[]
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamp(6)
 
   @@map("search_cache")
 }

@@ -32,17 +32,21 @@ jobs:
           cd ag-extension-dashboard
           npm install
 
-      - name: Build Frontend
+      - name: Lint, Build & Test Frontend
         run: |
           cd ag-extension-dashboard/src/frontend
           npm ci
+          npm run lint
           npm run build
+          npm test
 
-      - name: Build Backend
+      - name: Lint, Build & Test Backend
         run: |
           cd ag-extension-dashboard/src/backend
           npm ci
+          npm run lint
           npm run build
+          npm test -- --forceExit
 
   # 2. Deploy to Testing (Old Server)
   deploy-testing:

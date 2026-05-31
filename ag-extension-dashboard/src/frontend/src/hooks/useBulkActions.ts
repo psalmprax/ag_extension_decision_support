@@ -3,18 +3,33 @@ import { Farmer } from '../types/dashboard';
 import { sendBulkSMS } from '@/api/smsService';
 import { createFarmer, fetchFarmers, updateFarmers } from '@/api/farmerService';
 
+interface ConfirmModalData {
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'warning' | 'info' | 'success';
+    confirmText?: string;
+}
+
+interface NotificationData {
+    type: 'info' | 'warning' | 'error' | 'success';
+    message: string;
+    actionLabel?: string;
+    onAction?: () => void;
+}
+
 interface BulkActionsOptions {
     effectiveFarmers: Farmer[];
     selectedFarmers: Set<string>;
     setSelectedFarmers: (selected: Set<string>) => void;
-    addNotification: (notif: any) => void;
+    addNotification: (notif: NotificationData) => void;
     setActiveTab: (tab: string) => void;
     setShowBulkSmsComposer: (open: boolean) => void;
-    setConfirmModal: (modal: any) => void;
+    setConfirmModal: (modal: ConfirmModalData | null) => void;
     setIsUpdatingBulk: (updating: boolean) => void;
     setIsBulkUpdateModalOpen: (open: boolean) => void;
     removeFarmers: (ids: string[]) => Promise<void>;
-    setFarmerList: (farmers: any[]) => void;
+    setFarmerList: (farmers: Farmer[]) => void;
 }
 
 export const useBulkActions = (options: BulkActionsOptions) => {
@@ -127,7 +142,7 @@ export const useBulkActions = (options: BulkActionsOptions) => {
         });
     };
 
-    const onBulkUpdateFarmers = async (updates: any) => {
+    const onBulkUpdateFarmers = async (updates: Partial<Farmer>) => {
         const ids = Array.from(selectedFarmers);
         if (ids.length > 0) {
             setIsUpdatingBulk(true);

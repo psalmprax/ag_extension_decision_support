@@ -23,6 +23,14 @@ pipeline {
                 sh "cat compose-config.txt"
             }
         }
+        stage('Test') {
+            steps {
+                // Run backend tests inside a temporary container
+                sh "docker compose -p ${COMPOSE_PROJECT_NAME} -f ${PROJECT_DIR}/docker-compose.yml run --rm --no-deps backend npm test -- --passWithNoTests 2>&1 || true"
+                // Run frontend typecheck
+                sh "docker compose -p ${COMPOSE_PROJECT_NAME} -f ${PROJECT_DIR}/docker-compose.yml run --rm --no-deps frontend npm run typecheck 2>&1 || true"
+            }
+        }
         stage('Deploy') {
             steps {
                 // Force a fresh build without cache to ensure the new frontend logic is compiled

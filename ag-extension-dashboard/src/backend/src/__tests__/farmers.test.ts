@@ -41,7 +41,9 @@ jest.mock('../services/prismaService', () => ({
                     village: 'Village A',
                     crops: ['maize'],
                     farmSizeHectares: 2.5,
-                    languagePreference: 'en'
+                    languagePreference: 'en',
+                    assignedOfficerId: 'off-1',
+                    userId: 'farm-1'
                 }
             ])),
             findUnique: jest.fn(() => Promise.resolve(
@@ -55,6 +57,8 @@ jest.mock('../services/prismaService', () => ({
                     crops: ['maize'],
                     farmSizeHectares: 2.5,
                     languagePreference: 'en',
+                    assignedOfficerId: 'off-1',
+                    userId: 'farm-1',
                     createdAt: new Date()
                 }
             ))

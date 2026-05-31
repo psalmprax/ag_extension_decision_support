@@ -54,17 +54,17 @@ import apiClientRoutes from './routes/apiClients';
 import commercialKnowledgeRoutes from './routes/commercialKnowledge';
 
 const app: Application = express();
-app.set('trust proxy', true); // Trust reverse proxy headers (e.g. X-Forwarded-For) to get real client IP for rate limiting
+app.set('trust proxy', 1); // Trust first proxy hop (Traefik) for X-Forwarded-For
 
 const limiter = perUserRateLimit;
 
 // Middleware
 app.use(helmet({
-    hsts: false, // Disable HSTS to allow development and staging access over plain HTTP ports without ERR_SSL_PROTOCOL_ERROR
+    hsts: config.nodeEnv === 'production',
     contentSecurityPolicy: {
         directives: {
             ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-            "upgrade-insecure-requests": null, // Disable automatic upgrading of HTTP requests to HTTPS on development/staging ports
+            "upgrade-insecure-requests": config.nodeEnv === 'production' ? [] : null,
             "img-src": ["'self'", "data:", "https://images.unsplash.com", "https://*.ytimg.com"],
             "frame-src": ["'self'", "https://www.youtube.com", "https://www.youtube-nocookie.com"],
             "connect-src": ["'self'", "http://localhost:*", "http://127.0.0.1:*", "ws://localhost:*", "ws://127.0.0.1:*", "https://api.openai.com", "https://*.azure.com", "https://*.google.com"],
@@ -81,11 +81,11 @@ app.use(morgan('combined', { stream: { write: (message) => logger.info(message) 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(securityGate); // Security gate runs FIRST — before auth and rate limiting
 app.use(optionalAuth); // Parse optional user credentials before applying rate limiting
 app.use(limiter);
 
-/*
-// Request timeout middleware - 300s timeout for all requests during AI stabilization (Slow local LLM)
+// Request timeout middleware - 300s timeout for all requests
 app.use((req, res, next) => {
     res.setTimeout(300000, () => {
         logger.warn(`Request timeout (300000ms): ${req.method} ${req.path}`);
@@ -95,9 +95,6 @@ app.use((req, res, next) => {
     });
     next();
 });
-*/
-
-app.use(securityGate);
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
@@ -156,7 +153,8 @@ const healthHandler = async (_req: Request, res: Response) => {
             if (fallbackHealthy) {
                 fallbackActiveName = fallbackProvider.provider;
             }
-        } catch {
+        } catch (error) {
+            logger.warn('Fallback provider health check failed:', error);
             fallbackHealthy = false;
         }
 
@@ -171,7 +169,9 @@ const healthHandler = async (_req: Request, res: Response) => {
                         fallbackActiveName = p.provider;
                         break;
                     }
-                } catch { /* provider unavailable */ }
+                } catch (error) {
+                    logger.debug(`Provider ${type} unavailable:`, (error as Error).message);
+                }
             }
         }
 
@@ -293,16 +293,16 @@ app.use('/api/v1/ai', diseaseRoutes);
 app.use('/api/v1/whatsapp', whatsappRoutes);
 app.use('/api/v1/api-clients', apiClientRoutes);
 app.use('/api/v1/commercial/knowledge', commercialKnowledgeRoutes);
-// Create MCP router synchronously to ensure it loads properly
+// Create MCP router dynamically to support modern module standards and tree-shaking
 let mcpRouter: any = null;
-try {
-  // Import synchronously for Docker deployment
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { createMCPRouter } = require('./services/mcpAdapter');
-  mcpRouter = createMCPRouter();
-} catch (error) {
-  console.error('Failed to create MCP router:', error);
-}
+import('./services/mcpAdapter')
+  .then(({ createMCPRouter }) => {
+    mcpRouter = createMCPRouter();
+  })
+  .catch((error) => {
+    logger.error('Failed to create MCP router dynamically:', error);
+  });
+
 
 // MCP middleware wrapper - synchronous
 app.use('/api/v1/mcp', (req, res, next) => {

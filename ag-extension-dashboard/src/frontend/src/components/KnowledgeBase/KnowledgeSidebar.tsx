@@ -18,11 +18,21 @@ import { useAppStore } from '@/store/useAppStore';
 import { logout as apiLogout } from '@/api/authService';
 import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
 
+interface HistoryItem {
+    id: string;
+    query?: string;
+    queryText?: string;
+    crop?: string;
+    category?: string;
+    timestamp?: string;
+    createdAt?: string;
+}
+
 interface KnowledgeSidebarProps {
     isOpen: boolean;
     onToggle: () => void;
-    history: any[];
-    onSelect: (h: any) => void;
+    history: HistoryItem[];
+    onSelect: (h: HistoryItem) => void;
     onNewQuery?: () => void;
 }
 
@@ -98,7 +108,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
                                                )}
                                                <span className="flex items-center gap-1">
                                                    <Clock className="w-2.5 h-2.5" />
-                                                   {formatDistanceToNow(new Date(h.createdAt))} ago
+                                                   {h.createdAt ? `${formatDistanceToNow(new Date(h.createdAt))} ago` : ''}
                                                </span>
                                             </div>
                                         </div>

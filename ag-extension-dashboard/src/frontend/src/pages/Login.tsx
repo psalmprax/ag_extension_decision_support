@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Loader2, Sprout } from 'lucide-react';
-import { useAppStore } from '@/store/useAppStore';
+import { useAppStore, type User } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
@@ -44,7 +44,7 @@ export function Login({ onDemo }: LoginProps) {
             // Also store user data
             if (userData) {
                 localStorage.setItem('user', JSON.stringify(userData));
-                setUser(userData as any); // Cast to any if there are minor semantic differences, but should match now
+                setUser(userData as User);
             }
 
             if (!token) {
@@ -52,8 +52,9 @@ export function Login({ onDemo }: LoginProps) {
             }
 
             navigate('/dashboard');
-        } catch (err: any) {
-            const errorMsg = err.response?.data?.error || err.message || t('login_invalid_credentials');
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { error?: string } }; message?: string };
+            const errorMsg = error.response?.data?.error || error.message || t('login_invalid_credentials');
             setError(errorMsg);
         } finally {
             setIsLoading(false);
@@ -72,7 +73,7 @@ export function Login({ onDemo }: LoginProps) {
             if (token) localStorage.setItem('token', token);
             if (userData) {
                 localStorage.setItem('user', JSON.stringify(userData));
-                setUser(userData as any);
+                setUser(userData as User);
             }
 
             if (!token) {
@@ -81,8 +82,9 @@ export function Login({ onDemo }: LoginProps) {
 
             onDemo?.();
             navigate('/dashboard');
-        } catch (err: any) {
-            const errorMsg = err.response?.data?.error || err.message || 'Demo login failed';
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { error?: string } }; message?: string };
+            const errorMsg = error.response?.data?.error || error.message || 'Demo login failed';
             setError(errorMsg);
         } finally {
             setIsLoading(false);

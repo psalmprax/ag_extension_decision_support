@@ -412,6 +412,33 @@ export async function createTables(): Promise<void> {
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
 
+    -- Search cache table for RAG answer caching
+    CREATE TABLE IF NOT EXISTS search_cache (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      query_text TEXT NOT NULL,
+      normalized_query TEXT NOT NULL,
+      answer TEXT,
+      context_used JSONB,
+      visuals JSONB,
+      embedding float8[],
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+    -- Unique index on normalized query for O(1) exact match lookups
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_search_cache_normalized ON search_cache(normalized_query);
+
+    -- Knowledge search history table
+    CREATE TABLE IF NOT EXISTS knowledge_searches (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id UUID REFERENCES users(id),
+      query TEXT NOT NULL,
+      category VARCHAR(100),
+      crop VARCHAR(100),
+      answer TEXT,
+      reasoning TEXT,
+      visuals JSONB,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+
     -- Create indexes
     CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
     CREATE INDEX IF NOT EXISTS idx_farmers_region ON farmers(region);
@@ -424,11 +451,35 @@ export async function createTables(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_alerts_active ON alerts(is_active);
     CREATE INDEX IF NOT EXISTS idx_sms_history_farmer ON sms_history(farmer_id);
     CREATE INDEX IF NOT EXISTS idx_sms_history_created ON sms_history(created_at);
+    -- Knowledge search performance indexes
+    CREATE INDEX IF NOT EXISTS idx_knowledge_searches_user ON knowledge_searches(user_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_search_cache_query ON search_cache(LOWER(TRIM(query_text)));
+    -- GIN index for full-text search on knowledge articles (avoids computing to_tsvector per row)
+    CREATE INDEX IF NOT EXISTS idx_knowledge_fts ON knowledge_articles USING gin(to_tsvector('english', title || ' ' || content));
+    -- GIN index on crops array for = ANY(crops) queries
+    CREATE INDEX IF NOT EXISTS idx_knowledge_crops ON knowledge_articles USING gin(crops);
+  `;
+
+  // IVFFlat indexes for pgvector similarity search (O(log n) vs O(n) sequential scan)
+  const ivfflatIndexSQL = `
+    CREATE INDEX IF NOT EXISTS idx_knowledge_articles_embedding_ivfflat
+        ON knowledge_articles USING ivfflat (embedding vector_cosine_ops)
+        WITH (lists = 100);
+    CREATE INDEX IF NOT EXISTS idx_search_cache_embedding_ivfflat
+        ON search_cache USING ivfflat (embedding vector_cosine_ops)
+        WITH (lists = 100);
   `;
 
   try {
     await pool.query(cosineSimilaritySQL);
     await pool.query(createTablesSQL);
+    // Create IVFFlat indexes (requires pgvector extension and data in tables)
+    try {
+      await pool.query(ivfflatIndexSQL);
+      logger.info('IVFFlat indexes created for vector similarity search');
+    } catch (ivfErr) {
+      logger.debug('IVFFlat index creation skipped (pgvector extension or tables not ready):', ivfErr);
+    }
     logger.info('Database tables and functions created');
   } catch (error) {
     logger.warn('Error during database provisioning:', error);
@@ -437,6 +488,21 @@ export async function createTables(): Promise<void> {
 
 export function getPool(): Pool | null {
   return pool;
+}
+
+/**
+ * Get connection pool statistics for monitoring
+ */
+export function getPoolStats(): { connected: boolean; totalCount: number; idleCount: number; waitingCount: number } {
+  if (!pool) {
+    return { connected: false, totalCount: 0, idleCount: 0, waitingCount: 0 };
+  }
+  return {
+    connected: true,
+    totalCount: pool.totalCount,
+    idleCount: pool.idleCount,
+    waitingCount: pool.waitingCount
+  };
 }
 
 export async function query(text: string, params?: any[]): Promise<any> {

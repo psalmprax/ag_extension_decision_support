@@ -95,7 +95,8 @@ export class AgentOrchestrator {
     const agent = this.agentRegistry.get(task.agentId);
 
     if (!agent || agent.health === 'offline' || agent.currentLoad >= agent.maxConcurrentTasks) {
-      this.taskQueue.unshift(task);
+      // Push to back of queue to avoid starvation — other tasks get a chance
+      this.taskQueue.push(task);
       return null;
     }
 
@@ -149,7 +150,7 @@ export class AgentOrchestrator {
     task.handedOffTo = targetAgentId;
     task.handoffReason = reason;
     task.status = 'pending';
-    task.retryCount = 0;
+    // Do NOT reset retryCount — prevents infinite handoff loops
 
     this.handoffLog.push({
       from: previousAgent,
@@ -242,17 +243,18 @@ export class AgentOrchestrator {
     const agentConfig = this.agentRegistry.get(agent.agentId);
     if (!agentConfig) throw new Error(`Agent ${agent.agentId} not found`);
 
-    const provider = await AIProviderFactory.getWithFallback(async (provider) => {
-      return provider;
+    const prompt = this.buildTaskPrompt(task);
+
+    // Execute with fallback — generateText runs INSIDE the fallback callback
+    const TASK_TIMEOUT_MS = 120000; // 2 minute timeout per task
+    const result = await AIProviderFactory.getWithFallback(async (provider) => {
+      return await provider.generateText([
+        { role: 'system', content: `You are ${agent.name}, an AI agent specialized in: ${agent.capabilities.join(', ')}. Execute the assigned task and return a structured result.` },
+        { role: 'user', content: prompt }
+      ], { temperature: 0.2, maxTokens: 2000 });
     });
 
-    const prompt = this.buildTaskPrompt(task);
-    const response = await provider.generateText([
-      { role: 'system', content: `You are ${agent.name}, an AI agent specialized in: ${agent.capabilities.join(', ')}. Execute the assigned task and return a structured result.` },
-      { role: 'user', content: prompt }
-    ], { temperature: 0.2, maxTokens: 2000 });
-
-    return response.text || 'Task executed with no output';
+    return result.text || 'Task executed with no output';
   }
 
   private buildTaskPrompt(task: AgentTask): string {
