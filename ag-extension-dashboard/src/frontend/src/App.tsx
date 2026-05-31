@@ -356,7 +356,6 @@ function App() {
                     sidebarOpen={sidebarOpen} navItems={navItems}
                     activeTab={activeTab} setActiveTab={setActiveTab}
                     setShowHelpCenter={setShowHelpCenter}
-                    storeUser={storeUser}
                     onGenerateReport={handleGenerateReport}
                 />
 

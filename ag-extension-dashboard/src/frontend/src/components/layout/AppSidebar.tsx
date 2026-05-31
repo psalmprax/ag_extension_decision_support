@@ -12,7 +12,6 @@ interface AppSidebarProps {
     activeTab: string;
     setActiveTab: (tab: string) => void;
     setShowHelpCenter: (show: boolean) => void;
-    storeUser: { region?: string } | null;
     onGenerateReport: () => void;
 }
 
@@ -22,7 +21,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     activeTab,
     setActiveTab,
     setShowHelpCenter,
-    storeUser,
     onGenerateReport,
 }) => {
     const { isModern, subtextClass, headingClass } = useThemeClasses();
