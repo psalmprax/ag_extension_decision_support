@@ -14,7 +14,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci 2>/dev/null || npm install
 COPY . .
-RUN npm run build
+RUN npm run build:docker
 
 # ============================================================
 # Stage 3: Development
