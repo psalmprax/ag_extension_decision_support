@@ -14,7 +14,7 @@ import {
     Area
 } from 'recharts';
 import { TrendingUp, PieChart as PieIcon, BarChart3, Info } from 'lucide-react';
-import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
+import { useThemeClasses } from '@/hooks/useThemeClasses';
 
 const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -30,7 +30,7 @@ interface KnowledgeStatsProps {
 }
 
 export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
-    const { isModern, radiusClass } = useDesignSystemMode();
+    const { isModern, radiusClass } = useThemeClasses();
 
     if (!data) return (
         <div className="flex items-center justify-center p-20 text-gray-400">

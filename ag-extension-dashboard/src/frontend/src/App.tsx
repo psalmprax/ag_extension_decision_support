@@ -14,7 +14,7 @@ import { fetchVisits } from '@/api/visitService';
 import { fetchReports, generateReport, Report } from '@/api/reportService';
 import { fetchPerformanceData } from '@/api/analyticsService';
 import { getMyTransactions } from '@/api/billingService';
-import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
+import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -75,7 +75,7 @@ function App() {
 
     const {
         isModern, headingClass
-    } = useDesignSystemMode();
+    } = useThemeClasses();
 
     // Theme, auth, and bootstrap hooks
     useAppTheme(themeName, darkMode);

@@ -16,7 +16,7 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { useAppStore } from '@/store/useAppStore';
 import { logout as apiLogout } from '@/api/authService';
-import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
+import { useThemeClasses } from '@/hooks/useThemeClasses';
 
 interface HistoryItem {
     id: string;
@@ -44,7 +44,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
     onNewQuery
 }) => {
     const { user } = useAppStore();
-    const { isModern, radiusClass } = useDesignSystemMode();
+    const { isModern, radiusClass } = useThemeClasses();
 
     const handleLogout = async () => {
         await apiLogout();

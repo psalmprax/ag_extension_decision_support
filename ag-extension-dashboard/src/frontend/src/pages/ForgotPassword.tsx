@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, ArrowLeft, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { requestPasswordReset } from '@/api/authService';
-import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
+import { useThemeClasses } from '@/hooks/useThemeClasses';
 
 export const ForgotPassword: React.FC = () => {
     const navigate = useNavigate();
-    const { isModern, radiusClass, btnClass } = useDesignSystemMode();
+    const { isModern, radiusClass, btnClass } = useThemeClasses();
     const [email, setEmail] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');

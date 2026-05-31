@@ -6,7 +6,7 @@ import { Sparkles, Loader2, FileText, CheckCircle2, AlertCircle, Calendar } from
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '@/lib/LanguageContext';
-import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
+import { useThemeClasses } from '@/hooks/useThemeClasses';
 
 export const VisitSynthesisForm: React.FC = () => {
   const [notes, setNotes] = useState('');
@@ -15,7 +15,7 @@ export const VisitSynthesisForm: React.FC = () => {
   const [result, setResult] = useState<BoxUpdateData | null>(null);
   const { setLoading, user } = useAppStore();
   const { t } = useLanguage();
-  const { isModern, headingClass } = useDesignSystemMode();
+  const { isModern, headingClass } = useThemeClasses();
 
   const handleSynthesize = async () => {
     if (notes.length < 10) {

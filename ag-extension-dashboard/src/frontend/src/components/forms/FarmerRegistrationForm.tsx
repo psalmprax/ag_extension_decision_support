@@ -6,13 +6,13 @@ import { useAppStore } from '@/store/useAppStore';
 import { Loader2, UserPlus, MapPin, Phone, Maximize, Activity } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/lib/LanguageContext';
-import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
+import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { createFarmer } from '@/api/farmerService';
 
 export const FarmerRegistrationForm: React.FC = () => {
   const { addFarmer, isLoading, setLoading } = useAppStore();
   const { t } = useLanguage();
-  const { isModern, headingClass } = useDesignSystemMode();
+  const { isModern, headingClass } = useThemeClasses();
 
   const {
     register,

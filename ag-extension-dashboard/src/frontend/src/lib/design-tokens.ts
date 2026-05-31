@@ -1,6 +1,6 @@
 /**
  * Centralized design tokens extracted from Tailwind config, index.css,
- * and useDesignSystemMode. Values are NOT new — they name what's already in use.
+ * and useThemeClasses. Values are NOT new — they name what's already in use.
  */
 
 export const SPACING = {

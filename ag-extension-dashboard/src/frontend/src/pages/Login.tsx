@@ -5,7 +5,7 @@ import { Eye, EyeOff, Loader2, Sprout } from 'lucide-react';
 import { useAppStore, type User } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
-import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
+import { useThemeClasses } from '@/hooks/useThemeClasses';
 
 import { login, demoLogin } from '@/api/authService';
 
@@ -17,7 +17,7 @@ export function Login({ onDemo }: LoginProps) {
     const navigate = useNavigate();
     const { setUser } = useAppStore();
     const { t } = useLanguage();
-    const { isModern, radiusClass, btnClass } = useDesignSystemMode();
+    const { isModern, radiusClass, btnClass } = useThemeClasses();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');

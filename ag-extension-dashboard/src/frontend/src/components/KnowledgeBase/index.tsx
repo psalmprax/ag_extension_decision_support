@@ -25,7 +25,7 @@ import {
 import { askAI, searchKnowledge, fetchKnowledgeHistory, fetchKnowledgeStats, Attachment } from '@/api/knowledgeService';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
-import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
+import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { KnowledgeStats } from './KnowledgeStats';
 import { KnowledgeSidebar } from './KnowledgeSidebar';
 import { ReasoningVisuals } from './ReasoningVisuals';
@@ -81,7 +81,7 @@ interface Result {
 export const KnowledgeBase: React.FC = () => {
     const { t } = useLanguage();
     const { addNotification } = useAppStore();
-    const { isModern, headingClass, radiusClass, btnClass } = useDesignSystemMode();
+    const { isModern, headingClass, radiusClass, btnClass } = useThemeClasses();
     
     const [searchQuery, setSearchQuery] = useState('');
     const [attachments, setAttachments] = useState<Attachment[]>([]);

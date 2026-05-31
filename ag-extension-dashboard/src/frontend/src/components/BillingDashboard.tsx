@@ -24,7 +24,7 @@ import {
     Ticket
 } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
-import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
+import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAppStore } from '@/store/useAppStore';
@@ -97,7 +97,7 @@ interface Voucher {
 
 export const BillingDashboard: React.FC = () => {
     const { t } = useLanguage();
-    const { isModern, headingClass, radiusClass, btnClass } = useDesignSystemMode();
+    const { isModern, headingClass, radiusClass, btnClass } = useThemeClasses();
     const [searchParams, setSearchParams] = useSearchParams();
     const [plans, setPlans] = useState<Plan[]>([]);
     const [subscription, setSubscription] = useState<Subscription | null>(null);

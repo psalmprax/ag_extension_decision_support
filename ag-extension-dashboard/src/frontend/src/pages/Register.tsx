@@ -4,12 +4,12 @@ import { motion } from 'framer-motion';
 import { Eye, EyeOff, Loader2, Sprout, Check } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { register } from '@/api/authService';
-import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
+import { useThemeClasses } from '@/hooks/useThemeClasses';
 
 export function Register() {
     const navigate = useNavigate();
     const { t } = useLanguage();
-    const { isModern, radiusClass, btnClass } = useDesignSystemMode();
+    const { isModern, radiusClass, btnClass } = useThemeClasses();
 
     const [formData, setFormData] = useState({
         firstName: '',

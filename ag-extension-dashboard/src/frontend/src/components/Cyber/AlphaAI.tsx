@@ -20,7 +20,7 @@ import AlphaAgentOps from './AlphaAgentOps';
 import { useAppStore } from '@/store/useAppStore';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '@/api/client';
-import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
+import { useThemeClasses } from '@/hooks/useThemeClasses';
 
 const formatUptime = (seconds: number): string => {
     const d = Math.floor(seconds / 86400);
@@ -32,7 +32,7 @@ const formatUptime = (seconds: number): string => {
 };
 
 const AlphaAI = () => {
-    const { radiusClass, btnClass, isModern } = useDesignSystemMode();
+    const { radiusClass, btnClass, isModern } = useThemeClasses();
     const setActiveTab = useAppStore((s) => s.setActiveTab);
     const [activeMode, setActiveMode] = React.useState<'actionable' | 'ops'>('actionable');
     const [showTerminal, setShowTerminal] = React.useState(false);

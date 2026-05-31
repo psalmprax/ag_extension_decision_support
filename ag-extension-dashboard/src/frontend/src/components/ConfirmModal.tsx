@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, X, CheckCircle, Info, AlertCircle } from 'lucide-react';
-import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
+import { useThemeClasses } from '@/hooks/useThemeClasses';
 
 interface ConfirmModalProps {
     isOpen: boolean;
@@ -26,7 +26,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
     variant = 'warning',
     isLoading = false,
 }) => {
-    const { radiusClass, btnClass } = useDesignSystemMode();
+    const { radiusClass, btnClass } = useThemeClasses();
     const variants = {
         danger: {
             icon: AlertTriangle,

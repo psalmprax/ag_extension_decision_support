@@ -7,13 +7,13 @@ import {
 import { motion } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
 import { useAppStore } from '../store/useAppStore';
-import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
+import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { fetchHealthStatus, fetchRecoveryLog, triggerRecovery, HealthCheck, RecoveryAction } from '../api/systemHealthService';
 import { runDiagnostics, DiagnosticResult } from '../api/diagnosticsService';
 
 export function SystemHealth() {
     const { t } = useLanguage();
-    const { headingClass, isModern, radiusClass, btnClass } = useDesignSystemMode();
+    const { headingClass, isModern, radiusClass, btnClass } = useThemeClasses();
     const { addNotification } = useAppStore();
 
     const [healthChecks, setHealthChecks] = useState<HealthCheck[]>([]);
