@@ -223,7 +223,7 @@ router.get('/search', async (req: Request, res: Response) => {
     try {
         const { q, category, crop, limit = '10', offset = '0', v2 } = req.query;
 
-        const cacheKey = 'knowledge:search:' + q + ':' + category + ':' + crop + ':' + limit + ':' + offset;
+        const cacheKey = 'knowledge:search:' + q + ':' + category + ':' + crop + ':' + limit + ':' + offset + ':' + (v2 || 'false');
         const cached = await cacheGet(cacheKey);
         if (cached) {
             return res.json(JSON.parse(cached));
