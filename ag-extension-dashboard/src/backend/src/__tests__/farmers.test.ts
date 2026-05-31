@@ -30,6 +30,10 @@ jest.mock('../services/cacheService', () => ({
 // Mock Prisma
 jest.mock('../services/prismaService', () => ({
     getPrisma: jest.fn(() => ({
+        systemConfig: {
+            findUnique: jest.fn().mockResolvedValue(null),
+            upsert: jest.fn().mockResolvedValue({})
+        },
         farmer: {
             findMany: jest.fn(() => Promise.resolve([
                 { 

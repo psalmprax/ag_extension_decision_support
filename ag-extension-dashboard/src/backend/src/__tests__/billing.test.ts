@@ -91,6 +91,10 @@ jest.mock('../services/paymentService', () => ({
 
 jest.mock('../services/prismaService', () => ({
     getPrisma: jest.fn(() => ({
+        systemConfig: {
+            findUnique: jest.fn().mockResolvedValue(null),
+            upsert: jest.fn().mockResolvedValue({})
+        },
         subscription: {
             findUnique: jest.fn().mockResolvedValue(null),
             create: jest.fn().mockResolvedValue({}),
