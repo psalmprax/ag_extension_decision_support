@@ -122,8 +122,7 @@ export class RAGV2Service {
                     created_at TIMESTAMP DEFAULT NOW()
                 );
                 CREATE INDEX IF NOT EXISTS idx_chunks_article ON knowledge_chunks(article_id);
-                CREATE INDEX IF NOT EXISTS idx_chunks_embedding ON knowledge_chunks
-                    USING ivfflat (embedding vector_cosine_ops) WITH (lists = 10);
+                -- IVFFlat index created after data is loaded (requires non-empty table)
 
                 CREATE TABLE IF NOT EXISTS knowledge_entities (
                     id TEXT PRIMARY KEY,
@@ -304,12 +303,19 @@ export class RAGV2Service {
 
     static async storeRelationships(relationships: Relationship[]): Promise<void> {
         for (const rel of relationships) {
-            await query(
-                `INSERT INTO knowledge_relationships (source_id, target_id, relation_type, article_id, properties)
-                 VALUES ($1, $2, $3, $4, $5)
-                 ON CONFLICT (source_id, target_id, relation_type, article_id) DO NOTHING`,
-                [rel.sourceEntityId, rel.targetEntityId, rel.relationType, rel.articleId, JSON.stringify(rel.properties)]
-            );
+            try {
+                await query(
+                    `INSERT INTO knowledge_relationships (source_id, target_id, relation_type, article_id, properties)
+                     VALUES ($1, $2, $3, $4, $5)
+                     ON CONFLICT DO NOTHING`,
+                    [rel.sourceEntityId, rel.targetEntityId, rel.relationType, rel.articleId, JSON.stringify(rel.properties)]
+                );
+            } catch (err: any) {
+                // Ignore duplicate key errors
+                if (!err.message?.includes('duplicate key')) {
+                    logger.warn(`[RAGv2] Failed to store relationship: ${err.message}`);
+                }
+            }
         }
     }
 
@@ -549,6 +555,16 @@ JSON scores:`;
         logger.info('[RAGv2] Starting full bootstrap...');
         await this.initializeSchema();
         const chunkResult = await this.chunkAllArticles();
+
+        // Create IVFFlat index after data is loaded (requires non-empty table)
+        if (chunkResult.chunks > 0) {
+            try {
+                await query(`CREATE INDEX IF NOT EXISTS idx_chunks_embedding ON knowledge_chunks USING ivfflat (embedding vector_cosine_ops) WITH (lists = 10)`);
+            } catch (err: any) {
+                // Index may already exist
+            }
+        }
+
         const graphResult = await this.buildKnowledgeGraph();
         logger.info(`[RAGv2] Bootstrap complete: ${chunkResult.chunks} chunks, ${graphResult.entities} entities, ${graphResult.relationships} relationships`);
     }
