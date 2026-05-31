@@ -26,7 +26,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     setShowHelpCenter,
     storeUser,
     isModern,
-    darkMode,
     subtextClass,
     headingClass,
     btnClass,
@@ -42,7 +41,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                     className={`fixed left-0 top-0 h-full flex flex-col pt-20 pb-8 px-4 ${isModern ? 'bg-white/70 dark:bg-slate-950/40 backdrop-blur-2xl' : 'bg-white dark:bg-slate-900 shadow-xl'} border-r border-gray-200 dark:border-white/10 w-64 z-40`}
                 >
                     <div className="px-4 mb-8">
-                        <h3 className={`font-headline text-sm tracking-widest uppercase mb-1 ${isModern ? (darkMode ? 'text-cyan-400' : 'text-cyan-700') : 'text-slate-400'}`}>Ag-Extension</h3>
+                        <h3 className={`font-headline text-sm tracking-widest uppercase mb-1 ${isModern ? 'text-cyan-700 dark:text-cyan-400' : 'text-slate-400'}`}>Ag-Extension</h3>
                         <p className={`text-[10px] font-medium ${subtextClass}`}>{storeUser?.region || 'Sector 7G - Midwest'}</p>
                     </div>
 

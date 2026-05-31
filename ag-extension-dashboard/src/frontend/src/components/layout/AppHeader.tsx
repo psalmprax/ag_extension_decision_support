@@ -90,13 +90,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     <span className={`text-2xl font-headline ${headingClass}`}>AG-extension</span>
                 </div>
                 <nav className="hidden md:flex items-center gap-1">
-                    <button onClick={() => React.startTransition(() => setActiveTab('dashboard'))} className={`font-headline tracking-tight transition-all px-4 py-2 ${btnClass} ${activeTab === 'dashboard' ? (isModern ? (darkMode ? 'text-cyan-400 font-black' : 'text-cyan-700 font-black') : 'bg-slate-900 text-white') : 'text-slate-500'}`}>
+                    <button onClick={() => React.startTransition(() => setActiveTab('dashboard'))} className={`font-headline tracking-tight transition-all px-4 py-2 ${btnClass} ${activeTab === 'dashboard' ? (isModern ? 'text-cyan-700 dark:text-cyan-400 font-black' : 'bg-slate-900 text-white') : 'text-slate-500'}`}>
                         {isModern ? 'Strategic Intelligence' : 'Operations Dashboard'}
                     </button>
-                    <button onClick={() => React.startTransition(() => setActiveTab('analytics'))} className={`font-headline tracking-tight transition-all px-4 py-2 ${btnClass} ${activeTab === 'analytics' ? (isModern ? (darkMode ? 'text-cyan-400 font-black' : 'text-cyan-700 font-black') : 'bg-slate-900 text-white') : 'text-slate-500'}`}>
+                    <button onClick={() => React.startTransition(() => setActiveTab('analytics'))} className={`font-headline tracking-tight transition-all px-4 py-2 ${btnClass} ${activeTab === 'analytics' ? (isModern ? 'text-cyan-700 dark:text-cyan-400 font-black' : 'bg-slate-900 text-white') : 'text-slate-500'}`}>
                         {isModern ? 'Growth Optimization' : 'System Analytics'}
                     </button>
-                    <button onClick={() => React.startTransition(() => setActiveTab('reports'))} className={`font-headline tracking-tight transition-all px-4 py-2 ${btnClass} ${activeTab === 'reports' ? (isModern ? (darkMode ? 'text-cyan-400 font-black' : 'text-cyan-700 font-black') : 'bg-slate-900 text-white') : 'text-slate-500'}`}>
+                    <button onClick={() => React.startTransition(() => setActiveTab('reports'))} className={`font-headline tracking-tight transition-all px-4 py-2 ${btnClass} ${activeTab === 'reports' ? (isModern ? 'text-cyan-700 dark:text-cyan-400 font-black' : 'bg-slate-900 text-white') : 'text-slate-500'}`}>
                         {isModern ? 'Executive Reporting' : 'Data Reports'}
                     </button>
                 </nav>
@@ -177,7 +177,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     <div className="hidden lg:flex items-center gap-2 scale-90 origin-right">
                         <button
                             onClick={toggleDesignSystemMode}
-                            className={`flex items-center gap-2 px-3 py-1.5 ${btnClass} text-[10px] font-bold uppercase tracking-widest transition-all ${isModern ? (darkMode ? 'bg-cyan-500/10 text-cyan-400' : 'bg-cyan-600/10 text-cyan-700') : `bg-gray-100 dark:bg-white/5 ${subtextClass}`}`}
+                            className={`flex items-center gap-2 px-3 py-1.5 ${btnClass} text-[10px] font-bold uppercase tracking-widest transition-all ${isModern ? 'bg-cyan-600/10 text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-400' : `bg-gray-100 dark:bg-white/5 ${subtextClass}`}`}
                             title="Toggle Design Aesthetic"
                         >
                             <Layout className="w-3.5 h-3.5" />
