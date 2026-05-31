@@ -1,5 +1,9 @@
 import React from 'react';
 import { Farmer, Visit } from '@/types/dashboard';
+import { Button } from './ui/Button';
+import { Input } from './ui/Input';
+import { Select } from './ui/Select';
+import { Badge } from './ui/Badge';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     X,
@@ -340,11 +344,11 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                             <div className="flex items-center gap-1.5">
                                                 <MapPin className="w-4 h-4" />
                                                 {isEditing ? (
-                                                    <input
+                                                    <Input
                                                         type="text"
                                                         value={editData.region || ''}
                                                         onChange={(e) => setEditData({ ...editData, region: e.target.value })}
-                                                        className="bg-white/10 border border-white/20 rounded px-2 py-0.5 text-white placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                                                        className="bg-white/10 border-white/20 text-white placeholder-white/40 !h-7 !px-2 !py-0.5 !text-xs !rounded"
                                                         placeholder="Region"
                                                     />
                                                 ) : (
@@ -354,11 +358,11 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                             <div className="flex items-center gap-1.5">
                                                 <Maximize2 className="w-4 h-4" />
                                                 {isEditing ? (
-                                                    <input
+                                                    <Input
                                                         type="number"
                                                         value={editData.farmSize || 0}
                                                         onChange={(e) => setEditData({ ...editData, farmSize: Number(e.target.value) })}
-                                                        className="bg-white/10 border border-white/20 rounded px-2 py-0.5 text-white w-16 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                                                        className="bg-white/10 border-white/20 text-white !h-7 !px-2 !py-0.5 !text-xs !rounded !w-16"
                                                     />
                                                 ) : (
                                                     <span>{farmer.farmSize} ha</span>
@@ -367,11 +371,11 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                             <div className="flex items-center gap-1.5">
                                                 <Phone className="w-4 h-4" />
                                                 {isEditing ? (
-                                                    <input
+                                                    <Input
                                                         type="tel"
                                                         value={editData.phone || ''}
                                                         onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
-                                                        className="bg-white/10 border border-white/20 rounded px-2 py-0.5 text-white w-32 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                                                        className="bg-white/10 border-white/20 text-white placeholder-white/40 !h-7 !px-2 !py-0.5 !text-xs !rounded !w-32"
                                                         placeholder="Phone"
                                                     />
                                                 ) : (
@@ -381,16 +385,17 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                             {isEditing && (
                                                 <div className="flex items-center gap-1.5">
                                                     <Activity className="w-4 h-4" />
-                                                    <select
+                                                    <Select
                                                         value={editData.status || 'active'}
                                                         onChange={(e) => setEditData({ ...editData, status: e.target.value })}
-                                                        className="bg-white/10 border border-white/20 rounded px-2 py-0.5 text-white text-xs focus:outline-none focus:ring-1 focus:ring-primary-500"
-                                                    >
-                                                        <option value="active" className="text-gray-900">Active</option>
-                                                        <option value="inactive" className="text-gray-900">Inactive</option>
-                                                        <option value="pending" className="text-gray-900">Pending</option>
-                                                        <option value="suspended" className="text-gray-900">Suspended</option>
-                                                    </select>
+                                                        className="bg-white/10 border-white/20 text-white !h-7 !px-2 !py-0.5 !text-xs !rounded"
+                                                        options={[
+                                                            { value: 'active', label: 'Active' },
+                                                            { value: 'inactive', label: 'Inactive' },
+                                                            { value: 'pending', label: 'Pending' },
+                                                            { value: 'suspended', label: 'Suspended' },
+                                                        ]}
+                                                    />
                                                 </div>
                                             )}
                                         </div>
@@ -468,9 +473,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                                 <TrendingUp className={`w-4 h-4 text-primary-500`} />
                                                 {t('viz_yield_trends')}
                                             </h3>
-                                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400`}>
-                                                {t('viz_growth_positive')}
-                                            </span>
+                                            <Badge variant="success" size="sm">{t('viz_growth_positive')}</Badge>
                                         </div>
                                         <div className={`h-48 w-full ${radiusClass} p-4 border bg-gray-50/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800`}>
                                             <ResponsiveContainer width="100%" height="100%">
@@ -519,7 +522,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                                 <div className="space-y-2">
                                                     <div className="flex flex-wrap gap-2">
                                                         {(editData.crops || []).map((crop: string, i: number) => (
-                                                            <span key={i} className={`flex items-center gap-1 px-3 py-1 ${radiusClass} text-[10px] font-black uppercase tracking-tighter bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400`}>
+                                                            <Badge key={i} variant="info" size="sm" className="flex items-center gap-1">
                                                                 {crop}
                                                                 <button
                                                                     type="button"
@@ -528,14 +531,13 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                                                 >
                                                                     ×
                                                                 </button>
-                                                            </span>
+                                                            </Badge>
                                                         ))}
                                                     </div>
                                                     <div className="flex gap-2">
-                                                        <input
-                                                            type="text"
+                                                        <Input
+                                                            size="sm"
                                                             placeholder="Add crop..."
-                                                            className={`flex-1 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 ${radiusClass}`}
                                                             onKeyDown={(e) => {
                                                                 if (e.key === 'Enter') {
                                                                     e.preventDefault();
@@ -553,9 +555,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                             ) : (
                                                 <div className="flex flex-wrap gap-2">
                                                     {(farmer.crops || []).map((crop: string, i: number) => (
-                                                        <span key={`${crop}-${i}`} className={`px-3 py-1 ${radiusClass} text-[10px] font-black uppercase tracking-tighter bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400`}>
-                                                            {crop}
-                                                        </span>
+                                                        <Badge key={`${crop}-${i}`} variant="info" size="sm">{crop}</Badge>
                                                     ))}
                                                 </div>
                                             )}
@@ -576,16 +576,17 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                             {isEditing && (
                                                 <div className="mt-4">
                                                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Status</label>
-                                                    <select
+                                                    <Select
                                                         value={editData.status || 'Active'}
                                                         onChange={(e) => setEditData({ ...editData, status: e.target.value })}
-                                                        className={`w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 ${radiusClass} px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary-500`}
-                                                    >
-                                                        <option value="Active">Active</option>
-                                                        <option value="Inactive">Inactive</option>
-                                                        <option value="High Priority">High Priority</option>
-                                                        <option value="Special Attention">Special Attention</option>
-                                                    </select>
+                                                        options={[
+                                                            { value: 'Active', label: 'Active' },
+                                                            { value: 'Inactive', label: 'Inactive' },
+                                                            { value: 'High Priority', label: 'High Priority' },
+                                                            { value: 'Special Attention', label: 'Special Attention' },
+                                                        ]}
+                                                        size="sm"
+                                                    />
                                                 </div>
                                             )}
                                         </section>
@@ -626,18 +627,21 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                                         </p>
                                                         {visit.status === 'scheduled' && (
                                                             <div className="flex gap-2 mt-3">
-                                                                <button
+                                                                <Button
+                                                                    size="sm"
                                                                     onClick={() => handleUpdateVisitStatus(visit.id, 'completed')}
-                                                                    className={`px-3 py-1 ${btnClass} bg-green-500/10 hover:bg-green-500/20 text-green-600 dark:text-green-400 text-[9px] font-black uppercase tracking-widest border border-green-500/20 transition-all`}
+                                                                    className="bg-green-500/10 hover:bg-green-500/20 text-green-600 dark:text-green-400 text-[9px] font-black uppercase tracking-widest border border-green-500/20"
                                                                 >
                                                                     Complete
-                                                                </button>
-                                                                <button
+                                                                </Button>
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="danger"
                                                                     onClick={() => handleUpdateVisitStatus(visit.id, 'cancelled')}
-                                                                    className={`px-3 py-1 ${btnClass} bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-[9px] font-black uppercase tracking-widest border border-red-500/20 transition-all`}
+                                                                    className="bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-[9px] font-black uppercase tracking-widest border border-red-500/20"
                                                                 >
                                                                     Cancel
-                                                                </button>
+                                                                </Button>
                                                             </div>
                                                         )}
                                                     </div>
@@ -713,37 +717,23 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
-                                <button
+                                <Button
+                                    variant="secondary"
+                                    loading={isRefreshingPriority}
                                     onClick={handleRefreshPriority}
-                                    disabled={isRefreshingPriority}
-                                    className={`px-4 py-3 ${radiusClass} font-black text-xs transition-all flex items-center gap-2 border ${isCyber ? 'border-primary-500/30 text-primary-400 hover:bg-primary-500/10' : 'border-primary-200 dark:border-primary-800 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20'
-                                        } ${isRefreshingPriority ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    className="font-black text-xs"
                                 >
-                                    {isRefreshingPriority ? (
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                    ) : (
-                                        <Activity className="w-4 h-4" />
-                                    )}
-                                    {isRefreshingPriority ? 'ANALYZING...' : 'REFRESH ANALYSIS'}
-                                </button>
-                                <button
+                                    <Activity className="w-4 h-4" />
+                                    REFRESH ANALYSIS
+                                </Button>
+                                <Button
+                                    loading={isSynthesizing}
                                     onClick={handleStartSynthesis}
-                                    disabled={isSynthesizing}
-                                    className={`px-6 py-3 ${radiusClass} font-black text-xs shadow-xl transition-all flex items-center gap-2 ${isCyber ? 'bg-primary-400 shadow-primary-500/20 text-white' : 'bg-primary-600 hover:bg-primary-700 text-white shadow-primary-500/20'
-                                        } ${isSynthesizing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    className="font-black text-xs"
                                 >
-                                    {isSynthesizing ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                            GENERATING...
-                                        </>
-                                    ) : (
-                                        <>
-                                            {t('action_start_synthesis')}
-                                            <ChevronRight className="w-4 h-4" />
-                                        </>
-                                    )}
-                                </button>
+                                    {t('action_start_synthesis')}
+                                    <ChevronRight className="w-4 h-4" />
+                                </Button>
                             </div>
                         </div>
                     </motion.aside>
