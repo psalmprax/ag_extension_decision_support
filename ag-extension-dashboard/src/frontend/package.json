@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "npm run audit-locales && tsc && vite build",
+    "build:docker": "tsc && vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 500",
     "typecheck": "tsc --noEmit",
