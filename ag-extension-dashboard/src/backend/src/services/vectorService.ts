@@ -99,6 +99,7 @@ export class VectorService {
             params.push(limit);
 
             // Use native pgvector cosine distance operator for O(log n) search with IVFFlat index
+            // Only select needed columns — avoid fetching the large embedding vector
             const result = await query(`
                 SELECT * FROM (
                     SELECT id, title, content, category, crops, source_url, content_type,

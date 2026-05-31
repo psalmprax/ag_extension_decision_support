@@ -7,6 +7,7 @@ import { logger } from '@/utils/logger';
  * (semantic cache, vector search, cache save).
  *
  * TTL: 10 minutes. Max 1000 entries.
+ * Uses Map's insertion order for O(1) eviction instead of O(n log n) sorting.
  */
 
 interface CacheEntry {
@@ -14,17 +15,25 @@ interface CacheEntry {
     timestamp: number;
 }
 
+// Map preserves insertion order — oldest entries are first
 const cache = new Map<string, CacheEntry>();
 const MAX_ENTRIES = 1000;
 const TTL_MS = 10 * 60 * 1000; // 10 minutes
+const EVICT_COUNT = Math.floor(MAX_ENTRIES * 0.2); // Remove 20% on eviction
 
+/**
+ * Evict oldest entries using Map's insertion order.
+ * O(k) where k = EVICT_COUNT, instead of O(n log n) sorting.
+ */
 function evict(): void {
     if (cache.size <= MAX_ENTRIES) return;
-    // Remove oldest entries
-    const entries = [...cache.entries()].sort((a, b) => a[1].timestamp - b[1].timestamp);
-    const toRemove = entries.slice(0, Math.floor(MAX_ENTRIES * 0.2));
-    for (const [key] of toRemove) {
-        cache.delete(key);
+
+    // Map.keys() returns entries in insertion order (oldest first)
+    const keys = cache.keys();
+    for (let i = 0; i < EVICT_COUNT; i++) {
+        const next = keys.next();
+        if (next.done) break;
+        cache.delete(next.value);
     }
 }
 
@@ -46,7 +55,7 @@ export async function getEmbedding(text: string): Promise<number[]> {
     const result = await AIRouter.routeRequest('embed', { text });
     const embedding = result.embedding;
 
-    // Store in cache
+    // Store in cache (appends to end of Map — newest last)
     cache.set(key, { embedding, timestamp: now });
     evict();
 
@@ -56,6 +65,6 @@ export async function getEmbedding(text: string): Promise<number[]> {
 /**
  * Get cache stats for monitoring.
  */
-export function getEmbeddingCacheStats(): { size: number; maxSize: number } {
+export function getEmbeddingCacheStats(): { size: number; maxSize: number; hitRate?: number } {
     return { size: cache.size, maxSize: MAX_ENTRIES };
 }

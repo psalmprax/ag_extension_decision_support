@@ -9,6 +9,9 @@ import { logger } from '@/utils/logger';
 import { tavilyService } from '@/services/tavilyService';
 import { StealthScraperService } from '@/services/stealthScraperService';
 
+const STATS_CACHE_KEY = 'knowledge:search:stats';
+const STATS_CACHE_TTL = 300; // 5 minutes
+
 export interface KnowledgeArticle {
     id: string;
     title: string;
@@ -75,21 +78,37 @@ export class KnowledgeService {
 
     /**
      * Get knowledge search statistics for visuals
+     * Cached in Redis for 5 minutes to avoid repeated expensive queries
      */
     static async getSearchStats(): Promise<any> {
         try {
+            // Check Redis cache first
+            const cachedStats = await cacheGet(STATS_CACHE_KEY);
+            if (cachedStats) {
+                logger.debug('Search stats cache HIT');
+                return JSON.parse(cachedStats);
+            }
+
+            logger.debug('Search stats cache MISS — querying database');
             const [topCrops, topCategories, totalQueriesResult, cachedResult] = await Promise.all([
                 query(`SELECT crop, COUNT(*) as count FROM knowledge_searches WHERE crop IS NOT NULL GROUP BY crop ORDER BY count DESC LIMIT 5`),
                 query(`SELECT category, COUNT(*) as count FROM knowledge_searches WHERE category IS NOT NULL GROUP BY category ORDER BY count DESC LIMIT 5`),
                 query(`SELECT COUNT(*) as count FROM knowledge_searches`),
                 query(`SELECT COUNT(*) as count FROM search_cache`),
             ]);
-            return {
+
+            const stats = {
                 crops: topCrops.rows,
                 categories: topCategories.rows,
                 totalQueries: totalQueriesResult.rows[0]?.count || 0,
                 cachedQueries: cachedResult.rows[0]?.count || 0,
             };
+
+            // Cache in Redis with 5-minute TTL (non-blocking)
+            cacheSet(STATS_CACHE_KEY, JSON.stringify(stats), STATS_CACHE_TTL)
+                .catch(e => logger.error('Failed to cache search stats:', e));
+
+            return stats;
         } catch (error) {
             logger.error('Failed to get search stats:', error);
             return { crops: [], categories: [], totalQueries: 0, cachedQueries: 0 };

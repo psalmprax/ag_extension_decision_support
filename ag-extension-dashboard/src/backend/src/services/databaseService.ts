@@ -460,9 +460,26 @@ export async function createTables(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_knowledge_crops ON knowledge_articles USING gin(crops);
   `;
 
+  // IVFFlat indexes for pgvector similarity search (O(log n) vs O(n) sequential scan)
+  const ivfflatIndexSQL = `
+    CREATE INDEX IF NOT EXISTS idx_knowledge_articles_embedding_ivfflat
+        ON knowledge_articles USING ivfflat (embedding vector_cosine_ops)
+        WITH (lists = 100);
+    CREATE INDEX IF NOT EXISTS idx_search_cache_embedding_ivfflat
+        ON search_cache USING ivfflat (embedding vector_cosine_ops)
+        WITH (lists = 100);
+  `;
+
   try {
     await pool.query(cosineSimilaritySQL);
     await pool.query(createTablesSQL);
+    // Create IVFFlat indexes (requires pgvector extension and data in tables)
+    try {
+      await pool.query(ivfflatIndexSQL);
+      logger.info('IVFFlat indexes created for vector similarity search');
+    } catch (ivfErr) {
+      logger.debug('IVFFlat index creation skipped (pgvector extension or tables not ready):', ivfErr);
+    }
     logger.info('Database tables and functions created');
   } catch (error) {
     logger.warn('Error during database provisioning:', error);
@@ -471,6 +488,21 @@ export async function createTables(): Promise<void> {
 
 export function getPool(): Pool | null {
   return pool;
+}
+
+/**
+ * Get connection pool statistics for monitoring
+ */
+export function getPoolStats(): { connected: boolean; totalCount: number; idleCount: number; waitingCount: number } {
+  if (!pool) {
+    return { connected: false, totalCount: 0, idleCount: 0, waitingCount: 0 };
+  }
+  return {
+    connected: true,
+    totalCount: pool.totalCount,
+    idleCount: pool.idleCount,
+    waitingCount: pool.waitingCount
+  };
 }
 
 export async function query(text: string, params?: any[]): Promise<any> {
