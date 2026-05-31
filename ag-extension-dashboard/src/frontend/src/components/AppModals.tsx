@@ -15,6 +15,7 @@ import { ConfirmModal } from '@/components/ConfirmModal';
 import { Farmer, Visit } from '../types/dashboard';
 import { Report, downloadReport } from '@/api/reportService';
 import { useLanguage } from '@/lib/LanguageContext';
+import { useThemeClasses } from '@/hooks/useThemeClasses';
 
 interface AppModalsProps {
     // Visit Modal
@@ -90,14 +91,11 @@ interface AppModalsProps {
     handleStartConversation: (farmer: Farmer, type: 'ai' | 'farmer') => void;
     activeTab: string;
 
-    // Design
-    isModern: boolean;
-    btnClass: string;
-    radiusClass: string;
     addNotification: (n: { type: 'info' | 'warning' | 'error' | 'success'; message: string; actionLabel?: string; onAction?: () => void }) => void;
 }
 
 export const AppModals: React.FC<AppModalsProps> = (props) => {
+    const { isModern, btnClass, radiusClass } = useThemeClasses();
     const { t } = useLanguage();
 
     return (

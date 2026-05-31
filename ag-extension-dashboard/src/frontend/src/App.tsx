@@ -467,7 +467,7 @@ function App() {
                 farmerList={farmerList} isLoadingFarmers={isLoadingFarmers}
                 farmerSearchQuery={farmerSearchQuery} setFarmerSearchQuery={setFarmerSearchQuery}
                 handleStartConversation={handleStartConversation} activeTab={activeTab}
-                isModern={isModern} btnClass={btnClass} radiusClass={radiusClass} addNotification={addNotification}
+                addNotification={addNotification}
             />
         </div>
     );
