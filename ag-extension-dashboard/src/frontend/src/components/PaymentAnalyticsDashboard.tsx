@@ -17,6 +17,7 @@ import {
 import { useLanguage } from '../lib/LanguageContext';
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
+import { Button } from '@/components/ui/Button';
 import {
     getAnalyticsDashboard,
     getRevenueAnalytics,
@@ -204,16 +205,15 @@ export const PaymentAnalyticsDashboard: React.FC = () => {
             {/* Timeframe Selector */}
             <div className="mb-8 flex gap-2">
                 {(['month', 'quarter', 'year'] as const).map((period) => (
-                    <button
+                    <Button
                         key={period}
+                        size="sm"
+                        variant={timeframe === period ? 'primary' : 'ghost'}
                         onClick={() => setTimeframe(period)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${timeframe === period
-                                ? 'bg-primary-500 text-white shadow-lg'
-                                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                            }`}
+                        className={timeframe === period ? 'shadow-lg' : ''}
                     >
                         {period.charAt(0).toUpperCase() + period.slice(1)}
-                    </button>
+                    </Button>
                 ))}
             </div>
 

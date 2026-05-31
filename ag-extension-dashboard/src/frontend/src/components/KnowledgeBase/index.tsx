@@ -26,6 +26,8 @@ import { askAI, searchKnowledge, fetchKnowledgeHistory, fetchKnowledgeStats, Att
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
 import { KnowledgeStats } from './KnowledgeStats';
 import { KnowledgeSidebar } from './KnowledgeSidebar';
 import { ReasoningVisuals } from './ReasoningVisuals';
@@ -265,20 +267,15 @@ export const KnowledgeBase: React.FC = () => {
                                     >
                                         <BarChart3 className="w-6 h-6" />
                                     </button>
-                                    <button 
+                                    <Button
+                                        loading={isAsking}
+                                        disabled={!searchQuery.trim() && attachments.length === 0}
                                         onClick={() => handleSearch(searchQuery)}
-                                        disabled={isAsking || (!searchQuery.trim() && attachments.length === 0)}
-                                        className={`bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white p-3 md:px-8 ${radiusClass} font-bold shadow-lg shadow-primary-500/20 flex items-center gap-2 transition-all transform active:scale-95`}
+                                        className="p-3 md:px-8 font-bold shadow-lg shadow-primary-500/20"
                                     >
-                                        {isAsking ? (
-                                            <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                                        ) : (
-                                            <>
-                                                <span className="hidden md:inline">Generate</span>
-                                                <ArrowRight className="w-5 h-5" />
-                                            </>
-                                        )}
-                                    </button>
+                                        <span className="hidden md:inline">Generate</span>
+                                        <ArrowRight className="w-5 h-5" />
+                                    </Button>
                                 </div>
                             </div>
                         </div>
@@ -304,10 +301,10 @@ export const KnowledgeBase: React.FC = () => {
                                 {/* AI Answer Card */}
                                 <div className="card p-10 bg-white dark:bg-gray-800 shadow-2xl border-primary-50/50 dark:border-primary-900/30 border-2 relative overflow-hidden">
                                      {lastResult.cached && (
-                                         <div className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1 bg-green-500/10 text-green-600 dark:text-green-400 rounded-full text-[10px] font-black uppercase tracking-widest border border-green-500/20">
+                                         <Badge variant="success" size="sm" className="absolute top-4 right-4">
                                              <Zap className="w-3 h-3 fill-current" />
                                              Optimized Cache
-                                         </div>
+                                         </Badge>
                                      )}
                                     
                                     <div className="flex items-start gap-4 mb-8">
