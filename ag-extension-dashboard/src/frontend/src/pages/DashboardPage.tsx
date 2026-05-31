@@ -13,6 +13,7 @@ import { FarmerMap } from '@/components/FarmerMap';
 import { StatCard } from '../components/StatCard';
 import { Farmer, DashboardData } from '../types/dashboard';
 import { useLanguage } from '@/lib/LanguageContext';
+import { useThemeClasses } from '@/hooks/useThemeClasses';
 
 interface DashboardPageProps {
     dashboardData: DashboardData | undefined;
@@ -26,23 +27,16 @@ interface DashboardPageProps {
     handleOpenFarmerDetail: (farmer: Farmer) => void;
     user: { role?: string; firstName?: string } | undefined;
     addNotification: (n: { type: 'info' | 'warning' | 'error' | 'success'; message: string }) => void;
-    isModern: boolean;
-    darkMode: boolean;
-    cardClass: string;
-    headingClass: string;
-    dataClass: string;
-    subtextClass: string;
-    radiusClass: string;
 }
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({
     dashboardData, isLoading, isOfficer, performanceData,
     effectiveFarmers, isMapExpanded, setIsMapExpanded,
     handleStartConversation, handleOpenFarmerDetail,
-    user, isModern,
-    cardClass, headingClass, dataClass, subtextClass, radiusClass,
+    user,
 }) => {
     const { t } = useLanguage();
+    const { isModern, cardClass, headingClass, dataClass, subtextClass, radiusClass } = useThemeClasses();
 
     return (
         <div className="animate-in fade-in duration-500">

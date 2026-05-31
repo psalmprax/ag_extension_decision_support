@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { searchKnowledge } from '@/api/knowledgeService';
+import { searchKnowledge, KnowledgeArticle } from '@/api/knowledgeService';
 import { Farmer, Visit, Report } from '../types/dashboard';
 
 interface SearchResult {
@@ -15,7 +15,7 @@ export const useAppSearch = (
     farmers: Farmer[],
     visits: Visit[],
     reports: Report[],
-    transactions: any[]
+    transactions: Array<Record<string, unknown>>
 ) => {
     const [showGlobalSearch, setShowGlobalSearch] = useState(false);
     const [isGlobalSearching, setIsGlobalSearching] = useState(false);
@@ -57,7 +57,7 @@ export const useAppSearch = (
                 if (knowledgeResults.success && knowledgeResults.data?.articles?.length > 0) {
                     results.push({
                         type: 'Knowledge',
-                        items: knowledgeResults.data.articles.slice(0, 3).map((a: any) => ({
+                        items: knowledgeResults.data.articles.slice(0, 3).map((a: KnowledgeArticle) => ({
                             id: a.id,
                             label: a.title,
                             sublabel: a.category || '',
@@ -101,17 +101,17 @@ export const useAppSearch = (
             }
 
             // Search Transactions
-            const matchedTransactions = (transactions || []).filter((tx: any) => 
-                tx.transactionId?.toLowerCase().includes(query.toLowerCase()) ||
-                tx.status?.toLowerCase().includes(query.toLowerCase()) ||
-                tx.method?.toLowerCase().includes(query.toLowerCase())
+            const matchedTransactions = (transactions || []).filter((tx: Record<string, unknown>) =>
+                String(tx.transactionId || '').toLowerCase().includes(query.toLowerCase()) ||
+                String(tx.status || '').toLowerCase().includes(query.toLowerCase()) ||
+                String(tx.method || '').toLowerCase().includes(query.toLowerCase())
             ).slice(0, 3);
-            
+
             if (matchedTransactions.length > 0) {
                 results.push({
                     type: 'Billing',
-                    items: matchedTransactions.map((tx: any) => ({
-                        id: tx.id,
+                    items: matchedTransactions.map((tx: Record<string, unknown>) => ({
+                        id: String(tx.id || ''),
                         label: `TX: ${tx.transactionId}`,
                         sublabel: `${tx.amount} ${tx.currency} • ${tx.status}`
                     }))

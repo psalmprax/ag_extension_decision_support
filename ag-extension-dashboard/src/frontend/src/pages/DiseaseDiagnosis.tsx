@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
-import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
+import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '../store/useAppStore';
 import {
     diagnoseFromSymptoms,
@@ -22,7 +22,7 @@ import toast from 'react-hot-toast';
 
 export function DiseaseDiagnosis() {
     const { t } = useLanguage();
-    const { headingClass, isModern, radiusClass, btnClass } = useDesignSystemMode();
+    const { headingClass, isModern, radiusClass, btnClass } = useThemeClasses();
     const { addNotification } = useAppStore();
 
     // State

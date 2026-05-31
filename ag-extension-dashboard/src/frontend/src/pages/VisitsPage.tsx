@@ -4,6 +4,7 @@ import { MapPin, Clock, ChevronRight } from 'lucide-react';
 import { Visit, Farmer } from '../types/dashboard';
 import { updateVisit } from '@/api/visitService';
 import { useLanguage } from '@/lib/LanguageContext';
+import { useThemeClasses } from '@/hooks/useThemeClasses';
 
 interface VisitsPageProps {
     visits: Visit[];
@@ -12,18 +13,14 @@ interface VisitsPageProps {
     handleOpenFarmerDetail: (farmer: Farmer) => void;
     farmers: Farmer[];
     addNotification: (n: { type: 'info' | 'warning' | 'error' | 'success'; message: string }) => void;
-    isModern: boolean;
-    headingClass: string;
-    btnClass: string;
-    radiusClass: string;
 }
 
 export const VisitsPage: React.FC<VisitsPageProps> = ({
     visits, setShowVisitModal, refetchVisits, handleOpenFarmerDetail,
     farmers, addNotification,
-    isModern, headingClass, btnClass, radiusClass,
 }) => {
     const { t } = useLanguage();
+    const { isModern, headingClass, btnClass, radiusClass } = useThemeClasses();
 
     return (
         <div>

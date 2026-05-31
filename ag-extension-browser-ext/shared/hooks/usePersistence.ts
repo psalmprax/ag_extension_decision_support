@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 /**
- * A hook for persisting state to chrome.storage.local
+ * A hook for persisting state to browser.storage.local
  * @param key The key to use in storage
  * @param initialValue The initial value to use if none is found in storage
  */
@@ -11,14 +11,18 @@ export function usePersistence<T>(key: string, initialValue: T) {
 
   // Load from storage on mount
   useEffect(() => {
-    const chromeAPI = (window as any).chrome;
-    if (chromeAPI && chromeAPI.storage && chromeAPI.storage.local) {
-      chromeAPI.storage.local.get([key], (result: { [key: string]: any }) => {
-        if (result[key] !== undefined) {
-          setStoredValue(result[key]);
-        }
-        setIsLoaded(true);
-      });
+    if (browser?.storage?.local) {
+      browser.storage.local.get([key])
+        .then((result: Record<string, any>) => {
+          if (result?.[key] !== undefined) {
+            setStoredValue(result[key] as T);
+          }
+          setIsLoaded(true);
+        })
+        .catch((error: any) => {
+          console.error(`Error getting browser.storage.local for key "${key}":`, error);
+          setIsLoaded(true);
+        });
     } else {
       setIsLoaded(true);
     }
@@ -27,14 +31,15 @@ export function usePersistence<T>(key: string, initialValue: T) {
   // Update storage when value changes
   const setValue = (value: T | ((val: T) => T)) => {
     try {
-      const valueToStore = value instanceof Function ? value(storedValue) : value;
+      const valueToStore = typeof value === 'function' ? (value as Function)(storedValue) : value;
       setStoredValue(valueToStore);
-      const chromeAPI = (window as any).chrome;
-      if (chromeAPI && chromeAPI.storage && chromeAPI.storage.local) {
-        chromeAPI.storage.local.set({ [key]: valueToStore });
+      if (browser?.storage?.local) {
+        browser.storage.local.set({ [key]: valueToStore }).catch((error: any) => {
+          console.error(`Error setting browser.storage.local for key "${key}":`, error);
+        });
       }
     } catch (error) {
-      console.error(`Error setting chrome.storage.local for key "${key}":`, error);
+      console.error(`Error setting browser.storage.local for key "${key}":`, error);
     }
   };
 

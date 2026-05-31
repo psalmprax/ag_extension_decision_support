@@ -1,5 +1,5 @@
 import { Search, Filter, Download, Plus } from 'lucide-react';
-import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
+import { useThemeClasses } from '@/hooks/useThemeClasses';
 
 interface FarmerTableProps {
   farmers: Array<{
@@ -13,7 +13,7 @@ interface FarmerTableProps {
 }
 
 const CurrentFarmerTable: React.FC<FarmerTableProps> = ({ farmers }) => {
-  const { radiusClass, btnClass } = useDesignSystemMode();
+  const { radiusClass, btnClass } = useThemeClasses();
   return (
   <div className={`bg-white ${radiusClass} border border-gray-200`}>
     <div className="flex items-center justify-between p-3 bg-gray-50 border-b border-gray-200">
@@ -48,7 +48,7 @@ const CurrentFarmerTable: React.FC<FarmerTableProps> = ({ farmers }) => {
 };
 
 const NewFarmerTable: React.FC<FarmerTableProps> = ({ farmers }) => {
-  const { radiusClass, btnClass } = useDesignSystemMode();
+  const { radiusClass, btnClass } = useThemeClasses();
   return (
   <div className={`bg-white dark:bg-gray-800 ${radiusClass} shadow-lg shadow-black/5 overflow-hidden`}>
     <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 border-b border-100 dark:border-gray-700">
@@ -123,7 +123,7 @@ const NewFarmerTable: React.FC<FarmerTableProps> = ({ farmers }) => {
 };
 
 export const FarmerTable: React.FC<FarmerTableProps> = (props) => {
-  const { isModern } = useDesignSystemMode();
+  const { isModern } = useThemeClasses();
   return isModern ? <NewFarmerTable {...props} /> : <CurrentFarmerTable {...props} />;
 };
 

@@ -85,10 +85,10 @@ app.use(securityGate); // Security gate runs FIRST — before auth and rate limi
 app.use(optionalAuth); // Parse optional user credentials before applying rate limiting
 app.use(limiter);
 
-// Request timeout middleware - 300s timeout for all requests
+// Request timeout middleware - 30s default (AI routes override with longer timeout)
 app.use((req, res, next) => {
-    res.setTimeout(300000, () => {
-        logger.warn(`Request timeout (300000ms): ${req.method} ${req.path}`);
+    res.setTimeout(30000, () => {
+        logger.warn(`Request timeout (30000ms): ${req.method} ${req.path}`);
         if (!res.headersSent) {
             res.status(408).json({ success: false, error: 'Request timeout' });
         }

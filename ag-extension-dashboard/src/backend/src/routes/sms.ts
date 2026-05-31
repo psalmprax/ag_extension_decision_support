@@ -88,9 +88,7 @@ router.post('/bulk', checkUsageLimit('sms'), validate({ body: bulkSMSSchema }), 
         });
 
         if (result.sent > 0) {
-            for (let i = 0; i < result.sent; i++) {
-                await usageService.incrementUsage(senderId, 'sms');
-            }
+            await usageService.incrementUsageBy(senderId, 'sms', result.sent);
         }
 
         res.json({

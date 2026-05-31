@@ -4,6 +4,8 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { fetchFarmers } from '@/api/farmerService';
 import { createVisit } from '@/api/visitService';
 import toast from 'react-hot-toast';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 
 interface Farmer {
     id: string;
@@ -219,13 +221,12 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
                             <Calendar className="w-4 h-4 inline mr-1" />
                             {t('visit_date_time') || 'Date & Time'} *
                         </label>
-                        <input
+                        <Input
                             type="datetime-local"
                             value={formData.scheduledAt}
                             onChange={(e) => setFormData({ ...formData, scheduledAt: e.target.value })}
                             required
                             min={new Date().toISOString().slice(0, 16)}
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         />
                     </div>
 
@@ -246,30 +247,23 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
 
                     {/* Actions */}
                     <div className="flex gap-3 pt-2">
-                        <button
+                        <Button
                             type="button"
+                            variant="ghost"
+                            className="flex-1"
                             onClick={onClose}
-                            className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                         >
                             {t('common_cancel')}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             type="submit"
-                            disabled={loading || !formData.farmerId || !formData.scheduledAt}
-                            className="flex-1 px-4 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-semibold shadow-lg shadow-primary-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            loading={loading}
+                            disabled={!formData.farmerId || !formData.scheduledAt}
+                            className="flex-1"
                         >
-                            {loading ? (
-                                <>
-                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    {t('common_loading')}
-                                </>
-                            ) : (
-                                <>
-                                    <MapPin className="w-4 h-4" />
-                                    {t('visit_schedule') || 'Schedule Visit'}
-                                </>
-                            )}
-                        </button>
+                            <MapPin className="w-4 h-4" />
+                            {t('visit_schedule') || 'Schedule Visit'}
+                        </Button>
                     </div>
                 </form>
             </div>

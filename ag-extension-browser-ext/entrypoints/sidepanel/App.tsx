@@ -294,8 +294,6 @@ function App() {
   useEffect(() => {
     const getPageContext = async () => {
       try {
-        const browserAPI = (window as any).browser || (window as any).chrome;
-
         // Fetch farmers
         try {
           const fRes = await apiQueue.makeRequest(`${CONFIG.API_BASE_URL}/farmers`);
@@ -307,25 +305,23 @@ function App() {
           console.error('Failed to fetch farmers:', fErr);
         }
 
-        if (browserAPI && browserAPI.tabs) {
-          const [tab] = await browserAPI.tabs.query({ active: true, currentWindow: true });
-          if (tab && tab.id) {
-            browserAPI.tabs.sendMessage(tab.id, { action: 'get_page_context' }, (response: PageContext) => {
-              if (response) {
-                setPageContext(response);
-                // Only add welcome message if no history
-                if (messages.length === 0) {
-                  const welcomeMessage: Message = {
-                    id: 'welcome',
-                    role: 'assistant',
-                    content: `I've loaded the page "${response.title}". I can help you summarize content, extract data, or analyze this page. What would you like to do?`,
-                    timestamp: new Date().toISOString()
-                  };
-                  setMessages([welcomeMessage]);
-                }
+        const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+        if (tab && tab.id) {
+          browser.tabs.sendMessage(tab.id, { action: 'get_page_context' }, (response: PageContext) => {
+            if (response) {
+              setPageContext(response);
+              // Only add welcome message if no history
+              if (messages.length === 0) {
+                const welcomeMessage: Message = {
+                  id: 'welcome',
+                  role: 'assistant',
+                  content: `I've loaded the page "${response.title}". I can help you summarize content, extract data, or analyze this page. What would you like to do?`,
+                  timestamp: new Date().toISOString()
+                };
+                setMessages([welcomeMessage]);
               }
-            });
-          }
+            }
+          });
         }
       } catch (error) {
         console.error('Error getting page context:', error);
@@ -337,29 +333,26 @@ function App() {
 
   // Listen for online status changes and queue updates
   useEffect(() => {
-    const browserAPI = (window as any).browser || (window as any).chrome;
-    if (browserAPI && browserAPI.runtime) {
-      const handleStatusMessage = (message: any) => {
-        if (message.action === 'online_status_changed') {
-          setIsOnline(message.isOnline);
-        } else if (message.action === 'queue_updated') {
-          loadQueuedRequests();
-        }
-      };
+    const handleStatusMessage = (message: any) => {
+      if (message.action === 'online_status_changed') {
+        setIsOnline(message.isOnline);
+      } else if (message.action === 'queue_updated') {
+        loadQueuedRequests();
+      }
+    };
 
-      browserAPI.runtime.onMessage.addListener(handleStatusMessage);
-      loadQueuedRequests();
-      apiQueue.isCurrentlyOnline().then(setIsOnline);
+    browser.runtime.onMessage.addListener(handleStatusMessage);
+    loadQueuedRequests();
+    apiQueue.isCurrentlyOnline().then(setIsOnline);
 
-      return () => {
-        browserAPI.runtime.onMessage.removeListener(handleStatusMessage);
-      };
-    }
+    return () => {
+      browser.runtime.onMessage.removeListener(handleStatusMessage);
+    };
   }, []);
 
   // Listen for messages from background script or popup
   useEffect(() => {
-    const browserAPI = (window as any).browser || (window as any).chrome;
+    const browserAPI = browser;
     
     if (browserAPI && browserAPI.runtime) {
       const handlePopupMessage = async (message: any) => {

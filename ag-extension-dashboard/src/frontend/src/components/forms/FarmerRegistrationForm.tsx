@@ -6,13 +6,16 @@ import { useAppStore } from '@/store/useAppStore';
 import { Loader2, UserPlus, MapPin, Phone, Maximize, Activity } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/lib/LanguageContext';
-import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
+import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { createFarmer } from '@/api/farmerService';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { Button } from '@/components/ui/Button';
 
 export const FarmerRegistrationForm: React.FC = () => {
   const { addFarmer, isLoading, setLoading } = useAppStore();
   const { t } = useLanguage();
-  const { isModern, headingClass } = useDesignSystemMode();
+  const { isModern, headingClass } = useThemeClasses();
 
   const {
     register,
@@ -88,14 +91,11 @@ export const FarmerRegistrationForm: React.FC = () => {
               <UserPlus className="w-4 h-4" />
               {t('farmer_register_first_name') || 'First Name'}
             </label>
-            <input
+            <Input
               {...register('firstName')}
-              className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none transition-all"
               placeholder={t('farmer_register_first_name_placeholder') || 'Enter first name'}
+              error={errors.firstName?.message}
             />
-            {errors.firstName && (
-              <p className="text-red-500 text-xs mt-1">{errors.firstName.message}</p>
-            )}
           </div>
 
           {/* Last Name */}
@@ -104,14 +104,11 @@ export const FarmerRegistrationForm: React.FC = () => {
               <UserPlus className="w-4 h-4" />
               {t('farmer_register_last_name') || 'Last Name'}
             </label>
-            <input
+            <Input
               {...register('lastName')}
-              className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none transition-all"
               placeholder={t('farmer_register_last_name_placeholder') || 'Enter last name'}
+              error={errors.lastName?.message}
             />
-            {errors.lastName && (
-              <p className="text-red-500 text-xs mt-1">{errors.lastName.message}</p>
-            )}
           </div>
 
           {/* Phone */}
@@ -120,14 +117,11 @@ export const FarmerRegistrationForm: React.FC = () => {
               <Phone className="w-4 h-4" />
               {t('farmer_register_phone')}
             </label>
-            <input
+            <Input
               {...register('phone')}
-              className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none transition-all"
               placeholder={t('farmer_register_phone_placeholder')}
+              error={errors.phone?.message}
             />
-            {errors.phone && (
-              <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>
-            )}
           </div>
 
           {/* Location */}
@@ -136,14 +130,11 @@ export const FarmerRegistrationForm: React.FC = () => {
               <MapPin className="w-4 h-4" />
               {t('farmer_register_location')}
             </label>
-            <input
+            <Input
               {...register('location')}
-              className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none transition-all"
               placeholder={t('farmer_register_location_placeholder')}
+              error={errors.location?.message}
             />
-            {errors.location && (
-              <p className="text-red-500 text-xs mt-1">{errors.location.message}</p>
-            )}
           </div>
 
           {/* Farm Size */}
@@ -152,15 +143,12 @@ export const FarmerRegistrationForm: React.FC = () => {
               <Maximize className="w-4 h-4" />
               {t('farmer_register_farm_size')}
             </label>
-            <input
+            <Input
               type="number"
               step="0.1"
               {...register('farmSize', { valueAsNumber: true })}
-              className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+              error={errors.farmSize?.message}
             />
-            {errors.farmSize && (
-              <p className="text-red-500 text-xs mt-1">{errors.farmSize.message}</p>
-            )}
           </div>
 
           {/* Language Preference */}
@@ -168,18 +156,18 @@ export const FarmerRegistrationForm: React.FC = () => {
             <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
               {t('farmers_language')}
             </label>
-            <select
+            <Select
               {...register('languagePreference')}
-              className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none transition-all"
-            >
-              <option value="en">English (en)</option>
-              <option value="sw">Swahili (sw)</option>
-              <option value="lug">Luganda (lug)</option>
-              <option value="ny">Chichewa (ny)</option>
-              <option value="am">Amharic (am)</option>
-              <option value="oro">Afaan Oromoo (oro)</option>
-              <option value="fr">French (fr)</option>
-            </select>
+              options={[
+                { value: 'en', label: 'English (en)' },
+                { value: 'sw', label: 'Swahili (sw)' },
+                { value: 'lug', label: 'Luganda (lug)' },
+                { value: 'ny', label: 'Chichewa (ny)' },
+                { value: 'am', label: 'Amharic (am)' },
+                { value: 'oro', label: 'Afaan Oromoo (oro)' },
+                { value: 'fr', label: 'French (fr)' },
+              ]}
+            />
           </div>
 
           {/* Performance & Health */}
@@ -193,10 +181,9 @@ export const FarmerRegistrationForm: React.FC = () => {
                 <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
                   Initial Vital Score (0-100)
                 </label>
-                <input
+                <Input
                   type="number"
                   {...register('vitalScore', { valueAsNumber: true })}
-                  className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
                   placeholder="e.g. 85"
                 />
               </div>
@@ -236,41 +223,33 @@ export const FarmerRegistrationForm: React.FC = () => {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <input
+                <Input
                   type="number"
                   step="0.000001"
                   {...register('latitude', { valueAsNumber: true })}
                   placeholder={t('latitude')}
-                  className="w-full px-4 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white outline-none"
                 />
               </div>
               <div className="space-y-1">
-                <input
+                <Input
                   type="number"
                   step="0.000001"
                   {...register('longitude', { valueAsNumber: true })}
                   placeholder={t('longitude')}
-                  className="w-full px-4 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white outline-none"
                 />
               </div>
             </div>
           </div>
         </div>
 
-        <button
+        <Button
           type="submit"
-          disabled={isLoading}
-          className="w-full flex items-center justify-center gap-2 py-3 bg-primary-600 hover:bg-primary-700 disabled:bg-slate-400 text-white font-semibold rounded-lg shadow-md transition-all active:scale-95"
+          loading={isLoading}
+          className="w-full py-3"
         >
-          {isLoading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            <>
-              <UserPlus className="w-5 h-5" />
-              {t('farmer_register_button')}
-            </>
-          )}
-        </button>
+          <UserPlus className="w-5 h-5" />
+          {t('farmer_register_button')}
+        </Button>
       </form>
     </div>
   );

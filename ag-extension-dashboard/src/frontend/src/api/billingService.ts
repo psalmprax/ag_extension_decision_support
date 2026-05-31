@@ -1,11 +1,16 @@
 import apiClient from './client';
+import { AxiosError } from 'axios';
+
+function isAxiosError(err: unknown): err is AxiosError<{ success?: boolean; error?: string }> {
+    return err instanceof AxiosError;
+}
 
 export const fetchPlans = async () => {
     try {
         const { data } = await apiClient.get('/billing/plans');
         return data;
-    } catch (err: any) {
-        return err.response?.data || { success: false, error: 'Failed to fetch plans' };
+    } catch (err: unknown) {
+        return (isAxiosError(err) ? err.response?.data : null) || { success: false, error: 'Failed to fetch plans' };
     }
 };
 
@@ -13,8 +18,8 @@ export const fetchSubscription = async () => {
     try {
         const { data } = await apiClient.get('/billing/subscription');
         return data;
-    } catch (err: any) {
-        return err.response?.data || { success: false, error: 'Failed to fetch subscription' };
+    } catch (err: unknown) {
+        return (isAxiosError(err) ? err.response?.data : null) || { success: false, error: 'Failed to fetch subscription' };
     }
 };
 
@@ -22,8 +27,8 @@ export const fetchUsage = async () => {
     try {
         const { data } = await apiClient.get('/billing/usage');
         return data;
-    } catch (err: any) {
-        return err.response?.data || { success: false, error: 'Failed to fetch usage' };
+    } catch (err: unknown) {
+        return (isAxiosError(err) ? err.response?.data : null) || { success: false, error: 'Failed to fetch usage' };
     }
 };
 
@@ -31,8 +36,8 @@ export const createCheckoutSession = async (priceId: string, billingCycle: 'curr
     try {
         const { data } = await apiClient.post('/billing/subscribe', { priceId, billingCycle });
         return data;
-    } catch (err: any) {
-        return err.response?.data || { success: false, error: 'Failed to create checkout session' };
+    } catch (err: unknown) {
+        return (isAxiosError(err) ? err.response?.data : null) || { success: false, error: 'Failed to create checkout session' };
     }
 };
 
@@ -40,8 +45,8 @@ export const switchSubscription = async (priceId: string, billingCycle: 'current
     try {
         const { data } = await apiClient.post('/billing/switch', { priceId, billingCycle });
         return data;
-    } catch (err: any) {
-        return err.response?.data || { success: false, error: 'Failed to switch subscription' };
+    } catch (err: unknown) {
+        return (isAxiosError(err) ? err.response?.data : null) || { success: false, error: 'Failed to switch subscription' };
     }
 };
 
@@ -49,8 +54,8 @@ export const cancelSubscription = async () => {
     try {
         const { data } = await apiClient.post('/billing/cancel');
         return data;
-    } catch (err: any) {
-        return err.response?.data || { success: false, error: 'Failed to cancel subscription' };
+    } catch (err: unknown) {
+        return (isAxiosError(err) ? err.response?.data : null) || { success: false, error: 'Failed to cancel subscription' };
     }
 };
 
@@ -58,8 +63,8 @@ export const createPortalSession = async () => {
     try {
         const { data } = await apiClient.post('/billing/portal');
         return data;
-    } catch (err: any) {
-        return err.response?.data || { success: false, error: 'Failed to create portal session' };
+    } catch (err: unknown) {
+        return (isAxiosError(err) ? err.response?.data : null) || { success: false, error: 'Failed to create portal session' };
     }
 };
 
@@ -67,8 +72,8 @@ export const fetchInvoices = async () => {
     try {
         const { data } = await apiClient.get('/billing/invoices');
         return data;
-    } catch (err: any) {
-        return err.response?.data || { success: false, error: 'Failed to fetch invoices' };
+    } catch (err: unknown) {
+        return (isAxiosError(err) ? err.response?.data : null) || { success: false, error: 'Failed to fetch invoices' };
     }
 };
 
@@ -76,8 +81,8 @@ export const fetchPaymentMethods = async () => {
     try {
         const { data } = await apiClient.get('/billing/payment-methods');
         return data;
-    } catch (err: any) {
-        return err.response?.data || { success: false, error: 'Failed to fetch payment methods' };
+    } catch (err: unknown) {
+        return (isAxiosError(err) ? err.response?.data : null) || { success: false, error: 'Failed to fetch payment methods' };
     }
 };
 
@@ -85,8 +90,8 @@ export const addPaymentMethod = async (type: string) => {
     try {
         const { data } = await apiClient.post('/billing/payment-methods', { type });
         return data;
-    } catch (err: any) {
-        return err.response?.data || { success: false, error: 'Failed to add payment method' };
+    } catch (err: unknown) {
+        return (isAxiosError(err) ? err.response?.data : null) || { success: false, error: 'Failed to add payment method' };
     }
 };
 
@@ -94,8 +99,8 @@ export const deletePaymentMethod = async (id: string) => {
     try {
         const { data } = await apiClient.delete(`/billing/payment-methods/${id}`);
         return data;
-    } catch (err: any) {
-        return err.response?.data || { success: false, error: 'Failed to delete payment method' };
+    } catch (err: unknown) {
+        return (isAxiosError(err) ? err.response?.data : null) || { success: false, error: 'Failed to delete payment method' };
     }
 };
 

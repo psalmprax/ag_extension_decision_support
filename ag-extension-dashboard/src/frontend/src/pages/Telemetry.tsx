@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
-import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
+import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '../store/useAppStore';
 import { fetchTelemetrySummary, fetchTelemetryEvents, TelemetrySummary, TelemetryEvent } from '../api/telemetryService';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, LineChart, Line } from 'recharts';
@@ -14,7 +14,7 @@ import toast from 'react-hot-toast';
 
 export function Telemetry() {
     const { t } = useLanguage();
-    const { headingClass, isModern, radiusClass, btnClass } = useDesignSystemMode();
+    const { headingClass, isModern, radiusClass, btnClass } = useThemeClasses();
     const { addNotification } = useAppStore();
 
     // State
@@ -75,7 +75,7 @@ export function Telemetry() {
     const StatCard = ({ title, value, icon: Icon, change, color = 'blue' }: {
         title: string;
         value: string | number;
-        icon: any;
+        icon: React.ComponentType<{ className?: string }>;
         change?: number;
         color?: string;
     }) => (

@@ -14,7 +14,7 @@ import { fetchVisits } from '@/api/visitService';
 import { fetchReports, generateReport, Report } from '@/api/reportService';
 import { fetchPerformanceData } from '@/api/analyticsService';
 import { getMyTransactions } from '@/api/billingService';
-import { useDesignSystemMode } from '@/hooks/useDesignSystemMode';
+import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -74,9 +74,8 @@ function App() {
     } = useAppStore();
 
     const {
-        isModern, radiusClass, panelClass, headerOpacity,
-        btnClass, headingClass, dataClass, subtextClass, cardClass
-    } = useDesignSystemMode();
+        isModern, headingClass
+    } = useThemeClasses();
 
     // Theme, auth, and bootstrap hooks
     useAppTheme(themeName, darkMode);
@@ -338,9 +337,6 @@ function App() {
             <AppHeader
                 sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}
                 activeTab={activeTab} setActiveTab={setActiveTab}
-                darkMode={darkMode} setDarkMode={setDarkMode}
-                themeName={themeName} setThemeName={setThemeName}
-                isModern={isModern} toggleDesignSystemMode={toggleDesignSystemMode}
                 searchQuery={searchQuery} setSearchQuery={setSearchQuery}
                 showGlobalSearch={showGlobalSearch} setShowGlobalSearch={setShowGlobalSearch}
                 isGlobalSearching={isGlobalSearching} globalSearchResults={globalSearchResults}
@@ -353,7 +349,6 @@ function App() {
                 setIsNotificationPanelOpen={setIsNotificationPanelOpen}
                 isProfileMenuOpen={isProfileMenuOpen} setIsProfileMenuOpen={setIsProfileMenuOpen}
                 setShowProfileModal={setShowProfileModal} setShowSettingsPanel={setShowSettingsPanel}
-                headerOpacity={headerOpacity} btnClass={btnClass} headingClass={headingClass} subtextClass={subtextClass}
             />
 
             <div className="flex flex-1 overflow-hidden pt-16">
@@ -361,8 +356,7 @@ function App() {
                     sidebarOpen={sidebarOpen} navItems={navItems}
                     activeTab={activeTab} setActiveTab={setActiveTab}
                     setShowHelpCenter={setShowHelpCenter}
-                    storeUser={storeUser} isModern={isModern} darkMode={darkMode}
-                    subtextClass={subtextClass} headingClass={headingClass} btnClass={btnClass}
+                    storeUser={storeUser}
                     onGenerateReport={handleGenerateReport}
                 />
 
@@ -377,9 +371,7 @@ function App() {
                                         performanceData={performanceData} effectiveFarmers={effectiveFarmers}
                                         isMapExpanded={isMapExpanded} setIsMapExpanded={setIsMapExpanded}
                                         handleStartConversation={handleStartConversation} handleOpenFarmerDetail={handleOpenFarmerDetail}
-                                        user={user} isModern={isModern} darkMode={darkMode}
-                                        cardClass={cardClass} headingClass={headingClass} dataClass={dataClass}
-                                        subtextClass={subtextClass} radiusClass={radiusClass}
+                                        user={user}
                                         addNotification={addNotification}
                                     />
                                 )}
@@ -391,7 +383,6 @@ function App() {
                                         bulkSmsMessage={bulkSmsMessage} setBulkSmsMessage={setBulkSmsMessage}
                                         handleBulkSMS={handleBulkSMS} handleBulkExport={handleBulkExport}
                                         handleBulkDelete={handleBulkDelete} setSelectedFarmers={setSelectedFarmers}
-                                        isModern={isModern} headingClass={headingClass} btnClass={btnClass} radiusClass={radiusClass}
                                     />
                                 )}
                                 {activeTab === 'visits' && (
@@ -399,7 +390,6 @@ function App() {
                                         visits={visits} setShowVisitModal={setShowVisitModal} refetchVisits={refetchVisits}
                                         handleOpenFarmerDetail={handleOpenFarmerDetail} farmers={effectiveFarmers}
                                         addNotification={addNotification}
-                                        isModern={isModern} headingClass={headingClass} btnClass={btnClass} radiusClass={radiusClass}
                                     />
                                 )}
                                 {activeTab === 'reports' && (
@@ -410,13 +400,11 @@ function App() {
                                         reportContent={reportContent} setReportContent={setReportContent}
                                         isLoadingReport={isLoadingReport} setIsLoadingReport={setIsLoadingReport}
                                         addNotification={addNotification} user={user}
-                                        isModern={isModern} headingClass={headingClass} btnClass={btnClass} radiusClass={radiusClass}
                                     />
                                 )}
                                 {activeTab === 'analytics' && (
                                     <AnalyticsPage
-                                        performanceData={performanceData} darkMode={darkMode} isModern={isModern}
-                                        headingClass={headingClass} radiusClass={radiusClass}
+                                        performanceData={performanceData}
                                     />
                                 )}
                                 {activeTab === 'billing' && <BillingDashboard />}
@@ -429,7 +417,6 @@ function App() {
                                         farmerChatMessages={farmerChatMessages} farmerChatInput={farmerChatInput}
                                         setFarmerChatInput={setFarmerChatInput} handleFarmerChatSend={handleFarmerChatSend}
                                         loadFarmers={loadFarmers} setShowFarmerModal={setShowFarmerModal}
-                                        isModern={isModern} headingClass={headingClass} btnClass={btnClass} radiusClass={radiusClass}
                                     />
                                 )}
                                 {activeTab === 'farmer_dashboard' && <FarmerDashboard />}
@@ -479,7 +466,7 @@ function App() {
                 farmerList={farmerList} isLoadingFarmers={isLoadingFarmers}
                 farmerSearchQuery={farmerSearchQuery} setFarmerSearchQuery={setFarmerSearchQuery}
                 handleStartConversation={handleStartConversation} activeTab={activeTab}
-                isModern={isModern} btnClass={btnClass} radiusClass={radiusClass} addNotification={addNotification}
+                addNotification={addNotification}
             />
         </div>
     );

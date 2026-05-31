@@ -29,14 +29,14 @@ export default defineBackground(() => {
     let db: IDBDatabase | null = null;
 
     // Use global browser/chrome API
-    const chromeAPI = (globalThis as any).chrome;
+    const chromeAPI = browser;
 
     // Initialize IndexedDB
     const initDB = (): Promise<void> => {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-            request.onerror = () => reject(request.error);
+            request.onerror = () => reject(new Error(request.error?.message || 'Database open failed'));
             request.onsuccess = () => {
                 db = request.result;
                 resolve();
@@ -115,7 +115,7 @@ export default defineBackground(() => {
             const request = store.put({ key: 'offlineStatus', ...status });
 
             request.onsuccess = () => resolve();
-            request.onerror = () => reject(request.error);
+            request.onerror = () => reject(new Error(request.error?.message || 'Update offline status failed'));
         });
     };
 
@@ -125,7 +125,7 @@ export default defineBackground(() => {
 
         const queuedRequest: QueuedRequest = {
             ...request,
-            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
             timestamp: Date.now(),
             retries: 0,
             maxRetries: 3
@@ -142,7 +142,7 @@ export default defineBackground(() => {
                 notifyQueueUpdate();
                 resolve();
             };
-            dbRequest.onerror = () => reject(dbRequest.error);
+            dbRequest.onerror = () => reject(new Error(dbRequest.error?.message || 'Queue request failed'));
         });
     };
 
@@ -168,7 +168,7 @@ export default defineBackground(() => {
                 }
             };
 
-            request.onerror = () => reject(request.error);
+            request.onerror = () => reject(new Error(request.error?.message || 'Get queued requests failed'));
         });
     };
 
@@ -185,8 +185,38 @@ export default defineBackground(() => {
                 notifyQueueUpdate();
                 resolve();
             };
-            request.onerror = () => reject(request.error);
+            request.onerror = () => reject(new Error(request.error?.message || 'Remove queued request failed'));
         });
+    };
+
+    // Process a single queued request
+    const processSingleRequest = async (request: QueuedRequest): Promise<void> => {
+        try {
+            const response = await fetch(request.url, {
+                method: request.method,
+                headers: request.headers,
+                body: request.body ? JSON.stringify(request.body) : undefined
+            });
+
+            if (response.ok) {
+                console.log('Queued request processed successfully:', request.id);
+                await removeQueuedRequest(request.id);
+            } else {
+                throw new Error(`HTTP ${response.status}`);
+            }
+        } catch (error) {
+            console.error('Failed to process queued request:', request.id, error);
+            request.retries++;
+
+            if (request.retries >= request.maxRetries) {
+                console.log('Max retries reached, removing request:', request.id);
+                await removeQueuedRequest(request.id);
+            } else if (db) {
+                const transaction = db.transaction([QUEUE_STORE], 'readwrite');
+                const store = transaction.objectStore(QUEUE_STORE);
+                store.put(request);
+            }
+        }
     };
 
     // Process queued requests
@@ -194,35 +224,7 @@ export default defineBackground(() => {
         const requests = await getQueuedRequests();
 
         for (const request of requests) {
-            try {
-                const response = await fetch(request.url, {
-                    method: request.method,
-                    headers: request.headers,
-                    body: request.body ? JSON.stringify(request.body) : undefined
-                });
-
-                if (response.ok) {
-                    console.log('Queued request processed successfully:', request.id);
-                    await removeQueuedRequest(request.id);
-                } else {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-            } catch (error) {
-                console.error('Failed to process queued request:', request.id, error);
-                request.retries++;
-
-                if (request.retries >= request.maxRetries) {
-                    console.log('Max retries reached, removing request:', request.id);
-                    await removeQueuedRequest(request.id);
-                } else {
-                    // Update retry count
-                    if (db) {
-                        const transaction = db.transaction([QUEUE_STORE], 'readwrite');
-                        const store = transaction.objectStore(QUEUE_STORE);
-                        store.put(request);
-                    }
-                }
-            }
+            await processSingleRequest(request);
         }
     };
 
@@ -334,48 +336,24 @@ export default defineBackground(() => {
     });
 
     // Message handler for queuing requests
-    if (chromeAPI?.runtime?.onMessage) {
-        chromeAPI.runtime.onMessage.addListener((message: any, sender: any, sendResponse: any) => {
-            if (message.action === 'queue_request') {
-                queueRequest(message.request).then(() => {
+    const handleMessage = (message: any, sender: any, sendResponse: any) => {
+        const run = async () => {
+            try {
+                if (message.action === 'queue_request') {
+                    await queueRequest(message.request);
                     sendResponse({ success: true });
-                }).catch((error) => {
-                    console.error('Failed to queue request:', error);
-                    sendResponse({ success: false, error: error.message });
-                });
-                return true; // Keep channel open
-            }
-
-            if (message.action === 'get_queued_requests') {
-                getQueuedRequests().then((requests) => {
+                } else if (message.action === 'get_queued_requests') {
+                    const requests = await getQueuedRequests();
                     sendResponse({ success: true, requests });
-                }).catch((error) => {
-                    sendResponse({ success: false, error: error.message });
-                });
-                return true;
-            }
-
-            if (message.action === 'get_offline_status') {
-                getOfflineStatus().then((status) => {
+                } else if (message.action === 'get_offline_status') {
+                    const status = await getOfflineStatus();
                     sendResponse({ success: true, status });
-                }).catch((error) => {
-                    sendResponse({ success: false, error: error.message });
-                });
-                return true;
-            }
-
-            if (message.action === 'sync_now') {
-                processQueue().then(() => {
+                } else if (message.action === 'sync_now') {
+                    await processQueue();
                     sendResponse({ success: true });
-                }).catch((error) => {
-                    sendResponse({ success: false, error: error.message });
-                });
-                return true;
-            }
-
-            if (message.action === 'open_sidepanel') {
-                if (chromeAPI?.sidePanel) {
-                    chromeAPI.sidePanel.open({ windowId: sender.tab?.windowId }).then(() => {
+                } else if (message.action === 'open_sidepanel') {
+                    if (chromeAPI?.sidePanel) {
+                        await chromeAPI.sidePanel.open({ windowId: sender.tab?.windowId });
                         if (message.tab) {
                             setTimeout(() => {
                                 chromeAPI.runtime.sendMessage({ 
@@ -384,10 +362,19 @@ export default defineBackground(() => {
                                 });
                             }, 500);
                         }
-                    });
+                    }
                 }
+            } catch (error: any) {
+                console.error(`Error handling ${message.action}:`, error);
+                sendResponse({ success: false, error: error?.message || String(error) });
             }
-        });
+        };
+        run();
+        return true;
+    };
+
+    if (chromeAPI?.runtime?.onMessage) {
+        chromeAPI.runtime.onMessage.addListener(handleMessage);
     }
 
     init();

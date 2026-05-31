@@ -133,20 +133,33 @@ export class CredentialVault {
   }
 
   private encrypt(value: string): string {
-    const key = this.encryptionKey;
-    let result = '';
-    for (let i = 0; i < value.length; i++) {
-      result += String.fromCharCode(value.charCodeAt(i) ^ key.charCodeAt(i % key.length));
-    }
-    return Buffer.from(result).toString('base64');
+    const crypto = require('crypto');
+    const key = crypto.createHash('sha256').update(this.encryptionKey).digest();
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+    let encrypted = cipher.update(value, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    const authTag = cipher.getAuthTag().toString('hex');
+    return iv.toString('hex') + ':' + authTag + ':' + encrypted;
   }
 
   private decrypt(encrypted: string): string {
-    const value = Buffer.from(encrypted, 'base64').toString('utf-8');
-    const key = this.encryptionKey;
+    const crypto = require('crypto');
+    const key = crypto.createHash('sha256').update(this.encryptionKey).digest();
+    const parts = encrypted.split(':');
+    if (parts.length === 3) {
+      const iv = Buffer.from(parts[0], 'hex');
+      const authTag = Buffer.from(parts[1], 'hex');
+      const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+      decipher.setAuthTag(authTag);
+      let decrypted = decipher.update(parts[2], 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      return decrypted;
+    }
+    // Legacy XOR fallback for existing encrypted values
     let result = '';
-    for (let i = 0; i < value.length; i++) {
-      result += String.fromCharCode(value.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+    for (let i = 0; i < encrypted.length; i++) {
+      result += String.fromCharCode(encrypted.charCodeAt(i) ^ key[i % key.length]);
     }
     return result;
   }

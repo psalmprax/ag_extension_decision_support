@@ -3,6 +3,7 @@ import { FileText, Clock, Download, Loader2 } from 'lucide-react';
 import { Report } from '@/api/reportService';
 import { downloadReport, getReportContent } from '@/api/reportService';
 import { useLanguage } from '@/lib/LanguageContext';
+import { useThemeClasses } from '@/hooks/useThemeClasses';
 
 interface ReportsPageProps {
     reports: Report[];
@@ -16,10 +17,6 @@ interface ReportsPageProps {
     setIsLoadingReport: (loading: boolean) => void;
     addNotification: (n: { type: 'info' | 'warning' | 'error' | 'success'; message: string }) => void;
     user: { firstName?: string; lastName?: string; avatarUrl?: string } | undefined;
-    isModern: boolean;
-    headingClass: string;
-    btnClass: string;
-    radiusClass: string;
 }
 
 export const ReportsPage: React.FC<ReportsPageProps> = ({
@@ -28,9 +25,9 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
     reportContent: _reportContent, setReportContent,
     isLoadingReport: _isLoadingReport, setIsLoadingReport,
     addNotification, user,
-    isModern, headingClass, btnClass, radiusClass,
 }) => {
     const { t } = useLanguage();
+    const { isModern, headingClass, btnClass, radiusClass } = useThemeClasses();
 
     return (
         <div>
@@ -61,7 +58,8 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                                 const res = await getReportContent(report.id);
                                 if (res.success && res.data) {
                                     setViewingReport(res.data);
-                                    setReportContent(res.data.content || res.data.data?.content || null);
+                                    const content = res.data.content || (typeof res.data.data?.content === 'string' ? res.data.data.content : null);
+                                    setReportContent(content);
                                 }
                             } catch {
                                 addNotification({ type: 'error', message: 'Failed to load report' });

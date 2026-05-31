@@ -41,7 +41,7 @@ export default defineContentScript({
           " onmouseover="this.style.transform='scale(1.05) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 1v6M12 17v6M1 12h6M17 12h6"/></svg>
           </div>
-        `;
+        `);
 
         photoBtn.onclick = async () => {
           try {
@@ -72,16 +72,13 @@ export default defineContentScript({
                   stream.getTracks().forEach(track => track.stop());
 
                   // Send to sidepanel for analysis
-                  const browserAPI = (window as any).browser || (window as any).chrome;
-                  if (browserAPI && browserAPI.runtime) {
-                    browserAPI.runtime.sendMessage({
-                      action: 'photo_captured',
-                      imageData: imageData
-                    });
+                  browser.runtime.sendMessage({
+                    action: 'photo_captured',
+                    imageData: imageData
+                  });
 
-                    // Open sidepanel
-                    browserAPI.runtime.sendMessage({ action: 'open_sidepanel' });
-                  }
+                  // Open sidepanel
+                  browser.runtime.sendMessage({ action: 'open_sidepanel' });
                 }
               }, 1000);
             });
@@ -110,13 +107,10 @@ export default defineContentScript({
           " onmouseover="this.style.transform='scale(1.05) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
           </div>
-        `;
+        `);
 
         fab.onclick = () => {
-          const browserAPI = (window as any).browser || (window as any).chrome;
-          if (browserAPI && browserAPI.runtime) {
-            browserAPI.runtime.sendMessage({ action: 'open_sidepanel' });
-          }
+          browser.runtime.sendMessage({ action: 'open_sidepanel' });
         };
 
         // Sync Button
@@ -137,24 +131,22 @@ export default defineContentScript({
           " onmouseover="this.style.transform='scale(1.05) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
           </div>
-        `;
+        `);
 
         syncBtn.onclick = async () => {
           try {
-            const browserAPI = (window as any).browser || (window as any).chrome;
-            if (browserAPI && browserAPI.runtime) {
-              // Show loading state
-              const originalIcon = syncBtn.querySelector('div');
-              if (originalIcon) {
-                safeSetHTML(originalIcon, `
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 6v6l4 2"/>
-                  </svg>
-                `;
-              }
+            // Show loading state
+            const originalIcon = syncBtn.querySelector('div');
+            if (originalIcon) {
+              safeSetHTML(originalIcon, `
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+              `);
+            }
 
-              await browserAPI.runtime.sendMessage({ action: 'sync_now' });
+            await browser.runtime.sendMessage({ action: 'sync_now' });
 
               // Show success briefly
               if (originalIcon) {
@@ -162,17 +154,16 @@ export default defineContentScript({
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M20 6L9 17l-5-5"/>
                   </svg>
-                `;
+                `);
               }
 
               setTimeout(() => {
                 if (originalIcon) {
                   safeSetHTML(originalIcon, `
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
-                  `;
+                  `);
                 }
               }, 2000);
-            }
           } catch (error) {
             console.error('Sync failed:', error);
             // Show error state briefly
@@ -184,11 +175,11 @@ export default defineContentScript({
                   <path d="M15 9l-6 6"/>
                   <path d="M9 9l6 6"/>
                 </svg>
-              `;
+              `);
               setTimeout(() => {
                 safeSetHTML(iconDiv, `
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
-                `;
+                `);
               }, 2000);
             }
           }
@@ -212,7 +203,7 @@ export default defineContentScript({
           " onmouseover="this.style.transform='scale(1.05) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 1v6M12 17v6M1 12h6M17 12h6"/></svg>
           </div>
-        `;
+        `);
 
         gpsBtn.onclick = async () => {
           try {
@@ -229,7 +220,7 @@ export default defineContentScript({
                   <circle cx="12" cy="12" r="10"/>
                   <path d="M12 6v6l4 2"/>
                 </svg>
-              `;
+              `);
             }
 
             const position = await new Promise<GeolocationPosition>((resolve, reject) => {
@@ -249,22 +240,19 @@ export default defineContentScript({
             if (accuracy > 1000) accuracyStatus = 'poor';
 
             // Send location data to sidepanel with validation
-            const browserAPI = (window as any).browser || (window as any).chrome;
-            if (browserAPI && browserAPI.runtime) {
-              browserAPI.runtime.sendMessage({
-                action: 'location_captured',
-                location: {
-                  latitude,
-                  longitude,
-                  accuracy,
-                  accuracyStatus,
-                  timestamp
-                }
-              });
+            browser.runtime.sendMessage({
+              action: 'location_captured',
+              location: {
+                latitude,
+                longitude,
+                accuracy,
+                accuracyStatus,
+                timestamp
+              }
+            });
 
-              // Open sidepanel
-              browserAPI.runtime.sendMessage({ action: 'open_sidepanel' });
-            }
+            // Open sidepanel
+            browser.runtime.sendMessage({ action: 'open_sidepanel' });
           } catch (error: any) {
             console.error('Location access failed:', error);
 
@@ -284,7 +272,7 @@ export default defineContentScript({
             if (iconDiv) {
               safeSetHTML(iconDiv, `
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 1v6M12 17v6M1 12h6M17 12h6"/></svg>
-              `;
+              `);
             }
           }
         };
@@ -307,13 +295,10 @@ export default defineContentScript({
           " onmouseover="this.style.transform='scale(1.05) translateY(-2px)'" onmouseout="this.style.transform='scale(1) translateY(0)'">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </div>
-        `;
+        `);
 
         logVisitBtn.onclick = () => {
-          const browserAPI = (window as any).browser || (window as any).chrome;
-          if (browserAPI && browserAPI.runtime) {
-            browserAPI.runtime.sendMessage({ action: 'open_sidepanel', tab: 'log' });
-          }
+          browser.runtime.sendMessage({ action: 'open_sidepanel', tab: 'log' });
         };
 
         wrapper.appendChild(syncBtn);
@@ -326,9 +311,7 @@ export default defineContentScript({
     });
 
     // Add message listener for page context requests
-    const browserAPI = (window as any).browser || (window as any).chrome;
-    if (browserAPI && browserAPI.runtime) {
-      browserAPI.runtime.onMessage.addListener((message: any, sender: any, sendResponse: any) => {
+    browser.runtime.onMessage.addListener((message: any, sender: any, sendResponse: any) => {
         if (message.action === 'get_page_context') {
           const context = {
             title: document.title,
@@ -362,7 +345,6 @@ export default defineContentScript({
           return true;
         }
       });
-    }
 
     // Selection Overlay Bubble Logic
     let bubble: HTMLDivElement | null = null;
@@ -393,7 +375,7 @@ export default defineContentScript({
       safeSetHTML(bubble, `
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
         <span>ANALYZE WITH AI</span>
-      `;
+      `);
 
       bubble.onmousedown = (e) => {
         e.preventDefault(); // Prevent losing selection
@@ -404,10 +386,10 @@ export default defineContentScript({
         e.preventDefault();
         e.stopPropagation();
         const selectedText = window.getSelection()?.toString() || '';
-        if (selectedText.length > 0 && browserAPI && browserAPI.runtime) {
-          browserAPI.runtime.sendMessage({ action: 'open_sidepanel' });
+        if (selectedText.length > 0) {
+          browser.runtime.sendMessage({ action: 'open_sidepanel' });
           setTimeout(() => {
-            browserAPI.runtime.sendMessage({
+            browser.runtime.sendMessage({
               action: 'analyze_selection',
               text: selectedText
             });
@@ -455,11 +437,11 @@ export default defineContentScript({
       // Cmd/Ctrl + Shift + A
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'A') {
         const text = window.getSelection()?.toString().trim();
-        if (text && browserAPI && browserAPI.runtime) {
+        if (text) {
           e.preventDefault();
-          browserAPI.runtime.sendMessage({ action: 'open_sidepanel' });
+          browser.runtime.sendMessage({ action: 'open_sidepanel' });
           setTimeout(() => {
-            browserAPI.runtime.sendMessage({
+            browser.runtime.sendMessage({
               action: 'analyze_selection',
               text: text
             });
@@ -485,7 +467,7 @@ function extractMainContent(): string {
   return bodyText.replace(/\s+/g, ' ').trim().substring(0, 5000);
 }
 
-function extractStructuredData(): { headings: string[]; links: Array<{ text: string; url: string }>; images: Array<{ alt: string; src: string }>; metadata: Record<string, string> } {
+function extractStructuredData(): { headings: Array<{ tag: string; text: string }>; links: Array<{ text: string; url: string }>; images: Array<{ alt: string; src: string }>; metadata: Record<string, string> } {
   const headings = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6'))
     .map(h => ({ tag: h.tagName, text: h.textContent?.trim() || '' }))
     .filter(h => h.text.length > 0);

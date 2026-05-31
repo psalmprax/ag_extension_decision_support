@@ -15,11 +15,11 @@
 # ==============================================================================
 
 # --- Configuration ---
-SOURCE_HOST=${SOURCE_HOST:-"149.104.110.122"}
-SOURCE_KEY=${SOURCE_KEY:-"/home/psalmprax/Music/id_rsa"}
-DEST_HOST=${DEST_HOST:-"145.223.97.248"}
-DEST_KEY=${DEST_KEY:-"/home/psalmprax/Videos/id_key"}
-REMOTE_PATH="/root/ag_extension_decision_support/ag-extension-dashboard"
+SOURCE_HOST="${SOURCE_HOST:?SOURCE_HOST is required}"
+SOURCE_KEY="${SOURCE_KEY_PATH:?SOURCE_KEY_PATH is required}"
+DEST_HOST="${DEST_HOST:?DEST_HOST is required}"
+DEST_KEY="${DEST_KEY_PATH:?DEST_KEY_PATH is required}"
+REMOTE_PATH="${REMOTE_PATH:-/root/ag_extension_decision_support/ag-extension-dashboard}"
 
 # Docker Names
 COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml"
@@ -37,7 +37,7 @@ CREW_AI_VOL="${VOLUME_PREFIX}_crew-ai-data"
 # Cloud Database Configuration
 DB_NAME=${DB_NAME:-"ag_extension"}
 DB_USER=${DB_USER:-"postgres"}
-DB_PASS=${DB_PASS:-"password"}
+DB_PASS="${DB_PASS:?DB_PASS is required for migration commands}"
 SRC_DB_ENDPOINT=${SRC_DB_ENDPOINT:-""} 
 DST_DB_ENDPOINT=${DST_DB_ENDPOINT:-""} 
 
@@ -46,14 +46,14 @@ src_ssh() {
     if [[ "$SOURCE_HOST" == "localhost" || "$SOURCE_HOST" == "127.0.0.1" ]]; then
         bash -c "$*"
     else
-        ssh -i "$SOURCE_KEY" -o StrictHostKeyChecking=no -o PasswordAuthentication=no root@"$SOURCE_HOST" "$@"
+        ssh -i "$SOURCE_KEY" -o StrictHostKeyChecking=accept-new -o PasswordAuthentication=no root@"$SOURCE_HOST" "$@"
     fi
 }
 dest_ssh() { 
     if [[ "$DEST_HOST" == "localhost" || "$DEST_HOST" == "127.0.0.1" || "$DEST_HOST" == "$(hostname -I | awk '{print $1}')" ]]; then
         bash -c "$*"
     else
-        ssh -i "$DEST_KEY" -o StrictHostKeyChecking=no -o PasswordAuthentication=no root@"$DEST_HOST" "$@"
+        ssh -i "$DEST_KEY" -o StrictHostKeyChecking=accept-new -o PasswordAuthentication=no root@"$DEST_HOST" "$@"
     fi
 }
 
@@ -83,8 +83,8 @@ deploy_code() {
 migrate_postgres_docker() {
     echo "🐘 Migrating Postgres (Docker -> Docker)..."
     src_ssh "docker exec $DB_CONTAINER pg_dumpall -U postgres > /root/pg_migration.sql"
-    scp -i "$SOURCE_KEY" -o StrictHostKeyChecking=no root@"$SOURCE_HOST":/root/pg_migration.sql ./pg_migration.sql
-    scp -i "$DEST_KEY" -o StrictHostKeyChecking=no ./pg_migration.sql root@"$DEST_HOST":/root/pg_migration.sql
+    scp -i "$SOURCE_KEY" -o StrictHostKeyChecking=accept-new root@"$SOURCE_HOST":/root/pg_migration.sql ./pg_migration.sql
+    scp -i "$DEST_KEY" -o StrictHostKeyChecking=accept-new ./pg_migration.sql root@"$DEST_HOST":/root/pg_migration.sql
     
     dest_ssh "docker exec $DB_CONTAINER psql -U postgres -c \"SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$DB_NAME' AND pid <> pg_backend_pid();\""
     dest_ssh "docker exec $DB_CONTAINER dropdb -U postgres --if-exists $DB_NAME"
@@ -116,7 +116,7 @@ migrate_docker_to_cloud() {
         exit 1
     fi
     src_ssh "docker exec $DB_CONTAINER pg_dump -U postgres $DB_NAME > /root/docker_to_cloud.sql"
-    scp -i "$SOURCE_KEY" -o StrictHostKeyChecking=no root@"$SOURCE_HOST":/root/docker_to_cloud.sql ./docker_to_cloud.sql
+    scp -i "$SOURCE_KEY" -o StrictHostKeyChecking=accept-new root@"$SOURCE_HOST":/root/docker_to_cloud.sql ./docker_to_cloud.sql
     PGPASSWORD="$DB_PASS" psql -h "$DST_DB_ENDPOINT" -U "$DB_USER" -d "$DB_NAME" < docker_to_cloud.sql
     src_ssh "rm /root/docker_to_cloud.sql"
     rm docker_to_cloud.sql
@@ -130,7 +130,7 @@ extract_redis_rdb() {
     # Extract the dump.rdb
     src_ssh "docker cp $REDIS_CONTAINER:/data/dump.rdb /root/redis_dump.rdb"
     # Download locally
-    scp -i "$SOURCE_KEY" -o StrictHostKeyChecking=no root@"$SOURCE_HOST":/root/redis_dump.rdb ./redis_dump.rdb
+    scp -i "$SOURCE_KEY" -o StrictHostKeyChecking=accept-new root@"$SOURCE_HOST":/root/redis_dump.rdb ./redis_dump.rdb
     src_ssh "rm /root/redis_dump.rdb"
     echo "✅ Success! File './redis_dump.rdb' is ready for upload to S3/Cloud storage."
     echo "👉 Tip: In AWS, upload this to S3 and use it to seed your ElastiCache instance."
@@ -140,8 +140,8 @@ migrate_volumes() {
     local vol_name=$1
     local backup_name=$2
     src_ssh "docker run --rm -v $vol_name:/data -v /root:/backup alpine tar czf /backup/$backup_name -C /data ."
-    scp -i "$SOURCE_KEY" -o StrictHostKeyChecking=no root@"$SOURCE_HOST":/root/$backup_name ./$backup_name
-    scp -i "$DEST_KEY" -o StrictHostKeyChecking=no ./$backup_name root@"$DEST_HOST":/root/$backup_name
+    scp -i "$SOURCE_KEY" -o StrictHostKeyChecking=accept-new root@"$SOURCE_HOST":/root/$backup_name ./$backup_name
+    scp -i "$DEST_KEY" -o StrictHostKeyChecking=accept-new ./$backup_name root@"$DEST_HOST":/root/$backup_name
     dest_ssh "docker run --rm -v $vol_name:/data -v /root:/backup alpine tar xzf /backup/$backup_name -C /data"
     src_ssh "rm /root/$backup_name"
     dest_ssh "rm /root/$backup_name"

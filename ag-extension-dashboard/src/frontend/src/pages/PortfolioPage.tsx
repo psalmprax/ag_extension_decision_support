@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Farmer } from '../types/dashboard';
 import { useLanguage } from '@/lib/LanguageContext';
+import { useThemeClasses } from '@/hooks/useThemeClasses';
 
 interface PortfolioPageProps {
     effectiveFarmers: Farmer[];
@@ -23,19 +24,15 @@ interface PortfolioPageProps {
     handleBulkExport: () => void;
     handleBulkDelete: () => void;
     setSelectedFarmers: (farmers: Set<string>) => void;
-    isModern: boolean;
-    headingClass: string;
-    btnClass: string;
-    radiusClass: string;
 }
 
 export const PortfolioPage: React.FC<PortfolioPageProps> = ({
     effectiveFarmers, selectedFarmers, handleSelectFarmer, handleOpenFarmerDetail,
     showBulkSmsComposer, setShowBulkSmsComposer, bulkSmsMessage, setBulkSmsMessage,
     handleBulkSMS, handleBulkExport, handleBulkDelete, setSelectedFarmers,
-    isModern, headingClass, btnClass, radiusClass,
 }) => {
     const { t } = useLanguage();
+    const { isModern, headingClass, btnClass, radiusClass } = useThemeClasses();
 
     return (
         <div>

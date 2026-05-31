@@ -18,18 +18,16 @@ import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { ThemeName } from '@/theme';
 import { Farmer } from '../../types/dashboard';
+import { useThemeClasses } from '@/hooks/useThemeClasses';
+import { useAppStore } from '@/store/useAppStore';
+import { cn } from '@/lib/cn';
+import { dropdownVariants } from '@/lib/animations';
 
 interface AppHeaderProps {
     sidebarOpen: boolean;
     setSidebarOpen: (open: boolean) => void;
     activeTab: string;
     setActiveTab: (tab: string) => void;
-    darkMode: boolean;
-    setDarkMode: (dark: boolean) => void;
-    themeName: ThemeName;
-    setThemeName: (name: ThemeName) => void;
-    isModern: boolean;
-    toggleDesignSystemMode: () => void;
     searchQuery: string;
     setSearchQuery: (query: string) => void;
     showGlobalSearch: boolean;
@@ -45,24 +43,22 @@ interface AppHeaderProps {
     handleOpenFarmerDetail: (farmer: Farmer) => void;
     farmers: Farmer[];
     addNotification: (n: { message: string; type: 'info' | 'warning' | 'error' | 'success' }) => void;
-    isNotificationPanelOpen?: boolean;
     setIsNotificationPanelOpen: (open: boolean) => void;
     isProfileMenuOpen: boolean;
     setIsProfileMenuOpen: (open: boolean) => void;
     setShowProfileModal: (show: boolean) => void;
     setShowSettingsPanel: (show: boolean) => void;
-    headerOpacity: string;
-    btnClass: string;
-    headingClass: string;
-    subtextClass: string;
 }
+
+const navItems = [
+    { id: 'dashboard', modern: 'Strategic Intelligence', classic: 'Operations Dashboard' },
+    { id: 'analytics', modern: 'Growth Optimization', classic: 'System Analytics' },
+    { id: 'reports', modern: 'Executive Reporting', classic: 'Data Reports' },
+] as const;
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
     sidebarOpen, setSidebarOpen,
     activeTab, setActiveTab,
-    darkMode, setDarkMode,
-    themeName, setThemeName,
-    isModern, toggleDesignSystemMode,
     searchQuery, setSearchQuery,
     showGlobalSearch, setShowGlobalSearch,
     isGlobalSearching, globalSearchResults,
@@ -75,10 +71,27 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     setIsNotificationPanelOpen,
     isProfileMenuOpen, setIsProfileMenuOpen,
     setShowProfileModal, setShowSettingsPanel,
-    headerOpacity, btnClass, headingClass, subtextClass,
 }) => {
+    const { isModern, design, headingClass, subtextClass } = useThemeClasses();
+    const { darkMode, setDarkMode, themeName, setThemeName, toggleDesignSystemMode } = useAppStore();
+
+    const headerClass = cn(
+        'fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 backdrop-blur-xl border-b border-gray-200 dark:border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.1)]',
+        isModern ? 'bg-white/30 dark:bg-slate-950/30' : 'bg-white dark:bg-slate-950 border-b-2 border-slate-100 dark:border-slate-800'
+    );
+
+    const navBtnClass = (isActive: boolean) => cn(
+        'font-headline tracking-tight transition-all px-4 py-2',
+        isModern
+            ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_0_20px_rgba(34,211,238,0.2)]'
+            : 'rounded-none border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-mono text-[10px] uppercase tracking-widest',
+        isActive
+            ? (isModern ? 'text-cyan-700 dark:text-cyan-400 font-black' : 'bg-slate-900 text-white')
+            : 'text-slate-500'
+    );
+
     return (
-        <header className={`fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 ${headerOpacity} backdrop-blur-xl border-b border-gray-200 dark:border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.1)]`}>
+        <header className={headerClass}>
             <div className="flex items-center gap-8">
                 <div className="flex items-center gap-3">
                     <button
@@ -87,18 +100,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     >
                         <Menu className="w-5 h-5" />
                     </button>
-                    <span className={`text-2xl font-headline ${headingClass}`}>AG-extension</span>
+                    <span className={cn('text-2xl font-headline', headingClass)}>AG-extension</span>
                 </div>
                 <nav className="hidden md:flex items-center gap-1">
-                    <button onClick={() => React.startTransition(() => setActiveTab('dashboard'))} className={`font-headline tracking-tight transition-all px-4 py-2 ${btnClass} ${activeTab === 'dashboard' ? (isModern ? (darkMode ? 'text-cyan-400 font-black' : 'text-cyan-700 font-black') : 'bg-slate-900 text-white') : 'text-slate-500'}`}>
-                        {isModern ? 'Strategic Intelligence' : 'Operations Dashboard'}
-                    </button>
-                    <button onClick={() => React.startTransition(() => setActiveTab('analytics'))} className={`font-headline tracking-tight transition-all px-4 py-2 ${btnClass} ${activeTab === 'analytics' ? (isModern ? (darkMode ? 'text-cyan-400 font-black' : 'text-cyan-700 font-black') : 'bg-slate-900 text-white') : 'text-slate-500'}`}>
-                        {isModern ? 'Growth Optimization' : 'System Analytics'}
-                    </button>
-                    <button onClick={() => React.startTransition(() => setActiveTab('reports'))} className={`font-headline tracking-tight transition-all px-4 py-2 ${btnClass} ${activeTab === 'reports' ? (isModern ? (darkMode ? 'text-cyan-400 font-black' : 'text-cyan-700 font-black') : 'bg-slate-900 text-white') : 'text-slate-500'}`}>
-                        {isModern ? 'Executive Reporting' : 'Data Reports'}
-                    </button>
+                    {navItems.map((item) => (
+                        <button
+                            key={item.id}
+                            onClick={() => React.startTransition(() => setActiveTab(item.id))}
+                            className={navBtnClass(activeTab === item.id)}
+                        >
+                            {isModern ? item.modern : item.classic}
+                        </button>
+                    ))}
                 </nav>
             </div>
 
@@ -117,10 +130,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' && searchQuery.trim() && globalSearchResults.length === 0) {
                                 setWeatherLocation(searchQuery);
-                                addNotification({
-                                    message: `Weather now showing for ${searchQuery}`,
-                                    type: 'info'
-                                });
+                                addNotification({ message: `Weather now showing for ${searchQuery}`, type: 'info' });
                                 setSearchQuery('');
                                 setShowGlobalSearch(false);
                             }
@@ -177,7 +187,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     <div className="hidden lg:flex items-center gap-2 scale-90 origin-right">
                         <button
                             onClick={toggleDesignSystemMode}
-                            className={`flex items-center gap-2 px-3 py-1.5 ${btnClass} text-[10px] font-bold uppercase tracking-widest transition-all ${isModern ? (darkMode ? 'bg-cyan-500/10 text-cyan-400' : 'bg-cyan-600/10 text-cyan-700') : `bg-gray-100 dark:bg-white/5 ${subtextClass}`}`}
+                            className={cn(
+                                'flex items-center gap-2 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-all',
+                                isModern
+                                    ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98] bg-cyan-600/10 text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-400'
+                                    : 'rounded-none border border-slate-300 dark:border-slate-700 font-mono bg-gray-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'
+                            )}
                             title="Toggle Design Aesthetic"
                         >
                             <Layout className="w-3.5 h-3.5" />
@@ -227,13 +242,14 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                             <>
                                 <div className="fixed inset-0 z-40" onClick={() => setIsProfileMenuOpen(false)} />
                                 <motion.div
-                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    variants={dropdownVariants}
+                                    initial="initial"
+                                    animate="animate"
+                                    exit="exit"
                                     className="absolute right-0 mt-2 w-56 glass-panel rounded-xl shadow-2xl p-2 z-50"
                                 >
                                     <div className="p-3 mb-2 border-b border-white/10">
-                                        <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${subtextClass}`}>Account Info</p>
+                                        <p className={cn('text-[10px] font-bold uppercase tracking-widest mb-1', subtextClass)}>Account Info</p>
                                         <p className="text-xs font-bold text-gray-900 dark:text-white truncate">{storeUser?.email}</p>
                                     </div>
 
