@@ -1314,4 +1314,49 @@ router.post('/ingest', authorize(knowledgeAdminRoles), knowledgeUpload.single('f
     }
 });
 
+/**
+ * @swagger
+ * /api/v1/knowledge/sync:
+ *   post:
+ *     summary: Trigger full knowledge base sync (curated articles + FAOSTAT data)
+ *     tags: [Knowledge]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Sync results
+ */
+router.post('/sync', async (_req: Request, res: Response) => {
+    try {
+        const { KnowledgeSyncOrchestrator } = await import('@/services/data/knowledgeSyncOrchestrator');
+        const results = await KnowledgeSyncOrchestrator.syncAll();
+        res.json({ success: true, data: results });
+    } catch (error) {
+        logger.error('Knowledge sync error:', error);
+        res.status(500).json({ success: false, error: 'Failed to sync knowledge sources' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/knowledge/sync/status:
+ *   get:
+ *     summary: Get knowledge sync status
+ *     tags: [Knowledge]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Sync status
+ */
+router.get('/sync/status', async (_req: Request, res: Response) => {
+    try {
+        const { KnowledgeSyncOrchestrator } = await import('@/services/data/knowledgeSyncOrchestrator');
+        const status = KnowledgeSyncOrchestrator.getStatus();
+        res.json({ success: true, data: status });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Failed to get sync status' });
+    }
+});
+
 export default router;

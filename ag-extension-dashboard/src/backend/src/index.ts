@@ -134,6 +134,16 @@ async function bootstrap() {
             logger.error('Failed to import knowledge routes:', error);
         }
 
+        // Sync external knowledge sources (curated tropical articles — fast, no API calls)
+        try {
+            const { KnowledgeSyncOrchestrator } = await import('./services/data/knowledgeSyncOrchestrator');
+            KnowledgeSyncOrchestrator.syncLightweight().catch(err =>
+                logger.error('Failed to sync lightweight knowledge sources:', err)
+            );
+        } catch (error) {
+            logger.error('Failed to import knowledge sync orchestrator:', error);
+        }
+
         // Initialize persistent memory layer
         try {
             await persistentMemory.initialize();
