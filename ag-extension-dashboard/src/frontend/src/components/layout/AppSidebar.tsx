@@ -42,11 +42,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                             : 'bg-white dark:bg-slate-900 shadow-xl'
                     )}
                 >
-                    <div className="px-4 mb-8 flex items-center gap-3">
-                        <img src="/logo.png" alt="Logo" className="w-9 h-9 rounded-lg shadow" />
-                        <p className={cn('text-[10px] font-medium', subtextClass)}>
-                            {storeUser?.region || 'Sector 7G - Midwest'}
-                        </p>
+                    <div className="px-4 mb-8">
                     </div>
 
                     <nav className="flex flex-col gap-2 grow overflow-y-auto custom-scrollbar pr-2">
