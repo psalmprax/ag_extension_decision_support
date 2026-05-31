@@ -162,18 +162,45 @@ def main():
             logger.info("Generating Prisma client...")
             run_remote_command(ssh, "npx prisma generate", cwd=f"{deploy_dir}/ag-extension-dashboard/src/backend")
 
-            # Step 4: Build the application
+            # Step 4: Run database migrations (use host-accessible DB URL)
+            logger.info("Running database migrations...")
+            migrate_db_url = (
+                "postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}"
+                "@127.0.0.1:7501/${DATABASE_NAME:-ag_extension}"
+            )
+            run_remote_command(ssh,
+                f"DATABASE_URL=\"{migrate_db_url}\" npx prisma migrate deploy",
+                cwd=f"{deploy_dir}/ag-extension-dashboard/src/backend")
+
+            # Step 5: Seed dashboard data (idempotent — uses ON CONFLICT DO NOTHING)
+            # Connect via Docker-mapped port (host:7501 → container:5432)
+            logger.info("Seeding dashboard data...")
+            db_seed_cmd = (
+                "PGPASSWORD=${DATABASE_PASSWORD:-postgres} psql "
+                "-h 127.0.0.1 -p 7501 -U ${DATABASE_USER:-postgres} "
+                "-d ${DATABASE_NAME:-ag_extension}"
+            )
+            run_remote_command(ssh,
+                f"{db_seed_cmd} -f prisma/seed-dashboard-data.sql",
+                cwd=f"{deploy_dir}/ag-extension-dashboard/src/backend",
+                check=False)
+            run_remote_command(ssh,
+                f"{db_seed_cmd} -f prisma/fix-demo-user.sql",
+                cwd=f"{deploy_dir}/ag-extension-dashboard/src/backend",
+                check=False)
+
+            # Step 6: Build the application
             logger.info("Building the application...")
             run_remote_command(ssh, "npm run build", cwd=f"{deploy_dir}/ag-extension-dashboard/src/backend")
 
-            # Step 5: Ensure PM2 is installed and restart processes
+            # Step 7: Ensure PM2 is installed and restart processes
             logger.info("Checking PM2 installation...")
             pm2_check, _ = run_remote_command(ssh, "which pm2", check=False)
             if not pm2_check.strip():
                 logger.info("Installing PM2...")
                 run_remote_command(ssh, "npm install -g pm2")
 
-            # Step 6: Start or restart PM2 processes
+            # Step 8: Start or restart PM2 processes
             logger.info("Checking for existing PM2 processes...")
             pm2_list, _ = run_remote_command(ssh, "pm2 list --json", check=False)
             has_processes = '"name"' in pm2_list  # Simple check for processes
@@ -187,6 +214,13 @@ def main():
                 app_path = f"{deploy_dir}/ag-extension-dashboard/src/backend/dist/index.js"
                 run_remote_command(ssh, f"pm2 start {app_path} --name ag-extension-backend")
                 logger.info("Application started successfully with PM2")
+
+            # Step 9: Rebuild and restart frontend Docker container
+            logger.info("Rebuilding frontend Docker container...")
+            compose_dir = f"{deploy_dir}/ag-extension-dashboard"
+            run_remote_command(ssh, "docker compose build --no-cache frontend", cwd=compose_dir)
+            run_remote_command(ssh, "docker compose up -d frontend", cwd=compose_dir)
+            logger.info("Frontend container rebuilt and restarted")
 
             logger.info("Deployment completed successfully!")
         except Exception as e:
