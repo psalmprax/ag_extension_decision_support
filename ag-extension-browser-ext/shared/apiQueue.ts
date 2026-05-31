@@ -18,19 +18,19 @@ class APIQueueService {
 
     constructor() {
         // Listen for online/offline events
-        window.addEventListener('online', () => {
+        globalThis.addEventListener('online', () => {
             this.isOnline = true;
             this.notifyStatusChange(true);
         });
 
-        window.addEventListener('offline', () => {
+        globalThis.addEventListener('offline', () => {
             this.isOnline = false;
             this.notifyStatusChange(false);
         });
 
         // Listen for messages from background script
-        const browserAPI = (window as any).browser || (window as any).chrome;
-        if (browserAPI && browserAPI.runtime) {
+        const browserAPI = browser;
+        if (browserAPI?.runtime) {
             browserAPI.runtime.onMessage.addListener((message: any) => {
                 if (message.action === 'online_status_changed') {
                     this.isOnline = message.isOnline;
@@ -67,8 +67,8 @@ class APIQueueService {
 
     public async isCurrentlyOnline(): Promise<boolean> {
         try {
-            const browserAPI = (window as any).browser || (window as any).chrome;
-            if (browserAPI && browserAPI.runtime) {
+            const browserAPI = browser;
+            if (browserAPI?.runtime) {
                 const response = await browserAPI.runtime.sendMessage({ action: 'get_offline_status' });
                 if (response.success) {
                     this.isOnline = response.status.isOnline;
@@ -82,8 +82,8 @@ class APIQueueService {
     }
 
     public async queueRequest(request: QueuedRequest): Promise<void> {
-        const browserAPI = (window as any).browser || (window as any).chrome;
-        if (!browserAPI || !browserAPI.runtime) {
+        const browserAPI = browser;
+        if (!browserAPI?.runtime) {
             throw new Error('Browser API not available');
         }
 
@@ -148,8 +148,8 @@ class APIQueueService {
     }
 
     public async getQueuedRequests(): Promise<any[]> {
-        const browserAPI = (window as any).browser || (window as any).chrome;
-        if (!browserAPI || !browserAPI.runtime) {
+        const browserAPI = browser;
+        if (!browserAPI?.runtime) {
             return [];
         }
 
@@ -163,8 +163,8 @@ class APIQueueService {
     }
 
     public async syncNow(): Promise<void> {
-        const browserAPI = (window as any).browser || (window as any).chrome;
-        if (!browserAPI || !browserAPI.runtime) {
+        const browserAPI = browser;
+        if (!browserAPI?.runtime) {
             throw new Error('Browser API not available');
         }
 

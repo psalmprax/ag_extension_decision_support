@@ -9,9 +9,8 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
 
   const handleOpenSidepanel = () => {
-    const chromeAPI = (window as any).chrome;
-    if (chromeAPI && chromeAPI.runtime) {
-      chromeAPI.runtime.sendMessage({ action: 'open_sidepanel' });
+    if (browser?.runtime) {
+      browser.runtime.sendMessage({ action: 'open_sidepanel' });
     }
   };
 
@@ -24,9 +23,8 @@ function App() {
     handleOpenSidepanel();
     // Use a small delay to ensure sidepanel is open before sending message
     setTimeout(() => {
-      const chromeAPI = (window as any).chrome;
-      if (chromeAPI && chromeAPI.runtime) {
-        chromeAPI.runtime.sendMessage({ 
+      if (browser?.runtime) {
+        browser.runtime.sendMessage({ 
           action: 'trigger_quick_action', 
           actionType: action 
         });
@@ -132,9 +130,10 @@ function App() {
         {/* Agent Select Panel */}
         <section className="space-y-2">
           <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Active AI Intelligence</p>
-          <div 
+          <button 
+            type="button"
             onClick={handleOpenSidepanel}
-            className="p-3 bg-slate-800/50 rounded-xl border border-slate-700/50 hover:border-primary-500/30 transition-all cursor-pointer group"
+            className="w-full text-left p-3 bg-slate-800/50 rounded-xl border border-slate-700/50 hover:border-primary-500/30 transition-all cursor-pointer group"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -148,7 +147,7 @@ function App() {
               </div>
               <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary-500" />
             </div>
-          </div>
+          </button>
         </section>
 
         {/* Quick Actions Grid */}
@@ -182,10 +181,14 @@ function App() {
       </main>
 
       {/* Footer */}
-      <footer className="p-3 bg-slate-950/50 border-t border-slate-800/50 flex items-center justify-center gap-2 cursor-pointer hover:bg-slate-900 transition-all" onClick={handleOpenSidepanel}>
+      <button 
+        type="button" 
+        className="w-full p-3 bg-slate-950/50 border-t border-slate-800/50 flex items-center justify-center gap-2 cursor-pointer hover:bg-slate-900 transition-all focus:outline-none" 
+        onClick={handleOpenSidepanel}
+      >
         <div className="w-2 h-2 rounded-full bg-primary-500" />
         <span className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em]">Connected to ALFA Core</span>
-      </footer>
+      </button>
     </div>
   );
 }
