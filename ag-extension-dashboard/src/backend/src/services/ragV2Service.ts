@@ -375,7 +375,7 @@ export class RAGV2Service {
                         a.title, a.category, a.source, a.source_url, a.crops,
                         (1 - (c.embedding <=> $1::vector)) as score
                  FROM knowledge_chunks c
-                 JOIN knowledge_articles a ON a.id = c.article_id
+                 JOIN knowledge_articles a ON a.id::text = c.article_id
                  WHERE c.embedding IS NOT NULL
                  ORDER BY c.embedding <=> $1::vector
                  LIMIT $2`,
