@@ -94,6 +94,8 @@ services:
       - OLLAMA_HOST=${OLLAMA_HOST:-http://ettametta-ollama:11434}
       - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.2:3b}
       - AI_FALLBACK_PROVIDER=${AI_FALLBACK_PROVIDER:-ollama}
+      - DEMO_ENABLED=${DEMO_ENABLED:-false}
+      - DEMO_PASSWORD=${DEMO_PASSWORD:-demo-trial-2024}
     depends_on:
       app-db:
         condition: service_healthy
