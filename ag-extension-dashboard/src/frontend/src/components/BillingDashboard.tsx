@@ -32,6 +32,12 @@ import { fetchPlans, fetchSubscription, createCheckoutSession, createPortalSessi
 import { PaymentAnalyticsDashboard } from './PaymentAnalyticsDashboard';
 import { UsageQuota } from './UsageQuota';
 import { ConfirmModal } from './ConfirmModal';
+import { Button } from './ui/Button';
+import { Input } from './ui/Input';
+import { Select } from './ui/Select';
+import { Badge } from './ui/Badge';
+import { Dialog, DialogTitle, DialogContent, DialogActions } from './ui/Dialog';
+import { Textarea } from './ui/Textarea';
 
 interface Plan {
     id: string;
@@ -654,10 +660,10 @@ export const BillingDashboard: React.FC = () => {
                                     </div>
                                     <div className="flex flex-col items-end">
                                         <span className="text-[10px] font-black uppercase tracking-widest text-primary-300 mb-1">{t('billing_status_label')}</span>
-                                        <span className="flex items-center gap-2 px-3 py-1 bg-green-500/20 text-green-400 border border-green-500/30 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-lg shadow-green-500/20">
-                                            <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+                                        <Badge variant="success" size="sm">
+                                            <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse mr-1" />
                                             {t('billing_status_active')}
-                                        </span>
+                                        </Badge>
                                     </div>
                                 </div>
                                 <span id="subscription-status-title" className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-2 block">
@@ -838,18 +844,14 @@ export const BillingDashboard: React.FC = () => {
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{t('billing_stored_protocols')}</p>
                                 </div>
                             </div>
-                            <button
+                            <Button
+                                loading={actionLoading === 'add-pm'}
                                 onClick={handleAddMethod}
-                                disabled={actionLoading !== null}
-                                className={`flex items-center gap-2 px-6 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 ${radiusClass} text-[10px] font-black uppercase tracking-widest hover:bg-primary-500 dark:hover:bg-primary-500 dark:hover:text-white transition-all shadow-xl active:scale-95 disabled:opacity-50`}
+                                className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-primary-500 dark:hover:bg-primary-500 dark:hover:text-white"
                             >
-                                {actionLoading === 'add-pm' ? (
-                                    <div className="w-4 h-4 border-2 border-primary-500/20 border-t-primary-500 rounded-full animate-spin" />
-                                ) : (
-                                    <Plus className="w-4 h-4" />
-                                )}
+                                <Plus className="w-4 h-4" />
                                 {t('billing_add_method')}
-                            </button>
+                            </Button>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
@@ -866,60 +868,63 @@ export const BillingDashboard: React.FC = () => {
                                         <div className="space-y-0.5">
                                             <p className="text-sm font-black text-gray-900 dark:text-white tracking-tight">M-Pesa / Airtel Money</p>
                                             <div className="flex items-center gap-2">
-                                                <span className="text-[8px] font-black bg-green-500/10 text-green-600 px-1.5 py-0.5 rounded uppercase tracking-widest border border-green-500/10">Regional</span>
+                                                <Badge variant="success" size="sm">Regional</Badge>
                                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('billing_mobile_transfer') || 'Mobile Transfer'}</p>
                                             </div>
                                         </div>
                                     </div>
-                                    <button
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
                                         onClick={() => { setShowMobilePayForm(!showMobilePayForm); setFormMessage(null); }}
-                                        className={`px-4 py-2 bg-white dark:bg-gray-800 border border-green-200 dark:border-green-800 text-green-600 dark:text-green-400 ${btnClass} text-[10px] font-black uppercase tracking-widest hover:bg-green-500 hover:text-white transition-all shadow-sm`}
+                                        className="border-green-200 dark:border-green-800 text-green-600 dark:text-green-400 hover:bg-green-500 hover:text-white"
                                     >
                                         {t('action_pay_mobile') || 'Pay'}
-                                    </button>
+                                    </Button>
                                 </div>
                                 {showMobilePayForm && (
                                     <div className="mt-4 pt-4 border-t border-green-500/20 space-y-3">
                                         <div className="grid grid-cols-2 gap-3">
-                                            <select
+                                            <Select
                                                 value={mobilePayData.method}
                                                 onChange={(e) => setMobilePayData({ ...mobilePayData, method: e.target.value as 'mpesa' | 'airtel' | 'bank' })}
-                                                className={`px-3 py-2 ${radiusClass} border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm`}
-                                            >
-                                                <option value="mpesa">M-Pesa</option>
-                                                <option value="airtel">Airtel Money</option>
-                                                <option value="bank">Bank Transfer</option>
-                                            </select>
-                                            <select
+                                                options={[
+                                                    { value: 'mpesa', label: 'M-Pesa' },
+                                                    { value: 'airtel', label: 'Airtel Money' },
+                                                    { value: 'bank', label: 'Bank Transfer' },
+                                                ]}
+                                            />
+                                            <Select
                                                 value={mobilePayData.planId}
                                                 onChange={(e) => {
                                                     const p = plans.find(pl => pl.id === e.target.value);
                                                     setMobilePayData({ ...mobilePayData, planId: e.target.value, amount: p ? (p.price / 100).toString() : '' });
                                                 }}
-                                                className={`px-3 py-2 ${radiusClass} border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm`}
-                                            >
-                                                <option value="">Select Plan</option>
-                                                {plans.filter(p => p.price > 0).map(p => (
-                                                    <option key={p.id} value={p.id}>{p.name} (${(p.price / 100).toFixed(2)}/mo)</option>
-                                                ))}
-                                            </select>
+                                                options={[
+                                                    { value: '', label: 'Select Plan' },
+                                                    ...plans.filter(p => p.price > 0).map(p => ({
+                                                        value: p.id,
+                                                        label: `${p.name} ($${(p.price / 100).toFixed(2)}/mo)`,
+                                                    })),
+                                                ]}
+                                            />
                                         </div>
-                                        <input
+                                        <Input
                                             type="text"
                                             value={mobilePayData.transactionId}
                                             onChange={(e) => setMobilePayData({ ...mobilePayData, transactionId: e.target.value })}
                                             placeholder="Enter M-Pesa/Airtel Transaction ID"
-                                            className={`w-full px-3 py-2 ${radiusClass} border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm`}
                                         />
                                         <div className="flex items-center justify-between">
                                             <p className="text-[10px] text-gray-400">Admin will verify your payment before activation.</p>
-                                            <button
+                                            <Button
+                                                loading={actionLoading === 'mobile-pay'}
+                                                disabled={!mobilePayData.transactionId || !mobilePayData.planId}
                                                 onClick={handleSubmitTransaction}
-                                                disabled={actionLoading === 'mobile-pay' || !mobilePayData.transactionId || !mobilePayData.planId}
-                                                className={`px-4 py-2 bg-green-500 text-white ${btnClass} text-[10px] font-black uppercase tracking-widest hover:bg-green-600 transition-all shadow-sm disabled:opacity-50`}
+                                                className="bg-green-500 text-white hover:bg-green-600 font-black uppercase tracking-widest text-[10px]"
                                             >
-                                                {actionLoading === 'mobile-pay' ? 'Submitting...' : 'Submit Transaction'}
-                                            </button>
+                                                Submit Transaction
+                                            </Button>
                                         </div>
                                         {formMessage && (
                                             <p className={`text-xs font-medium ${formMessage.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
@@ -945,31 +950,34 @@ export const BillingDashboard: React.FC = () => {
                                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('billing_voucher_desc') || 'Prepaid Service Code'}</p>
                                         </div>
                                     </div>
-                                    <button
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
                                         onClick={() => { setShowVoucherForm(!showVoucherForm); setFormMessage(null); }}
-                                        className={`px-4 py-2 bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 ${btnClass} text-[10px] font-black uppercase tracking-widest hover:bg-indigo-500 hover:text-white transition-all shadow-sm`}
+                                        className="border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500 hover:text-white"
                                     >
                                         {t('action_redeem') || 'Redeem'}
-                                    </button>
+                                    </Button>
                                 </div>
                                 {showVoucherForm && (
                                     <div className="mt-4 pt-4 border-t border-indigo-500/20 space-y-3">
-                                        <input
+                                        <Input
                                             type="text"
                                             value={voucherCode}
                                             onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
                                             placeholder="Enter voucher code (e.g. AGV-A1B2C3D4)"
-                                            className={`w-full px-3 py-2 ${radiusClass} border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-mono tracking-wider`}
+                                            className="font-mono tracking-wider"
                                         />
                                         <div className="flex items-center justify-between">
                                             <p className="text-[10px] text-gray-400">Instantly activates your subscription.</p>
-                                            <button
+                                            <Button
+                                                loading={actionLoading === 'voucher'}
+                                                disabled={!voucherCode.trim()}
                                                 onClick={handleRedeemVoucher}
-                                                disabled={actionLoading === 'voucher' || !voucherCode.trim()}
-                                                className={`px-4 py-2 bg-indigo-500 text-white ${btnClass} text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-sm disabled:opacity-50`}
+                                                className="bg-indigo-500 text-white hover:bg-indigo-600 font-black uppercase tracking-widest text-[10px]"
                                             >
-                                                {actionLoading === 'voucher' ? 'Redeeming...' : 'Activate Voucher'}
-                                            </button>
+                                                Activate Voucher
+                                            </Button>
                                         </div>
                                         {formMessage && (
                                             <p className={`text-xs font-medium ${formMessage.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
@@ -1024,20 +1032,15 @@ export const BillingDashboard: React.FC = () => {
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('billing_global_p2p')}</p>
                                 </div>
                             </div>
-                            <button
+                            <Button
+                                variant="secondary"
+                                loading={actionLoading === 'paypal-price_pro_monthly'}
                                 onClick={() => handlePayPalSubscription('price_pro_monthly')}
-                                disabled={actionLoading === 'paypal-price_pro_monthly'}
-                                className="flex items-center gap-3 px-6 py-2.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/50 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800/50 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white"
                             >
-                                {actionLoading === 'paypal-price_pro_monthly' ? (
-                                    <div className="w-4 h-4 border-2 border-indigo-600/20 border-t-indigo-600 rounded-full animate-spin" />
-                                ) : (
-                                    <>
-                                        <Globe className="w-4 h-4" />
-                                        {t('billing_subscribe_paypal')}
-                                    </>
-                                )}
-                            </button>
+                                <Globe className="w-4 h-4" />
+                                {t('billing_subscribe_paypal')}
+                            </Button>
                         </div>
                     </section>
 
@@ -1064,24 +1067,24 @@ export const BillingDashboard: React.FC = () => {
                                 <div className="space-y-4">
                                     <div>
                                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{t('billing_stripe_secret')}</p>
-                                        <input
+                                        <Input
                                             type="password"
                                             value={adminKeys.stripeSecretKey}
                                             onChange={(e) => setAdminKeys({ ...adminKeys, stripeSecretKey: e.target.value })}
                                             placeholder="sk_test_••••••••••••••••••••••••"
-                                            className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-xs font-mono text-gray-900 dark:text-white outline-none focus:border-primary-500 transition-all"
+                                            className="font-mono"
                                         />
                                     </div>
                                 </div>
                                 <div className="space-y-4">
                                     <div>
                                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{t('billing_paypal_id')}</p>
-                                        <input
+                                        <Input
                                             type="text"
                                             value={adminKeys.paypalClientId}
                                             onChange={(e) => setAdminKeys({ ...adminKeys, paypalClientId: e.target.value })}
                                             placeholder="Client ID"
-                                            className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-xs font-mono text-gray-900 dark:text-white outline-none focus:border-primary-500 transition-all"
+                                            className="font-mono"
                                         />
                                     </div>
                                 </div>
@@ -1092,13 +1095,12 @@ export const BillingDashboard: React.FC = () => {
                                     <Lock className="w-3.5 h-3.5" />
                                     {t('billing_secure_storage')}
                                 </span>
-                                <button
+                                <Button
+                                    loading={actionLoading === 'admin-update'}
                                     onClick={handleAdminUpdate}
-                                    disabled={actionLoading === 'admin-update'}
-                                    className="px-6 py-2.5 bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-all shadow-lg shadow-primary-500/20 active:scale-95 disabled:opacity-50 disabled:scale-100 font-black"
                                 >
-                                    {actionLoading === 'admin-update' ? (t('billing_updating') || 'Updating...') : (t('billing_update_credentials'))}
-                                </button>
+                                    {t('billing_update_credentials')}
+                                </Button>
                             </div>
                         </section>
                     )}
@@ -1141,13 +1143,10 @@ export const BillingDashboard: React.FC = () => {
                                                     {(invoice.amount_paid / 100).toLocaleString('en-US', { style: 'currency', currency: invoice.currency })}
                                                 </td>
                                                 <td className="px-10 py-6">
-                                                    <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest ${invoice.status === 'paid'
-                                                        ? 'bg-green-500/10 text-green-500 border-green-500/20'
-                                                        : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
-                                                        }`}>
-                                                        <div className={`w-1.5 h-1.5 rounded-full ${invoice.status === 'paid' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-yellow-500'}`} />
+                                                    <Badge variant={invoice.status === 'paid' ? 'success' : 'warning'} size="sm">
+                                                        <div className={`w-1.5 h-1.5 rounded-full mr-1 ${invoice.status === 'paid' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-yellow-500'}`} />
                                                         {invoice.status === 'paid' ? t('billing_status_paid') : invoice.status}
-                                                    </div>
+                                                    </Badge>
                                                 </td>
                                                 <td className="px-10 py-6">
                                                     {invoice.invoice_pdf ? (
@@ -1223,19 +1222,22 @@ export const BillingDashboard: React.FC = () => {
                                                         <td className="px-6 py-4 text-xs uppercase">{tx.planId?.split('_')[1]}</td>
                                                         <td className="px-6 py-4">
                                                             <div className="flex gap-2">
-                                                                <button
+                                                                <Button
+                                                                    size="sm"
+                                                                    loading={actionLoading === `verify-${tx.id}`}
                                                                     onClick={() => handleVerifyTransaction(tx.id)}
-                                                                    disabled={actionLoading === `verify-${tx.id}`}
-                                                                    className="px-3 py-1 bg-green-500 text-white text-[10px] font-black rounded-lg hover:bg-green-600 transition-all uppercase tracking-widest disabled:opacity-50"
+                                                                    className="bg-green-500 text-white hover:bg-green-600 text-[10px] font-black uppercase tracking-widest"
                                                                 >
                                                                     {t('billing_admin_verify')}
-                                                                </button>
-                                                                <button
+                                                                </Button>
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="danger"
                                                                     onClick={() => setSelectedTransactionId(tx.id)}
-                                                                    className="px-3 py-1 bg-red-500 text-white text-[10px] font-black rounded-lg hover:bg-red-600 transition-all uppercase tracking-widest"
+                                                                    className="text-[10px] font-black uppercase tracking-widest"
                                                                 >
                                                                     {t('billing_admin_reject')}
-                                                                </button>
+                                                                </Button>
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -1269,88 +1271,80 @@ export const BillingDashboard: React.FC = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                                     <div>
                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block ml-1">Plan</label>
-                                        <select 
+                                        <Select
                                             value={voucherBatch.planId}
                                             onChange={(e) => setVoucherBatch({ ...voucherBatch, planId: e.target.value })}
-                                            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-purple-500 transition-all font-black uppercase tracking-widest"
-                                        >
-                                            <option value="price_pro_monthly">PRO (Monthly)</option>
-                                            <option value="price_pro_yearly">PRO (Yearly)</option>
-                                            <option value="price_enterprise_monthly">ENTERPRISE (Monthly)</option>
-                                        </select>
+                                            options={[
+                                                { value: 'price_pro_monthly', label: 'PRO (Monthly)' },
+                                                { value: 'price_pro_yearly', label: 'PRO (Yearly)' },
+                                                { value: 'price_enterprise_monthly', label: 'ENTERPRISE (Monthly)' },
+                                            ]}
+                                            className="font-black uppercase tracking-widest"
+                                        />
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block ml-1">{t('billing_admin_batch_count')}</label>
-                                        <input 
+                                        <Input
                                             type="number"
                                             value={voucherBatch.count}
                                             onChange={(e) => setVoucherBatch({ ...voucherBatch, count: parseInt(e.target.value) })}
-                                            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-purple-500 transition-all"
                                         />
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block ml-1">{t('billing_admin_expiry_days')}</label>
-                                        <input 
+                                        <Input
                                             type="number"
                                             value={voucherBatch.expiresInDays}
                                             onChange={(e) => setVoucherBatch({ ...voucherBatch, expiresInDays: parseInt(e.target.value) })}
-                                            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-purple-500 transition-all"
                                         />
                                     </div>
                                 </div>
 
-                                <button
+                                <Button
+                                    loading={actionLoading === 'generate-vouchers'}
                                     onClick={handleGenerateVouchers}
-                                    disabled={actionLoading === 'generate-vouchers'}
-                                    className="w-full py-4 bg-purple-500 text-white rounded-2xl hover:bg-purple-600 transition-all shadow-lg shadow-purple-500/20 active:scale-[0.98] disabled:opacity-50 disabled:scale-100 font-black uppercase tracking-widest text-xs"
+                                    className="w-full py-4 bg-purple-500 text-white rounded-2xl hover:bg-purple-600 shadow-lg shadow-purple-500/20 font-black uppercase tracking-widest text-xs"
                                 >
-                                    {actionLoading === 'generate-vouchers' ? t('billing_updating') : t('billing_admin_generate_vouchers')}
-                                </button>
+                                    {t('billing_admin_generate_vouchers')}
+                                </Button>
                             </section>
                         </div>
                     )}
 
                     {/* Rejection Modal */}
-                    {selectedTransactionId && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
-                            <motion.div 
-                                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                className="bg-white dark:bg-gray-900 rounded-[2rem] p-8 max-w-md w-full shadow-2xl border border-gray-100 dark:border-gray-800"
+                    <Dialog open={!!selectedTransactionId} onClose={() => setSelectedTransactionId(null)} size="md">
+                        <DialogContent>
+                            <div className="flex items-center gap-4 mb-6">
+                                <div className="p-3 bg-red-500/10 rounded-2xl shadow-inner">
+                                    <Trash2 className="w-6 h-6 text-red-500" />
+                                </div>
+                                <DialogTitle className="text-xl font-black uppercase tracking-tighter">Reject Transaction</DialogTitle>
+                            </div>
+
+                            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-4">{t('billing_admin_pending_reason')}</p>
+                            <Textarea
+                                value={rejectReason}
+                                onChange={(e) => setRejectReason(e.target.value)}
+                                placeholder="Enter reason for rejection..."
+                                className="mb-6"
+                            />
+                        </DialogContent>
+                        <DialogActions>
+                            <Button
+                                variant="ghost"
+                                onClick={() => setSelectedTransactionId(null)}
                             >
-                                <div className="flex items-center gap-4 mb-6">
-                                    <div className="p-3 bg-red-500/10 rounded-2xl shadow-inner">
-                                        <Trash2 className="w-6 h-6 text-red-500" />
-                                    </div>
-                                    <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Reject Transaction</h3>
-                                </div>
-
-                                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-4">{t('billing_admin_pending_reason')}</p>
-                                <textarea
-                                    value={rejectReason}
-                                    onChange={(e) => setRejectReason(e.target.value)}
-                                    placeholder="Enter reason for rejection..."
-                                    className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-red-500 transition-all min-h-[100px] mb-6"
-                                />
-
-                                <div className="flex gap-4">
-                                    <button
-                                        onClick={() => setSelectedTransactionId(null)}
-                                        className="flex-1 py-4 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-black uppercase tracking-widest text-[10px] rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
-                                    >
-                                        {t('common_cancel')}
-                                    </button>
-                                    <button
-                                        onClick={handleRejectTransaction}
-                                        disabled={actionLoading?.startsWith('reject-')}
-                                        className="flex-1 py-4 bg-red-500 text-white font-black uppercase tracking-widest text-[10px] rounded-xl hover:bg-red-600 shadow-lg shadow-red-500/20 active:scale-95 transition-all disabled:opacity-50"
-                                    >
-                                        {actionLoading?.startsWith('reject-') ? t('billing_updating') : t('billing_admin_reject')}
-                                    </button>
-                                </div>
-                            </motion.div>
-                        </div>
-                    )}
+                                {t('common_cancel')}
+                            </Button>
+                            <Button
+                                variant="danger"
+                                loading={actionLoading?.startsWith('reject-')}
+                                onClick={handleRejectTransaction}
+                            >
+                                {t('billing_admin_reject')}
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
                 </div>
             </div>
             {confirmModal && (
