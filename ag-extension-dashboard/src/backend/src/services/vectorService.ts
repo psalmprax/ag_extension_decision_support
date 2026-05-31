@@ -77,25 +77,6 @@ export class VectorService {
         try {
             // Generate query embedding
             const queryEmbeddingResult = await AIRouter.routeRequest('embed', { text: queryText });
-            const queryDim = queryEmbeddingResult.embedding.length;
-
-            // Optional dimension validation against stored database embeddings
-            try {
-                const dimCheck = await query(`
-                    SELECT array_length(embedding, 1) as dim 
-                    FROM knowledge_articles 
-                    WHERE embedding IS NOT NULL 
-                    LIMIT 1
-                `);
-                if (dimCheck.rows.length > 0) {
-                    const storedDim = dimCheck.rows[0].dim;
-                    if (storedDim && storedDim !== queryDim) {
-                        logger.warn(`Vector dimension mismatch! Stored: ${storedDim}, Query: ${queryDim}. Search may fail or return zero similarity.`);
-                    }
-                }
-            } catch (dimErr) {
-                logger.warn('Failed to perform database vector dimension check:', dimErr);
-            }
 
             // Convert to PostgreSQL array format: {val1,val2,val3}
             const vector = `{${queryEmbeddingResult.embedding.join(',')}}`;
@@ -225,11 +206,11 @@ export class VectorService {
         logger.info(`Performing hybrid search (Vector + Keyword) for: "${queryText}"`);
 
         try {
-            // Get vector matches (use a lower minScore threshold or none here to allow blending)
-            const vectorResults = await this.search(queryText, limit * 2, filters, 0.0);
-            
-            // Get keyword matches
-            const keywordResults = await this.keywordSearch(queryText, limit * 2, filters);
+            // Run both searches in parallel for faster response
+            const [vectorResults, keywordResults] = await Promise.all([
+                this.search(queryText, limit * 2, filters, 0.0),
+                this.keywordSearch(queryText, limit * 2, filters)
+            ]);
 
             if (vectorResults.length === 0 && keywordResults.length === 0) {
                 return [];

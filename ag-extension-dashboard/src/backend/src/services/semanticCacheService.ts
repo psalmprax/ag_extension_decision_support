@@ -21,15 +21,15 @@ export class SemanticCacheService {
             const embeddingResult = await AIRouter.routeRequest('embed', { text: queryText });
             const vector = `{${embeddingResult.embedding.join(',')}}`;
 
-            // 2. Search for similar queries in the cache table
-            // We use cosine_similarity for vector comparison
-            // Limit scan to most recent 500 entries to avoid full table scan
+            // 2. Search for most similar query using cosine_similarity
+            // Order by similarity DESC to find the best match, not just the most recent
             const result = await query(`
                 SELECT query_text as "queryText", answer, context_used as "contextUsed", visuals,
                        cosine_similarity(embedding::float8[], $1::float8[]) as similarity
                 FROM search_cache
-                ORDER BY created_at DESC
-                LIMIT 500
+                WHERE embedding IS NOT NULL
+                ORDER BY similarity DESC
+                LIMIT 1
             `, [vector]);
 
             if (result.rows.length > 0 && parseFloat(result.rows[0].similarity) >= threshold) {

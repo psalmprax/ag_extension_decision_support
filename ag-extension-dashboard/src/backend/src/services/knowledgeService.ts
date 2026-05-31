@@ -78,28 +78,12 @@ export class KnowledgeService {
      */
     static async getSearchStats(): Promise<any> {
         try {
-            const topCrops = await query(`
-                SELECT crop, COUNT(*) as count 
-                FROM knowledge_searches 
-                WHERE crop IS NOT NULL 
-                GROUP BY crop 
-                ORDER BY count DESC 
-                LIMIT 5
-            `);
-            const topCategories = await query(`
-                SELECT category, COUNT(*) as count 
-                FROM knowledge_searches 
-                WHERE category IS NOT NULL 
-                GROUP BY category 
-                ORDER BY count DESC 
-                LIMIT 5
-            `);
-            const totalQueriesResult = await query(`
-                SELECT COUNT(*) as count FROM knowledge_searches
-            `);
-            const cachedResult = await query(`
-                SELECT COUNT(*) as count FROM search_cache
-            `);
+            const [topCrops, topCategories, totalQueriesResult, cachedResult] = await Promise.all([
+                query(`SELECT crop, COUNT(*) as count FROM knowledge_searches WHERE crop IS NOT NULL GROUP BY crop ORDER BY count DESC LIMIT 5`),
+                query(`SELECT category, COUNT(*) as count FROM knowledge_searches WHERE category IS NOT NULL GROUP BY category ORDER BY count DESC LIMIT 5`),
+                query(`SELECT COUNT(*) as count FROM knowledge_searches`),
+                query(`SELECT COUNT(*) as count FROM search_cache`),
+            ]);
             return {
                 crops: topCrops.rows,
                 categories: topCategories.rows,
@@ -149,6 +133,7 @@ export class KnowledgeService {
                     WHERE LOWER(TRIM(query_text)) = LOWER(TRIM($1))
                     LIMIT 1
                 `, [queryText]);
+
 
                 if (dbExact.rows.length > 0) {
                     const cached = dbExact.rows[0];
@@ -276,18 +261,14 @@ export class KnowledgeService {
 
         if (userId) {
             try {
-                const userResult = await query('SELECT region FROM users WHERE id = $1', [userId]);
+                const [userResult, farmersResult] = await Promise.all([
+                    query('SELECT region FROM users WHERE id = $1', [userId]),
+                    query(`SELECT location, region, location_lat, location_lng, crops FROM farmers WHERE assigned_officer_id = $1 OR user_id = $1 LIMIT 5`, [userId])
+                ]);
                 if (userResult.rows.length > 0 && userResult.rows[0].region) {
                     finalRegion = userResult.rows[0].region;
                     finalLocation = userResult.rows[0].region;
                 }
-
-                const farmersResult = await query(`
-                    SELECT location, region, location_lat, location_lng, crops 
-                    FROM farmers 
-                    WHERE assigned_officer_id = $1 OR user_id = $1
-                    LIMIT 5
-                `, [userId]);
 
                 if (farmersResult.rows.length > 0) {
                     const firstFarmer = farmersResult.rows[0];
@@ -547,23 +528,17 @@ ${priceList.map((p: any) => `- ${p.crop}: ${p.price} (${p.trend})`).join('\n')}`
                 SemanticCacheService.save(queryText, response.answer, response.contextUsed, response.visuals).catch(e => logger.error('Failed to save semantic cache:', e));
             }
 
-            // 7. Asynchronously categorize the query and log search for user history in the background (non-blocking!)
-            (async () => {
-                try {
-                    const categories = queryCategories.length > 0 ? queryCategories : await this.categorizeQuery(queryText);
-                    await this.logSearch(
-                        userId, 
-                        queryText, 
-                        categories[0], 
-                        undefined, 
-                        response.answer,
-                        response.reasoning,
-                        response.visuals
-                    );
-                } catch (logError) {
-                    logger.error('Background classification or logging failed:', logError);
-                }
-            })();
+            // 7. Asynchronously log search for user history in the background (non-blocking!)
+            // Reuse already-computed queryCategories instead of calling categorizeQuery again
+            this.logSearch(
+                userId,
+                queryText,
+                queryCategories[0] || 'general_inquiry',
+                undefined,
+                response.answer,
+                response.reasoning,
+                response.visuals
+            ).catch(logError => logger.error('Background logging failed:', logError));
 
             return response;
         } catch (error) {
