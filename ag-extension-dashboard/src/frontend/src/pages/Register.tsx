@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Loader2, Sprout, Check } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Check } from 'lucide-react';
 import { AxiosError } from 'axios';
 import { useLanguage } from '@/lib/LanguageContext';
 import { register } from '@/api/authService';
@@ -90,9 +90,7 @@ export function Register() {
             >
                 {/* Logo */}
                 <div className="text-center mb-6">
-                    <div className="inline-flex items-center justify-center w-14 h-14 bg-green-100 dark:bg-green-900 rounded-full mb-3">
-                        <Sprout className="w-7 h-7 text-green-600 dark:text-green-400" />
-                    </div>
+                    <img src="/logo.png" alt="Ag-Extension Logo" className="w-20 h-20 mx-auto mb-3 rounded-2xl shadow-lg" />
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('register_title')}</h1>
                     <p className="text-gray-500 dark:text-gray-400 mt-1">{t('register_subtitle')}</p>
                 </div>

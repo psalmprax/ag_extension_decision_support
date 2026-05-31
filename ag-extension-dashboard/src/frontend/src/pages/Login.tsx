@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Loader2, Sprout } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAppStore, type User } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
@@ -103,9 +103,7 @@ export function Login({ onDemo }: LoginProps) {
                 {/* Logo and Language Switcher */}
                 <div className="flex justify-between items-start mb-8">
                     <div className="flex-1 text-center">
-                        <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full mb-4">
-                            <Sprout className="w-8 h-8 text-green-600 dark:text-green-400" />
-                        </div>
+                        <img src="/logo.png" alt="Ag-Extension Logo" className="w-20 h-20 mx-auto mb-4 rounded-2xl shadow-lg" />
                         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('login_title')}</h1>
                         <p className="text-gray-500 dark:text-gray-400 mt-1">{t('login_subtitle')}</p>
                     </div>
