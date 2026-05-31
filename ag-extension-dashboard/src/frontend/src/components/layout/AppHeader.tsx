@@ -101,7 +101,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                         <Menu className="w-5 h-5" />
                     </button>
                     <img src="/logo.png" alt="Logo" className="w-8 h-8 rounded-lg" />
-                    <span className={cn('text-2xl font-headline', headingClass)}>AG-extension</span>
                 </div>
                 <nav className="hidden md:flex items-center gap-1">
                     {navItems.map((item) => (
