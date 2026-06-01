@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
     Leaf, Users, MapPin, Brain, BarChart3, Shield,
-    ArrowRight, CheckCircle, Globe, Smartphone,
-    Zap, Database, ChevronRight, TrendingUp, Wifi, FileText
+    ArrowRight, CheckCircle, XCircle, Globe,
+    Zap, Database, ChevronRight, TrendingUp, FileText,
+    Building2, GraduationCap, Heart
 } from 'lucide-react';
 
 const stagger = {
@@ -22,21 +23,29 @@ const scaleIn = {
     visible: { opacity: 1, scale: 1, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } }
 };
 
+const painPoints = [
+    { problem: 'Paper-based field visit records lost or delayed by weeks', solution: 'Digital visit logs synced in real time, even offline' },
+    { problem: 'Guesswork recommendations with no soil or weather data', solution: 'NASA POWER weather + SoilGrids soil data in every decision' },
+    { problem: 'No visibility into officer performance or farmer outcomes', solution: 'Live analytics dashboard with per-officer metrics' },
+    { problem: 'Crop diseases identified too late, after spread', solution: 'AI disease diagnosis from photos, treatment in minutes' },
+];
+
 const features = [
     {
         icon: Users,
         title: 'Farmer Portfolio',
         desc: 'Manage your entire farmer network with real-time vital scores, crop data, and soil analytics in one unified view.',
-    },
-    {
-        icon: MapPin,
-        title: 'Field Visits',
-        desc: 'Schedule, track, and synthesize field visits with AI-powered note analysis and follow-up automation.',
+        highlight: true,
     },
     {
         icon: Brain,
         title: 'AI Assistant',
         desc: 'Instant agronomic advice powered by RAG with citations, knowledge graphs, and re-ranked results.',
+    },
+    {
+        icon: MapPin,
+        title: 'Field Visits',
+        desc: 'Schedule, track, and synthesize field visits with AI-powered note analysis and follow-up automation.',
     },
     {
         icon: TrendingUp,
@@ -61,12 +70,10 @@ const steps = [
     { num: '03', title: 'Analyze & Act', desc: 'AI surfaces insights, predicts risks, recommends actions, and generates reports for stakeholders.' },
 ];
 
-const trustedOrgs = [
-    'Min. of Agriculture, Kenya',
-    'AGRA',
-    'FAO',
-    'World Bank',
-    'IFDC',
+const audiences = [
+    { icon: Building2, title: 'Government Agencies', desc: 'National and regional agricultural ministries scaling extension services across districts.' },
+    { icon: GraduationCap, title: 'NGOs & Development Orgs', desc: 'World Bank, FAO, AGRA, and field partners running agricultural improvement programs.' },
+    { icon: Heart, title: 'Cooperatives & Agribusiness', desc: 'Farmer cooperatives and agribusiness companies managing contract farming at scale.' },
 ];
 
 export function LandingPage() {
@@ -85,9 +92,9 @@ export function LandingPage() {
                     </div>
 
                     <div className="hidden md:flex items-center gap-8">
+                        <a href="#problem" className="text-sm font-medium text-white/50 hover:text-white transition-colors">Why Us</a>
                         <a href="#features" className="text-sm font-medium text-white/50 hover:text-white transition-colors">Features</a>
                         <a href="#how-it-works" className="text-sm font-medium text-white/50 hover:text-white transition-colors">How It Works</a>
-                        <a href="#mission" className="text-sm font-medium text-white/50 hover:text-white transition-colors">Mission</a>
                     </div>
 
                     <div className="flex items-center gap-3">
@@ -133,7 +140,7 @@ export function LandingPage() {
                     >
                         <motion.div variants={fadeUp} className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/[0.04] border border-white/[0.06] backdrop-blur-sm">
                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                            <span className="text-xs font-medium text-white/60">Trusted across 10+ African countries</span>
+                            <span className="text-xs font-medium text-white/60">Agricultural decision support platform</span>
                         </motion.div>
 
                         <motion.h1 variants={fadeUp} className="text-[clamp(2.5rem,5vw,4rem)] font-bold leading-[1.05] tracking-tight">
@@ -164,20 +171,6 @@ export function LandingPage() {
                                 Try Live Demo
                                 <ChevronRight className="w-4 h-4" />
                             </button>
-                        </motion.div>
-
-                        {/* Micro stats */}
-                        <motion.div variants={fadeUp} className="flex gap-8 pt-2">
-                            {[
-                                { value: '5,000+', label: 'Farmers' },
-                                { value: '10+', label: 'Countries' },
-                                { value: '24/7', label: 'AI Support' },
-                            ].map((s, i) => (
-                                <div key={i}>
-                                    <div className="text-xl font-bold text-white/90">{s.value}</div>
-                                    <div className="text-xs text-white/30 mt-0.5">{s.label}</div>
-                                </div>
-                            ))}
                         </motion.div>
                     </motion.div>
 
@@ -292,65 +285,108 @@ export function LandingPage() {
                 <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#070d0a] to-transparent pointer-events-none" />
             </section>
 
-            {/* ========== TRUSTED BY ========== */}
-            <section className="relative py-16 border-y border-white/[0.04]">
-                <div className="max-w-6xl mx-auto px-6 text-center">
-                    <p className="text-xs uppercase tracking-[0.2em] font-medium text-white/25 mb-8">
-                        Trusted by leading organizations across Africa
-                    </p>
-                    <div className="flex flex-wrap justify-center gap-3">
-                        {trustedOrgs.map((org, i) => (
-                            <div
+            {/* ========== PROBLEM / SOLUTION ========== */}
+            <section id="problem" className="relative py-28 border-t border-white/[0.04]">
+                <div className="max-w-6xl mx-auto px-6">
+                    <motion.div
+                        initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-100px' }} variants={stagger}
+                        className="text-center mb-16"
+                    >
+                        <motion.div variants={fadeUp} className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400/70 mb-4">
+                            Why AgExtension
+                        </motion.div>
+                        <motion.h2 variants={fadeUp} className="text-[clamp(1.8rem,3.5vw,2.8rem)] font-bold tracking-tight leading-tight">
+                            The old way isn't{' '}
+                            <span className="bg-gradient-to-r from-red-400 to-amber-400 bg-clip-text text-transparent">working</span>
+                        </motion.h2>
+                    </motion.div>
+
+                    <div className="space-y-4">
+                        {painPoints.map((item, i) => (
+                            <motion.div
                                 key={i}
-                                className="px-5 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05] text-sm font-medium text-white/35 hover:text-white/50 hover:bg-white/[0.05] transition-all cursor-default"
+                                initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }}
+                                variants={fadeUp}
+                                className="grid md:grid-cols-2 gap-4"
                             >
-                                {org}
-                            </div>
+                                {/* Problem */}
+                                <div className="flex items-start gap-3 p-5 rounded-xl bg-red-500/[0.04] border border-red-500/[0.08]">
+                                    <XCircle className="w-5 h-5 text-red-400/70 flex-shrink-0 mt-0.5" />
+                                    <span className="text-sm text-white/50 leading-relaxed">{item.problem}</span>
+                                </div>
+                                {/* Solution */}
+                                <div className="flex items-start gap-3 p-5 rounded-xl bg-emerald-500/[0.04] border border-emerald-500/[0.08]">
+                                    <CheckCircle className="w-5 h-5 text-emerald-400/70 flex-shrink-0 mt-0.5" />
+                                    <span className="text-sm text-white/70 leading-relaxed">{item.solution}</span>
+                                </div>
+                            </motion.div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* ========== FEATURES ========== */}
-            <section id="features" className="relative py-28">
-                {/* Background glow */}
+            {/* ========== FEATURES (asymmetric) ========== */}
+            <section id="features" className="relative py-28 border-t border-white/[0.04]">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-emerald-500/[0.03] blur-[120px] rounded-full pointer-events-none" />
 
                 <div className="max-w-7xl mx-auto px-6 relative z-10">
                     <motion.div
                         initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-100px' }} variants={stagger}
-                        className="text-center mb-20 max-w-2xl mx-auto"
+                        className="mb-16"
                     >
                         <motion.div variants={fadeUp} className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400/70 mb-4">
                             Features
                         </motion.div>
-                        <motion.h2 variants={fadeUp} className="text-[clamp(2rem,3.5vw,3rem)] font-bold tracking-tight mb-5 leading-tight">
-                            Everything you need to manage
-                            <br />
-                            <span className="text-white/40">agricultural extension</span>
+                        <motion.h2 variants={fadeUp} className="text-[clamp(2rem,3.5vw,3rem)] font-bold tracking-tight leading-tight max-w-lg">
+                            Built for the realities of{' '}
+                            <span className="text-white/40">African agriculture</span>
                         </motion.h2>
-                        <motion.p variants={fadeUp} className="text-white/40 text-lg leading-relaxed">
-                            From farmer registration to AI-powered insights, all in one platform designed for the realities of African agriculture.
-                        </motion.p>
                     </motion.div>
 
+                    {/* Asymmetric grid — hero card spans 2 cols */}
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {features.map((feat, i) => (
                             <motion.div
                                 key={i}
                                 initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }}
                                 variants={fadeUp}
-                                className="group relative p-7 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:border-emerald-500/20 hover:bg-white/[0.04] transition-all duration-500 overflow-hidden"
+                                className={`group relative p-7 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:border-emerald-500/20 hover:bg-white/[0.04] transition-all duration-500 overflow-hidden ${
+                                    feat.highlight ? 'lg:col-span-2 lg:row-span-2 lg:p-10' : ''
+                                }`}
                             >
-                                {/* Hover glow */}
                                 <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/[0.04] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                                 <div className="relative z-10">
-                                    <div className="w-11 h-11 rounded-xl bg-white/[0.05] border border-white/[0.06] flex items-center justify-center mb-5 group-hover:bg-emerald-500/10 group-hover:border-emerald-500/20 transition-all duration-500">
-                                        <feat.icon className="w-5 h-5 text-white/50 group-hover:text-emerald-400 transition-colors duration-500" />
+                                    <div className={`rounded-xl bg-white/[0.05] border border-white/[0.06] flex items-center justify-center mb-5 group-hover:bg-emerald-500/10 group-hover:border-emerald-500/20 transition-all duration-500 ${
+                                        feat.highlight ? 'w-14 h-14 mb-7' : 'w-11 h-11'
+                                    }`}>
+                                        <feat.icon className={`text-white/50 group-hover:text-emerald-400 transition-colors duration-500 ${
+                                            feat.highlight ? 'w-7 h-7' : 'w-5 h-5'
+                                        }`} />
                                     </div>
-                                    <h3 className="text-base font-bold mb-2 text-white/90">{feat.title}</h3>
-                                    <p className="text-sm text-white/35 leading-relaxed group-hover:text-white/45 transition-colors duration-500">{feat.desc}</p>
+                                    <h3 className={`font-bold mb-2 text-white/90 ${feat.highlight ? 'text-xl mb-3' : 'text-base'}`}>
+                                        {feat.title}
+                                    </h3>
+                                    <p className={`text-white/35 leading-relaxed group-hover:text-white/45 transition-colors duration-500 ${
+                                        feat.highlight ? 'text-base max-w-md' : 'text-sm'
+                                    }`}>
+                                        {feat.desc}
+                                    </p>
+
+                                    {feat.highlight && (
+                                        <div className="mt-6 pt-5 border-t border-white/[0.05] grid grid-cols-3 gap-4">
+                                            {[
+                                                { val: 'Real-time', label: 'Sync' },
+                                                { val: 'Offline', label: 'First' },
+                                                { val: 'GPS', label: 'Enabled' },
+                                            ].map((s, j) => (
+                                                <div key={j}>
+                                                    <div className="text-sm font-bold text-emerald-400">{s.val}</div>
+                                                    <div className="text-[10px] text-white/25 uppercase tracking-wider">{s.label}</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </motion.div>
                         ))}
@@ -375,7 +411,6 @@ export function LandingPage() {
                     </motion.div>
 
                     <div className="grid md:grid-cols-3 gap-8 relative">
-                        {/* Connecting line */}
                         <div className="hidden md:block absolute top-8 left-[12%] right-[12%] h-px">
                             <div className="w-full h-full bg-gradient-to-r from-emerald-500/30 via-emerald-500/50 to-amber-500/30" />
                         </div>
@@ -398,34 +433,45 @@ export function LandingPage() {
                 </div>
             </section>
 
-            {/* ========== STATS BAND ========== */}
-            <section className="relative py-20 border-t border-b border-white/[0.04] overflow-hidden">
+            {/* ========== BUILT FOR ========== */}
+            <section className="relative py-28 border-t border-white/[0.04] overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/[0.04] via-transparent to-amber-500/[0.03] pointer-events-none" />
-                <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-10 text-center relative z-10">
-                    {[
-                        { value: '10+', label: 'Countries', icon: Globe },
-                        { value: '5,000+', label: 'Farmers Managed', icon: Users },
-                        { value: '50+', label: 'Crop Varieties', icon: Leaf },
-                        { value: '24/7', label: 'AI Support', icon: Zap },
-                    ].map((stat, i) => (
-                        <motion.div
-                            key={i}
-                            initial="hidden" whileInView="visible" viewport={{ once: true }}
-                            variants={fadeUp}
-                            className="space-y-2"
-                        >
-                            <stat.icon className="w-5 h-5 text-emerald-400/40 mx-auto mb-2" />
-                            <div className="text-[clamp(2rem,4vw,2.8rem)] font-bold bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
-                                {stat.value}
-                            </div>
-                            <div className="text-xs text-white/30 uppercase tracking-wider">{stat.label}</div>
+
+                <div className="max-w-6xl mx-auto px-6 relative z-10">
+                    <motion.div
+                        initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-100px' }} variants={stagger}
+                        className="text-center mb-16"
+                    >
+                        <motion.div variants={fadeUp} className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400/70 mb-4">
+                            Built For
                         </motion.div>
-                    ))}
+                        <motion.h2 variants={fadeUp} className="text-[clamp(1.8rem,3.5vw,2.8rem)] font-bold tracking-tight">
+                            Serving organizations across{' '}
+                            <span className="bg-gradient-to-r from-emerald-300 to-amber-400 bg-clip-text text-transparent">Africa</span>
+                        </motion.h2>
+                    </motion.div>
+
+                    <div className="grid md:grid-cols-3 gap-5">
+                        {audiences.map((aud, i) => (
+                            <motion.div
+                                key={i}
+                                initial="hidden" whileInView="visible" viewport={{ once: true }}
+                                variants={fadeUp}
+                                className="p-7 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:border-emerald-500/15 transition-all duration-300"
+                            >
+                                <div className="w-12 h-12 rounded-xl bg-emerald-500/[0.08] border border-emerald-500/10 flex items-center justify-center mb-5">
+                                    <aud.icon className="w-6 h-6 text-emerald-400/60" />
+                                </div>
+                                <h3 className="text-base font-bold mb-2 text-white/90">{aud.title}</h3>
+                                <p className="text-sm text-white/35 leading-relaxed">{aud.desc}</p>
+                            </motion.div>
+                        ))}
+                    </div>
                 </div>
             </section>
 
             {/* ========== MISSION ========== */}
-            <section id="mission" className="relative py-28">
+            <section id="mission" className="relative py-28 border-t border-white/[0.04]">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-emerald-500/[0.04] blur-[100px] rounded-full pointer-events-none" />
 
                 <motion.div
@@ -461,7 +507,7 @@ export function LandingPage() {
                         <span className="bg-gradient-to-r from-emerald-300 to-amber-400 bg-clip-text text-transparent">agricultural extension?</span>
                     </motion.h2>
                     <motion.p variants={fadeUp} className="text-lg text-white/40 mb-8">
-                        Join hundreds of organizations using data to grow smarter.
+                        Start with a free trial. No credit card required.
                     </motion.p>
                     <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 justify-center">
                         <button
@@ -499,27 +545,22 @@ export function LandingPage() {
                         <h4 className="text-xs font-bold uppercase tracking-wider text-white/25 mb-5">Product</h4>
                         <ul className="space-y-3 text-sm">
                             <li><a href="#features" className="text-white/40 hover:text-emerald-400 transition-colors">Features</a></li>
-                            <li><a href="#" className="text-white/40 hover:text-emerald-400 transition-colors">Pricing</a></li>
-                            <li><a href="#" className="text-white/40 hover:text-emerald-400 transition-colors">Integrations</a></li>
-                            <li><a href="#" className="text-white/40 hover:text-emerald-400 transition-colors">Changelog</a></li>
+                            <li><a href="#how-it-works" className="text-white/40 hover:text-emerald-400 transition-colors">How It Works</a></li>
+                            <li><a href="/demo" className="text-white/40 hover:text-emerald-400 transition-colors">Live Demo</a></li>
                         </ul>
                     </div>
                     <div>
                         <h4 className="text-xs font-bold uppercase tracking-wider text-white/25 mb-5">Resources</h4>
                         <ul className="space-y-3 text-sm">
-                            <li><a href="#" className="text-white/40 hover:text-emerald-400 transition-colors">Documentation</a></li>
-                            <li><a href="#" className="text-white/40 hover:text-emerald-400 transition-colors">API Reference</a></li>
-                            <li><a href="#" className="text-white/40 hover:text-emerald-400 transition-colors">Blog</a></li>
-                            <li><a href="#" className="text-white/40 hover:text-emerald-400 transition-colors">Support</a></li>
+                            <li><a href="#mission" className="text-white/40 hover:text-emerald-400 transition-colors">About</a></li>
+                            <li><a href="mailto:hello@gpexts.com" className="text-white/40 hover:text-emerald-400 transition-colors">Contact</a></li>
                         </ul>
                     </div>
                     <div>
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-white/25 mb-5">Contact</h4>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-white/25 mb-5">Get Started</h4>
                         <ul className="space-y-3 text-sm">
-                            <li><a href="mailto:hello@gpexts.com" className="text-white/40 hover:text-emerald-400 transition-colors">hello@gpexts.com</a></li>
-                            <li><a href="#" className="text-white/40 hover:text-emerald-400 transition-colors">Support</a></li>
-                            <li><a href="#" className="text-white/40 hover:text-emerald-400 transition-colors">Twitter</a></li>
-                            <li><a href="#" className="text-white/40 hover:text-emerald-400 transition-colors">LinkedIn</a></li>
+                            <li><a href="/register" className="text-white/40 hover:text-emerald-400 transition-colors">Create Account</a></li>
+                            <li><a href="/login" className="text-white/40 hover:text-emerald-400 transition-colors">Sign In</a></li>
                         </ul>
                     </div>
                 </div>
