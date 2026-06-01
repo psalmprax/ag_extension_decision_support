@@ -13,10 +13,11 @@ const router = Router();
 // Apply authentication to all visits routes
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
-// Get all visits
+// Get all visits — auto-filtered by role
 router.get('/', async (req: Request, res: Response) => {
     try {
         const { officerId, farmerId, status, limit = '50', offset = '0' } = req.query;
+        const user = req.user;
         const pool = getPool();
 
         if (!pool) {
@@ -27,7 +28,20 @@ router.get('/', async (req: Request, res: Response) => {
         const params: any[] = [];
         let paramIndex = 1;
 
-        if (officerId) {
+        // Role-based filtering
+        if (user?.role === 'extension_officer') {
+            // Officers see only visits for their assigned farmers
+            sql += ` AND v.farmer_id IN (SELECT id FROM farmers WHERE assigned_officer_id = $${paramIndex++})`;
+            params.push(user.userId);
+        } else if (user?.role === 'farmer') {
+            // Farmers see only their own visits
+            sql += ` AND v.farmer_id IN (SELECT id FROM farmers WHERE user_id = $${paramIndex++})`;
+            params.push(user.userId);
+        }
+        // admin and regional_manager see all visits (no additional filter)
+
+        // Optional explicit filters (override or refine role-based filtering for admins)
+        if (officerId && (user?.role === 'admin' || user?.role === 'regional_manager')) {
             sql += ' AND v.officer_id = $' + paramIndex++;
             params.push(officerId);
         }
