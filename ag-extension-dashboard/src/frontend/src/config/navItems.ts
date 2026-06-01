@@ -17,6 +17,7 @@ import {
     Mail,
     Wrench,
     Search,
+    UserCog,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -47,4 +48,5 @@ export const getNavItems = (isModern: boolean): NavItem[] => [
     { id: 'memory', label: isModern ? 'Cognitive Persistence' : 'Memory Manager', icon: Brain, roles: ['admin'] },
     { id: 'email_workflows', label: isModern ? 'Automated Dispatch' : 'Email Workflows', icon: Mail, roles: ['admin'] },
     { id: 'mcp_tools', label: isModern ? 'Protocol Toolchain' : 'System Tools', icon: Wrench, roles: ['admin'] },
+    { id: 'user_management', label: isModern ? 'Personnel Registry' : 'User Management', icon: UserCog, roles: ['admin'] },
 ];

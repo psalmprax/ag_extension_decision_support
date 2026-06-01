@@ -55,6 +55,7 @@ const MCPTools = lazy(() => import('./pages/MCPTools'));
 const SMSPage = lazy(() => import('./pages/SMS').then(m => ({ default: m.SMSPage })));
 const AlphaAI = lazy(() => import('./components/Cyber/AlphaAI'));
 const KnowledgeBase = lazy(() => import('./components/KnowledgeBase').then(m => ({ default: m.KnowledgeBase })));
+const UserManagementPage = lazy(() => import('./pages/UserManagementPage').then(m => ({ default: m.UserManagementPage })));
 
 function App() {
     const { t, language } = useLanguage();
@@ -437,6 +438,7 @@ function App() {
                                 {activeTab === 'memory' && <Memory />}
                                 {activeTab === 'email_workflows' && <EmailWorkflows />}
                                 {activeTab === 'mcp_tools' && <MCPTools />}
+                                {activeTab === 'user_management' && <UserManagementPage />}
                             </div>
                         </Suspense>
                     </ErrorBoundary>
