@@ -15,15 +15,15 @@ export const useAppBootstrap = (storeUser: unknown, setActiveTab: (tab: string) 
         try {
             registerServiceWorker();
         } catch (err) {
-            console.warn('[SW] Failed to register service worker gracefully:', err instanceof Error ? err.message : err);
+
         }
     }, []);
 
     // Push Notification Subscription
     useEffect(() => {
         if (storeUser) {
-            subscribeUserToPush().catch(err => {
-                console.warn('Push subscription failed:', err);
+            subscribeUserToPush().catch(() => {
+
             });
         }
     }, [storeUser]);

@@ -3,6 +3,7 @@ import { Router, Request, Response } from 'express';
 import { authorize, AuthRequest } from '@/middleware/authorize';
 import { apiClientService } from '@/services/apiClientService';
 import { logger } from '@/utils/logger';
+import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
@@ -21,7 +22,7 @@ router.post('/clients', async (req: AuthRequest, res: Response) => {
         });
     } catch (error) {
         logger.error('Create API client failed:', error);
-        res.status(500).json({ success: false, error: 'Failed to create API client' });
+        safeError(res, 500, 'Failed to create API client');
     }
 });
 
@@ -32,7 +33,7 @@ router.get('/clients', async (req: AuthRequest, res: Response) => {
         res.json({ success: true, data: clients });
     } catch (error) {
         logger.error('List API clients failed:', error);
-        res.status(500).json({ success: false, error: 'Failed to list API clients' });
+        safeError(res, 500, 'Failed to list API clients');
     }
 });
 
@@ -53,7 +54,7 @@ router.post('/clients/:clientId/keys', async (req: AuthRequest, res: Response) =
         });
     } catch (error) {
         logger.error('Create API key failed:', error);
-        res.status(500).json({ success: false, error: 'Failed to create API key' });
+        safeError(res, 500, 'Failed to create API key');
     }
 });
 
@@ -69,7 +70,7 @@ router.get('/clients/:clientId/keys', async (req: AuthRequest, res: Response) =>
         res.json({ success: true, data: keys });
     } catch (error) {
         logger.error('List API keys failed:', error);
-        res.status(500).json({ success: false, error: 'Failed to list API keys' });
+        safeError(res, 500, 'Failed to list API keys');
     }
 });
 
@@ -80,7 +81,7 @@ router.post('/keys/:keyId/revoke', async (req: Request, res: Response) => {
         res.json({ success: true, data: key });
     } catch (error) {
         logger.error('Revoke API key failed:', error);
-        res.status(500).json({ success: false, error: 'Failed to revoke API key' });
+        safeError(res, 500, 'Failed to revoke API key');
     }
 });
 

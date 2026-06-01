@@ -3,6 +3,7 @@ import { Router, Request, Response } from 'express';
 import { authorize } from '@/middleware/authorize';
 import { persistentMemory } from '@/services/persistentMemory';
 import { logger } from '@/utils/logger';
+import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
@@ -23,7 +24,7 @@ router.get('/', authorize(['admin', 'farmer']), async (req: Request, res: Respon
         res.json({ success: true, data: memories });
     } catch (error) {
         logger.error('Failed to get memories:', error);
-        res.status(500).json({ success: false, error: 'Failed to get memories' });
+        safeError(res, 500, 'Failed to get memories');
     }
 });
 
@@ -35,7 +36,7 @@ router.get('/summary', authorize(['admin']), async (req: Request, res: Response)
         res.json({ success: true, data: summary });
     } catch (error) {
         logger.error('Failed to get memory summary:', error);
-        res.status(500).json({ success: false, error: 'Failed to get memory summary' });
+        safeError(res, 500, 'Failed to get memory summary');
     }
 });
 
@@ -55,7 +56,7 @@ router.post('/', authorize(['admin', 'farmer']), async (req: Request, res: Respo
         res.json({ success: true, message: 'Memory storage logged - functionality will be implemented' });
     } catch (error) {
         logger.error('Failed to store memory:', error);
-        res.status(500).json({ success: false, error: 'Failed to store memory' });
+        safeError(res, 500, 'Failed to store memory');
     }
 });
 
@@ -69,7 +70,7 @@ router.delete('/:category/:key', authorize(['admin', 'farmer']), async (req: Req
         res.json({ success });
     } catch (error) {
         logger.error('Failed to delete memory:', error);
-        res.status(500).json({ success: false, error: 'Failed to delete memory' });
+        safeError(res, 500, 'Failed to delete memory');
     }
 });
 

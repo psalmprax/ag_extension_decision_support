@@ -84,7 +84,7 @@ export const useAppSync = (addNotification: (notif: { type: 'success' | 'warning
                     message: `${files.length} file(s) uploaded and processed successfully.`
                 });
             } catch (error) {
-                console.error('Upload error:', error);
+
                 addNotification({
                     type: 'error',
                     message: 'An error occurred during file upload.'

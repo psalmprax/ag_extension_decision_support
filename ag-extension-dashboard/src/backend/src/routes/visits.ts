@@ -3,10 +3,11 @@ import { Router, Request, Response } from 'express';
 import { query, getPool } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { validate } from '@/middleware/validationMiddleware';
-import { createVisitSchema } from '@/utils/schemas';
+import { createVisitSchema, updateVisitSchema } from '@/utils/schemas';
 import { authorize } from '@/middleware/authorize';
 import { shareService } from '@/services/shareService';
 import { bulkOperationsService } from '@/services/bulkOperationsService';
+import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
@@ -68,7 +69,7 @@ router.get('/', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Get visits error:', error);
-        res.status(500).json({ success: false, error: 'Failed to get visits' });
+        safeError(res, 500, 'Failed to get visits');
     }
 });
 
@@ -96,7 +97,7 @@ router.get('/:id', async (req: Request, res: Response) => {
         res.json({ success: true, data: visit });
     } catch (error) {
         logger.error('Get visit error:', error);
-        res.status(500).json({ success: false, error: 'Failed to get visit' });
+        safeError(res, 500, 'Failed to get visit');
     }
 });
 
@@ -119,12 +120,12 @@ router.post('/', validate(createVisitSchema), async (req: Request, res: Response
         res.status(201).json({ success: true, data: result.rows[0] });
     } catch (error) {
         logger.error('Create visit error:', error);
-        res.status(500).json({ success: false, error: 'Failed to create visit' });
+        safeError(res, 500, 'Failed to create visit');
     }
 });
 
 // Update visit
-router.patch('/:id', async (req: Request, res: Response) => {
+router.patch('/:id', validate(updateVisitSchema), async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { status, notes, outcomes, startedAt, completedAt, duration } = req.body;
@@ -183,7 +184,7 @@ router.patch('/:id', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Update visit error:', error);
-        res.status(500).json({ success: false, error: 'Failed to update visit' });
+        safeError(res, 500, 'Failed to update visit');
     }
 });
 
@@ -213,7 +214,7 @@ router.post('/location', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Log location error:', error);
-        res.status(500).json({ success: false, error: 'Failed to log location' });
+        safeError(res, 500, 'Failed to log location');
     }
 });
 
@@ -221,7 +222,7 @@ router.post("/:id/share", async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { isPublic, expiresAt, permissions } = req.body;
-        const createdBy = req.user?.id;
+        const createdBy = req.user?.userId;
 
         const shareLink = await shareService.createShare({
             entityType: "visit",
@@ -238,10 +239,7 @@ router.post("/:id/share", async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error("Error creating visit share:", error);
-        res.status(500).json({
-            success: false,
-            error: "Failed to create share link",
-        });
+        safeError(res, 500, 'Failed to create share link');
     }
 });
 
@@ -297,10 +295,7 @@ router.post('/bulk/delete', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Bulk delete visits error:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to perform bulk delete operation'
-        });
+        safeError(res, 500, 'Failed to perform bulk delete operation');
     }
 });
 

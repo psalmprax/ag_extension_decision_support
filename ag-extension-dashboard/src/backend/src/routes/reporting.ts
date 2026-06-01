@@ -8,6 +8,7 @@ import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { usageService } from '../services/usageService';
 import PDFDocument from 'pdfkit';
 import * as XLSX from 'xlsx';
+import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
@@ -66,7 +67,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
         });
     } catch (error) {
         logger.error('Get reports error:', error);
-        res.status(500).json({ success: false, error: 'Failed to get reports' });
+        safeError(res, 500, 'Failed to get reports');
     }
 });
 
@@ -147,7 +148,7 @@ router.post('/generate', checkUsageLimit('report'), async (req: AuthRequest, res
         }
     } catch (error) {
         logger.error('Generate report error:', error);
-        res.status(500).json({ success: false, error: 'Failed to generate report' });
+        safeError(res, 500, 'Failed to generate report');
     }
 });
 
@@ -180,7 +181,7 @@ router.get('/:id', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Get report error:', error);
-        res.status(500).json({ success: false, error: 'Failed to get report' });
+        safeError(res, 500, 'Failed to get report');
     }
 });
 
@@ -214,7 +215,7 @@ router.get('/:id/download', async (req: Request, res: Response) => {
         res.status(200).send(csv);
     } catch (error) {
         logger.error('Download report error:', error);
-        res.status(500).json({ success: false, error: 'Failed to download report' });
+        safeError(res, 500, 'Failed to download report');
     }
 });
 
@@ -645,7 +646,7 @@ router.get('/:id/download/pdf', async (req: Request, res: Response) => {
         doc.end();
     } catch (error) {
         logger.error('Download PDF error:', error);
-        res.status(500).json({ success: false, error: 'Failed to download PDF' });
+        safeError(res, 500, 'Failed to download PDF');
     }
 });
 
@@ -711,7 +712,7 @@ router.get('/:id/download/excel', async (req: Request, res: Response) => {
         res.send(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }));
     } catch (error) {
         logger.error('Download Excel error:', error);
-        res.status(500).json({ success: false, error: 'Failed to download Excel' });
+        safeError(res, 500, 'Failed to download Excel');
     }
 });
 
@@ -719,7 +720,7 @@ router.post("/:id/share", async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { isPublic, expiresAt, permissions } = req.body;
-        const createdBy = req.user?.id;
+        const createdBy = req.user?.userId;
 
         const shareLink = await shareService.createShare({
             entityType: "report",
@@ -736,10 +737,7 @@ router.post("/:id/share", async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error("Error creating report share:", error);
-        res.status(500).json({
-            success: false,
-            error: "Failed to create share link",
-        });
+        safeError(res, 500, 'Failed to create share link');
     }
 });
 

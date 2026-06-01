@@ -146,3 +146,32 @@ export const createVisitSchema = z.object({
     notes: z.string().optional(),
   }),
 });
+
+export const updateFarmerSchema = z.object({
+  body: z.object({
+    firstName: z.string().min(2).optional(),
+    lastName: z.string().min(2).optional(),
+    phone: z.string().optional(),
+    region: z.string().optional(),
+    village: z.string().optional(),
+    farmSize: z.number().positive().optional(),
+    crops: z.array(z.string()).min(1).optional(),
+    languagePreference: z.string().optional(),
+    vitalScore: z.number().min(0).max(100).optional(),
+    yieldHistory: z.any().optional(),
+    locationLat: z.number().optional(),
+    locationLng: z.number().optional(),
+  }).strict(),
+});
+
+export const updateVisitSchema = z.object({
+  body: z.object({
+    status: z.enum(['scheduled', 'in_progress', 'completed', 'cancelled']).optional(),
+    notes: z.string().optional(),
+    outcomes: z.string().optional(),
+    startedAt: z.string().datetime().optional(),
+    completedAt: z.string().datetime().optional(),
+    duration: z.number().positive().optional(),
+  }).strict(),
+});
+

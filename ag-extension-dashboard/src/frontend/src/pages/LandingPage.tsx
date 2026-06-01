@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useScroll, useTransform, useMotionValue, useSpring, AnimatePresence } from 'framer-motion';
 import {
-    Leaf, Users, MapPin, Brain, BarChart3, Shield,
+    Users, MapPin, Brain, BarChart3, Shield,
     ArrowRight, CheckCircle, XCircle, Globe,
     Zap, Database, ChevronRight, TrendingUp, FileText,
     Building2, GraduationCap, Heart, Bell, Search,
@@ -238,9 +238,7 @@ export function LandingPage() {
             <nav className="fixed top-0 left-0 right-0 z-50 bg-[#060b08]/60 backdrop-blur-2xl border-b border-white/[0.04]">
                 <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                            <Leaf className="w-4 h-4 text-white" />
-                        </div>
+                        <img src="/logo.png" alt="AgExtension" className="w-8 h-8 rounded-lg object-contain" />
                         <span className="text-lg font-bold tracking-tight">AgExtension</span>
                     </div>
 
@@ -812,9 +810,7 @@ export function LandingPage() {
                 <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-[1.5fr_1fr_1fr_1fr] gap-10 pb-10">
                     <div>
                         <div className="flex items-center gap-2.5 mb-4">
-                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
-                                <Leaf className="w-4 h-4 text-white" />
-                            </div>
+                            <img src="/logo.png" alt="AgExtension" className="w-8 h-8 rounded-lg object-contain" />
                             <span className="text-lg font-bold">AgExtension</span>
                         </div>
                         <p className="text-sm text-white/30 leading-relaxed max-w-xs">

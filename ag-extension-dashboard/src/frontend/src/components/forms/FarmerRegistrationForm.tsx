@@ -65,7 +65,7 @@ export const FarmerRegistrationForm: React.FC = () => {
       }
     } catch (error) {
       toast.error(t('farmer_register_failed'));
-      console.error(error);
+
     } finally {
       setLoading(false);
     }

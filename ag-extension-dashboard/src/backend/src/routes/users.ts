@@ -3,6 +3,7 @@ import { Router, Request, Response } from 'express';
 import { query, getPool } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
+import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
@@ -54,7 +55,7 @@ router.get('/', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Get users error:', error);
-        res.status(500).json({ success: false, error: 'Failed to get users' });
+        safeError(res, 500, 'Failed to get users');
     }
 });
 
@@ -92,7 +93,7 @@ router.get('/:id', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Get user error:', error);
-        res.status(500).json({ success: false, error: 'Failed to get user' });
+        safeError(res, 500, 'Failed to get user');
     }
 });
 
@@ -143,7 +144,7 @@ router.post('/', async (req: Request, res: Response) => {
         res.status(201).json({ success: true, data: result.rows[0] });
     } catch (error) {
         logger.error('Create user error:', error);
-        res.status(500).json({ success: false, error: 'Failed to create user' });
+        safeError(res, 500, 'Failed to create user');
     }
 });
 
@@ -184,7 +185,7 @@ router.get('/me', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Get profile error:', error);
-        res.status(500).json({ success: false, error: 'Failed to get profile' });
+        safeError(res, 500, 'Failed to get profile');
     }
 });
 

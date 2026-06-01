@@ -5,6 +5,7 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../utils/logger';
 import { authorize } from '../middleware/authorize';
+import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
@@ -75,7 +76,7 @@ router.post('/upload', upload.single('file'), (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Upload error:', error);
-        res.status(500).json({ success: false, error: 'Upload failed' });
+        safeError(res, 500, 'Upload failed');
     }
 });
 
@@ -102,7 +103,7 @@ router.post('/upload/multiple', upload.array('files', 5), (req: Request, res: Re
         });
     } catch (error) {
         logger.error('Multiple upload error:', error);
-        res.status(500).json({ success: false, error: 'Upload failed' });
+        safeError(res, 500, 'Upload failed');
     }
 });
 
@@ -127,7 +128,7 @@ router.post('/farmer/image', upload.single('image'), (req: Request, res: Respons
         });
     } catch (error) {
         logger.error('Farmer image upload error:', error);
-        res.status(500).json({ success: false, error: 'Upload failed' });
+        safeError(res, 500, 'Upload failed');
     }
 });
 
@@ -153,7 +154,7 @@ router.post('/farm/document', upload.single('document'), (req: Request, res: Res
         });
     } catch (error) {
         logger.error('Farm document upload error:', error);
-        res.status(500).json({ success: false, error: 'Upload failed' });
+        safeError(res, 500, 'Upload failed');
     }
 });
 

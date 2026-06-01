@@ -9,6 +9,7 @@ import { getPrisma } from '../services/prismaService';
 import { logger } from '../utils/logger';
 import { authorize, AuthRequest } from '../middleware/authorize';
 import { usageService } from '../services/usageService';
+import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 const prisma = getPrisma();
@@ -41,7 +42,7 @@ router.get('/plans', async (req, res) => {
         res.json({ success: true, data: plans });
     } catch (error) {
         logger.error('Failed to get plans:', error);
-        res.status(500).json({ success: false, message: 'Failed to retrieve pricing plans' });
+        safeError(res, 500, 'Failed to retrieve pricing plans');
     }
 });
 
@@ -68,7 +69,7 @@ router.get('/subscription', authorize(['admin', 'extension_officer', 'farmer']),
         res.json({ success: true, data: subscription });
     } catch (error) {
         logger.error('Failed to get subscription:', error);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -85,7 +86,7 @@ router.get('/usage', authorize(['admin', 'extension_officer', 'farmer']), async 
         res.json({ success: true, data: usageData });
     } catch (error) {
         logger.error('Failed to get usage:', error);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -194,7 +195,7 @@ router.post('/subscribe', authorize(['admin', 'extension_officer', 'farmer']), a
         res.json({ success: true, data: session });
     } catch (error) {
         logger.error('Failed to create subscription session:', error);
-        res.status(500).json({ success: false, message: 'Failed to initiate subscription' });
+        safeError(res, 500, 'Failed to initiate subscription');
     }
 });
 
@@ -223,11 +224,11 @@ router.post('/cancel', authorize(['admin', 'extension_officer', 'farmer']), asyn
             });
             res.json({ success: true, message: 'Subscription will be canceled at the end of the period' });
         } else {
-            res.status(500).json({ success: false, message: 'Failed to cancel subscription' });
+            safeError(res, 500, 'Failed to cancel subscription');
         }
     } catch (error) {
         logger.error('Failed to cancel subscription:', error);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -267,7 +268,7 @@ router.post('/portal', authorize(['admin', 'extension_officer', 'farmer']), asyn
         res.json({ success: true, data: { url: result.url } });
     } catch (error) {
         logger.error('Failed to create portal session:', error);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -324,11 +325,11 @@ router.post('/switch', authorize(['admin', 'extension_officer', 'farmer']), asyn
                 res.json({ success: true, message: 'Subscription plan switch scheduled' });
             }
         } else {
-            res.status(500).json({ success: false, message: 'Failed to switch plan' });
+            safeError(res, 500, 'Failed to switch plan');
         }
     } catch (error) {
         logger.error('Failed to switch subscription:', error);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -378,7 +379,7 @@ router.get('/payment-methods', authorize(['admin', 'extension_officer', 'farmer'
             });
         }
         logger.error('Failed to get payment methods:', error);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -405,7 +406,7 @@ router.post('/payment-methods', authorize(['admin', 'extension_officer', 'farmer
         res.json({ success: true, data: { url: result.url } });
     } catch (error) {
         logger.error('Failed to create setup session:', error);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -423,11 +424,11 @@ router.delete('/payment-methods/:id', authorize(['admin', 'extension_officer', '
         if (success) {
             res.json({ success: true, message: 'Payment method removed successfully' });
         } else {
-            res.status(500).json({ success: false, message: 'Failed to remove payment method' });
+            safeError(res, 500, 'Failed to remove payment method');
         }
     } catch (error) {
         logger.error('Failed to delete payment method:', error);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -474,7 +475,7 @@ router.get('/invoices', authorize(['admin', 'extension_officer', 'farmer']), asy
             });
         }
         logger.error('Failed to get invoices:', error);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -491,7 +492,7 @@ router.get('/analytics/dashboard', authorize(['admin']), async (req: AuthRequest
         res.json({ success: true, data: analytics });
     } catch (error) {
         logger.error('Failed to get analytics dashboard:', error);
-        res.status(500).json({ success: false, message: 'Failed to retrieve analytics data' });
+        safeError(res, 500, 'Failed to retrieve analytics data');
     }
 });
 
@@ -509,7 +510,7 @@ router.get('/analytics/revenue', authorize(['admin']), async (req: AuthRequest, 
         res.json({ success: true, data: metrics });
     } catch (error) {
         logger.error('Failed to get revenue metrics:', error);
-        res.status(500).json({ success: false, message: 'Failed to retrieve revenue metrics' });
+        safeError(res, 500, 'Failed to retrieve revenue metrics');
     }
 });
 
@@ -526,7 +527,7 @@ router.get('/analytics/customers', authorize(['admin']), async (req: AuthRequest
         res.json({ success: true, data: metrics });
     } catch (error) {
         logger.error('Failed to get customer metrics:', error);
-        res.status(500).json({ success: false, message: 'Failed to retrieve customer metrics' });
+        safeError(res, 500, 'Failed to retrieve customer metrics');
     }
 });
 
@@ -543,7 +544,7 @@ router.get('/analytics/subscriptions', authorize(['admin']), async (req: AuthReq
         res.json({ success: true, data: metrics });
     } catch (error) {
         logger.error('Failed to get subscription metrics:', error);
-        res.status(500).json({ success: false, message: 'Failed to retrieve subscription metrics' });
+        safeError(res, 500, 'Failed to retrieve subscription metrics');
     }
 });
 
@@ -560,7 +561,7 @@ router.get('/analytics/payment-methods', authorize(['admin']), async (req: AuthR
         res.json({ success: true, data: analytics });
     } catch (error) {
         logger.error('Failed to get payment method analytics:', error);
-        res.status(500).json({ success: false, message: 'Failed to retrieve payment method analytics' });
+        safeError(res, 500, 'Failed to retrieve payment method analytics');
     }
 });
 
@@ -577,7 +578,7 @@ router.get('/analytics/churn', authorize(['admin']), async (req: AuthRequest, re
         res.json({ success: true, data: prediction });
     } catch (error) {
         logger.error('Failed to get churn prediction:', error);
-        res.status(500).json({ success: false, message: 'Failed to retrieve churn analytics' });
+        safeError(res, 500, 'Failed to retrieve churn analytics');
     }
 });
 
@@ -594,7 +595,7 @@ router.get('/analytics/cohorts', authorize(['admin']), async (req: AuthRequest, 
         res.json({ success: true, data: cohorts });
     } catch (error) {
         logger.error('Failed to get cohort analysis:', error);
-        res.status(500).json({ success: false, message: 'Failed to retrieve cohort analysis' });
+        safeError(res, 500, 'Failed to retrieve cohort analysis');
     }
 });
 
@@ -615,7 +616,7 @@ router.patch('/admin/config', authorize(['admin']), async (req: AuthRequest, res
         res.json({ success: true, message: 'Billing configuration updated successfully' });
     } catch (error) {
         logger.error('Failed to update billing configuration:', error);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -672,7 +673,7 @@ router.post('/paypal/subscribe', authorize(['admin', 'extension_officer', 'farme
         }
     } catch (error) {
         logger.error('Failed to create PayPal subscription:', error);
-        res.status(500).json({ success: false, message: 'Failed to initiate PayPal subscription' });
+        safeError(res, 500, 'Failed to initiate PayPal subscription');
     }
 });
 
@@ -784,7 +785,7 @@ router.post('/voucher/redeem', authorize(['admin', 'extension_officer', 'farmer'
         }
     } catch (error) {
         logger.error('Voucher redemption failed:', error);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -807,7 +808,7 @@ router.post('/voucher/generate', authorize(['admin']), async (req: AuthRequest, 
         res.json({ success: true, data: result });
     } catch (error) {
         logger.error('Voucher generation failed:', error);
-        res.status(500).json({ success: false, message: 'Failed to generate vouchers' });
+        safeError(res, 500, 'Failed to generate vouchers');
     }
 });
 
@@ -828,7 +829,7 @@ router.get('/voucher/list', authorize(['admin']), async (req: AuthRequest, res) 
         res.json({ success: true, data: vouchers });
     } catch (error) {
         logger.error('Failed to list vouchers:', error);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -873,7 +874,7 @@ router.post('/transaction/submit', authorize(['admin', 'extension_officer', 'far
         }
     } catch (error) {
         logger.error('Transaction submission failed:', error);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -890,7 +891,7 @@ router.get('/transaction/my', authorize(['admin', 'extension_officer', 'farmer']
         res.json({ success: true, data: submissions });
     } catch (error) {
         logger.error('Failed to get user submissions:', error);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -910,7 +911,7 @@ router.get('/transaction/list', authorize(['admin']), async (req: AuthRequest, r
         res.json({ success: true, data: transactions });
     } catch (error) {
         logger.error('Failed to list transactions:', error);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -934,7 +935,7 @@ router.post('/transaction/verify/:id', authorize(['admin']), async (req: AuthReq
         }
     } catch (error) {
         logger.error('Transaction verification failed:', error);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -963,7 +964,7 @@ router.post('/transaction/reject/:id', authorize(['admin']), async (req: AuthReq
         }
     } catch (error) {
         logger.error('Transaction rejection failed:', error);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+        safeError(res, 500, 'Internal server error');
     }
 });
 

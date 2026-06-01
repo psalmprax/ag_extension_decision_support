@@ -23,7 +23,10 @@ import { selfHealingService } from './services/selfHealing';
 // Routes
 import authRoutes from './routes/auth';
 import knowledgeRoutes from './routes/knowledge';
+import knowledgeSourcesRoutes from './routes/knowledgeSources';
+import knowledgeSyncRoutes from './routes/knowledgeSync';
 import chatbotRoutes from './routes/chatbot';
+import chatbotSpeechRoutes from './routes/chatbotSpeech';
 import reportingRoutes from './routes/reporting';
 import analyticsRoutes from './routes/analytics';
 import portfolioRoutes from './routes/portfolio';
@@ -262,7 +265,10 @@ app.use(i18nUrlMiddleware);
 app.use(i18nRouteHandler);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/knowledge', knowledgeRoutes);
+app.use('/api/v1/knowledge/sources', knowledgeSourcesRoutes);
+app.use('/api/v1/knowledge/sync', knowledgeSyncRoutes);
 app.use('/api/v1/chatbot', chatbotRoutes);
+app.use('/api/v1/chatbot/speech', chatbotSpeechRoutes);
 app.use('/api/v1/reporting', reportingRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/portfolio', portfolioRoutes);
@@ -323,7 +329,10 @@ app.use('/api/mcp', (req, res, next) => {
 // Legacy redirects
 app.use('/api/auth', authRoutes);
 app.use('/api/knowledge', knowledgeRoutes);
+app.use('/api/knowledge/sources', knowledgeSourcesRoutes);
+app.use('/api/knowledge/sync', knowledgeSyncRoutes);
 app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/chatbot/speech', chatbotSpeechRoutes);
 app.use('/api/reporting', reportingRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/portfolio', portfolioRoutes);

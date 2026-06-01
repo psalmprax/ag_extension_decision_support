@@ -85,7 +85,7 @@ router.post('/synthesize-visit', [checkUsageLimit('ai_chat'), validate({ body: a
         });
     } catch (error) {
         logger.error('Visit synthesis failed:', error);
-        res.status(500).json({ success: false, error: 'Failed to synthesize visit data' });
+        safeError(res, 500, 'Failed to synthesize visit data');
     }
 });
 
@@ -117,7 +117,7 @@ router.post('/analyze-image', [checkUsageLimit('ai_vision')], async (req: AuthRe
         });
     } catch (error) {
         logger.error('Image analysis failed:', error);
-        res.status(500).json({ success: false, error: 'Failed to analyze image' });
+        safeError(res, 500, 'Failed to analyze image');
     }
 });
 
@@ -149,13 +149,14 @@ router.post('/analyze-video', [checkUsageLimit('ai_vision')], async (req: AuthRe
         });
     } catch (error) {
         logger.error('Video analysis failed:', error);
-        res.status(500).json({ success: false, error: 'Failed to analyze video' });
+        safeError(res, 500, 'Failed to analyze video');
     }
 });
 
 export default router;
 
 import axios from 'axios';
+import { safeError } from '@/utils/safeResponse';
 
 // Agent registry — system-defined agent metadata
 const agentRegistry = [
@@ -243,7 +244,7 @@ router.get('/agents', async (_req: AuthRequest, res: Response) => {
         res.json({ success: true, data: agentsWithStatus });
     } catch (error) {
         logger.error('Failed to fetch agents:', error);
-        res.status(500).json({ success: false, error: 'Failed to fetch agents' });
+        safeError(res, 500, 'Failed to fetch agents');
     }
 });
 
@@ -269,7 +270,7 @@ router.get('/status', async (_req: AuthRequest, res: Response) => {
         res.json({ success: true, data: { agents, timestamp: new Date().toISOString() } });
     } catch (error) {
         logger.error('Failed to fetch agent status:', error);
-        res.status(500).json({ success: false, error: 'Failed to fetch agent status' });
+        safeError(res, 500, 'Failed to fetch agent status');
     }
 });
 
@@ -291,7 +292,7 @@ router.post('/execute', async (req: AuthRequest, res: Response) => {
         res.json({ success: true, data: { agent, status: 'running' } });
     } catch (error) {
         logger.error('Failed to execute agent:', error);
-        res.status(500).json({ success: false, error: 'Failed to start agent execution' });
+        safeError(res, 500, 'Failed to start agent execution');
     }
 });
 
@@ -312,6 +313,6 @@ router.post('/stop/:agentId', async (req: AuthRequest, res: Response) => {
         res.json({ success: true, data: { agent: agentId, status: 'idle' } });
     } catch (error) {
         logger.error('Failed to stop agent:', error);
-        res.status(500).json({ success: false, error: 'Failed to stop agent' });
+        safeError(res, 500, 'Failed to stop agent');
     }
 });

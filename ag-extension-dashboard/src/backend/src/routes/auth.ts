@@ -7,6 +7,7 @@ import { logger } from '@/utils/logger';
 import { auditMiddleware } from '@/middleware/auditMiddleware';
 import { validate } from '@/middleware/validationMiddleware';
 import { loginSchema, registerSchema } from '@/utils/schemas';
+import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
@@ -92,7 +93,7 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
         });
     } catch (error) {
         logger.error('Login error:', error);
-        res.status(500).json({ success: false, error: 'Login failed' });
+        safeError(res, 500, 'Login failed');
     }
 });
 
@@ -204,7 +205,7 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
         });
     } catch (error) {
         logger.error('Registration error:', error);
-        res.status(500).json({ success: false, error: 'Registration failed' });
+        safeError(res, 500, 'Registration failed');
     }
 });
 
@@ -309,7 +310,7 @@ router.post('/demo', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Demo login error:', error);
-        res.status(500).json({ success: false, error: 'Demo login failed' });
+        safeError(res, 500, 'Demo login failed');
     }
 });
 

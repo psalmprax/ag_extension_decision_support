@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
 import { shareService } from '@/services/shareService';
+import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
@@ -74,10 +75,7 @@ router.post('/', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Error creating share:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to create share link',
-        });
+        safeError(res, 500, 'Failed to create share link');
     }
 });
 
@@ -130,10 +128,7 @@ router.get('/', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Error getting shares:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to get shares',
-        });
+        safeError(res, 500, 'Failed to get shares');
     }
 });
 
@@ -185,10 +180,7 @@ router.delete('/:token', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Error deleting share:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to delete share',
-        });
+        safeError(res, 500, 'Failed to delete share');
     }
 });
 
@@ -248,10 +240,7 @@ router.post('/:token/email', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Error sharing via email:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to share via email',
-        });
+        safeError(res, 500, 'Failed to share via email');
     }
 });
 
@@ -311,10 +300,7 @@ router.post('/:token/sms', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Error sharing via SMS:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to share via SMS',
-        });
+        safeError(res, 500, 'Failed to share via SMS');
     }
 });
 

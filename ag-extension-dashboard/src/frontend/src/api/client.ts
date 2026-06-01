@@ -95,11 +95,6 @@ apiClient.interceptors.response.use(
 
             const delay = getRetryDelay(retryCount);
 
-            // Log retry attempt in development
-            if (import.meta.env.DEV) {
-                console.log(`Retry attempt ${retryCount + 1}/${MAX_RETRIES} after ${delay}ms`);
-            }
-
             // Wait before retrying
             await new Promise(resolve => setTimeout(resolve, delay));
 
@@ -117,10 +112,6 @@ apiClient.interceptors.response.use(
             // Suppress noisy configuration warnings
             else if (error.response?.data && (error.response.data as Record<string, unknown>).errorCode === 'PAYMENT_GATEWAY_NOT_CONFIGURED') {
                 // Silent - expected setup state
-            }
-            // Log other errors
-            else if (error.response) {
-                console.warn(`API Error: ${error.response.status} - ${error.response.statusText}`);
             }
         }
         return Promise.reject(error);

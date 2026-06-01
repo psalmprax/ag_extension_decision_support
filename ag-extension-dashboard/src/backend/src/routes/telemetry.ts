@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { authorize } from '@/middleware/authorize';
 import { agentTelemetry } from '@/services/agentTelemetry';
 import { logger } from '@/utils/logger';
+import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
@@ -12,7 +13,7 @@ router.get('/summary', authorize(['extension_officer', 'admin', 'farmer']), asyn
         res.json({ success: true, data: summary });
     } catch (error) {
         logger.error('Failed to get telemetry summary:', error);
-        res.status(500).json({ success: false, error: 'Failed to get telemetry summary' });
+        safeError(res, 500, 'Failed to get telemetry summary');
     }
 });
 
@@ -23,7 +24,7 @@ router.get('/events', authorize(['extension_officer', 'admin', 'farmer']), async
         res.json({ success: true, data: events });
     } catch (error) {
         logger.error('Failed to get telemetry events:', error);
-        res.status(500).json({ success: false, error: 'Failed to get telemetry events' });
+        safeError(res, 500, 'Failed to get telemetry events');
     }
 });
 

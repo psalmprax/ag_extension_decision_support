@@ -4,6 +4,7 @@ import { selfHealingService } from '@/services/selfHealing';
 import { logger } from '@/utils/logger';
 import { getPoolStats } from '@/services/databaseService';
 import { getEmbeddingCacheStats } from '@/services/embeddingCache';
+import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
@@ -36,7 +37,7 @@ router.get('/metrics', authorize(['admin']), async (req: Request, res: Response)
         });
     } catch (error) {
         logger.error('Failed to get infrastructure metrics:', error);
-        res.status(500).json({ success: false, error: 'Failed to get infrastructure metrics' });
+        safeError(res, 500, 'Failed to get infrastructure metrics');
     }
 });
 
@@ -47,7 +48,7 @@ router.get('/components', authorize(['admin']), async (req: Request, res: Respon
         res.json({ success: true, data: healthChecks });
     } catch (error) {
         logger.error('Failed to get health checks:', error);
-        res.status(500).json({ success: false, error: 'Failed to get health checks' });
+        safeError(res, 500, 'Failed to get health checks');
     }
 });
 
@@ -58,7 +59,7 @@ router.get('/recovery-log', authorize(['admin']), async (req: Request, res: Resp
         res.json({ success: true, data: recoveryLog });
     } catch (error) {
         logger.error('Failed to get recovery log:', error);
-        res.status(500).json({ success: false, error: 'Failed to get recovery log' });
+        safeError(res, 500, 'Failed to get recovery log');
     }
 });
 
@@ -72,7 +73,7 @@ router.post('/recover/:component', authorize(['admin']), async (req: Request, re
         res.json({ success: true, message: 'Recovery request logged - automatic recovery will be attempted' });
     } catch (error) {
         logger.error(`Failed to process recovery request for ${req.params.component}:`, error);
-        res.status(500).json({ success: false, error: 'Failed to process recovery request' });
+        safeError(res, 500, 'Failed to process recovery request');
     }
 });
 

@@ -3,11 +3,12 @@ import { Router, Request, Response } from 'express';
 import { Farmer } from '@prisma/client';
 import { logger } from '@/utils/logger';
 import { validate } from '@/middleware/validationMiddleware';
-import { createFarmerSchema } from '@/utils/schemas';
+import { createFarmerSchema, updateFarmerSchema } from '@/utils/schemas';
 import { getPrisma } from '@/services/prismaService';
 import { authorize } from '@/middleware/authorize';
 import { shareService } from '@/services/shareService';
 import { bulkOperationsService } from '@/services/bulkOperationsService';
+import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
@@ -155,7 +156,7 @@ router.get('/', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Get farmers error:', error);
-        res.status(500).json({ success: false, error: 'Failed to get farmers' });
+        safeError(res, 500, 'Failed to get farmers');
     }
 });
 
@@ -231,7 +232,7 @@ router.get('/:id', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Get farmer error:', error);
-        res.status(500).json({ success: false, error: 'Failed to get farmer' });
+        safeError(res, 500, 'Failed to get farmer');
     }
 });
 
@@ -312,7 +313,7 @@ router.post('/', validate(createFarmerSchema), async (req: Request, res: Respons
         });
     } catch (error) {
         logger.error('Create farmer error:', error);
-        res.status(500).json({ success: false, error: 'Failed to create farmer' });
+        safeError(res, 500, 'Failed to create farmer');
     }
 });
 
@@ -342,7 +343,7 @@ router.post('/', validate(createFarmerSchema), async (req: Request, res: Respons
  *         description: Farmer not found
  */
 // Update farmer
-router.patch('/:id', async (req: Request, res: Response) => {
+router.patch('/:id', validate(updateFarmerSchema), async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const userRole = (req as any).user?.role;
@@ -408,7 +409,7 @@ router.patch('/:id', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Update farmer error:', error);
-        res.status(500).json({ success: false, error: 'Failed to update farmer' });
+        safeError(res, 500, 'Failed to update farmer');
     }
 });
 
@@ -460,7 +461,7 @@ router.post('/:id/share', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { isPublic, expiresAt, permissions } = req.body;
-        const createdBy = req.user?.id;
+        const createdBy = req.user?.userId;
 
         const shareLink = await shareService.createShare({
             entityType: 'farmer',
@@ -477,10 +478,7 @@ router.post('/:id/share', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Error creating farmer share:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to create share link',
-        });
+        safeError(res, 500, 'Failed to create share link');
     }
 });
 
@@ -599,11 +597,7 @@ router.post('/reorder', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Reorder farmers error:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to reorder farmers',
-            aria: { role: 'alert', label: 'Reorder failed: Internal server error' }
-        });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -659,10 +653,7 @@ router.post('/bulk/delete', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Bulk delete farmers error:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to perform bulk delete operation'
-        });
+        safeError(res, 500, 'Failed to perform bulk delete operation');
     }
 });
 
@@ -732,10 +723,7 @@ router.post('/bulk/update', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Bulk update farmers error:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to perform bulk update operation'
-        });
+        safeError(res, 500, 'Failed to perform bulk update operation');
     }
 });
 
@@ -775,10 +763,7 @@ router.get('/export', async (req: Request, res: Response) => {
         res.send(csvData);
     } catch (error) {
         logger.error('Export farmers error:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to export farmers'
-        });
+        safeError(res, 500, 'Failed to export farmers');
     }
 });
 
@@ -829,10 +814,7 @@ router.post('/import', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Import farmers error:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to import farmers'
-        });
+        safeError(res, 500, 'Failed to import farmers');
     }
 });
 
