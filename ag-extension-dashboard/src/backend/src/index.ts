@@ -134,6 +134,26 @@ async function bootstrap() {
             logger.error('Failed to import knowledge routes:', error);
         }
 
+        // Sync external knowledge sources (curated tropical articles — fast, no API calls)
+        try {
+            const { KnowledgeSyncOrchestrator } = await import('./services/data/knowledgeSyncOrchestrator');
+            KnowledgeSyncOrchestrator.syncLightweight().catch(err =>
+                logger.error('Failed to sync lightweight knowledge sources:', err)
+            );
+        } catch (error) {
+            logger.error('Failed to import knowledge sync orchestrator:', error);
+        }
+
+        // Bootstrap RAG v2 (chunking + knowledge graph)
+        try {
+            const { RAGV2Service } = await import('./services/ragV2Service');
+            RAGV2Service.bootstrap().catch(err =>
+                logger.error('Failed to bootstrap RAG v2:', err)
+            );
+        } catch (error) {
+            logger.error('Failed to import RAG v2 service:', error);
+        }
+
         // Initialize persistent memory layer
         try {
             await persistentMemory.initialize();

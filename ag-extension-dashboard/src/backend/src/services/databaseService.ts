@@ -433,12 +433,12 @@ export async function createTables(): Promise<void> {
     -- Convert embedding columns to pgvector native type if still float8[]
     DO $$ BEGIN
       IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'knowledge_articles' AND column_name = 'embedding' AND data_type = 'ARRAY') THEN
-        ALTER TABLE knowledge_articles ALTER COLUMN embedding TYPE vector(1536) USING embedding::real[]::vector;
+        ALTER TABLE knowledge_articles ALTER COLUMN embedding TYPE vector(768) USING embedding::real[]::vector;
       END IF;
     END $$;
     DO $$ BEGIN
       IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'search_cache' AND column_name = 'embedding' AND data_type = 'ARRAY') THEN
-        ALTER TABLE search_cache ALTER COLUMN embedding TYPE vector(1536) USING embedding::real[]::vector;
+        ALTER TABLE search_cache ALTER COLUMN embedding TYPE vector(768) USING embedding::real[]::vector;
       END IF;
     END $$;
     -- Unique index on normalized query for O(1) exact match lookups

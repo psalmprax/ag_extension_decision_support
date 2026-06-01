@@ -43,12 +43,21 @@ export interface KnowledgeChart {
     data: Array<{ label: string; value: number }>;
 }
 
+export interface Citation {
+    sourceId: string;
+    title: string;
+    category: string;
+    excerpt: string;
+    score: number;
+}
+
 export interface AskResponse {
     success: boolean;
     data: {
         answer: string;
         contextUsed: ContextItem[];
         cached?: boolean;
+        citations?: Citation[];
         visuals?: {
             kpis?: KnowledgeKPI[];
             charts?: KnowledgeChart[];
@@ -58,11 +67,12 @@ export interface AskResponse {
     };
 }
 
-export const searchKnowledge = async (query: string, category?: string, crop?: string): Promise<SearchResponse> => {
+export const searchKnowledge = async (query: string, category?: string, crop?: string, v2: boolean = true): Promise<SearchResponse> => {
     const params = new URLSearchParams();
     if (query) params.append('q', query);
     if (category) params.append('category', category);
     if (crop) params.append('crop', crop);
+    if (v2) params.append('v2', 'true');
 
     const response = await apiClient.get<SearchResponse>(`/knowledge/search?${params.toString()}`);
     return response.data;

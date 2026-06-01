@@ -221,9 +221,9 @@ export async function seedKnowledgeArticles(): Promise<void> {
 // Search knowledge base
 router.get('/search', async (req: Request, res: Response) => {
     try {
-        const { q, category, crop, limit = '10', offset = '0' } = req.query;
+        const { q, category, crop, limit = '10', offset = '0', v2 } = req.query;
 
-        const cacheKey = 'knowledge:search:' + q + ':' + category + ':' + crop + ':' + limit + ':' + offset;
+        const cacheKey = 'knowledge:search:' + q + ':' + category + ':' + crop + ':' + limit + ':' + offset + ':' + (v2 || 'false');
         const cached = await cacheGet(cacheKey);
         if (cached) {
             return res.json(JSON.parse(cached));
@@ -233,6 +233,36 @@ router.get('/search', async (req: Request, res: Response) => {
         const pool = getPool();
 
         if (pool && q) {
+            // Use RAG v2 enhanced search if requested
+            if (v2 === 'true') {
+                try {
+                    const { RAGV2Service } = await import('@/services/ragV2Service');
+                    const enhanced = await RAGV2Service.enhancedSearch(q as string, {
+                        limit: parseInt(limit as string),
+                        useChunks: true,
+                        useGraph: true,
+                        useReranking: true,
+                        filters: { category: category as string, crop: crop as string }
+                    });
+                    articles = enhanced.results.map(r => ({
+                        id: r.articleId,
+                        content: r.content,
+                        metadata: r.metadata,
+                        score: r.rerankScore ?? r.score,
+                        citation: r.citation
+                    }));
+                    // Include graph context and citations in response
+                    const response = {
+                        success: true,
+                        data: { articles, graphContext: enhanced.graphContext, citations: enhanced.citations },
+                        aria: { role: 'status', label: `${articles.length} knowledge results found with RAG v2` }
+                    };
+                    await cacheSet(cacheKey, JSON.stringify(response), 300);
+                    return res.json(response);
+                } catch (ragErr) {
+                    logger.warn('RAG v2 search failed, falling back to standard search:', ragErr);
+                }
+            }
             articles = await KnowledgeService.searchKnowledge(q as string, parseInt(limit as string), {
                 category: category as string | undefined,
                 crop: crop as string | undefined
@@ -796,6 +826,21 @@ router.post('/ask', async (req: Request, res: Response) => {
 
         const result = await KnowledgeService.askQuestion(userId, question);
 
+        // Enrich response with citations from RAG v2
+        let citations: any[] = [];
+        try {
+            const { RAGV2Service } = await import('@/services/ragV2Service');
+            const enhanced = await RAGV2Service.enhancedSearch(question, {
+                limit: 3,
+                useChunks: true,
+                useGraph: false, // Skip graph for speed in ask endpoint
+                useReranking: false
+            });
+            citations = enhanced.citations;
+        } catch (ragErr) {
+            // Non-fatal — citations are optional
+        }
+
         res.json({
             success: true,
             data: {
@@ -804,7 +849,8 @@ router.post('/ask', async (req: Request, res: Response) => {
                 visuals: result.visuals,
                 audio: (result as any).audio,
                 contextUsed: result.contextUsed,
-                cached: result.cached
+                cached: result.cached,
+                citations
             },
         });
     } catch (error) {
@@ -1311,6 +1357,113 @@ router.post('/ingest', authorize(knowledgeAdminRoles), knowledgeUpload.single('f
             error: 'Failed to ingest and vectorize document',
             aria: { role: 'alert', label: 'Document ingestion failed' }
         });
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/knowledge/sync:
+ *   post:
+ *     summary: Trigger full knowledge base sync (curated articles + FAOSTAT data)
+ *     tags: [Knowledge]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Sync results
+ */
+router.post('/sync', async (_req: Request, res: Response) => {
+    try {
+        const { KnowledgeSyncOrchestrator } = await import('@/services/data/knowledgeSyncOrchestrator');
+        const results = await KnowledgeSyncOrchestrator.syncAll();
+        res.json({ success: true, data: results });
+    } catch (error) {
+        logger.error('Knowledge sync error:', error);
+        res.status(500).json({ success: false, error: 'Failed to sync knowledge sources' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/knowledge/sync/status:
+ *   get:
+ *     summary: Get knowledge sync status
+ *     tags: [Knowledge]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Sync status
+ */
+router.get('/sync/status', async (_req: Request, res: Response) => {
+    try {
+        const { KnowledgeSyncOrchestrator } = await import('@/services/data/knowledgeSyncOrchestrator');
+        const status = KnowledgeSyncOrchestrator.getStatus();
+        res.json({ success: true, data: status });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Failed to get sync status' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/knowledge/ragv2/bootstrap:
+ *   post:
+ *     summary: Bootstrap RAG v2 (chunk all articles + build knowledge graph)
+ *     tags: [Knowledge]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Bootstrap results
+ */
+router.post('/ragv2/bootstrap', async (_req: Request, res: Response) => {
+    try {
+        const { RAGV2Service } = await import('@/services/ragV2Service');
+        await RAGV2Service.initializeSchema();
+        const chunks = await RAGV2Service.chunkAllArticles();
+        const graph = await RAGV2Service.buildKnowledgeGraph();
+        res.json({
+            success: true,
+            data: {
+                chunks: chunks.chunks,
+                articles: chunks.total,
+                entities: graph.entities,
+                relationships: graph.relationships
+            }
+        });
+    } catch (error) {
+        logger.error('RAG v2 bootstrap error:', error);
+        res.status(500).json({ success: false, error: 'Failed to bootstrap RAG v2' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/knowledge/graph/{entity}:
+ *   get:
+ *     summary: Get related entities from the knowledge graph
+ *     tags: [Knowledge]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: entity
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Related entities
+ */
+router.get('/graph/:entity', async (req: Request, res: Response) => {
+    try {
+        const { RAGV2Service } = await import('@/services/ragV2Service');
+        const related = await RAGV2Service.getRelatedEntities(req.params.entity);
+        res.json({ success: true, data: related });
+    } catch (error) {
+        logger.error('Graph query error:', error);
+        res.status(500).json({ success: false, error: 'Failed to query knowledge graph' });
     }
 });
 
