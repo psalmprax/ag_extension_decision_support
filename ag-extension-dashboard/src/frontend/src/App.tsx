@@ -57,6 +57,7 @@ const AlphaAI = lazy(() => import('./components/Cyber/AlphaAI'));
 const KnowledgeBase = lazy(() => import('./components/KnowledgeBase').then(m => ({ default: m.KnowledgeBase })));
 const UserManagementPage = lazy(() => import('./pages/UserManagementPage').then(m => ({ default: m.UserManagementPage })));
 const LandingPage = lazy(() => import('./pages/LandingPage').then(m => ({ default: m.LandingPage })));
+const DemoPage = lazy(() => import('./pages/DemoPage').then(m => ({ default: m.DemoPage })));
 
 function App() {
     const { t, language } = useLanguage();
@@ -308,6 +309,7 @@ function App() {
                         <Route path="/login" element={<div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4"><Login /></div>} />
                         <Route path="/register" element={<div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4"><Register /></div>} />
                         <Route path="/forgot-password" element={<div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4"><ForgotPassword /></div>} />
+                        <Route path="/demo" element={<DemoPage />} />
                         <Route path="*" element={<LandingPage />} />
                     </Routes>
                 </Suspense>
