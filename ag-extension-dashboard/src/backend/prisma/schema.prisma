@@ -88,7 +88,10 @@ model Farmer {
    conversations            ChatConversation[]
    analytics                AnalyticsEvent[]
 
-   @@map("farmers")
+  @@index([assignedOfficerId])
+  @@index([region])
+  @@index([userId])
+  @@map("farmers")
 }
 
 model Visit {
@@ -115,6 +118,9 @@ model Visit {
   officer              User?     @relation(fields: [officerId], references: [id])
   farmer               Farmer?   @relation(fields: [farmerId], references: [id])
 
+  @@index([farmerId])
+  @@index([officerId])
+  @@index([status])
   @@map("visits")
 }
 
@@ -197,6 +203,8 @@ model AnalyticsEvent {
   user      User?     @relation(fields: [userId], references: [id])
   farmer    Farmer?   @relation(fields: [farmerId], references: [id])
 
+  @@index([userId])
+  @@index([farmerId])
   @@map("analytics_events")
 }
 
@@ -311,6 +319,7 @@ model Notification {
   readAt    DateTime? @map("read_at") @db.Timestamp(6)
   user      User      @relation(fields: [userId], references: [id])
 
+  @@index([userId, isRead])
   @@map("notifications")
 }
 

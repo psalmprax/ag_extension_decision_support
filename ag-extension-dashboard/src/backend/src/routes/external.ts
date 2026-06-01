@@ -7,6 +7,7 @@ import { getMapData } from '@/services/mapService';
 import { marketPriceService } from '@/services/marketPriceService';
 import { authorize } from '@/middleware/authorize';
 import { SatelliteService } from '@/services/satelliteService';
+import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
@@ -21,7 +22,7 @@ router.get('/priority/:farmerId', async (req: Request, res: Response) => {
         res.json({ success: true, data: priority });
     } catch (error) {
         logger.error(`Priority route error for farmer ${req.params.farmerId}:`, error);
-        res.status(500).json({ success: false, error: 'Failed to calculate priority score' });
+        safeError(res, 500, 'Failed to calculate priority score');
     }
 });
 
@@ -39,7 +40,7 @@ router.get('/satellite', async (req: Request, res: Response) => {
         res.json({ success: true, data: indices });
     } catch (error) {
         logger.error('Satellite route error:', error);
-        res.status(500).json({ success: false, error: 'Failed to fetch satellite telemetry' });
+        safeError(res, 500, 'Failed to fetch satellite telemetry');
     }
 });
 
@@ -51,7 +52,7 @@ router.get('/weather/:location?', async (req: Request, res: Response) => {
         res.json({ success: true, data: weather });
     } catch (error) {
         logger.error('Weather route error:', (error as Error).message);
-        res.status(500).json({ success: false, error: 'Failed to fetch weather' });
+        safeError(res, 500, 'Failed to fetch weather');
     }
 });
 
@@ -64,7 +65,7 @@ router.get('/alerts', async (req: Request, res: Response) => {
         res.json({ success: true, data: alerts });
     } catch (error) {
         logger.error('Alerts route error:', error);
-        res.status(500).json({ success: false, error: 'Failed to fetch disease alerts' });
+        safeError(res, 500, 'Failed to fetch disease alerts');
     }
 });
 
@@ -73,7 +74,7 @@ router.get('/map', async (_req: Request, res: Response) => {
         const mapData = await getMapData();
         res.json({ success: true, data: mapData });
     } catch (error) {
-        res.status(500).json({ success: false, error: 'Failed to fetch map data' });
+        safeError(res, 500, 'Failed to fetch map data');
     }
 });
 
@@ -83,7 +84,7 @@ router.get('/prices', async (_req: Request, res: Response) => {
         res.json({ success: true, data: prices });
     } catch (error) {
         logger.error('Prices route error:', error);
-        res.status(500).json({ success: false, error: 'Failed to fetch market prices' });
+        safeError(res, 500, 'Failed to fetch market prices');
     }
 });
 

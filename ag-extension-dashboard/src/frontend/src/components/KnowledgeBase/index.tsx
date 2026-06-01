@@ -107,7 +107,7 @@ export const KnowledgeBase: React.FC = () => {
             const data = await fetchKnowledgeHistory();
             if (data.success) setHistory(data.data);
         } catch (err) {
-            console.error('History fetch failed', err);
+
         }
     };
 
@@ -116,7 +116,7 @@ export const KnowledgeBase: React.FC = () => {
             const data = await fetchKnowledgeStats();
             if (data.success) setStats(data.data);
         } catch (err) {
-            console.error('Stats fetch failed', err);
+
         }
     };
 

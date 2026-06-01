@@ -90,7 +90,7 @@ export const useBulkActions = (options: BulkActionsOptions) => {
                     message: `Bulk SMS sent to ${selectedFarmersList.length} farmers.`
                 });
             } catch (error) {
-                console.error('Bulk SMS error:', error);
+
                 addNotification({
                     type: 'error',
                     message: 'Error connecting to SMS service.'
@@ -132,7 +132,7 @@ export const useBulkActions = (options: BulkActionsOptions) => {
                         }
                     });
                 } catch (error) {
-                    console.error('Bulk delete error:', error);
+
                     addNotification({
                         type: 'error',
                         message: 'Failed to delete some farmers.'
@@ -155,7 +155,7 @@ export const useBulkActions = (options: BulkActionsOptions) => {
                     message: `Bulk update applied to ${ids.length} farmers.`
                 });
             } catch (error) {
-                console.error('Bulk update error:', error);
+
                 addNotification({
                     type: 'error',
                     message: 'Error applying bulk update.'

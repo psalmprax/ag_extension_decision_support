@@ -4,6 +4,7 @@ import { query, getPool } from '../services/databaseService';
 import { logger } from '../utils/logger';
 import { authorize } from '../middleware/authorize';
 import { subscribeUser, unsubscribeUser, sendPushNotification } from '../services/pushNotificationService';
+import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
@@ -44,7 +45,7 @@ router.get('/', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Get notifications error:', error);
-        res.status(500).json({ success: false, error: 'Failed to fetch notifications' });
+        safeError(res, 500, 'Failed to fetch notifications');
     }
 });
 
@@ -70,7 +71,7 @@ router.get('/unread-count', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Get unread count error:', error);
-        res.status(500).json({ success: false, error: 'Failed to fetch count' });
+        safeError(res, 500, 'Failed to fetch count');
     }
 });
 
@@ -94,7 +95,7 @@ router.put('/:id/read', async (req: Request, res: Response) => {
         res.json({ success: true });
     } catch (error) {
         logger.error('Mark read error:', error);
-        res.status(500).json({ success: false, error: 'Failed to mark as read' });
+        safeError(res, 500, 'Failed to mark as read');
     }
 });
 
@@ -117,7 +118,7 @@ router.put('/read-all', async (req: Request, res: Response) => {
         res.json({ success: true });
     } catch (error) {
         logger.error('Mark all read error:', error);
-        res.status(500).json({ success: false, error: 'Failed to mark all as read' });
+        safeError(res, 500, 'Failed to mark all as read');
     }
 });
 
@@ -137,7 +138,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
         res.json({ success: true });
     } catch (error) {
         logger.error('Delete notification error:', error);
-        res.status(500).json({ success: false, error: 'Failed to delete notification' });
+        safeError(res, 500, 'Failed to delete notification');
     }
 });
 
@@ -156,12 +157,12 @@ router.delete('/', async (req: Request, res: Response) => {
         res.json({ success: true });
     } catch (error) {
         logger.error('Clear notifications error:', error);
-        res.status(500).json({ success: false, error: 'Failed to clear notifications' });
+        safeError(res, 500, 'Failed to clear notifications');
     }
 });
 
-// Admin: Send notification to user
-router.post('/send', async (req: Request, res: Response) => {
+// Admin/Manager: Send notification to user
+router.post('/send', authorize(['admin', 'regional_manager']), async (req: Request, res: Response) => {
     try {
         const { userId, type, title, message, metadata } = req.body;
         const pool = getPool();
@@ -182,12 +183,12 @@ router.post('/send', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Send notification error:', error);
-        res.status(500).json({ success: false, error: 'Failed to send notification' });
+        safeError(res, 500, 'Failed to send notification');
     }
 });
 
-// Admin: Broadcast notification to all users
-router.post('/broadcast', async (req: Request, res: Response) => {
+// Admin/Manager: Broadcast notification to all users
+router.post('/broadcast', authorize(['admin', 'regional_manager']), async (req: Request, res: Response) => {
     try {
         const { type, title, message, metadata, role } = req.body;
         const pool = getPool();
@@ -224,7 +225,7 @@ router.post('/broadcast', async (req: Request, res: Response) => {
             data: { sent: usersResult.rows.length }
         });
     } catch (error) {
-        res.status(500).json({ success: false, error: 'Failed to broadcast notification' });
+        safeError(res, 500, 'Failed to broadcast notification');
     }
 });
 
@@ -242,7 +243,7 @@ router.post('/subscribe', async (req: Request, res: Response) => {
         res.status(201).json({ success: true });
     } catch (error) {
         logger.error('Subscribe error:', error);
-        res.status(500).json({ success: false, error: 'Failed to subscribe' });
+        safeError(res, 500, 'Failed to subscribe');
     }
 });
 
@@ -257,7 +258,7 @@ router.post('/unsubscribe', async (req: Request, res: Response) => {
         res.json({ success: true });
     } catch (error) {
         logger.error('Unsubscribe error:', error);
-        res.status(500).json({ success: false, error: 'Failed to unsubscribe' });
+        safeError(res, 500, 'Failed to unsubscribe');
     }
 });
 
@@ -269,7 +270,7 @@ router.post('/test-push', async (req: Request, res: Response) => {
         res.json({ success: true });
     } catch (error) {
         logger.error('Test push error:', error);
-        res.status(500).json({ success: false, error: 'Failed to send test push' });
+        safeError(res, 500, 'Failed to send test push');
     }
 });
 

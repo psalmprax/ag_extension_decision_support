@@ -9,6 +9,7 @@ import { usageService } from '../services/usageService';
 
 import { AIRouter } from '../services/aiProvider/aiProvider';
 import { query } from '../services/databaseService';
+import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
@@ -67,10 +68,10 @@ router.post('/send', checkUsageLimit('sms'), validate({ body: sendSMSSchema }), 
             await usageService.incrementUsage(senderId, 'sms');
             res.json({ success: true, message: 'SMS sent successfully' });
         } else {
-            res.status(500).json({ success: false, message: 'Failed to send SMS' });
+            safeError(res, 500, 'Failed to send SMS');
         }
     } catch (error: any) {
-        res.status(500).json({ success: false, message: error.message });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -98,7 +99,7 @@ router.post('/bulk', checkUsageLimit('sms'), validate({ body: bulkSMSSchema }), 
             results: result.results,
         });
     } catch (error: any) {
-        res.status(500).json({ success: false, message: error.message });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -123,7 +124,7 @@ router.get('/history', async (req: AuthRequest, res: Response) => {
             data: result.rows,
         });
     } catch (error: any) {
-        res.status(500).json({ success: false, message: error.message });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -149,7 +150,7 @@ router.post('/translate', validate({ body: translateSchema }), async (req: AuthR
             }
         });
     } catch (error: any) {
-        res.status(500).json({ success: false, message: error.message });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -162,7 +163,7 @@ router.post('/ussd/start', validate({ body: ussdSchema }), async (req: Request, 
 
         res.json({ response });
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -176,7 +177,7 @@ router.post('/ussd/handle', validate({ body: ussdSchema }), async (req: Request,
 
         res.json({ response });
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -196,10 +197,10 @@ router.post('/schedule', validate({ body: scheduleSMSSchema }), async (req: Auth
         if (success) {
             res.json({ success: true, message: 'SMS scheduled successfully' });
         } else {
-            res.status(500).json({ success: false, message: 'Failed to schedule SMS' });
+            safeError(res, 500, 'Failed to schedule SMS');
         }
     } catch (error: any) {
-        res.status(500).json({ success: false, message: error.message });
+        safeError(res, 500, 'Internal server error');
     }
 });
 

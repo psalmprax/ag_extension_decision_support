@@ -122,7 +122,7 @@ async function bootstrap() {
         // Seed Knowledge Articles (async)
         try {
             const { seedKnowledgeArticles, mockKnowledgeArticles } = await import('./routes/knowledge');
-            seedKnowledgeArticles().catch(err =>
+            seedKnowledgeArticles().catch((err: unknown) =>
                 logger.error('Failed to seed knowledge articles:', err)
             );
 

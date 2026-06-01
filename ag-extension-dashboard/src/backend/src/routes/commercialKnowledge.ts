@@ -9,6 +9,7 @@ import { marketPriceService } from '@/services/marketPriceService';
 import { usageService } from '@/services/usageService';
 import { authenticateCommercialAccess, apiClientService, CommercialAuthRequest } from '@/services/apiClientService';
 import { logger } from '@/utils/logger';
+import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
@@ -83,7 +84,7 @@ router.get('/search', async (req: CommercialAuthRequest, res: Response) => {
         res.json({ success: true, data: { query: q, articles, billing: (req as any).commercialUsage } });
     } catch (error) {
         logger.error('Commercial search API failed:', error);
-        res.status(500).json({ success: false, error: 'Commercial search failed' });
+        safeError(res, 500, 'Commercial search failed');
     }
 });
 
@@ -97,7 +98,7 @@ router.post('/ask', async (req: CommercialAuthRequest, res: Response) => {
         res.json({ success: true, data: { ...answer, billing: (req as any).commercialUsage } });
     } catch (error) {
         logger.error('Commercial ask API failed:', error);
-        res.status(500).json({ success: false, error: 'Commercial ask failed' });
+        safeError(res, 500, 'Commercial ask failed');
     }
 });
 
@@ -130,7 +131,7 @@ router.get('/live-context', async (req: CommercialAuthRequest, res: Response) =>
         res.json({ success: true, data: { ...context, billing: (req as any).commercialUsage } });
     } catch (error) {
         logger.error('Commercial live-context API failed:', error);
-        res.status(500).json({ success: false, error: 'Commercial live-context failed' });
+        safeError(res, 500, 'Commercial live-context failed');
     }
 });
 

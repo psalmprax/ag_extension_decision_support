@@ -3,6 +3,7 @@ import { Router, Request, Response } from 'express';
 import { contextMenuService, UserPermissions } from '@/services/contextMenuService';
 import { logger } from '@/utils/logger';
 import { authorize, UserRole } from '@/middleware/authorize';
+import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
@@ -60,10 +61,7 @@ router.get('/:entityType/:entityId', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Get context menu error:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to get context menu'
-        });
+        safeError(res, 500, 'Failed to get context menu');
     }
 });
 
@@ -94,10 +92,7 @@ router.get('/bulk/:entityType', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Get bulk context menu error:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to get bulk context menu'
-        });
+        safeError(res, 500, 'Failed to get bulk context menu');
     }
 });
 
@@ -147,10 +142,7 @@ router.post('/action', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Execute context menu action error:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to execute action'
-        });
+        safeError(res, 500, 'Failed to execute action');
     }
 });
 
@@ -202,10 +194,7 @@ router.get('/actions/:entityType', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Get available actions error:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to get available actions'
-        });
+        safeError(res, 500, 'Failed to get available actions');
     }
 });
 

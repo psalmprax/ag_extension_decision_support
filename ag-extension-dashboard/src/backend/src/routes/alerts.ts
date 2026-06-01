@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { query } from '../services/databaseService';
 import { logger } from '../utils/logger';
 import { authorize } from '../middleware/authorize';
+import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
@@ -25,7 +26,7 @@ router.get('/', async (_req: Request, res: Response) => {
         res.json({ success: true, data: result.rows });
     } catch (error) {
         logger.error('Error fetching alerts:', error);
-        res.status(500).json({ success: false, error: 'Failed to fetch alerts' });
+        safeError(res, 500, 'Failed to fetch alerts');
     }
 });
 
@@ -55,7 +56,7 @@ router.post('/', authorize(['extension_officer', 'admin']), async (req: Request,
         res.status(201).json({ success: true, data: result.rows[0] });
     } catch (error) {
         logger.error('Error creating alert:', error);
-        res.status(500).json({ success: false, error: 'Failed to create alert' });
+        safeError(res, 500, 'Failed to create alert');
     }
 });
 
@@ -84,7 +85,7 @@ router.patch('/:id/resolve', authorize(['extension_officer', 'admin']), async (r
         res.json({ success: true, message: 'Alert marked as resolved' });
     } catch (error) {
         logger.error('Error resolving alert:', error);
-        res.status(500).json({ success: false, error: 'Failed to resolve alert' });
+        safeError(res, 500, 'Failed to resolve alert');
     }
 });
 

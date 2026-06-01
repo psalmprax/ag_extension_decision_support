@@ -61,9 +61,9 @@ export function useWebRTC(): UseWebRTCReturn {
             }
         });
 
-        socket.on('connect_error', (err) => {
+        socket.on('connect_error', () => {
             if (isMounted) {
-                console.warn('Socket connection error:', err.message);
+
             }
         });
 

@@ -31,7 +31,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
             setTranslationsCache(prev => ({ ...prev, [lang]: data }));
         } catch (error) {
             if (import.meta.env.DEV) {
-                console.error(`[i18n] Error loading language ${lang}:`, error);
+
             }
             // If failed and not English, ensure we at least have English fallback locally
             if (lang !== 'en' && !translationsCache['en']) {
@@ -81,7 +81,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
         if (!translation) {
             // Log missing key in development mode
             if (import.meta.env.DEV) {
-                console.warn(`[i18n] Missing translation: key="${key}" lang="${language}"`);
+
             }
 
             // Fallback to English

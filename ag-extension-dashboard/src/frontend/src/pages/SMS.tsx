@@ -87,7 +87,7 @@ export function SMSPage() {
                 })));
             }
         } catch (err) {
-            console.error('Failed to fetch SMS history:', err);
+
         }
     };
 
@@ -108,7 +108,7 @@ export function SMSPage() {
                 })));
             }
         } catch (err) {
-            console.error('Failed to fetch farmers for SMS contacts:', err);
+
         } finally {
             setIsLoadingContacts(false);
         }
@@ -164,7 +164,7 @@ export function SMSPage() {
                 setMessage(res.data.translatedText);
             }
         } catch (err) {
-            console.error('Translation failed:', err);
+
         } finally {
             setIsTranslating(false);
         }

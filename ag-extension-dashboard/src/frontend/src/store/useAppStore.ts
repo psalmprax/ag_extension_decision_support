@@ -191,7 +191,7 @@ export const useAppStore = create<AppState>()(
                         toast.success('Farmer updated successfully');
                     }
                 } catch (error) {
-                    console.error('Update farmer error:', error);
+
                     toast.error('Failed to update farmer');
                 } finally {
                     set({ isLoading: false });
@@ -210,7 +210,7 @@ export const useAppStore = create<AppState>()(
                         toast.success(`${ids.length} farmers updated successfully`);
                     }
                 } catch (error) {
-                    console.error('Bulk update farmers error:', error);
+
                     toast.error('Failed to update some farmers');
                 } finally {
                     set({ isLoading: false });
@@ -227,7 +227,7 @@ export const useAppStore = create<AppState>()(
                         toast.success('Farmer removed successfully');
                     }
                 } catch (error) {
-                    console.error('Remove farmer error:', error);
+
                     toast.error('Failed to remove farmer');
                 } finally {
                     set({ isLoading: false });
@@ -245,7 +245,7 @@ export const useAppStore = create<AppState>()(
                         toast.success(`${ids.length} farmers removed successfully`);
                     }
                 } catch (error) {
-                    console.error('Bulk remove farmers error:', error);
+
                     toast.error('Failed to remove some farmers');
                 } finally {
                     set({ isLoading: false });
@@ -274,7 +274,7 @@ export const useAppStore = create<AppState>()(
                         toast.success('Visit scheduled successfully');
                     }
                 } catch (error) {
-                    console.error('Add visit error:', error);
+
                     toast.error('Failed to schedule visit');
                 } finally {
                     set({ isLoading: false });
@@ -293,7 +293,7 @@ export const useAppStore = create<AppState>()(
                         toast.success('Visit updated successfully');
                     }
                 } catch (error) {
-                    console.error('Update visit error:', error);
+
                     toast.error('Failed to update visit');
                 } finally {
                     set({ isLoading: false });

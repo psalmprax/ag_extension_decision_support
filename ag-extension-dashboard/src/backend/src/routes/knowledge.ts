@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { shareService } from "@/services/shareService";
 import { Router, Request, Response } from 'express';
+import { shareService } from "@/services/shareService";
 import { KnowledgeService } from '@/services/knowledgeService';
 import { cacheGet, cacheSet } from '@/services/cacheService';
 import { getPool, query } from '@/services/databaseService';
@@ -9,12 +9,7 @@ import { logger } from '@/utils/logger';
 import { authorize, UserRole } from '@/middleware/authorize';
 import { tavilyService } from '@/services/tavilyService';
 import { VectorService } from '@/services/vectorService';
-import { TropicalKnowledgeSourceService } from '@/services/data/tropicalKnowledgeSources';
-import { NasaPowerService } from '@/services/data/nasaPowerService';
-import { WeatherService } from '@/services/weatherService';
-import { FAOService } from '@/services/faoService';
-import { marketPriceService } from '@/services/marketPriceService';
-import { usageService } from '@/services/usageService';
+import { safeError } from '@/utils/safeResponse';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -22,11 +17,12 @@ import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
 const knowledgeAdminRoles: UserRole[] = ['admin', 'regional_manager', 'extension_officer'];
-const commercialApiRoles: UserRole[] = ['admin', 'regional_manager', 'extension_officer', 'farmer'];
+
+// Apply authentication to all knowledge routes
+router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
 function sanitizeKnowledgeContent(content: string, contentType: string): string {
     if (contentType !== 'html') return content;
-
     return content
         .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
         .replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, '')
@@ -42,9 +38,6 @@ const errorStatusMap: Record<string, number> = {
     'USER_NOT_AUTHENTICATED': 401,
     'REORDER_FAILED': 400
 };
-
-// Apply authentication to all knowledge routes
-router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
 // Mock knowledge articles for vector store seeding
 export const mockKnowledgeArticles = [
@@ -251,11 +244,9 @@ router.get('/search', async (req: Request, res: Response) => {
                         score: r.rerankScore ?? r.score,
                         citation: r.citation
                     }));
-                    // Include graph context and citations in response
                     const response = {
                         success: true,
                         data: { articles, graphContext: enhanced.graphContext, citations: enhanced.citations },
-                        aria: { role: 'status', label: `${articles.length} knowledge results found with RAG v2` }
                     };
                     await cacheSet(cacheKey, JSON.stringify(response), 300);
                     return res.json(response);
@@ -296,7 +287,6 @@ router.get('/search', async (req: Request, res: Response) => {
             (articles as any).totalCount = parseInt(countResult.rows[0]?.count || '0', 10);
         }
 
-        // Fallback or empty if no results
         if (!articles || articles.length === 0) {
             articles = [];
         }
@@ -314,7 +304,6 @@ router.get('/search', async (req: Request, res: Response) => {
 
         await cacheSet(cacheKey, JSON.stringify(response), 300);
 
-        // Log search for history/analytics (non-blocking)
         const userId = (req as any).user?.userId || (req as any).user?.id;
         if (userId && q) {
             KnowledgeService.logSearch(userId, q as string, category as string | undefined, crop as string | undefined).catch(() => {});
@@ -323,7 +312,7 @@ router.get('/search', async (req: Request, res: Response) => {
         res.json(response);
     } catch (error) {
         logger.error('Knowledge search error:', error);
-        res.status(500).json({ success: false, error: 'Search failed' });
+        safeError(res, 500, 'Search failed');
     }
 });
 
@@ -332,33 +321,28 @@ router.get('/history', async (req: Request, res: Response) => {
     try {
         const userId = (req as any).user?.userId || (req as any).user?.id;
         if (!userId) {
-            return res.status(errorStatusMap['USER_NOT_AUTHENTICATED']).json({ 
-                success: false, 
+            return res.status(errorStatusMap['USER_NOT_AUTHENTICATED']).json({
+                success: false,
                 errorCode: 'USER_NOT_AUTHENTICATED',
-                error: 'User not authenticated' 
+                error: 'User not authenticated'
             });
         }
-
         const history = await KnowledgeService.getSearchHistory(userId);
         res.json({ success: true, data: history });
     } catch (error) {
         logger.error('Get search history error:', error);
-        res.status(500).json({ 
-            success: false, 
-            errorCode: 'SEARCH_HISTORY_FAILED',
-            error: 'Failed to get search history' 
-        });
+        safeError(res, 500, 'Failed to get search history');
     }
 });
 
-// Get search statistics for visuals
+// Get search statistics
 router.get('/stats', async (_req: Request, res: Response) => {
     try {
         const stats = await KnowledgeService.getSearchStats();
         res.json({ success: true, data: stats });
     } catch (error) {
         logger.error('Get search stats error:', error);
-        res.status(500).json({ success: false, error: 'Failed to get search statistics' });
+        safeError(res, 500, 'Failed to get search statistics');
     }
 });
 
@@ -366,25 +350,20 @@ router.get('/stats', async (_req: Request, res: Response) => {
 router.get('/search/external', async (req: Request, res: Response) => {
     try {
         const { q, limit = '5' } = req.query;
-
         if (!q) {
             return res.status(400).json({ success: false, error: 'Query is required' });
         }
-
         if (!tavilyService.isConfigured()) {
-            return res.status(503).json({ 
-                success: false, 
+            return res.status(503).json({
+                success: false,
                 error: 'Web search not configured',
                 message: 'Add TAVILY_API_KEY to enable external agricultural data search'
             });
         }
-
         const results = await tavilyService.search(q as string, parseInt(limit as string));
-
         if (!results) {
-            return res.status(500).json({ success: false, error: 'Search failed' });
+            return safeError(res, 500, 'Search failed');
         }
-
         res.json({
             success: true,
             data: {
@@ -396,7 +375,7 @@ router.get('/search/external', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('External search error:', error);
-        res.status(500).json({ success: false, error: 'Failed to search external sources' });
+        safeError(res, 500, 'Failed to search external sources');
     }
 });
 
@@ -405,16 +384,13 @@ router.get('/meta/categories', async (_req: Request, res: Response) => {
     try {
         const pool = getPool();
         let categories: string[] = [];
-
         if (pool) {
             const result = await query('SELECT DISTINCT category FROM knowledge_articles ORDER BY category');
             categories = result.rows.map((r: any) => r.category);
         }
-
         if (categories.length === 0) {
             return res.json({ success: true, data: [] });
         }
-
         res.json({ success: true, data: categories });
     } catch (error) {
         logger.error('Get categories error:', error);
@@ -427,16 +403,13 @@ router.get('/meta/crops', async (_req: Request, res: Response) => {
     try {
         const pool = getPool();
         let crops: string[] = [];
-
         if (pool) {
             const result = await query("SELECT DISTINCT unnest(crops) as crop FROM knowledge_articles WHERE crops IS NOT NULL");
             crops = result.rows.map((r: any) => r.crop);
         }
-
         if (crops.length === 0) {
             return res.json({ success: true, data: [] });
         }
-
         res.json({ success: true, data: [...new Set(crops)] });
     } catch (error) {
         logger.error('Get crops error:', error);
@@ -444,127 +417,12 @@ router.get('/meta/crops', async (_req: Request, res: Response) => {
     }
 });
 
-// List configured static and dynamic tropical knowledge sources for the Knowledge Base menu
-router.get('/sources', async (_req: Request, res: Response) => {
-    try {
-        res.json({
-            success: true,
-            data: {
-                sources: await TropicalKnowledgeSourceService.listSources(),
-                curatedArticles: TropicalKnowledgeSourceService.listArticleSeeds().map(article => ({
-                    id: article.id,
-                    title: article.title,
-                    category: article.category,
-                    crops: article.crops,
-                    regions: article.regions,
-                    source: article.source,
-                    sourceUrl: article.sourceUrl
-                }))
-            }
-        });
-    } catch (error) {
-        logger.error('Get knowledge sources error:', error);
-        res.status(500).json({ success: false, error: 'Failed to load knowledge sources' });
-    }
-});
-
-// Create tropical knowledge source
-router.post('/sources', authorize(knowledgeAdminRoles), async (req: Request, res: Response) => {
-    try {
-        const { id, name, provider, type, license, url, syncMode, topics, crops, regions, description, priority } = req.body;
-        if (!id || !name || !provider || !type || !url || !syncMode) {
-            return res.status(400).json({ success: false, error: 'id, name, provider, type, url, and syncMode are required' });
-        }
-
-        await query(`
-            INSERT INTO tropical_knowledge_sources 
-                (id, name, provider, type, license, url, sync_mode, topics, crops, regions, description, priority, is_active)
-            VALUES 
-                ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, true)
-            ON CONFLICT (id) DO UPDATE SET
-                name = EXCLUDED.name,
-                provider = EXCLUDED.provider,
-                type = EXCLUDED.type,
-                license = EXCLUDED.license,
-                url = EXCLUDED.url,
-                sync_mode = EXCLUDED.sync_mode,
-                topics = EXCLUDED.topics,
-                crops = EXCLUDED.crops,
-                regions = EXCLUDED.regions,
-                description = EXCLUDED.description,
-                priority = EXCLUDED.priority,
-                updated_at = NOW()
-        `, [id, name, provider, type, license, url, syncMode, topics || [], crops || [], regions || [], description, priority || 'medium']);
-
-        res.status(201).json({ success: true, message: 'Tropical knowledge source created/updated successfully' });
-    } catch (error) {
-        logger.error('Create knowledge source error:', error);
-        res.status(500).json({ success: false, error: 'Failed to create knowledge source' });
-    }
-});
-
-// Update tropical knowledge source
-router.put('/sources/:id', authorize(knowledgeAdminRoles), async (req: Request, res: Response) => {
-    try {
-        const { id } = req.params;
-        const { name, provider, type, license, url, syncMode, topics, crops, regions, description, priority, isActive } = req.body;
-
-        await query(`
-            UPDATE tropical_knowledge_sources
-            SET 
-                name = COALESCE($1, name),
-                provider = COALESCE($2, provider),
-                type = COALESCE($3, type),
-                license = COALESCE($4, license),
-                url = COALESCE($5, url),
-                sync_mode = COALESCE($6, sync_mode),
-                topics = COALESCE($7, topics),
-                crops = COALESCE($8, crops),
-                regions = COALESCE($9, regions),
-                description = COALESCE($10, description),
-                priority = COALESCE($11, priority),
-                is_active = COALESCE($12, is_active),
-                updated_at = NOW()
-            WHERE id = $13
-        `, [name, provider, type, license, url, syncMode, topics, crops, regions, description, priority, isActive, id]);
-
-        res.json({ success: true, message: 'Tropical knowledge source updated successfully' });
-    } catch (error) {
-        logger.error('Update knowledge source error:', error);
-        res.status(500).json({ success: false, error: 'Failed to update knowledge source' });
-    }
-});
-
-// Delete tropical knowledge source (soft delete)
-router.delete('/sources/:id', authorize(knowledgeAdminRoles), async (req: Request, res: Response) => {
-    try {
-        const { id } = req.params;
-        await query('UPDATE tropical_knowledge_sources SET is_active = false, updated_at = NOW() WHERE id = $1', [id]);
-        res.json({ success: true, message: 'Tropical knowledge source deleted successfully' });
-    } catch (error) {
-        logger.error('Delete knowledge source error:', error);
-        res.status(500).json({ success: false, error: 'Failed to delete knowledge source' });
-    }
-});
-
-// Admin sync endpoint for curated free tropical source-backed articles
-router.post('/sources/sync-curated', authorize(knowledgeAdminRoles), async (_req: Request, res: Response) => {
-    try {
-        const result = await TropicalKnowledgeSourceService.syncCuratedArticles();
-        res.json({
-            success: true,
-            data: result,
-            message: `Synced ${result.synced} curated tropical knowledge articles into the vector knowledge base.`
-        });
-    } catch (error) {
-        logger.error('Curated tropical source sync error:', error);
-        res.status(500).json({ success: false, error: 'Failed to sync curated tropical sources' });
-    }
-});
-
-// Live context endpoint: dynamic data should augment answers without becoming static articles
+// Live context endpoint
 router.get('/live-context', async (req: Request, res: Response) => {
     try {
+        const { WeatherService } = await import('@/services/weatherService');
+        const { FAOService } = await import('@/services/faoService');
+        const { marketPriceService } = await import('@/services/marketPriceService');
         const { location = 'Kenya', region = 'Kenya', crop, lat, lng, includeMarket = 'true' } = req.query;
         const context: Record<string, any> = {
             location,
@@ -597,6 +455,7 @@ router.get('/live-context', async (req: Request, res: Response) => {
         if (lat && lng) {
             tasks.push((async () => {
                 try {
+                    const { NasaPowerService } = await import('@/services/data/nasaPowerService');
                     const nasa = new NasaPowerService();
                     context.agroclimate = await nasa.getAgroclimateSummary(parseFloat(lat as string), parseFloat(lng as string), 7);
                     context.sources.push('nasa_power');
@@ -631,150 +490,7 @@ router.get('/live-context', async (req: Request, res: Response) => {
         res.json({ success: true, data: context });
     } catch (error) {
         logger.error('Live context error:', error);
-        res.status(500).json({ success: false, error: 'Failed to load live agricultural context' });
-    }
-});
-
-// Commercial API catalog: expose sellable knowledge/API products to subscribed clients
-router.get('/commercial/catalog', async (_req: Request, res: Response) => {
-    res.json({
-        success: true,
-        data: {
-            products: [
-                {
-                    id: 'knowledge-search-api',
-                    name: 'Tropical Knowledge Search API',
-                    endpoint: 'GET /api/v1/knowledge/commercial/search',
-                    description: 'Semantic search over source-backed tropical agronomy knowledge articles.',
-                    billableUnit: '1 ai_chat credit per request',
-                    useCases: ['advisory apps', 'extension officer tools', 'crop-specific search']
-                },
-                {
-                    id: 'knowledge-ask-api',
-                    name: 'Source-Backed Advisory API',
-                    endpoint: 'POST /api/v1/knowledge/commercial/ask',
-                    description: 'RAG answer API with context citations and fallback extractive answers.',
-                    billableUnit: '1 ai_chat credit per request',
-                    useCases: ['white-label advisory chatbot', 'call center scripts', 'farmer app backend']
-                },
-                {
-                    id: 'live-context-api',
-                    name: 'Live Agricultural Context API',
-                    endpoint: 'GET /api/v1/knowledge/commercial/live-context',
-                    description: 'Weather, NASA POWER agroclimate, alerts and market context for a location/crop.',
-                    billableUnit: '1 ai_chat credit per request',
-                    useCases: ['irrigation scheduling', 'regional alerts', 'farm dashboard context']
-                }
-            ],
-            access: {
-                authentication: 'Bearer JWT from subscribed user/client account',
-                monetization: 'Uses subscription usage limits and ai_chat credits. Plans can map aiChatLimit to API request allowance.',
-                upgradeEndpoint: '/api/v1/billing/plans'
-            }
-        }
-    });
-});
-
-router.get('/commercial/search', authorize(commercialApiRoles), async (req: Request, res: Response) => {
-    try {
-        const userId = req.user!.userId;
-        if (req.user!.role !== 'admin') {
-            const limit = await usageService.checkLimit(userId, 'ai_chat');
-            if (!limit.allowed) {
-                return res.status(402).json({ success: false, error: 'API usage limit exceeded', details: limit });
-            }
-        }
-
-        const { q, category, crop, limit = '5' } = req.query;
-        if (!q) return res.status(400).json({ success: false, error: 'Query parameter q is required' });
-
-        const articles = await KnowledgeService.searchKnowledge(q as string, parseInt(limit as string), {
-            category: category as string | undefined,
-            crop: crop as string | undefined
-        });
-        await usageService.incrementUsage(userId, 'ai_chat');
-
-        res.json({
-            success: true,
-            data: {
-                query: q,
-                articles,
-                billing: { metered: true, usageType: 'ai_chat', units: 1 }
-            }
-        });
-    } catch (error) {
-        logger.error('Commercial knowledge search error:', error);
-        res.status(500).json({ success: false, error: 'Commercial knowledge search failed' });
-    }
-});
-
-router.post('/commercial/ask', authorize(commercialApiRoles), async (req: Request, res: Response) => {
-    try {
-        const userId = req.user!.userId;
-        if (req.user!.role !== 'admin') {
-            const limit = await usageService.checkLimit(userId, 'ai_chat');
-            if (!limit.allowed) {
-                return res.status(402).json({ success: false, error: 'API usage limit exceeded', details: limit });
-            }
-        }
-
-        const { question, attachments } = req.body;
-        if (!question) return res.status(400).json({ success: false, error: 'question is required' });
-
-        const answer = await KnowledgeService.askQuestion(userId, question, attachments);
-        await usageService.incrementUsage(userId, 'ai_chat');
-
-        res.json({
-            success: true,
-            data: {
-                ...answer,
-                billing: { metered: true, usageType: 'ai_chat', units: 1 }
-            }
-        });
-    } catch (error) {
-        logger.error('Commercial knowledge ask error:', error);
-        res.status(500).json({ success: false, error: 'Commercial knowledge ask failed' });
-    }
-});
-
-router.get('/commercial/live-context', authorize(commercialApiRoles), async (req: Request, res: Response) => {
-    try {
-        const userId = req.user!.userId;
-        if (req.user!.role !== 'admin') {
-            const limit = await usageService.checkLimit(userId, 'ai_chat');
-            if (!limit.allowed) {
-                return res.status(402).json({ success: false, error: 'API usage limit exceeded', details: limit });
-            }
-        }
-
-        const { location = 'Kenya', region = 'Kenya', crop, lat, lng } = req.query;
-        const context: any = { location, region, crop, generatedAt: new Date().toISOString(), sources: [] };
-
-        const [weather, alerts, prices] = await Promise.allSettled([
-            WeatherService.getByLocation(location as string),
-            FAOService.getDiseaseAlerts(region as string, crop as string | undefined),
-            marketPriceService.getLatestPrices()
-        ]);
-
-        if (weather.status === 'fulfilled') { context.weather = weather.value; context.sources.push('weather_forecast'); }
-        if (alerts.status === 'fulfilled') { context.diseaseAlerts = alerts.value; context.sources.push('fao_disease_alerts'); }
-        if (prices.status === 'fulfilled') { context.marketPrices = prices.value; context.sources.push('market_prices'); }
-
-        if (lat && lng) {
-            try {
-                const nasa = new NasaPowerService();
-                context.agroclimate = await nasa.getAgroclimateSummary(parseFloat(lat as string), parseFloat(lng as string), 7);
-                context.sources.push('nasa_power');
-            } catch (error) {
-                context.agroclimateError = (error as Error).message;
-            }
-        }
-
-        await usageService.incrementUsage(userId, 'ai_chat');
-        res.json({ success: true, data: { ...context, billing: { metered: true, usageType: 'ai_chat', units: 1 } } });
-    } catch (error) {
-        logger.error('Commercial live context error:', error);
-        res.status(500).json({ success: false, error: 'Commercial live context failed' });
+        safeError(res, 500, 'Failed to load live agricultural context');
     }
 });
 
@@ -783,34 +499,26 @@ router.get('/:id', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const pool = getPool();
-
         let article = null;
         if (pool) {
             const result = await query('SELECT * FROM knowledge_articles WHERE id = $1', [id]);
             article = result.rows[0];
         }
-
         if (!article) {
-            return res.status(errorStatusMap['ARTICLE_NOT_FOUND']).json({ 
-                success: false, 
+            return res.status(errorStatusMap['ARTICLE_NOT_FOUND']).json({
+                success: false,
                 errorCode: 'ARTICLE_NOT_FOUND',
-                error: 'Article not found' 
+                error: 'Article not found'
             });
         }
-
         res.json({ success: true, data: article });
     } catch (error) {
         logger.error('Get article error:', error);
-        res.status(500).json({ 
-            success: false, 
-            errorCode: 'INTERNAL_SERVER_ERROR',
-            error: 'Failed to get article' 
-        });
+        safeError(res, 500, 'Failed to get article');
     }
 });
 
-
-// Ask AI a question (RAG-based with Semantic Caching)
+// Ask AI a question (RAG-based)
 router.post('/ask', async (req: Request, res: Response) => {
     try {
         const { question } = req.body;
@@ -819,26 +527,24 @@ router.post('/ask', async (req: Request, res: Response) => {
         if (!question) {
             return res.status(400).json({ success: false, error: 'Question is required' });
         }
-
         if (!userId) {
             return res.status(401).json({ success: false, error: 'User not authenticated' });
         }
 
         const result = await KnowledgeService.askQuestion(userId, question);
 
-        // Enrich response with citations from RAG v2
         let citations: any[] = [];
         try {
             const { RAGV2Service } = await import('@/services/ragV2Service');
             const enhanced = await RAGV2Service.enhancedSearch(question, {
                 limit: 3,
                 useChunks: true,
-                useGraph: false, // Skip graph for speed in ask endpoint
+                useGraph: false,
                 useReranking: false
             });
             citations = enhanced.citations;
         } catch (ragErr) {
-            // Non-fatal — citations are optional
+            // Non-fatal
         }
 
         res.json({
@@ -856,18 +562,17 @@ router.post('/ask', async (req: Request, res: Response) => {
     } catch (error) {
         logger.error('Ask question error:', error);
         if (!res.headersSent) {
-            res.status(500).json({ success: false, error: 'Failed to get answer' });
+            safeError(res, 500, 'Failed to get answer');
         }
     }
 });
 
-
+// Share a knowledge article
 router.post("/:id/share", async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { isPublic, expiresAt, permissions } = req.body;
-        const createdBy = (req as any).user?.id;
-
+        const createdBy = (req as any).user?.userId;
         const shareLink = await shareService.createShare({
             entityType: "knowledge",
             entityId: id,
@@ -876,48 +581,14 @@ router.post("/:id/share", async (req: Request, res: Response) => {
             expiresAt: expiresAt ? new Date(expiresAt) : undefined,
             permissions,
         });
-
-        res.status(201).json({
-            success: true,
-            data: shareLink,
-        });
+        res.status(201).json({ success: true, data: shareLink });
     } catch (error) {
         logger.error("Error creating knowledge share:", error);
-        res.status(500).json({
-            success: false,
-            error: "Failed to create share link",
-        });
+        safeError(res, 500, 'Failed to create share link');
     }
 });
 
-/**
- * @openapi
- * /api/knowledge/reorder:
- *   post:
- *     summary: Reorder knowledge articles for drag-and-drop functionality
- *     tags: [Knowledge]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [items]
- *             properties:
- *               items:
- *                 type: array
- *                 items:
- *                   type: object
- *                   required: [id, order]
- *                   properties:
- *                     id: { type: string, format: uuid }
- *                     order: { type: integer }
- *     responses:
- *       200:
- *         description: Articles reordered successfully
- *       400:
- *         description: Invalid request data
- */
+// Reorder knowledge articles
 router.post('/reorder', authorize(knowledgeAdminRoles), async (req: Request, res: Response) => {
     try {
         const { items } = req.body;
@@ -927,22 +598,18 @@ router.post('/reorder', authorize(knowledgeAdminRoles), async (req: Request, res
             return res.status(400).json({
                 success: false,
                 error: 'Items array is required',
-                aria: { role: 'alert', label: 'Reorder failed: Invalid data provided' }
             });
         }
 
-        // Validate each item has id and order
         for (const item of items) {
             if (!item.id || typeof item.order !== 'number') {
                 return res.status(400).json({
                     success: false,
                     error: 'Each item must have id and order',
-                    aria: { role: 'alert', label: 'Reorder failed: Invalid item format' }
                 });
             }
         }
 
-        // Get article IDs to check existence
         const articleIds = items.map(item => item.id);
         const articles = await prisma.knowledgeArticle.findMany({
             where: { id: { in: articleIds } },
@@ -953,11 +620,9 @@ router.post('/reorder', authorize(knowledgeAdminRoles), async (req: Request, res
             return res.status(400).json({
                 success: false,
                 error: 'Some articles not found',
-                aria: { role: 'alert', label: 'Reorder failed: Some articles not found' }
             });
         }
 
-        // Update orders in transaction
         await prisma.$transaction(
             items.map(item =>
                 prisma.knowledgeArticle.update({
@@ -967,49 +632,14 @@ router.post('/reorder', authorize(knowledgeAdminRoles), async (req: Request, res
             )
         );
 
-        res.json({
-            success: true,
-            message: 'Articles reordered successfully',
-            aria: { role: 'status', label: 'Articles reordered successfully' }
-        });
+        res.json({ success: true, message: 'Articles reordered successfully' });
     } catch (error) {
         logger.error('Reorder articles error:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to reorder articles',
-            aria: { role: 'alert', label: 'Reorder failed: Internal server error' }
-        });
+        safeError(res, 500, 'Failed to reorder articles');
     }
 });
 
-/**
- * @openapi
- * /api/knowledge:
- *   post:
- *     summary: Create a new knowledge article
- *     tags: [Knowledge]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [title, content]
- *             properties:
- *               title: { type: string }
- *               content: { type: string }
- *               contentType: { type: string, enum: [text, html], default: text }
- *               summary: { type: string }
- *               category: { type: string }
- *               tags: { type: array, items: { type: string } }
- *               crops: { type: array, items: { type: string } }
- *               regions: { type: array, items: { type: string } }
- *               source: { type: string }
- *               sourceUrl: { type: string }
- *     responses:
- *       201:
- *         description: Article created
- */
+// Create a new knowledge article
 router.post('/', authorize(knowledgeAdminRoles), async (req: Request, res: Response) => {
     try {
         const {
@@ -1022,16 +652,13 @@ router.post('/', authorize(knowledgeAdminRoles), async (req: Request, res: Respo
             return res.status(400).json({
                 success: false,
                 error: 'Title and content are required',
-                aria: { role: 'alert', label: 'Article creation failed: Title and content required' }
             });
         }
 
-        // Validate contentType
         if (!['text', 'html'].includes(contentType)) {
             return res.status(400).json({
                 success: false,
                 error: 'contentType must be either "text" or "html"',
-                aria: { role: 'alert', label: 'Article creation failed: Invalid content type' }
             });
         }
 
@@ -1066,52 +693,14 @@ router.post('/', authorize(knowledgeAdminRoles), async (req: Request, res: Respo
         res.status(201).json({
             success: true,
             data: article,
-            aria: { role: 'status', label: 'Article created successfully' }
         });
     } catch (error) {
         logger.error('Create article error:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to create article',
-            aria: { role: 'alert', label: 'Article creation failed: Internal server error' }
-        });
+        safeError(res, 500, 'Failed to create article');
     }
 });
 
-/**
- * @openapi
- * /api/knowledge/{id}:
- *   put:
- *     summary: Update a knowledge article
- *     tags: [Knowledge]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               title: { type: string }
- *               content: { type: string }
- *               contentType: { type: string, enum: [text, html] }
- *               summary: { type: string }
- *               category: { type: string }
- *               tags: { type: array, items: { type: string } }
- *               crops: { type: array, items: { type: string } }
- *               regions: { type: array, items: { type: string } }
- *               source: { type: string }
- *               sourceUrl: { type: string }
- *     responses:
- *       200:
- *         description: Article updated
- */
+// Update a knowledge article
 router.put('/:id', authorize(knowledgeAdminRoles), async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
@@ -1121,7 +710,6 @@ router.put('/:id', authorize(knowledgeAdminRoles), async (req: Request, res: Res
         } = req.body;
         const prisma = getPrisma();
 
-        // Check if article exists
         const existingArticle = await prisma.knowledgeArticle.findUnique({
             where: { id }
         });
@@ -1130,16 +718,13 @@ router.put('/:id', authorize(knowledgeAdminRoles), async (req: Request, res: Res
             return res.status(404).json({
                 success: false,
                 error: 'Article not found',
-                aria: { role: 'alert', label: 'Article update failed: Article not found' }
             });
         }
 
-        // Validate contentType if provided
         if (contentType && !['text', 'html'].includes(contentType)) {
             return res.status(400).json({
                 success: false,
                 error: 'contentType must be either "text" or "html"',
-                aria: { role: 'alert', label: 'Article update failed: Invalid content type' }
             });
         }
 
@@ -1174,21 +759,12 @@ router.put('/:id', authorize(knowledgeAdminRoles), async (req: Request, res: Res
             contentType: article.contentType
         });
 
-        res.json({
-            success: true,
-            data: article,
-            aria: { role: 'status', label: 'Article updated successfully' }
-        });
+        res.json({ success: true, data: article });
     } catch (error) {
         logger.error('Update article error:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to update article',
-            aria: { role: 'alert', label: 'Article update failed: Internal server error' }
-        });
+        safeError(res, 500, 'Failed to update article');
     }
 });
-
 
 // Configure upload for knowledge ingestion
 const knowledgeStorage = multer.diskStorage({
@@ -1206,11 +782,7 @@ const knowledgeStorage = multer.diskStorage({
 });
 
 const knowledgeFileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-    const allowedTypes = [
-        'text/plain',
-        'text/markdown',
-        'application/pdf'
-    ];
+    const allowedTypes = ['text/plain', 'text/markdown', 'application/pdf'];
     if (allowedTypes.includes(file.mimetype) || file.originalname.endsWith('.md') || file.originalname.endsWith('.txt')) {
         cb(null, true);
     } else {
@@ -1221,16 +793,14 @@ const knowledgeFileFilter = (_req: any, file: Express.Multer.File, cb: multer.Fi
 const knowledgeUpload = multer({
     storage: knowledgeStorage,
     fileFilter: knowledgeFileFilter,
-    limits: {
-        fileSize: 10 * 1024 * 1024 // 10MB limit
-    }
+    limits: { fileSize: 10 * 1024 * 1024 }
 });
 
 /**
  * @swagger
  * /api/v1/knowledge/ingest:
  *   post:
- *     summary: Ingest and vectorize a PDF, TXT, or MD file dynamically
+ *     summary: Ingest and vectorize a PDF, TXT, or MD file
  *     security:
  *       - BearerAuth: []
  *     consumes:
@@ -1239,27 +809,24 @@ const knowledgeUpload = multer({
  *       - in: formData
  *         name: file
  *         type: file
- *         description: The file to upload and vectorize
  *       - in: formData
  *         name: title
  *         type: string
- *         description: Optional custom title
  *       - in: formData
  *         name: category
  *         type: string
- *         description: Optional category
  *       - in: formData
  *         name: crops
  *         type: string
- *         description: Optional comma-separated crop names
  *       - in: formData
  *         name: regions
  *         type: string
- *         description: Optional comma-separated region names
  *       - in: formData
  *         name: tags
  *         type: string
- *         description: Optional comma-separated tags
+ *     responses:
+ *       201:
+ *         description: Document ingested
  */
 router.post('/ingest', authorize(knowledgeAdminRoles), knowledgeUpload.single('file'), async (req: Request, res: Response) => {
     try {
@@ -1281,24 +848,16 @@ router.post('/ingest', authorize(knowledgeAdminRoles), knowledgeUpload.single('f
         } else if (ext === '.txt' || ext === '.md') {
             content = fs.readFileSync(filePath, 'utf-8');
         } else {
-            // Clean up the uploaded file if extension check failed
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-            }
+            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
             return res.status(400).json({ success: false, error: 'Unsupported file type. Only .pdf, .txt, and .md files are supported.' });
         }
 
         if (!content || content.trim().length === 0) {
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-            }
+            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
             return res.status(400).json({ success: false, error: 'The uploaded file contains no readable text.' });
         }
 
-        // Clean up the uploaded file from local disk as we are storing it in the database
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-        }
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
         const prisma = getPrisma();
         const articleId = uuidv4();
@@ -1306,19 +865,16 @@ router.post('/ingest', authorize(knowledgeAdminRoles), knowledgeUpload.single('f
         const articleCrops = crops ? crops.split(',').map((c: string) => c.trim()) : [];
         const articleRegions = regions ? regions.split(',').map((r: string) => r.trim()) : ['tropical'];
         const articleTags = tags ? tags.split(',').map((t: string) => t.trim()) : [];
-
-        // Truncate summary
         const summary = content.substring(0, 300).trim() + (content.length > 300 ? '...' : '');
 
-        // Create the database record
         const article = await prisma.knowledgeArticle.create({
             data: {
                 id: articleId,
                 title: articleTitle,
-                content: content,
+                content,
                 contentType: 'text',
-                summary: summary,
-                category: category,
+                summary,
+                category,
                 tags: articleTags,
                 crops: articleCrops,
                 regions: articleRegions,
@@ -1327,7 +883,6 @@ router.post('/ingest', authorize(knowledgeAdminRoles), knowledgeUpload.single('f
             }
         });
 
-        // Compute vector embedding and save to Postgres pgvector
         await VectorService.upsertDocument(article.id, article.content, {
             title: article.title,
             category: article.category,
@@ -1350,75 +905,14 @@ router.post('/ingest', authorize(knowledgeAdminRoles), knowledgeUpload.single('f
                 tags: article.tags,
                 summary: article.summary
             },
-            aria: { role: 'status', label: 'Document ingested and vectorized successfully' }
         });
     } catch (error) {
         logger.error('Document ingestion error:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to ingest and vectorize document',
-            aria: { role: 'alert', label: 'Document ingestion failed' }
-        });
+        safeError(res, 500, 'Failed to ingest document');
     }
 });
 
-/**
- * @swagger
- * /api/v1/knowledge/sync:
- *   post:
- *     summary: Trigger full knowledge base sync (curated articles + FAOSTAT data)
- *     tags: [Knowledge]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Sync results
- */
-router.post('/sync', async (_req: Request, res: Response) => {
-    try {
-        const { KnowledgeSyncOrchestrator } = await import('@/services/data/knowledgeSyncOrchestrator');
-        const results = await KnowledgeSyncOrchestrator.syncAll();
-        res.json({ success: true, data: results });
-    } catch (error) {
-        logger.error('Knowledge sync error:', error);
-        res.status(500).json({ success: false, error: 'Failed to sync knowledge sources' });
-    }
-});
-
-/**
- * @swagger
- * /api/v1/knowledge/sync/status:
- *   get:
- *     summary: Get knowledge sync status
- *     tags: [Knowledge]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Sync status
- */
-router.get('/sync/status', async (_req: Request, res: Response) => {
-    try {
-        const { KnowledgeSyncOrchestrator } = await import('@/services/data/knowledgeSyncOrchestrator');
-        const status = KnowledgeSyncOrchestrator.getStatus();
-        res.json({ success: true, data: status });
-    } catch (error) {
-        res.status(500).json({ success: false, error: 'Failed to get sync status' });
-    }
-});
-
-/**
- * @swagger
- * /api/v1/knowledge/ragv2/bootstrap:
- *   post:
- *     summary: Bootstrap RAG v2 (chunk all articles + build knowledge graph)
- *     tags: [Knowledge]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Bootstrap results
- */
+// RAG v2 bootstrap
 router.post('/ragv2/bootstrap', async (_req: Request, res: Response) => {
     try {
         const { RAGV2Service } = await import('@/services/ragV2Service');
@@ -1436,28 +930,11 @@ router.post('/ragv2/bootstrap', async (_req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('RAG v2 bootstrap error:', error);
-        res.status(500).json({ success: false, error: 'Failed to bootstrap RAG v2' });
+        safeError(res, 500, 'Failed to bootstrap RAG v2');
     }
 });
 
-/**
- * @swagger
- * /api/v1/knowledge/graph/{entity}:
- *   get:
- *     summary: Get related entities from the knowledge graph
- *     tags: [Knowledge]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: entity
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Related entities
- */
+// Knowledge graph entity lookup
 router.get('/graph/:entity', async (req: Request, res: Response) => {
     try {
         const { RAGV2Service } = await import('@/services/ragV2Service');
@@ -1465,7 +942,7 @@ router.get('/graph/:entity', async (req: Request, res: Response) => {
         res.json({ success: true, data: related });
     } catch (error) {
         logger.error('Graph query error:', error);
-        res.status(500).json({ success: false, error: 'Failed to query knowledge graph' });
+        safeError(res, 500, 'Failed to query knowledge graph');
     }
 });
 

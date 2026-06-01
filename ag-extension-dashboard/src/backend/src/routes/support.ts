@@ -3,6 +3,7 @@ import { Router, Request, Response } from 'express';
 import { query, getPool } from '../services/databaseService';
 import { logger } from '../utils/logger';
 import { authorize } from '../middleware/authorize';
+import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
@@ -90,7 +91,7 @@ router.post('/tickets', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Create support ticket error:', error);
-        res.status(500).json({ success: false, error: 'Failed to create support ticket' });
+        safeError(res, 500, 'Failed to create support ticket');
     }
 });
 
@@ -126,7 +127,7 @@ router.get('/tickets', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Get support tickets error:', error);
-        res.status(500).json({ success: false, error: 'Failed to fetch support tickets' });
+        safeError(res, 500, 'Failed to fetch support tickets');
     }
 });
 

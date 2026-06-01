@@ -97,7 +97,7 @@ apiClient.interceptors.response.use(
 
             // Log retry attempt in development
             if (import.meta.env.DEV) {
-                console.log(`Retry attempt ${retryCount + 1}/${MAX_RETRIES} after ${delay}ms`);
+
             }
 
             // Wait before retrying
@@ -120,7 +120,7 @@ apiClient.interceptors.response.use(
             }
             // Log other errors
             else if (error.response) {
-                console.warn(`API Error: ${error.response.status} - ${error.response.statusText}`);
+
             }
         }
         return Promise.reject(error);

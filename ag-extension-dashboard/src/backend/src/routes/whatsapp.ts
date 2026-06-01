@@ -5,6 +5,7 @@ import { authorize, AuthRequest } from '@/middleware/authorize';
 import { validate } from '../middleware/validate';
 import { z } from 'zod';
 import { logger } from '../utils/logger';
+import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
@@ -69,11 +70,11 @@ router.post('/send', validate({ body: sendMessageSchema }), async (req: AuthRequ
         if (success) {
             res.json({ success: true, message: 'WhatsApp message sent successfully' });
         } else {
-            res.status(500).json({ success: false, message: 'Failed to send WhatsApp message' });
+            safeError(res, 500, 'Failed to send WhatsApp message');
         }
     } catch (error: any) {
         logger.error('WhatsApp send error:', error);
-        res.status(500).json({ success: false, message: error.message });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -96,7 +97,7 @@ router.post('/bulk', validate({ body: bulkMessageSchema }), async (req: AuthRequ
         });
     } catch (error: any) {
         logger.error('WhatsApp bulk send error:', error);
-        res.status(500).json({ success: false, message: error.message });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -113,11 +114,11 @@ router.post('/alert', validate({ body: sendAlertSchema }), async (req: AuthReque
         if (success) {
             res.json({ success: true, message: 'Alert sent via WhatsApp' });
         } else {
-            res.status(500).json({ success: false, message: 'Failed to send alert' });
+            safeError(res, 500, 'Failed to send alert');
         }
     } catch (error: any) {
         logger.error('WhatsApp alert error:', error);
-        res.status(500).json({ success: false, message: error.message });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -134,11 +135,11 @@ router.post('/weather', validate({ body: weatherUpdateSchema }), async (req: Aut
         if (success) {
             res.json({ success: true, message: 'Weather update sent via WhatsApp' });
         } else {
-            res.status(500).json({ success: false, message: 'Failed to send weather update' });
+            safeError(res, 500, 'Failed to send weather update');
         }
     } catch (error: any) {
         logger.error('WhatsApp weather error:', error);
-        res.status(500).json({ success: false, message: error.message });
+        safeError(res, 500, 'Internal server error');
     }
 });
 
@@ -155,11 +156,11 @@ router.post('/market-prices', validate({ body: marketPriceSchema }), async (req:
         if (success) {
             res.json({ success: true, message: 'Market prices sent via WhatsApp' });
         } else {
-            res.status(500).json({ success: false, message: 'Failed to send market prices' });
+            safeError(res, 500, 'Failed to send market prices');
         }
     } catch (error: any) {
         logger.error('WhatsApp market prices error:', error);
-        res.status(500).json({ success: false, message: error.message });
+        safeError(res, 500, 'Internal server error');
     }
 });
 

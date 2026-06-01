@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Leaf, Brain, Smartphone, Database,
+    Brain, Smartphone, Database,
     ArrowLeft, Sparkles, RefreshCw, Layers,
     Play, Activity, CheckCircle, MapPin
 } from 'lucide-react';
@@ -104,9 +104,7 @@ export function DemoPage() {
                         </button>
                         <div className="w-px h-5 bg-white/10" />
                         <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-lg bg-emerald-700 flex items-center justify-center">
-                                <Leaf className="w-4 h-4 text-white" />
-                            </div>
+                            <img src="/logo.png" alt="AgExtension" className="w-7 h-7 rounded-lg object-contain" />
                             <span className="font-bold text-sm">AgExtension</span>
                         </div>
                     </div>

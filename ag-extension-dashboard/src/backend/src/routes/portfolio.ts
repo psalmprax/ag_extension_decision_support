@@ -5,6 +5,7 @@ import { cacheGet, cacheSet } from '@/services/cacheService';
 import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
 import * as XLSX from 'xlsx';
+import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
@@ -96,7 +97,7 @@ router.get('/', async (req: Request, res: Response) => {
         res.json({ success: true, data: portfolio });
     } catch (error) {
         logger.error('Portfolio error:', error);
-        res.status(500).json({ success: false, error: 'Failed to get portfolio' });
+        safeError(res, 500, 'Failed to get portfolio');
     }
 });
 
@@ -169,7 +170,7 @@ router.get('/recommendations', async (req: Request, res: Response) => {
         res.json({ success: true, data: recommendations });
     } catch (error) {
         logger.error('Recommendations error:', error);
-        res.status(500).json({ success: false, error: 'Failed to get recommendations' });
+        safeError(res, 500, 'Failed to get recommendations');
     }
 });
 
@@ -219,7 +220,7 @@ router.get('/farmers/:id', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Get farmer error:', error);
-        res.status(500).json({ success: false, error: 'Failed to get farmer' });
+        safeError(res, 500, 'Failed to get farmer');
     }
 });
 
@@ -313,7 +314,7 @@ router.get('/export/excel', async (req: Request, res: Response) => {
         res.send(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }));
     } catch (error) {
         logger.error('Export portfolio error:', error);
-        res.status(500).json({ success: false, error: 'Failed to export portfolio' });
+        safeError(res, 500, 'Failed to export portfolio');
     }
 });
 

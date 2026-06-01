@@ -4,6 +4,7 @@ import { query, getPool } from '@/services/databaseService';
 import { cacheGet, cacheSet } from '@/services/cacheService';
 import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
+import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
@@ -257,7 +258,7 @@ router.get('/dashboard', async (req: Request, res: Response) => {
         res.json({ success: true, data: dashboard });
     } catch (error) {
         logger.error('Dashboard analytics error:', error);
-        res.status(500).json({ success: false, error: 'Failed to fetch dashboard data' });
+        safeError(res, 500, 'Failed to fetch dashboard data');
     }
 });
 
@@ -340,7 +341,7 @@ router.get('/farmer-stats', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Farmer stats error:', error);
-        res.status(500).json({ success: false, error: 'Failed to fetch farmer stats' });
+        safeError(res, 500, 'Failed to fetch farmer stats');
     }
 });
 
@@ -457,7 +458,7 @@ router.get('/performance', async (req: Request, res: Response) => {
         res.json({ success: true, data: performance });
     } catch (error) {
         logger.error('Performance analytics error:', error);
-        res.status(500).json({ success: false, error: 'Failed to fetch performance data' });
+        safeError(res, 500, 'Failed to fetch performance data');
     }
 });
 
@@ -531,7 +532,7 @@ router.get('/queries', async (req: Request, res: Response) => {
         res.json({ success: true, data: queries });
     } catch (error) {
         logger.error('Query analytics error:', error);
-        res.status(500).json({ success: false, error: 'Failed to fetch query analytics' });
+        safeError(res, 500, 'Failed to fetch query analytics');
     }
 });
 
@@ -624,7 +625,7 @@ router.get('/chatbot', async (req: Request, res: Response) => {
         res.json({ success: true, data: chatbot });
     } catch (error) {
         logger.error('Chatbot analytics error:', error);
-        res.status(500).json({ success: false, error: 'Failed to fetch chatbot analytics' });
+        safeError(res, 500, 'Failed to fetch chatbot analytics');
     }
 });
 

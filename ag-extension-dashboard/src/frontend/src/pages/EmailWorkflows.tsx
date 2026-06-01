@@ -63,7 +63,7 @@ export function EmailWorkflows() {
                 setApprovals(approvalsRes.data);
             }
         } catch (error) {
-            console.error('Failed to load email workflow data:', error);
+
             addNotification({
                 type: 'error',
                 message: t('email_workflows_failed_load')
@@ -98,7 +98,7 @@ export function EmailWorkflows() {
                 loadData();
             }
         } catch (error) {
-            console.error('Failed to approve email:', error);
+
             addNotification({
                 type: 'error',
                 message: 'Failed to approve email'
@@ -124,7 +124,7 @@ export function EmailWorkflows() {
                 loadData();
             }
         } catch (error) {
-            console.error('Failed to reject email:', error);
+
             addNotification({
                 type: 'error',
                 message: t('email_workflows_failed_reject')
@@ -201,29 +201,44 @@ export function EmailWorkflows() {
 
     const categories = [...new Set(templates.map(t => t.category))];
 
+    const colorClasses: Record<string, { bg: string; icon: string }> = {
+        blue: { bg: 'bg-blue-50 dark:bg-blue-900/30', icon: 'text-blue-600 dark:text-blue-400' },
+        green: { bg: 'bg-green-50 dark:bg-green-900/30', icon: 'text-green-600 dark:text-green-400' },
+        emerald: { bg: 'bg-emerald-50 dark:bg-emerald-900/30', icon: 'text-emerald-600 dark:text-emerald-400' },
+        amber: { bg: 'bg-amber-50 dark:bg-amber-900/30', icon: 'text-amber-600 dark:text-amber-400' },
+        yellow: { bg: 'bg-yellow-50 dark:bg-yellow-900/30', icon: 'text-yellow-600 dark:text-yellow-400' },
+        red: { bg: 'bg-red-50 dark:bg-red-900/30', icon: 'text-red-600 dark:text-red-400' },
+        purple: { bg: 'bg-purple-50 dark:bg-purple-900/30', icon: 'text-purple-600 dark:text-purple-400' },
+        cyan: { bg: 'bg-cyan-50 dark:bg-cyan-900/30', icon: 'text-cyan-600 dark:text-cyan-400' },
+        gray: { bg: 'bg-gray-50 dark:bg-gray-900/30', icon: 'text-gray-600 dark:text-gray-400' },
+    };
+
     const StatCard = ({ title, value, icon: Icon, color = 'blue' }: {
         title: string;
         value: string | number;
         icon: React.ComponentType<{ className?: string }>;
         color?: string;
-    }) => (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="card p-6 border-white/20 hover:scale-[1.02] transition-transform duration-300"
-            style={{ borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-premium)' }}
-        >
-            <div className="flex items-start justify-between">
-                <div>
-                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{title}</p>
-                    <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
+    }) => {
+        const cc = colorClasses[color] || colorClasses.gray;
+        return (
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="card p-6 border-white/20 hover:scale-[1.02] transition-transform duration-300"
+                style={{ borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-premium)' }}
+            >
+                <div className="flex items-start justify-between">
+                    <div>
+                        <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{title}</p>
+                        <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
+                    </div>
+                    <div className={`p-3 ${cc.bg} ${radiusClass}`}>
+                        <Icon className={`w-6 h-6 ${cc.icon}`} />
+                    </div>
                 </div>
-                <div className={`p-3 bg-${color}-50 dark:bg-${color}-900/30 ${radiusClass}`}>
-                    <Icon className={`w-6 h-6 text-${color}-600 dark:text-${color}-400`} />
-                </div>
-            </div>
-        </motion.div>
-    );
+            </motion.div>
+        );
+    };
 
     if (isLoading) {
         return (
@@ -481,11 +496,29 @@ export function EmailWorkflows() {
                                             <Eye className="w-4 h-4" />
                                             Review
                                         </button>
-                                        <button className={`flex items-center gap-2 px-4 py-2 bg-green-600 text-white ${btnClass} hover:bg-green-700`}>
+                                        <button
+                                            onClick={async () => {
+                                                const res = await approveEmail(approval.id);
+                                                if (res.success) {
+                                                    addNotification({ type: 'success', message: t('email_workflows_approved') });
+                                                    loadData();
+                                                }
+                                            }}
+                                            className={`flex items-center gap-2 px-4 py-2 bg-green-600 text-white ${btnClass} hover:bg-green-700`}
+                                        >
                                             <CheckCircle className="w-4 h-4" />
                                             Quick Approve
                                         </button>
-                                        <button className={`flex items-center gap-2 px-4 py-2 bg-red-600 text-white ${btnClass} hover:bg-red-700`}>
+                                        <button
+                                            onClick={async () => {
+                                                const res = await rejectEmail(approval.id);
+                                                if (res.success) {
+                                                    addNotification({ type: 'success', message: t('email_workflows_rejected') });
+                                                    loadData();
+                                                }
+                                            }}
+                                            className={`flex items-center gap-2 px-4 py-2 bg-red-600 text-white ${btnClass} hover:bg-red-700`}
+                                        >
                                             <XCircle className="w-4 h-4" />
                                             Quick Reject
                                         </button>

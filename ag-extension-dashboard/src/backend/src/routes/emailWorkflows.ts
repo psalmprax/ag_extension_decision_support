@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { authorize, AuthRequest } from '@/middleware/authorize';
 import { emailWorkflowService } from '@/services/emailWorkflowService';
 import { logger } from '@/utils/logger';
+import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
@@ -12,7 +13,7 @@ router.get('/templates', authorize(['extension_officer', 'admin', 'farmer']), as
         res.json({ success: true, data: templates });
     } catch (error) {
         logger.error('Failed to get email templates:', error);
-        res.status(500).json({ success: false, error: 'Failed to get email templates' });
+        safeError(res, 500, 'Failed to get email templates');
     }
 });
 
@@ -22,7 +23,7 @@ router.get('/approvals/pending', authorize(['extension_officer', 'admin', 'farme
         res.json({ success: true, data: approvals });
     } catch (error) {
         logger.error('Failed to get pending approvals:', error);
-        res.status(500).json({ success: false, error: 'Failed to get pending approvals' });
+        safeError(res, 500, 'Failed to get pending approvals');
     }
 });
 
@@ -33,7 +34,7 @@ router.post('/approvals/:id/approve', authorize(['extension_officer', 'admin', '
         res.json({ success });
     } catch (error) {
         logger.error('Failed to approve email:', error);
-        res.status(500).json({ success: false, error: 'Failed to approve email' });
+        safeError(res, 500, 'Failed to approve email');
     }
 });
 
@@ -44,7 +45,7 @@ router.post('/approvals/:id/reject', authorize(['extension_officer', 'admin', 'f
         res.json({ success });
     } catch (error) {
         logger.error('Failed to reject email:', error);
-        res.status(500).json({ success: false, error: 'Failed to reject email' });
+        safeError(res, 500, 'Failed to reject email');
     }
 });
 

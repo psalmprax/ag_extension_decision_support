@@ -568,8 +568,8 @@ export function FarmerMap({
                     setMapBounds(undefined);
                     toast.success('Location updated!', { id: 'gps-detect' });
                 },
-                (error) => {
-                    console.warn('Failed to get geolocation:', error);
+                () => {
+
                     // Use a realistic regional default near the first active farmer or Nairobi center to simulate it perfectly
                     const defaultUserLat = farmers.length > 0 ? farmers[0].lat + 0.003 : -1.2863;
                     const defaultUserLng = farmers.length > 0 ? farmers[0].lng + 0.003 : 36.8172;

@@ -3,6 +3,7 @@ import { authorize, AuthRequest } from '@/middleware/authorize';
 import { plantDiseaseService } from '@/services/plantDiseaseService';
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
+import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
@@ -16,7 +17,7 @@ router.get('/', allowedRoles, async (req: Request, res: Response) => {
         res.json({ success: true, data: diseases });
     } catch (error) {
         logger.error('Failed to get diseases:', error);
-        res.status(500).json({ success: false, error: 'Failed to get diseases' });
+        safeError(res, 500, 'Failed to get diseases');
     }
 });
 
@@ -33,7 +34,7 @@ router.get('/:diseaseName', allowedRoles, async (req: Request, res: Response) =>
         res.json({ success: true, data: diseaseInfo });
     } catch (error) {
         logger.error('Failed to get disease info:', error);
-        res.status(500).json({ success: false, error: 'Failed to get disease info' });
+        safeError(res, 500, 'Failed to get disease info');
     }
 });
 
@@ -50,7 +51,7 @@ router.post('/diagnose', allowedRoles, async (req: Request, res: Response) => {
         res.json({ success: true, data: diagnosis });
     } catch (error) {
         logger.error('Failed to diagnose disease:', error);
-        res.status(500).json({ success: false, error: 'Failed to diagnose disease' });
+        safeError(res, 500, 'Failed to diagnose disease');
     }
 });
 
@@ -90,7 +91,7 @@ router.post('/diagnose/image', allowedRoles, async (req: AuthRequest, res: Respo
         res.json({ success: true, data: { ...analysis, reportId } });
     } catch (error) {
         logger.error('Failed to analyze image:', error);
-        res.status(500).json({ success: false, error: 'Failed to analyze image' });
+        safeError(res, 500, 'Failed to analyze image');
     }
 });
 
@@ -130,7 +131,7 @@ router.post('/diagnose/soil', allowedRoles, async (req: AuthRequest, res: Respon
         res.json({ success: true, data: { ...analysis, reportId } });
     } catch (error) {
         logger.error('Failed to analyze soil image:', error);
-        res.status(500).json({ success: false, error: 'Failed to analyze soil image' });
+        safeError(res, 500, 'Failed to analyze soil image');
     }
 });
 
