@@ -22,7 +22,7 @@ import {
     File as FileIcon,
     Volume2
 } from 'lucide-react';
-import { askAI, searchKnowledge, fetchKnowledgeHistory, fetchKnowledgeStats, Attachment } from '@/api/knowledgeService';
+import { askAI, searchKnowledge, fetchKnowledgeHistory, fetchKnowledgeStats, Attachment, Citation } from '@/api/knowledgeService';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
@@ -78,6 +78,7 @@ interface Result {
     timestamp?: string;
     visuals?: VisualData;
     audio?: string;
+    citations?: Citation[];
 }
 
 export const KnowledgeBase: React.FC = () => {
@@ -350,6 +351,34 @@ export const KnowledgeBase: React.FC = () => {
                                             ))}
                                         </div>
                                     </div>
+
+                                    {/* RAG v2 Citations */}
+                                    {lastResult.citations && lastResult.citations.length > 0 && (
+                                        <div className="mt-8 pt-8 border-t border-gray-100 dark:border-gray-700/50">
+                                            <div className="flex items-center gap-2 mb-4">
+                                                <Sparkles className="w-4 h-4 text-amber-500" />
+                                                <span className="text-xs font-black text-gray-400 uppercase tracking-widest">RAG v2 Citations</span>
+                                                <Badge variant="info" size="sm">Enhanced</Badge>
+                                            </div>
+                                            <div className="space-y-3">
+                                                {lastResult.citations.map((cite, i) => (
+                                                    <div key={i} className={`p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 ${radiusClass}`}>
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <span className="text-sm font-bold text-gray-800 dark:text-gray-200">{cite.title}</span>
+                                                            <Badge variant="warning" size="sm">{cite.category}</Badge>
+                                                        </div>
+                                                        <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{cite.excerpt}</p>
+                                                        <div className="mt-2 flex items-center gap-2">
+                                                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 max-w-[120px]">
+                                                                <div className="bg-amber-500 h-1.5 rounded-full" style={{ width: `${Math.round(cite.score * 100)}%` }}></div>
+                                                            </div>
+                                                            <span className="text-[10px] font-bold text-gray-500">{Math.round(cite.score * 100)}% match</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </motion.div>
                         ) : (

@@ -35,6 +35,7 @@ export interface Relationship {
     sourceEntityId: string;
     targetEntityId: string;
     relationType: string; // e.g., 'treats', 'affects', 'grows_in', 'requires'
+    articleId?: string;
     properties: Record<string, any>;
 }
 
@@ -97,8 +98,10 @@ function chunkText(text: string, chunkSize: number = 800, overlap: number = 150)
         }
         const chunk = text.substring(start, end).trim();
         if (chunk.length > 50) chunks.push(chunk);
-        start = end - overlap;
-        if (start >= text.length) break;
+        // Ensure start always advances (prevent infinite loop when near end)
+        const nextStart = end - overlap;
+        if (nextStart <= start) break;
+        start = nextStart;
     }
 
     return chunks;
@@ -325,6 +328,13 @@ export class RAGV2Service {
         const visited = new Set<string>();
         const results: Entity[] = [];
 
+        const toEntity = (row: any): Entity => ({
+            id: row.id,
+            name: row.name,
+            type: row.entity_type,
+            properties: row.properties || {},
+        });
+
         const traverse = async (name: string, depth: number) => {
             if (depth > maxDepth || visited.size > 20) return;
             const normalizedName = name.toLowerCase().trim();
@@ -339,7 +349,7 @@ export class RAGV2Service {
             const entityId = entities[0].id;
             if (visited.has(entityId)) return;
             visited.add(entityId);
-            results.push(entities[0]);
+            results.push(toEntity(entities[0]));
 
             // Find related entities
             const { rows: related } = await query(
@@ -353,7 +363,9 @@ export class RAGV2Service {
 
             for (const rel of related) {
                 if (!visited.has(rel.id)) {
-                    results.push({ ...rel, properties: { ...rel.properties, viaRelation: rel.relation_type } });
+                    const entity = toEntity(rel);
+                    entity.properties.viaRelation = rel.relation_type;
+                    results.push(entity);
                     visited.add(rel.id);
                 }
             }
@@ -492,7 +504,7 @@ JSON scores:`;
                     if (related.length > 0) {
                         const relations = related
                             .filter(r => r.id !== entity.id)
-                            .map(r => `${r.name} (${r.entity_type}${r.properties?.viaRelation ? ', ' + r.properties.viaRelation : ''})`)
+                            .map(r => `${r.name} (${r.type}${r.properties?.viaRelation ? ', ' + r.properties.viaRelation : ''})`)
                             .slice(0, 5);
                         if (relations.length > 0) {
                             relatedContexts.push(`Related to "${entity.name}": ${relations.join(', ')}`);
