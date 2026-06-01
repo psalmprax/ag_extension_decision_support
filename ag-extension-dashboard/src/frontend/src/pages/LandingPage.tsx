@@ -4,60 +4,61 @@ import { motion } from 'framer-motion';
 import {
     Leaf, Users, MapPin, Brain, BarChart3, Shield,
     ArrowRight, CheckCircle, Globe, Smartphone,
-    Zap, Database, ChevronRight
+    Zap, Database, ChevronRight, TrendingUp, Wifi, FileText
 } from 'lucide-react';
 
-const fadeInUp = {
-    hidden: { opacity: 0, y: 24 },
-    visible: (i: number) => ({
-        opacity: 1, y: 0,
-        transition: { delay: i * 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }
-    })
+const stagger = {
+    hidden: {},
+    visible: { transition: { staggerChildren: 0.08 } }
+};
+
+const fadeUp = {
+    hidden: { opacity: 0, y: 28 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } }
+};
+
+const scaleIn = {
+    hidden: { opacity: 0, scale: 0.92 },
+    visible: { opacity: 1, scale: 1, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } }
 };
 
 const features = [
     {
         icon: Users,
         title: 'Farmer Portfolio',
-        desc: 'Manage your entire farmer network with real-time vital scores, crop data, and soil analytics.',
-        color: 'bg-blue-50 text-blue-600',
+        desc: 'Manage your entire farmer network with real-time vital scores, crop data, and soil analytics in one unified view.',
     },
     {
         icon: MapPin,
         title: 'Field Visits',
         desc: 'Schedule, track, and synthesize field visits with AI-powered note analysis and follow-up automation.',
-        color: 'bg-emerald-50 text-emerald-600',
     },
     {
         icon: Brain,
         title: 'AI Assistant',
-        desc: 'Get instant agronomic advice powered by RAG with citations, knowledge graphs, and re-ranked results.',
-        color: 'bg-purple-50 text-purple-600',
+        desc: 'Instant agronomic advice powered by RAG with citations, knowledge graphs, and re-ranked results.',
     },
     {
-        icon: BarChart3,
+        icon: TrendingUp,
         title: 'Analytics & Reports',
         desc: 'Track officer performance, farmer outcomes, and generate executive reports with one click.',
-        color: 'bg-orange-50 text-orange-600',
     },
     {
         icon: Shield,
         title: 'Disease Diagnosis',
         desc: 'AI-powered crop disease identification with treatment recommendations from the knowledge base.',
-        color: 'bg-pink-50 text-pink-600',
     },
     {
         icon: Database,
         title: 'Knowledge Base',
-        desc: 'FAOSTAT data, NASA POWER weather, SoilGrids properties — all searchable with AI.',
-        color: 'bg-teal-50 text-teal-600',
+        desc: 'FAOSTAT data, NASA POWER weather, SoilGrids properties — all searchable with AI-powered RAG.',
     },
 ];
 
 const steps = [
-    { num: '1', title: 'Register Farmers', desc: 'Add farmers with GPS coordinates, crop data, soil info, and contact details. Bulk import supported.' },
-    { num: '2', title: 'Track & Visit', desc: 'Schedule field visits, record observations, capture photos, and log follow-up actions from any device.' },
-    { num: '3', title: 'Analyze & Act', desc: 'AI surfaces insights, predicts risks, recommends actions, and generates reports for stakeholders.' },
+    { num: '01', title: 'Register Farmers', desc: 'Add farmers with GPS coordinates, crop data, soil info, and contact details. Bulk import supported.' },
+    { num: '02', title: 'Track & Visit', desc: 'Schedule field visits, record observations, capture photos, and log follow-up actions from any device.' },
+    { num: '03', title: 'Analyze & Act', desc: 'AI surfaces insights, predicts risks, recommends actions, and generates reports for stakeholders.' },
 ];
 
 const trustedOrgs = [
@@ -72,33 +73,33 @@ export function LandingPage() {
     const navigate = useNavigate();
 
     return (
-        <div className="min-h-screen bg-[#FFFBEB] text-stone-900 overflow-x-hidden">
-            {/* Nav */}
-            <nav className="sticky top-0 z-50 bg-[#FFFBEB]/92 backdrop-blur-xl border-b border-amber-900/10">
-                <div className="max-w-7xl mx-auto px-6 h-[72px] flex items-center justify-between">
+        <div className="min-h-screen bg-[#070d0a] text-white overflow-x-hidden">
+            {/* ========== NAV ========== */}
+            <nav className="fixed top-0 left-0 right-0 z-50 bg-[#070d0a]/70 backdrop-blur-2xl border-b border-white/[0.04]">
+                <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-xl bg-emerald-800 flex items-center justify-center">
-                            <Leaf className="w-5 h-5 text-white" />
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                            <Leaf className="w-4 h-4 text-white" />
                         </div>
-                        <span className="text-xl font-bold tracking-tight text-emerald-800">AgExtension</span>
+                        <span className="text-lg font-bold tracking-tight">AgExtension</span>
                     </div>
 
                     <div className="hidden md:flex items-center gap-8">
-                        <a href="#features" className="text-sm font-medium text-stone-600 hover:text-emerald-800 transition-colors">Features</a>
-                        <a href="#how-it-works" className="text-sm font-medium text-stone-600 hover:text-emerald-800 transition-colors">How It Works</a>
-                        <a href="#contact" className="text-sm font-medium text-stone-600 hover:text-emerald-800 transition-colors">Contact</a>
+                        <a href="#features" className="text-sm font-medium text-white/50 hover:text-white transition-colors">Features</a>
+                        <a href="#how-it-works" className="text-sm font-medium text-white/50 hover:text-white transition-colors">How It Works</a>
+                        <a href="#testimonials" className="text-sm font-medium text-white/50 hover:text-white transition-colors">Testimonials</a>
                     </div>
 
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => navigate('/login')}
-                            className="text-sm font-semibold text-stone-600 hover:text-emerald-800 transition-colors"
+                            className="text-sm font-medium text-white/60 hover:text-white transition-colors"
                         >
                             Sign In
                         </button>
                         <button
                             onClick={() => navigate('/register')}
-                            className="px-5 py-2.5 text-sm font-bold bg-emerald-800 text-white rounded-lg hover:bg-emerald-700 transition-all hover:-translate-y-0.5 shadow-md hover:shadow-lg"
+                            className="px-4 py-2 text-sm font-semibold bg-white/[0.08] border border-white/[0.08] text-white rounded-lg hover:bg-white/[0.14] transition-all backdrop-blur-sm"
                         >
                             Get Started
                         </button>
@@ -106,126 +107,157 @@ export function LandingPage() {
                 </div>
             </nav>
 
-            {/* Hero */}
-            <section className="relative overflow-hidden">
-                {/* Geometric accents */}
-                <svg className="absolute -top-5 right-[8%] w-36 h-36 opacity-[0.06] pointer-events-none" viewBox="0 0 100 100">
-                    <polygon points="50,5 95,95 5,95" fill="#D97706" />
-                    <polygon points="50,25 80,80 20,80" fill="#FFFBEB" />
-                </svg>
-                <svg className="absolute bottom-3 left-[3%] w-24 h-24 opacity-[0.06] pointer-events-none" viewBox="0 0 100 100">
-                    <rect x="10" y="10" width="80" height="80" transform="rotate(45 50 50)" fill="#166534" />
-                </svg>
+            {/* ========== HERO ========== */}
+            <section className="relative min-h-screen flex items-center pt-16 overflow-hidden">
+                {/* Background orbs */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-emerald-500/[0.07] blur-[120px]" />
+                    <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-amber-500/[0.05] blur-[100px]" />
+                    <div className="absolute top-[40%] left-[50%] w-[300px] h-[300px] rounded-full bg-emerald-400/[0.03] blur-[80px]" />
+                </div>
 
-                <div className="max-w-7xl mx-auto px-6 pt-16 pb-20 grid lg:grid-cols-2 gap-12 items-center">
+                {/* Grid pattern */}
+                <div
+                    className="absolute inset-0 pointer-events-none opacity-[0.03]"
+                    style={{
+                        backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
+                        backgroundSize: '60px 60px',
+                    }}
+                />
+
+                <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center relative z-10">
                     {/* Left copy */}
                     <motion.div
-                        initial="hidden" animate="visible"
-                        className="space-y-6"
+                        initial="hidden" animate="visible" variants={stagger}
+                        className="space-y-8"
                     >
-                        <motion.div variants={fadeInUp} custom={0} className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-800/8 border border-emerald-800/15">
-                            <CheckCircle className="w-4 h-4 text-emerald-700" />
-                            <span className="text-xs font-semibold tracking-wide text-emerald-800">Trusted across 10+ African countries</span>
+                        <motion.div variants={fadeUp} className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/[0.04] border border-white/[0.06] backdrop-blur-sm">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            <span className="text-xs font-medium text-white/60">Trusted across 10+ African countries</span>
                         </motion.div>
 
-                        <motion.h1 variants={fadeInUp} custom={1} className="text-[clamp(2.2rem,4.5vw,3.5rem)] font-bold leading-[1.1] tracking-tight">
-                            Smarter Farming Starts with{' '}
-                            <span className="text-emerald-700">Better Data</span>
+                        <motion.h1 variants={fadeUp} className="text-[clamp(2.5rem,5vw,4rem)] font-bold leading-[1.05] tracking-tight">
+                            Smarter Farming
+                            <br />
+                            Starts with{' '}
+                            <span className="bg-gradient-to-r from-emerald-300 via-emerald-400 to-amber-400 bg-clip-text text-transparent">
+                                Better Data
+                            </span>
                         </motion.h1>
 
-                        <motion.p variants={fadeInUp} custom={2} className="text-lg text-stone-500 leading-relaxed max-w-lg">
+                        <motion.p variants={fadeUp} className="text-lg text-white/45 leading-relaxed max-w-lg">
                             Empower extension officers with AI-driven insights, real-time farmer tracking, and data-powered decisions across Africa.
                         </motion.p>
 
-                        <motion.div variants={fadeInUp} custom={3} className="flex flex-col sm:flex-row gap-3">
+                        <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3">
                             <button
                                 onClick={() => navigate('/register')}
-                                className="px-7 py-3.5 text-base font-bold bg-emerald-800 text-white rounded-lg hover:bg-emerald-700 transition-all hover:-translate-y-0.5 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group"
+                                className="group px-7 py-3.5 text-sm font-bold bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-400 hover:to-emerald-500 transition-all shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5 flex items-center justify-center gap-2"
                             >
                                 Start Free Trial
-                                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </button>
                             <button
                                 onClick={() => navigate('/demo')}
-                                className="px-7 py-3.5 text-base font-bold border-2 border-emerald-800 text-emerald-800 rounded-lg hover:bg-emerald-800 hover:text-white transition-all flex items-center justify-center gap-2"
+                                className="px-7 py-3.5 text-sm font-semibold bg-white/[0.05] border border-white/[0.08] text-white/80 rounded-xl hover:bg-white/[0.1] hover:text-white transition-all flex items-center justify-center gap-2 backdrop-blur-sm"
                             >
                                 Try Live Demo
-                                <ChevronRight className="w-5 h-5" />
+                                <ChevronRight className="w-4 h-4" />
                             </button>
+                        </motion.div>
+
+                        {/* Micro stats */}
+                        <motion.div variants={fadeUp} className="flex gap-8 pt-2">
+                            {[
+                                { value: '5,000+', label: 'Farmers' },
+                                { value: '10+', label: 'Countries' },
+                                { value: '24/7', label: 'AI Support' },
+                            ].map((s, i) => (
+                                <div key={i}>
+                                    <div className="text-xl font-bold text-white/90">{s.value}</div>
+                                    <div className="text-xs text-white/30 mt-0.5">{s.label}</div>
+                                </div>
+                            ))}
                         </motion.div>
                     </motion.div>
 
-                    {/* Right — static dashboard mockup */}
+                    {/* Right — Dashboard mockup */}
                     <motion.div
-                        initial={{ opacity: 0, y: 32, rotateY: 3, rotateX: -1 }}
-                        animate={{ opacity: 1, y: 0, rotateY: 3, rotateX: -1 }}
-                        transition={{ delay: 0.3, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                        initial="hidden" animate="visible" variants={scaleIn}
                         className="relative"
                     >
-                        <div className="bg-white rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.12)] border border-stone-200/60 overflow-hidden transform perspective-[1200px] rotate-y-[3deg] -rotate-x-[1deg] hover:rotate-y-0 hover:rotate-x-0 transition-transform duration-500">
-                            {/* Topbar */}
-                            <div className="flex items-center gap-2 px-4 py-2.5 bg-stone-100 border-b border-stone-200">
-                                <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
-                                <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                                <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
-                                <span className="text-[11px] text-stone-400 ml-2 font-medium">AgExtension Dashboard</span>
+                        {/* Glow behind mockup */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-transparent to-amber-500/10 blur-[60px] rounded-full scale-90" />
+
+                        <div className="relative rounded-2xl overflow-hidden border border-white/[0.08] bg-white/[0.02] backdrop-blur-sm shadow-2xl shadow-black/50 transform perspective-[1200px] rotate-y-[2deg] -rotate-x-[1deg] hover:rotate-y-0 hover:rotate-x-0 transition-transform duration-700">
+                            {/* Window chrome */}
+                            <div className="flex items-center gap-2 px-4 py-3 bg-white/[0.03] border-b border-white/[0.06]">
+                                <div className="flex gap-1.5">
+                                    <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
+                                    <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
+                                    <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
+                                </div>
+                                <div className="flex-1 flex justify-center">
+                                    <div className="px-3 py-0.5 rounded-md bg-white/[0.04] text-[10px] text-white/30 font-mono">
+                                        app.gpexts.com/dashboard
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="grid grid-cols-[170px_1fr] min-h-[310px]">
+                            <div className="grid grid-cols-[180px_1fr] min-h-[340px]">
                                 {/* Sidebar */}
-                                <div className="bg-stone-900 p-3 text-[11px] text-stone-400 space-y-0.5">
-                                    <div className="flex items-center gap-2 px-2.5 py-2 rounded-md bg-emerald-800/30 text-green-400 font-medium">
+                                <div className="bg-white/[0.02] border-r border-white/[0.06] p-3 text-[11px] space-y-0.5">
+                                    <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-emerald-500/[0.1] text-emerald-400 font-medium">
                                         <BarChart3 className="w-3.5 h-3.5" />
                                         Dashboard
                                     </div>
-                                    <div className="flex items-center gap-2 px-2.5 py-2 rounded-md">
-                                        <Users className="w-3.5 h-3.5" />
-                                        Farmers
-                                    </div>
-                                    <div className="flex items-center gap-2 px-2.5 py-2 rounded-md">
-                                        <MapPin className="w-3.5 h-3.5" />
-                                        Visits
-                                    </div>
-                                    <div className="flex items-center gap-2 px-2.5 py-2 rounded-md">
-                                        <Brain className="w-3.5 h-3.5" />
-                                        AI Assistant
-                                    </div>
-                                    <div className="flex items-center gap-2 px-2.5 py-2 rounded-md">
-                                        <BarChart3 className="w-3.5 h-3.5" />
-                                        Analytics
-                                    </div>
+                                    {[
+                                        { icon: Users, label: 'Farmers' },
+                                        { icon: MapPin, label: 'Visits' },
+                                        { icon: Brain, label: 'AI Assistant' },
+                                        { icon: TrendingUp, label: 'Analytics' },
+                                        { icon: FileText, label: 'Reports' },
+                                    ].map((item, i) => (
+                                        <div key={i} className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-white/30 hover:text-white/50 transition-colors">
+                                            <item.icon className="w-3.5 h-3.5" />
+                                            {item.label}
+                                        </div>
+                                    ))}
                                 </div>
 
                                 {/* Main content */}
-                                <div className="p-3 bg-stone-50 space-y-3">
+                                <div className="p-4 bg-white/[0.01] space-y-3">
                                     {/* Stats row */}
-                                    <div className="grid grid-cols-3 gap-2">
-                                        <div className="bg-white rounded-lg p-3 border border-stone-200">
-                                            <div className="text-lg font-bold text-emerald-700">2,847</div>
-                                            <div className="text-[10px] text-stone-400 uppercase tracking-wide">Active Farmers</div>
-                                        </div>
-                                        <div className="bg-white rounded-lg p-3 border border-stone-200">
-                                            <div className="text-lg font-bold text-emerald-700">156</div>
-                                            <div className="text-[10px] text-stone-400 uppercase tracking-wide">Visits This Month</div>
-                                        </div>
-                                        <div className="bg-white rounded-lg p-3 border border-stone-200">
-                                            <div className="text-lg font-bold text-amber-600">92%</div>
-                                            <div className="text-[10px] text-stone-400 uppercase tracking-wide">Health Score</div>
-                                        </div>
+                                    <div className="grid grid-cols-3 gap-2.5">
+                                        {[
+                                            { value: '2,847', label: 'Active Farmers', change: '+12%', color: 'text-emerald-400' },
+                                            { value: '156', label: 'Visits This Month', change: '+8%', color: 'text-emerald-400' },
+                                            { value: '92%', label: 'Health Score', change: '+3%', color: 'text-amber-400' },
+                                        ].map((stat, i) => (
+                                            <div key={i} className="bg-white/[0.03] rounded-lg p-3 border border-white/[0.05]">
+                                                <div className="text-lg font-bold text-white/90">{stat.value}</div>
+                                                <div className="text-[9px] text-white/30 uppercase tracking-wider mt-0.5">{stat.label}</div>
+                                                <div className={`text-[9px] font-semibold ${stat.color} mt-1`}>{stat.change}</div>
+                                            </div>
+                                        ))}
                                     </div>
 
-                                    {/* Chart */}
-                                    <div className="bg-white rounded-lg p-3 border border-stone-200">
-                                        <div className="text-[11px] font-semibold text-stone-700 mb-2">Farmer Growth</div>
-                                        <div className="flex items-end gap-1.5 h-14">
-                                            {[35, 50, 40, 65, 55, 75, 90].map((h, i) => (
+                                    {/* Chart area */}
+                                    <div className="bg-white/[0.02] rounded-lg p-3 border border-white/[0.04]">
+                                        <div className="flex justify-between items-center mb-3">
+                                            <span className="text-[10px] font-semibold text-white/50">Farmer Growth</span>
+                                            <span className="text-[9px] text-white/20">Last 7 months</span>
+                                        </div>
+                                        <div className="flex items-end gap-1.5 h-16">
+                                            {[30, 45, 38, 60, 52, 72, 88].map((h, i) => (
                                                 <div
                                                     key={i}
-                                                    className="flex-1 rounded-t-sm"
+                                                    className="flex-1 rounded-t-sm transition-all duration-300"
                                                     style={{
                                                         height: `${h}%`,
-                                                        background: i === 3 ? '#D97706' : '#166534',
-                                                        opacity: 0.7 + (i * 0.04),
+                                                        background: i === 6
+                                                            ? 'linear-gradient(to top, #D97706, #F59E0B)'
+                                                            : `linear-gradient(to top, rgba(16,185,129,${0.3 + i * 0.08}), rgba(16,185,129,${0.5 + i * 0.06}))`,
                                                     }}
                                                 />
                                             ))}
@@ -235,16 +267,16 @@ export function LandingPage() {
                                     {/* Farmer list */}
                                     <div className="space-y-1.5">
                                         {[
-                                            { name: 'Amina Okafor', initials: 'AO', color: 'bg-emerald-700', status: 'Active', statusColor: 'bg-green-100 text-green-700' },
-                                            { name: 'Joseph Mensah', initials: 'JM', color: 'bg-amber-600', status: 'Review', statusColor: 'bg-amber-100 text-amber-700' },
-                                            { name: 'Ngozi Kalu', initials: 'NK', color: 'bg-orange-600', status: 'Active', statusColor: 'bg-green-100 text-green-700' },
+                                            { name: 'Amina Okafor', initials: 'AO', color: 'from-emerald-400 to-emerald-600', status: 'Active', statusBg: 'bg-emerald-500/10 text-emerald-400' },
+                                            { name: 'Joseph Mensah', initials: 'JM', color: 'from-amber-400 to-amber-600', status: 'Review', statusBg: 'bg-amber-500/10 text-amber-400' },
+                                            { name: 'Ngozi Kalu', initials: 'NK', color: 'from-orange-400 to-orange-600', status: 'Active', statusBg: 'bg-emerald-500/10 text-emerald-400' },
                                         ].map((f, i) => (
-                                            <div key={i} className="flex items-center gap-2 bg-white rounded-md px-2.5 py-1.5 border border-stone-200 text-[11px]">
-                                                <div className={`w-5 h-5 rounded-full ${f.color} flex items-center justify-center text-white text-[9px] font-bold`}>
+                                            <div key={i} className="flex items-center gap-2.5 bg-white/[0.02] rounded-lg px-3 py-2 border border-white/[0.04] text-[11px]">
+                                                <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${f.color} flex items-center justify-center text-white text-[8px] font-bold shadow-sm`}>
                                                     {f.initials}
                                                 </div>
-                                                <span className="flex-1 font-medium text-stone-700">{f.name}</span>
-                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold ${f.statusColor}`}>
+                                                <span className="flex-1 font-medium text-white/70">{f.name}</span>
+                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold ${f.statusBg}`}>
                                                     {f.status}
                                                 </span>
                                             </div>
@@ -255,19 +287,22 @@ export function LandingPage() {
                         </div>
                     </motion.div>
                 </div>
+
+                {/* Bottom fade */}
+                <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#070d0a] to-transparent pointer-events-none" />
             </section>
 
-            {/* Trusted by */}
-            <section className="py-10 bg-white border-y border-stone-100">
-                <div className="max-w-5xl mx-auto px-6 text-center">
-                    <p className="text-xs uppercase tracking-[0.12em] font-semibold text-stone-400 mb-5">
-                        Trusted by organizations across Africa
+            {/* ========== TRUSTED BY ========== */}
+            <section className="relative py-16 border-y border-white/[0.04]">
+                <div className="max-w-6xl mx-auto px-6 text-center">
+                    <p className="text-xs uppercase tracking-[0.2em] font-medium text-white/25 mb-8">
+                        Trusted by leading organizations across Africa
                     </p>
-                    <div className="flex flex-wrap justify-center gap-4">
+                    <div className="flex flex-wrap justify-center gap-3">
                         {trustedOrgs.map((org, i) => (
                             <div
                                 key={i}
-                                className="px-5 py-2.5 bg-stone-50 rounded-lg text-sm font-semibold text-stone-500 border border-stone-100"
+                                className="px-5 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05] text-sm font-medium text-white/35 hover:text-white/50 hover:bg-white/[0.05] transition-all cursor-default"
                             >
                                 {org}
                             </div>
@@ -276,198 +311,227 @@ export function LandingPage() {
                 </div>
             </section>
 
-            {/* Features */}
-            <section id="features" className="py-24">
-                <div className="max-w-7xl mx-auto px-6">
+            {/* ========== FEATURES ========== */}
+            <section id="features" className="relative py-28">
+                {/* Background glow */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-emerald-500/[0.03] blur-[120px] rounded-full pointer-events-none" />
+
+                <div className="max-w-7xl mx-auto px-6 relative z-10">
                     <motion.div
-                        initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-100px' }}
-                        className="text-center mb-16 max-w-xl mx-auto"
+                        initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-100px' }} variants={stagger}
+                        className="text-center mb-20 max-w-2xl mx-auto"
                     >
-                        <motion.div variants={fadeInUp} custom={0} className="text-xs font-bold uppercase tracking-[0.12em] text-amber-600 mb-3">
+                        <motion.div variants={fadeUp} className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400/70 mb-4">
                             Features
                         </motion.div>
-                        <motion.h2 variants={fadeInUp} custom={1} className="text-[clamp(1.8rem,3vw,2.5rem)] font-bold tracking-tight mb-4">
-                            Everything you need to manage agricultural extension
+                        <motion.h2 variants={fadeUp} className="text-[clamp(2rem,3.5vw,3rem)] font-bold tracking-tight mb-5 leading-tight">
+                            Everything you need to manage
+                            <br />
+                            <span className="text-white/40">agricultural extension</span>
                         </motion.h2>
-                        <motion.p variants={fadeInUp} custom={2} className="text-stone-500 text-lg">
+                        <motion.p variants={fadeUp} className="text-white/40 text-lg leading-relaxed">
                             From farmer registration to AI-powered insights, all in one platform designed for the realities of African agriculture.
                         </motion.p>
                     </motion.div>
 
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {features.map((feat, i) => (
                             <motion.div
                                 key={i}
                                 initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }}
-                                variants={fadeInUp} custom={i}
-                                className="bg-white rounded-2xl p-7 border border-stone-100 hover:border-emerald-500/30 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden"
+                                variants={fadeUp}
+                                className="group relative p-7 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:border-emerald-500/20 hover:bg-white/[0.04] transition-all duration-500 overflow-hidden"
                             >
-                                {/* Top gradient bar on hover */}
-                                <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-amber-500 to-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                {/* Hover glow */}
+                                <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/[0.04] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-                                <div className={`w-12 h-12 rounded-xl ${feat.color} flex items-center justify-center mb-5`}>
-                                    <feat.icon className="w-6 h-6" />
+                                <div className="relative z-10">
+                                    <div className="w-11 h-11 rounded-xl bg-white/[0.05] border border-white/[0.06] flex items-center justify-center mb-5 group-hover:bg-emerald-500/10 group-hover:border-emerald-500/20 transition-all duration-500">
+                                        <feat.icon className="w-5 h-5 text-white/50 group-hover:text-emerald-400 transition-colors duration-500" />
+                                    </div>
+                                    <h3 className="text-base font-bold mb-2 text-white/90">{feat.title}</h3>
+                                    <p className="text-sm text-white/35 leading-relaxed group-hover:text-white/45 transition-colors duration-500">{feat.desc}</p>
                                 </div>
-                                <h3 className="text-lg font-bold mb-2">{feat.title}</h3>
-                                <p className="text-sm text-stone-500 leading-relaxed mb-4">{feat.desc}</p>
-                                <span className="text-sm font-semibold text-emerald-700 inline-flex items-center gap-1 group-hover:gap-2 transition-all">
-                                    Learn more <ChevronRight className="w-4 h-4" />
-                                </span>
                             </motion.div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* How It Works */}
-            <section id="how-it-works" className="py-24 bg-white">
+            {/* ========== HOW IT WORKS ========== */}
+            <section id="how-it-works" className="relative py-28 border-t border-white/[0.04]">
                 <div className="max-w-5xl mx-auto px-6">
                     <motion.div
-                        initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-100px' }}
-                        className="text-center mb-16"
+                        initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-100px' }} variants={stagger}
+                        className="text-center mb-20"
                     >
-                        <motion.div variants={fadeInUp} custom={0} className="text-xs font-bold uppercase tracking-[0.12em] text-amber-600 mb-3">
+                        <motion.div variants={fadeUp} className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400/70 mb-4">
                             How It Works
                         </motion.div>
-                        <motion.h2 variants={fadeInUp} custom={1} className="text-[clamp(1.8rem,3vw,2.5rem)] font-bold tracking-tight">
-                            Up and running in three simple steps
+                        <motion.h2 variants={fadeUp} className="text-[clamp(2rem,3.5vw,3rem)] font-bold tracking-tight">
+                            Up and running in{' '}
+                            <span className="bg-gradient-to-r from-emerald-300 to-amber-400 bg-clip-text text-transparent">three steps</span>
                         </motion.h2>
                     </motion.div>
 
                     <div className="grid md:grid-cols-3 gap-8 relative">
                         {/* Connecting line */}
-                        <div className="hidden md:block absolute top-10 left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-amber-500 via-emerald-600 to-amber-500" />
+                        <div className="hidden md:block absolute top-8 left-[12%] right-[12%] h-px">
+                            <div className="w-full h-full bg-gradient-to-r from-emerald-500/30 via-emerald-500/50 to-amber-500/30" />
+                        </div>
 
                         {steps.map((step, i) => (
                             <motion.div
                                 key={i}
                                 initial="hidden" whileInView="visible" viewport={{ once: true }}
-                                variants={fadeInUp} custom={i}
+                                variants={fadeUp}
                                 className="text-center relative"
                             >
-                                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#FFFBEB] to-amber-100 border-[3px] border-amber-500 flex items-center justify-center text-2xl font-bold text-amber-800 mx-auto mb-5 relative z-10">
+                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-amber-500/5 border border-emerald-500/20 flex items-center justify-center text-lg font-bold text-emerald-400 mx-auto mb-6 relative z-10 backdrop-blur-sm">
                                     {step.num}
                                 </div>
-                                <h3 className="text-lg font-bold mb-2">{step.title}</h3>
-                                <p className="text-sm text-stone-500 max-w-[260px] mx-auto">{step.desc}</p>
+                                <h3 className="text-lg font-bold mb-3 text-white/90">{step.title}</h3>
+                                <p className="text-sm text-white/35 max-w-[280px] mx-auto leading-relaxed">{step.desc}</p>
                             </motion.div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* Stats band */}
-            <section className="py-16 bg-gradient-to-r from-emerald-800 to-emerald-900 text-white">
-                <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            {/* ========== STATS BAND ========== */}
+            <section className="relative py-20 border-t border-b border-white/[0.04] overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/[0.04] via-transparent to-amber-500/[0.03] pointer-events-none" />
+                <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-10 text-center relative z-10">
                     {[
-                        { value: '10+', label: 'Countries' },
-                        { value: '5,000+', label: 'Farmers Managed' },
-                        { value: '50+', label: 'Crop Varieties' },
-                        { value: '24/7', label: 'AI Support' },
+                        { value: '10+', label: 'Countries', icon: Globe },
+                        { value: '5,000+', label: 'Farmers Managed', icon: Users },
+                        { value: '50+', label: 'Crop Varieties', icon: Leaf },
+                        { value: '24/7', label: 'AI Support', icon: Zap },
                     ].map((stat, i) => (
                         <motion.div
                             key={i}
                             initial="hidden" whileInView="visible" viewport={{ once: true }}
-                            variants={fadeInUp} custom={i}
+                            variants={fadeUp}
+                            className="space-y-2"
                         >
-                            <div className="text-[clamp(2rem,4vw,3rem)] font-bold">{stat.value}</div>
-                            <div className="text-sm opacity-80 mt-1">{stat.label}</div>
+                            <stat.icon className="w-5 h-5 text-emerald-400/40 mx-auto mb-2" />
+                            <div className="text-[clamp(2rem,4vw,2.8rem)] font-bold bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
+                                {stat.value}
+                            </div>
+                            <div className="text-xs text-white/30 uppercase tracking-wider">{stat.label}</div>
                         </motion.div>
                     ))}
                 </div>
             </section>
 
-            {/* Testimonial */}
-            <section className="py-24 bg-[#FFFBEB]">
+            {/* ========== TESTIMONIAL ========== */}
+            <section id="testimonials" className="relative py-28">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-emerald-500/[0.04] blur-[100px] rounded-full pointer-events-none" />
+
                 <motion.div
-                    initial="hidden" whileInView="visible" viewport={{ once: true }}
-                    className="max-w-2xl mx-auto px-6 text-center"
+                    initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}
+                    className="max-w-3xl mx-auto px-6 text-center relative z-10"
                 >
-                    <div className="text-6xl leading-none text-amber-500/30 font-serif mb-[-0.5rem]">"</div>
-                    <motion.blockquote variants={fadeInUp} custom={0} className="text-xl italic text-stone-600 leading-relaxed mb-8">
+                    <motion.div variants={fadeUp} className="text-7xl leading-none text-emerald-500/15 font-serif mb-2 select-none">
+                        &ldquo;
+                    </motion.div>
+                    <motion.blockquote variants={fadeUp} className="text-xl md:text-2xl text-white/70 leading-relaxed mb-10 font-light">
                         AgExtension transformed how we deliver agricultural services. We went from paper-based tracking to real-time insights across 3,000 farmers in six months. The AI assistant alone saves our officers hours per week.
                     </motion.blockquote>
-                    <motion.div variants={fadeInUp} custom={1} className="flex items-center justify-center gap-4">
-                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-500 to-emerald-700 flex items-center justify-center text-white font-bold text-lg">
+                    <motion.div variants={fadeUp} className="flex items-center justify-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-amber-500 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-emerald-500/20">
                             KO
                         </div>
                         <div className="text-left">
-                            <div className="font-bold">Dr. Kemi Oyelaran</div>
-                            <div className="text-sm text-stone-500">Director of Extension Services, Ogun State Nigeria</div>
+                            <div className="font-bold text-white/90">Dr. Kemi Oyelaran</div>
+                            <div className="text-sm text-white/35">Director of Extension Services, Ogun State Nigeria</div>
                         </div>
                     </motion.div>
                 </motion.div>
             </section>
 
-            {/* CTA */}
-            <section className="py-20 bg-gradient-to-br from-emerald-800 via-emerald-900 to-stone-900 text-white text-center">
+            {/* ========== CTA ========== */}
+            <section className="relative py-28 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-b from-[#070d0a] via-emerald-950/30 to-[#070d0a] pointer-events-none" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-emerald-500/[0.06] blur-[100px] rounded-full pointer-events-none" />
+
                 <motion.div
-                    initial="hidden" whileInView="visible" viewport={{ once: true }}
-                    className="max-w-2xl mx-auto px-6 space-y-6"
+                    initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}
+                    className="max-w-2xl mx-auto px-6 text-center relative z-10"
                 >
-                    <motion.h2 variants={fadeInUp} custom={0} className="text-[clamp(1.8rem,3vw,2.5rem)] font-bold tracking-tight">
-                        Ready to transform your agricultural extension?
+                    <motion.h2 variants={fadeUp} className="text-[clamp(2rem,4vw,3rem)] font-bold tracking-tight mb-5 leading-tight">
+                        Ready to transform your
+                        <br />
+                        <span className="bg-gradient-to-r from-emerald-300 to-amber-400 bg-clip-text text-transparent">agricultural extension?</span>
                     </motion.h2>
-                    <motion.p variants={fadeInUp} custom={1} className="text-lg opacity-80">
+                    <motion.p variants={fadeUp} className="text-lg text-white/40 mb-8">
                         Join hundreds of organizations using data to grow smarter.
                     </motion.p>
-                    <motion.button
-                        variants={fadeInUp} custom={2}
-                        onClick={() => navigate('/register')}
-                        className="px-8 py-4 text-base font-bold bg-amber-500 text-stone-900 rounded-lg hover:bg-amber-400 transition-all hover:-translate-y-0.5 shadow-lg hover:shadow-xl"
-                    >
-                        Get Started Free
-                    </motion.button>
+                    <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 justify-center">
+                        <button
+                            onClick={() => navigate('/register')}
+                            className="group px-8 py-4 text-base font-bold bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-400 hover:to-emerald-500 transition-all shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                        >
+                            Get Started Free
+                            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        </button>
+                        <button
+                            onClick={() => navigate('/demo')}
+                            className="px-8 py-4 text-base font-semibold bg-white/[0.05] border border-white/[0.08] text-white/70 rounded-xl hover:bg-white/[0.1] hover:text-white transition-all flex items-center justify-center gap-2"
+                        >
+                            Try Live Demo
+                        </button>
+                    </motion.div>
                 </motion.div>
             </section>
 
-            {/* Footer */}
-            <footer id="contact" className="bg-stone-900 text-stone-400 pt-16 pb-8">
+            {/* ========== FOOTER ========== */}
+            <footer id="contact" className="border-t border-white/[0.04] pt-16 pb-8">
                 <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-[1.5fr_1fr_1fr_1fr] gap-10 pb-10">
                     <div>
-                        <div className="flex items-center gap-2.5 mb-3">
-                            <div className="w-8 h-8 rounded-lg bg-emerald-800 flex items-center justify-center">
+                        <div className="flex items-center gap-2.5 mb-4">
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
                                 <Leaf className="w-4 h-4 text-white" />
                             </div>
-                            <span className="text-lg font-bold text-stone-100">AgExtension</span>
+                            <span className="text-lg font-bold">AgExtension</span>
                         </div>
-                        <p className="text-sm leading-relaxed">
+                        <p className="text-sm text-white/35 leading-relaxed max-w-xs">
                             Empowering agricultural extension officers with AI-driven decision support across Africa.
                         </p>
                     </div>
                     <div>
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-stone-500 mb-4">Product</h4>
-                        <ul className="space-y-2.5 text-sm">
-                            <li><a href="#features" className="hover:text-amber-500 transition-colors">Features</a></li>
-                            <li><a href="#" className="hover:text-amber-500 transition-colors">Pricing</a></li>
-                            <li><a href="#" className="hover:text-amber-500 transition-colors">Integrations</a></li>
-                            <li><a href="#" className="hover:text-amber-500 transition-colors">Changelog</a></li>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-white/25 mb-5">Product</h4>
+                        <ul className="space-y-3 text-sm">
+                            <li><a href="#features" className="text-white/40 hover:text-emerald-400 transition-colors">Features</a></li>
+                            <li><a href="#" className="text-white/40 hover:text-emerald-400 transition-colors">Pricing</a></li>
+                            <li><a href="#" className="text-white/40 hover:text-emerald-400 transition-colors">Integrations</a></li>
+                            <li><a href="#" className="text-white/40 hover:text-emerald-400 transition-colors">Changelog</a></li>
                         </ul>
                     </div>
                     <div>
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-stone-500 mb-4">Resources</h4>
-                        <ul className="space-y-2.5 text-sm">
-                            <li><a href="#" className="hover:text-amber-500 transition-colors">Documentation</a></li>
-                            <li><a href="#" className="hover:text-amber-500 transition-colors">API Reference</a></li>
-                            <li><a href="#" className="hover:text-amber-500 transition-colors">Blog</a></li>
-                            <li><a href="#" className="hover:text-amber-500 transition-colors">Support</a></li>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-white/25 mb-5">Resources</h4>
+                        <ul className="space-y-3 text-sm">
+                            <li><a href="#" className="text-white/40 hover:text-emerald-400 transition-colors">Documentation</a></li>
+                            <li><a href="#" className="text-white/40 hover:text-emerald-400 transition-colors">API Reference</a></li>
+                            <li><a href="#" className="text-white/40 hover:text-emerald-400 transition-colors">Blog</a></li>
+                            <li><a href="#" className="text-white/40 hover:text-emerald-400 transition-colors">Support</a></li>
                         </ul>
                     </div>
                     <div>
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-stone-500 mb-4">Contact</h4>
-                        <ul className="space-y-2.5 text-sm">
-                            <li><a href="mailto:hello@gpexts.com" className="hover:text-amber-500 transition-colors">hello@gpexts.com</a></li>
-                            <li><a href="#" className="hover:text-amber-500 transition-colors">Support</a></li>
-                            <li><a href="#" className="hover:text-amber-500 transition-colors">Twitter</a></li>
-                            <li><a href="#" className="hover:text-amber-500 transition-colors">LinkedIn</a></li>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-white/25 mb-5">Contact</h4>
+                        <ul className="space-y-3 text-sm">
+                            <li><a href="mailto:hello@gpexts.com" className="text-white/40 hover:text-emerald-400 transition-colors">hello@gpexts.com</a></li>
+                            <li><a href="#" className="text-white/40 hover:text-emerald-400 transition-colors">Support</a></li>
+                            <li><a href="#" className="text-white/40 hover:text-emerald-400 transition-colors">Twitter</a></li>
+                            <li><a href="#" className="text-white/40 hover:text-emerald-400 transition-colors">LinkedIn</a></li>
                         </ul>
                     </div>
                 </div>
-                <div className="max-w-7xl mx-auto px-6 pt-6 border-t border-stone-800 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-stone-500">
-                    <span>&copy; {new Date().getFullYear()} AgExtension. All rights reserved.</span>
-                    <div className="flex gap-4">
-                        <a href="#" className="hover:text-amber-500 transition-colors">Privacy Policy</a>
-                        <a href="#" className="hover:text-amber-500 transition-colors">Terms of Service</a>
+                <div className="max-w-7xl mx-auto px-6 pt-8 border-t border-white/[0.04] flex flex-col md:flex-row justify-between items-center gap-4">
+                    <span className="text-xs text-white/20">&copy; {new Date().getFullYear()} AgExtension. All rights reserved.</span>
+                    <div className="flex gap-5 text-xs">
+                        <a href="#" className="text-white/20 hover:text-emerald-400 transition-colors">Privacy Policy</a>
+                        <a href="#" className="text-white/20 hover:text-emerald-400 transition-colors">Terms of Service</a>
                     </div>
                 </div>
             </footer>
