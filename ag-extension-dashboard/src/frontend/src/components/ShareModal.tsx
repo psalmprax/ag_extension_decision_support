@@ -65,11 +65,8 @@ export const ShareModal: React.FC<ShareModalProps> = ({
       });
       if (result.success && result.data) {
         setShareData(result.data);
-      } else {
-
       }
-    } catch (error) {
-
+    } catch {
     } finally {
       setLoading(false);
     }

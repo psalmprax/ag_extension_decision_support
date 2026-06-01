@@ -62,9 +62,7 @@ export function useWebRTC(): UseWebRTCReturn {
         });
 
         socket.on('connect_error', () => {
-            if (isMounted) {
-
-            }
+            // Connection errors are expected when backend is unavailable
         });
 
         socket.on('user-joined', async (data: { userId: string; userName: string }) => {

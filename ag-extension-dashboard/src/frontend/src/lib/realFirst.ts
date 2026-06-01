@@ -26,10 +26,7 @@ export async function withRealFallback<T>(
         }
 
         return fallbackData;
-    } catch (error) {
-        if (import.meta.env.DEV) {
-
-        }
+    } catch {
         return fallbackData;
     }
 }

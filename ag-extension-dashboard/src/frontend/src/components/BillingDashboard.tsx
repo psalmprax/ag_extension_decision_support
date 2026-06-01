@@ -380,9 +380,6 @@ export const BillingDashboard: React.FC = () => {
                 fetchData();
             }
         } catch (error: unknown) {
-            if (import.meta.env.DEV) {
-
-            }
             toast.error('Subscription failed. Please try again.');
         } finally {
             setActionLoading(null);
@@ -404,9 +401,6 @@ export const BillingDashboard: React.FC = () => {
                 }
             }
         } catch (error: unknown) {
-            if (import.meta.env.DEV) {
-
-            }
             toast.error('Failed to switch plan. Please try again.');
         } finally {
             setActionLoading(null);
@@ -427,9 +421,6 @@ export const BillingDashboard: React.FC = () => {
                 }
             }
         } catch (error) {
-            if (import.meta.env.DEV) {
-
-            }
             toast.error('Failed to open billing portal. Please try again.');
         } finally {
             setActionLoading(null);
@@ -454,9 +445,6 @@ export const BillingDashboard: React.FC = () => {
                 }
             }
         } catch (error: unknown) {
-            if (import.meta.env.DEV) {
-
-            }
             toast.error('Failed to add payment method. Please try again.');
         } finally {
             setActionLoading(null);
@@ -504,9 +492,6 @@ export const BillingDashboard: React.FC = () => {
                 }
             }
         } catch (error) {
-            if (import.meta.env.DEV) {
-
-            }
             toast.error('Failed to create PayPal subscription. Please try again.');
         } finally {
             setActionLoading(null);

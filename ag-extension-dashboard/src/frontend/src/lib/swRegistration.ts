@@ -11,14 +11,10 @@ export const registerServiceWorker = () => {
     return registerSW({
         immediate: true,
         onRegisterError() {
-            if (import.meta.env.DEV) {
-
-            }
+            // Service worker registration errors are non-critical
         },
-        onRegistered(registration) {
-            if (registration && import.meta.env.DEV) {
-
-            }
+        onRegistered() {
+            // Service worker registered successfully
         },
     });
 };
