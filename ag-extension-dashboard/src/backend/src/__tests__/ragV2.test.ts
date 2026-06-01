@@ -1,4 +1,14 @@
 import { RAGV2Service } from '../services/ragV2Service';
+import { QueryResult } from 'pg';
+
+// Helper to create mock QueryResult objects
+const mockResult = (rows: unknown[], rowCount = rows.length): QueryResult => ({
+    rows,
+    rowCount,
+    fields: [],
+    command: 'SELECT',
+    oid: 0,
+});
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
@@ -212,7 +222,7 @@ describe('RAGV2Service', () => {
         it('chunks long text and embeds each chunk', async () => {
             const longText = 'Maize farming practices for tropical regions. '.repeat(50); // ~2200 chars
             mockGetEmbedding.mockResolvedValue(fakeEmbedding());
-            mockQuery.mockResolvedValue({ rows: [], rowCount: 1 });
+            mockQuery.mockResolvedValue(mockResult([], 1));
 
             const count = await RAGV2Service.chunkAndEmbedArticle('art-1', longText, { title: 'Test' });
 
@@ -230,7 +240,7 @@ describe('RAGV2Service', () => {
         it('returns 1 for short content that fits in one chunk', async () => {
             const shortText = 'Maize is a cereal crop grown in tropical regions.';
             mockGetEmbedding.mockResolvedValue(fakeEmbedding());
-            mockQuery.mockResolvedValue({ rows: [], rowCount: 1 });
+            mockQuery.mockResolvedValue(mockResult([], 1));
 
             const count = await RAGV2Service.chunkAndEmbedArticle('art-3', shortText, {});
             expect(count).toBe(1);
@@ -238,7 +248,7 @@ describe('RAGV2Service', () => {
 
         it('deletes existing chunks before inserting new ones', async () => {
             mockGetEmbedding.mockResolvedValue(fakeEmbedding());
-            mockQuery.mockResolvedValue({ rows: [], rowCount: 1 });
+            mockQuery.mockResolvedValue(mockResult([], 1));
 
             await RAGV2Service.chunkAndEmbedArticle('art-4', 'Short text content here.', {});
 
@@ -254,7 +264,7 @@ describe('RAGV2Service', () => {
                 .mockResolvedValueOnce(fakeEmbedding())
                 .mockRejectedValueOnce(new Error('Embedding failed'))
                 .mockResolvedValueOnce(fakeEmbedding());
-            mockQuery.mockResolvedValue({ rows: [], rowCount: 1 });
+            mockQuery.mockResolvedValue(mockResult([], 1));
 
             const count = await RAGV2Service.chunkAndEmbedArticle('art-5', longText, {});
             expect(count).toBeGreaterThan(0);
@@ -273,7 +283,7 @@ describe('RAGV2Service', () => {
                 properties: { firstSeenIn: 'art-1' }
             });
 
-            mockQuery.mockResolvedValue({ rows: [], rowCount: 1 });
+            mockQuery.mockResolvedValue(mockResult([], 1));
             await RAGV2Service.storeEntities(entities);
 
             expect(mockQuery).toHaveBeenCalledTimes(1);
@@ -295,7 +305,7 @@ describe('RAGV2Service', () => {
                 properties: { coOccurrence: true }
             }];
 
-            mockQuery.mockResolvedValue({ rows: [], rowCount: 1 });
+            mockQuery.mockResolvedValue(mockResult([], 1));
             await RAGV2Service.storeRelationships(rels);
 
             expect(mockQuery).toHaveBeenCalledTimes(1);
@@ -324,8 +334,7 @@ describe('RAGV2Service', () => {
     describe('searchChunks', () => {
         it('returns ranked results from chunk search', async () => {
             mockGetEmbedding.mockResolvedValue(fakeEmbedding());
-            mockQuery.mockResolvedValue({
-                rows: [
+            mockQuery.mockResolvedValue(mockResult([
                     {
                         id: 'art-1-chunk-0',
                         article_id: 'art-1',
@@ -338,9 +347,7 @@ describe('RAGV2Service', () => {
                         crops: ['maize'],
                         score: 0.85
                     }
-                ],
-                rowCount: 1
-            });
+                ], 1));
 
             const results = await RAGV2Service.searchChunks('maize farming', 5);
 
@@ -425,7 +432,7 @@ describe('RAGV2Service', () => {
 
     describe('initializeSchema', () => {
         it('creates tables and indexes', async () => {
-            mockQuery.mockResolvedValue({ rows: [], rowCount: 0 });
+            mockQuery.mockResolvedValue(mockResult([], 0));
 
             await RAGV2Service.initializeSchema();
 
@@ -451,9 +458,9 @@ describe('RAGV2Service', () => {
         it('runs full bootstrap pipeline', async () => {
             // Mock empty articles table (no articles to chunk)
             mockQuery
-                .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // initializeSchema
-                .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // chunkAllArticles - SELECT
-                .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // buildKnowledgeGraph - SELECT
+                .mockResolvedValueOnce(mockResult([], 0)) // initializeSchema
+                .mockResolvedValueOnce(mockResult([], 0)) // chunkAllArticles - SELECT
+                .mockResolvedValueOnce(mockResult([], 0)) // buildKnowledgeGraph - SELECT
                 ;
 
             await RAGV2Service.bootstrap();

@@ -236,7 +236,7 @@ class WhatsAppService {
                     'whatsapp',
                 ]
             );
-        } catch (error) {
+        } catch (error: any) {
             logger.error('Failed to persist WhatsApp message:', error);
         }
     }

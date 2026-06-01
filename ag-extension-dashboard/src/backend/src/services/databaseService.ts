@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { Pool } from 'pg';
+import { Pool, QueryResult } from 'pg';
 import { execSync } from 'child_process';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
@@ -523,7 +522,7 @@ export function getPoolStats(): { connected: boolean; totalCount: number; idleCo
   };
 }
 
-export async function query(text: string, params?: any[]): Promise<any> {
+export async function query(text: string, params?: unknown[]): Promise<QueryResult> {
   if (!pool) {
     throw new Error('Database not initialized');
   }

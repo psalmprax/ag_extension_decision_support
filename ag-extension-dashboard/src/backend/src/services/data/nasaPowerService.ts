@@ -21,9 +21,9 @@ export class NasaPowerService {
         for (let attempt = 1; attempt <= 3; attempt++) {
             try {
                 return await this.fetchMeteorologicalDataOnce(params);
-            } catch (error: any) {
+            } catch (error) {
                 lastError = error;
-                logger.warn(`NASA POWER fetch attempt ${attempt}/3 failed: ${error.message}`);
+                logger.warn(`NASA POWER fetch attempt ${attempt}/3 failed: ${error instanceof Error ? error.message : "Unknown error"}`);
                 if (attempt < 3) {
                     await new Promise(resolve => setTimeout(resolve, attempt * 1000));
                 }
@@ -81,9 +81,9 @@ export class NasaPowerService {
 
             logger.info(`Successfully fetched NASA POWER data for lat/lng: ${params.latitude}, ${params.longitude}`);
             return response.json();
-        } catch (error: any) {
-            logger.error(`Error fetching NASA POWER data: ${error.message}`);
-            throw new Error(`Failed to fetch NASA POWER data: ${error.message}`);
+        } catch (error) {
+            logger.error(`Error fetching NASA POWER data: ${error instanceof Error ? error.message : "Unknown error"}`);
+            throw new Error(`Failed to fetch NASA POWER data: ${error instanceof Error ? error.message : "Unknown error"}`);
         }
     }
 

@@ -140,10 +140,10 @@ export class GroqProvider extends BaseAIProvider {
                     totalTokens: response.usage?.total_tokens || 0,
                 },
             };
-        } catch (error: any) {
+        } catch (error) {
             logger.error('Groq analyzeImage error:', error);
             return {
-                analysis: `Error: ${error.message}`,
+                analysis: `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
                 model,
                 usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
             };

@@ -1,4 +1,13 @@
 {
+  "name": "ag-extension-decision-support",
+  "private": true,
+  "description": "Ag Extension Decision Support System",
+  "scripts": {
+    "test:e2e": "npx playwright test",
+    "lint:frontend": "cd ag-extension-dashboard/src/frontend && npm run lint",
+    "lint:backend": "cd ag-extension-dashboard/src/backend && npm run lint",
+    "lint": "npm run lint:frontend && npm run lint:backend"
+  },
   "dependencies": {
     "playwright": "^1.59.1"
   }

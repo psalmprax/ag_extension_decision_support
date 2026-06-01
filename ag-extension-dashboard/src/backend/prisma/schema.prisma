@@ -142,6 +142,8 @@ model KnowledgeArticle {
    updatedAt   DateTime? @default(now()) @map("updated_at") @db.Timestamp(6)
 
    @@index([category])
+   @@index([tags], type: Gin)
+   @@index([crops], type: Gin)
    @@map("knowledge_articles")
 }
 

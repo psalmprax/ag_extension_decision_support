@@ -47,7 +47,8 @@ router.get('/satellite', async (req: Request, res: Response) => {
 // Get weather by location
 router.get('/weather/:location?', async (req: Request, res: Response) => {
     try {
-        const location = req.params.location || req.query.location as string || 'Kenya';
+        const rawLocation = req.params.location || req.query.location as string || 'Kenya';
+        const location = rawLocation.substring(0, 200).replace(/[<>"'`;${}()|&]/g, '').trim() || 'Kenya';
         const weather = await WeatherService.getByLocation(location);
         res.json({ success: true, data: weather });
     } catch (error) {

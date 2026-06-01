@@ -99,7 +99,7 @@ class SMSService {
             }
             logger.error(`SMS failed: ${result.status}`);
             return false;
-        } catch (error: any) {
+        } catch (error) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             logger.error('Africa\'s Talking SMS error:', (error as any).response?.data || (error as any).message);
             return false;
@@ -133,7 +133,7 @@ class SMSService {
             }
             logger.error(`Twilio SMS failed: ${response.data.error_message}`);
             return false;
-        } catch (error: any) {
+        } catch (error) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             logger.error('Twilio SMS error:', (error as any).response?.data || (error as any).message);
             return false;

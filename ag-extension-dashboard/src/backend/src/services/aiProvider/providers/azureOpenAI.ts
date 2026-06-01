@@ -293,10 +293,10 @@ export class AzureOpenAIProvider extends BaseAIProvider {
                 model,
                 usage: response.usage,
             };
-        } catch (error: any) {
+        } catch (error) {
             logger.error('Azure OpenAI analyzeImage error:', error);
             return {
-                analysis: `Error: ${error.message}`,
+                analysis: `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
                 model,
                 usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
             };

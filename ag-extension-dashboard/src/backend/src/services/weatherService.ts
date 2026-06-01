@@ -63,12 +63,21 @@ export class WeatherService {
                 throw new Error(`Location not found: ${location}`);
             }
 
-            // Try to find a result matching the country if provided
+            // Try to find a result matching the country if mentioned in the location string
             let coords = geocodeResponse.data.results[0];
-            if (location.toLowerCase().includes('germany') || location.toLowerCase().includes('deutschland')) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const germanResult = geocodeResponse.data.results.find((r: any) => r.country_code === 'DE');
-                if (germanResult) coords = germanResult;
+            const locationLower = location.toLowerCase();
+            const countryHints: Record<string, string> = {
+                'germany': 'DE', 'deutschland': 'DE',
+                'kenya': 'KE', 'nigeria': 'NG', 'ghana': 'GH',
+                'tanzania': 'TZ', 'uganda': 'UG', 'ethiopia': 'ET',
+                'india': 'IN', 'brazil': 'BR', 'usa': 'US', 'united states': 'US',
+            };
+            for (const [hint, code] of Object.entries(countryHints)) {
+                if (locationLower.includes(hint)) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const match = geocodeResponse.data.results.find((r: any) => r.country_code === code);
+                    if (match) { coords = match; break; }
+                }
             }
 
             const { latitude, longitude } = coords;

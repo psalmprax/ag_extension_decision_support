@@ -45,8 +45,8 @@ export class StealthScraperService {
                 logger.warn(`Stealth scrape failed or returned no success: ${JSON.stringify(response.data)}`);
                 return [];
             }
-        } catch (error: any) {
-            logger.error(`Error executing stealth scrape: ${error.message}`);
+        } catch (error) {
+            logger.error(`Error executing stealth scrape: ${error instanceof Error ? error.message : "Unknown error"}`);
             return [];
         }
     }

@@ -8,7 +8,7 @@ const router = Router();
 
 router.get('/summary', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
     try {
-        const hours = parseInt((req.query.hours as string) || '24');
+        const hours = Math.max(1, Math.min(720, parseInt(req.query.hours as string) || 24));
         const summary = await agentTelemetry.getSummary(hours);
         res.json({ success: true, data: summary });
     } catch (error) {
@@ -19,7 +19,7 @@ router.get('/summary', authorize(['extension_officer', 'admin', 'farmer']), asyn
 
 router.get('/events', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
     try {
-        const limit = parseInt((req.query.limit as string) || '50');
+        const limit = Math.max(1, Math.min(500, parseInt(req.query.limit as string) || 50));
         const events = await agentTelemetry.getRecentEvents(limit);
         res.json({ success: true, data: events });
     } catch (error) {

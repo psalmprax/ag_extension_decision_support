@@ -224,29 +224,6 @@ export function handlePrismaError(error: any): AppError {
 }
 
 /**
- * Handle Sequelize-specific errors (if using Sequelize)
- */
-export function handleSequelizeError(error: any): AppError {
-    const sequelizeErrorMessages: Record<string, string> = {
-        UNIQUE_CONSTRAINT: 'A unique constraint violation occurred',
-        FOREIGN_KEY_CONSTRAINT: 'A foreign key constraint violation occurred',
-        NOT_NULL_CONSTRAINT: 'A not null constraint violation occurred',
-        CHECK_CONSTRAINT: 'A check constraint violation occurred',
-    };
-
-    if (error.original?.code && sequelizeErrorMessages[error.original.code]) {
-        return createError(
-            sequelizeErrorMessages[error.original.code],
-            400,
-            ErrorTypes.DATABASE_ERROR,
-            { sequelizeCode: error.original.code }
-        );
-    }
-
-    return createDatabaseError(error.message || 'Database operation failed');
-}
-
-/**
  * Handle JSON parsing errors
  */
 export function handleJsonParseError(error: any): AppError {

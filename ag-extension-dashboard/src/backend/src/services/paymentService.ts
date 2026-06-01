@@ -71,7 +71,7 @@ class PaymentService {
                 });
                 this.isSimulated = false;
                 logger.info('Stripe payment service initialized (Real Mode)');
-            } catch (error) {
+            } catch (error: any) {
                 logger.warn('Failed to initialize Stripe with provided key - payments will be simulated (Demo Mode):', error);
                 this.stripe = null;
                 this.isSimulated = true;
@@ -98,7 +98,7 @@ class PaymentService {
                 });
                 this.paypalConfigured = true;
                 logger.info('PayPal payment service initialized');
-            } catch (error) {
+            } catch (error: any) {
                 logger.warn('Failed to initialize PayPal:', error);
                 this.paypalConfigured = false;
             }
@@ -308,7 +308,7 @@ class PaymentService {
         try {
             await this.stripe.subscriptions.cancel(subscriptionId);
             return true;
-        } catch (error) {
+        } catch (error: any) {
             logger.error('Failed to cancel subscription:', error);
             return false;
         }
@@ -593,7 +593,7 @@ class PaymentService {
                 }
             }
             return true;
-        } catch (error) {
+        } catch (error: any) {
             logger.error('Error handling Stripe webhook:', error);
             return false;
         }
@@ -638,7 +638,7 @@ class PaymentService {
                 signature,
                 process.env.STRIPE_WEBHOOK_SECRET
             );
-        } catch (error) {
+        } catch (error: any) {
             logger.error('Webhook signature verification failed:', error);
             return null;
         }
@@ -708,7 +708,7 @@ class PaymentService {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 features: ((price.product as any).features) || [],
             }));
-        } catch (error) {
+        } catch (error: any) {
             logger.error('Failed to get pricing plans:', error);
             return [];
         }

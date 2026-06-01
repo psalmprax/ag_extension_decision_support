@@ -40,7 +40,8 @@ RUN npm ci && npm cache clean --force
 # Copy built application
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
-COPY . .
+# Copy prisma schema for migrations
+COPY prisma ./prisma
 
 # Set ownership
 RUN chown -R nodejs:nodejs /app

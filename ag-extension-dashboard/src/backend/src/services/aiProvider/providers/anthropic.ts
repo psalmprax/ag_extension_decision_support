@@ -220,10 +220,10 @@ export class AnthropicProvider extends BaseAIProvider {
                     totalTokens: response.usage.input_tokens + response.usage.output_tokens,
                 },
             };
-        } catch (error: any) {
+        } catch (error) {
             logger.error('Anthropic analyzeImage error:', error);
             return {
-                analysis: `Error: ${error.message}`,
+                analysis: `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
                 model,
                 usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
             };
