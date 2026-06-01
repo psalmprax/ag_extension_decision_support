@@ -87,7 +87,7 @@ export function LandingPage() {
                     <div className="hidden md:flex items-center gap-8">
                         <a href="#features" className="text-sm font-medium text-white/50 hover:text-white transition-colors">Features</a>
                         <a href="#how-it-works" className="text-sm font-medium text-white/50 hover:text-white transition-colors">How It Works</a>
-                        <a href="#testimonials" className="text-sm font-medium text-white/50 hover:text-white transition-colors">Testimonials</a>
+                        <a href="#mission" className="text-sm font-medium text-white/50 hover:text-white transition-colors">Mission</a>
                     </div>
 
                     <div className="flex items-center gap-3">
@@ -424,29 +424,25 @@ export function LandingPage() {
                 </div>
             </section>
 
-            {/* ========== TESTIMONIAL ========== */}
-            <section id="testimonials" className="relative py-28">
+            {/* ========== MISSION ========== */}
+            <section id="mission" className="relative py-28">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-emerald-500/[0.04] blur-[100px] rounded-full pointer-events-none" />
 
                 <motion.div
                     initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}
                     className="max-w-3xl mx-auto px-6 text-center relative z-10"
                 >
-                    <motion.div variants={fadeUp} className="text-7xl leading-none text-emerald-500/15 font-serif mb-2 select-none">
-                        &ldquo;
+                    <motion.div variants={fadeUp} className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400/70 mb-4">
+                        Our Mission
                     </motion.div>
-                    <motion.blockquote variants={fadeUp} className="text-xl md:text-2xl text-white/70 leading-relaxed mb-10 font-light">
-                        AgExtension transformed how we deliver agricultural services. We went from paper-based tracking to real-time insights across 3,000 farmers in six months. The AI assistant alone saves our officers hours per week.
-                    </motion.blockquote>
-                    <motion.div variants={fadeUp} className="flex items-center justify-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-amber-500 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-emerald-500/20">
-                            KO
-                        </div>
-                        <div className="text-left">
-                            <div className="font-bold text-white/90">Dr. Kemi Oyelaran</div>
-                            <div className="text-sm text-white/35">Director of Extension Services, Ogun State Nigeria</div>
-                        </div>
-                    </motion.div>
+                    <motion.h2 variants={fadeUp} className="text-[clamp(1.8rem,3.5vw,2.8rem)] font-bold tracking-tight mb-6 leading-tight">
+                        Closing the gap between{' '}
+                        <span className="bg-gradient-to-r from-emerald-300 to-amber-400 bg-clip-text text-transparent">agricultural data</span>
+                        {' '}and field decisions
+                    </motion.h2>
+                    <motion.p variants={fadeUp} className="text-lg text-white/40 leading-relaxed max-w-2xl mx-auto">
+                        Across Africa, extension officers manage thousands of farmers with clipboards and guesswork. AgExtension replaces that with real-time soil data, satellite weather, and AI-powered diagnostics — so every recommendation is backed by evidence, not intuition.
+                    </motion.p>
                 </motion.div>
             </section>
 
