@@ -56,6 +56,7 @@ const SMSPage = lazy(() => import('./pages/SMS').then(m => ({ default: m.SMSPage
 const AlphaAI = lazy(() => import('./components/Cyber/AlphaAI'));
 const KnowledgeBase = lazy(() => import('./components/KnowledgeBase').then(m => ({ default: m.KnowledgeBase })));
 const UserManagementPage = lazy(() => import('./pages/UserManagementPage').then(m => ({ default: m.UserManagementPage })));
+const LandingPage = lazy(() => import('./pages/LandingPage').then(m => ({ default: m.LandingPage })));
 
 function App() {
     const { t, language } = useLanguage();
@@ -302,14 +303,14 @@ function App() {
     if (!user) {
         return (
             <ErrorBoundary componentName="PublicAuth">
-                <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+                <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-green-600" /></div>}>
                     <Routes>
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/register" element={<Register />} />
-                        <Route path="/forgot-password" element={<ForgotPassword />} />
-                        <Route path="*" element={<Login />} />
+                        <Route path="/login" element={<div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4"><Login /></div>} />
+                        <Route path="/register" element={<div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4"><Register /></div>} />
+                        <Route path="/forgot-password" element={<div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4"><ForgotPassword /></div>} />
+                        <Route path="*" element={<LandingPage />} />
                     </Routes>
-                </div>
+                </Suspense>
             </ErrorBoundary>
         );
     }
