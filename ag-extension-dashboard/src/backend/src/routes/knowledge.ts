@@ -855,7 +855,9 @@ router.post('/ask', async (req: Request, res: Response) => {
         });
     } catch (error) {
         logger.error('Ask question error:', error);
-        res.status(500).json({ success: false, error: 'Failed to get answer' });
+        if (!res.headersSent) {
+            res.status(500).json({ success: false, error: 'Failed to get answer' });
+        }
     }
 });
 

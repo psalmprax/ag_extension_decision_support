@@ -339,3 +339,56 @@
     margin-bottom: 0.75rem;
     font-weight: 800;
 }
+
+/* Landing Page Redesign - Custom Animations & Styles */
+@keyframes pulse-slow {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+@keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes float-slow {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-15px) rotate(3deg); }
+}
+
+@keyframes float-reverse {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(12px) rotate(-3deg); }
+}
+
+.animate-pulse-slow {
+    animation: pulse-slow 8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-spin-slow {
+    animation: spin-slow 25s linear infinite;
+}
+
+.animate-float-slow {
+    animation: float-slow 7s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+    animation: float-reverse 9s ease-in-out infinite;
+}
+
+/* Custom premium color classes for our multi-theme picker */
+.theme-neo-saas {
+    --primary-gradient: from-[#06b6d4] via-[#3b82f6] to-[#8b5cf6];
+    --glow-color: rgba(6, 182, 212, 0.4);
+}
+
+.theme-african-harvest {
+    --primary-gradient: from-[#d97706] via-[#10b981] to-[#047857];
+    --glow-color: rgba(16, 185, 129, 0.4);
+}
+
+.theme-minimalist-tech {
+    --primary-gradient: from-[#0f172a] via-[#334155] to-[#475569];
+    --glow-color: rgba(15, 23, 42, 0.4);
+}
