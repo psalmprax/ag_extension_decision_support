@@ -96,35 +96,49 @@ router.get('/:id', async (req: Request, res: Response) => {
     }
 });
 
-const ALLOWED_ROLES = ['admin', 'regional_manager', 'extension_officer', 'farmer'] as const;
+const ALL_ROLES = ['admin', 'regional_manager', 'extension_officer', 'farmer'] as const;
+const BASIC_ROLES = ['extension_officer', 'farmer'] as const;
 
-// Create user
+// Create user (admin-only for elevated roles)
 router.post('/', async (req: Request, res: Response) => {
     try {
-        const { name, email, password, role, region, phone } = req.body;
+        const { firstName, lastName, email, password, role, region, phone } = req.body;
+        const currentUser = (req as any).user;
         const pool = getPool();
 
         if (!pool) {
             return res.status(503).json({ success: false, error: 'Database connection unavailable' });
         }
 
-        if (!email || !password) {
-            return res.status(400).json({ success: false, error: 'Email and password are required' });
+        if (!email || !password || !firstName || !lastName) {
+            return res.status(400).json({ success: false, error: 'Email, password, firstName, and lastName are required' });
         }
 
         const userRole = role || 'extension_officer';
-        if (!ALLOWED_ROLES.includes(userRole)) {
-            return res.status(400).json({ success: false, error: `Invalid role. Allowed: ${ALLOWED_ROLES.join(', ')}` });
+
+        // Security: only admins can create admin or regional_manager accounts
+        if (!BASIC_ROLES.includes(userRole) && currentUser?.role !== 'admin') {
+            return res.status(403).json({ success: false, error: 'Only admins can create admin or regional manager accounts' });
+        }
+
+        if (!ALL_ROLES.includes(userRole)) {
+            return res.status(400).json({ success: false, error: `Invalid role. Allowed: ${ALL_ROLES.join(', ')}` });
+        }
+
+        // Check if email already exists
+        const existing = await query('SELECT id FROM users WHERE email = $1', [email]);
+        if (existing.rows.length > 0) {
+            return res.status(409).json({ success: false, error: 'A user with this email already exists' });
         }
 
         const bcrypt = await import('bcryptjs');
         const passwordHash = await bcrypt.hash(password, 10);
 
         const result = await query(`
-            INSERT INTO users (name, email, password_hash, role, region, phone, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6, NOW())
-            RETURNING id, name, email, role, region, phone
-        `, [name, email, passwordHash, userRole, region, phone]);
+            INSERT INTO users (first_name, last_name, email, password_hash, role, region, phone, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+            RETURNING id, first_name, last_name, email, role, region, phone
+        `, [firstName, lastName, email, passwordHash, userRole, region, phone]);
 
         res.status(201).json({ success: true, data: result.rows[0] });
     } catch (error) {
