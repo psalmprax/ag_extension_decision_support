@@ -32,7 +32,7 @@ export class StealthScraperService {
                 },
                 {
                     headers: {
-                        'Authorization': 'Bearer dev-token', // Matches the dev-token logic in main.py
+                        'Authorization': `Bearer ${process.env.AGENT_ZERO_TOKEN || 'dev-token'}`,
                         'Content-Type': 'application/json'
                     },
                     timeout: 30000 // Stealth scrapes might take a little time

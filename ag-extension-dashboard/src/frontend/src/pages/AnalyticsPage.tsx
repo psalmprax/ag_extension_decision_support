@@ -102,7 +102,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({
 
             <div className="card p-8 mb-8 bg-theme-bg-card dark:bg-gray-800 border-gray-100 dark:border-gray-700 shadow-sm">
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">{t('analytics_activity_timeline')}</h3>
-                <div className="h-[400px]">
+                <div className="h-[300px] sm:h-[400px]">
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={performanceData?.timeline || []}>
                             <defs>

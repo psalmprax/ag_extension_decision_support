@@ -141,6 +141,7 @@ model KnowledgeArticle {
    createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
    updatedAt   DateTime? @default(now()) @map("updated_at") @db.Timestamp(6)
 
+   @@index([category])
    @@map("knowledge_articles")
 }
 
@@ -176,6 +177,7 @@ model ChatMessage {
   createdAt         DateTime?        @default(now()) @map("created_at") @db.Timestamp(6)
   conversation      ChatConversation? @relation(fields: [conversationId], references: [id])
 
+  @@index([conversationId])
   @@map("chat_messages")
 }
 
@@ -190,6 +192,8 @@ model Report {
   updatedAt   DateTime? @default(now()) @map("updated_at") @db.Timestamp(6)
   user        User?     @relation(fields: [generatedBy], references: [id])
 
+  @@index([generatedBy])
+  @@index([type])
   @@map("reports")
 }
 
@@ -205,6 +209,7 @@ model AnalyticsEvent {
 
   @@index([userId])
   @@index([farmerId])
+  @@index([eventType])
   @@map("analytics_events")
 }
 
@@ -223,6 +228,9 @@ model Alert {
   resolvedAt      DateTime? @map("resolved_at") @db.Timestamp(6)
   createdAt       DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
 
+  @@index([isActive])
+  @@index([type])
+  @@index([severity])
   @@map("alerts")
 }
 
@@ -349,6 +357,7 @@ model Share {
   updatedAt   DateTime? @default(now()) @map("updated_at") @db.Timestamp(6)
   accesses    ShareAccess[]
 
+  @@index([entityType, entityId])
   @@map("shares")
 }
 
