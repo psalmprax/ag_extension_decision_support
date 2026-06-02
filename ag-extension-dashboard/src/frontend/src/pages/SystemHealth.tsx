@@ -10,6 +10,8 @@ import { useAppStore } from '../store/useAppStore';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { fetchHealthStatus, fetchRecoveryLog, triggerRecovery, HealthCheck, RecoveryAction } from '../api/systemHealthService';
 import { runDiagnostics, DiagnosticResult } from '../api/diagnosticsService';
+import { StatCard } from '@/components/StatCard';
+import { STAT_COLORS } from '@/lib/color-tokens';
 
 export function SystemHealth() {
     const { t } = useLanguage();
