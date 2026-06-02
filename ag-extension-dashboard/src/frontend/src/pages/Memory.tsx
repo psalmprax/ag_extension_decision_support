@@ -10,6 +10,8 @@ import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '../store/useAppStore';
 import { fetchMemories, storeMemory, deleteMemory, fetchMemorySummary, type MemoryEntry } from '../api/memoryService';
 import toast from 'react-hot-toast';
+import { StatCard } from '@/components/StatCard';
+import { STAT_COLORS } from '@/lib/color-tokens';
 
 export function Memory() {
     const { t } = useLanguage();

@@ -65,6 +65,15 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
+      redis:
+        image: redis:alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
     
     steps:
       - name: Checkout code
@@ -136,21 +145,4 @@ jobs:
           cd ag-extension-dashboard/src/backend
           npm audit --audit-level=high
 
-  # Build and deploy (only on main)
-  deploy:
-    needs: [frontend, backend, security]
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Build and tag Docker image
-        run: |
-          echo "Docker build would happen here"
-          # docker build -t ag-extension:${{ github.sha }} .
-      
-      - name: Deploy to production
-        run: |
-          echo "Deployment would happen here"
+  # Deploy is handled by deploy-all.yml workflow

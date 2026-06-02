@@ -86,7 +86,7 @@ export const sendPushNotification = async (userId: string, title: string, body: 
 
             try {
                 await webpush.sendNotification(pushConfig, notificationPayload);
-            } catch (error: any) {
+            } catch (error) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 if ((error as any).statusCode === 410 || (error as any).statusCode === 404) {
                     // Subscription has expired or is no longer valid

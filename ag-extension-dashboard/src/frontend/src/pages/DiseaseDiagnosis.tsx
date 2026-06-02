@@ -62,8 +62,8 @@ export function DiseaseDiagnosis() {
                 if (res.success) {
                     setAllDiseases(res.data);
                 }
-            } catch (error) {
-
+            } catch {
+                // Disease list load failure is non-critical
             }
         };
         loadDiseases();
@@ -114,8 +114,8 @@ export function DiseaseDiagnosis() {
             if (res.success) {
                 setDiseaseInfo(res.data);
             }
-        } catch (error) {
-
+        } catch {
+            // Disease info load failure is non-critical
         } finally {
             setIsLoadingInfo(false);
         }

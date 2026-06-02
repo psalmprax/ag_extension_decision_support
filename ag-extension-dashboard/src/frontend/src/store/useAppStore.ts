@@ -94,8 +94,11 @@ export interface AppState {
     markNotificationRead: (id: string) => void;
     clearNotifications: () => void;
 
-    // Loading states
+    // Loading states (counter-based to handle concurrent mutations)
     isLoading: boolean;
+    _activeOperations: number;
+    _startOperation: () => void;
+    _endOperation: () => void;
     setLoading: (loading: boolean) => void;
 
     // Subscription & Usage
@@ -135,7 +138,7 @@ export interface AppState {
 
 export const useAppStore = create<AppState>()(
     persist(
-        (set) => ({
+        (set, get) => ({
             // Initial state
             user: null, 
             sidebarOpen: true,
@@ -146,6 +149,7 @@ export const useAppStore = create<AppState>()(
             visits: [],
             notifications: [],
             isLoading: false,
+            _activeOperations: 0,
             subscription: null,
             pendingSMS: null,
             contextMenu: null,
@@ -179,7 +183,7 @@ export const useAppStore = create<AppState>()(
                 farmers: [...state.farmers, farmer]
             })),
             updateFarmer: async (id, updates) => {
-                set({ isLoading: true });
+                get()._startOperation();
                 try {
                     const response = await farmerService.updateFarmer(id, updates);
                     if (response.success) {
@@ -194,11 +198,11 @@ export const useAppStore = create<AppState>()(
 
                     toast.error('Failed to update farmer');
                 } finally {
-                    set({ isLoading: false });
+                    get()._endOperation();
                 }
             },
             updateFarmers: async (ids, updates) => {
-                set({ isLoading: true });
+                get()._startOperation();
                 try {
                     const response = await farmerService.updateFarmers(ids, updates);
                     if (response.success) {
@@ -213,11 +217,11 @@ export const useAppStore = create<AppState>()(
 
                     toast.error('Failed to update some farmers');
                 } finally {
-                    set({ isLoading: false });
+                    get()._endOperation();
                 }
             },
             removeFarmer: async (id) => {
-                set({ isLoading: true });
+                get()._startOperation();
                 try {
                     const response = await farmerService.deleteFarmer(id);
                     if (response.success) {
@@ -230,11 +234,11 @@ export const useAppStore = create<AppState>()(
 
                     toast.error('Failed to remove farmer');
                 } finally {
-                    set({ isLoading: false });
+                    get()._endOperation();
                 }
             },
             removeFarmers: async (ids) => {
-                set({ isLoading: true });
+                get()._startOperation();
                 try {
                     // Call the bulk delete API if it exists, or loop
                     const response = await farmerService.deleteFarmers(ids);
@@ -248,13 +252,13 @@ export const useAppStore = create<AppState>()(
 
                     toast.error('Failed to remove some farmers');
                 } finally {
-                    set({ isLoading: false });
+                    get()._endOperation();
                 }
             },
 
             setVisits: (visits) => set({ visits }),
             addVisit: async (visit) => {
-                set({ isLoading: true });
+                get()._startOperation();
                 try {
                     const response = await visitService.createVisit(visit);
                     if (response.success && response.data) {
@@ -277,11 +281,11 @@ export const useAppStore = create<AppState>()(
 
                     toast.error('Failed to schedule visit');
                 } finally {
-                    set({ isLoading: false });
+                    get()._endOperation();
                 }
             },
             updateVisit: async (id, updates) => {
-                set({ isLoading: true });
+                get()._startOperation();
                 try {
                     const response = await visitService.updateVisit(id, updates);
                     if (response.success) {
@@ -296,7 +300,7 @@ export const useAppStore = create<AppState>()(
 
                     toast.error('Failed to update visit');
                 } finally {
-                    set({ isLoading: false });
+                    get()._endOperation();
                 }
             },
 
@@ -323,6 +327,14 @@ export const useAppStore = create<AppState>()(
             })),
             clearNotifications: () => set({ notifications: [] }),
 
+            _startOperation: () => set((state) => {
+                const count = state._activeOperations + 1;
+                return { _activeOperations: count, isLoading: true };
+            }),
+            _endOperation: () => set((state) => {
+                const count = Math.max(0, state._activeOperations - 1);
+                return { _activeOperations: count, isLoading: count > 0 };
+            }),
             setLoading: (isLoading) => set({ isLoading }),
             setSubscription: (subscription) => set({ subscription }),
             setPendingSMS: (pendingSMS) => set({ pendingSMS }),

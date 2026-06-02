@@ -254,10 +254,10 @@ export class GoogleVertexProvider extends BaseAIProvider {
                     totalTokens: result.response.usageMetadata?.totalTokenCount ?? 0,
                 },
             };
-        } catch (error: any) {
+        } catch (error) {
             logger.error('Google Vertex analyzeImage error:', error);
             return {
-                analysis: `Error: ${error.message}`,
+                analysis: `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
                 model: modelName,
                 usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
             };

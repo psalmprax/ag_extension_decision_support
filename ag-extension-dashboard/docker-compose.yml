@@ -79,8 +79,13 @@ services:
       target: development
     container_name: ag-dashboard-backend
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
     ports:
-      - "7500:3001"
+      - "127.0.0.1:7500:3001"
     environment:
       - DATABASE_URL=postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@app-db:5432/${DATABASE_NAME:-ag_extension}?schema=public
       - REDIS_URL=redis://:${REDIS_PASSWORD:-agext_redis_2024}@redis:6379
@@ -135,8 +140,13 @@ services:
   ettametta-ollama:
     image: ollama/ollama:0.6.2
     container_name: ettametta-ollama
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
     ports:
-      - "11435:11434"
+      - "127.0.0.1:11435:11434"
     volumes:
       - ollama_data:/root/.ollama
     environment:

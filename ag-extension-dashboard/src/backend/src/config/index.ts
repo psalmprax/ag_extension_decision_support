@@ -49,6 +49,7 @@ function getEnv(key: string, defaultValue?: string, requiredInProd = false): str
     return defaultValue || '';
 }
 
+
 export const config: AppConfig = {
     port: parseInt(getEnv('PORT', '3000'), 10),
     nodeEnv: getEnv('NODE_ENV', 'development'),

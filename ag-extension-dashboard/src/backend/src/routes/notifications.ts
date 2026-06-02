@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
+import { AuthRequest } from '../middleware/authorize';
 import { query, getPool } from '../services/databaseService';
 import { logger } from '../utils/logger';
 import { authorize } from '../middleware/authorize';
@@ -12,9 +12,9 @@ const router = Router();
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
 // Get all notifications for current user
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (req: AuthRequest, res: Response) => {
     try {
-        const userId = (req as any).user?.userId;
+        const userId = req.user?.userId;
         const pool = getPool();
 
         if (!pool) {
@@ -50,9 +50,9 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // Get unread notification count
-router.get('/unread-count', async (req: Request, res: Response) => {
+router.get('/unread-count', async (req: AuthRequest, res: Response) => {
     try {
-        const userId = (req as any).user?.userId;
+        const userId = req.user?.userId;
         const pool = getPool();
 
         if (!pool) {
@@ -76,10 +76,10 @@ router.get('/unread-count', async (req: Request, res: Response) => {
 });
 
 // Mark notification as read
-router.put('/:id/read', async (req: Request, res: Response) => {
+router.put('/:id/read', async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
-        const userId = (req as any).user?.userId;
+        const userId = req.user?.userId;
         const pool = getPool();
 
         if (!pool) {
@@ -100,9 +100,9 @@ router.put('/:id/read', async (req: Request, res: Response) => {
 });
 
 // Mark all notifications as read
-router.put('/read-all', async (req: Request, res: Response) => {
+router.put('/read-all', async (req: AuthRequest, res: Response) => {
     try {
-        const userId = (req as any).user?.userId;
+        const userId = req.user?.userId;
         const pool = getPool();
 
         if (!pool) {
@@ -123,10 +123,10 @@ router.put('/read-all', async (req: Request, res: Response) => {
 });
 
 // Delete notification
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
-        const userId = (req as any).user?.userId;
+        const userId = req.user?.userId;
         const pool = getPool();
 
         if (!pool) {
@@ -143,9 +143,9 @@ router.delete('/:id', async (req: Request, res: Response) => {
 });
 
 // Clear all notifications
-router.delete('/', async (req: Request, res: Response) => {
+router.delete('/', async (req: AuthRequest, res: Response) => {
     try {
-        const userId = (req as any).user?.userId;
+        const userId = req.user?.userId;
         const pool = getPool();
 
         if (!pool) {
@@ -162,7 +162,7 @@ router.delete('/', async (req: Request, res: Response) => {
 });
 
 // Admin/Manager: Send notification to user
-router.post('/send', authorize(['admin', 'regional_manager']), async (req: Request, res: Response) => {
+router.post('/send', authorize(['admin', 'regional_manager']), async (req: AuthRequest, res: Response) => {
     try {
         const { userId, type, title, message, metadata } = req.body;
         const pool = getPool();
@@ -188,7 +188,7 @@ router.post('/send', authorize(['admin', 'regional_manager']), async (req: Reque
 });
 
 // Admin/Manager: Broadcast notification to all users
-router.post('/broadcast', authorize(['admin', 'regional_manager']), async (req: Request, res: Response) => {
+router.post('/broadcast', authorize(['admin', 'regional_manager']), async (req: AuthRequest, res: Response) => {
     try {
         const { type, title, message, metadata, role } = req.body;
         const pool = getPool();
@@ -230,9 +230,12 @@ router.post('/broadcast', authorize(['admin', 'regional_manager']), async (req: 
 });
 
 // Subscribe to push notifications
-router.post('/subscribe', async (req: Request, res: Response) => {
+router.post('/subscribe', async (req: AuthRequest, res: Response) => {
     try {
-        const userId = (req as any).user?.userId;
+        const userId = req.user?.userId;
+        if (!userId) {
+            return res.status(401).json({ success: false, error: 'User not authenticated' });
+        }
         const subscription = req.body;
 
         if (!subscription || !subscription.endpoint) {
@@ -248,7 +251,7 @@ router.post('/subscribe', async (req: Request, res: Response) => {
 });
 
 // Unsubscribe from push notifications
-router.post('/unsubscribe', async (req: Request, res: Response) => {
+router.post('/unsubscribe', async (req: AuthRequest, res: Response) => {
     try {
         const { endpoint } = req.body;
         if (!endpoint) {
@@ -263,9 +266,12 @@ router.post('/unsubscribe', async (req: Request, res: Response) => {
 });
 
 // Test push notification
-router.post('/test-push', async (req: Request, res: Response) => {
+router.post('/test-push', async (req: AuthRequest, res: Response) => {
     try {
-        const userId = (req as any).user?.userId;
+        const userId = req.user?.userId;
+        if (!userId) {
+            return res.status(401).json({ success: false, error: 'User not authenticated' });
+        }
         await sendPushNotification(userId, 'Test Notification', 'Web push is working!', '/');
         res.json({ success: true });
     } catch (error) {

@@ -23,8 +23,8 @@ export function securityGate(req: Request, res: Response, next: NextFunction) {
     }
   }
 
-  // Scan POST/PUT/PATCH bodies for threats
-  if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
+  // Scan POST/PUT/PATCH/DELETE bodies for threats
+  if (method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE') {
     const bodyStr = JSON.stringify(req.body || {});
     const check = aegisShield.sanitizeInput(bodyStr);
 

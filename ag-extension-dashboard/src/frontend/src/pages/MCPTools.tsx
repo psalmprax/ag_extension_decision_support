@@ -9,6 +9,8 @@ import { useLanguage } from '../lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '../store/useAppStore';
 import { fetchMCPTools, callMCPTool, fetchMCPHealth, type MCPTool } from '../api/mcpService';
+import { StatCard } from '@/components/StatCard';
+import { STAT_COLORS } from '@/lib/color-tokens';
 
 export function MCPTools() {
     const { t } = useLanguage();

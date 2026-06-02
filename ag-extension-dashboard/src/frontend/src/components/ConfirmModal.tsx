@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, X, CheckCircle, Info, AlertCircle } from 'lucide-react';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 interface ConfirmModalProps {
     isOpen: boolean;
@@ -27,6 +28,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
     isLoading = false,
 }) => {
     const { radiusClass, btnClass } = useThemeClasses();
+    const trapRef = useFocusTrap(isOpen);
     const variants = {
         danger: {
             icon: AlertTriangle,
@@ -69,6 +71,10 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
                         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                     />
                     <motion.div
+                        ref={trapRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="confirm-modal-title"
                         initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -80,7 +86,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
                                     <Icon className={`w-6 h-6 ${config.iconColor}`} />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h3>
+                                    <h3 id="confirm-modal-title" className="text-lg font-bold text-gray-900 dark:text-white">{title}</h3>
                                     <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{message}</p>
                                 </div>
                                 <button

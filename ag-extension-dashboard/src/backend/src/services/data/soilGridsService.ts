@@ -20,9 +20,9 @@ export class SoilGridsService {
         for (let attempt = 1; attempt <= 3; attempt++) {
             try {
                 return await this.fetchSoilPropertiesOnce(latitude, longitude);
-            } catch (error: any) {
+            } catch (error) {
                 lastError = error;
-                logger.warn(`SoilGrids fetch attempt ${attempt}/3 failed: ${error.message}`);
+                logger.warn(`SoilGrids fetch attempt ${attempt}/3 failed: ${error instanceof Error ? error.message : "Unknown error"}`);
                 if (attempt < 3) {
                     await new Promise(resolve => setTimeout(resolve, attempt * 1000));
                 }
@@ -81,9 +81,9 @@ export class SoilGridsService {
             logger.info(`Successfully fetched SoilGrids data for lat/lng: ${latitude}, ${longitude}`);
             
             return this.parseSoilGridsResponse(data);
-        } catch (error: any) {
-            logger.error(`Error fetching SoilGrids: ${error.message}`);
-            throw new Error(`Failed to fetch SoilGrids: ${error.message}`);
+        } catch (error) {
+            logger.error(`Error fetching SoilGrids: ${error instanceof Error ? error.message : "Unknown error"}`);
+            throw new Error(`Failed to fetch SoilGrids: ${error instanceof Error ? error.message : "Unknown error"}`);
         }
     }
 

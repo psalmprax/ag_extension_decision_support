@@ -18,6 +18,8 @@ import {
 } from '../api/emailWorkflowService';
 import toast from 'react-hot-toast';
 import DOMPurify from 'dompurify';
+import { StatCard } from '@/components/StatCard';
+import { STAT_COLORS } from '@/lib/color-tokens';
 
 export function EmailWorkflows() {
     const { t } = useLanguage();

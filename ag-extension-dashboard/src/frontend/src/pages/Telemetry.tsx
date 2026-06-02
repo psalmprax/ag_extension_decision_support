@@ -11,6 +11,8 @@ import { useAppStore } from '../store/useAppStore';
 import { fetchTelemetrySummary, fetchTelemetryEvents, TelemetrySummary, TelemetryEvent } from '../api/telemetryService';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, LineChart, Line } from 'recharts';
 import toast from 'react-hot-toast';
+import { StatCard } from '@/components/StatCard';
+import { STAT_COLORS, CHART_COLORS } from '@/lib/color-tokens';
 
 export function Telemetry() {
     const { t } = useLanguage();
@@ -209,13 +211,13 @@ export function Telemetry() {
                     <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={[
                             { name: t('telemetry_success'), value: statusStats.success, color: '#10b981' },
-                            { name: t('telemetry_error'), value: statusStats.error, color: '#ef4444' },
-                            { name: t('telemetry_pending'), value: statusStats.pending, color: '#f59e0b' }
+                            { name: t('telemetry_error'), value: statusStats.error, color: CHART_COLORS.danger },
+                            { name: t('telemetry_pending'), value: statusStats.pending, color: CHART_COLORS.warning }
                         ]}>
                             <XAxis dataKey="name" />
                             <YAxis />
                             <Tooltip />
-                            <Bar dataKey="value" fill="#3b82f6" />
+                            <Bar dataKey="value" fill={CHART_COLORS.primary} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
@@ -232,7 +234,7 @@ export function Telemetry() {
                                 <XAxis dataKey="name" />
                                 <YAxis />
                                 <Tooltip />
-                                <Bar dataKey="usage" fill="#8b5cf6" />
+                                <Bar dataKey="usage" fill={CHART_COLORS.purple} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>

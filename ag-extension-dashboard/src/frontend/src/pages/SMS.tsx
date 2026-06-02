@@ -86,8 +86,8 @@ export function SMSPage() {
                     timestamp: new Date(msg.createdAt)
                 })));
             }
-        } catch (err) {
-
+        } catch {
+            // History load failure is non-critical
         }
     };
 
@@ -107,8 +107,8 @@ export function SMSPage() {
                     phone: f.phone || '',
                 })));
             }
-        } catch (err) {
-
+        } catch {
+            // Contacts load failure is non-critical
         } finally {
             setIsLoadingContacts(false);
         }
@@ -163,8 +163,8 @@ export function SMSPage() {
             if (res.success) {
                 setMessage(res.data.translatedText);
             }
-        } catch (err) {
-
+        } catch {
+            toast.error('Translation failed');
         } finally {
             setIsTranslating(false);
         }

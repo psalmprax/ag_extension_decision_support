@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, HelpCircle } from 'lucide-react';
 import { NavItem } from '../../config/navItems';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
+import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/lib/cn';
 import { sidebarVariants } from '@/lib/animations';
 
@@ -24,10 +25,17 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     onGenerateReport,
 }) => {
     const { isModern, subtextClass, headingClass } = useThemeClasses();
+    const setSidebarOpen = useAppStore((s) => s.setSidebarOpen);
 
     return (
         <AnimatePresence>
             {sidebarOpen && (
+                <>
+                {/* Backdrop for mobile */}
+                <div
+                    className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+                    onClick={() => setSidebarOpen(false)}
+                />
                 <motion.aside
                     variants={sidebarVariants}
                     initial="initial"
@@ -84,6 +92,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                         </button>
                     </div>
                 </motion.aside>
+                </>
             )}
         </AnimatePresence>
     );

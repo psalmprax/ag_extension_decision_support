@@ -1,30 +1,101 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { StatCardProps } from '../types/dashboard';
+import { cn } from '@/lib/cn';
+import { STAT_COLORS } from '@/lib/color-tokens';
 
-export const StatCard = ({ title, value, change, icon: Icon, delay, cardClass, headingClass, dataClass, subtextClass, isModern }: StatCardProps) => {
+interface StatCardProps {
+    title: string;
+    value: string | number;
+    subtitle?: string;
+    icon?: React.ReactNode | React.ComponentType<{ className?: string }>;
+    /** Color name from STAT_COLORS (e.g. 'blue', 'cyan', 'green') */
+    color?: string;
+    /** Icon component (alternative to icon prop, used with color-based API) */
+    Icon?: React.ComponentType<{ className?: string }>;
+    /** Legacy API: custom card classes */
+    cardClass?: string;
+    headingClass?: string;
+    dataClass?: string;
+    subtextClass?: string;
+    isModern?: boolean;
+    change?: number;
+    delay?: number;
+}
+
+export const StatCard: React.FC<StatCardProps> = ({
+    title,
+    value,
+    subtitle,
+    icon,
+    color,
+    Icon,
+    cardClass = '',
+    headingClass,
+    dataClass,
+    subtextClass,
+    isModern = false,
+}) => {
+    // Color-based API (Agents, Telemetry, Memory, etc.)
+    // icon can be passed as either Icon (component) or icon (component via lowercase prop)
+    const IconComponent = Icon || (typeof icon === 'function' ? icon as React.ComponentType<{ className?: string }> : undefined);
+    if (color || IconComponent) {
+        const cc = STAT_COLORS[color || 'blue'] || STAT_COLORS.blue;
+        return (
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="card p-6 border-white/20 hover:scale-[1.02] transition-transform duration-300"
+                style={{ borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-premium)' }}
+            >
+                <div className="flex items-start justify-between">
+                    <div>
+                        <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{title}</p>
+                        <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
+                        {subtitle && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{subtitle}</p>}
+                    </div>
+                    {IconComponent && (
+                        <div className={`p-3 ${cc.bg} rounded-xl`}>
+                            <IconComponent className={`w-6 h-6 ${cc.icon}`} />
+                        </div>
+                    )}
+                </div>
+            </motion.div>
+        );
+    }
+
+    // Design-system API (DashboardPage, etc.)
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay, type: "spring", stiffness: 300, damping: 24 }}
-            className={cardClass}
+            className={cn('p-6 transition-transform duration-300 hover:scale-[1.02]', cardClass)}
         >
-            <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-400/5 blur-3xl -mr-12 -mt-12 group-hover:bg-cyan-400/20 transition-all"></div>
-            <div className="flex justify-between items-start mb-4">
-                <div className={`p-2 ${isModern ? 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400'} rounded-lg`}>
-                    <Icon className="w-5 h-5" />
+            <div className="flex items-start justify-between">
+                <div className="min-w-0 flex-1">
+                    <p className={cn('text-xs font-bold uppercase tracking-wider mb-1', subtextClass)}>
+                        {title}
+                    </p>
+                    <p className={cn(
+                        'text-3xl font-black tracking-tighter',
+                        headingClass,
+                        isModern ? 'text-gray-900 dark:text-white' : 'text-gray-900 dark:text-white'
+                    )}>
+                        {value}
+                    </p>
+                    {subtitle && (
+                        <p className={cn('text-xs mt-1', dataClass)}>
+                            {subtitle}
+                        </p>
+                    )}
                 </div>
-                {change !== undefined && (
-                    <span className={`text-xs font-bold ${change >= 0 ? (isModern ? 'text-emerald-600 dark:text-cyan-400' : 'text-emerald-500') : 'text-rose-500'}`}>
-                        {change >= 0 ? '+' : ''}{change}%
-                    </span>
+                {icon && (
+                    <div className={cn('p-3 rounded-xl', subtextClass?.replace('text-', 'bg-').replace('600', '50').replace('400', '50'), 'dark:bg-white/5')}>
+                        {typeof icon === 'function' ? React.createElement(icon as React.ComponentType<{ className?: string }>, { className: 'w-6 h-6' }) : icon}
+                    </div>
                 )}
-            </div>
-            <h3 className={`font-headline uppercase mb-1 ${isModern ? headingClass : (subtextClass || 'text-slate-500 dark:text-slate-400')}`}>{title}</h3>
-            <div className={`text-3xl font-headline ${dataClass}`}>
-                {value !== undefined && value !== null ? value.toLocaleString() : '0'}
             </div>
         </motion.div>
     );
 };
+
+export default StatCard;

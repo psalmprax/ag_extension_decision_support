@@ -134,8 +134,8 @@ export class FaostatService {
             }));
 
             return records;
-        } catch (error: any) {
-            logger.warn(`FAOSTAT fetch failed for item=${itemCode} area=${areaCode}: ${error.message}`);
+        } catch (error) {
+            logger.warn(`FAOSTAT fetch failed for item=${itemCode} area=${areaCode}: ${error instanceof Error ? error.message : "Unknown error"}`);
             return [];
         }
     }

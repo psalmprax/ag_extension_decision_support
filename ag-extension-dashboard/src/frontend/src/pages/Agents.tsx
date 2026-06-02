@@ -12,6 +12,8 @@ import { fetchAgentStatus, fetchQueueStatus, fetchHandoffLog, dispatchTask, Agen
 import { withRealFallback } from '../lib/realFirst';
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import toast from 'react-hot-toast';
+import { StatCard } from '@/components/StatCard';
+import { STAT_COLORS, CHART_COLORS } from '@/lib/color-tokens';
 
 export function Agents() {
     const { t } = useLanguage();
@@ -184,10 +186,10 @@ export function Agents() {
     }
 
     const queueData = queueStatus ? [
-        { name: 'Queued', value: queueStatus.queued, color: '#f59e0b' },
-        { name: 'Active', value: queueStatus.active, color: '#3b82f6' },
+        { name: 'Queued', value: queueStatus.queued, color: CHART_COLORS.warning },
+        { name: 'Active', value: queueStatus.active, color: CHART_COLORS.primary },
         { name: 'Completed', value: queueStatus.completed, color: '#10b981' },
-        { name: 'Failed', value: queueStatus.failed, color: '#ef4444' }
+        { name: 'Failed', value: queueStatus.failed, color: CHART_COLORS.danger }
     ] : [];
 
     return (
@@ -275,7 +277,7 @@ export function Agents() {
                             <XAxis dataKey="name" />
                             <YAxis />
                             <Tooltip />
-                            <Bar dataKey="load" fill="#3b82f6" />
+                            <Bar dataKey="load" fill={CHART_COLORS.primary} />
                             <Bar dataKey="max" fill="#e5e7eb" />
                         </BarChart>
                     </ResponsiveContainer>

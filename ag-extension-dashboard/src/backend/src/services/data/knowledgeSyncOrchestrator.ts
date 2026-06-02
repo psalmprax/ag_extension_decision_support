@@ -67,8 +67,8 @@ export class KnowledgeSyncOrchestrator {
 
             this.lastSyncAt = new Date().toISOString();
             logger.info(`[KnowledgeSync] Complete. Sources: ${results.tropicalSources}, Articles: ${results.tropicalArticles + results.faostatArticles}, Embeddings: ${results.totalEmbeddings}`);
-        } catch (error: any) {
-            logger.error(`[KnowledgeSync] Error: ${error.message}`);
+        } catch (error) {
+            logger.error(`[KnowledgeSync] Error: ${error instanceof Error ? error.message : "Unknown error"}`);
         } finally {
             this.syncInProgress = false;
         }
@@ -85,8 +85,8 @@ export class KnowledgeSyncOrchestrator {
             await TropicalKnowledgeSourceService.seedSourcesFromStatic();
             const result = await TropicalKnowledgeSourceService.syncCuratedArticles();
             logger.info(`[KnowledgeSync] Lightweight sync: ${result.synced} curated articles`);
-        } catch (error: any) {
-            logger.error(`[KnowledgeSync] Lightweight sync error: ${error.message}`);
+        } catch (error) {
+            logger.error(`[KnowledgeSync] Lightweight sync error: ${error instanceof Error ? error.message : "Unknown error"}`);
         }
     }
 

@@ -113,11 +113,11 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction): v
 /**
  * Check if user owns resource or is admin
  */
-export const ownershipOrAdmin = (
+export const ownershipOrAdmin = async (
     req: Request,
     res: Response,
     next: NextFunction
-): void => {
+): Promise<void> => {
     const { userId } = req.params;
 
     // If no user attached, deny
@@ -139,12 +139,26 @@ export const ownershipOrAdmin = (
         return next();
     }
 
-    // Regional managers are denied until region-based access control is implemented
+    // Regional managers can access resources within their region
     if (req.user.role === 'regional_manager') {
-        logger.warn(`Regional manager ${req.user.userId} denied access to resource ${userId} — region check not yet implemented`);
+        try {
+            const { query } = await import('@/services/databaseService');
+            const [managerResult, targetResult] = await Promise.all([
+                query('SELECT region FROM users WHERE id = $1', [req.user.userId]),
+                query('SELECT region FROM users WHERE id = $1', [userId]),
+            ]);
+            const managerRegion = managerResult.rows[0]?.region;
+            const targetRegion = targetResult.rows[0]?.region;
+            if (managerRegion && targetRegion && managerRegion === targetRegion) {
+                return next();
+            }
+            logger.warn(`Regional manager ${req.user.userId} (${managerRegion}) denied access to user ${userId} (${targetRegion})`);
+        } catch (err) {
+            logger.error('Region check failed:', err);
+        }
         res.status(403).json({
             success: false,
-            error: 'Regional manager access requires region-based authorization (not yet implemented)',
+            error: 'Regional managers can only access resources within their region',
         });
         return;
     }

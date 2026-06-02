@@ -32,7 +32,7 @@ export class StealthScraperService {
                 },
                 {
                     headers: {
-                        'Authorization': 'Bearer dev-token', // Matches the dev-token logic in main.py
+                        'Authorization': `Bearer ${process.env.AGENT_ZERO_TOKEN || 'dev-token'}`,
                         'Content-Type': 'application/json'
                     },
                     timeout: 30000 // Stealth scrapes might take a little time
@@ -45,8 +45,8 @@ export class StealthScraperService {
                 logger.warn(`Stealth scrape failed or returned no success: ${JSON.stringify(response.data)}`);
                 return [];
             }
-        } catch (error: any) {
-            logger.error(`Error executing stealth scrape: ${error.message}`);
+        } catch (error) {
+            logger.error(`Error executing stealth scrape: ${error instanceof Error ? error.message : "Unknown error"}`);
             return [];
         }
     }

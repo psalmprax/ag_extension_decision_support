@@ -247,9 +247,9 @@ export class OpenAIProvider extends BaseAIProvider {
                 text: transcription.text,
                 language: options?.language,
             };
-        } catch (error: any) {
+        } catch (error) {
             logger.error('OpenAI speechToText error:', error);
-            throw new Error(`OpenAI speech-to-text failed: ${error.message}`);
+            throw new Error(`OpenAI speech-to-text failed: ${error instanceof Error ? error.message : "Unknown error"}`);
         }
     }
 
@@ -267,9 +267,9 @@ export class OpenAIProvider extends BaseAIProvider {
                 audio: buffer,
                 format: 'mp3',
             };
-        } catch (error: any) {
+        } catch (error) {
             logger.error('OpenAI textToSpeech error:', error);
-            throw new Error(`OpenAI text-to-speech failed: ${error.message}`);
+            throw new Error(`OpenAI text-to-speech failed: ${error instanceof Error ? error.message : "Unknown error"}`);
         }
     }
 
@@ -330,10 +330,10 @@ export class OpenAIProvider extends BaseAIProvider {
                 model,
                 usage: response.usage,
             };
-        } catch (error: any) {
+        } catch (error) {
             logger.error('OpenAI analyzeImage error:', error);
             return {
-                analysis: `Error: ${error.message}`,
+                analysis: `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
                 model,
                 usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
             };
@@ -362,7 +362,7 @@ export class OpenAIProvider extends BaseAIProvider {
                 max_tokens: 1,
             });
             return true;
-        } catch (error: any) {
+        } catch (error) {
             logger.error('OpenAI healthCheck error:', error);
             return false;
         }

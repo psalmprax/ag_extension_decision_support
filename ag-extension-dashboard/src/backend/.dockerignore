@@ -1,6 +1,10 @@
 node_modules
 dist
 .env
+.env.*
+.git
+.github
 prisma/migrations
 *.log
 .DS_Store
+__tests__

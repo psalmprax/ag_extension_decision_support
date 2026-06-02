@@ -103,9 +103,9 @@ export class FaoKnowledgeService {
             }
             
             logger.info(`FAO knowledge ingestion completed successfully. Total chunks stored: ${totalChunks}`);
-        } catch (error: any) {
-            logger.error(`Error ingesting FAO knowledge: ${error.message}`);
-            throw new Error(`Failed to ingest FAO knowledge: ${error.message}`);
+        } catch (error) {
+            logger.error(`Error ingesting FAO knowledge: ${error instanceof Error ? error.message : "Unknown error"}`);
+            throw new Error(`Failed to ingest FAO knowledge: ${error instanceof Error ? error.message : "Unknown error"}`);
         }
     }
 }
