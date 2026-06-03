@@ -1,16 +1,32 @@
+# ============================================================
+# Base Docker Compose — shared services for all environments
+# ============================================================
+# Usage:
+#   Dev:  docker compose up -d
+#   Prod: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#   +agents (any): docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d
+#
+# Profiles (optional):
+#   COMPOSE_PROFILES=full   — starts backend + frontend (default when omitted)
+#   COMPOSE_PROFILES=db     — starts only app-db + redis (no app services)
+#   COMPOSE_PROFILES=infra  — starts infra only (app-db, redis, traefik)
+# ============================================================
+
 services:
+  # ── Infrastructure ────────────────────────────────────────
+
   app-db:
     build:
       context: .
       dockerfile: Dockerfile.db
     container_name: ag-dashboard-db
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${DATABASE_USER:-postgres}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres}
       POSTGRES_DB: ${DATABASE_NAME:-ag_extension}
     ports:
-      - "127.0.0.1:7501:5432"
+      - "${DATABASE_PORT:-127.0.0.1:7501}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -25,10 +41,10 @@ services:
   redis:
     image: redis:alpine
     container_name: ag-dashboard-redis
-    restart: always
-    command: redis-server --requirepass ${REDIS_PASSWORD:-agext_redis_2024}
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-agext_redis_2024} --maxmemory 256mb --maxmemory-policy allkeys-lru
     ports:
-      - "127.0.0.1:7502:6379"
+      - "${REDIS_PORT:-127.0.0.1:7502}:6379"
     volumes:
       - redis_data:/data
     networks:
@@ -39,68 +55,60 @@ services:
       timeout: 5s
       retries: 5
 
-  # ============================================================
-  # Traefik — Reverse Proxy (Port 80)
-  # Provides clean URLs without :7503 suffix
-  #
-  # Base setup: HTTP only (works on any server, no TLS needed)
-  # For HTTPS + Let's Encrypt, add docker-compose.prod.yml:
-  #   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-  #
-  # Environment variables (set in .env):
-  #   DOMAIN=www.gpexts.com     (default)
-  # ============================================================
+  # ── Reverse Proxy ─────────────────────────────────────────
+  # Traefik auto-discovers services via Docker labels.
+  # Dev: HTTP only on port 80.
+  # Prod: add -f docker-compose.prod.yml for HTTPS + Let's Encrypt.
   traefik:
-    # v3.7+ required for Docker Engine 29+ (API 1.54). v3.0 is hardcoded
-    # to API 1.24 and fails with "client version too old".
     image: traefik:v3.7
     container_name: ag-traefik
     command:
-      # Docker provider — auto-discovers services via labels
       - "--providers.docker=true"
       - "--providers.docker.exposedByDefault=false"
       - "--providers.docker.network=ag-network"
-      # HTTP entrypoint (port 80)
       - "--entrypoints.web.address=:80"
-      # Disable dashboard in production (optional, uncomment to enable)
-      # - "--api.dashboard=true"
-      # - "--api.debug=false"
     ports:
-      - "80:80"
+      - "${TRAEFIK_HTTP_PORT:-80}:80"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - ag-network
-    restart: always
+    restart: unless-stopped
+
+  # ── Application Services (dev default, prod override) ──────
 
   backend:
     build:
       context: ./src/backend
-      target: development
+      target: ${BACKEND_DOCKER_TARGET:-development}
     container_name: ag-dashboard-backend
-    restart: always
+    restart: unless-stopped
     deploy:
       resources:
         limits:
-          memory: 1G
-          cpus: '1.0'
+          memory: ${BACKEND_MEMORY_LIMIT:-1G}
+          cpus: ${BACKEND_CPU_LIMIT:-1.0}
     ports:
-      - "127.0.0.1:7500:3001"
+      - "${BACKEND_PORT:-127.0.0.1:7500}:3001"
+    env_file:
+      - .env
     environment:
-      - DATABASE_URL=postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@app-db:5432/${DATABASE_NAME:-ag_extension}?schema=public
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-agext_redis_2024}@redis:6379
-      - PORT=3001
-      - NODE_ENV=${NODE_ENV:-development}
-      - JWT_SECRET=${JWT_SECRET:-dev-secret-key-for-local-only}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - AI_PRIMARY_PROVIDER=${AI_PRIMARY_PROVIDER:-openai}
-      - AI_PRIMARY_MODEL=${AI_PRIMARY_MODEL:-gpt-4o}
-      - AI_EMBEDDINGS_PROVIDER=${AI_EMBEDDINGS_PROVIDER:-openai}
-      - OLLAMA_HOST=${OLLAMA_HOST:-http://ettametta-ollama:11434}
-      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.2:3b}
-      - AI_FALLBACK_PROVIDER=${AI_FALLBACK_PROVIDER:-ollama}
-      - DEMO_ENABLED=${DEMO_ENABLED:-false}
-      - DEMO_PASSWORD=${DEMO_PASSWORD:-demo-trial-2024}
+      DATABASE_URL: postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@app-db:5432/${DATABASE_NAME:-ag_extension}?schema=public
+      REDIS_URL: redis://:${REDIS_PASSWORD:-agext_redis_2024}@redis:6379
+      PORT: 3001
+      NODE_ENV: ${NODE_ENV:-development}
+      JWT_SECRET: ${JWT_SECRET}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      AI_PRIMARY_PROVIDER: ${AI_PRIMARY_PROVIDER:-openai}
+      AI_PRIMARY_MODEL: ${AI_PRIMARY_MODEL:-gpt-4o}
+      AI_EMBEDDINGS_PROVIDER: ${AI_EMBEDDINGS_PROVIDER:-openai}
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://ettametta-ollama:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:3b}
+      AI_FALLBACK_PROVIDER: ${AI_FALLBACK_PROVIDER:-ollama}
+      DEMO_ENABLED: ${DEMO_ENABLED:-false}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-demo-trial-2024}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:7503}
     depends_on:
       app-db:
         condition: service_healthy
@@ -110,7 +118,6 @@ services:
       - ag-network
       - ettametta_ettametta
     labels:
-      # Traefik routing: DOMAIN/IP/api/* → backend:3001
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=(Host(`${DOMAIN:-www.gpexts.com}`) || Host(`localhost`) || Host(`145.223.97.248`)) && (PathPrefix(`/api`) || PathPrefix(`/api-docs`) || PathPrefix(`/socket.io`) || PathPrefix(`/health`))"
       - "traefik.http.routers.backend.entrypoints=web"
@@ -119,27 +126,31 @@ services:
   frontend:
     build:
       context: ./src/frontend
-      target: development
+      target: ${FRONTEND_DOCKER_TARGET:-development}
     container_name: ag-dashboard-frontend
-    restart: always
+    restart: unless-stopped
     ports:
-      - "127.0.0.1:7503:5173"
+      - "${FRONTEND_PORT:-127.0.0.1:7503}:5173"
     environment:
-      - VITE_API_URL=/api
+      - VITE_API_URL=${VITE_API_URL:-/api}
+      - VITE_WS_URL=${VITE_WS_URL:-}
     depends_on:
       - backend
     networks:
       - ag-network
     labels:
-      # Traefik routing: DOMAIN/IP/ → frontend (SPA)
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`${DOMAIN:-www.gpexts.com}`) || Host(`localhost`) || Host(`145.223.97.248`)"
       - "traefik.http.routers.frontend.entrypoints=web"
-      # Port auto-detected from container EXPOSE
 
+  # ── Local AI (optional) ───────────────────────────────────
+  # Disabled by default; enable with COMPOSE_PROFILES=ai
+  # or include docker-compose.agents.yml
   ettametta-ollama:
     image: ollama/ollama:0.6.2
     container_name: ettametta-ollama
+    profiles:
+      - ai
     deploy:
       resources:
         limits:
