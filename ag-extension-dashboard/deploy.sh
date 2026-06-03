@@ -89,7 +89,7 @@ cmd_staging() {
     error "docker-compose.staging.yml not found. Create it first."
   fi
   need_env
-  check_env_var STAGING_DOMAIN || true
+  check_env_file STAGING_DOMAIN || true
   info "Starting staging stack..."
   run_compose $STAGING_OVERLAY up -d
   success "Staging stack started."
@@ -97,8 +97,8 @@ cmd_staging() {
 
 cmd_prod() {
   need_env
-  check_env_var ACME_EMAIL
-  check_env_var DOMAIN
+  check_env_file ACME_EMAIL
+  check_env_file DOMAIN
   info "Starting production stack (HTTPS + Let's Encrypt)..."
   run_compose $PROD_OVERLAY up -d --build "$@"
   success "Production stack started."

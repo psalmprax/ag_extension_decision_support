@@ -55,8 +55,7 @@ services:
     environment:
       NODE_ENV: production
       LOG_LEVEL: ${LOG_LEVEL:-warn}
-      # Bind to all interfaces so Traefik can reach it inside the container network
-      # BIND_HOST is read by the backend server; remove if not implemented
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://www.gpexts.com}
     labels:
       # Enable Traefik service discovery
       - "traefik.enable=true"
