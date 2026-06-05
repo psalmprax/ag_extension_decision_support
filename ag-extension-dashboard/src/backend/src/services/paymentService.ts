@@ -55,6 +55,13 @@ class PaymentService {
     }
 
     private async initializeStripe() {
+        // Skip Stripe init if no database (avoids Prisma errors in CI/test)
+        if (!process.env.DATABASE_URL) {
+            logger.warn('Stripe not configured (no database) - payments will be simulated (Demo Mode)');
+            this.stripe = null;
+            this.isSimulated = true;
+            return;
+        }
         const stripeKey = await systemConfigService.getStripeKey();
 
         // Check if key is valid (must be real Stripe key, not placeholder)
