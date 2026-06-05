@@ -133,7 +133,7 @@ const API_MOCKS: Record<string, { status: number; body: unknown }> = {
     '/api/chat': { status: 200, body: { success: true, data: [] } },
     '/api/weather': { status: 200, body: { success: true, data: { temperature: 28, condition: 'Sunny', humidity: 65 } } },
     '/api/external/weather': { status: 200, body: { success: true, data: { temperature: 28, condition: 'Sunny', humidity: 65, location: 'Central' } } },
-    '/api/analytics/dashboard': { status: 200, body: { success: true, data: { visitsThisMonth: 45, farmersReached: 120, completionRate: 0.85 } } },
+    '/api/analytics/dashboard': { status: 200, body: MOCK_DASHBOARD },
 };
 
 // Match an API URL path against our mock table. Returns longest matching path.

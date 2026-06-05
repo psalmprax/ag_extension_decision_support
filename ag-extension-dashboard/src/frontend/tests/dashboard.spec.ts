@@ -7,7 +7,7 @@ test.describe('Dashboard Page', () => {
     });
 
     test('should load dashboard with sidebar navigation', async ({ page }) => {
-        const sidebar = page.locator('nav');
+        const sidebar = page.locator('aside');
         await expect(sidebar.getByRole('button', { name: /Strategic Intelligence|Operations Dashboard/i })).toBeVisible({ timeout: 15000 });
         await expect(sidebar.getByRole('button', { name: /Human Capital Network|Client Portfolio/i })).toBeVisible({ timeout: 5000 });
         await expect(sidebar.getByRole('button', { name: /Cognitive Synthesizer|AI Assistant/i })).toBeVisible({ timeout: 5000 });
@@ -15,16 +15,16 @@ test.describe('Dashboard Page', () => {
     });
 
     test('should switch tabs and show correct content', async ({ page }) => {
-        const sidebar = page.locator('nav');
+        const sidebar = page.locator('aside');
         // Navigate to Portfolio
         await sidebar.getByRole('button', { name: /Human Capital Network|Client Portfolio/i }).click();
         await page.waitForTimeout(1000);
-        await expect(page.getByRole('heading', { name: /Human Capital Network|Client Portfolio/i }).first()).toBeVisible({ timeout: 10000 });
+        await expect(page.locator('h1').filter({ hasText: /Human Capital Network|Client Portfolio/i })).toBeVisible({ timeout: 10000 });
 
         // Navigate back to Dashboard
         await sidebar.getByRole('button', { name: /Strategic Intelligence|Operations Dashboard/i }).click();
         await page.waitForTimeout(1000);
-        await expect(page.getByRole('heading', { name: /Strategic Intelligence|Operations Dashboard/i }).first()).toBeVisible({ timeout: 10000 });
+        await expect(page.locator('h1').filter({ hasText: /Strategic Intelligence|Operations Dashboard/i })).toBeVisible({ timeout: 10000 });
     });
 });
 
@@ -40,7 +40,7 @@ test.describe('Accessibility', () => {
     });
 
     test('should have alt text on images', async ({ page }) => {
-        await setupAuthenticatedPage(page);
+        // Note: beforeEach already calls setupAuthenticatedPage, no need for second call
         const images = page.locator('img');
         const count = await images.count();
         for (let i = 0; i < count; i++) {
@@ -50,7 +50,7 @@ test.describe('Accessibility', () => {
     });
 
     test('should not show error boundaries', async ({ page }) => {
-        await setupAuthenticatedPage(page);
+        // Note: beforeEach already calls setupAuthenticatedPage, no need for second call
         const errorElements = page.locator('[class*=\"error\"], [class*=\"Error\"]').first();
         const hasError = await errorElements.isVisible({ timeout: 1000 }).catch(() => false);
         expect(hasError).toBe(false);
