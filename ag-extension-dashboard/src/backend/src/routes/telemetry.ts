@@ -1,14 +1,16 @@
 import { Router, Request, Response } from 'express';
 import { authorize } from '@/middleware/authorize';
+import { validate } from '@/middleware/validate';
+import { telemetrySummarySchema, telemetryEventsSchema } from '@/utils/schemas';
 import { agentTelemetry } from '@/services/agentTelemetry';
 import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
-router.get('/summary', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
+router.get('/summary', authorize(['extension_officer', 'admin', 'farmer']), validate(telemetrySummarySchema), async (req: Request, res: Response) => {
     try {
-        const hours = Math.max(1, Math.min(720, parseInt(req.query.hours as string) || 24));
+        const hours = Number(req.query.hours) || 24;
         const summary = await agentTelemetry.getSummary(hours);
         res.json({ success: true, data: summary });
     } catch (error) {
@@ -17,9 +19,9 @@ router.get('/summary', authorize(['extension_officer', 'admin', 'farmer']), asyn
     }
 });
 
-router.get('/events', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
+router.get('/events', authorize(['extension_officer', 'admin', 'farmer']), validate(telemetryEventsSchema), async (req: Request, res: Response) => {
     try {
-        const limit = Math.max(1, Math.min(500, parseInt(req.query.limit as string) || 50));
+        const limit = Number(req.query.limit) || 50;
         const events = await agentTelemetry.getRecentEvents(limit);
         res.json({ success: true, data: events });
     } catch (error) {

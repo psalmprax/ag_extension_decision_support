@@ -1,0 +1,56 @@
+# ============================================================
+# Development Override
+# ============================================================
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+#
+# What this enables:
+#   • Vite hot-module-replacement (frontend rebuilds on source change)
+#   • ts-node-dev auto-restarts (backend recompiles on TS change)
+#   • Bind-mounted source dirs (no rebuild needed for most changes)
+#   • Debug ports open (backend:9229, frontend:9228)
+#   • Verbose logging (LOG_LEVEL=debug)
+#   • Traefik HTTP-only on port 80
+# ============================================================
+
+services:
+  backend:
+    build:
+      context: ./src/backend
+      target: development
+    # Bind-mount source for hot-reload (changes reflect without rebuild)
+    volumes:
+      - ./src/backend/src:/app/src:rw
+    environment:
+      NODE_ENV: development
+      LOG_LEVEL: debug
+      DEBUG_PORT: 9229
+    # Expose debug port on all interfaces (local only)
+    ports:
+      - "127.0.0.1:9229:9229"
+    command: ["node", "--inspect=0.0.0.0:9229", "node_modules/.bin/ts-node-dev", "--respawn", "--transpile-only", "-r", "tsconfig-paths/register", "src/index.ts"]
+
+  frontend:
+    build:
+      context: ./src/frontend
+      target: development
+    # Bind-mount source for hot-reload
+    volumes:
+      - ./src/frontend/src:/app/src:rw
+      - ./src/frontend/public:/app/public:rw
+    environment:
+      VITE_API_URL: http://localhost:7500/api
+      VITE_WS_URL: ws://localhost:7500
+    ports:
+      - "127.0.0.1:5173:5173"
+      - "127.0.0.1:9228:9228"
+
+  traefik:
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedByDefault=false"
+      - "--providers.docker.network=ag-network"
+      - "--entrypoints.web.address=:80"
+      - "--accesslog=true"
+      - "--log.level=DEBUG"
+    ports:
+      - "80:80"

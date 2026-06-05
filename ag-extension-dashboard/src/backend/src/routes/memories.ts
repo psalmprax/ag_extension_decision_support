@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, Request, Response } from 'express';
 import { authorize } from '@/middleware/authorize';
+import { validate } from '@/middleware/validate';
+import { memoryListSchema } from '@/utils/schemas';
 import { persistentMemory } from '@/services/persistentMemory';
 import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
@@ -8,10 +10,10 @@ import { safeError } from '@/utils/safeResponse';
 const router = Router();
 
 // Get memories with optional filtering
-router.get('/', authorize(['admin', 'farmer']), async (req: Request, res: Response) => {
+router.get('/', authorize(['admin', 'farmer']), validate(memoryListSchema), async (req: Request, res: Response) => {
     try {
         const category = req.query.category as string | undefined;
-        const limit = parseInt(req.query.limit as string || '50');
+        const limit = Number(req.query.limit) || 50;
         const userId = (req as any).user?.userId || 'system';
 
         // Use recall method with empty query to get all memories

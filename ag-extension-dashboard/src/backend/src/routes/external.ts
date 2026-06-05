@@ -6,6 +6,8 @@ import { logger } from '@/utils/logger';
 import { getMapData } from '@/services/mapService';
 import { marketPriceService } from '@/services/marketPriceService';
 import { authorize } from '@/middleware/authorize';
+import { validate } from '@/middleware/validate';
+import { soilDataQuerySchema, weatherQuerySchema } from '@/utils/schemas';
 import { SatelliteService } from '@/services/satelliteService';
 import { safeError } from '@/utils/safeResponse';
 
@@ -27,14 +29,10 @@ router.get('/priority/:farmerId', async (req: Request, res: Response) => {
 });
 
 // Get satellite telemetry (spectral indices)
-router.get('/satellite', async (req: Request, res: Response) => {
+router.get('/satellite', validate(soilDataQuerySchema), async (req: Request, res: Response) => {
     try {
         const lat = parseFloat(req.query.lat as string);
         const lng = parseFloat(req.query.lng as string);
-
-        if (isNaN(lat) || isNaN(lng)) {
-            return res.status(400).json({ success: false, error: 'Invalid coordinates' });
-        }
         
         const indices = await SatelliteService.getSpectralIndices(lat, lng);
         res.json({ success: true, data: indices });

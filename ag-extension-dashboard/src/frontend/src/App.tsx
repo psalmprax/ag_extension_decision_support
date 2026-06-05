@@ -368,7 +368,7 @@ function App() {
                         <Suspense fallback={<div className="p-6"><Loader2 className="w-8 h-8 animate-spin text-cyan-400" /></div>}>
                             <div className="p-6">
                                 {/* Tab Content */}
-                                {activeTab === 'dashboard' && (
+                                {activeTab === 'dashboard' && (<ErrorBoundary componentName="DashboardPage">
                                     <DashboardPage
                                         dashboardData={dashboardData} isLoading={isLoading} isOfficer={isOfficer}
                                         performanceData={performanceData} effectiveFarmers={effectiveFarmers}
@@ -377,8 +377,8 @@ function App() {
                                         user={user}
                                         addNotification={addNotification}
                                     />
-                                )}
-                                {activeTab === 'portfolio' && (
+                                </ErrorBoundary>)}
+                                {activeTab === 'portfolio' && (<ErrorBoundary componentName="PortfolioPage">
                                     <PortfolioPage
                                         effectiveFarmers={effectiveFarmers} selectedFarmers={selectedFarmers}
                                         handleSelectFarmer={handleSelectFarmer} handleOpenFarmerDetail={handleOpenFarmerDetail}
@@ -387,15 +387,15 @@ function App() {
                                         handleBulkSMS={handleBulkSMS} handleBulkExport={handleBulkExport}
                                         handleBulkDelete={handleBulkDelete} setSelectedFarmers={setSelectedFarmers}
                                     />
-                                )}
-                                {activeTab === 'visits' && (
+                                </ErrorBoundary>)}
+                                {activeTab === 'visits' && (<ErrorBoundary componentName="VisitsPage">
                                     <VisitsPage
                                         visits={visits} setShowVisitModal={setShowVisitModal} refetchVisits={refetchVisits}
                                         handleOpenFarmerDetail={handleOpenFarmerDetail} farmers={effectiveFarmers}
                                         addNotification={addNotification}
                                     />
-                                )}
-                                {activeTab === 'reports' && (
+                                </ErrorBoundary>)}
+                                {activeTab === 'reports' && (<ErrorBoundary componentName="ReportsPage">
                                     <ReportsPage
                                         reports={reports} handleGenerateReport={handleGenerateReport}
                                         isGeneratingReport={isGeneratingReport}
@@ -404,16 +404,22 @@ function App() {
                                         isLoadingReport={isLoadingReport} setIsLoadingReport={setIsLoadingReport}
                                         addNotification={addNotification} user={user}
                                     />
-                                )}
-                                {activeTab === 'analytics' && (
+                                </ErrorBoundary>)}
+                                {activeTab === 'analytics' && (<ErrorBoundary componentName="AnalyticsPage">
                                     <AnalyticsPage
                                         performanceData={performanceData}
                                     />
-                                )}
-                                {activeTab === 'billing' && <BillingDashboard />}
-                                {activeTab === 'knowledge' && <KnowledgeBase />}
-                                {activeTab === 'aiassistant' && <AlphaAI />}
-                                {activeTab === 'farmerchat' && (
+                                </ErrorBoundary>)}
+                                {activeTab === 'billing' && <ErrorBoundary componentName="BillingDashboard">
+                                    <BillingDashboard />
+                                </ErrorBoundary>}
+                                {activeTab === 'knowledge' && <ErrorBoundary componentName="KnowledgeBase">
+                                    <KnowledgeBase />
+                                </ErrorBoundary>}
+                                {activeTab === 'aiassistant' && <ErrorBoundary componentName="AlphaAI">
+                                    <AlphaAI />
+                                </ErrorBoundary>}
+                                {activeTab === 'farmerchat' && (<ErrorBoundary componentName="FarmerChatPage">
                                     <FarmerChatPage
                                         farmerConversations={farmerConversations} activeFarmerConvId={activeFarmerConvId}
                                         setActiveFarmerConvId={setActiveFarmerConvId} loadFarmerMessages={loadFarmerMessages}
@@ -421,27 +427,43 @@ function App() {
                                         setFarmerChatInput={setFarmerChatInput} handleFarmerChatSend={handleFarmerChatSend}
                                         loadFarmers={loadFarmers} setShowFarmerModal={setShowFarmerModal}
                                     />
-                                )}
-                                {activeTab === 'farmer_dashboard' && <FarmerDashboard />}
-                                {activeTab === 'register_farmer' && (
+                                </ErrorBoundary>)}
+                                {activeTab === 'farmer_dashboard' && <ErrorBoundary componentName="FarmerDashboard">
+                                    <FarmerDashboard />
+                                </ErrorBoundary>}
+                                {activeTab === 'register_farmer' && (<ErrorBoundary componentName="FarmerRegistrationForm">
                                     <div className="mt-6"><FarmerRegistrationForm /></div>
-                                )}
-                                {activeTab === 'visit_synthesis' && (
+                                </ErrorBoundary>)}
+                                {activeTab === 'visit_synthesis' && (<ErrorBoundary componentName="VisitSynthesisForm">
                                     <div className="mt-6"><VisitSynthesisForm /></div>
-                                )}
-                                {activeTab === 'sms' && <SMSPage />}
-                                {activeTab === 'telemetry' && (
+                                </ErrorBoundary>)}
+                                {activeTab === 'sms' && <ErrorBoundary componentName="SMSPage">
+                                    <SMSPage />
+                                </ErrorBoundary>}
+                                {activeTab === 'telemetry' && (<ErrorBoundary componentName="Telemetry">
                                     <div><h1 className={`text-3xl font-bold ${headingClass} mb-8`}>{isModern ? 'Neural Telemetry' : 'System Telemetry'}</h1><Telemetry /></div>
-                                )}
-                                {activeTab === 'agents' && (
+                                </ErrorBoundary>)}
+                                {activeTab === 'agents' && (<ErrorBoundary componentName="Agents">
                                     <div><h1 className={`text-3xl font-bold ${headingClass} mb-8`}>{isModern ? 'Autonomous Orchestration' : 'Agent Manager'}</h1><Agents /></div>
-                                )}
-                                {activeTab === 'system_health' && <SystemHealth />}
-                                {activeTab === 'disease_diagnosis' && <DiseaseDiagnosisPage />}
-                                {activeTab === 'memory' && <Memory />}
-                                {activeTab === 'email_workflows' && <EmailWorkflows />}
-                                {activeTab === 'mcp_tools' && <MCPTools />}
-                                {activeTab === 'user_management' && <UserManagementPage />}
+                                </ErrorBoundary>)}
+                                {activeTab === 'system_health' && <ErrorBoundary componentName="SystemHealth">
+                                    <SystemHealth />
+                                </ErrorBoundary>}
+                                {activeTab === 'disease_diagnosis' && <ErrorBoundary componentName="DiseaseDiagnosisPage">
+                                    <DiseaseDiagnosisPage />
+                                </ErrorBoundary>}
+                                {activeTab === 'memory' && <ErrorBoundary componentName="Memory">
+                                    <Memory />
+                                </ErrorBoundary>}
+                                {activeTab === 'email_workflows' && <ErrorBoundary componentName="EmailWorkflows">
+                                    <EmailWorkflows />
+                                </ErrorBoundary>}
+                                {activeTab === 'mcp_tools' && <ErrorBoundary componentName="MCPTools">
+                                    <MCPTools />
+                                </ErrorBoundary>}
+                                {activeTab === 'user_management' && <ErrorBoundary componentName="UserManagementPage">
+                                    <UserManagementPage />
+                                </ErrorBoundary>}
                             </div>
                         </Suspense>
                     </ErrorBoundary>

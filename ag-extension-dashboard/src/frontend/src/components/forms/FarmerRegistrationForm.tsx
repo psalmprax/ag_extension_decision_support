@@ -54,11 +54,12 @@ export const FarmerRegistrationForm: React.FC = () => {
           firstName: response.data.firstName,
           lastName: response.data.lastName,
           phone: response.data.phone || '',
-          location: data.location,
+          region: data.location,
+          village: data.location,
           crops: response.data.crops,
           farmSize: response.data.farmSize,
-          latitude: response.data.locationLat,
-          longitude: response.data.locationLng
+          locationLat: response.data.locationLat,
+          locationLng: response.data.locationLng
         });
         toast.success(t('farmer_register_success'));
         reset();
