@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test';
-import { setupApiMocks, setupAuthenticatedPage } from './helpers/mockApi';
+import { test } from '@playwright/test';
+import { setupApiMocks } from './helpers/mockApi';
 
 test.describe('Farmer Onboarding & AI Advisor Flow', () => {
     test.beforeEach(async ({ page }) => {

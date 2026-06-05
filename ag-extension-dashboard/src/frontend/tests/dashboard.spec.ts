@@ -51,7 +51,7 @@ test.describe('Accessibility', () => {
 
     test('should not show error boundaries', async ({ page }) => {
         // Note: beforeEach already calls setupAuthenticatedPage, no need for second call
-        const errorElements = page.locator('[class*=\"error\"], [class*=\"Error\"]').first();
+        const errorElements = page.locator('[class*="error"], [class*="Error"]').first();
         const hasError = await errorElements.isVisible({ timeout: 1000 }).catch(() => false);
         expect(hasError).toBe(false);
     });

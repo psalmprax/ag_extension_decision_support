@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 import { setupAuthenticatedPage } from './helpers/mockApi';
 
 test.describe('Theme Comparison: Cyber vs Forest', () => {
