@@ -17,6 +17,7 @@ export const validate = (schema: ZodSchema | { body?: ZodSchema; query?: ZodSche
 
     if (schema instanceof ZodObject && '_def' in schema) {
         // Wrapped format: z.object({ body: ..., query: ..., params: ... })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const shape = (schema as any)._def.shape();
         bodySchema = shape.body;
         querySchema = shape.query;

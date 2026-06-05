@@ -90,10 +90,13 @@ app.use(securityGate); // Security gate runs FIRST — before auth and rate limi
 app.use(optionalAuth); // Parse optional user credentials before applying rate limiting
 app.use(limiter);
 
-// Request timeout middleware - 30s default (AI routes override with longer timeout)
+// Request timeout middleware — AI-heavy routes (knowledge/ask, chatbot) get 120s, rest get 30s
 app.use((req, res, next) => {
-    res.setTimeout(30000, () => {
-        logger.warn(`Request timeout (30000ms): ${req.method} ${req.path}`);
+    const isAiHeavy = ['/api/knowledge', '/api/chatbot', '/api/v1/knowledge', '/api/v1/chatbot']
+        .some(p => req.path.startsWith(p));
+    const timeout = isAiHeavy ? 120000 : 30000;
+    res.setTimeout(timeout, () => {
+        logger.warn(`Request timeout (${timeout}ms): ${req.method} ${req.path}`);
         if (!res.headersSent) {
             res.status(408).json({ success: false, error: 'Request timeout' });
         }
@@ -381,6 +384,22 @@ app.get('/api/versions', (_req: Request, res: Response) => {
         deprecated: [],
         docs: '/api-docs'
     });
+});
+
+// Client-side error reporting endpoint
+app.post('/api/errors', (req: Request, res: Response) => {
+    const { error, componentStack, componentName, url, userAgent } = req.body;
+    logger.warn('Client error reported:', {
+        message: error?.message,
+        stack: error?.stack,
+        name: error?.name,
+        componentName,
+        componentStack,
+        url,
+        userAgent,
+        ip: req.ip,
+    });
+    res.status(200).json({ success: true });
 });
 
 app.use(errorHandler);

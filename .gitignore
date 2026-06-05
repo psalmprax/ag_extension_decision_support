@@ -25,3 +25,7 @@ translate_*.js
 
 # Prisma build artifacts
 prisma/migrations/*.sql.bak
+
+# Playwright test artifacts
+test-results/
+playwright-report/

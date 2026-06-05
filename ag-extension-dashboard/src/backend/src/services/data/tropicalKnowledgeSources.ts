@@ -221,18 +221,22 @@ export class TropicalKnowledgeSourceService {
         try {
             const dbResult = await query('SELECT * FROM tropical_knowledge_sources WHERE is_active = true');
             if (dbResult.rows.length > 0) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 return dbResult.rows.map((row: any) => ({
                     id: row.id,
                     name: row.name,
                     provider: row.provider,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     type: row.type as any,
                     license: row.license,
                     url: row.url,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     syncMode: row.sync_mode as any,
                     topics: row.topics,
                     crops: row.crops,
                     regions: row.regions,
                     description: row.description,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     priority: row.priority as any
                 }));
             }

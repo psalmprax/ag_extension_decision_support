@@ -39,13 +39,14 @@ export function checkHTTP(url: string, timeout = 5000): Promise<{ ok: boolean; s
 }
 
 // Check SSL certificate info
-export function checkSSL(hostname: string, port = 443, timeout = 5000): Promise<{
+export function checkSSL(hostname: string, _port = 443, timeout = 5000): Promise<{
     ok: boolean;
     error?: string;
     cert?: { validFrom: string; validTo: string; issuer: string; subject: string; daysLeft: number };
 }> {
     return new Promise((resolve) => {
         const req = https.get(`https://${hostname}`, { timeout, rejectUnauthorized: false }, (res) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const cert = (res.socket as any)?.getPeerCertificate?.();
             if (cert && Object.keys(cert).length > 0) {
                 const validTo = new Date(cert.valid_to);
@@ -65,6 +66,7 @@ export function checkSSL(hostname: string, port = 443, timeout = 5000): Promise<
             }
             res.destroy();
         });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         req.on('error', (err: any) => resolve({ ok: false, error: err.code || err.message }));
         req.on('timeout', () => { req.destroy(); resolve({ ok: false, error: 'TIMEOUT' }); });
     });

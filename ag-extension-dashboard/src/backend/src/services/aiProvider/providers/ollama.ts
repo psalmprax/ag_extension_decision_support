@@ -53,7 +53,7 @@ export class OllamaProvider extends BaseAIProvider {
                     num_predict: options?.maxTokens ?? 1000,
                 }
             }, {
-                timeout: parseInt(process.env.OLLAMA_REQUEST_TIMEOUT_MS || '60000', 10),
+                timeout: parseInt(process.env.OLLAMA_REQUEST_TIMEOUT_MS || '120000', 10),
             });
 
             const data = response.data;

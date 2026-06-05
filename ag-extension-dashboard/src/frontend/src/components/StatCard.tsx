@@ -3,6 +3,24 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/cn';
 import { STAT_COLORS } from '@/lib/color-tokens';
 
+const REACT_ELEMENT_TYPE = Symbol.for('react.element');
+
+/** Check if value is a React component type (function, forwardRef, memo, lazy).
+ *  Excludes React elements (which also have $$typeof but cannot be used as types). */
+function isComponentType(val: unknown): val is React.ComponentType<{ className?: string }> {
+    if (typeof val === 'function') return true;
+    if (typeof val === 'object' && val !== null) {
+        const $$typeof = (val as Record<string, unknown>).$$typeof;
+        return $$typeof !== undefined && $$typeof !== REACT_ELEMENT_TYPE;
+    }
+    return false;
+}
+
+/** Render a component-type icon safely (works with function, forwardRef, memo, and lazy) */
+const IconWrapper: React.FC<{ icon: React.ComponentType<{ className?: string }> }> = ({ icon: IconComp }) => (
+    <IconComp className="w-6 h-6" />
+);
+
 interface StatCardProps {
     title: string;
     value: string | number;
@@ -37,7 +55,7 @@ export const StatCard: React.FC<StatCardProps> = ({
 }) => {
     // Color-based API (Agents, Telemetry, Memory, etc.)
     // icon can be passed as either Icon (component) or icon (component via lowercase prop)
-    const IconComponent = Icon || (typeof icon === 'function' ? icon as React.ComponentType<{ className?: string }> : undefined);
+    const IconComponent = Icon || (isComponentType(icon) ? icon as React.ComponentType<{ className?: string }> : undefined);
     if (color || IconComponent) {
         const cc = STAT_COLORS[color || 'blue'] || STAT_COLORS.blue;
         return (
@@ -90,7 +108,7 @@ export const StatCard: React.FC<StatCardProps> = ({
                 </div>
                 {icon && (
                     <div className={cn('p-3 rounded-xl', subtextClass?.replace('text-', 'bg-').replace('600', '50').replace('400', '50'), 'dark:bg-white/5')}>
-                        {typeof icon === 'function' ? React.createElement(icon as React.ComponentType<{ className?: string }>, { className: 'w-6 h-6' }) : icon}
+                        {isComponentType(icon) ? <IconWrapper icon={icon as React.ComponentType<{ className?: string }>} /> : icon}
                     </div>
                 )}
             </div>

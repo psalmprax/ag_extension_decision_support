@@ -7,7 +7,7 @@ import { getMapData } from '@/services/mapService';
 import { marketPriceService } from '@/services/marketPriceService';
 import { authorize } from '@/middleware/authorize';
 import { validate } from '@/middleware/validate';
-import { soilDataQuerySchema, weatherQuerySchema } from '@/utils/schemas';
+import { soilDataQuerySchema } from '@/utils/schemas';
 import { SatelliteService } from '@/services/satelliteService';
 import { safeError } from '@/utils/safeResponse';
 

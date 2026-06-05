@@ -189,7 +189,7 @@ describe('RAGV2Service', () => {
 
             for (const rel of rels) {
                 // articleId is added at runtime but not in the interface
-                expect((rel as any).articleId).toBe('article-4');
+                expect(rel.articleId).toBe('article-4');
             }
         });
 

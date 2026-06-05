@@ -814,6 +814,7 @@ export function FarmerMap({
                             <Search className="w-4 h-4 text-gray-400 dark:text-gray-500 mr-2" />
                             <input
                                 type="text"
+                                aria-label={t('map_search_placeholder') || 'Search farmers'}
                                 placeholder={t('map_search_placeholder') || 'Search farmers...'}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -1006,6 +1007,7 @@ export function FarmerMap({
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:transition-colors" style={{ color: theme.primary[500] }} />
                                     <input
                                         type="text"
+                                        aria-label={t('map_search_placeholder') || 'Search farmers, regions, crops'}
                                         placeholder={t('map_search_placeholder') || "Search farmers, regions, crops..."}
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}

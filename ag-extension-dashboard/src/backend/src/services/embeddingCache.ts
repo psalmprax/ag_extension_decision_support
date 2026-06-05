@@ -1,5 +1,4 @@
 import { AIRouter } from '@/services/aiProvider/aiProvider';
-import { logger } from '@/utils/logger';
 
 /**
  * In-memory LRU cache for query embeddings.

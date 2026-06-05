@@ -246,7 +246,7 @@ export class AgentOrchestrator {
     const prompt = this.buildTaskPrompt(task);
 
     // Execute with fallback — generateText runs INSIDE the fallback callback
-    const TASK_TIMEOUT_MS = 120000; // 2 minute timeout per task
+    // 2 minute timeout per task is enforced by the AI provider
     const result = await AIProviderFactory.getWithFallback(async (provider) => {
       return await provider.generateText([
         { role: 'system', content: `You are ${agent.name}, an AI agent specialized in: ${agent.capabilities.join(', ')}. Execute the assigned task and return a structured result.` },
