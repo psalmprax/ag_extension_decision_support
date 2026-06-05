@@ -3,7 +3,7 @@
  * Multiple aesthetic themes for the Ag-Extension Dashboard
  */
 
-export type ThemeName = 'forest' | 'golden' | 'terracotta' | 'oceanic' | 'sunset' | 'sage' | 'cyber' | 'teal' | 'emerald' | 'lime';
+export type ThemeName = 'forest' | 'golden' | 'terracotta' | 'oceanic' | 'sunset' | 'sage' | 'teal' | 'emerald' | 'lime' | 'olive' | 'pine' | 'mint' | 'cyber';
 
 export interface ThemeColors {
     primary: {
@@ -483,6 +483,150 @@ export const themes: Record<ThemeName, ThemeColors> = {
     },
 
     /**
+     * Olive Theme - Warm earthy green representing olive groves and Mediterranean agriculture
+     * Best for: Olive farming, vineyards, warm climate agriculture
+     */
+    olive: {
+        primary: {
+            50: '#f6f7e6',
+            100: '#edefc8',
+            200: '#dbdf91',
+            300: '#c9cf5a',
+            400: '#b7bf28',
+            500: '#8fa023',
+            600: '#6f7d1a',
+            700: '#525e12',
+            800: '#37400a',
+            900: '#1d2405',
+        },
+        secondary: {
+            50: '#fdf8f0',
+            100: '#f9edda',
+            200: '#f2dbb5',
+            300: '#e8c98f',
+            400: '#ddb76a',
+            500: '#c9a04f',
+            600: '#a37d3a',
+            700: '#7c5d28',
+            800: '#553f19',
+            900: '#2e230d',
+        },
+        accent: {
+            50: '#fdf2ef',
+            100: '#fae0d8',
+            200: '#f3c0b2',
+            300: '#eaa28b',
+            400: '#df8465',
+            500: '#cc6a48',
+            600: '#a85232',
+            700: '#833d22',
+            800: '#5e2a14',
+            900: '#3a1a0a',
+        },
+        background: {
+            primary: '#f6f7e6',
+            secondary: '#edefc8',
+            card: '#ffffff',
+        },
+    },
+
+    /**
+     * Pine Theme - Deep cool green representing pine forests and timber
+     * Best for: Forestry, cool climate regions, mountain agriculture
+     */
+    pine: {
+        primary: {
+            50: '#eaf3ed',
+            100: '#cee2d5',
+            200: '#9dc4ab',
+            300: '#6ca681',
+            400: '#3b8858',
+            500: '#1d6b3a',
+            600: '#16552d',
+            700: '#104022',
+            800: '#092b16',
+            900: '#03150a',
+        },
+        secondary: {
+            50: '#f0f2f5',
+            100: '#d9dde3',
+            200: '#b3bac8',
+            300: '#8d98ad',
+            400: '#677692',
+            500: '#4a5c78',
+            600: '#3a4960',
+            700: '#2b3648',
+            800: '#1c2430',
+            900: '#0e121a',
+        },
+        accent: {
+            50: '#fefce8',
+            100: '#fef9c3',
+            200: '#fef08a',
+            300: '#fde047',
+            400: '#facc15',
+            500: '#eab308',
+            600: '#ca8a04',
+            700: '#a16207',
+            800: '#854d0e',
+            900: '#713f12',
+        },
+        background: {
+            primary: '#eaf3ed',
+            secondary: '#cee2d5',
+            card: '#ffffff',
+        },
+    },
+
+    /**
+     * Mint Theme - Light refreshing green representing cool mint and spring growth
+     * Best for: Tea plantations, herb gardens, refreshing UI experiences
+     */
+    mint: {
+        primary: {
+            50: '#f0fdf7',
+            100: '#d9f9ec',
+            200: '#b3f2d9',
+            300: '#8ae8c4',
+            400: '#5edbae',
+            500: '#3ccf97',
+            600: '#2ba87a',
+            700: '#1e825f',
+            800: '#135c45',
+            900: '#0a382a',
+        },
+        secondary: {
+            50: '#f5f0f9',
+            100: '#e8daf2',
+            200: '#d1b5e5',
+            300: '#ba90d8',
+            400: '#a36bcb',
+            500: '#8a4eb8',
+            600: '#6d3b94',
+            700: '#512b70',
+            800: '#371d4c',
+            900: '#1e0f29',
+        },
+        accent: {
+            50: '#fef6ef',
+            100: '#fde8d3',
+            200: '#fbd2a6',
+            300: '#f9bb7a',
+            400: '#f7a54e',
+            500: '#f08f2e',
+            600: '#d0731f',
+            700: '#a85814',
+            800: '#803f0c',
+            900: '#592806',
+        },
+        background: {
+            primary: '#f0fdf7',
+            secondary: '#d9f9ec',
+            card: '#ffffff',
+        },
+    },
+
+    /**
      * Cyber Theme - High-contrast dark theme with glassmorphism and neon cyan accents
      * Based on High-Contrast Glass design proposal
      */
@@ -590,6 +734,9 @@ export const themeDescriptions: Record<ThemeName, string> = {
     teal: '🔷 Teal Cyan - Menu accent aesthetic',
     emerald: '💎 Emerald - Premium quality crops',
     lime: '🍋 Lime Fresh - Vitality and new growth',
+    olive: '🌿 Olive Grove - Warm earthy green',
+    pine: '🌲 Pine Forest - Deep cool evergreen',
+    mint: '🌱 Mint Cool - Refreshing spring green',
 };
 
 /**
