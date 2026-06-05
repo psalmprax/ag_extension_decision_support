@@ -57,6 +57,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-warn}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://www.gpexts.com}
       DEMO_ENABLED: true
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-Demo@123}
     labels:
       # Enable Traefik service discovery
       - "traefik.enable=true"
