@@ -86,7 +86,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_0_20px_rgba(34,211,238,0.2)]'
             : 'rounded-none border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-mono text-[10px] uppercase tracking-widest',
         isActive
-            ? (isModern ? 'text-cyan-700 dark:text-cyan-400 font-black' : 'bg-slate-900 text-white')
+            ? (isModern ? 'text-primary-700 dark:text-primary-400 font-black' : 'bg-slate-900 text-white')
             : 'text-slate-500'
     );
 
@@ -122,7 +122,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                         type="text"
                         aria-label="Search system or location"
                         placeholder="Search system or location..."
-                        className="bg-white/5 border border-white/10 rounded-full pl-10 pr-4 py-1.5 text-xs focus:ring-1 focus:ring-cyan-400 outline-none w-64 transition-all text-gray-900 dark:text-white"
+                        className="bg-white/5 border border-white/10 rounded-full pl-10 pr-4 py-1.5 text-xs focus:ring-1 focus:ring-primary-400 outline-none w-64 transition-all text-gray-900 dark:text-white"
                         value={searchQuery}
                         onChange={(e) => {
                             setSearchQuery(e.target.value);
@@ -191,7 +191,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                             className={cn(
                                 'flex items-center gap-2 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-all',
                                 isModern
-                                    ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98] bg-cyan-600/10 text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-400'
+                                    ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98] bg-primary-600/10 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400'
                                     : 'rounded-none border border-slate-300 dark:border-slate-700 font-mono bg-gray-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'
                             )}
                             title="Toggle Design Aesthetic"
@@ -204,7 +204,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     </div>
                     <button
                         onClick={() => setDarkMode(!darkMode)}
-                        className="p-2 rounded-lg bg-white/5 border border-white/10 hover:border-cyan-400/50 hover:bg-white/10 transition-all text-slate-400 hover:text-cyan-400 backdrop-blur-sm"
+                        className="p-2 rounded-lg bg-white/5 border border-white/10 hover:border-primary-400/50 hover:bg-white/10 transition-all text-slate-400 hover:text-primary-400 backdrop-blur-sm"
                         title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                     >
                         {darkMode ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
@@ -212,13 +212,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <button onClick={() => setIsNotificationPanelOpen(true)} className="text-slate-400 hover:text-cyan-400 transition-colors p-2 rounded-full hover:bg-white/5 relative">
+                    <button onClick={() => setIsNotificationPanelOpen(true)} className="text-slate-400 hover:text-primary-400 transition-colors p-2 rounded-full hover:bg-white/5 relative">
                         <Bell className="w-5 h-5" />
                         {apiUnreadCount > 0 && (
-                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></span>
+                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary-400 rounded-full animate-pulse"></span>
                         )}
                     </button>
-                    <button onClick={() => setShowSettingsPanel(true)} className="text-slate-400 hover:text-cyan-400 transition-colors p-2 rounded-full hover:bg-white/5">
+                    <button onClick={() => setShowSettingsPanel(true)} className="text-slate-400 hover:text-primary-400 transition-colors p-2 rounded-full hover:bg-white/5">
                         <Settings className="w-5 h-5" />
                     </button>
                 </div>
@@ -228,8 +228,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                         onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                         className="flex items-center gap-3 pl-4 border-l border-white/10 hover:opacity-80 transition-opacity"
                     >
-                        <div className="w-8 h-8 rounded-full border border-cyan-400/30 overflow-hidden ring-2 ring-cyan-400/10 flex items-center justify-center bg-slate-800">
-                            <span className="text-[10px] text-cyan-400 font-bold">{storeUser?.firstName?.[0]}{storeUser?.lastName?.[0]}</span>
+                        <div className="w-8 h-8 rounded-full border border-primary-400/30 overflow-hidden ring-2 ring-primary-400/10 flex items-center justify-center bg-slate-800">
+                            <span className="text-[10px] text-primary-400 font-bold">{storeUser?.firstName?.[0]}{storeUser?.lastName?.[0]}</span>
                         </div>
                         <div className="hidden xl:block text-left">
                             <p className="text-xs font-bold text-gray-900 dark:text-white leading-none">
@@ -255,7 +255,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                                     </div>
 
                                     <button onClick={() => { setIsProfileMenuOpen(false); setShowProfileModal(true); }} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300">
-                                        <User className="w-4 h-4 text-cyan-400" />
+                                        <User className="w-4 h-4 text-primary-400" />
                                         <span className="text-xs font-bold uppercase tracking-widest">Profile</span>
                                     </button>
                                     <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-rose-500/10 text-rose-400">
