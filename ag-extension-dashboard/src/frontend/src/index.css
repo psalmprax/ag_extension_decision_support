@@ -207,7 +207,7 @@
     }
 
     .dark ::-webkit-scrollbar-thumb:hover {
-        @apply bg-cyan-400/50;
+        @apply bg-primary-400/50;
     }
     
     ::-webkit-scrollbar-corner {
@@ -222,7 +222,7 @@
     }
 
     .neon-glow {
-        @apply shadow-[0_0_15px_rgba(0,245,255,0.3)];
+        @apply shadow-[0_0_15px_rgba(var(--color-primary-400-rgb),0.3)];
     }
 
     .rim-lighting {
@@ -248,17 +248,17 @@
     }
 
     .btn-primary {
-        @apply bg-cyan-400 text-[#003739] hover:brightness-110 active:scale-95 shadow-[0_0_20px_rgba(0,245,255,0.2)];
+        @apply bg-primary-500 text-white hover:brightness-110 active:scale-95 shadow-[0_0_20px_rgba(var(--color-primary-500-rgb),0.3)];
     }
 
     .btn-secondary {
-        @apply glass-panel text-white hover:bg-white/10 border-cyan-400/30;
+        @apply glass-panel text-white hover:bg-white/10 border-primary-400/30;
     }
 
     /* Input styles */
     .input {
         @apply w-full px-4 py-3 rounded-lg border border-white/10 bg-white/5 text-white placeholder-slate-500 transition-all duration-200;
-        @apply focus:outline-none focus:ring-1 focus:ring-cyan-400/50 focus:border-cyan-400;
+        @apply focus:outline-none focus:ring-1 focus:ring-primary-400/50 focus:border-primary-400;
     }
 
     /* Badge styles */
@@ -279,13 +279,13 @@
     }
 
     .badge-info {
-        @apply bg-cyan-500/20 text-cyan-400 border border-cyan-400/30;
+        @apply bg-primary-500/20 text-primary-400 border border-primary-400/30;
     }
 }
 
 @layer utilities {
     .text-glow {
-        @apply drop-shadow-[0_0_8px_rgba(0,245,255,0.5)];
+        @apply drop-shadow-[0_0_8px_rgba(var(--color-primary-400-rgb),0.5)];
     }
 
     .font-headline {
