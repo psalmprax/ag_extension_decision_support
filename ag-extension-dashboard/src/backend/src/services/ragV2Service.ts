@@ -159,7 +159,7 @@ export class RAGV2Service {
 
     // ── Chunking ─────────────────────────────────────────────────────────────
 
-    static async chunkAndEmbedArticle(articleId: string, content: string, metadata: Record<string, any>): Promise<number> {
+    static async chunkAndEmbedArticle(articleId: string, content: string, _metadata: Record<string, any>): Promise<number> {
         const chunks = chunkText(content, 800, 150);
         if (chunks.length === 0) return 0;
 

@@ -14,6 +14,7 @@ router.use(authorize(['admin']));
 // GET /api/health/diagnostics
 // Runs comprehensive infrastructure checks to diagnose why www.gpexts.com is unreachable.
 // Results are cached for 60 seconds to avoid flooding.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let cachedResult: any = null;
 let cacheTime = 0;
 // Disable caching in test mode so each test gets fresh results
@@ -26,7 +27,8 @@ router.get('/', async (_req: Request, res: Response) => {
         return res.json({ success: true, cached: true, timestamp: new Date().toISOString(), ...cachedResult });
     }
 
-    const results: any = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const results: any = {
         timestamp: new Date().toISOString(),
         hostname: process.env.HOSTNAME || '',
         node_env: process.env.NODE_ENV || 'development',
@@ -36,7 +38,7 @@ router.get('/', async (_req: Request, res: Response) => {
 
     // ── 1. DNS Resolution ──────────────────────────────────────────────
     try {
-        const dnsResults: any = {};
+        const dnsResults: Record<string, { resolved: boolean; ips: string[]; error?: string }> = {};
         const domain = process.env.DOMAIN || 'www.gpexts.com';
         const rootDomain = domain.replace(/^www\./, '');
         for (const name of [domain, rootDomain]) {
@@ -62,7 +64,7 @@ router.get('/', async (_req: Request, res: Response) => {
         { port: process.env.NODE_ENV === 'production' ? 80 : 5173, name: process.env.NODE_ENV === 'production' ? 'Frontend (Nginx)' : 'Frontend (Vite)', host: 'localhost' },
     ];
 
-    const portResults: any[] = [];
+    const portResults: Array<{ port: number; name: string; host: string; open: boolean }> = [];
     for (const p of portsToCheck) {
         const open = await connectTCP(p.host, p.port);
         portResults.push({ ...p, open });
@@ -93,7 +95,7 @@ router.get('/', async (_req: Request, res: Response) => {
         { name: 'ag-extension-dashboard-traefik-1', port: 80 },
     ];
 
-    const containerResults: any[] = [];
+    const containerResults: Array<{ name: string; port: number; reachable: boolean }> = [];
     for (const c of containersToCheck) {
         const reachable = await connectTCP(c.name, c.port);
         containerResults.push({ ...c, reachable });
@@ -136,8 +138,8 @@ router.get('/', async (_req: Request, res: Response) => {
         recommendations.push(`Check DNS A record for ${checkDomain} — should point to ${process.env.SERVER_IP || '145.223.97.248'}`);
     }
 
-    const port80 = results.ports?.find((p: any) => p.port === 80);
-    const port443 = results.ports?.find((p: any) => p.port === 443);
+    const port80 = results.ports?.find((p: { port: number }) => p.port === 80);
+    const port443 = results.ports?.find((p: { port: number }) => p.port === 443);
 
     if (port80 && !port80.open) {
         issues.push('Port 80 (HTTP) is closed — Traefik may not be running');
@@ -178,7 +180,7 @@ router.get('/', async (_req: Request, res: Response) => {
     }
 });
 
-function tryParseJSON(str: string): any {
+function tryParseJSON(str: string): Record<string, unknown> | string {
     try {
         return JSON.parse(str);
     } catch {

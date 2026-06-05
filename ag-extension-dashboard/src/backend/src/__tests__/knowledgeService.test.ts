@@ -135,7 +135,7 @@ describe('KnowledgeService.categorizeQuery — timeout wrapper (10s)', () => {
         expect(result).toEqual(['pest_and_disease', 'agronomy_and_yield']);
     });
 
-    it('returns ["general_inquiry"] when all labels are below threshold', async () => {
+    it('returns empty array when all labels are below threshold', async () => {
         mockRouteRequest.mockResolvedValue({
             labels: [
                 { label: 'general_inquiry', score: 0.35 },
@@ -259,6 +259,7 @@ describe('KnowledgeService.askQuestion — reasoning timeout wrapper (60s)', () 
             visuals: null,
         });
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         mockRouteRequest.mockImplementation(async (type: string, opts?: any) => {
             if (type === 'classify') {
                 return { labels: [{ label: 'pest_and_disease', score: 0.95 }] };

@@ -87,18 +87,19 @@ export class SoilGridsService {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private parseSoilGridsResponse(data: any): SoilProperties {
         const layers = data?.properties?.layers || [];
         
         const getMeanValue = (layerName: string): number | null => {
-            const layer = layers.find((l: any) => l.name === layerName);
+            const layer = layers.find((l: { name: string }) => l.name === layerName);
             if (!layer || !layer.depths || layer.depths.length === 0) return null;
             
             // Average the mean values across the queried depths (0-5, 5-15, 15-30 cm)
-            const validDepths = layer.depths.filter((d: any) => d.values && d.values.mean !== undefined);
+            const validDepths = layer.depths.filter((d: { values?: { mean?: number } }) => d.values && d.values.mean !== undefined);
             if (validDepths.length === 0) return null;
             
-            const sum = validDepths.reduce((acc: number, cur: any) => acc + cur.values.mean, 0);
+            const sum = validDepths.reduce((acc: number, cur: { values: { mean: number } }) => acc + cur.values.mean, 0);
             return sum / validDepths.length;
         };
 

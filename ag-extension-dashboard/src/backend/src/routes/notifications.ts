@@ -31,7 +31,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 
         res.json({
             success: true,
-            data: result.rows.map((n: any) => ({
+            data: result.rows.map((n: Record<string, unknown>) => ({
                 id: n.id,
                 type: n.type,
                 title: n.title,
@@ -199,7 +199,7 @@ router.post('/broadcast', authorize(['admin', 'regional_manager']), async (req: 
 
         // Get user IDs based on role filter
         let userQuery = 'SELECT id FROM users';
-        const params: any[] = [];
+        const params: unknown[] = [];
 
         if (role) {
             userQuery += ' WHERE role = $1';

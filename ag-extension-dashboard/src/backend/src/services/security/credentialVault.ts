@@ -133,7 +133,6 @@ export class CredentialVault {
   }
 
   private encrypt(value: string): string {
-    const crypto = require('crypto');
     const key = crypto.createHash('sha256').update(this.encryptionKey).digest();
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
@@ -144,7 +143,6 @@ export class CredentialVault {
   }
 
   private decrypt(encrypted: string): string {
-    const crypto = require('crypto');
     const key = crypto.createHash('sha256').update(this.encryptionKey).digest();
     const parts = encrypted.split(':');
     if (parts.length === 3) {

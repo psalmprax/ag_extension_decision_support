@@ -21,14 +21,14 @@ export const perUserRateLimit = rateLimit({
     keyGenerator: (req: AuthRequest) => {
         return req.user?.userId || ipKeyGenerator(req.ip || 'anonymous');
     },
-    skip: (req: AuthRequest) => {
+    skip: (_req: AuthRequest) => {
         // Allow override via env var for staging/dev-facing deployments
         if (process.env.RATE_LIMIT_DISABLED === 'true') return true;
         // Skip in test only (not dev — staging should be rate-limited)
         return config.nodeEnv === 'test';
     },
-    handler: (req: AuthRequest, res: Response) => {
-        logger.warn(`Rate limit exceeded for user: ${req.user?.userId || req.ip}`);
+    handler: (_req: AuthRequest, res: Response) => {
+        logger.warn(`Rate limit exceeded for user: ${_req.user?.userId || _req.ip}`);
         res.status(429).json({
             success: false,
             error: 'Too many requests',
