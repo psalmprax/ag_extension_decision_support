@@ -26,6 +26,7 @@ export const CHART_COLORS = {
     warning: '#f59e0b',
     danger: '#ef4444',
     purple: '#8b5cf6',
-    cyan: '#06b6d4',
+    cyan: '#ff6600',
     muted: '#6b7280',
 } as const;
+// HOTRELOAD TEST 1780468119

@@ -1,12 +1,14 @@
 import { Router, Request, Response } from 'express';
 import { authorize, AuthRequest } from '@/middleware/authorize';
+import { validate } from '@/middleware/validate';
+import { emailWorkflowListSchema } from '@/utils/schemas';
 import { emailWorkflowService } from '@/services/emailWorkflowService';
 import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
-router.get('/templates', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
+router.get('/templates', authorize(['extension_officer', 'admin', 'farmer']), validate(emailWorkflowListSchema), async (req: Request, res: Response) => {
     try {
         const category = req.query.category as string | undefined;
         const templates = await emailWorkflowService.getTemplates(category);

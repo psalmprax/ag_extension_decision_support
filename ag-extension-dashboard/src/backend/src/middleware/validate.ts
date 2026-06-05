@@ -1,32 +1,45 @@
 import { Request, Response, NextFunction } from 'express';
-import { z, ZodSchema, ZodError } from 'zod';
+import { z, ZodSchema, ZodError, ZodObject } from 'zod';
 
 /**
  * Validation middleware factory
- * Validates request body, query, and params against Zod schemas
+ * Validates request body, query, and params against Zod schemas.
+ *
+ * Accepts two formats:
+ * 1. Flat: { body: z.object({...}), query: z.object({...}) }
+ * 2. Wrapped: z.object({ body: z.object({...}), query: z.object({...}) })
  */
-export const validate = (schema: {
-    body?: ZodSchema;
-    query?: ZodSchema;
-    params?: ZodSchema;
-}) => {
+export const validate = (schema: ZodSchema | { body?: ZodSchema; query?: ZodSchema; params?: ZodSchema }) => {
+    // Normalize: if schema is a ZodObject with body/query/params keys, extract them
+    let bodySchema: ZodSchema | undefined;
+    let querySchema: ZodSchema | undefined;
+    let paramsSchema: ZodSchema | undefined;
+
+    if (schema instanceof ZodObject && '_def' in schema) {
+        // Wrapped format: z.object({ body: ..., query: ..., params: ... })
+        const shape = (schema as any)._def.shape();
+        bodySchema = shape.body;
+        querySchema = shape.query;
+        paramsSchema = shape.params;
+    } else {
+        // Flat format: { body?: ZodSchema, query?: ZodSchema, params?: ZodSchema }
+        const s = schema as { body?: ZodSchema; query?: ZodSchema; params?: ZodSchema };
+        bodySchema = s.body;
+        querySchema = s.query;
+        paramsSchema = s.params;
+    }
+
     return (req: Request, res: Response, next: NextFunction) => {
         try {
-            // Validate body
-            if (schema.body) {
-                schema.body.parse(req.body);
+            if (bodySchema) {
+                bodySchema.parse(req.body);
             }
-
-            // Validate query parameters
-            if (schema.query) {
-                schema.query.parse(req.query);
+            if (querySchema) {
+                querySchema.parse(req.query);
             }
-
-            // Validate URL parameters
-            if (schema.params) {
-                schema.params.parse(req.params);
+            if (paramsSchema) {
+                paramsSchema.parse(req.params);
             }
-
             next();
         } catch (error) {
             if (error instanceof ZodError) {
@@ -34,14 +47,12 @@ export const validate = (schema: {
                     path: issue.path.join('.'),
                     message: issue.message,
                 }));
-
                 return res.status(400).json({
                     success: false,
                     error: 'Validation failed',
                     details: errors,
                 });
             }
-
             next(error);
         }
     };
