@@ -9,12 +9,10 @@ import { initializeTheme } from './theme';
 import { LanguageProvider } from './lib/LanguageContext';
 import { ThemeProvider } from './lib/ThemeProvider';
 import ErrorBoundary from './components/ErrorBoundary';
-// Global console silencing for production logging compliance
+// In production, only silence verbose console.log/info/debug — keep error/warn for debugging
 if (!import.meta.env.DEV) {
     const noop = () => {};
     console.log = noop;
-    console.warn = noop;
-    console.error = noop;
     console.info = noop;
     console.debug = noop;
 }

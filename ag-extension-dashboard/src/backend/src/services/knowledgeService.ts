@@ -486,16 +486,27 @@ ${priceList.map((p: any) => `- ${p.crop}: ${p.price} (${p.trend})`).join('\n')}`
             .join('\n\n---\n\n');
 
         // 4. Generate answer using Reasoning capability of ALFA
+        // Wrapped in a 60-second timeout so hangs on an unhealthy AI provider don't block the route.
+        const REASONING_TIMEOUT_MS = 60000;
+        let reasoningTimeoutId: ReturnType<typeof setTimeout> | undefined;
         try {
-            const reasoningResult: ReasoningResult = await AIRouter.routeRequest('reason', {
-                context: `${contextText || 'No specific context found in knowledge base.'}\n\nGrounding Guidelines:
+            const reasoningResult: ReasoningResult = await Promise.race([
+                AIRouter.routeRequest('reason', {
+                    context: `${contextText || 'No specific context found in knowledge base.'}\n\nGrounding Guidelines:
 - Prioritize context sources with high similarity scores (e.g. 0.70+).
 - Treat context with lower scores (< 0.50) as supplementary or less relevant context.
 - Explicitly base your answer on the provided context. If the context does not contain enough information to answer the question, state that.`,
-                query: queryText,
-                attachments: attachments, // Pass multimodal context
-                options: { temperature: 0.2, maxTokens: 900 }
-            });
+                    query: queryText,
+                    attachments: attachments, // Pass multimodal context
+                    options: { temperature: 0.2, maxTokens: 900 }
+                }),
+                new Promise<ReasoningResult>((_, reject) => {
+                    reasoningTimeoutId = setTimeout(
+                        () => reject(new Error(`askQuestion reasoning timed out after ${REASONING_TIMEOUT_MS}ms`)),
+                        REASONING_TIMEOUT_MS
+                    );
+                }),
+            ]).finally(() => clearTimeout(reasoningTimeoutId));
 
             // 5. Generate TTS and validate visuals in parallel using Promise.all (saves ~2-3 seconds!)
             let audioBase64: string | undefined = undefined;
@@ -651,22 +662,38 @@ ${priceList.map((p: any) => `- ${p.crop}: ${p.price} (${p.trend})`).join('\n')}`
 
     /**
      * Categorize a query to optimize retrieval
+     * Wrapped in a 10-second timeout so a slow AI provider doesn't block the RAG pipeline.
      */
     static async categorizeQuery(queryText: string): Promise<string[]> {
+        const TIMEOUT_MS = 10000;
+        let timeoutId: ReturnType<typeof setTimeout> | undefined;
         try {
-            const classification = await AIRouter.routeRequest('classify', {
-                input: queryText,
-                options: {
-                    taxonomy: 'pest_and_disease, agronomy_and_yield, climate_and_weather, market_prices, general_inquiry',
-                    multiLabel: true
-                }
-            });
+            const classification = await Promise.race([
+                AIRouter.routeRequest('classify', {
+                    input: queryText,
+                    options: {
+                        taxonomy: 'pest_and_disease, agronomy_and_yield, climate_and_weather, market_prices, general_inquiry',
+                        multiLabel: true
+                    }
+                }),
+                new Promise<any>((_, reject) => {
+                    timeoutId = setTimeout(
+                        () => reject(new Error(`categorizeQuery timed out after ${TIMEOUT_MS}ms`)),
+                        TIMEOUT_MS
+                    );
+                }),
+            ]).finally(() => clearTimeout(timeoutId));
 
             return classification.labels
                 .filter((l: any) => l.score > 0.4)
                 .map((l: any) => l.label);
         } catch (error) {
-            logger.error('Query classification failed:', error);
+            const isTimeout = (error as Error).message?.includes('categorizeQuery timed out');
+            if (isTimeout) {
+                logger.warn(`categorizeQuery timeout for: "${queryText.substring(0, 80)}" — falling back to general_inquiry`);
+            } else {
+                logger.error('categorizeQuery failed:', error);
+            }
             return ['general_inquiry'];
         }
     }

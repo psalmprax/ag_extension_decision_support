@@ -75,5 +75,5 @@ COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 EXPOSE 3001
 
 # Use tini as init process for proper signal handling
-ENTRYPOINT ["/sbin/tini", "--"]
+ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["node", "dist/index.js"]

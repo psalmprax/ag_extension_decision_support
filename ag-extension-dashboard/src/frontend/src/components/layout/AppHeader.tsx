@@ -120,6 +120,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
                     <input
                         type="text"
+                        aria-label="Search system or location"
                         placeholder="Search system or location..."
                         className="bg-white/5 border border-white/10 rounded-full pl-10 pr-4 py-1.5 text-xs focus:ring-1 focus:ring-cyan-400 outline-none w-64 transition-all text-gray-900 dark:text-white"
                         value={searchQuery}

@@ -97,9 +97,12 @@ check_port() {
 
 check_port "localhost" 80 "HTTP (Traefik)"
 check_port "localhost" 443 "HTTPS"
-check_port "localhost" 3001 "Backend API"
-check_port "localhost" 5432 "PostgreSQL"
-check_port "localhost" 6379 "Redis"
+
+# Container ports are mapped to host-side ports; use the host port numbers.
+# Backend container port 3001 → host 7500, DB 5432 → host 7501, Redis 6379 → host 7502
+check_port "localhost" 7500 "Backend API (host)→3001 (container)"
+check_port "localhost" 7501 "PostgreSQL (host)→5432 (container)"
+check_port "localhost" 7502 "Redis (host)→6379 (container)"
 
 echo ""
 info "If port 443 is closed — docker-compose.prod.yml is not deployed."
@@ -108,7 +111,8 @@ info "Fix: docker compose -f ${COMPOSE_DIR}/docker-compose.yml -f ${COMPOSE_DIR}
 # ─── 3. Docker Container Status ──────────────────────────────────────────
 header "3. Docker Container Status"
 
-CONTAINERS=("ag-extension-dashboard-traefik-1" "ag-dashboard-backend" "ag-dashboard-frontend" "ag-dashboard-db" "ag-dashboard-redis")
+# Actual container names from the running deployment (Docker Compose v2 naming)
+CONTAINERS=("ag-traefik" "ag-dashboard-backend" "ag-dashboard-frontend" "ag-dashboard-db" "ag-dashboard-redis" "ag-agent-zero" "ag-crew-ai")
 
 for container in "${CONTAINERS[@]}"; do
     if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^${container}$"; then
@@ -220,25 +224,27 @@ fi
 header "Summary"
 
 echo ""
-if timeout 3 bash -c "echo >/dev/tcp/localhost/443" 2>/dev/null; then
-    echo -e "  ${GREEN}${BOLD}✓ HTTPS (443) is OPEN${NC} — site should be accessible at https://${DOMAIN}/"
-else
-    if timeout 3 bash -c "echo >/dev/tcp/localhost/80" 2>/dev/null; then
+# Check via curl against the actual site URL (more reliable than /dev/tcp for proxied services)
+SITE_CHECK=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:80/ 2>/dev/null)
+if [ "$SITE_CHECK" = "200" ]; then
+    if timeout 3 bash -c "echo >/dev/tcp/localhost/443" 2>/dev/null; then
+        echo -e "  ${GREEN}${BOLD}✓ HTTPS (443) is OPEN${NC} — site should be accessible at https://${DOMAIN}/"
+    else
         echo -e "  ${YELLOW}${BOLD}⚠ HTTP (80) is OPEN but HTTPS (443) is CLOSED${NC}"
         echo -e "  ${YELLOW}${BOLD}  The site is reachable on HTTP only.${NC}"
         echo ""
         echo -e "  ${BOLD}Recommended fix:${NC}"
         echo "    cd ${COMPOSE_DIR}"
         echo "    docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --build"
-    else
-        echo -e "  ${RED}${BOLD}✗ BOTH HTTP (80) and HTTPS (443) are CLOSED${NC}"
-        echo -e "  ${RED}${BOLD}  Traefik may not be running.${NC}"
-        echo ""
-        echo -e "  ${BOLD}Recommended fix:${NC}"
-        echo "    docker ps | grep traefik"
-        echo "    cd ${COMPOSE_DIR}"
-        echo "    docker compose -f docker-compose.yml up -d traefik"
     fi
+else
+    echo -e "  ${RED}${BOLD}✗ BOTH HTTP (80) and HTTPS (443) are CLOSED${NC}"
+    echo -e "  ${RED}${BOLD}  Traefik may not be running.${NC}"
+    echo ""
+    echo -e "  ${BOLD}Recommended fix:${NC}"
+    echo "    docker ps | grep traefik"
+    echo "    cd ${COMPOSE_DIR}"
+    echo "    docker compose -f docker-compose.yml up -d traefik"
 fi
 
 echo ""
