@@ -83,17 +83,54 @@ test.describe('Performance', () => {
     });
 });
 
-// Infrastructure-dependent tests: skipped because they require WebGL (Leaflet maps)
-// or specific API data (weather), which are not available in headless Chromium CI.
+// Infrastructure-dependent tests: these may use WebGL (Leaflet maps) or external tile services
+// but the component containers render even without full WebGL support.
 test.describe('Farmer Map Component', () => {
-    test.skip('should render map component (requires WebGL in headless Chromium)', () => {});
-    test.skip('should have map layer controls (requires WebGL in headless Chromium)', () => {});
+    test.beforeEach(async ({ page }) => {
+        await setupAuthenticatedPage(page);
+    });
+
+    test('should render farmer map container on dashboard', async ({ page }) => {
+        // The FarmerMap component renders .leaflet-container even in headless mode
+        const mapContainer = page.locator('.leaflet-container');
+        await expect(mapContainer).toBeVisible({ timeout: 15000 });
+    });
+
+    test('should have map interaction elements (zoom controls)', async ({ page }) => {
+        // Zoom controls are part of the Leaflet UI
+        const zoomIn = page.locator('.leaflet-control-zoom-in');
+        await expect(zoomIn).toBeVisible({ timeout: 10000 });
+    });
 });
 
 test.describe('Weather Widget', () => {
-    test.skip('should display weather information (requires real weather API data)', () => {});
+    test.beforeEach(async ({ page }) => {
+        await setupAuthenticatedPage(page);
+    });
+
+    test('should display weather information from mocked API', async ({ page }) => {
+        // WeatherWidget fetches /api/external/weather and displays temp + condition
+        // The API_MOCKS table has /api/external/weather returning mock data
+        await page.waitForTimeout(3000);
+        const weatherVisible = await page.getByText(/Sunny|Clear|Rain|Cloud|°C/i).first().isVisible().catch(() => false);
+        expect(weatherVisible).toBe(true);
+    });
 });
 
 test.describe('Language Support', () => {
-    test.skip('should have language switcher (located in header or login page depending on context)', () => {});
+    test.beforeEach(async ({ page }) => {
+        await setupAuthenticatedPage(page);
+    });
+
+    test('should have language switcher in the app header', async ({ page }) => {
+        // LanguageSwitcher component is rendered in AppHeader
+        // It shows a globe/language icon button that opens a dropdown
+        const langSwitcher = page.locator('header').getByRole('button').filter({ hasText: /language|EN|SW|ES|FR/i });
+        const hasLangSwitcher = await langSwitcher.count().then(c => c > 0).catch(() => false);
+        // The language switcher may use an icon without text — check for any language-related element in the header
+        const hasLangElement = await page.locator('[aria-label*="language" i], [aria-label*="Language" i], [data-testid*="language" i]').count().then(c => c > 0).catch(() => false);
+        console.log(`Language switcher found: ${hasLangSwitcher || hasLangElement}`);
+        // At minimum, the page should have some language-related UI
+        expect(hasLangSwitcher || hasLangElement).toBe(true);
+    });
 });
