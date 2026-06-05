@@ -51,5 +51,4 @@ function getEmailWorker(): Worker<EmailJobData> | null {
 // Export the lazy getter — no Redis connection until first call
 export { getEmailWorker };
 
-// Exported for any code that needs the worker reference
-export { } from 'bullmq';
+
