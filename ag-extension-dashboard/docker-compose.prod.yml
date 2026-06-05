@@ -56,6 +56,7 @@ services:
       NODE_ENV: production
       LOG_LEVEL: ${LOG_LEVEL:-warn}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://www.gpexts.com}
+      DEMO_ENABLED: true
     labels:
       # Enable Traefik service discovery
       - "traefik.enable=true"
