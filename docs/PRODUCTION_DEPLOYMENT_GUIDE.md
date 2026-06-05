@@ -584,6 +584,13 @@ server {
 }
 ```
 
+> **⚠️ CSP Font Domains**: When using Google Fonts, ensure your `Content-Security-Policy` includes:
+> - `fonts.googleapis.com` in `style-src` (for the CSS stylesheet)
+> - `fonts.gstatic.com` in `font-src` (for the actual font files)
+> 
+> Both the **Nginx CSP** (frontend) and the **backend helmet CSP** must include these domains.
+> The backend CSP is configured in `src/backend/src/app.ts` in the `helmet` middleware.
+
 ### **8.2 API Security**
 
 ```javascript
@@ -711,6 +718,7 @@ EXPLAIN ANALYZE SELECT * FROM farmers WHERE region = 'Nairobi';
 - [ ] Service worker tested and working
 - [ ] Push notifications configured
 - [ ] Error tracking and monitoring active
+- [ ] Security headers (CSP) verified — Google Fonts domains (`fonts.googleapis.com`, `fonts.gstatic.com`) allowed
 - [ ] Performance benchmarks established
 
 ### **Launch Day**
