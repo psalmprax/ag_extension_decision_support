@@ -61,6 +61,8 @@ jest.mock('../utils/logger', () => ({
 
 import { AIRouter } from '../services/aiProvider/aiProvider';
 import { logger } from '../utils/logger';
+import { VectorService } from '../services/vectorService';
+import { cacheGet } from '../services/cacheService';
 
 const mockRouteRequest = AIRouter.routeRequest as jest.MockedFunction<typeof AIRouter.routeRequest>;
 const mockLoggerWarn = logger.warn as jest.MockedFunction<typeof logger.warn>;
@@ -155,7 +157,6 @@ describe('KnowledgeService.askQuestion — reasoning timeout wrapper (60s)', () 
         jest.clearAllMocks();
 
         // Default mocks for supporting services
-        const { VectorService } = require('../services/vectorService');
         (VectorService.hybridSearch as jest.Mock).mockResolvedValue([
             {
                 id: 'doc-1',
@@ -165,7 +166,6 @@ describe('KnowledgeService.askQuestion — reasoning timeout wrapper (60s)', () 
             },
         ]);
 
-        const { cacheGet } = require('../services/cacheService');
         (cacheGet as jest.Mock).mockResolvedValue(null);
     });
 
@@ -234,7 +234,6 @@ describe('KnowledgeService.askQuestion — reasoning timeout wrapper (60s)', () 
 
     it('re-throws error when both reasoning and context retrieval fail', async () => {
         // No context available
-        const { VectorService } = require('../services/vectorService');
         (VectorService.hybridSearch as jest.Mock).mockResolvedValue([]);
 
         mockRouteRequest.mockImplementation(async (type: string) => {
