@@ -3,7 +3,7 @@
  * Multiple aesthetic themes for the Ag-Extension Dashboard
  */
 
-export type ThemeName = 'forest' | 'golden' | 'terracotta' | 'oceanic' | 'sunset' | 'sage' | 'cyber';
+export type ThemeName = 'forest' | 'golden' | 'terracotta' | 'oceanic' | 'sunset' | 'sage' | 'cyber' | 'teal' | 'emerald' | 'lime';
 
 export interface ThemeColors {
     primary: {
@@ -339,6 +339,150 @@ export const themes: Record<ThemeName, ThemeColors> = {
     },
 
     /**
+     * Teal Theme - Cyan/teal primary matching the sidebar menu aesthetic
+     * Best for: Modern, tech-forward agricultural interfaces
+     */
+    teal: {
+        primary: {
+            50: '#f0fdfa',
+            100: '#ccfbf1',
+            200: '#99f6e4',
+            300: '#5eead4',
+            400: '#2dd4bf',
+            500: '#14b8a6',
+            600: '#0d9488',
+            700: '#0f766e',
+            800: '#115e59',
+            900: '#134e4a',
+        },
+        secondary: {
+            50: '#eef2ff',
+            100: '#e0e7ff',
+            200: '#c7d2fe',
+            300: '#a5b4fc',
+            400: '#818cf8',
+            500: '#6366f1',
+            600: '#4f46e5',
+            700: '#4338ca',
+            800: '#3730a3',
+            900: '#312e81',
+        },
+        accent: {
+            50: '#fffbeb',
+            100: '#fef3c7',
+            200: '#fde68a',
+            300: '#fcd34d',
+            400: '#fbbf24',
+            500: '#f59e0b',
+            600: '#d97706',
+            700: '#b45309',
+            800: '#92400e',
+            900: '#78350f',
+        },
+        background: {
+            primary: '#f0fdfa',
+            secondary: '#ccfbf1',
+            card: '#ffffff',
+        },
+    },
+
+    /**
+     * Emerald Theme - Rich, premium green representing quality crops and prosperity
+     * Best for: Premium farming operations, high-value crops
+     */
+    emerald: {
+        primary: {
+            50: '#ecfdf5',
+            100: '#d1fae5',
+            200: '#a7f3d0',
+            300: '#6ee7b7',
+            400: '#34d399',
+            500: '#10b981',
+            600: '#059669',
+            700: '#047857',
+            800: '#065f46',
+            900: '#064e3b',
+        },
+        secondary: {
+            50: '#f5f3ff',
+            100: '#ede9fe',
+            200: '#ddd6fe',
+            300: '#c4b5fd',
+            400: '#a78bfa',
+            500: '#8b5cf6',
+            600: '#7c3aed',
+            700: '#6d28d9',
+            800: '#5b21b6',
+            900: '#4c1d95',
+        },
+        accent: {
+            50: '#fefce8',
+            100: '#fef9c3',
+            200: '#fef08a',
+            300: '#fde047',
+            400: '#facc15',
+            500: '#eab308',
+            600: '#ca8a04',
+            700: '#a16207',
+            800: '#854d0e',
+            900: '#713f12',
+        },
+        background: {
+            primary: '#ecfdf5',
+            secondary: '#d1fae5',
+            card: '#ffffff',
+        },
+    },
+
+    /**
+     * Lime Theme - Fresh, zesty green representing vitality and new growth
+     * Best for: Vegetable farming, greenhouses, startups
+     */
+    lime: {
+        primary: {
+            50: '#f7fee7',
+            100: '#ecfccb',
+            200: '#d9f99d',
+            300: '#bef264',
+            400: '#a3e635',
+            500: '#84cc16',
+            600: '#65a30d',
+            700: '#4d7c0f',
+            800: '#3f6212',
+            900: '#365314',
+        },
+        secondary: {
+            50: '#faf5ff',
+            100: '#f3e8ff',
+            200: '#e9d5ff',
+            300: '#d8b4fe',
+            400: '#c084fc',
+            500: '#a855f7',
+            600: '#9333ea',
+            700: '#7e22ce',
+            800: '#6b21a8',
+            900: '#581c87',
+        },
+        accent: {
+            50: '#fff7ed',
+            100: '#ffedd5',
+            200: '#fed7aa',
+            300: '#fdba74',
+            400: '#fb923c',
+            500: '#f97316',
+            600: '#ea580c',
+            700: '#c2410c',
+            800: '#9a3412',
+            900: '#7c2d12',
+        },
+        background: {
+            primary: '#f7fee7',
+            secondary: '#ecfccb',
+            card: '#ffffff',
+        },
+    },
+
+    /**
      * Cyber Theme - High-contrast dark theme with glassmorphism and neon cyan accents
      * Based on High-Contrast Glass design proposal
      */
@@ -443,6 +587,9 @@ export const themeDescriptions: Record<ThemeName, string> = {
     sunset: '🌅 Sunset Orange - Warm harvest twilight',
     sage: '🌿 Sage Green - Vegetables and organic',
     cyber: '🌑 Cyber Dark - High-tech night mode',
+    teal: '🔷 Teal Cyan - Menu accent aesthetic',
+    emerald: '💎 Emerald - Premium quality crops',
+    lime: '🍋 Lime Fresh - Vitality and new growth',
 };
 
 /**
