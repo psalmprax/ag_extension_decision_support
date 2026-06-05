@@ -41,7 +41,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     return (
         <div className="animate-in fade-in duration-500">
             <div className='mb-12'>
-                <h1 className={`text-5xl font-black tracking-tighter font-headline mb-2 drop-shadow-[0_0_15px_rgba(0,245,255,0.1)] dark:drop-shadow-[0_0_15px_rgba(0,245,255,0.3)] ${headingClass}`}>
+                <h1 className={`text-5xl font-black tracking-tighter font-headline mb-2 drop-shadow-[0_0_15px_rgba(var(--color-primary-400-rgb),0.1)] dark:drop-shadow-[0_0_15px_rgba(var(--color-primary-400-rgb),0.3)] ${headingClass}`}>
                     {isModern ? 'Strategic Intelligence' : 'Operations Dashboard'}
                 </h1>
                 <p className='text-slate-400 font-headline font-medium text-lg'>
@@ -194,7 +194,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                             initial={{ width: 0 }}
                                             animate={{ width: `${item.progress}%` }}
                                             transition={{ duration: 1, delay: i * 0.1 }}
-                                            className={`h-full ${item.color} rounded-full shadow-[0_0_10px_rgba(0,245,255,0.3)]`}
+                                            className={`h-full ${item.color} rounded-full shadow-[0_0_10px_rgba(var(--color-primary-400-rgb),0.3)]`}
                                         />
                                     </div>
                                 </div>

@@ -62,7 +62,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                                         ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98]'
                                         : 'rounded-none border border-slate-300 dark:border-slate-700 font-mono text-[10px] uppercase tracking-widest',
                                     activeTab === item.id
-                                        ? 'bg-primary-600/10 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400 shadow-[inset_0_0_15px_rgba(0,245,255,0.1)]'
+                                        ? 'bg-primary-600/10 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400 shadow-[inset_0_0_15px_rgba(var(--color-primary-400-rgb),0.1)]'
                                         : cn(subtextClass, 'hover:bg-black/5 dark:hover:bg-white/5 hover:text-primary-600 dark:hover:text-primary-200')
                                 )}
                             >

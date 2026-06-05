@@ -83,7 +83,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     const navBtnClass = (isActive: boolean) => cn(
         'font-headline tracking-tight transition-all px-4 py-2',
         isModern
-            ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_0_20px_rgba(34,211,238,0.2)]'
+            ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_0_20px_rgba(var(--color-primary-400-rgb),0.2)]'
             : 'rounded-none border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-mono text-[10px] uppercase tracking-widest',
         isActive
             ? (isModern ? 'text-primary-700 dark:text-primary-400 font-black' : 'bg-slate-900 text-white')
