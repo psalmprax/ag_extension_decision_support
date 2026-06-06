@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authorize, AuthRequest } from '@/middleware/authorize';
 import { validate } from '@/middleware/validate';
-import { emailWorkflowListSchema } from '@/utils/schemas';
+import { emailWorkflowListSchema, updateEmailTemplateSchema } from '@/utils/schemas';
 import { emailWorkflowService } from '@/services/emailWorkflowService';
 import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
@@ -19,7 +19,7 @@ router.get('/templates', authorize(['extension_officer', 'admin', 'farmer']), va
     }
 });
 
-router.put('/templates/:id', authorize(['admin']), async (req: Request, res: Response) => {
+router.put('/templates/:id', authorize(['admin', 'extension_officer']), validate(updateEmailTemplateSchema), async (req: Request, res: Response) => {
     try {
         const { subject, body, category, variables } = req.body;
         const success = await emailWorkflowService.updateTemplate(req.params.id, { subject, body, category, variables });
