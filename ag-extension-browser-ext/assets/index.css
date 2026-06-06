@@ -22,4 +22,6 @@ body {
   display: flex;
   min-width: 320px;
   min-height: 100vh;
+  /* Scale everything down 20% */
+  zoom: 0.8;
 }
