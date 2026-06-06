@@ -18,15 +18,14 @@ export const STAT_COLORS: Record<string, { bg: string; icon: string }> = {
 
 /**
  * Chart color palette for Recharts visualizations.
- * Semantic names → hex values for dark-mode-aware chart fills.
+ * Semantic names → CSS variable references for theme-aware chart fills.
  */
 export const CHART_COLORS = {
-    primary: '#3b82f6',
-    success: '#22c55e',
-    warning: '#f59e0b',
-    danger: '#ef4444',
-    purple: '#8b5cf6',
-    cyan: '#ff6600',
-    muted: '#6b7280',
+    primary: 'rgb(var(--color-primary-500-rgb, 59 130 246))',
+    success: 'rgb(var(--color-primary-400-rgb, 34 197 94))',
+    warning: 'rgb(var(--color-accent-500-rgb, 245 158 11))',
+    danger: 'rgb(var(--color-error-500-rgb, 239 68 68))',
+    purple: 'rgb(139 92 246)',
+    cyan: 'rgb(var(--color-accent-500-rgb, 255 102 0))',
+    muted: 'rgb(var(--color-secondary-400-rgb, 107 114 128))',
 } as const;
-// HOTRELOAD TEST 1780468119
