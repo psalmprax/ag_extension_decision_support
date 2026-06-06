@@ -93,6 +93,12 @@ class PaymentService {
 
     // PayPal initialization
     private async initializePayPal() {
+        // Skip PayPal init if no database (avoids Prisma errors in CI/test)
+        if (!process.env.DATABASE_URL) {
+            logger.warn('PayPal not configured (no database) - PayPal payments unavailable');
+            this.paypalConfigured = false;
+            return;
+        }
         const paypalClientId = await systemConfigService.getPayPalKey();
         const paypalClientSecret = process.env.PAYPAL_CLIENT_SECRET;
 
