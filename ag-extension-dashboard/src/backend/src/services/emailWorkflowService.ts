@@ -279,6 +279,49 @@ export class EmailWorkflowService {
     return true;
   }
 
+  async updateTemplate(id: string, updates: {
+    subject?: string;
+    body?: string;
+    category?: string;
+    variables?: string[];
+  }): Promise<boolean> {
+    const pool = getPool();
+    if (!pool) return false;
+
+    const setClauses: string[] = [];
+    const values: (string | string[])[] = [];
+    let paramIndex = 1;
+
+    if (updates.subject !== undefined) {
+      setClauses.push(`subject = $${paramIndex++}`);
+      values.push(updates.subject);
+    }
+    if (updates.body !== undefined) {
+      setClauses.push(`body = $${paramIndex++}`);
+      values.push(updates.body);
+    }
+    if (updates.category !== undefined) {
+      setClauses.push(`category = $${paramIndex++}`);
+      values.push(updates.category);
+    }
+    if (updates.variables !== undefined) {
+      setClauses.push(`variables = $${paramIndex++}`);
+      values.push(updates.variables);
+    }
+
+    if (setClauses.length === 0) return false;
+
+    values.push(id);
+    const result = await query(`
+      UPDATE email_templates
+      SET ${setClauses.join(', ')}
+      WHERE id = $${paramIndex}
+      RETURNING *
+    `, values);
+
+    return result.rows.length > 0;
+  }
+
   async getPendingApprovals(): Promise<EmailApproval[]> {
     const pool = getPool();
     if (!pool) return [];

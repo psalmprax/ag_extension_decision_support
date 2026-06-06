@@ -1,6 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertCircle, RotateCcw, Copy, Check } from 'lucide-react';
-import { CONFIG } from '../../../shared/config';
+import CONFIG from '../config';
 
 interface Props {
   children: ReactNode;
@@ -37,7 +37,7 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.errorLogged) return;
     this.errorLogged = true;
 
-    console.error('Extension sidepanel ErrorBoundary caught an error:', error, errorInfo);
+    console.error('Extension ErrorBoundary caught an error:', error, errorInfo);
     this.reportError(error, errorInfo);
   }
 
@@ -50,12 +50,12 @@ export class ErrorBoundary extends Component<Props, State> {
           name: error.name,
         },
         componentStack: errorInfo.componentStack,
-        componentName: 'Sidepanel',
+        componentName: 'Extension',
         url: globalThis.location.href,
         userAgent: navigator.userAgent,
         timestamp: new Date().toISOString(),
       };
-      
+
       const endpoint = CONFIG.API_BASE_URL.startsWith('http')
         ? `${CONFIG.API_BASE_URL}/errors`
         : `${globalThis.location.origin}${CONFIG.API_BASE_URL}/errors`;
@@ -73,6 +73,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   handleReset = (): void => {
+    this.errorLogged = false;
     this.setState({
       hasError: false,
       error: null,
@@ -110,10 +111,10 @@ export class ErrorBoundary extends Component<Props, State> {
           <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center border border-red-500/20 shadow-lg mb-4">
             <AlertCircle className="w-6 h-6 text-red-400" />
           </div>
-          
-          <h2 className="text-base font-bold text-white mb-2 uppercase tracking-wider">Sidepanel Error</h2>
+
+          <h2 className="text-base font-bold text-white mb-2 uppercase tracking-wider">Extension Error</h2>
           <p className="text-xs text-slate-400 text-center mb-6 max-w-[240px]">
-            Something went wrong while rendering the extension sidepanel interface.
+            Something went wrong while rendering the extension interface.
           </p>
 
           {this.state.error && (
