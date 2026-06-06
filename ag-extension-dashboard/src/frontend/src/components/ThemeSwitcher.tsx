@@ -18,7 +18,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ currentTheme, onTh
         <div className="relative">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-cyan-400/50 transition-all text-slate-300 hover:text-cyan-400"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-primary-400/50 transition-all text-slate-300 hover:text-primary-400"
             >
                 <Palette className="w-4 h-4" />
                 <span className="text-[10px] font-black uppercase tracking-widest">{t('theme_choose')}</span>
@@ -43,7 +43,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ currentTheme, onTh
                                             onThemeChange(theme);
                                             setIsOpen(false);
                                         }}
-                                        className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${isActive ? 'bg-cyan-400/10 border border-cyan-400/30' : 'hover:bg-white/5 border border-transparent'
+                                        className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${isActive ? 'bg-primary-400/10 border border-primary-400/30' : 'hover:bg-white/5 border border-transparent'
                                             }`}
                                     >
                                         {/* Color Preview */}
@@ -56,7 +56,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ currentTheme, onTh
 
                                         {/* Theme Name */}
                                         <div className="flex-1 text-left">
-                                            <p className={`text-[10px] font-black uppercase tracking-widest ${isActive ? 'text-cyan-400' : 'text-slate-300'}`}>
+                                            <p className={`text-[10px] font-black uppercase tracking-widest ${isActive ? 'text-primary-400' : 'text-slate-300'}`}>
                                                 {theme}
                                             </p>
                                             <p className="text-[9px] font-medium text-slate-500 mt-0.5">{themeDescriptions[theme]}</p>
@@ -64,7 +64,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ currentTheme, onTh
 
                                         {/* Checkmark */}
                                         {isActive && (
-                                            <Check className="w-4 h-4 text-cyan-400" />
+                                            <Check className="w-4 h-4 text-primary-400" />
                                         )}
                                     </button>
                                 );

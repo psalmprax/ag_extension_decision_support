@@ -152,6 +152,8 @@ export function startIngestionWorker(): void {
 }
 
 // Auto-start the ingestion worker
-setTimeout(() => {
-    startIngestionWorker();
-}, 15000); // Wait 15 seconds for database to initialize
+if (process.env.NODE_ENV !== 'test') {
+    setTimeout(() => {
+        startIngestionWorker();
+    }, 15000); // Wait 15 seconds for database to initialize
+}

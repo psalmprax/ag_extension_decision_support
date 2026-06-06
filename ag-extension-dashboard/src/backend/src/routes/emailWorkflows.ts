@@ -19,6 +19,21 @@ router.get('/templates', authorize(['extension_officer', 'admin', 'farmer']), va
     }
 });
 
+router.put('/templates/:id', authorize(['admin']), async (req: Request, res: Response) => {
+    try {
+        const { subject, body, category, variables } = req.body;
+        const success = await emailWorkflowService.updateTemplate(req.params.id, { subject, body, category, variables });
+        if (success) {
+            res.json({ success: true, message: 'Template updated successfully' });
+        } else {
+            res.status(404).json({ success: false, message: 'Template not found' });
+        }
+    } catch (error) {
+        logger.error('Failed to update email template:', error);
+        safeError(res, 500, 'Failed to update email template');
+    }
+});
+
 router.get('/approvals/pending', authorize(['extension_officer', 'admin', 'farmer']), async (req: Request, res: Response) => {
     try {
         const approvals = await emailWorkflowService.getPendingApprovals();

@@ -41,7 +41,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     return (
         <div className="animate-in fade-in duration-500">
             <div className='mb-12'>
-                <h1 className={`text-5xl font-black tracking-tighter font-headline mb-2 drop-shadow-[0_0_15px_rgba(0,245,255,0.1)] dark:drop-shadow-[0_0_15px_rgba(0,245,255,0.3)] ${headingClass}`}>
+                <h1 className={`text-5xl font-black tracking-tighter font-headline mb-2 drop-shadow-[0_0_15px_rgba(var(--color-primary-400-rgb),0.1)] dark:drop-shadow-[0_0_15px_rgba(var(--color-primary-400-rgb),0.3)] ${headingClass}`}>
                     {isModern ? 'Strategic Intelligence' : 'Operations Dashboard'}
                 </h1>
                 <p className='text-slate-400 font-headline font-medium text-lg'>
@@ -115,11 +115,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 <div className={`lg:col-span-2 ${cardClass} group`}>
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="text-lg font-headline font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                            <MapPin className="w-5 h-5 text-cyan-400" />
+                            <MapPin className="w-5 h-5 text-primary-400" />
                             {t('stat_regional_distribution')}
                         </h3>
                         <div className="flex gap-2">
-                            <span className={`px-2 py-1 bg-cyan-400/10 text-cyan-400 ${radiusClass} text-[10px] font-bold uppercase tracking-widest border border-cyan-400/20`}>
+                            <span className={`px-2 py-1 bg-primary-400/10 text-primary-400 ${radiusClass} text-[10px] font-bold uppercase tracking-widest border border-primary-400/20`}>
                                 {t('stat_kenya_overview') || "Kenya Overview"}
                             </span>
                         </div>
@@ -157,7 +157,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                             <div className={`absolute bottom-4 left-4 right-4 flex justify-between items-center bg-slate-900/80 backdrop-blur-md p-3 ${radiusClass} border border-white/10`}>
                                 <div className="flex gap-4">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
+                                        <div className="w-2 h-2 bg-primary-400 rounded-full"></div>
                                         <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">{t('table_active')}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -167,7 +167,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                 </div>
                                 <button
                                     onClick={() => setIsMapExpanded(true)}
-                                    className={`text-[10px] font-black text-cyan-400 uppercase bg-cyan-400/10 px-3 py-1 ${radiusClass} border border-cyan-400/20 hover:bg-cyan-400/20 transition-colors`}
+                                    className={`text-[10px] font-black text-primary-400 uppercase bg-primary-400/10 px-3 py-1 ${radiusClass} border border-primary-400/20 hover:bg-primary-400/20 transition-colors`}
                                 >
                                     {t('viz_detail_view')}
                                 </button>
@@ -181,20 +181,20 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                         {performanceData ? (
                         <div className="space-y-6">
                             {[
-                                { name: t('analytics_resolution_rate'), progress: performanceData?.metrics?.resolutionRate ?? 0, color: 'bg-cyan-400' },
+                                { name: t('analytics_resolution_rate'), progress: performanceData?.metrics?.resolutionRate ?? 0, color: 'bg-primary-400' },
                                 { name: t('analytics_satisfaction_score'), progress: performanceData?.metrics?.satisfactionScore ? performanceData.metrics.satisfactionScore * 20 : 0, color: 'bg-purple-500' },
                             ].map((item, i) => (
                                 <div key={i} className="space-y-2">
                                     <div className="flex justify-between items-center">
                                         <span className="text-sm font-bold text-slate-300">{item.name}</span>
-                                        <span className="text-xs font-black text-cyan-400">{Math.round(item.progress)}%</span>
+                                        <span className="text-xs font-black text-primary-400">{Math.round(item.progress)}%</span>
                                     </div>
                                     <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
                                         <motion.div
                                             initial={{ width: 0 }}
                                             animate={{ width: `${item.progress}%` }}
                                             transition={{ duration: 1, delay: i * 0.1 }}
-                                            className={`h-full ${item.color} rounded-full shadow-[0_0_10px_rgba(0,245,255,0.3)]`}
+                                            className={`h-full ${item.color} rounded-full shadow-[0_0_10px_rgba(var(--color-primary-400-rgb),0.3)]`}
                                         />
                                     </div>
                                 </div>
@@ -202,14 +202,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                         </div>
                         ) : (
                             <div className="flex items-center justify-center py-8">
-                                <Loader2 className="w-6 h-6 animate-spin text-cyan-400" />
+                                <Loader2 className="w-6 h-6 animate-spin text-primary-400" />
                             </div>
                         )}
                     </div>
 
                     <div className={cardClass}>
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="w-2 h-2 bg-cyan-400 rounded-full animate-ping"></div>
+                            <div className="w-2 h-2 bg-primary-400 rounded-full animate-ping"></div>
                             <h3 className="text-sm font-headline font-bold text-gray-900 dark:text-white uppercase tracking-widest">Active Pulse</h3>
                         </div>
                         <div className="space-y-4">
@@ -223,7 +223,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                         <p className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-tight">{item.label}</p>
                                         <p className="text-[10px] text-slate-500">{item.time}</p>
                                     </div>
-                                    <span className="text-[10px] font-black text-cyan-400 uppercase">{item.status}</span>
+                                    <span className="text-[10px] font-black text-primary-400 uppercase">{item.status}</span>
                                 </div>
                             ))}
                         </div>

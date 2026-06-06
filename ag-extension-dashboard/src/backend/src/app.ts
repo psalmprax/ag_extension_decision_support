@@ -265,45 +265,54 @@ app.get('/api/health', healthHandler);
 app.get('/health/live', (_req: Request, res: Response) => res.json({ status: 'ok' }));
 app.get('/health/ready', (_req: Request, res: Response) => res.json({ status: 'ready' }));
 
-// API Routes with i18n support
+// API route mounts — defined once, mounted under /api/v1/ (with i18n) and /api/ (legacy)
+type RouteMount = { path: string; router: express.Router };
+const routeMounts: RouteMount[] = [
+  { path: '/auth', router: authRoutes },
+  { path: '/knowledge', router: knowledgeRoutes },
+  { path: '/knowledge/sources', router: knowledgeSourcesRoutes },
+  { path: '/knowledge/sync', router: knowledgeSyncRoutes },
+  { path: '/chatbot', router: chatbotRoutes },
+  { path: '/chatbot/speech', router: chatbotSpeechRoutes },
+  { path: '/reporting', router: reportingRoutes },
+  { path: '/analytics', router: analyticsRoutes },
+  { path: '/portfolio', router: portfolioRoutes },
+  { path: '/users', router: usersRoutes },
+  { path: '/farmers', router: farmersRoutes },
+  { path: '/visits', router: visitsRoutes },
+  { path: '/alerts', router: alertRoutes },
+  { path: '/external', router: externalRoutes },
+  { path: '/language', router: languageRoutes },
+  { path: '/ai', router: aiRoutes },
+  { path: '/upload', router: uploadRoutes },
+  { path: '/notifications', router: notificationRoutes },
+  { path: '/sms', router: smsRoutes },
+  { path: '/billing', router: billingRoutes },
+  { path: '/context-menus', router: contextMenuRoutes },
+  { path: '/shares', router: shareRouter },
+  { path: '/support', router: supportRoutes },
+  { path: '/ai/telemetry', router: telemetryRoutes },
+  { path: '/email', router: emailWorkflowRoutes },
+  { path: '/ai/agents', router: agentRoutes },
+  { path: '/system/health', router: systemHealthRoutes },
+  { path: '/health/diagnostics', router: diagnosticsRoutes },
+  { path: '/system/diagnostics', router: diagnosticsRoutes },
+  { path: '/ai/memories', router: memoryRoutes },
+  { path: '/ai/diseases', router: diseaseRoutes },
+  { path: '/ai', router: diseaseRoutes },
+  { path: '/whatsapp', router: whatsappRoutes },
+  { path: '/api-clients', router: apiClientRoutes },
+  { path: '/commercial/knowledge', router: commercialKnowledgeRoutes },
+];
+
+// Mount with i18n support (v1)
 app.use(i18nUrlMiddleware);
 app.use(i18nRouteHandler);
-app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/knowledge', knowledgeRoutes);
-app.use('/api/v1/knowledge/sources', knowledgeSourcesRoutes);
-app.use('/api/v1/knowledge/sync', knowledgeSyncRoutes);
-app.use('/api/v1/chatbot', chatbotRoutes);
-app.use('/api/v1/chatbot/speech', chatbotSpeechRoutes);
-app.use('/api/v1/reporting', reportingRoutes);
-app.use('/api/v1/analytics', analyticsRoutes);
-app.use('/api/v1/portfolio', portfolioRoutes);
-app.use('/api/v1/users', usersRoutes);
-app.use('/api/v1/farmers', farmersRoutes);
-app.use('/api/v1/visits', visitsRoutes);
-app.use('/api/v1/alerts', alertRoutes);
-app.use('/api/v1/external', externalRoutes);
-app.use('/api/v1/language', languageRoutes);
-app.use('/api/v1/ai', aiRoutes);
-app.use('/api/v1/upload', uploadRoutes);
-app.use('/api/v1/notifications', notificationRoutes);
-app.use('/api/v1/sms', smsRoutes);
-app.use('/api/v1/billing', billingRoutes);
-app.use('/api/v1/context-menus', contextMenuRoutes);
-app.use('/api/v1/shares', shareRouter);
+routeMounts.forEach(m => app.use(`/api/v1${m.path}`, m.router));
+
+// Also mount public shares (no v1 prefix needed)
 app.use('/api/public/shares', publicShareRouter);
-app.use('/api/v1/support', supportRoutes);
-app.use('/api/v1/ai/telemetry', telemetryRoutes);
-app.use('/api/v1/email', emailWorkflowRoutes);
-app.use('/api/v1/ai/agents', agentRoutes);
-app.use('/api/v1/system/health', systemHealthRoutes);
-app.use('/api/v1/health/diagnostics', diagnosticsRoutes);
-app.use('/api/v1/system/diagnostics', diagnosticsRoutes);
-app.use('/api/v1/ai/memories', memoryRoutes);
-app.use('/api/v1/ai/diseases', diseaseRoutes);
-app.use('/api/v1/ai', diseaseRoutes);
-app.use('/api/v1/whatsapp', whatsappRoutes);
-app.use('/api/v1/api-clients', apiClientRoutes);
-app.use('/api/v1/commercial/knowledge', commercialKnowledgeRoutes);
+
 // Create MCP router dynamically to support modern module standards and tree-shaking
 let mcpRouter: any = null;
 import('./services/mcpAdapter')
@@ -331,42 +340,9 @@ app.use('/api/mcp', (req, res, next) => {
   }
 });
 
-// Legacy redirects
-app.use('/api/auth', authRoutes);
-app.use('/api/knowledge', knowledgeRoutes);
-app.use('/api/knowledge/sources', knowledgeSourcesRoutes);
-app.use('/api/knowledge/sync', knowledgeSyncRoutes);
-app.use('/api/chatbot', chatbotRoutes);
-app.use('/api/chatbot/speech', chatbotSpeechRoutes);
-app.use('/api/reporting', reportingRoutes);
-app.use('/api/analytics', analyticsRoutes);
-app.use('/api/portfolio', portfolioRoutes);
-app.use('/api/users', usersRoutes);
-app.use('/api/farmers', farmersRoutes);
-app.use('/api/visits', visitsRoutes);
-app.use('/api/alerts', alertRoutes);
-app.use('/api/external', externalRoutes);
-app.use('/api/language', languageRoutes);
-app.use('/api/ai', aiRoutes);
-app.use('/api/upload', uploadRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/sms', smsRoutes);
-app.use('/api/billing', billingRoutes);
-app.use('/api/shares', shareRouter);
+// Legacy redirects (no i18n)
+routeMounts.forEach(m => app.use(`/api${m.path}`, m.router));
 app.use('/api/public/shares', publicShareRouter);
-app.use('/api/support', supportRoutes);
-app.use('/api/ai/telemetry', telemetryRoutes);
-app.use('/api/email', emailWorkflowRoutes);
-app.use('/api/ai/agents', agentRoutes);
-app.use('/api/system/health', systemHealthRoutes);
-app.use('/api/health/diagnostics', diagnosticsRoutes);
-app.use('/api/system/diagnostics', diagnosticsRoutes);
-app.use('/api/ai/memories', memoryRoutes);
-app.use('/api/ai/diseases', diseaseRoutes);
-app.use('/api/ai', diseaseRoutes);
-app.use('/api/whatsapp', whatsappRoutes);
-app.use('/api/api-clients', apiClientRoutes);
-app.use('/api/commercial/knowledge', commercialKnowledgeRoutes);
 app.use('/api/mcp', (req, res, next) => {
   if (mcpRouter) {
     mcpRouter(req, res, next);

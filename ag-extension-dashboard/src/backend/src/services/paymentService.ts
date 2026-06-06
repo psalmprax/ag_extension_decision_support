@@ -55,6 +55,13 @@ class PaymentService {
     }
 
     private async initializeStripe() {
+        // Skip Stripe init if no database (avoids Prisma errors in CI/test)
+        if (!process.env.DATABASE_URL) {
+            logger.warn('Stripe not configured (no database) - payments will be simulated (Demo Mode)');
+            this.stripe = null;
+            this.isSimulated = true;
+            return;
+        }
         const stripeKey = await systemConfigService.getStripeKey();
 
         // Check if key is valid (must be real Stripe key, not placeholder)
@@ -86,6 +93,12 @@ class PaymentService {
 
     // PayPal initialization
     private async initializePayPal() {
+        // Skip PayPal init if no database (avoids Prisma errors in CI/test)
+        if (!process.env.DATABASE_URL) {
+            logger.warn('PayPal not configured (no database) - PayPal payments unavailable');
+            this.paypalConfigured = false;
+            return;
+        }
         const paypalClientId = await systemConfigService.getPayPalKey();
         const paypalClientSecret = process.env.PAYPAL_CLIENT_SECRET;
 

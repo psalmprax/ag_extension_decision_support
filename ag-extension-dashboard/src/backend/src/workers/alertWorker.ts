@@ -22,9 +22,11 @@ import { query } from '../services/databaseService';
 
 
 // Auto-start the alert worker (after a delay to ensure database is ready)
-setTimeout(() => {
-    startAlertWorker();
-}, 10000); // Wait 10 seconds for database to initialize
+if (process.env.NODE_ENV !== 'test') {
+    setTimeout(() => {
+        startAlertWorker();
+    }, 10000); // Wait 10 seconds for database to initialize
+}
 
 export async function runAlertChecks(): Promise<void> {
     logger.info('Running automated alert checks...');
