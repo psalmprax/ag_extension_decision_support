@@ -9,6 +9,7 @@ on:
     branches:
       - master
     types: [closed]
+  workflow_dispatch:
 
 jobs:
   # 1. CI Checks (Runs for all triggers)
@@ -116,7 +117,7 @@ jobs:
   # 3. Deploy to Production (New Server)
   deploy-production:
     needs: ci-checks
-    if: github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.base_ref == 'master'
+    if: (github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.base_ref == 'master') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to Production Server
