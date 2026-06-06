@@ -204,6 +204,18 @@ export const emailWorkflowListSchema = z.object({
   }),
 });
 
+export const updateEmailTemplateSchema = z.object({
+  body: z.object({
+    subject: z.string().min(1, 'Subject cannot be empty').max(500).optional(),
+    body: z.string().min(1, 'Body cannot be empty').optional(),
+    category: z.string().min(1, 'Category cannot be empty').max(100).optional(),
+    variables: z.array(z.string().min(1)).optional(),
+  }).strict().refine(
+    data => data.subject !== undefined || data.body !== undefined || data.category !== undefined || data.variables !== undefined,
+    { message: 'At least one field (subject, body, category, variables) must be provided' }
+  ),
+});
+
 // External API Schemas
 export const weatherQuerySchema = z.object({
   query: z.object({
