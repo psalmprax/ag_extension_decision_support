@@ -61,7 +61,7 @@ jobs:
           host: ${{ secrets.TEST_SERVER_IP }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
-          command_timeout: 1800
+          command_timeout: 30m
           script: |
             if [ ! -d "/root/ag_extension_decision_support" ]; then
               echo "🚀 Project directory missing. Cloning repository..."
@@ -125,7 +125,7 @@ jobs:
           host: ${{ secrets.PROD_SERVER_IP }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
-          command_timeout: 1800
+          command_timeout: 30m
           script: |
             if [ ! -d "/root/ag_extension_decision_support" ]; then
               echo "Project directory missing. Cloning repository..."
