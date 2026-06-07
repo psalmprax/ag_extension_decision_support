@@ -298,7 +298,7 @@
    Unlike font-size changes, this scales everything geometrically:
    images, canvas maps, px-based borders, shadows — like browser zoom. */
 #root {
-    zoom: 0.6;
+    zoom: 0.8;
 }
 
 /* Classic Design System Mode Overrides */

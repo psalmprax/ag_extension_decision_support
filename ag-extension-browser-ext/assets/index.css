@@ -23,5 +23,5 @@ body {
   min-width: 320px;
   min-height: 100vh;
   /* Scale everything down 40% */
-  zoom: 0.6;
+  zoom: 0.8;
 }
