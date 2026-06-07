@@ -8,27 +8,13 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-RUN pip install --no-cache-dir \
-    fastapi \
-    uvicorn[standard] \
-    crewai \
-    crewai-tools \
-    langchain-openai \
-    langchain-community \
-    pydantic \
-    python-dotenv \
-    httpx \
-    && pip install --no-cache-dir --upgrade \
-    openai \
-    langchain
+# Copy and install Python dependencies in a single layer
+COPY requirements.txt .
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements.txt
 
 # Copy crew AI code
 COPY crew_main.py .
-COPY requirements.txt .
-
-# Install requirements
-RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose port
 EXPOSE 8001
