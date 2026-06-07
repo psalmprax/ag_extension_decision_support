@@ -82,7 +82,16 @@ jobs:
             
             # Force sync — discard any local modifications that would block the deploy
             git reset --hard origin/${{ github.ref_name }}
-            
+
+            # ── Ensure .env file exists ──────────────────────────
+            if [ ! -f ".env" ]; then
+              echo ".env not found — creating from .env.example..."
+              cp .env.example .env
+              echo ".env created from .env.example (edit secrets manually or set GitHub Secrets)"
+            else
+              echo ".env already exists — skipping creation"
+            fi
+
             # Check if databases are UP
             DB_UP=$(docker ps --filter "name=ag-dashboard-db" --filter "status=running" -q)
             REDIS_UP=$(docker ps --filter "name=ag-dashboard-redis" --filter "status=running" -q)
