@@ -330,7 +330,7 @@ class MultiAgentService:
             processing_time = (datetime.utcnow() - start_time).total_seconds() * 1000
             
             return MultiAgentService._parse_crew_result(
-                request.region, request.analysis_type.value, str(result), processing_time
+                request.region, request.analysis_type.value, result.raw, processing_time
             )
             
         except Exception as e:
@@ -551,7 +551,7 @@ class ResearchService:
                     "status": "success",
                     "topic": request.topic,
                     "depth": request.depth.value,
-                    "findings": str(result),
+                    "findings": result.raw,
                     "generated_at": datetime.utcnow().isoformat(),
                     "processing_time_ms": int(processing_time)
                 }

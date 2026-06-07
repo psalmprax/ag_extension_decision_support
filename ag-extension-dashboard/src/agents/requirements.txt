@@ -1,38 +1,39 @@
 # Core dependencies
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-pydantic==2.5.3
-python-dotenv==1.0.0
+fastapi>=0.115.0
+uvicorn[standard]>=0.34.0
+pydantic>=2.10.0
+python-dotenv>=1.0.1
 
 # Database
-psycopg2-binary==2.9.9
+psycopg2-binary>=2.9.9
 
 # AI/ML
-openai>=1.10.0
-langchain>=0.1.4
-langchain-openai>=0.0.2
+openai>=1.63.0
+langchain>=0.3.0
+langchain-openai>=0.2.0
+langchain-community>=0.3.0
 
-# Crew AI (optional - for multi-agent workflows)
-crewai==0.22.5
-crewai-tools==0.0.1
+# Crew AI (multi-agent workflows)
+crewai==1.14.6
+crewai-tools==1.14.6
 
 # JWT authentication
-PyJWT==2.8.0
-python-jose[cryptography]==3.3.0
+PyJWT>=2.13.0
+python-jose[cryptography]>=3.3.0
 
 # HTTP client
-httpx==0.26.0
-aiohttp==3.9.1
+httpx>=0.28.0
+aiohttp>=3.14.0
 
 # Logging and monitoring
-python-json-logger==2.0.7
-structlog==24.1.0
+python-json-logger>=3.0.0
+structlog>=25.0.0
 
 # Utilities
-python-dateutil==2.8.2
-pytz==2024.1
+python-dateutil>=2.8.2
+pytz>=2026.1
 
 # Testing (optional)
-pytest==7.4.4
-pytest-asyncio==0.23.3
-pytest-cov==4.1.0
+pytest>=8.0.0
+pytest-asyncio>=1.0.0
+pytest-cov>=6.0.0
