@@ -125,18 +125,18 @@ jobs:
     steps:
       - name: Deploy to Production Server
         uses: appleboy/ssh-action@master
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
           envs: JWT_SECRET,OPENAI_API_KEY,ANTHROPIC_API_KEY,ACME_EMAIL
           command_timeout: 30m
-        env:
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
-        script: |
+          script: |
             if [ ! -d "/root/ag_extension_decision_support" ]; then
               echo "Project directory missing. Cloning repository..."
               cd /root
@@ -153,11 +153,11 @@ jobs:
             if [ ! -f ".env" ]; then
               echo ".env not found — creating from .env.example with GitHub Secrets..."
               cp .env.example .env
-              # Override critical secrets — use awk to avoid sed special-char issues
+              # Override critical secrets — append at end of file (Docker Compose uses last-value-wins)
               for var in JWT_SECRET OPENAI_API_KEY ANTHROPIC_API_KEY ACME_EMAIL; do
-                val="$(eval echo "\$$var")"
+                val="${!var}"
                 if [ -n "$val" ]; then
-                  awk -v key="$var" -v val="$val" 'BEGIN{FS=OFS="="} $1==key{$2=val}1' .env > .env.tmp && mv .env.tmp .env
+                  printf '%s=%s\n' "$var" "$val" >> .env
                   echo "  ✅ $var set from GitHub Secret"
                 fi
               done
