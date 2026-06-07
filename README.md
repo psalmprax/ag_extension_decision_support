@@ -114,6 +114,10 @@ The platform provides 21+ specialized agricultural AI tools:
 
 See [ag-extension-dashboard-architecture.md](ag-extension-dashboard-architecture.md) for detailed system architecture.
 
+### CI/CD Pipeline
+
+The platform is deployed via an automated GitHub Actions pipeline. See the [Deploy Workflow Reference](docs/DEPLOY_WORKFLOW.md) for triggers, jobs, build caching, secrets, and troubleshooting.
+
 ## Contributing
 
 1. Fork the repository
