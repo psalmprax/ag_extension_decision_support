@@ -62,7 +62,7 @@ jobs:
           host: ${{ secrets.TEST_SERVER_IP }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
-          command_timeout: 30m
+          command_timeout: 60m
           script: |
             if [ ! -d "/root/ag_extension_decision_support" ]; then
               echo "🚀 Project directory missing. Cloning repository..."
@@ -97,15 +97,49 @@ jobs:
             REDIS_UP=$(docker ps --filter "name=ag-dashboard-redis" --filter "status=running" -q)
             
             if [ -z "$DB_UP" ] || [ -z "$REDIS_UP" ]; then
-              echo "Databases DOWN. Sequential deploy: infra first, then app services..."
+              echo "Databases DOWN. Building infrastructure, running migrations, then deploying app services..."
               # Build/start infrastructure first (slow builds, avoid CPU contention)
               docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --build app-db redis
+              # Wait for database and run migrations before building app services
+              docker compose -f docker-compose.yml -f docker-compose.agents.yml run --rm backend bash -c "
+                # Wait for database to accept connections (up to 60s)
+                for i in {1..30}; do
+                  if echo \"SELECT 1\" | npx prisma db execute --stdin 2>/dev/null; then
+                    echo 'Database is ready'
+                    break
+                  fi
+                  echo 'Waiting for database... ('\$i'/30)'
+                  sleep 2
+                done
+                if npx prisma migrate deploy 2>&1; then
+                  echo 'Migrations up to date.';
+                elif npx prisma migrate deploy 2>&1 | grep -q P3005; then
+                  echo 'P3005 detected — baselining existing database...';
+                  mkdir -p prisma/migrations/0_init;
+                  npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/0_init/migration.sql;
+                  npx prisma migrate resolve --applied 0_init;
+                  echo 'Baseline applied. Running migrate deploy...';
+                  npx prisma migrate deploy;
+                else
+                  echo 'migrate deploy failed (non-P3005). Aborting.' >&2;
+                  exit 1;
+                fi
+              "
               # Then build app services with no-cache to force rebuild
               docker compose -f docker-compose.yml -f docker-compose.agents.yml build --no-cache backend frontend agent-zero crew-ai
               docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --force-recreate backend frontend agent-zero crew-ai
             else
-              echo "Databases UP. Running migrations then deploying app services..."
+              echo "Databases UP. Waiting for database readiness then running migrations..."
               docker compose -f docker-compose.yml -f docker-compose.agents.yml run --rm backend bash -c "
+                # Wait for database to accept connections (up to 60s)
+                for i in {1..30}; do
+                  if echo \"SELECT 1\" | npx prisma db execute --stdin 2>/dev/null; then
+                    echo 'Database is ready'
+                    break
+                  fi
+                  echo 'Waiting for database... ('\$i'/30)'
+                  sleep 2
+                done
                 if npx prisma migrate deploy 2>&1; then
                   echo 'Migrations up to date.';
                 elif npx prisma migrate deploy 2>&1 | grep -q P3005; then
@@ -144,7 +178,7 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
           envs: JWT_SECRET,OPENAI_API_KEY,ANTHROPIC_API_KEY,ACME_EMAIL
-          command_timeout: 30m
+          command_timeout: 60m
           script: |
             if [ ! -d "/root/ag_extension_decision_support" ]; then
               echo "Project directory missing. Cloning repository..."
@@ -180,15 +214,49 @@ jobs:
             REDIS_UP=$(docker ps --filter "name=ag-dashboard-redis" --filter "status=running" -q)
 
             if [ -z "$DB_UP" ] || [ -z "$REDIS_UP" ]; then
-              echo "Databases DOWN. Sequential deploy: infra first, then app services..."
+              echo "Databases DOWN. Building infrastructure, running migrations, then deploying app services..."
               # Build/start infrastructure first (slow builds, avoid CPU contention)
               docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --build app-db redis
+              # Wait for database and run migrations before building app services
+              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml run --rm backend bash -c "
+                # Wait for database to accept connections (up to 60s)
+                for i in {1..30}; do
+                  if echo \"SELECT 1\" | npx prisma db execute --stdin 2>/dev/null; then
+                    echo 'Database is ready'
+                    break
+                  fi
+                  echo 'Waiting for database... ('\$i'/30)'
+                  sleep 2
+                done
+                if npx prisma migrate deploy 2>&1; then
+                  echo 'Migrations up to date.';
+                elif npx prisma migrate deploy 2>&1 | grep -q P3005; then
+                  echo 'P3005 detected — baselining existing database...';
+                  mkdir -p prisma/migrations/0_init;
+                  npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/0_init/migration.sql;
+                  npx prisma migrate resolve --applied 0_init;
+                  echo 'Baseline applied. Running migrate deploy...';
+                  npx prisma migrate deploy;
+                else
+                  echo 'migrate deploy failed (non-P3005). Aborting.' >&2;
+                  exit 1;
+                fi
+              "
               # Then build app services with no-cache to force rebuild
               docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml build --no-cache backend frontend agent-zero crew-ai
               docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate backend frontend agent-zero crew-ai
             else
-              echo "Databases UP. Running migrations then deploying app services..."
+              echo "Databases UP. Waiting for database readiness then running migrations..."
               docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml run --rm backend bash -c "
+                # Wait for database to accept connections (up to 60s)
+                for i in {1..30}; do
+                  if echo \"SELECT 1\" | npx prisma db execute --stdin 2>/dev/null; then
+                    echo 'Database is ready'
+                    break
+                  fi
+                  echo 'Waiting for database... ('\$i'/30)'
+                  sleep 2
+                done
                 if npx prisma migrate deploy 2>&1; then
                   echo 'Migrations up to date.';
                 elif npx prisma migrate deploy 2>&1 | grep -q P3005; then
