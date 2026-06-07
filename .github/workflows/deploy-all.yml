@@ -91,8 +91,9 @@ jobs:
               echo "Databases DOWN. Sequential deploy: infra first, then app services..."
               # Build/start infrastructure first (slow builds, avoid CPU contention)
               docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --build app-db redis
-              # Then build/start app services
-              docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --build backend frontend agent-zero crew-ai
+              # Then build app services with no-cache to force rebuild
+              docker compose -f docker-compose.yml -f docker-compose.agents.yml build --no-cache backend frontend agent-zero crew-ai
+              docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --force-recreate backend frontend agent-zero crew-ai
             else
               echo "Databases UP. Running migrations then deploying app services..."
               docker compose -f docker-compose.yml -f docker-compose.agents.yml run --rm backend bash -c "
@@ -110,7 +111,9 @@ jobs:
                   exit 1;
                 fi
               "
-              docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --build backend frontend agent-zero crew-ai
+              # Force clean rebuild — no-cache prevents Docker from reusing stale layers
+              docker compose -f docker-compose.yml -f docker-compose.agents.yml build --no-cache backend frontend agent-zero crew-ai
+              docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --force-recreate backend frontend agent-zero crew-ai
             fi
             docker image prune -f
 
@@ -148,8 +151,9 @@ jobs:
               echo "Databases DOWN. Sequential deploy: infra first, then app services..."
               # Build/start infrastructure first (slow builds, avoid CPU contention)
               docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --build app-db redis
-              # Then build/start app services
-              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --build backend frontend agent-zero crew-ai
+              # Then build app services with no-cache to force rebuild
+              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml build --no-cache backend frontend agent-zero crew-ai
+              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate backend frontend agent-zero crew-ai
             else
               echo "Databases UP. Running migrations then deploying app services..."
               docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml run --rm backend bash -c "
@@ -167,6 +171,8 @@ jobs:
                   exit 1;
                 fi
               "
-              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --build backend frontend agent-zero crew-ai
+              # Force clean rebuild — no-cache prevents Docker from reusing stale layers
+              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml build --no-cache backend frontend agent-zero crew-ai
+              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate backend frontend agent-zero crew-ai
             fi
             docker image prune -f
