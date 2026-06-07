@@ -293,14 +293,6 @@
     }
 }
 
-/* Scale the entire app to 80% like browser Ctrl+Minus zoom.
-   zoom is non-standard but supported in all major browsers.
-   Unlike font-size changes, this scales everything geometrically:
-   images, canvas maps, px-based borders, shadows — like browser zoom. */
-#root {
-    zoom: 0.8;
-}
-
 /* Classic Design System Mode Overrides */
 :root[data-design-mode="classic"] {
     --radius-card: 0px !important;
