@@ -6,6 +6,7 @@ python-dotenv>=1.0.1
 
 # Database
 psycopg2-binary>=2.9.9
+redis>=5.0.0
 
 # AI/ML
 openai>=1.63.0

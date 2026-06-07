@@ -14,6 +14,8 @@ import logging
 import asyncio
 from datetime import datetime, timedelta
 from enum import Enum
+from typing import Optional
+import redis.asyncio as redis
 
 # Import Stealth Scraper
 from tools.cloakbrowser.cloak_scanner import CloakBrowserScanner
@@ -42,10 +44,121 @@ app.add_middleware(
 # Environment variables with validation
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 DATABASE_URL = os.getenv("DATABASE_URL", "")
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
 JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret")
+SESSION_TTL = int(os.getenv("SESSION_TTL_SECONDS", "86400"))  # 24h default
 
 if not OPENAI_API_KEY:
     logger.warning("OPENAI_API_KEY not configured - AI features will be limited")
+
+# ----------------------------------------------------------------
+# Redis Session Manager — enables state survival across restarts
+# ----------------------------------------------------------------
+
+class RedisSessionManager:
+    """Redis-backed session persistence for agent tasks and results.
+    
+    Stores task history, analysis results, outreach records, and report
+    data so that agent state survives container restarts.  Each session
+    is keyed by task ID with a configurable TTL.
+    """
+
+    def __init__(self, redis_url: str, ttl: int = 86400):
+        self._redis_url = redis_url
+        self._ttl = ttl
+        self._client: Optional[redis.Redis] = None
+
+    @property
+    def connected(self) -> bool:
+        return self._client is not None
+
+    async def connect(self) -> bool:
+        """Establish Redis connection. Returns True on success."""
+        try:
+            self._client = redis.from_url(
+                self._redis_url,
+                decode_responses=True,
+                socket_connect_timeout=5,
+                socket_keepalive=True,
+            )
+            await self._client.ping()
+            logger.info("Redis session store connected")
+            return True
+        except Exception as e:
+            logger.warning(f"Redis unavailable — sessions will be ephemeral: {e}")
+            self._client = None
+            return False
+
+    async def disconnect(self):
+        """Gracefully close the Redis connection."""
+        if self._client:
+            await self._client.aclose()
+            self._client = None
+            logger.info("Redis session store disconnected")
+
+    async def save_session(self, task_id: str, data: dict) -> bool:
+        """Persist a task result to Redis."""
+        if not self._client:
+            return False
+        try:
+            key = f"agent:session:{task_id}"
+            payload = json.dumps(data, default=str)
+            async with self._client.pipeline(transaction=True) as pipe:
+                pipe.setex(key, self._ttl, payload)
+                score = datetime.utcnow().timestamp()
+                pipe.zadd("agent:sessions:index", {key: score})
+                # Keep index bounded — retain last 1000 sessions
+                pipe.zremrangebyrank("agent:sessions:index", 0, -1001)
+                await pipe.execute()
+            logger.debug(f"Session {task_id} saved to Redis")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to save session {task_id}: {e}")
+            return False
+
+    async def load_session(self, task_id: str) -> Optional[dict]:
+        """Retrieve a previously persisted session."""
+        if not self._client:
+            return None
+        try:
+            key = f"agent:session:{task_id}"
+            raw = await self._client.get(key)
+            return json.loads(raw) if raw else None
+        except Exception as e:
+            logger.error(f"Failed to load session {task_id}: {e}")
+            return None
+
+    async def list_sessions(self, limit: int = 20) -> list[dict]:
+        """Return recent sessions ordered by timestamp (newest first)."""
+        if not self._client:
+            return []
+        try:
+            keys = await self._client.zrevrange("agent:sessions:index", 0, limit - 1)
+            if not keys:
+                return []
+            pipeline = self._client.pipeline()
+            for k in keys:
+                pipeline.get(k)
+            results = await pipeline.execute()
+            return [json.loads(r) for r in results if r]
+        except Exception as e:
+            logger.error(f"Failed to list sessions: {e}")
+            return []
+
+    async def delete_session(self, task_id: str) -> bool:
+        """Remove a session from Redis."""
+        if not self._client:
+            return False
+        try:
+            key = f"agent:session:{task_id}"
+            await self._client.delete(key)
+            await self._client.zrem("agent:sessions:index", key)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to delete session {task_id}: {e}")
+            return False
+
+redis_sessions = RedisSessionManager(REDIS_URL, SESSION_TTL)
 
 # Import OpenAI for real AI processing (async client)
 try:
@@ -437,7 +550,8 @@ async def health_check():
         "timestamp": datetime.utcnow().isoformat(),
         "dependencies": {
             "openai": "configured" if async_client else "not_configured",
-            "database": "connected" if db.pool else "not_connected"
+            "database": "connected" if db.pool else "not_connected",
+            "redis": "connected" if redis_sessions.connected else "not_connected"
         }
     }
 
@@ -445,21 +559,46 @@ async def health_check():
 @app.post("/api/execute")
 async def execute_task(request: TaskRequest, current_user: dict = Depends(verify_token)):
     """Execute a general task using Agent Zero"""
-    logger.info(f"Executing task: {request.task_type} for user: {current_user.get('user_id')}")
+    task_id = f"task-{datetime.utcnow().timestamp():.0f}-{request.task_type.value}"
+    logger.info(f"Executing task {task_id}: {request.task_type} for user: {current_user.get('user_id')}")
 
     try:
         task_type = request.task_type
 
-        if task_type == "outreach":
-            return await handle_outreach(request.parameters)
-        elif task_type == "analysis":
-            return await handle_analysis(request.parameters)
-        elif task_type == "report":
-            return await handle_report(request.parameters)
-        elif task_type == "stealth_scrape":
-            return await handle_stealth_scrape(request.parameters)
+        if task_type == TaskType.OUTREACH:
+            result = await handle_outreach(request.parameters)
+        elif task_type == TaskType.ANALYSIS:
+            result = await handle_analysis(request.parameters)
+        elif task_type == TaskType.REPORT:
+            result = await handle_report(request.parameters)
+        elif task_type == TaskType.STEALTH_SCRAPE:
+            result = await handle_stealth_scrape(request.parameters)
         else:
             raise HTTPException(status_code=400, detail=f"Unknown task type: {task_type}")
+
+        # Normalise result to JSON-serializable dict
+        if hasattr(result, 'model_dump'):
+            serialized = result.model_dump()
+        elif hasattr(result, 'dict'):
+            serialized = result.dict()
+        elif isinstance(result, dict):
+            serialized = result
+        else:
+            serialized = str(result)
+
+        # Persist session for recovery across restarts
+        session = {
+            "task_id": task_id,
+            "task_type": request.task_type.value,
+            "user_id": current_user.get("user_id"),
+            "parameters": request.parameters,
+            "result": serialized,
+            "status": "completed",
+            "created_at": datetime.utcnow().isoformat(),
+        }
+        await redis_sessions.save_session(task_id, session)
+
+        return result
 
     except HTTPException:
         raise
@@ -468,18 +607,44 @@ async def execute_task(request: TaskRequest, current_user: dict = Depends(verify
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/sessions")
+async def list_sessions(limit: int = 20, current_user: dict = Depends(verify_token)):
+    """Retrieve recent agent session history (survives restarts)."""
+    sessions = await redis_sessions.list_sessions(limit)
+    return {"success": True, "data": sessions, "count": len(sessions)}
+
+
+@app.get("/api/sessions/{task_id}")
+async def get_session(task_id: str, current_user: dict = Depends(verify_token)):
+    """Retrieve a specific agent session by task ID."""
+    session = await redis_sessions.load_session(task_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return {"success": True, "data": session}
+
+
 @app.post("/api/outreach")
 async def schedule_outreach(request: OutreachRequest, current_user: dict = Depends(verify_token)):
     """Schedule automated farmer outreach"""
     logger.info(f"Scheduling outreach for {len(request.farmers)} farmers via {request.channel}")
 
     try:
-        return await OutreachService.send_outreach(
+        result = await OutreachService.send_outreach(
             request.farmers,
             request.message,
             request.channel,
             request.priority
         )
+        # Persist outreach session
+        task_id = f"outreach-{datetime.utcnow().timestamp():.0f}"
+        await redis_sessions.save_session(task_id, {
+            "task_id": task_id, "task_type": "outreach",
+            "user_id": current_user.get("user_id"),
+            "channel": request.channel, "farmers_count": len(request.farmers),
+            "result": result, "status": "completed",
+            "created_at": datetime.utcnow().isoformat(),
+        })
+        return result
     except Exception as e:
         logger.error(f"Outreach scheduling failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -582,6 +747,7 @@ async def startup_event():
     """Initialize services on startup"""
     logger.info("Starting Agent Zero Service v2.0.0")
     db.connect()
+    await redis_sessions.connect()
 
 
 @app.on_event("shutdown")
@@ -589,6 +755,7 @@ async def shutdown_event():
     """Clean up on shutdown"""
     logger.info("Shutting down Agent Zero Service")
     db.close()
+    await redis_sessions.disconnect()
 
 
 if __name__ == "__main__":
