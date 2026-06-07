@@ -33,13 +33,13 @@ jobs:
           cd ag-extension-dashboard
           npm install
 
-      - name: Lint, Build & Test Frontend
+      - name: Lint, Build & Test Frontend (with coverage)
         run: |
           cd ag-extension-dashboard/src/frontend
           npm ci
           npm run lint
           npm run build
-          npm test
+          npm run test:coverage
 
       - name: Lint, Build & Test Backend
         run: |
@@ -102,28 +102,27 @@ jobs:
               docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --build app-db redis
               # Wait for database and run migrations before building app services
               docker compose -f docker-compose.yml -f docker-compose.agents.yml run --rm backend bash -c "
-                # Wait for database to accept connections (up to 60s)
+                # Wait for database and run migrations (up to 60s)
                 for i in {1..30}; do
-                  if echo \"SELECT 1\" | npx prisma db execute --stdin 2>/dev/null; then
-                    echo 'Database is ready'
+                  MIGRATE_OUTPUT=\$(npx prisma migrate deploy 2>&1) && { echo 'Migrations up to date.'; break; }
+                  if echo \"\$MIGRATE_OUTPUT\" | grep -q P1000; then
+                    echo 'FATAL: Database authentication failed (P1000). Check DATABASE_USER/DATABASE_PASSWORD in .env.' >&2
+                    exit 1
+                  fi
+                  if echo \"\$MIGRATE_OUTPUT\" | grep -q P3005; then
+                    echo 'P3005 detected — baselining existing database...';
+                    mkdir -p prisma/migrations/0_init;
+                    npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/0_init/migration.sql;
+                    npx prisma migrate resolve --applied 0_init;
+                    echo 'Baseline applied. Running migrate deploy...';
+                    npx prisma migrate deploy;
                     break
                   fi
                   echo 'Waiting for database... ('\$i'/30)'
                   sleep 2
                 done
-                if npx prisma migrate deploy 2>&1; then
-                  echo 'Migrations up to date.';
-                elif npx prisma migrate deploy 2>&1 | grep -q P3005; then
-                  echo 'P3005 detected — baselining existing database...';
-                  mkdir -p prisma/migrations/0_init;
-                  npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/0_init/migration.sql;
-                  npx prisma migrate resolve --applied 0_init;
-                  echo 'Baseline applied. Running migrate deploy...';
-                  npx prisma migrate deploy;
-                else
-                  echo 'migrate deploy failed (non-P3005). Aborting.' >&2;
-                  exit 1;
-                fi
+                echo 'FATAL: Database migration failed after 30 retries.' >&2
+                exit 1
               "
               # Then build app services with no-cache to force rebuild
               docker compose -f docker-compose.yml -f docker-compose.agents.yml build --no-cache backend frontend agent-zero crew-ai
@@ -131,28 +130,27 @@ jobs:
             else
               echo "Databases UP. Waiting for database readiness then running migrations..."
               docker compose -f docker-compose.yml -f docker-compose.agents.yml run --rm backend bash -c "
-                # Wait for database to accept connections (up to 60s)
+                # Wait for database and run migrations (up to 60s)
                 for i in {1..30}; do
-                  if echo \"SELECT 1\" | npx prisma db execute --stdin 2>/dev/null; then
-                    echo 'Database is ready'
+                  MIGRATE_OUTPUT=\$(npx prisma migrate deploy 2>&1) && { echo 'Migrations up to date.'; break; }
+                  if echo \"\$MIGRATE_OUTPUT\" | grep -q P1000; then
+                    echo 'FATAL: Database authentication failed (P1000). Check DATABASE_USER/DATABASE_PASSWORD in .env.' >&2
+                    exit 1
+                  fi
+                  if echo \"\$MIGRATE_OUTPUT\" | grep -q P3005; then
+                    echo 'P3005 detected — baselining existing database...';
+                    mkdir -p prisma/migrations/0_init;
+                    npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/0_init/migration.sql;
+                    npx prisma migrate resolve --applied 0_init;
+                    echo 'Baseline applied. Running migrate deploy...';
+                    npx prisma migrate deploy;
                     break
                   fi
                   echo 'Waiting for database... ('\$i'/30)'
                   sleep 2
                 done
-                if npx prisma migrate deploy 2>&1; then
-                  echo 'Migrations up to date.';
-                elif npx prisma migrate deploy 2>&1 | grep -q P3005; then
-                  echo 'P3005 detected — baselining existing database...';
-                  mkdir -p prisma/migrations/0_init;
-                  npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/0_init/migration.sql;
-                  npx prisma migrate resolve --applied 0_init;
-                  echo 'Baseline applied. Running migrate deploy...';
-                  npx prisma migrate deploy;
-                else
-                  echo 'migrate deploy failed (non-P3005). Aborting.' >&2;
-                  exit 1;
-                fi
+                echo 'FATAL: Database migration failed after 30 retries.' >&2
+                exit 1
               "
               # Force clean rebuild — no-cache prevents Docker from reusing stale layers
               docker compose -f docker-compose.yml -f docker-compose.agents.yml build --no-cache backend frontend agent-zero crew-ai
@@ -219,28 +217,27 @@ jobs:
               docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --build app-db redis
               # Wait for database and run migrations before building app services
               docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml run --rm backend bash -c "
-                # Wait for database to accept connections (up to 60s)
+                # Wait for database and run migrations (up to 60s)
                 for i in {1..30}; do
-                  if echo \"SELECT 1\" | npx prisma db execute --stdin 2>/dev/null; then
-                    echo 'Database is ready'
+                  MIGRATE_OUTPUT=\$(npx prisma migrate deploy 2>&1) && { echo 'Migrations up to date.'; break; }
+                  if echo \"\$MIGRATE_OUTPUT\" | grep -q P1000; then
+                    echo 'FATAL: Database authentication failed (P1000). Check DATABASE_USER/DATABASE_PASSWORD in .env.' >&2
+                    exit 1
+                  fi
+                  if echo \"\$MIGRATE_OUTPUT\" | grep -q P3005; then
+                    echo 'P3005 detected — baselining existing database...';
+                    mkdir -p prisma/migrations/0_init;
+                    npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/0_init/migration.sql;
+                    npx prisma migrate resolve --applied 0_init;
+                    echo 'Baseline applied. Running migrate deploy...';
+                    npx prisma migrate deploy;
                     break
                   fi
                   echo 'Waiting for database... ('\$i'/30)'
                   sleep 2
                 done
-                if npx prisma migrate deploy 2>&1; then
-                  echo 'Migrations up to date.';
-                elif npx prisma migrate deploy 2>&1 | grep -q P3005; then
-                  echo 'P3005 detected — baselining existing database...';
-                  mkdir -p prisma/migrations/0_init;
-                  npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/0_init/migration.sql;
-                  npx prisma migrate resolve --applied 0_init;
-                  echo 'Baseline applied. Running migrate deploy...';
-                  npx prisma migrate deploy;
-                else
-                  echo 'migrate deploy failed (non-P3005). Aborting.' >&2;
-                  exit 1;
-                fi
+                echo 'FATAL: Database migration failed after 30 retries.' >&2
+                exit 1
               "
               # Then build app services with no-cache to force rebuild
               docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml build --no-cache backend frontend agent-zero crew-ai
@@ -248,28 +245,27 @@ jobs:
             else
               echo "Databases UP. Waiting for database readiness then running migrations..."
               docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml run --rm backend bash -c "
-                # Wait for database to accept connections (up to 60s)
+                # Wait for database and run migrations (up to 60s)
                 for i in {1..30}; do
-                  if echo \"SELECT 1\" | npx prisma db execute --stdin 2>/dev/null; then
-                    echo 'Database is ready'
+                  MIGRATE_OUTPUT=\$(npx prisma migrate deploy 2>&1) && { echo 'Migrations up to date.'; break; }
+                  if echo \"\$MIGRATE_OUTPUT\" | grep -q P1000; then
+                    echo 'FATAL: Database authentication failed (P1000). Check DATABASE_USER/DATABASE_PASSWORD in .env.' >&2
+                    exit 1
+                  fi
+                  if echo \"\$MIGRATE_OUTPUT\" | grep -q P3005; then
+                    echo 'P3005 detected — baselining existing database...';
+                    mkdir -p prisma/migrations/0_init;
+                    npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/0_init/migration.sql;
+                    npx prisma migrate resolve --applied 0_init;
+                    echo 'Baseline applied. Running migrate deploy...';
+                    npx prisma migrate deploy;
                     break
                   fi
                   echo 'Waiting for database... ('\$i'/30)'
                   sleep 2
                 done
-                if npx prisma migrate deploy 2>&1; then
-                  echo 'Migrations up to date.';
-                elif npx prisma migrate deploy 2>&1 | grep -q P3005; then
-                  echo 'P3005 detected — baselining existing database...';
-                  mkdir -p prisma/migrations/0_init;
-                  npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/0_init/migration.sql;
-                  npx prisma migrate resolve --applied 0_init;
-                  echo 'Baseline applied. Running migrate deploy...';
-                  npx prisma migrate deploy;
-                else
-                  echo 'migrate deploy failed (non-P3005). Aborting.' >&2;
-                  exit 1;
-                fi
+                echo 'FATAL: Database migration failed after 30 retries.' >&2
+                exit 1
               "
               # Force clean rebuild — no-cache prevents Docker from reusing stale layers
               docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml build --no-cache backend frontend agent-zero crew-ai

@@ -175,14 +175,17 @@
 
     body {
         @apply bg-gray-50 text-gray-900 antialiased overflow-x-hidden;
-        display: flex;
-        justify-content: center;
+        width: 100%;
+        min-height: 100vh;
+    }
+
+    #root {
+        width: 100%;
+        min-height: 100vh;
     }
 
     .dark body {
         @apply bg-[#0c1324] text-[#dce1fb] overflow-x-hidden;
-        display: flex;
-        justify-content: center;
     }
 
     /* Premium Custom Scrollbar */

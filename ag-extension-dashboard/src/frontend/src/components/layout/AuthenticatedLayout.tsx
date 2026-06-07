@@ -228,7 +228,7 @@ export function AuthenticatedLayout() {
 
     return (
         <div
-            className={`h-screen flex flex-col ${darkMode ? 'dark' : ''} bg-theme-bg-primary transition-colors duration-300 overflow-hidden relative z-0`}
+            className={`h-screen w-full flex flex-col ${darkMode ? 'dark' : ''} bg-theme-bg-primary transition-colors duration-300 overflow-hidden relative z-0`}
             onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
         >
             {/* Ambient Aurora Background */}
