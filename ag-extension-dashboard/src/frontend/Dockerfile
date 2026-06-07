@@ -1,34 +1,26 @@
 # ============================================================
-# Stage 1: Dependencies
-# ============================================================
-FROM node:20-slim AS deps
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci 2>/dev/null || npm install
-
-# ============================================================
-# Stage 2: Build
+# Stage 1: Build — install deps + compile TypeScript + Vite
 # ============================================================
 FROM node:20-slim AS build
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci 2>/dev/null || npm install
+RUN npm ci --no-audit --no-fund 2>/dev/null || npm install --no-audit --no-fund
 COPY . .
 RUN npm run build:docker
 
 # ============================================================
-# Stage 3: Development
+# Stage 2: Development — hot-reload with Vite dev server
 # ============================================================
 FROM node:20-slim AS development
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci 2>/dev/null || npm install
+RUN npm ci --no-audit --no-fund 2>/dev/null || npm install --no-audit --no-fund
 COPY . .
 EXPOSE 5173
 CMD ["npm", "run", "dev", "--", "--host"]
 
 # ============================================================
-# Stage 4: Production with nginx + security headers
+# Stage 3: Production — nginx serving static assets
 # ============================================================
 FROM nginx:alpine AS production
 

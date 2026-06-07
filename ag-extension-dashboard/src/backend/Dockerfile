@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y openssl ca-certificates && rm -rf /var/
 COPY package*.json ./
 COPY prisma/ ./prisma/
 
-RUN npm ci --only=production 2>/dev/null || npm install --include=prod && \
+RUN npm ci --only=production --no-audit --no-fund 2>/dev/null || npm install --include=prod --no-audit --no-fund && \
     npm prune --production 2>/dev/null; exit 0
 
 # ============================================================
@@ -23,7 +23,7 @@ COPY package*.json ./
 COPY prisma/ ./prisma/
 
 # Install ALL dependencies including devDeps
-RUN npm ci 2>/dev/null || npm install
+RUN npm ci --no-audit --no-fund 2>/dev/null || npm install --no-audit --no-fund
 
 # Generate Prisma client
 RUN npx prisma generate
@@ -44,7 +44,7 @@ RUN apt-get update && apt-get install -y openssl ca-certificates && rm -rf /var/
 # Install dependencies with devDeps for ts-node-dev
 COPY package*.json ./
 COPY prisma/ ./prisma/
-RUN npm ci 2>/dev/null || npm install
+RUN npm ci --no-audit --no-fund 2>/dev/null || npm install --no-audit --no-fund
 RUN npx prisma generate
 
 # Copy all source for hot-reload

@@ -17,7 +17,7 @@
     "test:coverage": "vitest run --coverage",
     "audit-locales": "node ../../scripts/audit-locales.js",
     "sync-locales": "node ../../scripts/sync-locales.js",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.17",

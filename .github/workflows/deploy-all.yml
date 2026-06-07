@@ -10,6 +10,16 @@ on:
       - master
     types: [closed]
   workflow_dispatch:
+    inputs:
+      force_clean_rebuild:
+        description: 'Force clean rebuild (--no-cache) of all Docker images'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  packages: write
 
 jobs:
   # 1. CI Checks (Runs for all triggers)
@@ -50,121 +60,149 @@ jobs:
           npm run build
           npm test -- --forceExit
 
-  # 2. Deploy to Testing (Old Server)
+  # 2. Deploy to Testing (Old Server) — 4 timed steps, parallel builds via BuildKit
   deploy-testing:
     needs: ci-checks
     if: github.event_name == 'push' && (github.ref == 'refs/heads/stage' || startsWith(github.ref, 'refs/heads/feature/'))
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to Old Server (Testing)
+      # ── Step 1/4: Git sync & .env (fast) ─────────────────────
+      - name: 1/4 Sync — git checkout + .env
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
-          command_timeout: 60m
+          command_timeout: 3m
           script: |
             if [ ! -d "/root/ag_extension_decision_support" ]; then
-              echo "🚀 Project directory missing. Cloning repository..."
-              cd /root
-              git clone https://github.com/${{ github.repository }}.git
+              echo "🚀 Cloning repository..."
+              cd /root && git clone https://github.com/${{ github.repository }}.git
             fi
-            
             cd /root/ag_extension_decision_support/ag-extension-dashboard
             git fetch origin
-            
-            # Ensure branch exists and is checked out
             if git show-ref --verify --quiet refs/heads/${{ github.ref_name }}; then
               git checkout ${{ github.ref_name }}
             else
               git checkout -b ${{ github.ref_name }} origin/${{ github.ref_name }}
             fi
-            
-            # Force sync — discard any local modifications that would block the deploy
             git reset --hard origin/${{ github.ref_name }}
-
-            # ── Ensure .env file exists ──────────────────────────
-            if [ ! -f ".env" ]; then
-              echo ".env not found — creating from .env.example..."
+            if [ ! -f .env ]; then
               cp .env.example .env
-              echo ".env created from .env.example (edit secrets manually or set GitHub Secrets)"
-            else
-              echo ".env already exists — skipping creation"
+              echo ".env created from .env.example"
             fi
 
-            # Check if databases are UP
+      # ── Step 2/4: Infrastructure & migrations (moderate) ─────
+      - name: 2/4 Infra — database + migrations
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.TEST_SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
+          command_timeout: 20m
+          script: |
+            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            COMPOSE_FILES="-f docker-compose.yml -f docker-compose.agents.yml"
+
             DB_UP=$(docker ps --filter "name=ag-dashboard-db" --filter "status=running" -q)
             REDIS_UP=$(docker ps --filter "name=ag-dashboard-redis" --filter "status=running" -q)
-            
-            if [ -z "$DB_UP" ] || [ -z "$REDIS_UP" ]; then
-              echo "Databases DOWN. Building infrastructure, running migrations, then deploying app services..."
-              # Build/start infrastructure first (slow builds, avoid CPU contention)
-              docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --build app-db redis
-              # Wait for database and run migrations before building app services
-              docker compose -f docker-compose.yml -f docker-compose.agents.yml run --rm backend bash -c "
-                # Wait for database and run migrations (up to 60s)
-                for i in {1..30}; do
-                  MIGRATE_OUTPUT=\$(npx prisma migrate deploy 2>&1) && { echo 'Migrations up to date.'; break; }
-                  if echo \"\$MIGRATE_OUTPUT\" | grep -q P1000; then
-                    echo 'FATAL: Database authentication failed (P1000). Check DATABASE_USER/DATABASE_PASSWORD in .env.' >&2
-                    exit 1
-                  fi
-                  if echo \"\$MIGRATE_OUTPUT\" | grep -q P3005; then
-                    echo 'P3005 detected — baselining existing database...';
-                    mkdir -p prisma/migrations/0_init;
-                    npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/0_init/migration.sql;
-                    npx prisma migrate resolve --applied 0_init;
-                    echo 'Baseline applied. Running migrate deploy...';
-                    npx prisma migrate deploy;
-                    break
-                  fi
-                  echo 'Waiting for database... ('\$i'/30)'
-                  sleep 2
-                done
-                echo 'FATAL: Database migration failed after 30 retries.' >&2
-                exit 1
-              "
-              # Then build app services with no-cache to force rebuild
-              docker compose -f docker-compose.yml -f docker-compose.agents.yml build --no-cache backend frontend agent-zero crew-ai
-              docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --force-recreate backend frontend agent-zero crew-ai
-            else
-              echo "Databases UP. Waiting for database readiness then running migrations..."
-              docker compose -f docker-compose.yml -f docker-compose.agents.yml run --rm backend bash -c "
-                # Wait for database and run migrations (up to 60s)
-                for i in {1..30}; do
-                  MIGRATE_OUTPUT=\$(npx prisma migrate deploy 2>&1) && { echo 'Migrations up to date.'; break; }
-                  if echo \"\$MIGRATE_OUTPUT\" | grep -q P1000; then
-                    echo 'FATAL: Database authentication failed (P1000). Check DATABASE_USER/DATABASE_PASSWORD in .env.' >&2
-                    exit 1
-                  fi
-                  if echo \"\$MIGRATE_OUTPUT\" | grep -q P3005; then
-                    echo 'P3005 detected — baselining existing database...';
-                    mkdir -p prisma/migrations/0_init;
-                    npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/0_init/migration.sql;
-                    npx prisma migrate resolve --applied 0_init;
-                    echo 'Baseline applied. Running migrate deploy...';
-                    npx prisma migrate deploy;
-                    break
-                  fi
-                  echo 'Waiting for database... ('\$i'/30)'
-                  sleep 2
-                done
-                echo 'FATAL: Database migration failed after 30 retries.' >&2
-                exit 1
-              "
-              # Force clean rebuild — no-cache prevents Docker from reusing stale layers
-              docker compose -f docker-compose.yml -f docker-compose.agents.yml build --no-cache backend frontend agent-zero crew-ai
-              docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --force-recreate backend frontend agent-zero crew-ai
-            fi
-            docker image prune -f
 
-  # 3. Deploy to Production (New Server)
+            if [ -z "$DB_UP" ] || [ -z "$REDIS_UP" ]; then
+              echo "📦 Databases down — building infrastructure..."
+              docker compose $COMPOSE_FILES up -d --build app-db redis
+            fi
+
+            echo "🗄️ Running database migrations..."
+            docker compose $COMPOSE_FILES run --rm backend bash -c "
+              MIGRATION_DONE=0
+              for i in {1..30}; do
+                MIGRATE_OUTPUT=\$(npx prisma migrate deploy 2>&1) && { echo 'Migrations up to date.'; MIGRATION_DONE=1; break; }
+                if echo \"\$MIGRATE_OUTPUT\" | grep -q P1000; then
+                  echo 'FATAL: Database auth failed (P1000).' >&2; exit 1
+                fi
+                if echo \"\$MIGRATE_OUTPUT\" | grep -q P3005; then
+                  echo 'P3005 — baselining...'
+                  mkdir -p prisma/migrations/0_init
+                  npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/0_init/migration.sql
+                  npx prisma migrate resolve --applied 0_init
+                  npx prisma migrate deploy
+                  MIGRATION_DONE=1
+                  break
+                fi
+                echo 'Waiting for database... ('\$i'/30)'
+                sleep 2
+              done
+              if [ \"\$MIGRATION_DONE\" != \"1\" ]; then
+                echo 'FATAL: Migration failed after 30 retries.' >&2
+                exit 1
+              fi
+            "
+
+      # ── Step 3/4: Build ALL services in parallel via BuildKit ─
+      - name: 3/4 Build — all services in parallel (backend + frontend + agents)
+        uses: appleboy/ssh-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+        with:
+          host: ${{ secrets.TEST_SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
+          envs: GITHUB_TOKEN,GITHUB_REPOSITORY,GITHUB_REPOSITORY_OWNER
+          command_timeout: 60m
+          script: |
+            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            CLEAN_REBUILD="${{ github.event.inputs.force_clean_rebuild == 'true' && '--no-cache' || '' }}"
+
+            if [ -n "$CLEAN_REBUILD" ]; then
+              echo "🧹 Clean rebuild forced — building without cache..."
+              docker buildx bake -f docker-bake.hcl backend frontend agent-zero crew-ai
+            else
+              echo "🔐 Authenticating to GHCR for remote Docker layer cache..."
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_REPOSITORY_OWNER" --password-stdin 2>/dev/null
+              echo "📦 Building with remote cache (GHCR)..."
+              docker buildx create --use --driver docker-container --name remote-builder 2>/dev/null || docker buildx use remote-builder 2>/dev/null || true
+              docker buildx bake \
+                -f docker-bake.hcl \
+                --set "*.cache-from=type=registry,ref=ghcr.io/${GITHUB_REPOSITORY}/buildcache:{{.Name}}" \
+                --set "*.cache-to=type=registry,ref=ghcr.io/${GITHUB_REPOSITORY}/buildcache:{{.Name}},mode=max" \
+                backend frontend agent-zero crew-ai
+            fi
+
+            echo "🚀 Starting all services..."
+            docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --force-recreate --no-build backend frontend agent-zero crew-ai
+
+      # ── Step 4/4: Cleanup ────────────────────────────────────
+      - name: 4/4 Cleanup — disk usage report + prune
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.TEST_SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
+          command_timeout: 5m
+          script: |
+            echo "💾 Docker disk usage before cleanup:"
+            echo "  Overlay2 actual: $(du -sh /var/lib/docker/ 2>/dev/null | cut -f1)"
+            docker system df
+            echo ""
+            echo "🧹 Pruning stale Docker images (unused + dangling, older than 24h)..."
+            docker image prune -a -f --filter "until=24h"
+            echo "🧹 Pruning BuildKit build cache..."
+            docker builder prune -f --filter "until=24h" 2>/dev/null || true
+            echo ""
+            echo "💾 Docker disk usage after cleanup:"
+            echo "  Overlay2 actual: $(du -sh /var/lib/docker/ 2>/dev/null | cut -f1)"
+            docker system df
+
+  # 3. Deploy to Production (New Server) — 4 timed steps, parallel builds via BuildKit
   deploy-production:
     needs: ci-checks
     if: (github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.base_ref == 'master') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to Production Server
+      # ── Step 1/4: Git sync & .env with GitHub Secrets (fast) ─
+      - name: 1/4 Sync — git checkout + .env
         uses: appleboy/ssh-action@master
         env:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
@@ -176,99 +214,128 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
           envs: JWT_SECRET,OPENAI_API_KEY,ANTHROPIC_API_KEY,ACME_EMAIL
-          command_timeout: 60m
+          command_timeout: 3m
           script: |
             if [ ! -d "/root/ag_extension_decision_support" ]; then
-              echo "Project directory missing. Cloning repository..."
-              cd /root
-              git clone https://github.com/${{ github.repository }}.git
+              cd /root && git clone https://github.com/${{ github.repository }}.git
             fi
-
             cd /root/ag_extension_decision_support/ag-extension-dashboard
             git fetch origin master
             git checkout master
-            # Force sync — discard any local modifications that would block the deploy
             git reset --hard origin/master
 
-            # ── Ensure .env file exists ──────────────────────────
             if [ ! -f ".env" ]; then
-              echo ".env not found — creating from .env.example with GitHub Secrets..."
               cp .env.example .env
-              # Override critical secrets — append at end of file (Docker Compose uses last-value-wins)
               for var in JWT_SECRET OPENAI_API_KEY ANTHROPIC_API_KEY ACME_EMAIL; do
                 val="${!var}"
                 if [ -n "$val" ]; then
                   printf '%s=%s\n' "$var" "$val" >> .env
-                  echo "  ✅ $var set from GitHub Secret"
                 fi
               done
-              echo ".env created successfully"
+              echo ".env created from .env.example with GitHub Secrets"
             else
               echo ".env already exists — skipping creation"
             fi
 
-            echo "Checking database and redis status..."
+      # ── Step 2/4: Infrastructure & migrations (moderate) ─────
+      - name: 2/4 Infra — database + migrations
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
+          command_timeout: 20m
+          script: |
+            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml"
+
             DB_UP=$(docker ps --filter "name=ag-dashboard-db" --filter "status=running" -q)
             REDIS_UP=$(docker ps --filter "name=ag-dashboard-redis" --filter "status=running" -q)
 
             if [ -z "$DB_UP" ] || [ -z "$REDIS_UP" ]; then
-              echo "Databases DOWN. Building infrastructure, running migrations, then deploying app services..."
-              # Build/start infrastructure first (slow builds, avoid CPU contention)
-              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --build app-db redis
-              # Wait for database and run migrations before building app services
-              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml run --rm backend bash -c "
-                # Wait for database and run migrations (up to 60s)
-                for i in {1..30}; do
-                  MIGRATE_OUTPUT=\$(npx prisma migrate deploy 2>&1) && { echo 'Migrations up to date.'; break; }
-                  if echo \"\$MIGRATE_OUTPUT\" | grep -q P1000; then
-                    echo 'FATAL: Database authentication failed (P1000). Check DATABASE_USER/DATABASE_PASSWORD in .env.' >&2
-                    exit 1
-                  fi
-                  if echo \"\$MIGRATE_OUTPUT\" | grep -q P3005; then
-                    echo 'P3005 detected — baselining existing database...';
-                    mkdir -p prisma/migrations/0_init;
-                    npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/0_init/migration.sql;
-                    npx prisma migrate resolve --applied 0_init;
-                    echo 'Baseline applied. Running migrate deploy...';
-                    npx prisma migrate deploy;
-                    break
-                  fi
-                  echo 'Waiting for database... ('\$i'/30)'
-                  sleep 2
-                done
-                echo 'FATAL: Database migration failed after 30 retries.' >&2
-                exit 1
-              "
-              # Then build app services with no-cache to force rebuild
-              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml build --no-cache backend frontend agent-zero crew-ai
-              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate backend frontend agent-zero crew-ai
-            else
-              echo "Databases UP. Waiting for database readiness then running migrations..."
-              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml run --rm backend bash -c "
-                # Wait for database and run migrations (up to 60s)
-                for i in {1..30}; do
-                  MIGRATE_OUTPUT=\$(npx prisma migrate deploy 2>&1) && { echo 'Migrations up to date.'; break; }
-                  if echo \"\$MIGRATE_OUTPUT\" | grep -q P1000; then
-                    echo 'FATAL: Database authentication failed (P1000). Check DATABASE_USER/DATABASE_PASSWORD in .env.' >&2
-                    exit 1
-                  fi
-                  if echo \"\$MIGRATE_OUTPUT\" | grep -q P3005; then
-                    echo 'P3005 detected — baselining existing database...';
-                    mkdir -p prisma/migrations/0_init;
-                    npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/0_init/migration.sql;
-                    npx prisma migrate resolve --applied 0_init;
-                    echo 'Baseline applied. Running migrate deploy...';
-                    npx prisma migrate deploy;
-                    break
-                  fi
-                  echo 'Waiting for database... ('\$i'/30)'
-                  sleep 2
-                done
-                echo 'FATAL: Database migration failed after 30 retries.' >&2
-                exit 1
-              "
-              # Force clean rebuild — no-cache prevents Docker from reusing stale layers
-              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml build --no-cache backend frontend agent-zero crew-ai
-              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate backend frontend agent-zero crew-ai
+              echo "📦 Databases down — building infrastructure..."
+              docker compose $COMPOSE_FILES up -d --build app-db redis
             fi
-            docker image prune -f
+
+            echo "🗄️ Running database migrations..."
+            docker compose $COMPOSE_FILES run --rm backend bash -c "
+              MIGRATION_DONE=0
+              for i in {1..30}; do
+                MIGRATE_OUTPUT=\$(npx prisma migrate deploy 2>&1) && { echo 'Migrations up to date.'; MIGRATION_DONE=1; break; }
+                if echo \"\$MIGRATE_OUTPUT\" | grep -q P1000; then
+                  echo 'FATAL: Database auth failed (P1000).' >&2; exit 1
+                fi
+                if echo \"\$MIGRATE_OUTPUT\" | grep -q P3005; then
+                  echo 'P3005 — baselining...'
+                  mkdir -p prisma/migrations/0_init
+                  npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/0_init/migration.sql
+                  npx prisma migrate resolve --applied 0_init
+                  npx prisma migrate deploy
+                  MIGRATION_DONE=1
+                  break
+                fi
+                echo 'Waiting for database... ('\$i'/30)'
+                sleep 2
+              done
+              if [ \"\$MIGRATION_DONE\" != \"1\" ]; then
+                echo 'FATAL: Migration failed after 30 retries.' >&2
+                exit 1
+              fi
+            "
+
+      # ── Step 3/4: Build ALL services in parallel via BuildKit ─
+      - name: 3/4 Build — all services in parallel (backend + frontend + agents)
+        uses: appleboy/ssh-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
+          envs: GITHUB_TOKEN,GITHUB_REPOSITORY,GITHUB_REPOSITORY_OWNER
+          command_timeout: 60m
+          script: |
+            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            CLEAN_REBUILD="${{ github.event.inputs.force_clean_rebuild == 'true' && '--no-cache' || '' }}"
+
+            if [ -n "$CLEAN_REBUILD" ]; then
+              echo "🧹 Clean rebuild forced — building without cache..."
+              docker buildx bake -f docker-bake.hcl backend frontend agent-zero crew-ai
+            else
+              echo "🔐 Authenticating to GHCR for remote Docker layer cache..."
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_REPOSITORY_OWNER" --password-stdin 2>/dev/null
+              echo "📦 Building with remote cache (GHCR)..."
+              docker buildx create --use --driver docker-container --name remote-builder 2>/dev/null || docker buildx use remote-builder 2>/dev/null || true
+              docker buildx bake \
+                -f docker-bake.hcl \
+                --set "*.cache-from=type=registry,ref=ghcr.io/${GITHUB_REPOSITORY}/buildcache:{{.Name}}" \
+                --set "*.cache-to=type=registry,ref=ghcr.io/${GITHUB_REPOSITORY}/buildcache:{{.Name}},mode=max" \
+                backend frontend agent-zero crew-ai
+            fi
+
+            echo "🚀 Starting all services..."
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate --no-build backend frontend agent-zero crew-ai
+
+      # ── Step 4/4: Cleanup ────────────────────────────────────
+      - name: 4/4 Cleanup — disk usage report + prune
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
+          command_timeout: 5m
+          script: |
+            echo "💾 Docker disk usage before cleanup:"
+            echo "  Overlay2 actual: $(du -sh /var/lib/docker/ 2>/dev/null | cut -f1)"
+            docker system df
+            echo ""
+            echo "🧹 Pruning stale Docker images (unused + dangling, older than 24h)..."
+            docker image prune -a -f --filter "until=24h"
+            echo "🧹 Pruning BuildKit build cache..."
+            docker builder prune -f --filter "until=24h" 2>/dev/null || true
+            echo ""
+            echo "💾 Docker disk usage after cleanup:"
+            echo "  Overlay2 actual: $(du -sh /var/lib/docker/ 2>/dev/null | cut -f1)"
+            docker system df
