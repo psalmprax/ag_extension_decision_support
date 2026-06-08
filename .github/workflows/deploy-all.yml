@@ -295,7 +295,7 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
           envs: GITHUB_TOKEN,GITHUB_REPOSITORY,GITHUB_REPOSITORY_OWNER
-          command_timeout: 240m
+          command_timeout: 1240m
           script: |
             cd /root/ag_extension_decision_support/ag-extension-dashboard
             CLEAN_REBUILD="${{ github.event.inputs.force_clean_rebuild == 'true' && '--no-cache' || '' }}"
