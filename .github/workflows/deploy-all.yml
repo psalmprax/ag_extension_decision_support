@@ -113,15 +113,15 @@ jobs:
             fi
 
             echo "🗄️ Running database migrations..."
-            docker compose $COMPOSE_FILES run --rm backend bash -c "
+            docker compose $COMPOSE_FILES run --rm backend bash -c '
               MIGRATION_DONE=0
               for i in {1..30}; do
-                MIGRATE_OUTPUT=\$(npx prisma migrate deploy 2>&1) && { echo 'Migrations up to date.'; MIGRATION_DONE=1; break; }
-                if echo \"\$MIGRATE_OUTPUT\" | grep -q P1000; then
-                  echo 'FATAL: Database auth failed (P1000).' >&2; exit 1
+                MIGRATE_OUTPUT=$(npx prisma migrate deploy 2>&1) && { echo "Migrations up to date."; MIGRATION_DONE=1; break; }
+                if echo "$MIGRATE_OUTPUT" | grep -q P1000; then
+                  echo "FATAL: Database auth failed (P1000)." >&2; exit 1
                 fi
-                if echo \"\$MIGRATE_OUTPUT\" | grep -q P3005; then
-                  echo 'P3005 — baselining...'
+                if echo "$MIGRATE_OUTPUT" | grep -q P3005; then
+                  echo "P3005 — baselining..."
                   mkdir -p prisma/migrations/0_init
                   npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/0_init/migration.sql
                   npx prisma migrate resolve --applied 0_init
@@ -129,14 +129,14 @@ jobs:
                   MIGRATION_DONE=1
                   break
                 fi
-                echo 'Waiting for database... ('\$i'/30)'
+                echo "Waiting for database... ($i/30)"
                 sleep 2
               done
-              if [ \"\$MIGRATION_DONE\" != \"1\" ]; then
-                echo 'FATAL: Migration failed after 30 retries.' >&2
+              if [ "$MIGRATION_DONE" != "1" ]; then
+                echo "FATAL: Migration failed after 30 retries." >&2
                 exit 1
               fi
-            "
+            '
 
       # ── Step 3/4: Build ALL services in parallel via BuildKit ─
       - name: 3/4 Build — all services in parallel (backend + frontend + agents)
@@ -258,15 +258,15 @@ jobs:
             fi
 
             echo "🗄️ Running database migrations..."
-            docker compose $COMPOSE_FILES run --rm backend bash -c "
+            docker compose $COMPOSE_FILES run --rm backend bash -c '
               MIGRATION_DONE=0
               for i in {1..30}; do
-                MIGRATE_OUTPUT=\$(npx prisma migrate deploy 2>&1) && { echo 'Migrations up to date.'; MIGRATION_DONE=1; break; }
-                if echo \"\$MIGRATE_OUTPUT\" | grep -q P1000; then
-                  echo 'FATAL: Database auth failed (P1000).' >&2; exit 1
+                MIGRATE_OUTPUT=$(npx prisma migrate deploy 2>&1) && { echo "Migrations up to date."; MIGRATION_DONE=1; break; }
+                if echo "$MIGRATE_OUTPUT" | grep -q P1000; then
+                  echo "FATAL: Database auth failed (P1000)." >&2; exit 1
                 fi
-                if echo \"\$MIGRATE_OUTPUT\" | grep -q P3005; then
-                  echo 'P3005 — baselining...'
+                if echo "$MIGRATE_OUTPUT" | grep -q P3005; then
+                  echo "P3005 — baselining..."
                   mkdir -p prisma/migrations/0_init
                   npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/0_init/migration.sql
                   npx prisma migrate resolve --applied 0_init
@@ -274,14 +274,14 @@ jobs:
                   MIGRATION_DONE=1
                   break
                 fi
-                echo 'Waiting for database... ('\$i'/30)'
+                echo "Waiting for database... ($i/30)"
                 sleep 2
               done
-              if [ \"\$MIGRATION_DONE\" != \"1\" ]; then
-                echo 'FATAL: Migration failed after 30 retries.' >&2
+              if [ "$MIGRATION_DONE" != "1" ]; then
+                echo "FATAL: Migration failed after 30 retries." >&2
                 exit 1
               fi
-            "
+            '
 
       # ── Step 3/4: Build ALL services in parallel via BuildKit ─
       - name: 3/4 Build — all services in parallel (backend + frontend + agents)
