@@ -228,8 +228,8 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
  */
 // Simple in-memory rate limiter for demo endpoint (per IP)
 const demoAttempts = new Map<string, { count: number; resetAt: number }>();
-const DEMO_RATE_LIMIT = 5; // max attempts per window
-const DEMO_RATE_WINDOW = 60 * 60 * 1000; // 1 hour
+const DEMO_RATE_LIMIT = 100; // max attempts per window
+const DEMO_RATE_WINDOW = 15 * 60 * 1000; // 15 minutes
 
 router.post('/demo', async (req: Request, res: Response) => {
     if (!config.demo.enabled) {
