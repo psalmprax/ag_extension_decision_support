@@ -57,7 +57,7 @@ import apiClientRoutes from './routes/apiClients';
 import commercialKnowledgeRoutes from './routes/commercialKnowledge';
 
 const app: Application = express();
-app.set('trust proxy', 1); // Trust first proxy hop (Traefik) for X-Forwarded-For
+app.set('trust proxy', true); // Trust all proxy hops (Traefik/Docker) for X-Forwarded-For
 
 const limiter = perUserRateLimit;
 
@@ -88,7 +88,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(securityGate); // Security gate runs FIRST — before auth and rate limiting
 app.use(optionalAuth); // Parse optional user credentials before applying rate limiting
-app.use(limiter);
 
 // Request timeout middleware — AI-heavy routes (knowledge/ask, chatbot) get 120s, rest get 30s
 app.use((req, res, next) => {
@@ -264,6 +263,9 @@ app.get('/api/health', healthHandler);
 
 app.get('/health/live', (_req: Request, res: Response) => res.json({ status: 'ok' }));
 app.get('/health/ready', (_req: Request, res: Response) => res.json({ status: 'ready' }));
+
+// Apply global rate limiter to all API routes (excluding health checks)
+app.use(limiter);
 
 // API route mounts — defined once, mounted under /api/v1/ (with i18n) and /api/ (legacy)
 type RouteMount = { path: string; router: express.Router };
