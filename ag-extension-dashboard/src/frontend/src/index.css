@@ -170,6 +170,8 @@
     html {
         font-family: 'Inter', system-ui, sans-serif;
         scroll-behavior: smooth;
+        /* Global -20% zoom via rem scaling. Avoids the fixed-position breaking issues of 'transform: scale' */
+        font-size: 80%; 
     }
 
     body {
