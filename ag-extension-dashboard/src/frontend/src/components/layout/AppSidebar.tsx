@@ -59,7 +59,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                                 )}
                             >
                                 <item.icon className="w-4 h-4 flex-shrink-0" />
-                                <span className="font-headline font-bold uppercase tracking-widest text-[10px]">{item.label}</span>
+                                <span className="font-headline font-bold uppercase tracking-widest text-[10px] truncate">{item.label}</span>
                             </button>
                         ))}
                     </nav>
