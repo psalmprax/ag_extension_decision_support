@@ -52,14 +52,14 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                                     'flex items-center gap-3 px-4 py-3 transition-all duration-200 text-left',
                                     isModern
                                         ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98]'
-                                        : 'rounded-none border border-slate-300 dark:border-slate-700 font-mono text-[10px] uppercase tracking-widest',
+                                        : 'rounded-none border border-slate-300 dark:border-slate-700 font-mono text-[0.625rem] uppercase tracking-widest',
                                     activeTab === item.id
                                         ? 'bg-cyan-600/10 dark:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-r-2 border-cyan-600 dark:border-cyan-400 shadow-[inset_0_0_15px_rgba(0,245,255,0.1)]'
                                         : cn(subtextClass, 'hover:bg-black/5 dark:hover:bg-white/5 hover:text-cyan-600 dark:hover:text-cyan-200')
                                 )}
                             >
                                 <item.icon className="w-4 h-4 flex-shrink-0" />
-                                <span className="font-headline font-bold uppercase tracking-widest text-[10px]">{item.label}</span>
+                                <span className="font-headline font-bold uppercase tracking-widest text-[0.625rem]">{item.label}</span>
                             </button>
                         ))}
                     </nav>
@@ -77,7 +77,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                         </button>
                         <button
                             onClick={() => setShowHelpCenter(true)}
-                            className="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-200 text-[10px] uppercase font-bold tracking-widest"
+                            className="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-200 text-[0.625rem] uppercase font-bold tracking-widest"
                         >
                             <HelpCircle className="w-3 h-3" />
                             Support
