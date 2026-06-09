@@ -178,7 +178,7 @@ export const PaymentAnalyticsDashboard: React.FC = () => {
     }
 
     return (
-        <div className="max-w-[1600px] mx-auto py-12 px-6">
+        <div className="w-full py-12 px-6">
             {/* Header */}
             <header className="mb-16 relative overflow-hidden">
                 <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary-500/10 rounded-full blur-[120px] pointer-events-none" />

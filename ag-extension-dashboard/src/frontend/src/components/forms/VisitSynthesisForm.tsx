@@ -79,7 +79,7 @@ export const VisitSynthesisForm: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="w-full space-y-8">
       <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">

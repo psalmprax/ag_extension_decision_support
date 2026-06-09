@@ -195,7 +195,7 @@ export const KnowledgeBase: React.FC = () => {
 
             {/* Main Content */}
             <main className="flex-1 overflow-y-auto p-4 md:p-8 scrollbar-hide">
-                <div className="max-w-4xl mx-auto">
+                <div className="w-full">
                     {/* Header glassmorphism */}
                     <div className="mb-12 text-center">
                         <motion.div 

@@ -76,7 +76,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     const { darkMode, setDarkMode, themeName, setThemeName, toggleDesignSystemMode } = useAppStore();
 
     const headerClass = cn(
-        'fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 backdrop-blur-xl border-b border-gray-200 dark:border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.1)]',
+        'fixed top-0 z-50 flex justify-between items-center px-6 h-16 backdrop-blur-xl border-b border-gray-200 dark:border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.1)] transition-all duration-300',
+        sidebarOpen ? 'lg:left-64 lg:w-[calc(100%-16rem)] left-0 w-full' : 'left-0 w-full',
         isModern ? 'bg-white/30 dark:bg-slate-950/30' : 'bg-white dark:bg-slate-950 border-b-2 border-slate-100 dark:border-slate-800'
     );
 
