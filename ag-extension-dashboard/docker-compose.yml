@@ -119,7 +119,7 @@ services:
       - ettametta_ettametta
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend-dev.rule=(Host(`${DOMAIN:-www.gpexts.com}`) || Host(`localhost`) || Host(`127.0.0.1`)) && (PathPrefix(`/api`) || PathPrefix(`/api-docs`) || PathPrefix(`/socket.io`) || PathPrefix(`/health`))"
+      - "traefik.http.routers.backend-dev.rule=(Host(`${DOMAIN:-www.gpexts.com}`) || Host(`localhost`) || Host(`127.0.0.1`) || Host(`145.223.97.248`)) && (PathPrefix(`/api`) || PathPrefix(`/api-docs`) || PathPrefix(`/socket.io`) || PathPrefix(`/health`))"
       - "traefik.http.routers.backend-dev.entrypoints=web"
       - "traefik.http.services.backend.loadbalancer.server.port=3001"
 
@@ -140,7 +140,7 @@ services:
       - ag-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend-dev.rule=Host(`${DOMAIN:-www.gpexts.com}`) || Host(`localhost`) || Host(`127.0.0.1`)"
+      - "traefik.http.routers.frontend-dev.rule=Host(`${DOMAIN:-www.gpexts.com}`) || Host(`localhost`) || Host(`127.0.0.1`) || Host(`145.223.97.248`)"
       - "traefik.http.routers.frontend-dev.entrypoints=web"
 
   # ── Local AI (optional) ───────────────────────────────────
