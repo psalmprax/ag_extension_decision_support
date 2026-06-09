@@ -37,7 +37,7 @@ export const staggerItem: Variants = {
 
 export const sidebarVariants: Variants = {
     initial: { width: 0, opacity: 0, x: -20 },
-    animate: { width: '16rem', opacity: 1, x: 0, transition: { duration: 0.3, ease: 'easeOut' } },
+    animate: { width: '18rem', opacity: 1, x: 0, transition: { duration: 0.3, ease: 'easeOut' } },
     exit: { width: 0, opacity: 0, x: -20, transition: { duration: 0.2 } },
 };
 

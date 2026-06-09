@@ -365,7 +365,7 @@ function App() {
                     onGenerateReport={handleGenerateReport}
                 />
 
-                <main className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarOpen ? 'ml-64' : ''} relative`}>
+                <main className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarOpen ? 'ml-72' : ''} relative`}>
                     <ErrorBoundary componentName="MainContent">
                         <Suspense fallback={<div className="p-6"><Loader2 className="w-8 h-8 animate-spin text-cyan-400" /></div>}>
                             <div className="p-6">
