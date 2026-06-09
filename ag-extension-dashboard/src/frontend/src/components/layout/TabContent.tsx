@@ -143,8 +143,8 @@ export function TabContent(props: TabContentProps) {
     } = props;
 
     return (
-        <Suspense fallback={<div className="p-6"><Loader2 className="w-8 h-8 animate-spin text-cyan-400" /></div>}>
-            <div className="p-6">
+        <Suspense fallback={<div className="p-4 md:p-6 lg:p-8 w-full"><Loader2 className="w-8 h-8 animate-spin text-cyan-400" /></div>}>
+            <div className="p-4 md:p-6 lg:p-8 w-full">
                 {activeTab === 'dashboard' && (
                     <ErrorBoundary componentName="DashboardPage">
                         <DashboardPage
