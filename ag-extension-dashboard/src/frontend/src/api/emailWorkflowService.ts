@@ -44,16 +44,6 @@ export const approveEmail = async (approvalId: string, comment?: string): Promis
     return response.data;
 };
 
-export const updateEmailTemplate = async (id: string, data: {
-    subject?: string;
-    body?: string;
-    category?: string;
-    variables?: string[];
-}): Promise<{ success: boolean; message?: string }> => {
-    const response = await apiClient.put(`/email/templates/${id}`, data);
-    return response.data;
-};
-
 export const rejectEmail = async (approvalId: string, comment?: string): Promise<{ success: boolean }> => {
     const response = await apiClient.post(`/email/approvals/${approvalId}/reject`, { comment });
     return response.data;

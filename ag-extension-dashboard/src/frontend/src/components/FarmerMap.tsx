@@ -23,7 +23,6 @@ const defaultIcon = L.icon({
 L.Marker.prototype.options.icon = defaultIcon;
 
 // Custom styles for premium markers and popups
-// Uses CSS variables from index.css for theme-aware colors
 const MAP_STYLES = `
   .custom-marker {
     background: none !important;
@@ -95,13 +94,13 @@ const MAP_STYLES = `
   }
 
   .glass-popup .leaflet-popup-content-wrapper {
-    background: rgba(var(--color-bg-card-rgb), 0.92) !important;
+    background: rgba(255, 255, 255, 0.92) !important;
     backdrop-filter: blur(20px) !important;
     border-radius: 24px !important;
-    border: 1px solid rgba(var(--color-bg-card-rgb), 0.5) !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
     box-shadow: 
-      0 20px 40px rgba(var(--color-bg-primary-rgb), 0.1),
-      0 0 0 1px rgba(var(--color-bg-card-rgb), 0.5) inset !important;
+      0 20px 40px rgba(0,0,0,0.1),
+      0 0 0 1px rgba(255,255,255,0.5) inset !important;
     padding: 0 !important;
     overflow: hidden;
   }
@@ -112,24 +111,24 @@ const MAP_STYLES = `
   }
   
   .glass-popup .leaflet-popup-tip {
-    background: rgba(var(--color-bg-card-rgb), 0.92) !important;
+    background: rgba(255, 255, 255, 0.92) !important;
     backdrop-filter: blur(20px) !important;
   }
 
   .glass-popup-dark .leaflet-popup-content-wrapper {
-    background: rgba(var(--color-bg-secondary-rgb), 0.95) !important;
+    background: rgba(17, 24, 39, 0.95) !important;
     backdrop-filter: blur(20px) !important;
-    border: 1px solid rgba(var(--color-bg-card-rgb), 0.1) !important;
-    box-shadow: 0 20px 40px rgba(var(--color-bg-primary-rgb), 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4) !important;
   }
   
   .glass-popup-dark .leaflet-popup-tip {
-    background: rgba(var(--color-bg-secondary-rgb), 0.95) !important;
+    background: rgba(17, 24, 39, 0.95) !important;
   }
 
   .leaflet-control-zoom {
     border: none !important;
-    box-shadow: 0 4px 12px rgba(var(--color-bg-primary-rgb), 0.15) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
     border-radius: 16px !important;
     overflow: hidden;
   }
@@ -139,24 +138,30 @@ const MAP_STYLES = `
     width: 36px !important;
     height: 36px !important;
     line-height: 36px !important;
-    color: rgb(var(--color-secondary-700-rgb)) !important;
-    background: rgb(var(--color-bg-card-rgb)) !important;
+    color: #374151 !important;
+    background: white !important;
     transition: all 0.2s !important;
   }
 
   .leaflet-control-zoom a:hover {
-    background: rgb(var(--color-secondary-100-rgb)) !important;
-    color: rgb(var(--color-primary-600-rgb)) !important;
+    background: #f3f4f6 !important;
+    color: #059669 !important;
   }
 
   .dark .leaflet-control-zoom a {
-    color: rgb(var(--color-secondary-400-rgb)) !important;
-    background: rgb(var(--color-secondary-800-rgb)) !important;
+    color: #d1d5db !important;
+    background: #1f2937 !important;
   }
 
   .dark .leaflet-control-zoom a:hover {
-    background: rgb(var(--color-secondary-700-rgb)) !important;
-    color: rgb(var(--color-primary-400-rgb)) !important;
+    background: #374151 !important;
+    color: #00ffff !important;
+  }
+
+    background: rgba(1, 1, 1, 0.95) !important;
+    border: 1px solid rgba(0, 255, 255, 0.3) !important;
+    border-top: none !important;
+    border-left: none !important;
   }
 
   .custom-scrollbar::-webkit-scrollbar {
@@ -166,11 +171,11 @@ const MAP_STYLES = `
     background: transparent;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgb(var(--color-secondary-300-rgb));
+    background: #d1d5db;
     border-radius: 3px;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgb(var(--color-secondary-400-rgb));
+    background: #9ca3af;
   }
 
   .map-search-input {
@@ -178,16 +183,16 @@ const MAP_STYLES = `
   }
   .map-search-input:focus {
     transform: scale(1.02);
-    box-shadow: 0 8px 20px rgba(var(--color-bg-primary-rgb), 0.12);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
   }
 
   .stats-card {
-    background: linear-gradient(135deg, rgba(var(--color-bg-card-rgb), 0.9) 0%, rgba(var(--color-bg-card-rgb), 0.7) 100%);
+    background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
     backdrop-filter: blur(10px);
   }
 
   .stats-card-dark {
-    background: linear-gradient(135deg, rgba(var(--color-secondary-800-rgb), 0.9) 0%, rgba(var(--color-bg-secondary-rgb), 0.7) 100%);
+    background: linear-gradient(135deg, rgba(31, 41, 55, 0.9) 0%, rgba(17, 24, 39, 0.7) 100%);
     backdrop-filter: blur(10px);
   }
 
@@ -208,10 +213,10 @@ const MAP_STYLES = `
   .user-location-dot {
     width: 14px;
     height: 14px;
-    background: rgb(var(--color-primary-500-rgb));
-    border: 2.5px solid rgb(var(--color-bg-card-rgb));
+    background: #3b82f6;
+    border: 2.5px solid #ffffff;
     border-radius: 50%;
-    box-shadow: 0 0 8px rgba(var(--color-primary-500-rgb), 0.8), 0 2px 4px rgba(var(--color-bg-primary-rgb), 0.3);
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.8), 0 2px 4px rgba(0,0,0,0.3);
     z-index: 2;
   }
   
@@ -219,7 +224,7 @@ const MAP_STYLES = `
     position: absolute;
     width: 32px;
     height: 32px;
-    background: rgba(var(--color-primary-500-rgb), 0.45);
+    background: rgba(59, 130, 246, 0.45);
     border-radius: 50%;
     animation: user-pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
     z-index: 1;
@@ -376,12 +381,12 @@ function LayerSwitcher({
                                 : 'hover:bg-gray-100 dark:hover:bg-gray-700'
                                 }`}
                             style={currentLayer === layer ? {
-                                background: `linear-gradient(135deg, rgb(var(--color-primary-600-rgb)), rgb(var(--color-primary-700-rgb)))`,
+                                background: `linear-gradient(135deg, #059669, #047857)`,
                                 color: 'white',
                             } : {
-                                background: 'rgb(var(--color-bg-card-rgb))',
-                                color: 'rgb(var(--color-secondary-700-rgb))',
-                                border: '1px solid rgb(var(--color-secondary-200-rgb))'
+                                background: 'white',
+                                color: '#374151',
+                                border: '1px solid #e5e7eb'
                             }}
                             aria-pressed={currentLayer === layer}
                         >
@@ -960,11 +965,11 @@ export function FarmerMap({
                                 : 'hover:bg-gray-100 dark:hover:bg-gray-700'
                                 }`}
                             style={currentLayer === layer ? {
-                                background: `linear-gradient(135deg, rgb(var(--color-primary-600-rgb)), rgb(var(--color-primary-700-rgb)))`,
+                                background: `linear-gradient(135deg, #059669, #047857)`,
                                 color: 'white',
                             } : {
-                                background: 'rgb(var(--color-secondary-100-rgb))',
-                                color: 'rgb(var(--color-secondary-700-rgb))',
+                                background: '#f3f4f6',
+                                color: '#374151',
                             }}
                         >
                             {TILE_LAYERS[layer].name}
