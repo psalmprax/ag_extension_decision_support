@@ -70,7 +70,7 @@ services:
       # Router 2 — HTTPS + TLS (primary domain)
       - "traefik.http.routers.backend.rule=(Host(`${DOMAIN:-www.gpexts.com}`) || Host(`gpexts.com`)) && (PathPrefix(`/api`) || PathPrefix(`/api-docs`) || PathPrefix(`/socket.io`) || PathPrefix(`/health`))"
       - "traefik.http.routers.backend.entrypoints=websecure"
-      - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.backend.tls=true"
       - "traefik.http.routers.backend.tls.domains[0].main=www.gpexts.com"
       - "traefik.http.routers.backend.tls.domains[0].sans=gpexts.com"
       # Router 3 — localhost/IP for health checks (HTTP only, no TLS)
@@ -96,7 +96,7 @@ services:
       # Router 2 — HTTPS + TLS (primary domain)
       - "traefik.http.routers.frontend.rule=Host(`${DOMAIN:-www.gpexts.com}`) || Host(`gpexts.com`)"
       - "traefik.http.routers.frontend.entrypoints=websecure"
-      - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.frontend.tls=true"
       - "traefik.http.routers.frontend.tls.domains[0].main=www.gpexts.com"
       - "traefik.http.routers.frontend.tls.domains[0].sans=gpexts.com"
       # Router 3 — localhost/IP for local dev testing (HTTP only)
