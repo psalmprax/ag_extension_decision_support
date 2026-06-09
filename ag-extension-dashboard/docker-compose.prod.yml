@@ -68,7 +68,7 @@ services:
       - "traefik.http.routers.backend-redirect.entrypoints=web"
       - "traefik.http.routers.backend-redirect.middlewares=https-redirect"
       # Router 2 — HTTPS + TLS (primary domain)
-      - "traefik.http.routers.backend.rule=(Host(`${DOMAIN:-www.gpexts.com}`) || Host(`gpexts.com`)) && (PathPrefix(`/api`) || PathPrefix(`/api-docs`) || PathPrefix(`/socket.io`) || PathPrefix(`/health`))"
+      - "traefik.http.routers.backend.rule=(Host(`${DOMAIN:-www.gpexts.com}`) || Host(`gpexts.com`) || Host(`149.104.110.122`)) && (PathPrefix(`/api`) || PathPrefix(`/api-docs`) || PathPrefix(`/socket.io`) || PathPrefix(`/health`))"
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls=true"
       - "traefik.http.routers.backend.tls.domains[0].main=www.gpexts.com"
@@ -90,11 +90,11 @@ services:
       # Nginx serves on port 80 inside container
       - "traefik.http.services.frontend.loadbalancer.server.port=80"
       # Router 1 — HTTP → HTTPS redirect (primary domain)
-      - "traefik.http.routers.frontend-redirect.rule=Host(`${DOMAIN:-www.gpexts.com}`) || Host(`gpexts.com`)"
+      - "traefik.http.routers.frontend-redirect.rule=Host(`${DOMAIN:-www.gpexts.com}`) || Host(`gpexts.com`) || Host(`149.104.110.122`)"
       - "traefik.http.routers.frontend-redirect.entrypoints=web"
       - "traefik.http.routers.frontend-redirect.middlewares=https-redirect"
       # Router 2 — HTTPS + TLS (primary domain)
-      - "traefik.http.routers.frontend.rule=Host(`${DOMAIN:-www.gpexts.com}`) || Host(`gpexts.com`)"
+      - "traefik.http.routers.frontend.rule=Host(`${DOMAIN:-www.gpexts.com}`) || Host(`gpexts.com`) || Host(`149.104.110.122`)"
       - "traefik.http.routers.frontend.entrypoints=websecure"
       - "traefik.http.routers.frontend.tls=true"
       - "traefik.http.routers.frontend.tls.domains[0].main=www.gpexts.com"
