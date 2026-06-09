@@ -535,7 +535,7 @@ export const BillingDashboard: React.FC = () => {
     }
 
     return (
-        <div className="w-full py-12 px-6">
+        <div className="max-w-[1400px] mx-auto py-12 px-6">
             {/* Configuration Alert Banner */}
             {(configErrors.stripe || configErrors.paypal) && (
                 <motion.div 

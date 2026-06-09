@@ -73,7 +73,7 @@ export const FarmerRegistrationForm: React.FC = () => {
   };
 
   return (
-    <div className="w-full p-6 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
+    <div className="max-w-2xl mx-auto p-6 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
       <div className="flex items-center gap-3 mb-6">
         <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
           <UserPlus className="w-6 h-6 text-primary-600 dark:text-primary-400" />

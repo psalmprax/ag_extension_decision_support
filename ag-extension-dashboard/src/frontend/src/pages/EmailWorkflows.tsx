@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     Mail, Plus, Send, CheckCircle, XCircle,
     Clock, Eye, Edit, Trash2, Filter,
-    AlertTriangle, RefreshCw, UserCheck, UserX,
-    Loader2
+    AlertTriangle, RefreshCw, UserCheck, UserX
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
@@ -48,7 +47,6 @@ export function EmailWorkflows() {
         category: '',
         variables: [] as string[]
     });
-    const [isSaving, setIsSaving] = useState(false);
 
     // Load data
     const loadData = async (showRefresh = false) => {
@@ -154,9 +152,8 @@ export function EmailWorkflows() {
     };
 
     const handleSaveTemplate = async () => {
-        if (!showEditModal || isSaving) return;
+        if (!showEditModal) return;
 
-        setIsSaving(true);
         try {
             const res = await updateEmailTemplate(showEditModal.id, {
                 subject: editForm.subject,
@@ -184,8 +181,6 @@ export function EmailWorkflows() {
                 type: 'error',
                 message: 'Failed to update template. Please try again.'
             });
-        } finally {
-            setIsSaving(false);
         }
     };
 
@@ -808,11 +803,9 @@ export function EmailWorkflows() {
                                 </button>
                                 <button
                                     onClick={handleSaveTemplate}
-                                    disabled={isSaving}
-                                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
                                 >
-                                    {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
-                                    {isSaving ? 'Saving...' : 'Save Changes'}
+                                    Save Changes
                                 </button>
                             </div>
                         </div>
