@@ -1,69 +1,49 @@
-/**
- * useAppStore — Unified facade over split stores.
- *
- * New code should import from the focused stores directly:
- * - useAuthStore — user authentication state
- * - useUIStore — sidebar, theme, dark mode, navigation, design system mode
- * - useDataStore — farmers, visits, notifications, subscriptions, loading
- *
- * This store re-exports their combined API for backward compatibility.
- */
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import toast from 'react-hot-toast';
+import { ThemeName } from '@/theme';
 import * as farmerService from '@/api/farmerService';
 import * as visitService from '@/api/visitService';
-import type { ThemeName } from '@/theme';
+import { toast } from 'react-hot-toast';
 
-export type { ThemeName } from '@/theme';
-
+// Types
 export interface User {
     id: string;
-    email: string;
     firstName: string;
     lastName: string;
-    role: 'admin' | 'regional_manager' | 'extension_officer' | 'farmer';
+    email: string;
+    role: 'admin' | 'extension_officer' | 'farmer';
     region?: string;
 }
 
 export interface Farmer {
     id: string;
-    name?: string;
     firstName: string;
     lastName: string;
-    phone?: string;
-    region?: string;
+    location: string;
     village?: string;
-    farmSize?: number;
-    crops?: string[];
-    vitalScore?: number;
-    yieldHistory?: { month: string; yield: number }[];
-    locationLat?: number;
-    locationLng?: number;
+    phone: string;
     languagePreference?: string;
-    createdAt?: string;
-    updatedAt?: string;
+    crops?: string[];
+    farmSize?: number;
+    latitude?: number;
+    longitude?: number;
+    region?: string;
 }
 
 export interface Visit {
     id: string;
     farmerId: string;
-    farmerName?: string;
-    scheduledDate?: string;
-    scheduledAt?: string;
-    status: 'pending' | 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+    farmerName: string;
+    scheduledDate: string;
+    status: 'pending' | 'completed' | 'cancelled';
     notes?: string;
-    visitType?: string;
-    priority?: string;
-    createdAt?: string;
 }
 
 export interface Notification {
     id: string;
-    title?: string;
+    type: 'info' | 'warning' | 'error' | 'success';
     message: string;
-    type: 'info' | 'success' | 'warning' | 'error';
-    timestamp: string;
+    timestamp: number;
     read: boolean;
     actionLabel?: string;
     onAction?: () => void;
@@ -114,11 +94,8 @@ export interface AppState {
     markNotificationRead: (id: string) => void;
     clearNotifications: () => void;
 
-    // Loading states (counter-based to handle concurrent mutations)
+    // Loading states
     isLoading: boolean;
-    _activeOperations: number;
-    _startOperation: () => void;
-    _endOperation: () => void;
     setLoading: (loading: boolean) => void;
 
     // Subscription & Usage
@@ -136,7 +113,7 @@ export interface AppState {
         periodEnd: string;
     } | null;
     setSubscription: (subscription: AppState['subscription']) => void;
-
+    
     // Cross-route data
     pendingSMS: { phone: string; name: string } | null;
     setPendingSMS: (data: { phone: string; name: string } | null) => void;
@@ -158,9 +135,9 @@ export interface AppState {
 
 export const useAppStore = create<AppState>()(
     persist(
-        (set, get) => ({
+        (set) => ({
             // Initial state
-            user: null,
+            user: null, 
             sidebarOpen: true,
             themeName: (localStorage.getItem('ag-theme-name') as ThemeName) || 'forest',
             darkMode: localStorage.getItem('theme') === 'dark',
@@ -169,12 +146,10 @@ export const useAppStore = create<AppState>()(
             visits: [],
             notifications: [],
             isLoading: false,
-            _activeOperations: 0,
             subscription: null,
             pendingSMS: null,
             contextMenu: null,
             shareModal: null,
-            designSystemMode: (localStorage.getItem('designSystemMode') as 'classic' | 'modern') || 'modern',
 
             // Actions
             setUser: (user) => set({ user }),
@@ -204,7 +179,7 @@ export const useAppStore = create<AppState>()(
                 farmers: [...state.farmers, farmer]
             })),
             updateFarmer: async (id, updates) => {
-                get()._startOperation();
+                set({ isLoading: true });
                 try {
                     const response = await farmerService.updateFarmer(id, updates);
                     if (response.success) {
@@ -215,15 +190,15 @@ export const useAppStore = create<AppState>()(
                         }));
                         toast.success('Farmer updated successfully');
                     }
-                } catch {
-
+                } catch (error) {
+                    console.error('Update farmer error:', error);
                     toast.error('Failed to update farmer');
                 } finally {
-                    get()._endOperation();
+                    set({ isLoading: false });
                 }
             },
             updateFarmers: async (ids, updates) => {
-                get()._startOperation();
+                set({ isLoading: true });
                 try {
                     const response = await farmerService.updateFarmers(ids, updates);
                     if (response.success) {
@@ -234,15 +209,15 @@ export const useAppStore = create<AppState>()(
                         }));
                         toast.success(`${ids.length} farmers updated successfully`);
                     }
-                } catch {
-
+                } catch (error) {
+                    console.error('Bulk update farmers error:', error);
                     toast.error('Failed to update some farmers');
                 } finally {
-                    get()._endOperation();
+                    set({ isLoading: false });
                 }
             },
             removeFarmer: async (id) => {
-                get()._startOperation();
+                set({ isLoading: true });
                 try {
                     const response = await farmerService.deleteFarmer(id);
                     if (response.success) {
@@ -251,15 +226,15 @@ export const useAppStore = create<AppState>()(
                         }));
                         toast.success('Farmer removed successfully');
                     }
-                } catch {
-
+                } catch (error) {
+                    console.error('Remove farmer error:', error);
                     toast.error('Failed to remove farmer');
                 } finally {
-                    get()._endOperation();
+                    set({ isLoading: false });
                 }
             },
             removeFarmers: async (ids) => {
-                get()._startOperation();
+                set({ isLoading: true });
                 try {
                     // Call the bulk delete API if it exists, or loop
                     const response = await farmerService.deleteFarmers(ids);
@@ -269,17 +244,17 @@ export const useAppStore = create<AppState>()(
                         }));
                         toast.success(`${ids.length} farmers removed successfully`);
                     }
-                } catch {
-
+                } catch (error) {
+                    console.error('Bulk remove farmers error:', error);
                     toast.error('Failed to remove some farmers');
                 } finally {
-                    get()._endOperation();
+                    set({ isLoading: false });
                 }
             },
 
             setVisits: (visits) => set({ visits }),
             addVisit: async (visit) => {
-                get()._startOperation();
+                set({ isLoading: true });
                 try {
                     const response = await visitService.createVisit(visit);
                     if (response.success && response.data) {
@@ -298,15 +273,15 @@ export const useAppStore = create<AppState>()(
                         }));
                         toast.success('Visit scheduled successfully');
                     }
-                } catch {
-
+                } catch (error) {
+                    console.error('Add visit error:', error);
                     toast.error('Failed to schedule visit');
                 } finally {
-                    get()._endOperation();
+                    set({ isLoading: false });
                 }
             },
             updateVisit: async (id, updates) => {
-                get()._startOperation();
+                set({ isLoading: true });
                 try {
                     const response = await visitService.updateVisit(id, updates);
                     if (response.success) {
@@ -317,61 +292,60 @@ export const useAppStore = create<AppState>()(
                         }));
                         toast.success('Visit updated successfully');
                     }
-                } catch {
-
+                } catch (error) {
+                    console.error('Update visit error:', error);
                     toast.error('Failed to update visit');
                 } finally {
-                    get()._endOperation();
+                    set({ isLoading: false });
                 }
             },
 
-            addNotification: (notification) => set((state) => ({
-                notifications: [
-                    {
-                        ...notification,
-                        id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
-                        timestamp: new Date().toISOString(),
-                        read: false,
-                    },
-                    ...state.notifications,
-                ].slice(0, 50),
-            })),
+            addNotification: (notification) => {
+                const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 
+                    Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+                
+                set((state) => ({
+                    notifications: [
+                        {
+                            id,
+                            timestamp: Date.now(),
+                            read: false,
+                            ...notification,
+                        },
+                        ...state.notifications
+                    ].slice(0, 50)
+                }));
+            },
             markNotificationRead: (id) => set((state) => ({
                 notifications: state.notifications.map((n) =>
                     n.id === id ? { ...n, read: true } : n
-                ),
+                )
             })),
             clearNotifications: () => set({ notifications: [] }),
 
+            setLoading: (isLoading) => set({ isLoading }),
             setSubscription: (subscription) => set({ subscription }),
             setPendingSMS: (pendingSMS) => set({ pendingSMS }),
 
-            _startOperation: () => set((state) => {
-                const count = state._activeOperations + 1;
-                return { _activeOperations: count, isLoading: true };
-            }),
-            _endOperation: () => set((state) => {
-                const count = Math.max(0, state._activeOperations - 1);
-                return { _activeOperations: count, isLoading: count > 0 };
-            }),
-            setLoading: (isLoading) => set({ isLoading }),
-
-            setDesignSystemMode: (mode) => {
-                localStorage.setItem('designSystemMode', mode);
-                set({ designSystemMode: mode });
-            },
-            toggleDesignSystemMode: () => set((state) => ({
-                designSystemMode: state.designSystemMode === 'modern' ? 'classic' : 'modern',
-            })),
-
-            showContextMenu: (data) => set({ contextMenu: data }),
+            showContextMenu: (contextMenu) => set({ contextMenu }),
             hideContextMenu: () => set({ contextMenu: null }),
-            showShareModal: (data) => set({ shareModal: data }),
+
+            showShareModal: (shareModal) => set({ shareModal }),
             hideShareModal: () => set({ shareModal: null }),
+
+            designSystemMode: 'modern',
+            setDesignSystemMode: (designSystemMode) => set({ designSystemMode }),
+            toggleDesignSystemMode: () => set((state) => ({ 
+                designSystemMode: state.designSystemMode === 'classic' ? 'modern' : 'classic' 
+            })),
         }),
         {
-            name: 'ag-extension-store',
+            name: 'ag-extension-storage',
             partialize: (state) => ({
+                themeName: state.themeName,
+                darkMode: state.darkMode,
+                sidebarOpen: state.sidebarOpen,
+                activeTab: state.activeTab,
                 user: state.user,
                 designSystemMode: state.designSystemMode,
             }),
@@ -379,7 +353,4 @@ export const useAppStore = create<AppState>()(
     )
 );
 
-// Re-export focused stores for new code
-export { useAuthStore } from './useAuthStore';
-export { useUIStore } from './useUIStore';
-export { useDataStore } from './useDataStore';
+export default useAppStore;

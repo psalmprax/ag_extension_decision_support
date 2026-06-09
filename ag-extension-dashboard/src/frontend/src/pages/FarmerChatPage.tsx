@@ -34,7 +34,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                 <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">{t('chat_subtitle')}</p>
             </div>
             <div className="flex flex-1 gap-6 overflow-hidden">
-                <div className={`hidden lg:flex w-80 flex-col bg-theme-bg-card dark:bg-gray-800 ${radiusClass} border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden`}>
+                <div className={`w-80 flex flex-col bg-theme-bg-card dark:bg-gray-800 ${radiusClass} border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden`}>
                     <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                         <h3 className="font-bold text-gray-900 dark:text-white">{t('chat_farmer_chats')}</h3>
                         <button

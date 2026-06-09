@@ -11,8 +11,6 @@ import { useAppStore } from '../store/useAppStore';
 import { fetchTelemetrySummary, fetchTelemetryEvents, TelemetrySummary, TelemetryEvent } from '../api/telemetryService';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, LineChart, Line } from 'recharts';
 import toast from 'react-hot-toast';
-import { StatCard } from '@/components/StatCard';
-import { STAT_COLORS, CHART_COLORS } from '@/lib/color-tokens';
 
 export function Telemetry() {
     const { t } = useLanguage();
@@ -45,7 +43,7 @@ export function Telemetry() {
                 setEvents(eventsRes.data);
             }
         } catch (error) {
-
+            console.error('Failed to load telemetry data:', error);
             addNotification({
                 type: 'error',
                 message: t('telemetry_failed_load')
@@ -80,42 +78,30 @@ export function Telemetry() {
         icon: React.ComponentType<{ className?: string }>;
         change?: number;
         color?: string;
-    }) => {
-        const colorClasses: Record<string, { bg: string; icon: string }> = {
-            blue: { bg: 'bg-blue-50 dark:bg-blue-900/30', icon: 'text-blue-600 dark:text-blue-400' },
-            green: { bg: 'bg-green-50 dark:bg-green-900/30', icon: 'text-green-600 dark:text-green-400' },
-            emerald: { bg: 'bg-emerald-50 dark:bg-emerald-900/30', icon: 'text-emerald-600 dark:text-emerald-400' },
-            amber: { bg: 'bg-amber-50 dark:bg-amber-900/30', icon: 'text-amber-600 dark:text-amber-400' },
-            red: { bg: 'bg-red-50 dark:bg-red-900/30', icon: 'text-red-600 dark:text-red-400' },
-            purple: { bg: 'bg-purple-50 dark:bg-purple-900/30', icon: 'text-purple-600 dark:text-purple-400' },
-            cyan: { bg: 'bg-cyan-50 dark:bg-cyan-900/30', icon: 'text-cyan-600 dark:text-cyan-400' },
-        };
-        const cc = colorClasses[color] || colorClasses.blue;
-        return (
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="card p-6 border-white/20 hover:scale-[1.02] transition-transform duration-300"
-                style={{ borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-premium)' }}
-            >
-                <div className="flex items-start justify-between">
-                    <div>
-                        <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{title}</p>
-                        <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
-                        {change !== undefined && (
-                            <div className={`flex items-center gap-1 text-xs font-bold mt-2 ${change >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                                <TrendingUp className="w-3 h-3" />
-                                <span>{change >= 0 ? '+' : ''}{change}%</span>
-                            </div>
-                        )}
-                    </div>
-                    <div className={`p-3 ${cc.bg} rounded-xl`}>
-                        <Icon className={`w-6 h-6 ${cc.icon}`} />
-                    </div>
+    }) => (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="card p-6 border-white/20 hover:scale-[1.02] transition-transform duration-300"
+            style={{ borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-premium)' }}
+        >
+            <div className="flex items-start justify-between">
+                <div>
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{title}</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
+                    {change !== undefined && (
+                        <div className={`flex items-center gap-1 text-xs font-bold mt-2 ${change >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                            <TrendingUp className="w-3 h-3" />
+                            <span>{change >= 0 ? '+' : ''}{change}%</span>
+                        </div>
+                    )}
                 </div>
-            </motion.div>
-        );
-    };
+                <div className={`p-3 bg-${color}-50 dark:bg-${color}-900/30 rounded-xl`}>
+                    <Icon className={`w-6 h-6 text-${color}-600 dark:text-${color}-400`} />
+                </div>
+            </div>
+        </motion.div>
+    );
 
     if (isLoading) {
         return (
@@ -211,13 +197,13 @@ export function Telemetry() {
                     <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={[
                             { name: t('telemetry_success'), value: statusStats.success, color: '#10b981' },
-                            { name: t('telemetry_error'), value: statusStats.error, color: CHART_COLORS.danger },
-                            { name: t('telemetry_pending'), value: statusStats.pending, color: CHART_COLORS.warning }
+                            { name: t('telemetry_error'), value: statusStats.error, color: '#ef4444' },
+                            { name: t('telemetry_pending'), value: statusStats.pending, color: '#f59e0b' }
                         ]}>
                             <XAxis dataKey="name" />
                             <YAxis />
                             <Tooltip />
-                            <Bar dataKey="value" fill={CHART_COLORS.primary} />
+                            <Bar dataKey="value" fill="#3b82f6" />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
@@ -234,7 +220,7 @@ export function Telemetry() {
                                 <XAxis dataKey="name" />
                                 <YAxis />
                                 <Tooltip />
-                                <Bar dataKey="usage" fill={CHART_COLORS.purple} />
+                                <Bar dataKey="usage" fill="#8b5cf6" />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>

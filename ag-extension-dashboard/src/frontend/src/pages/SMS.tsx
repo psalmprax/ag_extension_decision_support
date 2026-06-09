@@ -86,8 +86,8 @@ export function SMSPage() {
                     timestamp: new Date(msg.createdAt)
                 })));
             }
-        } catch {
-            // History load failure is non-critical
+        } catch (err) {
+            console.error('Failed to fetch SMS history:', err);
         }
     };
 
@@ -107,8 +107,8 @@ export function SMSPage() {
                     phone: f.phone || '',
                 })));
             }
-        } catch {
-            // Contacts load failure is non-critical
+        } catch (err) {
+            console.error('Failed to fetch farmers for SMS contacts:', err);
         } finally {
             setIsLoadingContacts(false);
         }
@@ -163,8 +163,8 @@ export function SMSPage() {
             if (res.success) {
                 setMessage(res.data.translatedText);
             }
-        } catch {
-            toast.error('Translation failed');
+        } catch (err) {
+            console.error('Translation failed:', err);
         } finally {
             setIsTranslating(false);
         }

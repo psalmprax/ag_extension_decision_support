@@ -97,7 +97,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
           setMenuData(getStaticFallbackMenu(entityType));
         }
       } catch (error) {
-
+        console.error('Failed to fetch context menu:', error);
         setMenuData(getStaticFallbackMenu(entityType));
       } finally {
         setIsLoading(false);

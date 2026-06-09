@@ -89,7 +89,7 @@ export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, 
                     setSynthesis("No recent visit data available. Spatial Intelligence unit merged historical regional telemetry with current vegetation indices.");
                 }
             } catch (err) {
-
+                console.error('Failed to load real insights:', err);
                 setSynthesis("Connectivity issue with Satellite Intelligence Unit. Falling back to regional baseline.");
             } finally {
                 setIsLoading(false);

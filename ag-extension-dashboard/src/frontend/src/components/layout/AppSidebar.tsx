@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, HelpCircle } from 'lucide-react';
 import { NavItem } from '../../config/navItems';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
-import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/lib/cn';
 import { sidebarVariants } from '@/lib/animations';
 
@@ -25,17 +24,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     onGenerateReport,
 }) => {
     const { isModern, subtextClass, headingClass } = useThemeClasses();
-    const setSidebarOpen = useAppStore((s) => s.setSidebarOpen);
 
     return (
         <AnimatePresence>
             {sidebarOpen && (
-                <>
-                {/* Backdrop for mobile */}
-                <div
-                    className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-                    onClick={() => setSidebarOpen(false)}
-                />
                 <motion.aside
                     variants={sidebarVariants}
                     initial="initial"
@@ -62,8 +54,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                                         ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98]'
                                         : 'rounded-none border border-slate-300 dark:border-slate-700 font-mono text-[10px] uppercase tracking-widest',
                                     activeTab === item.id
-                                        ? 'bg-primary-600/10 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400 shadow-[inset_0_0_15px_rgba(var(--color-primary-400-rgb),0.1)]'
-                                        : cn(subtextClass, 'hover:bg-black/5 dark:hover:bg-white/5 hover:text-primary-600 dark:hover:text-primary-200')
+                                        ? 'bg-cyan-600/10 dark:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-r-2 border-cyan-600 dark:border-cyan-400 shadow-[inset_0_0_15px_rgba(0,245,255,0.1)]'
+                                        : cn(subtextClass, 'hover:bg-black/5 dark:hover:bg-white/5 hover:text-cyan-600 dark:hover:text-cyan-200')
                                 )}
                             >
                                 <item.icon className="w-4 h-4 flex-shrink-0" />
@@ -76,7 +68,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                         <button
                             onClick={onGenerateReport}
                             className={cn(
-                                'bg-primary-500 text-white px-4 py-3 flex items-center justify-center gap-2 shadow-lg shadow-primary-500/20 transition-all',
+                                'bg-cyan-500 text-white px-4 py-3 flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 transition-all',
                                 isModern ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98]' : 'rounded-none'
                             )}
                         >
@@ -92,7 +84,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                         </button>
                     </div>
                 </motion.aside>
-                </>
             )}
         </AnimatePresence>
     );

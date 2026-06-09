@@ -26,7 +26,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
             <select
                 value={language}
                 onChange={handleChange}
-                className={`bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest focus:outline-none focus:ring-1 focus:ring-primary-400/50 text-slate-300 hover:text-white transition-all backdrop-blur-xl ${className}`}
+                className={`bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest focus:outline-none focus:ring-1 focus:ring-cyan-400/50 text-slate-300 hover:text-white transition-all backdrop-blur-xl ${className}`}
                 aria-label={t('common_select_language')}
             >
                 {languages.map((lang) => (

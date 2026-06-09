@@ -12,8 +12,6 @@ import { fetchAgentStatus, fetchQueueStatus, fetchHandoffLog, dispatchTask, Agen
 import { withRealFallback } from '../lib/realFirst';
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import toast from 'react-hot-toast';
-import { StatCard } from '@/components/StatCard';
-import { STAT_COLORS, CHART_COLORS } from '@/lib/color-tokens';
 
 export function Agents() {
     const { t } = useLanguage();
@@ -56,7 +54,7 @@ export function Agents() {
             setHandoffLog(handoffData);
             
         } catch (error) {
-
+            console.error('Failed to load agent data:', error);
             addNotification({
                 type: 'error',
                 message: t('agents_failed_load')
@@ -95,7 +93,7 @@ export function Agents() {
                 toast.error('Dispatch failed');
             }
         } catch (err) {
-
+            console.error('Dispatch error:', err);
             toast.error('Failed to dispatch task');
         } finally {
             setIsDispatching(null);
@@ -120,44 +118,29 @@ export function Agents() {
         }
     };
 
-    const colorClasses: Record<string, { bg: string; icon: string }> = {
-        blue: { bg: 'bg-blue-50 dark:bg-blue-900/30', icon: 'text-blue-600 dark:text-blue-400' },
-        green: { bg: 'bg-green-50 dark:bg-green-900/30', icon: 'text-green-600 dark:text-green-400' },
-        emerald: { bg: 'bg-emerald-50 dark:bg-emerald-900/30', icon: 'text-emerald-600 dark:text-emerald-400' },
-        amber: { bg: 'bg-amber-50 dark:bg-amber-900/30', icon: 'text-amber-600 dark:text-amber-400' },
-        red: { bg: 'bg-red-50 dark:bg-red-900/30', icon: 'text-red-600 dark:text-red-400' },
-        purple: { bg: 'bg-purple-50 dark:bg-purple-900/30', icon: 'text-purple-600 dark:text-purple-400' },
-        cyan: { bg: 'bg-cyan-50 dark:bg-cyan-900/30', icon: 'text-cyan-600 dark:text-cyan-400' },
-        yellow: { bg: 'bg-yellow-50 dark:bg-yellow-900/30', icon: 'text-yellow-600 dark:text-yellow-400' },
-        orange: { bg: 'bg-orange-50 dark:bg-orange-900/30', icon: 'text-orange-600 dark:text-orange-400' },
-    };
-
     const StatCard = ({ title, value, icon: Icon, color = 'blue' }: {
         title: string;
         value: string | number;
         icon: React.ComponentType<{ className?: string }>;
         color?: string;
-    }) => {
-        const cc = colorClasses[color] || colorClasses.blue;
-        return (
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="card p-6 border-white/20 hover:scale-[1.02] transition-transform duration-300"
-                style={{ borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-premium)' }}
-            >
-                <div className="flex items-start justify-between">
-                    <div>
-                        <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{title}</p>
-                        <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
-                    </div>
-                    <div className={`p-3 ${cc.bg} rounded-xl`}>
-                        <Icon className={`w-6 h-6 ${cc.icon}`} />
-                    </div>
+    }) => (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="card p-6 border-white/20 hover:scale-[1.02] transition-transform duration-300"
+            style={{ borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-premium)' }}
+        >
+            <div className="flex items-start justify-between">
+                <div>
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{title}</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
                 </div>
-            </motion.div>
-        );
-    };
+                <div className={`p-3 bg-${color}-50 dark:bg-${color}-900/30 rounded-xl`}>
+                    <Icon className={`w-6 h-6 text-${color}-600 dark:text-${color}-400`} />
+                </div>
+            </div>
+        </motion.div>
+    );
 
     if (isLoading) {
         return (
@@ -186,10 +169,10 @@ export function Agents() {
     }
 
     const queueData = queueStatus ? [
-        { name: 'Queued', value: queueStatus.queued, color: CHART_COLORS.warning },
-        { name: 'Active', value: queueStatus.active, color: CHART_COLORS.primary },
+        { name: 'Queued', value: queueStatus.queued, color: '#f59e0b' },
+        { name: 'Active', value: queueStatus.active, color: '#3b82f6' },
         { name: 'Completed', value: queueStatus.completed, color: '#10b981' },
-        { name: 'Failed', value: queueStatus.failed, color: CHART_COLORS.danger }
+        { name: 'Failed', value: queueStatus.failed, color: '#ef4444' }
     ] : [];
 
     return (
@@ -277,7 +260,7 @@ export function Agents() {
                             <XAxis dataKey="name" />
                             <YAxis />
                             <Tooltip />
-                            <Bar dataKey="load" fill={CHART_COLORS.primary} />
+                            <Bar dataKey="load" fill="#3b82f6" />
                             <Bar dataKey="max" fill="#e5e7eb" />
                         </BarChart>
                     </ResponsiveContainer>

@@ -45,7 +45,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                 toast.success('Profile updated successfully');
             }
         } catch (error) {
-
+            console.error('Failed to update profile:', error);
             toast.error('Failed to update profile. Please try again.');
         } finally {
             setIsSaving(false);

@@ -49,7 +49,7 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
                 setFarmers(data.data.farmers);
             }
         } catch (error) {
-
+            console.error('Failed to fetch farmers:', error);
         } finally {
             setLoadingFarmers(false);
         }
@@ -82,7 +82,7 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
                 toast.error(t('visit_create_failed'));
             }
         } catch (error) {
-
+            console.error('Failed to create visit:', error);
             toast.error(t('visit_create_failed'));
         } finally {
             setLoading(false);

@@ -54,19 +54,18 @@ export const FarmerRegistrationForm: React.FC = () => {
           firstName: response.data.firstName,
           lastName: response.data.lastName,
           phone: response.data.phone || '',
-          region: data.location,
-          village: data.location,
+          location: data.location,
           crops: response.data.crops,
           farmSize: response.data.farmSize,
-          locationLat: response.data.locationLat,
-          locationLng: response.data.locationLng
+          latitude: response.data.locationLat,
+          longitude: response.data.locationLng
         });
         toast.success(t('farmer_register_success'));
         reset();
       }
     } catch (error) {
       toast.error(t('farmer_register_failed'));
-
+      console.error(error);
     } finally {
       setLoading(false);
     }

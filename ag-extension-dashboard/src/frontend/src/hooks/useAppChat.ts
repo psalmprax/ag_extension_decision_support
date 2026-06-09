@@ -34,7 +34,7 @@ export const useAppChat = (language: string) => {
                 setActiveConvId(res.data[0].id);
             }
         } catch (error) {
-
+            console.error('Failed to load conversations:', error);
         }
     }, [activeConvId]);
 
@@ -43,7 +43,7 @@ export const useAppChat = (language: string) => {
             const res = await fetchMessages(id);
             setChatMessages(res.data);
         } catch (error) {
-
+            console.error('Failed to load messages:', error);
         }
     }, []);
 
@@ -55,7 +55,7 @@ export const useAppChat = (language: string) => {
                 setEditingConvId(null);
             }
         } catch (error) {
-
+            console.error('Failed to update conversation:', error);
         }
     };
 
@@ -71,7 +71,7 @@ export const useAppChat = (language: string) => {
                 setDeletingConvId(null);
             }
         } catch (error) {
-
+            console.error('Failed to delete conversation:', error);
         }
     };
 
@@ -84,7 +84,7 @@ export const useAppChat = (language: string) => {
                 setActiveFarmerConvId(res.data[0].id);
             }
         } catch (error) {
-
+            console.error('Failed to load farmer conversations:', error);
         }
     }, [activeFarmerConvId]);
 
@@ -93,7 +93,7 @@ export const useAppChat = (language: string) => {
             const res = await fetchMessages(id);
             setFarmerChatMessages(res.data);
         } catch (error) {
-
+            console.error('Failed to load farmer messages:', error);
         }
     }, []);
 
@@ -117,7 +117,7 @@ export const useAppChat = (language: string) => {
                 loadFarmerMessages(activeFarmerConvId);
             }
         } catch (error) {
-
+            console.error('Failed to send farmer message:', error);
         }
     };
 
@@ -156,7 +156,7 @@ export const useAppChat = (language: string) => {
                 return true;
             }
         } catch (error) {
-
+            console.error('Failed to start conversation:', error);
         }
         return false;
     };

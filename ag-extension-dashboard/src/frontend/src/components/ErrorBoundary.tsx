@@ -42,6 +42,7 @@ class ErrorBoundary extends Component<Props, State> {
         if (this.errorLogged) return;
         this.errorLogged = true;
 
+        console.error('ErrorBoundary caught an error:', error, errorInfo);
         this.setState({
             error,
             errorInfo,
@@ -309,7 +310,7 @@ export const ErrorBoundaryProvider: React.FC<ErrorBoundaryProviderProps> = ({ ch
     const handleError = React.useCallback((error: Error) => {
         setHasError(true);
         setLastError(error);
-
+        console.error('ErrorBoundaryProvider caught:', error);
     }, []);
 
     const resetError = React.useCallback(() => {

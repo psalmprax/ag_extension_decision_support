@@ -4,7 +4,7 @@ import { useAppStore } from '@/store/useAppStore';
 
 interface RoleGuardProps {
   children: React.ReactNode;
-  allowedRoles: Array<'admin' | 'regional_manager' | 'extension_officer' | 'farmer'>;
+  allowedRoles: Array<'admin' | 'extension_officer' | 'farmer'>;
 }
 
 export const RoleGuard: React.FC<RoleGuardProps> = ({ children, allowedRoles }) => {

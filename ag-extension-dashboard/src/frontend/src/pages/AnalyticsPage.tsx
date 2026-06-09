@@ -3,7 +3,6 @@ import { TrendingUp, Clock, Activity, AlertTriangle, MessageSquare, BarChart3 } 
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
-import { CHART_COLORS } from '@/lib/color-tokens';
 import { useAppStore } from '@/store/useAppStore';
 
 interface AnalyticsPageProps {
@@ -103,17 +102,17 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({
 
             <div className="card p-8 mb-8 bg-theme-bg-card dark:bg-gray-800 border-gray-100 dark:border-gray-700 shadow-sm">
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">{t('analytics_activity_timeline')}</h3>
-                <div className="h-[300px] sm:h-[400px]">
+                <div className="h-[400px]">
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={performanceData?.timeline || []}>
                             <defs>
                                 <linearGradient id="colorVisits" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor={CHART_COLORS.success} stopOpacity={0.2} />
-                                    <stop offset="95%" stopColor={CHART_COLORS.success} stopOpacity={0} />
+                                    <stop offset="5%" stopColor="#22c55e" stopOpacity={0.2} />
+                                    <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
                                 </linearGradient>
                                 <linearGradient id="colorQueries" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor={CHART_COLORS.primary} stopOpacity={0.2} />
-                                    <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={0} />
+                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} />
+                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                                 </linearGradient>
                             </defs>
                             <XAxis
@@ -136,8 +135,8 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({
                                     fontWeight: 'bold'
                                 }}
                             />
-                            <Area type="monotone" dataKey="visits" stroke={CHART_COLORS.success} strokeWidth={3} fillOpacity={1} fill="url(#colorVisits)" />
-                            <Area type="monotone" dataKey="queries" stroke={CHART_COLORS.primary} strokeWidth={3} fillOpacity={1} fill="url(#colorQueries)" />
+                            <Area type="monotone" dataKey="visits" stroke="#22c55e" strokeWidth={3} fillOpacity={1} fill="url(#colorVisits)" />
+                            <Area type="monotone" dataKey="queries" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorQueries)" />
                         </AreaChart>
                     </ResponsiveContainer>
                 </div>

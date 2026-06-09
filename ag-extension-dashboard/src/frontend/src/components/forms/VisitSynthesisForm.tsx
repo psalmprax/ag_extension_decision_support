@@ -35,7 +35,7 @@ export const VisitSynthesisForm: React.FC = () => {
       }
     } catch (error) {
       toast.error(t('visit_synthesis_error'));
-
+      console.error(error);
     } finally {
       setIsProcessing(false);
       setLoading(false);
@@ -61,7 +61,7 @@ export const VisitSynthesisForm: React.FC = () => {
         toast.error('Failed to save report to visits.');
       }
     } catch (error) {
-
+      console.error('Failed to save records:', error);
       toast.error('Failed to save records. Please try again.');
     } finally {
       setIsSaving(false);

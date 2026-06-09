@@ -127,7 +127,7 @@ export async function translateText(text: string, targetLang: string): Promise<s
         const result = await translate(text, targetCode);
         return result;
     } catch (error) {
-
+        console.error(`Translation error for ${targetLang}:`, error);
         return text;
     }
 }

@@ -111,7 +111,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                 })));
             }
         } catch (err) {
-
+            console.error('Failed to load interactions:', err);
         } finally {
             setIsLoadingHistory(false);
         }
@@ -203,7 +203,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                 });
             }
         } catch (err) {
-
+            console.error('Synthesis failed:', err);
             addNotification({
                 type: 'error',
                 message: 'AI Synthesis failed to generate'
@@ -247,7 +247,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                 });
             }
         } catch (err) {
-
+            console.error('Failed to update visit status:', err);
             addNotification({
                 type: 'error',
                 message: `Failed to mark visit as ${status}`

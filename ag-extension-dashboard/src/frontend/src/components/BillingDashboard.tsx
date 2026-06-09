@@ -196,7 +196,7 @@ export const BillingDashboard: React.FC = () => {
                 if (voucherRes?.success) setVouchers(voucherRes.data);
             }
         } catch (error) {
-
+            console.error('Failed to fetch billing data:', error);
         } finally {
             setLoading(false);
         }
@@ -262,7 +262,7 @@ export const BillingDashboard: React.FC = () => {
                 fetchData();
             }
         } catch (error) {
-
+            console.error('Verification failed:', error);
         } finally {
             setActionLoading(null);
         }
@@ -279,7 +279,7 @@ export const BillingDashboard: React.FC = () => {
                 fetchData();
             }
         } catch (error) {
-
+            console.error('Rejection failed:', error);
         } finally {
             setActionLoading(null);
         }
@@ -294,7 +294,7 @@ export const BillingDashboard: React.FC = () => {
                 toast.success(`Successfully generated ${voucherBatch.count} vouchers!`);
             }
         } catch (error) {
-
+            console.error('Generation failed:', error);
         } finally {
             setActionLoading(null);
         }
@@ -380,6 +380,9 @@ export const BillingDashboard: React.FC = () => {
                 fetchData();
             }
         } catch (error: unknown) {
+            if (import.meta.env.DEV) {
+                console.error('Subscription failed:', error);
+            }
             toast.error('Subscription failed. Please try again.');
         } finally {
             setActionLoading(null);
@@ -401,6 +404,9 @@ export const BillingDashboard: React.FC = () => {
                 }
             }
         } catch (error: unknown) {
+            if (import.meta.env.DEV) {
+                console.error('Switch failed:', error);
+            }
             toast.error('Failed to switch plan. Please try again.');
         } finally {
             setActionLoading(null);
@@ -421,6 +427,9 @@ export const BillingDashboard: React.FC = () => {
                 }
             }
         } catch (error) {
+            if (import.meta.env.DEV) {
+                console.error('Portal access failed:', error);
+            }
             toast.error('Failed to open billing portal. Please try again.');
         } finally {
             setActionLoading(null);
@@ -445,6 +454,9 @@ export const BillingDashboard: React.FC = () => {
                 }
             }
         } catch (error: unknown) {
+            if (import.meta.env.DEV) {
+                console.error('Failed to add payment method:', error);
+            }
             toast.error('Failed to add payment method. Please try again.');
         } finally {
             setActionLoading(null);
@@ -467,7 +479,7 @@ export const BillingDashboard: React.FC = () => {
                         fetchData();
                     }
                 } catch (error) {
-
+                    console.error('Failed to delete payment method:', error);
                     toast.error('Failed to delete payment method');
                 } finally {
                     setActionLoading(null);
@@ -492,6 +504,9 @@ export const BillingDashboard: React.FC = () => {
                 }
             }
         } catch (error) {
+            if (import.meta.env.DEV) {
+                console.error('PayPal subscription failed:', error);
+            }
             toast.error('Failed to create PayPal subscription. Please try again.');
         } finally {
             setActionLoading(null);
@@ -512,7 +527,7 @@ export const BillingDashboard: React.FC = () => {
                 setAdminKeys({ stripeSecretKey: '', paypalClientId: '' });
             }
         } catch (error) {
-
+            console.error('Failed to update credentials:', error);
             toast.error('Failed to update credentials. Ensure you have admin privileges.');
         } finally {
             setActionLoading(null);

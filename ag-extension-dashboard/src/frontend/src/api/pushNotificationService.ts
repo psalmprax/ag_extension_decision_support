@@ -11,7 +11,7 @@ export const subscribeUserToPush = async () => {
 
         // VAPID key must be configured for push to work
         if (!VAPID_PUBLIC_KEY) {
-
+            console.warn('VAPID_PUBLIC_KEY not configured. Push notifications will not work.');
             return null;
         }
 
@@ -33,7 +33,7 @@ export const subscribeUserToPush = async () => {
 
         return subscription;
     } catch (error) {
-
+        console.error('Error subscribing to push notifications:', error);
         return null;
     }
 };
@@ -52,7 +52,7 @@ export const unsubscribeFromPush = async () => {
         }
         return true;
     } catch (error) {
-
+        console.error('Error unsubscribing from push notifications:', error);
         return false;
     }
 };

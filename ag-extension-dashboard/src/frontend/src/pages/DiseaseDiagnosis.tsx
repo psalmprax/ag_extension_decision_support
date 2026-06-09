@@ -62,8 +62,8 @@ export function DiseaseDiagnosis() {
                 if (res.success) {
                     setAllDiseases(res.data);
                 }
-            } catch {
-                // Disease list load failure is non-critical
+            } catch (error) {
+                console.error('Failed to load diseases:', error);
             }
         };
         loadDiseases();
@@ -96,7 +96,7 @@ export function DiseaseDiagnosis() {
             });
             }
         } catch (error) {
-
+            console.error('Diagnosis error:', error);
                 addNotification({
                     type: 'error',
                     message: t('disease_diagnosis_failed_diagnose')
@@ -114,8 +114,8 @@ export function DiseaseDiagnosis() {
             if (res.success) {
                 setDiseaseInfo(res.data);
             }
-        } catch {
-            // Disease info load failure is non-critical
+        } catch (error) {
+            console.error('Failed to load disease info:', error);
         } finally {
             setIsLoadingInfo(false);
         }
@@ -157,7 +157,7 @@ export function DiseaseDiagnosis() {
                 });
             }
         } catch (error) {
-
+            console.error('Image analysis error:', error);
             addNotification({
                 type: 'error',
                 message: 'Failed to analyze image'
@@ -203,7 +203,7 @@ export function DiseaseDiagnosis() {
                 });
             }
         } catch (error) {
-
+            console.error('Soil analysis error:', error);
             addNotification({
                 type: 'error',
                 message: 'Failed to analyze soil image'

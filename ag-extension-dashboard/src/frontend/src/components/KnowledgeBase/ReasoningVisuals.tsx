@@ -78,7 +78,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
             }
             setIsPlaying(!isPlaying);
         } catch (e) {
-
+            console.error('Audio playback error:', e);
         }
     };
 

@@ -1,44 +1,36 @@
 import { test, expect } from '@playwright/test';
-import { setupAuthenticatedPage } from './helpers/mockApi';
 
 test.describe('Dashboard Smoke Test', () => {
   test.beforeEach(async ({ page }) => {
-    await setupAuthenticatedPage(page);
+    // Navigate to the dashboard
+    await page.goto('http://localhost:5173');
   });
 
   test('should load the dashboard and show the header', async ({ page }) => {
-    // The dashboard heading is 'Strategic Intelligence' (modern) or 'Operations Dashboard' (classic)
-    // Use filter({ hasText }) not getByRole accessible name — accessible name may differ from text content
-    await expect(page.locator('h1').filter({ hasText: /Strategic Intelligence|Operations Dashboard/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: 'Ag-Extension' })).toBeVisible();
+    await expect(page.getByText('Decision Support')).toBeVisible();
   });
 
   test('should show the sidebar with navigation items', async ({ page }) => {
-    // Scope to the sidebar <aside> element to avoid matching the AppHeader
-    const sidebar = page.locator('aside');
-    await expect(sidebar.getByRole('button', { name: /Strategic Intelligence|Operations Dashboard/i })).toBeVisible();
-    await expect(sidebar.getByRole('button', { name: /Cognitive Synthesizer|AI Assistant/i })).toBeVisible();
-    await expect(sidebar.getByRole('button', { name: /Human Capital Network|Client Portfolio/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Dashboard' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'AI Assistant' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Portfolio' })).toBeVisible();
   });
 
   test('should display the weather widget', async ({ page }) => {
-    await page.waitForTimeout(2000);
-    const hasWeather = await page.getByText(/Weather/i).isVisible().catch(() => false);
-    console.log(`Weather visible: ${hasWeather}`);
+    // Ensuring the weather widget or its skeleton is present
+    await expect(page.locator('header').getByText('Weather')).toBeVisible();
   });
 
   test('should switch between tabs', async ({ page }) => {
-    const sidebar = page.locator('aside');
-    const portfolioBtn = sidebar.getByRole('button', { name: /Human Capital Network|Client Portfolio/i });
+    const portfolioBtn = page.getByRole('button', { name: 'Portfolio' });
     await portfolioBtn.click();
-    await page.waitForTimeout(1000);
-
-    // Portfolio page heading
-    await expect(page.locator('h1').filter({ hasText: /Human Capital Network|Client Portfolio/i })).toBeVisible({ timeout: 10000 });
-
-    const dashboardBtn = sidebar.getByRole('button', { name: /Strategic Intelligence|Operations Dashboard/i });
+    
+    // Check for Portfolio title
+    await expect(page.getByRole('heading', { name: 'Farmer Portfolio' })).toBeVisible();
+    
+    const dashboardBtn = page.getByRole('button', { name: 'Dashboard' });
     await dashboardBtn.click();
-    await page.waitForTimeout(1000);
-
-    await expect(page.locator('h1').filter({ hasText: /Strategic Intelligence|Operations Dashboard/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: 'Dashboard Overview' })).toBeVisible();
   });
 });
