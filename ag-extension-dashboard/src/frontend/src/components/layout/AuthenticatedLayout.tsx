@@ -247,7 +247,24 @@ export function AuthenticatedLayout() {
                 </div>
             )}
 
-            <div className="flex flex-1 overflow-hidden">
+            <AppHeader
+                sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}
+                activeTab={activeTab} setActiveTab={setActiveTab}
+                searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+                showGlobalSearch={showGlobalSearch} setShowGlobalSearch={setShowGlobalSearch}
+                isGlobalSearching={isGlobalSearching} globalSearchResults={globalSearchResults}
+                handleGlobalSearch={handleGlobalSearch}
+                weatherLocation={weatherLocation} setWeatherLocation={() => {}}
+                apiUnreadCount={apiUnreadCount}
+                storeUser={storeUser} handleLogout={handleLogout}
+                handleOpenFarmerDetail={handleOpenFarmerDetail} farmers={effectiveFarmers}
+                addNotification={addNotification}
+                setIsNotificationPanelOpen={setIsNotificationPanelOpen}
+                isProfileMenuOpen={isProfileMenuOpen} setIsProfileMenuOpen={setIsProfileMenuOpen}
+                setShowProfileModal={setShowProfileModal} setShowSettingsPanel={setShowSettingsPanel}
+            />
+
+            <div className="flex flex-1 overflow-hidden pt-16">
                 <AppSidebar
                     sidebarOpen={sidebarOpen} navItems={navItems}
                     activeTab={activeTab} setActiveTab={setActiveTab}
@@ -255,23 +272,7 @@ export function AuthenticatedLayout() {
                     onGenerateReport={handleGenerateReport}
                 />
 
-                <main className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarOpen ? 'lg:pl-64' : ''} relative flex flex-col`}>
-                    <AppHeader
-                        sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}
-                        activeTab={activeTab} setActiveTab={setActiveTab}
-                        searchQuery={searchQuery} setSearchQuery={setSearchQuery}
-                        showGlobalSearch={showGlobalSearch} setShowGlobalSearch={setShowGlobalSearch}
-                        isGlobalSearching={isGlobalSearching} globalSearchResults={globalSearchResults}
-                        handleGlobalSearch={handleGlobalSearch}
-                        weatherLocation={weatherLocation} setWeatherLocation={() => {}}
-                        apiUnreadCount={apiUnreadCount}
-                        storeUser={storeUser} handleLogout={handleLogout}
-                        handleOpenFarmerDetail={handleOpenFarmerDetail} farmers={effectiveFarmers}
-                        addNotification={addNotification}
-                        setIsNotificationPanelOpen={setIsNotificationPanelOpen}
-                        isProfileMenuOpen={isProfileMenuOpen} setIsProfileMenuOpen={setIsProfileMenuOpen}
-                        setShowProfileModal={setShowProfileModal} setShowSettingsPanel={setShowSettingsPanel}
-                    />
+                <main className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarOpen ? 'lg:pl-64' : ''} relative`}>
                     <ErrorBoundary componentName="MainContent">
                         <TabContent
                             activeTab={activeTab}

@@ -42,7 +42,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                     animate="animate"
                     exit="exit"
                     className={cn(
-                        'fixed left-0 top-0 h-full flex flex-col pt-6 pb-8 px-4 border-r border-gray-200 dark:border-white/10 w-64 z-40',
+                        'fixed left-0 top-16 h-[calc(100vh-4rem)] flex flex-col pt-4 pb-8 px-4 border-r border-gray-200 dark:border-white/10 w-64 z-40',
                         isModern
                             ? 'bg-white/70 dark:bg-slate-950/40 backdrop-blur-2xl'
                             : 'bg-white dark:bg-slate-900 shadow-xl'
