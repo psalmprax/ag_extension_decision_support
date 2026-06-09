@@ -318,10 +318,12 @@ function App() {
     }
 
     return (
-        <div
-            className={`h-screen flex flex-col ${darkMode ? 'dark' : ''} bg-theme-bg-primary transition-colors duration-300 overflow-hidden relative z-0`}
-            onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
-        >
+        <>
+            {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+            <div
+                className={`h-screen flex flex-col ${darkMode ? 'dark' : ''} bg-theme-bg-primary transition-colors duration-300 overflow-hidden relative z-0`}
+                onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
+            >
             {/* Ambient Aurora Background */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10 hidden dark:block">
                 <motion.div animate={{ x: [0, 100, 0], y: [0, -50, 0], scale: [1, 1.1, 1] }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }} className="absolute -top-[10%] -left-[10%] w-[800px] h-[800px] bg-blue-600/30 mix-blend-screen rounded-full blur-[150px]" />
@@ -473,6 +475,7 @@ function App() {
                 addNotification={addNotification}
             />
         </div>
+        </>
     );
 }
 
