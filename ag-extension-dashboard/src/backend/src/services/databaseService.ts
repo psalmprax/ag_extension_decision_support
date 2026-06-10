@@ -266,6 +266,36 @@ export async function createTables(): Promise<void> {
       updated_at TIMESTAMP DEFAULT NOW()
     );
 
+    -- Fields table
+    CREATE TABLE IF NOT EXISTS fields (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      farmer_id UUID REFERENCES farmers(id) ON DELETE CASCADE,
+      name VARCHAR(100) NOT NULL,
+      area_hectares DECIMAL(10, 2),
+      soil_type VARCHAR(50),
+      soil_ph DECIMAL(4, 2),
+      boundary_coordinates JSONB,
+      is_active BOOLEAN DEFAULT true,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    );
+
+    -- Crop cycles table
+    CREATE TABLE IF NOT EXISTS crop_cycles (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      field_id UUID REFERENCES fields(id) ON DELETE CASCADE,
+      crop_name VARCHAR(100) NOT NULL,
+      variety VARCHAR(100),
+      status VARCHAR(50) DEFAULT 'planned',
+      planting_date TIMESTAMP,
+      expected_harvest_date TIMESTAMP,
+      actual_harvest_date TIMESTAMP,
+      yield_kg DECIMAL(10, 2),
+      notes TEXT,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    );
+
     -- Visits table
     CREATE TABLE IF NOT EXISTS visits (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -461,6 +491,8 @@ export async function createTables(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_farmers_region ON farmers(region);
     CREATE INDEX IF NOT EXISTS idx_visits_officer ON visits(officer_id);
     CREATE INDEX IF NOT EXISTS idx_visits_farmer ON visits(farmer_id);
+    CREATE INDEX IF NOT EXISTS idx_fields_farmer ON fields(farmer_id);
+    CREATE INDEX IF NOT EXISTS idx_crop_cycles_field ON crop_cycles(field_id);
     CREATE INDEX IF NOT EXISTS idx_knowledge_category ON knowledge_articles(category);
     CREATE INDEX IF NOT EXISTS idx_conversations_farmer ON chat_conversations(farmer_id);
     CREATE INDEX IF NOT EXISTS idx_messages_conversation ON chat_messages(conversation_id);

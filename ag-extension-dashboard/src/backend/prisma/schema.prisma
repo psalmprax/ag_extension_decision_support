@@ -87,6 +87,7 @@ model Farmer {
    visits                   Visit[]
    conversations            ChatConversation[]
    analytics                AnalyticsEvent[]
+   fields                   Field[]
 
   @@index([assignedOfficerId])
   @@index([region])
@@ -516,5 +517,42 @@ model TropicalKnowledgeSource {
   updatedAt   DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
 
   @@map("tropical_knowledge_sources")
+}
+
+model Field {
+  id                  String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  farmerId            String             @map("farmer_id") @db.Uuid
+  name                String             @db.VarChar(100)
+  areaHectares        Decimal?           @map("area_hectares") @db.Decimal(10, 2)
+  soilType            String?            @map("soil_type") @db.VarChar(50)
+  soilPh              Decimal?           @map("soil_ph") @db.Decimal(4, 2)
+  boundaryCoordinates Json?              @map("boundary_coordinates")
+  isActive            Boolean?           @default(true) @map("is_active")
+  createdAt           DateTime?          @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt           DateTime?          @default(now()) @map("updated_at") @db.Timestamp(6)
+  farmer              Farmer             @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  cropCycles          CropCycle[]
+
+  @@index([farmerId])
+  @@map("fields")
+}
+
+model CropCycle {
+  id                  String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fieldId             String             @map("field_id") @db.Uuid
+  cropName            String             @map("crop_name") @db.VarChar(100)
+  variety             String?            @db.VarChar(100)
+  status              String             @default("planned") @db.VarChar(50) // 'planned', 'planted', 'growing', 'harvested'
+  plantingDate        DateTime?          @map("planting_date") @db.Timestamp(6)
+  expectedHarvestDate DateTime?          @map("expected_harvest_date") @db.Timestamp(6)
+  actualHarvestDate   DateTime?          @map("actual_harvest_date") @db.Timestamp(6)
+  yieldKg             Decimal?           @map("yield_kg") @db.Decimal(10, 2)
+  notes               String?
+  createdAt           DateTime?          @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt           DateTime?          @default(now()) @map("updated_at") @db.Timestamp(6)
+  field               Field              @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@index([fieldId])
+  @@map("crop_cycles")
 }
 

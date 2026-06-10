@@ -58,6 +58,7 @@ const KnowledgeBase = lazy(() => import('./components/KnowledgeBase').then(m => 
 const UserManagementPage = lazy(() => import('./pages/UserManagementPage').then(m => ({ default: m.UserManagementPage })));
 const LandingPage = lazy(() => import('./pages/LandingPage').then(m => ({ default: m.LandingPage })));
 const DemoPage = lazy(() => import('./pages/DemoPage').then(m => ({ default: m.DemoPage })));
+const CropsFields = lazy(() => import('./pages/CropsFields').then(m => ({ default: m.CropsFields })));
 
 const TAB_TO_PATH: Record<string, string> = {
     'dashboard': '/dashboard',
@@ -74,6 +75,7 @@ const TAB_TO_PATH: Record<string, string> = {
     'agents': '/agents',
     'system_health': '/system-health',
     'disease_diagnosis': '/disease-diagnosis',
+    'fields': '/fields',
     'memory': '/memory',
     'email_workflows': '/email-workflows',
     'mcp_tools': '/mcp-tools',
@@ -485,6 +487,7 @@ function App() {
                                 )}
                                 {activeTab === 'system_health' && <SystemHealth />}
                                 {activeTab === 'disease_diagnosis' && <DiseaseDiagnosisPage />}
+                                {activeTab === 'fields' && <CropsFields />}
                                 {activeTab === 'memory' && <Memory />}
                                 {activeTab === 'email_workflows' && <EmailWorkflows />}
                                 {activeTab === 'mcp_tools' && <MCPTools />}
