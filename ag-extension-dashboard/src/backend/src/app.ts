@@ -32,6 +32,7 @@ import analyticsRoutes from './routes/analytics';
 import portfolioRoutes from './routes/portfolio';
 import usersRoutes from './routes/users';
 import farmersRoutes from './routes/farmers';
+import fieldsRoutes from './routes/fields';
 import visitsRoutes from './routes/visits';
 import externalRoutes from './routes/external';
 import languageRoutes from './routes/language';
@@ -286,6 +287,7 @@ const routeMounts: RouteMount[] = [
   { path: '/portfolio', router: portfolioRoutes },
   { path: '/users', router: usersRoutes },
   { path: '/farmers', router: farmersRoutes },
+  { path: '/fields', router: fieldsRoutes },
   { path: '/visits', router: visitsRoutes },
   { path: '/alerts', router: alertRoutes },
   { path: '/external', router: externalRoutes },

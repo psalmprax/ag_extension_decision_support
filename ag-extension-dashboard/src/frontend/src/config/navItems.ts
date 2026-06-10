@@ -44,6 +44,7 @@ export const getNavItems = (isModern: boolean): NavItem[] => [
     { id: 'telemetry', label: isModern ? 'Neural Telemetry' : 'System Telemetry', icon: Activity, roles: ['admin'] },
     { id: 'agents', label: isModern ? 'Autonomous Orchestration' : 'Agent Manager', icon: Settings, roles: ['admin'] },
     { id: 'system_health', label: isModern ? 'Infrastructure Vitality' : 'System Health', icon: Shield, roles: ['admin'] },
+    { id: 'fields', label: isModern ? 'Agronomic Topology' : 'Fields & Crops', icon: Leaf, roles: ['extension_officer', 'admin', 'farmer'] },
     { id: 'disease_diagnosis', label: isModern ? 'Pathological Diagnostics' : 'Disease Checker', icon: Leaf, roles: ['extension_officer', 'admin'] },
     { id: 'memory', label: isModern ? 'Cognitive Persistence' : 'Memory Manager', icon: Brain, roles: ['admin'] },
     { id: 'email_workflows', label: isModern ? 'Automated Dispatch' : 'Email Workflows', icon: Mail, roles: ['admin'] },

@@ -230,3 +230,50 @@ export const aiSchemas = {
         farmerId: z.string().uuid().optional(),
     }),
 };
+
+/**
+ * Field & Crop validation schemas
+ */
+export const fieldSchemas = {
+    create: z.object({
+        farmerId: z.string().uuid('Invalid farmer ID'),
+        name: z.string().min(2, 'Name must be at least 2 characters'),
+        areaHectares: z.number().positive().optional(),
+        soilType: z.string().optional(),
+        soilPh: z.number().min(0).max(14).optional(),
+        boundaryCoordinates: z.any().optional(),
+    }),
+
+    update: z.object({
+        name: z.string().min(2).optional(),
+        areaHectares: z.number().positive().optional(),
+        soilType: z.string().optional(),
+        soilPh: z.number().min(0).max(14).optional(),
+        boundaryCoordinates: z.any().optional(),
+        isActive: z.boolean().optional(),
+    }),
+};
+
+export const cropCycleSchemas = {
+    create: z.object({
+        fieldId: z.string().uuid('Invalid field ID'),
+        cropName: z.string().min(2, 'Crop name is required'),
+        variety: z.string().optional(),
+        status: z.enum(['planned', 'growing', 'harvested', 'failed']).default('planned'),
+        plantingDate: z.coerce.date().optional(),
+        expectedHarvestDate: z.coerce.date().optional(),
+        notes: z.string().optional(),
+    }),
+
+    update: z.object({
+        cropName: z.string().min(2).optional(),
+        variety: z.string().optional(),
+        status: z.enum(['planned', 'growing', 'harvested', 'failed']).optional(),
+        plantingDate: z.coerce.date().optional(),
+        expectedHarvestDate: z.coerce.date().optional(),
+        actualHarvestDate: z.coerce.date().optional(),
+        yieldKg: z.number().nonnegative().optional(),
+        notes: z.string().optional(),
+    }),
+};
+
