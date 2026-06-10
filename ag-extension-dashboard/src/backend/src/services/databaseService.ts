@@ -16,7 +16,7 @@ export async function initializeDatabase(): Promise<void> {
     });
 
     // Test connection with retry
-    let client;
+    let client = null as any;
     let retries = 5;
     while (retries > 0) {
       try {
@@ -28,6 +28,10 @@ export async function initializeDatabase(): Promise<void> {
         logger.warn(`Database connection attempt failed, retrying in 2 seconds... (${retries} retries left):`, err instanceof Error ? err.message : err);
         await new Promise(res => setTimeout(res, 2000));
       }
+    }
+    
+    if (!client) {
+      throw new Error('Database client connection failed');
     }
     
     await client.query('SELECT NOW()');
