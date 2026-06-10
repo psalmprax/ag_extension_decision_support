@@ -13,8 +13,6 @@ import ErrorBoundary from './components/ErrorBoundary';
 if (!import.meta.env.DEV) {
     const noop = () => {};
     console.log = noop;
-    console.warn = noop;
-    console.error = noop;
     console.info = noop;
     console.debug = noop;
 }
