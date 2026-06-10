@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, X, Send, MessageSquare, AlertCircle, Sparkles } from 'lucide-react';
+import { Mail, X, Send, AlertCircle, Sparkles } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 
 interface BulkSmsModalProps {

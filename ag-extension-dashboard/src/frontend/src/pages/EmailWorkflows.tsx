@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Mail, Plus, Send, CheckCircle, XCircle,
-    Clock, Eye, Edit, Trash2, Filter,
+    Mail, CheckCircle, XCircle,
+    Clock, Eye, Edit, Filter,
     AlertTriangle, RefreshCw, UserCheck, UserX
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '../store/useAppStore';
@@ -16,7 +16,6 @@ import {
     type EmailTemplate,
     type EmailApproval
 } from '../api/emailWorkflowService';
-import toast from 'react-hot-toast';
 import DOMPurify from 'dompurify';
 
 export function EmailWorkflows() {

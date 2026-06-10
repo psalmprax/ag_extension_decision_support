@@ -9,9 +9,7 @@ import {
     ResponsiveContainer, 
     PieChart, 
     Pie, 
-    Cell,
-    AreaChart,
-    Area
+    Cell
 } from 'recharts';
 import { TrendingUp, PieChart as PieIcon, BarChart3, Info } from 'lucide-react';
 import { useThemeClasses } from '@/hooks/useThemeClasses';

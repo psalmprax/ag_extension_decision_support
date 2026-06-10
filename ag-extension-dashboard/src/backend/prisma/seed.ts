@@ -13,13 +13,13 @@ async function main() {
 
   // Users
   const user = await prisma.user.upsert({
-    where: { email: 'officer@ag-extension.org' },
+    where: { email: 'demo@agridemo.com' },
     update: {},
     create: {
-      email: 'officer@ag-extension.org',
+      email: 'demo@agridemo.com',
       passwordHash,
-      firstName: 'John',
-      lastName: 'Doe',
+      firstName: 'Demo',
+      lastName: 'User',
       role: 'extension_officer',
       region: 'Central',
     },

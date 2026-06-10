@@ -3,7 +3,7 @@ import { useNavigate, Routes, Route } from 'react-router-dom';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { ForgotPassword } from './pages/ForgotPassword';
-import { useState, useCallback, Suspense, lazy } from 'react';
+import { useState, Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -38,7 +38,6 @@ import { useAppTheme } from './hooks/useAppTheme';
 import { useAppBootstrap } from './hooks/useAppBootstrap';
 import { useAppAuth } from './hooks/useAppAuth';
 import { fetchUnreadCount } from '@/api/notificationService';
-import { ThemeName } from '@/theme';
 
 // Lazy loaded components
 const FarmerDashboard = lazy(() => import('@/components/FarmerDashboard').then(m => ({ default: m.FarmerDashboard })));

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Users, UserPlus, Shield, Edit2, Trash2, X, Loader2,
+    Users, UserPlus, Shield, X, Loader2,
     ChevronDown, Search, Mail, MapPin, Phone
 } from 'lucide-react';
 import apiClient from '@/api/client';

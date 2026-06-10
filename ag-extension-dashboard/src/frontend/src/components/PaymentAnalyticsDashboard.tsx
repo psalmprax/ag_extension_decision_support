@@ -11,8 +11,7 @@ import {
     Target,
     Calendar,
     ArrowUp,
-    ArrowDown,
-    Minus
+    ArrowDown
 } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import { motion } from 'framer-motion';

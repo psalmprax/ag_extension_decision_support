@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, ReactNode } from 'react';
 import { useFeatureFlags } from '@/store/useFeatureFlags';
 import { useAppStore } from '@/store/useAppStore';
-import { applyTheme, themes, ThemeName } from '@/theme';
+import { applyTheme } from '@/theme';
 
 interface ThemeContextType {
   variant: 'current' | 'new';

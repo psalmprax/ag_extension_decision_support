@@ -48,7 +48,6 @@ import { generateSynthesis } from '@/api/chatbotService';
 import { fetchPriorityScore, updateVisit } from '@/api/visitService';
 import { SatelliteInsights } from './SatelliteInsights';
 import { ConfirmModal } from './ConfirmModal';
-import toast from 'react-hot-toast';
 
 interface FarmerDetailPanelProps {
     isOpen: boolean;

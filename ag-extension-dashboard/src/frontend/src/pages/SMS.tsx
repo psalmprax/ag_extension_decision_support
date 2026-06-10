@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
 import { useAppStore } from '../store/useAppStore';
 import { fetchSMSHistory, sendSMS, sendBulkSMS, translateMessage } from '../api/smsService';
-import { fetchFarmers, Farmer } from '../api/farmerService';
+import { fetchFarmers } from '../api/farmerService';
 import { fetchUsage } from '../api/billingService';
 import { withRealFallback } from '../lib/realFirst';
 import { useThemeClasses } from '@/hooks/useThemeClasses';

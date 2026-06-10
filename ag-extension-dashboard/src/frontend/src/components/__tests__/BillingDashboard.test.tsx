@@ -1,4 +1,4 @@
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { BillingDashboard } from '../BillingDashboard';
 import { LanguageProvider } from '../../lib/LanguageContext';
@@ -91,8 +91,9 @@ describe('BillingDashboard', () => {
         renderComponent();
         expect(screen.getByRole('status')).toBeInTheDocument();
 
-        await act(async () => {
-            await new Promise(resolve => setTimeout(resolve, 0));
+        // Wait for the loading state to disappear to satisfy React state updates
+        await waitFor(() => {
+            expect(screen.queryByRole('status')).not.toBeInTheDocument();
         });
     });
 

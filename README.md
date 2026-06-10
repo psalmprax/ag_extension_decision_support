@@ -18,7 +18,7 @@ An AI-powered agricultural extension platform providing farmers with real-time i
 - **Database**: PostgreSQL with Prisma ORM
 - **Cache**: Redis
 - **AI Providers**: OpenAI, Groq, Azure OpenAI, Google Vertex, Anthropic
-- **Frontend**: React (planned)
+- **Frontend**: React, Tailwind CSS, Vite
 - **Development**: Docker Compose
 
 ## Local Development Setup

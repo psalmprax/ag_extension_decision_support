@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
     Server, Activity, CheckCircle, AlertTriangle,
-    XCircle, Clock, Play, Pause, RotateCcw,
-    Users, Zap, BarChart3, RefreshCw, Send
+    XCircle, Clock,
+    Users, RefreshCw, Send
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '../store/useAppStore';

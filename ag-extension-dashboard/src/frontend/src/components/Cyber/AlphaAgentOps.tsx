@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { 
     Cpu, 
     Layers, 
@@ -18,7 +17,6 @@ import {
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 import apiClient from '@/api/client';
-import toast from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
 import { searchKnowledge } from '@/api/knowledgeService';
 import { fetchFarmers } from '@/api/farmerService';

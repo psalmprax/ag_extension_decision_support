@@ -9,9 +9,7 @@ import {
   Calendar, 
   History, 
   RefreshCcw, 
-  FileText, 
-  User as UserIcon,
-  Trash,
+  FileText,
   CheckSquare,
   Square,
   Globe,
@@ -22,7 +20,7 @@ import {
   MoreVertical
 } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
-import { fetchContextMenu, getStaticFallbackMenu, ContextMenuData as ServiceContextMenuData } from '@/api/contextMenuService';
+import { fetchContextMenu, getStaticFallbackMenu } from '@/api/contextMenuService';
 
 interface ContextMenuItem {
   id: string;

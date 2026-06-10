@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Activity, Clock, TrendingUp, AlertTriangle,
-    Server, Zap, DollarSign, BarChart3,
-    RefreshCw, Download, Filter, ChevronDown
+    Activity, Clock, TrendingUp, AlertTriangle, DollarSign,
+    RefreshCw
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '../store/useAppStore';
 import { fetchTelemetrySummary, fetchTelemetryEvents, TelemetrySummary, TelemetryEvent } from '../api/telemetryService';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, LineChart, Line } from 'recharts';
-import toast from 'react-hot-toast';
+import { XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
 export function Telemetry() {
     const { t } = useLanguage();

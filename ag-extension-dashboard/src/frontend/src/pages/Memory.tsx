@@ -2,14 +2,13 @@ import React, { useState, useEffect } from 'react';
 import {
     Brain, Plus, Search, Edit, Trash2,
     Clock, Tag, BarChart3, RefreshCw,
-    Filter, Download, Upload
+    Filter
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '../store/useAppStore';
 import { fetchMemories, storeMemory, deleteMemory, fetchMemorySummary, type MemoryEntry } from '../api/memoryService';
-import toast from 'react-hot-toast';
 
 export function Memory() {
     const { t } = useLanguage();

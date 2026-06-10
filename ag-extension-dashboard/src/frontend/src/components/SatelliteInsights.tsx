@@ -3,8 +3,6 @@ import { motion } from 'framer-motion';
 import { 
     Layers, 
     Zap, 
-    Droplets, 
-    Sun, 
     Navigation2,
     Shield,
     Cpu,

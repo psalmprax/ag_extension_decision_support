@@ -1,13 +1,10 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { 
     Zap, 
     ShieldAlert, 
     TrendingUp, 
-    Target, 
     BarChart3, 
     Globe, 
-    Ship, 
     Truck,
     ArrowUpRight,
     Droplets,

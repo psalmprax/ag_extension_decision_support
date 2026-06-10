@@ -1,6 +1,6 @@
 import React from 'react';
 import { useFeatureFlags } from '@/store/useFeatureFlags';
-import { X, Eye, Check } from 'lucide-react';
+import { X, Check } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 
 interface ABTestBannerProps {

@@ -2,11 +2,9 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Cpu,
-    Zap,
-    LineChart, 
+    Zap, 
     ShieldCheck, 
     Search,
-    ChevronRight,
     Terminal,
     X,
     Loader2,
