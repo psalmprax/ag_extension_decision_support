@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { getThemeCSS, applyTheme, ThemeName } from '@/theme';
+import { themes, getThemeCSS, applyTheme, ThemeName } from '@/theme';
 
 export const useAppTheme = (themeName: ThemeName, darkMode: boolean) => {
     // Apply theme when it changes

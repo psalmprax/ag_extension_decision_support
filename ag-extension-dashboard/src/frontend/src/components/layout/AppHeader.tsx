@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Layout,
@@ -16,6 +16,7 @@ import {
 import { WeatherWidget } from '@/components/WeatherWidget';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { ThemeName } from '@/theme';
 import { Farmer } from '../../types/dashboard';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '@/store/useAppStore';

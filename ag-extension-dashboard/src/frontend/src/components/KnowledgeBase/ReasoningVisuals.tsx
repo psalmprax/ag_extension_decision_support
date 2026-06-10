@@ -19,7 +19,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
     AlertCircle, 
     CheckCircle2, 
-    AlertTriangle,
+    AlertTriangle, 
+    Info,
     TrendingUp,
     Zap,
     Play,

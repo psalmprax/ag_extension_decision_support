@@ -1,7 +1,7 @@
 /// <reference types="vitest" />
 import { defineConfig, type UserConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import path from 'path';
+import path from 'node:path';
 import { VitePWA } from 'vite-plugin-pwa';
 
 interface VitestConfigExport extends UserConfig {
@@ -93,11 +93,22 @@ export default defineConfig({
                 entryFileNames: 'assets/[name]-[hash].js',
                 chunkFileNames: 'assets/[name]-[hash].js',
                 assetFileNames: 'assets/[name]-[hash].[ext]',
-                manualChunks: {
-                    vendor: ['react', 'react-dom', 'react-router-dom'],
-                    ui: ['@headlessui/react', 'lucide-react', 'framer-motion'],
-                    utils: ['date-fns', 'zod', 'zustand', '@tanstack/react-query'],
-                    charts: ['recharts']
+                manualChunks(id) {
+                    if (id.includes('node_modules')) {
+                        if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+                            return 'vendor-core';
+                        }
+                        if (id.includes('recharts') || id.includes('d3')) {
+                            return 'vendor-charts';
+                        }
+                        if (id.includes('lucide-react') || id.includes('framer-motion') || id.includes('@headlessui')) {
+                            return 'vendor-ui';
+                        }
+                        if (id.includes('leaflet')) {
+                            return 'vendor-maps';
+                        }
+                        return 'vendor-utils';
+                    }
                 }
             },
         },

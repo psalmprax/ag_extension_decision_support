@@ -1,5 +1,5 @@
 import { useDesign } from '@/hooks/useDesignVariant';
-import { Clock, MapPin, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, Clock, MapPin, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Visit {
   id: string;

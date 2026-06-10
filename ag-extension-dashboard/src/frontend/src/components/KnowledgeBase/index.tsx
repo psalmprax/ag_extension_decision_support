@@ -2,19 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Search, 
+    MessageSquare, 
+    History, 
     BarChart3, 
+    ChevronLeft, 
+    ChevronRight, 
     Sparkles,
     Brain,
     Lightbulb,
+    Clock,
     Zap,
+    TrendingUp,
+    PieChart,
     Info,
     ArrowRight,
     Paperclip,
     Mic,
     X,
-    File as FileIcon
+    File as FileIcon,
+    Volume2
 } from 'lucide-react';
-import { askAI, fetchKnowledgeHistory, fetchKnowledgeStats, Attachment, Citation } from '@/api/knowledgeService';
+import { askAI, searchKnowledge, fetchKnowledgeHistory, fetchKnowledgeStats, Attachment, Citation } from '@/api/knowledgeService';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 import { useThemeClasses } from '@/hooks/useThemeClasses';

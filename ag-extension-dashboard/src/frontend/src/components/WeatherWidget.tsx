@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Cloud, CloudRain, Sun, MapPin } from 'lucide-react';
+import { Cloud, CloudRain, Sun, Wind, MapPin, Droplets } from 'lucide-react';
 import { fetchWeather } from '@/api/weatherService';
 import { useLanguage } from '@/lib/LanguageContext';
 

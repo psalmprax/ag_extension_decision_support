@@ -1,13 +1,14 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import {
+    LayoutDashboard,
     MessageSquare,
     MapPin,
     Sparkles,
     Users,
     Loader2,
 } from 'lucide-react';
-import { CardSkeleton } from '@/components/Skeleton';
+import { CardSkeleton, ChartSkeleton } from '@/components/Skeleton';
 import { FarmerMap } from '@/components/FarmerMap';
 import { StatCard } from '../components/StatCard';
 import { Farmer, DashboardData } from '../types/dashboard';

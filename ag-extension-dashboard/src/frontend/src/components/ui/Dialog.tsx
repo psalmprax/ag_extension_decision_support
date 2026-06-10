@@ -1,6 +1,7 @@
 import React, { Fragment } from 'react';
 import { Dialog as HeadlessDialog, Transition } from '@headlessui/react';
 import { cn } from '@/lib/cn';
+import { modalVariants } from '@/lib/animations';
 
 interface DialogProps {
     open: boolean;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, 
   Share2, 
@@ -12,6 +12,7 @@ import {
   Users,
   Calendar,
   AlertCircle,
+  ExternalLink,
   RefreshCcw
 } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';

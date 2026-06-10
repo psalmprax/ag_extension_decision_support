@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { farmerSchema, type FarmerInput } from '@/lib/schemas';
 import { useAppStore } from '@/store/useAppStore';
-import { UserPlus, MapPin, Phone, Maximize, Activity } from 'lucide-react';
+import { Loader2, UserPlus, MapPin, Phone, Maximize, Activity } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';

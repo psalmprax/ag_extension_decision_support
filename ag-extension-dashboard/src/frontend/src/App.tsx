@@ -3,7 +3,7 @@ import { useNavigate, useLocation, Routes, Route } from 'react-router-dom';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { ForgotPassword } from './pages/ForgotPassword';
-import { useState, Suspense, lazy } from 'react';
+import { useState, useCallback, Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -38,6 +38,7 @@ import { useAppTheme } from './hooks/useAppTheme';
 import { useAppBootstrap } from './hooks/useAppBootstrap';
 import { useAppAuth } from './hooks/useAppAuth';
 import { fetchUnreadCount } from '@/api/notificationService';
+import { ThemeName } from '@/theme';
 
 // Lazy loaded components
 const FarmerDashboard = lazy(() => import('@/components/FarmerDashboard').then(m => ({ default: m.FarmerDashboard })));
@@ -58,41 +59,36 @@ const UserManagementPage = lazy(() => import('./pages/UserManagementPage').then(
 const LandingPage = lazy(() => import('./pages/LandingPage').then(m => ({ default: m.LandingPage })));
 const DemoPage = lazy(() => import('./pages/DemoPage').then(m => ({ default: m.DemoPage })));
 
+const TAB_TO_PATH: Record<string, string> = {
+    'dashboard': '/dashboard',
+    'portfolio': '/portfolio',
+    'visits': '/visits',
+    'reports': '/reports',
+    'analytics': '/analytics',
+    'billing': '/billing',
+    'knowledge': '/knowledge',
+    'aiassistant': '/ai-assistant',
+    'farmerchat': '/farmer-chat',
+    'sms': '/sms',
+    'telemetry': '/telemetry',
+    'agents': '/agents',
+    'system_health': '/system-health',
+    'disease_diagnosis': '/disease-diagnosis',
+    'memory': '/memory',
+    'email_workflows': '/email-workflows',
+    'mcp_tools': '/mcp-tools',
+    'user_management': '/user-management',
+};
+
+const PATH_TO_TAB: Record<string, string> = Object.entries(TAB_TO_PATH).reduce(
+    (acc, [tab, path]) => ({ ...acc, [path]: tab }),
+    {} as Record<string, string>
+);
+
 function App() {
     const { t, language } = useLanguage();
     const navigate = useNavigate();
     const location = useLocation();
-
-    // Sync the dashboard's activeTab from the URL pathname so that deep links
-    // like /knowledge, /portfolio, /visits, etc. pre-select the right tab.
-    // This makes dashboard URLs shareable and fixes the "SPA renders landing"
-    // issue on /knowledge.
-    React.useEffect(() => {
-        const PATH_TO_TAB: Record<string, string> = {
-            '/dashboard': 'dashboard',
-            '/portfolio': 'portfolio',
-            '/visits': 'visits',
-            '/reports': 'reports',
-            '/analytics': 'analytics',
-            '/billing': 'billing',
-            '/knowledge': 'knowledge',
-            '/ai-assistant': 'aiassistant',
-            '/farmer-chat': 'farmerchat',
-            '/sms': 'sms',
-            '/telemetry': 'telemetry',
-            '/agents': 'agents',
-            '/system-health': 'system_health',
-            '/disease-diagnosis': 'disease_diagnosis',
-            '/memory': 'memory',
-            '/email-workflows': 'email_workflows',
-            '/mcp-tools': 'mcp_tools',
-            '/user-management': 'user_management',
-        };
-        const tab = PATH_TO_TAB[location.pathname];
-        if (tab && tab !== activeTab) {
-            setActiveTab(tab);
-        }
-    }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
     const {
         themeName, setThemeName,
         darkMode, setDarkMode,
@@ -106,6 +102,24 @@ function App() {
         removeFarmer, removeFarmers,
         toggleDesignSystemMode
     } = useAppStore();
+
+    // Sync activeTab from URL pathname on mount or route changes
+    React.useEffect(() => {
+        const tab = PATH_TO_TAB[location.pathname];
+        if (tab && tab !== activeTab) {
+            setActiveTab(tab);
+        }
+    }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Sync URL pathname from activeTab change for authenticated users
+    React.useEffect(() => {
+        if (storeUser) {
+            const targetPath = TAB_TO_PATH[activeTab];
+            if (targetPath && location.pathname !== targetPath) {
+                navigate(targetPath);
+            }
+        }
+    }, [activeTab, storeUser]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const {
         isModern, headingClass
@@ -341,7 +355,6 @@ function App() {
                         <Route path="/register" element={<div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4"><Register /></div>} />
                         <Route path="/forgot-password" element={<div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4"><ForgotPassword /></div>} />
                         <Route path="/demo" element={<DemoPage />} />
-                        {/* Standalone Knowledge Base for logged-out visitors — API calls will auth-fail gracefully. */}
                         <Route path="/knowledge" element={<div className="min-h-screen bg-theme-bg-primary"><KnowledgeBase /></div>} />
                         <Route path="*" element={<LandingPage />} />
                     </Routes>

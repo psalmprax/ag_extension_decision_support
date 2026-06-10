@@ -17,6 +17,7 @@ import {
     Trash2,
     Lock,
     Settings,
+    AtSign,
     Globe,
     CreditCard as CardIcon,
     Smartphone,
@@ -28,6 +29,7 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAppStore } from '@/store/useAppStore';
 import { fetchPlans, fetchSubscription, createCheckoutSession, createPortalSession, fetchInvoices, switchSubscription, fetchPaymentMethods, addPaymentMethod, deletePaymentMethod, updateAdminConfig, createPayPalSubscription, redeemVoucher, submitTransaction, getMyTransactions, listAllTransactions, verifyTransaction, rejectTransaction, generateVouchers, listVouchers } from '@/api/billingService';
+import { PaymentAnalyticsDashboard } from './PaymentAnalyticsDashboard';
 import { UsageQuota } from './UsageQuota';
 import { ConfirmModal } from './ConfirmModal';
 import { Button } from './ui/Button';

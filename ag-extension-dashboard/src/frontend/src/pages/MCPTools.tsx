@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Wrench, Play, Code, RefreshCw,
-    CheckCircle, XCircle, Loader2, Terminal
+    Wrench, Play, Code, Eye, RefreshCw,
+    CheckCircle, XCircle, Loader2, Terminal,
+    Zap, AlertTriangle
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';

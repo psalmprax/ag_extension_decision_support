@@ -1,11 +1,12 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion';
+import { motion, useScroll, useTransform, useMotionValue, useSpring, AnimatePresence } from 'framer-motion';
 import {
     Leaf, Users, MapPin, Brain, BarChart3, Shield,
     ArrowRight, CheckCircle, XCircle, Globe,
-    Zap, Database, TrendingUp, FileText,
-    Building2, GraduationCap, Heart, Bell, Wifi,
+    Zap, Database, ChevronRight, TrendingUp, FileText,
+    Building2, GraduationCap, Heart, Bell, Search,
+    CloudRain, Droplets, Thermometer, Activity, Wifi,
     ChevronDown, Play
 } from 'lucide-react';
 
