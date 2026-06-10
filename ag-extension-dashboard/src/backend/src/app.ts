@@ -199,15 +199,20 @@ const healthHandler = async (_req: Request, res: Response) => {
         errors.push(`ai_provider: ${(error as Error).message}`);
     }
 
-    // Check external APIs (weather, NASA POWER, FAO)
+    // Check external APIs (weather, NASA POWER, FAO).
+    // An API is "configured" if EITHER its key OR its base URL is set, so that
+    // a service with a default URL (e.g. weatherapi.com) counts as configured
+    // even before a real API key is provisioned. This endpoint reports
+    // configuration state, not reachability.
     try {
         const weatherKey = config.externalApis.weather.apiKey;
+        const weatherUrl = config.externalApis.weather.url;
         const faoConfigured = !!config.externalApis.fao.url;
         const nasaConfigured = true; // NASA POWER is always available
-        
-        if (weatherKey || faoConfigured || nasaConfigured) {
-            externalApiStatus = `${['weather', 'fao', 'nasa'].filter(k => 
-                (k === 'weather' && weatherKey) ||
+
+        if (weatherKey || weatherUrl || faoConfigured || nasaConfigured) {
+            externalApiStatus = `${['weather', 'fao', 'nasa'].filter(k =>
+                (k === 'weather' && (weatherKey || weatherUrl)) ||
                 (k === 'fao' && faoConfigured) ||
                 (k === 'nasa')
             ).length}/3 configured`;
