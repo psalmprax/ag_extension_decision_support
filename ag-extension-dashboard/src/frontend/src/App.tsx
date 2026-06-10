@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, Routes, Route } from 'react-router-dom';
+import { useNavigate, useLocation, Routes, Route } from 'react-router-dom';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { ForgotPassword } from './pages/ForgotPassword';
@@ -61,6 +61,38 @@ const DemoPage = lazy(() => import('./pages/DemoPage').then(m => ({ default: m.D
 function App() {
     const { t, language } = useLanguage();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Sync the dashboard's activeTab from the URL pathname so that deep links
+    // like /knowledge, /portfolio, /visits, etc. pre-select the right tab.
+    // This makes dashboard URLs shareable and fixes the "SPA renders landing"
+    // issue on /knowledge.
+    React.useEffect(() => {
+        const PATH_TO_TAB: Record<string, string> = {
+            '/dashboard': 'dashboard',
+            '/portfolio': 'portfolio',
+            '/visits': 'visits',
+            '/reports': 'reports',
+            '/analytics': 'analytics',
+            '/billing': 'billing',
+            '/knowledge': 'knowledge',
+            '/ai-assistant': 'aiassistant',
+            '/farmer-chat': 'farmerchat',
+            '/sms': 'sms',
+            '/telemetry': 'telemetry',
+            '/agents': 'agents',
+            '/system-health': 'system_health',
+            '/disease-diagnosis': 'disease_diagnosis',
+            '/memory': 'memory',
+            '/email-workflows': 'email_workflows',
+            '/mcp-tools': 'mcp_tools',
+            '/user-management': 'user_management',
+        };
+        const tab = PATH_TO_TAB[location.pathname];
+        if (tab && tab !== activeTab) {
+            setActiveTab(tab);
+        }
+    }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
     const {
         themeName, setThemeName,
         darkMode, setDarkMode,
@@ -309,6 +341,8 @@ function App() {
                         <Route path="/register" element={<div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4"><Register /></div>} />
                         <Route path="/forgot-password" element={<div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4"><ForgotPassword /></div>} />
                         <Route path="/demo" element={<DemoPage />} />
+                        {/* Standalone Knowledge Base for logged-out visitors — API calls will auth-fail gracefully. */}
+                        <Route path="/knowledge" element={<div className="min-h-screen bg-theme-bg-primary"><KnowledgeBase /></div>} />
                         <Route path="*" element={<LandingPage />} />
                     </Routes>
                 </Suspense>
