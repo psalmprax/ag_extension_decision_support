@@ -12,11 +12,24 @@ export async function initializeDatabase(): Promise<void> {
       connectionString: config.database.url,
       max: 20,
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
+      connectionTimeoutMillis: 15000,
     });
 
-    // Test connection
-    const client = await pool.connect();
+    // Test connection with retry
+    let client;
+    let retries = 5;
+    while (retries > 0) {
+      try {
+        client = await pool.connect();
+        break;
+      } catch (err) {
+        retries--;
+        if (retries === 0) throw err;
+        logger.warn(`Database connection attempt failed, retrying in 2 seconds... (${retries} retries left):`, err instanceof Error ? err.message : err);
+        await new Promise(res => setTimeout(res, 2000));
+      }
+    }
+    
     await client.query('SELECT NOW()');
     client.release();
 
