@@ -58,6 +58,7 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-https://www.gpexts.com}
       DEMO_ENABLED: true
       DEMO_PASSWORD: ${DEMO_PASSWORD:-Demo@123}
+      WEATHER_API_KEY: ${WEATHER_API_KEY:-}
     labels:
       # Enable Traefik service discovery
       - "traefik.enable=true"
