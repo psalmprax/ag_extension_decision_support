@@ -319,7 +319,6 @@ function App() {
 
     return (
         <>
-            {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
             <div
                 className={`h-screen flex flex-col ${darkMode ? 'dark' : ''} bg-theme-bg-primary transition-colors duration-300 overflow-hidden relative z-0`}
                 onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
