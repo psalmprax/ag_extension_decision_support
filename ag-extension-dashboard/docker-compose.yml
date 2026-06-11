@@ -195,7 +195,7 @@ volumes:
 networks:
   ag-network:
     name: ag-network
-    external: true
+    driver: bridge
   ettametta_ettametta:
     name: ettametta_ettametta
-    external: true
+    driver: bridge
