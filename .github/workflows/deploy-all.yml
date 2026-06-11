@@ -78,9 +78,11 @@ jobs:
             set -e
             if [ ! -d "/root/ag_extension_decision_support" ]; then
               echo "🚀 Cloning repository..."
-              cd /root && git clone https://github.com/${{ github.repository }}.git
+              cd /root && git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
             fi
             cd /root/ag_extension_decision_support/ag-extension-dashboard
+            # Ensure the remote uses HTTPS with token authentication
+            git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
             git fetch origin
             if git show-ref --verify --quiet refs/heads/${{ github.ref_name }}; then
               git checkout ${{ github.ref_name }}
