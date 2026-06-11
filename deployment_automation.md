@@ -65,3 +65,14 @@ docker compose \
   up -d
 ```
 Because the `ag-extension-dashboard_postgres_data` volume still exists on the host machine, Docker Compose will spin up fresh DB containers and seamlessly attach them to your existing data.
+
+## 5. Prisma Database Schema Synchronization
+
+If you introduce new models or schema changes in `schema.prisma`, you must manually synchronize the database schema in the production environment. Because the backend container runs in production mode (where automatic schema syncing is disabled for safety), run the following command on the remote host inside the `ag-extension-dashboard/src/backend` directory:
+
+```bash
+DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:7501/ag_extension" npx prisma@6.19.2 db push --accept-data-loss
+```
+
+*(Note: `--accept-data-loss` is required if Prisma detects potentially destructive changes, like dropping deprecated columns or tables, during the sync.)*
+
