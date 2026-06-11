@@ -79,7 +79,8 @@ services:
       - "traefik.http.routers.backend-local.entrypoints=web"
       # HTTP → HTTPS redirect middleware (per-service scope)
       - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
-
+    networks:
+        - ag-network
   frontend:
     build:
       context: ./src/frontend
@@ -105,7 +106,8 @@ services:
       - "traefik.http.routers.frontend-local.entrypoints=web"
       # HTTP → HTTPS redirect middleware
       - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
-
+    networks:
+      - ag-network
 volumes:
   traefik_letsencrypt:
     driver: local

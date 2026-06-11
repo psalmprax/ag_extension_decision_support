@@ -194,6 +194,34 @@ jobs:
             echo "  Overlay2 actual: $(du -sh /var/lib/docker/ 2>/dev/null | cut -f1)"
             docker system df
 
+      # ── Step 5/5: Health Check — verify services are up ─────────────────────
+      - name: 5/5 Health Check — verify services
+        run: |
+          echo "Checking backend health endpoint..."
+          curl -sSf http://localhost:7500/health || { echo "Backend health check failed"; exit 1; }
+          echo "Backend is healthy"
+
+  sync-master:
+    needs: deploy-testing
+    if: github.ref == 'refs/heads/stage' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+      - name: Fast-forward merge stage into master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git checkout master || git checkout -b master
+          git merge --ff-only origin/stage || echo "No fast-forward possible"
+          git push origin master
+
   # 3. Deploy to Production (New Server) — 4 timed steps, parallel builds via BuildKit
   deploy-production:
     needs: ci-checks
