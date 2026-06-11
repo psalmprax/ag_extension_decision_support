@@ -124,6 +124,12 @@ services:
       - "traefik.http.routers.backend-dev.rule=(Host(`${DOMAIN:-www.gpexts.com}`) || Host(`localhost`) || Host(`127.0.0.1`) || Host(`145.223.97.248`)) && (PathPrefix(`/api`) || PathPrefix(`/api-docs`) || PathPrefix(`/socket.io`) || PathPrefix(`/health`))"
       - "traefik.http.routers.backend-dev.entrypoints=web"
       - "traefik.http.services.backend.loadbalancer.server.port=3001"
+      - "traefik.http.routers.backend-dev-secure.entrypoints=websecure"
+      - "traefik.http.routers.backend-dev-secure.tls=true"
+      - "traefik.http.routers.backend-dev-secure.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.backend-dev-secure.tls.domains[0].main=www.gpexts.com"
+      - "traefik.http.routers.backend-dev-secure.tls.domains[0].sans=*.gpexts.com"
+      - "traefik.http.routers.backend-dev-secure.rule=(Host(`${DOMAIN:-www.gpexts.com}`) || Host(`localhost`) || Host(`127.0.0.1`) || Host(`145.223.97.248`)) && (PathPrefix(`/api`) || PathPrefix(`/api-docs`) || PathPrefix(`/socket.io`) || PathPrefix(`/health`))"
 
   frontend:
     build:
@@ -144,6 +150,12 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend-dev.rule=Host(`${DOMAIN:-www.gpexts.com}`) || Host(`localhost`) || Host(`127.0.0.1`) || Host(`145.223.97.248`)"
       - "traefik.http.routers.frontend-dev.entrypoints=web"
+      - "traefik.http.routers.frontend-dev-secure.entrypoints=websecure"
+      - "traefik.http.routers.frontend-dev-secure.tls=true"
+      - "traefik.http.routers.frontend-dev-secure.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.frontend-dev-secure.tls.domains[0].main=www.gpexts.com"
+      - "traefik.http.routers.frontend-dev-secure.tls.domains[0].sans=*.gpexts.com"
+      - "traefik.http.routers.frontend-dev-secure.rule=Host(`${DOMAIN:-www.gpexts.com}`) || Host(`localhost`) || Host(`127.0.0.1`) || Host(`145.223.97.248`)"
 
   # ── Local AI (optional) ───────────────────────────────────
   # Disabled by default; enable with COMPOSE_PROFILES=ai
