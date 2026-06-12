@@ -193,7 +193,6 @@ jobs:
           command_timeout: 5m
           script: |
             echo "💾 Docker disk usage before cleanup:"
-            echo "  Overlay2 actual: $(du -sh /var/lib/docker/ 2>/dev/null | cut -f1)"
             docker system df
             echo ""
             echo "🧹 Pruning stale Docker images (unused + dangling, older than 24h)..."
@@ -202,7 +201,6 @@ jobs:
             docker builder prune -f --filter "until=24h" 2>/dev/null || true
             echo ""
             echo "💾 Docker disk usage after cleanup:"
-            echo "  Overlay2 actual: $(du -sh /var/lib/docker/ 2>/dev/null | cut -f1)"
             docker system df
 
       # ── Step 5/5: Health Check — verify services are up ─────────────────────
@@ -380,7 +378,6 @@ jobs:
           command_timeout: 5m
           script: |
             echo "💾 Docker disk usage before cleanup:"
-            echo "  Overlay2 actual: $(du -sh /var/lib/docker/ 2>/dev/null | cut -f1)"
             docker system df
             echo ""
             echo "🧹 Pruning stale Docker images (unused + dangling, older than 24h)..."
@@ -389,7 +386,6 @@ jobs:
             docker builder prune -f --filter "until=24h" 2>/dev/null || true
             echo ""
             echo "💾 Docker disk usage after cleanup:"
-            echo "  Overlay2 actual: $(du -sh /var/lib/docker/ 2>/dev/null | cut -f1)"
             docker system df
 
       # ── Step 5/5: SSL + Health Check ──────────────────────────
