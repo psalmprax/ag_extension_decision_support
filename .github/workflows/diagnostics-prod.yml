@@ -1,0 +1,85 @@
+name: Run Production Diagnostics
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    name: Run Diagnostics on Production Server
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH and run diagnostics
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
+          command_timeout: 15m
+          script: |
+            set -e
+            cd /root/ag_extension_decision_support/ag-extension-dashboard
+
+            echo "============================================="
+            echo "🐳 Docker Containers Status"
+            echo "============================================="
+            docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+            echo ""
+            echo "============================================="
+            echo "🌐 Docker Networks"
+            echo "============================================="
+            docker network ls
+
+            echo ""
+            echo "============================================="
+            echo "🔍 Network ag-network Inspection"
+            echo "============================================="
+            docker network inspect ag-network
+
+            echo ""
+            echo "============================================="
+            echo "📋 Backend Container Logs (Last 50 lines)"
+            echo "============================================="
+            docker logs --tail=50 ag-dashboard-backend || true
+
+            echo ""
+            echo "============================================="
+            echo "📋 Agent Zero Logs (Last 50 lines)"
+            echo "============================================="
+            docker logs --tail=50 ag-agent-zero || true
+
+            echo ""
+            echo "============================================="
+            echo "📋 Crew AI Logs (Last 50 lines)"
+            echo "============================================="
+            docker logs --tail=50 ag-crew-ai || true
+
+            echo ""
+            echo "============================================="
+            echo "⚡ Connectivity Tests from Backend"
+            echo "============================================="
+            echo "1. Resolving ag-agent-zero from backend:"
+            docker exec ag-dashboard-backend nslookup ag-agent-zero || docker exec ag-dashboard-backend ping -c 1 ag-agent-zero || echo "❌ Resolution failed"
+
+            echo ""
+            echo "2. Resolving ag-crew-ai from backend:"
+            docker exec ag-dashboard-backend nslookup ag-crew-ai || docker exec ag-dashboard-backend ping -c 1 ag-crew-ai || echo "❌ Resolution failed"
+
+            echo ""
+            echo "3. Querying agent-zero health from backend:"
+            docker exec ag-dashboard-backend curl -iv http://ag-agent-zero:8000/health || echo "❌ Curl to agent-zero failed"
+
+            echo ""
+            echo "4. Querying crew-ai health from backend:"
+            docker exec ag-dashboard-backend curl -iv http://ag-crew-ai:8001/health || echo "❌ Curl to crew-ai failed"
+
+            echo ""
+            echo "5. Querying agent-zero health from host:"
+            curl -iv http://127.0.0.1:7504/health || echo "❌ Host curl to agent-zero failed"
+
+            echo ""
+            echo "6. Querying crew-ai health from host:"
+            curl -iv http://127.0.0.1:7505/health || echo "❌ Host curl to crew-ai failed"
