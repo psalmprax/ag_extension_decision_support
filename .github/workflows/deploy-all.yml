@@ -283,16 +283,19 @@ jobs:
 
             if [ ! -f ".env" ]; then
               cp .env.example .env
-              for var in JWT_SECRET OPENAI_API_KEY ANTHROPIC_API_KEY ACME_EMAIL; do
-                val="${!var}"
-                if [ -n "$val" ]; then
-                  printf '%s=%s\n' "$var" "$val" >> .env
-                fi
-              done
-              echo ".env created from .env.example with GitHub Secrets"
-            else
-              echo ".env already exists — skipping creation"
+              echo ".env created from .env.example"
             fi
+
+            for var in JWT_SECRET OPENAI_API_KEY ANTHROPIC_API_KEY ACME_EMAIL; do
+              val="${!var}"
+              if [ -n "$val" ]; then
+                # Remove existing key if it exists
+                sed -i "/^$var=/d" .env
+                # Append the new key/value
+                printf '%s=%s\n' "$var" "$val" >> .env
+                echo "🔑 Updated $var in .env from GitHub secrets"
+              fi
+            done
 
             # Ensure VAPID keys are configured in .env
             if ! grep -q "VAPID_PUBLIC_KEY" .env 2>/dev/null; then
