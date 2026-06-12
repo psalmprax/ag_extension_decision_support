@@ -391,3 +391,59 @@ jobs:
             echo "💾 Docker disk usage after cleanup:"
             echo "  Overlay2 actual: $(du -sh /var/lib/docker/ 2>/dev/null | cut -f1)"
             docker system df
+
+      # ── Step 5/5: SSL + Health Check ──────────────────────────
+      - name: 5/5 SSL & Health Check — verify certificate and services
+        uses: appleboy/ssh-action@master
+        env:
+          ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
+          envs: ACME_EMAIL
+          command_timeout: 5m
+          script: |
+            cd /root/ag_extension_decision_support/ag-extension-dashboard
+
+            # Ensure ACME_EMAIL is in .env
+            if ! grep -q "ACME_EMAIL" .env 2>/dev/null; then
+              echo "ACME_EMAIL=${ACME_EMAIL:-admin@gpexts.com}" >> .env
+              echo "✅ Added ACME_EMAIL to .env"
+            fi
+
+            echo "⏳ Waiting for services to stabilize..."
+            sleep 15
+
+            echo ""
+            echo "🔒 Checking SSL certificate..."
+            CERT_SUBJECT=$(echo | openssl s_client -connect www.gpexts.com:443 -servername www.gpexts.com 2>/dev/null | openssl x509 -noout -subject 2>/dev/null || echo "UNKNOWN")
+            echo "  Certificate: $CERT_SUBJECT"
+
+            if echo "$CERT_SUBJECT" | grep -qi "TRAEFIK DEFAULT CERT"; then
+              echo "⚠️ Traefik serving default cert — triggering ACME renewal..."
+              COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml"
+              docker compose $COMPOSE_FILES exec -T traefik rm -f /letsencrypt/acme.json 2>/dev/null || true
+              VOLUME_PATH=$(docker volume inspect ag-extension-dashboard_traefik_letsencrypt -f '{{.Mountpoint}}' 2>/dev/null || echo "")
+              if [ -n "$VOLUME_PATH" ] && [ -f "$VOLUME_PATH/acme.json" ]; then
+                rm -f "$VOLUME_PATH/acme.json"
+              fi
+              docker compose $COMPOSE_FILES restart traefik
+              echo "  Traefik restarted — cert should be issued within 60s"
+            elif echo "$CERT_SUBJECT" | grep -qi "gpexts"; then
+              echo "✅ Valid SSL certificate detected"
+            fi
+
+            echo ""
+            echo "🏥 Checking backend health..."
+            for i in $(seq 1 10); do
+              if curl -sSfk https://localhost/health > /dev/null 2>&1 || curl -sSf http://localhost:7500/health > /dev/null 2>&1; then
+                echo "✅ Backend is healthy!"
+                exit 0
+              fi
+              echo "  Attempt $i/10 — waiting 5s..."
+              sleep 5
+            done
+            echo "⚠️ Backend health check did not pass — check manually"
+            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || true
+

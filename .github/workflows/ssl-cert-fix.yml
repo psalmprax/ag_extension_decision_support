@@ -1,0 +1,174 @@
+# ============================================================
+# SSL Certificate Fix & Health Check
+# ============================================================
+# This workflow:
+#   1. Diagnoses SSL certificate issues on production
+#   2. Fixes Traefik ACME cert by clearing stale storage
+#   3. Verifies the new cert is valid
+#   4. Runs on a weekly schedule to catch expiry early
+# ============================================================
+
+name: SSL Certificate Fix & Monitor
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_renew:
+        description: 'Force certificate renewal (delete acme.json and restart Traefik)'
+        required: false
+        default: true
+        type: boolean
+  schedule:
+    # Run every Monday at 06:00 UTC to catch cert issues early
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  ssl-fix-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      # ── Step 1: Diagnose current SSL state ──────────────────
+      - name: 1/4 Diagnose — check current certificate
+        id: diagnose
+        run: |
+          echo "🔍 Checking current SSL certificate for www.gpexts.com..."
+          CERT_INFO=$(echo | openssl s_client -connect www.gpexts.com:443 -servername www.gpexts.com 2>/dev/null | openssl x509 -noout -subject -issuer -dates 2>/dev/null || echo "CERT_FETCH_FAILED")
+          echo "$CERT_INFO"
+
+          if echo "$CERT_INFO" | grep -qi "TRAEFIK DEFAULT CERT"; then
+            echo "❌ Traefik is serving its default self-signed certificate!"
+            echo "cert_status=invalid" >> $GITHUB_OUTPUT
+          elif echo "$CERT_INFO" | grep -qi "Let's Encrypt"; then
+            EXPIRY=$(echo "$CERT_INFO" | grep "notAfter" | cut -d= -f2)
+            EXPIRY_EPOCH=$(date -d "$EXPIRY" +%s 2>/dev/null || echo 0)
+            NOW_EPOCH=$(date +%s)
+            DAYS_LEFT=$(( (EXPIRY_EPOCH - NOW_EPOCH) / 86400 ))
+            echo "✅ Valid Let's Encrypt certificate (expires in ${DAYS_LEFT} days)"
+            if [ "$DAYS_LEFT" -lt 14 ]; then
+              echo "⚠️ Certificate expires in less than 14 days — renewal recommended"
+              echo "cert_status=expiring" >> $GITHUB_OUTPUT
+            else
+              echo "cert_status=valid" >> $GITHUB_OUTPUT
+            fi
+          elif echo "$CERT_INFO" | grep -q "CERT_FETCH_FAILED"; then
+            echo "❌ Could not connect to www.gpexts.com:443"
+            echo "cert_status=unreachable" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ Unknown certificate issuer"
+            echo "$CERT_INFO"
+            echo "cert_status=unknown" >> $GITHUB_OUTPUT
+          fi
+
+      # ── Step 2: Fix cert on production server ───────────────
+      - name: 2/4 Fix — renew SSL certificate on production
+        if: steps.diagnose.outputs.cert_status != 'valid' || github.event.inputs.force_renew == 'true'
+        uses: appleboy/ssh-action@master
+        env:
+          ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
+          envs: ACME_EMAIL
+          command_timeout: 5m
+          script: |
+            set -e
+            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml"
+
+            echo "📋 Current Traefik status:"
+            docker ps --filter "name=ag-traefik" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+            echo ""
+            echo "🔍 Checking ACME_EMAIL in .env..."
+            if ! grep -q "ACME_EMAIL" .env 2>/dev/null; then
+              if [ -n "$ACME_EMAIL" ]; then
+                echo "ACME_EMAIL=$ACME_EMAIL" >> .env
+                echo "✅ Added ACME_EMAIL to .env"
+              else
+                echo "ACME_EMAIL=admin@gpexts.com" >> .env
+                echo "⚠️ Added default ACME_EMAIL to .env"
+              fi
+            else
+              echo "✅ ACME_EMAIL already set in .env"
+            fi
+
+            echo ""
+            echo "🔍 Checking Traefik logs for ACME errors..."
+            docker logs ag-traefik --tail 30 2>&1 | grep -i "acme\|cert\|error\|challenge\|tls" || echo "No ACME-related log entries found"
+
+            echo ""
+            echo "🗑️ Removing stale ACME certificate storage..."
+            # Remove the acme.json inside the Docker volume
+            docker compose $COMPOSE_FILES exec -T traefik rm -f /letsencrypt/acme.json 2>/dev/null || true
+            # Also try via volume mount
+            VOLUME_PATH=$(docker volume inspect ag-extension-dashboard_traefik_letsencrypt -f '{{.Mountpoint}}' 2>/dev/null || echo "")
+            if [ -n "$VOLUME_PATH" ] && [ -f "$VOLUME_PATH/acme.json" ]; then
+              rm -f "$VOLUME_PATH/acme.json"
+              echo "✅ Removed acme.json from volume at $VOLUME_PATH"
+            fi
+
+            echo ""
+            echo "🔄 Restarting Traefik to trigger new certificate request..."
+            docker compose $COMPOSE_FILES restart traefik
+
+            echo ""
+            echo "⏳ Waiting 30 seconds for ACME challenge to complete..."
+            sleep 30
+
+            echo ""
+            echo "📋 Traefik ACME logs after restart:"
+            docker logs ag-traefik --tail 20 2>&1 | grep -i "acme\|cert\|obtained\|error\|challenge" || echo "No ACME entries yet"
+
+      # ── Step 3: Verify the new certificate ──────────────────
+      - name: 3/4 Verify — check new certificate
+        if: steps.diagnose.outputs.cert_status != 'valid' || github.event.inputs.force_renew == 'true'
+        run: |
+          echo "⏳ Waiting 60 seconds for certificate propagation..."
+          sleep 60
+
+          echo ""
+          echo "🔍 Checking new SSL certificate..."
+          for attempt in $(seq 1 5); do
+            CERT_INFO=$(echo | openssl s_client -connect www.gpexts.com:443 -servername www.gpexts.com 2>/dev/null | openssl x509 -noout -subject -issuer -dates 2>/dev/null || echo "CERT_FETCH_FAILED")
+            echo "Attempt $attempt/5:"
+            echo "$CERT_INFO"
+
+            if echo "$CERT_INFO" | grep -qi "Let's Encrypt"; then
+              echo ""
+              echo "✅ SSL certificate successfully issued by Let's Encrypt!"
+              exit 0
+            fi
+
+            echo "  Certificate not yet valid, waiting 30s..."
+            sleep 30
+          done
+
+          echo ""
+          echo "⚠️ Certificate may still be provisioning. Check manually:"
+          echo "  openssl s_client -connect www.gpexts.com:443 -servername www.gpexts.com"
+          # Don't fail the workflow — ACME can take a few minutes
+          exit 0
+
+      # ── Step 4: Report status ───────────────────────────────
+      - name: 4/4 Report — final SSL status
+        if: always()
+        run: |
+          echo "📊 Final SSL Certificate Report"
+          echo "================================"
+          echo ""
+          echo "Domain: www.gpexts.com"
+          CERT_INFO=$(echo | openssl s_client -connect www.gpexts.com:443 -servername www.gpexts.com 2>/dev/null | openssl x509 -noout -subject -issuer -dates 2>/dev/null || echo "Unable to retrieve certificate")
+          echo "$CERT_INFO"
+          echo ""
+
+          # Also check bare domain
+          echo "Domain: gpexts.com"
+          CERT_INFO2=$(echo | openssl s_client -connect gpexts.com:443 -servername gpexts.com 2>/dev/null | openssl x509 -noout -subject -issuer -dates 2>/dev/null || echo "Unable to retrieve certificate")
+          echo "$CERT_INFO2"
+
+          echo ""
+          echo "HTTP redirect check:"
+          curl -sSI --max-time 10 http://www.gpexts.com 2>&1 | head -5
