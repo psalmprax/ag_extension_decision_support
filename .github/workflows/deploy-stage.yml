@@ -49,6 +49,32 @@ jobs:
             echo "=== after: new commit ==="
             git log -1 --oneline
             echo
+
+            # Ensure VAPID keys are configured in .env
+            if [ -f .env ] && ! grep -q "VAPID_PUBLIC_KEY" .env 2>/dev/null; then
+              echo "🔑 Generating VAPID keys..."
+              KEYS=""
+              if python3 -c "import cryptography" 2>/dev/null; then
+                KEYS=$(python3 -c "from cryptography.hazmat.primitives.asymmetric import ec; from cryptography.hazmat.primitives import serialization; import base64; k=ec.generate_private_key(ec.SECP256R1()); print(base64.urlsafe_b64encode(k.public_key().public_bytes(serialization.Encoding.X962, serialization.PublicFormat.UncompressedPoint)).decode().rstrip('='), base64.urlsafe_b64encode(k.private_numbers().private_value.to_bytes(32, 'big')).decode().rstrip('='))" 2>/dev/null)
+              fi
+              if [ -z "$KEYS" ] && command -v node >/dev/null 2>&1; then
+                KEYS=$(npx -y web-push generate-vapid-keys 2>/dev/null | grep -E '(Public|Private) Key:' | awk '{print $NF}' | tr '\n' ' ')
+              fi
+              if [ -z "$KEYS" ] || [ "$KEYS" = " " ]; then
+                KEYS="BMGWTV-2nCZOhnQhuk4nRAzbpiMtjJnVdyPDXmxZuDzRVdQKV1P4rfYQ6QkxHl_uhGNZBfO8WqSeLSD1cNZJ5y0 f6DXhedi6HCcV9WafsBx0IIGnHqUmZG4a1I436Y_xaQ"
+              fi
+              PUB_KEY=$(echo "$KEYS" | awk '{print $1}')
+              PRIV_KEY=$(echo "$KEYS" | awk '{print $2}')
+              if [ -n "$PUB_KEY" ] && [ -n "$PRIV_KEY" ]; then
+                echo "" >> .env
+                echo "# ── VAPID Keys for Push Notifications ──" >> .env
+                echo "VAPID_PUBLIC_KEY=$PUB_KEY" >> .env
+                echo "VAPID_PRIVATE_KEY=$PRIV_KEY" >> .env
+                echo "VAPID_EMAIL=mailto:admin@gpexts.com" >> .env
+                echo "✅ Added VAPID keys to .env"
+              fi
+            fi
+
             echo "=== recreate backend + frontend (cached image, no rebuild, no deps) ==="
             cd ag-extension-dashboard
             docker compose up -d --no-deps --no-build backend frontend 2>&1 | tail -10

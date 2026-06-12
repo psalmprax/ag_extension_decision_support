@@ -9,8 +9,19 @@ export const subscribeUserToPush = async () => {
             return null;
         }
 
+        // Dynamically fetch VAPID key from backend
+        let vapidKey = VAPID_PUBLIC_KEY || '';
+        try {
+            const res = await apiClient.get<{ success: boolean; publicKey: string }>('/api/v1/notifications/vapid-public-key');
+            if (res.data?.success && res.data.publicKey) {
+                vapidKey = res.data.publicKey;
+            }
+        } catch (err) {
+            console.warn('Failed to fetch VAPID key from backend, using env fallback:', err);
+        }
+
         // VAPID key must be configured for push to work
-        if (!VAPID_PUBLIC_KEY) {
+        if (!vapidKey) {
             console.warn('VAPID_PUBLIC_KEY not configured. Push notifications will not work.');
             return null;
         }
@@ -24,7 +35,7 @@ export const subscribeUserToPush = async () => {
             // Subscribe the user
             subscription = await registration.pushManager.subscribe({
                 userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as unknown as BufferSource
+                applicationServerKey: urlBase64ToUint8Array(vapidKey) as unknown as BufferSource
             });
         }
 

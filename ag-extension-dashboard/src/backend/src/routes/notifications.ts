@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Router, Request, Response } from 'express';
 import { AuthRequest } from '../middleware/authorize';
 import { query, getPool } from '../services/databaseService';
 import { logger } from '../utils/logger';
@@ -7,6 +7,14 @@ import { subscribeUser, unsubscribeUser, sendPushNotification } from '../service
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
+
+// Get VAPID public key (public endpoint)
+router.get('/vapid-public-key', (req: Request, res: Response) => {
+    res.json({
+        success: true,
+        publicKey: process.env.VAPID_PUBLIC_KEY || ''
+    });
+});
 
 // Apply authentication to all routes
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
