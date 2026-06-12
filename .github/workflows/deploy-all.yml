@@ -195,10 +195,8 @@ jobs:
             echo "💾 Docker disk usage before cleanup:"
             docker system df
             echo ""
-            echo "🧹 Pruning stale Docker images (unused + dangling, older than 24h)..."
-            docker image prune -a -f --filter "until=24h"
-            echo "🧹 Pruning BuildKit build cache..."
-            docker builder prune -f --filter "until=24h" 2>/dev/null || true
+            echo "🧹 Pruning dangling Docker images..."
+            docker image prune -f
             echo ""
             echo "💾 Docker disk usage after cleanup:"
             docker system df
@@ -380,10 +378,8 @@ jobs:
             echo "💾 Docker disk usage before cleanup:"
             docker system df
             echo ""
-            echo "🧹 Pruning stale Docker images (unused + dangling, older than 24h)..."
-            docker image prune -a -f --filter "until=24h"
-            echo "🧹 Pruning BuildKit build cache..."
-            docker builder prune -f --filter "until=24h" 2>/dev/null || true
+            echo "🧹 Pruning dangling Docker images..."
+            docker image prune -f
             echo ""
             echo "💾 Docker disk usage after cleanup:"
             docker system df
