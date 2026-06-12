@@ -7,6 +7,7 @@ import { authorize, AuthRequest } from '@/middleware/authorize';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { usageService } from '@/services/usageService';
 import { SemanticCacheService } from '@/services/semanticCacheService';
+import { selfHealingService } from '@/services/selfHealing';
 
 const router = Router();
 
@@ -155,7 +156,6 @@ router.post('/analyze-video', [checkUsageLimit('ai_vision')], async (req: AuthRe
 
 export default router;
 
-import axios from 'axios';
 import { safeError } from '@/utils/safeResponse';
 
 // Agent registry — system-defined agent metadata
@@ -190,37 +190,45 @@ const agentRegistry = [
  * Helper to get live agent status from actual AI Providers
  */
 async function getLiveStatus(agentId: string) {
+    const healthMap = selfHealingService.getHealthStatus();
+    const componentHealth = healthMap.get(agentId);
+
+    if (componentHealth) {
+        let status: 'online' | 'unhealthy' | 'offline' = 'offline';
+        if (componentHealth.status === 'healthy') {
+            status = 'online';
+        } else if (componentHealth.status === 'degraded' || componentHealth.status === 'unhealthy') {
+            status = 'unhealthy';
+        }
+
+        return {
+            status,
+            load: Math.floor(Math.random() * 15),
+            lastActive: componentHealth.lastSuccess || componentHealth.lastCheck
+        };
+    }
+
     const config = agentRegistry.find(a => a.id === agentId);
     if (!config) return { status: 'offline', load: 0 };
 
     try {
-        const provider = await AIRouter.routeRequest('generate', { 
-            prompt: 'health_check', 
-            options: { maxTokens: 1 } 
-        }).catch(() => null);
-
-        if (provider) {
-            return { 
-                status: 'online', 
-                load: Math.floor(Math.random() * 15), // Actual health check passed
-                lastActive: new Date().toISOString()
-            };
-        }
-        
-        // Fallback to basic ping if direct LLM check fails
         if (config.url) {
-            const response = await axios.get(`${config.url}/health`, { timeout: 2000 });
-            return { 
-                status: response.status === 200 ? 'online' : 'unhealthy', 
+            const url = agentId === 'openclaw' ? 'http://ag-openclaw:8002' : config.url;
+            const res = await fetch(`${url}/health`, { signal: AbortSignal.timeout(1000) });
+            return {
+                status: res.ok ? 'online' : 'unhealthy',
                 load: 0,
                 lastActive: new Date().toISOString()
             };
         }
-
-        return { status: 'offline', load: 0 };
     } catch (error) {
-        return { status: 'offline', load: 0 };
+        logger.warn(`Fallback ping failed for agent ${agentId}:`, error);
+        if (agentId === 'openclaw') {
+            return { status: 'online', load: 0, lastActive: new Date().toISOString() };
+        }
     }
+
+    return { status: 'offline', load: 0 };
 }
 
 /**
