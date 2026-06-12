@@ -9,9 +9,9 @@ group "default" {
 target "backend" {
   context     = "./src/backend"
   dockerfile  = "Dockerfile"
-  # Tag matches docker-compose's internal naming: <project>_<service>
+  # Tag matches docker-compose's internal naming: <project>-<service>
   # COMPOSE_PROJECT_NAME is "ag-extension-dashboard" (from directory name)
-  tags        = ["ag-extension-dashboard_backend:latest"]
+  tags        = ["ag-extension-dashboard-backend:latest"]
   cache-from  = ["type=registry,ref=ghcr.io/${GITHUB_REPOSITORY}/buildcache:backend"]
   cache-to    = ["type=registry,ref=ghcr.io/${GITHUB_REPOSITORY}/buildcache:backend,mode=max"]
 }
@@ -19,7 +19,7 @@ target "backend" {
 target "frontend" {
   context     = "./src/frontend"
   dockerfile  = "Dockerfile"
-  tags        = ["ag-extension-dashboard_frontend:latest"]
+  tags        = ["ag-extension-dashboard-frontend:latest"]
   cache-from  = ["type=registry,ref=ghcr.io/${GITHUB_REPOSITORY}/buildcache:frontend"]
   cache-to    = ["type=registry,ref=ghcr.io/${GITHUB_REPOSITORY}/buildcache:frontend,mode=max"]
 }
@@ -27,7 +27,7 @@ target "frontend" {
 target "agent-zero" {
   context     = "./src/agents"
   dockerfile  = "Dockerfile.agent-zero"
-  tags        = ["ag-extension-dashboard_agent-zero:latest"]
+  tags        = ["ag-extension-dashboard-agent-zero:latest"]
   cache-from  = ["type=registry,ref=ghcr.io/${GITHUB_REPOSITORY}/buildcache:agent-zero"]
   cache-to    = ["type=registry,ref=ghcr.io/${GITHUB_REPOSITORY}/buildcache:agent-zero,mode=max"]
 }
@@ -35,7 +35,7 @@ target "agent-zero" {
 target "crew-ai" {
   context     = "./src/agents"
   dockerfile  = "Dockerfile.crew-ai"
-  tags        = ["ag-extension-dashboard_crew-ai:latest"]
+  tags        = ["ag-extension-dashboard-crew-ai:latest"]
   cache-from  = ["type=registry,ref=ghcr.io/${GITHUB_REPOSITORY}/buildcache:crew-ai"]
   cache-to    = ["type=registry,ref=ghcr.io/${GITHUB_REPOSITORY}/buildcache:crew-ai,mode=max"]
 }
