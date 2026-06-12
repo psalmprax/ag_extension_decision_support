@@ -358,13 +358,13 @@ jobs:
 
             if [ -n "$CLEAN_REBUILD" ]; then
               echo "🧹 Clean rebuild forced — building without cache..."
-              docker buildx bake -f docker-bake.hcl backend frontend agent-zero crew-ai
+              docker buildx bake --load -f docker-bake.hcl backend frontend agent-zero crew-ai
             else
               echo "🔐 Authenticating to GHCR for remote Docker layer cache..."
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_REPOSITORY_OWNER" --password-stdin 2>/dev/null
               echo "📦 Building with remote cache (GHCR)..."
               docker buildx create --use --driver docker-container --name remote-builder 2>/dev/null || docker buildx use remote-builder 2>/dev/null || true
-              docker buildx bake -f docker-bake.hcl backend frontend agent-zero crew-ai
+              docker buildx bake --load -f docker-bake.hcl backend frontend agent-zero crew-ai
             fi
 
             echo "🚀 Starting all services..."
