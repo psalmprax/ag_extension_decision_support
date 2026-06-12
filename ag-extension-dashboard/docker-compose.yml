@@ -199,4 +199,4 @@ networks:
     driver: bridge
   ettametta_ettametta:
     name: ettametta_ettametta
-    driver: bridge
+    external: true

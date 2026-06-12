@@ -124,17 +124,8 @@ jobs:
             else
               export JWT_SECRET
             fi
-            # Ensure Docker network label is correct
-            NETWORK_NAME=ettametta_ettametta
-            CURRENT_LABEL=$(docker network inspect "$NETWORK_NAME" -f "{{ index .Labels \"com.docker.compose.network\" }}" 2>/dev/null || echo "")
-            if [ -n "$CURRENT_LABEL" ] && [ "$CURRENT_LABEL" != "$NETWORK_NAME" ]; then
-                echo "🔧 Fixing network label for $NETWORK_NAME"
-                # docker network rm "$NETWORK_NAME" || true  # Skipping removal to avoid active endpoints
-                docker network create --label com.docker.compose.network="$NETWORK_NAME" "$NETWORK_NAME"
-            elif [ -z "$CURRENT_LABEL" ]; then
-                echo "🛠️ Creating missing Docker network $NETWORK_NAME"
-                docker network create --label com.docker.compose.network="$NETWORK_NAME" "$NETWORK_NAME"
-            fi
+            # Network ettametta_ettametta is marked external: true in docker-compose.yml
+            # so Docker Compose will use the pre-existing network without label conflicts
             docker compose $COMPOSE_FILES run --rm backend bash -c '
               MIGRATION_DONE=0
               for i in {1..30}; do
