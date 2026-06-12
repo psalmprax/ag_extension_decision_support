@@ -207,10 +207,25 @@ jobs:
 
       # ── Step 5/5: Health Check — verify services are up ─────────────────────
       - name: 5/5 Health Check — verify services
-        run: |
-          echo "Checking backend health endpoint..."
-          curl -sSf http://localhost:7500/health || { echo "Backend health check failed"; exit 1; }
-          echo "Backend is healthy"
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.TEST_SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
+          command_timeout: 3m
+          script: |
+            echo "⏳ Waiting for backend to become healthy..."
+            for i in $(seq 1 15); do
+              if curl -sSf http://localhost:7500/health > /dev/null 2>&1; then
+                echo "✅ Backend is healthy!"
+                exit 0
+              fi
+              echo "  Attempt $i/15 — waiting 5s..."
+              sleep 5
+            done
+            echo "❌ Backend health check failed after 15 attempts"
+            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || true
+            exit 1
 
   sync-master:
     needs: deploy-testing
