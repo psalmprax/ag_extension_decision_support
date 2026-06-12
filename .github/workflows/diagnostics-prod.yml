@@ -83,3 +83,48 @@ jobs:
             echo ""
             echo "6. Querying crew-ai health from host:"
             curl -iv http://127.0.0.1:7505/health || echo "❌ Host curl to crew-ai failed"
+
+            echo ""
+            echo "============================================="
+            echo "🔑 Environment Checks (.env and container envs)"
+            echo "============================================="
+            echo "Checking .env file keys on host:"
+            if [ -f "/root/ag_extension_decision_support/ag-extension-dashboard/.env" ]; then
+              echo "✅ .env file exists"
+              grep -E "^[A-Z0-9_]+=" /root/ag_extension_decision_support/ag-extension-dashboard/.env | while read -r line; do
+                key=$(echo "$line" | cut -d= -f1)
+                val=$(echo "$line" | cut -d= -f2-)
+                if [ -z "$val" ]; then
+                  echo "  $key=EMPTY"
+                else
+                  echo "  $key=SET (length: ${#val})"
+                fi
+              done
+            else
+              echo "❌ .env file does not exist"
+            fi
+
+            echo ""
+            echo "Checking env vars inside ag-dashboard-backend:"
+            docker exec ag-dashboard-backend env | grep -E "OPENAI|ANTHROPIC|JWT|VAPID" | while read -r line; do
+              key=$(echo "$line" | cut -d= -f1)
+              val=$(echo "$line" | cut -d= -f2-)
+              echo "  $key=SET (length: ${#val})"
+            done || echo "❌ Could not read backend env"
+
+            echo ""
+            echo "Checking env vars inside ag-agent-zero:"
+            docker exec ag-agent-zero env | grep -E "OPENAI|ANTHROPIC|JWT|VAPID" | while read -r line; do
+              key=$(echo "$line" | cut -d= -f1)
+              val=$(echo "$line" | cut -d= -f2-)
+              echo "  $key=SET (length: ${#val})"
+            done || echo "❌ Could not read agent-zero env"
+
+            echo ""
+            echo "Checking env vars inside ag-crew-ai:"
+            docker exec ag-crew-ai env | grep -E "OPENAI|ANTHROPIC|JWT|VAPID" | while read -r line; do
+              key=$(echo "$line" | cut -d= -f1)
+              val=$(echo "$line" | cut -d= -f2-)
+              echo "  $key=SET (length: ${#val})"
+            done || echo "❌ Could not read crew-ai env"
+
