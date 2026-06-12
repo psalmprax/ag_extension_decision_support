@@ -183,26 +183,8 @@ jobs:
             echo "🚀 Starting all services..."
             docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --force-recreate --no-build backend frontend agent-zero crew-ai
 
-      # ── Step 4/4: Cleanup ────────────────────────────────────
-      - name: 4/4 Cleanup — disk usage report + prune
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.TEST_SERVER_IP }}
-          username: root
-          key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
-          command_timeout: 5m
-          script: |
-            echo "💾 Docker disk usage before cleanup:"
-            docker system df
-            echo ""
-            echo "🧹 Pruning dangling Docker images..."
-            docker image prune -f
-            echo ""
-            echo "💾 Docker disk usage after cleanup:"
-            docker system df
-
-      # ── Step 5/5: Health Check — verify services are up ─────────────────────
-      - name: 5/5 Health Check — verify services
+      # ── Step 4/4: Health Check — verify services are up ─────────────────────
+      - name: 4/4 Health Check — verify services
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
@@ -366,26 +348,8 @@ jobs:
             echo "🚀 Starting all services..."
             docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate --no-build backend frontend agent-zero crew-ai
 
-      # ── Step 4/4: Cleanup ────────────────────────────────────
-      - name: 4/4 Cleanup — disk usage report + prune
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.PROD_SERVER_IP }}
-          username: root
-          key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
-          command_timeout: 5m
-          script: |
-            echo "💾 Docker disk usage before cleanup:"
-            docker system df
-            echo ""
-            echo "🧹 Pruning dangling Docker images..."
-            docker image prune -f
-            echo ""
-            echo "💾 Docker disk usage after cleanup:"
-            docker system df
-
-      # ── Step 5/5: SSL + Health Check ──────────────────────────
-      - name: 5/5 SSL & Health Check — verify certificate and services
+      # ── Step 4/4: SSL + Health Check ──────────────────────────
+      - name: 4/4 SSL & Health Check — verify certificate and services
         uses: appleboy/ssh-action@master
         env:
           ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
