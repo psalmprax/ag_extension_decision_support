@@ -118,7 +118,7 @@ export class RAGV2Service {
             await query(`
                 CREATE TABLE IF NOT EXISTS knowledge_chunks (
                     id TEXT PRIMARY KEY,
-                    article_id TEXT NOT NULL REFERENCES knowledge_articles(id) ON DELETE CASCADE,
+                    article_id UUID NOT NULL REFERENCES knowledge_articles(id) ON DELETE CASCADE,
                     chunk_index INTEGER NOT NULL,
                     content TEXT NOT NULL,
                     embedding vector(768),
@@ -142,7 +142,7 @@ export class RAGV2Service {
                     source_id TEXT NOT NULL REFERENCES knowledge_entities(id) ON DELETE CASCADE,
                     target_id TEXT NOT NULL REFERENCES knowledge_entities(id) ON DELETE CASCADE,
                     relation_type TEXT NOT NULL,
-                    article_id TEXT REFERENCES knowledge_articles(id) ON DELETE CASCADE,
+                    article_id UUID REFERENCES knowledge_articles(id) ON DELETE CASCADE,
                     properties JSONB DEFAULT '{}',
                     created_at TIMESTAMP DEFAULT NOW(),
                     UNIQUE(source_id, target_id, relation_type, article_id)
@@ -387,7 +387,7 @@ export class RAGV2Service {
                         a.title, a.category, a.source, a.source_url, a.crops,
                         (1 - (c.embedding <=> $1::vector)) as score
                  FROM knowledge_chunks c
-                 JOIN knowledge_articles a ON a.id::text = c.article_id
+                 JOIN knowledge_articles a ON a.id = c.article_id
                  WHERE c.embedding IS NOT NULL
                  ORDER BY c.embedding <=> $1::vector
                  LIMIT $2`,
