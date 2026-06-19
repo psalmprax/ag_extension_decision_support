@@ -26,7 +26,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
             <select
                 value={language}
                 onChange={handleChange}
-                className={`bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest focus:outline-none focus:ring-1 focus:ring-cyan-400/50 text-slate-300 hover:text-white transition-all backdrop-blur-xl ${className}`}
+                className={`bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xxs font-black uppercase tracking-widest focus:outline-none focus:ring-1 focus:ring-cyan-400/50 text-slate-300 hover:text-white transition-all backdrop-blur-xl ${className}`}
                 aria-label={t('common_select_language')}
             >
                 {languages.map((lang) => (
@@ -40,14 +40,14 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
 
     return (
         <div className={`flex items-center gap-2 ${className}`}>
-            <label htmlFor="language-select" className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+            <label htmlFor="language-select" className="text-xxs font-black uppercase tracking-widest text-gray-400">
                 {t('common_select_language')}:
             </label>
             <select
                 id="language-select"
                 value={language}
                 onChange={handleChange}
-                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-[10px] font-black uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-white"
+                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xxs font-black uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-white"
             >
                 {languages.map((lang) => (
                     <option key={lang.code} value={lang.code} className="dark:bg-gray-900">

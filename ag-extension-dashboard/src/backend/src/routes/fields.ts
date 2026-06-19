@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { logger } from '@/utils/logger';
 import { validate } from '@/middleware/validationMiddleware';
 import { fieldSchemas, cropCycleSchemas } from '@/schemas';
@@ -60,6 +60,19 @@ async function checkFieldAccess(fieldId: string, req: Request): Promise<boolean>
     if (!field) return false;
 
     return checkFarmerAccess(field.farmerId, req);
+}
+
+/**
+ * Middleware to enforce field access. Returns 403 if access denied.
+ */
+async function requireFieldAccess(req: Request, res: Response, next: NextFunction): Promise<void> {
+    const { id } = req.params;
+    const hasAccess = await checkFieldAccess(id, req);
+    if (!hasAccess) {
+        res.status(403).json({ success: false, error: 'Access denied' });
+        return;
+    }
+    next();
 }
 
 /**
@@ -191,16 +204,11 @@ router.post('/', validate(fieldSchemas.create), async (req: Request, res: Respon
  * PATCH /api/fields/:id
  * Update field properties
  */
-router.patch('/:id', validate(fieldSchemas.update), async (req: Request, res: Response) => {
+router.patch('/:id', validate(fieldSchemas.update), requireFieldAccess, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { name, areaHectares, soilType, soilPh, boundaryCoordinates, isActive } = req.body;
         const prisma = getPrisma();
-
-        const hasAccess = await checkFieldAccess(id, req);
-        if (!hasAccess) {
-            return res.status(403).json({ success: false, error: 'Access denied' });
-        }
 
         const field = await prisma.field.update({
             where: { id },
@@ -228,15 +236,10 @@ router.patch('/:id', validate(fieldSchemas.update), async (req: Request, res: Re
  * DELETE /api/fields/:id
  * Delete a field (soft delete or hard delete depending on preference, we do soft delete)
  */
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', requireFieldAccess, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const prisma = getPrisma();
-
-        const hasAccess = await checkFieldAccess(id, req);
-        if (!hasAccess) {
-            return res.status(403).json({ success: false, error: 'Access denied' });
-        }
 
         // Soft delete
         const field = await prisma.field.update({

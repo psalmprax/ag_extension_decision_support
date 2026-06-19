@@ -9,6 +9,7 @@ import { useLanguage } from '../lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '../store/useAppStore';
 import { fetchMCPTools, callMCPTool, fetchMCPHealth, type MCPTool } from '../api/mcpService';
+import { MetricCard } from '@/components/MetricCard';
 
 export function MCPTools() {
     const { t } = useLanguage();
@@ -219,29 +220,6 @@ export function MCPTools() {
         }
     };
 
-    const StatCard = ({ title, value, icon: Icon, color = 'blue' }: {
-        title: string;
-        value: string | number;
-        icon: React.ComponentType<{ className?: string }>;
-        color?: string;
-    }) => (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="card p-6 border-white/20 hover:scale-[1.02] transition-transform duration-300"
-            style={{ borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-premium)' }}
-        >
-            <div className="flex items-start justify-between">
-                <div>
-                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{title}</p>
-                    <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
-                </div>
-                <div className={`p-3 bg-${color}-50 dark:bg-${color}-900/30 ${radiusClass}`}>
-                    <Icon className={`w-6 h-6 text-${color}-600 dark:text-${color}-400`} />
-                </div>
-            </div>
-        </motion.div>
-    );
 
     if (isLoading) {
         return (
@@ -321,19 +299,19 @@ export function MCPTools() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard
+                <MetricCard
                         title={t('mcp_tools_available_tools')}
                     value={tools.length}
                     icon={Wrench}
                     color="blue"
                 />
-                <StatCard
+                <MetricCard
                         title={t('mcp_tools_executed_today')}
                     value={executionHistory.filter(h => new Date(h.timestamp).toDateString() === new Date().toDateString()).length}
                     icon={Play}
                     color="green"
                 />
-                <StatCard
+                <MetricCard
                         title={t('mcp_tools_success_rate')}
                     value={executionHistory.length > 0
                         ? `${Math.round((executionHistory.filter(h => !h.result?.isError).length / executionHistory.length) * 100)}%`
@@ -342,7 +320,7 @@ export function MCPTools() {
                     icon={CheckCircle}
                     color="purple"
                 />
-                <StatCard
+                <MetricCard
                         title={t('mcp_tools_total_executions')}
                     value={executionHistory.length}
                     icon={Terminal}

@@ -427,7 +427,7 @@ export function SMSPage() {
                                                 <button
                                                     onClick={handleTranslate}
                                                     disabled={isTranslating || !message}
-                                                    className="flex items-center gap-1.5 px-2 py-0.5 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-primary-100 transition-colors disabled:opacity-50"
+                                                    className="flex items-center gap-1.5 px-2 py-0.5 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-lg text-xxs font-bold uppercase tracking-wider hover:bg-primary-100 transition-colors disabled:opacity-50"
                                                 >
                                                     {isTranslating ? (
                                                         <Loader2 className="w-3 h-3 animate-spin" />
@@ -437,7 +437,7 @@ export function SMSPage() {
                                                     {t('common_translate') || 'Translate'}
                                                 </button>
                                             </div>
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${message.length > 150 ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
+                                            <span className={`text-xxs font-bold px-2 py-0.5 rounded-full ${message.length > 150 ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
                                                 {t('sms_char_count').replace('{count}', message.length.toString())}
                                             </span>
                                         </div>
@@ -503,7 +503,7 @@ export function SMSPage() {
                                                 <div>
                                                     <p className="font-bold text-slate-900 dark:text-white">{msg.to}</p>
                                                     <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5 line-clamp-2">{msg.message}</p>
-                                                    <span className="text-[10px] uppercase font-bold text-slate-400 mt-2 inline-block">
+                                                    <span className="text-xxs uppercase font-bold text-slate-400 mt-2 inline-block">
                                                         {msg.timestamp.toLocaleString()}
                                                     </span>
                                                 </div>
@@ -565,13 +565,13 @@ export function SMSPage() {
                                     <p className="text-xl font-bold text-emerald-600">
                                         {history.filter(m => m.status === 'success').length}
                                     </p>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase">{t('sms_stats_sent')}</p>
+                                    <p className="text-xxs font-bold text-slate-400 uppercase">{t('sms_stats_sent')}</p>
                                 </div>
                                 <div>
                                     <p className="text-xl font-bold text-rose-500 font-mono">
                                         {history.filter(m => m.status === 'failed').length}
                                     </p>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase">{t('sms_stats_failed')}</p>
+                                    <p className="text-xxs font-bold text-slate-400 uppercase">{t('sms_stats_failed')}</p>
                                 </div>
                             </div>
                         </div>

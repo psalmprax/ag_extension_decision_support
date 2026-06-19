@@ -181,7 +181,7 @@ const AlphaAgentOps = () => {
                         </div>
                         Alpha Agent Ops
                     </h2>
-                    <p className="text-[10px] font-bold text-primary-400/60 uppercase tracking-widest pl-12">
+                    <p className="text-xxs font-bold text-primary-400/60 uppercase tracking-widest pl-12">
                         Agent Orchestration & Task Management
                     </p>
                 </div>
@@ -203,7 +203,7 @@ const AlphaAgentOps = () => {
             <div className="grid grid-cols-12 gap-8 mt-8">
                 {/* Agent Selection Sidebar */}
                 <div className="col-span-4 space-y-4">
-                    <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-4">Instance Registry</h3>
+                    <h3 className="text-xxs font-black text-white/40 uppercase tracking-[0.2em] mb-4">Instance Registry</h3>
                     {agents.length > 0 ? agents.map((agent) => (
                         <button
                             key={agent.id}
@@ -229,7 +229,7 @@ const AlphaAgentOps = () => {
                                 </div>
                             </div>
                             <div className="font-black text-white uppercase tracking-wider mb-1">{agent.name}</div>
-                            <div className="text-[10px] text-white/40 font-medium leading-relaxed">{agent.description}</div>
+                            <div className="text-xxs text-white/40 font-medium leading-relaxed">{agent.description}</div>
                             
                             {agent.load > 0 && (
                                 <div className="mt-3 space-y-1">
@@ -288,7 +288,7 @@ const AlphaAgentOps = () => {
                         {/* Capability Matrix */}
                         <div className="grid grid-cols-2 gap-6 mb-8">
                             <div className="space-y-4">
-                                <h5 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Active Capabilities</h5>
+                                <h5 className="text-xxs font-black text-white/40 uppercase tracking-[0.2em]">Active Capabilities</h5>
                                 <div className="space-y-2">
                                     {(activeAgentData?.capabilities || []).map((cap) => (
                                         <div key={cap} className="flex items-center gap-3 p-3 bg-white/5 rounded-2xl border border-white/5 hover:border-white/10 transition-all cursor-default">
@@ -301,11 +301,11 @@ const AlphaAgentOps = () => {
                             </div>
                             <div className="bg-primary-500/5 rounded-3xl border border-primary-500/10 p-6 flex flex-col justify-center items-center text-center">
                                 <CloudLightning className="w-12 h-12 text-primary-400/20 mb-4" />
-                                <div className="text-[10px] font-black text-primary-400 uppercase tracking-[0.2em] mb-2">System Health</div>
+                                <div className="text-xxs font-black text-primary-400 uppercase tracking-[0.2em] mb-2">System Health</div>
                                 <div className="text-2xl font-black text-white">
                                     {healthData?.status === 'healthy' ? 'Online' : healthData?.status || 'Unknown'}
                                 </div>
-                                <p className="text-[9px] text-white/40 mt-2 uppercase tracking-tight">
+                                <p className="text-micro text-white/40 mt-2 uppercase tracking-tight">
                                     DB: {healthData?.services?.database || '\u2014'} | Cache: {healthData?.services?.cache || '\u2014'}
                                 </p>
                             </div>
@@ -314,10 +314,10 @@ const AlphaAgentOps = () => {
                         {/* Recent Activity Log */}
                         <div className="bg-black/20 rounded-2xl border border-white/5 overflow-hidden">
                             <div className="px-4 py-3 bg-white/5 border-b border-white/5 flex items-center justify-between">
-                                <span className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em]">Runtime History</span>
+                                <span className="text-micro font-black text-white/40 uppercase tracking-[0.2em]">Runtime History</span>
                                 <Terminal className="w-3 h-3 text-white/40" />
                             </div>
-                            <div className="p-4 space-y-3 font-mono text-[10px] min-h-[80px]">
+                            <div className="p-4 space-y-3 font-mono text-xxs min-h-[80px]">
                                 {consoleOutput.length === 0 ? (
                                     <div className="text-white/20 text-center py-4">System initialized. Awaiting agent commands.</div>
                                 ) : (
@@ -354,7 +354,7 @@ const AlphaAgentOps = () => {
                             </div>
                             <div>
                                 <div className="text-[8px] font-black text-white/40 uppercase tracking-widest">Knowledge Base</div>
-                                <div className="text-sm font-black text-white">{knowledgeTotal ?? '\u2014'} <span className="text-[10px] text-white/40">Articles</span></div>
+                                <div className="text-sm font-black text-white">{knowledgeTotal ?? '\u2014'} <span className="text-xxs text-white/40">Articles</span></div>
                             </div>
                         </div>
                         <div className="p-4 bg-black/40 border border-white/10 rounded-2xl flex items-center gap-4">
@@ -363,7 +363,7 @@ const AlphaAgentOps = () => {
                             </div>
                             <div>
                                 <div className="text-[8px] font-black text-white/40 uppercase tracking-widest">Active Farmers</div>
-                                <div className="text-sm font-black text-white">{farmerCount ?? '\u2014'} <span className="text-[10px] text-white/40">Registered</span></div>
+                                <div className="text-sm font-black text-white">{farmerCount ?? '\u2014'} <span className="text-xxs text-white/40">Registered</span></div>
                             </div>
                         </div>
                         <div className="p-4 bg-black/40 border border-orange-500/20 rounded-2xl flex items-center gap-4">
@@ -372,7 +372,7 @@ const AlphaAgentOps = () => {
                             </div>
                             <div>
                                 <div className="text-[8px] font-black text-white/40 uppercase tracking-widest">Active Alerts</div>
-                                <div className="text-sm font-black text-white">{alertsCount ?? '\u2014'} <span className="text-[10px] text-white/40">Active</span></div>
+                                <div className="text-sm font-black text-white">{alertsCount ?? '\u2014'} <span className="text-xxs text-white/40">Active</span></div>
                             </div>
                         </div>
                     </div>

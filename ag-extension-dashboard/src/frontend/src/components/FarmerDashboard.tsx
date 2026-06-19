@@ -84,7 +84,7 @@ export const FarmerDashboard: React.FC = () => {
             <p className="text-primary-300/60 mt-1 font-bold uppercase tracking-widest text-xs">{t('farmer_overview')}</p>
           </div>
           <div className="text-right">
-            <p className="text-[10px] font-black text-primary-300/40 uppercase tracking-[0.3em]">System Status: Optimal</p>
+            <p className="text-xxs font-black text-primary-300/40 uppercase tracking-[0.3em]">System Status: Optimal</p>
             <p className="text-sm font-bold text-white tabular-nums mt-1">{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })}</p>
           </div>
         </header>
@@ -136,9 +136,9 @@ export const FarmerDashboard: React.FC = () => {
                 >
                     <div className="flex justify-between items-start mb-4">
                         <stat.icon className="w-5 h-5 text-primary-400 opacity-60 group-hover:opacity-100 transition-opacity" />
-                        <span className="text-[10px] font-bold text-primary-300/40 tracking-widest leading-none mt-1">{stat.trend}</span>
+                        <span className="text-xxs font-bold text-primary-300/40 tracking-widest leading-none mt-1">{stat.trend}</span>
                     </div>
-                    <p className="text-[10px] font-black text-primary-300/40 uppercase tracking-widest leading-none mb-1">{stat.label}</p>
+                    <p className="text-xxs font-black text-primary-300/40 uppercase tracking-widest leading-none mb-1">{stat.label}</p>
                     <p className="text-2xl font-black text-white tabular-nums tracking-tighter">{stat.value}</p>
                 </div>
             ))}
@@ -192,7 +192,7 @@ export const FarmerDashboard: React.FC = () => {
           >
             <div className="flex items-start justify-between">
               <div className="space-y-1.5">
-                <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">{stat.title}</p>
+                <p className="text-xxs font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">{stat.title}</p>
                 <p className="text-xl font-black text-gray-900 dark:text-white tracking-tight">{stat.value}</p>
               </div>
               <div className={`p-3 ${stat.bg} dark:bg-opacity-10 rounded-xl group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500`}>
@@ -217,7 +217,7 @@ export const FarmerDashboard: React.FC = () => {
                         <span className="font-bold text-gray-700 dark:text-gray-300">{item.crop}</span>
                         <div className="text-right">
                             <p className="font-black text-gray-900 dark:text-white">{item.price}</p>
-                            <p className={`text-[10px] font-bold ${String(item.trend || '').startsWith('+') ? 'text-emerald-500' : 'text-rose-500'} uppercase tracking-widest`}>{item.trend}</p>
+                            <p className={`text-xxs font-bold ${String(item.trend || '').startsWith('+') ? 'text-emerald-500' : 'text-rose-500'} uppercase tracking-widest`}>{item.trend}</p>
                         </div>
                     </div>
                 ))

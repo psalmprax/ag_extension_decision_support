@@ -368,7 +368,7 @@ function LayerSwitcher({
     return (
         <div className="leaflet-top leaflet-right" style={{ marginTop: '10px', marginRight: '10px' }}>
             <div className="leaflet-control leaflet-control-layers bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 dark:border-gray-700/50 p-3">
-                <div className="text-[10px] font-black mb-3 text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                <div className="text-xxs font-black mb-3 text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Layers className="w-3.5 h-3.5" /> {t('map_type') || 'Map Type'}
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -406,7 +406,7 @@ function MapLegend({ show, t }: { show: boolean, t: (key: string) => string }) {
     return (
         <div className="leaflet-bottom leaflet-left" style={{ marginBottom: '30px', marginLeft: '10px' }}>
             <div className="leaflet-control bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 dark:border-gray-700/50 p-3.5 min-w-[170px]">
-                <div className="text-[10px] font-black mb-3 text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                <div className="text-xxs font-black mb-3 text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Info className="w-3.5 h-3.5" /> {t('map_legend') || 'Crop Legend'}
                 </div>
                 <div className="flex flex-col gap-2">
@@ -660,7 +660,7 @@ export function FarmerMap({
                             </div>
                             <h4 className="font-bold text-sm text-gray-900 dark:text-white">Your Location</h4>
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Extension Officer / Active GPS Node</p>
-                            <span className="text-[10px] text-blue-500 font-semibold mt-2 px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/40">
+                            <span className="text-xxs text-blue-500 font-semibold mt-2 px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/40">
                                 Lat: {currentUserLocation[0].toFixed(4)}, Lng: {currentUserLocation[1].toFixed(4)}
                             </span>
                         </div>
@@ -692,7 +692,7 @@ export function FarmerMap({
                                     <span className="text-2xl filter drop-shadow-md">{CROP_ICONS[farmer.crop.toLowerCase()] || CROP_ICONS.default}</span>
                                 </div>
                                 <div className="absolute top-3 left-3">
-                                    <span className="px-2.5 py-1 bg-white/25 backdrop-blur-md rounded-full text-[10px] font-bold text-white uppercase tracking-wider border border-white/30">
+                                    <span className="px-2.5 py-1 bg-white/25 backdrop-blur-md rounded-full text-xxs font-bold text-white uppercase tracking-wider border border-white/30">
                                         {farmer.crop}
                                     </span>
                                 </div>
@@ -714,7 +714,7 @@ export function FarmerMap({
                                             <div className="w-7 h-7 rounded-xl bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/30">
                                                 <Wheat className="w-4 h-4" />
                                             </div>
-                                            <span className="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 tracking-wider">{t('farmer_farm_size') || 'Farm Size'}</span>
+                                            <span className="text-xxs uppercase font-bold text-emerald-600 dark:text-emerald-400 tracking-wider">{t('farmer_farm_size') || 'Farm Size'}</span>
                                         </div>
                                         <div className="font-black text-xl text-emerald-700 dark:text-emerald-300">
                                             {farmer.size} <span className="text-xs font-medium text-emerald-500">ha</span>
@@ -725,7 +725,7 @@ export function FarmerMap({
                                             <div className="w-7 h-7 rounded-xl bg-amber-500 flex items-center justify-center text-white shadow-lg shadow-amber-500/30">
                                                 <TrendingUp className="w-4 h-4" />
                                             </div>
-                                            <span className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 tracking-wider">{t('farmer_est_yield')}</span>
+                                            <span className="text-xxs uppercase font-bold text-amber-600 dark:text-amber-400 tracking-wider">{t('farmer_est_yield')}</span>
                                         </div>
                                         <div className="font-black text-xl text-amber-700 dark:text-amber-300">
                                             {farmer.yield} <span className="text-xs font-medium text-amber-500">t/ha</span>
@@ -850,7 +850,7 @@ export function FarmerMap({
                                             <div className="text-sm font-bold text-gray-700 dark:text-gray-200 truncate">
                                                 {farmer.name || `${farmer.firstName} ${farmer.lastName}`}
                                             </div>
-                                            <div className="text-[10px] text-gray-400">{farmer.region}</div>
+                                            <div className="text-xxs text-gray-400">{farmer.region}</div>
                                         </div>
                                         <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-500" />
                                     </button>
@@ -888,7 +888,7 @@ export function FarmerMap({
                             </p>
                             <button 
                                 onClick={() => setIsExpanded(false)}
-                                className="mt-6 px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                                className="mt-6 px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xxs font-black uppercase tracking-widest transition-all"
                             >
                                 {t('action_refresh_sync') || 'Refresh Sync'}
                             </button>
@@ -902,7 +902,7 @@ export function FarmerMap({
                 <div className="absolute bottom-4 left-4 z-[1000] hidden md:block">
                     <div className={`stats-card dark:stats-card-dark rounded-2xl shadow-xl border border-gray-100/50 dark:border-gray-700/50 p-3 min-w-[180px]`}>
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-[10px] uppercase font-black text-gray-400 tracking-wider">{t('map_overview') || 'Overview'}</span>
+                            <span className="text-xxs uppercase font-black text-gray-400 tracking-wider">{t('map_overview') || 'Overview'}</span>
                             <button
                                 onClick={() => setVisibleStats(false)}
                                 className="text-gray-300 hover:text-gray-500"
@@ -914,14 +914,14 @@ export function FarmerMap({
                             <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-900/30 dark:to-emerald-800/20 rounded-xl p-2 border border-emerald-200/50 dark:border-emerald-700/30">
                                 <div className="flex items-center gap-1.5 mb-1">
                                     <Users className="w-3 h-3 text-emerald-500" />
-                                    <span className="text-[9px] uppercase font-bold text-emerald-600 dark:text-emerald-400">{t('map_farms') || 'Farms'}</span>
+                                    <span className="text-micro uppercase font-bold text-emerald-600 dark:text-emerald-400">{t('map_farms') || 'Farms'}</span>
                                 </div>
                                 <span className="text-lg font-black text-emerald-700 dark:text-emerald-300">{stats.totalFarms}</span>
                             </div>
                             <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/30 dark:to-blue-800/20 rounded-xl p-2 border border-blue-200/50 dark:border-blue-700/30">
                                 <div className="flex items-center gap-1.5 mb-1">
                                     <Wheat className="w-3 h-3 text-blue-500" />
-                                    <span className="text-[9px] uppercase font-bold text-blue-600 dark:text-blue-400">{t('map_hectares') || 'Hectares'}</span>
+                                    <span className="text-micro uppercase font-bold text-blue-600 dark:text-blue-400">{t('map_hectares') || 'Hectares'}</span>
                                 </div>
                                 <span className="text-lg font-black text-blue-700 dark:text-blue-300">{(Number(stats.totalSize) || 0).toFixed(0)}</span>
                             </div>
@@ -930,7 +930,7 @@ export function FarmerMap({
                         <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
                             <div className="flex items-center gap-1 mb-1.5">
                                 <TrendingUp className="w-3 h-3 text-gray-400" />
-                                <span className="text-[9px] uppercase font-bold text-gray-400">{t('map_top_crops') || 'Top Crops'}</span>
+                                <span className="text-micro uppercase font-bold text-gray-400">{t('map_top_crops') || 'Top Crops'}</span>
                             </div>
                             <div className="flex gap-1">
                                 {stats.topCrops.map(([crop, count], idx) => {
@@ -938,7 +938,7 @@ export function FarmerMap({
                                     return (
                                         <div
                                             key={crop}
-                                            className="flex-1 h-5 rounded-md flex items-center justify-center text-[9px] font-bold text-white"
+                                            className="flex-1 h-5 rounded-md flex items-center justify-center text-micro font-bold text-white"
                                             style={{ backgroundColor: theme.primary[colors[idx]] }}
                                             title={`${crop}: ${count}`}
                                         >
@@ -1027,7 +1027,7 @@ export function FarmerMap({
                             {/* Side Panel */}
                             <div className={`w-80 border-r flex flex-col ${themeName === 'cyber' ? 'border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/30' : 'bg-white dark:bg-gray-900'}`}>
                                 <div className={`p-4 border-b ${themeName === 'cyber' ? 'border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50' : 'bg-gray-50 dark:bg-gray-800/50'}`}>
-                                    <div className="text-[11px] uppercase tracking-wider font-bold text-gray-400">Farmlist</div>
+                                    <div className="text-xs-plus uppercase tracking-wider font-bold text-gray-400">Farmlist</div>
                                 </div>
                                 <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
                                     {filteredFarmers.length > 0 ? (
@@ -1053,7 +1053,7 @@ export function FarmerMap({
                                                     <div className={`font-bold text-sm truncate 'text-gray-800 dark:text-white'`}>
                                                         {farmer.name || `${farmer.firstName} ${farmer.lastName}`}
                                                     </div>
-                                                    <div className={`text-[10px] font-medium truncate 'text-gray-400'`}>{farmer.region} • {farmer.size}ha</div>
+                                                    <div className={`text-xxs font-medium truncate 'text-gray-400'`}>{farmer.region} • {farmer.size}ha</div>
                                                 </div>
                                             </button>
                                         ))
@@ -1078,7 +1078,7 @@ export function FarmerMap({
                         <div className={`px-8 py-4 border-t flex items-center justify-between backdrop-blur-sm 'bg-gray-50/80 dark:bg-gray-800/80 border-gray-100 dark:border-gray-800'`}>
                             <div className="flex items-center gap-8">
                                 <div className="flex flex-col">
-                                    <span className={`text-[10px] uppercase font-black tracking-widest 'text-gray-400'`}>{t('map_farms')}</span>
+                                    <span className={`text-xxs uppercase font-black tracking-widest 'text-gray-400'`}>{t('map_farms')}</span>
                                     <span className={`text-xl font-bold 'text-gray-800 dark:text-white'`}>{farmers.length}</span>
                                 </div>
                                 <div className={`h-8 w-px 'bg-gray-200 dark:bg-gray-700'`}></div>

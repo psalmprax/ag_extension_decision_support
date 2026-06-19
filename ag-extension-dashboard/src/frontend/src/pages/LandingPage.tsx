@@ -381,7 +381,7 @@ export function LandingPage() {
                                     <div className="w-2.5 h-2.5 rounded-full bg-green-500/40" />
                                 </div>
                                 <div className="flex-1 flex justify-center">
-                                    <div className="px-3 py-0.5 rounded-md bg-white/[0.04] text-[10px] text-white/25 font-mono">
+                                    <div className="px-3 py-0.5 rounded-md bg-white/[0.04] text-xxs text-white/25 font-mono">
                                         app.gpexts.com/dashboard
                                     </div>
                                 </div>
@@ -393,9 +393,9 @@ export function LandingPage() {
 
                             <div className="grid grid-cols-[170px_1fr] min-h-[380px]">
                                 {/* Sidebar */}
-                                <div className="bg-white/[0.015] border-r border-white/[0.05] p-2.5 text-[10px] space-y-0.5">
+                                <div className="bg-white/[0.015] border-r border-white/[0.05] p-2.5 text-xxs space-y-0.5">
                                     <div className="px-2.5 py-1.5 mb-2">
-                                        <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-emerald-500/[0.1] text-emerald-400 font-medium text-[10px]">
+                                        <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-emerald-500/[0.1] text-emerald-400 font-medium text-xxs">
                                             <BarChart3 className="w-3 h-3" />
                                             Dashboard
                                         </div>
@@ -424,10 +424,10 @@ export function LandingPage() {
                                     {/* Welcome bar */}
                                     <div className="flex items-center justify-between mb-1">
                                         <div>
-                                            <div className="text-[11px] font-semibold text-white/70">Good morning, Amina</div>
-                                            <div className="text-[9px] text-white/25">Here's what's happening across your network</div>
+                                            <div className="text-xs-plus font-semibold text-white/70">Good morning, Amina</div>
+                                            <div className="text-micro text-white/25">Here's what's happening across your network</div>
                                         </div>
-                                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/[0.08] text-emerald-400 text-[9px] font-medium">
+                                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/[0.08] text-emerald-400 text-micro font-medium">
                                             <Wifi className="w-2.5 h-2.5" />
                                             All Systems Online
                                         </div>
@@ -457,7 +457,7 @@ export function LandingPage() {
                                         {/* Chart */}
                                         <div className="bg-white/[0.02] rounded-lg p-2.5 border border-white/[0.04]">
                                             <div className="flex justify-between items-center mb-2">
-                                                <span className="text-[9px] font-semibold text-white/45">Farmer Growth</span>
+                                                <span className="text-micro font-semibold text-white/45">Farmer Growth</span>
                                                 <span className="text-[8px] text-white/15">Last 12 months</span>
                                             </div>
                                             <div className="flex items-end gap-1 h-20">
@@ -482,7 +482,7 @@ export function LandingPage() {
 
                                         {/* Activity feed */}
                                         <div className="bg-white/[0.02] rounded-lg p-2.5 border border-white/[0.04]">
-                                            <div className="text-[9px] font-semibold text-white/45 mb-2">Recent Activity</div>
+                                            <div className="text-micro font-semibold text-white/45 mb-2">Recent Activity</div>
                                             <div className="space-y-2">
                                                 {[
                                                     { icon: MapPin, text: 'Visit: Amina Okafor', time: '2m ago', color: 'text-emerald-400' },
@@ -493,7 +493,7 @@ export function LandingPage() {
                                                     <div key={i} className="flex items-start gap-2">
                                                         <item.icon className={`w-3 h-3 ${item.color} flex-shrink-0 mt-0.5`} />
                                                         <div className="flex-1 min-w-0">
-                                                            <div className="text-[9px] text-white/50 truncate">{item.text}</div>
+                                                            <div className="text-micro text-white/50 truncate">{item.text}</div>
                                                             <div className="text-[7px] text-white/20">{item.time}</div>
                                                         </div>
                                                     </div>
@@ -509,7 +509,7 @@ export function LandingPage() {
                                             { name: 'Joseph Mensah', initials: 'JM', color: 'from-amber-400 to-amber-600', crop: 'Cassava', status: 'Review', statusBg: 'bg-amber-500/10 text-amber-400', health: 78 },
                                             { name: 'Ngozi Kalu', initials: 'NK', color: 'from-orange-400 to-orange-600', crop: 'Rice & Millet', status: 'Active', statusBg: 'bg-emerald-500/10 text-emerald-400', health: 88 },
                                         ].map((f, i) => (
-                                            <div key={i} className="flex items-center gap-2.5 bg-white/[0.015] rounded-lg px-2.5 py-1.5 border border-white/[0.03] text-[10px]">
+                                            <div key={i} className="flex items-center gap-2.5 bg-white/[0.015] rounded-lg px-2.5 py-1.5 border border-white/[0.03] text-xxs">
                                                 <div className={`w-5 h-5 rounded-full bg-gradient-to-br ${f.color} flex items-center justify-center text-white text-[7px] font-bold`}>
                                                     {f.initials}
                                                 </div>
@@ -542,7 +542,7 @@ export function LandingPage() {
                     transition={{ delay: 2 }}
                     className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-20"
                 >
-                    <span className="text-[10px] text-white/20 uppercase tracking-widest">Scroll</span>
+                    <span className="text-xxs text-white/20 uppercase tracking-widest">Scroll</span>
                     <ChevronDown className="w-4 h-4 text-white/20 animate-bounce" />
                 </motion.div>
             </section>
@@ -637,7 +637,7 @@ export function LandingPage() {
                                             ].map((s, j) => (
                                                 <div key={j}>
                                                     <div className="text-sm font-bold text-emerald-400">{s.val}</div>
-                                                    <div className="text-[10px] text-white/20 uppercase tracking-wider">{s.label}</div>
+                                                    <div className="text-xxs text-white/20 uppercase tracking-wider">{s.label}</div>
                                                 </div>
                                             ))}
                                         </div>

@@ -18,7 +18,7 @@ import {
     ImageAnalysisResult,
     VideoAnalysisOptions,
     VideoAnalysisResult,
-} from '../aiProvider';
+} from '../types';
 import { REASONING_SYSTEM_PROMPT, extractVisuals } from '../assetLibrary';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';

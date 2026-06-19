@@ -144,7 +144,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
           menuData?.sections.map((section) => (
             <div key={section.id} className="last:border-b-0 border-b border-gray-100 dark:border-gray-800 pb-1 last:pb-0">
               {section.title && (
-                <div className="px-4 py-1.5 text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-50/50 dark:bg-gray-800/50 mb-1">
+                <div className="px-4 py-1.5 text-xxs font-black text-gray-400 uppercase tracking-widest bg-gray-50/50 dark:bg-gray-800/50 mb-1">
                   {section.title}
                 </div>
               )}

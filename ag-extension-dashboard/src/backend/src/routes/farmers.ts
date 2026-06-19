@@ -413,6 +413,8 @@ router.patch('/:id', validate(updateFarmerSchema), async (req: Request, res: Res
     }
 });
 
+import { createShareRoute } from './shareRouteFactory';
+
 /**
  * @openapi
  * /api/farmers/{id}/share:
@@ -457,30 +459,7 @@ router.patch('/:id', validate(updateFarmerSchema), async (req: Request, res: Res
  *                     url: { type: string }
  *                     expiresAt: { type: string, format: date-time }
  */
-router.post('/:id/share', async (req: Request, res: Response) => {
-    try {
-        const { id } = req.params;
-        const { isPublic, expiresAt, permissions } = req.body;
-        const createdBy = req.user?.userId;
-
-        const shareLink = await shareService.createShare({
-            entityType: 'farmer',
-            entityId: id,
-            createdBy,
-            isPublic,
-            expiresAt: expiresAt ? new Date(expiresAt) : undefined,
-            permissions,
-        });
-
-        res.status(201).json({
-            success: true,
-            data: shareLink,
-        });
-    } catch (error) {
-        logger.error('Error creating farmer share:', error);
-        safeError(res, 500, 'Failed to create share link');
-    }
-});
+router.use(createShareRoute('farmer'));
 
 /**
  * @openapi

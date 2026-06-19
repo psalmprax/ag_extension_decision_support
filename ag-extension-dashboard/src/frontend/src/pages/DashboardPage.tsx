@@ -119,7 +119,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                             {t('stat_regional_distribution')}
                         </h3>
                         <div className="flex gap-2">
-                            <span className={`px-2 py-1 bg-cyan-400/10 text-cyan-400 ${radiusClass} text-[10px] font-bold uppercase tracking-widest border border-cyan-400/20`}>
+                            <span className={`px-2 py-1 bg-cyan-400/10 text-cyan-400 ${radiusClass} text-xxs font-bold uppercase tracking-widest border border-cyan-400/20`}>
                                 {t('stat_kenya_overview') || "Kenya Overview"}
                             </span>
                         </div>
@@ -158,16 +158,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                 <div className="flex gap-4">
                                     <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
-                                        <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">{t('table_active')}</span>
+                                        <span className="text-xxs font-bold text-slate-300 uppercase tracking-widest">{t('table_active')}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                                        <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">{t('analytics_disease_alerts')}</span>
+                                        <span className="text-xxs font-bold text-slate-300 uppercase tracking-widest">{t('analytics_disease_alerts')}</span>
                                     </div>
                                 </div>
                                 <button
                                     onClick={() => setIsMapExpanded(true)}
-                                    className={`text-[10px] font-black text-cyan-400 uppercase bg-cyan-400/10 px-3 py-1 ${radiusClass} border border-cyan-400/20 hover:bg-cyan-400/20 transition-colors`}
+                                    className={`text-xxs font-black text-cyan-400 uppercase bg-cyan-400/10 px-3 py-1 ${radiusClass} border border-cyan-400/20 hover:bg-cyan-400/20 transition-colors`}
                                 >
                                     {t('viz_detail_view')}
                                 </button>
@@ -221,9 +221,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                 <div key={i} className="flex justify-between items-center border-b border-white/5 pb-3 last:border-0 last:pb-0">
                                     <div>
                                         <p className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-tight">{item.label}</p>
-                                        <p className="text-[10px] text-slate-500">{item.time}</p>
+                                        <p className="text-xxs text-slate-500">{item.time}</p>
                                     </div>
-                                    <span className="text-[10px] font-black text-cyan-400 uppercase">{item.status}</span>
+                                    <span className="text-xxs font-black text-cyan-400 uppercase">{item.status}</span>
                                 </div>
                             ))}
                         </div>

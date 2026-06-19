@@ -111,65 +111,6 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction): v
 };
 
 /**
- * Check if user owns resource or is admin
- */
-export const ownershipOrAdmin = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-): Promise<void> => {
-    const { userId } = req.params;
-
-    // If no user attached, deny
-    if (!req.user) {
-        res.status(401).json({
-            success: false,
-            error: 'Authentication required',
-        });
-        return;
-    }
-
-    // Admin can do anything
-    if (req.user.role === 'admin') {
-        return next();
-    }
-
-    // Check if user owns the resource
-    if (req.user.userId === userId) {
-        return next();
-    }
-
-    // Regional managers can access resources within their region
-    if (req.user.role === 'regional_manager') {
-        try {
-            const { query } = await import('@/services/databaseService');
-            const [managerResult, targetResult] = await Promise.all([
-                query('SELECT region FROM users WHERE id = $1', [req.user.userId]),
-                query('SELECT region FROM users WHERE id = $1', [userId]),
-            ]);
-            const managerRegion = managerResult.rows[0]?.region;
-            const targetRegion = targetResult.rows[0]?.region;
-            if (managerRegion && targetRegion && managerRegion === targetRegion) {
-                return next();
-            }
-            logger.warn(`Regional manager ${req.user.userId} (${managerRegion}) denied access to user ${userId} (${targetRegion})`);
-        } catch (err) {
-            logger.error('Region check failed:', err);
-        }
-        res.status(403).json({
-            success: false,
-            error: 'Regional managers can only access resources within their region',
-        });
-        return;
-    }
-
-    res.status(403).json({
-        success: false,
-        error: 'You do not have permission to access this resource',
-    });
-};
-
-/**
  * Permission definitions
  */
 export const Permissions = {
@@ -227,29 +168,4 @@ export const Permissions = {
 export const hasPermission = (role: UserRole, permission: string): boolean => {
     const rolePermissions = Permissions[role];
     return (rolePermissions as readonly string[]).includes(permission);
-};
-
-/**
- * Permission-based middleware
- */
-export const requirePermission = (permission: string) => {
-    return (req: AuthRequest, res: Response, next: NextFunction): void => {
-        if (!req.user) {
-            res.status(401).json({
-                success: false,
-                error: 'Authentication required',
-            });
-            return;
-        }
-
-        if (!hasPermission(req.user.role as UserRole, permission)) {
-            res.status(403).json({
-                success: false,
-                error: 'Insufficient permissions',
-            });
-            return;
-        }
-
-        next();
-    };
 };

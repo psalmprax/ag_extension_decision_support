@@ -27,7 +27,7 @@ const QuotaBar = ({ label, current, limit, icon: Icon, color, glowColor }: Quota
                         <Icon className={`w-3.5 h-3.5 ${color.replace('from-', 'text-').split(' ')[0]}`} />
                     </div>
                     <div>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 block leading-none mb-1.5">
+                        <span className="text-xxs font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 block leading-none mb-1.5">
                             {label}
                         </span>
                         <span className={`text-xs font-black ${isHigh ? 'text-red-500' : 'text-gray-900 dark:text-white'}`}>
@@ -36,7 +36,7 @@ const QuotaBar = ({ label, current, limit, icon: Icon, color, glowColor }: Quota
                     </div>
                 </div>
                 <div className="text-right">
-                    <span className={`text-[10px] font-black ${isHigh ? 'text-red-500 animate-pulse' : 'text-gray-400 dark:text-gray-500'}`}>
+                    <span className={`text-xxs font-black ${isHigh ? 'text-red-500 animate-pulse' : 'text-gray-400 dark:text-gray-500'}`}>
                         {isUnlimited ? t('usage_unlimited') : `${percentage}%`}
                     </span>
                 </div>
@@ -132,11 +132,11 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
                                 <h4 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em] leading-none mb-1.5">
                                     {t('billing_quota_usage')}
                                 </h4>
-                                <p className="text-[10px] font-black text-gray-400/60 uppercase tracking-widest">{t('usage_realtime_telemetry')}</p>
+                                <p className="text-xxs font-black text-gray-400/60 uppercase tracking-widest">{t('usage_realtime_telemetry')}</p>
                             </div>
                         </div>
                         <div className="flex flex-col items-end">
-                            <span className="px-3 py-1.5 rounded-full bg-gray-900 dark:bg-white text-[10px] font-black text-white dark:text-gray-900 uppercase tracking-widest shadow-xl">
+                            <span className="px-3 py-1.5 rounded-full bg-gray-900 dark:bg-white text-xxs font-black text-white dark:text-gray-900 uppercase tracking-widest shadow-xl">
                                 {plan.name}
                             </span>
                         </div>
@@ -175,7 +175,7 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
                                 <AlertCircle className="w-5 h-5 text-red-500" />
                             </div>
                             <div className="relative z-10">
-                                <h5 className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em] mb-1">{t('usage_critical_threshold')}</h5>
+                                <h5 className="text-xxs font-black text-red-500 uppercase tracking-[0.2em] mb-1">{t('usage_critical_threshold')}</h5>
                                 <p className="text-xs text-red-600 dark:text-red-400/80 leading-relaxed font-bold">
                                     {t('billing_limit_warning')}
                                 </p>

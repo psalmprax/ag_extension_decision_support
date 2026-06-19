@@ -22,12 +22,7 @@ import { getNavItems } from './config/navItems';
 import { AppHeader } from './components/layout/AppHeader';
 import { AppSidebar } from './components/layout/AppSidebar';
 import { AppModals } from './components/AppModals';
-import { DashboardPage } from './pages/DashboardPage';
-import { PortfolioPage } from './pages/PortfolioPage';
-import { VisitsPage } from './pages/VisitsPage';
-import { ReportsPage } from './pages/ReportsPage';
-import { AnalyticsPage } from './pages/AnalyticsPage';
-import { FarmerChatPage } from './pages/FarmerChatPage';
+import { TabContent } from './components/TabContent';
 import { Farmer } from './types/dashboard';
 import { useAppSync } from './hooks/useAppSync';
 import { useAppShortcuts } from './hooks/useAppShortcuts';
@@ -37,28 +32,14 @@ import { useAppChat } from './hooks/useAppChat';
 import { useAppTheme } from './hooks/useAppTheme';
 import { useAppBootstrap } from './hooks/useAppBootstrap';
 import { useAppAuth } from './hooks/useAppAuth';
+import { useAppModalState } from './hooks/useAppModalState';
 import { fetchUnreadCount } from '@/api/notificationService';
 import { ThemeName } from '@/theme';
 
 // Lazy loaded components
-const FarmerDashboard = lazy(() => import('@/components/FarmerDashboard').then(m => ({ default: m.FarmerDashboard })));
-const BillingDashboard = lazy(() => import('@/components/BillingDashboard').then(m => ({ default: m.BillingDashboard })));
-const VisitSynthesisForm = lazy(() => import('@/components/forms/VisitSynthesisForm').then(m => ({ default: m.VisitSynthesisForm })));
-const FarmerRegistrationForm = lazy(() => import('@/components/forms/FarmerRegistrationForm').then(m => ({ default: m.FarmerRegistrationForm })));
-const Telemetry = lazy(() => import('./pages/Telemetry'));
-const Agents = lazy(() => import('./pages/Agents'));
-const SystemHealth = lazy(() => import('./pages/SystemHealth'));
-const DiseaseDiagnosisPage = lazy(() => import('./pages/DiseaseDiagnosis').then(m => ({ default: m.DiseaseDiagnosis })));
-const Memory = lazy(() => import('./pages/Memory'));
-const EmailWorkflows = lazy(() => import('./pages/EmailWorkflows'));
-const MCPTools = lazy(() => import('./pages/MCPTools'));
-const SMSPage = lazy(() => import('./pages/SMS').then(m => ({ default: m.SMSPage })));
-const AlphaAI = lazy(() => import('./components/Cyber/AlphaAI'));
-const KnowledgeBase = lazy(() => import('./components/KnowledgeBase').then(m => ({ default: m.KnowledgeBase })));
-const UserManagementPage = lazy(() => import('./pages/UserManagementPage').then(m => ({ default: m.UserManagementPage })));
 const LandingPage = lazy(() => import('./pages/LandingPage').then(m => ({ default: m.LandingPage })));
 const DemoPage = lazy(() => import('./pages/DemoPage').then(m => ({ default: m.DemoPage })));
-const CropsFields = lazy(() => import('./pages/CropsFields').then(m => ({ default: m.CropsFields })));
+const KnowledgeBase = lazy(() => import('./components/KnowledgeBase').then(m => ({ default: m.KnowledgeBase })));
 
 const TAB_TO_PATH: Record<string, string> = {
     'dashboard': '/dashboard',
@@ -141,22 +122,21 @@ function App() {
         window.location.href = '/login';
     };
 
-    // UI modal state
-    const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
-    const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-    const [showProfileModal, setShowProfileModal] = useState(false);
-    const [showSettingsPanel, setShowSettingsPanel] = useState(false);
-    const [showHelpCenter, setShowHelpCenter] = useState(false);
-    const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
-    const [showVisitModal, setShowVisitModal] = useState(false);
-    const [showFarmerModal, setShowFarmerModal] = useState(false);
-    const [viewingReport, setViewingReport] = useState<Report | null>(null);
-    const [showBulkSmsComposer, setShowBulkSmsComposer] = useState(false);
-    const [bulkSmsMessage, setBulkSmsMessage] = useState('');
-    const [confirmModal, setConfirmModal] = useState<{
-        title: string; message: string; onConfirm: () => void;
-        variant?: 'danger' | 'warning' | 'info' | 'success'; confirmText?: string;
-    } | null>(null);
+    // Consolidated modal/UI state
+    const {
+        isNotificationPanelOpen, setIsNotificationPanelOpen,
+        isProfileMenuOpen, setIsProfileMenuOpen,
+        showProfileModal, setShowProfileModal,
+        showSettingsPanel, setShowSettingsPanel,
+        showHelpCenter, setShowHelpCenter,
+        isDetailPanelOpen, setIsDetailPanelOpen,
+        showVisitModal, setShowVisitModal,
+        showFarmerModal, setShowFarmerModal,
+        viewingReport, setViewingReport,
+        showBulkSmsComposer, setShowBulkSmsComposer,
+        bulkSmsMessage, setBulkSmsMessage,
+        confirmModal, setConfirmModal,
+    } = useAppModalState();
 
     // Data state
     const [searchQuery, setSearchQuery] = useState('');
@@ -416,82 +396,29 @@ function App() {
                     <ErrorBoundary componentName="MainContent">
                         <Suspense fallback={<div className="p-6"><Loader2 className="w-8 h-8 animate-spin text-cyan-400" /></div>}>
                             <div className="p-6">
-                                {/* Tab Content */}
-                                {activeTab === 'dashboard' && (
-                                    <DashboardPage
-                                        dashboardData={dashboardData} isLoading={isLoading} isOfficer={isOfficer}
-                                        performanceData={performanceData} effectiveFarmers={effectiveFarmers}
-                                        isMapExpanded={isMapExpanded} setIsMapExpanded={setIsMapExpanded}
-                                        handleStartConversation={handleStartConversation} handleOpenFarmerDetail={handleOpenFarmerDetail}
-                                        user={user}
-                                        addNotification={addNotification}
-                                    />
-                                )}
-                                {activeTab === 'portfolio' && (
-                                    <PortfolioPage
-                                        effectiveFarmers={effectiveFarmers} selectedFarmers={selectedFarmers}
-                                        handleSelectFarmer={handleSelectFarmer} handleOpenFarmerDetail={handleOpenFarmerDetail}
-                                        showBulkSmsComposer={showBulkSmsComposer} setShowBulkSmsComposer={setShowBulkSmsComposer}
-                                        bulkSmsMessage={bulkSmsMessage} setBulkSmsMessage={setBulkSmsMessage}
-                                        handleBulkSMS={handleBulkSMS} handleBulkExport={handleBulkExport}
-                                        handleBulkDelete={handleBulkDelete} setSelectedFarmers={setSelectedFarmers}
-                                    />
-                                )}
-                                {activeTab === 'visits' && (
-                                    <VisitsPage
-                                        visits={visits} setShowVisitModal={setShowVisitModal} refetchVisits={refetchVisits}
-                                        handleOpenFarmerDetail={handleOpenFarmerDetail} farmers={effectiveFarmers}
-                                        addNotification={addNotification}
-                                    />
-                                )}
-                                {activeTab === 'reports' && (
-                                    <ReportsPage
-                                        reports={reports} handleGenerateReport={handleGenerateReport}
-                                        isGeneratingReport={isGeneratingReport}
-                                        viewingReport={viewingReport} setViewingReport={setViewingReport}
-                                        reportContent={reportContent} setReportContent={setReportContent}
-                                        isLoadingReport={isLoadingReport} setIsLoadingReport={setIsLoadingReport}
-                                        addNotification={addNotification} user={user}
-                                    />
-                                )}
-                                {activeTab === 'analytics' && (
-                                    <AnalyticsPage
-                                        performanceData={performanceData}
-                                    />
-                                )}
-                                {activeTab === 'billing' && <BillingDashboard />}
-                                {activeTab === 'knowledge' && <KnowledgeBase />}
-                                {activeTab === 'aiassistant' && <AlphaAI />}
-                                {activeTab === 'farmerchat' && (
-                                    <FarmerChatPage
-                                        farmerConversations={farmerConversations} activeFarmerConvId={activeFarmerConvId}
-                                        setActiveFarmerConvId={setActiveFarmerConvId} loadFarmerMessages={loadFarmerMessages}
-                                        farmerChatMessages={farmerChatMessages} farmerChatInput={farmerChatInput}
-                                        setFarmerChatInput={setFarmerChatInput} handleFarmerChatSend={handleFarmerChatSend}
-                                        loadFarmers={loadFarmers} setShowFarmerModal={setShowFarmerModal}
-                                    />
-                                )}
-                                {activeTab === 'farmer_dashboard' && <FarmerDashboard />}
-                                {activeTab === 'register_farmer' && (
-                                    <div className="mt-6"><FarmerRegistrationForm /></div>
-                                )}
-                                {activeTab === 'visit_synthesis' && (
-                                    <div className="mt-6"><VisitSynthesisForm /></div>
-                                )}
-                                {activeTab === 'sms' && <SMSPage />}
-                                {activeTab === 'telemetry' && (
-                                    <div><h1 className={`text-3xl font-bold ${headingClass} mb-8`}>{isModern ? 'Neural Telemetry' : 'System Telemetry'}</h1><Telemetry /></div>
-                                )}
-                                {activeTab === 'agents' && (
-                                    <div><h1 className={`text-3xl font-bold ${headingClass} mb-8`}>{isModern ? 'Autonomous Orchestration' : 'Agent Manager'}</h1><Agents /></div>
-                                )}
-                                {activeTab === 'system_health' && <SystemHealth />}
-                                {activeTab === 'disease_diagnosis' && <DiseaseDiagnosisPage />}
-                                {activeTab === 'fields' && <CropsFields />}
-                                {activeTab === 'memory' && <Memory />}
-                                {activeTab === 'email_workflows' && <EmailWorkflows />}
-                                {activeTab === 'mcp_tools' && <MCPTools />}
-                                {activeTab === 'user_management' && <UserManagementPage />}
+                                <TabContent
+                                    activeTab={activeTab} headingClass={headingClass} isModern={isModern}
+                                    isOfficer={isOfficer} user={user} addNotification={addNotification}
+                                    dashboardData={dashboardData} isLoading={isLoading} performanceData={performanceData}
+                                    effectiveFarmers={effectiveFarmers} isMapExpanded={isMapExpanded} setIsMapExpanded={setIsMapExpanded}
+                                    handleStartConversation={handleStartConversation} handleOpenFarmerDetail={handleOpenFarmerDetail}
+                                    selectedFarmers={selectedFarmers} handleSelectFarmer={handleSelectFarmer}
+                                    showBulkSmsComposer={showBulkSmsComposer} setShowBulkSmsComposer={setShowBulkSmsComposer}
+                                    bulkSmsMessage={bulkSmsMessage} setBulkSmsMessage={setBulkSmsMessage}
+                                    handleBulkSMS={handleBulkSMS} handleBulkExport={handleBulkExport}
+                                    handleBulkDelete={handleBulkDelete} setSelectedFarmers={setSelectedFarmers}
+                                    visits={visits} setShowVisitModal={setShowVisitModal} refetchVisits={refetchVisits}
+                                    reports={reports} handleGenerateReport={handleGenerateReport}
+                                    isGeneratingReport={isGeneratingReport} viewingReport={viewingReport}
+                                    setViewingReport={setViewingReport} reportContent={reportContent}
+                                    setReportContent={setReportContent} isLoadingReport={isLoadingReport}
+                                    setIsLoadingReport={setIsLoadingReport}
+                                    farmerConversations={farmerConversations} activeFarmerConvId={activeFarmerConvId}
+                                    setActiveFarmerConvId={setActiveFarmerConvId} loadFarmerMessages={loadFarmerMessages}
+                                    farmerChatMessages={farmerChatMessages} farmerChatInput={farmerChatInput}
+                                    setFarmerChatInput={setFarmerChatInput} handleFarmerChatSend={handleFarmerChatSend}
+                                    loadFarmers={loadFarmers} setShowFarmerModal={setShowFarmerModal}
+                                />
                             </div>
                         </Suspense>
                     </ErrorBoundary>

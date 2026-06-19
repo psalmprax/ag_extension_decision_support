@@ -472,21 +472,21 @@ export function CropsFields() {
                                                     {/* Stats Indicators */}
                                                     <div className="grid grid-cols-2 gap-4 mb-6 bg-slate-950/40 p-3 rounded-xl border border-white/5">
                                                         <div>
-                                                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Area size</span>
+                                                            <span className="text-xxs font-black uppercase tracking-wider text-slate-500">Area size</span>
                                                             <p className="text-sm font-bold text-slate-200 mt-0.5">{field.areaHectares} Hectares</p>
                                                         </div>
                                                         <div>
-                                                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Soil type</span>
+                                                            <span className="text-xxs font-black uppercase tracking-wider text-slate-500">Soil type</span>
                                                             <p className="text-sm font-bold text-slate-200 mt-0.5 capitalize">{field.soilType || 'Unspecified'}</p>
                                                         </div>
                                                         <div>
-                                                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Soil pH</span>
+                                                            <span className="text-xxs font-black uppercase tracking-wider text-slate-500">Soil pH</span>
                                                             <p className="text-sm font-bold text-slate-200 mt-0.5">
                                                                 {field.soilPh ? `${field.soilPh.toFixed(1)} pH` : 'Not Measured'}
                                                             </p>
                                                         </div>
                                                         <div>
-                                                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Coordinates</span>
+                                                            <span className="text-xxs font-black uppercase tracking-wider text-slate-500">Coordinates</span>
                                                             <p className="text-sm font-bold text-slate-200 mt-0.5 truncate">
                                                                 {field.latitude && field.longitude 
                                                                     ? `${field.latitude.toFixed(4)}, ${field.longitude.toFixed(4)}`
@@ -503,7 +503,7 @@ export function CropsFields() {
                                                                 <div className="flex-1 min-w-0">
                                                                     <div className="flex items-center justify-between">
                                                                         <span className="text-xs font-black text-cyan-400 uppercase tracking-wider">Growing</span>
-                                                                        <span className="text-[10px] font-medium text-slate-400">
+                                                                        <span className="text-xxs font-medium text-slate-400">
                                                                             Planted {new Date(currentCycle.plantingDate!).toLocaleDateString()}
                                                                         </span>
                                                                     </div>
@@ -600,7 +600,7 @@ export function CropsFields() {
                                                         <td className="p-4 font-semibold text-slate-100">{cycle.cropName}</td>
                                                         <td className="p-4 text-slate-400 font-mono text-xs">{cycle.variety || 'N/A'}</td>
                                                         <td className="p-4">
-                                                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                                                            <span className={`px-2.5 py-1 rounded-full text-xxs font-black uppercase tracking-widest ${
                                                                 cycle.status === 'growing' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' :
                                                                 cycle.status === 'harvested' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
                                                                 cycle.status === 'failed' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :

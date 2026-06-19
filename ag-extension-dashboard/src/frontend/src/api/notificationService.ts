@@ -31,34 +31,6 @@ export const markAllAsRead = async (): Promise<void> => {
     await apiClient.put('/notifications/read-all');
 };
 
-export const deleteNotification = async (notificationId: string): Promise<void> => {
-    await apiClient.delete(`/notifications/${notificationId}`);
-};
-
 export const clearAllNotifications = async (): Promise<void> => {
     await apiClient.delete('/notifications');
-};
-
-// Admin functions
-export const sendNotification = async (params: {
-    userId: string;
-    type?: string;
-    title: string;
-    message: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    metadata?: Record<string, any>;
-}): Promise<void> => {
-    await apiClient.post('/notifications/send', params);
-};
-
-export const broadcastNotification = async (params: {
-    type?: string;
-    title: string;
-    message: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    metadata?: Record<string, any>;
-    role?: string;
-}): Promise<{ sent: number }> => {
-    const { data } = await apiClient.post('/notifications/broadcast', params);
-    return data.data;
 };

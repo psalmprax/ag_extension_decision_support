@@ -152,19 +152,19 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
                             <div className="flex-1 space-y-4 my-2">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{t('table_region_village')}</p>
+                                        <p className="text-xxs font-black uppercase tracking-widest text-gray-400 mb-1">{t('table_region_village')}</p>
                                         <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate">{farmer.region}</p>
                                         <p className="text-xs text-gray-500 truncate">{farmer.village}</p>
                                     </div>
                                     <div>
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{t('table_farm_size')}</p>
+                                        <p className="text-xxs font-black uppercase tracking-widest text-gray-400 mb-1">{t('table_farm_size')}</p>
                                         <p className="text-sm font-bold text-gray-800 dark:text-gray-100">{farmer.farmSize} <span className="text-xs text-gray-500 font-medium tracking-normal">ha</span></p>
                                     </div>
                                 </div>
 
                                 <div className="flex flex-wrap gap-1.5 min-h-[30px]">
                                     {farmer.crops?.map((crop: string) => (
-                                        <span key={crop} className={`px-2.5 py-1 bg-gray-100/50 dark:bg-gray-800 text-primary-600 dark:text-primary-300 ${radiusClass} text-[10px] font-bold uppercase tracking-tight border border-gray-200 dark:border-gray-700 shadow-sm`}>
+                                        <span key={crop} className={`px-2.5 py-1 bg-gray-100/50 dark:bg-gray-800 text-primary-600 dark:text-primary-300 ${radiusClass} text-xxs font-bold uppercase tracking-tight border border-gray-200 dark:border-gray-700 shadow-sm`}>
                                             {crop}
                                         </span>
                                     ))}
@@ -172,9 +172,9 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
                             </div>
 
                             <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/10 flex justify-between items-center">
-                                <span className="px-3 py-1 bg-green-500/10 text-green-600 dark:text-green-400 rounded-full text-[10px] font-black uppercase tracking-widest shadow-inner shadow-green-500/20">{t('table_active')}</span>
+                                <span className="px-3 py-1 bg-green-500/10 text-green-600 dark:text-green-400 rounded-full text-xxs font-black uppercase tracking-widest shadow-inner shadow-green-500/20">{t('table_active')}</span>
                                 <div className="flex -space-x-2">
-                                    <div className="w-6 h-6 rounded-full bg-blue-100 border-2 border-white dark:border-gray-800 flex items-center justify-center text-[10px] font-bold text-blue-600">SMS</div>
+                                    <div className="w-6 h-6 rounded-full bg-blue-100 border-2 border-white dark:border-gray-800 flex items-center justify-center text-xxs font-bold text-blue-600">SMS</div>
                                 </div>
                             </div>
 

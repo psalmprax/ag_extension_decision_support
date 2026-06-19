@@ -57,12 +57,12 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
                                     </div>
                                     <div>
                                         <h4 className="font-bold text-gray-900 dark:text-white text-lg tracking-tight truncate max-w-[150px]">{visit.farmer_name}</h4>
-                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">
+                                        <p className="text-xxs text-gray-500 font-bold uppercase tracking-widest mt-0.5">
                                             {visit.visit_type}
                                         </p>
                                     </div>
                                 </div>
-                                <span className={`px-2 py-1 ${radiusClass} text-[9px] font-black uppercase tracking-widest border shadow-sm ${visit.status === 'completed'
+                                <span className={`px-2 py-1 ${radiusClass} text-micro font-black uppercase tracking-widest border shadow-sm ${visit.status === 'completed'
                                         ? 'bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-400'
                                         : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-700 dark:text-yellow-400'
                                     }`}>
@@ -94,7 +94,7 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
                                                         addNotification({ type: 'error', message: 'Failed to update visit status' });
                                                     }
                                                 }}
-                                                className={`px-3 py-1.5 bg-green-500/20 text-green-700 dark:text-green-400 ${btnClass} text-[10px] font-black uppercase hover:bg-green-500/30 transition-colors shadow-sm`}
+                                                className={`px-3 py-1.5 bg-green-500/20 text-green-700 dark:text-green-400 ${btnClass} text-xxs font-black uppercase hover:bg-green-500/30 transition-colors shadow-sm`}
                                             >
                                                 Complete
                                             </button>
@@ -109,7 +109,7 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
                                                         addNotification({ type: 'error', message: 'Failed to update visit status' });
                                                     }
                                                 }}
-                                                className={`px-3 py-1.5 bg-red-500/10 text-red-700 dark:text-red-400 ${btnClass} text-[10px] font-black uppercase hover:bg-red-500/20 transition-colors`}
+                                                className={`px-3 py-1.5 bg-red-500/10 text-red-700 dark:text-red-400 ${btnClass} text-xxs font-black uppercase hover:bg-red-500/20 transition-colors`}
                                             >
                                                 Cancel
                                             </button>

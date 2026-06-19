@@ -90,6 +90,11 @@ export default {
                 '2xl': 'var(--shadow-premium)',
                 'neon': '0 0 15px rgba(0, 245, 255, 0.3)',
             },
+            fontSize: {
+                'micro': '9px',
+                'xxs': '10px',
+                'xs-plus': '11px',
+            },
             fontFamily: {
                 sans: ['Inter', 'system-ui', 'sans-serif'],
                 headline: ['Space Grotesk', 'sans-serif'],

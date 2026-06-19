@@ -5,10 +5,11 @@ import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Badge } from './ui/Badge';
 import { motion, AnimatePresence } from 'framer-motion';
+import { FarmerDetailHeader } from './FarmerDetailHeader';
+import { FarmerYieldChart } from './FarmerYieldChart';
+import { FarmerVisitTimeline } from './FarmerVisitTimeline';
 import {
     X,
-    MapPin,
-    Calendar,
     TrendingUp,
     MessageSquare,
     Phone,
@@ -16,28 +17,13 @@ import {
     Clock,
     ChevronRight,
     Sprout,
-    Maximize2,
     Activity,
     Mail,
-    Edit2,
-    Save,
     History,
     FileText,
-    Loader2,
-    Share2,
-    Trash2,
-    MoreVertical
+    Loader2
 } from 'lucide-react';
 import { VideoCall } from './VideoCall';
-import {
-    AreaChart,
-    Area,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer
-} from 'recharts';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 import { useNavigate } from 'react-router-dom';
@@ -94,7 +80,6 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
     React.useEffect(() => {
         setLocalVisits(visits);
     }, [visits]);
-    const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
 
     const loadInteractions = async () => {
         if (!farmer?.id) return;
@@ -284,125 +269,20 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                         style={{ borderTopLeftRadius: 'var(--radius-card)', borderBottomLeftRadius: 'var(--radius-card)' }}
                     >
                         {/* Header Section */}
-                        <div className="relative h-64 flex-shrink-0" onContextMenu={handleContextMenu}>
-                            <div className={`absolute inset-0 opacity-90 bg-gradient-to-br from-primary-600 to-secondary-700`} />
-                            <div className="absolute inset-0 bg-gradient-to-br from-primary-800/40 to-secondary-900/40" />
-
-                            {isCyber && (
-                                <div className="absolute inset-0 cyber-grid-premium opacity-20" />
-                            )}
-
-                            <div className="absolute top-6 right-6 flex items-center gap-2 z-20">
-                                <button
-                                    onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-                                    className={`p-2 backdrop-blur-md rounded-full text-white transition-all ${isEditing ? 'bg-primary-500/40 border border-primary-500/30' : 'bg-white/10 hover:bg-white/20'}`}
-                                    title={isEditing ? 'Save Changes' : 'Edit Farmer'}
-                                >
-                                    {isEditing ? <Save className="w-5 h-5" /> : <Edit2 className="w-5 h-5" />}
-                                </button>
-                                <button
-                                    onClick={handleShare}
-                                    className="p-2 backdrop-blur-md rounded-full text-white transition-all bg-white/10 hover:bg-white/20"
-                                    title="Share Farmer Information"
-                                >
-                                    <Share2 className="w-5 h-5" />
-                                </button>
-                                <button
-                                    onClick={handleContextMenu}
-                                    className="p-2 backdrop-blur-md rounded-full text-white transition-all bg-white/10 hover:bg-white/20"
-                                    title="More Actions"
-                                >
-                                    <MoreVertical className="w-5 h-5" />
-                                </button>
-                                <button
-                                    onClick={() => setIsDeleteModalOpen(true)}
-                                    className="p-2 backdrop-blur-md rounded-full text-white transition-all bg-rose-500/20 hover:bg-rose-500/40 border border-rose-500/30"
-                                    title="Delete Farmer"
-                                >
-                                    <Trash2 className="w-5 h-5" />
-                                </button>
-                                <button
-                                    onClick={onClose}
-                                    className="p-2 backdrop-blur-md rounded-full text-white transition-all bg-white/10 hover:bg-white/20"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
-
-                            <div className="absolute bottom-0 left-0 right-0 p-8 pt-20 bg-gradient-to-t from-black/60 to-transparent">
-                                <div className="flex items-end gap-6">
-                                    <div className={`w-24 h-24 ${radiusClass} p-1 shadow-2xl bg-white`}>
-                                        <div className={`w-full h-full ${radiusClass} flex items-center justify-center font-black text-4xl bg-primary-100 text-primary-600`}>
-                                            {farmer.firstName?.[0]}{farmer.lastName?.[0]}
-                                        </div>
-                                    </div>
-                                    <div className="mb-2">
-                                        <h2 className={`text-3xl font-black leading-none mb-2 text-white`}>
-                                            {farmer.firstName} {farmer.lastName}
-                                        </h2>
-                                        <div className="flex items-center gap-4 text-white/80 text-sm font-medium">
-                                            <div className="flex items-center gap-1.5">
-                                                <MapPin className="w-4 h-4" />
-                                                {isEditing ? (
-                                                    <Input
-                                                        type="text"
-                                                        value={editData.region || ''}
-                                                        onChange={(e) => setEditData({ ...editData, region: e.target.value })}
-                                                        className="bg-white/10 border-white/20 text-white placeholder-white/40 !h-7 !px-2 !py-0.5 !text-xs !rounded"
-                                                        placeholder="Region"
-                                                    />
-                                                ) : (
-                                                    <span>{farmer.region}, {farmer.village}</span>
-                                                )}
-                                            </div>
-                                            <div className="flex items-center gap-1.5">
-                                                <Maximize2 className="w-4 h-4" />
-                                                {isEditing ? (
-                                                    <Input
-                                                        type="number"
-                                                        value={editData.farmSize || 0}
-                                                        onChange={(e) => setEditData({ ...editData, farmSize: Number(e.target.value) })}
-                                                        className="bg-white/10 border-white/20 text-white !h-7 !px-2 !py-0.5 !text-xs !rounded !w-16"
-                                                    />
-                                                ) : (
-                                                    <span>{farmer.farmSize} ha</span>
-                                                )}
-                                            </div>
-                                            <div className="flex items-center gap-1.5">
-                                                <Phone className="w-4 h-4" />
-                                                {isEditing ? (
-                                                    <Input
-                                                        type="tel"
-                                                        value={editData.phone || ''}
-                                                        onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
-                                                        className="bg-white/10 border-white/20 text-white placeholder-white/40 !h-7 !px-2 !py-0.5 !text-xs !rounded !w-32"
-                                                        placeholder="Phone"
-                                                    />
-                                                ) : (
-                                                    <span>{farmer.phone || 'No phone'}</span>
-                                                )}
-                                            </div>
-                                            {isEditing && (
-                                                <div className="flex items-center gap-1.5">
-                                                    <Activity className="w-4 h-4" />
-                                                    <Select
-                                                        value={editData.status || 'active'}
-                                                        onChange={(e) => setEditData({ ...editData, status: e.target.value })}
-                                                        className="bg-white/10 border-white/20 text-white !h-7 !px-2 !py-0.5 !text-xs !rounded"
-                                                        options={[
-                                                            { value: 'active', label: 'Active' },
-                                                            { value: 'inactive', label: 'Inactive' },
-                                                            { value: 'pending', label: 'Pending' },
-                                                            { value: 'suspended', label: 'Suspended' },
-                                                        ]}
-                                                    />
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <FarmerDetailHeader
+                            farmer={farmer}
+                            editData={editData}
+                            setEditData={setEditData}
+                            isEditing={isEditing}
+                            setIsEditing={setIsEditing}
+                            handleSave={handleSave}
+                            handleShare={handleShare}
+                            handleContextMenu={handleContextMenu}
+                            setIsDeleteModalOpen={setIsDeleteModalOpen}
+                            onClose={onClose}
+                            radiusClass={radiusClass}
+                            isCyber={isCyber}
+                        />
 
                         {/* Tabs */}
                         <div className={`px-8 pt-6 border-b bg-white border-gray-100 dark:border-gray-800`}>
@@ -415,7 +295,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id as 'overview' | 'history' | 'insights')}
-                                        className={`pb-4 text-[10px] font-black uppercase tracking-[0.2em] relative transition-all ${activeTab === tab.id
+                                        className={`pb-4 text-xxs font-black uppercase tracking-[0.2em] relative transition-all ${activeTab === tab.id
                                             ? (isCyber ? 'text-primary-400' : 'text-primary-600')
                                             : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
                                             }`}
@@ -459,7 +339,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                                 <div className={`w-12 h-12 ${radiusClass} ${action.color} flex items-center justify-center shadow-lg transition-all group-hover:scale-110 group-hover:rotate-3 outline outline-4 outline-transparent hover:outline-white/20`}>
                                                     <action.icon className="w-6 h-6" />
                                                 </div>
-                                                <span className={`text-[10px] font-black uppercase tracking-widest transition-colors ${isCyber ? 'text-primary-300' : 'text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-200'}`}>
+                                                <span className={`text-xxs font-black uppercase tracking-widest transition-colors ${isCyber ? 'text-primary-300' : 'text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-200'}`}>
                                                     {action.label}
                                                 </span>
                                             </button>
@@ -467,49 +347,12 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                     </div>
 
                                     {/* Yield Performance */}
-                                    <section>
-                                        <div className="flex items-center justify-between mb-6">
-                                            <h3 className={`text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2 text-gray-400`}>
-                                                <TrendingUp className={`w-4 h-4 text-primary-500`} />
-                                                {t('viz_yield_trends')}
-                                            </h3>
-                                            <Badge variant="success" size="sm">{t('viz_growth_positive')}</Badge>
-                                        </div>
-                                        <div className={`h-48 w-full ${radiusClass} p-4 border bg-gray-50/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800`}>
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <AreaChart data={farmer.yieldHistory || []}>
-                                                    <defs>
-                                                        <linearGradient id="colorYield" x1="0" y1="0" x2="0" y2="1">
-                                                            <stop offset="5%" stopColor={isCyber ? "#4fd1c5" : "#22c55e"} stopOpacity={0.3} />
-                                                            <stop offset="95%" stopColor={isCyber ? "#4fd1c5" : "#22c55e"} stopOpacity={0} />
-                                                        </linearGradient>
-                                                    </defs>
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isCyber ? "rgba(79, 209, 197, 0.1)" : "#E5E7EB"} />
-                                                    <XAxis dataKey="month" hide />
-                                                    <YAxis hide />
-                                                    <Tooltip
-                                                        contentStyle={{
-                                                            borderRadius: isModern ? '16px' : '0px',
-                                                            border: 'none',
-                                                            backgroundColor: isCyber ? 'rgba(0,0,0,0.8)' : undefined,
-                                                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                                                            fontSize: '12px',
-                                                            fontWeight: 'bold',
-                                                            color: isCyber ? '#fff' : undefined
-                                                        }}
-                                                    />
-                                                    <Area
-                                                        type="monotone"
-                                                        dataKey="yield"
-                                                        stroke={isCyber ? "#4fd1c5" : "#22c55e"}
-                                                        strokeWidth={3}
-                                                        fillOpacity={1}
-                                                        fill="url(#colorYield)"
-                                                    />
-                                                </AreaChart>
-                                            </ResponsiveContainer>
-                                        </div>
-                                    </section>
+                                    <FarmerYieldChart
+                                        farmer={farmer}
+                                        radiusClass={radiusClass}
+                                        isCyber={isCyber}
+                                        isModern={isModern}
+                                    />
 
                                     <div className="grid grid-cols-2 gap-6">
                                         {/* Crops Section */}
@@ -575,7 +418,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                             </div>
                                             {isEditing && (
                                                 <div className="mt-4">
-                                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Status</label>
+                                                    <label className="text-xxs font-black uppercase tracking-widest text-gray-400 block mb-1">Status</label>
                                                     <Select
                                                         value={editData.status || 'Active'}
                                                         onChange={(e) => setEditData({ ...editData, status: e.target.value })}
@@ -593,67 +436,12 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                     </div>
 
                                     {/* Visit Timeline */}
-                                    <section>
-                                        <h3 className={`text-sm font-black uppercase tracking-[0.2em] mb-6 flex items-center gap-2 text-gray-400`}>
-                                            <Clock className="w-4 h-4 text-purple-500" />
-                                            {t('nav_visits')}
-                                        </h3>
-                                        <div className="space-y-4">
-                                            {visits.length > 0 ? visits.map((visit, i) => (
-                                                <div key={visit.id || i} className="relative pl-8 group">
-                                                    {/* Line */}
-                                                    {i !== visits.length - 1 && (
-                                                        <div className={`absolute left-3 top-6 bottom-[-16px] w-0.5 transition-colors ${isCyber ? 'bg-primary-500/30' : 'bg-gray-100 dark:bg-gray-800 group-hover:bg-primary-500'}`} />
-                                                    )}
-                                                    {/* Dot */}
-                                                    <div className={`absolute left-0 top-1.5 w-6 h-6 rounded-full border-4 shadow-md border-white dark:border-gray-900
-                                                         ${visit.status === 'completed' ? (isCyber ? 'bg-primary-500 neon-glow-primary' : 'bg-primary-500') : 'bg-accent-500'}`} />
-
-                                                    <div
-                                                        className={`p-4 ${radiusClass} border transition-all cursor-pointer ${isCyber ? 'bg-primary-500/5 hover:border-primary-500/30'
-                                                                : 'bg-gray-50/50 dark:bg-gray-800/30 border-gray-100 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-800'
-                                                            }`}
-                                                    >
-                                                        <div className="flex justify-between items-start mb-1">
-                                                            <span className={`text-xs font-black uppercase tracking-tight text-gray-900 dark:text-white`}>
-                                                                {visit.visit_type}
-                                                            </span>
-                                                            <span className="text-[10px] font-bold text-gray-400">
-                                                                {new Date(visit.scheduled_at).toLocaleDateString()}
-                                                            </span>
-                                                        </div>
-                                                        <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed italic">
-                                                            “{visit.reason || t('visit_routine_inspection')}”
-                                                        </p>
-                                                        {visit.status === 'scheduled' && (
-                                                            <div className="flex gap-2 mt-3">
-                                                                <Button
-                                                                    size="sm"
-                                                                    onClick={() => handleUpdateVisitStatus(visit.id, 'completed')}
-                                                                    className="bg-green-500/10 hover:bg-green-500/20 text-green-600 dark:text-green-400 text-[9px] font-black uppercase tracking-widest border border-green-500/20"
-                                                                >
-                                                                    Complete
-                                                                </Button>
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="danger"
-                                                                    onClick={() => handleUpdateVisitStatus(visit.id, 'cancelled')}
-                                                                    className="bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-[9px] font-black uppercase tracking-widest border border-red-500/20"
-                                                                >
-                                                                    Cancel
-                                                                </Button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            )) : (
-                                                <div className={`p-8 text-center ${radiusClass} border border-dashed bg-gray-50/50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700`}>
-                                                    <Calendar className={`w-8 h-8 mx-auto mb-2 text-gray-300`} />
-                                                    <p className={`text-xs font-bold uppercase tracking-widest text-gray-400`}>{t('visit_no_history')}</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </section>
+                                    <FarmerVisitTimeline
+                                        visits={visits}
+                                        handleUpdateVisitStatus={handleUpdateVisitStatus}
+                                        radiusClass={radiusClass}
+                                        isCyber={isCyber}
+                                    />
                                 </>
                             ) : activeTab === 'history' ? (
                                 <section className="space-y-6">
@@ -680,7 +468,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                                                 }`}>
                                                                 {log.type}
                                                             </span>
-                                                            <span className="text-[10px] text-gray-400">{log.date}</span>
+                                                            <span className="text-xxs text-gray-400">{log.date}</span>
                                                         </div>
                                                         <span className="text-[8px] font-black uppercase tracking-widest text-emerald-500">{log.status}</span>
                                                     </div>
@@ -690,7 +478,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                                 </div>
                                             ))
                                         ) : (
-                                            <div className="text-center py-10 text-gray-500 uppercase text-[10px] font-bold tracking-widest">
+                                            <div className="text-center py-10 text-gray-500 uppercase text-xxs font-bold tracking-widest">
                                                 No interaction history found
                                             </div>
                                         )}
@@ -708,7 +496,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                     <Clock className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <p className={`text-[10px] font-black uppercase tracking-widest text-gray-400`}>{t('visit_next_scheduled')}</p>
+                                    <p className={`text-xxs font-black uppercase tracking-widest text-gray-400`}>{t('visit_next_scheduled')}</p>
                                     <p className={`text-sm font-bold text-gray-900 dark:text-white`}>
                                         {nextScheduledVisit
                                             ? new Date(nextScheduledVisit.scheduled_at).toLocaleDateString()
@@ -782,21 +570,6 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                     </div>
                 </motion.div>
             )}
-            <ConfirmModal
-                key="delete-confirm-modal"
-                isOpen={showDeleteConfirm}
-                onClose={() => setShowDeleteConfirm(false)}
-                onConfirm={async () => {
-                    setShowDeleteConfirm(false);
-                    const { removeFarmer } = useAppStore.getState();
-                    await removeFarmer(farmer.id);
-                    onClose();
-                }}
-                title="Delete Farmer"
-                message={`Are you sure you want to delete ${farmer.firstName} ${farmer.lastName}? This action cannot be undone.`}
-                variant="danger"
-                confirmText="Delete"
-            />
         </AnimatePresence>
     );
 };

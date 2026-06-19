@@ -133,7 +133,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
             <div className="space-y-6">
               {/* Access Settings */}
               <div className="space-y-4">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Access Level</label>
+                <label className="text-xxs font-black text-gray-400 uppercase tracking-[0.2em]">Access Level</label>
                 <div className="grid grid-cols-1 gap-3">
                   {[
                     { id: 'restricted', label: 'Restricted', desc: 'Only specified users can access', icon: Shield },
@@ -164,7 +164,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               {/* Expiration Settings */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-1.5">
+                  <label className="text-xxs font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-1.5">
                     <Clock className="w-3 h-3" /> Expiration
                   </label>
                   <select
@@ -179,7 +179,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-1.5">
+                  <label className="text-xxs font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-1.5">
                     <Calendar className="w-3 h-3" /> Permissions
                   </label>
                   <button
@@ -221,7 +221,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Shareable URL</label>
+                <label className="text-xxs font-black text-gray-400 uppercase tracking-[0.2em]">Shareable URL</label>
                 <div className="relative">
                   <input
                     readOnly

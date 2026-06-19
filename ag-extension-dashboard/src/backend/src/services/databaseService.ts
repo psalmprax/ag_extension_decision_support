@@ -62,7 +62,7 @@ export async function initializeDatabase(): Promise<void> {
  * Seeds the database with initial "Real-First" data for the dashboard.
  * Only seeds in development/test environments, never in production.
  */
-export async function seedInitialData(): Promise<void> {
+async function seedInitialData(): Promise<void> {
   if (!pool) return;
 
   const isProduction = process.env.NODE_ENV === 'production';
@@ -165,15 +165,7 @@ export async function seedInitialData(): Promise<void> {
 
 async function syncPrismaSchema(): Promise<void> {
   try {
-    // Only run schema sync in development/test environments
-    // In production, this must be run manually as part of deployment pipeline
     const isProduction = process.env.NODE_ENV === 'production';
-    if (isProduction) {
-      logger.info('Skipping Prisma schema sync in production (run manually during deployment)');
-      return;
-    }
-
-    logger.info('Syncing Prisma schema with database (development only)...');
     const { PrismaClient } = await import('@prisma/client');
     const prisma = new PrismaClient({
       datasourceUrl: process.env.DATABASE_URL,
@@ -181,19 +173,28 @@ async function syncPrismaSchema(): Promise<void> {
     await prisma.$executeRaw`SELECT 1`; // Test connection
     await prisma.$disconnect();
 
-    // Only run schema push in development, without dangerous flags
-    execSync('npx prisma db push', {
+    const cmd = isProduction ? 'npx prisma migrate deploy' : 'npx prisma db push';
+    logger.info(`Running database schema sync: ${cmd}`);
+    const output = execSync(cmd, {
       stdio: 'pipe',
       env: { ...process.env }
     });
-    logger.info('Prisma schema synced successfully');
+    logger.info('Database schema sync output:\n' + output.toString());
   } catch (error) {
-    logger.warn('Prisma schema sync skipped:', error);
+    logger.warn('Prisma schema sync / migration failed:', error);
   }
 }
 
 export async function createTables(): Promise<void> {
   if (!pool) return;
+
+  // Enable vector extension if available in database
+  try {
+    await pool.query("CREATE EXTENSION IF NOT EXISTS vector");
+    logger.info('pgvector extension enabled or checked');
+  } catch (err) {
+    logger.debug('pgvector extension check failed (might not be superuser or supported): ' + err);
+  }
 
   let hasVector = false;
   try {
@@ -237,245 +238,7 @@ export async function createTables(): Promise<void> {
     $$ LANGUAGE plpgsql IMMUTABLE;
     `;
 
-  const createTablesSQL = `
-    -- Users table
-    CREATE TABLE IF NOT EXISTS users (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      email VARCHAR(255) UNIQUE NOT NULL,
-      password_hash VARCHAR(255) NOT NULL,
-      first_name VARCHAR(100) NOT NULL,
-      last_name VARCHAR(100) NOT NULL,
-      role VARCHAR(50) NOT NULL DEFAULT 'extension_officer',
-      region VARCHAR(100),
-      phone VARCHAR(20),
-      avatar_url TEXT,
-      is_active BOOLEAN DEFAULT true,
-      reset_token VARCHAR(255),
-      reset_token_expires TIMESTAMP,
-      created_at TIMESTAMP DEFAULT NOW(),
-      updated_at TIMESTAMP DEFAULT NOW()
-    );
-
-    -- Ensure reset columns exist for existing databases
-    ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255);
-    ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expires TIMESTAMP;
-
-    -- Farmers table
-    CREATE TABLE IF NOT EXISTS farmers (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      user_id UUID REFERENCES users(id),
-      first_name VARCHAR(100) NOT NULL,
-      last_name VARCHAR(100) NOT NULL,
-      phone VARCHAR(20),
-      location VARCHAR(255),
-      village VARCHAR(100),
-      district VARCHAR(100),
-      region VARCHAR(100),
-      country VARCHAR(100) DEFAULT 'Kenya',
-      farm_size_hectares DECIMAL(10, 2),
-      crops TEXT[],
-      language_preference VARCHAR(20) DEFAULT 'en',
-      soil_moisture DECIMAL(5, 2),
-      temperature DECIMAL(5, 2),
-      ph_level DECIMAL(4, 2),
-      ai_confidence DECIMAL(5, 2),
-      created_at TIMESTAMP DEFAULT NOW(),
-      updated_at TIMESTAMP DEFAULT NOW()
-    );
-
-    -- Fields table
-    CREATE TABLE IF NOT EXISTS fields (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      farmer_id UUID REFERENCES farmers(id) ON DELETE CASCADE,
-      name VARCHAR(100) NOT NULL,
-      area_hectares DECIMAL(10, 2),
-      soil_type VARCHAR(50),
-      soil_ph DECIMAL(4, 2),
-      boundary_coordinates JSONB,
-      is_active BOOLEAN DEFAULT true,
-      created_at TIMESTAMP DEFAULT NOW(),
-      updated_at TIMESTAMP DEFAULT NOW()
-    );
-
-    -- Crop cycles table
-    CREATE TABLE IF NOT EXISTS crop_cycles (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      field_id UUID REFERENCES fields(id) ON DELETE CASCADE,
-      crop_name VARCHAR(100) NOT NULL,
-      variety VARCHAR(100),
-      status VARCHAR(50) DEFAULT 'planned',
-      planting_date TIMESTAMP,
-      expected_harvest_date TIMESTAMP,
-      actual_harvest_date TIMESTAMP,
-      yield_kg DECIMAL(10, 2),
-      notes TEXT,
-      created_at TIMESTAMP DEFAULT NOW(),
-      updated_at TIMESTAMP DEFAULT NOW()
-    );
-
-    -- Visits table
-    CREATE TABLE IF NOT EXISTS visits (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      officer_id UUID REFERENCES users(id),
-      farmer_id UUID REFERENCES farmers(id),
-      visit_type VARCHAR(50) DEFAULT 'routine',
-      status VARCHAR(50) DEFAULT 'scheduled',
-      scheduled_at TIMESTAMP,
-      started_at TIMESTAMP,
-      completed_at TIMESTAMP,
-      duration_minutes INTEGER,
-      location_lat DECIMAL(10, 8),
-      location_lng DECIMAL(11, 8),
-      notes TEXT,
-      outcomes TEXT,
-      follow_up_required BOOLEAN DEFAULT false,
-      follow_up_date DATE,
-      created_at TIMESTAMP DEFAULT NOW(),
-      updated_at TIMESTAMP DEFAULT NOW()
-    );
-
-    -- Knowledge articles table
-    CREATE TABLE IF NOT EXISTS knowledge_articles (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      title VARCHAR(255) NOT NULL,
-      content TEXT NOT NULL,
-      summary TEXT,
-      category VARCHAR(100),
-      tags TEXT[],
-      crops TEXT[],
-      regions TEXT[],
-      source VARCHAR(255),
-      source_url TEXT,
-      embedding float8[],
-      created_at TIMESTAMP DEFAULT NOW(),
-      updated_at TIMESTAMP DEFAULT NOW()
-    );
-
-    -- Chat conversations table
-    CREATE TABLE IF NOT EXISTS chat_conversations (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      farmer_id UUID REFERENCES farmers(id),
-      officer_id UUID REFERENCES users(id),
-      language VARCHAR(20) DEFAULT 'en',
-      status VARCHAR(50) DEFAULT 'active',
-      started_at TIMESTAMP DEFAULT NOW(),
-      ended_at TIMESTAMP,
-      satisfaction_score INTEGER,
-      created_at TIMESTAMP DEFAULT NOW()
-    );
-
-    -- Chat messages table
-    CREATE TABLE IF NOT EXISTS chat_messages (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      conversation_id UUID REFERENCES chat_conversations(id),
-      role VARCHAR(20) NOT NULL,
-      content TEXT NOT NULL,
-      language VARCHAR(20),
-      translated_content TEXT,
-      intent VARCHAR(100),
-      entities JSONB,
-      is_voice BOOLEAN DEFAULT false,
-      audio_url TEXT,
-      created_at TIMESTAMP DEFAULT NOW()
-    );
-
-    -- Reports table
-    CREATE TABLE IF NOT EXISTS reports (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      type VARCHAR(50) NOT NULL,
-      title VARCHAR(255) NOT NULL,
-      content JSONB NOT NULL,
-      generated_by UUID REFERENCES users(id),
-      status VARCHAR(50) DEFAULT 'draft',
-      created_at TIMESTAMP DEFAULT NOW(),
-      updated_at TIMESTAMP DEFAULT NOW()
-    );
-
-    -- Analytics events table
-    CREATE TABLE IF NOT EXISTS analytics_events (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      event_type VARCHAR(100) NOT NULL,
-      user_id UUID REFERENCES users(id),
-      farmer_id UUID REFERENCES farmers(id),
-      metadata JSONB,
-      created_at TIMESTAMP DEFAULT NOW()
-    );
-
-    -- Alerts table
-    CREATE TABLE IF NOT EXISTS alerts (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      type VARCHAR(50) NOT NULL,
-      severity VARCHAR(20) DEFAULT 'medium',
-      title VARCHAR(255) NOT NULL,
-      description TEXT,
-      location VARCHAR(255),
-      affected_farmers UUID[],
-      is_active BOOLEAN DEFAULT true,
-      notification_sent BOOLEAN DEFAULT false,
-      alert_notification_sent BOOLEAN DEFAULT false,
-      triggered_at TIMESTAMP DEFAULT NOW(),
-      resolved_at TIMESTAMP,
-      created_at TIMESTAMP DEFAULT NOW()
-    );
-
-    -- market_prices table
-    CREATE TABLE IF NOT EXISTS market_prices (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      crop VARCHAR(100) NOT NULL,
-      price VARCHAR(50) NOT NULL,
-      trend VARCHAR(20) NOT NULL,
-      updated_at TIMESTAMP DEFAULT NOW()
-    );
-
-    -- SMS history table
-    CREATE TABLE IF NOT EXISTS sms_history (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      sender_id UUID REFERENCES users(id),
-      recipient_phone VARCHAR(20) NOT NULL,
-      farmer_id UUID REFERENCES farmers(id),
-      message TEXT NOT NULL,
-      status VARCHAR(50) DEFAULT 'pending',
-      provider VARCHAR(50),
-      created_at TIMESTAMP DEFAULT NOW()
-    );
-
-    -- Tropical knowledge sources table
-    CREATE TABLE IF NOT EXISTS tropical_knowledge_sources (
-      id VARCHAR(100) PRIMARY KEY,
-      name VARCHAR(255) NOT NULL,
-      provider VARCHAR(255) NOT NULL,
-      type VARCHAR(50) NOT NULL,
-      license TEXT,
-      url TEXT NOT NULL,
-      sync_mode VARCHAR(50) NOT NULL,
-      topics TEXT[],
-      crops TEXT[],
-      regions TEXT[],
-      description TEXT,
-      priority VARCHAR(20) DEFAULT 'medium',
-      is_active BOOLEAN DEFAULT true,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    );
-
-    -- Search cache table for RAG answer caching
-    CREATE TABLE IF NOT EXISTS search_cache (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      query_text TEXT NOT NULL,
-      normalized_query TEXT NOT NULL,
-      answer TEXT,
-      context_used JSONB,
-      visuals JSONB,
-      embedding float8[],
-      created_at TIMESTAMP DEFAULT NOW()
-    );
-    -- Add normalized_query column if table already existed without it (migration safety)
-    DO $$ BEGIN
-      IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'search_cache' AND column_name = 'normalized_query') THEN
-        ALTER TABLE search_cache ADD COLUMN normalized_query TEXT NOT NULL DEFAULT '';
-        UPDATE search_cache SET normalized_query = LOWER(TRIM(query_text)) WHERE normalized_query = '';
-      END IF;
-    END $$;
+  const setupVectorsSQL = `
     -- Convert embedding columns to pgvector native type if still float8[]
     DO $$ BEGIN
       IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'knowledge_articles' AND column_name = 'embedding' AND data_type = 'ARRAY') THEN
@@ -487,43 +250,11 @@ export async function createTables(): Promise<void> {
         ALTER TABLE search_cache ALTER COLUMN embedding TYPE vector(768) USING embedding::real[]::vector;
       END IF;
     END $$;
-    -- Unique index on normalized query for O(1) exact match lookups
-    CREATE UNIQUE INDEX IF NOT EXISTS idx_search_cache_normalized ON search_cache(normalized_query);
-
-    -- Knowledge search history table
-    CREATE TABLE IF NOT EXISTS knowledge_searches (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      user_id UUID REFERENCES users(id),
-      query TEXT NOT NULL,
-      category VARCHAR(100),
-      crop VARCHAR(100),
-      answer TEXT,
-      reasoning TEXT,
-      visuals JSONB,
-      created_at TIMESTAMP DEFAULT NOW()
-    );
-
-    -- Create indexes
-    CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-    CREATE INDEX IF NOT EXISTS idx_farmers_region ON farmers(region);
-    CREATE INDEX IF NOT EXISTS idx_visits_officer ON visits(officer_id);
-    CREATE INDEX IF NOT EXISTS idx_visits_farmer ON visits(farmer_id);
-    CREATE INDEX IF NOT EXISTS idx_fields_farmer ON fields(farmer_id);
-    CREATE INDEX IF NOT EXISTS idx_crop_cycles_field ON crop_cycles(field_id);
-    CREATE INDEX IF NOT EXISTS idx_knowledge_category ON knowledge_articles(category);
-    CREATE INDEX IF NOT EXISTS idx_conversations_farmer ON chat_conversations(farmer_id);
-    CREATE INDEX IF NOT EXISTS idx_messages_conversation ON chat_messages(conversation_id);
-    CREATE INDEX IF NOT EXISTS idx_analytics_events_type ON analytics_events(event_type);
-    CREATE INDEX IF NOT EXISTS idx_alerts_active ON alerts(is_active);
-    CREATE INDEX IF NOT EXISTS idx_sms_history_farmer ON sms_history(farmer_id);
-    CREATE INDEX IF NOT EXISTS idx_sms_history_created ON sms_history(created_at);
-    -- Knowledge search performance indexes
-    CREATE INDEX IF NOT EXISTS idx_knowledge_searches_user ON knowledge_searches(user_id, created_at DESC);
-    CREATE INDEX IF NOT EXISTS idx_search_cache_query ON search_cache(LOWER(TRIM(query_text)));
-    -- GIN index for full-text search on knowledge articles (avoids computing to_tsvector per row)
-    CREATE INDEX IF NOT EXISTS idx_knowledge_fts ON knowledge_articles USING gin(to_tsvector('english', title || ' ' || content));
-    -- GIN index on crops array for = ANY(crops) queries
-    CREATE INDEX IF NOT EXISTS idx_knowledge_crops ON knowledge_articles USING gin(crops);
+    DO $$ BEGIN
+      IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'knowledge_chunks' AND column_name = 'embedding' AND data_type = 'ARRAY') THEN
+        ALTER TABLE knowledge_chunks ALTER COLUMN embedding TYPE vector(768) USING embedding::real[]::vector;
+      END IF;
+    END $$;
   `;
 
   // IVFFlat indexes for pgvector similarity search (O(log n) vs O(n) sequential scan)
@@ -534,23 +265,28 @@ export async function createTables(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_search_cache_embedding_ivfflat
         ON search_cache USING ivfflat (embedding vector_cosine_ops)
         WITH (lists = 100);
+    CREATE INDEX IF NOT EXISTS idx_knowledge_chunks_embedding_ivfflat
+        ON knowledge_chunks USING ivfflat (embedding vector_cosine_ops)
+        WITH (lists = 100);
   `;
 
   try {
     await pool.query(cosineSimilaritySQL);
-    await pool.query(createTablesSQL);
-    // Create IVFFlat indexes (requires pgvector extension and data in tables)
-    try {
-      await pool.query(ivfflatIndexSQL);
-      logger.info('IVFFlat indexes created for vector similarity search');
-    } catch (ivfErr) {
-      logger.debug('IVFFlat index creation skipped (pgvector extension or tables not ready):', ivfErr);
+    if (hasVector) {
+      await pool.query(setupVectorsSQL);
+      try {
+        await pool.query(ivfflatIndexSQL);
+        logger.info('IVFFlat indexes created/verified for vector similarity search');
+      } catch (ivfErr) {
+        logger.debug('IVFFlat index creation/verification skipped:', ivfErr);
+      }
     }
-    logger.info('Database tables and functions created');
+    logger.info('Database custom vector functions and indexes provisioned');
   } catch (error) {
-    logger.warn('Error during database provisioning:', error);
+    logger.warn('Error during database custom provisioning:', error);
   }
 }
+
 
 export function getPool(): Pool | null {
   return pool;

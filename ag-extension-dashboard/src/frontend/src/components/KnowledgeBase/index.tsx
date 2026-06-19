@@ -228,7 +228,7 @@ export const KnowledgeBase: React.FC = () => {
                                             ) : (
                                                 <FileIcon className="w-4 h-4 text-primary-500" />
                                             )}
-                                            <span className="text-[10px] font-bold text-primary-700 dark:text-primary-300 max-w-[100px] truncate">{att.name}</span>
+                                            <span className="text-xxs font-bold text-primary-700 dark:text-primary-300 max-w-[100px] truncate">{att.name}</span>
                                             <button onClick={() => removeAttachment(i)} className="text-primary-400 hover:text-rose-500 transition-colors">
                                                 <X className="w-3 h-3" />
                                             </button>
@@ -342,7 +342,7 @@ export const KnowledgeBase: React.FC = () => {
                                                 <div key={i} className={`px-4 py-2 bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700/50 ${radiusClass} flex items-center gap-2 group hover:border-primary-500/50 transition-colors cursor-pointer`}>
                                                     <div className="w-2 h-2 bg-primary-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
                                                     <div className="flex flex-col">
-                                                        <span className="text-[10px] font-black text-gray-400 uppercase leading-none mb-1">Source</span>
+                                                        <span className="text-xxs font-black text-gray-400 uppercase leading-none mb-1">Source</span>
                                                         <span className="text-xs font-bold text-gray-700 dark:text-gray-300 max-w-[220px] truncate" title={ctx.metadata?.sourceUrl || ctx.metadata?.title || ''}>
                                                             {ctx.metadata?.title || `${ctx.metadata?.crop || 'General'} / ${ctx.metadata?.category || 'Expert Advice'}`}
                                                         </span>
@@ -372,7 +372,7 @@ export const KnowledgeBase: React.FC = () => {
                                                             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 max-w-[120px]">
                                                                 <div className="bg-amber-500 h-1.5 rounded-full" style={{ width: `${Math.round(cite.score * 100)}%` }}></div>
                                                             </div>
-                                                            <span className="text-[10px] font-bold text-gray-500">{Math.round(cite.score * 100)}% match</span>
+                                                            <span className="text-xxs font-bold text-gray-500">{Math.round(cite.score * 100)}% match</span>
                                                         </div>
                                                     </div>
                                                 ))}

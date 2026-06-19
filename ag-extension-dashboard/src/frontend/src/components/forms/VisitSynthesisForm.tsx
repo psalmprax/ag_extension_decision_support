@@ -137,13 +137,13 @@ export const VisitSynthesisForm: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase">{t('crop_health')}</p>
+                  <p className="text-xxs font-bold text-slate-400 uppercase">{t('crop_health')}</p>
                   <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${getStatusColor(result.cropHealthStatus)}`}>
                     {result.cropHealthStatus}
                   </span>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase">{t('follow_up')}</p>
+                  <p className="text-xxs font-bold text-slate-400 uppercase">{t('follow_up')}</p>
                   <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${result.followUpRequired ? 'text-rose-500 bg-rose-50' : 'text-emerald-500 bg-emerald-50'}`}>
                     {result.followUpRequired ? t('common_yes') : t('common_no')}
                   </span>

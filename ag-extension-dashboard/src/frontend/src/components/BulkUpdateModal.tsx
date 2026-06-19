@@ -99,7 +99,7 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
 
                             {/* Region */}
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
+                                <label className="text-xxs font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
                                     <MapPin className="w-3 h-3" />
                                     Region
                                 </label>
@@ -121,7 +121,7 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
 
                             {/* Language */}
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
+                                <label className="text-xxs font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
                                     <Languages className="w-3 h-3" />
                                     Language Preference
                                 </label>
@@ -139,7 +139,7 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
 
                             {/* Crops */}
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
+                                <label className="text-xxs font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
                                     <Sprout className="w-3 h-3" />
                                     Crop Types (Overrides existing)
                                 </label>

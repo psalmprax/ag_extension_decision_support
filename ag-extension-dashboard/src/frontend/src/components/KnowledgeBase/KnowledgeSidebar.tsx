@@ -72,7 +72,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
                 <div className="flex-1 overflow-y-auto scrollbar-hide space-y-6">
                     <div className="flex items-center gap-2 text-gray-400 px-2">
                         <History className="w-4 h-4" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Recent Search Retainer</span>
+                        <span className="text-xxs font-black uppercase tracking-widest">Recent Search Retainer</span>
                     </div>
 
                     <div className="space-y-2">
@@ -99,7 +99,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
                                             <p className="text-sm font-bold text-gray-700 dark:text-gray-200 truncate mb-1">
                                                 {h.queryText}
                                             </p>
-                                            <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                            <div className="flex items-center gap-2 text-xxs font-black text-gray-400 uppercase tracking-widest">
                                                {h.crop && (
                                                    <span className="flex items-center gap-1 text-primary-500">
                                                        <Target className="w-2.5 h-2.5" />
@@ -132,7 +132,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
                         <p className="text-sm font-black text-gray-900 dark:text-white truncate">
                             {user ? `${user.firstName} ${user.lastName}` : 'User'}
                         </p>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">
+                        <p className="text-xxs font-bold text-gray-400 uppercase tracking-[0.2em]">
                             {user?.role?.replace('_', ' ') || 'Member'}
                         </p>
                     </div>

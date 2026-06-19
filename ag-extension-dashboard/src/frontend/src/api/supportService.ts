@@ -30,8 +30,3 @@ export const createSupportTicket = async (params: {
     const { data } = await apiClient.post('/support/tickets', params);
     return data;
 };
-
-export const fetchMyTickets = async (): Promise<{ success: boolean; data: SupportTicket[] }> => {
-    const { data } = await apiClient.get('/support/tickets');
-    return data;
-};

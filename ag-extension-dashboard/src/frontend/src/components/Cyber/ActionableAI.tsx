@@ -138,10 +138,10 @@ const ActionableAI = () => {
                 <div className="relative z-10">
                     <div className="flex items-center gap-3 mb-4">
                         <div className="px-3 py-1 bg-primary-500/20 rounded-full border border-primary-500/30">
-                            <span className="text-[10px] font-black text-primary-400 uppercase tracking-widest">Priority Alpha</span>
+                            <span className="text-xxs font-black text-primary-400 uppercase tracking-widest">Priority Alpha</span>
                         </div>
                         <div className="h-px w-12 bg-white/20" />
-                        <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Real-time Decision Matrix</span>
+                        <span className="text-xxs font-bold text-white/40 uppercase tracking-widest">Real-time Decision Matrix</span>
                     </div>
                     <h2 className="text-4xl font-black text-white uppercase tracking-[0.2em] mb-4">Actionable AI</h2>
                     <p className="max-w-2xl text-white/60 text-sm leading-relaxed font-medium capitalize">
@@ -163,7 +163,7 @@ const ActionableAI = () => {
                                     </div>
                                 ))}
                             </div>
-                            <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">3 Satellite Nodes Active</span>
+                            <span className="text-xxs font-black text-white/60 uppercase tracking-widest">3 Satellite Nodes Active</span>
                         </div>
                         <IsometricFarmOverview />
                     </div>
@@ -196,7 +196,7 @@ const ActionableAI = () => {
                             ) : (
                                 <div className="p-6 text-center">
                                     <Database className="w-8 h-8 text-white/20 mx-auto mb-2" />
-                                    <p className="text-[10px] text-white/40 font-bold uppercase">No market data available</p>
+                                    <p className="text-xxs text-white/40 font-bold uppercase">No market data available</p>
                                 </div>
                             )}
                         </div>
@@ -222,7 +222,7 @@ const ActionableAI = () => {
                                             />
                                         ))}
                                     </div>
-                                    <div className="mt-4 flex justify-between items-center text-[10px] font-bold text-white/40 uppercase">
+                                    <div className="mt-4 flex justify-between items-center text-xxs font-bold text-white/40 uppercase">
                                         <span>Yield History</span>
                                         <span className="text-white">{farmerStats?.yieldHistory?.length || 0} cycles recorded</span>
                                     </div>
@@ -231,7 +231,7 @@ const ActionableAI = () => {
                                 <div className="h-24 flex items-center justify-center">
                                     <div className="text-center">
                                         <TrendingUp className="w-8 h-8 text-white/20 mx-auto mb-2" />
-                                        <p className="text-[10px] text-white/40 font-bold uppercase">No yield data recorded yet</p>
+                                        <p className="text-xxs text-white/40 font-bold uppercase">No yield data recorded yet</p>
                                     </div>
                                 </div>
                             )}
@@ -254,15 +254,15 @@ const ActionableAI = () => {
                             <div className="space-y-3">
                                 {alerts.slice(0, 2).map((alert) => (
                                     <div key={alert.id} className="p-3 bg-error-500/5 rounded-xl border border-error-500/10">
-                                        <p className="text-[11px] font-black text-white uppercase tracking-tight mb-1">{alert.title}</p>
-                                        <p className="text-[10px] text-white/60 leading-relaxed font-medium lowercase">{alert.description}</p>
+                                        <p className="text-xs-plus font-black text-white uppercase tracking-tight mb-1">{alert.title}</p>
+                                        <p className="text-xxs text-white/60 leading-relaxed font-medium lowercase">{alert.description}</p>
                                     </div>
                                 ))}
                             </div>
                         ) : (
                             <div className="p-4 text-center">
                                 <AlertTriangle className="w-6 h-6 text-white/20 mx-auto mb-2" />
-                                <p className="text-[10px] text-white/40 font-bold uppercase">Alert data source currently unavailable</p>
+                                <p className="text-xxs text-white/40 font-bold uppercase">Alert data source currently unavailable</p>
                             </div>
                         )}
                     </div>
@@ -280,17 +280,17 @@ const ActionableAI = () => {
                                 <div className="text-center p-3 bg-white/5 rounded-2xl border border-white/5">
                                     <ThermometerSun className="w-4 h-4 text-orange-400 mx-auto mb-2" />
                                     <div className="text-[8px] font-black text-white/40 uppercase mb-1">Temp</div>
-                                    <div className="text-[11px] font-black text-white">{weatherData.temperature ?? '—'}°C</div>
+                                    <div className="text-xs-plus font-black text-white">{weatherData.temperature ?? '—'}°C</div>
                                 </div>
                                 <div className="text-center p-3 bg-white/5 rounded-2xl border border-white/5">
                                     <Droplets className="w-4 h-4 text-blue-400 mx-auto mb-2" />
                                     <div className="text-[8px] font-black text-white/40 uppercase mb-1">Humid</div>
-                                    <div className="text-[11px] font-black text-white">{weatherData.humidity ?? '—'}%</div>
+                                    <div className="text-xs-plus font-black text-white">{weatherData.humidity ?? '—'}%</div>
                                 </div>
                                 <div className="text-center p-3 bg-white/5 rounded-2xl border border-white/5">
                                     <Wind className="w-4 h-4 text-primary-400 mx-auto mb-2" />
                                     <div className="text-[8px] font-black text-white/40 uppercase mb-1">Wind</div>
-                                    <div className="text-[11px] font-black text-white">{weatherData.windSpeed ?? '—'}km/h</div>
+                                    <div className="text-xs-plus font-black text-white">{weatherData.windSpeed ?? '—'}km/h</div>
                                 </div>
                             </div>
                         ) : weatherLoading ? (
@@ -300,7 +300,7 @@ const ActionableAI = () => {
                         ) : (
                             <div className="text-center py-4">
                                 <Globe className="w-6 h-6 text-white/20 mx-auto mb-2" />
-                                <p className="text-[10px] text-white/40 font-bold uppercase">Weather data unavailable</p>
+                                <p className="text-xxs text-white/40 font-bold uppercase">Weather data unavailable</p>
                             </div>
                         )}
                     </div>
@@ -308,7 +308,7 @@ const ActionableAI = () => {
                     {/* Real Economic Performance */}
                     <div className="bg-gradient-to-br from-primary-600/20 to-secondary-600/20 border border-white/10 rounded-3xl p-8 backdrop-blur-md text-center">
                         <BarChart3 className="w-12 h-12 text-primary-400 mx-auto mb-4 opacity-40" />
-                        <h4 className="text-[10px] font-black text-primary-400 uppercase tracking-[0.3em] mb-4">Performance Index</h4>
+                        <h4 className="text-xxs font-black text-primary-400 uppercase tracking-[0.3em] mb-4">Performance Index</h4>
                         {performanceData?.metrics ? (
                             <div className="flex items-center justify-center gap-4">
                                 <div className="text-5xl font-black text-white tracking-tighter">
@@ -318,7 +318,7 @@ const ActionableAI = () => {
                                     <span className="block text-[8px] font-black text-green-400 uppercase">
                                         {performanceData.metrics.satisfactionScore || 0}/5 satisfaction
                                     </span>
-                                    <span className="block text-[10px] font-black text-white/60 uppercase">Resolution Rate</span>
+                                    <span className="block text-xxs font-black text-white/60 uppercase">Resolution Rate</span>
                                 </div>
                             </div>
                         ) : (
@@ -327,7 +327,7 @@ const ActionableAI = () => {
                         <button
                             onClick={handleGenerateStrategy}
                             disabled={isGenerating}
-                            className="w-full mt-8 py-4 bg-primary-500 rounded-2xl font-black text-[10px] text-white uppercase tracking-[0.2em] shadow-lg shadow-primary-500/20 hover:bg-primary-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                            className="w-full mt-8 py-4 bg-primary-500 rounded-2xl font-black text-xxs text-white uppercase tracking-[0.2em] shadow-lg shadow-primary-500/20 hover:bg-primary-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                         >
                             {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                             {isGenerating ? 'Generating...' : 'Generate Full Strategy'}

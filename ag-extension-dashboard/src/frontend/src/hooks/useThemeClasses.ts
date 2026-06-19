@@ -27,7 +27,7 @@ export function useThemeClasses() {
             : 'bg-white dark:bg-slate-950 border-b-2 border-slate-100 dark:border-slate-800';
         const btnClass = isModern
             ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_0_20px_rgba(34,211,238,0.2)]'
-            : 'rounded-none border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-mono text-[10px] uppercase tracking-widest';
+            : 'rounded-none border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-mono text-xxs uppercase tracking-widest';
         const headingClass = isModern
             ? 'text-cyan-900 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-white dark:via-cyan-200 dark:to-emerald-200 dark:drop-shadow-[0_0_15px_rgba(34,211,238,0.4)] font-black tracking-tighter'
             : 'text-slate-900 dark:text-white font-bold';

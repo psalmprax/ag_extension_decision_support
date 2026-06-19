@@ -40,7 +40,7 @@ export interface I18nConfig {
 }
 
 // Default supported languages
-export const SUPPORTED_LANGUAGES: LanguageConfig[] = [
+const SUPPORTED_LANGUAGES: LanguageConfig[] = [
     { code: 'en', name: 'English', nativeName: 'English', isRTL: false },
     { code: 'es', name: 'Spanish', nativeName: 'Español', isRTL: false },
     { code: 'fr', name: 'French', nativeName: 'Français', isRTL: false },
@@ -263,35 +263,35 @@ let i18nConfig: I18nConfig = { ...DEFAULT_I18N_CONFIG };
 /**
  * Set custom i18n configuration
  */
-export function setI18nConfig(config: Partial<I18nConfig>): void {
+function setI18nConfig(config: Partial<I18nConfig>): void {
     i18nConfig = { ...DEFAULT_I18N_CONFIG, ...config };
 }
 
 /**
  * Get current i18n configuration
  */
-export function getI18nConfig(): I18nConfig {
+function getI18nConfig(): I18nConfig {
     return i18nConfig;
 }
 
 /**
  * Get supported languages
  */
-export function getSupportedLanguages(): LanguageConfig[] {
+function getSupportedLanguages(): LanguageConfig[] {
     return i18nConfig.languages;
 }
 
 /**
  * Get language config by code
  */
-export function getLanguageConfig(code: string): LanguageConfig | undefined {
+function getLanguageConfig(code: string): LanguageConfig | undefined {
     return i18nConfig.languages.find(lang => lang.code === code);
 }
 
 /**
  * Check if a language is supported
  */
-export function isSupportedLanguage(code: string): boolean {
+function isSupportedLanguage(code: string): boolean {
     return i18nConfig.languages.some(lang => lang.code === code);
 }
 

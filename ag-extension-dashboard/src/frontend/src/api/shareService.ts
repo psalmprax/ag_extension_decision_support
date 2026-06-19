@@ -26,13 +26,3 @@ export const createShare = async (params: CreateShareParams): Promise<ShareRespo
     const { data } = await apiClient.post<ShareResponse>('/shares', params);
     return data;
 };
-
-export const revokeShare = async (shareId: string): Promise<{ success: boolean }> => {
-    const { data } = await apiClient.delete(`/shares/${shareId}`);
-    return data;
-};
-
-export const getShareActivity = async (shareId: string): Promise<{ success: boolean; data: unknown[] }> => {
-    const { data } = await apiClient.get(`/shares/${shareId}/activity`);
-    return data;
-};

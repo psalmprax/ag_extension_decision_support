@@ -223,7 +223,7 @@ export function DemoPage() {
                                             <div className="mt-5 pt-3 border-t border-white/5 flex items-center justify-between flex-wrap gap-3">
                                                 <div className="flex flex-wrap gap-2">
                                                     {presets[selectedPreset].citations.map((cite, i) => (
-                                                        <span key={i} className="px-2.5 py-1 rounded-md bg-white/5 text-[10px] font-mono text-stone-400 border border-white/5">
+                                                        <span key={i} className="px-2.5 py-1 rounded-md bg-white/5 text-xxs font-mono text-stone-400 border border-white/5">
                                                             {cite}
                                                         </span>
                                                     ))}
@@ -246,7 +246,7 @@ export function DemoPage() {
                             <div className="p-5 rounded-xl bg-black/30 border border-white/5 text-center space-y-5">
                                 <div className="flex justify-between items-center text-xs">
                                     <span className="font-mono text-stone-400">Audio Note Transcript Preview:</span>
-                                    <span className="text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full font-mono text-[10px]">Offline Recorded</span>
+                                    <span className="text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full font-mono text-xxs">Offline Recorded</span>
                                 </div>
                                 <p className="text-sm italic text-stone-300 leading-relaxed max-w-lg mx-auto">
                                     "Checked Emmanuel Mwangi's farm in Machakos. The beans look stable, but the maize leaves show significant light green discoloration. Recommended immediate check for nitrogen deficit. Dispatched a guidance advice to prepare fertilizer dressings."
@@ -295,11 +295,11 @@ export function DemoPage() {
                                         </p>
                                         <div className="grid grid-cols-2 gap-4 text-xs">
                                             <div>
-                                                <p className="text-stone-500 font-mono text-[10px] uppercase mb-0.5">Farmer</p>
+                                                <p className="text-stone-500 font-mono text-xxs uppercase mb-0.5">Farmer</p>
                                                 <p className="font-semibold">{synthesisOutput.farmer}</p>
                                             </div>
                                             <div>
-                                                <p className="text-stone-500 font-mono text-[10px] uppercase mb-0.5">Soil Assessment</p>
+                                                <p className="text-stone-500 font-mono text-xxs uppercase mb-0.5">Soil Assessment</p>
                                                 <p className="font-semibold text-amber-400">{synthesisOutput.status}</p>
                                             </div>
                                         </div>
@@ -317,14 +317,14 @@ export function DemoPage() {
                         <div className="space-y-6">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="p-4 rounded-xl bg-black/30 border border-white/5">
-                                    <span className="text-[10px] uppercase font-mono text-stone-500 block mb-1">Bulk Density</span>
+                                    <span className="text-xxs uppercase font-mono text-stone-500 block mb-1">Bulk Density</span>
                                     <span className="text-2xl font-bold font-mono text-cyan-400">1.25 kg/dm3</span>
-                                    <span className="text-[10px] text-emerald-400 block mt-1.5">Optimal aeration tier</span>
+                                    <span className="text-xxs text-emerald-400 block mt-1.5">Optimal aeration tier</span>
                                 </div>
                                 <div className="p-4 rounded-xl bg-black/30 border border-white/5">
-                                    <span className="text-[10px] uppercase font-mono text-stone-500 block mb-1">Organic Carbon</span>
+                                    <span className="text-xxs uppercase font-mono text-stone-500 block mb-1">Organic Carbon</span>
                                     <span className="text-2xl font-bold font-mono text-amber-400">22 g/kg</span>
-                                    <span className="text-[10px] text-amber-400 block mt-1.5">Slight deficit (Target: 30)</span>
+                                    <span className="text-xxs text-amber-400 block mt-1.5">Slight deficit (Target: 30)</span>
                                 </div>
                             </div>
 
@@ -333,7 +333,7 @@ export function DemoPage() {
                                     <span className="font-mono text-stone-400">NASA POWER Live Stream Data</span>
                                     <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                                 </div>
-                                <div className="space-y-2 font-mono text-[11px] text-cyan-400/90 leading-relaxed">
+                                <div className="space-y-2 font-mono text-xs-plus text-cyan-400/90 leading-relaxed">
                                     {telemetryLogs.map((log, i) => (
                                         <p key={i}>{log}</p>
                                     ))}

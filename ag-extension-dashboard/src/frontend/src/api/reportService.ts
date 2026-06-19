@@ -44,8 +44,3 @@ export const getReportContent = async (reportId: string): Promise<{ success: boo
     const response = await apiClient.get(`/reporting/${reportId}`);
     return response.data;
 };
-
-export const deleteReport = async (reportId: string): Promise<{ success: boolean }> => {
-    const response = await apiClient.delete(`/reporting/${reportId}`);
-    return response.data;
-};

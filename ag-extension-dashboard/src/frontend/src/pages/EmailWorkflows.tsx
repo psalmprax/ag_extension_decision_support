@@ -18,6 +18,7 @@ import {
 } from '../api/emailWorkflowService';
 import toast from 'react-hot-toast';
 import DOMPurify from 'dompurify';
+import { MetricCard } from '@/components/MetricCard';
 
 export function EmailWorkflows() {
     const { t } = useLanguage();
@@ -201,29 +202,6 @@ export function EmailWorkflows() {
 
     const categories = [...new Set(templates.map(t => t.category))];
 
-    const StatCard = ({ title, value, icon: Icon, color = 'blue' }: {
-        title: string;
-        value: string | number;
-        icon: React.ComponentType<{ className?: string }>;
-        color?: string;
-    }) => (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="card p-6 border-white/20 hover:scale-[1.02] transition-transform duration-300"
-            style={{ borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-premium)' }}
-        >
-            <div className="flex items-start justify-between">
-                <div>
-                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{title}</p>
-                    <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
-                </div>
-                <div className={`p-3 bg-${color}-50 dark:bg-${color}-900/30 ${radiusClass}`}>
-                    <Icon className={`w-6 h-6 text-${color}-600 dark:text-${color}-400`} />
-                </div>
-            </div>
-        </motion.div>
-    );
 
     if (isLoading) {
         return (
@@ -271,25 +249,25 @@ export function EmailWorkflows() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard
+                <MetricCard
                         title={t('email_workflows_templates')}
                     value={templates.length}
                     icon={Mail}
                     color="blue"
                 />
-                <StatCard
+                <MetricCard
                         title={t('email_workflows_pending_approvals')}
                     value={approvals.length}
                     icon={Clock}
                     color="yellow"
                 />
-                <StatCard
+                <MetricCard
                         title={t('email_workflows_categories')}
                     value={categories.length}
                     icon={Filter}
                     color="green"
                 />
-                <StatCard
+                <MetricCard
                         title={t('email_workflows_total_variables')}
                     value={templates.reduce((acc, t) => acc + t.variables.length, 0)}
                     icon={AlertTriangle}

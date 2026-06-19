@@ -127,7 +127,7 @@ export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, 
                         <h4 className={`text-xs font-black uppercase tracking-[0.2em] ${isCyber ? 'text-primary-400' : 'text-gray-900'}`}>
                             Spatial Intelligence
                         </h4>
-                        <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">
+                        <p className="text-xxs text-gray-500 uppercase tracking-widest font-bold">
                             Live Telemetry • ID: {farmerId.slice(0, 8)}
                         </p>
                     </div>
@@ -137,7 +137,7 @@ export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, 
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                     </span>
-                    <span className="text-[10px] font-black uppercase tracking-tighter text-green-500">Active Scan</span>
+                    <span className="text-xxs font-black uppercase tracking-tighter text-green-500">Active Scan</span>
                 </div>
             </div>
 
@@ -167,7 +167,7 @@ export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, 
                         ))}
                         {dataPoints.length === 0 && !isLoading && (
                             <div className="absolute inset-0 flex items-center justify-center">
-                                <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">Precision coordinates pending</p>
+                                <p className="text-xxs font-black text-white/20 uppercase tracking-[0.3em]">Precision coordinates pending</p>
                             </div>
                         )}
                     </div>
@@ -203,12 +203,12 @@ export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, 
                 )}
 
                 <div className="absolute bottom-4 left-4">
-                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">
+                    <p className="text-xxs font-black text-white/40 uppercase tracking-widest">
                         {farmer?.locationLat ? `Lat: ${Number(farmer.locationLat).toFixed(4)} • Lng: ${Number(farmer.locationLng).toFixed(4)}` : 'GPS Tracking Active'}
                     </p>
                 </div>
                 <div className="absolute bottom-4 right-4 text-right">
-                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">
+                    <p className="text-xxs font-black text-white/40 uppercase tracking-widest">
                         Source: Sentinel-2 MSI
                     </p>
                 </div>
@@ -220,9 +220,9 @@ export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, 
                 isCyber ? 'bg-black/40 border-white/10' : 'bg-white border-gray-100 shadow-sm'
             }`}>
                 <div className="flex items-center justify-between mb-4">
-                    <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Resource Priority Index</h5>
+                    <h5 className="text-xxs font-black uppercase tracking-[0.2em] text-gray-400">Resource Priority Index</h5>
                     {priority && (
-                        <div className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        <div className={`px-2 py-0.5 rounded text-xxs font-bold ${
                             priority.level === 'critical' ? 'bg-red-500 text-white' : 'bg-primary-500 text-white'
                         }`}>
                             {priority.score}%
@@ -234,7 +234,7 @@ export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, 
                     {priority?.reasons.slice(0, 4).map((reason, i) => (
                         <div key={i} className="flex items-center gap-2">
                             <Zap className="w-3 h-3 text-primary-500" />
-                            <span className="text-[10px] font-medium text-gray-400 line-clamp-1">{reason}</span>
+                            <span className="text-xxs font-medium text-gray-400 line-clamp-1">{reason}</span>
                         </div>
                     ))}
                 </div>
@@ -244,8 +244,8 @@ export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, 
                         {priority?.level === 'critical' ? <AlertTriangle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
                     </div>
                     <div>
-                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Recommended Action</p>
-                        <p className={`text-[11px] font-bold ${isCyber ? 'text-white' : 'text-gray-900'}`}>
+                        <p className="text-micro font-black text-gray-500 uppercase tracking-widest">Recommended Action</p>
+                        <p className={`text-xs-plus font-bold ${isCyber ? 'text-white' : 'text-gray-900'}`}>
                             {isLoading ? 'Calculating...' : (priority?.recommendedAction || 'Monitor and maintain routine visits.')}
                         </p>
                     </div>
@@ -254,7 +254,7 @@ export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, 
 
             {/* Analysis Summary */}
             <div className={`p-6 rounded-3xl border relative min-h-[140px] flex flex-col justify-center ${isCyber ? 'bg-primary-500/5 border-primary-500/20 shadow-[0_0_20px_rgba(79,209,197,0.05)]' : 'bg-blue-50/50 border-blue-100'}`}>
-                <h5 className={`text-[10px] font-black uppercase tracking-[0.2em] mb-3 flex items-center gap-2 ${isCyber ? 'text-primary-400' : 'text-blue-600'}`}>
+                <h5 className={`text-xxs font-black uppercase tracking-[0.2em] mb-3 flex items-center gap-2 ${isCyber ? 'text-primary-400' : 'text-blue-600'}`}>
                     <Navigation2 className="w-3 h-3" />
                     {isLoading ? 'Generating Synthesis...' : 'Growth Trajectory Analysis'}
                 </h5>

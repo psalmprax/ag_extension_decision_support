@@ -73,7 +73,7 @@ export const BulkSmsModal: React.FC<BulkSmsModalProps> = ({
 
                         <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
                             <div className="space-y-3">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
+                                <label className="text-xxs font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
                                     <Sparkles className="w-3 h-3" />
                                     Quick Templates
                                 </label>
@@ -95,10 +95,10 @@ export const BulkSmsModal: React.FC<BulkSmsModalProps> = ({
 
                             <div className="space-y-3">
                                 <div className="flex justify-between items-center">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">
+                                    <label className="text-xxs font-black uppercase tracking-widest text-gray-500">
                                         Custom Message
                                     </label>
-                                    <span className={`text-[10px] font-black tracking-widest ${message.length > 160 ? 'text-amber-500' : 'text-gray-400'}`}>
+                                    <span className={`text-xxs font-black tracking-widest ${message.length > 160 ? 'text-amber-500' : 'text-gray-400'}`}>
                                         {message.length} / 160 chars
                                     </span>
                                 </div>
@@ -111,7 +111,7 @@ export const BulkSmsModal: React.FC<BulkSmsModalProps> = ({
                                 {message.length > 160 && (
                                     <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800">
                                         <AlertCircle className="w-4 h-4 text-amber-600" />
-                                        <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 leading-tight">
+                                        <p className="text-xxs font-bold text-amber-700 dark:text-amber-400 leading-tight">
                                             Warning: Messages over 160 characters may be split into multiple SMS.
                                         </p>
                                     </div>

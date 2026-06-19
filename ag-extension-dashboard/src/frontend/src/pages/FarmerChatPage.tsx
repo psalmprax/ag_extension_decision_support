@@ -69,7 +69,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                                         <div className="flex-1 overflow-hidden">
                                             <div className="flex justify-between items-center">
                                                 <span className="font-bold text-sm text-gray-900 dark:text-white truncate">{conv.farmerName}</span>
-                                                <span className="text-[10px] text-gray-400">{new Date(conv.startedAt).toLocaleDateString()}</span>
+                                                <span className="text-xxs text-gray-400">{new Date(conv.startedAt).toLocaleDateString()}</span>
                                             </div>
                                             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{conv.lastMessage}</p>
                                         </div>
@@ -94,7 +94,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                                         </h4>
                                         <div className="flex items-center gap-1">
                                             <span className="w-2 h-2 bg-secondary-500 rounded-full animate-pulse"></span>
-                                            <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">{t('chat_direct_chat')}</span>
+                                            <span className="text-xxs text-gray-500 uppercase font-bold tracking-wider">{t('chat_direct_chat')}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -108,7 +108,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                                             : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-tl-none'
                                             }`}>
                                             <p className="text-sm leading-relaxed">{msg.content}</p>
-                                            <span className={`text-[9px] mt-2 block ${msg.role === 'officer' ? 'text-primary-200' : 'text-gray-400'}`}>
+                                            <span className={`text-micro mt-2 block ${msg.role === 'officer' ? 'text-primary-200' : 'text-gray-400'}`}>
                                                 {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </span>
                                         </div>

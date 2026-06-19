@@ -131,7 +131,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
                                 </div>
                                 <div>
                                     <h2 className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-tight">{t('nav_notifications') || 'Notifications'}</h2>
-                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                                    <p className="text-xxs text-gray-400 font-bold uppercase tracking-widest">
                                         {unreadCount} {t('common_unread') || 'Unread'} · {displayNotifications.length} {t('common_total') || 'Total'}
                                     </p>
                                 </div>
@@ -176,7 +176,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
                                     </div>
                                     <div>
                                         <p className="text-sm font-bold text-gray-500 dark:text-gray-400">{t('common_no_data') || 'No new notifications'}</p>
-                                        <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-widest">{t('notifications_all_caught_up') || 'You are all caught up'}</p>
+                                        <p className="text-xxs text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-widest">{t('notifications_all_caught_up') || 'You are all caught up'}</p>
                                     </div>
                                 </div>
                             ) : (
@@ -203,7 +203,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
                                                 <div className="flex items-center justify-between mt-2">
                                                     <div className="flex items-center gap-2">
                                                         <Clock className="w-3 h-3 text-gray-400" />
-                                                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                                                        <span className="text-xxs text-gray-400 font-bold uppercase tracking-wider">
                                                             {formatDistanceToNow(notification.timestamp, { addSuffix: true })}
                                                         </span>
                                                     </div>
@@ -213,7 +213,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, on
                                                                 e.stopPropagation();
                                                                 notification.onAction?.();
                                                             }}
-                                                            className="flex items-center gap-1.5 px-3 py-1 bg-white/50 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 text-[10px] font-black uppercase tracking-widest text-primary-700 dark:text-primary-400 rounded-lg transition-all border border-primary-200/50 dark:border-primary-400/20"
+                                                            className="flex items-center gap-1.5 px-3 py-1 bg-white/50 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 text-xxs font-black uppercase tracking-widest text-primary-700 dark:text-primary-400 rounded-lg transition-all border border-primary-200/50 dark:border-primary-400/20"
                                                         >
                                                             <Undo className="w-3 h-3" />
                                                             {notification.actionLabel}

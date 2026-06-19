@@ -11,6 +11,7 @@ import { useAppStore } from '../store/useAppStore';
 import { fetchTelemetrySummary, fetchTelemetryEvents, TelemetrySummary, TelemetryEvent } from '../api/telemetryService';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, LineChart, Line } from 'recharts';
 import toast from 'react-hot-toast';
+import { MetricCard } from '@/components/MetricCard';
 
 export function Telemetry() {
     const { t } = useLanguage();
@@ -72,36 +73,6 @@ export function Telemetry() {
         pending: events.filter(e => e.status === 'pending').length
     };
 
-    const StatCard = ({ title, value, icon: Icon, change, color = 'blue' }: {
-        title: string;
-        value: string | number;
-        icon: React.ComponentType<{ className?: string }>;
-        change?: number;
-        color?: string;
-    }) => (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="card p-6 border-white/20 hover:scale-[1.02] transition-transform duration-300"
-            style={{ borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-premium)' }}
-        >
-            <div className="flex items-start justify-between">
-                <div>
-                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{title}</p>
-                    <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
-                    {change !== undefined && (
-                        <div className={`flex items-center gap-1 text-xs font-bold mt-2 ${change >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                            <TrendingUp className="w-3 h-3" />
-                            <span>{change >= 0 ? '+' : ''}{change}%</span>
-                        </div>
-                    )}
-                </div>
-                <div className={`p-3 bg-${color}-50 dark:bg-${color}-900/30 rounded-xl`}>
-                    <Icon className={`w-6 h-6 text-${color}-600 dark:text-${color}-400`} />
-                </div>
-            </div>
-        </motion.div>
-    );
 
     if (isLoading) {
         return (
@@ -162,25 +133,25 @@ export function Telemetry() {
             {/* Stats Cards */}
             {summary && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <StatCard
+                    <MetricCard
                         title={t('telemetry_total_requests')}
                         value={summary.totalRequests.toLocaleString()}
                         icon={Activity}
                         color="blue"
                     />
-                    <StatCard
+                    <MetricCard
                         title={t('telemetry_avg_response_time')}
                         value={`${summary.avgResponseTimeMs.toFixed(0)}ms`}
                         icon={Clock}
                         color="green"
                     />
-                    <StatCard
+                    <MetricCard
                         title={t('telemetry_error_rate')}
                         value={`${(summary.errorRate * 100).toFixed(1)}%`}
                         icon={AlertTriangle}
                         color="red"
                     />
-                    <StatCard
+                    <MetricCard
                         title={t('telemetry_total_cost')}
                         value={`$${summary.totalCostUsd.toFixed(2)}`}
                         icon={DollarSign}

@@ -129,7 +129,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                                         if (active && payload && payload.length) {
                                             return (
                                                 <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md p-3 rounded-2xl shadow-2xl border border-white/20">
-                                                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{payload[0].payload.label}</p>
+                                                    <p className="text-xxs font-black uppercase tracking-widest text-gray-400 mb-1">{payload[0].payload.label}</p>
                                                     <p className="text-lg font-black text-primary-600 dark:text-primary-400">{payload[0].value}</p>
                                                 </div>
                                             );
@@ -154,7 +154,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                                         if (active && payload && payload.length) {
                                             return (
                                                 <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md p-3 rounded-2xl shadow-2xl border border-white/20">
-                                                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{payload[0].payload.label}</p>
+                                                    <p className="text-xxs font-black uppercase tracking-widest text-gray-400 mb-1">{payload[0].payload.label}</p>
                                                     <p className="text-lg font-black text-primary-600 dark:text-primary-400">{payload[0].value}</p>
                                                 </div>
                                             );
@@ -193,7 +193,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                                         if (active && payload && payload.length) {
                                             return (
                                                 <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md p-3 rounded-2xl shadow-2xl border border-white/20">
-                                                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{payload[0].name}</p>
+                                                    <p className="text-xxs font-black uppercase tracking-widest text-gray-400 mb-1">{payload[0].name}</p>
                                                     <p className="text-lg font-black text-primary-600 dark:text-primary-400">{payload[0].value}</p>
                                                 </div>
                                             );
@@ -212,7 +212,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                                         if (active && payload && payload.length) {
                                             return (
                                                 <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md p-3 rounded-2xl shadow-2xl border border-white/20">
-                                                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{payload[0].payload.label}</p>
+                                                    <p className="text-xxs font-black uppercase tracking-widest text-gray-400 mb-1">{payload[0].payload.label}</p>
                                                     <p className="text-lg font-black text-primary-600 dark:text-primary-400">{payload[0].value}</p>
                                                 </div>
                                             );
@@ -253,7 +253,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                             <Zap className={`w-12 h-12 ${isPlaying ? 'animate-pulse fill-current' : 'fill-none'}`} />
                         </motion.button>
                         <div className="flex-1 text-center md:text-left">
-                            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] opacity-70 mb-2">ALFA Voice Synthesis</h4>
+                            <h4 className="text-xxs font-black uppercase tracking-[0.3em] opacity-70 mb-2">ALFA Voice Synthesis</h4>
                             <p className="text-xl font-bold leading-tight mb-4">
                                 Listen to the AI's synthesized expert recommendation.
                             </p>
@@ -266,7 +266,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                                         className="h-full bg-white"
                                     />
                                 </div>
-                                <span className="text-[10px] font-black uppercase">{isPlaying ? 'Playing...' : 'Click to Play'}</span>
+                                <span className="text-xxs font-black uppercase">{isPlaying ? 'Playing...' : 'Click to Play'}</span>
                             </div>
                         </div>
                         <audio 
@@ -299,7 +299,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                                  kpi.status === 'warning' ? <AlertTriangle className="w-5 h-5" /> :
                                  <AlertCircle className="w-5 h-5" />}
                             </div>
-                            <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">{kpi.label}</span>
+                            <span className="text-xxs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">{kpi.label}</span>
                             <span className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{kpi.value}</span>
                         </motion.div>
                     ))}
@@ -324,7 +324,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                                         <Maximize2 className="w-6 h-6" />
                                     </div>
                                 </div>
-                                <div className="absolute top-3 left-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-[10px] font-black uppercase tracking-widest">
+                                <div className="absolute top-3 left-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-xxs font-black uppercase tracking-widest">
                                     <ImageIcon className="w-3 h-3" />
                                     Image
                                 </div>
@@ -335,7 +335,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                             </div>
                             {img.caption && <p className="text-sm font-bold text-gray-600 dark:text-gray-400 px-2 flex items-center justify-between">
                                 <span>{img.caption}</span>
-                                <span className="text-[10px] text-primary-500 uppercase font-black opacity-0 group-hover:opacity-100 transition-opacity">Click to Enlarge</span>
+                                <span className="text-xxs text-primary-500 uppercase font-black opacity-0 group-hover:opacity-100 transition-opacity">Click to Enlarge</span>
                             </p>}
                         </motion.div>
                     ))}
@@ -360,7 +360,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                                         <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
                                             <Play className="w-12 h-12 text-white/80 group-hover:scale-110 transition-transform" />
                                         </div>
-                                        <div className="absolute top-3 left-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-[10px] font-black uppercase tracking-widest">
+                                        <div className="absolute top-3 left-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-xxs font-black uppercase tracking-widest">
                                             <Play className="w-3 h-3" />
                                             External Video
                                         </div>

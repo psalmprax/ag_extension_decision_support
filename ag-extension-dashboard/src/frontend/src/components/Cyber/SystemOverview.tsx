@@ -81,12 +81,12 @@ const SystemOverview: React.FC<SystemOverviewProps> = ({
             <div className="pt-8 border-t border-white/5 mt-8">
                 <div className="flex items-end justify-between">
                     <div>
-                        <p className="text-[10px] font-black text-primary-300/20 uppercase tracking-widest mb-1">Health Score</p>
+                        <p className="text-xxs font-black text-primary-300/20 uppercase tracking-widest mb-1">Health Score</p>
                         <p className="text-4xl font-black text-white tabular-nums tracking-tighter">
                             {healthScore !== undefined ? healthScore : '—'}
                         </p>
                         {uptime && (
-                            <p className="text-[10px] font-bold text-white/30 mt-1">Uptime: {uptime}</p>
+                            <p className="text-xxs font-bold text-white/30 mt-1">Uptime: {uptime}</p>
                         )}
                     </div>
                     <div className="w-16 h-16 rounded-2xl bg-primary-500/10 flex items-center justify-center border border-primary-500/20">

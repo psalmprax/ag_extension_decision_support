@@ -37,11 +37,6 @@ export const fetchFields = async (farmerId?: string) => {
     return response.data;
 };
 
-export const fetchFieldById = async (id: string) => {
-    const response = await apiClient.get(`/v1/fields/${id}`);
-    return response.data;
-};
-
 export const createField = async (data: Partial<Field>) => {
     const response = await apiClient.post('/v1/fields', data);
     return response.data;
@@ -54,11 +49,6 @@ export const updateField = async (id: string, data: Partial<Field>) => {
 
 export const deleteField = async (id: string) => {
     const response = await apiClient.delete(`/v1/fields/${id}`);
-    return response.data;
-};
-
-export const fetchCropCycles = async (fieldId: string) => {
-    const response = await apiClient.get(`/v1/fields/${fieldId}/cycles`);
     return response.data;
 };
 

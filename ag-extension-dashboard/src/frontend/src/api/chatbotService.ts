@@ -20,12 +20,6 @@ export const createConversation = async (params: { farmerId?: string; farmerName
     return data;
 };
 
-// Create AI-only conversation (no farmer required)
-export const createAIConversation = async (params: { language?: string }) => {
-    const { data } = await apiClient.post('/chatbot/conversations/ai', params);
-    return data;
-};
-
 export const generateSynthesis = async (params: { farmerId: string; notes: string; visitDate?: string }) => {
     const { data } = await apiClient.post('/chatbot/synthesis', params);
     return data;

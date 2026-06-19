@@ -69,7 +69,7 @@ const CropCycleGantt: React.FC<CropCycleGanttProps> = ({ items, visits = [], far
             <div className="space-y-6">
                 {displayItems.length > 0 ? displayItems.map(item => (
                     <div key={item.id} className="space-y-2">
-                        <div className="flex justify-between text-[10px] font-bold text-primary-300/30">
+                        <div className="flex justify-between text-xxs font-bold text-primary-300/30">
                             <span>{item.label}</span>
                             <span>{item.value}</span>
                         </div>
@@ -82,7 +82,7 @@ const CropCycleGantt: React.FC<CropCycleGanttProps> = ({ items, visits = [], far
                         </div>
                     </div>
                 )) : (
-                    <div className="text-[10px] font-bold text-primary-300/20 uppercase tracking-widest text-center py-10">
+                    <div className="text-xxs font-bold text-primary-300/20 uppercase tracking-widest text-center py-10">
                         No active cycles found
                     </div>
                 )}

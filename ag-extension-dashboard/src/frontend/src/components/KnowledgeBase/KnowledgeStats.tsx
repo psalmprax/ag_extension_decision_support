@@ -59,7 +59,7 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
                             <stat.icon className="w-6 h-6" />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">{stat.label}</p>
+                            <p className="text-xxs font-black text-gray-400 uppercase tracking-widest leading-none mb-1">{stat.label}</p>
                             <p className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{stat.value}</p>
                         </div>
                     </div>

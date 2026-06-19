@@ -12,8 +12,8 @@ const badgeVariants = cva('inline-flex items-center font-bold uppercase tracking
             info: 'bg-primary-500/20 text-primary-600 dark:text-primary-400 border border-primary-500/30',
         },
         size: {
-            sm: 'px-2 py-0.5 text-[9px]',
-            md: 'px-2.5 py-1 text-[10px]',
+            sm: 'px-2 py-0.5 text-micro',
+            md: 'px-2.5 py-1 text-xxs',
         },
         design: {
             modern: 'rounded-full backdrop-blur-sm',

@@ -114,48 +114,9 @@ export class RAGV2Service {
     // ── Schema Initialization ────────────────────────────────────────────────
 
     static async initializeSchema(): Promise<void> {
-        try {
-            await query(`
-                CREATE TABLE IF NOT EXISTS knowledge_chunks (
-                    id TEXT PRIMARY KEY,
-                    article_id UUID NOT NULL REFERENCES knowledge_articles(id) ON DELETE CASCADE,
-                    chunk_index INTEGER NOT NULL,
-                    content TEXT NOT NULL,
-                    embedding vector(768),
-                    created_at TIMESTAMP DEFAULT NOW()
-                );
-                CREATE INDEX IF NOT EXISTS idx_chunks_article ON knowledge_chunks(article_id);
-                -- IVFFlat index created after data is loaded (requires non-empty table)
-
-                CREATE TABLE IF NOT EXISTS knowledge_entities (
-                    id TEXT PRIMARY KEY,
-                    name TEXT NOT NULL,
-                    entity_type TEXT NOT NULL,
-                    properties JSONB DEFAULT '{}',
-                    created_at TIMESTAMP DEFAULT NOW()
-                );
-                CREATE INDEX IF NOT EXISTS idx_entities_type ON knowledge_entities(entity_type);
-                CREATE INDEX IF NOT EXISTS idx_entities_name ON knowledge_entities USING gin(to_tsvector('english', name));
-
-                CREATE TABLE IF NOT EXISTS knowledge_relationships (
-                    id SERIAL PRIMARY KEY,
-                    source_id TEXT NOT NULL REFERENCES knowledge_entities(id) ON DELETE CASCADE,
-                    target_id TEXT NOT NULL REFERENCES knowledge_entities(id) ON DELETE CASCADE,
-                    relation_type TEXT NOT NULL,
-                    article_id UUID REFERENCES knowledge_articles(id) ON DELETE CASCADE,
-                    properties JSONB DEFAULT '{}',
-                    created_at TIMESTAMP DEFAULT NOW(),
-                    UNIQUE(source_id, target_id, relation_type, article_id)
-                );
-                CREATE INDEX IF NOT EXISTS idx_rel_source ON knowledge_relationships(source_id);
-                CREATE INDEX IF NOT EXISTS idx_rel_target ON knowledge_relationships(target_id);
-                CREATE INDEX IF NOT EXISTS idx_rel_type ON knowledge_relationships(relation_type);
-            `);
-            logger.info('[RAGv2] Schema initialized');
-        } catch (error: any) {
-            logger.error('[RAGv2] Schema init error:', error.message);
-        }
+        logger.info('[RAGv2] Schema initialization handled via Prisma migrations');
     }
+
 
     // ── Chunking ─────────────────────────────────────────────────────────────
 

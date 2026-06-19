@@ -18,6 +18,19 @@ import { v4 as uuidv4 } from 'uuid';
 const router = Router();
 const knowledgeAdminRoles: UserRole[] = ['admin', 'regional_manager', 'extension_officer'];
 
+async function upsertVector(article: any): Promise<void> {
+    await VectorService.upsertDocument(article.id, article.content, {
+        title: article.title,
+        category: article.category,
+        tags: article.tags,
+        crops: article.crops,
+        regions: article.regions,
+        source: article.source,
+        sourceUrl: article.sourceUrl,
+        contentType: article.contentType
+    });
+}
+
 // Apply authentication to all knowledge routes
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
@@ -568,25 +581,8 @@ router.post('/ask', async (req: Request, res: Response) => {
 });
 
 // Share a knowledge article
-router.post("/:id/share", async (req: Request, res: Response) => {
-    try {
-        const { id } = req.params;
-        const { isPublic, expiresAt, permissions } = req.body;
-        const createdBy = (req as any).user?.userId;
-        const shareLink = await shareService.createShare({
-            entityType: "knowledge",
-            entityId: id,
-            createdBy,
-            isPublic,
-            expiresAt: expiresAt ? new Date(expiresAt) : undefined,
-            permissions,
-        });
-        res.status(201).json({ success: true, data: shareLink });
-    } catch (error) {
-        logger.error("Error creating knowledge share:", error);
-        safeError(res, 500, 'Failed to create share link');
-    }
-});
+import { createShareRoute } from './shareRouteFactory';
+router.use(createShareRoute('knowledge'));
 
 // Reorder knowledge articles
 router.post('/reorder', authorize(knowledgeAdminRoles), async (req: Request, res: Response) => {
@@ -679,16 +675,7 @@ router.post('/', authorize(knowledgeAdminRoles), async (req: Request, res: Respo
             },
         });
 
-        await VectorService.upsertDocument(article.id, article.content, {
-            title: article.title,
-            category: article.category,
-            tags: article.tags,
-            crops: article.crops,
-            regions: article.regions,
-            source: article.source,
-            sourceUrl: article.sourceUrl,
-            contentType: article.contentType
-        });
+        await upsertVector(article);
 
         res.status(201).json({
             success: true,
@@ -748,16 +735,7 @@ router.put('/:id', authorize(knowledgeAdminRoles), async (req: Request, res: Res
             data: updateData,
         });
 
-        await VectorService.upsertDocument(article.id, article.content, {
-            title: article.title,
-            category: article.category,
-            tags: article.tags,
-            crops: article.crops,
-            regions: article.regions,
-            source: article.source,
-            sourceUrl: article.sourceUrl,
-            contentType: article.contentType
-        });
+        await upsertVector(article);
 
         res.json({ success: true, data: article });
     } catch (error) {
@@ -883,16 +861,7 @@ router.post('/ingest', authorize(knowledgeAdminRoles), knowledgeUpload.single('f
             }
         });
 
-        await VectorService.upsertDocument(article.id, article.content, {
-            title: article.title,
-            category: article.category,
-            tags: article.tags,
-            crops: article.crops,
-            regions: article.regions,
-            source: article.source,
-            sourceUrl: article.sourceUrl,
-            contentType: article.contentType
-        });
+        await upsertVector(article);
 
         res.status(201).json({
             success: true,

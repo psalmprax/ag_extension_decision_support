@@ -1,0 +1,316 @@
+﻿2026-06-12T17:42:43.5897640Z Current runner version: '2.334.0'
+2026-06-12T17:42:43.5925318Z ##[group]Runner Image Provisioner
+2026-06-12T17:42:43.5926373Z Hosted Compute Agent
+2026-06-12T17:42:43.5927345Z Version: 20260527.539
+2026-06-12T17:42:43.5928156Z Commit: a891dd388383b896fa6ac04a82c0b75cec981078
+2026-06-12T17:42:43.5929138Z Build Date: 2026-05-27T21:39:57Z
+2026-06-12T17:42:43.5929992Z Worker ID: {343ac36c-7433-4419-8eca-9275efa184bc}
+2026-06-12T17:42:43.5930929Z Azure Region: eastus
+2026-06-12T17:42:43.5931664Z ##[endgroup]
+2026-06-12T17:42:43.5933329Z ##[group]Operating System
+2026-06-12T17:42:43.5934105Z Ubuntu
+2026-06-12T17:42:43.5934799Z 24.04.4
+2026-06-12T17:42:43.5935484Z LTS
+2026-06-12T17:42:43.5936173Z ##[endgroup]
+2026-06-12T17:42:43.5937251Z ##[group]Runner Image
+2026-06-12T17:42:43.5937994Z Image: ubuntu-24.04
+2026-06-12T17:42:43.5938794Z Version: 20260607.184.1
+2026-06-12T17:42:43.5940254Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260607.184/images/ubuntu/Ubuntu2404-Readme.md
+2026-06-12T17:42:43.5941947Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260607.184
+2026-06-12T17:42:43.5943588Z ##[endgroup]
+2026-06-12T17:42:43.5944870Z ##[group]GITHUB_TOKEN Permissions
+2026-06-12T17:42:43.5947615Z Contents: read
+2026-06-12T17:42:43.5948365Z Metadata: read
+2026-06-12T17:42:43.5949176Z ##[endgroup]
+2026-06-12T17:42:43.5952106Z Secret source: Actions
+2026-06-12T17:42:43.5953155Z Prepare workflow directory
+2026-06-12T17:42:43.6288670Z Prepare all required actions
+2026-06-12T17:42:43.6326931Z Getting action download info
+2026-06-12T17:42:43.9066470Z Download action repository 'appleboy/ssh-action@master' (SHA:1530429296e979861824d74fb800013190b5dee0)
+2026-06-12T17:42:44.1691239Z Complete job name: Run Diagnostics on Production Server
+2026-06-12T17:42:44.2511161Z ##[group]Run appleboy/ssh-action@master
+2026-06-12T17:42:44.2512100Z with:
+2026-06-12T17:42:44.2512712Z   host: ***
+2026-06-12T17:42:44.2513265Z   username: root
+2026-06-12T17:42:44.2516495Z   key: ***
+2026-06-12T17:42:44.2517211Z   command_timeout: 15m
+2026-06-12T17:42:44.2534877Z   script: set -e
+cd /root/ag_extension_decision_support/ag-extension-dashboard
+
+echo "============================================="
+echo "🐳 Docker Containers Status"
+echo "============================================="
+docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+echo ""
+echo "============================================="
+echo "🌐 Docker Networks"
+echo "============================================="
+docker network ls
+
+echo ""
+echo "============================================="
+echo "🔍 Network ag-network Inspection"
+echo "============================================="
+docker network inspect ag-network
+
+echo ""
+echo "============================================="
+echo "📋 Backend Container Logs (Last 50 lines)"
+echo "============================================="
+docker logs --tail=50 ag-dashboard-backend || true
+
+echo ""
+echo "============================================="
+echo "📋 Agent Zero Logs (Last 50 lines)"
+echo "============================================="
+docker logs --tail=50 ag-agent-zero || true
+
+echo ""
+echo "============================================="
+echo "📋 Crew AI Logs (Last 50 lines)"
+echo "============================================="
+docker logs --tail=50 ag-crew-ai || true
+
+echo ""
+echo "============================================="
+echo "⚡ Connectivity Tests from Backend"
+echo "============================================="
+echo "1. Resolving ag-agent-zero from backend:"
+docker exec ag-dashboard-backend nslookup ag-agent-zero || docker exec ag-dashboard-backend ping -c 1 ag-agent-zero || echo "❌ Resolution failed"
+
+echo ""
+echo "2. Resolving ag-crew-ai from backend:"
+docker exec ag-dashboard-backend nslookup ag-crew-ai || docker exec ag-dashboard-backend ping -c 1 ag-crew-ai || echo "❌ Resolution failed"
+
+echo ""
+echo "3. Querying agent-zero health from backend:"
+docker exec ag-dashboard-backend curl -iv http://ag-agent-zero:8000/health || echo "❌ Curl to agent-zero failed"
+
+echo ""
+echo "4. Querying crew-ai health from backend:"
+docker exec ag-dashboard-backend curl -iv http://ag-crew-ai:8001/health || echo "❌ Curl to crew-ai failed"
+
+echo ""
+echo "5. Querying agent-zero health from host:"
+curl -iv http://127.0.0.1:7504/health || echo "❌ Host curl to agent-zero failed"
+
+echo ""
+echo "6. Querying crew-ai health from host:"
+curl -iv http://127.0.0.1:7505/health || echo "❌ Host curl to crew-ai failed"
+
+echo ""
+echo "============================================="
+echo "🔑 Environment Checks (.env and container envs)"
+echo "============================================="
+echo "Checking .env file keys on host:"
+if [ -f "/root/ag_extension_decision_support/ag-extension-dashboard/.env" ]; then
+  echo "✅ .env file exists"
+  grep -E "^[A-Z0-9_]+=" /root/ag_extension_decision_support/ag-extension-dashboard/.env | while read -r line; do
+    key=$(echo "$line" | cut -d= -f1)
+    val=$(echo "$line" | cut -d= -f2-)
+    if [ -z "$val" ]; then
+      echo "  $key=EMPTY"
+    else
+      echo "  $key=SET (length: ${#val})"
+    fi
+  done
+else
+  echo "❌ .env file does not exist"
+fi
+
+echo ""
+echo "Checking env vars inside ag-dashboard-backend:"
+docker exec ag-dashboard-backend env | grep -E "OPENAI|ANTHROPIC|JWT|VAPID" | while read -r line; do
+  key=$(echo "$line" | cut -d= -f1)
+  val=$(echo "$line" | cut -d= -f2-)
+  echo "  $key=SET (length: ${#val})"
+done || echo "❌ Could not read backend env"
+
+echo ""
+echo "Checking env vars inside ag-agent-zero:"
+docker exec ag-agent-zero env | grep -E "OPENAI|ANTHROPIC|JWT|VAPID" | while read -r line; do
+  key=$(echo "$line" | cut -d= -f1)
+  val=$(echo "$line" | cut -d= -f2-)
+  echo "  $key=SET (length: ${#val})"
+done || echo "❌ Could not read agent-zero env"
+
+echo ""
+echo "Checking env vars inside ag-crew-ai:"
+docker exec ag-crew-ai env | grep -E "OPENAI|ANTHROPIC|JWT|VAPID" | while read -r line; do
+  key=$(echo "$line" | cut -d= -f1)
+  val=$(echo "$line" | cut -d= -f2-)
+  echo "  $key=SET (length: ${#val})"
+done || echo "❌ Could not read crew-ai env"
+
+2026-06-12T17:42:44.2553156Z   port: 22
+2026-06-12T17:42:44.2553640Z   protocol: tcp
+2026-06-12T17:42:44.2554144Z   timeout: 30s
+2026-06-12T17:42:44.2554635Z   proxy_port: 22
+2026-06-12T17:42:44.2555144Z   proxy_protocol: tcp
+2026-06-12T17:42:44.2555671Z   proxy_timeout: 30s
+2026-06-12T17:42:44.2556196Z   curl_insecure: false
+2026-06-12T17:42:44.2556814Z   capture_stdout: false
+2026-06-12T17:42:44.2557802Z ##[endgroup]
+2026-06-12T17:42:44.2665424Z ##[group]Run echo "$GITHUB_ACTION_PATH" >> $GITHUB_PATH
+2026-06-12T17:42:44.2666295Z [36;1mecho "$GITHUB_ACTION_PATH" >> $GITHUB_PATH[0m
+2026-06-12T17:42:44.2820109Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-06-12T17:42:44.2820871Z env:
+2026-06-12T17:42:44.2821591Z   GITHUB_ACTION_PATH: /home/runner/work/_actions/appleboy/ssh-action/master
+2026-06-12T17:42:44.2822400Z ##[endgroup]
+2026-06-12T17:42:44.3027872Z ##[group]Run entrypoint.sh
+2026-06-12T17:42:44.3028457Z [36;1mentrypoint.sh[0m
+2026-06-12T17:42:44.3063073Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-06-12T17:42:44.3063826Z env:
+2026-06-12T17:42:44.3064514Z   GITHUB_ACTION_PATH: /home/runner/work/_actions/appleboy/ssh-action/master
+2026-06-12T17:42:44.3065440Z   INPUT_HOST: ***
+2026-06-12T17:42:44.3065947Z   INPUT_PORT: 22
+2026-06-12T17:42:44.3066456Z   INPUT_PROTOCOL: tcp
+2026-06-12T17:42:44.3067190Z   INPUT_USERNAME: root
+2026-06-12T17:42:44.3067712Z   INPUT_PASSWORD: 
+2026-06-12T17:42:44.3068404Z   INPUT_PASSPHRASE: 
+2026-06-12T17:42:44.3071654Z   INPUT_KEY: ***
+2026-06-12T17:42:44.3072181Z   INPUT_KEY_PATH: 
+2026-06-12T17:42:44.3072690Z   INPUT_FINGERPRINT: 
+2026-06-12T17:42:44.3073204Z   INPUT_PROXY_HOST: 
+2026-06-12T17:42:44.3073732Z   INPUT_PROXY_PORT: 22
+2026-06-12T17:42:44.3074264Z   INPUT_PROXY_USERNAME: 
+2026-06-12T17:42:44.3074807Z   INPUT_PROXY_PASSWORD: 
+2026-06-12T17:42:44.3075341Z   INPUT_PROXY_PASSPHRASE: 
+2026-06-12T17:42:44.3075884Z   INPUT_PROXY_KEY: 
+2026-06-12T17:42:44.3076383Z   INPUT_PROXY_KEY_PATH: 
+2026-06-12T17:42:44.3077030Z   INPUT_PROXY_FINGERPRINT: 
+2026-06-12T17:42:44.3077785Z   INPUT_TIMEOUT: 30s
+2026-06-12T17:42:44.3078302Z   INPUT_PROXY_TIMEOUT: 30s
+2026-06-12T17:42:44.3078838Z   INPUT_COMMAND_TIMEOUT: 15m
+2026-06-12T17:42:44.3110324Z   INPUT_SCRIPT: set -e
+cd /root/ag_extension_decision_support/ag-extension-dashboard
+
+echo "============================================="
+echo "🐳 Docker Containers Status"
+echo "============================================="
+docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+echo ""
+echo "============================================="
+echo "🌐 Docker Networks"
+echo "============================================="
+docker network ls
+
+echo ""
+echo "============================================="
+echo "🔍 Network ag-network Inspection"
+echo "============================================="
+docker network inspect ag-network
+
+echo ""
+echo "============================================="
+echo "📋 Backend Container Logs (Last 50 lines)"
+echo "============================================="
+docker logs --tail=50 ag-dashboard-backend || true
+
+echo ""
+echo "============================================="
+echo "📋 Agent Zero Logs (Last 50 lines)"
+echo "============================================="
+docker logs --tail=50 ag-agent-zero || true
+
+echo ""
+echo "============================================="
+echo "📋 Crew AI Logs (Last 50 lines)"
+echo "============================================="
+docker logs --tail=50 ag-crew-ai || true
+
+echo ""
+echo "============================================="
+echo "⚡ Connectivity Tests from Backend"
+echo "============================================="
+echo "1. Resolving ag-agent-zero from backend:"
+docker exec ag-dashboard-backend nslookup ag-agent-zero || docker exec ag-dashboard-backend ping -c 1 ag-agent-zero || echo "❌ Resolution failed"
+
+echo ""
+echo "2. Resolving ag-crew-ai from backend:"
+docker exec ag-dashboard-backend nslookup ag-crew-ai || docker exec ag-dashboard-backend ping -c 1 ag-crew-ai || echo "❌ Resolution failed"
+
+echo ""
+echo "3. Querying agent-zero health from backend:"
+docker exec ag-dashboard-backend curl -iv http://ag-agent-zero:8000/health || echo "❌ Curl to agent-zero failed"
+
+echo ""
+echo "4. Querying crew-ai health from backend:"
+docker exec ag-dashboard-backend curl -iv http://ag-crew-ai:8001/health || echo "❌ Curl to crew-ai failed"
+
+echo ""
+echo "5. Querying agent-zero health from host:"
+curl -iv http://127.0.0.1:7504/health || echo "❌ Host curl to agent-zero failed"
+
+echo ""
+echo "6. Querying crew-ai health from host:"
+curl -iv http://127.0.0.1:7505/health || echo "❌ Host curl to crew-ai failed"
+
+echo ""
+echo "============================================="
+echo "🔑 Environment Checks (.env and container envs)"
+echo "============================================="
+echo "Checking .env file keys on host:"
+if [ -f "/root/ag_extension_decision_support/ag-extension-dashboard/.env" ]; then
+  echo "✅ .env file exists"
+  grep -E "^[A-Z0-9_]+=" /root/ag_extension_decision_support/ag-extension-dashboard/.env | while read -r line; do
+    key=$(echo "$line" | cut -d= -f1)
+    val=$(echo "$line" | cut -d= -f2-)
+    if [ -z "$val" ]; then
+      echo "  $key=EMPTY"
+    else
+      echo "  $key=SET (length: ${#val})"
+    fi
+  done
+else
+  echo "❌ .env file does not exist"
+fi
+
+echo ""
+echo "Checking env vars inside ag-dashboard-backend:"
+docker exec ag-dashboard-backend env | grep -E "OPENAI|ANTHROPIC|JWT|VAPID" | while read -r line; do
+  key=$(echo "$line" | cut -d= -f1)
+  val=$(echo "$line" | cut -d= -f2-)
+  echo "  $key=SET (length: ${#val})"
+done || echo "❌ Could not read backend env"
+
+echo ""
+echo "Checking env vars inside ag-agent-zero:"
+docker exec ag-agent-zero env | grep -E "OPENAI|ANTHROPIC|JWT|VAPID" | while read -r line; do
+  key=$(echo "$line" | cut -d= -f1)
+  val=$(echo "$line" | cut -d= -f2-)
+  echo "  $key=SET (length: ${#val})"
+done || echo "❌ Could not read agent-zero env"
+
+echo ""
+echo "Checking env vars inside ag-crew-ai:"
+docker exec ag-crew-ai env | grep -E "OPENAI|ANTHROPIC|JWT|VAPID" | while read -r line; do
+  key=$(echo "$line" | cut -d= -f1)
+  val=$(echo "$line" | cut -d= -f2-)
+  echo "  $key=SET (length: ${#val})"
+done || echo "❌ Could not read crew-ai env"
+
+2026-06-12T17:42:44.3133281Z   INPUT_SCRIPT_FILE: 
+2026-06-12T17:42:44.3133826Z   INPUT_ENVS: 
+2026-06-12T17:42:44.3134322Z   INPUT_ENVS_FORMAT: 
+2026-06-12T17:42:44.3134841Z   INPUT_DEBUG: 
+2026-06-12T17:42:44.3135332Z   INPUT_ALL_ENVS: 
+2026-06-12T17:42:44.3135853Z   INPUT_REQUEST_PTY: 
+2026-06-12T17:42:44.3136377Z   INPUT_USE_INSECURE_CIPHER: 
+2026-06-12T17:42:44.3137150Z   INPUT_CIPHER: 
+2026-06-12T17:42:44.3137677Z   INPUT_PROXY_USE_INSECURE_CIPHER: 
+2026-06-12T17:42:44.3138269Z   INPUT_PROXY_CIPHER: 
+2026-06-12T17:42:44.3138783Z   INPUT_SYNC: 
+2026-06-12T17:42:44.3139303Z   INPUT_CAPTURE_STDOUT: false
+2026-06-12T17:42:44.3139875Z   INPUT_CURL_INSECURE: false
+2026-06-12T17:42:44.3140443Z   DRONE_SSH_VERSION: 
+2026-06-12T17:42:44.3140954Z ##[endgroup]
+2026-06-12T17:42:44.3277328Z Downloading drone-ssh-1.8.2-linux-amd64 from https://github.com/appleboy/drone-ssh/releases/download/v1.8.2
+2026-06-12T17:42:44.4253804Z ======= CLI Version Information =======
+2026-06-12T17:42:44.4270419Z Drone SSH version 1.8.2
+2026-06-12T17:42:44.4274555Z =======================================
+2026-06-12T17:43:14.4593070Z 2026/06/12 17:43:14 dial tcp ***:22: i/o timeout
+2026-06-12T17:43:14.4611953Z ##[error]Process completed with exit code 1.
+2026-06-12T17:43:14.4726496Z Cleaning up orphan processes

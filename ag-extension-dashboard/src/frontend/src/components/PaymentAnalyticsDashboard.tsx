@@ -159,7 +159,7 @@ export const PaymentAnalyticsDashboard: React.FC = () => {
                         <BarChart3 className="w-8 h-8 text-primary-500 animate-pulse" />
                     </div>
                 </div>
-                <p className="mt-6 text-gray-500 dark:text-gray-400 font-black uppercase tracking-widest text-[10px] animate-pulse">
+                <p className="mt-6 text-gray-500 dark:text-gray-400 font-black uppercase tracking-widest text-xxs animate-pulse">
                     {t('analytics_loading') || 'Loading Analytics...'}
                 </p>
             </div>
@@ -189,7 +189,7 @@ export const PaymentAnalyticsDashboard: React.FC = () => {
                         className="flex items-center gap-2 mb-4"
                     >
                         <span className="w-12 h-1 text-primary-500 bg-primary-500 rounded-full inline-block"></span>
-                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary-500">
+                        <span className="text-xxs font-black uppercase tracking-[0.3em] text-primary-500">
                             {t('analytics_intelligence') || 'PAYMENT INTELLIGENCE'}
                         </span>
                     </motion.div>

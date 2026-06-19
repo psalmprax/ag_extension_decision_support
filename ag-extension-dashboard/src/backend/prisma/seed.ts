@@ -142,45 +142,135 @@ async function main() {
   // Farmers
   const farmerCount = await prisma.farmer.count();
   if (farmerCount === 0) {
-    await prisma.farmer.createMany({
-      data: [
-        {
-          firstName: 'Jane',
-          lastName: 'Smith',
-          phone: '+254700111222',
-          region: 'Central',
-          village: 'Village A',
-          crops: ['Corn', 'Wheat'],
-          userId: user.id,
-          vitalScore: 82,
-          yieldHistory: [
-            { month: 'Jan', yield: 45 },
-            { month: 'Feb', yield: 52 },
-            { month: 'Mar', yield: 48 },
-            { month: 'Apr', yield: 61 },
-            { month: 'May', yield: 55 },
-            { month: 'Jun', yield: 67 },
-          ]
-        },
-        {
-          firstName: 'Peter',
-          lastName: 'Kamau',
-          phone: '+254700222333',
-          region: 'Central',
-          village: 'Village B',
-          crops: ['Coffee', 'Tea'],
-          userId: user.id,
-          vitalScore: 65,
-          yieldHistory: [
-            { month: 'Jan', yield: 38 },
-            { month: 'Feb', yield: 42 },
-            { month: 'Mar', yield: 40 },
-            { month: 'Apr', yield: 45 },
-            { month: 'May', yield: 48 },
-            { month: 'Jun', yield: 50 },
-          ]
+    const farmer1 = await prisma.farmer.create({
+      data: {
+        firstName: 'Jane',
+        lastName: 'Smith',
+        phone: '+254700111222',
+        region: 'Central',
+        village: 'Village A',
+        crops: ['Corn', 'Wheat'],
+        userId: user.id,
+        vitalScore: 82,
+        yieldHistory: [
+          { month: 'Jan', yield: 45 },
+          { month: 'Feb', yield: 52 },
+          { month: 'Mar', yield: 48 },
+          { month: 'Apr', yield: 61 },
+          { month: 'May', yield: 55 },
+          { month: 'Jun', yield: 67 },
+        ]
+      }
+    });
+
+    const farmer2 = await prisma.farmer.create({
+      data: {
+        firstName: 'Peter',
+        lastName: 'Kamau',
+        phone: '+254700222333',
+        region: 'Central',
+        village: 'Village B',
+        crops: ['Coffee', 'Tea'],
+        userId: user.id,
+        vitalScore: 65,
+        yieldHistory: [
+          { month: 'Jan', yield: 38 },
+          { month: 'Feb', yield: 42 },
+          { month: 'Mar', yield: 40 },
+          { month: 'Apr', yield: 45 },
+          { month: 'May', yield: 48 },
+          { month: 'Jun', yield: 50 },
+        ]
+      }
+    });
+
+    // Fields
+    const field1 = await prisma.field.create({
+        data: {
+            farmerId: farmer1.id,
+            name: 'North Plot',
+            areaHectares: 2.5,
+            soilType: 'Loam',
+            soilPh: 6.5
         }
-      ]
+    });
+
+    const field2 = await prisma.field.create({
+        data: {
+            farmerId: farmer2.id,
+            name: 'Valley Farm',
+            areaHectares: 1.8,
+            soilType: 'Clay',
+            soilPh: 5.8
+        }
+    });
+
+    // Crop Cycles
+    await prisma.cropCycle.create({
+        data: {
+            fieldId: field1.id,
+            cropName: 'Corn',
+            status: 'growing',
+            plantingDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+        }
+    });
+
+    await prisma.cropCycle.create({
+        data: {
+            fieldId: field2.id,
+            cropName: 'Coffee',
+            status: 'harvested',
+            plantingDate: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000),
+            actualHarvestDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+            yieldKg: 1500
+        }
+    });
+
+    // Visits
+    await prisma.visit.create({
+        data: {
+            officerId: user.id,
+            farmerId: farmer1.id,
+            visitType: 'routine',
+            status: 'completed',
+            scheduledAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+            completedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+            notes: 'Crop looking healthy, advised on fertilizer.'
+        }
+    });
+
+    await prisma.visit.create({
+        data: {
+            officerId: user.id,
+            farmerId: farmer2.id,
+            visitType: 'emergency',
+            status: 'scheduled',
+            scheduledAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+            notes: 'Check for leaf rust.'
+        }
+    });
+
+    // Alerts
+    await prisma.alert.create({
+        data: {
+            type: 'weather',
+            severity: 'high',
+            title: 'Heavy Rainfall Warning',
+            description: 'Expected heavy rainfall in the Central region over the next 48 hours.',
+            location: 'Central',
+            affectedFarmers: [farmer1.id, farmer2.id]
+        }
+    });
+
+    // Reports
+    await prisma.report.create({
+        data: {
+            type: 'monthly_summary',
+            title: 'Monthly Extension Report - June',
+            content: { summary: 'Completed 15 visits, identified 2 outbreaks.' },
+            generatedBy: user.id,
+            status: 'published'
+        }
     });
   }
 

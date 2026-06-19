@@ -10,7 +10,7 @@ import {
     ClassificationResult,
     EmbeddingOptions,
     EmbeddingResult,
-} from '../aiProvider';
+} from '../types';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
 import { REASONING_SYSTEM_PROMPT, extractVisuals } from '../assetLibrary';

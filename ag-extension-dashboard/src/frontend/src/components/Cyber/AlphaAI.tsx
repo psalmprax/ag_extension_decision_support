@@ -161,7 +161,7 @@ const AlphaAI = () => {
                             <button
                                 key={mode.id}
                                 onClick={() => setActiveMode(mode.id as 'actionable' | 'ops')}
-                                className={`px-6 py-2.5 ${btnClass} border text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+                                className={`px-6 py-2.5 ${btnClass} border text-xxs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
                                     activeMode === mode.id
                                         ? 'bg-white/10 border-white/20 text-white shadow-xl'
                                         : 'bg-transparent border-transparent text-white/40 hover:text-white/60'
@@ -177,7 +177,7 @@ const AlphaAI = () => {
                 <div className="flex items-center gap-4">
                     <div className={`flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 ${radiusClass}`}>
                         <div className={`w-2 h-2 rounded-full animate-pulse ${healthData?.status === 'healthy' ? 'bg-green-500' : 'bg-yellow-500'}`} />
-                        <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">
+                        <span className="text-xxs font-black text-white/60 uppercase tracking-widest">
                             {healthData?.status === 'healthy' ? 'System Online' : healthLoading ? 'Checking...' : 'Status Unknown'}
                         </span>
                     </div>
@@ -200,12 +200,12 @@ const AlphaAI = () => {
                         className={`mb-8 bg-black/60 border border-white/10 ${radiusClass} overflow-hidden`}
                     >
                         <div className="p-3 border-b border-white/5 flex items-center justify-between">
-                            <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">Terminal</span>
+                            <span className="text-micro font-black text-white/40 uppercase tracking-widest">Terminal</span>
                             <button onClick={() => setShowTerminal(false)} className="text-white/40 hover:text-white">
                                 <X className="w-3 h-3" />
                             </button>
                         </div>
-                        <div className="p-3 max-h-40 overflow-y-auto font-mono text-[10px] space-y-1">
+                        <div className="p-3 max-h-40 overflow-y-auto font-mono text-xxs space-y-1">
                             {terminalOutput.map((line, i) => (
                                 <div key={i} className={line.startsWith('>') ? 'text-primary-400' : 'text-white/60'}>
                                     {line}
@@ -225,7 +225,7 @@ const AlphaAI = () => {
                                 onChange={(e) => setTerminalInput(e.target.value)}
                                 onKeyDown={(e) => { if (e.key === 'Enter') handleTerminalCommand(terminalInput); }}
                                 placeholder="Type a command (help, status, agents, uptime, clear)..."
-                                className="w-full bg-transparent text-white/80 text-[10px] font-mono outline-none placeholder-white/20 px-2"
+                                className="w-full bg-transparent text-white/80 text-xxs font-mono outline-none placeholder-white/20 px-2"
                             />
                         </div>
                     </motion.div>
@@ -240,8 +240,8 @@ const AlphaAI = () => {
                             <stat.icon className="w-12 h-12" />
                         </div>
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">{stat.label}</span>
-                            <span className={`text-[9px] font-bold uppercase ${
+                            <span className="text-micro font-black text-white/40 uppercase tracking-widest">{stat.label}</span>
+                            <span className={`text-micro font-bold uppercase ${
                                 stat.trend === 'Healthy' || stat.trend === 'Online' || stat.trend === 'Active' 
                                     ? 'text-green-400' 
                                     : stat.trend === 'Check' || stat.trend === 'Offline' || stat.trend === 'Down'

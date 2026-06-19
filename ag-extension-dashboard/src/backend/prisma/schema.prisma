@@ -141,6 +141,8 @@ model KnowledgeArticle {
    order       Int?      @default(0) @db.Integer
    createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
    updatedAt   DateTime? @default(now()) @map("updated_at") @db.Timestamp(6)
+   chunks      KnowledgeChunk[]
+   relationships KnowledgeRelationship[]
 
    @@index([category])
    @@index([tags], type: Gin)
@@ -555,4 +557,50 @@ model CropCycle {
   @@index([fieldId])
   @@map("crop_cycles")
 }
+
+model KnowledgeChunk {
+  id         String            @id
+  articleId  String            @map("article_id") @db.Uuid
+  chunkIndex Int               @map("chunk_index")
+  content    String
+  embedding  Float[]
+  createdAt  DateTime?         @default(now()) @map("created_at") @db.Timestamp(6)
+  article    KnowledgeArticle  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([articleId])
+  @@map("knowledge_chunks")
+}
+
+model KnowledgeEntity {
+  id                  String                 @id
+  name                String
+  entityType          String                 @map("entity_type")
+  properties          Json                   @default("{}")
+  createdAt           DateTime?              @default(now()) @map("created_at") @db.Timestamp(6)
+  sourceRelationships KnowledgeRelationship[] @relation("SourceEntity")
+  targetRelationships KnowledgeRelationship[] @relation("TargetEntity")
+
+  @@index([entityType])
+  @@map("knowledge_entities")
+}
+
+model KnowledgeRelationship {
+  id           Int              @id @default(autoincrement())
+  sourceId     String           @map("source_id")
+  targetId     String           @map("target_id")
+  relationType String           @map("relation_type")
+  articleId    String?          @map("article_id") @db.Uuid
+  properties   Json             @default("{}")
+  createdAt    DateTime?        @default(now()) @map("created_at") @db.Timestamp(6)
+  source       KnowledgeEntity  @relation("SourceEntity", fields: [sourceId], references: [id], onDelete: Cascade)
+  target       KnowledgeEntity  @relation("TargetEntity", fields: [targetId], references: [id], onDelete: Cascade)
+  article      KnowledgeArticle? @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceId, targetId, relationType, articleId])
+  @@index([sourceId])
+  @@index([targetId])
+  @@index([relationType])
+  @@map("knowledge_relationships")
+}
+
 

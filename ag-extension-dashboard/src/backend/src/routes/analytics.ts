@@ -12,7 +12,6 @@ const router = Router();
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
 // Helper to safely execute database queries with fallback
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function getFromDB(sql: string, params: unknown[] = []): Promise<any[]> {
     try {
         const pool = getPool();
@@ -28,213 +27,162 @@ async function getFromDB(sql: string, params: unknown[] = []): Promise<any[]> {
     }
 }
 
+function parseIntCount(rows: any[]): number {
+    return parseInt((rows[0] as any)?.count || '0');
+}
+
+function computeGrowth(current: number, previous: number): number {
+    return previous > 0 ? ((current - previous) / previous * 100) : 0;
+}
+
+interface UserScope {
+    isOfficer: boolean;
+    isManager: boolean;
+    officerId: string | null;
+    managerRegion: string | null;
+}
+
+function buildScopeFilter(user: UserScope, column: string = 'assigned_officer_id'): { whereClause: string; params: unknown[] } {
+    if (user.isOfficer) {
+        return { whereClause: `AND ${column} = $1`, params: [user.officerId] };
+    }
+    if (user.isManager) {
+        return { whereClause: `AND f.region = $1`, params: [user.managerRegion] };
+    }
+    return { whereClause: '', params: [] };
+}
+
+function buildCacheKey(user: UserScope): string {
+    if (user.isOfficer) return `analytics:dashboard:${user.officerId}`;
+    if (user.isManager) return `analytics:dashboard:region:${user.managerRegion || 'unknown'}`;
+    return 'analytics:dashboard:global';
+}
+
+async function fetchOverviewCounts(user: UserScope) {
+    const sf = buildScopeFilter(user);
+    const [farmersCount, officersCount, activeConversations, recentVisits, avgSatisfactionResult, resolvedQueries] = await Promise.all([
+        getFromDB(`SELECT COUNT(*) as count FROM farmers WHERE is_active = true ${sf.whereClause}`, sf.params),
+        getFromDB("SELECT COUNT(*) as count FROM users WHERE role = 'extension_officer' AND is_active = true"),
+        getFromDB(`SELECT COUNT(*) as count FROM chat_conversations WHERE status = 'active' ${user.isOfficer ? 'AND officer_id = $1' : user.isManager ? `c JOIN farmers f ON f.id = c.farmer_id WHERE c.status = 'active' AND f.region = $1` : ''}`, sf.params),
+        getFromDB(`SELECT COUNT(*) as count FROM visits WHERE created_at > NOW() - INTERVAL '30 days' ${sf.whereClause}`, sf.params),
+        getFromDB(`SELECT AVG(satisfaction_score) as avg FROM chat_conversations WHERE satisfaction_score IS NOT NULL ${sf.whereClause}`, sf.params),
+        getFromDB(`SELECT COUNT(*) as count FROM chat_conversations WHERE status = 'resolved' ${sf.whereClause}`, sf.params),
+    ]);
+    return { farmersCount, officersCount, activeConversations, recentVisits, avgSatisfactionResult, resolvedQueries };
+}
+
+async function fetchGeography(user: UserScope) {
+    const sf = buildScopeFilter(user);
+    return getFromDB(`
+        SELECT f.region, COUNT(DISTINCT f.id) as farmers, COUNT(DISTINCT u.id) as officers 
+        FROM farmers f 
+        LEFT JOIN users u ON u.region = f.region AND u.role = 'extension_officer' 
+        WHERE 1=1 ${sf.whereClause}
+        GROUP BY f.region ORDER BY farmers DESC LIMIT 10
+    `, sf.params);
+}
+
+async function fetchCropDistribution(user: UserScope) {
+    const sf = buildScopeFilter(user);
+    const cropsData = await getFromDB(`
+        SELECT unnest(crops) as crop, COUNT(*) as count 
+        FROM farmers WHERE crops IS NOT NULL ${sf.whereClause}
+        GROUP BY crop ORDER BY count DESC
+    `, sf.params);
+    const totalCropCount = cropsData.reduce((sum: number, row: Record<string, unknown>) => sum + parseInt(row.count as string), 0);
+    return cropsData.slice(0, 5).map((row: Record<string, unknown>) => ({
+        name: row.crop as string,
+        percentage: totalCropCount > 0 ? Math.round((parseInt(row.count as string) / totalCropCount) * 100) : 0
+    }));
+}
+
+async function fetchRecentActivity(user: UserScope) {
+    return getFromDB(`
+        (SELECT 'visit' as type, 'Visit completed in ' || COALESCE(f.village, f.region) as description, NOW() - v.created_at as time_diff
+         FROM visits v JOIN farmers f ON f.id = v.farmer_id
+         WHERE v.status = 'completed' ${user.isOfficer ? 'AND v.officer_id = $1' : ''}
+         ORDER BY v.completed_at DESC LIMIT 3)
+        UNION ALL
+        (SELECT 'query' as type, 'New query from ' || f.first_name || ' ' || f.last_name as description, NOW() - c.started_at as time_diff
+         FROM chat_conversations c JOIN farmers f ON f.id = c.farmer_id
+         WHERE 1=1 ${user.isOfficer ? 'AND c.officer_id = $1' : ''}
+         ORDER BY c.started_at DESC LIMIT 2)
+        ORDER BY time_diff LIMIT 5
+    `, user.isOfficer ? [user.officerId] : []);
+}
+
+async function fetchTrendData(user: UserScope) {
+    const sf = buildScopeFilter(user);
+    const [lastMonthFarmers, lastMonthConversations, lastMonthVisits, lastMonthSatisfactionResult] = await Promise.all([
+        getFromDB(`SELECT COUNT(*) as count FROM farmers WHERE created_at > NOW() - INTERVAL '60 days' AND created_at < NOW() - INTERVAL '30 days' ${sf.whereClause}`, sf.params),
+        getFromDB(`SELECT COUNT(*) as count FROM chat_conversations WHERE started_at > NOW() - INTERVAL '60 days' AND started_at < NOW() - INTERVAL '30 days' ${sf.whereClause}`, sf.params),
+        getFromDB(`SELECT COUNT(*) as count FROM visits WHERE created_at > NOW() - INTERVAL '60 days' AND created_at < NOW() - INTERVAL '30 days' ${sf.whereClause}`, sf.params),
+        getFromDB(`SELECT AVG(satisfaction_score) as avg FROM chat_conversations WHERE satisfaction_score IS NOT NULL AND created_at > NOW() - INTERVAL '60 days' AND created_at < NOW() - INTERVAL '30 days' ${sf.whereClause}`, sf.params),
+    ]);
+    return { lastMonthFarmers, lastMonthConversations, lastMonthVisits, lastMonthSatisfactionResult };
+}
+
+async function fetchPriorityQueue() {
+    return getFromDB(`
+        SELECT f.id as farmer_id, f.first_name || ' ' || f.last_name as name,
+            'Scheduled consultation' as reason, 'medium' as severity, f.crops[1] as crop
+        FROM farmers f JOIN visits v ON v.farmer_id = f.id
+        WHERE v.status = 'scheduled' ORDER BY v.scheduled_at ASC LIMIT 5
+    `);
+}
+
 // Dashboard overview - fetches real data from database
 router.get('/dashboard', async (req: Request, res: Response) => {
     try {
         const { userId, role } = req.user as any;
-        const isOfficer = role === 'extension_officer';
-        const isManager = role === 'regional_manager';
-        const officerId = isOfficer ? userId : null;
-        
-        // Fetch manager region if needed
-        let managerRegion = null;
-        if (isManager) {
+        const user: UserScope = {
+            isOfficer: role === 'extension_officer',
+            isManager: role === 'regional_manager',
+            officerId: role === 'extension_officer' ? userId : null,
+            managerRegion: null,
+        };
+
+        if (user.isManager) {
             const manager = await getFromDB("SELECT region FROM users WHERE id = $1", [userId]);
-            managerRegion = manager[0]?.region;
+            user.managerRegion = manager[0]?.region;
         }
 
-        // Try to get cached data first - user-specific for officers/managers
-        const cacheKey = isOfficer ? `analytics:dashboard:${userId}` : isManager ? `analytics:dashboard:region:${managerRegion || 'unknown'}` : 'analytics:dashboard:global';
+        const cacheKey = buildCacheKey(user);
         const cached = await cacheGet(cacheKey);
-        if (cached) {
-            return res.json(JSON.parse(cached));
-        }
+        if (cached) return res.json(JSON.parse(cached));
 
-        // Fetch real data from database
-        const [
-            farmersCount,
-            officersCount,
-            activeConversations,
-            recentVisits,
-            avgSatisfactionResult,
-            resolvedQueries
-        ] = await Promise.all([
-            getFromDB(
-                isOfficer 
-                ? "SELECT COUNT(*) as count FROM farmers WHERE is_active = true AND assigned_officer_id = $1" 
-                : isManager
-                ? "SELECT COUNT(*) as count FROM farmers WHERE is_active = true AND region = $1"
-                : "SELECT COUNT(*) as count FROM farmers WHERE is_active = true",
-                isOfficer ? [officerId] : isManager ? [managerRegion] : []
-            ),
-            getFromDB("SELECT COUNT(*) as count FROM users WHERE role = 'extension_officer' AND is_active = true"),
-            getFromDB(
-                isOfficer
-                ? "SELECT COUNT(*) as count FROM chat_conversations WHERE status = 'active' AND officer_id = $1"
-                : isManager
-                ? "SELECT COUNT(*) as count FROM chat_conversations c JOIN farmers f ON f.id = c.farmer_id WHERE c.status = 'active' AND f.region = $1"
-                : "SELECT COUNT(*) as count FROM chat_conversations WHERE status = 'active'",
-                isOfficer ? [officerId] : isManager ? [managerRegion] : []
-            ),
-            getFromDB(
-                isOfficer
-                ? "SELECT COUNT(*) as count FROM visits WHERE created_at > NOW() - INTERVAL '30 days' AND officer_id = $1"
-                : isManager
-                ? "SELECT COUNT(*) as count FROM visits v JOIN farmers f ON f.id = v.farmer_id WHERE v.created_at > NOW() - INTERVAL '30 days' AND f.region = $1"
-                : "SELECT COUNT(*) as count FROM visits WHERE created_at > NOW() - INTERVAL '30 days'",
-                isOfficer ? [officerId] : isManager ? [managerRegion] : []
-            ),
-            getFromDB(
-                isOfficer
-                ? "SELECT AVG(satisfaction_score) as avg FROM chat_conversations WHERE satisfaction_score IS NOT NULL AND officer_id = $1"
-                : isManager
-                ? "SELECT AVG(satisfaction_score) as avg FROM chat_conversations c JOIN farmers f ON f.id = c.farmer_id WHERE c.satisfaction_score IS NOT NULL AND f.region = $1"
-                : "SELECT AVG(satisfaction_score) as avg FROM chat_conversations WHERE satisfaction_score IS NOT NULL",
-                isOfficer ? [officerId] : isManager ? [managerRegion] : []
-            ),
-            getFromDB(
-                isOfficer
-                ? "SELECT COUNT(*) as count FROM chat_conversations WHERE status = 'resolved' AND officer_id = $1"
-                : isManager
-                ? "SELECT COUNT(*) as count FROM chat_conversations c JOIN farmers f ON f.id = c.farmer_id WHERE c.status = 'resolved' AND f.region = $1"
-                : "SELECT COUNT(*) as count FROM chat_conversations WHERE status = 'resolved'",
-                isOfficer ? [officerId] : isManager ? [managerRegion] : []
-            )
+        const [overviewData, geography, top5Crops, recentActivity, trendData, priorityQueueData] = await Promise.all([
+            fetchOverviewCounts(user),
+            fetchGeography(user),
+            fetchCropDistribution(user),
+            fetchRecentActivity(user),
+            fetchTrendData(user),
+            fetchPriorityQueue(),
         ]);
 
-        const currentFarmers = parseInt((farmersCount[0] as any)?.count || '0');
+        const { farmersCount, officersCount, activeConversations, recentVisits, avgSatisfactionResult, resolvedQueries } = overviewData;
+        const { lastMonthFarmers, lastMonthConversations, lastMonthVisits, lastMonthSatisfactionResult } = trendData;
 
-        // Return real empty state when database is empty — no mock fallback
-
-        // Get regional data
-        const geography = await getFromDB(`
-            SELECT f.region, 
-                   COUNT(DISTINCT f.id) as farmers, 
-                   COUNT(DISTINCT u.id) as officers 
-            FROM farmers f 
-            LEFT JOIN users u ON u.region = f.region AND u.role = 'extension_officer' 
-            ${isOfficer ? 'WHERE f.assigned_officer_id = $1' : isManager ? 'WHERE f.region = $1' : ''}
-            GROUP BY f.region
-            ORDER BY farmers DESC
-            LIMIT 10
-        `, isOfficer ? [officerId] : isManager ? [managerRegion] : []);
-
-        // Get crop distribution
-        const cropsData = await getFromDB(`
-            SELECT unnest(crops) as crop, COUNT(*) as count 
-            FROM farmers 
-            WHERE crops IS NOT NULL ${isOfficer ? 'AND assigned_officer_id = $1' : isManager ? 'AND region = $1' : ''}
-            GROUP BY crop 
-            ORDER BY count DESC
-        `, isOfficer ? [officerId] : isManager ? [managerRegion] : []);
-
-        // Calculate crop percentages
-        const totalCropCount = cropsData.reduce((sum: number, row: Record<string, unknown>) => sum + parseInt(row.count as string), 0);
-        const top5Crops = cropsData.slice(0, 5).map((row: Record<string, unknown>) => ({
-            name: row.crop as string,
-            percentage: totalCropCount > 0 ? Math.round((parseInt(row.count as string) / totalCropCount) * 100) : 0
-        }));
-
-        // Get recent activity from visits and conversations
-        const recentActivity = await getFromDB(`
-            (SELECT 'visit' as type, 
-                    'Visit completed in ' || COALESCE(f.village, f.region) as description,
-                    NOW() - v.created_at as time_diff
-             FROM visits v
-             JOIN farmers f ON f.id = v.farmer_id
-             WHERE v.status = 'completed' ${isOfficer ? 'AND v.officer_id = $1' : ''}
-             ORDER BY v.completed_at DESC
-             LIMIT 3)
-            UNION ALL
-            (SELECT 'query' as type,
-                    'New query from ' || f.first_name || ' ' || f.last_name as description,
-                    NOW() - c.started_at as time_diff
-             FROM chat_conversations c
-             JOIN farmers f ON f.id = c.farmer_id
-             WHERE 1=1 ${isOfficer ? 'AND c.officer_id = $1' : ''}
-             ORDER BY c.started_at DESC
-             LIMIT 2)
-            ORDER BY time_diff
-            LIMIT 5
-        `, isOfficer ? [officerId] : []);
-
-        // Get trends (comparing to last month)
-        const [
-            lastMonthFarmers,
-            lastMonthConversations,
-            lastMonthVisits,
-            lastMonthSatisfactionResult
-        ] = await Promise.all([
-            getFromDB(
-                isOfficer
-                ? "SELECT COUNT(*) as count FROM farmers WHERE created_at > NOW() - INTERVAL '60 days' AND created_at < NOW() - INTERVAL '30 days' AND assigned_officer_id = $1"
-                : "SELECT COUNT(*) as count FROM farmers WHERE created_at > NOW() - INTERVAL '60 days' AND created_at < NOW() - INTERVAL '30 days'",
-                isOfficer ? [officerId] : []
-            ),
-            getFromDB(
-                isOfficer
-                ? "SELECT COUNT(*) as count FROM chat_conversations WHERE started_at > NOW() - INTERVAL '60 days' AND started_at < NOW() - INTERVAL '30 days' AND officer_id = $1"
-                : "SELECT COUNT(*) as count FROM chat_conversations WHERE started_at > NOW() - INTERVAL '60 days' AND started_at < NOW() - INTERVAL '30 days'",
-                isOfficer ? [officerId] : []
-            ),
-            getFromDB(
-                isOfficer
-                ? "SELECT COUNT(*) as count FROM visits WHERE created_at > NOW() - INTERVAL '60 days' AND created_at < NOW() - INTERVAL '30 days' AND officer_id = $1"
-                : "SELECT COUNT(*) as count FROM visits WHERE created_at > NOW() - INTERVAL '60 days' AND created_at < NOW() - INTERVAL '30 days'",
-                isOfficer ? [officerId] : []
-            ),
-            getFromDB(
-                isOfficer
-                ? "SELECT AVG(satisfaction_score) as avg FROM chat_conversations WHERE satisfaction_score IS NOT NULL AND created_at > NOW() - INTERVAL '60 days' AND created_at < NOW() - INTERVAL '30 days' AND officer_id = $1"
-                : "SELECT AVG(satisfaction_score) as avg FROM chat_conversations WHERE satisfaction_score IS NOT NULL AND created_at > NOW() - INTERVAL '60 days' AND created_at < NOW() - INTERVAL '30 days'",
-                isOfficer ? [officerId] : []
-            )
-        ]);
-
-        const lastFarmers = parseInt((lastMonthFarmers[0] as any)?.count || '0');
-        const farmersGrowth = lastFarmers > 0 ? ((currentFarmers - lastFarmers) / lastFarmers * 100) : 0;
-
-        const currentConversations = parseInt((activeConversations[0] as any)?.count || '0');
-        const lastConversations = parseInt((lastMonthConversations[0] as any)?.count || '0');
-        const conversationsGrowth = lastConversations > 0 ? ((currentConversations - lastConversations) / lastConversations * 100) : 0;
-
-        const currentVisits = parseInt((recentVisits[0] as any)?.count || '0');
-        const lastVisits = parseInt((lastMonthVisits[0] as any)?.count || '0');
-        const visitsGrowth = lastVisits > 0 ? ((currentVisits - lastVisits) / lastVisits * 100) : 0;
-
+        const currentFarmers = parseIntCount(farmersCount);
+        const currentConversations = parseIntCount(activeConversations);
+        const currentVisits = parseIntCount(recentVisits);
         const currentSatisfaction = parseFloat((avgSatisfactionResult[0] as any)?.avg || '0');
-        const lastSatisfaction = parseFloat((lastMonthSatisfactionResult[0] as any)?.avg || '0');
-        const satisfactionChange = lastSatisfaction > 0 ? (currentSatisfaction - lastSatisfaction) : 0;
-
-        // Build response with real data
-        const priorityQueueData = await getFromDB(`
-            SELECT f.id as farmer_id, 
-                    f.first_name || ' ' || f.last_name as name,
-                    'Scheduled consultation' as reason,
-                    'medium' as severity,
-                    f.crops[1] as crop
-            FROM farmers f
-            JOIN visits v ON v.farmer_id = f.id
-            WHERE v.status = 'scheduled'
-            ORDER BY v.scheduled_at ASC
-            LIMIT 5
-        `);
 
         const dashboard = {
             overview: {
                 totalFarmers: currentFarmers,
-                totalOfficers: parseInt((officersCount[0] as any)?.count || '0'),
+                totalOfficers: parseIntCount(officersCount),
                 activeConversations: currentConversations,
                 visitsThisMonth: currentVisits,
                 avgSatisfaction: Math.round(currentSatisfaction * 10) / 10,
-                queriesResolved: parseInt((resolvedQueries[0] as any)?.count || '0'),
+                queriesResolved: parseIntCount(resolvedQueries),
                 avgConversationsPerFarmer: currentFarmers > 0 ? Math.round((currentConversations / currentFarmers) * 10) / 10 : 0
             },
             trends: {
-                farmersGrowth: Math.round(farmersGrowth * 10) / 10,
-                conversationsGrowth: Math.round(conversationsGrowth * 10) / 10,
-                visitsGrowth: Math.round(visitsGrowth * 10) / 10,
-                satisfactionChange: Math.round(satisfactionChange * 10) / 10,
+                farmersGrowth: Math.round(computeGrowth(currentFarmers, parseIntCount(lastMonthFarmers)) * 10) / 10,
+                conversationsGrowth: Math.round(computeGrowth(currentConversations, parseIntCount(lastMonthConversations)) * 10) / 10,
+                visitsGrowth: Math.round(computeGrowth(currentVisits, parseIntCount(lastMonthVisits)) * 10) / 10,
+                satisfactionChange: Math.round((currentSatisfaction - parseFloat((lastMonthSatisfactionResult[0] as any)?.avg || '0')) * 10) / 10,
             },
             geography: geography.map((row: Record<string, unknown>) => ({
                 region: (row.region as string) || 'Unknown',
@@ -252,9 +200,7 @@ router.get('/dashboard', async (req: Request, res: Response) => {
             recentActivity: recentActivity || []
         };
 
-        // Cache for 5 minutes
         await cacheSet(cacheKey, JSON.stringify({ success: true, data: dashboard }), 300);
-
         res.json({ success: true, data: dashboard });
     } catch (error) {
         logger.error('Dashboard analytics error:', error);

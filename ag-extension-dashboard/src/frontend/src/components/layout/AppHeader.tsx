@@ -84,7 +84,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         'font-headline tracking-tight transition-all px-4 py-2',
         isModern
             ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_0_20px_rgba(34,211,238,0.2)]'
-            : 'rounded-none border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-mono text-[10px] uppercase tracking-widest',
+            : 'rounded-none border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-mono text-xxs uppercase tracking-widest',
         isActive
             ? (isModern ? 'text-cyan-700 dark:text-cyan-400 font-black' : 'bg-slate-900 text-white')
             : 'text-slate-500'
@@ -148,7 +148,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                             ) : (
                                 globalSearchResults.map((group) => (
                                     <div key={group.type}>
-                                        <div className="px-4 pt-3 pb-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{group.type}</div>
+                                        <div className="px-4 pt-3 pb-1 text-xxs font-bold text-gray-400 uppercase tracking-widest">{group.type}</div>
                                         {group.items.map((item) => (
                                             <button
                                                 key={item.id}
@@ -189,7 +189,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                         <button
                             onClick={toggleDesignSystemMode}
                             className={cn(
-                                'flex items-center gap-2 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-all',
+                                'flex items-center gap-2 px-3 py-1.5 text-xxs font-bold uppercase tracking-widest transition-all',
                                 isModern
                                     ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98] bg-cyan-600/10 text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-400'
                                     : 'rounded-none border border-slate-300 dark:border-slate-700 font-mono bg-gray-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'
@@ -229,7 +229,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                         className="flex items-center gap-3 pl-4 border-l border-white/10 hover:opacity-80 transition-opacity"
                     >
                         <div className="w-8 h-8 rounded-full border border-cyan-400/30 overflow-hidden ring-2 ring-cyan-400/10 flex items-center justify-center bg-slate-800">
-                            <span className="text-[10px] text-cyan-400 font-bold">{storeUser?.firstName?.[0]}{storeUser?.lastName?.[0]}</span>
+                            <span className="text-xxs text-cyan-400 font-bold">{storeUser?.firstName?.[0]}{storeUser?.lastName?.[0]}</span>
                         </div>
                         <div className="hidden xl:block text-left">
                             <p className="text-xs font-bold text-gray-900 dark:text-white leading-none">
@@ -250,7 +250,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                                     className="absolute right-0 mt-2 w-56 glass-panel rounded-xl shadow-2xl p-2 z-50"
                                 >
                                     <div className="p-3 mb-2 border-b border-white/10">
-                                        <p className={cn('text-[10px] font-bold uppercase tracking-widest mb-1', subtextClass)}>Account Info</p>
+                                        <p className={cn('text-xxs font-bold uppercase tracking-widest mb-1', subtextClass)}>Account Info</p>
                                         <p className="text-xs font-bold text-gray-900 dark:text-white truncate">{storeUser?.email}</p>
                                     </div>
 

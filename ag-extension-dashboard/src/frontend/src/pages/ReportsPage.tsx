@@ -72,7 +72,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                             <div className={`p-3 bg-gray-50 dark:bg-gray-700 ${radiusClass} group-hover:bg-primary-50 dark:group-hover:bg-primary-900/30 transition-colors`}>
                                 <FileText className="w-8 h-8 text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400" />
                             </div>
-                            <span className={`px-2 py-1 ${radiusClass} text-[10px] font-black uppercase tracking-widest ${report.status === 'ready'
+                            <span className={`px-2 py-1 ${radiusClass} text-xxs font-black uppercase tracking-widest ${report.status === 'ready'
                                 ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
                                 : 'bg-secondary-100 dark:bg-secondary-700 text-secondary-700 dark:text-secondary-400'
                                 }`}>
@@ -88,7 +88,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                         <div className="flex items-center justify-between pt-4 border-t border-gray-50 dark:border-gray-700">
                             <div className="flex items-center gap-2">
                                 <Clock className="w-3 h-3 text-gray-400" />
-                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                <span className="text-xxs font-bold text-gray-400 uppercase tracking-widest">
                                     {new Date(report.generatedAt).toLocaleDateString()}
                                 </span>
                             </div>
@@ -104,7 +104,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                                             a.click();
                                         });
                                     }}
-                                    className={`p-1 px-2 text-[10px] font-bold text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 ${btnClass} transition-colors flex items-center gap-1`}
+                                    className={`p-1 px-2 text-xxs font-bold text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 ${btnClass} transition-colors flex items-center gap-1`}
                                 >
                                     <Download className="w-3 h-3" />
                                     {t('common_download') || 'PDF'}
@@ -125,7 +125,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                                         </div>
                                     )}
                                     {report.createdBy && (
-                                        <span className="text-[9px] text-gray-500 dark:text-gray-400 font-medium self-center ml-1 truncate max-w-[80px]">
+                                        <span className="text-micro text-gray-500 dark:text-gray-400 font-medium self-center ml-1 truncate max-w-[80px]">
                                             {report.createdBy}
                                         </span>
                                     )}

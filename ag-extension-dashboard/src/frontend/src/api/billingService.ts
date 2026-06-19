@@ -50,15 +50,6 @@ export const switchSubscription = async (priceId: string, billingCycle: 'current
     }
 };
 
-export const cancelSubscription = async () => {
-    try {
-        const { data } = await apiClient.post('/billing/cancel');
-        return data;
-    } catch (err: unknown) {
-        return (isAxiosError(err) ? err.response?.data : null) || { success: false, error: 'Failed to cancel subscription' };
-    }
-};
-
 export const createPortalSession = async () => {
     try {
         const { data } = await apiClient.post('/billing/portal');

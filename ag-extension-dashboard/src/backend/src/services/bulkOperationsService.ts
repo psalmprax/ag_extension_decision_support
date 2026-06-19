@@ -44,396 +44,151 @@ export class BulkOperationsService {
         this.prisma = getPrisma();
     }
 
-    /**
-     * Generate unique operation ID
-     */
     private generateOperationId(): string {
         return `bulk_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     }
 
-    /**
-     * Bulk delete farmers with transaction safety
-     */
-    async bulkDeleteFarmers(
-        request: BulkDeleteRequest,
+    private async executeBulkDelete(
+        entityType: string,
+        ids: string[],
         userId: string,
-        userRole: string
+        userRole: string,
+        deleteItem: (id: string, tx: any) => Promise<void>,
+        batchSize: number = 10
     ): Promise<BulkOperationResult> {
         const operationId = this.generateOperationId();
         let processed = 0;
         let failed = 0;
         const errors: string[] = [];
 
-        try {
-            logger.info(`Starting bulk farmer deletion: ${request.ids.length} farmers`, { operationId, userId });
+        logger.info(`Starting bulk ${entityType} deletion: ${ids.length} items`, { operationId, userId });
 
-            // Process in batches to avoid memory issues
-            const batchSize = 10;
-            for (let i = 0; i < request.ids.length; i += batchSize) {
-                const batch = request.ids.slice(i, i + batchSize);
-
-                await this.prisma.$transaction(async (tx) => {
-                    for (const farmerId of batch) {
-                        try {
-                            // Check permissions
-                            if (!await this.checkFarmerAccess(farmerId, userId, userRole, tx)) {
-                                failed++;
-                                errors.push(`Access denied for farmer ${farmerId}`);
-                                continue;
-                            }
-
-                            // Delete farmer (cascade will handle related records)
-                            await tx.farmer.delete({
-                                where: { id: farmerId }
-                            });
-
-                            processed++;
-                        } catch (error) {
-                            failed++;
-                            errors.push(`Failed to delete farmer ${farmerId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-                        }
-                    }
-                });
-            }
-
-            const result: BulkOperationResult = {
-                success: failed === 0,
-                processed,
-                failed,
-                errors,
-                operationId
-            };
-
-            logger.info(`Bulk farmer deletion completed`, { operationId, processed, failed });
-            return result;
-
-        } catch (error) {
-            logger.error(`Bulk farmer deletion failed`, { operationId, error });
-            throw error;
-        }
-    }
-
-    /**
-     * Bulk delete visits
-     */
-    async bulkDeleteVisits(
-        request: BulkDeleteRequest,
-        userId: string,
-        userRole: string
-    ): Promise<BulkOperationResult> {
-        const operationId = this.generateOperationId();
-        let processed = 0;
-        let failed = 0;
-        const errors: string[] = [];
-
-        try {
-            logger.info(`Starting bulk visit deletion: ${request.ids.length} visits`, { operationId, userId });
-
-            const pool = getPool();
-            if (!pool) {
-                throw new Error('Database connection unavailable');
-            }
-
-            // Process in batches
-            const batchSize = 20;
-            for (let i = 0; i < request.ids.length; i += batchSize) {
-                const batch = request.ids.slice(i, i + batchSize);
-
-                for (const visitId of batch) {
+        for (let i = 0; i < ids.length; i += batchSize) {
+            const batch = ids.slice(i, i + batchSize);
+            await this.prisma.$transaction(async (tx) => {
+                for (const id of batch) {
                     try {
-                        // Check permissions via SQL
-                        const permissionCheck = await query(
-                            'SELECT v.id FROM visits v LEFT JOIN farmers f ON f.id = v.farmer_id WHERE v.id = $1 AND (v.officer_id = $2 OR f.assigned_officer_id = $2 OR $3 IN (\'admin\', \'regional_manager\'))',
-                            [visitId, userId, userRole]
-                        );
-
-                        if (permissionCheck.rows.length === 0) {
-                            failed++;
-                            errors.push(`Access denied for visit ${visitId}`);
-                            continue;
-                        }
-
-                        // Delete visit
-                        await query('DELETE FROM visits WHERE id = $1', [visitId]);
-
+                        await deleteItem(id, tx);
                         processed++;
                     } catch (error) {
                         failed++;
-                        errors.push(`Failed to delete visit ${visitId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                        errors.push(`Failed to delete ${entityType} ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
                     }
                 }
-            }
-
-            const result: BulkOperationResult = {
-                success: failed === 0,
-                processed,
-                failed,
-                errors,
-                operationId
-            };
-
-            logger.info(`Bulk visit deletion completed`, { operationId, processed, failed });
-            return result;
-
-        } catch (error) {
-            logger.error(`Bulk visit deletion failed`, { operationId, error });
-            throw error;
-        }
-    }
-
-    /**
-     * Bulk delete reports
-     */
-    async bulkDeleteReports(
-        request: BulkDeleteRequest,
-        userId: string,
-        userRole: string
-    ): Promise<BulkOperationResult> {
-        const operationId = this.generateOperationId();
-        let processed = 0;
-        let failed = 0;
-        const errors: string[] = [];
-
-        try {
-            logger.info(`Starting bulk report deletion: ${request.ids.length} reports`, { operationId, userId });
-
-            const batchSize = 10;
-            for (let i = 0; i < request.ids.length; i += batchSize) {
-                const batch = request.ids.slice(i, i + batchSize);
-
-                await this.prisma.$transaction(async (tx) => {
-                    for (const reportId of batch) {
-                        try {
-                            // Check ownership for non-admin users
-                            if (userRole !== 'admin') {
-                                const report = await tx.report.findUnique({
-                                    where: { id: reportId },
-                                    select: { generatedBy: true }
-                                });
-
-                                if (!report || report.generatedBy !== userId) {
-                                    failed++;
-                                    errors.push(`Access denied for report ${reportId}`);
-                                    continue;
-                                }
-                            }
-
-                            await tx.report.delete({
-                                where: { id: reportId }
-                            });
-
-                            processed++;
-                        } catch (error) {
-                            failed++;
-                            errors.push(`Failed to delete report ${reportId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-                        }
-                    }
-                });
-            }
-
-            const result: BulkOperationResult = {
-                success: failed === 0,
-                processed,
-                failed,
-                errors,
-                operationId
-            };
-
-            return result;
-
-        } catch (error) {
-            logger.error(`Bulk report deletion failed`, { operationId, error });
-            throw error;
-        }
-    }
-
-    /**
-     * Bulk delete knowledge articles
-     */
-    async bulkDeleteKnowledgeArticles(
-        request: BulkDeleteRequest,
-        userId: string,
-        userRole: string,
-        onProgress?: (update: ProgressUpdate) => void
-    ): Promise<BulkOperationResult> {
-        const operationId = this.generateOperationId();
-        let processed = 0;
-        let failed = 0;
-        const errors: string[] = [];
-
-        try {
-            // Only admins can delete knowledge articles
-            if (userRole !== 'admin') {
-                throw new Error('Only administrators can perform bulk knowledge article operations');
-            }
-
-            logger.info(`Starting bulk knowledge article deletion: ${request.ids.length} articles`, { operationId, userId });
-
-            const total = request.ids.length;
-            let current = 0;
-
-            const batchSize = 10;
-            for (let i = 0; i < request.ids.length; i += batchSize) {
-                const batch = request.ids.slice(i, i + batchSize);
-
-                await this.prisma.$transaction(async (tx) => {
-                    for (const articleId of batch) {
-                        try {
-                            await tx.knowledgeArticle.delete({
-                                where: { id: articleId }
-                            });
-
-                            processed++;
-                            current++;
-
-                            if (onProgress) {
-                                onProgress({
-                                    operationId,
-                                    progress: (current / total) * 100,
-                                    total,
-                                    current,
-                                    message: `Deleting articles: ${current}/${total}`,
-                                    status: 'running'
-                                });
-                            }
-                        } catch (error) {
-                            failed++;
-                            errors.push(`Failed to delete article ${articleId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-                            current++;
-                        }
-                    }
-                });
-            }
-
-            const result: BulkOperationResult = {
-                success: failed === 0,
-                processed,
-                failed,
-                errors,
-                operationId
-            };
-
-            if (onProgress) {
-                onProgress({
-                    operationId,
-                    progress: 100,
-                    total,
-                    current,
-                    message: result.success ? 'Deletion completed successfully' : 'Deletion completed with errors',
-                    status: result.success ? 'completed' : 'failed'
-                });
-            }
-
-            return result;
-
-        } catch (error) {
-            logger.error(`Bulk knowledge article deletion failed`, { operationId, error });
-            throw error;
-        }
-    }
-
-    /**
-     * Bulk update farmers
-     */
-    async bulkUpdateFarmers(
-        request: BulkUpdateRequest,
-        userId: string,
-        userRole: string
-    ): Promise<BulkOperationResult> {
-        const operationId = this.generateOperationId();
-        let processed = 0;
-        let failed = 0;
-        const errors: string[] = [];
-
-        try {
-            logger.info(`Starting bulk farmer update: ${request.ids.length} farmers`, { operationId, userId });
-
-            const batchSize = 10;
-            for (let i = 0; i < request.ids.length; i += batchSize) {
-                const batch = request.ids.slice(i, i + batchSize);
-
-                await this.prisma.$transaction(async (tx) => {
-                    for (const farmerId of batch) {
-                        try {
-                            // Check permissions
-                            if (!await this.checkFarmerAccess(farmerId, userId, userRole, tx)) {
-                                failed++;
-                                errors.push(`Access denied for farmer ${farmerId}`);
-                                continue;
-                            }
-
-                            await tx.farmer.update({
-                                where: { id: farmerId },
-                                data: {
-                                    ...request.updates,
-                                    updatedAt: new Date()
-                                }
-                            });
-
-                            processed++;
-                        } catch (error) {
-                            failed++;
-                            errors.push(`Failed to update farmer ${farmerId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-                        }
-                    }
-                });
-            }
-
-            const result: BulkOperationResult = {
-                success: failed === 0,
-                processed,
-                failed,
-                errors,
-                operationId
-            };
-
-            return result;
-
-        } catch (error) {
-            logger.error(`Bulk farmer update failed`, { operationId, error });
-            throw error;
-        }
-    }
-
-    /**
-     * Check access permissions for farmer
-     */
-    private async checkFarmerAccess(
-        farmerId: string,
-        userId: string,
-        userRole: string,
-        tx: any
-    ): Promise<boolean> {
-        if (userRole === 'admin') return true;
-
-        const farmer = await tx.farmer.findUnique({
-            where: { id: farmerId },
-            select: {
-                assignedOfficerId: true,
-                userId: true,
-                region: true
-            }
-        });
-
-        if (!farmer) return false;
-
-        if (userRole === 'extension_officer') {
-            return farmer.assignedOfficerId === userId || farmer.userId === userId;
-        }
-
-        if (userRole === 'farmer') {
-            return farmer.userId === userId;
-        }
-
-        if (userRole === 'regional_manager') {
-            const manager = await tx.user.findUnique({
-                where: { id: userId },
-                select: { region: true }
             });
-            return manager?.region === farmer.region;
         }
 
-        return false;
+        const result = { success: failed === 0, processed, failed, errors, operationId };
+        logger.info(`Bulk ${entityType} deletion completed`, { operationId, processed, failed });
+        return result;
+    }
+
+    async bulkDeleteFarmers(request: BulkDeleteRequest, userId: string, userRole: string): Promise<BulkOperationResult> {
+        return this.executeBulkDelete('farmer', request.ids, userId, userRole, async (farmerId, tx) => {
+            if (userRole !== 'admin') {
+                const farmer = await tx.farmer.findUnique({ where: { id: farmerId }, select: { assignedOfficerId: true, userId: true, region: true } });
+                if (!farmer) throw new Error('Not found');
+                if (userRole === 'extension_officer' && farmer.assignedOfficerId !== userId && farmer.userId !== userId) throw new Error('Access denied');
+                if (userRole === 'farmer' && farmer.userId !== userId) throw new Error('Access denied');
+                if (userRole === 'regional_manager') {
+                    const manager = await tx.user.findUnique({ where: { id: userId }, select: { region: true } });
+                    if (manager?.region !== farmer.region) throw new Error('Access denied');
+                }
+            }
+            await tx.farmer.delete({ where: { id: farmerId } });
+        });
+    }
+
+    async bulkDeleteVisits(request: BulkDeleteRequest, userId: string, userRole: string): Promise<BulkOperationResult> {
+        const operationId = this.generateOperationId();
+        let processed = 0;
+        let failed = 0;
+        const errors: string[] = [];
+
+        logger.info(`Starting bulk visit deletion: ${request.ids.length} visits`, { operationId, userId });
+
+        for (let i = 0; i < request.ids.length; i += 20) {
+            const batch = request.ids.slice(i, i + 20);
+            for (const visitId of batch) {
+                try {
+                    const permissionCheck = await query(
+                        'SELECT v.id FROM visits v LEFT JOIN farmers f ON f.id = v.farmer_id WHERE v.id = $1 AND (v.officer_id = $2 OR f.assigned_officer_id = $2 OR $3 IN ($4, $5))',
+                        [visitId, userId, userRole, 'admin', 'regional_manager']
+                    );
+                    if (permissionCheck.rows.length === 0) { failed++; errors.push(`Access denied for visit ${visitId}`); continue; }
+                    await query('DELETE FROM visits WHERE id = $1', [visitId]);
+                    processed++;
+                } catch (error) {
+                    failed++;
+                    errors.push(`Failed to delete visit ${visitId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                }
+            }
+        }
+
+        const result = { success: failed === 0, processed, failed, errors, operationId };
+        logger.info(`Bulk visit deletion completed`, { operationId, processed, failed });
+        return result;
+    }
+
+    async bulkDeleteReports(request: BulkDeleteRequest, userId: string, userRole: string): Promise<BulkOperationResult> {
+        return this.executeBulkDelete('report', request.ids, userId, userRole, async (reportId, tx) => {
+            if (userRole !== 'admin') {
+                const report = await tx.report.findUnique({ where: { id: reportId }, select: { generatedBy: true } });
+                if (!report || report.generatedBy !== userId) throw new Error('Access denied');
+            }
+            await tx.report.delete({ where: { id: reportId } });
+        });
+    }
+
+    async bulkDeleteKnowledgeArticles(request: BulkDeleteRequest, userId: string, userRole: string, onProgress?: (update: ProgressUpdate) => void): Promise<BulkOperationResult> {
+        if (userRole !== 'admin') throw new Error('Only administrators can perform bulk knowledge article operations');
+
+        const operationId = this.generateOperationId();
+        let processed = 0;
+        let failed = 0;
+        const errors: string[] = [];
+        const total = request.ids.length;
+        let current = 0;
+
+        logger.info(`Starting bulk knowledge article deletion: ${total} articles`, { operationId, userId });
+
+        for (let i = 0; i < request.ids.length; i += 10) {
+            const batch = request.ids.slice(i, i + 10);
+            await this.prisma.$transaction(async (tx) => {
+                for (const articleId of batch) {
+                    try {
+                        await tx.knowledgeArticle.delete({ where: { id: articleId } });
+                        processed++;
+                        current++;
+                        if (onProgress) onProgress({ operationId, progress: (current / total) * 100, total, current, message: `Deleting articles: ${current}/${total}`, status: 'running' });
+                    } catch (error) {
+                        failed++;
+                        errors.push(`Failed to delete article ${articleId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                        current++;
+                    }
+                }
+            });
+        }
+
+        const result = { success: failed === 0, processed, failed, errors, operationId };
+        if (onProgress) onProgress({ operationId, progress: 100, total, current, message: result.success ? 'Deletion completed successfully' : 'Deletion completed with errors', status: result.success ? 'completed' : 'failed' });
+        return result;
+    }
+
+    async bulkUpdateFarmers(request: BulkUpdateRequest, userId: string, userRole: string): Promise<BulkOperationResult> {
+        return this.executeBulkDelete('farmer', request.ids, userId, userRole, async (farmerId, tx) => {
+            if (userRole !== 'admin') {
+                const farmer = await tx.farmer.findUnique({ where: { id: farmerId }, select: { assignedOfficerId: true, userId: true, region: true } });
+                if (!farmer) throw new Error('Not found');
+                if (userRole === 'extension_officer' && farmer.assignedOfficerId !== userId && farmer.userId !== userId) throw new Error('Access denied');
+                if (userRole === 'farmer' && farmer.userId !== userId) throw new Error('Access denied');
+                if (userRole === 'regional_manager') {
+                    const manager = await tx.user.findUnique({ where: { id: userId }, select: { region: true } });
+                    if (manager?.region !== farmer.region) throw new Error('Access denied');
+                }
+            }
+            await tx.farmer.update({ where: { id: farmerId }, data: { ...request.updates, updatedAt: new Date() } });
+        });
     }
 
     /**

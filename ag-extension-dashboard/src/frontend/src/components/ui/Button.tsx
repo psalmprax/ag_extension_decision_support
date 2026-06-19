@@ -19,7 +19,7 @@ const buttonVariants = cva(
             },
             design: {
                 modern: 'rounded-xl hover:scale-[1.02] active:scale-[0.98]',
-                classic: 'rounded-none font-mono text-[10px] uppercase tracking-widest border border-slate-300 dark:border-slate-700',
+                classic: 'rounded-none font-mono text-xxs uppercase tracking-widest border border-slate-300 dark:border-slate-700',
             },
         },
         compoundVariants: [

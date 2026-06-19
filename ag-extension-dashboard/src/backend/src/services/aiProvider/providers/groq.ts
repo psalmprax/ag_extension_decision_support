@@ -8,7 +8,7 @@ import {
     ImageAnalysisResult,
     VideoAnalysisOptions,
     VideoAnalysisResult,
-} from '../aiProvider';
+} from '../types';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
 import Groq from 'groq-sdk';
@@ -35,7 +35,7 @@ export class GroqProvider extends BaseAIProvider {
             function: {
                 name: tool.name,
                 description: tool.description,
-                parameters: zodToJsonSchema(tool.schema),
+                parameters: zodToJsonSchema(tool.schema as any),
             },
         }));
 

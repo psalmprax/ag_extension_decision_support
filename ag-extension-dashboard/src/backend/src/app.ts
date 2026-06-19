@@ -110,45 +110,31 @@ app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
 // Setup Swagger
 setupSwagger(app);
 
-// Health check handler with full dependency checks
-const healthHandler = async (_req: Request, res: Response) => {
-    let dbStatus = 'unknown';
-    let cacheStatus = 'unknown';
-    let aiProviderStatus = 'unknown';
-    let externalApiStatus = 'unknown';
-    let agentStatus = 'unknown';
-    const errors: string[] = [];
-
-    // Check database
+// Health check helpers
+async function checkDatabase(): Promise<{ status: string; error?: string }> {
     try {
         const pool = getPool();
-        if (pool) {
-            await pool.query('SELECT 1');
-            dbStatus = 'connected';
-        } else {
-            dbStatus = 'not configured';
-        }
+        if (!pool) return { status: 'not configured' };
+        await pool.query('SELECT 1');
+        return { status: 'connected' };
     } catch (error) {
         logger.error('Database health check failed:', error);
-        dbStatus = 'error';
-        errors.push(`database: ${(error as Error).message}`);
+        return { status: 'error', error: `database: ${(error as Error).message}` };
     }
+}
 
-    // Check cache (Redis)
+async function checkCache(): Promise<{ status: string; error?: string }> {
     try {
         const redis = getCache();
-        if (redis && redis.isOpen) {
-            cacheStatus = 'connected';
-        } else {
-            cacheStatus = 'not connected';
-        }
+        if (redis?.isOpen) return { status: 'connected' };
+        return { status: 'not connected' };
     } catch (error) {
         logger.error('Cache health check failed:', error);
-        cacheStatus = 'error';
-        errors.push(`cache: ${(error as Error).message}`);
+        return { status: 'error', error: `cache: ${(error as Error).message}` };
     }
+}
 
-    // Check AI provider (primary + fallback + cascading fallback)
+async function checkAIProvider(): Promise<{ status: string; error?: string }> {
     try {
         const primaryProvider = await AIProviderFactory.getPrimaryProvider();
         const primaryHealthy = primaryProvider.isConfigured() && await primaryProvider.healthCheck();
@@ -158,11 +144,8 @@ const healthHandler = async (_req: Request, res: Response) => {
         try {
             const fallbackProvider = await AIProviderFactory.getFallbackProvider();
             fallbackHealthy = fallbackProvider.isConfigured() && await fallbackProvider.healthCheck();
-            if (fallbackHealthy) {
-                fallbackActiveName = fallbackProvider.provider;
-            }
-        } catch (error) {
-            logger.warn('Fallback provider health check failed:', error);
+            if (fallbackHealthy) fallbackActiveName = fallbackProvider.provider;
+        } catch {
             fallbackHealthy = false;
         }
 
@@ -177,75 +160,70 @@ const healthHandler = async (_req: Request, res: Response) => {
                         fallbackActiveName = p.provider;
                         break;
                     }
-                } catch (error) {
-                    logger.debug(`Provider ${type} unavailable:`, (error as Error).message);
-                }
+                } catch {}
             }
         }
 
-        if (primaryHealthy) {
-            aiProviderStatus = 'healthy';
-        } else if (fallbackHealthy) {
-            aiProviderStatus = 'degraded (fallback active)';
-        } else if (anyCascadingHealthy) {
-            aiProviderStatus = `degraded (fell back to ${fallbackActiveName})`;
-        } else if (!primaryProvider.isConfigured() && !await (await AIProviderFactory.getFallbackProvider()).isConfigured()) {
-            aiProviderStatus = 'not configured';
-        } else {
-            aiProviderStatus = 'unhealthy';
-            errors.push('ai_provider: primary, fallback, and cascade options are all unhealthy');
+        if (primaryHealthy) return { status: 'healthy' };
+        if (fallbackHealthy) return { status: 'degraded (fallback active)' };
+        if (anyCascadingHealthy) return { status: `degraded (fell back to ${fallbackActiveName})` };
+        if (!primaryProvider.isConfigured() && !await (await AIProviderFactory.getFallbackProvider()).isConfigured()) {
+            return { status: 'not configured' };
         }
+        return { status: 'unhealthy', error: 'ai_provider: primary, fallback, and cascade options are all unhealthy' };
     } catch (error) {
-        aiProviderStatus = 'error';
-        errors.push(`ai_provider: ${(error as Error).message}`);
+        return { status: 'error', error: `ai_provider: ${(error as Error).message}` };
     }
+}
 
-    // Check external APIs (weather, NASA POWER, FAO).
-    // An API is "configured" if EITHER its key OR its base URL is set, so that
-    // a service with a default URL (e.g. weatherapi.com) counts as configured
-    // even before a real API key is provisioned. This endpoint reports
-    // configuration state, not reachability.
+function checkExternalAPIs(): { status: string; error?: string } {
     try {
         const weatherKey = config.externalApis.weather.apiKey;
         const weatherUrl = config.externalApis.weather.url;
         const faoConfigured = !!config.externalApis.fao.url;
-        const nasaConfigured = true; // NASA POWER is always available
+        const nasaConfigured = true;
 
         if (weatherKey || weatherUrl || faoConfigured || nasaConfigured) {
-            externalApiStatus = `${['weather', 'fao', 'nasa'].filter(k =>
+            const configured = ['weather', 'fao', 'nasa'].filter(k =>
                 (k === 'weather' && (weatherKey || weatherUrl)) ||
                 (k === 'fao' && faoConfigured) ||
                 (k === 'nasa')
-            ).length}/3 configured`;
-        } else {
-            externalApiStatus = 'none configured';
+            ).length;
+            return { status: `${configured}/3 configured` };
         }
+        return { status: 'none configured' };
     } catch (error) {
-        externalApiStatus = 'error';
-        errors.push(`external_apis: ${(error as Error).message}`);
+        return { status: 'error', error: `external_apis: ${(error as Error).message}` };
     }
+}
 
-    // Check agent services
+function checkAgentServices(): { status: string; error?: string } {
     try {
         const agentHealth = selfHealingService.getHealthStatus();
         const registeredCount = agentHealth.size;
         const unhealthyCount = Array.from(agentHealth.values()).filter(h => h.status === 'unhealthy' || h.status === 'offline').length;
         
-        if (registeredCount === 0) {
-            agentStatus = 'not initialized';
-        } else if (unhealthyCount === 0) {
-            agentStatus = `${registeredCount} registered, all healthy`;
-        } else {
-            agentStatus = `${registeredCount} registered, ${unhealthyCount} unhealthy`;
-            if (unhealthyCount > 0) errors.push(`agents: ${unhealthyCount} unhealthy`);
-        }
+        if (registeredCount === 0) return { status: 'not initialized' };
+        if (unhealthyCount === 0) return { status: `${registeredCount} registered, all healthy` };
+        return { status: `${registeredCount} registered, ${unhealthyCount} unhealthy`, error: `agents: ${unhealthyCount} unhealthy` };
     } catch (error) {
-        agentStatus = 'error';
-        errors.push(`agents: ${(error as Error).message}`);
+        return { status: 'error', error: `agents: ${(error as Error).message}` };
     }
+}
 
-    const isHealthy = dbStatus === 'connected' && aiProviderStatus !== 'unhealthy';
-    const isDegraded = dbStatus === 'connected' && errors.length > 0;
+// Health check handler with full dependency checks
+const healthHandler = async (_req: Request, res: Response) => {
+    const [db, cache, ai, external, agents] = await Promise.all([
+        checkDatabase(),
+        checkCache(),
+        checkAIProvider(),
+        Promise.resolve(checkExternalAPIs()),
+        Promise.resolve(checkAgentServices()),
+    ]);
+
+    const errors = [db.error, cache.error, ai.error, external.error, agents.error].filter(Boolean);
+    const isHealthy = db.status === 'connected' && ai.status !== 'unhealthy';
+    const isDegraded = db.status === 'connected' && errors.length > 0;
 
     res.status(isHealthy ? 200 : isDegraded ? 200 : 503).json({
         status: isHealthy ? 'healthy' : isDegraded ? 'degraded' : 'unhealthy',
@@ -254,11 +232,11 @@ const healthHandler = async (_req: Request, res: Response) => {
         environment: config.nodeEnv,
         version: '1.0.1',
         services: {
-            database: dbStatus,
-            cache: cacheStatus,
-            ai_provider: aiProviderStatus,
-            external_apis: externalApiStatus,
-            agent_orchestrator: agentStatus,
+            database: db.status,
+            cache: cache.status,
+            ai_provider: ai.status,
+            external_apis: external.status,
+            agent_orchestrator: agents.status,
         },
         errors: errors.length > 0 ? errors : undefined,
     });
