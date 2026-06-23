@@ -15,7 +15,7 @@ const IsometricFarmOverview: React.FC<IsometricFarmOverviewProps> = ({
 }) => {
     const [satelliteData, setSatelliteData] = useState<{ ndvi?: number; soilMoisture?: number; lastUpdated?: string } | null>(null);
     const [farmSize, setFarmSize] = useState(externalFarmSize);
-    const [crops, setCrops] = useState<string[]>(externalCrops);
+    const [crops, _setCrops] = useState<string[]>(externalCrops);
 
     useEffect(() => {
         if (!farmerId) return;
