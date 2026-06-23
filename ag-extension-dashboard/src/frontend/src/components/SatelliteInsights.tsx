@@ -29,8 +29,7 @@ interface SatelliteInsightsProps {
     metrics?: Metric[];
 }
 
-export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, isCyber, metrics }) => {
-    const { t: _t } = useLanguage();
+const useSatelliteData = (farmerId: string) => {
     const [synthesis, setSynthesis] = useState<string | null>(null);
     const [farmer, setFarmer] = useState<Farmer | null>(null);
     const [priority, setPriority] = useState<PriorityData | null>(null);
@@ -42,7 +41,6 @@ export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, 
             if (!farmerId) return;
             setIsLoading(true);
             try {
-                // Real-First fetch for Farmer details
                 const farmerRes = await withRealFallback(
                     fetchFarmerById(farmerId),
                     { success: true, data: { id: farmerId, firstName: 'Farmer', lastName: '' } as Farmer }
@@ -50,7 +48,6 @@ export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, 
                 const farmerData = farmerRes.data;
                 setFarmer(farmerData);
 
-                // Default fallbacks for synthesis and priority
                 const fallbackPriority: PriorityData = {
                     farmerId,
                     level: 'normal',
@@ -97,6 +94,151 @@ export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, 
         loadRealData();
     }, [farmerId]);
 
+    return { synthesis, farmer, priority, satelliteData, isLoading };
+};
+
+const SpatialDataVisualization = ({ dataPoints, isLoading, isCyber, priority, farmer }: { dataPoints: Array<Record<string, unknown>>, isLoading: boolean, isCyber: boolean, priority: Record<string, unknown> | null, farmer: Record<string, unknown> | null }) => {
+    const priorityLevel = priority?.level;
+    const isHighOrCritical = priorityLevel === 'critical' || priorityLevel === 'high';
+
+    let priorityTextClass: string;
+    if (priorityLevel === 'critical') {
+        priorityTextClass = 'text-red-500';
+    } else if (priorityLevel === 'high') {
+        priorityTextClass = 'text-orange-500';
+    } else {
+        priorityTextClass = 'text-green-500';
+    }
+
+    const gpsLabel = farmer?.locationLat
+        ? `Lat: ${Number(farmer.locationLat).toFixed(4)} • Lng: ${Number(farmer.locationLng).toFixed(4)}`
+        : 'GPS Tracking Active';
+
+    return (
+        <div className={`aspect-video rounded-3xl relative overflow-hidden border ${isCyber ? 'bg-black/40 border-primary-500/20 shadow-[0_0_30px_var(--color-outline)]' : 'bg-gray-100 border-gray-200'}`}>
+            {/* Background Representation of Farm */}
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/40 via-blue-900/20 to-emerald-950/40" />
+            {isCyber && <div className="absolute inset-0 cyber-grid-premium opacity-30" />}
+            
+            {/* Data Points Layer - Rendered from real NDVI indices */}
+            <div className="absolute inset-0 flex items-center justify-center">
+                <div className="relative w-full h-full">
+                    {dataPoints.map((point: Record<string, unknown>, i: number) => (
+                        <motion.div
+                            key={i}
+                            initial={{ opacity: 0, scale: 0 }}
+                            animate={{ opacity: 0.8, scale: 1 }}
+                            className="absolute w-4 h-4"
+                            style={{ left: `${point.x}%`, top: `${point.y}%` }}
+                        >
+                            <div className={`w-full h-full rounded-full ${point.colorClass as string} blur-md opacity-40 pulse-ring`} />
+                            <div className={`absolute inset-0 w-2 h-2 m-auto rounded-full ${point.pulseClass as string} border border-white/40 shadow-lg`} />
+                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[8px] font-black text-white/60 uppercase whitespace-nowrap">
+                                NDVI {point.ndvi as number}
+                            </div>
+                        </motion.div>
+                    ))}
+                    {dataPoints.length === 0 && !isLoading && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <p className="text-xxs font-black text-white/20 uppercase tracking-[0.3em]">Precision coordinates pending</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Scanline Overlay */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <motion.div
+                    animate={{ x: ['-100%', '200%'] }}
+                    transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+                    className="h-full w-1/2 bg-gradient-to-r from-transparent via-primary-500/10 to-transparent blur-2xl"
+                />
+            </div>
+
+            {/* Status Overlays */}
+            <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
+                <p className="text-[8px] font-black text-primary-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                    <Layers className="w-3 h-3" />
+                    Spectral Layer IV
+                </p>
+            </div>
+            
+            {priority && (
+                <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
+                    <div className={`text-[8px] font-black uppercase tracking-[0.2em] flex items-center gap-2 ${priorityTextClass}`}>
+                        {isHighOrCritical ? <AlertTriangle className="w-3 h-3" /> : <Shield className="w-3 h-3" />}
+                        {priority.level as string} PRIORITY
+                    </div>
+                </div>
+            )}
+
+            <div className="absolute bottom-4 left-4">
+                <p className="text-xxs font-black text-white/40 uppercase tracking-widest">
+                    {gpsLabel}
+                </p>
+            </div>
+            <div className="absolute bottom-4 right-4 text-right">
+                <p className="text-xxs font-black text-white/40 uppercase tracking-widest">
+                    Source: Sentinel-2 MSI
+                </p>
+            </div>
+        </div>
+    );
+};
+
+const MetricsGrid = ({ priority, isCyber, isLoading }: { priority: Record<string, unknown> | null, isCyber: boolean, isLoading: boolean }) => {
+    const isCritical = priority?.level === 'critical';
+    let containerClass: string;
+    if (isCritical) {
+        containerClass = 'bg-red-500/5 border-red-500/20';
+    } else if (isCyber) {
+        containerClass = 'bg-black/40 border-white/10';
+    } else {
+        containerClass = 'bg-white border-gray-100 shadow-sm';
+    }
+
+    return (
+        <div className={`p-6 rounded-3xl border transition-all ${containerClass}`}>
+            <div className="flex items-center justify-between mb-4">
+                <h5 className="text-xxs font-black uppercase tracking-[0.2em] text-gray-400">Resource Priority Index</h5>
+                {priority && (
+                    <div className={`px-2 py-0.5 rounded text-xxs font-bold ${
+                        isCritical ? 'bg-red-500 text-white' : 'bg-primary-500 text-white'
+                    }`}>
+                        {priority.score}%
+                    </div>
+                )}
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3 mb-4">
+                {priority?.reasons.slice(0, 4).map((reason: string, i: number) => (
+                    <div key={i} className="flex items-center gap-2">
+                        <Zap className="w-3 h-3 text-primary-500" />
+                        <span className="text-xxs font-medium text-gray-400 line-clamp-1">{reason}</span>
+                    </div>
+                ))}
+            </div>
+
+            <div className={`p-3 rounded-xl flex items-center gap-3 ${isCyber ? 'bg-white/5' : 'bg-gray-50'}`}>
+                <div className={`p-1.5 rounded-lg ${isCritical ? 'bg-red-500/20 text-red-500' : 'bg-primary-500/20 text-primary-500'}`}>
+                    {isCritical ? <AlertTriangle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
+                </div>
+                <div>
+                    <p className="text-micro font-black text-gray-500 uppercase tracking-widest">Recommended Action</p>
+                    <p className={`text-xs-plus font-bold ${isCyber ? 'text-white' : 'text-gray-900'}`}>
+                        {isLoading && 'Calculating...'}
+                        {!isLoading && (priority?.recommendedAction || 'Monitor and maintain routine visits.')}
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, isCyber, metrics }) => {
+    const { t: _t } = useLanguage();
+    const { synthesis, farmer, priority, satelliteData, isLoading } = useSatelliteData(farmerId);
+
 
     // Use actual satellite telemetry to generate visual data points
     const dataPoints = satelliteData.map((data, i) => {
@@ -139,116 +281,15 @@ export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, 
                 </div>
             </div>
 
-            {/* Spatial Data Visualization */}
-            <div className={`aspect-video rounded-3xl relative overflow-hidden border ${isCyber ? 'bg-black/40 border-primary-500/20 shadow-[0_0_30px_var(--color-outline)]' : 'bg-gray-100 border-gray-200'}`}>
-                {/* Background Representation of Farm */}
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/40 via-blue-900/20 to-emerald-950/40" />
-                {isCyber && <div className="absolute inset-0 cyber-grid-premium opacity-30" />}
-                
-                {/* Data Points Layer - Rendered from real NDVI indices */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="relative w-full h-full">
-                        {dataPoints.map((point, i) => (
-                            <motion.div
-                                key={i}
-                                initial={{ opacity: 0, scale: 0 }}
-                                animate={{ opacity: 0.8, scale: 1 }}
-                                className="absolute w-4 h-4"
-                                style={{ left: `${point.x}%`, top: `${point.y}%` }}
-                            >
-                                <div className={`w-full h-full rounded-full ${point.colorClass} blur-md opacity-40 pulse-ring`} />
-                                <div className={`absolute inset-0 w-2 h-2 m-auto rounded-full ${point.pulseClass} border border-white/40 shadow-lg`} />
-                                <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[8px] font-black text-white/60 uppercase whitespace-nowrap">
-                                    NDVI {point.ndvi}
-                                </div>
-                            </motion.div>
-                        ))}
-                        {dataPoints.length === 0 && !isLoading && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <p className="text-xxs font-black text-white/20 uppercase tracking-[0.3em]">Precision coordinates pending</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
+            <SpatialDataVisualization 
+                dataPoints={dataPoints}
+                isLoading={isLoading}
+                isCyber={isCyber}
+                priority={priority}
+                farmer={farmer}
+            />
 
-                {/* Scanline Overlay */}
-                <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                    <motion.div
-                        animate={{ x: ['-100%', '200%'] }}
-                        transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
-                        className="h-full w-1/2 bg-gradient-to-r from-transparent via-primary-500/10 to-transparent blur-2xl"
-                    />
-                </div>
-
-                {/* Status Overlays */}
-                <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
-                    <p className="text-[8px] font-black text-primary-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                        <Layers className="w-3 h-3" />
-                        Spectral Layer IV
-                    </p>
-                </div>
-                
-                {priority && (
-                    <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
-                        <div className={`text-[8px] font-black uppercase tracking-[0.2em] flex items-center gap-2 ${
-                            priority.level === 'critical' ? 'text-red-500' : 
-                            priority.level === 'high' ? 'text-orange-500' : 'text-green-500'
-                        }`}>
-                            {priority.level === 'critical' || priority.level === 'high' ? <AlertTriangle className="w-3 h-3" /> : <Shield className="w-3 h-3" />}
-                            {priority.level} PRIORITY
-                        </div>
-                    </div>
-                )}
-
-                <div className="absolute bottom-4 left-4">
-                    <p className="text-xxs font-black text-white/40 uppercase tracking-widest">
-                        {farmer?.locationLat ? `Lat: ${Number(farmer.locationLat).toFixed(4)} • Lng: ${Number(farmer.locationLng).toFixed(4)}` : 'GPS Tracking Active'}
-                    </p>
-                </div>
-                <div className="absolute bottom-4 right-4 text-right">
-                    <p className="text-xxs font-black text-white/40 uppercase tracking-widest">
-                        Source: Sentinel-2 MSI
-                    </p>
-                </div>
-            </div>
-
-            {/* Metrics Grid */}
-            <div className={`p-6 rounded-3xl border transition-all ${
-                priority?.level === 'critical' ? 'bg-red-500/5 border-red-500/20' : 
-                isCyber ? 'bg-black/40 border-white/10' : 'bg-white border-gray-100 shadow-sm'
-            }`}>
-                <div className="flex items-center justify-between mb-4">
-                    <h5 className="text-xxs font-black uppercase tracking-[0.2em] text-gray-400">Resource Priority Index</h5>
-                    {priority && (
-                        <div className={`px-2 py-0.5 rounded text-xxs font-bold ${
-                            priority.level === 'critical' ? 'bg-red-500 text-white' : 'bg-primary-500 text-white'
-                        }`}>
-                            {priority.score}%
-                        </div>
-                    )}
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                    {priority?.reasons.slice(0, 4).map((reason, i) => (
-                        <div key={i} className="flex items-center gap-2">
-                            <Zap className="w-3 h-3 text-primary-500" />
-                            <span className="text-xxs font-medium text-gray-400 line-clamp-1">{reason}</span>
-                        </div>
-                    ))}
-                </div>
-
-                <div className={`p-3 rounded-xl flex items-center gap-3 ${isCyber ? 'bg-white/5' : 'bg-gray-50'}`}>
-                    <div className={`p-1.5 rounded-lg ${priority?.level === 'critical' ? 'bg-red-500/20 text-red-500' : 'bg-primary-500/20 text-primary-500'}`}>
-                        {priority?.level === 'critical' ? <AlertTriangle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
-                    </div>
-                    <div>
-                        <p className="text-micro font-black text-gray-500 uppercase tracking-widest">Recommended Action</p>
-                        <p className={`text-xs-plus font-bold ${isCyber ? 'text-white' : 'text-gray-900'}`}>
-                            {isLoading ? 'Calculating...' : (priority?.recommendedAction || 'Monitor and maintain routine visits.')}
-                        </p>
-                    </div>
-                </div>
-            </div>
+            <MetricsGrid priority={priority} isCyber={isCyber} isLoading={isLoading} />
 
             {/* Analysis Summary */}
             <div className={`p-6 rounded-3xl border relative min-h-[140px] flex flex-col justify-center ${isCyber ? 'bg-primary-500/5 border-primary-500/20 shadow-[0_0_20px_var(--color-outline)]' : 'bg-blue-50/50 border-blue-100'}`}>

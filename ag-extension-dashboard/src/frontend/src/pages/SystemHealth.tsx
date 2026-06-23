@@ -12,6 +12,168 @@ import { fetchHealthStatus, fetchRecoveryLog, triggerRecovery, HealthCheck, Reco
 import { runDiagnostics, DiagnosticResult } from '../api/diagnosticsService';
 import { MetricCard } from '@/components/MetricCard';
 
+function DiagnosticsPanel({ diagnostics }: { diagnostics: DiagnosticResult }) {
+    return (
+        <div className="card p-6">
+            <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-amber-500" />
+                    Infrastructure Diagnostics
+                    {diagnostics.cached && (
+                        <span className="text-xs text-gray-400 font-normal">(cached)</span>
+                    )}
+                </h3>
+                <span className="text-xs text-gray-500">{new Date(diagnostics.timestamp).toLocaleTimeString()}</span>
+            </div>
+
+            {/* Issues & Summary */}
+            {diagnostics.issues && diagnostics.issues.length > 0 && (
+                <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <p className="text-sm font-bold text-red-700 dark:text-red-300 mb-2">
+                        {diagnostics.issues.length} Issue(s) Detected
+                    </p>
+                    <ul className="list-disc list-inside space-y-1">
+                        {diagnostics.issues.map((issue: string, i: number) => (
+                            <li key={i} className="text-sm text-red-600 dark:text-red-400">{issue}</li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+            {diagnostics.issues && diagnostics.issues.length === 0 && (
+                <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                    <p className="text-sm font-bold text-green-700 dark:text-green-300">{diagnostics.summary}</p>
+                </div>
+            )}
+
+            {/* DNS */}
+            {diagnostics.dns && (
+                <div className="mb-4">
+                    <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">DNS Resolution</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {Object.entries(diagnostics.dns).map(([domain, info]: [string, Record<string, unknown>]) => {
+                            const isResolved = Boolean(info.resolved);
+                            const resolvedIps = (info.ips as string[] | undefined)?.join(', ');
+                            const dnsBorderClass = isResolved
+                                ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800'
+                                : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800';
+                            const dnsDetail = isResolved
+                                ? `→ ${resolvedIps}`
+                                : `✗ ${(info.error as string) || 'Failed'}`;
+                            return (
+                            <div key={domain} className={`p-3 rounded-lg border ${dnsBorderClass}`}>
+                                <p className="text-xs font-mono font-bold">{domain}</p>
+                                <p className="text-sm">{dnsDetail}</p>
+                            </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* Ports */}
+            {diagnostics.ports && (
+                <div className="mb-4">
+                    <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Port Connectivity</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                        {diagnostics.ports.map((p: Record<string, unknown>) => (
+                            <div key={p.port as string} className={`flex items-center gap-2 p-2 rounded-lg text-xs font-mono ${p.open ? 'bg-green-50 dark:bg-green-900/10 text-green-700 dark:text-green-300' : 'bg-red-50 dark:bg-red-900/10 text-red-700 dark:text-red-300'}`}>
+                                <span className="font-bold">{p.open ? '✓' : '✗'}</span>
+                                <span>{p.name as string} ({p.port as string})</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Traefik */}
+            {diagnostics.traefik && (
+                <div className="mb-4">
+                    <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Traefik Routing</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className={`p-3 rounded-lg border ${diagnostics.traefik.backend_via_traefik === 'reachable' ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800'}`}>
+                            <p className="text-xs font-bold mb-1">Backend via Traefik</p>
+                            <p className="text-sm">{diagnostics.traefik.backend_via_traefik === 'reachable' ? '✓ Reachable' : '✗ Unreachable'} (HTTP {diagnostics.traefik.backend_http_status})</p>
+                        </div>
+                        <div className={`p-3 rounded-lg border ${diagnostics.traefik.frontend_via_traefik === 'reachable' ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800'}`}>
+                            <p className="text-xs font-bold mb-1">Frontend via Traefik</p>
+                            <p className="text-sm">{diagnostics.traefik.frontend_via_traefik === 'reachable' ? '✓ Reachable' : '✗ Unreachable'} (HTTP {diagnostics.traefik.frontend_http_status})</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Container Network */}
+            {diagnostics.container_network && (
+                <div className="mb-4">
+                    <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Container Network</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
+                        {diagnostics.container_network.map((c: Record<string, unknown>) => (
+                            <div key={c.name as string} className={`flex items-center gap-2 p-2 rounded-lg text-xs font-mono ${c.reachable ? 'bg-green-50 dark:bg-green-900/10 text-green-700 dark:text-green-300' : 'bg-red-50 dark:bg-red-900/10 text-red-700 dark:text-red-300'}`}>
+                                <span className="font-bold">{c.reachable ? '✓' : '✗'}</span>
+                                <span>{c.name as string}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* SSL */}
+            {diagnostics.ssl && (
+                <div className="mb-4">
+                    <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">SSL Certificate</h4>
+                    <div className={`p-3 rounded-lg border ${diagnostics.ssl.ok ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800' : 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800'}`}>
+                        {diagnostics.ssl.ok && diagnostics.ssl.cert ? (
+                            <div className="text-sm space-y-1">
+                                <p><span className="font-bold">Issuer:</span> {diagnostics.ssl.cert.issuer}</p>
+                                <p><span className="font-bold">Subject:</span> {diagnostics.ssl.cert.subject}</p>
+                                <p><span className="font-bold">Expires:</span> {new Date(diagnostics.ssl.cert.validTo).toLocaleDateString()} <span className={diagnostics.ssl.cert.daysLeft < 30 ? 'text-red-500 font-bold' : 'text-green-500'}>({diagnostics.ssl.cert.daysLeft} days)</span></p>
+                            </div>
+                        ) : (
+                            <p className="text-sm">{diagnostics.ssl.error || 'Not available (HTTPS not configured)'}</p>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Deployment */}
+            {diagnostics.deployment && (
+                <div className="mb-4">
+                    <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Deployment</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="p-3 rounded-lg border bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                            <p className="text-xs font-bold text-gray-500">NODE_ENV</p>
+                            <p className="text-sm font-mono">{diagnostics.deployment.node_env}</p>
+                        </div>
+                        <div className={`p-3 rounded-lg border ${diagnostics.deployment.prod_override_detected ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800'}`}>
+                            <p className="text-xs font-bold text-gray-500">Prod Override</p>
+                            <p className="text-sm font-bold">{diagnostics.deployment.prod_override_detected ? '✓ Active' : '✗ Missing'}</p>
+                        </div>
+                        <div className={`p-3 rounded-lg border ${diagnostics.deployment.https_active ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800' : 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800'}`}>
+                            <p className="text-xs font-bold text-gray-500">HTTPS</p>
+                            <p className="text-sm font-bold">{diagnostics.deployment.https_active ? '✓ Active' : '✗ Inactive'}</p>
+                        </div>
+                        <div className={`p-3 rounded-lg border ${diagnostics.deployment.acme_email_configured ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800' : 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800'}`}>
+                            <p className="text-xs font-bold text-gray-500">ACME Email</p>
+                            <p className="text-sm font-bold">{diagnostics.deployment.acme_email_configured ? '✓ Set' : '✗ Not set'}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Recommendations */}
+            {diagnostics.recommendations && diagnostics.recommendations.length > 0 && (
+                <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <p className="text-sm font-bold text-blue-700 dark:text-blue-300 mb-2">Recommendations</p>
+                    <ul className="list-disc list-inside space-y-1">
+                        {diagnostics.recommendations.map((rec: string, i: number) => (
+                            <li key={i} className="text-sm text-blue-600 dark:text-blue-400 whitespace-pre-wrap font-mono text-xs">{rec}</li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+        </div>
+    );
+}
 export function SystemHealth() {
     const { t } = useLanguage();
     const { headingClass, isModern, radiusClass, btnClass } = useThemeClasses();
@@ -308,156 +470,7 @@ export function SystemHealth() {
             </div>
 
             {/* Diagnostics Results */}
-            {diagnostics && (
-                <div className="card p-6">
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                            <Activity className="w-5 h-5 text-amber-500" />
-                            Infrastructure Diagnostics
-                            {diagnostics.cached && (
-                                <span className="text-xs text-gray-400 font-normal">(cached)</span>
-                            )}
-                        </h3>
-                        <span className="text-xs text-gray-500">{new Date(diagnostics.timestamp).toLocaleTimeString()}</span>
-                    </div>
-
-                    {/* Issues & Summary */}
-                    {diagnostics.issues && diagnostics.issues.length > 0 && (
-                        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                            <p className="text-sm font-bold text-red-700 dark:text-red-300 mb-2">
-                                {diagnostics.issues.length} Issue(s) Detected
-                            </p>
-                            <ul className="list-disc list-inside space-y-1">
-                                {diagnostics.issues.map((issue: string, i: number) => (
-                                    <li key={i} className="text-sm text-red-600 dark:text-red-400">{issue}</li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-                    {diagnostics.issues && diagnostics.issues.length === 0 && (
-                        <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                            <p className="text-sm font-bold text-green-700 dark:text-green-300">{diagnostics.summary}</p>
-                        </div>
-                    )}
-
-                    {/* DNS */}
-                    {diagnostics.dns && (
-                        <div className="mb-4">
-                            <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">DNS Resolution</h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {Object.entries(diagnostics.dns).map(([domain, info]: [string, unknown]) => (
-                                    <div key={domain} className={`p-3 rounded-lg border ${info.resolved ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800'}`}>
-                                        <p className="text-xs font-mono font-bold">{domain}</p>
-                                        <p className="text-sm">{info.resolved ? `→ ${info.ips?.join(', ')}` : `✗ ${info.error || 'Failed'}`}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Ports */}
-                    {diagnostics.ports && (
-                        <div className="mb-4">
-                            <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Port Connectivity</h4>
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                                {diagnostics.ports.map((p: unknown) => (
-                                    <div key={p.port} className={`flex items-center gap-2 p-2 rounded-lg text-xs font-mono ${p.open ? 'bg-green-50 dark:bg-green-900/10 text-green-700 dark:text-green-300' : 'bg-red-50 dark:bg-red-900/10 text-red-700 dark:text-red-300'}`}>
-                                        <span className="font-bold">{p.open ? '✓' : '✗'}</span>
-                                        <span>{p.name} ({p.port})</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Traefik */}
-                    {diagnostics.traefik && (
-                        <div className="mb-4">
-                            <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Traefik Routing</h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div className={`p-3 rounded-lg border ${diagnostics.traefik.backend_via_traefik === 'reachable' ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800'}`}>
-                                    <p className="text-xs font-bold mb-1">Backend via Traefik</p>
-                                    <p className="text-sm">{diagnostics.traefik.backend_via_traefik === 'reachable' ? '✓ Reachable' : '✗ Unreachable'} (HTTP {diagnostics.traefik.backend_http_status})</p>
-                                </div>
-                                <div className={`p-3 rounded-lg border ${diagnostics.traefik.frontend_via_traefik === 'reachable' ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800'}`}>
-                                    <p className="text-xs font-bold mb-1">Frontend via Traefik</p>
-                                    <p className="text-sm">{diagnostics.traefik.frontend_via_traefik === 'reachable' ? '✓ Reachable' : '✗ Unreachable'} (HTTP {diagnostics.traefik.frontend_http_status})</p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Container Network */}
-                    {diagnostics.container_network && (
-                        <div className="mb-4">
-                            <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Container Network</h4>
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-                                {diagnostics.container_network.map((c: unknown) => (
-                                    <div key={c.name} className={`flex items-center gap-2 p-2 rounded-lg text-xs font-mono ${c.reachable ? 'bg-green-50 dark:bg-green-900/10 text-green-700 dark:text-green-300' : 'bg-red-50 dark:bg-red-900/10 text-red-700 dark:text-red-300'}`}>
-                                        <span className="font-bold">{c.reachable ? '✓' : '✗'}</span>
-                                        <span>{c.name}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* SSL */}
-                    {diagnostics.ssl && (
-                        <div className="mb-4">
-                            <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">SSL Certificate</h4>
-                            <div className={`p-3 rounded-lg border ${diagnostics.ssl.ok ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800' : 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800'}`}>
-                                {diagnostics.ssl.ok && diagnostics.ssl.cert ? (
-                                    <div className="text-sm space-y-1">
-                                        <p><span className="font-bold">Issuer:</span> {diagnostics.ssl.cert.issuer}</p>
-                                        <p><span className="font-bold">Subject:</span> {diagnostics.ssl.cert.subject}</p>
-                                        <p><span className="font-bold">Expires:</span> {new Date(diagnostics.ssl.cert.validTo).toLocaleDateString()} <span className={diagnostics.ssl.cert.daysLeft < 30 ? 'text-red-500 font-bold' : 'text-green-500'}>({diagnostics.ssl.cert.daysLeft} days)</span></p>
-                                    </div>
-                                ) : (
-                                    <p className="text-sm">{diagnostics.ssl.error || 'Not available (HTTPS not configured)'}</p>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Deployment */}
-                    {diagnostics.deployment && (
-                        <div className="mb-4">
-                            <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Deployment</h4>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                <div className="p-3 rounded-lg border bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-                                    <p className="text-xs font-bold text-gray-500">NODE_ENV</p>
-                                    <p className="text-sm font-mono">{diagnostics.deployment.node_env}</p>
-                                </div>
-                                <div className={`p-3 rounded-lg border ${diagnostics.deployment.prod_override_detected ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800'}`}>
-                                    <p className="text-xs font-bold text-gray-500">Prod Override</p>
-                                    <p className="text-sm font-bold">{diagnostics.deployment.prod_override_detected ? '✓ Active' : '✗ Missing'}</p>
-                                </div>
-                                <div className={`p-3 rounded-lg border ${diagnostics.deployment.https_active ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800' : 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800'}`}>
-                                    <p className="text-xs font-bold text-gray-500">HTTPS</p>
-                                    <p className="text-sm font-bold">{diagnostics.deployment.https_active ? '✓ Active' : '✗ Inactive'}</p>
-                                </div>
-                                <div className={`p-3 rounded-lg border ${diagnostics.deployment.acme_email_configured ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800' : 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800'}`}>
-                                    <p className="text-xs font-bold text-gray-500">ACME Email</p>
-                                    <p className="text-sm font-bold">{diagnostics.deployment.acme_email_configured ? '✓ Set' : '✗ Not set'}</p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Recommendations */}
-                    {diagnostics.recommendations && diagnostics.recommendations.length > 0 && (
-                        <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                            <p className="text-sm font-bold text-blue-700 dark:text-blue-300 mb-2">Recommendations</p>
-                            <ul className="list-disc list-inside space-y-1">
-                                {diagnostics.recommendations.map((rec: string, i: number) => (
-                                    <li key={i} className="text-sm text-blue-600 dark:text-blue-400 whitespace-pre-wrap font-mono text-xs">{rec}</li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-                </div>
-            )}
+            {diagnostics && <DiagnosticsPanel diagnostics={diagnostics} />}
 
             {/* Recovery Log */}
             <div className="card p-6">

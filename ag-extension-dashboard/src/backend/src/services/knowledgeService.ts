@@ -39,7 +39,7 @@ export class KnowledgeService {
         crop?: string,
         answer?: string,
         reasoning?: string,
-        visuals?: any
+        visuals?: Record<string, any>
     ): Promise<void> {
         try {
             await query(`
@@ -54,7 +54,7 @@ export class KnowledgeService {
     /**
      * Get recent search history for a user (de-duplicated)
      */
-    static async getSearchHistory(userId: string, limit: number = 10): Promise<any[]> {
+    static async getSearchHistory(userId: string, limit: number = 10): Promise<Record<string, any>[]> {
         try {
             // Using a subquery with ROW_NUMBER to only return the latest instance of each unique query
             const result = await query(`
@@ -80,7 +80,7 @@ export class KnowledgeService {
      * Get knowledge search statistics for visuals
      * Cached in Redis for 5 minutes to avoid repeated expensive queries
      */
-    static async getSearchStats(): Promise<any> {
+    static async getSearchStats(): Promise<Record<string, any>> {
         try {
             // Check Redis cache first
             const cachedStats = await cacheGet(STATS_CACHE_KEY);
@@ -173,82 +173,129 @@ export class KnowledgeService {
         return null;
     }
 
+    private static async fallbackAgriQuery(queryText: string, queryCategories: string[], currentResults: SearchResult[]): Promise<SearchResult[]> {
+        logger.info(`Query intent classified as agricultural [${queryCategories.join(', ')}]. Triggering StealthScraperService for: "${queryText}"`);
+        try {
+            let platform = 'fao_crop_guides';
+            const lowerQuery = queryText.toLowerCase();
+            
+            if (queryCategories.includes('pest_and_disease') || lowerQuery.includes('cabi')) {
+                platform = 'cabi_plantwise';
+            } else if (queryCategories.includes('climate_and_weather') || lowerQuery.includes('fews')) {
+                platform = 'fews_net';
+            } else if (lowerQuery.includes('cassava') || lowerQuery.includes('yam') || lowerQuery.includes('iita')) {
+                platform = 'iita_agronomy';
+            } else if (lowerQuery.includes('rice') || lowerQuery.includes('africarice')) {
+                platform = 'africarice';
+            }
+            
+            const stealthResults = await StealthScraperService.scrapeKnowledge(queryText, platform, 'Global Tropics');
+            
+            if (stealthResults && stealthResults.length > 0) {
+                const mappedStealthResults: SearchResult[] = stealthResults.map((r, index) => ({
+                    id: `stealth-${index}-${Date.now()}`,
+                    content: `Stealth Scrape (${platform}): Topic: ${r.topic}. Summary: ${r.summary || 'N/A'}. Keywords: ${r.keywords.join(', ')}`,
+                    metadata: {
+                        title: `Tropical DB: ${r.topic}`,
+                        category: 'Validated Scientific Guidance',
+                        crop: 'Dynamic',
+                        sourceUrl: r.url || `https://tropical-database-search`,
+                        contentType: 'text'
+                    },
+                    score: 0.5
+                }));
+                return [...mappedStealthResults, ...currentResults].slice(0, 4);
+            }
+        } catch (stealthError) {
+            logger.error('Failed to retrieve stealth scraper fallback:', stealthError);
+        }
+        return currentResults;
+    }
+
+    private static async fallbackGeneralQuery(queryText: string, currentResults: SearchResult[]): Promise<SearchResult[]> {
+        logger.info(`Query intent is general. Querying Tavily for: "${queryText}"`);
+        try {
+            const webResults = await tavilyService.search(queryText, 3);
+            if (webResults && webResults.results && webResults.results.length > 0) {
+                const mappedWebResults: SearchResult[] = webResults.results.map((r, index) => ({
+                    id: `web-${index}-${Date.now()}`,
+                    content: r.content,
+                    metadata: {
+                        title: r.title,
+                        category: 'External Reference',
+                        crop: 'All',
+                        sourceUrl: r.url,
+                        contentType: 'text'
+                    },
+                    score: r.score
+                }));
+                return [...mappedWebResults, ...currentResults].slice(0, 4);
+            }
+        } catch (webError) {
+            logger.error('Failed to retrieve external search fallback:', webError);
+        }
+        return currentResults;
+    }
+
     private static async enrichContextWithWebFallbacks(
         queryText: string,
         queryCategories: string[],
         isAgriQuery: boolean,
         contextResults: SearchResult[]
     ): Promise<SearchResult[]> {
-        let results = [...contextResults];
-
-        if (results.length > 0 && results[0].score >= 0.65) {
-            return results;
+        if (contextResults.length > 0 && contextResults[0].score >= 0.65) {
+            return contextResults;
         }
 
-        const bestScore = results.length > 0 ? results[0].score : 0;
+        const bestScore = contextResults.length > 0 ? contextResults[0].score : 0;
         logger.info(`Low local match score (${bestScore}). Performing fallback routing based on intent...`);
 
         if (isAgriQuery) {
-            logger.info(`Query intent classified as agricultural [${queryCategories.join(', ')}]. Triggering StealthScraperService for: "${queryText}"`);
-            try {
-                let platform = 'fao_crop_guides';
-                const lowerQuery = queryText.toLowerCase();
-                
-                if (queryCategories.includes('pest_and_disease') || lowerQuery.includes('cabi')) {
-                    platform = 'cabi_plantwise';
-                } else if (queryCategories.includes('climate_and_weather') || lowerQuery.includes('fews')) {
-                    platform = 'fews_net';
-                } else if (lowerQuery.includes('cassava') || lowerQuery.includes('yam') || lowerQuery.includes('iita')) {
-                    platform = 'iita_agronomy';
-                } else if (lowerQuery.includes('rice') || lowerQuery.includes('africarice')) {
-                    platform = 'africarice';
-                }
-                
-                const stealthResults = await StealthScraperService.scrapeKnowledge(queryText, platform, 'Global Tropics');
-                
-                if (stealthResults && stealthResults.length > 0) {
-                    const mappedStealthResults: SearchResult[] = stealthResults.map((r, index) => ({
-                        id: `stealth-${index}-${Date.now()}`,
-                        content: `Stealth Scrape (${platform}): Topic: ${r.topic}. Summary: ${r.summary || 'N/A'}. Keywords: ${r.keywords.join(', ')}`,
-                        metadata: {
-                            title: `Tropical DB: ${r.topic}`,
-                            category: 'Validated Scientific Guidance',
-                            crop: 'Dynamic',
-                            sourceUrl: r.url || `https://tropical-database-search`,
-                            contentType: 'text'
-                        },
-                        score: 0.5
-                    }));
-                    results = [...mappedStealthResults, ...results].slice(0, 4);
-                }
-            } catch (stealthError) {
-                logger.error('Failed to retrieve stealth scraper fallback:', stealthError);
-            }
+            return this.fallbackAgriQuery(queryText, queryCategories, contextResults);
         } else if (tavilyService.isConfigured()) {
-            logger.info(`Query intent [${queryCategories.join(', ')}] is general. Querying Tavily for: "${queryText}"`);
-            try {
-                const webResults = await tavilyService.search(queryText, 3);
-                if (webResults && webResults.results && webResults.results.length > 0) {
-                    const mappedWebResults: SearchResult[] = webResults.results.map((r, index) => ({
-                        id: `web-${index}-${Date.now()}`,
-                        content: r.content,
-                        metadata: {
-                            title: r.title,
-                            category: 'External Reference',
-                            crop: 'All',
-                            sourceUrl: r.url,
-                            contentType: 'text'
-                        },
-                        score: r.score
-                    }));
-                    results = [...mappedWebResults, ...results].slice(0, 4);
-                }
-            } catch (webError) {
-                logger.error('Failed to retrieve external search fallback:', webError);
-            }
+            return this.fallbackGeneralQuery(queryText, contextResults);
         }
 
-        return results;
+        return contextResults;
+    }
+
+    private static assignUserRegion(userResult: Record<string, any>, finalData: Record<string, any>) {
+        if (userResult.rows.length > 0 && userResult.rows[0].region) {
+            finalData.finalRegion = userResult.rows[0].region;
+            finalData.finalLocation = userResult.rows[0].region;
+        }
+    }
+
+    private static assignFarmerData(farmersResult: Record<string, any>, finalData: Record<string, any>) {
+        if (farmersResult.rows.length === 0) return;
+        
+        const firstFarmer = farmersResult.rows[0];
+        if (!finalData.finalCrop) {
+            const allCrops = farmersResult.rows.flatMap((f: Record<string, any>) => f.crops || []);
+            if (allCrops.length > 0) {
+                finalData.finalCrop = allCrops[0];
+            }
+        }
+        if (firstFarmer.location) finalData.finalLocation = firstFarmer.location;
+        if (firstFarmer.region) finalData.finalRegion = firstFarmer.region;
+        if (firstFarmer.location_lat && firstFarmer.location_lng) {
+            finalData.finalLat = parseFloat(firstFarmer.location_lat);
+            finalData.finalLng = parseFloat(firstFarmer.location_lng);
+        }
+    }
+
+    private static async fetchUserAndFarmerContext(userId: string, finalData: Record<string, any>) {
+        try {
+            const [userResult, farmersResult] = await Promise.all([
+                query('SELECT region FROM users WHERE id = $1', [userId]),
+                query(`SELECT location, region, location_lat, location_lng, crops FROM farmers WHERE assigned_officer_id = $1 OR user_id = $1 LIMIT 5`, [userId])
+            ]);
+            
+            this.assignUserRegion(userResult, finalData);
+            this.assignFarmerData(farmersResult, finalData);
+        } catch (err) {
+            logger.error('Error fetching context metadata for user/farmer:', err);
+        }
     }
 
     private static async resolveUserContext(
@@ -256,156 +303,142 @@ export class KnowledgeService {
         queryText: string
     ): Promise<{ crop: string | undefined; location: string; region: string; lat?: number; lng?: number }> {
         const cropKeywords = ['maize', 'cassava', 'beans', 'rice', 'banana', 'plantain', 'cocoa', 'coffee', 'yam', 'cowpea', 'soybean', 'groundnut', 'sorghum', 'millet', 'vegetables'];
-        let finalCrop = cropKeywords.find(c => queryText.toLowerCase().includes(c));
-        let finalLocation = 'Kenya';
-        let finalRegion = 'Kenya';
-        let finalLat: number | undefined = undefined;
-        let finalLng: number | undefined = undefined;
+        
+        const finalData: Record<string, any> = {
+            finalCrop: cropKeywords.find(c => queryText.toLowerCase().includes(c)),
+            finalLocation: 'Kenya',
+            finalRegion: 'Kenya',
+            finalLat: undefined,
+            finalLng: undefined
+        };
 
         if (userId) {
-            try {
-                const [userResult, farmersResult] = await Promise.all([
-                    query('SELECT region FROM users WHERE id = $1', [userId]),
-                    query(`SELECT location, region, location_lat, location_lng, crops FROM farmers WHERE assigned_officer_id = $1 OR user_id = $1 LIMIT 5`, [userId])
-                ]);
-                if (userResult.rows.length > 0 && userResult.rows[0].region) {
-                    finalRegion = userResult.rows[0].region;
-                    finalLocation = userResult.rows[0].region;
-                }
-
-                if (farmersResult.rows.length > 0) {
-                    const firstFarmer = farmersResult.rows[0];
-                    if (!finalCrop) {
-                        const allCrops = farmersResult.rows.flatMap((f: any) => f.crops || []);
-                        if (allCrops.length > 0) {
-                            finalCrop = allCrops[0];
-                        }
-                    }
-                    if (firstFarmer.location) finalLocation = firstFarmer.location;
-                    if (firstFarmer.region) finalRegion = firstFarmer.region;
-                    if (firstFarmer.location_lat && firstFarmer.location_lng) {
-                        finalLat = parseFloat(firstFarmer.location_lat);
-                        finalLng = parseFloat(firstFarmer.location_lng);
-                    }
-                }
-            } catch (err) {
-                logger.error('Error fetching context metadata for user/farmer:', err);
-            }
+            await this.fetchUserAndFarmerContext(userId, finalData);
         }
+        return { crop: finalData.finalCrop, location: finalData.finalLocation, region: finalData.finalRegion, lat: finalData.finalLat, lng: finalData.finalLng };
+    }
 
-        return { crop: finalCrop, location: finalLocation, region: finalRegion, lat: finalLat, lng: finalLng };
+    private static async fetchWeatherContext(queryCategories: string[], location: string, crop: string | undefined): Promise<SearchResult | null> {
+        if (queryCategories.length > 0 && !queryCategories.includes('climate_and_weather')) return null;
+        try {
+            const { WeatherService } = await import('@/services/weatherService');
+            const weather = await WeatherService.getByLocation(location);
+            if (weather) {
+                const temp = weather.temperature ?? weather.temp;
+                const condition = weather.condition || 'Clear';
+                const wind = weather.windSpeed;
+                
+                let forecastText = 'No forecast data';
+                if (weather.forecast && Array.isArray(weather.forecast)) {
+                    forecastText = weather.forecast.map(f => `  - ${f.date}: Max ${f.maxTemp}°C, Min ${f.minTemp}°C, ${f.condition}`).join('\n');
+                }
+                
+                return {
+                    id: `live-weather-${Date.now()}`,
+                    content: `Live Weather for ${location}:\n- Current Temp: ${temp !== undefined ? temp : 'N/A'}°C\n- Description: ${condition}\n- Wind Speed: ${wind !== undefined ? wind : 'N/A'} km/h\n- 3-Day Forecast:\n${forecastText}`,
+                    metadata: { title: `Live Weather Forecast for ${location}`, category: 'Weather Forecast', crop: crop || 'All', sourceUrl: 'https://open-meteo.com', contentType: 'text' },
+                    score: 1.0
+                };
+            }
+        } catch (err) { logger.warn('Failed to fetch weather in askQuestion:', err); }
+        return null;
+    }
+
+    private static async fetchFAOAlertsContext(queryCategories: string[], region: string, crop: string | undefined): Promise<SearchResult | null> {
+        if (queryCategories.length > 0 && !queryCategories.includes('pest_and_disease')) return null;
+        try {
+            const { FAOService } = await import('@/services/faoService');
+            const alerts = await FAOService.getDiseaseAlerts(region, crop);
+            if (alerts && alerts.length > 0) {
+                return {
+                    id: `live-fao-alerts-${Date.now()}`,
+                    content: `FAO Disease Alerts for ${region} (Crop: ${crop || 'All'}):\n${alerts.map((a: Record<string, any>) => `- [${a.severity.toUpperCase()}] ${a.title}: ${a.description}`).join('\n')}`,
+                    metadata: { title: `FAO Pest & Disease Alerts (${region})`, category: 'Disease Alerts', crop: crop || 'All', sourceUrl: 'https://www.fao.org', contentType: 'text' },
+                    score: 1.0
+                };
+            }
+        } catch (err) { logger.warn('Failed to fetch FAO alerts in askQuestion:', err); }
+        return null;
+    }
+
+    private static async fetchNasaAgroclimateContext(queryCategories: string[], lat: number | undefined, lng: number | undefined, crop: string | undefined): Promise<SearchResult | null> {
+        if (!lat || !lng) return null;
+        if (queryCategories.length > 0 && !queryCategories.includes('agronomy_and_yield') && !queryCategories.includes('climate_and_weather')) return null;
+        try {
+            const { NasaPowerService } = await import('@/services/data/nasaPowerService');
+            const nasa = new NasaPowerService();
+            const agro = await nasa.getAgroclimateSummary(lat, lng, 7);
+            if (agro) {
+                const tempMin = agro.temperatureRange?.min ?? 'N/A';
+                const tempMax = agro.temperatureRange?.max ?? 'N/A';
+                const rh = agro.relativeHumidity ?? 'N/A';
+                const precip = agro.precipitationSum ?? 'N/A';
+                const solar = agro.solarRadiationAvg ?? 'N/A';
+                return {
+                    id: `live-nasa-agro-${Date.now()}`,
+                    content: `NASA POWER Agroclimate Summary for lat: ${lat}, lng: ${lng}:\n- Temp Range: ${tempMin} to ${tempMax}°C\n- Avg Relative Humidity: ${rh}%\n- Precipitation Sum: ${precip} mm\n- Avg Solar Radiation: ${solar} MJ/m²/day`,
+                    metadata: { title: `Agroclimatic Solar & Rainfall Context (NASA POWER)`, category: 'Agroclimatology', crop: crop || 'All', sourceUrl: 'https://power.larc.nasa.gov/', contentType: 'text' },
+                    score: 1.0
+                };
+            }
+        } catch (err) { logger.warn('Failed to fetch NASA agroclimate in askQuestion:', err); }
+        return null;
+    }
+
+    private static async fetchSoilPropertiesContext(queryCategories: string[], lat: number | undefined, lng: number | undefined, crop: string | undefined): Promise<SearchResult | null> {
+        if (!lat || !lng) return null;
+        if (queryCategories.length > 0 && !queryCategories.includes('agronomy_and_yield') && !queryCategories.includes('climate_and_weather')) return null;
+        try {
+            const { soilGridsService } = await import('@/services/data/soilGridsService');
+            const soil = (await soilGridsService.fetchSoilProperties(lat, lng)) as Record<string, any>;
+            if (soil) {
+                const ph = soil.ph_h2o ?? 'N/A';
+                const clay = soil.clay ?? 'N/A';
+                const soc = soil.soc ?? 'N/A';
+                return {
+                    id: `live-soil-properties-${Date.now()}`,
+                    content: `SoilGrids ISRIC Soil Properties for lat: ${lat}, lng: ${lng}:\n- pH at 0-5cm: ${ph}\n- Clay content: ${clay}%\n- Organic Carbon: ${soc} dg/kg`,
+                    metadata: { title: `Location-Specific Soil Properties (ISRIC SoilGrids)`, category: 'Soil Properties', crop: crop || 'All', sourceUrl: 'https://soilgrids.org/', contentType: 'text' },
+                    score: 1.0
+                };
+            }
+        } catch (err) { logger.warn('Failed to fetch SoilGrids in askQuestion:', err); }
+        return null;
+    }
+
+    private static async fetchMarketPricesContext(queryCategories: string[], crop: string | undefined): Promise<SearchResult | null> {
+        if (queryCategories.length > 0 && !queryCategories.includes('market_prices')) return null;
+        try {
+            const { marketPriceService } = await import('@/services/marketPriceService');
+            const prices = await marketPriceService.getLatestPrices();
+            if (prices && prices.length > 0) {
+                const relevantPrices = crop ? prices.filter((p: Record<string, any>) => p.crop.toLowerCase().includes(crop.toLowerCase())) : prices;
+                const priceList = relevantPrices.length > 0 ? relevantPrices : prices;
+                return {
+                    id: `live-market-prices-${Date.now()}`,
+                    content: `Latest Market Prices:\n${priceList.map((p: Record<string, any>) => `- ${p.crop}: ${p.price} (${p.trend})`).join('\n')}`,
+                    metadata: { title: 'Latest Market Prices Context', category: 'Market Prices', crop: crop || 'All', sourceUrl: 'https://www.ratin.net', contentType: 'text' },
+                    score: 1.0
+                };
+            }
+        } catch (err) { logger.warn('Failed to fetch market prices in askQuestion:', err); }
+        return null;
     }
 
     private static async fetchLiveAgriContext(
         queryCategories: string[],
         location: { crop: string | undefined; location: string; region: string; lat?: number; lng?: number }
     ): Promise<SearchResult[]> {
-        const liveContextResults: SearchResult[] = [];
-        const tasks: Array<Promise<void>> = [];
+        const tasks: Array<Promise<SearchResult | null>> = [
+            this.fetchWeatherContext(queryCategories, location.location, location.crop),
+            this.fetchFAOAlertsContext(queryCategories, location.region, location.crop),
+            this.fetchNasaAgroclimateContext(queryCategories, location.lat, location.lng, location.crop),
+            this.fetchSoilPropertiesContext(queryCategories, location.lat, location.lng, location.crop),
+            this.fetchMarketPricesContext(queryCategories, location.crop)
+        ];
 
-        const { crop: finalCrop, location: finalLocation, region: finalRegion, lat: finalLat, lng: finalLng } = location;
-
-        if (queryCategories.length === 0 || queryCategories.includes('climate_and_weather')) {
-            tasks.push((async () => {
-                try {
-                    const { WeatherService } = await import('@/services/weatherService');
-                    const weather = await WeatherService.getByLocation(finalLocation);
-                    if (weather) {
-                        const temp = weather.temperature ?? weather.temp;
-                        const condition = weather.condition || 'Clear';
-                        const wind = weather.windSpeed;
-                        
-                        let forecastText = 'No forecast data';
-                        if (weather.forecast && Array.isArray(weather.forecast)) {
-                            forecastText = weather.forecast.map(f => {
-                                return `  - ${f.date}: Max ${f.maxTemp}°C, Min ${f.minTemp}°C, ${f.condition}`;
-                            }).join('\n');
-                        }
-                        
-                        liveContextResults.push({
-                            id: `live-weather-${Date.now()}`,
-                            content: `Live Weather for ${finalLocation}:\n- Current Temp: ${temp !== undefined ? temp : 'N/A'}°C\n- Description: ${condition}\n- Wind Speed: ${wind !== undefined ? wind : 'N/A'} km/h\n- 3-Day Forecast:\n${forecastText}`,
-                            metadata: { title: `Live Weather Forecast for ${finalLocation}`, category: 'Weather Forecast', crop: finalCrop || 'All', sourceUrl: 'https://open-meteo.com', contentType: 'text' },
-                            score: 1.0
-                        });
-                    }
-                } catch (err) { logger.warn('Failed to fetch weather in askQuestion:', err); }
-            })());
-        }
-
-        if (queryCategories.length === 0 || queryCategories.includes('pest_and_disease')) {
-            tasks.push((async () => {
-                try {
-                    const { FAOService } = await import('@/services/faoService');
-                    const alerts = await FAOService.getDiseaseAlerts(finalRegion, finalCrop);
-                    if (alerts && alerts.length > 0) {
-                        liveContextResults.push({
-                            id: `live-fao-alerts-${Date.now()}`,
-                            content: `FAO Disease Alerts for ${finalRegion} (Crop: ${finalCrop || 'All'}):\n${alerts.map((a: any) => `- [${a.severity.toUpperCase()}] ${a.title}: ${a.description}`).join('\n')}`,
-                            metadata: { title: `FAO Pest & Disease Alerts (${finalRegion})`, category: 'Disease Alerts', crop: finalCrop || 'All', sourceUrl: 'https://www.fao.org', contentType: 'text' },
-                            score: 1.0
-                        });
-                    }
-                } catch (err) { logger.warn('Failed to fetch FAO alerts in askQuestion:', err); }
-            })());
-        }
-
-        if (finalLat && finalLng && (queryCategories.length === 0 || queryCategories.includes('agronomy_and_yield') || queryCategories.includes('climate_and_weather'))) {
-            tasks.push((async () => {
-                try {
-                    const { NasaPowerService } = await import('@/services/data/nasaPowerService');
-                    const nasa = new NasaPowerService();
-                    const agro = await nasa.getAgroclimateSummary(finalLat!, finalLng!, 7);
-                    if (agro) {
-                        liveContextResults.push({
-                            id: `live-nasa-agro-${Date.now()}`,
-                            content: `NASA POWER Agroclimate Summary for lat: ${finalLat}, lng: ${finalLng}:\n- Temp Range: ${agro.temperatureRange?.min ?? 'N/A'} to ${agro.temperatureRange?.max ?? 'N/A'}°C\n- Avg Relative Humidity: ${agro.relativeHumidity ?? 'N/A'}%\n- Precipitation Sum: ${agro.precipitationSum ?? 'N/A'} mm\n- Avg Solar Radiation: ${agro.solarRadiationAvg ?? 'N/A'} MJ/m²/day`,
-                            metadata: { title: `Agroclimatic Solar & Rainfall Context (NASA POWER)`, category: 'Agroclimatology', crop: finalCrop || 'All', sourceUrl: 'https://power.larc.nasa.gov/', contentType: 'text' },
-                            score: 1.0
-                        });
-                    }
-                } catch (err) { logger.warn('Failed to fetch NASA agroclimate in askQuestion:', err); }
-            })());
-
-            tasks.push((async () => {
-                try {
-                    const { soilGridsService } = await import('@/services/data/soilGridsService');
-                    const soil = (await soilGridsService.fetchSoilProperties(finalLat!, finalLng!)) as any;
-                    if (soil) {
-                        liveContextResults.push({
-                            id: `live-soil-properties-${Date.now()}`,
-                            content: `SoilGrids ISRIC Soil Properties for lat: ${finalLat}, lng: ${finalLng}:\n- pH at 0-5cm: ${soil.ph_h2o ?? 'N/A'}\n- Clay content: ${soil.clay ?? 'N/A'}%\n- Organic Carbon: ${soil.soc ?? 'N/A'} dg/kg`,
-                            metadata: { title: `Location-Specific Soil Properties (ISRIC SoilGrids)`, category: 'Soil Properties', crop: finalCrop || 'All', sourceUrl: 'https://soilgrids.org/', contentType: 'text' },
-                            score: 1.0
-                        });
-                    }
-                } catch (err) { logger.warn('Failed to fetch SoilGrids in askQuestion:', err); }
-            })());
-        }
-
-        if (queryCategories.length === 0 || queryCategories.includes('market_prices')) {
-            tasks.push((async () => {
-                try {
-                    const { marketPriceService } = await import('@/services/marketPriceService');
-                    const prices = await marketPriceService.getLatestPrices();
-                    if (prices && prices.length > 0) {
-                        const relevantPrices = finalCrop 
-                            ? prices.filter((p: any) => p.crop.toLowerCase().includes(finalCrop!.toLowerCase()))
-                            : prices;
-                        const priceList = relevantPrices.length > 0 ? relevantPrices : prices;
-                        liveContextResults.push({
-                            id: `live-market-prices-${Date.now()}`,
-                            content: `Latest Market Prices:\n${priceList.map((p: any) => `- ${p.crop}: ${p.price} (${p.trend})`).join('\n')}`,
-                            metadata: { title: 'Latest Market Prices Context', category: 'Market Prices', crop: finalCrop || 'All', sourceUrl: 'https://www.ratin.net', contentType: 'text' },
-                            score: 1.0
-                        });
-                    }
-                } catch (err) { logger.warn('Failed to fetch market prices in askQuestion:', err); }
-            })());
-        }
-
-        await Promise.all(tasks);
-        return liveContextResults;
+        const results = await Promise.all(tasks);
+        return results.filter((r): r is SearchResult => r !== null);
     }
 
     private static async callReasoningWithTimeout(
@@ -473,6 +506,34 @@ export class KnowledgeService {
     /**
      * Ask a question and get a RAG-based answer (with semantic caching and multimodal support)
      */
+    private static cacheAndLogResponse(userId: string, queryText: string, attachments: Record<string, any>[] | undefined, redisKey: string, queryCategories: string[], response: Record<string, any>) {
+        if (!attachments || attachments.length === 0) {
+            cacheSet(redisKey, JSON.stringify(response), 3600 * 24).catch(e => logger.error('Failed to set Redis exact cache:', e));
+            SemanticCacheService.save(queryText, response.answer, response.contextUsed, response.visuals).catch(e => logger.error('Failed to save semantic cache:', e));
+        }
+
+        this.logSearch(
+            userId, queryText, queryCategories[0] || 'general_inquiry', undefined,
+            response.answer, response.reasoning, response.visuals
+        ).catch(logError => logger.error('Background logging failed:', logError));
+    }
+
+    private static handleAskQuestionFallback(userId: string, queryText: string, contextResults: SearchResult[], error: unknown) {
+        logger.error('RAG analysis failed:', error);
+
+        if (contextResults.length > 0) {
+            const fallback = this.buildExtractiveAnswer(queryText, contextResults);
+            this.logSearch(
+                userId, queryText,
+                contextResults[0]?.metadata?.category, contextResults[0]?.metadata?.crop,
+                fallback.answer, fallback.reasoning, fallback.visuals
+            ).catch(logError => logger.error('Fallback search logging failed:', logError));
+            return fallback;
+        }
+
+        throw error;
+    }
+
     static async askQuestion(
         userId: string, 
         queryText: string, 
@@ -482,26 +543,21 @@ export class KnowledgeService {
 
         const redisKey = `rag:exact:${queryText.toLowerCase().trim()}`;
 
-        // 1. Check exact match cache (Redis + SQL) first (super fast, 0-1ms, zero LLM calls)
         if (!attachments || attachments.length === 0) {
             const cached = await this.checkCaches(queryText, redisKey);
             if (cached) return cached;
         }
 
-        // 2. Retrieve relevant context (cache miss)
         let contextResults = await this.searchKnowledge(queryText);
         const queryCategories = await this.categorizeQuery(queryText);
         const isAgriQuery = queryCategories.length === 0 || queryCategories.some(c =>
             ['pest_and_disease', 'agronomy_and_yield', 'climate_and_weather', 'market_prices'].includes(c)
         );
 
-        // 3. Enrich with web fallbacks if local match is weak
         contextResults = await this.enrichContextWithWebFallbacks(queryText, queryCategories, isAgriQuery, contextResults);
 
-        // 4. Resolve user context for live API calls
         const userContext = await this.resolveUserContext(userId, queryText);
 
-        // 5. Fetch live agricultural context (weather, FAO, NASA, SoilGrids, market prices)
         if (isAgriQuery) {
             const liveResults = await this.fetchLiveAgriContext(queryCategories, userContext);
             contextResults = [...liveResults, ...contextResults];
@@ -512,10 +568,7 @@ export class KnowledgeService {
             .join('\n\n---\n\n');
 
         try {
-            // 6. Generate answer using Reasoning capability
             const reasoningResult = await this.callReasoningWithTimeout(contextText, queryText, attachments);
-
-            // 7. Post-process: TTS + visual validation
             const { visuals, audio } = await this.postProcessResponse(reasoningResult, queryText);
 
             const response = {
@@ -526,33 +579,11 @@ export class KnowledgeService {
                 cached: false
             };
 
-            // 8. Asynchronously store in semantic and Redis caches (non-blocking!)
-            if (!attachments || attachments.length === 0) {
-                cacheSet(redisKey, JSON.stringify(response), 3600 * 24).catch(e => logger.error('Failed to set Redis exact cache:', e));
-                SemanticCacheService.save(queryText, response.answer, response.contextUsed, response.visuals).catch(e => logger.error('Failed to save semantic cache:', e));
-            }
-
-            // 9. Asynchronously log search for user history in the background (non-blocking!)
-            this.logSearch(
-                userId, queryText, queryCategories[0] || 'general_inquiry', undefined,
-                response.answer, response.reasoning, response.visuals
-            ).catch(logError => logger.error('Background logging failed:', logError));
+            this.cacheAndLogResponse(userId, queryText, attachments, redisKey, queryCategories, response);
 
             return response;
         } catch (error) {
-            logger.error('RAG analysis failed:', error);
-
-            if (contextResults.length > 0) {
-                const fallback = this.buildExtractiveAnswer(queryText, contextResults);
-                this.logSearch(
-                    userId, queryText,
-                    contextResults[0]?.metadata?.category, contextResults[0]?.metadata?.crop,
-                    fallback.answer, fallback.reasoning, fallback.visuals
-                ).catch(logError => logger.error('Fallback search logging failed:', logError));
-                return fallback;
-            }
-
-            throw error;
+            return this.handleAskQuestionFallback(userId, queryText, contextResults, error);
         }
     }
 
@@ -639,7 +670,7 @@ export class KnowledgeService {
                         multiLabel: true
                     }
                 }),
-                new Promise<any>((_, reject) => {
+                new Promise<Record<string, any>>((_, reject) => {
                     timeoutId = setTimeout(
                         () => reject(new Error(`categorizeQuery timed out after ${TIMEOUT_MS}ms`)),
                         TIMEOUT_MS
@@ -648,8 +679,8 @@ export class KnowledgeService {
             ]).finally(() => clearTimeout(timeoutId));
 
             return classification.labels
-                .filter((l: any) => l.score > 0.4)
-                .map((l: any) => l.label);
+                .filter((l: Record<string, any>) => l.score > 0.4)
+                .map((l: Record<string, any>) => l.label);
         } catch (error) {
             const isTimeout = (error as Error).message?.includes('categorizeQuery timed out');
             if (isTimeout) {
@@ -661,56 +692,50 @@ export class KnowledgeService {
         }
     }
 
-    /**
-     * Validates and enhances visual assets with runtime checks
-     */
-    static async validateAndEnhanceVisuals(visuals: any, searchQuery: string): Promise<any> {
-        const enhancedVisuals = { ...visuals };
+    private static async enhanceImages(enhancedVisuals: Record<string, any>, searchQuery: string) {
+        if (!enhancedVisuals.images || enhancedVisuals.images.length === 0) return;
 
-        // Validate image URLs
-        if (enhancedVisuals.images && enhancedVisuals.images.length > 0) {
-            const validImageUrls = await AssetValidationService.validateAssetUrls(
-                enhancedVisuals.images.map((img: any) => img.url)
-            );
+        const validImageUrls = await AssetValidationService.validateAssetUrls(
+            enhancedVisuals.images.map((img: Record<string, any>) => img.url)
+        );
 
-            // Filter to only valid images
-            enhancedVisuals.images = enhancedVisuals.images.filter((img: any) =>
-                validImageUrls.includes(img.url)
-            );
+        enhancedVisuals.images = enhancedVisuals.images.filter((img: Record<string, any>) =>
+            validImageUrls.includes(img.url)
+        );
 
-            // If we have fewer than desired images, try to get more relevant ones
-            if (enhancedVisuals.images.length < 2) {
-                try {
-                    const additionalImages = await AssetValidationService.getRelevantImages(searchQuery, 3);
-                    const existingUrls = new Set(enhancedVisuals.images.map((img: any) => img.url));
+        if (enhancedVisuals.images.length < 2) {
+            try {
+                const additionalImages = await AssetValidationService.getRelevantImages(searchQuery, 3);
+                const existingUrls = new Set(enhancedVisuals.images.map((img: Record<string, any>) => img.url));
 
-                    for (const additional of additionalImages) {
-                        if (!existingUrls.has(additional.url)) {
-                            enhancedVisuals.images.push({
-                                url: additional.url,
-                                caption: `Verified agricultural image (${additional.category})`
-                            });
-                            if (enhancedVisuals.images.length >= 3) break;
-                        }
+                for (const additional of additionalImages) {
+                    if (!existingUrls.has(additional.url)) {
+                        enhancedVisuals.images.push({
+                            url: additional.url,
+                            caption: `Verified agricultural image (${additional.category})`
+                        });
+                        if (enhancedVisuals.images.length >= 3) break;
                     }
-                } catch (error) {
-                    logger.warn('Failed to get additional relevant images:', error);
                 }
+            } catch (error) {
+                logger.warn('Failed to get additional relevant images:', error);
             }
         }
+    }
 
-        // Validate video URLs
-        if (enhancedVisuals.videos && enhancedVisuals.videos.length > 0) {
-            const validVideoUrls = await AssetValidationService.validateAssetUrls(
-                enhancedVisuals.videos.map((vid: any) => vid.url)
-            );
+    private static async enhanceVideos(enhancedVisuals: Record<string, any>) {
+        if (!enhancedVisuals.videos || enhancedVisuals.videos.length === 0) return;
 
-            enhancedVisuals.videos = enhancedVisuals.videos.filter((vid: any) =>
-                validVideoUrls.includes(vid.url)
-            );
-        }
+        const validVideoUrls = await AssetValidationService.validateAssetUrls(
+            enhancedVisuals.videos.map((vid: Record<string, any>) => vid.url)
+        );
 
-        // Ensure we have at least some visuals if possible
+        enhancedVisuals.videos = enhancedVisuals.videos.filter((vid: Record<string, any>) =>
+            validVideoUrls.includes(vid.url)
+        );
+    }
+
+    private static async addFallbackVisuals(enhancedVisuals: Record<string, any>, searchQuery: string) {
         if ((!enhancedVisuals.images || enhancedVisuals.images.length === 0) &&
             (!enhancedVisuals.charts || enhancedVisuals.charts.length === 0)) {
             try {
@@ -727,6 +752,17 @@ export class KnowledgeService {
                 logger.warn('Failed to get fallback images:', error);
             }
         }
+    }
+
+    /**
+     * Validates and enhances visual assets with runtime checks
+     */
+    static async validateAndEnhanceVisuals(visuals: Record<string, any>, searchQuery: string): Promise<Record<string, any>> {
+        const enhancedVisuals = { ...visuals };
+
+        await this.enhanceImages(enhancedVisuals, searchQuery);
+        await this.enhanceVideos(enhancedVisuals);
+        await this.addFallbackVisuals(enhancedVisuals, searchQuery);
 
         return enhancedVisuals;
     }

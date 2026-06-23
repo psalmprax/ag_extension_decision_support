@@ -14,6 +14,47 @@ const deepResearchSchema = z.object({
   region: z.string().optional().describe('Geographic region of interest'),
 });
 
+async function fetchTavilyResults(topic: string, depth: string, results: Array<{ source: string; data: string }>) {
+  let searchDepthCount = 3;
+  if (depth === 'deep') searchDepthCount = 10;
+  else if (depth === 'standard') searchDepthCount = 5;
+  const tavilyResults = await tavilyService.search(topic, searchDepthCount);
+  if (tavilyResults) {
+    results.push({
+      source: 'tavily_web_search',
+      data: JSON.stringify(tavilyResults.results?.slice(0, 5).map((r: Record<string, any>) => ({
+        title: r.title,
+        url: r.url,
+        snippet: r.content,
+      })) || []),
+    });
+  }
+}
+
+async function fetchFaoAlerts(region: string | undefined, focus: string | undefined, results: Array<{ source: string; data: string }>) {
+  if (region || focus?.toLowerCase().includes('disease')) {
+    const faoAlerts = await FAOService.getDiseaseAlerts(region || 'global', focus || '');
+    if (faoAlerts && faoAlerts.length > 0) {
+      results.push({
+        source: 'fao_disease_alerts',
+        data: JSON.stringify(faoAlerts),
+      });
+    }
+  }
+}
+
+async function fetchWeatherContext(region: string | undefined, results: Array<{ source: string; data: string }>) {
+  if (region) {
+    const weather = await WeatherService.getByLocation(region);
+    if (weather) {
+      results.push({
+        source: 'weather_context',
+        data: JSON.stringify(weather),
+      });
+    }
+  }
+}
+
 export const deepResearchTool: Tool<typeof deepResearchSchema> = {
   name: 'deep_agricultural_research',
   description: 'Conducts multi-source deep research combining web search, FAO data, weather analysis, and AI synthesis. Use for complex agricultural questions requiring systematic analysis across multiple data sources.',
@@ -22,40 +63,9 @@ export const deepResearchTool: Tool<typeof deepResearchSchema> = {
     try {
       const results: Array<{ source: string; data: string }> = [];
 
-      // Source 1: Web research via Tavily
-      const tavilyResults = await tavilyService.search(topic, depth === 'deep' ? 10 : depth === 'standard' ? 5 : 3);
-      if (tavilyResults) {
-        results.push({
-          source: 'tavily_web_search',
-          data: JSON.stringify(tavilyResults.results?.slice(0, 5).map((r: any) => ({
-            title: r.title,
-            url: r.url,
-            snippet: r.content,
-          })) || []),
-        });
-      }
-
-      // Source 2: FAO disease/pest alerts
-      if (region || focus?.toLowerCase().includes('disease')) {
-        const faoAlerts = await FAOService.getDiseaseAlerts(region || 'global', focus || '');
-        if (faoAlerts && faoAlerts.length > 0) {
-          results.push({
-            source: 'fao_disease_alerts',
-            data: JSON.stringify(faoAlerts),
-          });
-        }
-      }
-
-      // Source 3: Weather context
-      if (region) {
-        const weather = await WeatherService.getByLocation(region);
-        if (weather) {
-          results.push({
-            source: 'weather_context',
-            data: JSON.stringify(weather),
-          });
-        }
-      }
+      await fetchTavilyResults(topic, depth, results);
+      await fetchFaoAlerts(region, focus, results);
+      await fetchWeatherContext(region, results);
 
       // Source 4: AI synthesis
       const synthesisPrompt = `Synthesize the following research data on "${topic}" into a comprehensive agricultural analysis.

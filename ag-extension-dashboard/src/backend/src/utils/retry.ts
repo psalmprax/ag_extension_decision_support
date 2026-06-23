@@ -35,25 +35,25 @@ export async function withRetry<T>(
             return await fn();
         } catch (error) {
             lastError = error;
-
-            // Check if we should retry
-            if (attempt < opts.maxRetries) {
-                const shouldRetry = opts.retryableErrors
-                    ? opts.retryableErrors(error)
-                    : defaultRetryableErrors(error);
-
-                if (shouldRetry) {
-                    logger.warn(`Retry attempt ${attempt + 1}/${opts.maxRetries} after ${delay}ms`, {
-                        error: (error as Error)?.message || error,
-                    });
-
-                    await sleep(delay);
-                    delay = Math.min(delay * opts.backoffMultiplier, opts.maxDelay);
-                } else {
-                    // Non-retryable error
-                    throw error;
-                }
+            
+            if (attempt >= opts.maxRetries) {
+                break;
             }
+
+            const shouldRetry = opts.retryableErrors
+                ? opts.retryableErrors(error)
+                : defaultRetryableErrors(error);
+
+            if (!shouldRetry) {
+                throw error;
+            }
+
+            logger.warn(`Retry attempt ${attempt + 1}/${opts.maxRetries} after ${delay}ms`, {
+                error: (error as Error)?.message || error,
+            });
+
+            await sleep(delay);
+            delay = Math.min(delay * opts.backoffMultiplier, opts.maxDelay);
         }
     }
 

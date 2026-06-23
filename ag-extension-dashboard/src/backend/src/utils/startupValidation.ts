@@ -8,15 +8,7 @@ export interface ValidationWarning {
     severity: 'critical' | 'warning' | 'info';
 }
 
-/**
- * Validates that critical configuration is present at startup
- * Logs warnings for missing non-critical configs
- */
-export function validateStartupConfiguration(): ValidationWarning[] {
-    const warnings: ValidationWarning[] = [];
-    const isProduction = process.env.NODE_ENV === 'production';
-
-    // === Critical: Database ===
+function validateDatabaseConfig(warnings: ValidationWarning[]): void {
     if (!config.database.url) {
         warnings.push({
             type: 'missing',
@@ -25,8 +17,9 @@ export function validateStartupConfiguration(): ValidationWarning[] {
             severity: 'critical',
         });
     }
+}
 
-    // === Critical: JWT Secret ===
+function validateJwtConfig(warnings: ValidationWarning[], isProduction: boolean): void {
     if (!config.jwt.secret || config.jwt.secret === 'dev-secret-key-for-local-only') {
         if (isProduction) {
             warnings.push({
@@ -39,8 +32,9 @@ export function validateStartupConfiguration(): ValidationWarning[] {
             logger.warn('JWT_SECRET is using the default development key. This is fine for local dev only.');
         }
     }
+}
 
-    // === Critical: AI Provider ===
+function validateAiConfig(warnings: ValidationWarning[], isProduction: boolean): void {
     if (!config.openAI.apiKey && !config.azureOpenAI.apiKey && !config.anthropic.apiKey && !config.groq.apiKey) {
         warnings.push({
             type: 'missing',
@@ -67,8 +61,9 @@ export function validateStartupConfiguration(): ValidationWarning[] {
             severity: 'info',
         });
     }
+}
 
-    // === Warning: Redis ===
+function validateExternalServices(warnings: ValidationWarning[]): void {
     if (!config.redis.url) {
         warnings.push({
             type: 'missing',
@@ -78,7 +73,6 @@ export function validateStartupConfiguration(): ValidationWarning[] {
         });
     }
 
-    // === Warning: External APIs ===
     if (!config.externalApis.weather.apiKey) {
         warnings.push({
             type: 'missing',
@@ -88,7 +82,6 @@ export function validateStartupConfiguration(): ValidationWarning[] {
         });
     }
 
-    // === Info: Stripe ===
     if (!config.stripeSecretKey) {
         warnings.push({
             type: 'recommended',
@@ -97,8 +90,9 @@ export function validateStartupConfiguration(): ValidationWarning[] {
             severity: 'info',
         });
     }
+}
 
-    // === Info: Deployment ===
+function validateDeploymentConfig(warnings: ValidationWarning[], isProduction: boolean): void {
     if (isProduction) {
         if (!process.env.CORS_ORIGIN) {
             warnings.push({
@@ -118,6 +112,21 @@ export function validateStartupConfiguration(): ValidationWarning[] {
             });
         }
     }
+}
+
+/**
+ * Validates that critical configuration is present at startup
+ * Logs warnings for missing non-critical configs
+ */
+export function validateStartupConfiguration(): ValidationWarning[] {
+    const warnings: ValidationWarning[] = [];
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    validateDatabaseConfig(warnings);
+    validateJwtConfig(warnings, isProduction);
+    validateAiConfig(warnings, isProduction);
+    validateExternalServices(warnings);
+    validateDeploymentConfig(warnings, isProduction);
 
     return warnings;
 }

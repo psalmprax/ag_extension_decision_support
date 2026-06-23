@@ -34,7 +34,7 @@ export interface MCPListToolsResponse {
   tools: MCPTool[];
 }
 
-export class MCPAdapter {
+class MCPAdapter {
   private static instance: MCPAdapter;
 
   static getInstance(): MCPAdapter {
@@ -44,48 +44,48 @@ export class MCPAdapter {
     return MCPAdapter.instance;
   }
 
+  private processSchemaShape(shape: Record<string, any> | null, properties: Record<string, unknown>, required: string[], toolName: string): void {
+    if (shape && typeof shape === 'object') {
+      for (const [key, value] of Object.entries(shape)) {
+        try {
+          const zodDef = (value as Record<string, any>)?._def;
+          const fieldType = this.getZodType(zodDef);
+          const description = zodDef?.description || '';
+
+          properties[key] = {
+            type: fieldType,
+            description: description,
+          };
+
+          const isOptional = this.isFieldOptional(zodDef);
+          if (!isOptional) {
+            required.push(key);
+          }
+        } catch (fieldError) {
+          console.error(`Tool ${toolName}, field ${key}: Error processing field:`, fieldError);
+        }
+      }
+    }
+  }
+
   convertToMCPTools(): MCPTool[] {
     return toolRegistry.map(tool => {
       const zodSchema = tool.schema;
       const properties: Record<string, unknown> = {};
       const required: string[] = [];
 
-      // Try to extract shape from Zod schema
-      let shape: any = null;
+      let shape: Record<string, any> | null = null;
 
       try {
-        // For Zod v3, shape is a function that returns the shape object
         if (zodSchema && zodSchema._def && zodSchema._def.shape) {
           if (typeof zodSchema._def.shape === 'function') {
             shape = zodSchema._def.shape();
           } else {
-            // Fallback: if shape is already an object
             shape = zodSchema._def.shape;
           }
         }
 
-        if (shape && typeof shape === 'object') {
-          for (const [key, value] of Object.entries(shape)) {
-            try {
-              const zodDef = (value as any)?._def;
-              const fieldType = this.getZodType(zodDef);
-              const description = zodDef?.description || '';
-
-              properties[key] = {
-                type: fieldType,
-                description: description,
-              };
-
-            // Check if field is required (not optional)
-            const isOptional = this.isFieldOptional(zodDef);
-            if (!isOptional) {
-              required.push(key);
-            }
-            } catch (fieldError) {
-              console.error(`Tool ${tool.name}, field ${key}: Error processing field:`, fieldError);
-            }
-          }
-        }
+        this.processSchemaShape(shape, properties, required, tool.name);
       } catch (error) {
         console.error(`Tool ${tool.name}: Error extracting schema:`, error);
       }
@@ -128,7 +128,7 @@ export class MCPAdapter {
     }
   }
 
-  private isFieldOptional(zodDef: any): boolean {
+  private isFieldOptional(zodDef: Record<string, any> | null | undefined): boolean {
     if (!zodDef) return false;
 
     const typeName = zodDef.typeName;
@@ -147,7 +147,7 @@ export class MCPAdapter {
     return false;
   }
 
-  private getZodType(zodDef: any): string {
+  private getZodType(zodDef: Record<string, any> | null | undefined): string {
     if (!zodDef) return 'string';
     const typeName = zodDef.typeName;
     switch (typeName) {
@@ -164,7 +164,7 @@ export class MCPAdapter {
   }
 }
 
-export const mcpAdapter = MCPAdapter.getInstance();
+const mcpAdapter = MCPAdapter.getInstance();
 
 export function createMCPRouter(): Router {
   const router = Router();

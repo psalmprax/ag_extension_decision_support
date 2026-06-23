@@ -445,6 +445,17 @@ export const themeDescriptions: Record<ThemeName, string> = {
     cyber: '🌑 Cyber Dark - High-tech night mode',
 };
 
+function getDarkVal(key: string, val: string): string {
+    switch (key) {
+        case '50': return '#111827';
+        case '100': return '#1f2937';
+        case '200': return '#374151';
+        case '300': return '#4b5563';
+        case '400': return '#6b7280';
+        default: return val;
+    }
+}
+
 /**
  * Apply theme CSS variables to the document
  */
@@ -466,13 +477,7 @@ export function applyTheme(themeName: ThemeName): void {
     // For dark mode, we use darker versions of primary/secondary colors
     // and darker backgrounds
     Object.entries(theme.primary).forEach(([key, val]) => {
-        // Use a darker shade for dark mode
-        const darkVal = key === '50' ? '#111827' :
-            key === '100' ? '#1f2937' :
-                key === '200' ? '#374151' :
-                    key === '300' ? '#4b5563' :
-                        key === '400' ? '#6b7280' :
-                            val; // 500+ stay same
+        const darkVal = getDarkVal(key, val);
         darkVars.push(`--color-primary-${key}: ${darkVal};`);
         darkVars.push(`--color-primary-${key}-rgb: ${hexToRgb(darkVal)};`);
     });

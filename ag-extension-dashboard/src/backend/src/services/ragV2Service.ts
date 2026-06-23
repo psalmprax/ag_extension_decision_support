@@ -28,7 +28,7 @@ export interface Entity {
     id: string;
     name: string;
     type: 'crop' | 'disease' | 'soil' | 'region' | 'practice' | 'nutrient' | 'pest';
-    properties: Record<string, any>;
+    properties: Record<string, unknown>;
 }
 
 export interface Relationship {
@@ -36,14 +36,14 @@ export interface Relationship {
     targetEntityId: string;
     relationType: string; // e.g., 'treats', 'affects', 'grows_in', 'requires'
     articleId?: string;
-    properties: Record<string, any>;
+    properties: Record<string, unknown>;
 }
 
 export interface RankedResult {
     id: string;
     articleId: string;
     content: string;
-    metadata: Record<string, any>;
+    metadata: Record<string, unknown>;
     score: number;
     rerankScore?: number;
     citation: string;
@@ -120,7 +120,7 @@ export class RAGV2Service {
 
     // ── Chunking ─────────────────────────────────────────────────────────────
 
-    static async chunkAndEmbedArticle(articleId: string, content: string, _metadata: Record<string, any>): Promise<number> {
+    static async chunkAndEmbedArticle(articleId: string, content: string, _metadata: Record<string, unknown>): Promise<number> {
         const chunks = chunkText(content, 800, 150);
         if (chunks.length === 0) return 0;
 
@@ -139,8 +139,9 @@ export class RAGV2Service {
                     [`${articleId}-chunk-${i}`, articleId, i, chunks[i], vector]
                 );
                 embedded++;
-            } catch (err: any) {
-                logger.warn(`[RAGv2] Failed to embed chunk ${i} of article ${articleId}: ${err.message}`);
+            } catch (err: unknown) {
+                const errorMessage = err instanceof Error ? err.message : String(err);
+                logger.warn(`[RAGv2] Failed to embed chunk ${i} of article ${articleId}: ${errorMessage}`);
             }
         }
 
@@ -166,27 +167,32 @@ export class RAGV2Service {
 
     // ── Entity Extraction ────────────────────────────────────────────────────
 
+    private static processPatternMatches(text: string, type: string, pattern: RegExp, articleId: string, entities: Map<string, Entity>) {
+        const regex = new RegExp(pattern.source, 'gi'); // Use global flag for matchAll
+        const matches = [...text.matchAll(regex)];
+        
+        for (const match of matches) {
+            const name = match[1] || match[0];
+            const normalizedName = name.toLowerCase().trim();
+            const entityId = `${type}:${normalizedName}`;
+
+            if (!entities.has(entityId)) {
+                entities.set(entityId, {
+                    id: entityId,
+                    name: normalizedName,
+                    type: type as Entity['type'],
+                    properties: { firstSeenIn: articleId }
+                });
+            }
+        }
+    }
+
     static extractEntities(text: string, articleId: string): Map<string, Entity> {
         const entities = new Map<string, Entity>();
 
         for (const [type, patterns] of Object.entries(ENTITY_PATTERNS)) {
             for (const pattern of patterns) {
-                const regex = new RegExp(pattern.source, pattern.flags);
-                let match;
-                while ((match = regex.exec(text)) !== null) {
-                    const name = match[1] || match[0];
-                    const normalizedName = name.toLowerCase().trim();
-                    const entityId = `${type}:${normalizedName}`;
-
-                    if (!entities.has(entityId)) {
-                        entities.set(entityId, {
-                            id: entityId,
-                            name: normalizedName,
-                            type: type as Entity['type'],
-                            properties: { firstSeenIn: articleId }
-                        });
-                    }
-                }
+                this.processPatternMatches(text, type, pattern, articleId, entities);
             }
         }
 
@@ -206,38 +212,36 @@ export class RAGV2Service {
 
     // ── Relationship Extraction ──────────────────────────────────────────────
 
+    private static processRelationshipPair(a: Entity, b: Entity, articleId: string, rels: Relationship[]) {
+        const relType = this.inferRelationType(a.type, b.type);
+        if (relType) {
+            rels.push({
+                sourceEntityId: a.id,
+                targetEntityId: b.id,
+                relationType: relType,
+                articleId,
+                properties: { coOccurrence: true }
+            });
+            const reverseRel = this.inferRelationType(b.type, a.type);
+            if (reverseRel) {
+                rels.push({
+                    sourceEntityId: b.id,
+                    targetEntityId: a.id,
+                    relationType: reverseRel,
+                    articleId,
+                    properties: { coOccurrence: true }
+                });
+            }
+        }
+    }
+
     static extractRelationships(entities: Map<string, Entity>, articleId: string): Relationship[] {
         const rels: Relationship[] = [];
         const entityList = Array.from(entities.values());
 
-        // Co-occurrence based relationships within the same article
         for (let i = 0; i < entityList.length; i++) {
             for (let j = i + 1; j < entityList.length; j++) {
-                const a = entityList[i];
-                const b = entityList[j];
-
-                // Infer relationship type from entity types
-                const relType = this.inferRelationType(a.type, b.type);
-                if (relType) {
-                    rels.push({
-                        sourceEntityId: a.id,
-                        targetEntityId: b.id,
-                        relationType: relType,
-                        articleId,
-                        properties: { coOccurrence: true }
-                    });
-                    // Also add reverse
-                    const reverseRel = this.inferRelationType(b.type, a.type);
-                    if (reverseRel) {
-                        rels.push({
-                            sourceEntityId: b.id,
-                            targetEntityId: a.id,
-                            relationType: reverseRel,
-                            articleId,
-                            properties: { coOccurrence: true }
-                        });
-                    }
-                }
+                this.processRelationshipPair(entityList[i], entityList[j], articleId, rels);
             }
         }
 
@@ -274,10 +278,11 @@ export class RAGV2Service {
                      ON CONFLICT DO NOTHING`,
                     [rel.sourceEntityId, rel.targetEntityId, rel.relationType, rel.articleId, JSON.stringify(rel.properties)]
                 );
-            } catch (err: any) {
+            } catch (err: unknown) {
                 // Ignore duplicate key errors
-                if (!err.message?.includes('duplicate key')) {
-                    logger.warn(`[RAGv2] Failed to store relationship: ${err.message}`);
+                const errorMessage = err instanceof Error ? err.message : String(err);
+                if (!errorMessage.includes('duplicate key')) {
+                    logger.warn(`[RAGv2] Failed to store relationship: ${errorMessage}`);
                 }
             }
         }
@@ -285,49 +290,66 @@ export class RAGV2Service {
 
     // ── Graph Traversal ──────────────────────────────────────────────────────
 
+    private static toEntity(row: Record<string, unknown>): Entity {
+        return {
+            id: String(row.id),
+            name: String(row.name),
+            type: String(row.entity_type) as Entity['type'],
+            properties: (row.properties as Record<string, unknown>) || {},
+        };
+    }
+
+    private static async fetchEntityAndRelated(normalizedName: string, entityId?: string): Promise<{ entityRow: Record<string, unknown>; relatedRows: Record<string, unknown>[] } | null> {
+        let eId = entityId;
+        let entityRow = null;
+
+        if (!eId) {
+            const { rows: entities } = await query(
+                "SELECT id, name, entity_type, properties FROM knowledge_entities WHERE name ILIKE $1 LIMIT 1",
+                [`%${normalizedName}%`]
+            );
+            if (entities.length === 0) return null;
+            entityRow = entities[0];
+            eId = entityRow.id;
+        }
+
+        const { rows: related } = await query(
+            `SELECT e.id, e.name, e.entity_type, e.properties, r.relation_type
+             FROM knowledge_relationships r
+             JOIN knowledge_entities e ON (e.id = r.target_id)
+             WHERE r.source_id = $1
+             LIMIT 10`,
+            [eId]
+        );
+
+        return { entityRow, relatedRows: related };
+    }
+
     static async getRelatedEntities(entityName: string, maxDepth: number = 2): Promise<Entity[]> {
         const visited = new Set<string>();
         const results: Entity[] = [];
-
-        const toEntity = (row: any): Entity => ({
-            id: row.id,
-            name: row.name,
-            type: row.entity_type,
-            properties: row.properties || {},
-        });
 
         const traverse = async (name: string, depth: number) => {
             if (depth > maxDepth || visited.size > 20) return;
             const normalizedName = name.toLowerCase().trim();
 
-            // Find entity by name
-            const { rows: entities } = await query(
-                "SELECT id, name, entity_type, properties FROM knowledge_entities WHERE name ILIKE $1 LIMIT 1",
-                [`%${normalizedName}%`]
-            );
-            if (entities.length === 0) return;
+            const data = await this.fetchEntityAndRelated(normalizedName);
+            if (!data) return;
 
-            const entityId = entities[0].id;
+            const { entityRow, relatedRows } = data;
+            const entityId = String(entityRow.id);
+
             if (visited.has(entityId)) return;
             visited.add(entityId);
-            results.push(toEntity(entities[0]));
+            results.push(this.toEntity(entityRow));
 
-            // Find related entities
-            const { rows: related } = await query(
-                `SELECT e.id, e.name, e.entity_type, e.properties, r.relation_type
-                 FROM knowledge_relationships r
-                 JOIN knowledge_entities e ON (e.id = r.target_id)
-                 WHERE r.source_id = $1
-                 LIMIT 10`,
-                [entityId]
-            );
-
-            for (const rel of related) {
-                if (!visited.has(rel.id)) {
-                    const entity = toEntity(rel);
-                    entity.properties.viaRelation = rel.relation_type;
+            for (const rel of relatedRows) {
+                const relId = String(rel.id);
+                if (!visited.has(relId)) {
+                    const entity = this.toEntity(rel);
+                    entity.properties.viaRelation = String(rel.relation_type);
                     results.push(entity);
-                    visited.add(rel.id);
+                    visited.add(relId);
                 }
             }
         };
@@ -355,10 +377,10 @@ export class RAGV2Service {
                 [vector, limit]
             );
 
-            return rows.map((row: any) => ({
-                id: row.id,
-                articleId: row.article_id,
-                content: row.content,
+            return rows.map((row: Record<string, unknown>) => ({
+                id: String(row.id),
+                articleId: String(row.article_id),
+                content: String(row.content),
                 metadata: {
                     title: row.title,
                     category: row.category,
@@ -367,11 +389,12 @@ export class RAGV2Service {
                     crops: row.crops,
                     chunkIndex: row.chunk_index
                 },
-                score: Number.parseFloat(row.score),
+                score: Number.parseFloat(String(row.score)),
                 citation: `${row.title} (${row.category})`
             }));
-        } catch (error: any) {
-            logger.error('[RAGv2] Chunk search failed:', error.message);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            logger.error('[RAGv2] Chunk search failed:', errorMessage);
             return [];
         }
     }
@@ -413,14 +436,64 @@ JSON scores:`;
                 // Sort by rerank score, fall back to original score
                 candidates.sort((a, b) => (b.rerankScore ?? b.score) - (a.rerankScore ?? a.score));
             }
-        } catch (err: any) {
-            logger.warn(`[RAGv2] Re-ranking failed, using original order: ${err.message}`);
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.warn(`[RAGv2] Re-ranking failed, using original order: ${errorMessage}`);
         }
 
         return candidates.slice(0, topK);
     }
 
     // ── Full RAG v2 Pipeline ─────────────────────────────────────────────────
+
+    private static async fetchInitialResults(queryText: string, limit: number, useChunks: boolean, filters: Record<string, unknown>): Promise<RankedResult[]> {
+        if (useChunks) {
+            return await this.searchChunks(queryText, limit * 3);
+        } else {
+            const { VectorService } = await import('./vectorService');
+            const articleResults = await VectorService.hybridSearch(queryText, limit * 3, filters);
+            return articleResults.map(r => ({
+                id: r.id,
+                articleId: r.id,
+                content: r.content,
+                metadata: r.metadata,
+                score: r.score,
+                citation: `${r.metadata.title} (${r.metadata.category})`
+            }));
+        }
+    }
+
+    private static async buildGraphContext(queryText: string): Promise<string> {
+        try {
+            const queryEntities = this.extractEntities(queryText, '');
+            const relatedContexts: string[] = [];
+
+            for (const entity of queryEntities.values()) {
+                const related = await this.getRelatedEntities(entity.name, 1);
+                if (related.length > 0) {
+                    const relations = related
+                        .filter(r => r.id !== entity.id)
+                        .map(r => {
+                            const viaRelation = r.properties?.viaRelation;
+                            const relationStr = viaRelation ? ', ' + viaRelation : '';
+                            return `${r.name} (${r.type}${relationStr})`;
+                        })
+                        .slice(0, 5);
+                    if (relations.length > 0) {
+                        relatedContexts.push(`Related to "${entity.name}": ${relations.join(', ')}`);
+                    }
+                }
+            }
+
+            if (relatedContexts.length > 0) {
+                return `Knowledge Graph Context:\n${relatedContexts.join('\n')}`;
+            }
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.warn(`[RAGv2] Graph enrichment failed: ${errorMessage}`);
+        }
+        return '';
+    }
 
     static async enhancedSearch(
         queryText: string,
@@ -434,65 +507,23 @@ JSON scores:`;
     ): Promise<{ results: RankedResult[]; graphContext: string; citations: Citation[] }> {
         const { limit = 5, useChunks = true, useGraph = true, useReranking = true, filters = {} } = options;
 
-        // 1. Initial retrieval — chunk-level or article-level
-        let results: RankedResult[];
-        if (useChunks) {
-            results = await this.searchChunks(queryText, limit * 3);
-        } else {
-            // Fall back to article-level search (existing VectorService)
-            const { VectorService } = await import('./vectorService');
-            const articleResults = await VectorService.hybridSearch(queryText, limit * 3, filters);
-            results = articleResults.map(r => ({
-                id: r.id,
-                articleId: r.id,
-                content: r.content,
-                metadata: r.metadata,
-                score: r.score,
-                citation: `${r.metadata.title} (${r.metadata.category})`
-            }));
-        }
+        let results = await this.fetchInitialResults(queryText, limit, useChunks, filters);
 
-        // 2. Knowledge graph context enrichment
         let graphContext = '';
         if (useGraph) {
-            try {
-                // Extract entities from the query
-                const queryEntities = this.extractEntities(queryText, '');
-                const relatedContexts: string[] = [];
-
-                for (const entity of queryEntities.values()) {
-                    const related = await this.getRelatedEntities(entity.name, 1);
-                    if (related.length > 0) {
-                        const relations = related
-                            .filter(r => r.id !== entity.id)
-                            .map(r => `${r.name} (${r.type}${r.properties?.viaRelation ? ', ' + r.properties.viaRelation : ''})`)
-                            .slice(0, 5);
-                        if (relations.length > 0) {
-                            relatedContexts.push(`Related to "${entity.name}": ${relations.join(', ')}`);
-                        }
-                    }
-                }
-
-                if (relatedContexts.length > 0) {
-                    graphContext = `Knowledge Graph Context:\n${relatedContexts.join('\n')}`;
-                }
-            } catch (err: any) {
-                logger.warn(`[RAGv2] Graph enrichment failed: ${err.message}`);
-            }
+            graphContext = await this.buildGraphContext(queryText);
         }
 
-        // 3. Re-ranking
         if (useReranking && results.length > 1) {
             results = await this.rerank(queryText, results, limit);
         } else {
             results = results.slice(0, limit);
         }
 
-        // 4. Build citations
         const citations: Citation[] = results.map(r => ({
             sourceId: r.articleId,
-            title: r.metadata.title || 'Unknown',
-            category: r.metadata.category || 'General',
+            title: String(r.metadata.title || 'Unknown'),
+            category: String(r.metadata.category || 'General'),
             excerpt: r.content.substring(0, 200) + (r.content.length > 200 ? '...' : ''),
             score: r.rerankScore ?? r.score
         }));
@@ -533,7 +564,7 @@ JSON scores:`;
         if (chunkResult.chunks > 0) {
             try {
                 await query(`CREATE INDEX IF NOT EXISTS idx_chunks_embedding ON knowledge_chunks USING ivfflat (embedding vector_cosine_ops) WITH (lists = 10)`);
-            } catch (err: any) {
+            } catch (err: unknown) {
                 // Index may already exist
             }
         }

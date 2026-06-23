@@ -35,6 +35,53 @@ interface ConfirmModal { title: string; message: string; onConfirm: () => void; 
 
 export type { Plan, Subscription, Invoice, PaymentMethod, Transaction, Voucher, ConfirmModal };
 
+function handleSubscribeError(
+    response: Record<string, unknown>,
+    priceId: string,
+    t: (key: string) => string,
+    setConfirmModal: (modal: ConfirmModal | null) => void,
+    handleSubscribe: (priceId: string, billingCycle: 'current' | 'next') => void,
+    handleSwitch: (priceId: string, billingCycle: 'current' | 'next') => void
+) {
+    if (response.errorCode === 'PAYMENT_GATEWAY_NOT_CONFIGURED') {
+        toast.error(t('billing_configuration_alert') || response.message);
+        return;
+    }
+    if (response.errorCode === 'ALREADY_SUBSCRIBED') {
+        const canSchedule = !response.subscription?.cancelAtPeriodEnd;
+        setConfirmModal({
+            title: 'Subscription Exists',
+            message: canSchedule ? `${response.message} ${t('confirm_next_cycle')}` : `${response.message} ${t('confirm_reenable_renewal')}`,
+            variant: 'warning',
+            confirmText: 'Schedule for Next Cycle',
+            onConfirm: () => { setConfirmModal(null); handleSubscribe(priceId, 'next'); }
+        });
+        return;
+    }
+    if (response.errorCode === 'ACTIVE_SUBSCRIPTION_EXISTS') {
+        const isSamePlan = response.currentSubscription?.plan?.stripePriceId === priceId;
+        if (isSamePlan) {
+            setConfirmModal({
+                title: 'Plan Continuation',
+                message: t('confirm_plan_continuation'),
+                variant: 'info',
+                confirmText: 'Continue',
+                onConfirm: () => { setConfirmModal(null); handleSubscribe(priceId, 'next'); }
+            });
+        } else {
+            setConfirmModal({
+                title: 'Switch Plan',
+                message: `${response.message}\n\n${t('confirm_switch_plan')}`,
+                variant: 'warning',
+                confirmText: 'Switch Now',
+                onConfirm: () => { setConfirmModal(null); handleSwitch(priceId, 'current'); }
+            });
+        }
+        return;
+    }
+    toast.error(response.message || 'Action failed');
+}
+
 export function useBillingActions() {
     const { t } = useLanguage();
     const { user } = useAppStore();
@@ -185,22 +232,7 @@ export function useBillingActions() {
         try {
             const response = await createCheckoutSession(priceId, billingCycle);
             if (!response.success) {
-                if (response.errorCode === 'PAYMENT_GATEWAY_NOT_CONFIGURED') { toast.error(t('billing_configuration_alert') || response.message); return; }
-                if (response.errorCode === 'ALREADY_SUBSCRIBED') {
-                    const canSchedule = !response.subscription?.cancelAtPeriodEnd;
-                    setConfirmModal({ title: 'Subscription Exists', message: canSchedule ? `${response.message} ${t('confirm_next_cycle')}` : `${response.message} ${t('confirm_reenable_renewal')}`, variant: 'warning', confirmText: 'Schedule for Next Cycle', onConfirm: () => { setConfirmModal(null); handleSubscribe(priceId, 'next'); } });
-                    return;
-                }
-                if (response.errorCode === 'ACTIVE_SUBSCRIPTION_EXISTS') {
-                    const isSamePlan = response.currentSubscription?.plan?.stripePriceId === priceId;
-                    if (isSamePlan) {
-                        setConfirmModal({ title: 'Plan Continuation', message: t('confirm_plan_continuation'), variant: 'info', confirmText: 'Continue', onConfirm: () => { setConfirmModal(null); handleSubscribe(priceId, 'next'); } });
-                    } else {
-                        setConfirmModal({ title: 'Switch Plan', message: `${response.message}\n\n${t('confirm_switch_plan')}`, variant: 'warning', confirmText: 'Switch Now', onConfirm: () => { setConfirmModal(null); handleSwitch(priceId, 'current'); } });
-                    }
-                    return;
-                }
-                toast.error(response.message || 'Action failed');
+                handleSubscribeError(response, priceId, t, setConfirmModal, handleSubscribe, handleSwitch);
                 return;
             }
             if (response.data?.url) { window.location.href = response.data.url; return; }

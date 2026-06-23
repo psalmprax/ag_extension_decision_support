@@ -64,91 +64,107 @@ export class SelfHealingService {
     }
   }
 
+  private async handleCheckResult(component: string, health: HealthCheck, isHealthy: boolean) {
+    if (isHealthy) {
+      if (health.status !== 'healthy') {
+        logger.info(`Component recovered: ${component}`);
+        await this.triggerRecovery(component, 'auto_recovery', true);
+      }
+      health.status = 'healthy';
+      health.consecutiveFailures = 0;
+      health.lastSuccess = new Date().toISOString();
+      this.recoveryAttempts.set(component, 0);
+    } else {
+      health.consecutiveFailures++;
+      health.status = health.consecutiveFailures >= this.maxConsecutiveFailures ? 'unhealthy' : 'degraded';
+
+      if (health.consecutiveFailures >= this.maxConsecutiveFailures) {
+        logger.warn(`Component unhealthy: ${component} (${health.consecutiveFailures} consecutive failures)`);
+        await this.attemptRecovery(component);
+      }
+    }
+    health.lastCheck = new Date().toISOString();
+  }
+
+  private async handleCheckError(component: string, health: HealthCheck, error: unknown) {
+    health.consecutiveFailures++;
+    health.status = 'unhealthy';
+    health.error = error instanceof Error ? error.message : String(error);
+    health.lastCheck = new Date().toISOString();
+
+    if (health.consecutiveFailures >= this.maxConsecutiveFailures) {
+      await this.attemptRecovery(component);
+    }
+  }
+
   async runHealthChecks(): Promise<void> {
     for (const [component, health] of this.healthChecks) {
       try {
         const isHealthy = await this.checkComponent(component);
-
-        if (isHealthy) {
-          if (health.status !== 'healthy') {
-            logger.info(`Component recovered: ${component}`);
-            await this.triggerRecovery(component, 'auto_recovery', true);
-          }
-          health.status = 'healthy';
-          health.consecutiveFailures = 0;
-          health.lastSuccess = new Date().toISOString();
-          // Reset recovery attempts on successful check
-          this.recoveryAttempts.set(component, 0);
-        } else {
-          health.consecutiveFailures++;
-          health.status = health.consecutiveFailures >= this.maxConsecutiveFailures ? 'unhealthy' : 'degraded';
-
-          if (health.consecutiveFailures >= this.maxConsecutiveFailures) {
-            logger.warn(`Component unhealthy: ${component} (${health.consecutiveFailures} consecutive failures)`);
-            await this.attemptRecovery(component);
-          }
-        }
-
-        health.lastCheck = new Date().toISOString();
+        await this.handleCheckResult(component, health, isHealthy);
       } catch (error) {
-        health.consecutiveFailures++;
-        health.status = 'unhealthy';
-        health.error = error instanceof Error ? error.message : String(error);
-        health.lastCheck = new Date().toISOString();
-
-        if (health.consecutiveFailures >= this.maxConsecutiveFailures) {
-          await this.attemptRecovery(component);
-        }
+        await this.handleCheckError(component, health, error);
       }
+    }
+  }
+
+  private async checkAiProvider(): Promise<boolean> {
+    const provider = await AIProviderFactory.getPrimaryProvider();
+    return provider.isConfigured() && await provider.healthCheck();
+  }
+
+  private async checkDatabase(): Promise<boolean> {
+    const { getPool } = await import('@/services/databaseService');
+    const pool = getPool();
+    if (!pool) return false;
+    await pool.query('SELECT 1');
+    return true;
+  }
+
+  private async checkCache(): Promise<boolean> {
+    const { getCache } = await import('@/services/cacheService');
+    const redis = getCache();
+    return redis?.isOpen || false;
+  }
+
+  private async checkAgentService(component: string): Promise<boolean> {
+    const urls: Record<string, string> = {
+      'agent-zero': 'http://ag-agent-zero:8000',
+      'crew-ai': 'http://ag-crew-ai:8001',
+      'openclaw': 'http://ag-openclaw:8002',
+    };
+    const url = urls[component];
+    if (!url) return false;
+
+    try {
+      logger.info(`Checking health for ${component} at ${url}/health`);
+      const response = await fetch(`${url}/health`, { signal: AbortSignal.timeout(10000) });
+      const isHealthy = response.ok;
+      logger.info(`Health check for ${component}: ${isHealthy ? 'healthy' : 'unhealthy'} (${response.status})`);
+      return isHealthy;
+    } catch (error) {
+      logger.warn(`Health check failed for ${component}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      if (component === 'openclaw') {
+        logger.info(`OpenClaw agent not running yet (expected for planned agent)`);
+        return true; 
+      }
+      return false;
     }
   }
 
   async checkComponent(component: string): Promise<boolean> {
     try {
       switch (component) {
-        case 'ai-provider': {
-          const provider = await AIProviderFactory.getPrimaryProvider();
-          return provider.isConfigured() && await provider.healthCheck();
-        }
-        case 'database': {
-          const { getPool } = await import('@/services/databaseService');
-          const pool = getPool();
-          if (!pool) return false;
-          await pool.query('SELECT 1');
-          return true;
-        }
-        case 'cache': {
-          const { getCache } = await import('@/services/cacheService');
-          const redis = getCache();
-          return redis?.isOpen || false;
-        }
+        case 'ai-provider':
+          return await this.checkAiProvider();
+        case 'database':
+          return await this.checkDatabase();
+        case 'cache':
+          return await this.checkCache();
         case 'agent-zero':
         case 'crew-ai':
-        case 'openclaw': {
-          const urls: Record<string, string> = {
-            'agent-zero': 'http://ag-agent-zero:8000',
-            'crew-ai': 'http://ag-crew-ai:8001',
-            'openclaw': 'http://ag-openclaw:8002',
-          };
-          const url = urls[component];
-          if (!url) return false;
-
-          try {
-            logger.info(`Checking health for ${component} at ${url}/health`);
-            const response = await fetch(`${url}/health`, { signal: AbortSignal.timeout(10000) });
-            const isHealthy = response.ok;
-            logger.info(`Health check for ${component}: ${isHealthy ? 'healthy' : 'unhealthy'} (${response.status})`);
-            return isHealthy;
-          } catch (error) {
-            logger.warn(`Health check failed for ${component}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-            // For planned agents that aren't running yet, don't count as failures
-            if (component === 'openclaw') {
-              logger.info(`OpenClaw agent not running yet (expected for planned agent)`);
-              return true; // Consider it "healthy" since it's planned but not implemented
-            }
-            return false;
-          }
-        }
+        case 'openclaw':
+          return await this.checkAgentService(component);
         default:
           return true;
       }

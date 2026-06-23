@@ -10,17 +10,40 @@ interface CyberDashboardProps {
     farmerStats: unknown;
 }
 
+const getSoilTrend = (soil: unknown) => {
+    if (!soil) return 'No data';
+    return Number(String(soil).replace('%', '')) > 30 ? 'Optimal' : 'Low';
+};
+
+const getPhTrend = (ph: unknown) => {
+    if (!ph) return 'No data';
+    const num = Number(ph);
+    return num > 6 && num < 8 ? 'Optimal' : 'Checking';
+};
+
+const getAiTrend = (ai: unknown) => {
+    if (!ai) return 'No data';
+    return Number(String(ai).replace('%', '')) > 80 ? 'High' : 'Normal';
+};
+
+const getTempTrend = (temp: unknown) => {
+    if (!temp) return 'No data';
+    return 'Stable';
+};
+
+const getDashboardMetrics = (stats: Record<string, unknown> | null | undefined) => [
+    { label: 'SOIL MOISTURE', value: stats?.soilMoisture as string | undefined || '\u2014', icon: Zap, trend: getSoilTrend(stats?.soilMoisture) },
+    { label: 'AVG TEMP', value: stats?.avgTemp as string | undefined || '\u2014', icon: TrendingUp, trend: getTempTrend(stats?.avgTemp) },
+    { label: 'PH LEVEL', value: stats?.phLevel as string | undefined || '\u2014', icon: LineChart, trend: getPhTrend(stats?.phLevel) },
+    { label: 'AI CONFIDENCE', value: stats?.aiConfidence as string | undefined || '\u2014', icon: ShieldAlert, trend: getAiTrend(stats?.aiConfidence) }
+];
+
 export const CyberDashboard: React.FC<CyberDashboardProps> = ({ farmerStats }) => {
     const { user } = useAppStore();
     const { t } = useLanguage();
     const { showContextMenu } = useAppStore();
 
-    const dashboardMetrics = [
-        { label: 'SOIL MOISTURE', value: farmerStats?.soilMoisture || '\u2014', icon: Zap, trend: farmerStats?.soilMoisture ? (Number(String(farmerStats.soilMoisture).replace('%','')) > 30 ? 'Optimal' : 'Low') : 'No data' },
-        { label: 'AVG TEMP', value: farmerStats?.avgTemp || '\u2014', icon: TrendingUp, trend: farmerStats?.avgTemp ? 'Stable' : 'No data' },
-        { label: 'PH LEVEL', value: farmerStats?.phLevel || '\u2014', icon: LineChart, trend: farmerStats?.phLevel ? (Number(farmerStats.phLevel) > 6 && Number(farmerStats.phLevel) < 8 ? 'Optimal' : 'Checking') : 'No data' },
-        { label: 'AI CONFIDENCE', value: farmerStats?.aiConfidence || '\u2014', icon: ShieldAlert, trend: farmerStats?.aiConfidence ? (Number(String(farmerStats.aiConfidence).replace('%','')) > 80 ? 'High' : 'Normal') : 'No data' }
-    ];
+    const dashboardMetrics = getDashboardMetrics(farmerStats);
 
     return (
         <div className="space-y-8 animate-fade-in">

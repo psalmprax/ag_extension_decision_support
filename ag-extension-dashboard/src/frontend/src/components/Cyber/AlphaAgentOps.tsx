@@ -37,6 +37,47 @@ const iconMap: Record<string, React.ElementType> = {
     'openclaw': Terminal,
 };
 
+const getTagColor = (tag: string) => {
+    switch(tag) {
+        case 'SYSTEM': return 'text-primary-400';
+        case 'OK':
+        case 'QUERY': return 'text-green-400';
+        case 'ERR': return 'text-red-400';
+        case 'WARN': return 'text-orange-400';
+        case 'EXEC':
+        case 'REFRESH': return 'text-yellow-400';
+        default: return 'text-white/60';
+    }
+};
+
+const ConsoleLogViewer = ({ consoleOutput, activeAgentData, activeAgent, now }: { consoleOutput: string[]; activeAgentData: Record<string, unknown> | undefined; activeAgent: string; now: Date }) => (
+    <div className="p-4 space-y-3 font-mono text-xxs min-h-[80px]">
+        {consoleOutput.length === 0 ? (
+            <div className="text-white/20 text-center py-4">System initialized. Awaiting agent commands.</div>
+        ) : (
+            consoleOutput.map((line: string, i: number) => {
+                const parts = line.match(/^(\d{2}:\d{2}:\d{2}) \[(\w+)\] (.+)$/);
+                if (!parts) return <div key={i} className="text-white/60">{line}</div>;
+                const [, time, tag, msg] = parts;
+                return (
+                    <div key={i} className="flex gap-3">
+                        <span className="text-white/20">{time}</span>
+                        <span className={getTagColor(tag)}>[{tag}]</span>
+                        <span className="text-white/60">{msg}</span>
+                    </div>
+                );
+            })
+        )}
+        {activeAgentData?.status === 'running' && (
+            <div className="flex gap-3 animate-pulse">
+                <span className="text-white/20">{now()}</span>
+                <span className="text-primary-400">[PROC]</span>
+                <span className="text-white/60">Agent {activeAgent} maintaining active orchestration...</span>
+            </div>
+        )}
+    </div>
+);
+
 const AlphaAgentOps = () => {
     const { t: _t } = useLanguage();
     const { addNotification } = useAppStore();
@@ -315,32 +356,7 @@ const AlphaAgentOps = () => {
                                 <span className="text-micro font-black text-white/40 uppercase tracking-[0.2em]">Runtime History</span>
                                 <Terminal className="w-3 h-3 text-white/40" />
                             </div>
-                            <div className="p-4 space-y-3 font-mono text-xxs min-h-[80px]">
-                                {consoleOutput.length === 0 ? (
-                                    <div className="text-white/20 text-center py-4">System initialized. Awaiting agent commands.</div>
-                                ) : (
-                                    consoleOutput.map((line, i) => {
-                                        const parts = line.match(/^(\d{2}:\d{2}:\d{2}) \[(\w+)\] (.+)$/);
-                                        if (!parts) return <div key={i} className="text-white/60">{line}</div>;
-                                        const [, time, tag, msg] = parts;
-                                        const tagColor = tag === 'SYSTEM' ? 'text-primary-400' : tag === 'OK' || tag === 'QUERY' ? 'text-green-400' : tag === 'ERR' ? 'text-red-400' : tag === 'WARN' ? 'text-orange-400' : tag === 'EXEC' || tag === 'REFRESH' ? 'text-yellow-400' : 'text-white/60';
-                                        return (
-                                            <div key={i} className="flex gap-3">
-                                                <span className="text-white/20">{time}</span>
-                                                <span className={tagColor}>[{tag}]</span>
-                                                <span className="text-white/60">{msg}</span>
-                                            </div>
-                                        );
-                                    })
-                                )}
-                                {activeAgentData?.status === 'running' && (
-                                    <div className="flex gap-3 animate-pulse">
-                                        <span className="text-white/20">{now()}</span>
-                                        <span className="text-primary-400">[PROC]</span>
-                                        <span className="text-white/60">Agent {activeAgent} maintaining active orchestration...</span>
-                                    </div>
-                                )}
-                            </div>
+                            <ConsoleLogViewer consoleOutput={consoleOutput} activeAgentData={activeAgentData} activeAgent={activeAgent} now={now} />
                         </div>
                     </div>
 

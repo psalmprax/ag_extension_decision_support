@@ -19,7 +19,7 @@ export interface BulkDeleteRequest {
 
 export interface BulkUpdateRequest {
     ids: string[];
-    updates: Record<string, any>;
+    updates: Record<string, unknown>;
 }
 
 export interface BulkImportResult {
@@ -53,7 +53,7 @@ export class BulkOperationsService {
         ids: string[],
         userId: string,
         userRole: string,
-        deleteItem: (id: string, tx: any) => Promise<void>,
+        deleteItem: (id: string, tx: Record<string, any>) => Promise<void>,
         batchSize: number = 10
     ): Promise<BulkOperationResult> {
         const operationId = this.generateOperationId();
@@ -140,38 +140,45 @@ export class BulkOperationsService {
         });
     }
 
+    private notifyProgress(onProgress: ((update: ProgressUpdate) => void) | undefined, operationId: string, current: number, total: number) {
+        if (onProgress) {
+            onProgress({ operationId, progress: (current / total) * 100, total, current, message: `Deleting articles: ${current}/${total}`, status: 'running' });
+        }
+    }
+
+    private async processKnowledgeArticleBatch(batch: string[], onProgress: ((update: ProgressUpdate) => void) | undefined, operationId: string, total: number, stats: Record<string, any>) {
+        await this.prisma.$transaction(async (tx) => {
+            for (const articleId of batch) {
+                try {
+                    await tx.knowledgeArticle.delete({ where: { id: articleId } });
+                    stats.processed++;
+                    stats.current++;
+                    this.notifyProgress(onProgress, operationId, stats.current, total);
+                } catch (error) {
+                    stats.failed++;
+                    stats.errors.push(`Failed to delete article ${articleId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                    stats.current++;
+                }
+            }
+        });
+    }
+
     async bulkDeleteKnowledgeArticles(request: BulkDeleteRequest, userId: string, userRole: string, onProgress?: (update: ProgressUpdate) => void): Promise<BulkOperationResult> {
         if (userRole !== 'admin') throw new Error('Only administrators can perform bulk knowledge article operations');
 
         const operationId = this.generateOperationId();
-        let processed = 0;
-        let failed = 0;
-        const errors: string[] = [];
         const total = request.ids.length;
-        let current = 0;
+        const stats = { current: 0, processed: 0, failed: 0, errors: [] as string[] };
 
         logger.info(`Starting bulk knowledge article deletion: ${total} articles`, { operationId, userId });
 
         for (let i = 0; i < request.ids.length; i += 10) {
             const batch = request.ids.slice(i, i + 10);
-            await this.prisma.$transaction(async (tx) => {
-                for (const articleId of batch) {
-                    try {
-                        await tx.knowledgeArticle.delete({ where: { id: articleId } });
-                        processed++;
-                        current++;
-                        if (onProgress) onProgress({ operationId, progress: (current / total) * 100, total, current, message: `Deleting articles: ${current}/${total}`, status: 'running' });
-                    } catch (error) {
-                        failed++;
-                        errors.push(`Failed to delete article ${articleId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-                        current++;
-                    }
-                }
-            });
+            await this.processKnowledgeArticleBatch(batch, onProgress, operationId, total, stats);
         }
 
-        const result = { success: failed === 0, processed, failed, errors, operationId };
-        if (onProgress) onProgress({ operationId, progress: 100, total, current, message: result.success ? 'Deletion completed successfully' : 'Deletion completed with errors', status: result.success ? 'completed' : 'failed' });
+        const result = { success: stats.failed === 0, processed: stats.processed, failed: stats.failed, errors: stats.errors, operationId };
+        if (onProgress) onProgress({ operationId, progress: 100, total, current: stats.current, message: result.success ? 'Deletion completed successfully' : 'Deletion completed with errors', status: result.success ? 'completed' : 'failed' });
         return result;
     }
 
@@ -191,17 +198,9 @@ export class BulkOperationsService {
         });
     }
 
-    /**
-     * Export data to CSV format
-     */
-    async exportFarmersToCSV(
-        filters: any,
-        userId: string,
-        userRole: string
-    ): Promise<string> {
-        const where: any = {};
+    private async buildFarmerExportFilters(filters: Record<string, any>, userId: string, userRole: string): Promise<Record<string, any>> {
+        const where: Record<string, any> = {};
 
-        // Apply role-based filtering
         if (userRole === 'extension_officer') {
             where.assignedOfficerId = userId;
         } else if (userRole === 'regional_manager') {
@@ -216,7 +215,6 @@ export class BulkOperationsService {
             where.userId = userId;
         }
 
-        // Apply filters
         if (filters.region) where.region = filters.region;
         if (filters.search) {
             where.OR = [
@@ -225,6 +223,19 @@ export class BulkOperationsService {
                 { village: { contains: filters.search, mode: 'insensitive' } },
             ];
         }
+
+        return where;
+    }
+
+    /**
+     * Export data to CSV format
+     */
+    async exportFarmersToCSV(
+        filters: Record<string, any>,
+        userId: string,
+        userRole: string
+    ): Promise<string> {
+        const where = await this.buildFarmerExportFilters(filters, userId, userRole);
 
         const farmers = await this.prisma.farmer.findMany({
             where,
@@ -275,6 +286,103 @@ export class BulkOperationsService {
         ).join('\n');
     }
 
+    private mapHeaderToField(header: string, value: string, farmerData: Record<string, any>) {
+        switch (header.toLowerCase()) {
+            case 'first name':
+            case 'firstname':
+                farmerData.firstName = value;
+                break;
+            case 'last name':
+            case 'lastname':
+                farmerData.lastName = value;
+                break;
+            case 'phone':
+                farmerData.phone = value;
+                break;
+            case 'region':
+                farmerData.region = value;
+                break;
+            case 'district':
+                farmerData.district = value;
+                break;
+            case 'village':
+                farmerData.village = value;
+                break;
+            case 'crops':
+                farmerData.crops = value ? value.split(';').map((c: string) => c.trim()) : [];
+                break;
+            case 'farm size (hectares)':
+                farmerData.farmSizeHectares = value ? parseFloat(value) : null;
+                break;
+            case 'vital score':
+                farmerData.vitalScore = value ? parseFloat(value) : null;
+                break;
+            case 'latitude':
+                farmerData.locationLat = value ? parseFloat(value) : null;
+                break;
+            case 'longitude':
+                farmerData.locationLng = value ? parseFloat(value) : null;
+                break;
+            case 'language preference':
+                farmerData.languagePreference = value || 'en';
+                break;
+        }
+    }
+
+    private async processCSVRow(row: string, headers: string[], tx: Record<string, any>, userRole: string, userId: string): Promise<Record<string, any>> {
+        const values = this.parseCSVRow(row);
+        if (values.length !== headers.length) {
+            throw new Error(`Column count mismatch`);
+        }
+
+        const farmerData: Record<string, any> = {};
+        headers.forEach((header, index) => {
+            const value = values[index]?.replace(/"/g, '').trim();
+            this.mapHeaderToField(header, value, farmerData);
+        });
+
+        // Validate required fields
+        if (!farmerData.firstName || !farmerData.lastName) {
+            throw new Error(`Missing required fields (firstName, lastName)`);
+        }
+
+        // Apply regional restrictions for regional managers
+        if (userRole === 'regional_manager') {
+            const manager = await tx.user.findUnique({
+                where: { id: userId },
+                select: { region: true }
+            });
+            if (manager?.region && farmerData.region !== manager.region) {
+                throw new Error(`Cannot import farmers from different region`);
+            }
+        }
+
+        await tx.farmer.create({
+            data: {
+                ...farmerData,
+                country: 'Kenya',
+                isActive: true
+            }
+        });
+
+        return farmerData;
+    }
+
+    private async processImportBatch(batch: string[], startIndex: number, headers: string[], userRole: string, userId: string, result: { imported: number; skipped: number; errors: string[] }) {
+        await this.prisma.$transaction(async (tx) => {
+            for (let j = 0; j < batch.length; j++) {
+                const row = batch[j];
+                try {
+                    await this.processCSVRow(row, headers, tx, userRole, userId);
+                    result.imported++;
+                } catch (error) {
+                    result.skipped++;
+                    result.errors.push(`Row ${startIndex + j + 2}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                }
+            }
+        });
+    }
+
     /**
      * Import farmers from CSV
      */
@@ -284,9 +392,7 @@ export class BulkOperationsService {
         userRole: string
     ): Promise<BulkImportResult> {
         const operationId = this.generateOperationId();
-        let imported = 0;
-        let skipped = 0;
-        const errors: string[] = [];
+        const result = { imported: 0, skipped: 0, errors: [] as string[] };
 
         try {
             // Only admins and regional managers can import
@@ -306,100 +412,10 @@ export class BulkOperationsService {
             const batchSize = 10;
             for (let i = 0; i < dataRows.length; i += batchSize) {
                 const batch = dataRows.slice(i, i + batchSize);
-
-                await this.prisma.$transaction(async (tx) => {
-                    for (const row of batch) {
-                        try {
-                            const values = this.parseCSVRow(row);
-                            if (values.length !== headers.length) {
-                                skipped++;
-                                errors.push(`Row ${i + 2}: Column count mismatch`);
-                                continue;
-                            }
-
-                            const farmerData: any = {};
-                            headers.forEach((header, index) => {
-                                const value = values[index]?.replace(/"/g, '').trim();
-                                switch (header.toLowerCase()) {
-                                    case 'first name':
-                                    case 'firstname':
-                                        farmerData.firstName = value;
-                                        break;
-                                    case 'last name':
-                                    case 'lastname':
-                                        farmerData.lastName = value;
-                                        break;
-                                    case 'phone':
-                                        farmerData.phone = value;
-                                        break;
-                                    case 'region':
-                                        farmerData.region = value;
-                                        break;
-                                    case 'district':
-                                        farmerData.district = value;
-                                        break;
-                                    case 'village':
-                                        farmerData.village = value;
-                                        break;
-                                    case 'crops':
-                                        farmerData.crops = value ? value.split(';').map((c: string) => c.trim()) : [];
-                                        break;
-                                    case 'farm size (hectares)':
-                                        farmerData.farmSizeHectares = value ? parseFloat(value) : null;
-                                        break;
-                                    case 'vital score':
-                                        farmerData.vitalScore = value ? parseFloat(value) : null;
-                                        break;
-                                    case 'latitude':
-                                        farmerData.locationLat = value ? parseFloat(value) : null;
-                                        break;
-                                    case 'longitude':
-                                        farmerData.locationLng = value ? parseFloat(value) : null;
-                                        break;
-                                    case 'language preference':
-                                        farmerData.languagePreference = value || 'en';
-                                        break;
-                                }
-                            });
-
-                            // Validate required fields
-                            if (!farmerData.firstName || !farmerData.lastName) {
-                                skipped++;
-                                errors.push(`Row ${i + 2}: Missing required fields (firstName, lastName)`);
-                                continue;
-                            }
-
-                            // Apply regional restrictions for regional managers
-                            if (userRole === 'regional_manager') {
-                                const manager = await tx.user.findUnique({
-                                    where: { id: userId },
-                                    select: { region: true }
-                                });
-                                if (manager?.region && farmerData.region !== manager.region) {
-                                    skipped++;
-                                    errors.push(`Row ${i + 2}: Cannot import farmers from different region`);
-                                    continue;
-                                }
-                            }
-
-                            await tx.farmer.create({
-                                data: {
-                                    ...farmerData,
-                                    country: 'Kenya',
-                                    isActive: true
-                                }
-                            });
-
-                            imported++;
-                        } catch (error) {
-                            skipped++;
-                            errors.push(`Row ${i + 2}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-                        }
-                    }
-                });
+                await this.processImportBatch(batch, i, headers, userRole, userId, result);
             }
 
-            return { imported, skipped, errors };
+            return result;
 
         } catch (error) {
             logger.error(`Farmer import failed`, { operationId, error });

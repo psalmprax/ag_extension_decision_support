@@ -90,6 +90,76 @@ router.get('/usage', authorize(['admin', 'extension_officer', 'farmer']), async 
     }
 });
 
+interface SubscriptionWithPlan {
+    stripeSubscriptionId: string | null;
+    cancelAtPeriodEnd?: boolean;
+    currentPeriodEnd?: string | Date;
+    plan?: {
+        name?: string;
+        stripePriceId: string | null;
+    };
+    [key: string]: unknown;
+}
+
+async function handleExistingSubscription(currentSubscription: SubscriptionWithPlan, priceId: string, billingCycle: string, res: express.Response, userId: string) {
+    const currentPlanPriceId = currentSubscription.plan?.stripePriceId;
+    const currentPlanName = currentSubscription.plan?.name;
+    const isSamePlan = currentPlanPriceId === priceId;
+
+    if (billingCycle === 'current') {
+        if (isSamePlan) {
+            return res.status(400).json({
+                success: false,
+                errorCode: 'ALREADY_SUBSCRIBED',
+                message: `You are already subscribed to the ${currentPlanName} plan.`,
+                subscription: currentSubscription
+            });
+        }
+        return res.status(409).json({
+            success: false,
+            errorCode: 'ACTIVE_SUBSCRIPTION_EXISTS',
+            message: `You already have an active ${currentPlanName} subscription.`,
+            suggestedAction: 'switch',
+            currentSubscription
+        });
+    }
+
+    if (billingCycle === 'next') {
+        if (isSamePlan) {
+            if (currentSubscription.cancelAtPeriodEnd) {
+                const success = await paymentService.switchSubscription(
+                    currentSubscription.stripeSubscriptionId!,
+                    priceId,
+                    false
+                );
+                if (success) {
+                    await prisma.subscription.update({
+                        where: { userId },
+                        data: { cancelAtPeriodEnd: false }
+                    });
+                    return res.json({
+                        success: true,
+                        message: `Successfully scheduled renewal for ${currentPlanName}.`
+                    });
+                }
+            }
+            return res.status(400).json({
+                success: false,
+                message: `Your ${currentPlanName} subscription is already set to renew.`
+            });
+        }
+        return res.status(409).json({
+            success: false,
+            errorCode: 'ACTIVE_SUBSCRIPTION_EXISTS',
+            message: `You have an active ${currentPlanName} subscription. Schedule a switch?`,
+            suggestedAction: 'switch_next',
+            currentSubscription
+        });
+    }
+
+    return null;
+}
+
 /**
  * @swagger
  * /api/v1/billing/subscribe:
@@ -114,61 +184,8 @@ router.post('/subscribe', authorize(['admin', 'extension_officer', 'farmer']), a
         const hasStripeSubscription = currentSubscription && currentSubscription.stripeSubscriptionId;
 
         if (currentSubscription && isSubscriptionActive(currentSubscription) && hasStripeSubscription) {
-            const currentPlanPriceId = currentSubscription.plan?.stripePriceId;
-            const currentPlanName = currentSubscription.plan?.name;
-            const isSamePlan = currentPlanPriceId === priceId;
-
-            if (billingCycle === 'current') {
-                if (isSamePlan) {
-                    return res.status(400).json({
-                        success: false,
-                        errorCode: 'ALREADY_SUBSCRIBED',
-                        message: `You are already subscribed to the ${currentPlanName} plan.`,
-                        subscription: currentSubscription
-                    });
-                } else {
-                    return res.status(409).json({
-                        success: false,
-                        errorCode: 'ACTIVE_SUBSCRIPTION_EXISTS',
-                        message: `You already have an active ${currentPlanName} subscription.`,
-                        suggestedAction: 'switch',
-                        currentSubscription
-                    });
-                }
-            } else if (billingCycle === 'next') {
-                if (isSamePlan) {
-                    if (currentSubscription.cancelAtPeriodEnd) {
-                        const success = await paymentService.switchSubscription(
-                            currentSubscription.stripeSubscriptionId!,
-                            priceId,
-                            false
-                        );
-                        if (success) {
-                            await prisma.subscription.update({
-                                where: { userId },
-                                data: { cancelAtPeriodEnd: false }
-                            });
-                            return res.json({
-                                success: true,
-                                message: `Successfully scheduled renewal for ${currentPlanName}.`
-                            });
-                        }
-                    } else {
-                        return res.status(400).json({
-                            success: false,
-                            message: `Your ${currentPlanName} subscription is already set to renew.`
-                        });
-                    }
-                } else {
-                    return res.status(409).json({
-                        success: false,
-                        errorCode: 'ACTIVE_SUBSCRIPTION_EXISTS',
-                        message: `You have an active ${currentPlanName} subscription. Schedule a switch?`,
-                        suggestedAction: 'switch_next',
-                        currentSubscription
-                    });
-                }
-            }
+            const handled = await handleExistingSubscription(currentSubscription, priceId, billingCycle, res, userId);
+            if (handled) return;
         }
 
         let trialEnd: number | undefined;
@@ -370,8 +387,9 @@ router.get('/payment-methods', authorize(['admin', 'extension_officer', 'farmer'
         }
         
         res.json({ success: true, data: result.data });
-    } catch (error: any) {
-        if (error.message === 'STRIPE_CONFIG_REQUIRED') {
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (errorMessage === 'STRIPE_CONFIG_REQUIRED') {
             return res.status(400).json({
                 success: false,
                 errorCode: 'PAYMENT_GATEWAY_NOT_CONFIGURED',
@@ -466,8 +484,9 @@ router.get('/invoices', authorize(['admin', 'extension_officer', 'farmer']), asy
         }
         
         res.json({ success: true, data: result.data });
-    } catch (error: any) {
-        if (error.message === 'STRIPE_CONFIG_REQUIRED') {
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (errorMessage === 'STRIPE_CONFIG_REQUIRED') {
             return res.status(400).json({
                 success: false,
                 errorCode: 'PAYMENT_GATEWAY_NOT_CONFIGURED',
@@ -975,8 +994,7 @@ router.post('/transaction/reject/:id', authorize(['admin']), async (req: AuthReq
  *     summary: Stripe Webhook handler
  *     tags: [Billing]
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-router.post('/webhook', express.raw({ type: 'application/json' }), async (req: any, res: any) => {
+router.post('/webhook', express.raw({ type: 'application/json' }), async (req: express.Request, res: express.Response) => {
     const sig = req.headers['stripe-signature'];
     if (!sig) return res.status(400).send('Webhook Error: Missing signature');
 

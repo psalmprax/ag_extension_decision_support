@@ -4,11 +4,11 @@ module.exports = {
     extends: [
         'eslint:recommended',
         'plugin:@typescript-eslint/recommended',
-        'plugin:react-hooks/recommended',
+        'plugin:react-hooks/recommended'
     ],
     ignorePatterns: ['dist', '.eslintrc.cjs'],
     parser: '@typescript-eslint/parser',
-    plugins: ['react-refresh', 'unused-imports'],
+    plugins: ['react-refresh', 'unused-imports', 'sonarjs'],
     rules: {
         'react-refresh/only-export-components': [
             'warn',
@@ -17,5 +17,6 @@ module.exports = {
         '@typescript-eslint/no-unused-vars': ['warn', { varsIgnorePattern: '^_', argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }],
         '@typescript-eslint/no-explicit-any': 'warn',
         'unused-imports/no-unused-imports': 'warn',
+        'sonarjs/cognitive-complexity': ['error', 15],
     },
 }

@@ -7,7 +7,8 @@ import { getPrisma } from '@/services/prismaService';
 import { logger } from '@/utils/logger';
 import { authorize, UserRole } from '@/middleware/authorize';
 import { tavilyService } from '@/services/tavilyService';
-import { VectorService } from '@/services/vectorService';
+import { VectorService, SearchResult } from '@/services/vectorService';
+import type { Citation } from '@/services/ragV2Service';
 import { safeError } from '@/utils/safeResponse';
 import multer from 'multer';
 import path from 'path';
@@ -17,7 +18,7 @@ import { v4 as uuidv4 } from 'uuid';
 const router = Router();
 const knowledgeAdminRoles: UserRole[] = ['admin', 'regional_manager', 'extension_officer'];
 
-async function upsertVector(article: any): Promise<void> {
+async function upsertVector(article: Record<string, any>): Promise<void> {
     await VectorService.upsertDocument(article.id, article.content, {
         title: article.title,
         category: article.category,
@@ -223,6 +224,88 @@ export async function seedKnowledgeArticles(): Promise<void> {
     }
 }
 
+async function performLegacySearch(limit: string, offset: string, category?: string, crop?: string) {
+    let sql = 'SELECT * FROM knowledge_articles WHERE 1=1';
+    let countSql = 'SELECT COUNT(*) as count FROM knowledge_articles WHERE 1=1';
+    const params: unknown[] = [];
+    let paramIndex = 1;
+
+    if (category) {
+        sql += ' AND category = $' + paramIndex;
+        countSql += ' AND category = $' + paramIndex;
+        params.push(category);
+        paramIndex++;
+    }
+
+    if (crop) {
+        sql += ' AND $' + paramIndex + ' = ANY(crops)';
+        countSql += ' AND $' + paramIndex + ' = ANY(crops)';
+        params.push(crop);
+        paramIndex++;
+    }
+
+    sql += ' ORDER BY "order" ASC, created_at DESC LIMIT $' + paramIndex + ' OFFSET $' + (paramIndex + 1);
+    const countResult = await query(countSql, params);
+    params.push(parseInt(limit, 10), parseInt(offset, 10));
+
+    const result = await query(sql, params);
+    const articles = result.rows;
+    (articles as unknown as { totalCount: number }).totalCount = parseInt(countResult.rows[0]?.count || '0', 10);
+    return articles;
+}
+
+async function executeRagV2Search(q: string, limit: string, category: string | undefined, crop: string | undefined, cacheKey: string, res: Response) {
+    try {
+        const { RAGV2Service } = await import('@/services/ragV2Service');
+        const enhanced = await RAGV2Service.enhancedSearch(q, {
+            limit: parseInt(limit, 10),
+            useChunks: true,
+            useGraph: true,
+            useReranking: true,
+            filters: { category, crop }
+        });
+        const articles = enhanced.results.map((r: Record<string, any>) => ({
+            id: r.articleId,
+            content: r.content,
+            metadata: r.metadata,
+            score: r.rerankScore ?? r.score,
+            citation: r.citation
+        }));
+        const response = {
+            success: true,
+            data: { articles, graphContext: enhanced.graphContext, citations: enhanced.citations },
+        };
+        await cacheSet(cacheKey, JSON.stringify(response), 300);
+        return res.json(response);
+    } catch (ragErr) {
+        logger.warn('RAG v2 search failed, falling back to standard search:', ragErr);
+        return null;
+    }
+}
+
+async function fetchKnowledgeArticles(q: unknown, limit: unknown, offset: unknown, category: unknown, crop: unknown, v2: unknown, cacheKey: string, res: Response): Promise<SearchResult[] | Response> {
+    let articles: SearchResult[] = [];
+    const pool = getPool();
+
+    if (pool && q) {
+        if (v2 === 'true') {
+            const ragRes = await executeRagV2Search(q as string, limit as string, category as string | undefined, crop as string | undefined, cacheKey, res);
+            if (ragRes) return ragRes; // Response already sent
+        }
+        articles = await KnowledgeService.searchKnowledge(q as string, parseInt(limit as string, 10), {
+            category: category as string | undefined,
+            crop: crop as string | undefined
+        });
+    } else if (pool) {
+        articles = await performLegacySearch(limit as string, offset as string, category as string | undefined, crop as string | undefined);
+    }
+
+    if (!articles || articles.length === 0) {
+        articles = [];
+    }
+    return articles;
+}
+
 // Search knowledge base
 router.get('/search', async (req: Request, res: Response) => {
     try {
@@ -234,89 +317,28 @@ router.get('/search', async (req: Request, res: Response) => {
             return res.json(JSON.parse(cached));
         }
 
-        let articles: any[] = [];
-        const pool = getPool();
-
-        if (pool && q) {
-            // Use RAG v2 enhanced search if requested
-            if (v2 === 'true') {
-                try {
-                    const { RAGV2Service } = await import('@/services/ragV2Service');
-                    const enhanced = await RAGV2Service.enhancedSearch(q as string, {
-                        limit: parseInt(limit as string),
-                        useChunks: true,
-                        useGraph: true,
-                        useReranking: true,
-                        filters: { category: category as string, crop: crop as string }
-                    });
-                    articles = enhanced.results.map(r => ({
-                        id: r.articleId,
-                        content: r.content,
-                        metadata: r.metadata,
-                        score: r.rerankScore ?? r.score,
-                        citation: r.citation
-                    }));
-                    const response = {
-                        success: true,
-                        data: { articles, graphContext: enhanced.graphContext, citations: enhanced.citations },
-                    };
-                    await cacheSet(cacheKey, JSON.stringify(response), 300);
-                    return res.json(response);
-                } catch (ragErr) {
-                    logger.warn('RAG v2 search failed, falling back to standard search:', ragErr);
-                }
-            }
-            articles = await KnowledgeService.searchKnowledge(q as string, parseInt(limit as string), {
-                category: category as string | undefined,
-                crop: crop as string | undefined
-            });
-        } else if (pool) {
-            let sql = 'SELECT * FROM knowledge_articles WHERE 1=1';
-            let countSql = 'SELECT COUNT(*) as count FROM knowledge_articles WHERE 1=1';
-            const params: any[] = [];
-            let paramIndex = 1;
-
-            if (category) {
-                sql += ' AND category = $' + paramIndex;
-                countSql += ' AND category = $' + paramIndex;
-                params.push(category);
-                paramIndex++;
-            }
-
-            if (crop) {
-                sql += ' AND $' + paramIndex + ' = ANY(crops)';
-                countSql += ' AND $' + paramIndex + ' = ANY(crops)';
-                params.push(crop);
-                paramIndex++;
-            }
-
-            sql += ' ORDER BY "order" ASC, created_at DESC LIMIT $' + paramIndex + ' OFFSET $' + (paramIndex + 1);
-            const countResult = await query(countSql, params);
-            params.push(parseInt(limit as string), parseInt(offset as string));
-
-            const result = await query(sql, params);
-            articles = result.rows;
-            (articles as any).totalCount = parseInt(countResult.rows[0]?.count || '0', 10);
+        const fetchResult = await fetchKnowledgeArticles(q, limit, offset, category, crop, v2, cacheKey, res);
+        if ('json' in fetchResult && typeof fetchResult.json === 'function') {
+            // It's a response object, already handled
+            return;
         }
 
-        if (!articles || articles.length === 0) {
-            articles = [];
-        }
-
-        const total = (articles as any).totalCount ?? articles.length;
+        const articles = fetchResult as SearchResult[];
+        const total = (articles as unknown as { totalCount?: number }).totalCount ?? articles.length;
         const response = {
             success: true,
             data: {
                 articles,
                 total,
-                limit: parseInt(limit as string),
-                offset: parseInt(offset as string),
+                limit: parseInt(limit as string, 10),
+                offset: parseInt(offset as string, 10),
             },
         };
 
         await cacheSet(cacheKey, JSON.stringify(response), 300);
 
-        const userId = (req as any).user?.userId || (req as any).user?.id;
+        const user = (req as Request & { user?: Record<string, unknown> }).user;
+        const userId = user?.userId || user?.id;
         if (userId && q) {
             KnowledgeService.logSearch(userId, q as string, category as string | undefined, crop as string | undefined).catch(() => {});
         }
@@ -331,7 +353,8 @@ router.get('/search', async (req: Request, res: Response) => {
 // Get recent search history
 router.get('/history', async (req: Request, res: Response) => {
     try {
-        const userId = (req as any).user?.userId || (req as any).user?.id;
+        const user = (req as Request & { user?: Record<string, unknown> }).user;
+        const userId = user?.userId || user?.id;
         if (!userId) {
             return res.status(errorStatusMap['USER_NOT_AUTHENTICATED']).json({
                 success: false,
@@ -372,7 +395,7 @@ router.get('/search/external', async (req: Request, res: Response) => {
                 message: 'Add TAVILY_API_KEY to enable external agricultural data search'
             });
         }
-        const results = await tavilyService.search(q as string, parseInt(limit as string));
+        const results = await tavilyService.search(q as string, parseInt(limit as string, 10));
         if (!results) {
             return safeError(res, 500, 'Search failed');
         }
@@ -398,7 +421,7 @@ router.get('/meta/categories', async (_req: Request, res: Response) => {
         let categories: string[] = [];
         if (pool) {
             const result = await query('SELECT DISTINCT category FROM knowledge_articles ORDER BY category');
-            categories = result.rows.map((r: any) => r.category);
+            categories = result.rows.map((r: Record<string, any>) => r.category);
         }
         if (categories.length === 0) {
             return res.json({ success: true, data: [] });
@@ -417,7 +440,7 @@ router.get('/meta/crops', async (_req: Request, res: Response) => {
         let crops: string[] = [];
         if (pool) {
             const result = await query("SELECT DISTINCT unnest(crops) as crop FROM knowledge_articles WHERE crops IS NOT NULL");
-            crops = result.rows.map((r: any) => r.crop);
+            crops = result.rows.map((r: Record<string, any>) => r.crop);
         }
         if (crops.length === 0) {
             return res.json({ success: true, data: [] });
@@ -429,14 +452,62 @@ router.get('/meta/crops', async (_req: Request, res: Response) => {
     }
 });
 
+async function loadWeatherAndFao(context: Record<string, unknown>, location: string, region: string, crop?: string) {
+    const { WeatherService } = await import('@/services/weatherService');
+    const { FAOService } = await import('@/services/faoService');
+    const tasks: Array<Promise<void>> = [];
+
+    tasks.push((async () => {
+        try {
+            context.weather = await WeatherService.getByLocation(location);
+            (context.sources as string[]).push('weather_forecast');
+        } catch (error) {
+            context.weatherError = (error as Error).message;
+        }
+    })());
+
+    tasks.push((async () => {
+        try {
+            context.diseaseAlerts = await FAOService.getDiseaseAlerts(region, crop);
+            (context.sources as string[]).push('fao_disease_alerts');
+        } catch (error) {
+            context.diseaseAlertsError = (error as Error).message;
+        }
+    })());
+
+    return tasks;
+}
+
+async function loadGeoData(context: Record<string, unknown>, lat: string, lng: string) {
+    const tasks: Array<Promise<void>> = [];
+    tasks.push((async () => {
+        try {
+            const { NasaPowerService } = await import('@/services/data/nasaPowerService');
+            const nasa = new NasaPowerService();
+            context.agroclimate = await nasa.getAgroclimateSummary(parseFloat(lat), parseFloat(lng), 7);
+            (context.sources as string[]).push('nasa_power');
+        } catch (error) {
+            context.agroclimateError = (error as Error).message;
+        }
+    })());
+
+    tasks.push((async () => {
+        try {
+            const { soilGridsService } = await import('@/services/data/soilGridsService');
+            context.soilProperties = await soilGridsService.fetchSoilProperties(parseFloat(lat), parseFloat(lng));
+            (context.sources as string[]).push('soilgrids_isric');
+        } catch (error) {
+            context.soilPropertiesError = (error as Error).message;
+        }
+    })());
+    return tasks;
+}
+
 // Live context endpoint
 router.get('/live-context', async (req: Request, res: Response) => {
     try {
-        const { WeatherService } = await import('@/services/weatherService');
-        const { FAOService } = await import('@/services/faoService');
-        const { marketPriceService } = await import('@/services/marketPriceService');
         const { location = 'Kenya', region = 'Kenya', crop, lat, lng, includeMarket = 'true' } = req.query;
-        const context: Record<string, any> = {
+        const context: Record<string, unknown> = {
             location,
             region,
             crop,
@@ -444,54 +515,19 @@ router.get('/live-context', async (req: Request, res: Response) => {
             sources: []
         };
 
-        const tasks: Array<Promise<void>> = [];
-
-        tasks.push((async () => {
-            try {
-                context.weather = await WeatherService.getByLocation(location as string);
-                context.sources.push('weather_forecast');
-            } catch (error) {
-                context.weatherError = (error as Error).message;
-            }
-        })());
-
-        tasks.push((async () => {
-            try {
-                context.diseaseAlerts = await FAOService.getDiseaseAlerts(region as string, crop as string | undefined);
-                context.sources.push('fao_disease_alerts');
-            } catch (error) {
-                context.diseaseAlertsError = (error as Error).message;
-            }
-        })());
+        const tasks: Array<Promise<void>> = await loadWeatherAndFao(context, location as string, region as string, crop as string | undefined);
 
         if (lat && lng) {
-            tasks.push((async () => {
-                try {
-                    const { NasaPowerService } = await import('@/services/data/nasaPowerService');
-                    const nasa = new NasaPowerService();
-                    context.agroclimate = await nasa.getAgroclimateSummary(parseFloat(lat as string), parseFloat(lng as string), 7);
-                    context.sources.push('nasa_power');
-                } catch (error) {
-                    context.agroclimateError = (error as Error).message;
-                }
-            })());
-
-            tasks.push((async () => {
-                try {
-                    const { soilGridsService } = await import('@/services/data/soilGridsService');
-                    context.soilProperties = await soilGridsService.fetchSoilProperties(parseFloat(lat as string), parseFloat(lng as string));
-                    context.sources.push('soilgrids_isric');
-                } catch (error) {
-                    context.soilPropertiesError = (error as Error).message;
-                }
-            })());
+            const geoTasks = await loadGeoData(context, lat as string, lng as string);
+            tasks.push(...geoTasks);
         }
 
         if (includeMarket === 'true') {
+            const { marketPriceService } = await import('@/services/marketPriceService');
             tasks.push((async () => {
                 try {
                     context.marketPrices = await marketPriceService.getLatestPrices();
-                    context.sources.push('market_prices');
+                    (context.sources as string[]).push('market_prices');
                 } catch (error) {
                     context.marketPricesError = (error as Error).message;
                 }
@@ -534,7 +570,8 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.post('/ask', async (req: Request, res: Response) => {
     try {
         const { question } = req.body;
-        const userId = (req as any).user?.userId || (req as any).user?.id;
+        const user = (req as Request & { user?: Record<string, unknown> }).user;
+        const userId = user?.userId || user?.id;
 
         if (!question) {
             return res.status(400).json({ success: false, error: 'Question is required' });
@@ -545,7 +582,7 @@ router.post('/ask', async (req: Request, res: Response) => {
 
         const result = await KnowledgeService.askQuestion(userId, question);
 
-        let citations: any[] = [];
+        let citations: Citation[] = [];
         try {
             const { RAGV2Service } = await import('@/services/ragV2Service');
             const enhanced = await RAGV2Service.enhancedSearch(question, {
@@ -565,7 +602,7 @@ router.post('/ask', async (req: Request, res: Response) => {
                 answer: result.answer,
                 reasoning: result.reasoning,
                 visuals: result.visuals,
-                audio: (result as any).audio,
+                audio: (result as unknown as Record<string, unknown>).audio,
                 contextUsed: result.contextUsed,
                 cached: result.cached,
                 citations
@@ -686,57 +723,61 @@ router.post('/', authorize(knowledgeAdminRoles), async (req: Request, res: Respo
     }
 });
 
+async function processUpdateArticle(req: Request, res: Response) {
+    const { id } = req.params;
+    const {
+        title, content, contentType, summary, category,
+        tags, crops, regions, source, sourceUrl
+    } = req.body;
+    const prisma = getPrisma();
+
+    const existingArticle = await prisma.knowledgeArticle.findUnique({
+        where: { id }
+    });
+
+    if (!existingArticle) {
+        return res.status(404).json({
+            success: false,
+            error: 'Article not found',
+        });
+    }
+
+    if (contentType && !['text', 'html'].includes(contentType)) {
+        return res.status(400).json({
+            success: false,
+            error: 'contentType must be either "text" or "html"',
+        });
+    }
+
+    const sanitizedContent = content === undefined ? undefined : sanitizeKnowledgeContent(content, contentType || existingArticle.contentType || 'text');
+
+    const updateData: Record<string, unknown> = {};
+    if (title !== undefined) updateData.title = title;
+    if (content !== undefined) updateData.content = sanitizedContent;
+    if (contentType !== undefined) updateData.contentType = contentType;
+    if (summary !== undefined) updateData.summary = summary;
+    if (category !== undefined) updateData.category = category;
+    if (tags !== undefined) updateData.tags = tags;
+    if (crops !== undefined) updateData.crops = crops;
+    if (regions !== undefined) updateData.regions = regions;
+    if (source !== undefined) updateData.source = source;
+    if (sourceUrl !== undefined) updateData.sourceUrl = sourceUrl;
+    updateData.updatedAt = new Date();
+
+    const article = await prisma.knowledgeArticle.update({
+        where: { id },
+        data: updateData,
+    });
+
+    await upsertVector(article);
+
+    return res.json({ success: true, data: article });
+}
+
 // Update a knowledge article
 router.put('/:id', authorize(knowledgeAdminRoles), async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
-        const {
-            title, content, contentType, summary, category,
-            tags, crops, regions, source, sourceUrl
-        } = req.body;
-        const prisma = getPrisma();
-
-        const existingArticle = await prisma.knowledgeArticle.findUnique({
-            where: { id }
-        });
-
-        if (!existingArticle) {
-            return res.status(404).json({
-                success: false,
-                error: 'Article not found',
-            });
-        }
-
-        if (contentType && !['text', 'html'].includes(contentType)) {
-            return res.status(400).json({
-                success: false,
-                error: 'contentType must be either "text" or "html"',
-            });
-        }
-
-        const sanitizedContent = content === undefined ? undefined : sanitizeKnowledgeContent(content, contentType || existingArticle.contentType || 'text');
-
-        const updateData: any = {};
-        if (title !== undefined) updateData.title = title;
-        if (content !== undefined) updateData.content = sanitizedContent;
-        if (contentType !== undefined) updateData.contentType = contentType;
-        if (summary !== undefined) updateData.summary = summary;
-        if (category !== undefined) updateData.category = category;
-        if (tags !== undefined) updateData.tags = tags;
-        if (crops !== undefined) updateData.crops = crops;
-        if (regions !== undefined) updateData.regions = regions;
-        if (source !== undefined) updateData.source = source;
-        if (sourceUrl !== undefined) updateData.sourceUrl = sourceUrl;
-        updateData.updatedAt = new Date();
-
-        const article = await prisma.knowledgeArticle.update({
-            where: { id },
-            data: updateData,
-        });
-
-        await upsertVector(article);
-
-        res.json({ success: true, data: article });
+        await processUpdateArticle(req, res);
     } catch (error) {
         logger.error('Update article error:', error);
         safeError(res, 500, 'Failed to update article');
@@ -758,7 +799,7 @@ const knowledgeStorage = multer.diskStorage({
     }
 });
 
-const knowledgeFileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+const knowledgeFileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
     const allowedTypes = ['text/plain', 'text/markdown', 'application/pdf'];
     if (allowedTypes.includes(file.mimetype) || file.originalname.endsWith('.md') || file.originalname.endsWith('.txt')) {
         cb(null, true);
@@ -772,6 +813,82 @@ const knowledgeUpload = multer({
     fileFilter: knowledgeFileFilter,
     limits: { fileSize: 10 * 1024 * 1024 }
 });
+
+async function extractContentFromFile(filePath: string, ext: string): Promise<string | null> {
+    if (ext === '.pdf') {
+        // @ts-expect-error pdf-parse has no TypeScript types
+        const pdfParse = await import('pdf-parse');
+        const buffer = fs.readFileSync(filePath);
+        const pdfData = await pdfParse.default(buffer);
+        return pdfData.text;
+    } else if (ext === '.txt' || ext === '.md') {
+        return fs.readFileSync(filePath, 'utf-8');
+    }
+    return null;
+}
+
+async function processKnowledgeIngestion(req: Request, res: Response) {
+    if (!req.file) {
+        return res.status(400).json({ success: false, error: 'No file uploaded' });
+    }
+
+    const { title, category = 'General', crops, regions, tags } = req.body;
+    const filePath = req.file.path;
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    
+    const content = await extractContentFromFile(filePath, ext);
+
+    if (content === null) {
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        return res.status(400).json({ success: false, error: 'Unsupported file type. Only .pdf, .txt, and .md files are supported.' });
+    }
+
+    if (!content || content.trim().length === 0) {
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        return res.status(400).json({ success: false, error: 'The uploaded file contains no readable text.' });
+    }
+
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+
+    const prisma = getPrisma();
+    const articleId = uuidv4();
+    const articleTitle = title || path.basename(req.file.originalname, ext).replace(/[-_]/g, ' ');
+    const articleCrops = crops ? crops.split(',').map((c: string) => c.trim()) : [];
+    const articleRegions = regions ? regions.split(',').map((r: string) => r.trim()) : ['tropical'];
+    const articleTags = tags ? tags.split(',').map((t: string) => t.trim()) : [];
+    const summary = content.substring(0, 300).trim() + (content.length > 300 ? '...' : '');
+
+    const article = await prisma.knowledgeArticle.create({
+        data: {
+            id: articleId,
+            title: articleTitle,
+            content,
+            contentType: 'text',
+            summary,
+            category,
+            tags: articleTags,
+            crops: articleCrops,
+            regions: articleRegions,
+            source: 'Dynamic Ingestion',
+            sourceUrl: `/uploads/${req.file.filename}`
+        }
+    });
+
+    await upsertVector(article);
+
+    return res.status(201).json({
+        success: true,
+        data: {
+            id: article.id,
+            title: article.title,
+            category: article.category,
+            crops: article.crops,
+            regions: article.regions,
+            tags: article.tags,
+            summary: article.summary
+        },
+    });
+}
 
 /**
  * @swagger
@@ -807,73 +924,7 @@ const knowledgeUpload = multer({
  */
 router.post('/ingest', authorize(knowledgeAdminRoles), knowledgeUpload.single('file'), async (req: Request, res: Response) => {
     try {
-        if (!req.file) {
-            return res.status(400).json({ success: false, error: 'No file uploaded' });
-        }
-
-        const { title, category = 'General', crops, regions, tags } = req.body;
-        const filePath = req.file.path;
-        const ext = path.extname(req.file.originalname).toLowerCase();
-        let content = '';
-
-        if (ext === '.pdf') {
-            // @ts-expect-error pdf-parse has no TypeScript types
-            const pdfParse = await import('pdf-parse');
-            const buffer = fs.readFileSync(filePath);
-            const pdfData = await pdfParse.default(buffer);
-            content = pdfData.text;
-        } else if (ext === '.txt' || ext === '.md') {
-            content = fs.readFileSync(filePath, 'utf-8');
-        } else {
-            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-            return res.status(400).json({ success: false, error: 'Unsupported file type. Only .pdf, .txt, and .md files are supported.' });
-        }
-
-        if (!content || content.trim().length === 0) {
-            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-            return res.status(400).json({ success: false, error: 'The uploaded file contains no readable text.' });
-        }
-
-        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-
-        const prisma = getPrisma();
-        const articleId = uuidv4();
-        const articleTitle = title || path.basename(req.file.originalname, ext).replace(/[-_]/g, ' ');
-        const articleCrops = crops ? crops.split(',').map((c: string) => c.trim()) : [];
-        const articleRegions = regions ? regions.split(',').map((r: string) => r.trim()) : ['tropical'];
-        const articleTags = tags ? tags.split(',').map((t: string) => t.trim()) : [];
-        const summary = content.substring(0, 300).trim() + (content.length > 300 ? '...' : '');
-
-        const article = await prisma.knowledgeArticle.create({
-            data: {
-                id: articleId,
-                title: articleTitle,
-                content,
-                contentType: 'text',
-                summary,
-                category,
-                tags: articleTags,
-                crops: articleCrops,
-                regions: articleRegions,
-                source: 'Dynamic Ingestion',
-                sourceUrl: `/uploads/${req.file.filename}`
-            }
-        });
-
-        await upsertVector(article);
-
-        res.status(201).json({
-            success: true,
-            data: {
-                id: article.id,
-                title: article.title,
-                category: article.category,
-                crops: article.crops,
-                regions: article.regions,
-                tags: article.tags,
-                summary: article.summary
-            },
-        });
+        await processKnowledgeIngestion(req, res);
     } catch (error) {
         logger.error('Document ingestion error:', error);
         safeError(res, 500, 'Failed to ingest document');

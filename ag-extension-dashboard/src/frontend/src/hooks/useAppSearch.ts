@@ -21,6 +21,84 @@ export const useAppSearch = (
     const [isGlobalSearching, setIsGlobalSearching] = useState(false);
     const [globalSearchResults, setGlobalSearchResults] = useState<SearchResult[]>([]);
 
+    const getFarmerResults = (query: string): SearchResult | null => {
+        const matchedFarmers = (farmers || []).filter((f: Farmer) =>
+            `${f.firstName} ${f.lastName}`.toLowerCase().includes(query.toLowerCase()) ||
+            (f.region || '').toLowerCase().includes(query.toLowerCase()) ||
+            (f.phone || '').includes(query)
+        ).slice(0, 5);
+        
+        if (matchedFarmers.length > 0) {
+            return {
+                type: 'Farmers',
+                items: matchedFarmers.map((f: Farmer) => ({
+                    id: f.id,
+                    label: `${f.firstName} ${f.lastName}`,
+                    sublabel: f.region || f.village || f.district || '',
+                }))
+            };
+        }
+        return null;
+    };
+
+    const getVisitResults = (query: string): SearchResult | null => {
+        const matchedVisits = (visits || []).filter((v: Visit) =>
+            v.farmer_name?.toLowerCase().includes(query.toLowerCase()) ||
+            v.visit_type?.toLowerCase().includes(query.toLowerCase())
+        ).slice(0, 3);
+        
+        if (matchedVisits.length > 0) {
+            return {
+                type: 'Visits',
+                items: matchedVisits.map((v: Visit) => ({
+                    id: v.id,
+                    label: `${v.farmer_name} — ${v.visit_type}`,
+                    sublabel: new Date(v.scheduled_at).toLocaleDateString(),
+                }))
+            };
+        }
+        return null;
+    };
+
+    const getReportResults = (query: string): SearchResult | null => {
+        const matchedReports = (reports || []).filter((r: Report) => 
+            r.title?.toLowerCase().includes(query.toLowerCase()) ||
+            r.type?.toLowerCase().includes(query.toLowerCase())
+        ).slice(0, 3);
+        
+        if (matchedReports.length > 0) {
+            return {
+                type: 'Reports',
+                items: matchedReports.map((r: Report) => ({
+                    id: r.id,
+                    label: r.title,
+                    sublabel: `Generated ${new Date(r.generatedAt).toLocaleDateString()}`
+                }))
+            };
+        }
+        return null;
+    };
+
+    const getTransactionResults = (query: string): SearchResult | null => {
+        const matchedTransactions = (transactions || []).filter((tx: Record<string, unknown>) =>
+            String(tx.transactionId || '').toLowerCase().includes(query.toLowerCase()) ||
+            String(tx.status || '').toLowerCase().includes(query.toLowerCase()) ||
+            String(tx.method || '').toLowerCase().includes(query.toLowerCase())
+        ).slice(0, 3);
+
+        if (matchedTransactions.length > 0) {
+            return {
+                type: 'Billing',
+                items: matchedTransactions.map((tx: Record<string, unknown>) => ({
+                    id: String(tx.id || ''),
+                    label: `TX: ${tx.transactionId}`,
+                    sublabel: `${tx.amount} ${tx.currency} • ${tx.status}`
+                }))
+            };
+        }
+        return null;
+    };
+
     const handleGlobalSearch = async (query: string) => {
         if (!query.trim()) {
             setGlobalSearchResults([]);
@@ -33,25 +111,9 @@ export const useAppSearch = (
         const results: SearchResult[] = [];
         
         try {
-            // Search farmers
-            const matchedFarmers = (farmers || []).filter((f: Farmer) =>
-                `${f.firstName} ${f.lastName}`.toLowerCase().includes(query.toLowerCase()) ||
-                (f.region || '').toLowerCase().includes(query.toLowerCase()) ||
-                (f.phone || '').includes(query)
-            ).slice(0, 5);
-            
-            if (matchedFarmers.length > 0) {
-                results.push({
-                    type: 'Farmers',
-                    items: matchedFarmers.map((f: Farmer) => ({
-                        id: f.id,
-                        label: `${f.firstName} ${f.lastName}`,
-                        sublabel: f.region || f.village || f.district || '',
-                    }))
-                });
-            }
+            const farmerResults = getFarmerResults(query);
+            if (farmerResults) results.push(farmerResults);
 
-            // Search knowledge
             try {
                 const knowledgeResults = await searchKnowledge(query);
                 if (knowledgeResults.success && knowledgeResults.data?.articles?.length > 0) {
@@ -66,57 +128,14 @@ export const useAppSearch = (
                 }
             } catch { /* knowledge search optional */ }
 
-            // Search visits
-            const matchedVisits = (visits || []).filter((v: Visit) =>
-                v.farmer_name?.toLowerCase().includes(query.toLowerCase()) ||
-                v.visit_type?.toLowerCase().includes(query.toLowerCase())
-            ).slice(0, 3);
-            
-            if (matchedVisits.length > 0) {
-                results.push({
-                    type: 'Visits',
-                    items: matchedVisits.map((v: Visit) => ({
-                        id: v.id,
-                        label: `${v.farmer_name} — ${v.visit_type}`,
-                        sublabel: new Date(v.scheduled_at).toLocaleDateString(),
-                    }))
-                });
-            }
+            const visitResults = getVisitResults(query);
+            if (visitResults) results.push(visitResults);
 
-            // Search Reports
-            const matchedReports = (reports || []).filter((r: Report) => 
-                r.title?.toLowerCase().includes(query.toLowerCase()) ||
-                r.type?.toLowerCase().includes(query.toLowerCase())
-            ).slice(0, 3);
-            
-            if (matchedReports.length > 0) {
-                results.push({
-                    type: 'Reports',
-                    items: matchedReports.map((r: Report) => ({
-                        id: r.id,
-                        label: r.title,
-                        sublabel: `Generated ${new Date(r.generatedAt).toLocaleDateString()}`
-                    }))
-                });
-            }
+            const reportResults = getReportResults(query);
+            if (reportResults) results.push(reportResults);
 
-            // Search Transactions
-            const matchedTransactions = (transactions || []).filter((tx: Record<string, unknown>) =>
-                String(tx.transactionId || '').toLowerCase().includes(query.toLowerCase()) ||
-                String(tx.status || '').toLowerCase().includes(query.toLowerCase()) ||
-                String(tx.method || '').toLowerCase().includes(query.toLowerCase())
-            ).slice(0, 3);
-
-            if (matchedTransactions.length > 0) {
-                results.push({
-                    type: 'Billing',
-                    items: matchedTransactions.map((tx: Record<string, unknown>) => ({
-                        id: String(tx.id || ''),
-                        label: `TX: ${tx.transactionId}`,
-                        sublabel: `${tx.amount} ${tx.currency} • ${tx.status}`
-                    }))
-                });
-            }
+            const txResults = getTransactionResults(query);
+            if (txResults) results.push(txResults);
         } finally {
             setGlobalSearchResults(results);
             setIsGlobalSearching(false);

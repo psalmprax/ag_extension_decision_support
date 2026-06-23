@@ -11,6 +11,40 @@ const cropYieldForecastSchema = z.object({
   expectedHarvestDate: z.string().optional().describe('Expected harvest date (YYYY-MM-DD)'),
 });
 
+function getCropCoefficients(crop: string) {
+  const cropCoefficients: Record<string, { baseYield: number; weatherFactor: number; growthDays: number }> = {
+    maize: { baseYield: 4.5, weatherFactor: 0.15, growthDays: 120 },
+    wheat: { baseYield: 3.2, weatherFactor: 0.12, growthDays: 110 },
+    rice: { baseYield: 5.8, weatherFactor: 0.18, growthDays: 140 },
+    coffee: { baseYield: 1.2, weatherFactor: 0.10, growthDays: 270 },
+    beans: { baseYield: 1.5, weatherFactor: 0.14, growthDays: 90 },
+    sorghum: { baseYield: 2.0, weatherFactor: 0.08, growthDays: 100 },
+    cassava: { baseYield: 12.0, weatherFactor: 0.06, growthDays: 240 },
+    potatoes: { baseYield: 18.0, weatherFactor: 0.13, growthDays: 90 },
+    tomatoes: { baseYield: 40.0, weatherFactor: 0.16, growthDays: 75 },
+    cotton: { baseYield: 2.5, weatherFactor: 0.11, growthDays: 160 },
+  };
+
+  return cropCoefficients[crop.toLowerCase()] || { baseYield: 3.0, weatherFactor: 0.12, growthDays: 120 };
+}
+
+function calculateWeatherScore(weather: Record<string, any> | null, crop: string): number {
+  if (!weather) return 0.5;
+
+  const temp = weather.temperature || weather.temp;
+  const humidity = weather.humidity;
+  const rain = weather.forecast?.reduce((sum: number, _d: Record<string, any>) => sum + 0, 0) || 0;
+  
+  const tempOptimal = crop.toLowerCase() === 'rice' ? (temp >= 20 && temp <= 35) : (temp >= 15 && temp <= 30);
+  const humidityOptimal = humidity >= 40 && humidity <= 80;
+  const rainAdequate = rain > 0;
+
+  const tempScore = tempOptimal ? 0.4 : 0.1;
+  const humidityScore = humidityOptimal ? 0.3 : 0.1;
+  const rainScore = rainAdequate ? 0.3 : 0.1;
+  return tempScore + humidityScore + rainScore;
+}
+
 export const cropYieldForecastTool: Tool<typeof cropYieldForecastSchema> = {
   name: 'crop_yield_forecast',
   description: 'Predicts crop yield and agricultural output using weather patterns, historical data, and growth stage analysis. Use when forecasting production, estimating harvest volumes, or planning agricultural output.',
@@ -19,33 +53,8 @@ export const cropYieldForecastTool: Tool<typeof cropYieldForecastSchema> = {
     try {
       const weather = await WeatherService.getByLocation(region);
       
-      const cropCoefficients: Record<string, { baseYield: number; weatherFactor: number; growthDays: number }> = {
-        maize: { baseYield: 4.5, weatherFactor: 0.15, growthDays: 120 },
-        wheat: { baseYield: 3.2, weatherFactor: 0.12, growthDays: 110 },
-        rice: { baseYield: 5.8, weatherFactor: 0.18, growthDays: 140 },
-        coffee: { baseYield: 1.2, weatherFactor: 0.10, growthDays: 270 },
-        beans: { baseYield: 1.5, weatherFactor: 0.14, growthDays: 90 },
-        sorghum: { baseYield: 2.0, weatherFactor: 0.08, growthDays: 100 },
-        cassava: { baseYield: 12.0, weatherFactor: 0.06, growthDays: 240 },
-        potatoes: { baseYield: 18.0, weatherFactor: 0.13, growthDays: 90 },
-        tomatoes: { baseYield: 40.0, weatherFactor: 0.16, growthDays: 75 },
-        cotton: { baseYield: 2.5, weatherFactor: 0.11, growthDays: 160 },
-      };
-
-      const cropData = cropCoefficients[crop.toLowerCase()] || { baseYield: 3.0, weatherFactor: 0.12, growthDays: 120 };
-
-      let weatherScore = 0.5;
-      if (weather) {
-        const temp = weather.temperature || weather.temp;
-        const humidity = weather.humidity;
-        const rain = weather.forecast?.reduce((sum, _d) => sum + 0, 0) || 0;
-        
-        const tempOptimal = crop.toLowerCase() === 'rice' ? (temp >= 20 && temp <= 35) : (temp >= 15 && temp <= 30);
-        const humidityOptimal = humidity >= 40 && humidity <= 80;
-        const rainAdequate = rain > 0;
-
-        weatherScore = (tempOptimal ? 0.4 : 0.1) + (humidityOptimal ? 0.3 : 0.1) + (rainAdequate ? 0.3 : 0.1);
-      }
+      const cropData = getCropCoefficients(crop);
+      const weatherScore = calculateWeatherScore(weather, crop);
 
       const adjustedYieldPerHectare = cropData.baseYield * (0.5 + weatherScore * cropData.weatherFactor * 5);
       const totalYield = areaHectares ? adjustedYieldPerHectare * areaHectares : adjustedYieldPerHectare;

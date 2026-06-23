@@ -67,10 +67,12 @@ router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer'
 router.get('/', async (req: Request, res: Response) => {
     try {
         const { region: queryRegion, search, limit = '50', offset = '0', mobile = 'false' } = req.query;
-        const { userId, role } = req.user as any;
+        const { userId: _userId, role: _role } = req.user as Record<string, unknown>;
+const userId = String(_userId);
+const role = String(_role);
         const prisma = getPrisma();
 
-        const where: any = {};
+        const where: Record<string, unknown> = {};
 
         // Role-based filtering
         if (role === 'extension_officer') {
@@ -182,7 +184,9 @@ router.get('/', async (req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { userId, role } = req.user as any;
+        const { userId: _userId, role: _role } = req.user as Record<string, unknown>;
+const userId = String(_userId);
+const role = String(_role);
         const prisma = getPrisma();
 
         const farmer = await prisma.farmer.findUnique({
@@ -345,8 +349,9 @@ router.post('/', validate(createFarmerSchema), async (req: Request, res: Respons
 router.patch('/:id', validate(updateFarmerSchema), async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const userRole = (req as any).user?.role;
-        const userId = (req as any).user?.userId;
+        const user = (req as Request & { user?: Record<string, unknown> }).user;
+        const userRole = user?.role;
+        const userId = user?.userId;
 
         // Ownership check: admin/regional_manager can edit any, others only their own or assigned
         if (userRole !== 'admin' && userRole !== 'regional_manager') {
@@ -460,6 +465,24 @@ import { createShareRoute } from './shareRouteFactory';
  */
 router.use(createShareRoute('farmer'));
 
+async function verifyFarmersAccess(farmers: { assignedOfficerId: string | null; userId: string | null; region: string | null; id: string }[], role: string, userId: string, prisma: { user: { findUnique: (args: { where: { id: string }, select: { region: true } }) => Promise<{ region?: string | null } | null> } }): Promise<boolean> {
+    for (const farmer of farmers) {
+        if (role === 'extension_officer' && farmer.assignedOfficerId !== userId) {
+            return false;
+        }
+        if (role === 'farmer' && farmer.userId !== userId) {
+            return false;
+        }
+        if (role === 'regional_manager') {
+            const manager = await prisma.user.findUnique({ where: { id: userId }, select: { region: true } });
+            if (manager?.region && farmer.region !== manager.region) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 /**
  * @openapi
  * /api/farmers/reorder:
@@ -493,7 +516,9 @@ router.use(createShareRoute('farmer'));
 router.post('/reorder', async (req: Request, res: Response) => {
     try {
         const { items } = req.body;
-        const { userId, role } = req.user as any;
+        const { userId: _userId, role: _role } = req.user as Record<string, unknown>;
+const userId = String(_userId);
+const role = String(_role);
         const prisma = getPrisma();
 
         if (!items || !Array.isArray(items)) {
@@ -531,31 +556,13 @@ router.post('/reorder', async (req: Request, res: Response) => {
         }
 
         // Role-based access control
-        for (const farmer of farmers) {
-            if (role === 'extension_officer' && farmer.assignedOfficerId !== userId) {
-                return res.status(403).json({
-                    success: false,
-                    error: 'Access denied to some farmers',
-                    aria: { role: 'alert', label: 'Reorder failed: Access denied' }
-                });
-            }
-            if (role === 'farmer' && farmer.userId !== userId) {
-                return res.status(403).json({
-                    success: false,
-                    error: 'Access denied to some farmers',
-                    aria: { role: 'alert', label: 'Reorder failed: Access denied' }
-                });
-            }
-            if (role === 'regional_manager') {
-                const manager = await prisma.user.findUnique({ where: { id: userId }, select: { region: true } });
-                if (manager?.region && farmer.region !== manager.region) {
-                    return res.status(403).json({
-                        success: false,
-                        error: 'Access denied to some farmers',
-                        aria: { role: 'alert', label: 'Reorder failed: Access denied' }
-                    });
-                }
-            }
+        const hasAccess = await verifyFarmersAccess(farmers, role, userId, prisma);
+        if (!hasAccess) {
+            return res.status(403).json({
+                success: false,
+                error: 'Access denied to some farmers',
+                aria: { role: 'alert', label: 'Reorder failed: Access denied' }
+            });
         }
 
         // Update orders in transaction
@@ -602,7 +609,9 @@ router.post('/reorder', async (req: Request, res: Response) => {
 router.post('/bulk/delete', async (req: Request, res: Response) => {
     try {
         const { ids, reason } = req.body;
-        const { userId, role } = req.user as any;
+        const { userId: _userId, role: _role } = req.user as Record<string, unknown>;
+const userId = String(_userId);
+const role = String(_role);
 
         if (!ids || !Array.isArray(ids) || ids.length === 0) {
             return res.status(400).json({
@@ -665,7 +674,9 @@ router.post('/bulk/delete', async (req: Request, res: Response) => {
 router.post('/bulk/update', async (req: Request, res: Response) => {
     try {
         const { ids, updates } = req.body;
-        const { userId, role } = req.user as any;
+        const { userId: _userId, role: _role } = req.user as Record<string, unknown>;
+const userId = String(_userId);
+const role = String(_role);
 
         if (!ids || !Array.isArray(ids) || ids.length === 0) {
             return res.status(400).json({
@@ -728,7 +739,9 @@ router.post('/bulk/update', async (req: Request, res: Response) => {
 router.get('/export', async (req: Request, res: Response) => {
     try {
         const { region, search } = req.query;
-        const { userId, role } = req.user as any;
+        const { userId: _userId, role: _role } = req.user as Record<string, unknown>;
+const userId = String(_userId);
+const role = String(_role);
 
         const csvData = await bulkOperationsService.exportFarmersToCSV(
             { region: region as string, search: search as string },
@@ -771,7 +784,9 @@ router.post('/import', async (req: Request, res: Response) => {
         // Note: File upload middleware should be added to handle multipart/form-data
         // For now, assuming CSV content is sent in request body
         const csvData = req.body.csv || req.body;
-        const { userId, role } = req.user as any;
+        const { userId: _userId, role: _role } = req.user as Record<string, unknown>;
+const userId = String(_userId);
+const role = String(_role);
 
         if (!csvData || typeof csvData !== 'string') {
             return res.status(400).json({

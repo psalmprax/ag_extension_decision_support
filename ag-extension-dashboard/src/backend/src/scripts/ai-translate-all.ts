@@ -93,27 +93,7 @@ const langNames: Record<string, string> = {
     ug: 'Uyghur'
 };
 
-async function aiTranslateDictionary(langCode: string, targetLangName: string, sourceDict: Record<string, string>, currentDict: Record<string, string>) {
-    const keysToTranslate = Object.keys(sourceDict).filter(key => {
-        const val = currentDict[key];
-        const sourceVal = sourceDict[key];
-        
-        if (!val) return true;
-        if (val === sourceVal) {
-            const isUniversal = /^(SMS|PDF|AI|ID|GPS|KES|USD|MWK)$/i.test(sourceVal) || sourceVal.length < 3;
-            return !isUniversal;
-        }
-        return false;
-    });
-
-    if (keysToTranslate.length === 0) {
-        console.log(`  ✨ ${langCode}: No translations needed.`);
-        return currentDict;
-    }
-
-    console.log(`  🤖 ${langCode}: Translating ${keysToTranslate.length} keys to ${targetLangName}...`);
-
-    const resultDict = { ...currentDict };
+async function processBatchTranslation(keysToTranslate: string[], sourceDict: Record<string, string>, targetLangName: string, langCode: string, resultDict: Record<string, string>) {
     const batchSize = 40;
     
     for (let i = 0; i < keysToTranslate.length; i += batchSize) {
@@ -139,8 +119,6 @@ Guidelines:
                         content: JSON.stringify(input, null, 2)
                     }
                 ],
-                // Fallback to smaller model if needed to save TPD? 
-                // llama-3.3-70b-versatile is good, but let's stick to it unless it fails.
                 model: "llama-3.1-8b-instant",
                 response_format: { type: "json_object" }
             });
@@ -158,37 +136,36 @@ Guidelines:
             batch.forEach(k => { if (!resultDict[k]) resultDict[k] = sourceDict[k]; });
         }
     }
+}
+
+async function aiTranslateDictionary(langCode: string, targetLangName: string, sourceDict: Record<string, string>, currentDict: Record<string, string>) {
+    const keysToTranslate = Object.keys(sourceDict).filter(key => {
+        const val = currentDict[key];
+        const sourceVal = sourceDict[key];
+        
+        if (!val) return true;
+        if (val === sourceVal) {
+            const isUniversal = /^(SMS|PDF|AI|ID|GPS|KES|USD|MWK)$/i.test(sourceVal) || sourceVal.length < 3;
+            return !isUniversal;
+        }
+        return false;
+    });
+
+    if (keysToTranslate.length === 0) {
+        console.log(`  ✨ ${langCode}: No translations needed.`);
+        return currentDict;
+    }
+
+    console.log(`  🤖 ${langCode}: Translating ${keysToTranslate.length} keys to ${targetLangName}...`);
+
+    const resultDict = { ...currentDict };
+    
+    await processBatchTranslation(keysToTranslate, sourceDict, targetLangName, langCode, resultDict);
 
     return resultDict;
 }
 
-async function run() {
-    console.log('🚀 Starting Refined AI Translation Process...\n');
-
-    const dictionaries = extractTranslations(content);
-    const enDict = dictionaries['en'];
-    if (!enDict) {
-        console.error('❌ Could not find English dictionary (en).');
-        return;
-    }
-
-    const langCodes = Array.from(VALID_LANGS).filter(l => l !== 'en');
-    console.log(`🌍 Processing ${langCodes.length} languages: ${langCodes.join(', ')}`);
-    
-    let stoppedByRateLimit = false;
-
-    // For each language, perform AI translation
-    for (const code of langCodes) {
-        const targetName = langNames[code] || code;
-        try {
-            dictionaries[code] = await aiTranslateDictionary(code, targetName, enDict, dictionaries[code]);
-        } catch (err) {
-            stoppedByRateLimit = true;
-            break;
-        }
-    }
-
-    // Rebuild the file
+function rebuildTranslationsFile(content: string, enDict: Record<string, string>, dictionaries: Record<string, Record<string, string>>, VALID_LANGS: Set<string>, OUTPUT_FILE: string) {
     console.log('\n📝 Rebuilding i18n.ts with strict key filtering...');
     
     // Original headers and type definitions
@@ -218,6 +195,35 @@ async function run() {
     output += `};\n`;
 
     fs.writeFileSync(OUTPUT_FILE, output);
+}
+
+async function run() {
+    console.log('🚀 Starting Refined AI Translation Process...\n');
+
+    const dictionaries = extractTranslations(content);
+    const enDict = dictionaries['en'];
+    if (!enDict) {
+        console.error('❌ Could not find English dictionary (en).');
+        return;
+    }
+
+    const langCodes = Array.from(VALID_LANGS).filter(l => l !== 'en');
+    console.log(`🌍 Processing ${langCodes.length} languages: ${langCodes.join(', ')}`);
+    
+    let stoppedByRateLimit = false;
+
+    // For each language, perform AI translation
+    for (const code of langCodes) {
+        const targetName = langNames[code] || code;
+        try {
+            dictionaries[code] = await aiTranslateDictionary(code, targetName, enDict, dictionaries[code]);
+        } catch (err) {
+            stoppedByRateLimit = true;
+            break;
+        }
+    }
+
+    rebuildTranslationsFile(content, enDict, dictionaries, VALID_LANGS, OUTPUT_FILE);
     
     if (stoppedByRateLimit) {
         console.log(`\n⚠️  Process paused due to rate limits. Progress has been saved to i18n.ts.`);

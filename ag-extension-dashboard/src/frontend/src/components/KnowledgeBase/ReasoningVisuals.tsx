@@ -59,6 +59,216 @@ interface ReasoningVisualsProps {
 
 const COLORS = [CH_COLORS.blue, CH_COLORS.purple, 'var(--color-primary-500)', CH_COLORS.warning, CH_COLORS.success];
 
+const ChartTooltip = ({ active, payload, isPie = false }: { active?: boolean, payload?: Record<string, unknown>[], isPie?: boolean }) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md p-3 rounded-2xl shadow-2xl border border-white/20">
+                <p className="text-xxs font-black uppercase tracking-widest text-gray-400 mb-1">{isPie ? payload[0].name : payload[0].payload.label}</p>
+                <p className="text-lg font-black text-primary-600 dark:text-primary-400">{payload[0].value}</p>
+            </div>
+        );
+    }
+    return null;
+};
+
+const BarChartRenderer = ({ data }: { data: Array<Record<string, unknown>> }) => (
+    <BarChart data={data}>
+        <defs>
+            <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--color-chart-blue)" stopOpacity={1}/>
+                <stop offset="100%" stopColor="var(--color-primary-500)" stopOpacity={0.8}/>
+            </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
+        <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: 'var(--color-primary-500)' }} />
+        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: 'var(--color-primary-500)' }} />
+        <Tooltip cursor={{ fill: 'var(--color-outline)' }} content={<ChartTooltip />} />
+        <Bar dataKey="value" fill="url(#barGradient)" radius={[6, 6, 0, 0]} barSize={32} />
+    </BarChart>
+);
+
+const AreaChartRenderer = ({ data }: { data: Array<Record<string, unknown>> }) => (
+    <AreaChart data={data}>
+        <defs>
+            <linearGradient id="colorArea" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="var(--color-chart-blue)" stopOpacity={0.4}/>
+                <stop offset="95%" stopColor="var(--color-chart-blue)" stopOpacity={0}/>
+            </linearGradient>
+        </defs>
+        <XAxis dataKey="label" hide />
+        <YAxis hide />
+        <Tooltip content={<ChartTooltip />} />
+        <Area 
+            type="monotone" 
+            dataKey="value" 
+            stroke={CH_COLORS.blue} 
+            strokeWidth={4}
+            fillOpacity={1} 
+            fill="url(#colorArea)" 
+            animationDuration={2000}
+        />
+    </AreaChart>
+);
+
+const PieChartRenderer = ({ data }: { data: Array<Record<string, unknown>> }) => (
+    <PieChart>
+        <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={70}
+            outerRadius={95}
+            paddingAngle={8}
+            dataKey="value"
+            stroke="none"
+        >
+            {data.map((_, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            ))}
+        </Pie>
+        <Tooltip content={<ChartTooltip isPie />} />
+    </PieChart>
+);
+
+const LineChartRenderer = ({ data }: { data: Array<Record<string, unknown>> }) => (
+    <LineChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
+        <XAxis dataKey="label" hide />
+        <YAxis hide />
+        <Tooltip content={<ChartTooltip />} />
+        <Line 
+            type="monotone" 
+            dataKey="value" 
+            stroke={CH_COLORS.purple} 
+            strokeWidth={5} 
+            dot={{ r: 6, fill: CH_COLORS.purple, strokeWidth: 0 }} 
+            activeDot={{ r: 10, stroke: 'white', strokeWidth: 3 }}
+            animationDuration={2500}
+        />
+    </LineChart>
+);
+
+const MediaAssetsSection = ({ safeVisuals, setSelectedImage, getYoutubeEmbedUrl }: { safeVisuals: Record<string, unknown>, setSelectedImage: (url: string) => void, getYoutubeEmbedUrl: (url: string) => string }) => {
+    if (!((safeVisuals.images && (safeVisuals.images as []).length > 0) || (safeVisuals.videos && (safeVisuals.videos as []).length > 0))) {
+        return null;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {safeVisuals.images?.map((img: Record<string, unknown>, idx: number) => (
+                <motion.div 
+                    key={`img-${idx}`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-white/50 dark:bg-gray-900/40 p-4 rounded-3xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-xl group overflow-hidden cursor-pointer"
+                    onClick={() => setSelectedImage(img.url as string)}
+                >
+                    <div className="relative aspect-video rounded-2xl overflow-hidden mb-3">
+                        <img src={img.url as string} alt={(img.caption as string) || 'Agricultural insight'} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <div className="p-3 bg-white/20 backdrop-blur-md rounded-2xl text-white">
+                                <Maximize2 className="w-6 h-6" />
+                            </div>
+                        </div>
+                        <div className="absolute top-3 left-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-xxs font-black uppercase tracking-widest">
+                            <ImageIcon className="w-3 h-3" />
+                            Image
+                        </div>
+                        <div className="absolute bottom-3 left-3 px-3 py-1 bg-primary-600/90 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-[8px] font-black uppercase tracking-widest">
+                            <CheckCircle2 className="w-2.5 h-2.5" />
+                            Verified ALFA Asset
+                        </div>
+                    </div>
+                    {img.caption && <p className="text-sm font-bold text-gray-600 dark:text-gray-400 px-2 flex items-center justify-between">
+                        <span>{img.caption as string}</span>
+                        <span className="text-xxs text-primary-500 uppercase font-black opacity-0 group-hover:opacity-100 transition-opacity">Click to Enlarge</span>
+                    </p>}
+                </motion.div>
+            ))}
+            {safeVisuals.videos?.map((vid: Record<string, unknown>, idx: number) => (
+                <motion.div 
+                    key={`vid-${idx}`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-white/50 dark:bg-gray-900/40 p-4 rounded-3xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-xl group overflow-hidden"
+                >
+                    <div className="relative aspect-video rounded-2xl overflow-hidden mb-3 bg-black flex items-center justify-center shadow-inner">
+                        {vid.url && ((vid.url as string).includes('youtube.com') || (vid.url as string).includes('youtu.be')) ? (
+                            <iframe 
+                                src={getYoutubeEmbedUrl(vid.url as string)}
+                                title={(vid.caption as string) || "Video analysis"}
+                                className="w-full h-full border-none"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                            />
+                        ) : (
+                            <>
+                                <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+                                    <Play className="w-12 h-12 text-white/80 group-hover:scale-110 transition-transform" />
+                                </div>
+                                <div className="absolute top-3 left-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-xxs font-black uppercase tracking-widest">
+                                    <Play className="w-3 h-3" />
+                                    External Video
+                                </div>
+                                <a href={vid.url as string} target="_blank" rel="noopener noreferrer" className="absolute bottom-3 right-3 p-3 bg-primary-600 rounded-2xl text-white shadow-xl transform active:scale-95 transition-all">
+                                    <ExternalLink className="w-5 h-5" />
+                                </a>
+                            </>
+                        )}
+                        <div className="absolute bottom-3 left-3 px-3 py-1 bg-primary-600/90 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-[8px] font-black uppercase tracking-widest pointer-events-none">
+                            <CheckCircle2 className="w-2.5 h-2.5" />
+                            Verified Source
+                        </div>
+                    </div>
+                    {vid.caption && <p className="text-sm font-bold text-gray-600 dark:text-gray-400 px-2">{vid.caption as string}</p>}
+                </motion.div>
+            ))}
+        </div>
+    );
+};
+
+const AudioSynthesisSection = ({ audio, audioRef, isPlaying, togglePlayback, setIsPlaying }: { audio: string, audioRef: React.RefObject<HTMLAudioElement>, isPlaying: boolean, togglePlayback: () => void, setIsPlaying: (val: boolean) => void }) => {
+    if (!audio) return null;
+    return (
+        <div className="p-8 bg-gradient-to-r from-primary-600 to-indigo-600 rounded-[2.5rem] text-white overflow-hidden relative group shadow-2xl shadow-primary-500/20">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32 group-hover:scale-110 transition-transform"></div>
+            <div className="relative flex flex-col md:flex-row items-center gap-8">
+                <motion.button 
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={togglePlayback}
+                    className="p-6 bg-white/20 backdrop-blur-md rounded-3xl text-white hover:bg-white/30 transition-all shadow-xl"
+                >
+                    <Zap className={`w-12 h-12 ${isPlaying ? 'animate-pulse fill-current' : 'fill-none'}`} />
+                </motion.button>
+                <div className="flex-1 text-center md:text-left">
+                    <h4 className="text-xxs font-black uppercase tracking-[0.3em] opacity-70 mb-2">ALFA Voice Synthesis</h4>
+                    <p className="text-xl font-bold leading-tight mb-4">
+                        Listen to the AI's synthesized expert recommendation.
+                    </p>
+                    <div className="flex items-center gap-4 justify-center md:justify-start">
+                        <div className="h-1 flex-1 bg-white/20 rounded-full overflow-hidden max-w-[200px]">
+                            <motion.div 
+                                initial={{ width: 0 }}
+                                animate={{ width: isPlaying ? '100%' : '0%' }}
+                                transition={{ duration: 15, ease: "linear" }}
+                                className="h-full bg-white"
+                            />
+                        </div>
+                        <span className="text-xxs font-black uppercase">{isPlaying ? 'Playing...' : 'Click to Play'}</span>
+                    </div>
+                </div>
+                <audio 
+                    ref={audioRef} 
+                    src={audio.startsWith('data:') ? audio : `data:audio/mp3;base64,${audio}`} 
+                    onEnded={() => setIsPlaying(false)}
+                    className="hidden" 
+                />
+            </div>
+        </div>
+    );
+};
+
 export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, audio }) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -113,123 +323,13 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                 <div className="flex-1 w-full -ml-6">
                     <ResponsiveContainer width="100%" height="100%">
                         {type === 'bar' ? (
-                            <BarChart data={data}>
-                                <defs>
-                                    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stopColor="var(--color-chart-blue)" stopOpacity={1}/>
-                                        <stop offset="100%" stopColor="var(--color-primary-500)" stopOpacity={0.8}/>
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
-                                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: 'var(--color-primary-500)' }} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: 'var(--color-primary-500)' }} />
-                                <Tooltip 
-                                    cursor={{ fill: 'var(--color-outline)' }}
-                                    content={({ active, payload }) => {
-                                        if (active && payload && payload.length) {
-                                            return (
-                                                <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md p-3 rounded-2xl shadow-2xl border border-white/20">
-                                                    <p className="text-xxs font-black uppercase tracking-widest text-gray-400 mb-1">{payload[0].payload.label}</p>
-                                                    <p className="text-lg font-black text-primary-600 dark:text-primary-400">{payload[0].value}</p>
-                                                </div>
-                                            );
-                                        }
-                                        return null;
-                                    }}
-                                />
-                                <Bar dataKey="value" fill="url(#barGradient)" radius={[6, 6, 0, 0]} barSize={32} />
-                            </BarChart>
+                            <BarChartRenderer data={data} />
                         ) : type === 'area' ? (
-                            <AreaChart data={data}>
-                                <defs>
-                                    <linearGradient id="colorArea" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="var(--color-chart-blue)" stopOpacity={0.4}/>
-                                        <stop offset="95%" stopColor="var(--color-chart-blue)" stopOpacity={0}/>
-                                    </linearGradient>
-                                </defs>
-                                <XAxis dataKey="label" hide />
-                                <YAxis hide />
-                                <Tooltip 
-                                    content={({ active, payload }) => {
-                                        if (active && payload && payload.length) {
-                                            return (
-                                                <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md p-3 rounded-2xl shadow-2xl border border-white/20">
-                                                    <p className="text-xxs font-black uppercase tracking-widest text-gray-400 mb-1">{payload[0].payload.label}</p>
-                                                    <p className="text-lg font-black text-primary-600 dark:text-primary-400">{payload[0].value}</p>
-                                                </div>
-                                            );
-                                        }
-                                        return null;
-                                    }}
-                                />
-                                <Area 
-                                    type="monotone" 
-                                    dataKey="value" 
-                                    stroke={CH_COLORS.blue} 
-                                    strokeWidth={4}
-                                    fillOpacity={1} 
-                                    fill="url(#colorArea)" 
-                                    animationDuration={2000}
-                                />
-                            </AreaChart>
+                            <AreaChartRenderer data={data} />
                         ) : type === 'pie' ? (
-                            <PieChart>
-                                <Pie
-                                    data={data}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={70}
-                                    outerRadius={95}
-                                    paddingAngle={8}
-                                    dataKey="value"
-                                    stroke="none"
-                                >
-                                    {data.map((_, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip 
-                                    content={({ active, payload }) => {
-                                        if (active && payload && payload.length) {
-                                            return (
-                                                <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md p-3 rounded-2xl shadow-2xl border border-white/20">
-                                                    <p className="text-xxs font-black uppercase tracking-widest text-gray-400 mb-1">{payload[0].name}</p>
-                                                    <p className="text-lg font-black text-primary-600 dark:text-primary-400">{payload[0].value}</p>
-                                                </div>
-                                            );
-                                        }
-                                        return null;
-                                    }}
-                                />
-                            </PieChart>
+                            <PieChartRenderer data={data} />
                         ) : (
-                            <LineChart data={data}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
-                                <XAxis dataKey="label" hide />
-                                <YAxis hide />
-                                <Tooltip 
-                                    content={({ active, payload }) => {
-                                        if (active && payload && payload.length) {
-                                            return (
-                                                <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md p-3 rounded-2xl shadow-2xl border border-white/20">
-                                                    <p className="text-xxs font-black uppercase tracking-widest text-gray-400 mb-1">{payload[0].payload.label}</p>
-                                                    <p className="text-lg font-black text-primary-600 dark:text-primary-400">{payload[0].value}</p>
-                                                </div>
-                                            );
-                                        }
-                                        return null;
-                                    }}
-                                />
-                                <Line 
-                                    type="monotone" 
-                                    dataKey="value" 
-                                    stroke={CH_COLORS.purple} 
-                                    strokeWidth={5} 
-                                    dot={{ r: 6, fill: CH_COLORS.purple, strokeWidth: 0 }} 
-                                    activeDot={{ r: 10, stroke: 'white', strokeWidth: 3 }}
-                                    animationDuration={2500}
-                                />
-                            </LineChart>
+                            <LineChartRenderer data={data} />
                         )}
                     </ResponsiveContainer>
                 </div>
@@ -240,44 +340,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
     return (
         <div className="space-y-6 mt-8">
             {/* Audio Abstraction Layer */}
-            {audio && (
-                <div className="p-8 bg-gradient-to-r from-primary-600 to-indigo-600 rounded-[2.5rem] text-white overflow-hidden relative group shadow-2xl shadow-primary-500/20">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32 group-hover:scale-110 transition-transform"></div>
-                    <div className="relative flex flex-col md:flex-row items-center gap-8">
-                        <motion.button 
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={togglePlayback}
-                            className="p-6 bg-white/20 backdrop-blur-md rounded-3xl text-white hover:bg-white/30 transition-all shadow-xl"
-                        >
-                            <Zap className={`w-12 h-12 ${isPlaying ? 'animate-pulse fill-current' : 'fill-none'}`} />
-                        </motion.button>
-                        <div className="flex-1 text-center md:text-left">
-                            <h4 className="text-xxs font-black uppercase tracking-[0.3em] opacity-70 mb-2">ALFA Voice Synthesis</h4>
-                            <p className="text-xl font-bold leading-tight mb-4">
-                                Listen to the AI's synthesized expert recommendation.
-                            </p>
-                            <div className="flex items-center gap-4 justify-center md:justify-start">
-                                <div className="h-1 flex-1 bg-white/20 rounded-full overflow-hidden max-w-[200px]">
-                                    <motion.div 
-                                        initial={{ width: 0 }}
-                                        animate={{ width: isPlaying ? '100%' : '0%' }}
-                                        transition={{ duration: 15, ease: "linear" }}
-                                        className="h-full bg-white"
-                                    />
-                                </div>
-                                <span className="text-xxs font-black uppercase">{isPlaying ? 'Playing...' : 'Click to Play'}</span>
-                            </div>
-                        </div>
-                        <audio 
-                            ref={audioRef} 
-                            src={audio.startsWith('data:') ? audio : `data:audio/mp3;base64,${audio}`} 
-                            onEnded={() => setIsPlaying(false)}
-                            className="hidden" 
-                        />
-                    </div>
-                </div>
-            )}
+            <AudioSynthesisSection audio={audio} audioRef={audioRef} isPlaying={isPlaying} togglePlayback={togglePlayback} setIsPlaying={setIsPlaying} />
 
             {/* KPI Metrics Grid */}
             {safeVisuals.kpis && safeVisuals.kpis.length > 0 && (
@@ -306,79 +369,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                 </div>
             )}
 
-            {/* Media Assets (Images/Videos) */}
-            {((safeVisuals.images && safeVisuals.images.length > 0) || (safeVisuals.videos && safeVisuals.videos.length > 0)) && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {safeVisuals.images?.map((img, idx) => (
-                        <motion.div 
-                            key={`img-${idx}`}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="bg-white/50 dark:bg-gray-900/40 p-4 rounded-3xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-xl group overflow-hidden cursor-pointer"
-                            onClick={() => setSelectedImage(img.url)}
-                        >
-                            <div className="relative aspect-video rounded-2xl overflow-hidden mb-3">
-                                <img src={img.url} alt={img.caption || 'Agricultural insight'} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                    <div className="p-3 bg-white/20 backdrop-blur-md rounded-2xl text-white">
-                                        <Maximize2 className="w-6 h-6" />
-                                    </div>
-                                </div>
-                                <div className="absolute top-3 left-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-xxs font-black uppercase tracking-widest">
-                                    <ImageIcon className="w-3 h-3" />
-                                    Image
-                                </div>
-                                <div className="absolute bottom-3 left-3 px-3 py-1 bg-primary-600/90 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-[8px] font-black uppercase tracking-widest">
-                                    <CheckCircle2 className="w-2.5 h-2.5" />
-                                    Verified ALFA Asset
-                                </div>
-                            </div>
-                            {img.caption && <p className="text-sm font-bold text-gray-600 dark:text-gray-400 px-2 flex items-center justify-between">
-                                <span>{img.caption}</span>
-                                <span className="text-xxs text-primary-500 uppercase font-black opacity-0 group-hover:opacity-100 transition-opacity">Click to Enlarge</span>
-                            </p>}
-                        </motion.div>
-                    ))}
-                    {safeVisuals.videos?.map((vid, idx) => (
-                        <motion.div 
-                            key={`vid-${idx}`}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="bg-white/50 dark:bg-gray-900/40 p-4 rounded-3xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-xl group overflow-hidden"
-                        >
-                            <div className="relative aspect-video rounded-2xl overflow-hidden mb-3 bg-black flex items-center justify-center shadow-inner">
-                                {vid.url && (vid.url.includes('youtube.com') || vid.url.includes('youtu.be')) ? (
-                                    <iframe 
-                                        src={getYoutubeEmbedUrl(vid.url)}
-                                        title={vid.caption || "Video analysis"}
-                                        className="w-full h-full border-none"
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                        allowFullScreen
-                                    />
-                                ) : (
-                                    <>
-                                        <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
-                                            <Play className="w-12 h-12 text-white/80 group-hover:scale-110 transition-transform" />
-                                        </div>
-                                        <div className="absolute top-3 left-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-xxs font-black uppercase tracking-widest">
-                                            <Play className="w-3 h-3" />
-                                            External Video
-                                        </div>
-                                        <a href={vid.url} target="_blank" rel="noopener noreferrer" className="absolute bottom-3 right-3 p-3 bg-primary-600 rounded-2xl text-white shadow-xl transform active:scale-95 transition-all">
-                                            <ExternalLink className="w-5 h-5" />
-                                        </a>
-                                    </>
-                                )}
-                                <div className="absolute bottom-3 left-3 px-3 py-1 bg-primary-600/90 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-[8px] font-black uppercase tracking-widest pointer-events-none">
-                                    <CheckCircle2 className="w-2.5 h-2.5" />
-                                    Verified Source
-                                </div>
-                            </div>
-                            {vid.caption && <p className="text-sm font-bold text-gray-600 dark:text-gray-400 px-2">{vid.caption}</p>}
-                        </motion.div>
-                    ))}
-                </div>
-            )}
+            <MediaAssetsSection safeVisuals={safeVisuals} setSelectedImage={setSelectedImage} getYoutubeEmbedUrl={getYoutubeEmbedUrl} />
 
             {/* Charts Section */}
             {safeVisuals.charts && safeVisuals.charts.length > 0 && (

@@ -10,6 +10,96 @@ interface HelpCenterModalProps {
     onClose: () => void;
 }
 
+function SupportTicketForm({
+    _showTicketForm, setShowTicketForm,
+    ticketSubject, setTicketSubject,
+    ticketCategory, setTicketCategory,
+    ticketDescription, setTicketDescription,
+    ticketSubmitting, ticketSubmitted, handleTicketSubmit
+}: {
+    _showTicketForm: boolean;
+    setShowTicketForm: (show: boolean) => void;
+    ticketSubject: string;
+    setTicketSubject: (subject: string) => void;
+    ticketCategory: string;
+    setTicketCategory: (category: string) => void;
+    ticketDescription: string;
+    setTicketDescription: (desc: string) => void;
+    ticketSubmitting: boolean;
+    ticketSubmitted: boolean;
+    handleTicketSubmit: (e: React.FormEvent) => void;
+}) {
+    return (
+        <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-4"
+        >
+            <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Submit Support Ticket</h3>
+                <button onClick={() => setShowTicketForm(false)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                    <X className="w-4 h-4 text-gray-400" />
+                </button>
+            </div>
+            {ticketSubmitted ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <CheckCircle className="w-16 h-16 text-green-500 mb-4" />
+                    <h4 className="text-lg font-bold text-gray-900 dark:text-white">Ticket Submitted</h4>
+                    <p className="text-sm text-gray-500">We'll get back to you soon.</p>
+                </div>
+            ) : (
+                <form onSubmit={handleTicketSubmit} className="space-y-4">
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Subject</label>
+                        <input
+                            type="text"
+                            value={ticketSubject}
+                            onChange={(e) => setTicketSubject(e.target.value)}
+                            placeholder="Brief description of your issue"
+                            className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Category</label>
+                        <select
+                            value={ticketCategory}
+                            onChange={(e) => setTicketCategory(e.target.value)}
+                            className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500"
+                        >
+                            <option value="general">General</option>
+                            <option value="farmers">Farmer Management</option>
+                            <option value="visits">Visits</option>
+                            <option value="ai">AI Advisor</option>
+                            <option value="billing">Billing</option>
+                            <option value="bug">Bug Report</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Description</label>
+                        <textarea
+                            value={ticketDescription}
+                            onChange={(e) => setTicketDescription(e.target.value)}
+                            placeholder="Describe your issue in detail..."
+                            rows={4}
+                            className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 resize-none"
+                            required
+                        />
+                    </div>
+                    <button
+                        type="submit"
+                        disabled={ticketSubmitting}
+                        className="w-full px-4 py-3 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
+                    >
+                        {ticketSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                        {ticketSubmitting ? 'Submitting...' : 'Submit Ticket'}
+                    </button>
+                </form>
+            )}
+        </motion.div>
+    );
+}
+
 export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClose }) => {
     const { t } = useLanguage();
     const setActiveTab = useAppStore((s) => s.setActiveTab);
@@ -112,74 +202,19 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                             {/* Content */}
                             <div className="flex-1 overflow-y-auto p-6 space-y-6">
                                 {showTicketForm ? (
-                                    /* Support Ticket Form */
-                                    <motion.div
-                                        initial={{ opacity: 0, x: 20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        className="space-y-4"
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Submit Support Ticket</h3>
-                                            <button onClick={() => setShowTicketForm(false)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
-                                                <X className="w-4 h-4 text-gray-400" />
-                                            </button>
-                                        </div>
-                                        {ticketSubmitted ? (
-                                            <div className="flex flex-col items-center justify-center py-12 text-center">
-                                                <CheckCircle className="w-16 h-16 text-green-500 mb-4" />
-                                                <h4 className="text-lg font-bold text-gray-900 dark:text-white">Ticket Submitted</h4>
-                                                <p className="text-sm text-gray-500">We'll get back to you soon.</p>
-                                            </div>
-                                        ) : (
-                                            <form onSubmit={handleTicketSubmit} className="space-y-4">
-                                                <div>
-                                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Subject</label>
-                                                    <input
-                                                        type="text"
-                                                        value={ticketSubject}
-                                                        onChange={(e) => setTicketSubject(e.target.value)}
-                                                        placeholder="Brief description of your issue"
-                                                        className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500"
-                                                        required
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Category</label>
-                                                    <select
-                                                        value={ticketCategory}
-                                                        onChange={(e) => setTicketCategory(e.target.value)}
-                                                        className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500"
-                                                    >
-                                                        <option value="general">General</option>
-                                                        <option value="farmers">Farmer Management</option>
-                                                        <option value="visits">Visits</option>
-                                                        <option value="ai">AI Advisor</option>
-                                                        <option value="billing">Billing</option>
-                                                        <option value="bug">Bug Report</option>
-                                                    </select>
-                                                </div>
-                                                <div>
-                                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Description</label>
-                                                    <textarea
-                                                        value={ticketDescription}
-                                                        onChange={(e) => setTicketDescription(e.target.value)}
-                                                        placeholder="Describe your issue in detail..."
-                                                        rows={4}
-                                                        className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 resize-none"
-                                                        required
-                                                    />
-                                                </div>
-                                                <button
-                                                    type="submit"
-                                                    disabled={ticketSubmitting}
-                                                    className="w-full px-4 py-3 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
-                                                >
-                                                    {ticketSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                                                    {ticketSubmitting ? 'Submitting...' : 'Submit Ticket'}
-                                                </button>
-                                            </form>
-                                        )}
-                                    </motion.div>
+                                    <SupportTicketForm
+                                        showTicketForm={showTicketForm}
+                                        setShowTicketForm={setShowTicketForm}
+                                        ticketSubject={ticketSubject}
+                                        setTicketSubject={setTicketSubject}
+                                        ticketCategory={ticketCategory}
+                                        setTicketCategory={setTicketCategory}
+                                        ticketDescription={ticketDescription}
+                                        setTicketDescription={setTicketDescription}
+                                        ticketSubmitting={ticketSubmitting}
+                                        ticketSubmitted={ticketSubmitted}
+                                        handleTicketSubmit={handleTicketSubmit}
+                                    />
                                 ) : (
                                     <>
                                         {/* Quick Links */}

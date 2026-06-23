@@ -20,41 +20,29 @@ let cacheTime = 0;
 // Disable caching in test mode so each test gets fresh results
 const CACHE_TTL = process.env.NODE_ENV === 'test' ? -1 : 60_000;
 
-router.get('/', async (_req: Request, res: Response) => {
+function tryParseJSON(str: string): Record<string, unknown> | string {
     try {
-    // Return cached result if still fresh
-    if (cachedResult && Date.now() - cacheTime < CACHE_TTL) {
-        return res.json({ success: true, cached: true, timestamp: new Date().toISOString(), ...cachedResult });
+        return JSON.parse(str);
+    } catch {
+        return str.slice(0, 200);
     }
+}
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const results: any = {
-        timestamp: new Date().toISOString(),
-        hostname: process.env.HOSTNAME || '',
-        node_env: process.env.NODE_ENV || 'development',
-        domain: process.env.DOMAIN || 'www.gpexts.com',
-        server_ip: process.env.SERVER_IP || '145.223.97.248',
-    };
-
-    // ── 1. DNS Resolution ──────────────────────────────────────────────
-    try {
-        const dnsResults: Record<string, { resolved: boolean; ips: string[]; error?: string }> = {};
-        const domain = process.env.DOMAIN || 'www.gpexts.com';
-        const rootDomain = domain.replace(/^www\./, '');
-        for (const name of [domain, rootDomain]) {
-            try {
-                const addresses = await dns.resolve4(name);
-                dnsResults[name] = { resolved: true, ips: addresses };
-            } catch {
-                dnsResults[name] = { resolved: false, ips: [], error: 'DNS resolution failed' };
-            }
+async function checkDnsResolution(domain: string): Promise<Record<string, { resolved: boolean; ips: string[]; error?: string }>> {
+    const dnsResults: Record<string, { resolved: boolean; ips: string[]; error?: string }> = {};
+    const rootDomain = domain.replace(/^www\./, '');
+    for (const name of [domain, rootDomain]) {
+        try {
+            const addresses = await dns.resolve4(name);
+            dnsResults[name] = { resolved: true, ips: addresses };
+        } catch {
+            dnsResults[name] = { resolved: false, ips: [], error: 'DNS resolution failed' };
         }
-        results.dns = dnsResults;
-    } catch (err) {
-        results.dns = { error: `DNS check failed: ${(err as Error).message}` };
     }
+    return dnsResults;
+}
 
-    // ── 2. Port Connectivity ───────────────────────────────────────────
+async function checkPortConnectivity(): Promise<Array<{ port: number; name: string; host: string; open: boolean }>> {
     const portsToCheck = [
         { port: 80, name: 'HTTP (Traefik)', host: 'localhost' },
         { port: 443, name: 'HTTPS', host: 'localhost' },
@@ -69,13 +57,14 @@ const results: any = {
         const open = await connectTCP(p.host, p.port);
         portResults.push({ ...p, open });
     }
-    results.ports = portResults;
+    return portResults;
+}
 
-    // ── 3. Traefik Routing Check ──────────────────────────────────────
+async function checkTraefikRouting(): Promise<Record<string, unknown>> {
     try {
         const traefikHealth = await checkHTTP('http://localhost:80/api/health');
         const traefikFrontend = await checkHTTP('http://localhost:80/');
-        results.traefik = {
+        return {
             backend_via_traefik: traefikHealth.ok ? 'reachable' : 'unreachable',
             backend_http_status: traefikHealth.status,
             frontend_via_traefik: traefikFrontend.ok ? 'reachable' : 'unreachable',
@@ -83,10 +72,11 @@ const results: any = {
             backend_health_response: traefikHealth.body ? tryParseJSON(traefikHealth.body) : undefined,
         };
     } catch (err) {
-        results.traefik = { error: `Traefik check failed: ${(err as Error).message}` };
+        return { error: `Traefik check failed: ${(err as Error).message}` };
     }
+}
 
-    // ── 4. Container Network Checks ────────────────────────────────────
+async function checkContainerNetworks(): Promise<Array<{ name: string; port: number; reachable: boolean }>> {
     const containersToCheck = [
         { name: 'app-db', port: 5432 },
         { name: 'redis', port: 6379 },
@@ -100,35 +90,43 @@ const results: any = {
         const reachable = await connectTCP(c.name, c.port);
         containerResults.push({ ...c, reachable });
     }
-    results.container_network = containerResults;
+    return containerResults;
+}
 
-    // ── 5. SSL Certificate ─────────────────────────────────────────────
-    const sslDomain = process.env.DOMAIN || 'www.gpexts.com';
-    const sslResult = await checkSSL(sslDomain);
+async function checkSSLCertificate(domain: string): Promise<Record<string, unknown>> {
+    const sslResult = await checkSSL(domain);
     if (sslResult.ok) {
-        results.ssl = sslResult;
+        return sslResult as unknown as Record<string, unknown>;
     } else {
-        results.ssl = {
+        return {
             ok: false,
             error: sslResult.error || 'Connection failed (this may be a container networking limitation)',
-            container_network_note: `The SSL check runs inside the Docker container. If the container cannot resolve or reach the public domain, the check reports as failed even when SSL is correctly configured on the host. Verify SSL independently via: openssl s_client -connect ${sslDomain}:443`,
+            container_network_note: `The SSL check runs inside the Docker container. If the container cannot resolve or reach the public domain, the check reports as failed even when SSL is correctly configured on the host. Verify SSL independently via: openssl s_client -connect ${domain}:443`,
         };
     }
+}
 
-    // ── 6. Docker Compose & Deployment Detection ──────────────────────
+function getDeploymentDetection(sslResult: Record<string, unknown>): Record<string, unknown> {
     const isProduction = process.env.NODE_ENV === 'production';
     const hasACMEEmail = !!process.env.ACME_EMAIL;
-    results.deployment = {
+    return {
         node_env: process.env.NODE_ENV || 'development',
         docker_hostname: process.env.HOSTNAME || '',
         acme_email_configured: hasACMEEmail,
-        // Heuristic: if port 443 is open and HTTPS works, prod override is active
         https_active: sslResult.ok,
         prod_override_detected: sslResult.ok || (isProduction && hasACMEEmail),
         recommendation: '',
     };
+}
 
-    // ── 7. Summary & Recommendations ────────────────────────────────────
+interface DiagnosticResults {
+    dns?: Record<string, { resolved: boolean }>;
+    ports?: Array<{ port: number; open: boolean }>;
+    traefik?: { backend_via_traefik: string };
+    [key: string]: unknown;
+}
+
+function getSummaryAndRecommendations(results: DiagnosticResults): Record<string, unknown> {
     const issues: string[] = [];
     const recommendations: string[] = [];
 
@@ -161,31 +159,57 @@ const results: any = {
         recommendations.push('Check Traefik labels and Docker provider configuration in docker-compose.yml');
     }
 
-    results.issues = issues;
-    results.recommendations = recommendations;
+    return {
+        issues,
+        recommendations,
+        summary: issues.length === 0
+            ? 'All checks passed. The server appears healthy. Check DNS propagation and firewall settings on the network level.'
+            : `Found ${issues.length} issue(s). See recommendations for remediation.`,
+    };
+}
 
-    results.summary = issues.length === 0
-        ? 'All checks passed. The server appears healthy. Check DNS propagation and firewall settings on the network level.'
-        : `Found ${issues.length} issue(s). See recommendations for remediation.`;
+router.get('/', async (_req: Request, res: Response) => {
+    try {
+        if (cachedResult && Date.now() - cacheTime < CACHE_TTL) {
+            return res.json({ success: true, cached: true, timestamp: new Date().toISOString(), ...cachedResult });
+        }
 
-    // Cache result
-    cachedResult = results;
-    cacheTime = Date.now();
+        const domain = process.env.DOMAIN || 'www.gpexts.com';
+        
+        const results: Record<string, unknown> = {
+            timestamp: new Date().toISOString(),
+            hostname: process.env.HOSTNAME || '',
+            node_env: process.env.NODE_ENV || 'development',
+            domain,
+            server_ip: process.env.SERVER_IP || '145.223.97.248',
+        };
 
-    const isHealthy = issues.length === 0;
-    res.status(isHealthy ? 200 : 200).json({ success: true, cached: false, timestamp: results.timestamp, ...results });
+        try {
+            results.dns = await checkDnsResolution(domain);
+        } catch (err) {
+            results.dns = { error: `DNS check failed: ${(err as Error).message}` };
+        }
+
+        results.ports = await checkPortConnectivity();
+        results.traefik = await checkTraefikRouting();
+        results.container_network = await checkContainerNetworks();
+        results.ssl = await checkSSLCertificate(domain);
+        results.deployment = getDeploymentDetection(results.ssl as Record<string, unknown>);
+
+        const summary = getSummaryAndRecommendations(results);
+        results.issues = summary.issues;
+        results.recommendations = summary.recommendations;
+        results.summary = summary.summary;
+
+        cachedResult = results;
+        cacheTime = Date.now();
+
+        const isHealthy = (summary.issues as string[]).length === 0;
+        res.status(isHealthy ? 200 : 200).json({ success: true, cached: false, timestamp: results.timestamp, ...results });
     } catch (error) {
         logger.error('Diagnostics endpoint error:', error);
         safeError(res, 500, 'Diagnostics check failed');
     }
 });
-
-function tryParseJSON(str: string): Record<string, unknown> | string {
-    try {
-        return JSON.parse(str);
-    } catch {
-        return str.slice(0, 200);
-    }
-}
 
 export default router;

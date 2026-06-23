@@ -25,7 +25,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
         }
 
         let sql = 'SELECT * FROM reports WHERE 1=1';
-        const params: any[] = [];
+        const params: unknown[] = [];
         let paramIndex = 1;
 
         if (type) {
@@ -53,7 +53,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
         res.json({
             success: true,
             data: {
-                reports: result.rows.map((r: any) => ({
+                reports: result.rows.map((r: Record<string, any>) => ({
                     id: r.id,
                     type: r.type,
                     title: r.title,
@@ -70,81 +70,82 @@ router.get('/', async (req: AuthRequest, res: Response) => {
     }
 });
 
+async function generateReportData(type: string, effectiveStartDate: string, effectiveEndDate: string, officerId: string | undefined, region: string | undefined, title: string | undefined, req: AuthRequest, res: Response) {
+    const reportData: Record<string, any> = {};
+    if (type === 'visit_summary' || type === 'activity_report') {
+        const visitResult = await query(`
+            SELECT COUNT(*) as total, 
+                   SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
+                   SUM(duration_minutes) as total_minutes
+            FROM visits 
+            WHERE scheduled_at >= $1 AND scheduled_at <= $2
+            ${officerId ? 'AND officer_id = $3' : ''}
+        `, [effectiveStartDate, effectiveEndDate, officerId].filter(Boolean));
+
+        reportData.visits = visitResult.rows[0];
+    }
+
+    if (type === 'impact_metrics' || type === 'activity_report') {
+        const convResult = await query(`
+            SELECT COUNT(*) as total_conversations,
+                   SUM(CASE WHEN satisfaction_score IS NOT NULL THEN 1 ELSE 0 END) as rated,
+                   AVG(satisfaction_score) as avg_satisfaction
+            FROM conversations 
+            WHERE created_at >= $1 AND created_at <= $2
+        `, [effectiveStartDate, effectiveEndDate]);
+
+        reportData.conversations = convResult.rows[0];
+    }
+
+    const reportTitle = title || `${type.replace('_', ' ')} - ${new Date(effectiveStartDate).toLocaleDateString()} to ${new Date(effectiveEndDate).toLocaleDateString()}`;
+
+    // Combine all metadata into the content JSONB column as per schema
+    const fullReportContent = {
+        ...reportData,
+        metadata: {
+            region,
+            startDate: effectiveStartDate,
+            endDate: effectiveEndDate,
+            officerId
+        }
+    };
+
+    const result = await query(`
+        INSERT INTO reports (type, title, generated_by, content, status, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, 'completed', NOW(), NOW())
+        RETURNING *
+    `, [type, reportTitle, officerId || req.user!.userId, JSON.stringify(fullReportContent)]);
+
+    await usageService.incrementUsage(req.user!.userId, 'report');
+
+    return res.status(201).json({
+        success: true,
+        data: {
+            id: result.rows[0].id,
+            type: result.rows[0].type,
+            title: result.rows[0].title,
+            generatedAt: result.rows[0].created_at,
+            status: result.rows[0].status,
+            data: fullReportContent,
+        },
+    });
+}
+
 // Generate report
 router.post('/generate', checkUsageLimit('report'), async (req: AuthRequest, res: Response) => {
     try {
         const { type, startDate, endDate, officerId, region, title } = req.body;
         const pool = getPool();
 
+        if (!pool) {
+            return res.status(503).json({ success: false, error: 'Database connection unavailable' });
+        }
+
         // Use default date range if not provided (last 30 days)
         const effectiveStartDate = startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
         const effectiveEndDate = endDate || new Date().toISOString();
 
-        const reportData: any = {};
-
-        if (pool) {
-            if (type === 'visit_summary' || type === 'activity_report') {
-                const visitResult = await query(`
-                    SELECT COUNT(*) as total, 
-                           SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
-                           SUM(duration_minutes) as total_minutes
-                    FROM visits 
-                    WHERE scheduled_at >= $1 AND scheduled_at <= $2
-                    ${officerId ? 'AND officer_id = $3' : ''}
-                `, [effectiveStartDate, effectiveEndDate, officerId].filter(Boolean));
-
-                reportData.visits = visitResult.rows[0];
-            }
-
-            if (type === 'impact_metrics' || type === 'activity_report') {
-                const convResult = await query(`
-                    SELECT COUNT(*) as total_conversations,
-                           SUM(CASE WHEN satisfaction_score IS NOT NULL THEN 1 ELSE 0 END) as rated,
-                           AVG(satisfaction_score) as avg_satisfaction
-                    FROM conversations 
-                    WHERE created_at >= $1 AND created_at <= $2
-                `, [effectiveStartDate, effectiveEndDate]);
-
-                reportData.conversations = convResult.rows[0];
-            }
-
-            const reportTitle = title || `${type.replace('_', ' ')} - ${new Date(effectiveStartDate).toLocaleDateString()} to ${new Date(effectiveEndDate).toLocaleDateString()}`;
-
-            // Combine all metadata into the content JSONB column as per schema
-            const fullReportContent = {
-                ...reportData,
-                metadata: {
-                    region,
-                    startDate: effectiveStartDate,
-                    endDate: effectiveEndDate,
-                    officerId
-                }
-            };
-
-            const result = await query(`
-                INSERT INTO reports (type, title, generated_by, content, status, created_at, updated_at)
-                VALUES ($1, $2, $3, $4, 'completed', NOW(), NOW())
-                RETURNING *
-            `, [type, reportTitle, officerId || req.user!.userId, JSON.stringify(fullReportContent)]);
-
-            await usageService.incrementUsage(req.user!.userId, 'report');
-
-            return res.status(201).json({
-                success: true,
-                data: {
-                    id: result.rows[0].id,
-                    type: result.rows[0].type,
-                    title: result.rows[0].title,
-                    generatedAt: result.rows[0].created_at,
-                    status: result.rows[0].status,
-                    data: fullReportContent,
-                },
-            });
-        }
-
-        if (!pool) {
-            return res.status(503).json({ success: false, error: 'Database connection unavailable' });
-        }
+        await generateReportData(type, effectiveStartDate, effectiveEndDate, officerId, region, title, req, res);
     } catch (error) {
         logger.error('Generate report error:', error);
         safeError(res, 500, 'Failed to generate report');
@@ -218,7 +219,7 @@ router.get('/:id/download', async (req: Request, res: Response) => {
     }
 });
 
-function generateDiseaseDiagnosisPDF(doc: any, report: any, data: any) {
+function drawDiseaseDiagnosisHeader(doc: Record<string, any>, report: Record<string, any>, data: Record<string, any>) {
     // Elegant Dark Green Header
     doc.rect(0, 0, doc.page.width, 110).fill('#1b5e20');
     
@@ -288,8 +289,9 @@ function generateDiseaseDiagnosisPDF(doc: any, report: any, data: any) {
     }
 
     doc.y = bannerY + 45;
+}
 
-    // Diagnosed Pathologies
+function drawDiseasePathologies(doc: Record<string, any>, data: Record<string, any>) {
     doc.fillColor('#263238')
        .fontSize(13)
        .font('Helvetica-Bold')
@@ -298,10 +300,9 @@ function generateDiseaseDiagnosisPDF(doc: any, report: any, data: any) {
     doc.moveDown(0.5);
 
     if (data.diseases && data.diseases.length > 0) {
-        data.diseases.forEach((dis: any, idx: number) => {
+        data.diseases.forEach((dis: Record<string, any>, idx: number) => {
             const disY = doc.y;
             
-            // Background Card
             doc.rect(50, disY, doc.page.width - 100, 140).stroke('#cfd8dc');
             
             doc.fillColor('#b71c1c')
@@ -320,7 +321,6 @@ function generateDiseaseDiagnosisPDF(doc: any, report: any, data: any) {
                .fontSize(9)
                .text(dis.description || 'No description provided.', 65, disY + 32, { width: doc.page.width - 130 });
 
-            // Columns for Symptoms & Treatments
             const listY = disY + 65;
             doc.fillColor('#1b5e20')
                .font('Helvetica-Bold')
@@ -328,7 +328,6 @@ function generateDiseaseDiagnosisPDF(doc: any, report: any, data: any) {
                .text('Observed Symptoms:', 65, listY)
                .text('Recommended Treatments:', 300, listY);
 
-            // Lists
             doc.fillColor('#37474f')
                .font('Helvetica')
                .fontSize(8);
@@ -352,6 +351,11 @@ function generateDiseaseDiagnosisPDF(doc: any, report: any, data: any) {
            .text('No active crop diseases or visual pathogens detected in this sample.', 60, doc.y);
         doc.moveDown(1);
     }
+}
+
+function generateDiseaseDiagnosisPDF(doc: Record<string, any>, report: Record<string, any>, data: Record<string, any>) {
+    drawDiseaseDiagnosisHeader(doc, report, data);
+    drawDiseasePathologies(doc, data);
 
     // Nutrient Deficiencies
     if (data.nutrientDeficiencies && data.nutrientDeficiencies.length > 0) {
@@ -398,7 +402,7 @@ function generateDiseaseDiagnosisPDF(doc: any, report: any, data: any) {
        .text('This pathology analysis represents an AI-assisted diagnostic estimate and should be validated through direct agronomic inspection.', 50, doc.page.height - 40, { align: 'center', width: doc.page.width - 100 });
 }
 
-function generateSoilDiagnosticPDF(doc: any, report: any, data: any) {
+function drawSoilDiagnosticHeader(doc: Record<string, any>, report: Record<string, any>, data: Record<string, any>) {
     // Elegant Earth Brown Header
     doc.rect(0, 0, doc.page.width, 110).fill('#3e2723');
     
@@ -468,8 +472,9 @@ function generateSoilDiagnosticPDF(doc: any, report: any, data: any) {
     }
 
     doc.y = bannerY + 45;
+}
 
-    // Soil Physical Attributes
+function drawSoilPhysicalAttributes(doc: Record<string, any>, data: Record<string, any>) {
     doc.fillColor('#263238')
        .fontSize(13)
        .font('Helvetica-Bold')
@@ -477,7 +482,6 @@ function generateSoilDiagnosticPDF(doc: any, report: any, data: any) {
     doc.moveDown(0.5);
 
     const tableY = doc.y;
-    // Draw 2x2 grid for Texture, Moisture, Drainage, Observation
     doc.rect(50, tableY, doc.page.width - 100, 80).stroke('#d7ccc8');
 
     doc.fontSize(9).fillColor('#3e2723');
@@ -494,8 +498,9 @@ function generateSoilDiagnosticPDF(doc: any, report: any, data: any) {
        .font('Helvetica').fillColor('#37474f').text(data.colorDiscoloration || 'N/A', 170, tableY + 58, { width: doc.page.width - 240 });
 
     doc.y = tableY + 95;
+}
 
-    // Chemical NPK Profile
+function drawSoilNPKProfile(doc: Record<string, any>, data: Record<string, any>) {
     doc.fillColor('#263238')
        .fontSize(13)
        .font('Helvetica-Bold')
@@ -527,6 +532,12 @@ function generateSoilDiagnosticPDF(doc: any, report: any, data: any) {
        .fillColor(getNutrientColor(kLevel)).text(kLevel.toUpperCase(), 490, npkY + 16);
 
     doc.y = npkY + 65;
+}
+
+function generateSoilDiagnosticPDF(doc: Record<string, any>, report: Record<string, any>, data: Record<string, any>) {
+    drawSoilDiagnosticHeader(doc, report, data);
+    drawSoilPhysicalAttributes(doc, data);
+    drawSoilNPKProfile(doc, data);
 
     // Crop Suitability
     if (data.cropSuitability && data.cropSuitability.length > 0) {
@@ -567,6 +578,55 @@ function generateSoilDiagnosticPDF(doc: any, report: any, data: any) {
        .text('This soil analysis represents an AI-assisted diagnostic estimate and should be validated through direct soil core sampling.', 50, doc.page.height - 40, { align: 'center', width: doc.page.width - 100 });
 }
 
+function drawGeneralReportDetails(doc: Record<string, any>, report: Record<string, any>, data: Record<string, any>) {
+    // Header
+    doc.fontSize(20).fillColor('#2c3e50').text('Agricultural Extension Report', { align: 'center' });
+    doc.moveDown(0.5);
+    doc.fontSize(14).fillColor('#34495e').text(report.title || 'Activity Report', { align: 'center' });
+    doc.moveDown(0.3);
+    doc.fontSize(10).fillColor('#7f8c8d').text(`Generated: ${new Date(report.created_at).toLocaleString()}`, { align: 'center' });
+    doc.moveDown(2);
+
+    // Report Details
+    doc.fontSize(12).fillColor('#2c3e50').text('Report Details', { underline: true });
+    doc.moveDown(0.5);
+    doc.fontSize(10).fillColor('#34495e');
+    doc.text(`Report Type: ${report.type}`);
+    doc.text(`Status: ${report.status}`);
+    const rawStartDate = data.metadata?.startDate;
+    const rawEndDate = data.metadata?.endDate;
+    const startDateStr = rawStartDate ? new Date(rawStartDate).toLocaleDateString() : 'N/A';
+    const endDateStr = rawEndDate ? new Date(rawEndDate).toLocaleDateString() : 'N/A';
+    doc.text(`Period: ${startDateStr} - ${endDateStr}`);
+    doc.moveDown(1);
+
+    // Visit Data
+    if (data.visits) {
+        doc.fontSize(12).fillColor('#2c3e50').text('Visit Statistics', { underline: true });
+        doc.moveDown(0.5);
+        doc.fontSize(10).fillColor('#34495e');
+        doc.text(`Total Visits: ${data.visits.total || 0}`);
+        doc.text(`Completed Visits: ${data.visits.completed || 0}`);
+        doc.text(`Total Minutes: ${data.visits.total_minutes || 0}`);
+        doc.moveDown(1);
+    }
+
+    // Conversation Data
+    if (data.conversations) {
+        doc.fontSize(12).fillColor('#2c3e50').text('Conversation Statistics', { underline: true });
+        doc.moveDown(0.5);
+        doc.fontSize(10).fillColor('#34495e');
+        doc.text(`Total Conversations: ${data.conversations.total_conversations || 0}`);
+        doc.text(`Rated Conversations: ${data.conversations.rated || 0}`);
+        doc.text(`Average Satisfaction: ${data.conversations.avg_satisfaction ? data.conversations.avg_satisfaction.toFixed(1) + '/5' : 'N/A'}`);
+        doc.moveDown(1);
+    }
+
+    // Footer
+    doc.moveDown(2);
+    doc.fontSize(8).fillColor('#95a5a6').text('Agricultural Extension Decision Support System', { align: 'center' });
+}
+
 // Download report as PDF
 router.get('/:id/download/pdf', async (req: Request, res: Response) => {
     try {
@@ -584,7 +644,7 @@ router.get('/:id/download/pdf', async (req: Request, res: Response) => {
 
         doc.pipe(res);
 
-        const data = report.content as any;
+        const data = report.content as Record<string, any>;
 
         // Custom router for visual diagnostics PDF
         if (report.type === 'disease_diagnosis') {
@@ -599,49 +659,7 @@ router.get('/:id/download/pdf', async (req: Request, res: Response) => {
             return;
         }
 
-        // Header
-        doc.fontSize(20).fillColor('#2c3e50').text('Agricultural Extension Report', { align: 'center' });
-        doc.moveDown(0.5);
-        doc.fontSize(14).fillColor('#34495e').text(report.title || 'Activity Report', { align: 'center' });
-        doc.moveDown(0.3);
-        doc.fontSize(10).fillColor('#7f8c8d').text(`Generated: ${new Date(report.created_at).toLocaleString()}`, { align: 'center' });
-        doc.moveDown(2);
-
-        // Report Details
-        doc.fontSize(12).fillColor('#2c3e50').text('Report Details', { underline: true });
-        doc.moveDown(0.5);
-        doc.fontSize(10).fillColor('#34495e');
-        doc.text(`Report Type: ${report.type}`);
-        doc.text(`Status: ${report.status}`);
-        doc.text(`Period: ${data.metadata?.startDate ? new Date(data.metadata.startDate).toLocaleDateString() : 'N/A'} - ${data.metadata?.endDate ? new Date(data.metadata.endDate).toLocaleDateString() : 'N/A'}`);
-        doc.moveDown(1);
-
-        // Visit Data
-        if (data.visits) {
-            doc.fontSize(12).fillColor('#2c3e50').text('Visit Statistics', { underline: true });
-            doc.moveDown(0.5);
-            doc.fontSize(10).fillColor('#34495e');
-            doc.text(`Total Visits: ${data.visits.total || 0}`);
-            doc.text(`Completed Visits: ${data.visits.completed || 0}`);
-            doc.text(`Total Minutes: ${data.visits.total_minutes || 0}`);
-            doc.moveDown(1);
-        }
-
-        // Conversation Data
-        if (data.conversations) {
-            doc.fontSize(12).fillColor('#2c3e50').text('Conversation Statistics', { underline: true });
-            doc.moveDown(0.5);
-            doc.fontSize(10).fillColor('#34495e');
-            doc.text(`Total Conversations: ${data.conversations.total_conversations || 0}`);
-            doc.text(`Rated Conversations: ${data.conversations.rated || 0}`);
-            doc.text(`Average Satisfaction: ${data.conversations.avg_satisfaction ? data.conversations.avg_satisfaction.toFixed(1) + '/5' : 'N/A'}`);
-            doc.moveDown(1);
-        }
-
-        // Footer
-        doc.moveDown(2);
-        doc.fontSize(8).fillColor('#95a5a6').text('Agricultural Extension Decision Support System', { align: 'center' });
-
+        drawGeneralReportDetails(doc, report, data);
         doc.end();
     } catch (error) {
         logger.error('Download PDF error:', error);
@@ -660,7 +678,7 @@ router.get('/:id/download/excel', async (req: Request, res: Response) => {
             return res.status(404).json({ success: false, error: 'Report not found' });
         }
 
-        const data = report.content as any;
+        const data = report.content as Record<string, any>;
         const wb = XLSX.utils.book_new();
 
         // Summary Sheet

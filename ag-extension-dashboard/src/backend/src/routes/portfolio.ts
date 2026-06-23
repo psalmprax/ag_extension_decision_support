@@ -83,7 +83,7 @@ router.get('/', async (req: Request, res: Response) => {
                 upcomingVisits: parseInt(upcomingVisits.rows[0]?.count || '0'),
                 highPriority: parseInt(highPriority.rows[0]?.count || '0'),
             },
-            priorityQueue: priorityQueue.rows.map((row: any) => ({
+            priorityQueue: priorityQueue.rows.map((row: Record<string, any>) => ({
                 farmerId: row.farmer_id,
                 name: row.name,
                 reason: row.reason,
@@ -151,7 +151,7 @@ router.get('/recommendations', async (req: Request, res: Response) => {
 
         const recommendations = {
             date: targetDate,
-            recommendedVisits: recommendedVisits.rows.map((row: any) => ({
+            recommendedVisits: recommendedVisits.rows.map((row: Record<string, any>) => ({
                 farmerId: row.farmer_id,
                 name: row.name,
                 location: { lat: row.lat, lng: row.lng },
@@ -159,7 +159,7 @@ router.get('/recommendations', async (req: Request, res: Response) => {
                 priority: row.priority,
                 estimatedTime: row.estimatedtime,
             })),
-            alerts: alerts.rows.map((row: any) => ({
+            alerts: alerts.rows.map((row: Record<string, any>) => ({
                 type: row.type,
                 severity: row.severity,
                 location: row.location,
@@ -224,6 +224,58 @@ router.get('/farmers/:id', async (req: Request, res: Response) => {
     }
 });
 
+function buildSummarySheet(farmers: Record<string, any>[], oId: string) {
+    const summaryData = [
+        ['Portfolio Summary'],
+        [''],
+        ['Extension Officer', oId],
+        ['Export Date', new Date().toLocaleString()],
+        [''],
+        ['Metric', 'Value'],
+        ['Total Farmers', farmers.length],
+        ['Farmers with Visits', farmers.filter((f: Record<string, any>) => f.total_visits > 0).length],
+        ['Total Visits', farmers.reduce((sum: number, f: Record<string, any>) => sum + parseInt(f.total_visits || '0'), 0)],
+    ];
+    return XLSX.utils.aoa_to_sheet(summaryData);
+}
+
+function buildFarmersSheet(farmers: Record<string, any>[]) {
+    const farmerRows = [
+        ['First Name', 'Last Name', 'Phone', 'Village', 'District', 'Region', 'Farm Size (ha)', 'Crops', 'Total Visits', 'Last Visit']
+    ];
+    for (const farmer of farmers) {
+        farmerRows.push([
+            farmer.first_name || '',
+            farmer.last_name || '',
+            farmer.phone || '',
+            farmer.village || '',
+            farmer.district || '',
+            farmer.region || '',
+            farmer.farm_size_hectares || 0,
+            (farmer.crops || []).join(', '),
+            farmer.total_visits || 0,
+            farmer.last_visit_date ? new Date(farmer.last_visit_date).toLocaleDateString() : 'Never'
+        ]);
+    }
+    return XLSX.utils.aoa_to_sheet(farmerRows);
+}
+
+function buildVisitsSheet(visits: Record<string, any>[]) {
+    const visitsRows = [
+        ['Farmer Name', 'Village', 'Scheduled Date', 'Type', 'Notes']
+    ];
+    for (const visit of visits) {
+        visitsRows.push([
+            `${visit.first_name} ${visit.last_name}`,
+            visit.village || '',
+            visit.scheduled_at ? new Date(visit.scheduled_at).toLocaleString() : '',
+            visit.type || 'routine',
+            visit.notes || ''
+        ]);
+    }
+    return XLSX.utils.aoa_to_sheet(visitsRows);
+}
+
 // Export portfolio as Excel
 router.get('/export/excel', async (req: Request, res: Response) => {
     try {
@@ -248,41 +300,8 @@ router.get('/export/excel', async (req: Request, res: Response) => {
         const farmers = farmersResult.rows;
         const wb = XLSX.utils.book_new();
 
-        // Summary sheet
-        const summaryData = [
-            ['Portfolio Summary'],
-            [''],
-            ['Extension Officer', oId],
-            ['Export Date', new Date().toLocaleString()],
-            [''],
-            ['Metric', 'Value'],
-            ['Total Farmers', farmers.length],
-            ['Farmers with Visits', farmers.filter((f: any) => f.total_visits > 0).length],
-            ['Total Visits', farmers.reduce((sum: number, f: any) => sum + parseInt(f.total_visits || '0'), 0)],
-        ];
-        const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
-        XLSX.utils.book_append_sheet(wb, summarySheet, 'Summary');
-
-        // Farmers list sheet
-        const farmerRows = [
-            ['First Name', 'Last Name', 'Phone', 'Village', 'District', 'Region', 'Farm Size (ha)', 'Crops', 'Total Visits', 'Last Visit']
-        ];
-        for (const farmer of farmers) {
-            farmerRows.push([
-                farmer.first_name || '',
-                farmer.last_name || '',
-                farmer.phone || '',
-                farmer.village || '',
-                farmer.district || '',
-                farmer.region || '',
-                farmer.farm_size_hectares || 0,
-                (farmer.crops || []).join(', '),
-                farmer.total_visits || 0,
-                farmer.last_visit_date ? new Date(farmer.last_visit_date).toLocaleDateString() : 'Never'
-            ]);
-        }
-        const farmerSheet = XLSX.utils.aoa_to_sheet(farmerRows);
-        XLSX.utils.book_append_sheet(wb, farmerSheet, 'Farmers');
+        XLSX.utils.book_append_sheet(wb, buildSummarySheet(farmers, oId as string), 'Summary');
+        XLSX.utils.book_append_sheet(wb, buildFarmersSheet(farmers), 'Farmers');
 
         // Get upcoming visits
         const visitsResult = await query(`
@@ -294,20 +313,7 @@ router.get('/export/excel', async (req: Request, res: Response) => {
             LIMIT 50
         `, [oId]);
 
-        const visitsRows = [
-            ['Farmer Name', 'Village', 'Scheduled Date', 'Type', 'Notes']
-        ];
-        for (const visit of visitsResult.rows) {
-            visitsRows.push([
-                `${visit.first_name} ${visit.last_name}`,
-                visit.village || '',
-                visit.scheduled_at ? new Date(visit.scheduled_at).toLocaleString() : '',
-                visit.type || 'routine',
-                visit.notes || ''
-            ]);
-        }
-        const visitsSheet = XLSX.utils.aoa_to_sheet(visitsRows);
-        XLSX.utils.book_append_sheet(wb, visitsSheet, 'Upcoming Visits');
+        XLSX.utils.book_append_sheet(wb, buildVisitsSheet(visitsResult.rows), 'Upcoming Visits');
 
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', `attachment; filename="portfolio_${oId}_${new Date().toISOString().split('T')[0]}.xlsx"`);

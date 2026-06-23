@@ -31,62 +31,56 @@ interface ShortcutOptions {
     setConfirmModal: (modal: ConfirmModalState | null) => void;
 }
 
+const executeEscapeHandlers = (options: ShortcutOptions) => {
+    const escapeHandlers = [
+        { condition: options.isNotificationPanelOpen, action: () => options.setIsNotificationPanelOpen(false) },
+        { condition: options.isProfileMenuOpen, action: () => options.setIsProfileMenuOpen(false) },
+        { condition: options.showProfileModal, action: () => options.setShowProfileModal(false) },
+        { condition: options.showSettingsPanel, action: () => options.setShowSettingsPanel(false) },
+        { condition: options.showHelpCenter, action: () => options.setShowHelpCenter(false) },
+        { condition: options.isDetailPanelOpen, action: () => options.setIsDetailPanelOpen(false) },
+        { condition: options.showVisitModal, action: () => options.setShowVisitModal(false) },
+        { condition: options.showFarmerModal, action: () => options.setShowFarmerModal(false) },
+        { condition: options.showGlobalSearch, action: () => options.setShowGlobalSearch(false) },
+        { condition: !!options.viewingReport, action: () => options.setViewingReport(null) },
+        { condition: options.showBulkSmsComposer, action: () => options.setShowBulkSmsComposer(false) },
+        { condition: !!options.confirmModal, action: () => options.setConfirmModal(null) },
+    ];
+
+    for (const handler of escapeHandlers) {
+        if (handler.condition) {
+            handler.action();
+            break;
+        }
+    }
+};
+
+const handleAppKeyDown = (e: KeyboardEvent, options: ShortcutOptions) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        const searchInput = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement;
+        if (searchInput) {
+            searchInput.focus();
+            options.setShowGlobalSearch(true);
+        }
+        return;
+    }
+
+    if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+        e.preventDefault();
+        options.setSidebarOpen(!options.sidebarOpen);
+        return;
+    }
+
+    if (e.key === 'Escape') {
+        executeEscapeHandlers(options);
+    }
+};
+
 export const useAppShortcuts = (options: ShortcutOptions) => {
-    const {
-        sidebarOpen, setSidebarOpen,
-        isNotificationPanelOpen, setIsNotificationPanelOpen,
-        isProfileMenuOpen, setIsProfileMenuOpen,
-        showProfileModal, setShowProfileModal,
-        showSettingsPanel, setShowSettingsPanel,
-        showHelpCenter, setShowHelpCenter,
-        isDetailPanelOpen, setIsDetailPanelOpen,
-        showVisitModal, setShowVisitModal,
-        showFarmerModal, setShowFarmerModal,
-        showGlobalSearch, setShowGlobalSearch,
-        viewingReport, setViewingReport,
-        showBulkSmsComposer, setShowBulkSmsComposer,
-        confirmModal, setConfirmModal
-    } = options;
-
     useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                e.preventDefault();
-                const searchInput = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement;
-                if (searchInput) {
-                    searchInput.focus();
-                    setShowGlobalSearch(true);
-                }
-            }
-
-            if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
-                e.preventDefault();
-                setSidebarOpen(!sidebarOpen);
-            }
-            if (e.key === 'Escape') {
-                if (isNotificationPanelOpen) setIsNotificationPanelOpen(false);
-                else if (isProfileMenuOpen) setIsProfileMenuOpen(false);
-                else if (showProfileModal) setShowProfileModal(false);
-                else if (showSettingsPanel) setShowSettingsPanel(false);
-                else if (showHelpCenter) setShowHelpCenter(false);
-                else if (isDetailPanelOpen) setIsDetailPanelOpen(false);
-                else if (showVisitModal) setShowVisitModal(false);
-                else if (showFarmerModal) setShowFarmerModal(false);
-                else if (showGlobalSearch) setShowGlobalSearch(false);
-                else if (viewingReport) setViewingReport(null);
-                else if (showBulkSmsComposer) setShowBulkSmsComposer(false);
-                else if (confirmModal) setConfirmModal(null);
-            }
-        };
-
+        const handleKeyDown = (e: KeyboardEvent) => handleAppKeyDown(e, options);
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [
-        isNotificationPanelOpen, isProfileMenuOpen, showProfileModal, showSettingsPanel, showHelpCenter,
-        isDetailPanelOpen, showVisitModal, showFarmerModal, showGlobalSearch, viewingReport,
-        showBulkSmsComposer, confirmModal, sidebarOpen, setSidebarOpen, setShowGlobalSearch,
-        setViewingReport, setShowBulkSmsComposer, setConfirmModal, setIsNotificationPanelOpen,
-        setIsProfileMenuOpen, setShowProfileModal, setShowSettingsPanel, setShowHelpCenter,
-        setIsDetailPanelOpen, setShowVisitModal, setShowFarmerModal
-    ]);
+    }, [options]);
 };
