@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
+import type { ReactNode } from 'react';
 import { BillingDashboard } from '../BillingDashboard';
 import { LanguageProvider } from '../../lib/LanguageContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -46,8 +47,9 @@ vi.mock('@/api/billingService', () => ({
 
 // Mock framer-motion to avoid animation issues in tests
 vi.mock('framer-motion', () => {
-     
-    const mockComponent = ({ children, _whileHover, _whileTap, _initial, _animate, _exit, _variants, _transition, _layout, ...props }: unknown) => (
+    type MotionMockProps = { children?: ReactNode; [key: string]: unknown };
+
+    const mockComponent = ({ children, ...props }: MotionMockProps) => (
         <div {...props}>{children}</div>
     );
     return {
@@ -61,8 +63,8 @@ vi.mock('framer-motion', () => {
             p: mockComponent,
             span: mockComponent,
         },
-         
-        AnimatePresence: ({ children }: unknown) => <>{children}</>
+
+        AnimatePresence: ({ children }: MotionMockProps) => <>{children}</>
     };
 });
 

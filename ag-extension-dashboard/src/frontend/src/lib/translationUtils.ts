@@ -166,10 +166,19 @@ export async function generateAllTranslations(): Promise<Record<string, Record<s
     return allTranslations;
 }
 
+declare global {
+    interface Window {
+        translationUtils: {
+            translateText: typeof translateText;
+            translateToLanguage: typeof translateToLanguage;
+            generateAllTranslations: typeof generateAllTranslations;
+        };
+    }
+}
+
 // Export for use in console
 if (typeof window !== 'undefined') {
-     
-    (window as unknown).translationUtils = {
+    window.translationUtils = {
         translateText,
         translateToLanguage,
         generateAllTranslations,

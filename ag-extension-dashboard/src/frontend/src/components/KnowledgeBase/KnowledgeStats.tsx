@@ -52,7 +52,7 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
                     { label: 'Cached Answers', value: cachedQueries.toLocaleString(), icon: Info, color: 'text-purple-500', bg: 'bg-purple-500/10' }
                 ].map((stat, i) => (
                     <div key={i} className="card p-6 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/50 flex items-center gap-4 group hover:border-primary-500/50 transition-colors">
-                        <div className={`p-3 ${isModern ? 'rounded-2xl' : 'rounded-none'} ${stat.bg} ${stat.color} group-hover:scale-110 transition-transform`}>
+                        <div className={`p-3 rounded-none ${stat.bg} ${stat.color} group-hover:scale-110 transition-transform`}>
                             <stat.icon className="w-6 h-6" />
                         </div>
                         <div>
@@ -85,14 +85,14 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
                                     contentStyle={{ 
                                         backgroundColor: 'var(--color-bg-secondary)', 
                                         border: 'none', 
-                                        borderRadius: isModern ? '12px' : '0px',
+                                        borderRadius: '0px',
                                         color: 'var(--color-primary-500)',
                                         fontSize: '10px',
                                         fontWeight: 'bold',
                                         boxShadow: '0 10px 15px -3px var(--color-outline)'
                                     }}
                                 />
-                                <Bar dataKey="count" fill={CH_COLORS.blue} radius={isModern ? [6, 6, 0, 0] : [0, 0, 0, 0]} />
+                                <Bar dataKey="count" fill={CH_COLORS.blue} radius={[0, 0, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>

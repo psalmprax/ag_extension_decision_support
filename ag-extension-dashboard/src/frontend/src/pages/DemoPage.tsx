@@ -51,7 +51,6 @@ export function DemoPage() {
     const runRagSimulation = async (index: number) => {
         if (isTyping) return;
         setSelectedPreset(index);
-        setRagQuery(presets[index].query);
         setIsTyping(true);
         setSimulatedResponse('');
 
