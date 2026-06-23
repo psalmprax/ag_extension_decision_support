@@ -4,7 +4,7 @@
  * if the promise fails (e.g., backend is offline, network error).
  */
 export async function withRealFallback<T>(
-    realPromise: Promise<{ success: boolean; data: T } | any>,
+    realPromise: Promise<{ success: boolean; data: T } | unknown>,
     fallbackData: T
 ): Promise<T> {
     try {

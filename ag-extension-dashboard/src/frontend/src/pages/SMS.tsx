@@ -11,7 +11,6 @@ import { fetchSMSHistory, sendSMS, sendBulkSMS, translateMessage } from '../api/
 import { fetchFarmers } from '../api/farmerService';
 import { fetchUsage } from '../api/billingService';
 import { withRealFallback } from '../lib/realFirst';
-import { useThemeClasses } from '@/hooks/useThemeClasses';
 import toast from 'react-hot-toast';
 
 interface SMSMessage {
@@ -31,7 +30,6 @@ interface Contact {
 
 export function SMSPage() {
     const { t, language } = useLanguage();
-    const { headingClass: _headingClass, isModern: _isModern, radiusClass, btnClass } = useThemeClasses();
     const { pendingSMS, setPendingSMS } = useAppStore();
 
     // UI State

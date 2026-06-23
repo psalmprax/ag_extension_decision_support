@@ -1,5 +1,3 @@
-import { query } from '@/services/databaseService';
-import { cacheGet } from '@/services/cacheService';
 
 // Mock dependencies
 jest.mock('@/services/databaseService');
@@ -13,8 +11,6 @@ jest.mock('@/utils/logger', () => ({
     },
 }));
 
-const mockQuery = query as jest.MockedFunction<typeof query>;
-const mockCacheGet = cacheGet as jest.MockedFunction<typeof cacheGet>;
 
 describe('Analytics Route Helpers', () => {
     beforeEach(() => {

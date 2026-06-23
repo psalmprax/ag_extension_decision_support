@@ -10,7 +10,7 @@ export interface DiagnosticResult {
     server_ip: string;
     dns: Record<string, { resolved: boolean; ips: string[]; error?: string }>;
     ports: Array<{ port: number; name: string; host: string; open: boolean }>;
-    traefik: Record<string, any>;
+    traefik: Record<string, unknown>;
     container_network: Array<{ name: string; port: number; reachable: boolean }>;
     ssl: {
         ok: boolean;

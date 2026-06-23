@@ -1,7 +1,6 @@
 import React from 'react';
 import { Clock, Download, FileText, Receipt } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
-import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { Badge } from '../ui/Badge';
 
 interface Invoice {
@@ -19,7 +18,6 @@ interface InvoicesProps {
 
 export const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
     const { t } = useLanguage();
-    const { radiusClass } = useThemeClasses();
 
     return (
         <section aria-labelledby="invoices-title" className="card p-0 bg-white dark:bg-gray-900 border-none shadow-2xl overflow-hidden group">

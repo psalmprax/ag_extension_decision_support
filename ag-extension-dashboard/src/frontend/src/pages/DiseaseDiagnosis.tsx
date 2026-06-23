@@ -32,7 +32,6 @@ export function DiseaseDiagnosis() {
     const [cropType, setCropType] = useState('');
     const [isDiagnosing, setIsDiagnosing] = useState(false);
     const [diagnosis, setDiagnosis] = useState<DiseaseDiagnosis[]>([]);
-    const [allDiseases, setAllDiseases] = useState<string[]>([]);
     const [selectedDisease, setSelectedDisease] = useState<string | null>(null);
     const [diseaseInfo, setDiseaseInfo] = useState<DiseaseInfo | null>(null);
     const [isLoadingInfo, setIsLoadingInfo] = useState(false);

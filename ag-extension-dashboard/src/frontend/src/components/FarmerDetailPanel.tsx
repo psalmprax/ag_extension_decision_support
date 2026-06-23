@@ -27,7 +27,6 @@ import { VideoCall } from './VideoCall';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 import { useNavigate } from 'react-router-dom';
-import { useThemeClasses } from '@/hooks/useThemeClasses';
 
 import { fetchSMSHistory } from '@/api/smsService';
 import { generateSynthesis } from '@/api/chatbotService';
@@ -61,7 +60,6 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
         showShareModal
     } = useAppStore();
     
-    const { radiusClass, btnClass, isModern } = useThemeClasses();
     const isCyber = themeName === 'cyber' && isModern;
     const navigate = useNavigate();
     

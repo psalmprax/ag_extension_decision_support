@@ -345,7 +345,7 @@ export function SystemHealth() {
                         <div className="mb-4">
                             <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">DNS Resolution</h4>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {Object.entries(diagnostics.dns).map(([domain, info]: [string, any]) => (
+                                {Object.entries(diagnostics.dns).map(([domain, info]: [string, unknown]) => (
                                     <div key={domain} className={`p-3 rounded-lg border ${info.resolved ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800'}`}>
                                         <p className="text-xs font-mono font-bold">{domain}</p>
                                         <p className="text-sm">{info.resolved ? `→ ${info.ips?.join(', ')}` : `✗ ${info.error || 'Failed'}`}</p>

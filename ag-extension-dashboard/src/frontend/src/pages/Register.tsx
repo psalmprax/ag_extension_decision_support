@@ -5,12 +5,10 @@ import { Eye, EyeOff, Loader2, Check } from 'lucide-react';
 import { AxiosError } from 'axios';
 import { useLanguage } from '@/lib/LanguageContext';
 import { register } from '@/api/authService';
-import { useThemeClasses } from '@/hooks/useThemeClasses';
 
 export function Register() {
     const navigate = useNavigate();
     const { t } = useLanguage();
-    const { isModern, radiusClass, btnClass } = useThemeClasses();
 
     const [formData, setFormData] = useState({
         firstName: '',

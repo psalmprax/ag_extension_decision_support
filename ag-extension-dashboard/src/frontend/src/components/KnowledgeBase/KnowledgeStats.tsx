@@ -12,7 +12,6 @@ import {
     Cell
 } from 'recharts';
 import { TrendingUp, PieChart as PieIcon, BarChart3, Info } from 'lucide-react';
-import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { CH_COLORS } from '@/lib/colors';
 
 const COLORS = [CH_COLORS.blue, CH_COLORS.green, CH_COLORS.warning, CH_COLORS.error, CH_COLORS.purple];
@@ -29,7 +28,6 @@ interface KnowledgeStatsProps {
 }
 
 export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
-    const { isModern, radiusClass } = useThemeClasses();
 
     if (!data) return (
         <div className="flex items-center justify-center p-20 text-gray-400">

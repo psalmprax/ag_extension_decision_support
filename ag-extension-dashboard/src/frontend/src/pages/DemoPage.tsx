@@ -12,7 +12,6 @@ export function DemoPage() {
     const [activeTab, setActiveTab] = useState<'rag' | 'synthesis' | 'telemetry'>('rag');
 
     // RAG states
-    const [ragQuery, setRagQuery] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const [ragStep, setRagStep] = useState(0);
     const [simulatedResponse, setSimulatedResponse] = useState('');
