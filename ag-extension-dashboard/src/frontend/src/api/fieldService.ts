@@ -9,7 +9,7 @@ export interface Field {
     soilPh?: number;
     latitude?: number;
     longitude?: number;
-    boundaryCoordinates?: any; // GeoJSON or JSON structure
+    boundaryCoordinates?: unknown; // GeoJSON or JSON structure
     isActive: boolean;
     createdAt: string;
     updatedAt: string;

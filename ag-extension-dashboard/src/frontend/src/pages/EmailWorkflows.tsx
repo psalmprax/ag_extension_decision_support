@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Mail, Plus, Send, CheckCircle, XCircle,
-    Clock, Eye, Edit, Trash2, Filter,
+    Mail, CheckCircle, XCircle,
+    Clock, Eye, Edit, Filter,
     AlertTriangle, RefreshCw, UserCheck, UserX
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '../store/useAppStore';
@@ -16,7 +16,6 @@ import {
     type EmailTemplate,
     type EmailApproval
 } from '../api/emailWorkflowService';
-import toast from 'react-hot-toast';
 import DOMPurify from 'dompurify';
 import { MetricCard } from '@/components/MetricCard';
 
@@ -47,7 +46,7 @@ export function EmailWorkflows() {
     });
 
     // Load data
-    const loadData = async (showRefresh = false) => {
+    const loadData = useCallback(async (showRefresh = false) => {
         try {
             if (showRefresh) setIsRefreshing(true);
             else setIsLoading(true);
@@ -73,11 +72,11 @@ export function EmailWorkflows() {
             setIsLoading(false);
             setIsRefreshing(false);
         }
-    };
+    }, [selectedCategory, addNotification, t]);
 
     useEffect(() => {
         loadData();
-    }, [selectedCategory]);
+    }, [loadData]);
 
     const handleRefresh = () => {
         loadData(true);

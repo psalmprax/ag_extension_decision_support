@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Users, UserPlus, Shield, Edit2, Trash2, X, Loader2,
+    Users, UserPlus, Shield, X, Loader2,
     ChevronDown, Search, Mail, MapPin, Phone
 } from 'lucide-react';
 import apiClient from '@/api/client';
@@ -29,7 +29,7 @@ const ROLES = [
 const getRoleBadge = (role: string) => ROLES.find(r => r.value === role) || ROLES[2];
 
 export function UserManagementPage() {
-    const { t } = useLanguage();
+    const { t: _t } = useLanguage();
     const { isModern, radiusClass, btnClass, headingClass } = useThemeClasses();
     const queryClient = useQueryClient();
 
@@ -66,7 +66,7 @@ export function UserManagementPage() {
             setTimeout(() => { setShowCreateModal(false); setFormSuccess(''); }, 1500);
             setFormData({ firstName: '', lastName: '', email: '', password: '', role: 'extension_officer', region: '', phone: '' });
         },
-        onError: (err: any) => {
+        onError: (err: unknown) => {
             setFormError(err.response?.data?.error || 'Failed to create user');
         },
     });

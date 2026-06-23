@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
 import { useAppStore } from '../store/useAppStore';
 import { fetchSMSHistory, sendSMS, sendBulkSMS, translateMessage } from '../api/smsService';
-import { fetchFarmers, Farmer } from '../api/farmerService';
+import { fetchFarmers } from '../api/farmerService';
 import { fetchUsage } from '../api/billingService';
 import { withRealFallback } from '../lib/realFirst';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
@@ -31,7 +31,7 @@ interface Contact {
 
 export function SMSPage() {
     const { t, language } = useLanguage();
-    const { headingClass, isModern, radiusClass, btnClass } = useThemeClasses();
+    const { headingClass: _headingClass, isModern: _isModern, radiusClass, btnClass } = useThemeClasses();
     const { pendingSMS, setPendingSMS } = useAppStore();
 
     // UI State
@@ -59,8 +59,8 @@ export function SMSPage() {
     const [showRightPanel, setShowRightPanel] = useState(true);
 
     // Status State
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [response, setResponse] = useState<any>(null);
+     
+    const [response, setResponse] = useState<unknown>(null);
     const [error, setError] = useState<string | null>(null);
     const [history, setHistory] = useState<SMSMessage[]>([]);
     
@@ -195,8 +195,8 @@ export function SMSPage() {
                 setError(res.error || 'Failed to send message');
             }
         } catch (err: unknown) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            setError((err as any).response?.data?.message || (err as any).message);
+             
+            setError((err as unknown).response?.data?.message || (err as unknown).message);
         } finally {
             setIsSending(false);
         }

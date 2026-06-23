@@ -9,6 +9,7 @@ import { initializeTheme } from './theme';
 import { LanguageProvider } from './lib/LanguageContext';
 import { ThemeProvider } from './lib/ThemeProvider';
 import ErrorBoundary from './components/ErrorBoundary';
+import { CH_COLORS } from '@/lib/colors';
 // Global console silencing for production logging compliance
 if (!import.meta.env.DEV) {
     const noop = () => {};
@@ -21,7 +22,7 @@ const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
             refetchOnWindowFocus: false,
-            retry: (failureCount, error: any) => {
+            retry: (failureCount, error: unknown) => {
                 // Don't retry on 401 errors (authentication required)
                 if (error?.response?.status === 401) {
                     return false;
@@ -66,19 +67,19 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                                 toastOptions={{
                                     duration: 4000,
                                     style: {
-                                        background: '#333',
-                                        color: '#fff',
+                                        background: 'var(--color-primary-500)',
+                                        color: 'var(--color-primary-500)',
                                     },
                                     success: {
                                         duration: 3000,
                                         style: {
-                                            background: '#22c55e',
+                                            background: CH_COLORS.green,
                                         },
                                     },
                                     error: {
                                         duration: 4000,
                                         style: {
-                                            background: '#ef4444',
+                                            background: CH_COLORS.error,
                                         },
                                     },
                                 }}

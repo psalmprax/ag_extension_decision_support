@@ -1,5 +1,40 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, beforeAll } from '@jest/globals';
+import { describe, it, expect, beforeAll, jest } from '@jest/globals';
+
+jest.mock('../services/paymentService', () => ({
+    paymentService: {
+        getPricingPlans: (jest.fn() as any).mockImplementation(() => Promise.resolve([])),
+        createCheckoutSession: (jest.fn() as any).mockImplementation(() => Promise.resolve({ url: '' })),
+        getSubscription: (jest.fn() as any).mockImplementation(() => Promise.resolve(null)),
+        cancelSubscription: (jest.fn() as any).mockImplementation(() => Promise.resolve({ success: true })),
+        switchSubscription: (jest.fn() as any).mockImplementation(() => Promise.resolve({ success: true })),
+        getPaymentMethods: (jest.fn() as any).mockImplementation(() => Promise.resolve({ success: true, data: [] })),
+        getOrCreateCustomer: (jest.fn() as any).mockImplementation(() => Promise.resolve('')),
+        getInvoices: (jest.fn() as any).mockImplementation(() => Promise.resolve([])),
+        createPortalSession: (jest.fn() as any).mockImplementation(() => Promise.resolve(''))
+    }
+}));
+
+jest.mock('../services/prismaService', () => ({
+    getPrisma: (jest.fn() as any).mockImplementation(() => ({
+        systemConfig: {
+            findUnique: (jest.fn() as any).mockResolvedValue(null),
+            upsert: (jest.fn() as any).mockResolvedValue({})
+        },
+        subscription: {
+            findUnique: (jest.fn() as any).mockResolvedValue(null),
+            create: (jest.fn() as any).mockResolvedValue({}),
+            update: (jest.fn() as any).mockResolvedValue({})
+        },
+        subscriptionPlan: {
+            findMany: (jest.fn() as any).mockResolvedValue([]),
+            findFirst: (jest.fn() as any).mockResolvedValue(null)
+        },
+        user: {
+            findUnique: (jest.fn() as any).mockResolvedValue({ id: '1', email: 'test@example.com' })
+        }
+    }))
+}));
 
 describe('Tool Registry', () => {
   let toolRegistry: any[];

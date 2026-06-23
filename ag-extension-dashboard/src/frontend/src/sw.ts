@@ -3,11 +3,11 @@ import { precacheAndRoute } from 'workbox-precaching';
 // @ts-expect-error - __WB_MANIFEST is injected by workbox
 precacheAndRoute(self.__WB_MANIFEST);
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sw = self as any;
+ 
+const sw = self as unknown;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-sw.addEventListener('push', (event: any) => {
+ 
+sw.addEventListener('push', (event: unknown) => {
     if (event.data) {
         const payload = event.data.json();
         const options = {
@@ -25,8 +25,8 @@ sw.addEventListener('push', (event: any) => {
     }
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-sw.addEventListener('notificationclick', (event: any) => {
+ 
+sw.addEventListener('notificationclick', (event: unknown) => {
     event.notification.close();
     event.waitUntil(
         sw.clients.openWindow(event.notification.data.url)

@@ -2,7 +2,7 @@
 import { PrismaClient } from '@prisma/client';
 import { getPrisma } from './prismaService';
 import { logger } from '@/utils/logger';
-import { query, getPool } from './databaseService';
+import { query } from './databaseService';
 
 export interface BulkOperationResult {
     success: boolean;

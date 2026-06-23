@@ -1,4 +1,4 @@
-import { Pool, QueryResult } from 'pg';
+import { Pool, PoolClient, QueryResult } from 'pg';
 import { execSync } from 'child_process';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
@@ -16,7 +16,7 @@ export async function initializeDatabase(): Promise<void> {
     });
 
     // Test connection with retry
-    let client = null as any;
+    let client: PoolClient | null = null;
     let retries = 5;
     while (retries > 0) {
       try {

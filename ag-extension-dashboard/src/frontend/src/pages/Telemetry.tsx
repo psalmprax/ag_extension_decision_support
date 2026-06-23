@@ -1,17 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Activity, Clock, TrendingUp, AlertTriangle,
-    Server, Zap, DollarSign, BarChart3,
-    RefreshCw, Download, Filter, ChevronDown
+    Activity, Clock, AlertTriangle, DollarSign,
+    RefreshCw
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '../store/useAppStore';
 import { fetchTelemetrySummary, fetchTelemetryEvents, TelemetrySummary, TelemetryEvent } from '../api/telemetryService';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, LineChart, Line } from 'recharts';
-import toast from 'react-hot-toast';
+import { XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { MetricCard } from '@/components/MetricCard';
+import { CH_COLORS } from '@/lib/colors';
 
 export function Telemetry() {
     const { t } = useLanguage();
@@ -27,7 +26,7 @@ export function Telemetry() {
     const [filterStatus, setFilterStatus] = useState<string>('all');
 
     // Load data
-    const loadData = async (showRefresh = false) => {
+    const loadData = useCallback(async (showRefresh = false) => {
         try {
             if (showRefresh) setIsRefreshing(true);
             else setIsLoading(true);
@@ -53,11 +52,11 @@ export function Telemetry() {
             setIsLoading(false);
             setIsRefreshing(false);
         }
-    };
+    }, [timeRange, addNotification, t]);
 
     useEffect(() => {
         loadData();
-    }, [timeRange]);
+    }, [loadData]);
 
     const handleRefresh = () => {
         loadData(true);
@@ -167,14 +166,14 @@ export function Telemetry() {
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t('telemetry_request_distribution')}</h3>
                     <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={[
-                            { name: t('telemetry_success'), value: statusStats.success, color: '#10b981' },
-                            { name: t('telemetry_error'), value: statusStats.error, color: '#ef4444' },
-                            { name: t('telemetry_pending'), value: statusStats.pending, color: '#f59e0b' }
+                            { name: t('telemetry_success'), value: statusStats.success, color: CH_COLORS.success },
+                            { name: t('telemetry_error'), value: statusStats.error, color: CH_COLORS.error },
+                            { name: t('telemetry_pending'), value: statusStats.pending, color: CH_COLORS.warning }
                         ]}>
                             <XAxis dataKey="name" />
                             <YAxis />
                             <Tooltip />
-                            <Bar dataKey="value" fill="#3b82f6" />
+                            <Bar dataKey="value" fill={CH_COLORS.blue} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
@@ -191,7 +190,7 @@ export function Telemetry() {
                                 <XAxis dataKey="name" />
                                 <YAxis />
                                 <Tooltip />
-                                <Bar dataKey="usage" fill="#8b5cf6" />
+                                <Bar dataKey="usage" fill={CH_COLORS.purple} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>

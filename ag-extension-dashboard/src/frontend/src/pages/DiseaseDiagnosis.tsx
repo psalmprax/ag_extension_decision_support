@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
     Search, Upload, Camera, Leaf, AlertTriangle,
-    CheckCircle, XCircle, Loader2, RefreshCw,
-    FileImage, Eye, Download, Droplet, Layers, Activity
+    CheckCircle, XCircle, Loader2,
+    FileImage, Download, Droplet, Layers, Activity
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '../store/useAppStore';
@@ -67,6 +67,7 @@ export function DiseaseDiagnosis() {
             }
         };
         loadDiseases();
+        // Intentional mount-only fetch: getAllDiseases is a stable module import.
     }, []);
 
     const handleAddSymptom = () => {

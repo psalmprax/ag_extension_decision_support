@@ -1,4 +1,6 @@
 import { useEffect } from 'react';
+import type { Report } from '@/api/reportService';
+import type { ConfirmModalState } from './useAppModalState';
 
 interface ShortcutOptions {
     sidebarOpen: boolean;
@@ -21,12 +23,12 @@ interface ShortcutOptions {
     setShowFarmerModal: (show: boolean) => void;
     showGlobalSearch: boolean;
     setShowGlobalSearch: (show: boolean) => void;
-    viewingReport: any;
-    setViewingReport: (report: any) => void;
+    viewingReport: Report | null;
+    setViewingReport: (report: Report | null) => void;
     showBulkSmsComposer: boolean;
     setShowBulkSmsComposer: (open: boolean) => void;
-    confirmModal: any;
-    setConfirmModal: (modal: any) => void;
+    confirmModal: ConfirmModalState | null;
+    setConfirmModal: (modal: ConfirmModalState | null) => void;
 }
 
 export const useAppShortcuts = (options: ShortcutOptions) => {
@@ -80,11 +82,11 @@ export const useAppShortcuts = (options: ShortcutOptions) => {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [
-        isNotificationPanelOpen, isProfileMenuOpen, showProfileModal, showSettingsPanel, showHelpCenter, 
-        isDetailPanelOpen, showVisitModal, showFarmerModal, showGlobalSearch, viewingReport, 
-        showBulkSmsComposer, confirmModal, sidebarOpen, setSidebarOpen, setShowGlobalSearch, 
-        setViewingReport, setShowBulkSmsComposer, setConfirmModal, setIsNotificationPanelOpen, 
-        setIsProfileMenuOpen, setShowProfileModal, setShowSettingsPanel, setShowHelpCenter, 
+        isNotificationPanelOpen, isProfileMenuOpen, showProfileModal, showSettingsPanel, showHelpCenter,
+        isDetailPanelOpen, showVisitModal, showFarmerModal, showGlobalSearch, viewingReport,
+        showBulkSmsComposer, confirmModal, sidebarOpen, setSidebarOpen, setShowGlobalSearch,
+        setViewingReport, setShowBulkSmsComposer, setConfirmModal, setIsNotificationPanelOpen,
+        setIsProfileMenuOpen, setShowProfileModal, setShowSettingsPanel, setShowHelpCenter,
         setIsDetailPanelOpen, setShowVisitModal, setShowFarmerModal
     ]);
 };

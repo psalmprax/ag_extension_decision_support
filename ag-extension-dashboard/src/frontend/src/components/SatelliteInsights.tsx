@@ -3,8 +3,6 @@ import { motion } from 'framer-motion';
 import { 
     Layers, 
     Zap, 
-    Droplets, 
-    Sun, 
     Navigation2,
     Shield,
     Cpu,
@@ -32,7 +30,7 @@ interface SatelliteInsightsProps {
 }
 
 export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, isCyber, metrics }) => {
-    const { t } = useLanguage();
+    const { t: _t } = useLanguage();
     const [synthesis, setSynthesis] = useState<string | null>(null);
     const [farmer, setFarmer] = useState<Farmer | null>(null);
     const [priority, setPriority] = useState<PriorityData | null>(null);
@@ -107,13 +105,13 @@ export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, 
         const y = 50 + (i < 2 ? 5 : -5);
         
         const colorClass = data.health === 'healthy' ? 'bg-green-500' : data.health === 'normal' ? 'bg-amber-500' : 'bg-red-500';
-        const pulseClass = data.health === 'healthy' ? 'bg-green-400 shadow-[0_0_10px_rgba(34,197,94,0.8)]' : 
-                          data.health === 'normal' ? 'bg-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.8)]' : 
-                          'bg-red-400 shadow-[0_0_10px_rgba(239,68,68,0.8)]';
+        const pulseClass = data.health === 'healthy' ? 'bg-green-400 shadow-[0_0_10px_var(--color-outline)]' : 
+                          data.health === 'normal' ? 'bg-amber-400 shadow-[0_0_10px_var(--color-outline)]' : 
+                          'bg-red-400 shadow-[0_0_10px_var(--color-outline)]';
 
         return { x, y, colorClass, pulseClass, ndvi: data.ndvi };
     });
-    const displayMetrics = metrics || [];
+    const _displayMetrics = metrics || [];
 
     return (
         <div className="space-y-8">
@@ -142,7 +140,7 @@ export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, 
             </div>
 
             {/* Spatial Data Visualization */}
-            <div className={`aspect-video rounded-3xl relative overflow-hidden border ${isCyber ? 'bg-black/40 border-primary-500/20 shadow-[0_0_30px_rgba(79,209,197,0.1)]' : 'bg-gray-100 border-gray-200'}`}>
+            <div className={`aspect-video rounded-3xl relative overflow-hidden border ${isCyber ? 'bg-black/40 border-primary-500/20 shadow-[0_0_30px_var(--color-outline)]' : 'bg-gray-100 border-gray-200'}`}>
                 {/* Background Representation of Farm */}
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/40 via-blue-900/20 to-emerald-950/40" />
                 {isCyber && <div className="absolute inset-0 cyber-grid-premium opacity-30" />}
@@ -253,7 +251,7 @@ export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, 
             </div>
 
             {/* Analysis Summary */}
-            <div className={`p-6 rounded-3xl border relative min-h-[140px] flex flex-col justify-center ${isCyber ? 'bg-primary-500/5 border-primary-500/20 shadow-[0_0_20px_rgba(79,209,197,0.05)]' : 'bg-blue-50/50 border-blue-100'}`}>
+            <div className={`p-6 rounded-3xl border relative min-h-[140px] flex flex-col justify-center ${isCyber ? 'bg-primary-500/5 border-primary-500/20 shadow-[0_0_20px_var(--color-outline)]' : 'bg-blue-50/50 border-blue-100'}`}>
                 <h5 className={`text-xxs font-black uppercase tracking-[0.2em] mb-3 flex items-center gap-2 ${isCyber ? 'text-primary-400' : 'text-blue-600'}`}>
                     <Navigation2 className="w-3 h-3" />
                     {isLoading ? 'Generating Synthesis...' : 'Growth Trajectory Analysis'}

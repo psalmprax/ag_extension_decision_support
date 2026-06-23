@@ -155,7 +155,7 @@ function saveToFile(finalTranslations: Record<string, Record<string, string>>, o
         const sortedKeys = Object.keys(dict).sort();
 
         for (const key of sortedKeys) {
-            let value = String(dict[key] || '').replace(/"/g, '\\"');
+            const value = String(dict[key] || '').replace(/"/g, '\\"');
             newContent += `        ${key}: "${value}",\n`;
         }
         newContent += `    },\n`;

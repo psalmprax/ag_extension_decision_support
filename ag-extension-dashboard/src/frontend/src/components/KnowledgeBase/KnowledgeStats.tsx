@@ -9,14 +9,13 @@ import {
     ResponsiveContainer, 
     PieChart, 
     Pie, 
-    Cell,
-    AreaChart,
-    Area
+    Cell
 } from 'recharts';
 import { TrendingUp, PieChart as PieIcon, BarChart3, Info } from 'lucide-react';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
+import { CH_COLORS } from '@/lib/colors';
 
-const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6'];
+const COLORS = [CH_COLORS.blue, CH_COLORS.green, CH_COLORS.warning, CH_COLORS.error, CH_COLORS.purple];
 
 interface KnowledgeStatsData {
     crops?: { name: string; count: number }[];
@@ -76,26 +75,26 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
                     <div className="h-64 mt-auto">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={cropsData}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#88888820" />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-primary-500)20" />
                                 <XAxis 
                                     dataKey="crop" 
-                                    tick={{ fontSize: 10, fontWeight: 'bold', fill: '#888' }} 
+                                    tick={{ fontSize: 10, fontWeight: 'bold', fill: 'var(--color-primary-500)' }} 
                                     axisLine={false}
                                     tickLine={false}
                                 />
                                 <YAxis hide />
                                 <Tooltip 
                                     contentStyle={{ 
-                                        backgroundColor: '#1f2937', 
+                                        backgroundColor: 'var(--color-bg-secondary)', 
                                         border: 'none', 
                                         borderRadius: isModern ? '12px' : '0px',
-                                        color: '#fff',
+                                        color: 'var(--color-primary-500)',
                                         fontSize: '10px',
                                         fontWeight: 'bold',
-                                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                                        boxShadow: '0 10px 15px -3px var(--color-outline)'
                                     }}
                                 />
-                                <Bar dataKey="count" fill="#3b82f6" radius={isModern ? [6, 6, 0, 0] : [0, 0, 0, 0]} />
+                                <Bar dataKey="count" fill={CH_COLORS.blue} radius={isModern ? [6, 6, 0, 0] : [0, 0, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
@@ -120,7 +119,7 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
                                         paddingAngle={5}
                                         dataKey="count"
                                     >
-                                        {categoriesData.map((_entry: any, index: number) => (
+                                        {categoriesData.map((_entry: unknown, index: number) => (
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                     </Pie>
@@ -128,7 +127,7 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
                             </ResponsiveContainer>
                         </div>
                         <div className="flex flex-col gap-2">
-                            {categoriesData.map((cat: any, i: number) => (
+                            {categoriesData.map((cat: unknown, i: number) => (
                                 <div key={i} className="flex items-center gap-3">
                                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }}></div>
                                     <span className="text-xs font-bold text-gray-600 dark:text-gray-400 truncate w-32 capitalize">{cat.category}</span>

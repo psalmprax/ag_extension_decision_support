@@ -5,7 +5,6 @@ import { logger } from '@/utils/logger';
 import { validate } from '@/middleware/validationMiddleware';
 import { createVisitSchema, updateVisitSchema } from '@/utils/schemas';
 import { authorize } from '@/middleware/authorize';
-import { shareService } from '@/services/shareService';
 import { bulkOperationsService } from '@/services/bulkOperationsService';
 import { safeError } from '@/utils/safeResponse';
 

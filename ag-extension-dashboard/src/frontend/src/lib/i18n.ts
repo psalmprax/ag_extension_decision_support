@@ -37,5 +37,5 @@ export const languages: { code: Language; name: string; flag: string }[] = [
 
 // Translations are now lazy-loaded from /public/locales/{lang}.json
 // This significantly reduces the bundle size and improves scalability.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const translations: Record<Language, Record<string, string>> = {} as any;
+ 
+export const translations: Record<Language, Record<string, string>> = {} as unknown;

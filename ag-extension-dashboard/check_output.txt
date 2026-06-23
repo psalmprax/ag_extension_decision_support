@@ -1,0 +1,155 @@
+[0;34m[INFO][0;0m Running frontend color requirement check...
+[0;31m[ERROR][0;0m Hardcoded colors found in src/frontend/src/pages/Telemetry.tsx:
+src/frontend/src/pages/Telemetry.tsx:170:                            { name: t('telemetry_success'), value: statusStats.success, color: '#10b981' },
+src/frontend/src/pages/Telemetry.tsx:171:                            { name: t('telemetry_error'), value: statusStats.error, color: '#ef4444' },
+src/frontend/src/pages/Telemetry.tsx:172:                            { name: t('telemetry_pending'), value: statusStats.pending, color: '#f59e0b' }
+src/frontend/src/pages/Telemetry.tsx:177:                            <Bar dataKey="value" fill="#3b82f6" />
+src/frontend/src/pages/Telemetry.tsx:194:                                <Bar dataKey="usage" fill="#8b5cf6" />
+[0;31m[ERROR][0;0m Hardcoded colors found in src/frontend/src/pages/Agents.tsx:
+src/frontend/src/pages/Agents.tsx:150:        { name: 'Queued', value: queueStatus.queued, color: '#f59e0b' },
+src/frontend/src/pages/Agents.tsx:151:        { name: 'Active', value: queueStatus.active, color: '#3b82f6' },
+src/frontend/src/pages/Agents.tsx:152:        { name: 'Completed', value: queueStatus.completed, color: '#10b981' },
+src/frontend/src/pages/Agents.tsx:153:        { name: 'Failed', value: queueStatus.failed, color: '#ef4444' }
+src/frontend/src/pages/Agents.tsx:241:                            <Bar dataKey="load" fill="#3b82f6" />
+src/frontend/src/pages/Agents.tsx:242:                            <Bar dataKey="max" fill="#e5e7eb" />
+[0;31m[ERROR][0;0m Hardcoded colors found in src/frontend/src/pages/DashboardPage.tsx:
+src/frontend/src/pages/DashboardPage.tsx:44:                <h1 className={`text-5xl font-black tracking-tighter font-headline mb-2 drop-shadow-[0_0_15px_rgba(0,245,255,0.1)] dark:drop-shadow-[0_0_15px_rgba(0,245,255,0.3)] ${headingClass}`}>
+src/frontend/src/pages/DashboardPage.tsx:197:                                            className={`h-full ${item.color} rounded-full shadow-[0_0_10px_rgba(0,245,255,0.3)]`}
+[0;31m[ERROR][0;0m Hardcoded colors found in src/frontend/src/pages/LandingPage.tsx:
+src/frontend/src/pages/LandingPage.tsx:140:                    stroke="rgba(16,185,129,0.4)"
+src/frontend/src/pages/LandingPage.tsx:150:                            stroke="rgba(16,185,129,0.15)"
+src/frontend/src/pages/LandingPage.tsx:159:                        <circle cx={node.x} cy={node.y} r="1.5" fill="rgba(16,185,129,0.6)">
+src/frontend/src/pages/LandingPage.tsx:163:                        <circle cx={node.x} cy={node.y} r="0.6" fill="rgba(16,185,129,0.9)" />
+src/frontend/src/pages/LandingPage.tsx:249:                        <a href="#features" className="text-sm font-medium text-white/50 hover:text-white transition-colors">Features</a>
+src/frontend/src/pages/LandingPage.tsx:289:                        background: 'radial-gradient(circle, rgba(16,185,129,0.06) 0%, transparent 70%)',
+src/frontend/src/pages/LandingPage.tsx:297:                        backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
+src/frontend/src/pages/LandingPage.tsx:439:                                            { value: '2,847', label: 'Farmers', change: '+12%', color: '#10b981', sparkData: [20, 25, 22, 30, 28, 35, 32, 40, 38, 45] },
+src/frontend/src/pages/LandingPage.tsx:440:                                            { value: '156', label: 'Visits', change: '+8%', color: '#10b981', sparkData: [10, 15, 12, 18, 20, 16, 22, 25, 20, 28] },
+src/frontend/src/pages/LandingPage.tsx:441:                                            { value: '92%', label: 'Health', change: '+3%', color: '#f59e0b', sparkData: [85, 87, 86, 88, 90, 89, 91, 90, 92, 92] },
+src/frontend/src/pages/LandingPage.tsx:442:                                            { value: '4.2mm', label: 'Rain/day', change: 'Normal', color: '#3b82f6', sparkData: [3, 4, 5, 3, 4, 6, 5, 4, 3, 4] },
+src/frontend/src/pages/LandingPage.tsx:471:                                                                ? 'linear-gradient(to top, #D97706, #F59E0B)'
+src/frontend/src/pages/LandingPage.tsx:472:                                                                : `linear-gradient(to top, rgba(16,185,129,${0.2 + i * 0.04}), rgba(16,185,129,${0.4 + i * 0.03}))`,
+src/frontend/src/pages/LandingPage.tsx:522:                                                        <div className="h-full rounded-full" style={{ width: `${f.health}%`, background: f.health > 85 ? '#10b981' : f.health > 70 ? '#f59e0b' : '#ef4444' }} />
+src/frontend/src/pages/LandingPage.tsx:827:                            <li><a href="#features" className="text-white/35 hover:text-emerald-400 transition-colors">Features</a></li>
+[0;31m[ERROR][0;0m Hardcoded colors found in src/frontend/src/pages/AnalyticsPage.tsx:
+src/frontend/src/pages/AnalyticsPage.tsx:110:                                    <stop offset="5%" stopColor="#22c55e" stopOpacity={0.2} />
+src/frontend/src/pages/AnalyticsPage.tsx:111:                                    <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+src/frontend/src/pages/AnalyticsPage.tsx:114:                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} />
+src/frontend/src/pages/AnalyticsPage.tsx:115:                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+src/frontend/src/pages/AnalyticsPage.tsx:122:                                tick={{ fill: '#9ca3af', fontSize: 10, fontWeight: 600 }}
+src/frontend/src/pages/AnalyticsPage.tsx:127:                                tick={{ fill: '#9ca3af', fontSize: 10, fontWeight: 600 }}
+src/frontend/src/pages/AnalyticsPage.tsx:131:                                    backgroundColor: darkMode ? '#1f2937' : '#ffffff',
+src/frontend/src/pages/AnalyticsPage.tsx:132:                                    borderColor: darkMode ? '#374151' : '#f3f4f6',
+src/frontend/src/pages/AnalyticsPage.tsx:138:                            <Area type="monotone" dataKey="visits" stroke="#22c55e" strokeWidth={3} fillOpacity={1} fill="url(#colorVisits)" />
+src/frontend/src/pages/AnalyticsPage.tsx:139:                            <Area type="monotone" dataKey="queries" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorQueries)" />
+[0;31m[ERROR][0;0m Hardcoded colors found in src/frontend/src/hooks/useThemeClasses.ts:
+src/frontend/src/hooks/useThemeClasses.ts:23:            ? 'backdrop-blur-xl bg-white/70 dark:bg-white/5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] border border-white/10'
+src/frontend/src/hooks/useThemeClasses.ts:29:            ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_0_20px_rgba(34,211,238,0.2)]'
+src/frontend/src/hooks/useThemeClasses.ts:32:            ? 'text-cyan-900 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-white dark:via-cyan-200 dark:to-emerald-200 dark:drop-shadow-[0_0_15px_rgba(34,211,238,0.4)] font-black tracking-tighter'
+src/frontend/src/hooks/useThemeClasses.ts:35:            ? 'text-cyan-900 dark:text-cyan-400 font-black tracking-tighter dark:drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]'
+[0;31m[ERROR][0;0m Hardcoded colors found in src/frontend/src/main.tsx:
+src/frontend/src/main.tsx:69:                                        background: '#333',
+src/frontend/src/main.tsx:70:                                        color: '#fff',
+src/frontend/src/main.tsx:75:                                            background: '#22c55e',
+src/frontend/src/main.tsx:81:                                            background: '#ef4444',
+[0;31m[ERROR][0;0m Hardcoded colors found in src/frontend/src/components/KnowledgeBase/AIResult.tsx:
+src/frontend/src/components/KnowledgeBase/AIResult.tsx:96:                                <div className="w-2 h-2 bg-primary-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
+[0;31m[ERROR][0;0m Hardcoded colors found in src/frontend/src/components/KnowledgeBase/KnowledgeStats.tsx:
+src/frontend/src/components/KnowledgeBase/KnowledgeStats.tsx:19:const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6'];
+src/frontend/src/components/KnowledgeBase/KnowledgeStats.tsx:79:                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#88888820" />
+src/frontend/src/components/KnowledgeBase/KnowledgeStats.tsx:82:                                    tick={{ fontSize: 10, fontWeight: 'bold', fill: '#888' }} 
+src/frontend/src/components/KnowledgeBase/KnowledgeStats.tsx:89:                                        backgroundColor: '#1f2937', 
+src/frontend/src/components/KnowledgeBase/KnowledgeStats.tsx:92:                                        color: '#fff',
+src/frontend/src/components/KnowledgeBase/KnowledgeStats.tsx:95:                                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+src/frontend/src/components/KnowledgeBase/KnowledgeStats.tsx:98:                                <Bar dataKey="count" fill="#3b82f6" radius={isModern ? [6, 6, 0, 0] : [0, 0, 0, 0]} />
+[0;31m[ERROR][0;0m Hardcoded colors found in src/frontend/src/components/KnowledgeBase/ReasoningVisuals.tsx:
+src/frontend/src/components/KnowledgeBase/ReasoningVisuals.tsx:60:const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
+src/frontend/src/components/KnowledgeBase/ReasoningVisuals.tsx:101:                className="bg-white/40 dark:bg-gray-900/30 p-8 rounded-[2.5rem] border border-white/20 dark:border-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.1)] backdrop-blur-3xl h-[350px] flex flex-col group transition-all"
+src/frontend/src/components/KnowledgeBase/ReasoningVisuals.tsx:110:                    <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(59,130,246,0.8)]"></div>
+src/frontend/src/components/KnowledgeBase/ReasoningVisuals.tsx:119:                                        <stop offset="0%" stopColor="#3b82f6" stopOpacity={1}/>
+src/frontend/src/components/KnowledgeBase/ReasoningVisuals.tsx:120:                                        <stop offset="100%" stopColor="#6366f1" stopOpacity={0.8}/>
+src/frontend/src/components/KnowledgeBase/ReasoningVisuals.tsx:124:                                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: '#94a3b8' }} />
+src/frontend/src/components/KnowledgeBase/ReasoningVisuals.tsx:125:                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: '#94a3b8' }} />
+src/frontend/src/components/KnowledgeBase/ReasoningVisuals.tsx:127:                                    cursor={{ fill: 'rgba(59, 130, 246, 0.05)' }}
+src/frontend/src/components/KnowledgeBase/ReasoningVisuals.tsx:146:                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4}/>
+src/frontend/src/components/KnowledgeBase/ReasoningVisuals.tsx:147:                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+src/frontend/src/components/KnowledgeBase/ReasoningVisuals.tsx:168:                                    stroke="#3b82f6" 
+src/frontend/src/components/KnowledgeBase/ReasoningVisuals.tsx:226:                                    stroke="#8b5cf6" 
+src/frontend/src/components/KnowledgeBase/ReasoningVisuals.tsx:228:                                    dot={{ r: 6, fill: '#8b5cf6', strokeWidth: 0 }} 
+src/frontend/src/components/KnowledgeBase/ReasoningVisuals.tsx:420:                            className="relative max-w-7xl max-h-full rounded-[2.5rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.5)] border border-white/10"
+[0;31m[ERROR][0;0m Hardcoded colors found in src/frontend/src/components/layout/AppHeader.tsx:
+src/frontend/src/components/layout/AppHeader.tsx:73:        'fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 backdrop-blur-xl border-b border-gray-200 dark:border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.1)]',
+src/frontend/src/components/layout/AppHeader.tsx:80:            ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_0_20px_rgba(34,211,238,0.2)]'
+[0;31m[ERROR][0;0m Hardcoded colors found in src/frontend/src/components/layout/AppSidebar.tsx:
+src/frontend/src/components/layout/AppSidebar.tsx:57:                                        ? 'bg-primary-600/10 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400 shadow-[inset_0_0_15px_rgba(var(--color-primary-500-rgb),0.1)]'
+[0;31m[ERROR][0;0m Hardcoded colors found in src/frontend/src/components/FarmerMap.tsx:
+src/frontend/src/components/FarmerMap.tsx:36:    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+src/frontend/src/components/FarmerMap.tsx:42:    filter: drop-shadow(0 8px 12px rgba(0,0,0,0.4));
+src/frontend/src/components/FarmerMap.tsx:48:    filter: drop-shadow(0 12px 20px rgba(0,0,0,0.5));
+src/frontend/src/components/FarmerMap.tsx:97:    background: rgba(255, 255, 255, 0.92) !important;
+src/frontend/src/components/FarmerMap.tsx:100:    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+src/frontend/src/components/FarmerMap.tsx:102:      0 20px 40px rgba(0,0,0,0.1),
+src/frontend/src/components/FarmerMap.tsx:103:      0 0 0 1px rgba(255,255,255,0.5) inset !important;
+src/frontend/src/components/FarmerMap.tsx:114:    background: rgba(255, 255, 255, 0.92) !important;
+src/frontend/src/components/FarmerMap.tsx:119:    background: rgba(17, 24, 39, 0.95) !important;
+src/frontend/src/components/FarmerMap.tsx:121:    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+src/frontend/src/components/FarmerMap.tsx:122:    box-shadow: 0 20px 40px rgba(0,0,0,0.4) !important;
+src/frontend/src/components/FarmerMap.tsx:126:    background: rgba(17, 24, 39, 0.95) !important;
+src/frontend/src/components/FarmerMap.tsx:131:    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+src/frontend/src/components/FarmerMap.tsx:141:    color: #374151 !important;
+src/frontend/src/components/FarmerMap.tsx:147:    background: #f3f4f6 !important;
+src/frontend/src/components/FarmerMap.tsx:148:    color: #059669 !important;
+src/frontend/src/components/FarmerMap.tsx:152:    color: #d1d5db !important;
+src/frontend/src/components/FarmerMap.tsx:153:    background: #1f2937 !important;
+src/frontend/src/components/FarmerMap.tsx:157:    background: #374151 !important;
+src/frontend/src/components/FarmerMap.tsx:158:    color: #00ffff !important;
+src/frontend/src/components/FarmerMap.tsx:161:    background: rgba(1, 1, 1, 0.95) !important;
+src/frontend/src/components/FarmerMap.tsx:162:    border: 1px solid rgba(0, 255, 255, 0.3) !important;
+src/frontend/src/components/FarmerMap.tsx:174:    background: #d1d5db;
+src/frontend/src/components/FarmerMap.tsx:178:    background: #9ca3af;
+src/frontend/src/components/FarmerMap.tsx:186:    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+src/frontend/src/components/FarmerMap.tsx:190:    background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
+src/frontend/src/components/FarmerMap.tsx:195:    background: linear-gradient(135deg, rgba(31, 41, 55, 0.9) 0%, rgba(17, 24, 39, 0.7) 100%);
+src/frontend/src/components/FarmerMap.tsx:216:    background: #3b82f6;
+src/frontend/src/components/FarmerMap.tsx:217:    border: 2.5px solid #ffffff;
+src/frontend/src/components/FarmerMap.tsx:219:    box-shadow: 0 0 8px rgba(59, 130, 246, 0.8), 0 2px 4px rgba(0,0,0,0.3);
+src/frontend/src/components/FarmerMap.tsx:227:    background: rgba(59, 130, 246, 0.45);
+src/frontend/src/components/FarmerMap.tsx:241:    maize: '#FFD700',
+src/frontend/src/components/FarmerMap.tsx:242:    tobacco: '#8B4513',
+src/frontend/src/components/FarmerMap.tsx:243:    groundnuts: '#D2691E',
+src/frontend/src/components/FarmerMap.tsx:244:    soybeans: '#228B22',
+src/frontend/src/components/FarmerMap.tsx:245:    rice: '#F0E68C',
+src/frontend/src/components/FarmerMap.tsx:246:    cotton: '#FFFAF0',
+src/frontend/src/components/FarmerMap.tsx:247:    wheat: '#DEB887',
+src/frontend/src/components/FarmerMap.tsx:248:    sorghum: '#A0522D',
+src/frontend/src/components/FarmerMap.tsx:249:    beans: '#CD853F',
+src/frontend/src/components/FarmerMap.tsx:250:    potatoes: '#B8860B',
+src/frontend/src/components/FarmerMap.tsx:251:    default: '#4A90D9',
+src/frontend/src/components/FarmerMap.tsx:384:                                background: `linear-gradient(135deg, #059669, #047857)`,
+src/frontend/src/components/FarmerMap.tsx:388:                                color: '#374151',
+src/frontend/src/components/FarmerMap.tsx:389:                                border: '1px solid #e5e7eb'
+src/frontend/src/components/FarmerMap.tsx:967:                                background: `linear-gradient(135deg, #059669, #047857)`,
+src/frontend/src/components/FarmerMap.tsx:970:                                background: '#f3f4f6',
+src/frontend/src/components/FarmerMap.tsx:971:                                color: '#374151',
+src/frontend/src/components/FarmerMap.tsx:1103:                                    backgroundColor: themeName === 'cyber' ? 'rgba(0, 255, 255, 0.05)' : `${theme.primary[50]}`,
+src/frontend/src/components/FarmerMap.tsx:1104:                                    borderColor: themeName === 'cyber' ? 'rgba(0, 255, 255, 0.2)' : `${theme.primary[100]}`
+[0;31m[ERROR][0;0m Hardcoded colors found in src/frontend/src/components/SatelliteInsights.tsx:
+src/frontend/src/components/SatelliteInsights.tsx:110:        const pulseClass = data.health === 'healthy' ? 'bg-green-400 shadow-[0_0_10px_rgba(34,197,94,0.8)]' : 
+src/frontend/src/components/SatelliteInsights.tsx:111:                          data.health === 'normal' ? 'bg-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.8)]' : 
+src/frontend/src/components/SatelliteInsights.tsx:112:                          'bg-red-400 shadow-[0_0_10px_rgba(239,68,68,0.8)]';
+src/frontend/src/components/SatelliteInsights.tsx:145:            <div className={`aspect-video rounded-3xl relative overflow-hidden border ${isCyber ? 'bg-black/40 border-primary-500/20 shadow-[0_0_30px_rgba(79,209,197,0.1)]' : 'bg-gray-100 border-gray-200'}`}>
+src/frontend/src/components/SatelliteInsights.tsx:256:            <div className={`p-6 rounded-3xl border relative min-h-[140px] flex flex-col justify-center ${isCyber ? 'bg-primary-500/5 border-primary-500/20 shadow-[0_0_20px_rgba(79,209,197,0.05)]' : 'bg-blue-50/50 border-blue-100'}`}>
+[0;31m[ERROR][0;0m Hardcoded colors found in src/frontend/src/components/UsageQuota.tsx:
+src/frontend/src/components/UsageQuota.tsx:58:                        className="absolute inset-0 opacity-30 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.4)_50%,transparent_100%)] skew-x-12"
+src/frontend/src/components/UsageQuota.tsx:115:        'sms': { icon: Send, color: "from-primary-400 to-primary-600", glow: "rgba(34, 197, 94, 0.4)" },
+src/frontend/src/components/UsageQuota.tsx:116:        'ai_chat': { icon: MessageSquare, color: "from-blue-400 to-indigo-600", glow: "rgba(59, 130, 246, 0.4)" },
+src/frontend/src/components/UsageQuota.tsx:117:        'report': { icon: FileText, color: "from-purple-400 to-fuchsia-600", glow: "rgba(168, 85, 247, 0.4)" }
+[0;31m[ERROR][0;0m Hardcoded colors found in src/frontend/src/components/billing/Invoices.tsx:
+src/frontend/src/components/billing/Invoices.tsx:40:                                <td className="px-10 py-6"><Badge variant={invoice.status === 'paid' ? 'success' : 'warning'} size="sm"><div className={`w-1.5 h-1.5 rounded-full mr-1 ${invoice.status === 'paid' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-yellow-500'}`} />{invoice.status === 'paid' ? t('billing_status_paid') : invoice.status}</Badge></td>
+[0;31m[ERROR][0;0m Hardcoded colors found in src/frontend/src/components/ThemeSwitcher.tsx:
+src/frontend/src/components/ThemeSwitcher.tsx:52:                                                className="w-3 h-3 rounded-full shadow-[0_0_8px_rgba(var(--color-primary-rgb),0.5)]"
+[0;31m[ERROR][0;0m Hardcoded colors found in src/frontend/src/components/ui/Button.tsx:
+src/frontend/src/components/ui/Button.tsx:27:            { variant: 'primary', design: 'modern', className: 'shadow-[0_0_20px_rgba(34,211,238,0.2)]' },
+[0;31m[ERROR][0;0m Hardcoded colors found in src/frontend/src/components/Cyber/CropCycleGantt.tsx:
+src/frontend/src/components/Cyber/CropCycleGantt.tsx:80:                                className="h-full bg-gradient-to-r from-primary-500 to-secondary-500 shadow-[0_0_15px_rgba(6,182,212,0.5)]" 
+[0;31m[ERROR][0;0m Frontend color check failed! Please move hardcoded colors to the Tailwind config or use theme tokens.

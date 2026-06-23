@@ -1,0 +1,219 @@
+
+> ag-extension-frontend@1.0.0 lint
+> eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 500
+
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/App.tsx
+   72:20  warning  'setThemeName' is assigned a value but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+   72:20  warning  'setThemeName' is assigned a value but never used. Allowed unused vars must match /^_/u            unused-imports/no-unused-vars
+   73:19  warning  'setDarkMode' is assigned a value but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+   73:19  warning  'setDarkMode' is assigned a value but never used. Allowed unused vars must match /^_/u             unused-imports/no-unused-vars
+   76:18  warning  'storeFarmers' is assigned a value but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+   76:18  warning  'storeFarmers' is assigned a value but never used. Allowed unused vars must match /^_/u            unused-imports/no-unused-vars
+   80:37  warning  'showShareModal' is assigned a value but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+   80:37  warning  'showShareModal' is assigned a value but never used. Allowed unused vars must match /^_/u          unused-imports/no-unused-vars
+   81:9   warning  'removeFarmer' is assigned a value but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+   81:9   warning  'removeFarmer' is assigned a value but never used. Allowed unused vars must match /^_/u            unused-imports/no-unused-vars
+   82:9   warning  'toggleDesignSystemMode' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   82:9   warning  'toggleDesignSystemMode' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+  181:13  warning  'isOnline' is assigned a value but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+  181:13  warning  'isOnline' is assigned a value but never used. Allowed unused vars must match /^_/u                unused-imports/no-unused-vars
+  181:23  warning  'pendingSyncCount' is assigned a value but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+  181:23  warning  'pendingSyncCount' is assigned a value but never used. Allowed unused vars must match /^_/u        unused-imports/no-unused-vars
+  184:9   warning  'conversations' is assigned a value but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+  184:9   warning  'conversations' is assigned a value but never used. Allowed unused vars must match /^_/u           unused-imports/no-unused-vars
+  184:38  warning  'setActiveConvId' is assigned a value but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  184:38  warning  'setActiveConvId' is assigned a value but never used. Allowed unused vars must match /^_/u         unused-imports/no-unused-vars
+  184:55  warning  'chatMessages' is assigned a value but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+  184:55  warning  'chatMessages' is assigned a value but never used. Allowed unused vars must match /^_/u            unused-imports/no-unused-vars
+  184:69  warning  'setChatMessages' is assigned a value but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  184:69  warning  'setChatMessages' is assigned a value but never used. Allowed unused vars must match /^_/u         unused-imports/no-unused-vars
+  185:9   warning  'chatInput' is assigned a value but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+  185:9   warning  'chatInput' is assigned a value but never used. Allowed unused vars must match /^_/u               unused-imports/no-unused-vars
+  185:20  warning  'setChatInput' is assigned a value but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+  185:20  warning  'setChatInput' is assigned a value but never used. Allowed unused vars must match /^_/u            unused-imports/no-unused-vars
+  185:34  warning  'isTyping' is assigned a value but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+  185:34  warning  'isTyping' is assigned a value but never used. Allowed unused vars must match /^_/u                unused-imports/no-unused-vars
+  185:44  warning  'setIsTyping' is assigned a value but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+  185:44  warning  'setIsTyping' is assigned a value but never used. Allowed unused vars must match /^_/u             unused-imports/no-unused-vars
+  192:47  warning  'handleSelectAllFarmers' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  192:47  warning  'handleSelectAllFarmers' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/api/diagnosticsService.ts
+  13:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/api/fieldService.ts
+  12:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/ABTestBanner.tsx
+   13:11  warning  't' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   13:11  warning  't' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+  126:11  warning  't' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  126:11  warning  't' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/ContextMenu.tsx
+  86:11  warning  't' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  86:11  warning  't' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/Cyber/AlphaAI.tsx
+  32:36  warning  'isModern' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  32:36  warning  'isModern' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/Cyber/AlphaAgentOps.tsx
+  41:13  warning  't' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  41:13  warning  't' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/Cyber/IsometricFarmOverview.tsx
+  18:19  warning  'setCrops' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  18:19  warning  'setCrops' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/FarmerDetailPanel.tsx
+   64:26  warning  'btnClass' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   64:26  warning  'btnClass' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+  561:55  warning  Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/AIResult.tsx
+  23:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  24:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  25:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  26:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/KnowledgeStats.tsx
+   32:23  warning  'radiusClass' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   32:23  warning  'radiusClass' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+  122:70  warning  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+  130:55  warning  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/index.tsx
+  31:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/MarkdownRenderer.tsx
+  70:33  warning  'node' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  70:33  warning  'node' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/PaymentAnalyticsDashboard.tsx
+  103:13  warning  'user' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  103:13  warning  'user' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/SatelliteInsights.tsx
+   33:13  warning  't' is assigned a value but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+   33:13  warning  't' is assigned a value but never used. Allowed unused vars must match /^_/u               unused-imports/no-unused-vars
+  114:11  warning  'displayMetrics' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  114:11  warning  'displayMetrics' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/ShareModal.tsx
+  35:11  warning  't' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  35:11  warning  't' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/TabContent.tsx
+  33:11  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  34:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  36:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  38:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  42:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  51:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  52:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  53:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  56:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  60:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  70:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  74:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  77:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/WeatherWidget.tsx
+  20:13  warning  't' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  20:13  warning  't' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/__tests__/BillingDashboard.test.tsx
+  50:40   warning  'whileHover' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  50:40   warning  'whileHover' is defined but never used. Allowed unused args must match /^_/u  unused-imports/no-unused-vars
+  50:52   warning  'whileTap' is defined but never used. Allowed unused args must match /^_/u    @typescript-eslint/no-unused-vars
+  50:52   warning  'whileTap' is defined but never used. Allowed unused args must match /^_/u    unused-imports/no-unused-vars
+  50:62   warning  'initial' is defined but never used. Allowed unused args must match /^_/u     @typescript-eslint/no-unused-vars
+  50:62   warning  'initial' is defined but never used. Allowed unused args must match /^_/u     unused-imports/no-unused-vars
+  50:71   warning  'animate' is defined but never used. Allowed unused args must match /^_/u     @typescript-eslint/no-unused-vars
+  50:71   warning  'animate' is defined but never used. Allowed unused args must match /^_/u     unused-imports/no-unused-vars
+  50:80   warning  'exit' is defined but never used. Allowed unused args must match /^_/u        @typescript-eslint/no-unused-vars
+  50:80   warning  'exit' is defined but never used. Allowed unused args must match /^_/u        unused-imports/no-unused-vars
+  50:86   warning  'variants' is defined but never used. Allowed unused args must match /^_/u    @typescript-eslint/no-unused-vars
+  50:86   warning  'variants' is defined but never used. Allowed unused args must match /^_/u    unused-imports/no-unused-vars
+  50:96   warning  'transition' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  50:96   warning  'transition' is defined but never used. Allowed unused args must match /^_/u  unused-imports/no-unused-vars
+  50:108  warning  'layout' is defined but never used. Allowed unused args must match /^_/u      @typescript-eslint/no-unused-vars
+  50:108  warning  'layout' is defined but never used. Allowed unused args must match /^_/u      unused-imports/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/billing/Invoices.tsx
+  22:13  warning  'radiusClass' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  22:13  warning  'radiusClass' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/billing/PaymentMethods.tsx
+  11:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  12:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  19:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  20:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/billing/SubscriptionStatus.tsx
+  9:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/farmer/CyberDashboard.tsx
+  10:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/lib/realFirst.ts
+  7:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/main.tsx
+  25:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/CropsFields.tsx
+   21:13  warning  't' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   21:13  warning  't' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+  408:67  warning  Unexpected any. Specify a different type                                      @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/DemoPage.tsx
+  15:12  warning  'ragQuery' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  15:12  warning  'ragQuery' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+  24:60  warning  Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/DiseaseDiagnosis.tsx
+  35:12  warning  'allDiseases' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  35:12  warning  'allDiseases' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/ForgotPassword.tsx
+  9:13  warning  'isModern' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  9:13  warning  'isModern' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/LandingPage.tsx
+  29:7  warning  'fadeIn' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  29:7  warning  'fadeIn' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/Login.tsx
+  20:13  warning  'isModern' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  20:13  warning  'isModern' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/MCPTools.tsx
+  389:128  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/Register.tsx
+  13:13  warning  'isModern' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  13:13  warning  'isModern' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/SMS.tsx
+  34:13  warning  'headingClass' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  34:13  warning  'headingClass' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+  34:27  warning  'isModern' is assigned a value but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+  34:27  warning  'isModern' is assigned a value but never used. Allowed unused vars must match /^_/u      unused-imports/no-unused-vars
+  34:50  warning  'btnClass' is assigned a value but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+  34:50  warning  'btnClass' is assigned a value but never used. Allowed unused vars must match /^_/u      unused-imports/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/SystemHealth.tsx
+  348:96  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  363:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  395:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/UserManagementPage.tsx
+  32:13  warning  't' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  32:13  warning  't' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+  69:24  warning  Unexpected any. Specify a different type                                      @typescript-eslint/no-explicit-any
+
+✖ 140 problems (0 errors, 140 warnings)
+

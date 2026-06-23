@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, Request, Response } from 'express';
-import { shareService } from "@/services/shareService";
 import { KnowledgeService } from '@/services/knowledgeService';
 import { cacheGet, cacheSet } from '@/services/cacheService';
 import { getPool, query } from '@/services/databaseService';

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     TrendingUp,
     Users,
@@ -11,8 +11,7 @@ import {
     Target,
     Calendar,
     ArrowUp,
-    ArrowDown,
-    Minus
+    ArrowDown
 } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import { motion } from 'framer-motion';
@@ -101,13 +100,9 @@ export const PaymentAnalyticsDashboard: React.FC = () => {
     const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
     const [loading, setLoading] = useState(true);
     const [timeframe, setTimeframe] = useState<'month' | 'quarter' | 'year'>('month');
-    const { user } = useAppStore();
+    const { user: _user } = useAppStore();
 
-    useEffect(() => {
-        fetchAnalytics();
-    }, [timeframe]);
-
-    const fetchAnalytics = async () => {
+    const fetchAnalytics = useCallback(async () => {
         setLoading(true);
         try {
             const [dashboardRes, revenueRes, customerRes, subscriptionRes, paymentMethodRes, churnRes, cohortRes] = await Promise.all([
@@ -136,7 +131,11 @@ export const PaymentAnalyticsDashboard: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [timeframe]);
+
+    useEffect(() => {
+        fetchAnalytics();
+    }, [fetchAnalytics]);
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-US', {

@@ -1,12 +1,12 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, useScroll, useTransform, useMotionValue, useSpring, AnimatePresence } from 'framer-motion';
+import { CH_COLORS } from '@/lib/colors';
+import { motion, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion';
 import {
     Leaf, Users, MapPin, Brain, BarChart3, Shield,
     ArrowRight, CheckCircle, XCircle, Globe,
-    Zap, Database, ChevronRight, TrendingUp, FileText,
-    Building2, GraduationCap, Heart, Bell, Search,
-    CloudRain, Droplets, Thermometer, Activity, Wifi,
+    Zap, Database, TrendingUp, FileText,
+    Building2, GraduationCap, Heart, Bell, Wifi,
     ChevronDown, Play
 } from 'lucide-react';
 
@@ -26,10 +26,6 @@ const scaleIn = {
     visible: { opacity: 1, scale: 1, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] } }
 };
 
-const fadeIn = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { duration: 0.8 } }
-};
 
 // ─── Data ───────────────────────────────────────────────────────
 const painPoints = [
@@ -137,7 +133,7 @@ function AfricaVisualization() {
                 <path
                     d="M45,8 C48,7 52,8 54,10 C56,12 57,15 56,18 C55,20 58,22 60,24 C62,26 63,28 62,30 C61,32 63,34 64,36 C65,38 66,42 65,46 C64,50 62,54 60,58 C58,62 56,66 54,70 C52,74 50,78 48,80 C46,82 44,84 42,82 C40,80 38,76 36,72 C34,68 32,64 30,60 C28,56 26,52 25,48 C24,44 24,40 25,36 C26,32 27,28 28,24 C29,20 30,16 32,14 C34,12 38,10 42,9 Z"
                     fill="none"
-                    stroke="rgba(16,185,129,0.4)"
+                    stroke="var(--color-outline)"
                     strokeWidth="0.3"
                 />
                 {/* Connection lines between nodes */}
@@ -147,7 +143,7 @@ function AfricaVisualization() {
                             key={`${i}-${j}`}
                             x1={node.x} y1={node.y}
                             x2={other.x} y2={other.y}
-                            stroke="rgba(16,185,129,0.15)"
+                            stroke="var(--color-outline)"
                             strokeWidth="0.15"
                             strokeDasharray="1,1"
                         />
@@ -156,11 +152,11 @@ function AfricaVisualization() {
                 {/* Pulsing nodes */}
                 {africaNodes.map((node, i) => (
                     <g key={i}>
-                        <circle cx={node.x} cy={node.y} r="1.5" fill="rgba(16,185,129,0.6)">
+                        <circle cx={node.x} cy={node.y} r="1.5" fill="var(--color-outline)">
                             <animate attributeName="r" values="1.5;3;1.5" dur={`${2 + i * 0.3}s`} repeatCount="indefinite" />
                             <animate attributeName="opacity" values="0.6;0.2;0.6" dur={`${2 + i * 0.3}s`} repeatCount="indefinite" />
                         </circle>
-                        <circle cx={node.x} cy={node.y} r="0.6" fill="rgba(16,185,129,0.9)" />
+                        <circle cx={node.x} cy={node.y} r="0.6" fill="var(--color-outline)" />
                     </g>
                 ))}
             </svg>
@@ -246,7 +242,7 @@ export function LandingPage() {
 
                     <div className="hidden md:flex items-center gap-8">
                         <a href="#problem" className="text-sm font-medium text-white/50 hover:text-white transition-colors">Why Us</a>
-                        <a href="#features" className="text-sm font-medium text-white/50 hover:text-white transition-colors">Features</a>
+                        <a href="var(--color-primary-500)tures" className="text-sm font-medium text-white/50 hover:text-white transition-colors">Features</a>
                         <a href="#how-it-works" className="text-sm font-medium text-white/50 hover:text-white transition-colors">How It Works</a>
                     </div>
 
@@ -286,7 +282,7 @@ export function LandingPage() {
                         y: springY,
                         translateX: '-50%',
                         translateY: '-50%',
-                        background: 'radial-gradient(circle, rgba(16,185,129,0.06) 0%, transparent 70%)',
+                        background: 'radial-gradient(circle, var(--color-outline) 0%, transparent 70%)',
                     }}
                 />
 
@@ -294,7 +290,7 @@ export function LandingPage() {
                 <div
                     className="absolute inset-0 pointer-events-none opacity-[0.025]"
                     style={{
-                        backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
+                        backgroundImage: 'linear-gradient(var(--color-outline) 1px, transparent 1px), linear-gradient(90deg, var(--color-outline) 1px, transparent 1px)',
                         backgroundSize: '60px 60px',
                     }}
                 />
@@ -436,10 +432,10 @@ export function LandingPage() {
                                     {/* Stats row */}
                                     <div className="grid grid-cols-4 gap-2">
                                         {[
-                                            { value: '2,847', label: 'Farmers', change: '+12%', color: '#10b981', sparkData: [20, 25, 22, 30, 28, 35, 32, 40, 38, 45] },
-                                            { value: '156', label: 'Visits', change: '+8%', color: '#10b981', sparkData: [10, 15, 12, 18, 20, 16, 22, 25, 20, 28] },
-                                            { value: '92%', label: 'Health', change: '+3%', color: '#f59e0b', sparkData: [85, 87, 86, 88, 90, 89, 91, 90, 92, 92] },
-                                            { value: '4.2mm', label: 'Rain/day', change: 'Normal', color: '#3b82f6', sparkData: [3, 4, 5, 3, 4, 6, 5, 4, 3, 4] },
+                                            { value: '2,847', label: 'Farmers', change: '+12%', color: CH_COLORS.success, sparkData: [20, 25, 22, 30, 28, 35, 32, 40, 38, 45] },
+                                            { value: '156', label: 'Visits', change: '+8%', color: CH_COLORS.success, sparkData: [10, 15, 12, 18, 20, 16, 22, 25, 20, 28] },
+                                            { value: '92%', label: 'Health', change: '+3%', color: CH_COLORS.warning, sparkData: [85, 87, 86, 88, 90, 89, 91, 90, 92, 92] },
+                                            { value: '4.2mm', label: 'Rain/day', change: 'Normal', color: CH_COLORS.blue, sparkData: [3, 4, 5, 3, 4, 6, 5, 4, 3, 4] },
                                         ].map((stat, i) => (
                                             <div key={i} className="bg-white/[0.025] rounded-lg p-2.5 border border-white/[0.04]">
                                                 <div className="flex justify-between items-start mb-1">
@@ -468,8 +464,8 @@ export function LandingPage() {
                                                         style={{
                                                             height: `${h}%`,
                                                             background: i === 11
-                                                                ? 'linear-gradient(to top, #D97706, #F59E0B)'
-                                                                : `linear-gradient(to top, rgba(16,185,129,${0.2 + i * 0.04}), rgba(16,185,129,${0.4 + i * 0.03}))`,
+                                                                ? 'linear-gradient(to top, var(--color-primary-500), var(--color-status-warning))'
+                                                                : `linear-gradient(to top, var(--color-outline), var(--color-outline))`,
                                                             opacity: i === 11 ? 1 : 0.6 + i * 0.03,
                                                         }}
                                                     />
@@ -519,7 +515,7 @@ export function LandingPage() {
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-8 h-1 rounded-full bg-white/[0.06] overflow-hidden">
-                                                        <div className="h-full rounded-full" style={{ width: `${f.health}%`, background: f.health > 85 ? '#10b981' : f.health > 70 ? '#f59e0b' : '#ef4444' }} />
+                                                        <div className="h-full rounded-full" style={{ width: `${f.health}%`, background: f.health > 85 ? CH_COLORS.success : f.health > 70 ? CH_COLORS.warning : CH_COLORS.error }} />
                                                     </div>
                                                     <span className={`px-1.5 py-0.5 rounded-full text-[8px] font-semibold ${f.statusBg}`}>{f.status}</span>
                                                 </div>
@@ -824,7 +820,7 @@ export function LandingPage() {
                     <div>
                         <h4 className="text-xs font-bold uppercase tracking-wider text-white/20 mb-5">Product</h4>
                         <ul className="space-y-3 text-sm">
-                            <li><a href="#features" className="text-white/35 hover:text-emerald-400 transition-colors">Features</a></li>
+                            <li><a href="var(--color-primary-500)tures" className="text-white/35 hover:text-emerald-400 transition-colors">Features</a></li>
                             <li><a href="#how-it-works" className="text-white/35 hover:text-emerald-400 transition-colors">How It Works</a></li>
                             <li><a href="/demo" className="text-white/35 hover:text-emerald-400 transition-colors">Live Demo</a></li>
                         </ul>

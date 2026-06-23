@@ -19,6 +19,7 @@ import redis.asyncio as redis
 
 # Import Stealth Scraper
 from tools.cloakbrowser.cloak_scanner import CloakBrowserScanner
+from tools.slop_cleaner import clean_slop
 
 # Configure logging
 logging.basicConfig(
@@ -333,7 +334,7 @@ class AIProcessingService:
                     max_tokens=1500
                 )
 
-                analysis_text = response.choices[0].message.content
+                analysis_text = clean_slop(response.choices[0].message.content)
 
                 return AIProcessingService._parse_analysis_response(
                     region, data_type, time_period, analysis_text
@@ -518,7 +519,7 @@ class ReportService:
                     temperature=0.3,
                     max_tokens=1000
                 )
-                return response.choices[0].message.content
+                return clean_slop(response.choices[0].message.content)
             except Exception as e:
                 logger.error(f"AI section generation failed: {e}")
 

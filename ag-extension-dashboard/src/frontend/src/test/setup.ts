@@ -4,8 +4,8 @@ import { cleanup } from '@testing-library/react';
 import * as matchers from '@testing-library/jest-dom/matchers';
 
 // Extend expect with jest-dom matchers
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-expect.extend(matchers as any);
+ 
+expect.extend(matchers as unknown);
 
 import defaultTranslations from '../../public/locales/en.json';
 import swTranslations from '../../public/locales/sw.json';

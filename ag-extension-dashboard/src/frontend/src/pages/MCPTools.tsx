@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Wrench, Play, Code, Eye, RefreshCw,
-    CheckCircle, XCircle, Loader2, Terminal,
-    Zap, AlertTriangle
+    Wrench, Play, Code, RefreshCw,
+    CheckCircle, XCircle, Loader2, Terminal
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
@@ -42,7 +41,7 @@ export function MCPTools() {
     }>>([]);
 
     // Load data
-    const loadData = async (showRefresh = false) => {
+    const loadData = useCallback(async (showRefresh = false) => {
         try {
             if (showRefresh) setIsRefreshing(true);
             else setIsLoading(true);
@@ -68,11 +67,11 @@ export function MCPTools() {
             setIsLoading(false);
             setIsRefreshing(false);
         }
-    };
+    }, [addNotification, t]);
 
     useEffect(() => {
         loadData();
-    }, []);
+    }, [loadData]);
 
     const handleRefresh = () => {
         loadData(true);

@@ -3,7 +3,7 @@
 # ============================================================
 FROM node:20-slim AS deps
 WORKDIR /app
-RUN apt-get update && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 
 # Copy only dependency manifests first for maximum layer caching
 COPY package*.json ./
@@ -17,7 +17,7 @@ RUN npm ci --only=production --no-audit --no-fund 2>/dev/null || npm install --i
 # ============================================================
 FROM node:20-slim AS build
 WORKDIR /app
-RUN apt-get update && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
 COPY prisma/ ./prisma/
@@ -39,7 +39,7 @@ RUN npm run build
 # ============================================================
 FROM node:20-slim AS development
 WORKDIR /app
-RUN apt-get update && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies with devDeps for ts-node-dev
 COPY package*.json ./
@@ -50,6 +50,9 @@ RUN npx prisma generate
 # Copy all source for hot-reload
 COPY . .
 
+RUN chown -R node:node /app
+USER node
+
 EXPOSE 3001
 CMD ["npm", "run", "dev"]
 
@@ -59,7 +62,7 @@ CMD ["npm", "run", "dev"]
 FROM node:20-slim AS production
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y openssl ca-certificates tini && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates tini && rm -rf /var/lib/apt/lists/*
 
 # Copy production node_modules only
 COPY --from=deps /app/node_modules ./node_modules
@@ -71,6 +74,9 @@ COPY --from=build /app/prisma ./prisma
 
 # Copy prisma-generated client from build stage
 COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
+
+RUN chown -R node:node /app
+USER node
 
 EXPOSE 3001
 

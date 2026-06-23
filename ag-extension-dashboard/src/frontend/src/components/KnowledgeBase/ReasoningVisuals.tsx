@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { CH_COLORS } from '@/lib/colors';
 import { 
     BarChart, 
     Bar, 
@@ -19,8 +20,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
     AlertCircle, 
     CheckCircle2, 
-    AlertTriangle, 
-    Info,
+    AlertTriangle,
     TrendingUp,
     Zap,
     Play,
@@ -57,7 +57,7 @@ interface ReasoningVisualsProps {
     audio?: string; // Base64 or URL
 }
 
-const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
+const COLORS = [CH_COLORS.blue, CH_COLORS.purple, 'var(--color-primary-500)', CH_COLORS.warning, CH_COLORS.success];
 
 export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, audio }) => {
     const [isPlaying, setIsPlaying] = useState(false);
@@ -98,7 +98,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
         return (
             <motion.div 
                 whileHover={{ y: -5 }}
-                className="bg-white/40 dark:bg-gray-900/30 p-8 rounded-[2.5rem] border border-white/20 dark:border-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.1)] backdrop-blur-3xl h-[350px] flex flex-col group transition-all"
+                className="bg-white/40 dark:bg-gray-900/30 p-8 rounded-[2.5rem] border border-white/20 dark:border-white/5 shadow-[0_20px_50px_var(--color-outline)] backdrop-blur-3xl h-[350px] flex flex-col group transition-all"
             >
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-3">
@@ -107,7 +107,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                         </div>
                         <h3 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-[0.2em]">{title}</h3>
                     </div>
-                    <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(59,130,246,0.8)]"></div>
+                    <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse shadow-[0_0_10px_var(--color-outline)]"></div>
                 </div>
                 
                 <div className="flex-1 w-full -ml-6">
@@ -116,15 +116,15 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                             <BarChart data={data}>
                                 <defs>
                                     <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stopColor="#3b82f6" stopOpacity={1}/>
-                                        <stop offset="100%" stopColor="#6366f1" stopOpacity={0.8}/>
+                                        <stop offset="0%" stopColor="var(--color-chart-blue)" stopOpacity={1}/>
+                                        <stop offset="100%" stopColor="var(--color-primary-500)" stopOpacity={0.8}/>
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
-                                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: '#94a3b8' }} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: '#94a3b8' }} />
+                                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: 'var(--color-primary-500)' }} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: 'var(--color-primary-500)' }} />
                                 <Tooltip 
-                                    cursor={{ fill: 'rgba(59, 130, 246, 0.05)' }}
+                                    cursor={{ fill: 'var(--color-outline)' }}
                                     content={({ active, payload }) => {
                                         if (active && payload && payload.length) {
                                             return (
@@ -143,8 +143,8 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                             <AreaChart data={data}>
                                 <defs>
                                     <linearGradient id="colorArea" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4}/>
-                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                                        <stop offset="5%" stopColor="var(--color-chart-blue)" stopOpacity={0.4}/>
+                                        <stop offset="95%" stopColor="var(--color-chart-blue)" stopOpacity={0}/>
                                     </linearGradient>
                                 </defs>
                                 <XAxis dataKey="label" hide />
@@ -165,7 +165,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                                 <Area 
                                     type="monotone" 
                                     dataKey="value" 
-                                    stroke="#3b82f6" 
+                                    stroke={CH_COLORS.blue} 
                                     strokeWidth={4}
                                     fillOpacity={1} 
                                     fill="url(#colorArea)" 
@@ -223,9 +223,9 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                                 <Line 
                                     type="monotone" 
                                     dataKey="value" 
-                                    stroke="#8b5cf6" 
+                                    stroke={CH_COLORS.purple} 
                                     strokeWidth={5} 
-                                    dot={{ r: 6, fill: '#8b5cf6', strokeWidth: 0 }} 
+                                    dot={{ r: 6, fill: CH_COLORS.purple, strokeWidth: 0 }} 
                                     activeDot={{ r: 10, stroke: 'white', strokeWidth: 3 }}
                                     animationDuration={2500}
                                 />
@@ -417,7 +417,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
-                            className="relative max-w-7xl max-h-full rounded-[2.5rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.5)] border border-white/10"
+                            className="relative max-w-7xl max-h-full rounded-[2.5rem] overflow-hidden shadow-[0_0_100px_var(--color-outline)] border border-white/10"
                             onClick={(e) => e.stopPropagation()}
                         >
                             <img src={selectedImage} alt="Enlarged visualization" className="w-full h-auto max-h-[85vh] object-contain" />

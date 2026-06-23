@@ -3,17 +3,12 @@ import { useNavigate, useLocation, Routes, Route } from 'react-router-dom';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { ForgotPassword } from './pages/ForgotPassword';
-import { useState, useCallback, Suspense, lazy } from 'react';
+import { useState, Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { fetchDashboardData } from '@/api/dashboardService';
 import { logout as apiLogout } from '@/api/authService';
 import { fetchFarmers } from '@/api/farmerService';
-import { fetchVisits } from '@/api/visitService';
-import { fetchReports, generateReport, Report } from '@/api/reportService';
-import { fetchPerformanceData } from '@/api/analyticsService';
-import { getMyTransactions } from '@/api/billingService';
+import { generateReport } from '@/api/reportService';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -33,8 +28,9 @@ import { useAppTheme } from './hooks/useAppTheme';
 import { useAppBootstrap } from './hooks/useAppBootstrap';
 import { useAppAuth } from './hooks/useAppAuth';
 import { useAppModalState } from './hooks/useAppModalState';
+import { useAppQueries } from './hooks/useAppQueries';
+import { useAppMenuActions } from './hooks/useAppMenuActions';
 import { fetchUnreadCount } from '@/api/notificationService';
-import { ThemeName } from '@/theme';
 
 // Lazy loaded components
 const LandingPage = lazy(() => import('./pages/LandingPage').then(m => ({ default: m.LandingPage })));
@@ -73,17 +69,15 @@ function App() {
     const navigate = useNavigate();
     const location = useLocation();
     const {
-        themeName, setThemeName,
-        darkMode, setDarkMode,
+        themeName,
+        darkMode,
         sidebarOpen, setSidebarOpen,
         activeTab, setActiveTab,
-        farmers: storeFarmers,
         user: storeUser, setUser,
         addNotification,
         contextMenu, hideContextMenu,
-        shareModal, hideShareModal, showShareModal,
-        removeFarmer, removeFarmers,
-        toggleDesignSystemMode
+        shareModal, hideShareModal,
+        removeFarmers,
     } = useAppStore();
 
     // Sync activeTab from URL pathname on mount or route changes
@@ -169,100 +163,30 @@ function App() {
         setIsDetailPanelOpen(true);
     };
 
-    const handleMenuAction = (action: string, entityId?: string) => {
-        if (action.startsWith('share_')) {
-            const type = action.split('_')[1];
-            const entity = storeFarmers?.find(f => f.id === entityId);
-            showShareModal({
-                entityType: type, entityId: entityId || '',
-                entityName: entity ? `${entity.firstName} ${entity.lastName}` : undefined
-            });
-        } else if (action === 'schedule_visit') {
-            setShowVisitModal(true);
-        } else if (action === 'export_farmer' || action.startsWith('export_')) {
-            if (entityId) {
-                const farmer = storeFarmers?.find(f => f.id === entityId);
-                if (farmer) {
-                    const csvContent = [
-                        ['Name', 'Phone', 'Region', 'Village', 'Crops', 'Farm Size (ha)'],
-                        [`"${farmer.firstName} ${farmer.lastName}"`, `"${farmer.phone || ''}"`, `"${farmer.region || ''}"`, `"${farmer.village || ''}"`, `"${farmer.crops?.join(', ') || ''}"`, `"${farmer.farmSize?.toString() || ''}"`]
-                    ].join('\n');
-                    const blob = new Blob([csvContent], { type: 'text/csv' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url; a.download = `farmer_${entityId}_export.csv`; a.click();
-                    URL.revokeObjectURL(url);
-                    addNotification({ type: 'success', message: 'Farmer data exported successfully' });
-                }
-            }
-        } else if (action.includes('delete')) {
-            setConfirmModal({
-                title: 'Confirm Action', message: `Are you sure you want to perform this action: ${action}?`,
-                variant: 'danger', confirmText: 'Delete',
-                onConfirm: () => {
-                    setConfirmModal(null);
-                    if (action.startsWith('farmer') && entityId) {
-                        removeFarmer(entityId);
-                        addNotification({ type: 'success', message: 'Farmer record deleted successfully' });
-                    } else {
-                        addNotification({ type: 'info', message: 'Action executed successfully' });
-                    }
-                }
-            });
-        }
-    };
+    const { handleMenuAction } = useAppMenuActions();
 
     // Data queries
-    const { data: dashboardResponse, isLoading, isError } = useQuery({
-        queryKey: ['dashboard'], queryFn: fetchDashboardData,
-        enabled: activeTab === 'dashboard' && !!user
-    });
-    const dashboardData = dashboardResponse?.data;
-
-    const { data: farmersResponse } = useQuery({
-        queryKey: ['farmers'], queryFn: fetchFarmers,
-        enabled: (activeTab === 'portfolio' || activeTab === 'dashboard') && !!user
-    });
-    const queryFarmers = farmersResponse?.data?.farmers || [];
-    const effectiveFarmers = queryFarmers.length > 0 ? queryFarmers : storeFarmers;
-
-    const { data: visitsResponse, refetch: refetchVisits } = useQuery({
-        queryKey: ['visits'], queryFn: fetchVisits,
-        enabled: activeTab === 'visits' && !!user
-    });
-    const visits = visitsResponse?.data?.visits || [];
-
-    const { data: reportsResponse, refetch: refetchReports } = useQuery({
-        queryKey: ['reports'], queryFn: fetchReports,
-        enabled: activeTab === 'reports' && !!user
-    });
-    const reports = reportsResponse?.data?.reports || [];
-
-    const { data: performanceResponse } = useQuery({
-        queryKey: ['performance'], queryFn: fetchPerformanceData,
-        enabled: (activeTab === 'analytics' || activeTab === 'dashboard') && !!user
-    });
-    const performanceData = performanceResponse?.data;
-
-    const { data: transactionsResponse } = useQuery({
-        queryKey: ['transactions'], queryFn: getMyTransactions,
-        enabled: (activeTab === 'billing' || searchQuery.trim().length > 0) && !!user
-    });
-    const transactions = transactionsResponse?.data || [];
+    const {
+        dashboardData, isLoading, isError,
+        effectiveFarmers,
+        visits, refetchVisits,
+        reports, refetchReports,
+        performanceData,
+        transactions,
+    } = useAppQueries(activeTab, searchQuery);
 
     // Custom hooks
-    const { isOnline, pendingSyncCount, isDragOver, handleDragOver, handleDragLeave, handleDrop } = useAppSync(addNotification);
+    const { isDragOver, handleDragOver, handleDragLeave, handleDrop } = useAppSync(addNotification);
     const { showGlobalSearch, setShowGlobalSearch, isGlobalSearching, globalSearchResults, handleGlobalSearch } = useAppSearch(effectiveFarmers, visits, reports, transactions);
     const {
-        conversations, activeConvId, setActiveConvId, chatMessages, setChatMessages,
-        chatInput, setChatInput, isTyping, setIsTyping,
+        activeConvId,
         loadConversations, loadMessages, loadFarmerConversations, loadFarmerMessages,
         farmerConversations, activeFarmerConvId, setActiveFarmerConvId,
         farmerChatMessages, farmerChatInput, setFarmerChatInput,
         handleFarmerChatSend, handleStartConversation
     } = useAppChat(language);
     const {
-        isSendingBulkSms, handleSelectFarmer, handleSelectAllFarmers,
+        isSendingBulkSms, handleSelectFarmer,
         handleBulkSMS, onBulkSmsSend, handleBulkDelete, onBulkUpdateFarmers, handleBulkExport
     } = useBulkActions({
         effectiveFarmers, selectedFarmers, setSelectedFarmers, addNotification,

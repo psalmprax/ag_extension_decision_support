@@ -1,5 +1,5 @@
-import { query, getPool } from '@/services/databaseService';
-import { cacheGet, cacheSet } from '@/services/cacheService';
+import { query } from '@/services/databaseService';
+import { cacheGet } from '@/services/cacheService';
 
 // Mock dependencies
 jest.mock('@/services/databaseService');
@@ -14,9 +14,7 @@ jest.mock('@/utils/logger', () => ({
 }));
 
 const mockQuery = query as jest.MockedFunction<typeof query>;
-const mockGetPool = getPool as jest.MockedFunction<typeof getPool>;
 const mockCacheGet = cacheGet as jest.MockedFunction<typeof cacheGet>;
-const mockCacheSet = cacheSet as jest.MockedFunction<typeof cacheSet>;
 
 describe('Analytics Route Helpers', () => {
     beforeEach(() => {
@@ -128,10 +126,11 @@ describe('Analytics Route Helpers', () => {
         });
 
         it('should parse count from query result', () => {
-            const parseIntCount = (rows: any[]): number => {
-                return parseInt((rows[0] as any)?.count || '0');
+            const parseIntCount = (rows: Array<{ count?: string | number }>): number => {
+                const value = rows[0]?.count;
+                return parseInt(String(value ?? '0'), 10);
             };
-            
+
             expect(parseIntCount([{ count: '42' }])).toBe(42);
             expect(parseIntCount([{ count: '0' }])).toBe(0);
             expect(parseIntCount([])).toBe(0);

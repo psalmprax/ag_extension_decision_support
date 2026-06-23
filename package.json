@@ -10,5 +10,8 @@
   },
   "dependencies": {
     "playwright": "^1.59.1"
+  },
+  "devDependencies": {
+    "@opengsd/gsd-pi": "^1.2.0"
   }
 }

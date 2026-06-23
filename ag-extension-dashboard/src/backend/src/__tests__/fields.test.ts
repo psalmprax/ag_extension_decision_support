@@ -1,6 +1,7 @@
 import request from 'supertest';
 import app from '../app';
 import jwt from 'jsonwebtoken';
+import { Prisma } from '@prisma/client';
 import { config } from '../config';
 
 // Mock DB and Cache
@@ -36,7 +37,7 @@ jest.mock('../services/prismaService', () => {
                 upsert: jest.fn().mockResolvedValue({})
             },
             farmer: {
-                findUnique: jest.fn().mockImplementation((args: any) => {
+                findUnique: jest.fn().mockImplementation((args: Prisma.FarmerFindUniqueArgs) => {
                     if (args.where.id === 'farmer-1') {
                         return Promise.resolve({
                             id: 'farmer-1',
@@ -61,7 +62,7 @@ jest.mock('../services/prismaService', () => {
                         cropCycles: []
                     }
                 ]),
-                findUnique: jest.fn().mockImplementation((args: any) => {
+                findUnique: jest.fn().mockImplementation((args: Prisma.FieldFindUniqueArgs) => {
                     if (args.where.id === 'field-1') {
                         return Promise.resolve({
                             id: 'field-1',
@@ -76,22 +77,22 @@ jest.mock('../services/prismaService', () => {
                     }
                     return Promise.resolve(null);
                 }),
-                create: jest.fn().mockImplementation((args: any) => Promise.resolve({
+                create: jest.fn().mockImplementation((args: Prisma.FieldCreateArgs) => Promise.resolve({
                     id: 'new-field-id',
                     ...args.data
                 })),
-                update: jest.fn().mockImplementation((args: any) => Promise.resolve({
+                update: jest.fn().mockImplementation((args: Prisma.FieldUpdateArgs) => Promise.resolve({
                     id: args.where.id,
                     ...args.data
                 }))
             },
             cropCycle: {
                 findMany: jest.fn().mockResolvedValue([]),
-                create: jest.fn().mockImplementation((args: any) => Promise.resolve({
+                create: jest.fn().mockImplementation((args: Prisma.CropCycleCreateArgs) => Promise.resolve({
                     id: 'cycle-1',
                     ...args.data
                 })),
-                update: jest.fn().mockImplementation((args: any) => Promise.resolve({
+                update: jest.fn().mockImplementation((args: Prisma.CropCycleUpdateArgs) => Promise.resolve({
                     id: args.where.id,
                     ...args.data
                 })),

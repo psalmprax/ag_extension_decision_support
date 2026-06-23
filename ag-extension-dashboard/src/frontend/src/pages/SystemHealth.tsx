@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     Activity, CheckCircle, AlertTriangle, XCircle,
     RotateCcw, Clock, RefreshCw, Shield,
@@ -29,7 +29,7 @@ export function SystemHealth() {
     const ERROR_COOLDOWN = 10000; // 10s cooldown for repetitive error notifications
 
     // Load data
-    const loadData = async (showRefresh = false) => {
+    const loadData = useCallback(async (showRefresh = false) => {
         if (isFetchingRef.current) return;
         isFetchingRef.current = true;
 
@@ -68,14 +68,13 @@ export function SystemHealth() {
             setIsRefreshing(false);
             isFetchingRef.current = false;
         }
-    };
+    }, [addNotification, t]);
 
     useEffect(() => {
         loadData();
-        // Auto-refresh every 60 seconds
         const interval = setInterval(() => loadData(), 60000);
         return () => clearInterval(interval);
-    }, []);
+    }, [loadData]);
 
     const handleRefresh = () => {
         loadData(true);
@@ -361,7 +360,7 @@ export function SystemHealth() {
                         <div className="mb-4">
                             <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Port Connectivity</h4>
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                                {diagnostics.ports.map((p: any) => (
+                                {diagnostics.ports.map((p: unknown) => (
                                     <div key={p.port} className={`flex items-center gap-2 p-2 rounded-lg text-xs font-mono ${p.open ? 'bg-green-50 dark:bg-green-900/10 text-green-700 dark:text-green-300' : 'bg-red-50 dark:bg-red-900/10 text-red-700 dark:text-red-300'}`}>
                                         <span className="font-bold">{p.open ? '✓' : '✗'}</span>
                                         <span>{p.name} ({p.port})</span>
@@ -393,7 +392,7 @@ export function SystemHealth() {
                         <div className="mb-4">
                             <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Container Network</h4>
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-                                {diagnostics.container_network.map((c: any) => (
+                                {diagnostics.container_network.map((c: unknown) => (
                                     <div key={c.name} className={`flex items-center gap-2 p-2 rounded-lg text-xs font-mono ${c.reachable ? 'bg-green-50 dark:bg-green-900/10 text-green-700 dark:text-green-300' : 'bg-red-50 dark:bg-red-900/10 text-red-700 dark:text-red-300'}`}>
                                         <span className="font-bold">{c.reachable ? '✓' : '✗'}</span>
                                         <span>{c.name}</span>

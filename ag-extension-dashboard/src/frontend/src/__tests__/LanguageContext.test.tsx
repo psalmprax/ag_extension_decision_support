@@ -7,8 +7,8 @@ import { LanguageProvider, useLanguage } from '../lib/LanguageContext';
 // We only need to mock the structure for types if needed, 
 // but LanguageContext already has its own types.
 vi.mock('../lib/i18n', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const actual = await vi.importActual<any>('../lib/i18n');
+     
+    const actual = await vi.importActual<unknown>('../lib/i18n');
     return {
         ...actual,
         translations: {} // Keep it empty as in production

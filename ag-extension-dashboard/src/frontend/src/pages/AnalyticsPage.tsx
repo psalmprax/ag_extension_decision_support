@@ -4,6 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'rec
 import { useLanguage } from '@/lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '@/store/useAppStore';
+import { CH_COLORS } from '@/lib/colors';
 
 interface AnalyticsPageProps {
     performanceData: {
@@ -107,36 +108,36 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({
                         <AreaChart data={performanceData?.timeline || []}>
                             <defs>
                                 <linearGradient id="colorVisits" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#22c55e" stopOpacity={0.2} />
-                                    <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                                    <stop offset="5%" stopColor="var(--color-chart-green)" stopOpacity={0.2} />
+                                    <stop offset="95%" stopColor="var(--color-chart-green)" stopOpacity={0} />
                                 </linearGradient>
                                 <linearGradient id="colorQueries" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} />
-                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                    <stop offset="5%" stopColor="var(--color-chart-blue)" stopOpacity={0.2} />
+                                    <stop offset="95%" stopColor="var(--color-chart-blue)" stopOpacity={0} />
                                 </linearGradient>
                             </defs>
                             <XAxis
                                 dataKey="date"
                                 axisLine={false}
                                 tickLine={false}
-                                tick={{ fill: '#9ca3af', fontSize: 10, fontWeight: 600 }}
+                                tick={{ fill: CH_COLORS.gray, fontSize: 10, fontWeight: 600 }}
                             />
                             <YAxis
                                 axisLine={false}
                                 tickLine={false}
-                                tick={{ fill: '#9ca3af', fontSize: 10, fontWeight: 600 }}
+                                tick={{ fill: CH_COLORS.gray, fontSize: 10, fontWeight: 600 }}
                             />
                             <Tooltip
                                 contentStyle={{
-                                    backgroundColor: darkMode ? '#1f2937' : '#ffffff',
-                                    borderColor: darkMode ? '#374151' : '#f3f4f6',
+                                    backgroundColor: darkMode ? 'var(--color-bg-secondary)' : 'var(--color-primary-500)',
+                                    borderColor: darkMode ? 'var(--color-outline)' : 'var(--color-bg-secondary)',
                                     borderRadius: isModern ? '12px' : '0px',
                                     fontSize: '12px',
                                     fontWeight: 'bold'
                                 }}
                             />
-                            <Area type="monotone" dataKey="visits" stroke="#22c55e" strokeWidth={3} fillOpacity={1} fill="url(#colorVisits)" />
-                            <Area type="monotone" dataKey="queries" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorQueries)" />
+                            <Area type="monotone" dataKey="visits" stroke="var(--color-chart-green)" strokeWidth={3} fillOpacity={1} fill="url(#colorVisits)" />
+                            <Area type="monotone" dataKey="queries" stroke={CH_COLORS.blue} strokeWidth={3} fillOpacity={1} fill="url(#colorQueries)" />
                         </AreaChart>
                     </ResponsiveContainer>
                 </div>

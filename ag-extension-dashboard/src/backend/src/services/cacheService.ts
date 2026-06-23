@@ -69,17 +69,6 @@ export async function cacheDelete(key: string): Promise<boolean> {
     }
 }
 
-export async function cacheClear(): Promise<boolean> {
-    if (!redisClient) return false;
-    try {
-        await redisClient.flushDb();
-        return true;
-    } catch (error) {
-        logger.error('Cache clear error:', error);
-        return false;
-    }
-}
-
 export async function closeCache(): Promise<void> {
     if (redisClient) {
         await redisClient.quit();

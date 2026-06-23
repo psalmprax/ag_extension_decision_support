@@ -138,18 +138,3 @@ export function initializeSocketHandlers(io: SocketServer): void {
         }
     }, 60000);
 }
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function emitToUser(io: SocketServer, userId: string, event: string, data: any): void {
-    io.to(`user:${userId}`).emit(event, data);
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function emitToRole(io: SocketServer, role: string, event: string, data: any): void {
-    io.to(role).emit(event, data);
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function emitToConversation(io: SocketServer, conversationId: string, event: string, data: any): void {
-    io.to(`conversation:${conversationId}`).emit(event, data);
-}

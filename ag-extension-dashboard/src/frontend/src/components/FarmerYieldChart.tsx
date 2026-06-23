@@ -8,11 +8,9 @@ import { useLanguage } from '@/lib/LanguageContext';
 interface FarmerYieldChartProps {
     farmer: Farmer;
     radiusClass: string;
-    isCyber: boolean;
-    isModern: boolean;
 }
 
-export const FarmerYieldChart: React.FC<FarmerYieldChartProps> = ({ farmer, radiusClass, isCyber, isModern }) => {
+export const FarmerYieldChart: React.FC<FarmerYieldChartProps> = ({ farmer, radiusClass }) => {
     const { t } = useLanguage();
 
     return (
@@ -29,28 +27,28 @@ export const FarmerYieldChart: React.FC<FarmerYieldChartProps> = ({ farmer, radi
                     <AreaChart data={farmer.yieldHistory || []}>
                         <defs>
                             <linearGradient id="colorYield" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor={isCyber ? "#4fd1c5" : "#22c55e"} stopOpacity={0.3} />
-                                <stop offset="95%" stopColor={isCyber ? "#4fd1c5" : "#22c55e"} stopOpacity={0} />
+                                <stop offset="5%" stopColor="var(--color-primary-500)" stopOpacity={0.3} />
+                                <stop offset="95%" stopColor="var(--color-primary-500)" stopOpacity={0} />
                             </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isCyber ? "rgba(79, 209, 197, 0.1)" : "#E5E7EB"} />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-outline)" strokeOpacity={0.2} />
                         <XAxis dataKey="month" hide />
                         <YAxis hide />
                         <Tooltip
                             contentStyle={{
-                                borderRadius: isModern ? '16px' : '0px',
+                                borderRadius: 'var(--radius-card)',
                                 border: 'none',
-                                backgroundColor: isCyber ? 'rgba(0,0,0,0.8)' : undefined,
-                                boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                                backgroundColor: 'var(--color-bg-card)',
+                                boxShadow: 'var(--shadow-premium)',
                                 fontSize: '12px',
                                 fontWeight: 'bold',
-                                color: isCyber ? '#fff' : undefined
+                                color: 'var(--color-on-surface)'
                             }}
                         />
                         <Area
                             type="monotone"
                             dataKey="yield"
-                            stroke={isCyber ? "#4fd1c5" : "#22c55e"}
+                            stroke="var(--color-primary-500)"
                             strokeWidth={3}
                             fillOpacity={1}
                             fill="url(#colorYield)"

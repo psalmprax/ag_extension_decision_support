@@ -1,0 +1,299 @@
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/App.tsx
+   34:10  warning  'ThemeName' is defined but never used                        @typescript-eslint/no-unused-vars
+   73:20  warning  'setThemeName' is assigned a value but never used            @typescript-eslint/no-unused-vars
+   74:19  warning  'setDarkMode' is assigned a value but never used             @typescript-eslint/no-unused-vars
+   77:18  warning  'storeFarmers' is assigned a value but never used            @typescript-eslint/no-unused-vars
+   81:37  warning  'showShareModal' is assigned a value but never used          @typescript-eslint/no-unused-vars
+   82:9   warning  'removeFarmer' is assigned a value but never used            @typescript-eslint/no-unused-vars
+   83:9   warning  'toggleDesignSystemMode' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  182:13  warning  'isOnline' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  182:23  warning  'pendingSyncCount' is assigned a value but never used        @typescript-eslint/no-unused-vars
+  185:9   warning  'conversations' is assigned a value but never used           @typescript-eslint/no-unused-vars
+  185:38  warning  'setActiveConvId' is assigned a value but never used         @typescript-eslint/no-unused-vars
+  185:55  warning  'chatMessages' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  185:69  warning  'setChatMessages' is assigned a value but never used         @typescript-eslint/no-unused-vars
+  186:9   warning  'chatInput' is assigned a value but never used               @typescript-eslint/no-unused-vars
+  186:20  warning  'setChatInput' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  186:34  warning  'isTyping' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  186:44  warning  'setIsTyping' is assigned a value but never used             @typescript-eslint/no-unused-vars
+  193:47  warning  'handleSelectAllFarmers' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/__tests__/client.test.ts
+  1:32  warning  'vi' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/api/diagnosticsService.ts
+  13:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/api/fieldService.ts
+  12:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/ABTestBanner.tsx
+    3:13  warning  'Eye' is defined but never used         @typescript-eslint/no-unused-vars
+   13:11  warning  't' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  126:11  warning  't' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/BulkSmsModal.tsx
+  3:25  warning  'MessageSquare' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/ContextMenu.tsx
+  13:11  warning  'UserIcon' is defined but never used                @typescript-eslint/no-unused-vars
+  14:3   warning  'Trash' is defined but never used                   @typescript-eslint/no-unused-vars
+  25:70  warning  'ServiceContextMenuData' is defined but never used  @typescript-eslint/no-unused-vars
+  88:11  warning  't' is assigned a value but never used              @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/Cyber/ActionableAI.tsx
+   2:10  warning  'motion' is defined but never used  @typescript-eslint/no-unused-vars
+   7:5   warning  'Target' is defined but never used  @typescript-eslint/no-unused-vars
+  10:5   warning  'Ship' is defined but never used    @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/Cyber/AlphaAI.tsx
+   6:5   warning  'LineChart' is defined but never used          @typescript-eslint/no-unused-vars
+   9:5   warning  'ChevronRight' is defined but never used       @typescript-eslint/no-unused-vars
+  34:36  warning  'isModern' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/Cyber/AlphaAgentOps.tsx
+   2:10  warning  'motion' is defined but never used      @typescript-eslint/no-unused-vars
+  21:8   warning  'toast' is defined but never used       @typescript-eslint/no-unused-vars
+  43:13  warning  't' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/Cyber/IsometricFarmOverview.tsx
+  18:19  warning  'setCrops' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/FarmerDetailPanel.tsx
+   37:8   warning  'toast' is defined but never used              @typescript-eslint/no-unused-vars
+   65:26  warning  'btnClass' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  562:55  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/AIResult.tsx
+  23:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  24:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  25:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  26:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/KnowledgeSidebar.tsx
+   2:18  warning  'AnimatePresence' is defined but never used  @typescript-eslint/no-unused-vars
+  13:5   warning  'CheckCircle2' is defined but never used     @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/KnowledgeStats.tsx
+   13:5   warning  'AreaChart' is defined but never used             @typescript-eslint/no-unused-vars
+   14:5   warning  'Area' is defined but never used                  @typescript-eslint/no-unused-vars
+   34:23  warning  'radiusClass' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  124:70  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  132:55  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/ReasoningVisuals.tsx
+  24:5  warning  'Info' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/index.tsx
+   4:17  warning  'searchKnowledge' is defined but never used  @typescript-eslint/no-unused-vars
+  31:15  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/MarkdownRenderer.tsx
+  70:33  warning  'node' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/PaymentAnalyticsDashboard.tsx
+   15:5   warning  'Minus' is defined but never used          @typescript-eslint/no-unused-vars
+  104:13  warning  'user' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/SatelliteInsights.tsx
+    6:5   warning  'Droplets' is defined but never used                 @typescript-eslint/no-unused-vars
+    7:5   warning  'Sun' is defined but never used                      @typescript-eslint/no-unused-vars
+   35:13  warning  't' is assigned a value but never used               @typescript-eslint/no-unused-vars
+  116:11  warning  'displayMetrics' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/ShareModal.tsx
+   2:18  warning  'AnimatePresence' is defined but never used  @typescript-eslint/no-unused-vars
+  15:3   warning  'ExternalLink' is defined but never used     @typescript-eslint/no-unused-vars
+  36:11  warning  't' is assigned a value but never used       @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/TabContent.tsx
+   1:17  warning  'Suspense' is defined but never used      @typescript-eslint/no-unused-vars
+   2:10  warning  'Loader2' is defined but never used       @typescript-eslint/no-unused-vars
+  34:11  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  35:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  37:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  39:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  43:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  52:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  53:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  54:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  57:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  61:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  71:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  75:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  78:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/WeatherWidget.tsx
+   3:33  warning  'Wind' is defined but never used        @typescript-eslint/no-unused-vars
+   3:47  warning  'Droplets' is defined but never used    @typescript-eslint/no-unused-vars
+  20:13  warning  't' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/__tests__/BillingDashboard.test.tsx
+  50:40   warning  'whileHover' is defined but never used  @typescript-eslint/no-unused-vars
+  50:52   warning  'whileTap' is defined but never used    @typescript-eslint/no-unused-vars
+  50:62   warning  'initial' is defined but never used     @typescript-eslint/no-unused-vars
+  50:71   warning  'animate' is defined but never used     @typescript-eslint/no-unused-vars
+  50:80   warning  'exit' is defined but never used        @typescript-eslint/no-unused-vars
+  50:86   warning  'variants' is defined but never used    @typescript-eslint/no-unused-vars
+  50:96   warning  'transition' is defined but never used  @typescript-eslint/no-unused-vars
+  50:108  warning  'layout' is defined but never used      @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/billing/Invoices.tsx
+  22:13  warning  'radiusClass' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/billing/PaymentMethods.tsx
+  11:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  12:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  19:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  20:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/billing/SubscriptionStatus.tsx
+  2:48  warning  'Shield' is defined but never used        @typescript-eslint/no-unused-vars
+  2:56  warning  'ArrowRight' is defined but never used    @typescript-eslint/no-unused-vars
+  2:68  warning  'CheckCircle' is defined but never used   @typescript-eslint/no-unused-vars
+  9:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/farmer/CyberDashboard.tsx
+  10:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/farmer/NormalDashboard.tsx
+  4:10  warning  'Sprout' is defined but never used    @typescript-eslint/no-unused-vars
+  4:33  warning  'Calendar' is defined but never used  @typescript-eslint/no-unused-vars
+  4:43  warning  'Bell' is defined but never used      @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/forms/FarmerRegistrationForm.tsx
+  6:10  warning  'Loader2' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/ui/Dialog.tsx
+  4:10  warning  'modalVariants' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/hooks/useAppTheme.ts
+  2:10  warning  'themes' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/hooks/useWebRTC.ts
+  109:37  warning  '_data' is defined but never used  @typescript-eslint/no-unused-vars
+  113:37  warning  '_data' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/lib/realFirst.ts
+  7:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/main.tsx
+  25:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/Agents.tsx
+  4:21  warning  'Play' is defined but never used             @typescript-eslint/no-unused-vars
+  4:27  warning  'Pause' is defined but never used            @typescript-eslint/no-unused-vars
+  4:34  warning  'RotateCcw' is defined but never used        @typescript-eslint/no-unused-vars
+  5:12  warning  'Zap' is defined but never used              @typescript-eslint/no-unused-vars
+  5:17  warning  'BarChart3' is defined but never used        @typescript-eslint/no-unused-vars
+  7:18  warning  'AnimatePresence' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/CropsFields.tsx
+    3:38  warning  'Calendar' is defined but never used       @typescript-eslint/no-unused-vars
+    4:17  warning  'Droplet' is defined but never used        @typescript-eslint/no-unused-vars
+    4:35  warning  'ClipboardList' is defined but never used  @typescript-eslint/no-unused-vars
+    5:18  warning  'Navigation' is defined but never used     @typescript-eslint/no-unused-vars
+    5:30  warning  'Eye' is defined but never used            @typescript-eslint/no-unused-vars
+    5:41  warning  'AlertCircle' is defined but never used    @typescript-eslint/no-unused-vars
+    6:20  warning  'ArrowRight' is defined but never used     @typescript-eslint/no-unused-vars
+   21:13  warning  't' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  408:67  warning  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/DashboardPage.tsx
+   4:5   warning  'LayoutDashboard' is defined but never used  @typescript-eslint/no-unused-vars
+  11:24  warning  'ChartSkeleton' is defined but never used    @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/DemoPage.tsx
+  15:12  warning  'ragQuery' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  24:60  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/DiseaseDiagnosis.tsx
+   4:36  warning  'RefreshCw' is defined but never used             @typescript-eslint/no-unused-vars
+   5:16  warning  'Eye' is defined but never used                   @typescript-eslint/no-unused-vars
+   7:18  warning  'AnimatePresence' is defined but never used       @typescript-eslint/no-unused-vars
+  35:12  warning  'allDiseases' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/EmailWorkflows.tsx
+   3:11  warning  'Plus' is defined but never used             @typescript-eslint/no-unused-vars
+   3:17  warning  'Send' is defined but never used             @typescript-eslint/no-unused-vars
+   4:23  warning  'Trash2' is defined but never used           @typescript-eslint/no-unused-vars
+   7:18  warning  'AnimatePresence' is defined but never used  @typescript-eslint/no-unused-vars
+  19:8   warning  'toast' is defined but never used            @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/FarmerChatPage.tsx
+  3:37  warning  'Farmer' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/ForgotPassword.tsx
+  9:13  warning  'isModern' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/LandingPage.tsx
+   4:70  warning  'AnimatePresence' is defined but never used  @typescript-eslint/no-unused-vars
+   8:20  warning  'ChevronRight' is defined but never used     @typescript-eslint/no-unused-vars
+   9:44  warning  'Search' is defined but never used           @typescript-eslint/no-unused-vars
+  10:5   warning  'CloudRain' is defined but never used        @typescript-eslint/no-unused-vars
+  10:16  warning  'Droplets' is defined but never used         @typescript-eslint/no-unused-vars
+  10:26  warning  'Thermometer' is defined but never used      @typescript-eslint/no-unused-vars
+  10:39  warning  'Activity' is defined but never used         @typescript-eslint/no-unused-vars
+  30:7   warning  'fadeIn' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/Login.tsx
+  20:13  warning  'isModern' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/MCPTools.tsx
+    3:25   warning  'Eye' is defined but never used            @typescript-eslint/no-unused-vars
+    5:5    warning  'Zap' is defined but never used            @typescript-eslint/no-unused-vars
+    5:10   warning  'AlertTriangle' is defined but never used  @typescript-eslint/no-unused-vars
+  390:128  warning  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/Memory.tsx
+   5:13  warning  'Download' is defined but never used         @typescript-eslint/no-unused-vars
+   5:23  warning  'Upload' is defined but never used           @typescript-eslint/no-unused-vars
+   7:18  warning  'AnimatePresence' is defined but never used  @typescript-eslint/no-unused-vars
+  12:8   warning  'toast' is defined but never used            @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/Register.tsx
+  13:13  warning  'isModern' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/ReportsPage.tsx
+  24:20  warning  '_viewingReport' is defined but never used    @typescript-eslint/no-unused-vars
+  25:20  warning  '_reportContent' is defined but never used    @typescript-eslint/no-unused-vars
+  26:22  warning  '_isLoadingReport' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/SMS.tsx
+  11:24  warning  'Farmer' is defined but never used                 @typescript-eslint/no-unused-vars
+  34:13  warning  'headingClass' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  34:27  warning  'isModern' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  34:50  warning  'btnClass' is assigned a value but never used      @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/SystemHealth.tsx
+  348:96  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  363:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  395:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/Telemetry.tsx
+   3:22  warning  'TrendingUp' is defined but never used       @typescript-eslint/no-unused-vars
+   4:5   warning  'Server' is defined but never used           @typescript-eslint/no-unused-vars
+   4:13  warning  'Zap' is defined but never used              @typescript-eslint/no-unused-vars
+   4:30  warning  'BarChart3' is defined but never used        @typescript-eslint/no-unused-vars
+   5:16  warning  'Download' is defined but never used         @typescript-eslint/no-unused-vars
+   5:26  warning  'Filter' is defined but never used           @typescript-eslint/no-unused-vars
+   5:34  warning  'ChevronDown' is defined but never used      @typescript-eslint/no-unused-vars
+   7:18  warning  'AnimatePresence' is defined but never used  @typescript-eslint/no-unused-vars
+  12:10  warning  'AreaChart' is defined but never used        @typescript-eslint/no-unused-vars
+  12:21  warning  'Area' is defined but never used             @typescript-eslint/no-unused-vars
+  12:86  warning  'LineChart' is defined but never used        @typescript-eslint/no-unused-vars
+  12:97  warning  'Line' is defined but never used             @typescript-eslint/no-unused-vars
+  13:8   warning  'toast' is defined but never used            @typescript-eslint/no-unused-vars
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/pages/UserManagementPage.tsx
+   5:30  warning  'Edit2' is defined but never used         @typescript-eslint/no-unused-vars
+   5:37  warning  'Trash2' is defined but never used        @typescript-eslint/no-unused-vars
+  32:13  warning  't' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  69:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/types/dashboard.ts
+  1:10  warning  'ReactNode' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 188 problems (0 errors, 188 warnings)
+

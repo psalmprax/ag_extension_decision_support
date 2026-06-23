@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
     ChevronLeft, 
     ChevronRight, 
@@ -10,7 +10,6 @@ import {
     Clock,
     User,
     LogOut,
-    CheckCircle2,
     Target
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';

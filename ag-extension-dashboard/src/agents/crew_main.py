@@ -13,6 +13,7 @@ import json
 import logging
 from datetime import datetime
 from enum import Enum
+from tools.slop_cleaner import clean_slop
 
 # Configure logging
 logging.basicConfig(
@@ -24,9 +25,12 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="Crew AI Service", version="2.0.0")
 
 # CORS middleware
+NODE_ENV = os.getenv("NODE_ENV", "development")
+ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "https://www.gpexts.com,http://localhost:7503,http://localhost:5173").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -386,6 +390,7 @@ Consider:
     @staticmethod
     def _parse_crew_result(region: str, analysis_type: str, result_text: str, processing_time: float) -> MultiAgentResult:
         """Parse Crew AI result into structured format"""
+        result_text = clean_slop(result_text)
         # Extract sections from the result text
         findings = []
         recommendations = []
@@ -436,6 +441,7 @@ Consider:
     @staticmethod
     def _parse_analysis_text(region: str, analysis_type: str, text: str, processing_time: float) -> MultiAgentResult:
         """Parse direct analysis text into structured format"""
+        text = clean_slop(text)
         findings = []
         recommendations = []
         
@@ -551,7 +557,7 @@ class ResearchService:
                     "status": "success",
                     "topic": request.topic,
                     "depth": request.depth.value,
-                    "findings": result.raw,
+                    "findings": clean_slop(result.raw),
                     "generated_at": datetime.utcnow().isoformat(),
                     "processing_time_ms": int(processing_time)
                 }
@@ -578,7 +584,7 @@ class ResearchService:
                     "status": "success",
                     "topic": request.topic,
                     "depth": request.depth.value,
-                    "findings": response.choices[0].message.content,
+                    "findings": clean_slop(response.choices[0].message.content),
                     "generated_at": datetime.utcnow().isoformat(),
                     "processing_time_ms": int(processing_time)
                 }
@@ -663,7 +669,7 @@ class ReportGenerationService:
                     temperature=0.3,
                     max_tokens=1500
                 )
-                return response.choices[0].message.content
+                return clean_slop(response.choices[0].message.content)
             except Exception as e:
                 logger.error(f"AI section generation failed: {e}")
         

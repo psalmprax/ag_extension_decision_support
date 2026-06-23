@@ -33,19 +33,19 @@ const MAP_STYLES = `
     position: relative;
     width: 36px;
     height: 48px;
-    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+    filter: drop-shadow(0 4px 6px var(--color-outline));
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .marker-pin-wrapper:hover {
     transform: translateY(-4px) scale(1.1);
-    filter: drop-shadow(0 8px 12px rgba(0,0,0,0.4));
+    filter: drop-shadow(0 8px 12px var(--color-outline));
     z-index: 1000;
   }
   
   .marker-pin-wrapper.selected {
     transform: translateY(-6px) scale(1.2);
-    filter: drop-shadow(0 12px 20px rgba(0,0,0,0.5));
+    filter: drop-shadow(0 12px 20px var(--color-outline));
     z-index: 1001;
   }
   
@@ -94,13 +94,13 @@ const MAP_STYLES = `
   }
 
   .glass-popup .leaflet-popup-content-wrapper {
-    background: rgba(255, 255, 255, 0.92) !important;
+    background: var(--color-outline) !important;
     backdrop-filter: blur(20px) !important;
     border-radius: 24px !important;
-    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    border: 1px solid var(--color-outline) !important;
     box-shadow: 
-      0 20px 40px rgba(0,0,0,0.1),
-      0 0 0 1px rgba(255,255,255,0.5) inset !important;
+      0 20px 40px var(--color-outline),
+      0 0 0 1px var(--color-outline) inset !important;
     padding: 0 !important;
     overflow: hidden;
   }
@@ -111,24 +111,24 @@ const MAP_STYLES = `
   }
   
   .glass-popup .leaflet-popup-tip {
-    background: rgba(255, 255, 255, 0.92) !important;
+    background: var(--color-outline) !important;
     backdrop-filter: blur(20px) !important;
   }
 
   .glass-popup-dark .leaflet-popup-content-wrapper {
-    background: rgba(17, 24, 39, 0.95) !important;
+    background: var(--color-outline) !important;
     backdrop-filter: blur(20px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.4) !important;
+    border: 1px solid var(--color-outline) !important;
+    box-shadow: 0 20px 40px var(--color-outline) !important;
   }
   
   .glass-popup-dark .leaflet-popup-tip {
-    background: rgba(17, 24, 39, 0.95) !important;
+    background: var(--color-outline) !important;
   }
 
   .leaflet-control-zoom {
     border: none !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    box-shadow: 0 4px 12px var(--color-outline) !important;
     border-radius: 16px !important;
     overflow: hidden;
   }
@@ -138,28 +138,28 @@ const MAP_STYLES = `
     width: 36px !important;
     height: 36px !important;
     line-height: 36px !important;
-    color: #374151 !important;
+    color: var(--color-outline) !important;
     background: white !important;
     transition: all 0.2s !important;
   }
 
   .leaflet-control-zoom a:hover {
-    background: #f3f4f6 !important;
-    color: #059669 !important;
+    background: var(--color-bg-secondary) !important;
+    color: var(--color-primary-500) !important;
   }
 
   .dark .leaflet-control-zoom a {
-    color: #d1d5db !important;
-    background: #1f2937 !important;
+    color: var(--color-on-surface) !important;
+    background: var(--color-bg-secondary) !important;
   }
 
   .dark .leaflet-control-zoom a:hover {
-    background: #374151 !important;
-    color: #00ffff !important;
+    background: var(--color-outline) !important;
+    color: var(--color-primary-400) !important;
   }
 
-    background: rgba(1, 1, 1, 0.95) !important;
-    border: 1px solid rgba(0, 255, 255, 0.3) !important;
+    background: var(--color-outline) !important;
+    border: 1px solid var(--color-outline) !important;
     border-top: none !important;
     border-left: none !important;
   }
@@ -171,11 +171,11 @@ const MAP_STYLES = `
     background: transparent;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #d1d5db;
+    background: var(--color-on-surface);
     border-radius: 3px;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
+    background: var(--color-chart-gray);
   }
 
   .map-search-input {
@@ -183,16 +183,16 @@ const MAP_STYLES = `
   }
   .map-search-input:focus {
     transform: scale(1.02);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    box-shadow: 0 8px 20px var(--color-outline);
   }
 
   .stats-card {
-    background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
+    background: linear-gradient(135deg, var(--color-outline) 0%, var(--color-outline) 100%);
     backdrop-filter: blur(10px);
   }
 
   .stats-card-dark {
-    background: linear-gradient(135deg, rgba(31, 41, 55, 0.9) 0%, rgba(17, 24, 39, 0.7) 100%);
+    background: linear-gradient(135deg, var(--color-outline) 0%, var(--color-outline) 100%);
     backdrop-filter: blur(10px);
   }
 
@@ -213,10 +213,10 @@ const MAP_STYLES = `
   .user-location-dot {
     width: 14px;
     height: 14px;
-    background: #3b82f6;
-    border: 2.5px solid #ffffff;
+    background: var(--color-chart-blue);
+    border: 2.5px solid var(--color-primary-500);
     border-radius: 50%;
-    box-shadow: 0 0 8px rgba(59, 130, 246, 0.8), 0 2px 4px rgba(0,0,0,0.3);
+    box-shadow: 0 0 8px var(--color-outline), 0 2px 4px var(--color-outline);
     z-index: 2;
   }
   
@@ -224,7 +224,7 @@ const MAP_STYLES = `
     position: absolute;
     width: 32px;
     height: 32px;
-    background: rgba(59, 130, 246, 0.45);
+    background: var(--color-outline);
     border-radius: 50%;
     animation: user-pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
     z-index: 1;
@@ -238,17 +238,17 @@ const MAP_STYLES = `
 
 // Crop type colors for markers with icons
 const CROP_COLORS: Record<string, string> = {
-    maize: '#FFD700',
-    tobacco: '#8B4513',
-    groundnuts: '#D2691E',
-    soybeans: '#228B22',
-    rice: '#F0E68C',
-    cotton: '#FFFAF0',
-    wheat: '#DEB887',
-    sorghum: '#A0522D',
-    beans: '#CD853F',
-    potatoes: '#B8860B',
-    default: '#4A90D9',
+    maize: 'var(--color-primary-500)',
+    tobacco: 'var(--color-primary-500)',
+    groundnuts: 'var(--color-primary-500)',
+    soybeans: 'var(--color-primary-500)',
+    rice: 'var(--color-primary-500)',
+    cotton: 'var(--color-primary-500)',
+    wheat: 'var(--color-primary-500)',
+    sorghum: 'var(--color-primary-500)',
+    beans: 'var(--color-primary-500)',
+    potatoes: 'var(--color-primary-500)',
+    default: 'var(--color-primary-500)',
 };
 
 const CROP_ICONS: Record<string, string> = {
@@ -268,6 +268,7 @@ const CROP_ICONS: Record<string, string> = {
 // Default starting coordinates for the map (Kenya)
 const DEFAULT_CENTER: [number, number] = [-1.2863, 36.8172];
 const DEFAULT_ZOOM = 6;
+const EMPTY_FARMERS: FarmerData[] = [];
 
 // Map tile layer types
 type MapLayer = 'street' | 'satellite' | 'terrain';
@@ -381,12 +382,12 @@ function LayerSwitcher({
                                 : 'hover:bg-gray-100 dark:hover:bg-gray-700'
                                 }`}
                             style={currentLayer === layer ? {
-                                background: `linear-gradient(135deg, #059669, #047857)`,
+                                background: `linear-gradient(135deg, var(--color-primary-500), var(--color-primary-500))`,
                                 color: 'white',
                             } : {
                                 background: 'white',
-                                color: '#374151',
-                                border: '1px solid #e5e7eb'
+                                color: 'var(--color-outline)',
+                                border: '1px solid var(--color-primary-500)'
                             }}
                             aria-pressed={currentLayer === layer}
                         >
@@ -463,7 +464,7 @@ export function FarmerMap({
     isExternalExpanded,
     onToggleExpand,
 }: FarmerMapProps) {
-    const farmers = propFarmers || [];
+    const farmers = propFarmers || EMPTY_FARMERS;
     const [currentLayer, setCurrentLayer] = useState<MapLayer>('street');
     const [selectedFarmer, setSelectedFarmer] = useState<FarmerData | null>(null);
     const [internalExpanded, setInternalExpanded] = useState(false);
@@ -964,11 +965,11 @@ export function FarmerMap({
                                 : 'hover:bg-gray-100 dark:hover:bg-gray-700'
                                 }`}
                             style={currentLayer === layer ? {
-                                background: `linear-gradient(135deg, #059669, #047857)`,
+                                background: `linear-gradient(135deg, var(--color-primary-500), var(--color-primary-500))`,
                                 color: 'white',
                             } : {
-                                background: '#f3f4f6',
-                                color: '#374151',
+                                background: 'var(--color-bg-secondary)',
+                                color: 'var(--color-outline)',
                             }}
                         >
                             {TILE_LAYERS[layer].name}
@@ -1100,8 +1101,8 @@ export function FarmerMap({
                                 className="flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl border"
                                 style={{
                                     color: theme.primary[600],
-                                    backgroundColor: themeName === 'cyber' ? 'rgba(0, 255, 255, 0.05)' : `${theme.primary[50]}`,
-                                    borderColor: themeName === 'cyber' ? 'rgba(0, 255, 255, 0.2)' : `${theme.primary[100]}`
+                                    backgroundColor: themeName === 'cyber' ? 'var(--color-outline)' : `${theme.primary[50]}`,
+                                    borderColor: themeName === 'cyber' ? 'var(--color-outline)' : `${theme.primary[100]}`
                                 }}
                             >
                                 <div className="w-2 h-2 rounded-full animate-ping" style={{ backgroundColor: theme.primary[500] }}></div>

@@ -44,7 +44,7 @@ const IsometricFarmOverview: React.FC<IsometricFarmOverviewProps> = ({
         };
 
         fetchSatellite();
-    }, [farmerId]);
+    }, [farmerId, externalFarmSize]);
 
 
     const ndviColor = satelliteData?.ndvi 

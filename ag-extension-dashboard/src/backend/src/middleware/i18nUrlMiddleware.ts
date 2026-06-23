@@ -258,28 +258,7 @@ const DEFAULT_I18N_CONFIG: I18nConfig = {
 };
 
 // Current configuration (can be customized)
-let i18nConfig: I18nConfig = { ...DEFAULT_I18N_CONFIG };
-
-/**
- * Set custom i18n configuration
- */
-function setI18nConfig(config: Partial<I18nConfig>): void {
-    i18nConfig = { ...DEFAULT_I18N_CONFIG, ...config };
-}
-
-/**
- * Get current i18n configuration
- */
-function getI18nConfig(): I18nConfig {
-    return i18nConfig;
-}
-
-/**
- * Get supported languages
- */
-function getSupportedLanguages(): LanguageConfig[] {
-    return i18nConfig.languages;
-}
+const i18nConfig: I18nConfig = { ...DEFAULT_I18N_CONFIG };
 
 /**
  * Get language config by code

@@ -1,15 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Brain, Plus, Search, Edit, Trash2,
     Clock, Tag, BarChart3, RefreshCw,
-    Filter, Download, Upload
+    Filter
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '../store/useAppStore';
 import { fetchMemories, storeMemory, deleteMemory, fetchMemorySummary, type MemoryEntry } from '../api/memoryService';
-import toast from 'react-hot-toast';
 import { MetricCard } from '@/components/MetricCard';
 
 export function Memory() {
@@ -36,7 +35,7 @@ export function Memory() {
     });
 
     // Load data
-    const loadData = async (showRefresh = false) => {
+    const loadData = useCallback(async (showRefresh = false) => {
         try {
             if (showRefresh) setIsRefreshing(true);
             else setIsLoading(true);
@@ -62,11 +61,11 @@ export function Memory() {
             setIsLoading(false);
             setIsRefreshing(false);
         }
-    };
+    }, [selectedCategory, addNotification, t]);
 
     useEffect(() => {
         loadData();
-    }, [selectedCategory]);
+    }, [loadData]);
 
     const handleRefresh = () => {
         loadData(true);

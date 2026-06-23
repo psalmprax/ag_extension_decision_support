@@ -34,7 +34,6 @@ import { generateSynthesis } from '@/api/chatbotService';
 import { fetchPriorityScore, updateVisit } from '@/api/visitService';
 import { SatelliteInsights } from './SatelliteInsights';
 import { ConfirmModal } from './ConfirmModal';
-import toast from 'react-hot-toast';
 
 interface FarmerDetailPanelProps {
     isOpen: boolean;
@@ -81,7 +80,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
         setLocalVisits(visits);
     }, [visits]);
 
-    const loadInteractions = async () => {
+    const loadInteractions = React.useCallback(async () => {
         if (!farmer?.id) return;
         setIsLoadingHistory(true);
         try {
@@ -100,14 +99,14 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
         } finally {
             setIsLoadingHistory(false);
         }
-    };
+    }, [farmer?.id]);
 
     React.useEffect(() => {
         if (farmer) setEditData(farmer);
         if (activeTab === 'history') {
             loadInteractions();
         }
-    }, [farmer, activeTab]);
+    }, [farmer, activeTab, loadInteractions]);
 
     const handleSave = () => {
         if (!farmer) return;
@@ -350,8 +349,6 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                                     <FarmerYieldChart
                                         farmer={farmer}
                                         radiusClass={radiusClass}
-                                        isCyber={isCyber}
-                                        isModern={isModern}
                                     />
 
                                     <div className="grid grid-cols-2 gap-6">
@@ -561,7 +558,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                         <div className="overflow-y-auto max-h-[85vh]">
                             <VideoCall
                                 roomId={`farmer-${farmer.id}`}
-                                userId={(storeUser as any)?.userId || 'unknown'}
+                                userId={(storeUser as unknown)?.userId || 'unknown'}
                                 userName={`${storeUser?.firstName} ${storeUser?.lastName}` || 'Extension Officer'}
                                 isHost={true}
                                 onEnd={() => setShowVideoCall(false)}

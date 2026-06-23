@@ -1,0 +1,35 @@
+{
+  "mcpServers": {
+    "gsd-workflow": {
+      "command": "/usr/bin/node",
+      "args": [
+        "/home/psalmprax/.npm-global/lib/node_modules/@opengsd/gsd-pi/packages/mcp-server/dist/cli.js"
+      ],
+      "cwd": "/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support",
+      "env": {
+        "GSD_CLI_PATH": "/home/psalmprax/.npm-global/bin/gsd",
+        "GSD_BIN_PATH": "/home/psalmprax/.npm-global/bin/gsd",
+        "GSD_WORKFLOW_EXECUTORS_MODULE": "/home/psalmprax/.gsd/agent/extensions/gsd/tools/workflow-tool-executors.js",
+        "GSD_WORKFLOW_WRITE_GATE_MODULE": "/home/psalmprax/.gsd/agent/extensions/gsd/bootstrap/write-gate.js",
+        "GSD_PERSIST_WRITE_GATE_STATE": "1",
+        "GSD_WORKFLOW_PROJECT_ROOT": "/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support"
+      }
+    },
+    "gsd-browser": {
+      "command": "/usr/bin/node",
+      "args": [
+        "/home/psalmprax/.npm-global/lib/node_modules/@opengsd/gsd-pi/node_modules/@opengsd/gsd-browser/bin/gsd-browser",
+        "mcp",
+        "--session",
+        "gsd-ag_extension_decision_support-b17150f9",
+        "--identity-scope",
+        "project",
+        "--identity-key",
+        "gsd-ag_extension_decision_support-b17150f9",
+        "--identity-project",
+        "/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support"
+      ],
+      "cwd": "/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support"
+    }
+  }
+}

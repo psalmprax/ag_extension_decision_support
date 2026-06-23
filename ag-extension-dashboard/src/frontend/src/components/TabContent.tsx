@@ -1,5 +1,4 @@
-import React, { Suspense } from 'react';
-import { Loader2 } from 'lucide-react';
+import React from 'react';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { PortfolioPage } from '@/pages/PortfolioPage';
 import { VisitsPage } from '@/pages/VisitsPage';
@@ -31,16 +30,16 @@ interface TabContentProps {
     headingClass: string;
     isModern: boolean;
     isOfficer: boolean;
-    user: any;
-    addNotification: (n: any) => void;
+    user: unknown;
+    addNotification: (n: unknown) => void;
     // Dashboard
-    dashboardData: any;
+    dashboardData: unknown;
     isLoading: boolean;
-    performanceData: any;
+    performanceData: unknown;
     effectiveFarmers: Farmer[];
     isMapExpanded: boolean;
     setIsMapExpanded: (v: boolean) => void;
-    handleStartConversation: (...args: any[]) => void;
+    handleStartConversation: (...args: unknown[]) => void;
     handleOpenFarmerDetail: (f: Farmer) => void;
     // Portfolio
     selectedFarmers: Set<string>;
@@ -49,16 +48,16 @@ interface TabContentProps {
     setShowBulkSmsComposer: (v: boolean) => void;
     bulkSmsMessage: string;
     setBulkSmsMessage: (v: string) => void;
-    handleBulkSMS: (...args: any[]) => void;
-    handleBulkExport: (...args: any[]) => void;
-    handleBulkDelete: (...args: any[]) => void;
+    handleBulkSMS: (...args: unknown[]) => void;
+    handleBulkExport: (...args: unknown[]) => void;
+    handleBulkDelete: (...args: unknown[]) => void;
     setSelectedFarmers: (v: Set<string>) => void;
     // Visits
-    visits: any[];
+    visits: unknown[];
     setShowVisitModal: (v: boolean) => void;
     refetchVisits: () => void;
     // Reports
-    reports: any[];
+    reports: unknown[];
     handleGenerateReport: () => void;
     isGeneratingReport: boolean;
     viewingReport: Report | null;
@@ -68,14 +67,14 @@ interface TabContentProps {
     isLoadingReport: boolean;
     setIsLoadingReport: (v: boolean) => void;
     // Chat
-    farmerConversations: any[];
+    farmerConversations: unknown[];
     activeFarmerConvId: string | null;
     setActiveFarmerConvId: (id: string | null) => void;
     loadFarmerMessages: (id: string) => void;
-    farmerChatMessages: any[];
+    farmerChatMessages: unknown[];
     farmerChatInput: string;
     setFarmerChatInput: (v: string) => void;
-    handleFarmerChatSend: (...args: any[]) => void;
+    handleFarmerChatSend: (...args: unknown[]) => void;
     loadFarmers: () => void;
     setShowFarmerModal: (v: boolean) => void;
 }

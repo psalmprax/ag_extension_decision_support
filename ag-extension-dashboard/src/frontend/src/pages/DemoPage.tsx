@@ -21,7 +21,7 @@ export function DemoPage() {
     // Audio synthesis states
     const [isPlayingAudio, setIsPlayingAudio] = useState(false);
     const [isSynthesizing, setIsSynthesizing] = useState(false);
-    const [synthesisOutput, setSynthesisOutput] = useState<any>(null);
+    const [synthesisOutput, setSynthesisOutput] = useState<unknown>(null);
 
     // Telemetry
     const [telemetryLogs] = useState([

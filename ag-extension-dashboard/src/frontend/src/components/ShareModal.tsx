@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   X, 
   Share2, 
@@ -12,7 +12,6 @@ import {
   Users,
   Calendar,
   AlertCircle,
-  ExternalLink,
   RefreshCcw
 } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -33,7 +32,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   entityId,
   entityName 
 }) => {
-  const { t } = useLanguage();
+  const { t: _t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [shareData, setShareData] = useState<ShareResponse['data'] | null>(null);
   const [copied, setCopied] = useState(false);

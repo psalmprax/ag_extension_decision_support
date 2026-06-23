@@ -58,9 +58,9 @@ const SystemOverview: React.FC<SystemOverviewProps> = ({
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'online':
-            case 'stable': return 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] animate-pulse';
-            case 'warning': return 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]';
-            case 'error': return 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse';
+            case 'stable': return 'bg-status-success shadow-glow-success animate-pulse';
+            case 'warning': return 'bg-status-warning shadow-glow-warning';
+            case 'error': return 'bg-status-error shadow-glow-error animate-pulse';
             default: return 'bg-white/20';
         }
     };

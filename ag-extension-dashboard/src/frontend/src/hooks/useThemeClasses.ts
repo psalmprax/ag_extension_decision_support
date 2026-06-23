@@ -20,19 +20,19 @@ export function useThemeClasses() {
         // Legacy strings for gradual migration (same as useDesignSystemMode)
         const radiusClass = isModern ? 'rounded-2xl' : 'rounded-none';
         const panelClass = isModern
-            ? 'backdrop-blur-xl bg-white/70 dark:bg-white/5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] border border-white/10'
+            ? 'backdrop-blur-xl bg-white/70 dark:bg-white/5 shadow-[inset_0_1px_1px_var(--color-outline)] border border-white/10'
             : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-none';
         const headerOpacity = isModern
             ? 'bg-white/30 dark:bg-slate-950/30'
             : 'bg-white dark:bg-slate-950 border-b-2 border-slate-100 dark:border-slate-800';
         const btnClass = isModern
-            ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_0_20px_rgba(34,211,238,0.2)]'
+            ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_0_20px_var(--color-outline)]'
             : 'rounded-none border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-mono text-xxs uppercase tracking-widest';
         const headingClass = isModern
-            ? 'text-cyan-900 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-white dark:via-cyan-200 dark:to-emerald-200 dark:drop-shadow-[0_0_15px_rgba(34,211,238,0.4)] font-black tracking-tighter'
+            ? 'text-cyan-900 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-white dark:via-cyan-200 dark:to-emerald-200 dark:drop-shadow-[0_0_15px_var(--color-outline)] font-black tracking-tighter'
             : 'text-slate-900 dark:text-white font-bold';
         const dataClass = isModern
-            ? 'text-cyan-900 dark:text-cyan-400 font-black tracking-tighter dark:drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]'
+            ? 'text-cyan-900 dark:text-cyan-400 font-black tracking-tighter dark:drop-shadow-[0_0_8px_var(--color-outline)]'
             : 'text-slate-900 dark:text-white font-bold';
         const subtextClass = isModern
             ? 'text-slate-600 dark:text-slate-400'

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useFeatureFlags } from '@/store/useFeatureFlags';
-import { X, Eye, Check } from 'lucide-react';
+import { X, Check } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 
 interface ABTestBannerProps {
@@ -10,7 +10,7 @@ interface ABTestBannerProps {
 
 export const ABTestBanner: React.FC<ABTestBannerProps> = ({ onClose, inline = false }) => {
   const { designVariant, setDesignVariant, shouldShowABTest, setShowABTest } = useFeatureFlags();
-  const { t } = useLanguage();
+  const { t: _t } = useLanguage();
 
   if (!shouldShowABTest && !inline) return null;
 
@@ -123,7 +123,7 @@ interface DesignToggleProps {
 
 export const DesignToggle: React.FC<DesignToggleProps> = ({ className }) => {
   const { designVariant, setDesignVariant } = useFeatureFlags();
-  const { t } = useLanguage();
+  const { t: _t } = useLanguage();
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>

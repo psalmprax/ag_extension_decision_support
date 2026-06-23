@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Server, Activity, CheckCircle, AlertTriangle,
-    XCircle, Clock, Play, Pause, RotateCcw,
-    Users, Zap, BarChart3, RefreshCw, Send
+    XCircle, Clock,
+    Users, RefreshCw, Send
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '../store/useAppStore';
@@ -13,6 +13,7 @@ import { withRealFallback } from '../lib/realFirst';
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import toast from 'react-hot-toast';
 import { MetricCard } from '@/components/MetricCard';
+import { CH_COLORS } from '@/lib/colors';
 
 export function Agents() {
     const { t } = useLanguage();
@@ -28,7 +29,7 @@ export function Agents() {
     const [isDispatching, setIsDispatching] = useState<string | null>(null);
 
     // Load data
-    const loadData = async (showRefresh = false) => {
+    const loadData = useCallback(async (showRefresh = false) => {
         try {
             if (showRefresh) setIsRefreshing(true);
             else setIsLoading(true);
@@ -64,14 +65,13 @@ export function Agents() {
             setIsLoading(false);
             setIsRefreshing(false);
         }
-    };
+    }, [addNotification, t]);
 
     useEffect(() => {
         loadData();
-        // Auto-refresh every 30 seconds
         const interval = setInterval(() => loadData(), 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [loadData]);
 
     const handleRefresh = () => {
         loadData(true);
@@ -147,10 +147,10 @@ export function Agents() {
     }
 
     const queueData = queueStatus ? [
-        { name: 'Queued', value: queueStatus.queued, color: '#f59e0b' },
-        { name: 'Active', value: queueStatus.active, color: '#3b82f6' },
-        { name: 'Completed', value: queueStatus.completed, color: '#10b981' },
-        { name: 'Failed', value: queueStatus.failed, color: '#ef4444' }
+        { name: 'Queued', value: queueStatus.queued, color: CH_COLORS.warning },
+        { name: 'Active', value: queueStatus.active, color: CH_COLORS.blue },
+        { name: 'Completed', value: queueStatus.completed, color: CH_COLORS.success },
+        { name: 'Failed', value: queueStatus.failed, color: CH_COLORS.error }
     ] : [];
 
     return (
@@ -238,8 +238,8 @@ export function Agents() {
                             <XAxis dataKey="name" />
                             <YAxis />
                             <Tooltip />
-                            <Bar dataKey="load" fill="#3b82f6" />
-                            <Bar dataKey="max" fill="#e5e7eb" />
+                            <Bar dataKey="load" fill={CH_COLORS.blue} />
+                            <Bar dataKey="max" fill="var(--color-primary-500)" />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>

@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Sprout, Map, Plus, Edit, Trash2, Calendar,
-    TrendingUp, Droplet, Sliders, ClipboardList,
-    CheckCircle, Navigation, Eye, User, AlertCircle,
-    Info, Loader2, ArrowRight
+    Sprout, Map, Plus, Edit, Trash2,
+    TrendingUp, Sliders,
+    CheckCircle, User,
+    Info, Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
@@ -18,7 +18,7 @@ import { fetchFarmers } from '../api/farmerService';
 import type { Farmer } from '../types/dashboard';
 
 export function CropsFields() {
-    const { t } = useLanguage();
+    const { t: _t } = useLanguage();
     const { headingClass, isModern, radiusClass, btnClass, cardClass } = useThemeClasses();
     const { addNotification, user } = useAppStore();
 
@@ -87,10 +87,10 @@ export function CropsFields() {
             };
             loadFarmersList();
         }
-    }, [isFarmer]);
+    }, [isFarmer, addNotification]);
 
     // Load fields when selected farmer changes (or on mount if farmer)
-    const loadFieldsData = async () => {
+    const loadFieldsData = useCallback(async () => {
         try {
             setIsLoading(true);
             const targetId = isFarmer ? undefined : selectedFarmerId;
@@ -110,11 +110,11 @@ export function CropsFields() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [isFarmer, selectedFarmerId, addNotification]);
 
     useEffect(() => {
         loadFieldsData();
-    }, [selectedFarmerId, isFarmer]);
+    }, [loadFieldsData]);
 
     // Field Actions
     const handleOpenAddField = () => {
@@ -405,7 +405,7 @@ export function CropsFields() {
                     return (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id as any)}
+                            onClick={() => setActiveTab(tab.id as unknown)}
                             className={`flex items-center gap-2 pb-4 font-bold text-sm tracking-wide transition-all border-b-2 uppercase ${
                                 isActive 
                                     ? 'text-cyan-400 border-cyan-400' 

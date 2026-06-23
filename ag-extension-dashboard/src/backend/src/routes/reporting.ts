@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { shareService } from "@/services/shareService";
 import { Router, Request, Response } from 'express';
 import { query, getPool } from '@/services/databaseService';
 import { logger } from '@/utils/logger';

@@ -77,7 +77,7 @@ const CropCycleGantt: React.FC<CropCycleGanttProps> = ({ items, visits = [], far
                             <motion.div 
                                 initial={{ width: 0 }}
                                 animate={{ width: `${item.percent}%` }}
-                                className="h-full bg-gradient-to-r from-primary-500 to-secondary-500 shadow-[0_0_15px_rgba(6,182,212,0.5)]" 
+                                className="h-full bg-gradient-to-r from-primary-500 to-secondary-500 shadow-[0_0_15px_var(--color-outline)]" 
                             />
                         </div>
                     </div>

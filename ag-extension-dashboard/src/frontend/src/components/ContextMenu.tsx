@@ -9,9 +9,7 @@ import {
   Calendar, 
   History, 
   RefreshCcw, 
-  FileText, 
-  User as UserIcon,
-  Trash,
+  FileText,
   CheckSquare,
   Square,
   Globe,
@@ -22,7 +20,7 @@ import {
   MoreVertical
 } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
-import { fetchContextMenu, getStaticFallbackMenu, ContextMenuData as ServiceContextMenuData } from '@/api/contextMenuService';
+import { fetchContextMenu, getStaticFallbackMenu } from '@/api/contextMenuService';
 
 interface ContextMenuItem {
   id: string;
@@ -85,7 +83,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   const [menuData, setMenuData] = useState<ContextMenuData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const menuRef = useRef<HTMLDivElement>(null);
-  const { t } = useLanguage();
+  const { t: _t } = useLanguage();
 
   useEffect(() => {
     const loadMenu = async () => {

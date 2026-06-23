@@ -49,7 +49,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ currentTheme, onTh
                                         {/* Color Preview */}
                                         <div className="flex gap-1">
                                             <div
-                                                className="w-3 h-3 rounded-full shadow-[0_0_8px_rgba(var(--color-primary-rgb),0.5)]"
+                                                className="w-3 h-3 rounded-full shadow-[0_0_8px_var(--color-outline),0.5)]"
                                                 style={{ backgroundColor: themes[theme].primary[500] }}
                                             />
                                         </div>

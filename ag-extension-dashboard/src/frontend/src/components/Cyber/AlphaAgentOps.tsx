@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { 
     Cpu, 
     Layers, 
@@ -18,7 +17,6 @@ import {
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 import apiClient from '@/api/client';
-import toast from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
 import { searchKnowledge } from '@/api/knowledgeService';
 import { fetchFarmers } from '@/api/farmerService';
@@ -40,7 +38,7 @@ const iconMap: Record<string, React.ElementType> = {
 };
 
 const AlphaAgentOps = () => {
-    const { t } = useLanguage();
+    const { t: _t } = useLanguage();
     const { addNotification } = useAppStore();
     const [activeAgent, setActiveAgent] = React.useState<string>('agent-zero');
     const [isRunning, setIsRunning] = React.useState(false);

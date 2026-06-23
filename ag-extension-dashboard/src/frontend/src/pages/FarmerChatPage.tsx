@@ -1,6 +1,6 @@
 import React from 'react';
 import { Users, Plus, Send } from 'lucide-react';
-import { Conversation, ChatMessage, Farmer } from '../types/dashboard';
+import { Conversation, ChatMessage } from '../types/dashboard';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 

@@ -6,7 +6,6 @@ import { validate } from '@/middleware/validationMiddleware';
 import { createFarmerSchema, updateFarmerSchema } from '@/utils/schemas';
 import { getPrisma } from '@/services/prismaService';
 import { authorize } from '@/middleware/authorize';
-import { shareService } from '@/services/shareService';
 import { bulkOperationsService } from '@/services/bulkOperationsService';
 import { safeError } from '@/utils/safeResponse';
 

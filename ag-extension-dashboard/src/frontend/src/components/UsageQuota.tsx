@@ -55,7 +55,7 @@ const QuotaBar = ({ label, current, limit, icon: Icon, color, glowColor }: Quota
                     <motion.div
                         animate={{ x: ["-100%", "100%"] }}
                         transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                        className="absolute inset-0 opacity-30 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.4)_50%,transparent_100%)] skew-x-12"
+                        className="absolute inset-0 opacity-30 bg-[linear-gradient(90deg,transparent_0%,var(--color-outline)_50%,transparent_100%)] skew-x-12"
                     />
                     {/* Secondary Glow Pulse */}
                     <div className={`absolute inset-0 bg-white/20 animate-pulse ${percentage < 100 ? 'rounded-r-none' : ''}`} />
@@ -112,9 +112,9 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
     }
 
     const typeConfig: Record<string, { icon: React.ComponentType<{ className?: string }>, color: string, glow: string }> = {
-        'sms': { icon: Send, color: "from-primary-400 to-primary-600", glow: "rgba(34, 197, 94, 0.4)" },
-        'ai_chat': { icon: MessageSquare, color: "from-blue-400 to-indigo-600", glow: "rgba(59, 130, 246, 0.4)" },
-        'report': { icon: FileText, color: "from-purple-400 to-fuchsia-600", glow: "rgba(168, 85, 247, 0.4)" }
+        'sms': { icon: Send, color: "from-primary-400 to-primary-600", glow: "var(--color-outline)" },
+        'ai_chat': { icon: MessageSquare, color: "from-blue-400 to-indigo-600", glow: "var(--color-outline)" },
+        'report': { icon: FileText, color: "from-purple-400 to-fuchsia-600", glow: "var(--color-outline)" }
     };
 
     return (

@@ -1,6 +1,6 @@
+import type { Pool } from 'pg';
 import { getPool } from '@/services/databaseService';
 import { getCache } from '@/services/cacheService';
-import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
 import { selfHealingService } from '@/services/selfHealing';
 
 // Mock dependencies
@@ -19,7 +19,6 @@ jest.mock('@/utils/logger', () => ({
 
 const mockGetPool = getPool as jest.MockedFunction<typeof getPool>;
 const mockGetCache = getCache as jest.MockedFunction<typeof getCache>;
-const mockAIProviderFactory = AIProviderFactory as jest.Mocked<typeof AIProviderFactory>;
 const mockSelfHealingService = selfHealingService as jest.Mocked<typeof selfHealingService>;
 
 // Import the extracted functions (we need to test them indirectly through the health handler)
@@ -32,8 +31,8 @@ describe('Health Check Helpers', () => {
 
     describe('Database Health Check', () => {
         it('should return connected when pool is available and query succeeds', async () => {
-            const mockPool = { query: jest.fn().mockResolvedValue({ rows: [{ '?column?': 1 }] }) };
-            mockGetPool.mockReturnValue(mockPool as any);
+            const mockPool = { query: jest.fn().mockResolvedValue({ rows: [{ '?column?': 1 }] }) } as unknown as Pool;
+            mockGetPool.mockReturnValue(mockPool);
 
             // Test by simulating the health check logic
             const pool = getPool();
@@ -55,14 +54,14 @@ describe('Health Check Helpers', () => {
 
     describe('Cache Health Check', () => {
         it('should return connected when redis is open', () => {
-            mockGetCache.mockReturnValue({ isOpen: true } as any);
+            mockGetCache.mockReturnValue({ isOpen: true } as unknown as ReturnType<typeof getCache>);
             const redis = getCache();
             const status = redis?.isOpen ? 'connected' : 'not connected';
             expect(status).toBe('connected');
         });
 
         it('should return not connected when redis is closed', () => {
-            mockGetCache.mockReturnValue({ isOpen: false } as any);
+            mockGetCache.mockReturnValue({ isOpen: false } as unknown as ReturnType<typeof getCache>);
             const redis = getCache();
             const status = redis?.isOpen ? 'connected' : 'not connected';
             expect(status).toBe('not connected');

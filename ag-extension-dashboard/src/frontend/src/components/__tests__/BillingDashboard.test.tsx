@@ -46,8 +46,8 @@ vi.mock('@/api/billingService', () => ({
 
 // Mock framer-motion to avoid animation issues in tests
 vi.mock('framer-motion', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mockComponent = ({ children, whileHover, whileTap, initial, animate, exit, variants, transition, layout, ...props }: any) => (
+     
+    const mockComponent = ({ children, _whileHover, _whileTap, _initial, _animate, _exit, _variants, _transition, _layout, ...props }: unknown) => (
         <div {...props}>{children}</div>
     );
     return {
@@ -61,8 +61,8 @@ vi.mock('framer-motion', () => {
             p: mockComponent,
             span: mockComponent,
         },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        AnimatePresence: ({ children }: any) => <>{children}</>
+         
+        AnimatePresence: ({ children }: unknown) => <>{children}</>
     };
 });
 

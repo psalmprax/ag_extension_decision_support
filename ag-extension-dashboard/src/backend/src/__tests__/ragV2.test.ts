@@ -431,17 +431,12 @@ describe('RAGV2Service', () => {
     // ── Schema Initialization ────────────────────────────────────────────────
 
     describe('initializeSchema', () => {
-        it('creates tables and indexes', async () => {
+        it('should log schema delegation and not run database queries', async () => {
             mockQuery.mockResolvedValue(mockResult([], 0));
 
             await RAGV2Service.initializeSchema();
 
-            expect(mockQuery).toHaveBeenCalledTimes(1);
-            const sql = mockQuery.mock.calls[0][0] as string;
-            expect(sql).toContain('CREATE TABLE IF NOT EXISTS knowledge_chunks');
-            expect(sql).toContain('CREATE TABLE IF NOT EXISTS knowledge_entities');
-            expect(sql).toContain('CREATE TABLE IF NOT EXISTS knowledge_relationships');
-            expect(sql).toContain('vector(768)');
+            expect(mockQuery).not.toHaveBeenCalled();
         });
 
         it('handles errors gracefully', async () => {
