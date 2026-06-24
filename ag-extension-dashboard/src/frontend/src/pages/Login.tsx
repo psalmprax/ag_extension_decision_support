@@ -94,7 +94,7 @@ export function Login({ onDemo }: LoginProps) {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`bg-white dark:bg-gray-800 ${radiusClass} shadow-xl p-8 w-full max-w-md`}
+                className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md`}
                 role="form"
                 aria-label="Login form"
             >
@@ -111,7 +111,7 @@ export function Login({ onDemo }: LoginProps) {
                 </div>
 
                 {/* Demo Banner */}
-                <div className={`mb-6 p-4 bg-blue-50 dark:bg-blue-900/30 ${radiusClass} border border-blue-200 dark:border-blue-800`}>
+                <div className={`mb-6 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800`}>
                     <p className="text-sm text-blue-700 dark:text-blue-300 text-center">
                         {t('login_want_explore')}{' '}
                         <button
@@ -133,7 +133,7 @@ export function Login({ onDemo }: LoginProps) {
 
                 {/* Error Message */}
                 {error && (
-                    <div className={`mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 ${radiusClass}`}>
+                    <div className={`mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg`}>
                         <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
                     </div>
                 )}
@@ -148,7 +148,7 @@ export function Login({ onDemo }: LoginProps) {
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className={`w-full px-4 py-3 ${radiusClass} border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+                            className={`w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent`}
                             placeholder="you@example.com"
                             required
                         />
@@ -168,7 +168,7 @@ export function Login({ onDemo }: LoginProps) {
                                 type={showPassword ? 'text' : 'password'}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className={`w-full px-4 py-3 pr-12 ${radiusClass} border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+                                className={`w-full px-4 py-3 pr-12 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent`}
                                 placeholder="••••••••"
                                 required
                             />
@@ -185,7 +185,7 @@ export function Login({ onDemo }: LoginProps) {
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className={`w-full py-3 px-4 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-semibold ${btnClass} transition-colors flex items-center justify-center gap-2`}
+                        className={`w-full py-3 px-4 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-semibold btn btn-primary w-full transition-colors flex items-center justify-center gap-2`}
                     >
                         {isLoading ? (
                             <>

@@ -11,13 +11,12 @@ interface HelpCenterModalProps {
 }
 
 function SupportTicketForm({
-    _showTicketForm, setShowTicketForm,
+    setShowTicketForm,
     ticketSubject, setTicketSubject,
     ticketCategory, setTicketCategory,
     ticketDescription, setTicketDescription,
     ticketSubmitting, ticketSubmitted, handleTicketSubmit
 }: {
-    _showTicketForm: boolean;
     setShowTicketForm: (show: boolean) => void;
     ticketSubject: string;
     setTicketSubject: (subject: string) => void;
@@ -203,7 +202,6 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                             <div className="flex-1 overflow-y-auto p-6 space-y-6">
                                 {showTicketForm ? (
                                     <SupportTicketForm
-                                        showTicketForm={showTicketForm}
                                         setShowTicketForm={setShowTicketForm}
                                         ticketSubject={ticketSubject}
                                         setTicketSubject={setTicketSubject}

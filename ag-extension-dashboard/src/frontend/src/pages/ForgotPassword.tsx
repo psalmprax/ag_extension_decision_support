@@ -35,7 +35,7 @@ export const ForgotPassword: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-            <div className={`w-full max-w-md bg-white dark:bg-gray-800 ${radiusClass} shadow-2xl overflow-hidden`}>
+            <div className={`w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-2xl overflow-hidden`}>
                 <div className="p-8 bg-gradient-to-br from-primary-500 to-primary-700 text-white">
                     <h1 className="text-2xl font-bold">Reset Password</h1>
                     <p className="text-sm opacity-90 mt-1">Enter your email to receive reset instructions</p>
@@ -51,7 +51,7 @@ export const ForgotPassword: React.FC = () => {
                             <button
                                 type="button"
                                 onClick={() => navigate('/login')}
-                                className={`w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold ${btnClass} transition-colors`}
+                                className={`w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold btn btn-primary w-full transition-colors`}
                             >
                                 Back to Login
                             </button>
@@ -59,7 +59,7 @@ export const ForgotPassword: React.FC = () => {
                     ) : (
                         <>
                             {status === 'error' && (
-                                <div className={`p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 ${radiusClass} flex items-center gap-2`}>
+                                <div className={`p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-2`}>
                                     <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
                                     <p className="text-sm text-red-600 dark:text-red-400">{message}</p>
                                 </div>
@@ -77,7 +77,7 @@ export const ForgotPassword: React.FC = () => {
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
                                         placeholder="you@example.com"
-                                        className={`w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 ${radiusClass} focus:ring-2 focus:ring-primary-500 dark:text-white`}
+                                        className={`w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:text-white`}
                                     />
                                 </div>
                             </div>
@@ -85,7 +85,7 @@ export const ForgotPassword: React.FC = () => {
                             <button
                                 type="submit"
                                 disabled={isLoading || !email.trim()}
-                                className={`w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold ${btnClass} transition-colors disabled:opacity-50 flex items-center justify-center gap-2`}
+                                className={`w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold btn btn-primary w-full transition-colors disabled:opacity-50 flex items-center justify-center gap-2`}
                             >
                                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                                 {isLoading ? 'Sending...' : 'Send Reset Link'}

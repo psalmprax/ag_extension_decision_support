@@ -322,10 +322,10 @@ function App() {
                             <div className="p-6">
                                 <TabContent
                                     activeTab={activeTab} headingClass={headingClass} isModern={isModern}
-                                    isOfficer={isOfficer} user={user} addNotification={addNotification}
+                                    isOfficer={isOfficer} user={user} addNotification={addNotification as (n: unknown) => void}
                                     dashboardData={dashboardData} isLoading={isLoading} performanceData={performanceData}
                                     effectiveFarmers={effectiveFarmers} isMapExpanded={isMapExpanded} setIsMapExpanded={setIsMapExpanded}
-                                    handleStartConversation={handleStartConversation} handleOpenFarmerDetail={handleOpenFarmerDetail}
+                                    handleStartConversation={handleStartConversation as (...args: unknown[]) => void} handleOpenFarmerDetail={handleOpenFarmerDetail}
                                     selectedFarmers={selectedFarmers} handleSelectFarmer={handleSelectFarmer}
                                     showBulkSmsComposer={showBulkSmsComposer} setShowBulkSmsComposer={setShowBulkSmsComposer}
                                     bulkSmsMessage={bulkSmsMessage} setBulkSmsMessage={setBulkSmsMessage}
@@ -340,7 +340,7 @@ function App() {
                                     farmerConversations={farmerConversations} activeFarmerConvId={activeFarmerConvId}
                                     setActiveFarmerConvId={setActiveFarmerConvId} loadFarmerMessages={loadFarmerMessages}
                                     farmerChatMessages={farmerChatMessages} farmerChatInput={farmerChatInput}
-                                    setFarmerChatInput={setFarmerChatInput} handleFarmerChatSend={handleFarmerChatSend}
+                                    setFarmerChatInput={setFarmerChatInput} handleFarmerChatSend={handleFarmerChatSend as (...args: unknown[]) => void}
                                     loadFarmers={loadFarmers} setShowFarmerModal={setShowFarmerModal}
                                 />
                             </div>

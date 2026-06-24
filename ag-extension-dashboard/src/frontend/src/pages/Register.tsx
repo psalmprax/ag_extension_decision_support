@@ -83,7 +83,7 @@ export function Register() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`bg-white dark:bg-gray-800 ${radiusClass} shadow-xl p-8 w-full max-w-md`}
+                className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md`}
                 style={{ pointerEvents: 'auto', touchAction: 'auto' }}
             >
                 {/* Logo */}
@@ -95,7 +95,7 @@ export function Register() {
 
                 {/* Error Message */}
                 {error && (
-                    <div className={`mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 ${radiusClass}`}>
+                    <div className={`mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg`}>
                         <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
                     </div>
                 )}
@@ -112,7 +112,7 @@ export function Register() {
                                 name="firstName"
                                 value={formData.firstName}
                                 onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                                className={`w-full px-4 py-3 ${radiusClass} border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+                                className={`w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent`}
                                 required
                             />
                         </div>
@@ -125,7 +125,7 @@ export function Register() {
                                 name="lastName"
                                 value={formData.lastName}
                                 onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                                className={`w-full px-4 py-3 ${radiusClass} border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+                                className={`w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent`}
                                 required
                             />
                         </div>
@@ -140,7 +140,7 @@ export function Register() {
                             name="email"
                             value={formData.email}
                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            className={`w-full px-4 py-3 ${radiusClass} border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+                            className={`w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent`}
                             placeholder="you@example.com"
                             required
                         />
@@ -154,7 +154,7 @@ export function Register() {
                             name="role"
                             value={formData.role}
                             onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                            className={`w-full px-4 py-3 ${radiusClass} border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+                            className={`w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent`}
                         >
                             <option value="extension_officer">{t('register_role_extension')}</option>
                             <option value="farmer">{t('register_role_farmer')}</option>
@@ -170,7 +170,7 @@ export function Register() {
                             name="region"
                             value={formData.region}
                             onChange={(e) => setFormData({ ...formData, region: e.target.value })}
-                            className={`w-full px-4 py-3 ${radiusClass} border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+                            className={`w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent`}
                             placeholder="e.g., Lilongwe"
                         />
                     </div>
@@ -185,7 +185,7 @@ export function Register() {
                                 name="password"
                                 value={formData.password}
                                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                className={`w-full px-4 py-3 pr-12 ${radiusClass} border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+                                className={`w-full px-4 py-3 pr-12 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent`}
                                 placeholder="••••••••"
                                 required
                             />
@@ -218,7 +218,7 @@ export function Register() {
                             name="confirmPassword"
                             value={formData.confirmPassword}
                             onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                            className={`w-full px-4 py-3 ${radiusClass} border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+                            className={`w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent`}
                             placeholder="••••••••"
                             required
                         />
@@ -227,7 +227,7 @@ export function Register() {
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className={`w-full py-3 px-4 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-semibold ${btnClass} transition-colors flex items-center justify-center gap-2`}
+                        className={`w-full py-3 px-4 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-semibold btn btn-primary w-full transition-colors flex items-center justify-center gap-2`}
                     >
                         {isLoading ? (
                             <>
