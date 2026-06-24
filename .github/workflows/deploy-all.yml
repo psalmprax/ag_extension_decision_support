@@ -180,6 +180,9 @@ jobs:
           script: |
             set -e
             cd /root/ag_extension_decision_support/ag-extension-dashboard
+            # Contabo VPS default resolver (209.126.15.53) DNS-timeouts under BuildKit pull load — pin to public resolvers before any docker/buildx call in this step.
+            echo "Pinning DNS to 1.1.1.1 + 8.8.8.8 for this BuildKit run..."
+            echo -e 'nameserver 1.1.1.1\nnameserver 8.8.8.8' > /etc/resolv.conf
             CLEAN_REBUILD="${{ github.event.inputs.force_clean_rebuild == 'true' && '--no-cache' || '' }}"
 
             if [ -n "$CLEAN_REBUILD" ]; then
@@ -435,6 +438,9 @@ jobs:
           script: |
             set -e
             cd /root/ag_extension_decision_support/ag-extension-dashboard
+            # Contabo VPS default resolver (209.126.15.53) DNS-timeouts under BuildKit pull load — pin to public resolvers before any docker/buildx call in this step.
+            echo "Pinning DNS to 1.1.1.1 + 8.8.8.8 for this BuildKit run..."
+            echo -e 'nameserver 1.1.1.1\nnameserver 8.8.8.8' > /etc/resolv.conf
             CLEAN_REBUILD="${{ github.event.inputs.force_clean_rebuild == 'true' && '--no-cache' || '' }}"
 
             if [ -n "$CLEAN_REBUILD" ]; then
