@@ -168,6 +168,16 @@ services:
   ettametta-ollama:
     image: ollama/ollama:0.6.2
     container_name: ettametta-ollama
+    # Pin DNS so the entrypoint's `ollama pull llama3.2:3b` can resolve
+    # `registry.ollama.ai`. Docker's embedded DNS at 127.0.0.11 does not
+    # always reach the host's upstream resolvers from inside the container's
+    # network namespace (i/o timeout on UDP 127.0.0.1:NNN -> 127.0.0.11:53).
+    # Bypassing it makes cold-pull deterministic on hosts filtering egress
+    # UDP/53 from the bridge subnet. OLLAMA_DNS env-var lets dev hosts behind
+    # corporate firewalls override (e.g. OLLAMA_DNS=10.0.0.53).
+    dns:
+      - ${OLLAMA_DNS:-1.1.1.1}
+      - 8.8.8.8
     profiles:
       - ai
     deploy:

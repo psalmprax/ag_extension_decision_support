@@ -19,6 +19,14 @@
 #                        Use on first deploys where the `ai` profile isn't active
 #                        yet (e.g. when minimal host staging hasn't brought up
 #                        the model container).
+#   --expected-model NAME  Model name expected in /api/tags response
+#                        (default: llama3.2:3b, matches compose entrypoint
+#                        pull). Falling-back to a generic 'models[] non-empty'
+#                        check is not enough: a freshly-restarted ollama whose
+#                        cold-pull was DNS-blocked will return [] only briefly,
+#                        or [] → [other-model-only] once one of the bundled
+#                        models completes. Requiring the *expected* model name
+#                        surfaces the semantic-regression case at gate time.
 #   -h | --help          Show this help and exit
 #
 # Exit codes:
@@ -49,6 +57,7 @@ OLLA_SERVICE="ettametta-ollama"
 RETRIES=30
 INTERVAL=10
 IF_RUNNING=0
+EXPECTED_MODEL="${EXPECTED_MODEL:-llama3.2:3b}"
 COMPOSE_DIR_OVERRIDE=""
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -68,6 +77,8 @@ Usage: scripts/smoke-ollama.sh [options]
   --if-running         Pass with a warning when ettametta-ollama isn't running.
                        Use on first deploys where the `ai` profile isn't active
                        yet.
+  --expected-model NAME  Model name expected in /api/tags response
+                       (default: llama3.2:3b)
   -h | --help          Show this help and exit
 
 Exit codes:
@@ -86,6 +97,7 @@ while [ $# -gt 0 ]; do
         --retries)    RETRIES="$2"; shift 2 ;;
         --interval)   INTERVAL="$2"; shift 2 ;;
         --if-running) IF_RUNNING=1; shift ;;
+        --expected-model) EXPECTED_MODEL="$2"; shift 2 ;;
         -h|--help)    print_help ;;
         *) fail "Unknown option: $1"; exit 2 ;;
     esac
@@ -171,11 +183,23 @@ while [ "$ATTEMPT" -lt "$RETRIES" ]; do
                 LAST_ERR="response had empty 'models' array (model still pulling?)"
                 ;;
             *)
-                echo
-                pass "Ollama healthy and $MODELS model(s) loaded"
-                info "Reached on attempt $ATTEMPT of $RETRIES."
-                echo
-                exit 0
+                # Verify the *expected* model is actually loaded, not just any
+                # model. This catches the failure mode where ollama's startup
+                # `ollama pull` was blocked (typically Docker-embedded DNS at
+                # 127.0.0.11 cannot upstream-resolve `registry.ollama.ai`) and
+                # /api/tags returns either [] or a models[] containing only
+                # bundled tags that are NOT the one the AI provider chain asks
+                # for. The compose `dns:` override on ettametta-ollama is the
+                # primary defense; this check guards the gate semantically.
+                if echo "$RESP" | grep -qF "\"$EXPECTED_MODEL\"" 2>/dev/null; then
+                    echo
+                    pass "Ollama healthy and $MODELS model(s) loaded; expected '$EXPECTED_MODEL' present"
+                    info "Reached on attempt $ATTEMPT of $RETRIES."
+                    echo
+                    exit 0
+                else
+                    LAST_ERR="models list does NOT contain expected '$EXPECTED_MODEL'. Likely: ollama cold-pull blocked at container startup (DNS path issue - see docker-compose.yml 'dns:' override on ettametta-ollama) or AI provider chain was reconfigured to a different model."
+                fi
                 ;;
         esac
     else
