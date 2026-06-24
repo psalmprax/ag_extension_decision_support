@@ -220,7 +220,13 @@ jobs:
               echo "Authenticating to GHCR for remote Docker layer cache..."
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_REPOSITORY_OWNER" --password-stdin 2>/dev/null
               echo "Building with remote cache (GHCR)..."
-              docker buildx create --use --driver docker-container --name remote-builder 2>/dev/null || docker buildx use remote-builder 2>/dev/null || true
+              # `--driver-opt network=host` puts the buildkitd worker in the host
+              # network namespace so base-image pulls go through the host's DNS
+              # path. The default bridge (172.17.0.0/16) on this Contabo VPS
+              # cannot egress UDP/53 to public resolvers (verified error from
+              # the previous run: `dial tcp: lookup registry-1.docker.io on
+              # 8.8.8.8:53: read udp 172.17.0.2:...->8.8.8.8:53: i/o timeout`).
+              docker buildx create --use --driver docker-container --driver-opt "network=host" --name remote-builder 2>/dev/null || docker buildx use remote-builder 2>/dev/null || true
               docker buildx bake --load -f docker-bake.hcl backend frontend agent-zero crew-ai
             fi
 
@@ -506,7 +512,13 @@ jobs:
               echo "Authenticating to GHCR for remote Docker layer cache..."
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_REPOSITORY_OWNER" --password-stdin 2>/dev/null
               echo "Building with remote cache (GHCR)..."
-              docker buildx create --use --driver docker-container --name remote-builder 2>/dev/null || docker buildx use remote-builder 2>/dev/null || true
+              # `--driver-opt network=host` puts the buildkitd worker in the host
+              # network namespace so base-image pulls go through the host's DNS
+              # path. The default bridge (172.17.0.0/16) on this Contabo VPS
+              # cannot egress UDP/53 to public resolvers (verified error from
+              # the previous run: `dial tcp: lookup registry-1.docker.io on
+              # 8.8.8.8:53: read udp 172.17.0.2:...->8.8.8.8:53: i/o timeout`).
+              docker buildx create --use --driver docker-container --driver-opt "network=host" --name remote-builder 2>/dev/null || docker buildx use remote-builder 2>/dev/null || true
               docker buildx bake --load -f docker-bake.hcl backend frontend agent-zero crew-ai
             fi
 

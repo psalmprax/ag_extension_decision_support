@@ -136,6 +136,18 @@ jobs:
               echo "Docker daemon DNS already pinned (daemon.json matches target)."
             fi
             echo
+
+            # Compose's --build spawns a buildkit worker container on the
+            # default docker bridge (172.17.0.0/16). On this Contabo VPS that
+            # subnet cannot egress UDP/53 to public resolvers (verified error
+            # from the previous run: `dial tcp: lookup registry-1.docker.io on
+            # 8.8.8.8:53: read udp 172.17.0.2:...->8.8.8.8:53: i/o timeout`),
+            # so base pulls fail even after the daemon.json DNS pin.
+            # `--driver-opt network=host` puts the worker in the host network
+            # namespace — pulls go through the host's DNS path which works.
+            docker buildx create --use --driver docker-container --driver-opt "network=host" --name stage-builder 2>/dev/null || docker buildx use stage-builder 2>/dev/null || true
+            export DOCKER_BUILDER=stage-builder
+
             docker compose \
               -f docker-compose.yml \
               -f docker-compose.staging.yml \
