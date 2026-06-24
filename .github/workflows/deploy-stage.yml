@@ -137,6 +137,17 @@ jobs:
             fi
             echo
 
+            # Idempotently allow docker bridge → public UDP/53 egress.
+            # `--driver-opt network=host` did not apply at lazy-spawn time
+            # on the prior run (buildkti worker stayed on 172.17.0.0/16).
+            # Counteract by ensuring the FORWARD + OUTPUT chains ACCEPT
+            # UDP/53 to/from the bridge subnet regardless of buildx
+            # network-mode behaviour.
+            iptables -C FORWARD -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT 2>/dev/null || iptables -I FORWARD 1 -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT
+            iptables -C FORWARD -d 172.17.0.0/16 -p udp --sport 53 -j ACCEPT 2>/dev/null || iptables -I FORWARD 1 -d 172.17.0.0/16 -p udp --sport 53 -j ACCEPT
+            iptables -C OUTPUT  -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT 2>/dev/null || iptables -I OUTPUT  1 -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT
+            echo "  iptables UDP/53 from 172.17.0.0/16: ensured"
+
             # Compose's --build spawns a buildkit worker container on the
             # default docker bridge (172.17.0.0/16). On this Contabo VPS that
             # subnet cannot egress UDP/53 to public resolvers (verified error
@@ -145,7 +156,11 @@ jobs:
             # so base pulls fail even after the daemon.json DNS pin.
             # `--driver-opt network=host` puts the worker in the host network
             # namespace — pulls go through the host's DNS path which works.
-            docker buildx create --use --driver docker-container --driver-opt "network=host" --name stage-builder 2>/dev/null || docker buildx use stage-builder 2>/dev/null || true
+            # `--bootstrap` forces the worker container to be created and
+            # started at instance-create time so the driver-opts apply to the
+            # actual docker run invocation (the lazy-spawn path previously
+            # ignored network=host).
+            docker buildx create --use --driver docker-container --driver-opt "network=host" --name stage-builder --bootstrap 2>/dev/null || docker buildx use stage-builder 2>/dev/null || true
             export DOCKER_BUILDER=stage-builder
 
             docker compose \
