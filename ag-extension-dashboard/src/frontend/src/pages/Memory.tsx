@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
     Brain, Plus, Search, Edit, Trash2,
     Clock, Tag, BarChart3, RefreshCw,
@@ -7,6 +7,7 @@ import {
 import { motion } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
+import { useResourceLoader } from '@/hooks/useResourceLoader';
 import { useAppStore } from '../store/useAppStore';
 import { fetchMemories, storeMemory, deleteMemory, fetchMemorySummary, type MemoryEntry } from '../api/memoryService';
 import { MetricCard } from '@/components/MetricCard';
@@ -17,15 +18,34 @@ export function Memory() {
     const { headingClass, isModern, radiusClass, btnClass } = useThemeClasses();
     const { addNotification } = useAppStore();
 
-    // State
-    const [memories, setMemories] = useState<MemoryEntry[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isRefreshing, setIsRefreshing] = useState(false);
+    // Resource loader encapsulates the category-filter + parallel-fetch + refresh
+    // state machine shared with EmailWorkflows.tsx (see audit dup:73594d16).
+    type MemoryResources = {
+        memories: MemoryEntry[];
+        summary: Array<{ category: string; count: number; avgImportance: number }>;
+    };
+    const loader = useResourceLoader<MemoryResources>({
+        load: async (category) => ({
+            memories: await fetchMemories(category),
+            summary: await fetchMemorySummary(),
+        }),
+        errorMessage: t('memory_failed_load'),
+    });
+    const memories = loader.data.memories ?? [];
+    const memorySummary = loader.data.summary ?? [];
+    const {
+        selectedCategory,
+        setSelectedCategory,
+        isLoading,
+        isRefreshing,
+        reload,
+        refresh,
+    } = loader;
+
+    // Search + modal state (unrelated to loader).
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState<string>('all');
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingMemory, setEditingMemory] = useState<MemoryEntry | null>(null);
-    const [memorySummary, setMemorySummary] = useState<Array<{ category: string; count: number; avgImportance: number }>>([]);
 
     // Form state
     const [newMemory, setNewMemory] = useState({
@@ -34,43 +54,6 @@ export function Memory() {
         value: '',
         importance: 0.5
     });
-
-    // Load data
-    const loadData = useCallback(async (showRefresh = false) => {
-        try {
-            if (showRefresh) setIsRefreshing(true);
-            else setIsLoading(true);
-
-            const [memoriesRes, summaryRes] = await Promise.all([
-                fetchMemories(selectedCategory === 'all' ? undefined : selectedCategory),
-                fetchMemorySummary()
-            ]);
-
-            if (memoriesRes.success) {
-                setMemories(memoriesRes.data);
-            }
-            if (summaryRes.success) {
-                setMemorySummary(summaryRes.data);
-            }
-        } catch (error) {
-            console.error('Failed to load memory data:', error);
-            addNotification({
-                type: 'error',
-                message: t('memory_failed_load')
-            });
-        } finally {
-            setIsLoading(false);
-            setIsRefreshing(false);
-        }
-    }, [selectedCategory, addNotification, t]);
-
-    useEffect(() => {
-        loadData();
-    }, [loadData]);
-
-    const handleRefresh = () => {
-        loadData(true);
-    };
 
     const handleAddMemory = async () => {
         if (!newMemory.category || !newMemory.key || !newMemory.value) return;
@@ -84,7 +67,7 @@ export function Memory() {
                 });
                 setNewMemory({ category: '', key: '', value: '', importance: 0.5 });
                 setShowAddModal(false);
-                loadData();
+                reload();
             }
         } catch (error) {
             console.error('Failed to store memory:', error);
@@ -105,7 +88,7 @@ export function Memory() {
                         type: 'success',
                         message: t('memory_deleted_success')
                     });
-                loadData();
+                reload();
             }
         } catch (error) {
             console.error('Failed to delete memory:', error);
@@ -143,7 +126,7 @@ export function Memory() {
                 setNewMemory({ category: '', key: '', value: '', importance: 0.5 });
                 setShowAddModal(false);
                 setEditingMemory(null);
-                loadData();
+                reload();
             }
         } catch (error) {
             console.error('Failed to update memory:', error);
@@ -182,9 +165,8 @@ export function Memory() {
                     >
                         <Plus className="w-4 h-4" />
                         Add Memory
-                    </button>
-                    <button
-                        onClick={handleRefresh}
+                    </button>                        <button
+                            onClick={refresh}
                         disabled={isRefreshing}
                         className={`flex items-center gap-2 px-4 py-2 bg-gray-600 text-white ${btnClass} hover:bg-gray-700 disabled:opacity-50`}
                     >

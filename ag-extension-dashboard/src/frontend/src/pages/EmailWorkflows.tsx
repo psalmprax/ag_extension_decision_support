@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useLanguage } from '../lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
+import { useResourceLoader } from '@/hooks/useResourceLoader';
 import { useAppStore } from '../store/useAppStore';
 import {
     fetchEmailTemplates,
@@ -28,16 +29,35 @@ export function EmailWorkflows() {
     const { headingClass, isModern, radiusClass, btnClass } = useThemeClasses();
     const { addNotification } = useAppStore();
 
-    // State
+    // Resource loader encapsulates the category-filter + parallel-fetch + refresh
+    // state machine shared with Memory.tsx (see audit dup:73594d16).
+    type EmailResources = { templates: EmailTemplate[]; approvals: EmailApproval[] };
+    const loader = useResourceLoader<EmailResources>({
+        load: async (category) => ({
+            templates: await fetchEmailTemplates(category),
+            approvals: await fetchPendingApprovals(),
+        }),
+        errorMessage: t('email_workflows_failed_load'),
+    });
+    const templates = loader.data.templates ?? [];
+    const approvals = loader.data.approvals ?? [];
+    const {
+        selectedCategory,
+        setSelectedCategory,
+        isLoading,
+        isRefreshing,
+        reload,
+        refresh,
+    } = loader;
+
+    // Modal + per-row processing state (unrelated to loader).
     const [activeTab, setActiveTab] = useState<'templates' | 'approvals'>('templates');
-    const [templates, setTemplates] = useState<EmailTemplate[]>([]);
-    const [approvals, setApprovals] = useState<EmailApproval[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isRefreshing, setIsRefreshing] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState<string>('all');
     const [showApprovalModal, setShowApprovalModal] = useState<EmailApproval | null>(null);
     const [approvalComment, setApprovalComment] = useState('');
     const [isProcessingApproval, setIsProcessingApproval] = useState(false);
+    // Tracks which approvals are mid-flight so the row disables its 3 action buttons
+    // (Review / Quick Approve / Quick Reject) and prevents double-fire races.
+    const [processingApprovals, setProcessingApprovals] = useState<Set<string>>(new Set());
 
     // Preview and Edit modals
     const [showPreviewModal, setShowPreviewModal] = useState<EmailTemplate | null>(null);
@@ -51,73 +71,80 @@ export function EmailWorkflows() {
 
     const categories = [...new Set(templates.map(template => template.category))];
 
-    const loadData = useCallback(async (showRefresh = false) => {
+    const dispatchApproval = async (
+        approval: EmailApproval,
+        action: 'approve' | 'reject',
+        comment?: string,
+    ) => {
+        setProcessingApprovals(prev => {
+            const next = new Set(prev);
+            next.add(approval.id);
+            return next;
+        });
         try {
-            if (showRefresh) setIsRefreshing(true);
-            else setIsLoading(true);
-
-            const [templatesRes, approvalsRes] = await Promise.all([
-                fetchEmailTemplates(selectedCategory === 'all' ? undefined : selectedCategory),
-                fetchPendingApprovals(),
-            ]);
-
-            if (templatesRes.success) setTemplates(templatesRes.data);
-            if (approvalsRes.success) setApprovals(approvalsRes.data);
+            const res = action === 'approve'
+                ? await approveEmail(approval.id, comment)
+                : await rejectEmail(approval.id, comment);
+            if (res.success) {
+                addNotification({
+                    type: 'success',
+                    message: action === 'approve'
+                        ? t('email_workflows_approved')
+                        : t('email_workflows_rejected'),
+                });
+                // If the user happened to have the modal open for this approval, close it
+                // so the list refresh doesn't leave a stale modal pointing at a row that
+                // is now resolved.
+                if (showApprovalModal?.id === approval.id) {
+                    setShowApprovalModal(null);
+                    setApprovalComment('');
+                }
+                reload();
+            } else {
+                addNotification({
+                    type: 'error',
+                    message: action === 'approve'
+                        ? 'Failed to approve email'
+                        : t('email_workflows_failed_reject'),
+                });
+            }
         } catch (error) {
-            console.error('Failed to load email workflow data:', error);
+            console.error(`Failed to ${action} email:`, error);
             addNotification({
                 type: 'error',
-                message: t('email_workflows_failed_load'),
+                message: action === 'approve'
+                    ? 'Failed to approve email'
+                    : t('email_workflows_failed_reject'),
             });
         } finally {
-            setIsLoading(false);
-            setIsRefreshing(false);
-        }
-    }, [selectedCategory, addNotification, t]);
-
-    useEffect(() => {
-        loadData();
-    }, [loadData]);
-
-    const handleRefresh = () => loadData(true);
-
-    const handleApproveEmail = async () => {
-        if (!showApprovalModal) return;
-        setIsProcessingApproval(true);
-        try {
-            const res = await approveEmail(showApprovalModal.id, approvalComment || undefined);
-            if (res.success) {
-                addNotification({ type: 'success', message: t('email_workflows_approved') });
-                setShowApprovalModal(null);
-                setApprovalComment('');
-                loadData();
+            setProcessingApprovals(prev => {
+                const next = new Set(prev);
+                next.delete(approval.id);
+                return next;
+            });
+            if (showApprovalModal?.id === approval.id) {
+                setIsProcessingApproval(false);
             }
-        } catch (error) {
-            console.error('Failed to approve email:', error);
-            addNotification({ type: 'error', message: 'Failed to approve email' });
-        } finally {
-            setIsProcessingApproval(false);
         }
     };
 
-    const handleRejectEmail = async () => {
+    const handleApproveEmail = () => {
         if (!showApprovalModal) return;
         setIsProcessingApproval(true);
-        try {
-            const res = await rejectEmail(showApprovalModal.id, approvalComment || undefined);
-            if (res.success) {
-                addNotification({ type: 'success', message: t('email_workflows_rejected') });
-                setShowApprovalModal(null);
-                setApprovalComment('');
-                loadData();
-            }
-        } catch (error) {
-            console.error('Failed to reject email:', error);
-            addNotification({ type: 'error', message: t('email_workflows_failed_reject') });
-        } finally {
-            setIsProcessingApproval(false);
-        }
+        dispatchApproval(showApprovalModal, 'approve', approvalComment || undefined);
     };
+
+    const handleRejectEmail = () => {
+        if (!showApprovalModal) return;
+        setIsProcessingApproval(true);
+        dispatchApproval(showApprovalModal, 'reject', approvalComment || undefined);
+    };
+
+    const handleQuickApprove = (approval: EmailApproval) =>
+        dispatchApproval(approval, 'approve', 'Quick approve');
+
+    const handleQuickReject = (approval: EmailApproval) =>
+        dispatchApproval(approval, 'reject', 'Quick reject');
 
     const handlePreviewTemplate = (template: EmailTemplate) => setShowPreviewModal(template);
 
@@ -155,7 +182,7 @@ export function EmailWorkflows() {
                 headingClass={headingClass}
                 subtitle={t('email_workflows_subtitle')}
                 isRefreshing={isRefreshing}
-                onRefresh={handleRefresh}
+                onRefresh={refresh}
                 btnClass={btnClass}
             />
 
@@ -197,6 +224,9 @@ export function EmailWorkflows() {
                 <EmailWorkflowsApprovalQueue
                     approvals={approvals}
                     onReview={setShowApprovalModal}
+                    onQuickApprove={handleQuickApprove}
+                    onQuickReject={handleQuickReject}
+                    processingApprovals={processingApprovals}
                     btnClass={btnClass}
                     t={t}
                     radiusClass={radiusClass}

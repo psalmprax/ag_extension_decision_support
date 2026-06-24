@@ -7,12 +7,18 @@ import type { EmailApproval } from '@/api/emailWorkflowService';
 export function EmailWorkflowsApprovalQueue({
     approvals,
     onReview,
+    onQuickApprove,
+    onQuickReject,
+    processingApprovals,
     btnClass,
     t,
     radiusClass,
 }: {
     approvals: EmailApproval[];
     onReview: (approval: EmailApproval) => void;
+    onQuickApprove: (approval: EmailApproval) => void;
+    onQuickReject: (approval: EmailApproval) => void;
+    processingApprovals: Set<string>;
     btnClass: string;
     t: (key: string) => string;
     radiusClass: string;
@@ -67,16 +73,25 @@ export function EmailWorkflowsApprovalQueue({
                             <div className="flex gap-3">
                                 <button
                                     onClick={() => onReview(approval)}
-                                    className={`flex items-center gap-2 px-4 py-2 bg-primary-600 text-white ${btnClass} hover:bg-primary-700`}
+                                    disabled={processingApprovals.has(approval.id)}
+                                    className={`flex items-center gap-2 px-4 py-2 bg-primary-600 text-white ${btnClass} hover:bg-primary-700 disabled:opacity-50`}
                                 >
                                     <Eye className="w-4 h-4" />
                                     Review
                                 </button>
-                                <button className={`flex items-center gap-2 px-4 py-2 bg-green-600 text-white ${btnClass} hover:bg-green-700`}>
+                                <button
+                                    onClick={() => onQuickApprove(approval)}
+                                    disabled={processingApprovals.has(approval.id)}
+                                    className={`flex items-center gap-2 px-4 py-2 bg-green-600 text-white ${btnClass} hover:bg-green-700 disabled:opacity-50`}
+                                >
                                     <CheckCircle className="w-4 h-4" />
                                     Quick Approve
                                 </button>
-                                <button className={`flex items-center gap-2 px-4 py-2 bg-red-600 text-white ${btnClass} hover:bg-red-700`}>
+                                <button
+                                    onClick={() => onQuickReject(approval)}
+                                    disabled={processingApprovals.has(approval.id)}
+                                    className={`flex items-center gap-2 px-4 py-2 bg-red-600 text-white ${btnClass} hover:bg-red-700 disabled:opacity-50`}
+                                >
                                     <XCircle className="w-4 h-4" />
                                     Quick Reject
                                 </button>
