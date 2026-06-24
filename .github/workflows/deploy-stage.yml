@@ -108,6 +108,9 @@ jobs:
 
             echo
             echo "=== build + recreate backend + frontend (staging override = production target) ==="
+            # Contabo VPS default resolver (209.126.15.53) DNS-timeouts under Compose/BuildKit pull load — pin to public resolvers before docker compose --build.
+            echo "Pinning DNS to 1.1.1.1 + 8.8.8.8 for this compose/build step..."
+            echo -e 'nameserver 1.1.1.1\nnameserver 8.8.8.8' > /etc/resolv.conf
             docker compose \
               -f docker-compose.yml \
               -f docker-compose.staging.yml \
