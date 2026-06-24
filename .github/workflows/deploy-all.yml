@@ -186,7 +186,12 @@ jobs:
             # symlink that gets reverted, and host DNS does not propagate into a
             # buildkitd container that was already created with the broken one.
             # daemon.json is the authoritative knob and is read at daemon start.
-            TARGET_DNS='{"dns":["1.1.1.1","8.8.8.8"],"log-level":"warn"}'
+            # 127.0.0.1 is appended LAST so it acts as a final-port fallback to
+            # an `unbound` local DNS-over-TLS forwarder (TCP/853) for hosts
+            # where Contabo blocks UDP/53 from the docker bridge subnet above
+            # iptables (i.e., iptables fix is insufficient). The first two
+            # entries cover the iptables-unblocked case at full UDP speed.
+            TARGET_DNS='{"dns":["1.1.1.1","8.8.8.8","127.0.0.1"],"log-level":"warn"}'
             mkdir -p /etc/docker
             CLEAN_CURRENT=$(cat /etc/docker/daemon.json 2>/dev/null | tr -d ' \n\t' || echo '{}')
             CLEAN_TARGET=$(echo "$TARGET_DNS" | tr -d ' \n\t')
@@ -495,7 +500,12 @@ jobs:
             # symlink that gets reverted, and host DNS does not propagate into a
             # buildkitd container that was already created with the broken one.
             # daemon.json is the authoritative knob and is read at daemon start.
-            TARGET_DNS='{"dns":["1.1.1.1","8.8.8.8"],"log-level":"warn"}'
+            # 127.0.0.1 is appended LAST so it acts as a final-port fallback to
+            # an `unbound` local DNS-over-TLS forwarder (TCP/853) for hosts
+            # where Contabo blocks UDP/53 from the docker bridge subnet above
+            # iptables (i.e., iptables fix is insufficient). The first two
+            # entries cover the iptables-unblocked case at full UDP speed.
+            TARGET_DNS='{"dns":["1.1.1.1","8.8.8.8","127.0.0.1"],"log-level":"warn"}'
             mkdir -p /etc/docker
             CLEAN_CURRENT=$(cat /etc/docker/daemon.json 2>/dev/null | tr -d ' \n\t' || echo '{}')
             CLEAN_TARGET=$(echo "$TARGET_DNS" | tr -d ' \n\t')
