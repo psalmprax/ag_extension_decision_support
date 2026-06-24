@@ -180,9 +180,37 @@ jobs:
           script: |
             set -e
             cd /root/ag_extension_decision_support/ag-extension-dashboard
-            # Contabo VPS default resolver (209.126.15.53) DNS-timeouts under BuildKit pull load — pin to public resolvers before any docker/buildx call in this step.
-            echo "Pinning DNS to 1.1.1.1 + 8.8.8.8 for this BuildKit run..."
-            echo -e 'nameserver 1.1.1.1\nnameserver 8.8.8.8' > /etc/resolv.conf
+            # Pin Docker daemon DNS to Cloudflare+Google so BuildKit + compose pulls
+            # bypass Contabo's flaky default resolver (209.126.15.53). The earlier
+            # /etc/resolv.conf swap is fragile: on Ubuntu 22 it is a systemd-resolved
+            # symlink that gets reverted, and host DNS does not propagate into a
+            # buildkitd container that was already created with the broken one.
+            # daemon.json is the authoritative knob and is read at daemon start.
+            TARGET_DNS='{"dns":["1.1.1.1","8.8.8.8"],"log-level":"warn"}'
+            mkdir -p /etc/docker
+            CLEAN_CURRENT=$(cat /etc/docker/daemon.json 2>/dev/null | tr -d ' \n\t' || echo '{}')
+            CLEAN_TARGET=$(echo "$TARGET_DNS" | tr -d ' \n\t')
+            if [ "$CLEAN_CURRENT" != "$CLEAN_TARGET" ]; then
+              echo "$TARGET_DNS" > /etc/docker/daemon.json
+              echo "Pinning Docker daemon DNS to 1.1.1.1 + 8.8.8.8..."
+              echo "  Restarting Docker daemon to pick up new DNS..."
+              systemctl restart docker
+              for i in $(seq 1 30); do
+                if docker info >/dev/null 2>&1; then
+                  echo "  Docker daemon up after ${i}s."
+                  break
+                fi
+                sleep 1
+              done
+              docker info >/dev/null 2>&1 || { echo "FATAL: Docker daemon did not come back up" >&2; exit 1; }
+              # The restart tears down the cached buildkitd container; force a
+              # fresh buildx instance below so the new buildkitd inherits the
+              # new daemon DNS instead of the inherited broken resolvers.
+              docker buildx rm remote-builder 2>/dev/null || true
+              echo "  /etc/docker/daemon.json written; daemon restarted; remote-builder cleared."
+            else
+              echo "Docker daemon DNS already pinned (daemon.json matches target)."
+            fi
             CLEAN_REBUILD="${{ github.event.inputs.force_clean_rebuild == 'true' && '--no-cache' || '' }}"
 
             if [ -n "$CLEAN_REBUILD" ]; then
@@ -438,9 +466,37 @@ jobs:
           script: |
             set -e
             cd /root/ag_extension_decision_support/ag-extension-dashboard
-            # Contabo VPS default resolver (209.126.15.53) DNS-timeouts under BuildKit pull load — pin to public resolvers before any docker/buildx call in this step.
-            echo "Pinning DNS to 1.1.1.1 + 8.8.8.8 for this BuildKit run..."
-            echo -e 'nameserver 1.1.1.1\nnameserver 8.8.8.8' > /etc/resolv.conf
+            # Pin Docker daemon DNS to Cloudflare+Google so BuildKit + compose pulls
+            # bypass Contabo's flaky default resolver (209.126.15.53). The earlier
+            # /etc/resolv.conf swap is fragile: on Ubuntu 22 it is a systemd-resolved
+            # symlink that gets reverted, and host DNS does not propagate into a
+            # buildkitd container that was already created with the broken one.
+            # daemon.json is the authoritative knob and is read at daemon start.
+            TARGET_DNS='{"dns":["1.1.1.1","8.8.8.8"],"log-level":"warn"}'
+            mkdir -p /etc/docker
+            CLEAN_CURRENT=$(cat /etc/docker/daemon.json 2>/dev/null | tr -d ' \n\t' || echo '{}')
+            CLEAN_TARGET=$(echo "$TARGET_DNS" | tr -d ' \n\t')
+            if [ "$CLEAN_CURRENT" != "$CLEAN_TARGET" ]; then
+              echo "$TARGET_DNS" > /etc/docker/daemon.json
+              echo "Pinning Docker daemon DNS to 1.1.1.1 + 8.8.8.8..."
+              echo "  Restarting Docker daemon to pick up new DNS..."
+              systemctl restart docker
+              for i in $(seq 1 30); do
+                if docker info >/dev/null 2>&1; then
+                  echo "  Docker daemon up after ${i}s."
+                  break
+                fi
+                sleep 1
+              done
+              docker info >/dev/null 2>&1 || { echo "FATAL: Docker daemon did not come back up" >&2; exit 1; }
+              # The restart tears down the cached buildkitd container; force a
+              # fresh buildx instance below so the new buildkitd inherits the
+              # new daemon DNS instead of the inherited broken resolvers.
+              docker buildx rm remote-builder 2>/dev/null || true
+              echo "  /etc/docker/daemon.json written; daemon restarted; remote-builder cleared."
+            else
+              echo "Docker daemon DNS already pinned (daemon.json matches target)."
+            fi
             CLEAN_REBUILD="${{ github.event.inputs.force_clean_rebuild == 'true' && '--no-cache' || '' }}"
 
             if [ -n "$CLEAN_REBUILD" ]; then
