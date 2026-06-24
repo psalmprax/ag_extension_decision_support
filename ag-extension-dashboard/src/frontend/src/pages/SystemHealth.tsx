@@ -127,8 +127,8 @@ function SslSection({ ssl }: { ssl?: Record<string, unknown> }) {
             <div className={`p-3 rounded-lg border ${getHealthBorderClass(isHealthy, 'amberOrGreen')}`}>
                 {isHealthy && cert ? (
                     <div className="text-sm space-y-1">
-                        <p><span className="font-bold">Issuer:</span> {cert.issuer ?? ''}</p>
-                        <p><span className="font-bold">Subject:</span> {cert.subject ?? ''}</p>
+                        <p><span className="font-bold">Issuer:</span> {cert.issuer ?? '—'}</p>
+                        <p><span className="font-bold">Subject:</span> {cert.subject ?? '—'}</p>
                         <p><span className="font-bold">Expires:</span> {new Date(cert.validTo ?? Date.now()).toLocaleDateString()} <span className={daysLeft != null && daysLeft < CERT_EXPIRY_WARN_DAYS ? 'text-red-500 font-bold' : 'text-green-500'}>({daysLeft ?? '—'} days)</span></p>
                     </div>
                 ) : (
