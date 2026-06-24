@@ -211,6 +211,13 @@ function checkAgentServices(): { status: string; error?: string } {
     }
 }
 
+// Health check warm-up window: tolerate DB-still-warming for the first N seconds of
+// process lifetime so /api/health doesn't return 503 during Prisma pool cold-start.
+// After the window closes the original strict logic takes over so a real DB outage
+// is still surfaced as 503.
+const HEALTH_WARMUP_WINDOW_MS = 60_000;
+const PROCESS_START_TIME = Date.now();
+
 // Health check handler with full dependency checks
 const healthHandler = async (_req: Request, res: Response) => {
     const [db, cache, ai, external, agents] = await Promise.all([
@@ -222,11 +229,37 @@ const healthHandler = async (_req: Request, res: Response) => {
     ]);
 
     const errors = [db.error, cache.error, ai.error, external.error, agents.error].filter(Boolean);
-    const isHealthy = db.status === 'connected' && ai.status !== 'unhealthy';
-    const isDegraded = db.status === 'connected' && errors.length > 0;
+    const inWarmup = Date.now() - PROCESS_START_TIME < HEALTH_WARMUP_WINDOW_MS;
+    const dbOk = db.status === 'connected';
+    const aiOk = ai.status !== 'unhealthy';
 
-    res.status(isHealthy ? 200 : isDegraded ? 200 : 503).json({
-        status: isHealthy ? 'healthy' : isDegraded ? 'degraded' : 'unhealthy',
+    let statusCode: number;
+    let statusText: 'healthy' | 'degraded' | 'unhealthy' | 'healthy (warmup)' | 'starting (warmup)';
+
+    if (inWarmup) {
+        // Warm-up window: the DB dependency is tolerated (Prisma pool cold-start can
+        // outlast a single curl probe). The AI provider doesn't share this cold-start
+        // path, so we still gate on it.
+        if (!aiOk) {
+            statusCode = 503;
+            statusText = 'unhealthy';
+        } else if (dbOk && errors.length === 0) {
+            statusCode = 200;
+            statusText = 'healthy (warmup)';
+        } else {
+            statusCode = 200;
+            statusText = 'starting (warmup)';
+        }
+    } else {
+        // Strict post-warmup behavior -- original logic verbatim.
+        const isHealthyStrict = dbOk && aiOk;
+        const isDegradedStrict = dbOk && errors.length > 0;
+        statusCode = isHealthyStrict || isDegradedStrict ? 200 : 503;
+        statusText = isHealthyStrict ? 'healthy' : isDegradedStrict ? 'degraded' : 'unhealthy';
+    }
+
+    res.status(statusCode).json({
+        status: statusText,
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
         environment: config.nodeEnv,
@@ -238,6 +271,7 @@ const healthHandler = async (_req: Request, res: Response) => {
             external_apis: external.status,
             agent_orchestrator: agents.status,
         },
+        warmup: inWarmup,
         errors: errors.length > 0 ? errors : undefined,
     });
 };
