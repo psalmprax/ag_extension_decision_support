@@ -11,6 +11,7 @@ import { fetchTelemetrySummary, fetchTelemetryEvents, TelemetrySummary, Telemetr
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { MetricCard } from '@/components/MetricCard';
 import { CH_COLORS } from '@/lib/colors';
+import { LoadingHeaderSkeleton } from '@/components/ui/LoadingHeaderSkeleton';
 
 export function Telemetry() {
     const { t } = useLanguage();
@@ -74,29 +75,7 @@ export function Telemetry() {
 
 
     if (isLoading) {
-        return (
-            <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Agent Telemetry Dashboard</h1>
-                        <p className="text-gray-600 dark:text-gray-400 mt-1">Monitor AI agent performance and usage</p>
-                    </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {[...Array(4)].map((_, i) => (
-                        <div key={i} className="card p-6 animate-pulse">
-                            <div className="flex items-start justify-between">
-                                <div className="space-y-2">
-                                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
-                                    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
-                                </div>
-                                <div className="h-12 w-12 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        );
+        return <LoadingHeaderSkeleton title="Agent Telemetry Dashboard" description="Monitor AI agent performance and usage" />;
     }
 
     return (

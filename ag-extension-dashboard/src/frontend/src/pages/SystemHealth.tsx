@@ -44,14 +44,11 @@ function DnsSection({ dns }: { dns?: Record<string, Record<string, unknown>> }) 
                 {Object.entries(dns).map(([domain, info]) => {
                     const isResolved = Boolean(info.resolved);
                     const resolvedIps = (info.ips as string[] | undefined)?.join(', ');
-                    const dnsBorderClass = isResolved
-                        ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800'
-                        : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800';
                     const dnsDetail = isResolved
                         ? `→ ${resolvedIps}`
                         : `✗ ${(info.error as string) || 'Failed'}`;
                     return (
-                        <div key={domain} className={`p-3 rounded-lg border ${dnsBorderClass}`}>
+                        <div key={domain} className={`p-3 rounded-lg border ${getHealthBorderClass(isResolved, 'redOrGreen')}`}>
                             <p className="text-xs font-mono font-bold">{domain}</p>
                             <p className="text-sm">{String(dnsDetail)}</p>
                         </div>
@@ -117,23 +114,22 @@ function ContainerNetworkSection({ container_network }: { container_network?: Ar
     );
 }
 
+const CERT_EXPIRY_WARN_DAYS = 30; // Warn when SSL cert has fewer than this many days remaining
+
 function SslSection({ ssl }: { ssl?: Record<string, unknown> }) {
     if (!ssl) return null;
-    const ok = Boolean(ssl.ok);
-    const borderClass = ok
-        ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800'
-        : 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800';
+    const isHealthy = Boolean(ssl.ok);
     const cert = ssl.cert as { issuer?: string; subject?: string; validTo?: string; daysLeft?: number } | undefined;
     const daysLeft = cert?.daysLeft;
     return (
         <div className="mb-4">
             <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">SSL Certificate</h4>
-            <div className={`p-3 rounded-lg border ${borderClass}`}>
-                {ok && cert ? (
+            <div className={`p-3 rounded-lg border ${getHealthBorderClass(isHealthy, 'amberOrGreen')}`}>
+                {isHealthy && cert ? (
                     <div className="text-sm space-y-1">
                         <p><span className="font-bold">Issuer:</span> {cert.issuer ?? ''}</p>
                         <p><span className="font-bold">Subject:</span> {cert.subject ?? ''}</p>
-                        <p><span className="font-bold">Expires:</span> {new Date(cert.validTo ?? Date.now()).toLocaleDateString()} <span className={daysLeft != null && daysLeft < 30 ? 'text-red-500 font-bold' : 'text-green-500'}>({daysLeft} days)</span></p>
+                        <p><span className="font-bold">Expires:</span> {new Date(cert.validTo ?? Date.now()).toLocaleDateString()} <span className={daysLeft != null && daysLeft < CERT_EXPIRY_WARN_DAYS ? 'text-red-500 font-bold' : 'text-green-500'}>({daysLeft ?? '—'} days)</span></p>
                     </div>
                 ) : (
                     <p className="text-sm">{String(ssl.error ?? 'Not available (HTTPS not configured)')}</p>
@@ -211,12 +207,12 @@ function DiagnosticsPanel({ diagnostics }: { diagnostics: DiagnosticResult }) {
         </div>
     );
 }
-function getHealthBorderClass(ok: boolean, palette: 'redOrGreen' | 'amberOrGreen'): string {
+function getHealthBorderClass(isHealthy: boolean, palette: 'redOrGreen' | 'amberOrGreen'): string {
     const healthyClass = 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800';
     if (palette === 'redOrGreen') {
-        return ok ? healthyClass : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800';
+        return isHealthy ? healthyClass : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800';
     }
-    return ok ? healthyClass : 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800';
+    return isHealthy ? healthyClass : 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800';
 }
 
 function getStatusColor(status: string): string {
