@@ -1,14 +1,41 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-    Wrench, Play, Code, RefreshCw,
-    CheckCircle, XCircle, Loader2, Terminal
-} from 'lucide-react';
-import { motion } from 'framer-motion';
+import { RefreshCw, Wrench, Play, CheckCircle, Terminal } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '../store/useAppStore';
 import { fetchMCPTools, callMCPTool, fetchMCPHealth, type MCPTool } from '../api/mcpService';
 import { MetricCard } from '@/components/MetricCard';
+import { LoadingHeaderSkeleton } from '@/components/ui/LoadingHeaderSkeleton';
+
+import { MCPToolsHealthCard } from '@/components/mcp/HealthCard';
+import { MCPToolsToolListSidebar } from '@/components/mcp/ToolListSidebar';
+import { MCPToolsToolExecutionForm } from '@/components/mcp/ToolExecutionForm';
+import { MCPToolsExecutionHistory } from '@/components/mcp/ExecutionHistory';
+import type { MCPHealth, ExecutionResult, ExecutionHistoryEntry, InputSchema } from '@/types/mcp';
+
+const HISTORY_LIMIT = 10; // Number of past executions retained in the in-memory history.
+
+// Sensible default values per schema introspection, used when the user selects a tool.
+function getDefaultArgs(tool: MCPTool): Record<string, unknown> {
+    const defaults: Record<string, unknown> = {};
+    if (!tool.inputSchema.properties) return defaults;
+
+    for (const [key, schema] of Object.entries(tool.inputSchema.properties)) {
+        const schemaTyped = schema as InputSchema;
+        if (key === 'location') {
+            defaults[key] = 'Kampala, Uganda';
+        } else if (key === 'days' && schemaTyped.type === 'number') {
+            defaults[key] = 3;
+        } else if (key === 'limit' && schemaTyped.type === 'number') {
+            defaults[key] = 10;
+        } else if (key === 'crop' || key === 'cropName') {
+            defaults[key] = 'Maize';
+        } else if (key === 'region') {
+            defaults[key] = 'Central Region';
+        }
+    }
+    return defaults;
+}
 
 export function MCPTools() {
     const { t } = useLanguage();
@@ -17,30 +44,15 @@ export function MCPTools() {
 
     // State
     const [tools, setTools] = useState<MCPTool[]>([]);
-    const [health, setHealth] = useState<{
-        status: string;
-        protocol: string;
-        version: string;
-        toolsAvailable: number;
-        tools: string[];
-    } | null>(null);
+    const [health, setHealth] = useState<MCPHealth | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [selectedTool, setSelectedTool] = useState<MCPTool | null>(null);
     const [toolArgs, setToolArgs] = useState<Record<string, unknown>>({});
     const [isExecuting, setIsExecuting] = useState(false);
-    const [executionResult, setExecutionResult] = useState<{
-        content: Array<{ type: string; text: string }>;
-        isError?: boolean;
-    } | null>(null);
-    const [executionHistory, setExecutionHistory] = useState<Array<{
-        tool: string;
-        args: Record<string, unknown>;
-        result: { isError?: boolean; content?: Array<{ type: string; text: string }> } | null;
-        timestamp: string;
-    }>>([]);
+    const [executionResult, setExecutionResult] = useState<ExecutionResult | null>(null);
+    const [executionHistory, setExecutionHistory] = useState<ExecutionHistoryEntry[]>([]);
 
-    // Load data
     const loadData = useCallback(async (showRefresh = false) => {
         try {
             if (showRefresh) setIsRefreshing(true);
@@ -48,20 +60,16 @@ export function MCPTools() {
 
             const [toolsRes, healthRes] = await Promise.all([
                 fetchMCPTools(),
-                fetchMCPHealth()
+                fetchMCPHealth(),
             ]);
 
-            if (toolsRes.success) {
-                setTools(toolsRes.data);
-            }
-            if (healthRes.success) {
-                setHealth(healthRes.data);
-            }
+            if (toolsRes.success) setTools(toolsRes.data);
+            if (healthRes.success) setHealth(healthRes.data);
         } catch (error) {
             console.error('Failed to load MCP data:', error);
             addNotification({
                 type: 'error',
-                message: t('mcp_tools_failed_load')
+                message: t('mcp_tools_failed_load'),
             });
         } finally {
             setIsLoading(false);
@@ -73,8 +81,12 @@ export function MCPTools() {
         loadData();
     }, [loadData]);
 
-    const handleRefresh = () => {
-        loadData(true);
+    const handleRefresh = () => loadData(true);
+
+    const handleSelectTool = (tool: MCPTool) => {
+        setSelectedTool(tool);
+        setToolArgs(getDefaultArgs(tool));
+        setExecutionResult(null);
     };
 
     const handleExecuteTool = async () => {
@@ -90,7 +102,7 @@ export function MCPTools() {
         if (missing.length > 0) {
             addNotification({
                 type: 'error',
-                message: `Please fill in the required parameters: ${missing.join(', ')}`
+                message: `Please fill in the required parameters: ${missing.join(', ')}`,
             });
             return;
         }
@@ -102,153 +114,43 @@ export function MCPTools() {
             const res = await callMCPTool(selectedTool.name, argsToSend);
             if (res.success) {
                 setExecutionResult(res.data);
-                // Add to history
                 setExecutionHistory(prev => [{
                     tool: selectedTool.name,
                     args: toolArgs,
                     result: res.data,
-                    timestamp: new Date().toISOString()
-                }, ...prev.slice(0, 9)]); // Keep last 10
+                    timestamp: new Date().toISOString(),
+                }, ...prev.slice(0, HISTORY_LIMIT - 1)]);
 
                 if (res.data.isError) {
-                    addNotification({
-                        type: 'error',
-                        message: t('mcp_tools_execution_failed')
-                    });
+                    addNotification({ type: 'error', message: t('mcp_tools_execution_failed') });
                 } else {
-                    addNotification({
-                        type: 'success',
-                        message: t('mcp_tools_executed_success')
-                    });
+                    addNotification({ type: 'success', message: t('mcp_tools_executed_success') });
                 }
             } else {
-                addNotification({
-                    type: 'error',
-                    message: 'Failed to execute tool'
-                });
+                addNotification({ type: 'error', message: 'Failed to execute tool' });
             }
         } catch (error) {
             console.error('Tool execution error:', error);
-            addNotification({
-                type: 'error',
-                message: 'Failed to execute tool'
-            });
+            addNotification({ type: 'error', message: 'Failed to execute tool' });
         } finally {
             setIsExecuting(false);
         }
     };
 
-    const getDefaultArgs = (tool: MCPTool): Record<string, unknown> => {
-        const defaults: Record<string, unknown> = {};
-
-        // Set defaults for common parameters
-        if (tool.inputSchema.properties) {
-            for (const [key, schema] of Object.entries(tool.inputSchema.properties)) {
-                const schemaTyped = schema as { type?: string };
-                if (key === 'location') {
-                    defaults[key] = 'Kampala, Uganda'; // Default location for agricultural context
-                } else if (key === 'days' && schemaTyped.type === 'number') {
-                    defaults[key] = 3; // Default 3 days forecast
-                } else if (key === 'limit' && schemaTyped.type === 'number') {
-                    defaults[key] = 10; // Default limit
-                } else if (key === 'crop' || key === 'cropName') {
-                    defaults[key] = 'Maize'; // Default crop for agricultural context
-                } else if (key === 'region') {
-                    defaults[key] = 'Central Region'; // Default region
-                }
-                // Add more defaults as needed for other tools
-            }
-        }
-
-        return defaults;
-    };
-
-    const renderInputField = (propertyName: string, schema: { type?: string; description?: string }) => {
-        const rawValue = toolArgs[propertyName];
-        const value = typeof rawValue === 'object' ? JSON.stringify(rawValue ?? '') : String(rawValue ?? '');
-
-        switch (schema.type) {
-            case 'string':
-                return (
-                    <input
-                        type="text"
-                        value={value}
-                        onChange={(e) => setToolArgs(prev => ({ ...prev, [propertyName]: e.target.value }))}
-                        placeholder={schema.description || `Enter ${propertyName}`}
-                        className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 ${radiusClass} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}
-                    />
-                );
-            case 'number':
-                return (
-                    <input
-                        type="number"
-                        value={value}
-                        onChange={(e) => setToolArgs(prev => ({ ...prev, [propertyName]: parseFloat(e.target.value) || 0 }))}
-                        placeholder={schema.description || `Enter ${propertyName}`}
-                        className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 ${radiusClass} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}
-                    />
-                );
-            case 'boolean':
-                return (
-                    <select
-                        value={value.toString()}
-                        onChange={(e) => setToolArgs(prev => ({ ...prev, [propertyName]: e.target.value === 'true' }))}
-                        className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 ${radiusClass} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}
-                    >
-                        <option value="false">False</option>
-                        <option value="true">True</option>
-                    </select>
-                );
-            default:
-                return (
-                    <textarea
-                        value={typeof value === 'object' ? JSON.stringify(value, null, 2) : value}
-                        onChange={(e) => {
-                            try {
-                                const parsed = JSON.parse(e.target.value);
-                                setToolArgs(prev => ({ ...prev, [propertyName]: parsed }));
-                            } catch {
-                                setToolArgs(prev => ({ ...prev, [propertyName]: e.target.value }));
-                            }
-                        }}
-                        placeholder={schema.description || `Enter ${propertyName} (JSON)`}
-                        rows={3}
-                        className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 ${radiusClass} bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono text-sm resize-none`}
-                    />
-                );
-        }
-    };
-
-
     if (isLoading) {
-        return (
-            <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">MCP Tools Browser</h1>
-                        <p className="text-gray-600 dark:text-gray-400 mt-1">Explore and execute Model Context Protocol tools</p>
-                    </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {[...Array(4)].map((_, i) => (
-                        <div key={i} className="card p-6 animate-pulse">
-                            <div className="flex items-start justify-between">
-                                <div className="space-y-2">
-                                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
-                                    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
-                                </div>
-                                <div className="h-12 w-12 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        );
+        return <LoadingHeaderSkeleton title="MCP Tools Browser" description="Explore and execute Model Context Protocol tools" />;
     }
+
+    const executionsToday = executionHistory.filter(
+        h => new Date(h.timestamp).toDateString() === new Date().toDateString()
+    ).length;
+    const successCount = executionHistory.filter(h => !h.result?.isError).length;
+    const successRate = executionHistory.length > 0
+        ? `${Math.round((successCount / executionHistory.length) * 100)}%`
+        : '100%';
 
     return (
         <div className="space-y-6">
-            {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className={`text-2xl ${headingClass}`}>{isModern ? 'Protocol Toolchain' : 'System Tools'}</h1>
@@ -264,243 +166,73 @@ export function MCPTools() {
                 </button>
             </div>
 
-            {/* Health Status */}
-            {health && (
-                <div className="card p-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('mcp_tools_server_status')}</h3>
-                        <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                            health.status === 'healthy'
-                                ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300'
-                                : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300'
-                        }`}>
-                            {health.status === 'healthy' ? <CheckCircle className="w-4 h-4 inline mr-1" /> : <XCircle className="w-4 h-4 inline mr-1" />}
-                            {health.status}
-                        </div>
-                    </div>
+            {health && <MCPToolsHealthCard health={health} t={t} />}
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="text-center">
-                            <div className="text-2xl font-bold text-gray-900 dark:text-white">{health.toolsAvailable}</div>
-                            <div className="text-sm text-gray-600 dark:text-gray-400">Tools Available</div>
-                        </div>
-                        <div className="text-center">
-                            <div className="text-lg font-semibold text-gray-900 dark:text-white">{health.protocol}</div>
-                            <div className="text-sm text-gray-600 dark:text-gray-400">Protocol Version</div>
-                        </div>
-                        <div className="text-center">
-                            <div className="text-lg font-semibold text-gray-900 dark:text-white">{health.version}</div>
-                            <div className="text-sm text-gray-600 dark:text-gray-400">Server Version</div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <MetricCard
-                        title={t('mcp_tools_available_tools')}
+                    title={t('mcp_tools_available_tools')}
                     value={tools.length}
                     icon={Wrench}
                     color="blue"
                 />
                 <MetricCard
-                        title={t('mcp_tools_executed_today')}
-                    value={executionHistory.filter(h => new Date(h.timestamp).toDateString() === new Date().toDateString()).length}
+                    title={t('mcp_tools_executed_today')}
+                    value={executionsToday}
                     icon={Play}
                     color="green"
                 />
                 <MetricCard
-                        title={t('mcp_tools_success_rate')}
-                    value={executionHistory.length > 0
-                        ? `${Math.round((executionHistory.filter(h => !h.result?.isError).length / executionHistory.length) * 100)}%`
-                        : '100%'
-                    }
+                    title={t('mcp_tools_success_rate')}
+                    value={successRate}
                     icon={CheckCircle}
                     color="purple"
                 />
                 <MetricCard
-                        title={t('mcp_tools_total_executions')}
+                    title={t('mcp_tools_total_executions')}
                     value={executionHistory.length}
                     icon={Terminal}
                     color="orange"
                 />
             </div>
 
-            {/* Tools Grid and Execution Panel */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Tools List */}
-                <div className="card p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">{t('mcp_tools_available_tools')}</h3>
-                    <div className="space-y-4 max-h-96 overflow-y-auto">
-                        {tools.map((tool) => (
-                            <motion.div
-                                key={tool.name}
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                            className={`p-4 border ${radiusClass} cursor-pointer transition-all ${
-                                selectedTool?.name === tool.name
-                                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                                    : 'border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700'
-                                }`}
-                                onClick={() => {
-                                    setSelectedTool(tool);
-                                    const defaults = getDefaultArgs(tool);
-                                    setToolArgs(defaults);
-                                    setExecutionResult(null);
-                                }}
-                            >
-                                <div className="flex items-center justify-between mb-2">
-                                    <h4 className="font-semibold text-gray-900 dark:text-white">{tool.name}</h4>
-                                    <Code className="w-5 h-5 text-gray-400" />
-                                </div>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{tool.description}</p>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                                        {tool.inputSchema.properties ? Object.keys(tool.inputSchema.properties).length : 0} parameters
-                                    </span>
-                                    {tool.inputSchema.required && tool.inputSchema.required.length > 0 && (
-                                        <span className="text-xs bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300 px-2 py-1 rounded">
-                                            {tool.inputSchema.required.length} required
-                                        </span>
-                                    )}
-                                </div>
-                            </motion.div>
-                        ))}
-                    </div>
-                </div>
+                <MCPToolsToolListSidebar
+                    tools={tools}
+                    selectedTool={selectedTool}
+                    onSelect={handleSelectTool}
+                    radiusClass={radiusClass}
+                    t={t}
+                />
 
-                {/* Tool Execution Panel */}
-                <div className="card p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">{t('mcp_tools_tool_execution')}</h3>
-
-                    {selectedTool ? (
-                        <div className="space-y-6">
-                            {/* Tool Info */}
-                            <div className={`p-4 bg-gray-50 dark:bg-gray-800/50 ${radiusClass}`}>
-                                <h4 className="font-semibold text-gray-900 dark:text-white mb-1">{selectedTool.name}</h4>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">{selectedTool.description}</p>
-                            </div>
-
-                            {/* Parameters */}
-                            {selectedTool.inputSchema.properties && Object.keys(selectedTool.inputSchema.properties).length > 0 && (
-                                <div className="space-y-4">
-                                    <h5 className="font-medium text-gray-900 dark:text-white">Parameters</h5>
-                                    {(Object.entries(selectedTool.inputSchema.properties) as Array<[string, { type?: string; description?: string }]>).map(([propName, propSchema]) => (
-                                        <div key={propName}>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                {propName}
-                                                {selectedTool.inputSchema.required?.includes(propName) && (
-                                                    <span className="text-red-500 ml-1">*</span>
-                                                )}
-                                            </label>
-                                            {renderInputField(propName, propSchema)}
-                                            {propSchema.description && (
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{propSchema.description}</p>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            {/* Execute Button */}
-                            <button
-                                onClick={handleExecuteTool}
-                                disabled={isExecuting}
-                                className={`w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary-600 text-white ${btnClass} hover:bg-primary-700 disabled:opacity-50`}
-                            >
-                                {isExecuting ? (
-                                    <>
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                        {t('mcp_tools_executing')}
-                                    </>
-                                ) : (
-                                    <>
-                                        <Play className="w-4 h-4" />
-                                        {t('mcp_tools_execute')}
-                                    </>
-                                )}
-                            </button>
-
-                            {/* Execution Result */}
-                            {executionResult && (
-                                <div className={`p-4 ${radiusClass} ${
-                                    executionResult.isError
-                                        ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
-                                        : 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
-                                }`}>
-                                    <div className="flex items-center gap-2 mb-2">
-                                        {executionResult.isError ? (
-                                            <XCircle className="w-5 h-5 text-red-600" />
-                                        ) : (
-                                            <CheckCircle className="w-5 h-5 text-green-600" />
-                                        )}
-                                        <h5 className="font-medium text-gray-900 dark:text-white">
-                                            {executionResult.isError ? 'Execution Failed' : 'Execution Successful'}
-                                        </h5>
-                                    </div>
-                                    <div className="space-y-2">
-                                        {executionResult.content.map((item, index) => (
-                                            <div key={index} className="text-sm">
-                                                {item.type === 'text' && (
-                                                    <pre className={`whitespace-pre-wrap font-mono text-gray-900 dark:text-white bg-white dark:bg-gray-800 p-2 border ${radiusClass}`}>
-                                                        {item.text}
-                                                    </pre>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    ) : (
+                {selectedTool ? (
+                    <MCPToolsToolExecutionForm
+                        tool={selectedTool}
+                        args={toolArgs}
+                        isExecuting={isExecuting}
+                        executionResult={executionResult}
+                        onArgsChange={setToolArgs}
+                        onExecute={handleExecuteTool}
+                        t={t}
+                        radiusClass={radiusClass}
+                        btnClass={btnClass}
+                    />
+                ) : (
+                    <div className="card p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">{t('mcp_tools_tool_execution')}</h3>
                         <div className="text-center py-12">
                             <Wrench className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
                             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Select a Tool</h3>
                             <p className="text-gray-600 dark:text-gray-400">Choose a tool from the list to execute</p>
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
 
-            {/* Execution History */}
-            {executionHistory.length > 0 && (
-                <div className="card p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">{t('mcp_tools_recent_executions')}</h3>
-                    <div className="space-y-3 max-h-64 overflow-y-auto">
-                        {executionHistory.map((execution, index) => (
-                            <motion.div
-                                key={index}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className={`flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 ${radiusClass}`}
-                            >
-                                <div className="flex items-center gap-3">
-                                    {execution.result?.isError ? (
-                                        <XCircle className="w-5 h-5 text-red-600" />
-                                    ) : (
-                                        <CheckCircle className="w-5 h-5 text-green-600" />
-                                    )}
-                                    <div>
-                                        <p className="font-medium text-gray-900 dark:text-white">{execution.tool}</p>
-                                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                                            {Object.keys(execution.args).length > 0
-                                                ? `${Object.keys(execution.args).length} parameters`
-                                                : 'No parameters'
-                                            }
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                                        {new Date(execution.timestamp).toLocaleString()}
-                                    </p>
-                                </div>
-                            </motion.div>
-                        ))}
-                    </div>
-                </div>
-            )}
+            <MCPToolsExecutionHistory
+                history={executionHistory}
+                radiusClass={radiusClass}
+                t={t}
+            />
         </div>
     );
 }
