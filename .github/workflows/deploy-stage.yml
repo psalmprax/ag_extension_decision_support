@@ -91,12 +91,27 @@ jobs:
             docker network create --driver bridge ettametta_ettametta >/dev/null 2>&1 || true
             docker network ls --format "table {{.Name}}\t{{.Driver}}" | grep -E "ettametta_ettametta|ag-network|NETWORK" || true
             echo
-            echo "=== build + recreate backend + frontend (staging override = production target) ==="
             cd ag-extension-dashboard
+            if [ ! -f docker-compose.staging.yml ]; then
+              echo "❌ docker-compose.staging.yml not found in repo!" >&2
+              exit 1
+            fi
+
+            echo "=== ensure db extensions exist (idempotent) ==="
+            docker exec ag-dashboard-db psql \
+              -U "${DATABASE_USER:-postgres}" \
+              -d "${DATABASE_NAME:-ag_extension}" \
+              -v ON_ERROR_STOP=1 \
+              -c "CREATE EXTENSION IF NOT EXISTS vector;" \
+              -c "CREATE EXTENSION IF NOT EXISTS postgis;" \
+            || echo "(warning: app-db not running, or extension pre-create failed; continuing)"
+
+            echo
+            echo "=== build + recreate backend + frontend (staging override = production target) ==="
             docker compose \
               -f docker-compose.yml \
               -f docker-compose.staging.yml \
-              up -d                            --build backend frontend
+              up -d --build backend frontend
             echo
             echo "=== wait 30s for deps (db+redis) + build + boot ==="
             sleep 30
@@ -104,10 +119,26 @@ jobs:
             echo "=== container status ==="
             docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" --filter "name=ag-dashboard"
             echo
-            echo "=== backend health check (fails loud if non-2xx; logs tail on failure) ==="
-            if ! curl -sSf --max-time 15 http://127.0.0.1:7500/api/health; then
-              echo "❌ backend health check did not return 2xx" >&2
-              docker logs --tail 60 ag-dashboard-backend 2>/dev/null || true
+            echo "=== backend health check (4 attempts + visible failure text) ==="
+            HEALTH_PASS=0
+            for i in 1 2 3 4; do
+              if RESP=$(curl -sSf --max-time 10 http://127.0.0.1:7500/api/health 2>&1); then
+                echo "✅ Backend is healthy! (attempt $i)"
+                echo "$RESP" | head -3
+                HEALTH_PASS=1
+                break
+              else
+                echo "❌ Attempt $i failed."
+                echo "----- last response -----"
+                echo "$RESP" | head -10
+                echo "------------------------"
+                sleep 10
+              fi
+            done
+            if [ "$HEALTH_PASS" != "1" ]; then
+              echo "FATAL: Backend health check failed after 4 retries." >&2
+              docker logs --tail 80 ag-dashboard-backend 2>/dev/null || true
+              docker logs --tail 40 ag-dashboard-db    2>/dev/null || true
               exit 1
             fi
             echo
