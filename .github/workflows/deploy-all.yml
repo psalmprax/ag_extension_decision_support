@@ -171,11 +171,21 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          # Enables the `ai` Compose profile so the profile-gated
+          # `ettametta-ollama` service starts alongside backend + frontend +
+          # the agent services (declared in
+          # ag-extension-dashboard/docker-compose.yml with `profiles: ["ai"]`;
+          # see docs/COMPOSE_PROFILES.md).
+          COMPOSE_PROFILES: ai
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
-          envs: GITHUB_TOKEN,GITHUB_REPOSITORY,GITHUB_REPOSITORY_OWNER
+          # Extend the appleboy/ssh-action forwarding whitelist so the
+          # step-level `env: COMPOSE_PROFILES: ai` actually reaches the
+          # remote shell. Without this, ssh-action only forwards the named
+          # vars and the local-LLM service stays profile-invisible.
+          envs: GITHUB_TOKEN,GITHUB_REPOSITORY,GITHUB_REPOSITORY_OWNER,COMPOSE_PROFILES
           command_timeout: 1240m
           script: |
             set -e
@@ -253,7 +263,7 @@ jobs:
             fi
 
             echo "Starting all services..."
-            docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --force-recreate --no-build backend frontend agent-zero crew-ai
+            docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --force-recreate --no-build backend frontend agent-zero crew-ai ettametta-ollama
 
       # ── Step 4/5: Migrations against the FRESHLY BUILT backend image ──
       # Two reliability fixes vs. the prior 2/4 step:
@@ -485,11 +495,21 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          # Enables the `ai` Compose profile so the profile-gated
+          # `ettametta-ollama` service starts alongside backend + frontend +
+          # the agent services (declared in
+          # ag-extension-dashboard/docker-compose.yml with `profiles: ["ai"]`;
+          # see docs/COMPOSE_PROFILES.md).
+          COMPOSE_PROFILES: ai
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
-          envs: GITHUB_TOKEN,GITHUB_REPOSITORY,GITHUB_REPOSITORY_OWNER
+          # Extend the appleboy/ssh-action forwarding whitelist so the
+          # step-level `env: COMPOSE_PROFILES: ai` actually reaches the
+          # remote shell. Without this, ssh-action only forwards the named
+          # vars and the local-LLM service stays profile-invisible.
+          envs: GITHUB_TOKEN,GITHUB_REPOSITORY,GITHUB_REPOSITORY_OWNER,COMPOSE_PROFILES
           command_timeout: 1240m
           script: |
             set -e
@@ -567,7 +587,7 @@ jobs:
             fi
 
             echo "Starting all services..."
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate --no-build backend frontend agent-zero crew-ai
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate --no-build backend frontend agent-zero crew-ai ettametta-ollama
 
       # ── Step 4/5: Migrations against the FRESHLY BUILT backend image ──
       - name: 4/5 Migrate — prisma migrate deploy (extension pre-create + visible retry)

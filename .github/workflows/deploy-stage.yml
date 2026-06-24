@@ -9,10 +9,10 @@ name: Deploy to Stage (auto on push)
 #   - SSH_PRIVATE_KEY_TESTING   : contents of the matching SSH private key
 #
 # This workflow rebuilds backend + frontend (and their deps db/redis) on
-# the host using the staging multi-stage target. The compose ai profile
-# (ettametta-ollama) is NOT enabled; OLLAMA_HOST and AI_FALLBACK_PROVIDER
-# are pinned in .env to keep the backend from DNS-timeout on ai profile.
-# Use the full
+# the host using the staging multi-stage target. The compose `ai` profile
+# (`COMPOSE_PROFILES=ai`) starts `ettametta-ollama`; compose defaults
+# route the backend's `AI_FALLBACK_PROVIDER=ollama` to
+# `http://ettametta-ollama:11434` via the `ag-network` DNS name. Use
 # deploy-all.yml for production-grade deploys (CI checks, GHCR cache,
 # parallel builds, agent services, disk cleanup).
 
@@ -33,6 +33,12 @@ jobs:
     steps:
       - name: Build + redeploy backend + frontend on host
         uses: appleboy/ssh-action@master
+        env:
+          # Enables the `ai` Compose profile so the profile-gated
+          # `ettametta-ollama` service starts alongside backend + frontend
+          # (declared in ag-extension-dashboard/docker-compose.yml with
+          # `profiles: ["ai"]`; see docs/COMPOSE_PROFILES.md).
+          COMPOSE_PROFILES: ai
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
           username: root
@@ -76,14 +82,6 @@ jobs:
                 echo "VAPID_EMAIL=mailto:admin@gpexts.com" >> .env
                 echo "✅ Added VAPID keys to .env"
               fi
-            fi
-
-            # Pin OLLAMA_HOST + fallback so backend doesn't DNS-timeout on ettametta-ollama
-            # (the ai-profile container isn't running on this minimal deploy).
-            if [ -f .env ] && ! grep -q "^OLLAMA_HOST=" .env 2>/dev/null; then
-              echo "\U0001F527 Pinning OLLAMA_HOST=http://localhost:11434 + AI_FALLBACK_PROVIDER=openai in .env"
-              echo "OLLAMA_HOST=http://localhost:11434" >> .env
-              echo "AI_FALLBACK_PROVIDER=openai" >> .env
             fi
 
             # Pre-create external networks referenced by compose (ettametta_ettametta is external: true)
@@ -171,7 +169,7 @@ jobs:
             docker compose \
               -f docker-compose.yml \
               -f docker-compose.staging.yml \
-              up -d --build backend frontend
+              up -d --build backend frontend ettametta-ollama
             echo
             echo "=== wait 30s for deps (db+redis) + build + boot ==="
             sleep 30
