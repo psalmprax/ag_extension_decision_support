@@ -200,6 +200,26 @@ jobs:
               exit 1
             fi
             echo
+
+            # Smoke-test the AI fallback profile-gated container.
+            # `--if-running` lets first deploys (no ai profile yet) pass the gate;
+            # once the profile is active this becomes a real probe. Retries held
+            # to 18 × 10s = ~350s worst case so the existing step's 15min
+            # command_timeout isn't blown by combining cold model-pull + the
+            # build/health-check/iptables bootstrap that already runs up here
+            # (~7-9min overhead leaves ~5-7min for the smoke probe including
+            # a buffer for slow Contabo pulls that can hit ~5min).
+            # See scripts/smoke-ollama.sh (defaults are 30×10 = ~590s for
+            # standalone use; CI calls pass a tighter budget).
+            echo "=== smoke-test ettametta-ollama (post-deploy gate) ==="
+            if ! bash scripts/smoke-ollama.sh --if-running --retries 18 --interval 10; then
+              echo "FATAL: ettametta-ollama smoke test failed." >&2
+              echo "----- ettametta-ollama container logs (last 50 lines) -----"
+              docker compose logs --tail 50 ettametta-ollama 2>&1 || true
+              echo "------------------------------------------------------------"
+              exit 1
+            fi
+            echo
             echo "=== frontend TCP probe (informational) ==="
             curl -sSI --max-time 10 http://127.0.0.1:7503/ | head -3 || echo "(frontend probe did not return headers — non-fatal)"
             echo
