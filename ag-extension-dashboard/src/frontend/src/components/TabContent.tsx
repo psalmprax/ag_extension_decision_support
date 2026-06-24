@@ -7,7 +7,7 @@ import { AnalyticsPage } from '@/pages/AnalyticsPage';
 import { FarmerChatPage } from '@/pages/FarmerChatPage';
 import { Farmer, Visit, Conversation, ChatMessage, DashboardData } from '@/types/dashboard';
 import { Report } from '@/api/reportService';
-interface AnalyticsDataShape { metrics?: { resolutionRate?: number; avgResponseTime?: string | number; satisfactionScore?: number; followUpRate?: number; firstContactResolution?: number }; timeline?: Record<string, unknown>[] }
+interface AnalyticsDataShape { metrics?: { resolutionRate?: number; avgResponseTime?: string | number; satisfactionScore?: number; followUpRate?: number; firstContactResolution?: number }; timeline?: Record<string, string | number>[] }
 
 const FarmerDashboard = React.lazy(() => import('@/components/FarmerDashboard').then(m => ({ default: m.FarmerDashboard })));
 const BillingDashboard = React.lazy(() => import('@/components/BillingDashboard').then(m => ({ default: m.BillingDashboard })));
@@ -133,7 +133,7 @@ export function TabContent(props: TabContentProps) {
                 />
             );
         case 'analytics':
-            return <AnalyticsPage performanceData={props.performanceData as unknown as AnalyticsDataShape | undefined as unknown as any} />;
+            return <AnalyticsPage performanceData={props.performanceData as unknown as AnalyticsDataShape | undefined} />;
         case 'billing':
             return <BillingDashboard />;
         case 'knowledge':

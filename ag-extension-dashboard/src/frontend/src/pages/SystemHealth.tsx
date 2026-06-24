@@ -12,6 +12,7 @@ import { fetchHealthStatus, fetchRecoveryLog, triggerRecovery, HealthCheck, Reco
 import { runDiagnostics, DiagnosticResult } from '../api/diagnosticsService';
 import { MetricCard } from '@/components/MetricCard';
 import { LoadingHeaderSkeleton } from '@/components/ui/LoadingHeaderSkeleton';
+import { RATE_LIMIT_STATUS, CERT_EXPIRY_WARN_DAYS, ERROR_COOLDOWN_MS } from '@/lib/constants';
 
 function IssuesSummary({ issues, summary }: { issues?: string[]; summary?: string }) {
     if (!issues || issues.length === 0) {
@@ -114,25 +115,55 @@ function ContainerNetworkSection({ container_network }: { container_network?: Ar
     );
 }
 
-const CERT_EXPIRY_WARN_DAYS = 30; // Warn when SSL cert has fewer than this many days remaining
+type SslCert = {
+    issuer?: string;
+    subject?: string;
+    validTo?: string;
+    daysLeft?: number;
+};
+
+/**
+ * Renders the Issuer / Subject / conditional Expires lines for a healthy SSL cert.
+ * Extracted from SslSection to flatten the prior nested-ternary (outer guard plus
+ * an inline daysLeft color guard wedged into a className attribute).
+ */
+function SslCertDetails({ cert }: { cert: SslCert }) {
+    const daysLeftColorClass =
+        cert.daysLeft != null && cert.daysLeft < CERT_EXPIRY_WARN_DAYS
+            ? 'text-red-500 font-bold'
+            : 'text-green-500';
+    return (
+        <div className="text-sm space-y-1">
+            <p>
+                <span className="font-bold">Issuer:</span> {cert.issuer ?? '—'}
+            </p>
+            <p>
+                <span className="font-bold">Subject:</span> {cert.subject ?? '—'}
+            </p>
+            {cert.validTo && (
+                <p>
+                    <span className="font-bold">Expires:</span>{' '}
+                    {new Date(cert.validTo).toLocaleDateString()}{' '}
+                    <span className={daysLeftColorClass}>({cert.daysLeft ?? '—'} days)</span>
+                </p>
+            )}
+        </div>
+    );
+}
 
 function SslSection({ ssl }: { ssl?: Record<string, unknown> }) {
     if (!ssl) return null;
     const isHealthy = Boolean(ssl.ok);
-    const cert = ssl.cert as { issuer?: string; subject?: string; validTo?: string; daysLeft?: number } | undefined;
-    const daysLeft = cert?.daysLeft;
+    const cert = ssl.cert as SslCert | undefined;
+    const errorText = String(ssl.error ?? 'Not available (HTTPS not configured)');
     return (
         <div className="mb-4">
             <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">SSL Certificate</h4>
             <div className={`p-3 rounded-lg border ${getHealthBorderClass(isHealthy, 'amberOrGreen')}`}>
                 {isHealthy && cert ? (
-                    <div className="text-sm space-y-1">
-                        <p><span className="font-bold">Issuer:</span> {cert.issuer ?? '—'}</p>
-                        <p><span className="font-bold">Subject:</span> {cert.subject ?? '—'}</p>
-                        <p><span className="font-bold">Expires:</span> {new Date(cert.validTo ?? Date.now()).toLocaleDateString()} <span className={daysLeft != null && daysLeft < CERT_EXPIRY_WARN_DAYS ? 'text-red-500 font-bold' : 'text-green-500'}>({daysLeft ?? '—'} days)</span></p>
-                    </div>
+                    <SslCertDetails cert={cert} />
                 ) : (
-                    <p className="text-sm">{String(ssl.error ?? 'Not available (HTTPS not configured)')}</p>
+                    <p className="text-sm">{errorText}</p>
                 )}
             </div>
         </div>
@@ -320,8 +351,6 @@ function ComponentHealthCard({
     );
 }
 
-const RATE_LIMIT_STATUS = 429; // HTTP 429 Too Many Requests
-
 function notifyLoadError(
     error: unknown,
     lastErrorTimeRef: React.MutableRefObject<number>,
@@ -402,7 +431,6 @@ function useSystemHealthData(
     const [isRefreshing, setIsRefreshing] = useState(false);
     const isFetchingRef = useRef(false);
     const lastErrorTimeRef = useRef<number>(0);
-    const ERROR_COOLDOWN = 10000; // 10s cooldown for repetitive error notifications
 
     const loadData = useCallback(async (showRefresh = false) => {
         if (isFetchingRef.current) return;
@@ -418,7 +446,7 @@ function useSystemHealthData(
             if (recoveryRes.success) setRecoveryLog(recoveryRes.data);
         } catch (error) {
             console.error('Failed to load health data:', error);
-            notifyLoadError(error, lastErrorTimeRef, ERROR_COOLDOWN, addNotification, t);
+            notifyLoadError(error, lastErrorTimeRef, ERROR_COOLDOWN_MS, addNotification, t);
         } finally {
             setIsLoading(false);
             setIsRefreshing(false);

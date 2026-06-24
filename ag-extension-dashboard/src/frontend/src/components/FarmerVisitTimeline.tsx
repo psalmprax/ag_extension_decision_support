@@ -5,7 +5,8 @@ import { Clock, Calendar } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 
 interface FarmerVisitTimelineProps {
-    visits: Visit[];
+    /** Visits to render; `undefined` is coalesced to `[]` by the receiver. */
+    visits: Visit[] | undefined;
     handleUpdateVisitStatus: (visitId: string, status: 'completed' | 'cancelled') => void;
     radiusClass: string;
     isCyber: boolean;
@@ -15,6 +16,7 @@ export const FarmerVisitTimeline: React.FC<FarmerVisitTimelineProps> = ({
     visits, handleUpdateVisitStatus, radiusClass, isCyber
 }) => {
     const { t } = useLanguage();
+    const safeVisits = visits ?? [];
 
     return (
         <section>
@@ -23,9 +25,9 @@ export const FarmerVisitTimeline: React.FC<FarmerVisitTimelineProps> = ({
                 {t('nav_visits')}
             </h3>
             <div className="space-y-4">
-                {visits.length > 0 ? visits.map((visit, i) => (
+                {safeVisits.length > 0 ? safeVisits.map((visit, i) => (
                     <div key={visit.id || i} className="relative pl-8 group">
-                        {i !== visits.length - 1 && (
+                        {i !== safeVisits.length - 1 && (
                             <div className={`absolute left-3 top-6 bottom-[-16px] w-0.5 transition-colors ${isCyber ? 'bg-primary-500/30' : 'bg-gray-100 dark:bg-gray-800 group-hover:bg-primary-500'}`} />
                         )}
                         <div className={`absolute left-0 top-1.5 w-6 h-6 rounded-full border-4 shadow-md border-white dark:border-gray-900
