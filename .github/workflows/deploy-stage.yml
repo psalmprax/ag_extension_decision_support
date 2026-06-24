@@ -95,6 +95,32 @@ jobs:
               exit 1
             fi
 
+            # Pre-build AI fallback smoke gate.
+            # Runs the ettametta-ollama probe BEFORE the long `up -d --build …`
+            # step so that any failure (missing service, broken service, stale
+            # model) aborts the deploy quickly instead of after 5+ min of work.
+            # Strict mode (no `--if-running`): catches BOTH missing AND broken
+            # services. Probes whatever is currently running on this host from
+            # a prior deploy — on first-ever deploy (no backend from prior
+            # deploy) the script's pre-check #1 fails closed with rc=2.
+            #
+            # Budget: 12 retries × 10s = ~230s worst case (per script's
+            # MAX_WALL_SECONDS formula). Combined with the build + iptables +
+            # DNS pin + health check (~7-9 min) the worst case fits inside the
+            # existing `command_timeout: 15m` with ~2 min slack to spare.
+            #
+            # Absolute script path because cwd here is `ag-extension-dashboard/`
+            # and the script lives one directory up.
+            echo "=== pre-build smoke gate: verify ettametta-ollama is live ==="
+            if ! bash /root/ag_extension_decision_support/scripts/smoke-ollama.sh --retries 12 --interval 10; then
+              echo "FATAL: ettametta-ollama pre-build gate failed (service missing or unreachable)." >&2
+              echo "----- ettametta-ollama container logs (last 50 lines, if present) -----"
+              docker compose logs --tail 50 ettametta-ollama 2>&1 || echo "(no logs: container not present in this compose project)"
+              echo "------------------------------------------------------------"
+              exit 1
+            fi
+            echo
+
             echo "=== ensure db extensions exist (idempotent) ==="
             docker exec ag-dashboard-db psql \
               -U "${DATABASE_USER:-postgres}" \
@@ -198,28 +224,7 @@ jobs:
               docker logs --tail 80 ag-dashboard-backend 2>/dev/null || true
               docker logs --tail 40 ag-dashboard-db    2>/dev/null || true
               exit 1
-            fi
-            echo
-
-            # Smoke-test the AI fallback profile-gated container.
-            # `--if-running` lets first deploys (no ai profile yet) pass the gate;
-            # once the profile is active this becomes a real probe. Retries held
-            # to 18 × 10s = ~350s worst case so the existing step's 15min
-            # command_timeout isn't blown by combining cold model-pull + the
-            # build/health-check/iptables bootstrap that already runs up here
-            # (~7-9min overhead leaves ~5-7min for the smoke probe including
-            # a buffer for slow Contabo pulls that can hit ~5min).
-            # See scripts/smoke-ollama.sh (defaults are 30×10 = ~590s for
-            # standalone use; CI calls pass a tighter budget).
-            echo "=== smoke-test ettametta-ollama (post-deploy gate) ==="
-            if ! bash scripts/smoke-ollama.sh --if-running --retries 18 --interval 10; then
-              echo "FATAL: ettametta-ollama smoke test failed." >&2
-              echo "----- ettametta-ollama container logs (last 50 lines) -----"
-              docker compose logs --tail 50 ettametta-ollama 2>&1 || true
-              echo "------------------------------------------------------------"
-              exit 1
-            fi
-            echo
+            fi            echo
             echo "=== frontend TCP probe (informational) ==="
             curl -sSI --max-time 10 http://127.0.0.1:7503/ | head -3 || echo "(frontend probe did not return headers — non-fatal)"
             echo
