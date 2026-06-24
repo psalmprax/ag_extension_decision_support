@@ -202,7 +202,7 @@ jobs:
             docker compose \
               -f docker-compose.yml \
               -f docker-compose.staging.yml \
-              up -d --build backend frontend ettametta-ollama
+              up -d --build --force-recreate backend frontend ettametta-ollama
             echo
             echo "=== wait 30s for deps (db+redis) + build + boot ==="
             sleep 30
