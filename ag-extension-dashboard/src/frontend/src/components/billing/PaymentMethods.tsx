@@ -8,16 +8,16 @@ import { Select } from '../ui/Select';
 import { Badge } from '../ui/Badge';
 
 interface PaymentMethodsProps {
-    paymentMethods: unknown[];
-    plans: unknown[];
+    paymentMethods: Array<{ id?: string; card?: { brand?: string; last4?: string; exp_month?: number; exp_year?: number } }>;
+    plans: Array<{ id: string; name: string; price: number }>;
     onAddMethod: () => void;
     onDeleteMethod: (id: string) => void;
     onPayPalSubscription: (planId: string) => void;
     actionLoading: string | null;
     showMobilePayForm: boolean;
     setShowMobilePayForm: (show: boolean) => void;
-    mobilePayData: unknown;
-    setMobilePayData: (data: unknown) => void;
+    mobilePayData: { method: string; planId: string; transactionId: string; amount?: string };
+    setMobilePayData: (data: { method: string; planId: string; transactionId: string; amount?: string }) => void;
     handleSubmitTransaction: () => void;
     showVoucherForm: boolean;
     setShowVoucherForm: (show: boolean) => void;
@@ -61,7 +61,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                         <div className="mt-4 pt-4 border-t border-green-500/20 space-y-3">
                             <div className="grid grid-cols-2 gap-3">
                                 <Select value={mobilePayData.method} onChange={(e) => setMobilePayData({ ...mobilePayData, method: e.target.value })} options={[{ value: 'mpesa', label: 'M-Pesa' }, { value: 'airtel', label: 'Airtel Money' }, { value: 'bank', label: 'Bank Transfer' }]} />
-                                <Select value={mobilePayData.planId} onChange={(e) => { const p = plans.find(pl => pl.id === e.target.value); setMobilePayData({ ...mobilePayData, planId: e.target.value, amount: p ? (p.price / 100).toString() : '' }); }} options={[{ value: '', label: 'Select Plan' }, ...plans.filter(p => p.price > 0).map(p => ({ value: p.id, label: `${p.name} ($${(p.price / 100).toFixed(2)}/mo)` }))] } />
+                                <Select value={mobilePayData.planId} onChange={(e) => { const p = plans.find(pl => pl.id === e.target.value); setMobilePayData({ ...mobilePayData, planId: e.target.value, amount: p ? (p.price / 100).toString() : '' }); }} options={[{ value: '', label: 'Select Plan' }, ...plans.filter((p: { id: string; name: string; price: number }) => p.price > 0).map((p: { id: string; name: string; price: number }) => ({ value: p.id, label: `${p.name} ($${(p.price / 100).toFixed(2)}/mo)` }))] } />
                             </div>
                             <Input type="text" value={mobilePayData.transactionId} onChange={(e) => setMobilePayData({ ...mobilePayData, transactionId: e.target.value })} placeholder="Enter M-Pesa/Airtel Transaction ID" />
                             <div className="flex items-center justify-between">
@@ -99,7 +99,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                             <div className={`w-12 h-8 bg-gray-900 ${radiusClass} flex items-center justify-center text-[8px] font-black text-white uppercase tracking-tighter`}>{pm.card?.brand || 'Card'}</div>
                             <div className="space-y-1"><p className="text-sm font-black text-gray-900 dark:text-white tracking-tight">•••• •••• •••• {pm.card?.last4}</p><p className="text-xxs font-black text-gray-400 uppercase tracking-widest">{t('billing_expires').replace('{date}', `${pm.card?.exp_month}/${pm.card?.exp_year}`)}</p></div>
                         </div>
-                        <button onClick={() => onDeleteMethod(pm.id)} disabled={actionLoading === `delete-${pm.id}`} className="p-2 text-gray-400 hover:text-error-500 transition-colors opacity-0 group-hover/pm:opacity-100 disabled:opacity-50">
+                        <button onClick={() => pm.id && onDeleteMethod(pm.id)} disabled={actionLoading === `delete-${pm.id}`} className="p-2 text-gray-400 hover:text-error-500 transition-colors opacity-0 group-hover/pm:opacity-100 disabled:opacity-50">
                             {actionLoading === `delete-${pm.id}` ? <div className="w-4 h-4 border-2 border-error-500/20 border-t-error-500 rounded-full animate-spin" /> : <Trash2 className="w-4 h-4" />}
                         </button>
                     </div>

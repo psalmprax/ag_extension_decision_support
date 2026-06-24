@@ -36,7 +36,7 @@ export const FarmerDashboard: React.FC = () => {
   ];
 
   if (isCyber) {
-    return <CyberDashboard farmerStats={farmerStats} />;
+    return <CyberDashboard farmerStats={farmerStats as unknown as Record<string, unknown> | null | undefined} />;
   }
 
   return <NormalDashboard stats={stats} statsLoading={statsLoading} />;

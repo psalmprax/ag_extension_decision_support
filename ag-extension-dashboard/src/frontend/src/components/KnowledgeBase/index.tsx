@@ -9,6 +9,7 @@ import { KnowledgeStats } from './KnowledgeStats';
 import { KnowledgeSidebar } from './KnowledgeSidebar';
 import { SearchBar } from './SearchBar';
 import { AIResult } from './AIResult';
+import type { VisualsData } from './types';
 
 interface ContextItem {
     content: string;
@@ -28,7 +29,7 @@ interface Result {
     cached?: boolean;
     query?: string;
     timestamp?: string;
-    visuals?: unknown;
+    visuals?: VisualsData;
     audio?: string;
     citations?: Citation[];
 }
@@ -160,7 +161,7 @@ export const KnowledgeBase: React.FC = () => {
                                 {stats && <KnowledgeStats data={stats} />}
                             </motion.div>
                         ) : lastResult ? (
-                            <AIResult result={lastResult} />
+                            <AIResult result={lastResult as { answer: string; contextUsed: ContextItem[]; cached?: boolean; query?: string; timestamp?: string; visuals?: VisualsData; audio?: string; citations?: Citation[] }} />
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 opacity-60">
                                 {['How to manage fall armyworm?', 'Best time for maize harvesting?', 'Impact of soil pH on yield?', 'Intercropping with beans'].map((suggestion, i) => (

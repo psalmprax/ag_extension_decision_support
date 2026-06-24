@@ -174,7 +174,7 @@ const useTerminal = (healthData: Record<string, unknown> | undefined) => {
     return { showTerminal, setShowTerminal, terminalInput, setTerminalInput, terminalOutput, isTerminalLoading, handleTerminalCommand };
 };
 
-const TopNavigationBar = ({ modes, activeMode, setActiveMode, healthData, healthLoading, showTerminal, setShowTerminal, radiusClass, btnClass }: { modes: Array<{ id: string; name: string; icon: React.ElementType; color: string }>, activeMode: string, setActiveMode: (m: string) => void, healthData: Record<string, unknown> | undefined, healthLoading: boolean, showTerminal: boolean, setShowTerminal: (s: boolean) => void, radiusClass: string, btnClass: string }) => {
+const TopNavigationBar = ({ modes, activeMode, setActiveMode, healthData, healthLoading, showTerminal, setShowTerminal, radiusClass, btnClass }: { modes: Array<{ id: string; name: string; icon: React.ElementType; color: string }>, activeMode: string, setActiveMode: (m: 'actionable' | 'ops') => void, healthData: Record<string, unknown> | undefined, healthLoading: boolean, showTerminal: boolean, setShowTerminal: (s: boolean) => void, radiusClass: string, btnClass: string }) => {
     const isHealthy = healthData?.status === 'healthy';
     const statusDotClass = isHealthy ? 'bg-green-500' : 'bg-yellow-500';
 
@@ -189,7 +189,7 @@ const TopNavigationBar = ({ modes, activeMode, setActiveMode, healthData, health
                 {modes.map((mode) => (
                     <button
                         key={mode.id}
-                        onClick={() => setActiveMode(mode.id as 'actionable' | 'ops')}
+                        onClick={() => setActiveMode(mode.id as unknown as 'actionable' | 'ops')}
                         className={`px-6 py-2.5 ${btnClass} border text-xxs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
                             activeMode === mode.id
                                 ? 'bg-white/10 border-white/20 text-white shadow-xl'

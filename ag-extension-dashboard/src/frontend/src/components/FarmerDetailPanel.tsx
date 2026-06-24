@@ -196,7 +196,7 @@ const OverviewTabContent = ({
                     onClick={() => handleAction(action.id as 'chat' | 'sms' | 'call' | 'video')}
                     onContextMenu={(e) => {
                         e.preventDefault();
-                        showContextMenu({ x: e.clientX, y: e.clientY, entityType: 'farmer', entityId: farmer.id });
+                        (showContextMenu as unknown as (data: { x: number; y: number; entityType: string; entityId?: string }) => void)({ x: e.clientX, y: e.clientY, entityType: 'farmer', entityId: farmer.id });
                     }}
                     className="flex flex-col items-center gap-2 group"
                 >
@@ -214,22 +214,20 @@ const OverviewTabContent = ({
         <FarmerYieldChart
             farmer={farmer}
             radiusClass={radiusClass}
-        />
-
-        <div className="grid grid-cols-2 gap-6">
+        />            <div className="grid grid-cols-2 gap-6">
             <CropsSection
                 farmer={farmer}
                 isEditing={isEditing}
-                editData={editData}
-                setEditData={setEditData}
+                editData={editData as unknown as Record<string, unknown>}
+                setEditData={setEditData as unknown as (d: Record<string, unknown>) => void}
                 radiusClass={radiusClass}
                 t={t}
             />
             <VitalStatsSection
                 farmer={farmer}
                 isEditing={isEditing}
-                editData={editData}
-                setEditData={setEditData}
+                editData={editData as unknown as Record<string, unknown>}
+                setEditData={setEditData as unknown as (d: Record<string, unknown>) => void}
                 radiusClass={radiusClass}
                 t={t}
             />
@@ -238,7 +236,7 @@ const OverviewTabContent = ({
         {/* Visit Timeline */}
         <FarmerVisitTimeline
             visits={visits}
-            handleUpdateVisitStatus={handleUpdateVisitStatus}
+            handleUpdateVisitStatus={handleUpdateVisitStatus as unknown as (id: string, st: string) => void}
             radiusClass={radiusClass}
             isCyber={isCyber}
         />
@@ -274,10 +272,10 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
     const [isSynthesizing, setIsSynthesizing] = React.useState(false);
     const [isRefreshingPriority, setIsRefreshingPriority] = React.useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
-    const [localVisits, setLocalVisits] = React.useState(visits);
+    const [localVisits, setLocalVisits] = React.useState<Visit[]>((visits ?? []) as unknown as Visit[]);
 
     React.useEffect(() => {
-        setLocalVisits(visits);
+        setLocalVisits((visits ?? []) as unknown as Visit[]);
     }, [visits]);
 
     const loadInteractions = React.useCallback(async () => {
@@ -310,7 +308,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
 
     const handleSave = () => {
         if (!farmer) return;
-        updateFarmer(farmer.id, editData);
+        (updateFarmer as (id: string, data: unknown) => void)(farmer.id, editData);
         setIsEditing(false);
         addNotification({
             type: 'success',
@@ -320,7 +318,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
 
     const handleShare = () => {
         if (!farmer) return;
-        showShareModal({
+        (showShareModal as (data: { entityType: string; entityId: string; entityName?: string }) => void)({
             entityType: 'farmer',
             entityId: farmer.id,
             entityName: `${farmer.firstName} ${farmer.lastName}`
@@ -330,7 +328,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
     const handleContextMenu = (e: React.MouseEvent) => {
         if (!farmer) return;
         e.preventDefault();
-        showContextMenu({
+        (showContextMenu as (data: { x: number; y: number; entityType: string; entityId?: string }) => void)({
             x: e.clientX,
             y: e.clientY,
             entityType: 'farmer',
@@ -517,17 +515,17 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                         {/* Content Section */}
                         <div className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar overflow-x-hidden">
                             {activeTab === 'overview' ? (
-                                <OverviewTabContent 
+                                <OverviewTabContent
                                     farmer={farmer}
                                     isCyber={isCyber}
                                     radiusClass={radiusClass}
                                     isEditing={isEditing}
-                                    editData={editData}
-                                    setEditData={setEditData}
+                                    editData={editData as unknown as Record<string, unknown>}
+                                    setEditData={setEditData as unknown as (d: Record<string, unknown>) => void}
                                     visits={visits}
-                                    handleUpdateVisitStatus={handleUpdateVisitStatus}
-                                    handleAction={handleAction}
-                                    showContextMenu={showContextMenu}
+                                    handleUpdateVisitStatus={handleUpdateVisitStatus as unknown as (id: string, st: string) => void}
+                                    handleAction={handleAction as unknown as (a: string) => void}
+                                    showContextMenu={showContextMenu as unknown as (e: React.MouseEvent) => void}
                                     t={t}
                                 />
                             ) : activeTab === 'history' ? (
@@ -609,7 +607,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                         <div className="overflow-y-auto max-h-[85vh]">
                             <VideoCall
                                 roomId={`farmer-${farmer.id}`}
-                                userId={(storeUser as unknown)?.userId || 'unknown'}
+                                userId={((storeUser as { userId?: string } | null | undefined)?.userId) || 'unknown'}
                                 userName={`${storeUser?.firstName} ${storeUser?.lastName}` || 'Extension Officer'}
                                 isHost={true}
                                 onEnd={() => setShowVideoCall(false)}

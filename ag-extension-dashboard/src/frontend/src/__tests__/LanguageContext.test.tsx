@@ -8,7 +8,7 @@ import { LanguageProvider, useLanguage } from '../lib/LanguageContext';
 // but LanguageContext already has its own types.
 vi.mock('../lib/i18n', async () => {
      
-    const actual = await vi.importActual<unknown>('../lib/i18n');
+    const actual = await vi.importActual<Record<string, unknown>>('../lib/i18n');
     return {
         ...actual,
         translations: {} // Keep it empty as in production

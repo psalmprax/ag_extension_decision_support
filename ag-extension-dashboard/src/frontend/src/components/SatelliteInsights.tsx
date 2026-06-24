@@ -14,6 +14,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { fetchVisitsByFarmer, fetchSynthesis, fetchPriorityScore, PriorityData, fetchSatelliteTelemetry, SatelliteIndex } from '@/api/visitService';
 import { fetchFarmerById, Farmer } from '@/api/farmerService';
 import { withRealFallback } from '@/lib/realFirst';
+import type { PriorityLike, FarmerLike } from '@/types/visit';
 
 interface Metric {
     label: string;
@@ -29,12 +30,14 @@ interface SatelliteInsightsProps {
     metrics?: Metric[];
 }
 
+// Nullable alias removed: replaced by inline T | null typing after component prop widening
+
 const useSatelliteData = (farmerId: string) => {
     const [synthesis, setSynthesis] = useState<string | null>(null);
     const [farmer, setFarmer] = useState<Farmer | null>(null);
     const [priority, setPriority] = useState<PriorityData | null>(null);
     const [satelliteData, setSatelliteData] = useState<SatelliteIndex[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
     useEffect(() => {
         const loadRealData = async () => {
@@ -97,7 +100,7 @@ const useSatelliteData = (farmerId: string) => {
     return { synthesis, farmer, priority, satelliteData, isLoading };
 };
 
-const SpatialDataVisualization = ({ dataPoints, isLoading, isCyber, priority, farmer }: { dataPoints: Array<Record<string, unknown>>, isLoading: boolean, isCyber: boolean, priority: Record<string, unknown> | null, farmer: Record<string, unknown> | null }) => {
+const SpatialDataVisualization = ({ dataPoints, isLoading, isCyber, priority, farmer }: { dataPoints: Array<Record<string, unknown>>, isLoading: boolean, isCyber: boolean, priority: PriorityLike | null, farmer: FarmerLike | null }) => {
     const priorityLevel = priority?.level;
     const isHighOrCritical = priorityLevel === 'critical' || priorityLevel === 'high';
 
@@ -110,8 +113,8 @@ const SpatialDataVisualization = ({ dataPoints, isLoading, isCyber, priority, fa
         priorityTextClass = 'text-green-500';
     }
 
-    const gpsLabel = farmer?.locationLat
-        ? `Lat: ${Number(farmer.locationLat).toFixed(4)} • Lng: ${Number(farmer.locationLng).toFixed(4)}`
+    const gpsLabel = farmer?.locationLat !== undefined && farmer?.locationLat !== null
+        ? `Lat: ${Number(farmer.locationLat).toFixed(4)} • Lng: ${Number(farmer.locationLng ?? 0).toFixed(4)}`
         : 'GPS Tracking Active';
 
     return (
@@ -129,12 +132,12 @@ const SpatialDataVisualization = ({ dataPoints, isLoading, isCyber, priority, fa
                             initial={{ opacity: 0, scale: 0 }}
                             animate={{ opacity: 0.8, scale: 1 }}
                             className="absolute w-4 h-4"
-                            style={{ left: `${point.x}%`, top: `${point.y}%` }}
+                            style={{ left: `${point['x']}%`, top: `${point['y']}%` }}
                         >
-                            <div className={`w-full h-full rounded-full ${point.colorClass as string} blur-md opacity-40 pulse-ring`} />
-                            <div className={`absolute inset-0 w-2 h-2 m-auto rounded-full ${point.pulseClass as string} border border-white/40 shadow-lg`} />
+                            <div className={`w-full h-full rounded-full ${String(point['colorClass'] ?? '')} blur-md opacity-40 pulse-ring`} />
+                            <div className={`absolute inset-0 w-2 h-2 m-auto rounded-full ${String(point['pulseClass'] ?? '')} border border-white/40 shadow-lg`} />
                             <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[8px] font-black text-white/60 uppercase whitespace-nowrap">
-                                NDVI {point.ndvi as number}
+                                NDVI {String(point['ndvi'] ?? 0)}
                             </div>
                         </motion.div>
                     ))}
@@ -164,10 +167,9 @@ const SpatialDataVisualization = ({ dataPoints, isLoading, isCyber, priority, fa
             </div>
             
             {priority && (
-                <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
-                    <div className={`text-[8px] font-black uppercase tracking-[0.2em] flex items-center gap-2 ${priorityTextClass}`}>
+                <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">                            <div className={`text-[8px] font-black uppercase tracking-[0.2em] flex items-center gap-2 ${priorityTextClass}`}>
                         {isHighOrCritical ? <AlertTriangle className="w-3 h-3" /> : <Shield className="w-3 h-3" />}
-                        {priority.level as string} PRIORITY
+                        {String(priority.level ?? 'unknown') as React.ReactNode} PRIORITY
                     </div>
                 </div>
             )}
@@ -186,7 +188,7 @@ const SpatialDataVisualization = ({ dataPoints, isLoading, isCyber, priority, fa
     );
 };
 
-const MetricsGrid = ({ priority, isCyber, isLoading }: { priority: Record<string, unknown> | null, isCyber: boolean, isLoading: boolean }) => {
+const MetricsGrid = ({ priority, isCyber, isLoading }: { priority: PriorityLike | null, isCyber: boolean, isLoading: boolean }) => {
     const isCritical = priority?.level === 'critical';
     let containerClass: string;
     if (isCritical) {
@@ -197,6 +199,9 @@ const MetricsGrid = ({ priority, isCyber, isLoading }: { priority: Record<string
         containerClass = 'bg-white border-gray-100 shadow-sm';
     }
 
+    const reasons = (priority?.reasons ?? []) as string[];
+    const score = priority?.score ?? 0;
+
     return (
         <div className={`p-6 rounded-3xl border transition-all ${containerClass}`}>
             <div className="flex items-center justify-between mb-4">
@@ -205,13 +210,13 @@ const MetricsGrid = ({ priority, isCyber, isLoading }: { priority: Record<string
                     <div className={`px-2 py-0.5 rounded text-xxs font-bold ${
                         isCritical ? 'bg-red-500 text-white' : 'bg-primary-500 text-white'
                     }`}>
-                        {priority.score}%
+                        {score}%
                     </div>
                 )}
             </div>
-            
+
             <div className="grid grid-cols-2 gap-3 mb-4">
-                {priority?.reasons.slice(0, 4).map((reason: string, i: number) => (
+                {reasons.slice(0, 4).map((reason, i) => (
                     <div key={i} className="flex items-center gap-2">
                         <Zap className="w-3 h-3 text-primary-500" />
                         <span className="text-xxs font-medium text-gray-400 line-clamp-1">{reason}</span>
@@ -281,15 +286,15 @@ export const SatelliteInsights: React.FC<SatelliteInsightsProps> = ({ farmerId, 
                 </div>
             </div>
 
-            <SpatialDataVisualization 
-                dataPoints={dataPoints}
-                isLoading={isLoading}
-                isCyber={isCyber}
-                priority={priority}
-                farmer={farmer}
+            <SpatialDataVisualization
+                dataPoints={dataPoints as unknown as Array<Record<string, unknown>>}
+                isLoading={isLoading ?? false}
+                isCyber={isCyber ?? false}
+                priority={priority as unknown as PriorityLike}
+                farmer={farmer as unknown as FarmerLike}
             />
 
-            <MetricsGrid priority={priority} isCyber={isCyber} isLoading={isLoading} />
+            <MetricsGrid priority={priority as unknown as PriorityLike} isCyber={isCyber ?? false} isLoading={isLoading ?? false} />
 
             {/* Analysis Summary */}
             <div className={`p-6 rounded-3xl border relative min-h-[140px] flex flex-col justify-center ${isCyber ? 'bg-primary-500/5 border-primary-500/20 shadow-[0_0_20px_var(--color-outline)]' : 'bg-blue-50/50 border-blue-100'}`}>

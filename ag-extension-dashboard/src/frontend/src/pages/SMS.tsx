@@ -175,7 +175,7 @@ export function SMSComposerComposeTab({
                         className={`p-4 rounded-xl flex items-center gap-3 ${error ? 'bg-rose-50 text-rose-700 dark:bg-rose-900/20' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20'}`}
                     >
                         {error ? <XCircle className="w-5 h-5 flex-shrink-0" /> : <CheckCircle className="w-5 h-5 flex-shrink-0" />}
-                        <p className="text-sm font-medium">{error || response?.message}</p>
+                        <p className="text-sm font-medium">{error || (response?.message ?? '') as React.ReactNode}</p>
                     </motion.div>
                 )}
 
@@ -608,7 +608,7 @@ export function SMSPage() {
 
     // Status State
      
-    const [response, setResponse] = useState<unknown>(null);
+    const [response, setResponse] = useState<{ message?: string } | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [history, setHistory] = useState<SMSMessage[]>([]);
     
@@ -743,8 +743,8 @@ export function SMSPage() {
                 setError(res.error || 'Failed to send message');
             }
         } catch (err: unknown) {
-             
-            setError((err as unknown).response?.data?.message || (err as unknown).message);
+            const e = err as { response?: { data?: { message?: string } }; message?: string } | null | undefined;
+            setError((e?.response?.data?.message) || e?.message || 'Failed to send message');
         } finally {
             setIsSending(false);
         }

@@ -92,8 +92,8 @@ export const BillingDashboard: React.FC = () => {
                 {/* Left Column: Current Plan & Controls */}
                 <div className="xl:col-span-4 space-y-12 h-full">
                     <SubscriptionStatus
-                        subscription={billing.subscription}
-                        onPortal={billing.handlePortal}
+                        subscription={billing.subscription as unknown as { [key: string]: unknown; plan?: { name?: string | undefined }; currentPeriodEnd?: string | undefined } | null}
+                        onPortal={() => { void billing.handlePortal(); }}
                         actionLoading={billing.actionLoading}
                     />
                     <section aria-label="Usage Intelligence"><UsageQuota /></section>
@@ -125,8 +125,8 @@ export const BillingDashboard: React.FC = () => {
                         actionLoading={billing.actionLoading}
                         showMobilePayForm={billing.showMobilePayForm}
                         setShowMobilePayForm={billing.setShowMobilePayForm}
-                        mobilePayData={billing.mobilePayData}
-                        setMobilePayData={billing.setMobilePayData}
+                        mobilePayData={billing.mobilePayData as unknown as { method: string; planId: string; transactionId: string; amount?: string | undefined }}
+                        setMobilePayData={billing.setMobilePayData as unknown as (data: { method: string; planId: string; transactionId: string; amount?: string | undefined }) => void}
                         handleSubmitTransaction={billing.handleSubmitTransaction}
                         showVoucherForm={billing.showVoucherForm}
                         setShowVoucherForm={billing.setShowVoucherForm}

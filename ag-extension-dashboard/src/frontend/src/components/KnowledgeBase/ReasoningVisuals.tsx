@@ -29,42 +29,30 @@ import {
     X,
     Maximize2
 } from 'lucide-react';
-
-interface KPI {
-    label: string;
-    value: string;
-    status: 'good' | 'warning' | 'critical';
-}
-
-interface Chart {
-    type: 'bar' | 'line' | 'pie' | 'area';
-    title: string;
-    data: Array<{ label: string; value: number }>;
-}
-
-interface MediaAsset {
-    url: string;
-    caption?: string;
-}
+import {
+    EMPTY_VISUALS,
+    type Chart,
+    type KPI,
+    type MediaAsset,
+    type VisualsData,
+} from './types';
 
 interface ReasoningVisualsProps {
-    visuals: {
-        kpis?: KPI[];
-        charts?: Chart[];
-        images?: MediaAsset[];
-        videos?: MediaAsset[];
-    };
+    visuals: VisualsData;
     audio?: string; // Base64 or URL
 }
 
 const COLORS = [CH_COLORS.blue, CH_COLORS.purple, 'var(--color-primary-500)', CH_COLORS.warning, CH_COLORS.success];
 
-const ChartTooltip = ({ active, payload, isPie = false }: { active?: boolean, payload?: Record<string, unknown>[], isPie?: boolean }) => {
+const ChartTooltip = ({ active, payload, isPie = false }: { active?: boolean, payload?: unknown[], isPie?: boolean }) => {
     if (active && payload && payload.length) {
+        const item = payload[0] as { name?: unknown; value?: unknown; payload?: { label?: unknown } };
+        const label = isPie ? String(item.name ?? '') : String(item.payload?.label ?? '');
+        const value = String(item.value ?? '');
         return (
             <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md p-3 rounded-2xl shadow-2xl border border-white/20">
-                <p className="text-xxs font-black uppercase tracking-widest text-gray-400 mb-1">{isPie ? payload[0].name : payload[0].payload.label}</p>
-                <p className="text-lg font-black text-primary-600 dark:text-primary-400">{payload[0].value}</p>
+                <p className="text-xxs font-black uppercase tracking-widest text-gray-400 mb-1">{label}</p>
+                <p className="text-lg font-black text-primary-600 dark:text-primary-400">{value}</p>
             </div>
         );
     }
@@ -148,23 +136,25 @@ const LineChartRenderer = ({ data }: { data: Array<Record<string, unknown>> }) =
     </LineChart>
 );
 
-const MediaAssetsSection = ({ safeVisuals, setSelectedImage, getYoutubeEmbedUrl }: { safeVisuals: Record<string, unknown>, setSelectedImage: (url: string) => void, getYoutubeEmbedUrl: (url: string) => string }) => {
-    if (!((safeVisuals.images && (safeVisuals.images as []).length > 0) || (safeVisuals.videos && (safeVisuals.videos as []).length > 0))) {
+const MediaAssetsSection = ({ safeVisuals, setSelectedImage, getYoutubeEmbedUrl }: { safeVisuals: { images?: Array<{ url: string; caption?: string }>; videos?: Array<{ url: string; caption?: string }>; [key: string]: unknown },    setSelectedImage: (url: string) => void, getYoutubeEmbedUrl: (url: string) => string }) => {
+    const images = (safeVisuals.images ?? []) as MediaAsset[];
+    const videos = (safeVisuals.videos ?? []) as MediaAsset[];
+    if (!(images.length > 0 || videos.length > 0)) {
         return null;
     }
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {safeVisuals.images?.map((img: Record<string, unknown>, idx: number) => (
-                <motion.div 
+            {images.map((img, idx) => (
+                <motion.div
                     key={`img-${idx}`}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-white/50 dark:bg-gray-900/40 p-4 rounded-3xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-xl group overflow-hidden cursor-pointer"
-                    onClick={() => setSelectedImage(img.url as string)}
+                    onClick={() => setSelectedImage(img.url)}
                 >
                     <div className="relative aspect-video rounded-2xl overflow-hidden mb-3">
-                        <img src={img.url as string} alt={(img.caption as string) || 'Agricultural insight'} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <img src={img.url} alt={img.caption ?? 'Agricultural insight'} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <div className="p-3 bg-white/20 backdrop-blur-md rounded-2xl text-white">
                                 <Maximize2 className="w-6 h-6" />
@@ -180,23 +170,22 @@ const MediaAssetsSection = ({ safeVisuals, setSelectedImage, getYoutubeEmbedUrl 
                         </div>
                     </div>
                     {img.caption && <p className="text-sm font-bold text-gray-600 dark:text-gray-400 px-2 flex items-center justify-between">
-                        <span>{img.caption as string}</span>
+                        <span>{img.caption}</span>
                         <span className="text-xxs text-primary-500 uppercase font-black opacity-0 group-hover:opacity-100 transition-opacity">Click to Enlarge</span>
                     </p>}
                 </motion.div>
             ))}
-            {safeVisuals.videos?.map((vid: Record<string, unknown>, idx: number) => (
-                <motion.div 
+            {videos.map((vid, idx) => (
+                <motion.div
                     key={`vid-${idx}`}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-white/50 dark:bg-gray-900/40 p-4 rounded-3xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-xl group overflow-hidden"
                 >
-                    <div className="relative aspect-video rounded-2xl overflow-hidden mb-3 bg-black flex items-center justify-center shadow-inner">
-                        {vid.url && ((vid.url as string).includes('youtube.com') || (vid.url as string).includes('youtu.be')) ? (
-                            <iframe 
-                                src={getYoutubeEmbedUrl(vid.url as string)}
-                                title={(vid.caption as string) || "Video analysis"}
+                    <div className="relative aspect-video rounded-2xl overflow-hidden mb-3 bg-black flex items-center justify-center shadow-inner">                                {vid.url && (vid.url.includes('youtube.com') || vid.url.includes('youtu.be')) ? (
+                            <iframe
+                                src={getYoutubeEmbedUrl(vid.url)}
+                                title={String(vid.caption ?? 'Video analysis')}
                                 className="w-full h-full border-none"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                 allowFullScreen
@@ -210,7 +199,7 @@ const MediaAssetsSection = ({ safeVisuals, setSelectedImage, getYoutubeEmbedUrl 
                                     <Play className="w-3 h-3" />
                                     External Video
                                 </div>
-                                <a href={vid.url as string} target="_blank" rel="noopener noreferrer" className="absolute bottom-3 right-3 p-3 bg-primary-600 rounded-2xl text-white shadow-xl transform active:scale-95 transition-all">
+                                <a href={vid.url} target="_blank" rel="noopener noreferrer" className="absolute bottom-3 right-3 p-3 bg-primary-600 rounded-2xl text-white shadow-xl transform active:scale-95 transition-all">
                                     <ExternalLink className="w-5 h-5" />
                                 </a>
                             </>
@@ -220,7 +209,7 @@ const MediaAssetsSection = ({ safeVisuals, setSelectedImage, getYoutubeEmbedUrl 
                             Verified Source
                         </div>
                     </div>
-                    {vid.caption && <p className="text-sm font-bold text-gray-600 dark:text-gray-400 px-2">{vid.caption as string}</p>}
+                    {vid.caption && <p className="text-sm font-bold text-gray-600 dark:text-gray-400 px-2">{vid.caption}</p>}
                 </motion.div>
             ))}
         </div>
@@ -275,7 +264,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
     // Robust empty state initialization
-    const safeVisuals = visuals || { kpis: [], charts: [], images: [], videos: [] };
+    const safeVisuals = visuals || EMPTY_VISUALS;
     if (!visuals && !audio) return null;
 
     const togglePlayback = () => {
@@ -302,8 +291,9 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
         return url;
     };
 
-    const renderChart = (chart: Chart) => {
+    const renderChart = (chart: Chart): React.ReactNode => {
         const { type, data, title } = chart;
+        const chartData: Array<Record<string, unknown>> = data as unknown as Array<Record<string, unknown>>;
         
         return (
             <motion.div 
@@ -323,13 +313,13 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                 <div className="flex-1 w-full -ml-6">
                     <ResponsiveContainer width="100%" height="100%">
                         {type === 'bar' ? (
-                            <BarChartRenderer data={data} />
+                            <BarChartRenderer data={chartData} />
                         ) : type === 'area' ? (
-                            <AreaChartRenderer data={data} />
+                            <AreaChartRenderer data={chartData} />
                         ) : type === 'pie' ? (
-                            <PieChartRenderer data={data} />
+                            <PieChartRenderer data={chartData} />
                         ) : (
-                            <LineChartRenderer data={data} />
+                            <LineChartRenderer data={chartData} />
                         )}
                     </ResponsiveContainer>
                 </div>
@@ -345,8 +335,8 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
             {/* KPI Metrics Grid */}
             {safeVisuals.kpis && safeVisuals.kpis.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {safeVisuals.kpis.map((kpi, idx) => (
-                        <motion.div 
+                    {safeVisuals.kpis.map((kpi: KPI, idx) => (
+                        <motion.div
                             key={`kpi-${idx}`}
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
@@ -355,7 +345,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                         >
                             <div className={`p-2 rounded-xl mb-1 ${
                                 kpi.status === 'good' ? 'bg-green-100 text-green-600' :
-                                kpi.status === 'warning' ? 'bg-amber-100 text-amber-600' : 
+                                kpi.status === 'warning' ? 'bg-amber-100 text-amber-600' :
                                 'bg-rose-100 text-rose-600'
                             }`}>
                                 {kpi.status === 'good' ? <CheckCircle2 className="w-5 h-5" /> :
@@ -369,7 +359,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                 </div>
             )}
 
-            <MediaAssetsSection safeVisuals={safeVisuals} setSelectedImage={setSelectedImage} getYoutubeEmbedUrl={getYoutubeEmbedUrl} />
+            <MediaAssetsSection safeVisuals={safeVisuals as unknown as Record<string, unknown>} setSelectedImage={setSelectedImage} getYoutubeEmbedUrl={getYoutubeEmbedUrl} />
 
             {/* Charts Section */}
             {safeVisuals.charts && safeVisuals.charts.length > 0 && (
@@ -432,7 +422,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                             <h4 className="text-sm font-black uppercase tracking-[0.2em] opacity-70 mb-1">Expert Decision Insight</h4>
                             <p className="text-lg font-bold leading-tight">
                                 {safeVisuals.kpis && safeVisuals.kpis.length > 0
-                                    ? `${safeVisuals.kpis.filter(k => k.status === 'good').length} of ${safeVisuals.kpis.length} indicators performing optimally. Review recommendations below.`
+                                    ? `${safeVisuals.kpis.filter((k: KPI) => k.status === 'good').length} of ${safeVisuals.kpis.length} indicators performing optimally. Review recommendations below.`
                                     : 'Multimodal analysis complete. Review the synthesized intelligence above.'}
                             </p>
                         </div>

@@ -5,8 +5,9 @@ import { VisitsPage } from '@/pages/VisitsPage';
 import { ReportsPage } from '@/pages/ReportsPage';
 import { AnalyticsPage } from '@/pages/AnalyticsPage';
 import { FarmerChatPage } from '@/pages/FarmerChatPage';
-import { Farmer } from '@/types/dashboard';
+import { Farmer, Visit, Conversation, ChatMessage, DashboardData } from '@/types/dashboard';
 import { Report } from '@/api/reportService';
+interface AnalyticsDataShape { metrics?: { resolutionRate?: number; avgResponseTime?: string | number; satisfactionScore?: number; followUpRate?: number; firstContactResolution?: number }; timeline?: Record<string, unknown>[] }
 
 const FarmerDashboard = React.lazy(() => import('@/components/FarmerDashboard').then(m => ({ default: m.FarmerDashboard })));
 const BillingDashboard = React.lazy(() => import('@/components/BillingDashboard').then(m => ({ default: m.BillingDashboard })));
@@ -57,7 +58,7 @@ interface TabContentProps {
     setShowVisitModal: (v: boolean) => void;
     refetchVisits: () => void;
     // Reports
-    reports: unknown[];
+    reports: Report[];
     handleGenerateReport: () => void;
     isGeneratingReport: boolean;
     viewingReport: Report | null;
@@ -93,11 +94,12 @@ export function TabContent(props: TabContentProps) {
         case 'dashboard':
             return (
                 <DashboardPage
-                    dashboardData={props.dashboardData} isLoading={props.isLoading} isOfficer={isOfficer}
-                    performanceData={props.performanceData} effectiveFarmers={props.effectiveFarmers}
+                    dashboardData={props.dashboardData as unknown as DashboardData | undefined} isLoading={props.isLoading} isOfficer={isOfficer}
+                    performanceData={props.performanceData as unknown as AnalyticsDataShape | undefined} effectiveFarmers={props.effectiveFarmers}
                     isMapExpanded={props.isMapExpanded} setIsMapExpanded={props.setIsMapExpanded}
                     handleStartConversation={props.handleStartConversation} handleOpenFarmerDetail={props.handleOpenFarmerDetail}
-                    user={user} addNotification={addNotification}
+                    user={user as { role?: string; firstName?: string; lastName?: string; avatarUrl?: string } | undefined}
+                    addNotification={addNotification}
                 />
             );
         case 'portfolio':
@@ -114,7 +116,7 @@ export function TabContent(props: TabContentProps) {
         case 'visits':
             return (
                 <VisitsPage
-                    visits={props.visits} setShowVisitModal={props.setShowVisitModal} refetchVisits={props.refetchVisits}
+                    visits={props.visits as Visit[]} setShowVisitModal={props.setShowVisitModal} refetchVisits={props.refetchVisits}
                     handleOpenFarmerDetail={props.handleOpenFarmerDetail} farmers={props.effectiveFarmers}
                     addNotification={addNotification}
                 />
@@ -122,16 +124,16 @@ export function TabContent(props: TabContentProps) {
         case 'reports':
             return (
                 <ReportsPage
-                    reports={props.reports} handleGenerateReport={props.handleGenerateReport}
+                    reports={props.reports as unknown as Report[]} handleGenerateReport={props.handleGenerateReport}
                     isGeneratingReport={props.isGeneratingReport}
                     viewingReport={props.viewingReport} setViewingReport={props.setViewingReport}
                     reportContent={props.reportContent} setReportContent={props.setReportContent}
                     isLoadingReport={props.isLoadingReport} setIsLoadingReport={props.setIsLoadingReport}
-                    addNotification={addNotification} user={user}
+                    addNotification={addNotification} user={user as { firstName?: string; lastName?: string; avatarUrl?: string } | undefined}
                 />
             );
         case 'analytics':
-            return <AnalyticsPage performanceData={props.performanceData} />;
+            return <AnalyticsPage performanceData={props.performanceData as unknown as AnalyticsDataShape | undefined as unknown as any} />;
         case 'billing':
             return <BillingDashboard />;
         case 'knowledge':
@@ -141,9 +143,10 @@ export function TabContent(props: TabContentProps) {
         case 'farmerchat':
             return (
                 <FarmerChatPage
-                    farmerConversations={props.farmerConversations} activeFarmerConvId={props.activeFarmerConvId}
+                    farmerConversations={props.farmerConversations as Conversation[]} activeFarmerConvId={props.activeFarmerConvId}
                     setActiveFarmerConvId={props.setActiveFarmerConvId} loadFarmerMessages={props.loadFarmerMessages}
-                    farmerChatMessages={props.farmerChatMessages} farmerChatInput={props.farmerChatInput}
+                    farmerChatMessages={props.farmerChatMessages as ChatMessage[]}
+                    farmerChatInput={props.farmerChatInput}
                     setFarmerChatInput={props.setFarmerChatInput} handleFarmerChatSend={props.handleFarmerChatSend}
                     loadFarmers={props.loadFarmers} setShowFarmerModal={props.setShowFarmerModal}
                 />

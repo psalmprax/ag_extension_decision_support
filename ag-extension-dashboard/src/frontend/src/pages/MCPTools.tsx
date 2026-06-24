@@ -386,7 +386,7 @@ export function MCPTools() {
                             {selectedTool.inputSchema.properties && Object.keys(selectedTool.inputSchema.properties).length > 0 && (
                                 <div className="space-y-4">
                                     <h5 className="font-medium text-gray-900 dark:text-white">Parameters</h5>
-                                    {Object.entries(selectedTool.inputSchema.properties).map(([propName, propSchema]: [string, unknown]) => (
+                                    {(Object.entries(selectedTool.inputSchema.properties) as Array<[string, { type?: string; description?: string }]>).map(([propName, propSchema]) => (
                                         <div key={propName}>
                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                                 {propName}

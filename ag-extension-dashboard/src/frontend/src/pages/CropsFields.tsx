@@ -682,7 +682,7 @@ export function CropsFields() {
                     return (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id as unknown)}
+                            onClick={() => setActiveTab(tab.id as 'overview' | 'cycles')}
                             className={`flex items-center gap-2 pb-4 font-bold text-sm tracking-wide transition-all border-b-2 uppercase ${
                                 isActive 
                                     ? 'text-cyan-400 border-cyan-400' 

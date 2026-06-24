@@ -67,7 +67,8 @@ export function UserManagementPage() {
             setFormData({ firstName: '', lastName: '', email: '', password: '', role: 'extension_officer', region: '', phone: '' });
         },
         onError: (err: unknown) => {
-            setFormError(err.response?.data?.error || 'Failed to create user');
+            const e = err as { response?: { data?: { error?: string } } };
+            setFormError(e?.response?.data?.error || 'Failed to create user');
         },
     });
 

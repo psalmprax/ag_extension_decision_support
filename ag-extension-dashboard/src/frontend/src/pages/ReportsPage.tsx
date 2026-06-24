@@ -46,12 +46,12 @@ export function ReportCard({
                 try {
                     const res = await getReportContent(report.id);
                     if (res.success && res.data) {
-                        setViewingReport(res.data);
+                        setViewingReport(res.data ?? null);
                         let content = res.data.content;
                         if (!content && typeof res.data.data?.content === 'string') {
                             content = res.data.data.content;
                         }
-                        setReportContent(content);
+                        setReportContent(content ?? null);
                     }
                 } catch {
                     addNotification({ type: 'error', message: 'Failed to load report' });

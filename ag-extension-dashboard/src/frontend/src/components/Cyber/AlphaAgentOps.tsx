@@ -50,7 +50,7 @@ const getTagColor = (tag: string) => {
     }
 };
 
-const ConsoleLogViewer = ({ consoleOutput, activeAgentData, activeAgent, now }: { consoleOutput: string[]; activeAgentData: Record<string, unknown> | undefined; activeAgent: string; now: Date }) => (
+const ConsoleLogViewer = ({ consoleOutput, activeAgentData, activeAgent, now }: { consoleOutput: string[]; activeAgentData: Record<string, unknown> | undefined; activeAgent: string; now: () => string }) => (
     <div className="p-4 space-y-3 font-mono text-xxs min-h-[80px]">
         {consoleOutput.length === 0 ? (
             <div className="text-white/20 text-center py-4">System initialized. Awaiting agent commands.</div>
@@ -68,7 +68,7 @@ const ConsoleLogViewer = ({ consoleOutput, activeAgentData, activeAgent, now }: 
                 );
             })
         )}
-        {activeAgentData?.status === 'running' && (
+        {activeAgentData?.['status'] === 'running' && (
             <div className="flex gap-3 animate-pulse">
                 <span className="text-white/20">{now()}</span>
                 <span className="text-primary-400">[PROC]</span>

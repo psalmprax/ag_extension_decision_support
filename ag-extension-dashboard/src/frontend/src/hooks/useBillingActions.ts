@@ -35,23 +35,32 @@ interface ConfirmModal { title: string; message: string; onConfirm: () => void; 
 
 export type { Plan, Subscription, Invoice, PaymentMethod, Transaction, Voucher, ConfirmModal };
 
+interface SubscribeErrorResponse {
+    errorCode?: string;
+    message?: string;
+    subscription?: { cancelAtPeriodEnd?: boolean; [k: string]: unknown };
+    currentSubscription?: { plan?: { stripePriceId?: string; [k: string]: unknown }; [k: string]: unknown };
+    [key: string]: unknown;
+}
+
 function handleSubscribeError(
-    response: Record<string, unknown>,
+    response: SubscribeErrorResponse,
     priceId: string,
     t: (key: string) => string,
     setConfirmModal: (modal: ConfirmModal | null) => void,
     handleSubscribe: (priceId: string, billingCycle: 'current' | 'next') => void,
     handleSwitch: (priceId: string, billingCycle: 'current' | 'next') => void
-) {
+): void {
     if (response.errorCode === 'PAYMENT_GATEWAY_NOT_CONFIGURED') {
-        toast.error(t('billing_configuration_alert') || response.message);
+        toast.error(t('billing_configuration_alert') || response.message || '');
         return;
     }
     if (response.errorCode === 'ALREADY_SUBSCRIBED') {
         const canSchedule = !response.subscription?.cancelAtPeriodEnd;
+        const msg = response.message ?? '';
         setConfirmModal({
             title: 'Subscription Exists',
-            message: canSchedule ? `${response.message} ${t('confirm_next_cycle')}` : `${response.message} ${t('confirm_reenable_renewal')}`,
+            message: canSchedule ? `${msg} ${t('confirm_next_cycle')}` : `${msg} ${t('confirm_reenable_renewal')}`,
             variant: 'warning',
             confirmText: 'Schedule for Next Cycle',
             onConfirm: () => { setConfirmModal(null); handleSubscribe(priceId, 'next'); }
@@ -60,6 +69,7 @@ function handleSubscribeError(
     }
     if (response.errorCode === 'ACTIVE_SUBSCRIPTION_EXISTS') {
         const isSamePlan = response.currentSubscription?.plan?.stripePriceId === priceId;
+        const msg = response.message ?? '';
         if (isSamePlan) {
             setConfirmModal({
                 title: 'Plan Continuation',
@@ -71,7 +81,7 @@ function handleSubscribeError(
         } else {
             setConfirmModal({
                 title: 'Switch Plan',
-                message: `${response.message}\n\n${t('confirm_switch_plan')}`,
+                message: `${msg}\n\n${t('confirm_switch_plan')}`,
                 variant: 'warning',
                 confirmText: 'Switch Now',
                 onConfirm: () => { setConfirmModal(null); handleSwitch(priceId, 'current'); }
@@ -169,14 +179,14 @@ export function useBillingActions() {
                 setFormMessage({ type: 'error', text: res.message || 'Voucher redemption failed.' });
             }
         } catch (error) {
-            const err = error as { response?: { data?: { message?: string } } };
-            setFormMessage({ type: 'error', text: err.response?.data?.message || 'Voucher redemption failed.' });
+            const err = (error as { response?: { data?: { message?: string } } } | null) ?? null;
+            setFormMessage({ type: 'error', text: err?.response?.data?.message || 'Voucher redemption failed.' });
         } finally {
             setActionLoading(null);
         }
     };
 
-    const handleSubmitTransaction = async () => {
+    const handleSubmitTransaction = async (): Promise<void> => {
         if (!mobilePayData.transactionId || !mobilePayData.planId || !mobilePayData.amount) return;
         setActionLoading('mobile-pay');
         setFormMessage(null);
@@ -194,8 +204,8 @@ export function useBillingActions() {
                 setFormMessage({ type: 'error', text: res.message || 'Submission failed.' });
             }
         } catch (error) {
-            const err = error as { response?: { data?: { message?: string } } };
-            setFormMessage({ type: 'error', text: err.response?.data?.message || 'Submission failed.' });
+            const err = (error as { response?: { data?: { message?: string } } } | null) ?? null;
+            setFormMessage({ type: 'error', text: err?.response?.data?.message || 'Submission failed.' });
         } finally {
             setActionLoading(null);
         }
@@ -227,7 +237,7 @@ export function useBillingActions() {
         finally { setActionLoading(null); }
     };
 
-    const handleSubscribe = async (priceId: string, billingCycle: 'current' | 'next' = 'current') => {
+    const handleSubscribe = async (priceId: string, billingCycle: 'current' | 'next' = 'current'): Promise<void> => {
         setActionLoading(priceId);
         try {
             const response = await createCheckoutSession(priceId, billingCycle);
@@ -238,7 +248,8 @@ export function useBillingActions() {
             if (response.data?.url) { window.location.href = response.data.url; return; }
             if (response.message) { toast.success(response.message); fetchData(); }
         } catch (error: unknown) {
-            if (import.meta.env.DEV) console.error('Subscription failed:', error);
+            const e = (error instanceof Error ? error : null);
+            if (import.meta.env.DEV && e) console.error('Subscription failed:', e);
             toast.error('Subscription failed. Please try again.');
         } finally { setActionLoading(null); }
     };

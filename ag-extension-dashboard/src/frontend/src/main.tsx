@@ -24,7 +24,8 @@ const queryClient = new QueryClient({
             refetchOnWindowFocus: false,
             retry: (failureCount, error: unknown) => {
                 // Don't retry on 401 errors (authentication required)
-                if (error?.response?.status === 401) {
+                const e = error as { response?: { status?: number } } | null | undefined;
+                if (e && typeof e === 'object' && e.response && e.response.status === 401) {
                     return false;
                 }
                 // Retry other errors once

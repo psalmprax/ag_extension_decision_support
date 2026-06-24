@@ -125,11 +125,11 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
                             </ResponsiveContainer>
                         </div>
                         <div className="flex flex-col gap-2">
-                            {categoriesData.map((cat: unknown, i: number) => (
+                            {categoriesData.map((cat: Record<string, unknown>, i: number) => (
                                 <div key={i} className="flex items-center gap-3">
                                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }}></div>
-                                    <span className="text-xs font-bold text-gray-600 dark:text-gray-400 truncate w-32 capitalize">{cat.category}</span>
-                                    <span className="text-xs font-black text-gray-900 dark:text-white">{cat.count}</span>
+                                    <span className="text-xs font-bold text-gray-600 dark:text-gray-400 truncate w-32 capitalize">{String(cat.category ?? '')}</span>
+                                    <span className="text-xs font-black text-gray-900 dark:text-white">{String(cat.count ?? 0)}</span>
                                 </div>
                             ))}
                         </div>

@@ -7,35 +7,35 @@ import CropCycleGantt from '../Cyber/CropCycleGantt';
 import SystemOverview from '../Cyber/SystemOverview';
 
 interface CyberDashboardProps {
-    farmerStats: unknown;
+    farmerStats: Record<string, unknown> | null | undefined;
 }
 
-const getSoilTrend = (soil: unknown) => {
+const getSoilTrend = (soil: unknown): string => {
     if (!soil) return 'No data';
     return Number(String(soil).replace('%', '')) > 30 ? 'Optimal' : 'Low';
 };
 
-const getPhTrend = (ph: unknown) => {
+const getPhTrend = (ph: unknown): string => {
     if (!ph) return 'No data';
     const num = Number(ph);
     return num > 6 && num < 8 ? 'Optimal' : 'Checking';
 };
 
-const getAiTrend = (ai: unknown) => {
+const getAiTrend = (ai: unknown): string => {
     if (!ai) return 'No data';
     return Number(String(ai).replace('%', '')) > 80 ? 'High' : 'Normal';
 };
 
-const getTempTrend = (temp: unknown) => {
+const getTempTrend = (temp: unknown): string => {
     if (!temp) return 'No data';
     return 'Stable';
 };
 
 const getDashboardMetrics = (stats: Record<string, unknown> | null | undefined) => [
-    { label: 'SOIL MOISTURE', value: stats?.soilMoisture as string | undefined || '\u2014', icon: Zap, trend: getSoilTrend(stats?.soilMoisture) },
-    { label: 'AVG TEMP', value: stats?.avgTemp as string | undefined || '\u2014', icon: TrendingUp, trend: getTempTrend(stats?.avgTemp) },
-    { label: 'PH LEVEL', value: stats?.phLevel as string | undefined || '\u2014', icon: LineChart, trend: getPhTrend(stats?.phLevel) },
-    { label: 'AI CONFIDENCE', value: stats?.aiConfidence as string | undefined || '\u2014', icon: ShieldAlert, trend: getAiTrend(stats?.aiConfidence) }
+    { label: 'SOIL MOISTURE', value: (stats?.soilMoisture as string | undefined) ?? '\u2014', icon: Zap, trend: getSoilTrend(stats?.soilMoisture) },
+    { label: 'AVG TEMP', value: (stats?.avgTemp as string | undefined) ?? '\u2014', icon: TrendingUp, trend: getTempTrend(stats?.avgTemp) },
+    { label: 'PH LEVEL', value: (stats?.phLevel as string | undefined) ?? '\u2014', icon: LineChart, trend: getPhTrend(stats?.phLevel) },
+    { label: 'AI CONFIDENCE', value: (stats?.aiConfidence as string | undefined) ?? '\u2014', icon: ShieldAlert, trend: getAiTrend(stats?.aiConfidence) }
 ];
 
 export const CyberDashboard: React.FC<CyberDashboardProps> = ({ farmerStats }) => {
@@ -61,26 +61,31 @@ export const CyberDashboard: React.FC<CyberDashboardProps> = ({ farmerStats }) =
             </header>
 
             <section className="animate-slide-up">
-                <IsometricFarmOverview farmSize={farmerStats?.farmSize} crops={farmerStats?.crops} />
+                <IsometricFarmOverview
+                    farmSize={farmerStats?.['farmSize'] as number | undefined}
+                    crops={farmerStats?.['crops'] as string[] | undefined}
+                />
             </section>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 animate-slide-up" style={{ animationDelay: '100ms' }}>
                     <CropCycleGantt
-                        items={Array.isArray(farmerStats?.yieldHistory) ? farmerStats.yieldHistory.map((y: { crop?: string; yield?: number }, i: number) => ({
-                            id: String(i),
-                            label: `${y.crop || 'PHASE_' + (i+1)}`,
-                            value: `${y.yield || 0} t/ha`,
-                            percent: Math.min((y.yield || 0) * 10, 100)
-                        })) : []}
+                        items={Array.isArray(farmerStats?.['yieldHistory'])
+                            ? (farmerStats['yieldHistory'] as Array<{ crop?: string; yield?: number }>).map((y, i) => ({
+                                id: String(i),
+                                label: `${y.crop || 'PHASE_' + (i+1)}`,
+                                value: `${y.yield || 0} t/ha`,
+                                percent: Math.min((y.yield || 0) * 10, 100)
+                            }))
+                            : []}
                     />
                 </div>
                 <div className="animate-slide-up" style={{ animationDelay: '200ms' }}>
                     <SystemOverview
-                        healthScore={farmerStats?.vitalScore !== undefined ? Number((farmerStats.vitalScore * 10).toFixed(1)) : undefined}
+                        healthScore={farmerStats?.['vitalScore'] !== undefined ? Number(((farmerStats['vitalScore'] as number) * 10).toFixed(1)) : undefined}
                         indicators={[
-                            { label: 'SOIL_ANALYSIS', status: farmerStats?.soilMoisture ? 'online' : 'warning' },
-                            { label: 'AI_AGENT', status: farmerStats?.aiConfidence ? 'stable' : 'online' },
+                            { label: 'SOIL_ANALYSIS', status: farmerStats?.['soilMoisture'] ? 'online' : 'warning' },
+                            { label: 'AI_AGENT', status: farmerStats?.['aiConfidence'] ? 'stable' : 'online' },
                             { label: 'PERSISTENCE', status: farmerStats ? 'online' : 'warning' }
                         ]}
                     />

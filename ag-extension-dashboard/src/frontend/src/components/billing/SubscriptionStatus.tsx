@@ -6,7 +6,7 @@ import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { Badge } from '../ui/Badge';
 
 interface SubscriptionStatusProps {
-    subscription: unknown;
+    subscription: { plan?: { name?: string }; currentPeriodEnd?: string; [key: string]: unknown } | null;
     onPortal: () => void;
     actionLoading: string | null;
 }
@@ -39,10 +39,10 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({ subscrip
                         </div>
                     </div>
                     <span id="subscription-status-title" className="text-xxs font-black uppercase tracking-widest text-white/50 mb-2 block">{t('billing_current_plan')}</span>
-                    <h2 className="text-3xl font-black text-white leading-none tracking-tighter mb-4 group-hover:text-primary-400 transition-colors duration-500">{subscription.plan.name}</h2>
+                    <h2 className="text-3xl font-black text-white leading-none tracking-tighter mb-4 group-hover:text-primary-400 transition-colors duration-500">{subscription?.plan?.name ?? 'N/A'}</h2>
                     <div className="flex items-center gap-3 text-white/40 font-black text-xxs uppercase tracking-widest">
                         <Clock className="w-4 h-4 text-primary-500" />
-                        <span>{t('billing_renews_on')} {new Date(subscription.currentPeriodEnd).toLocaleDateString()}</span>
+                        <span>{t('billing_renews_on')} {subscription?.currentPeriodEnd ? new Date(subscription.currentPeriodEnd).toLocaleDateString() : 'N/A'}</span>
                     </div>
                 </div>
                 <div className="relative z-10 pt-8 border-t border-white/10 space-y-4">

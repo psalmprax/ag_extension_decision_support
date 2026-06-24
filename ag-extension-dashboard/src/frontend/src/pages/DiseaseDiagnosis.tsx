@@ -135,7 +135,7 @@ export function DiseaseDiagnosis() {
                     radiusClass={radiusClass}
                     btnClass={btnClass}
                     t={t}
-                    addNotification={addNotification}
+                    addNotification={addNotification as unknown as (n: { type: string; message: string }) => void}
                     onViewDiseaseInfo={handleViewDiseaseInfo}
                     getSeverityColor={getSeverityColor}
                 />
@@ -148,7 +148,7 @@ export function DiseaseDiagnosis() {
                     radiusClass={radiusClass}
                     btnClass={btnClass}
                     t={t}
-                    addNotification={addNotification}
+                    addNotification={addNotification as unknown as (n: { type: string; message: string }) => void}
                     getSeverityColor={getSeverityColor}
                 />
             )}
@@ -159,7 +159,7 @@ export function DiseaseDiagnosis() {
                     setCropType={setCropType}
                     radiusClass={radiusClass}
                     btnClass={btnClass}
-                    addNotification={addNotification}
+                    addNotification={addNotification as unknown as (n: { type: string; message: string }) => void}
                 />
             )}
 

@@ -146,7 +146,7 @@ export function VideoCall({ roomId, userId, userName, isHost = false, onEnd }: V
     }
 
     if (!isInCall) {
-        return <PreCallView t={t} participants={participants} localStream={localStream} localVideoRef={localVideoRef} isHost={isHost} isJoining={isJoining} handleStartCall={handleStartCall} handleJoinCall={handleJoinCall} />;
+        return <PreCallView t={t} participants={participants as unknown as Record<string, unknown>[]} localStream={localStream} localVideoRef={localVideoRef} isHost={isHost} isJoining={isJoining} handleStartCall={handleStartCall} handleJoinCall={handleJoinCall} />;
     }
 
     return (

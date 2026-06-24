@@ -12,7 +12,8 @@ import { fetchHealthStatus, fetchRecoveryLog, triggerRecovery, HealthCheck, Reco
 import { runDiagnostics, DiagnosticResult } from '../api/diagnosticsService';
 import { MetricCard } from '@/components/MetricCard';
 
-function DiagnosticsPanel({ diagnostics }: { diagnostics: DiagnosticResult }) {
+function DiagnosticsPanel({ diagnostics }: { diagnostics: DiagnosticResult & { [key: string]: unknown } }) {
+    const d = diagnostics as unknown as Record<string, any>;
     return (
         <div className="card p-6">
             <div className="flex items-center justify-between mb-6">
@@ -26,8 +27,7 @@ function DiagnosticsPanel({ diagnostics }: { diagnostics: DiagnosticResult }) {
                 <span className="text-xs text-gray-500">{new Date(diagnostics.timestamp).toLocaleTimeString()}</span>
             </div>
 
-            {/* Issues & Summary */}
-            {diagnostics.issues && diagnostics.issues.length > 0 && (
+            {/* Issues & Summary */}                            {diagnostics.issues && diagnostics.issues.length > 0 && (
                 <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                     <p className="text-sm font-bold text-red-700 dark:text-red-300 mb-2">
                         {diagnostics.issues.length} Issue(s) Detected
@@ -41,7 +41,7 @@ function DiagnosticsPanel({ diagnostics }: { diagnostics: DiagnosticResult }) {
             )}
             {diagnostics.issues && diagnostics.issues.length === 0 && (
                 <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                    <p className="text-sm font-bold text-green-700 dark:text-green-300">{diagnostics.summary}</p>
+                    <p className="text-sm font-bold text-green-700 dark:text-green-300">{diagnostics.summary ?? ''}</p>
                 </div>
             )}
 
@@ -62,7 +62,7 @@ function DiagnosticsPanel({ diagnostics }: { diagnostics: DiagnosticResult }) {
                             return (
                             <div key={domain} className={`p-3 rounded-lg border ${dnsBorderClass}`}>
                                 <p className="text-xs font-mono font-bold">{domain}</p>
-                                <p className="text-sm">{dnsDetail}</p>
+                                <p className="text-sm">{String(dnsDetail)}</p>
                             </div>
                             );
                         })}
@@ -77,7 +77,7 @@ function DiagnosticsPanel({ diagnostics }: { diagnostics: DiagnosticResult }) {
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                         {diagnostics.ports.map((p: Record<string, unknown>) => (
                             <div key={p.port as string} className={`flex items-center gap-2 p-2 rounded-lg text-xs font-mono ${p.open ? 'bg-green-50 dark:bg-green-900/10 text-green-700 dark:text-green-300' : 'bg-red-50 dark:bg-red-900/10 text-red-700 dark:text-red-300'}`}>
-                                <span className="font-bold">{p.open ? '✓' : '✗'}</span>
+                                <span className="font-bold">{String(p.open) ? '✓' : '✗'}</span>
                                 <span>{p.name as string} ({p.port as string})</span>
                             </div>
                         ))}
@@ -110,7 +110,7 @@ function DiagnosticsPanel({ diagnostics }: { diagnostics: DiagnosticResult }) {
                         {diagnostics.container_network.map((c: Record<string, unknown>) => (
                             <div key={c.name as string} className={`flex items-center gap-2 p-2 rounded-lg text-xs font-mono ${c.reachable ? 'bg-green-50 dark:bg-green-900/10 text-green-700 dark:text-green-300' : 'bg-red-50 dark:bg-red-900/10 text-red-700 dark:text-red-300'}`}>
                                 <span className="font-bold">{c.reachable ? '✓' : '✗'}</span>
-                                <span>{c.name as string}</span>
+                                <span>{String(c.name ?? '')}</span>
                             </div>
                         ))}
                     </div>
@@ -124,12 +124,12 @@ function DiagnosticsPanel({ diagnostics }: { diagnostics: DiagnosticResult }) {
                     <div className={`p-3 rounded-lg border ${diagnostics.ssl.ok ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800' : 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800'}`}>
                         {diagnostics.ssl.ok && diagnostics.ssl.cert ? (
                             <div className="text-sm space-y-1">
-                                <p><span className="font-bold">Issuer:</span> {diagnostics.ssl.cert.issuer}</p>
-                                <p><span className="font-bold">Subject:</span> {diagnostics.ssl.cert.subject}</p>
-                                <p><span className="font-bold">Expires:</span> {new Date(diagnostics.ssl.cert.validTo).toLocaleDateString()} <span className={diagnostics.ssl.cert.daysLeft < 30 ? 'text-red-500 font-bold' : 'text-green-500'}>({diagnostics.ssl.cert.daysLeft} days)</span></p>
+                                <p><span className="font-bold">Issuer:</span> {diagnostics.ssl.cert.issuer ?? ''}</p>
+                                <p><span className="font-bold">Subject:</span> {diagnostics.ssl.cert.subject ?? ''}</p>
+                                <p><span className="font-bold">Expires:</span> {new Date(diagnostics.ssl.cert.validTo).toLocaleDateString()} <span className={(diagnostics.ssl.cert.daysLeft as number) < 30 ? 'text-red-500 font-bold' : 'text-green-500'}>({diagnostics.ssl.cert.daysLeft} days)</span></p>
                             </div>
                         ) : (
-                            <p className="text-sm">{diagnostics.ssl.error || 'Not available (HTTPS not configured)'}</p>
+                            <p className="text-sm">{String(diagnostics.ssl.error ?? 'Not available (HTTPS not configured)')}</p>
                         )}
                     </div>
                 </div>
@@ -142,7 +142,7 @@ function DiagnosticsPanel({ diagnostics }: { diagnostics: DiagnosticResult }) {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <div className="p-3 rounded-lg border bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                             <p className="text-xs font-bold text-gray-500">NODE_ENV</p>
-                            <p className="text-sm font-mono">{diagnostics.deployment.node_env}</p>
+                            <p className="text-sm font-mono">{diagnostics.deployment.node_env ?? ''}</p>
                         </div>
                         <div className={`p-3 rounded-lg border ${diagnostics.deployment.prod_override_detected ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800'}`}>
                             <p className="text-xs font-bold text-gray-500">Prod Override</p>

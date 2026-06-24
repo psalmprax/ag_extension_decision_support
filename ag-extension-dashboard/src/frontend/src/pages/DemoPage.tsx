@@ -20,7 +20,7 @@ export function DemoPage() {
     // Audio synthesis states
     const [isPlayingAudio, setIsPlayingAudio] = useState(false);
     const [isSynthesizing, setIsSynthesizing] = useState(false);
-    const [synthesisOutput, setSynthesisOutput] = useState<unknown>(null);
+    const [synthesisOutput, setSynthesisOutput] = useState<{ farmer?: string; status?: string; action?: string; crop?: string } | null>(null);
 
     // Telemetry
     const [telemetryLogs] = useState([
@@ -294,15 +294,15 @@ export function DemoPage() {
                                         <div className="grid grid-cols-2 gap-4 text-xs">
                                             <div>
                                                 <p className="text-stone-500 font-mono text-xxs uppercase mb-0.5">Farmer</p>
-                                                <p className="font-semibold">{synthesisOutput.farmer}</p>
+                                                <p className="font-semibold">{synthesisOutput.farmer ?? ''}</p>
                                             </div>
                                             <div>
                                                 <p className="text-stone-500 font-mono text-xxs uppercase mb-0.5">Soil Assessment</p>
-                                                <p className="font-semibold text-amber-400">{synthesisOutput.status}</p>
+                                                <p className="font-semibold text-amber-400">{synthesisOutput.status ?? ''}</p>
                                             </div>
                                         </div>
                                         <div className="p-3 rounded-lg bg-black/30 text-xs text-stone-300 font-mono">
-                                            {synthesisOutput.action}
+                                            {synthesisOutput.action ?? ''}
                                         </div>
                                     </motion.div>
                                 )}

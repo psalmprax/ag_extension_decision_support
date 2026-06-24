@@ -6,6 +6,7 @@ import { Badge } from '../ui/Badge';
 import { ReasoningVisuals } from './ReasoningVisuals';
 import { MarkdownRenderer } from '../MarkdownRenderer';
 import { Citation } from '@/api/knowledgeService';
+import type { VisualsData } from './types';
 
 interface ContextItem {
     content: string;
@@ -19,20 +20,13 @@ interface ContextItem {
     };
 }
 
-interface VisualData {
-    kpis?: unknown[];
-    charts?: unknown[];
-    images?: unknown[];
-    videos?: unknown[];
-}
-
 interface Result {
     answer: string;
     contextUsed: ContextItem[];
     cached?: boolean;
     query?: string;
     timestamp?: string;
-    visuals?: VisualData;
+    visuals?: VisualsData;
     audio?: string;
     citations?: Citation[];
 }
@@ -80,7 +74,7 @@ export const AIResult: React.FC<AIResultProps> = ({ result }) => {
                 {/* Visual Intelligence Layer */}
                 {(result.visuals || result.audio) && (
                     <div className={`mt-12 mb-16 p-1 bg-gradient-to-br from-primary-500/5 to-transparent ${isModern ? 'rounded-[2.5rem]' : 'rounded-none'} border border-primary-500/10`}>
-                        <ReasoningVisuals visuals={result.visuals || {}} audio={result.audio} />
+                        <ReasoningVisuals visuals={(result.visuals ?? {}) as VisualsData} audio={result.audio} />
                     </div>
                 )}
 
