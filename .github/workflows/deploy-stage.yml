@@ -8,8 +8,11 @@ name: Deploy to Stage (auto on push)
 #   - TEST_SERVER_IP            : the server IP (currently 161.97.126.84)
 #   - SSH_PRIVATE_KEY_TESTING   : contents of the matching SSH private key
 #
-# This workflow rebuilds backend + frontend on the host using the staging
-# multi-stage target (no DB migrations, no Redis touch). Use the full
+# This workflow rebuilds backend + frontend (and their deps db/redis) on
+# the host using the staging multi-stage target. The compose ai profile
+# (ettametta-ollama) is NOT enabled; OLLAMA_HOST and AI_FALLBACK_PROVIDER
+# are pinned in .env to keep the backend from DNS-timeout on ai profile.
+# Use the full
 # deploy-all.yml for production-grade deploys (CI checks, GHCR cache,
 # parallel builds, agent services, disk cleanup).
 
@@ -75,6 +78,14 @@ jobs:
               fi
             fi
 
+            # Pin OLLAMA_HOST + fallback so backend doesn't DNS-timeout on ettametta-ollama
+            # (the ai-profile container isn't running on this minimal deploy).
+            if [ -f .env ] && ! grep -q "^OLLAMA_HOST=" .env 2>/dev/null; then
+              echo "\U0001F527 Pinning OLLAMA_HOST=http://localhost:11434 + AI_FALLBACK_PROVIDER=openai in .env"
+              echo "OLLAMA_HOST=http://localhost:11434" >> .env
+              echo "AI_FALLBACK_PROVIDER=openai" >> .env
+            fi
+
             # Pre-create external networks referenced by compose (ettametta_ettametta is external: true)
             echo "=== ensure external networks exist ==="
             docker network create --driver bridge ettametta_ettametta >/dev/null 2>&1 || true
@@ -85,10 +96,10 @@ jobs:
             docker compose \
               -f docker-compose.yml \
               -f docker-compose.staging.yml \
-              up -d --no-deps --build backend frontend
+              up -d                            --build backend frontend
             echo
-            echo "=== wait 25s for build + boot ==="
-            sleep 25
+            echo "=== wait 30s for deps (db+redis) + build + boot ==="
+            sleep 30
             echo
             echo "=== container status ==="
             docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" --filter "name=ag-dashboard"
