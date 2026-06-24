@@ -216,7 +216,7 @@ const MediaAssetsSection = ({ safeVisuals, setSelectedImage, getYoutubeEmbedUrl 
     );
 };
 
-const AudioSynthesisSection = ({ audio, audioRef, isPlaying, togglePlayback, setIsPlaying }: { audio: string, audioRef: React.RefObject<HTMLAudioElement>, isPlaying: boolean, togglePlayback: () => void, setIsPlaying: (val: boolean) => void }) => {
+const AudioSynthesisSection = ({ audio, audioRef, isPlaying, togglePlayback, setIsPlaying }: { audio: string | undefined, audioRef: React.RefObject<HTMLAudioElement>, isPlaying: boolean, togglePlayback: () => void, setIsPlaying: (val: boolean) => void }) => {
     if (!audio) return null;
     return (
         <div className="p-8 bg-gradient-to-r from-primary-600 to-indigo-600 rounded-[2.5rem] text-white overflow-hidden relative group shadow-2xl shadow-primary-500/20">

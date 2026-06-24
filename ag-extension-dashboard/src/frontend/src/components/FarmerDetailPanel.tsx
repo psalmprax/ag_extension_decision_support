@@ -180,8 +180,8 @@ const VitalStatsSection = ({ farmer, isEditing, editData, setEditData, radiusCla
 
 const OverviewTabContent = ({
     farmer, isCyber, radiusClass, isEditing, editData, setEditData,
-    visits, handleUpdateVisitStatus, handleAction, showContextMenu, t
-}: { farmer: Farmer; isCyber: boolean; radiusClass: string; isEditing: boolean; editData: Record<string, unknown>; setEditData: (d: Record<string, unknown>) => void; visits: Visit[] | undefined; handleUpdateVisitStatus: (id: string, st: string) => void; handleAction: (a: string) => void; showContextMenu: (e: React.MouseEvent) => void; t: (key: string) => string }) => (
+    visits = [], handleUpdateVisitStatus, handleAction, showContextMenu, t
+}: { farmer: Farmer; isCyber: boolean; radiusClass: string; isEditing: boolean; editData: Record<string, unknown>; setEditData: (d: Record<string, unknown>) => void; visits?: Visit[]; handleUpdateVisitStatus: (id: string, st: string) => void; handleAction: (a: string) => void; showContextMenu: (e: React.MouseEvent) => void; t: (key: string) => string }) => (
     <>
         {/* Action Buttons */}
         <div className="grid grid-cols-4 gap-4">
