@@ -488,6 +488,42 @@ jobs:
             docker logs --tail 40 ag-dashboard-redis 2>/dev/null || true
             exit 1
 
+      # ── Pre-build smoke gate: verify ettametta-ollama is live before the long
+      # parallel build. Same pattern as deploy-stage.yml's gate: dedicated step,
+      # 10m budget, retries 18 × 10s = ~350s worst case, on-fail diagnostic dump.
+      # NOTE: no `env: COMPOSE_PROFILES: ai` here on purpose.
+      # `docker compose ps -a --services` is profile-agnostic — services are
+      # project-defined and enumerated regardless of profile activation — so
+      # the gate intentionally inspects the full service list. Mirroring the
+      # build step's env would be dead code-with-no-`with.envs:`-forward and
+      # would mislead future readers into thinking the gate was profile-aware.
+      - name: "Pre-build smoke gate: verify ettametta-ollama"
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
+          command_timeout: 10m
+          script: |
+            set -euo pipefail
+            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            # Absolute script path because cwd here is `ag-extension-dashboard/`
+            # and the script lives one directory up.
+            # Strict mode (no `--if-running`): catches both missing AND broken
+            # services — first-ever deploys to a fresh prod host fail closed
+            # until an operator manually launches ettametta-ollama with
+            # `docker compose --profile ai up -d ettametta-ollama`.
+            # Budget: 18 retries × 10s = ~350s worst case per script's
+            # MAX_WALL_SECONDS formula; applies via the 10m step budget.
+            if ! bash /root/ag_extension_decision_support/scripts/smoke-ollama.sh --retries 18 --interval 10; then
+              echo "FATAL: ettametta-ollama smoke gate failed (service missing or unreachable)." >&2
+              echo "----- ettametta-ollama container logs (last 50 lines, if present) -----"
+              docker compose logs --tail 50 ettametta-ollama 2>&1 || echo "(no logs: container not present in this compose project)"
+              echo "------------------------------------------------------------"
+              exit 1
+            fi
+            echo "✅ Pre-build smoke gate passed"
+
       # ── Step 3/5: Build ALL services in parallel ─────────────────────
       - name: 3/5 Build — all services in parallel (backend + frontend + agents)
         uses: appleboy/ssh-action@master
