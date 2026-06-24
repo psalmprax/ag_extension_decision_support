@@ -1,15 +1,15 @@
 name: Deploy to Stage (auto on push)
 
-# Auto-deploys the testing server (145.223.97.248) whenever code is pushed
+# Auto-deploys the testing server (TEST_SERVER_IP secret) whenever code is pushed
 # to the stage branch. Local → remote is one-way automatic; do NOT edit files
 # on the host directly — push to stage and let this workflow do the work.
 #
 # Required GitHub repo secrets:
-#   - TEST_SERVER_IP            : the server IP (145.223.97.248)
-#   - SSH_PRIVATE_KEY_TESTING   : contents of the SSH private key (id_key)
+#   - TEST_SERVER_IP            : the server IP (currently 161.97.126.84)
+#   - SSH_PRIVATE_KEY_TESTING   : contents of the matching SSH private key
 #
-# This workflow ONLY recreates backend + frontend with the cached image
-# (no rebuild, no DB migrations, no Redis touch). Use the full
+# This workflow rebuilds backend + frontend on the host using the staging
+# multi-stage target (no DB migrations, no Redis touch). Use the full
 # deploy-all.yml for production-grade deploys (CI checks, GHCR cache,
 # parallel builds, agent services, disk cleanup).
 
@@ -28,15 +28,15 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     steps:
-      - name: Pull latest stage and recreate backend + frontend
+      - name: Build + redeploy backend + frontend on host
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
-          command_timeout: 10m
+          command_timeout: 15m
           script: |
-            set -e
+            set -euo pipefail
             cd /root/ag_extension_decision_support
             # Ensure remote uses HTTPS with token authentication
             git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
@@ -75,17 +75,27 @@ jobs:
               fi
             fi
 
-            echo "=== recreate backend + frontend (cached image, no rebuild, no deps) ==="
+            echo "=== build + recreate backend + frontend (staging override = production target) ==="
             cd ag-extension-dashboard
-            docker compose up -d --no-deps --no-build backend frontend 2>&1 | tail -10
+            docker compose \
+              -f docker-compose.yml \
+              -f docker-compose.staging.yml \
+              up -d --no-deps --build backend frontend
             echo
-            echo "=== wait 12s for boot ==="
-            sleep 12
+            echo "=== wait 25s for build + boot ==="
+            sleep 25
             echo
             echo "=== container status ==="
             docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" --filter "name=ag-dashboard"
             echo
-            echo "=== quick health check (skip if curl missing) ==="
-            curl -sI --max-time 8 http://127.0.0.1:7500/api/health 2>&1 | head -3 || echo "curl not available on host"
+            echo "=== backend health check (fails loud if non-2xx; logs tail on failure) ==="
+            if ! curl -sSf --max-time 15 http://127.0.0.1:7500/api/health; then
+              echo "❌ backend health check did not return 2xx" >&2
+              docker logs --tail 60 ag-dashboard-backend 2>/dev/null || true
+              exit 1
+            fi
+            echo
+            echo "=== frontend TCP probe (informational) ==="
+            curl -sSI --max-time 10 http://127.0.0.1:7503/ | head -3 || echo "(frontend probe did not return headers — non-fatal)"
             echo
             echo "✅ Deploy complete"
