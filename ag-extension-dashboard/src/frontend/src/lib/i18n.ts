@@ -38,4 +38,4 @@ export const languages: { code: Language; name: string; flag: string }[] = [
 // Translations are now lazy-loaded from /public/locales/{lang}.json
 // This significantly reduces the bundle size and improves scalability.
  
-export const translations: Record<Language, Record<string, string>> = {} as unknown;
+export const translations: Record<Language, Record<string, string>> = {} as Record<Language, Record<string, string>>;

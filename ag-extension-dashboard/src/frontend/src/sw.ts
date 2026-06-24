@@ -4,12 +4,12 @@ import { precacheAndRoute } from 'workbox-precaching';
 precacheAndRoute(self.__WB_MANIFEST);
 
  
-const sw = self as unknown;
+const sw = self as unknown as ServiceWorkerGlobalScope;
 
  
-sw.addEventListener('push', (event: unknown) => {
+sw.addEventListener('push', (event: PushEvent) => {
     if (event.data) {
-        const payload = event.data.json();
+        const payload: { body: string; title: string; url?: string } = event.data.json();
         const options = {
             body: payload.body,
             icon: '/pwa-192x192.png',
@@ -26,7 +26,7 @@ sw.addEventListener('push', (event: unknown) => {
 });
 
  
-sw.addEventListener('notificationclick', (event: unknown) => {
+sw.addEventListener('notificationclick', (event: NotificationEvent) => {
     event.notification.close();
     event.waitUntil(
         sw.clients.openWindow(event.notification.data.url)

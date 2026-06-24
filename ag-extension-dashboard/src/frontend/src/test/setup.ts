@@ -1,11 +1,11 @@
 import '@testing-library/jest-dom';
-import { expect, afterEach, vi } from 'vitest';
+import { expect, afterEach, vi, type MatchersObject, type MatcherState } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import * as matchers from '@testing-library/jest-dom/matchers';
 
 // Extend expect with jest-dom matchers
  
-expect.extend(matchers as unknown);
+expect.extend(matchers as MatchersObject<MatcherState>);
 
 import defaultTranslations from '../../public/locales/en.json';
 import swTranslations from '../../public/locales/sw.json';

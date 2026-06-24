@@ -20,7 +20,7 @@ export function useAppMenuActions() {
         });
     };
 
-    const handleExport = (action: string, entityId?: string) => {
+    const handleExport = (_action: string, entityId?: string) => {
         if (entityId) {
             const farmer = storeFarmers?.find(f => f.id === entityId);
             if (farmer) {

@@ -580,6 +580,7 @@ export function SMSRightPanel({
 export function SMSPage() {
     const { t, language } = useLanguage();
     const { pendingSMS, setPendingSMS } = useAppStore();
+    const radiusClass = 'rounded-lg';
 
     // UI State
     const [activeTab, setActiveTab] = useState<'compose' | 'history'>('compose');

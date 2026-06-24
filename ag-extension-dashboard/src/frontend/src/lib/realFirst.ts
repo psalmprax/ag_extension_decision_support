@@ -9,20 +9,18 @@ export async function withRealFallback<T>(
 ): Promise<T> {
     try {
         const response = await realPromise;
+        const r = response as { success: boolean; data: T } | undefined;
         
-        // Handle cases where the response follows { success: true, data: ... } pattern
-        if (response && response.success && response.data !== undefined) {
-            return response.data;
+        if (r?.success && r.data !== undefined) {
+            return r.data;
         }
         
-        // Handle direct data return if the service doesn't use the success wrapper
-        if (response !== undefined && !('success' in response)) {
-            return response;
+        if (response !== undefined && !('success' in (response as object))) {
+            return response as T;
         }
 
-        // If success is false but data is present (though unusual), or other cases
-        if (response && response.data) {
-            return response.data;
+        if (r?.data) {
+            return r.data;
         }
 
         return fallbackData;
