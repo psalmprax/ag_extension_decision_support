@@ -8,7 +8,7 @@ The video call feature uses `navigator.mediaDevices.getUserMedia`, which require
 ## Option A: Caddy (automatic TLS with Let's Encrypt)
 
 ### 1. DNS
-Point a domain (e.g., `dashboard.example.com`) to `149.104.110.122`.
+Point a domain (e.g., `dashboard.example.com`) to `161.97.126.84`.
 
 ### 2. Install Caddy
 ```bash
@@ -48,7 +48,7 @@ mkdir -p /etc/ssl/private /etc/ssl/certs
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -keyout /etc/ssl/private/selfsigned.key \
   -out /etc/ssl/certs/selfsigned.crt \
-  -subj "/CN=149.104.110.122"
+  -subj "/CN=161.97.126.84"
 ```
 
 ### 2. Install Nginx
@@ -61,7 +61,7 @@ Create `/etc/nginx/sites-available/ag-dashboard`:
 ```nginx
 server {
     listen 443 ssl;
-    server_name 149.104.110.122;
+    server_name 161.97.126.84;
 
     ssl_certificate /etc/ssl/certs/selfsigned.crt;
     ssl_certificate_key /etc/ssl/private/selfsigned.key;
@@ -88,7 +88,7 @@ server {
 
 server {
     listen 80;
-    server_name 149.104.110.122;
+    server_name 161.97.126.84;
     return 301 https://$host$request_uri;
 }
 ```
@@ -100,4 +100,4 @@ nginx -t && systemctl restart nginx
 ```
 
 ### 5. Browser Warning
-Users must accept the self-signed certificate warning on first visit (`https://149.104.110.122`).
+Users must accept the self-signed certificate warning on first visit (`https://161.97.126.84`).

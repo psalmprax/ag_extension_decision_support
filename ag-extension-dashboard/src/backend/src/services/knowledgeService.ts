@@ -189,7 +189,12 @@ export class KnowledgeService {
                 platform = 'africarice';
             }
             
-            const stealthResults = await StealthScraperService.scrapeKnowledge(queryText, platform, 'Global Tropics');
+            const stealthResults = await Promise.race([
+                StealthScraperService.scrapeKnowledge(queryText, platform, 'Global Tropics'),
+                new Promise<null>((_, reject) =>
+                    setTimeout(() => reject(new Error('StealthScraperService.scrapeKnowledge timed out after 30s')), 30000)
+                )
+            ]) as any[] | null;
             
             if (stealthResults && stealthResults.length > 0) {
                 const mappedStealthResults: SearchResult[] = stealthResults.map((r, index) => ({
@@ -446,7 +451,7 @@ export class KnowledgeService {
         queryText: string,
         attachments?: Array<{ type: 'image' | 'file' | 'audio'; data: string; mimeType?: string }>
     ): Promise<ReasoningResult> {
-        const REASONING_TIMEOUT_MS = 60000;
+        const REASONING_TIMEOUT_MS = 240000;
         let reasoningTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
         return Promise.race([
@@ -531,7 +536,29 @@ export class KnowledgeService {
             return fallback;
         }
 
-        throw error;
+        const noResultAnswer: ReasoningResult & { cached: boolean; contextUsed: SearchResult[] } = {
+            reasoning: 'No context found in knowledge base and AI provider did not complete in time.',
+            answer: `I wasn't able to find information about **"${queryText}"** in the knowledge base, and the AI assistant is currently unavailable. Please try rephrasing your question or check back later.`,
+            confidence: 0.1,
+            visuals: {
+                kpis: [
+                    { label: 'Source Matches', value: '0', status: 'warning' as const },
+                    { label: 'Status', value: 'No Results', status: 'warning' as const }
+                ],
+                charts: [],
+                images: [],
+                videos: []
+            },
+            contextUsed: [],
+            cached: false
+        };
+
+        this.logSearch(
+            userId, queryText, 'general_inquiry', undefined,
+            noResultAnswer.answer, noResultAnswer.reasoning, noResultAnswer.visuals
+        ).catch(logError => logger.error('Fallback search logging failed:', logError));
+
+        return noResultAnswer;
     }
 
     static async askQuestion(

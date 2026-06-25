@@ -37,6 +37,23 @@ jobs:
       # intentionally inspects the full service list. Mirroring the build
       # step's env would be dead code-with-no-`with.envs:`-forward and would
       # mislead future readers into thinking the gate was profile-aware.
+      - name: "Pre-pull model on existing ollama (cached volume survives --force-recreate)"
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.TEST_SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
+          command_timeout: 5m
+          script: |
+            set -euo pipefail
+            if docker ps --format '{{.Names}}' 2>/dev/null | grep -q '^ettametta-ollama$'; then
+              echo "=== Pre-pulling llama3.2:1b on existing ollama container ==="
+              docker exec ettametta-ollama ollama pull llama3.2:1b 2>&1 || echo "(pre-pull skipped — container may be starting up)"
+              echo "✅ Pre-pull complete"
+            else
+              echo "(ettametta-ollama not running — pre-pull deferred to entrypoint)"
+            fi
+
       - name: "Pre-build smoke gate: verify ettametta-ollama"
         uses: appleboy/ssh-action@master
         with:
@@ -55,7 +72,7 @@ jobs:
             # `docker compose --profile ai up -d ettametta-ollama`.
             # Budget: 18 retries × 10s = ~350s worst case per script's
             # MAX_WALL_SECONDS formula; applies via the 10m step budget.
-            if ! bash /root/ag_extension_decision_support/scripts/smoke-ollama.sh --retries 18 --interval 10; then
+            if ! bash /root/ag_extension_decision_support/scripts/smoke-ollama.sh --retries 18 --interval 10 --expected-model llama3.2:1b; then
               echo "FATAL: ettametta-ollama smoke gate failed (service missing or unreachable)." >&2
               echo "----- ettametta-ollama container logs (last 50 lines, if present) -----"
               docker compose logs --tail 50 ettametta-ollama 2>&1 || echo "(no logs: container not present in this compose project)"

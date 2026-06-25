@@ -84,14 +84,14 @@ describe('OllamaProvider — timeout configuration', () => {
 
     // ── generateText timeout ─────────────────────────────────────────────────
 
-    it('uses default 120000ms timeout when env var is not set', async () => {
+    it('uses default 300000ms timeout when env var is not set', async () => {
         mockPost.mockResolvedValue(mockOllamaChatResponse('Maize grows well in warm climates.'));
 
         await makeProvider().generateText('Tell me about maize');
 
         expect(mockPost).toHaveBeenCalledTimes(1);
         const axiosConfig = mockPost.mock.calls[0][2];
-        expect(axiosConfig.timeout).toBe(120000);
+        expect(axiosConfig.timeout).toBe(300000);
     });
 
     it('uses OLLAMA_REQUEST_TIMEOUT_MS env var when set', async () => {
@@ -115,7 +115,7 @@ describe('OllamaProvider — timeout configuration', () => {
     });
 
     it('wraps timeout errors with descriptive message', async () => {
-        mockPost.mockRejectedValue(new Error('timeout of 120000ms exceeded'));
+        mockPost.mockRejectedValue(new Error('timeout of 300000ms exceeded'));
 
         await expect(
             makeProvider().generateText('Tell me about yams')
@@ -124,17 +124,17 @@ describe('OllamaProvider — timeout configuration', () => {
 
     // ── createEmbedding timeout (hardcoded 10s) ──────────────────────────────
 
-    it('createEmbedding uses fixed 10000ms timeout', async () => {
+    it('createEmbedding uses fixed 30000ms timeout', async () => {
         mockPost.mockResolvedValue(mockOllamaEmbedding());
 
         await makeProvider().createEmbedding('maize farming');
 
         const axiosConfig = mockPost.mock.calls[0][2];
-        expect(axiosConfig.timeout).toBe(10000);
+        expect(axiosConfig.timeout).toBe(30000);
     });
 
     it('createEmbedding throws on timeout', async () => {
-        mockPost.mockRejectedValue(new Error('timeout of 10000ms exceeded'));
+        mockPost.mockRejectedValue(new Error('timeout of 30000ms exceeded'));
 
         await expect(makeProvider().createEmbedding('test')).rejects.toThrow();
     });

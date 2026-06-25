@@ -94,7 +94,7 @@ app.use(optionalAuth); // Parse optional user credentials before applying rate l
 app.use((req, res, next) => {
     const isAiHeavy = ['/api/knowledge', '/api/chatbot', '/api/v1/knowledge', '/api/v1/chatbot']
         .some(p => req.path.startsWith(p));
-    const timeout = isAiHeavy ? 120000 : 30000;
+    const timeout = isAiHeavy ? 300000 : 30000;
     res.setTimeout(timeout, () => {
         logger.warn(`Request timeout (${timeout}ms): ${req.method} ${req.path}`);
         if (!res.headersSent) {

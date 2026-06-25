@@ -33,7 +33,7 @@ ag-extension-browser-ext/        # WXT browser extension (sibling workspace)
 - **Dupes:** 169 code clone groups
 - **UI quality:** 14/24 (audited April 2026)
 - **Testing:** Very low — high CRAP scores indicate most complexity is untested
-- **Deployment:** Running on 149.104.110.122 (PM2), health degraded (DB/cache OK, AI provider needs keys)
+- **Deployment:** Running on 161.97.126.84 (PM2), health degraded (DB/cache OK, AI provider needs keys)
 
 ## Recent Work
 

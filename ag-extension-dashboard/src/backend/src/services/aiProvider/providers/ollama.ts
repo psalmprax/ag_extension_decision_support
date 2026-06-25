@@ -51,9 +51,10 @@ export class OllamaProvider extends BaseAIProvider {
                 options: {
                     temperature: options?.temperature ?? 0.7,
                     num_predict: options?.maxTokens ?? 1000,
+                    num_ctx: 2048,
                 }
             }, {
-                timeout: parseInt(process.env.OLLAMA_REQUEST_TIMEOUT_MS || '120000', 10),
+                timeout: parseInt(process.env.OLLAMA_REQUEST_TIMEOUT_MS || '300000', 10),
             });
 
             const data = response.data;
@@ -82,8 +83,11 @@ export class OllamaProvider extends BaseAIProvider {
             const response = await axios.post(`${host}/api/embeddings`, {
                 model,
                 prompt: text,
+                options: {
+                    num_ctx: 256,
+                },
             }, {
-                timeout: 10000,
+                timeout: 30000,
             });
 
             const embedding: number[] = response.data.embedding;

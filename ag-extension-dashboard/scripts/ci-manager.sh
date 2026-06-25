@@ -13,7 +13,7 @@
 BRANCH=${1:-$(git branch --show-current)}
 
 # Configuration
-TEST_SERVER="149.104.110.122"
+TEST_SERVER="161.97.126.84"
 TEST_KEY="/home/psalmprax/Music/id_rsa"
 
 PROD_SERVER="145.223.97.248"

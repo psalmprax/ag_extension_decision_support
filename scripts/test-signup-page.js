@@ -8,7 +8,7 @@ const { chromium } = require('playwright');
 
   try {
     // Navigate to signup page
-    await page.goto('http://149.104.110.122:7503/register');
+    await page.goto('http://161.97.126.84:7503/register');
     console.log('✓ Navigated to register page');
     console.log('Page title:', await page.title());
     

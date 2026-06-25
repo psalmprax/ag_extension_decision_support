@@ -10,7 +10,7 @@ The platform is divided into two distinct environments to ensure stability and s
 
 | Environment | Purpose | Server IP | Branch |
 | :--- | :--- | :--- | :--- |
-| **Testing** | Sandbox for new features & UAT | `149.104.110.122` | `stage`, `feature/*` |
+| **Testing** | Sandbox for new features & UAT | `161.97.126.84` | `stage`, `feature/*` |
 | **Production** | Live environment for users | `145.223.97.248` | `master` |
 
 ---
@@ -75,7 +75,7 @@ The script handles persistent data for AI Agents (`agent-zero` and `crew-ai`) by
 
 ## 🔐 6. Required GitHub Secrets
 To enable the automated pipeline, ensure the following secrets are set in your GitHub repository:
-*   `TEST_SERVER_IP`: `149.104.110.122`
+*   `TEST_SERVER_IP`: `161.97.126.84`
 *   `PROD_SERVER_IP`: `145.223.97.248`
 *   `SSH_PRIVATE_KEY_TESTING`: Content of your testing SSH key.
 *   `SSH_PRIVATE_KEY_PRODUCTION`: Content of your production SSH key.

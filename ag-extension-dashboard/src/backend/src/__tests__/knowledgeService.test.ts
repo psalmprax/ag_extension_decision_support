@@ -232,7 +232,7 @@ describe('KnowledgeService.askQuestion — reasoning timeout wrapper (60s)', () 
         expect(mockLoggerError).toHaveBeenCalled();
     });
 
-    it('re-throws error when both reasoning and context retrieval fail', async () => {
+    it('returns graceful fallback when both reasoning and context retrieval fail', async () => {
         // No context available
         (VectorService.hybridSearch as jest.Mock).mockResolvedValue([]);
 
@@ -246,9 +246,9 @@ describe('KnowledgeService.askQuestion — reasoning timeout wrapper (60s)', () 
             return {};
         });
 
-        await expect(
-            KnowledgeService.askQuestion('user-1', 'Something completely unknown')
-        ).rejects.toThrow();
+        const result = await KnowledgeService.askQuestion('user-1', 'Something completely unknown');
+        expect(result.answer).toContain('wasn\'t able to find information');
+        expect(result.contextUsed).toEqual([]);
     });
 
     it('passes attachments through to the reasoning call', async () => {

@@ -1,5 +1,5 @@
 # ============================================================
-# Staging Override — HTTPS + Let's Encrypt + Nginx
+# Staging Override — HTTPS + Let's Encrypt + Demo + Ollama
 # ============================================================
 # Usage:
 #   docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d --build
@@ -14,6 +14,11 @@
 #   staging.gpexts.com:443 ─→ Traefik ─→ frontend:80 (Nginx SPA)
 #   staging.gpexts.com:443 ─→         ─→ backend:3001 (API)
 #   HTTP :80                 ─→         ─→ HTTPS :443 (redirect)
+#
+# Staging-specific overrides:
+#   - Demo login enabled (DEMO_ENABLED=true)
+#   - Ollama as primary AI provider with llama3.2:1b (fits 8G memory limit)
+#   - Fallback to OpenAI for production-grade inference
 #
 # Note: Let's Encrypt cert covers staging.gpexts.com via SAN.
 # ============================================================
@@ -57,6 +62,17 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
       # Staging uses its own domain for CORS
       CORS_ORIGIN: ${CORS_ORIGIN:-https://${STAGING_DOMAIN:-staging.gpexts.com}}
+      # Demo login (overrides .env DEMO_ENABLED=false)
+      DEMO_ENABLED: "true"
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-demo-trial-2024}
+      # AI providers — Ollama primary on staging server, OpenAI fallback
+      AI_PRIMARY_PROVIDER: ${AI_PRIMARY_PROVIDER:-ollama}
+      AI_PRIMARY_MODEL: ${AI_PRIMARY_MODEL:-llama3.2:1b}
+      AI_EMBEDDINGS_PROVIDER: ${AI_EMBEDDINGS_PROVIDER:-ollama}
+      AI_EMBEDDINGS_MODEL: ${AI_EMBEDDINGS_MODEL:-nomic-embed-text}
+      AI_FALLBACK_PROVIDER: ${AI_FALLBACK_PROVIDER:-openai}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:1b}
+      OLLAMA_REQUEST_TIMEOUT_MS: ${OLLAMA_REQUEST_TIMEOUT_MS:-300000}
     labels:
       # Enable Traefik service discovery
       - "traefik.enable=true"
@@ -100,6 +116,19 @@ services:
       - "traefik.http.routers.frontend-local.entrypoints=web"
       # HTTP → HTTPS redirect middleware
       - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+
+  # ── Ollama (staging override — smaller model, more memory) ─────────────
+  # Base compose uses 4G + llama3.2:3b; staging server has limited RAM
+  # so we use 8G + llama3.2:1b for reliable cold-start pulls.
+  # nomic-embed-text is also pulled for fast CPU-based embeddings.
+  ettametta-ollama:
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+    environment:
+      OLLAMA_KEEP_ALIVE: 30m
+    entrypoint: /bin/sh -c "ollama serve & sleep 10 && ollama pull llama3.2:1b && ollama pull nomic-embed-text && wait"
 
 volumes:
   traefik_letsencrypt:
