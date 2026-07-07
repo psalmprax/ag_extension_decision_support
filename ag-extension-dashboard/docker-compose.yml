@@ -192,7 +192,6 @@ services:
     environment:
       - OLLAMA_HOST=0.0.0.0:11434
       - OLLAMA_KEEP_ALIVE=5m
-    entrypoint: /bin/sh -c "ollama serve & sleep 10 && ollama pull llama3.2:3b && wait"
     restart: unless-stopped
     networks:
       - ag-network
