@@ -14,8 +14,6 @@ import {
   mapRecommendedVisitRows,
   mapAlertSummaryRows,
   mapFarmerDetailRow,
-  mapPortfolioExportFarmerRows,
-  mapPortfolioExportVisitRows,
 } from '@/types/dtos';
 import { query, getPool } from '@/services/databaseService';
 import { cacheGet, cacheSet } from '@/services/cacheService';

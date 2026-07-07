@@ -11,7 +11,6 @@ import type {
 } from '@/types/rowTypes';
 import {
   mapCountRow,
-  mapKnowledgeArticleRows,
   mapKnowledgeArticleRow,
   mapKnowledgeCategoryRows,
   mapKnowledgeCropRows,

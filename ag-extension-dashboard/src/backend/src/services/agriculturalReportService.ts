@@ -86,13 +86,17 @@ export class AgriculturalReportService {
 
             const aiResponse = await provider.generateText(prompt);
             const reportContent = aiResponse.text;
+            if (!reportContent) {
+                logger.warn(`No report content generated for farmer ${farmer.farmerId}`);
+                return;
+            }
 
             // 3. Distribute via preferred channels
             if (farmer.channels.sms && farmer.phone) {
                 await smsService.sendSMS({
                     to: farmer.phone,
                     message: reportContent,
-                    userId: farmer.farmerId
+                    farmerId: farmer.farmerId
                 }).catch(e => logger.warn(`Failed to send SMS to ${farmer.farmerId}:`, e));
             }
 
@@ -100,7 +104,7 @@ export class AgriculturalReportService {
                 await whatsappService.sendMessage({
                     to: farmer.whatsapp,
                     message: reportContent,
-                    userId: farmer.farmerId
+                    farmerId: farmer.farmerId
                 }).catch(e => logger.warn(`Failed to send WhatsApp to ${farmer.farmerId}:`, e));
             }
 
@@ -108,8 +112,7 @@ export class AgriculturalReportService {
                 await emailService.sendEmail({
                     to: farmer.email,
                     subject: 'Your Daily Agricultural Advisory Report',
-                    html: `<p>Hello ${farmer.name},</p><p>${reportContent.replace(/\\n/g, '<br/>')}</p>`,
-                    userId: farmer.farmerId
+                    html: `<p>Hello ${farmer.name},</p><p>${reportContent.replace(/\\n/g, '<br/>')}</p>`
                 }).catch(e => logger.warn(`Failed to send Email to ${farmer.farmerId}:`, e));
             }
 
@@ -130,7 +133,7 @@ export class AgriculturalReportService {
                 isActive: true,
                 OR: [
                     { phone: { not: null } },
-                    { user: { email: { not: null } } }
+                    { user: { isNot: null } }
                 ]
             },
             include: {

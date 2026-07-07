@@ -55,6 +55,9 @@ export class VideoGenerationService {
         `;
         
         const response = await provider.generateText(prompt);
+        if (!response.text) {
+            throw new Error('Failed to generate video script.');
+        }
         return response.text;
     }
 
@@ -75,7 +78,7 @@ export class VideoGenerationService {
         return assetMap[topic] || ['generic_farm.mp4'];
     }
 
-    private static async dispatchRenderJob(script: string, audioUrl: string, assets: string[]): Promise<string> {
+    private static async dispatchRenderJob(_script: string, _audioUrl: string, _assets: string[]): Promise<string> {
         // Mock dispatching to a rendering engine like Remotion or FFmpeg
         logger.info('Dispatching assets to rendering engine...');
         return `job_${Date.now()}`;

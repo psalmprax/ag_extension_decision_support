@@ -70,6 +70,7 @@ jest.mock('../services/usageService', () => ({
 // `pipe(res)` captures the response so `end()` can close it cleanly.
 jest.mock('pdfkit', () => {
     const MockPDFDocument = jest.fn().mockImplementation(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const doc: any = {
             page: { width: 595, height: 842 },
             y: 0,

@@ -125,6 +125,9 @@ export class SocialIntelligenceAgent {
 
         try {
             const response = await provider.generateText(prompt);
+            if (!response.text) {
+                throw new Error('Empty response from AI provider');
+            }
             // Assuming the LLM returns a valid JSON structure
             const cleanedText = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
             const result = JSON.parse(cleanedText);
@@ -137,11 +140,12 @@ export class SocialIntelligenceAgent {
 
     private async dispatchAlerts(summary: string) {
         logger.warn('ALERT: Critical social intelligence findings detected.');
-        await notificationService.createNotification({
+        await notificationService.send({
             userId: 'admin', // Dispatch to system admins/extension officers
-            type: 'alert',
+            type: 'warning',
             title: 'Critical Social Trend Alert',
             message: summary,
+            channel: 'in_app',
             metadata: { source: 'SocialIntelligenceAgent' }
         });
     }
