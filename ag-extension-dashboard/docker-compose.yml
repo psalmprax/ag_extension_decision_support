@@ -168,7 +168,6 @@ services:
   # or include docker-compose.agents.yml
   ettametta-ollama:
     image: ollama/ollama:0.6.2
-    container_name: ettametta-ollama
     # Pin DNS so the entrypoint's `ollama pull llama3.2:3b` can resolve
     # `registry.ollama.ai`. Docker's embedded DNS at 127.0.0.11 does not
     # always reach the host's upstream resolvers from inside the container's
