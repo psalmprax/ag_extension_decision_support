@@ -36,9 +36,8 @@ export const useSpeechRecognition = (options: SpeechRecognitionOptions) => {
       return;
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const SpeechRecognitionConstructor =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition;
+    const win = window as any;
+    const SpeechRecognitionConstructor = win.SpeechRecognition || win.webkitSpeechRecognition;
 
     if (!SpeechRecognitionConstructor) {
       setIsSupported(false);
