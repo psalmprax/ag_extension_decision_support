@@ -18,6 +18,7 @@ import { getCache } from './services/cacheService';
 import { perUserRateLimit } from './middleware/rateLimitMiddleware';
 import { optionalAuth } from './middleware/authorize';
 import { AIProviderFactory } from './services/aiProvider/aiProvider';
+import { AI_CASCADE_FALLBACK } from './services/aiProvider/cascade';
 import { selfHealingService } from './services/selfHealing';
 
 // Routes
@@ -151,8 +152,8 @@ async function checkAIProvider(): Promise<{ status: string; error?: string }> {
 
         let anyCascadingHealthy = false;
         if (!primaryHealthy && !fallbackHealthy) {
-            const cascadeTypes: any[] = ['groq', 'ollama', 'openai', 'anthropic'];
-            for (const type of cascadeTypes) {
+            // See AI_CASCADE_FALLBACK in services/aiProvider/cascade.ts for order rationale.
+            for (const type of AI_CASCADE_FALLBACK) {
                 try {
                     const p = await AIProviderFactory.getProvider(type);
                     if (p.isConfigured() && await p.healthCheck()) {

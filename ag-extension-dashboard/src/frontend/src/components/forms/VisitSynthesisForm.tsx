@@ -70,11 +70,16 @@ export const VisitSynthesisForm: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'good': return 'text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20';
-      case 'fair': return 'text-blue-500 bg-blue-50 dark:bg-blue-900/20';
-      case 'poor': return 'text-amber-500 bg-amber-50 dark:bg-amber-900/20';
-      case 'diseased': return 'text-rose-500 bg-rose-50 dark:bg-rose-900/20';
-      default: return 'text-slate-500 bg-slate-50 dark:bg-slate-900/20';
+      case 'good':
+        return 'text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20';
+      case 'fair':
+        return 'text-blue-500 bg-blue-50 dark:bg-blue-900/20';
+      case 'poor':
+        return 'text-amber-500 bg-amber-50 dark:bg-amber-900/20';
+      case 'diseased':
+        return 'text-rose-500 bg-rose-50 dark:bg-rose-900/20';
+      default:
+        return 'text-slate-500 bg-slate-50 dark:bg-slate-900/20';
     }
   };
 
@@ -86,7 +91,9 @@ export const VisitSynthesisForm: React.FC = () => {
             <Sparkles className="w-6 h-6 text-purple-600 dark:text-purple-400" />
           </div>
           <div>
-            <h2 className={`text-2xl font-bold ${headingClass}`}>{isModern ? 'Encounter Analysis' : 'Visit Synthesis'}</h2>
+            <h2 className={`text-2xl font-bold ${headingClass}`}>
+              {isModern ? 'Encounter Analysis' : 'Visit Synthesis'}
+            </h2>
             <p className="text-slate-500 dark:text-slate-400">{t('visit_synthesis_subtitle')}</p>
           </div>
         </div>
@@ -94,11 +101,11 @@ export const VisitSynthesisForm: React.FC = () => {
         <div className="space-y-4">
           <textarea
             value={notes}
-            onChange={(e) => setNotes(e.target.value)}
+            onChange={e => setNotes(e.target.value)}
             placeholder={t('visit_synthesis_placeholder')}
             className="w-full min-h-[200px] p-4 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none transition-all resize-none"
           />
-          
+
           <button
             onClick={handleSynthesize}
             disabled={isProcessing || !notes.trim()}
@@ -138,20 +145,26 @@ export const VisitSynthesisForm: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <p className="text-xxs font-bold text-slate-400 uppercase">{t('crop_health')}</p>
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${getStatusColor(result.cropHealthStatus)}`}>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${getStatusColor(result.cropHealthStatus)}`}
+                  >
                     {result.cropHealthStatus}
                   </span>
                 </div>
                 <div className="space-y-1">
                   <p className="text-xxs font-bold text-slate-400 uppercase">{t('follow_up')}</p>
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${result.followUpRequired ? 'text-rose-500 bg-rose-50' : 'text-emerald-500 bg-emerald-50'}`}>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${result.followUpRequired ? 'text-rose-500 bg-rose-50' : 'text-emerald-500 bg-emerald-50'}`}
+                  >
                     {result.followUpRequired ? t('common_yes') : t('common_no')}
                   </span>
                 </div>
               </div>
 
               <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-700">
-                <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">{t('pest_status')}</h4>
+                <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">
+                  {t('pest_status')}
+                </h4>
                 <p className="text-sm font-medium">{result.pestIssues}</p>
               </div>
             </div>
@@ -193,7 +206,7 @@ export const VisitSynthesisForm: React.FC = () => {
                   <Calendar className="w-4 h-4" />
                   <span className="text-xs font-bold uppercase">{result.nextVisitDateHint}</span>
                 </div>
-                <button 
+                <button
                   onClick={handleSaveRecords}
                   disabled={isSaving}
                   className="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-2 disabled:opacity-50"

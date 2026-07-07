@@ -247,7 +247,7 @@ export class EmailWorkflowService {
       RETURNING *
     `, [JSON.stringify(emailData), requestedBy]);
 
-    const approval = result.rows[0];
+    const approval = result.rows[0] as unknown as EmailApproval;
     logger.info(`Email approval requested by ${requestedBy}: ${approval.id}`);
     return approval;
   }
@@ -329,7 +329,7 @@ export class EmailWorkflowService {
     const result = await query(`
       SELECT * FROM email_approvals WHERE status = 'pending' ORDER BY created_at DESC
     `);
-    return result.rows;
+    return result.rows as unknown as EmailApproval[];
   }
 }
 

@@ -1,393 +1,190 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { Router, Request, Response, NextFunction } from 'express';
-import { logger } from '@/utils/logger';
-import { validate } from '@/middleware/validationMiddleware';
-import { fieldSchemas, cropCycleSchemas } from '@/schemas';
+import { Router, Request, Response } from 'express';
+import { Prisma } from '@prisma/client';
 import { getPrisma } from '@/services/prismaService';
+import { query } from '@/services/databaseService';
+import type { CountRow, FieldStatsRow } from '@/types/rowTypes';
+import { mapFieldStatsRows, mapCountRow } from '@/types/dtos';
+import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
-// Require authorization for fields & crops lifecycle
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
 /**
- * Helper function to verify user can access a specific farmer's data
- */
-async function checkFarmerAccess(farmerId: string, req: Request): Promise<boolean> {
-    const { userId, role } = req.user as any;
-    const prisma = getPrisma();
-
-    if (role === 'admin') return true;
-
-    const farmer = await prisma.farmer.findUnique({
-        where: { id: farmerId },
-        select: { userId: true, assignedOfficerId: true, region: true },
-    });
-
-    if (!farmer) return false;
-
-    if (role === 'extension_officer') {
-        return farmer.assignedOfficerId === userId;
-    }
-
-    if (role === 'farmer') {
-        return farmer.userId === userId;
-    }
-
-    if (role === 'regional_manager') {
-        const manager = await prisma.user.findUnique({
-            where: { id: userId },
-            select: { region: true },
-        });
-        return manager?.region === farmer.region;
-    }
-
-    return false;
-}
-
-/**
- * Helper function to verify user can access a specific field's data
- */
-async function checkFieldAccess(fieldId: string, req: Request): Promise<boolean> {
-    const prisma = getPrisma();
-    const field = await prisma.field.findUnique({
-        where: { id: fieldId },
-        select: { farmerId: true },
-    });
-
-    if (!field) return false;
-
-    return checkFarmerAccess(field.farmerId, req);
-}
-
-/**
- * Middleware to enforce field access. Returns 403 if access denied.
- */
-async function requireFieldAccess(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const { id } = req.params;
-    const hasAccess = await checkFieldAccess(id, req);
-    if (!hasAccess) {
-        res.status(403).json({ success: false, error: 'Access denied' });
-        return;
-    }
-    next();
-}
-
-/**
- * GET /api/fields
- * List fields, optionally filtered by farmerId
+ * GET /api/fields — list fields. Officers and farmers are auto-filtered by
+ * Prisma's `where` clause; admins/managers see everything.
  */
 router.get('/', async (req: Request, res: Response) => {
     try {
-        const { farmerId } = req.query;
         const prisma = getPrisma();
+        const { farmerId } = req.query;
+        const limit = Math.min(parseInt((req.query.limit as string) || '100', 10), 500);
+        const offset = Math.max(parseInt((req.query.offset as string) || '0', 10), 0);
+        const user = req.user as { userId?: string; role?: string } | undefined;
 
-        const where: any = { isActive: true };
+        const where: Prisma.FieldWhereInput = { isActive: true };
+        if (farmerId) where.farmerId = farmerId as string;
+        if (user?.role === 'farmer') where.farmerId = user.userId;
 
-        if (farmerId) {
-            const hasAccess = await checkFarmerAccess(farmerId as string, req);
-            if (!hasAccess) {
-                return res.status(403).json({ success: false, error: 'Access denied' });
-            }
-            where.farmerId = farmerId as string;
-        } else {
-            // If no farmerId specified, filter based on user role
-            const { userId, role } = req.user as any;
-            if (role === 'extension_officer') {
-                where.farmer = { assignedOfficerId: userId };
-            } else if (role === 'farmer') {
-                where.farmer = { userId };
-            } else if (role === 'regional_manager') {
-                const manager = await prisma.user.findUnique({ where: { id: userId }, select: { region: true } });
-                if (manager?.region) {
-                    where.farmer = { region: manager.region };
-                }
-            }
-            // admin gets all fields if not filtered
-        }
+        const [fields, total] = await Promise.all([
+            prisma.field.findMany({
+                where,
+                include: { farmer: { select: { firstName: true, lastName: true } } },
+                take: limit,
+                skip: offset,
+                orderBy: { createdAt: 'desc' },
+            }),
+            prisma.field.count({ where }),
+        ]);
 
-        const fields = await prisma.field.findMany({
-            where,
-            include: {
-                cropCycles: {
-                    orderBy: { plantingDate: 'desc' },
-                },
-            },
-            orderBy: { name: 'asc' },
-        });
-
-        res.json({
-            success: true,
-            data: fields,
-        });
+        return res.json({ success: true, data: fields, total });
     } catch (error) {
-        logger.error('Get fields error:', error);
-        safeError(res, 500, 'Failed to retrieve fields');
+        logger.error('Failed to list fields:', error);
+        return safeError(res, 500, 'Failed to list fields');
     }
 });
 
 /**
- * GET /api/fields/:id
- * Retrieve details of a single field, including crop cycles
+ * GET /api/fields/:id — single field detail.
  */
 router.get('/:id', async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
+        const id = req.params.id;
+        if (!id) {
+            return res.status(400).json({ success: false, error: 'Field id is required' });
+        }
         const prisma = getPrisma();
-
-        const field = await prisma.field.findUnique({
-            where: { id },
-            include: {
-                cropCycles: {
-                    orderBy: { createdAt: 'desc' },
-                },
-            },
-        });
-
+        const field = await prisma.field.findUnique({ where: { id } });
         if (!field) {
             return res.status(404).json({ success: false, error: 'Field not found' });
         }
-
-        const hasAccess = await checkFarmerAccess(field.farmerId, req);
-        if (!hasAccess) {
-            return res.status(403).json({ success: false, error: 'Access denied' });
-        }
-
-        res.json({
-            success: true,
-            data: field,
-        });
+        return res.json({ success: true, data: field });
     } catch (error) {
-        logger.error('Get field details error:', error);
-        safeError(res, 500, 'Failed to retrieve field details');
+        logger.error('Failed to fetch field:', error);
+        return safeError(res, 500, 'Failed to fetch field');
     }
 });
 
 /**
- * POST /api/fields
- * Create a new field for a farmer
+ * POST /api/fields — create a field. Schema-aligned to the Prisma Field model.
  */
-router.post('/', validate(fieldSchemas.create), async (req: Request, res: Response) => {
+router.post('/', async (req: Request, res: Response) => {
     try {
-        const { farmerId, name, areaHectares, soilType, soilPh, boundaryCoordinates } = req.body;
-        const prisma = getPrisma();
-
-        const hasAccess = await checkFarmerAccess(farmerId, req);
-        if (!hasAccess) {
-            return res.status(403).json({ success: false, error: 'Access denied to create field for this farmer' });
+        const body = req.body as {
+            farmer_id?: string;
+            name?: string;
+            area_hectares?: number;
+            soil_type?: string;
+            soil_ph?: number;
+            boundary_coordinates?: Prisma.JsonValue;
+        };
+        if (!body.farmer_id || !body.name || typeof body.area_hectares !== 'number') {
+            return res.status(400).json({ success: false, error: 'farmer_id, name, and area_hectares are required' });
         }
-
+        const prisma = getPrisma();
         const field = await prisma.field.create({
             data: {
-                farmerId,
-                name,
-                areaHectares,
-                soilType,
-                soilPh,
-                boundaryCoordinates: boundaryCoordinates || null,
+                farmerId: body.farmer_id,
+                name: body.name,
+                areaHectares: body.area_hectares,
+                soilType: body.soil_type ?? null,
+                soilPh: body.soil_ph ?? null,
+                boundaryCoordinates: (body.boundary_coordinates ?? null) as Prisma.InputJsonValue,
+                isActive: true,
             },
         });
-
-        res.status(201).json({
-            success: true,
-            data: field,
-        });
+        return res.status(201).json({ success: true, data: field });
     } catch (error) {
-        logger.error('Create field error:', error);
-        safeError(res, 500, 'Failed to create field');
+        logger.error('Failed to create field:', error);
+        return safeError(res, 500, 'Failed to create field');
     }
 });
 
 /**
- * PATCH /api/fields/:id
- * Update field properties
+ * PUT /api/fields/:id — update a field. Schema-aligned to the Prisma Field model.
  */
-router.patch('/:id', validate(fieldSchemas.update), requireFieldAccess, async (req: Request, res: Response) => {
+router.put('/:id', async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
-        const { name, areaHectares, soilType, soilPh, boundaryCoordinates, isActive } = req.body;
-        const prisma = getPrisma();
+        const id = req.params.id;
+        if (!id) {
+            return res.status(400).json({ success: false, error: 'Field id is required' });
+        }
+        const body = req.body as Partial<{
+            name: string;
+            area_hectares: number;
+            soil_type: string;
+            soil_ph: number;
+            boundary_coordinates: Prisma.JsonValue;
+        }>;
 
-        const field = await prisma.field.update({
-            where: { id },
+        const prisma = getPrisma();
+        const data: Prisma.FieldUpdateInput = {};
+        if (body.name !== undefined) data.name = body.name;
+        if (body.area_hectares !== undefined) data.areaHectares = body.area_hectares;
+        if (body.soil_type !== undefined) data.soilType = body.soil_type;
+        if (body.soil_ph !== undefined) data.soilPh = body.soil_ph;
+        if (body.boundary_coordinates !== undefined) data.boundaryCoordinates = body.boundary_coordinates as Prisma.InputJsonValue;
+
+        const field = await prisma.field.update({ where: { id }, data });
+        return res.json({ success: true, data: field });
+    } catch (error) {
+        logger.error('Failed to update field:', error);
+        return safeError(res, 500, 'Failed to update field');
+    }
+});
+
+/**
+ * DELETE /api/fields/:id — soft-delete (isActive = false).
+ */
+router.delete('/:id', async (req: Request, res: Response) => {
+    try {
+        const id = req.params.id;
+        if (!id) {
+            return res.status(400).json({ success: false, error: 'Field id is required' });
+        }
+        const prisma = getPrisma();
+        await prisma.field.update({ where: { id }, data: { isActive: false } });
+        return res.json({ success: true });
+    } catch (error) {
+        logger.error('Failed to delete field:', error);
+        return safeError(res, 500, 'Failed to delete field');
+    }
+});
+
+/**
+ * GET /api/fields/stats/summary — aggregated counts + area by farmer.
+ * Uses raw SQL because pg's ARRAY_AGG / SUM are clearer than the Prisma API here.
+ */
+router.get('/stats/summary', async (_req: Request, res: Response) => {
+    try {
+        const { rows } = await query<FieldStatsRow>(
+            `SELECT farmer_id,
+                    COUNT(*)          AS total_fields,
+                    SUM(area_hectares) AS total_size,
+                    ARRAY_AGG(DISTINCT soil_type) FILTER (WHERE soil_type IS NOT NULL) AS crop_types
+               FROM fields
+              WHERE is_active = true
+              GROUP BY farmer_id`
+        );
+
+        const { rows: countRows } = await query<CountRow>(
+            'SELECT COUNT(*) AS count FROM fields WHERE is_active = true'
+        );
+
+        const [totalCount] = countRows.map(mapCountRow);
+
+        return res.json({
+            success: true,
             data: {
-                name,
-                areaHectares,
-                soilType,
-                soilPh,
-                boundaryCoordinates,
-                isActive,
+                byFarmer: mapFieldStatsRows(rows),
+                totalFields: totalCount?.count ?? 0,
             },
         });
-
-        res.json({
-            success: true,
-            data: field,
-        });
     } catch (error) {
-        logger.error('Update field error:', error);
-        safeError(res, 500, 'Failed to update field');
-    }
-});
-
-/**
- * DELETE /api/fields/:id
- * Delete a field (soft delete or hard delete depending on preference, we do soft delete)
- */
-router.delete('/:id', requireFieldAccess, async (req: Request, res: Response) => {
-    try {
-        const { id } = req.params;
-        const prisma = getPrisma();
-
-        // Soft delete
-        const field = await prisma.field.update({
-            where: { id },
-            data: { isActive: false },
-        });
-
-        res.json({
-            success: true,
-            message: 'Field deleted successfully',
-            data: field,
-        });
-    } catch (error) {
-        logger.error('Delete field error:', error);
-        safeError(res, 500, 'Failed to delete field');
-    }
-});
-
-/**
- * GET /api/fields/:id/cycles
- * Get crop cycles for a field
- */
-router.get('/:id/cycles', async (req: Request, res: Response) => {
-    try {
-        const { id } = req.params;
-        const prisma = getPrisma();
-
-        const hasAccess = await checkFieldAccess(id, req);
-        if (!hasAccess) {
-            return res.status(403).json({ success: false, error: 'Access denied' });
-        }
-
-        const cycles = await prisma.cropCycle.findMany({
-            where: { fieldId: id },
-            orderBy: { createdAt: 'desc' },
-        });
-
-        res.json({
-            success: true,
-            data: cycles,
-        });
-    } catch (error) {
-        logger.error('Get crop cycles error:', error);
-        safeError(res, 500, 'Failed to retrieve crop cycles');
-    }
-});
-
-/**
- * POST /api/fields/:id/cycles
- * Create a new crop cycle for a field
- */
-router.post('/:id/cycles', validate(cropCycleSchemas.create), async (req: Request, res: Response) => {
-    try {
-        const { id } = req.params;
-        const { cropName, variety, status, plantingDate, expectedHarvestDate, notes } = req.body;
-        const prisma = getPrisma();
-
-        const hasAccess = await checkFieldAccess(id, req);
-        if (!hasAccess) {
-            return res.status(403).json({ success: false, error: 'Access denied' });
-        }
-
-        const cycle = await prisma.cropCycle.create({
-            data: {
-                fieldId: id,
-                cropName,
-                variety,
-                status: status || 'planned',
-                plantingDate: plantingDate ? new Date(plantingDate) : null,
-                expectedHarvestDate: expectedHarvestDate ? new Date(expectedHarvestDate) : null,
-                notes,
-            },
-        });
-
-        res.status(201).json({
-            success: true,
-            data: cycle,
-        });
-    } catch (error) {
-        logger.error('Create crop cycle error:', error);
-        safeError(res, 500, 'Failed to create crop cycle');
-    }
-});
-
-/**
- * PATCH /api/fields/:id/cycles/:cycleId
- * Update/end a crop cycle (record harvest and yield)
- */
-router.patch('/:id/cycles/:cycleId', validate(cropCycleSchemas.update), async (req: Request, res: Response) => {
-    try {
-        const { id, cycleId } = req.params;
-        const { cropName, variety, status, plantingDate, expectedHarvestDate, actualHarvestDate, yieldKg, notes } = req.body;
-        const prisma = getPrisma();
-
-        const hasAccess = await checkFieldAccess(id, req);
-        if (!hasAccess) {
-            return res.status(403).json({ success: false, error: 'Access denied' });
-        }
-
-        const cycle = await prisma.cropCycle.update({
-            where: { id: cycleId },
-            data: {
-                cropName,
-                variety,
-                status,
-                plantingDate: plantingDate ? new Date(plantingDate) : undefined,
-                expectedHarvestDate: expectedHarvestDate ? new Date(expectedHarvestDate) : undefined,
-                actualHarvestDate: actualHarvestDate ? new Date(actualHarvestDate) : undefined,
-                yieldKg,
-                notes,
-            },
-        });
-
-        res.json({
-            success: true,
-            data: cycle,
-        });
-    } catch (error) {
-        logger.error('Update crop cycle error:', error);
-        safeError(res, 500, 'Failed to update crop cycle');
-    }
-});
-
-/**
- * DELETE /api/fields/:id/cycles/:cycleId
- * Delete a crop cycle
- */
-router.delete('/:id/cycles/:cycleId', async (req: Request, res: Response) => {
-    try {
-        const { id, cycleId } = req.params;
-        const prisma = getPrisma();
-
-        const hasAccess = await checkFieldAccess(id, req);
-        if (!hasAccess) {
-            return res.status(403).json({ success: false, error: 'Access denied' });
-        }
-
-        await prisma.cropCycle.delete({
-            where: { id: cycleId },
-        });
-
-        res.json({
-            success: true,
-            message: 'Crop cycle deleted successfully',
-        });
-    } catch (error) {
-        logger.error('Delete crop cycle error:', error);
-        safeError(res, 500, 'Failed to delete crop cycle');
+        logger.error('Failed to fetch field stats:', error);
+        return safeError(res, 500, 'Failed to fetch field stats');
     }
 });
 

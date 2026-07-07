@@ -14,7 +14,7 @@ export const FarmerDashboard: React.FC = () => {
   const { data: statsResponse, isLoading: statsLoading } = useQuery({
     queryKey: ['farmer-stats'],
     queryFn: fetchFarmerStats,
-    enabled: !!user
+    enabled: !!user,
   });
 
   const farmerStats = statsResponse?.data;
@@ -23,20 +23,47 @@ export const FarmerDashboard: React.FC = () => {
   const stats = [
     {
       title: t('farmer_my_crops'),
-      value: Array.isArray(farmerStats?.crops) && farmerStats.crops.length > 0
-        ? farmerStats.crops.join(', ')
-        : 'N/A',
+      value:
+        Array.isArray(farmerStats?.crops) && farmerStats.crops.length > 0
+          ? farmerStats.crops.join(', ')
+          : 'N/A',
       icon: Sprout,
       color: 'text-primary-600',
-      bg: 'bg-primary-100'
+      bg: 'bg-primary-100',
     },
-    { title: t('farmer_next_visit'), value: farmerStats?.nextVisitDate || 'TBD', icon: Calendar, color: 'text-secondary-600', bg: 'bg-secondary-100' },
-    { title: t('farmer_ai_advisory'), value: farmerStats?.aiTipsCount ? t('farmer_new_tips', { count: farmerStats.aiTipsCount }) : '0 updates', icon: MessageSquare, color: 'text-accent-600', bg: 'bg-accent-100' },
-    { title: t('farmer_alerts'), value: farmerStats?.alertsCount ? `${farmerStats.alertsCount} ${t('farmer_active_status', { defaultValue: 'Active' })}` : 'No alerts', icon: Bell, color: 'text-amber-600', bg: 'bg-amber-100' },
+    {
+      title: t('farmer_next_visit'),
+      value: farmerStats?.nextVisitDate || 'TBD',
+      icon: Calendar,
+      color: 'text-secondary-600',
+      bg: 'bg-secondary-100',
+    },
+    {
+      title: t('farmer_ai_advisory'),
+      value: farmerStats?.aiTipsCount
+        ? t('farmer_new_tips', { count: farmerStats.aiTipsCount })
+        : '0 updates',
+      icon: MessageSquare,
+      color: 'text-accent-600',
+      bg: 'bg-accent-100',
+    },
+    {
+      title: t('farmer_alerts'),
+      value: farmerStats?.alertsCount
+        ? `${farmerStats.alertsCount} ${t('farmer_active_status', { defaultValue: 'Active' })}`
+        : 'No alerts',
+      icon: Bell,
+      color: 'text-amber-600',
+      bg: 'bg-amber-100',
+    },
   ];
 
   if (isCyber) {
-    return <CyberDashboard farmerStats={farmerStats as unknown as Record<string, unknown> | null | undefined} />;
+    return (
+      <CyberDashboard
+        farmerStats={farmerStats as unknown as Record<string, unknown> | null | undefined}
+      />
+    );
   }
 
   return <NormalDashboard stats={stats} statsLoading={statsLoading} />;

@@ -37,8 +37,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   }, [designVariant, themeName, darkMode, designSystemMode]);
 
   return (
-    <ThemeContext.Provider value={{ variant: designVariant }}>
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={{ variant: designVariant }}>{children}</ThemeContext.Provider>
   );
 };

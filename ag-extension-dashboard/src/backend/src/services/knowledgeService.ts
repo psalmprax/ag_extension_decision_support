@@ -449,7 +449,8 @@ export class KnowledgeService {
     private static async callReasoningWithTimeout(
         contextText: string,
         queryText: string,
-        attachments?: Array<{ type: 'image' | 'file' | 'audio'; data: string; mimeType?: string }>
+        attachments?: Array<{ type: 'image' | 'file' | 'audio'; data: string; mimeType?: string }>,
+        options?: { preferredProvider?: string }
     ): Promise<ReasoningResult> {
         const REASONING_TIMEOUT_MS = 240000;
         let reasoningTimeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -459,7 +460,7 @@ export class KnowledgeService {
                 context: `${contextText || 'No specific context found in knowledge base.'}\n\nGrounding Guidelines:\n- Prioritize context sources with high similarity scores (e.g. 0.70+).\n- Treat context with lower scores (< 0.50) as supplementary or less relevant context.\n- Explicitly base your answer on the provided context. If the context does not contain enough information to answer the question, state that.`,
                 query: queryText,
                 attachments,
-                options: { temperature: 0.2, maxTokens: 900 }
+                options: { temperature: 0.2, maxTokens: 900, preferredProvider: options?.preferredProvider }
             }),
             new Promise<ReasoningResult>((_, reject) => {
                 reasoningTimeoutId = setTimeout(
@@ -562,11 +563,12 @@ export class KnowledgeService {
     }
 
     static async askQuestion(
-        userId: string, 
-        queryText: string, 
-        attachments?: Array<{ type: 'image' | 'file' | 'audio'; data: string; mimeType?: string }>
+        userId: string,
+        queryText: string,
+        attachments?: Array<{ type: 'image' | 'file' | 'audio'; data: string; mimeType?: string }>,
+        options?: { preferredProvider?: string }
     ): Promise<ReasoningResult & { cached: boolean; contextUsed: SearchResult[] }> {
-        logger.info(`Getting RAG-based answer for query: "${queryText}" (User: ${userId}, Attachments: ${attachments?.length || 0})`);
+        logger.info(`Getting RAG-based answer for query: "${queryText}" (User: ${userId}, Attachments: ${attachments?.length || 0}, PreferredProvider: ${options?.preferredProvider || 'default'})`);
 
         const redisKey = `rag:exact:${queryText.toLowerCase().trim()}`;
 
@@ -576,7 +578,7 @@ export class KnowledgeService {
         }
 
         let contextResults = await this.searchKnowledge(queryText);
-        const queryCategories = await this.categorizeQuery(queryText);
+        const queryCategories = await this.categorizeQuery(queryText, options);
         const isAgriQuery = queryCategories.length === 0 || queryCategories.some(c =>
             ['pest_and_disease', 'agronomy_and_yield', 'climate_and_weather', 'market_prices'].includes(c)
         );
@@ -595,7 +597,7 @@ export class KnowledgeService {
             .join('\n\n---\n\n');
 
         try {
-            const reasoningResult = await this.callReasoningWithTimeout(contextText, queryText, attachments);
+            const reasoningResult = await this.callReasoningWithTimeout(contextText, queryText, attachments, options);
             const { visuals, audio } = await this.postProcessResponse(reasoningResult, queryText);
 
             const response = {
@@ -685,7 +687,7 @@ export class KnowledgeService {
      * Categorize a query to optimize retrieval
      * Wrapped in a 10-second timeout so a slow AI provider doesn't block the RAG pipeline.
      */
-    static async categorizeQuery(queryText: string): Promise<string[]> {
+    static async categorizeQuery(queryText: string, options?: { preferredProvider?: string }): Promise<string[]> {
         const TIMEOUT_MS = 10000;
         let timeoutId: ReturnType<typeof setTimeout> | undefined;
         try {
@@ -694,7 +696,8 @@ export class KnowledgeService {
                     input: queryText,
                     options: {
                         taxonomy: 'pest_and_disease, agronomy_and_yield, climate_and_weather, market_prices, general_inquiry',
-                        multiLabel: true
+                        multiLabel: true,
+                        preferredProvider: options?.preferredProvider
                     }
                 }),
                 new Promise<Record<string, any>>((_, reject) => {

@@ -1,3 +1,9 @@
+// NOTE: fields.ts uses Prisma (not raw `query` + mappers from src/types/dtos.ts),
+// so the mapper-before-response test pattern does not apply here. The existing
+// tests cover Prisma-based CRUD via the prismaService mock. The fields route's
+// `/stats` endpoint does use `mapFieldStatsRows` + `mapCountRow` but is
+// tested via the Prisma mock infrastructure above.
+
 import request from 'supertest';
 import app from '../app';
 import jwt from 'jsonwebtoken';

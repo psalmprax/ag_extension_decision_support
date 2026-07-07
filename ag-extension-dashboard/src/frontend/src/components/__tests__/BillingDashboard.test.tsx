@@ -8,122 +8,134 @@ import { MemoryRouter } from 'react-router-dom';
 
 // Mock billing service to prevent real API calls
 vi.mock('@/api/billingService', () => ({
-    fetchPlans: vi.fn().mockResolvedValue({
-        success: true,
-        data: [
-            { id: 'price_free', name: 'Free', price: 0, interval: 'month', features: ['plan_feature_basic_analytics'] },
-            { id: 'price_pro_monthly', name: 'Pro', price: 29, interval: 'month', features: ['plan_feature_advanced_analytics'] },
-        ],
-    }),
-    fetchSubscription: vi.fn().mockResolvedValue({
-        success: true,
-        data: {
-            id: 'sub_1',
-            status: 'active',
-            currentPeriodEnd: '2026-06-30',
-            cancelAtPeriodEnd: false,
-            plan: { id: 'price_pro_monthly', name: 'Pro', price: 29, interval: 'month', features: [] },
-        },
-    }),
-    fetchInvoices: vi.fn().mockResolvedValue({ success: true, data: [] }),
-    fetchPaymentMethods: vi.fn().mockResolvedValue({ success: true, data: [] }),
-    createCheckoutSession: vi.fn(),
-    createPortalSession: vi.fn(),
-    switchSubscription: vi.fn(),
-    getMyTransactions: vi.fn().mockResolvedValue({ success: true, data: [] }),
-    listAllTransactions: vi.fn().mockResolvedValue({ success: true, data: [] }),
-    verifyTransaction: vi.fn(),
-    rejectTransaction: vi.fn(),
-    generateVouchers: vi.fn(),
-    listVouchers: vi.fn().mockResolvedValue({ success: true, data: [] }),
-    redeemVoucher: vi.fn(),
-    submitTransaction: vi.fn(),
-    updateAdminConfig: vi.fn(),
-    createPayPalSubscription: vi.fn(),
-    addPaymentMethod: vi.fn(),
-    deletePaymentMethod: vi.fn(),
-    fetchUsage: vi.fn().mockResolvedValue({ success: true, data: [] }),
+  fetchPlans: vi.fn().mockResolvedValue({
+    success: true,
+    data: [
+      {
+        id: 'price_free',
+        name: 'Free',
+        price: 0,
+        interval: 'month',
+        features: ['plan_feature_basic_analytics'],
+      },
+      {
+        id: 'price_pro_monthly',
+        name: 'Pro',
+        price: 29,
+        interval: 'month',
+        features: ['plan_feature_advanced_analytics'],
+      },
+    ],
+  }),
+  fetchSubscription: vi.fn().mockResolvedValue({
+    success: true,
+    data: {
+      id: 'sub_1',
+      status: 'active',
+      currentPeriodEnd: '2026-06-30',
+      cancelAtPeriodEnd: false,
+      plan: { id: 'price_pro_monthly', name: 'Pro', price: 29, interval: 'month', features: [] },
+    },
+  }),
+  fetchInvoices: vi.fn().mockResolvedValue({ success: true, data: [] }),
+  fetchPaymentMethods: vi.fn().mockResolvedValue({ success: true, data: [] }),
+  createCheckoutSession: vi.fn(),
+  createPortalSession: vi.fn(),
+  switchSubscription: vi.fn(),
+  getMyTransactions: vi.fn().mockResolvedValue({ success: true, data: [] }),
+  listAllTransactions: vi.fn().mockResolvedValue({ success: true, data: [] }),
+  verifyTransaction: vi.fn(),
+  rejectTransaction: vi.fn(),
+  generateVouchers: vi.fn(),
+  listVouchers: vi.fn().mockResolvedValue({ success: true, data: [] }),
+  redeemVoucher: vi.fn(),
+  submitTransaction: vi.fn(),
+  updateAdminConfig: vi.fn(),
+  createPayPalSubscription: vi.fn(),
+  addPaymentMethod: vi.fn(),
+  deletePaymentMethod: vi.fn(),
+  fetchUsage: vi.fn().mockResolvedValue({ success: true, data: [] }),
 }));
 
 // Mock framer-motion to avoid animation issues in tests
 vi.mock('framer-motion', () => {
-    type MotionMockProps = { children?: ReactNode; [key: string]: unknown };
+  type MotionMockProps = { children?: ReactNode; [key: string]: unknown };
 
-    const mockComponent = ({ children, ...props }: MotionMockProps) => (
-        <div {...props}>{children}</div>
-    );
-    return {
-        motion: {
-            div: mockComponent,
-            section: mockComponent,
-            article: mockComponent,
-            button: mockComponent,
-            h1: mockComponent,
-            h2: mockComponent,
-            p: mockComponent,
-            span: mockComponent,
-        },
+  const mockComponent = ({ children, ...props }: MotionMockProps) => (
+    <div {...props}>{children}</div>
+  );
+  return {
+    motion: {
+      div: mockComponent,
+      section: mockComponent,
+      article: mockComponent,
+      button: mockComponent,
+      h1: mockComponent,
+      h2: mockComponent,
+      p: mockComponent,
+      span: mockComponent,
+    },
 
-        AnimatePresence: ({ children }: MotionMockProps) => <>{children}</>
-    };
+    AnimatePresence: ({ children }: MotionMockProps) => <>{children}</>,
+  };
 });
 
 const queryClient = new QueryClient({
-    defaultOptions: {
-        queries: {
-            retry: false,
-        },
+  defaultOptions: {
+    queries: {
+      retry: false,
     },
+  },
 });
 
 const renderComponent = () => {
-    return render(
-        <QueryClientProvider client={queryClient}>
-            <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-                <LanguageProvider>
-                    <BillingDashboard />
-                </LanguageProvider>
-            </MemoryRouter>
-        </QueryClientProvider>
-    );
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <LanguageProvider>
+          <BillingDashboard />
+        </LanguageProvider>
+      </MemoryRouter>
+    </QueryClientProvider>
+  );
 };
 
 describe('BillingDashboard', () => {
-    it('renders loading state initially', async () => {
-        renderComponent();
-        expect(screen.getByRole('status')).toBeInTheDocument();
+  it('renders loading state initially', async () => {
+    renderComponent();
+    expect(screen.getByRole('status')).toBeInTheDocument();
 
-        // Wait for the loading state to disappear to satisfy React state updates
-        await waitFor(() => {
-            expect(screen.queryByRole('status')).not.toBeInTheDocument();
-        });
+    // Wait for the loading state to disappear to satisfy React state updates
+    await waitFor(() => {
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    });
+  });
+
+  it('renders subscription details after loading', async () => {
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
     });
 
-    it('renders subscription details after loading', async () => {
-        renderComponent();
+    // Check for the subscription status heading
+    expect(screen.getByText('Current Plan')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Pro/i, level: 2 })).toBeInTheDocument();
+  });
 
-        await waitFor(() => {
-            expect(screen.queryByRole('status')).not.toBeInTheDocument();
-        });
+  it('renders available plans', async () => {
+    renderComponent();
 
-        // Check for the subscription status heading
-        expect(screen.getByText('Current Plan')).toBeInTheDocument();
-        expect(screen.getByRole('heading', { name: /Pro/i, level: 2 })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
     });
 
-    it('renders available plans', async () => {
-        renderComponent();
+    // Plans are now in a section with aria-label="Available subscription plans"
+    const plansSection = screen.getByRole('region', { name: /Available subscription plans/i });
+    expect(plansSection).toBeInTheDocument();
 
-        await waitFor(() => {
-            expect(screen.queryByRole('status')).not.toBeInTheDocument();
-        });
-
-        // Plans are now in a section with aria-label="Available subscription plans"
-        const plansSection = screen.getByRole('region', { name: /Available subscription plans/i });
-        expect(plansSection).toBeInTheDocument();
-
-        // Check for plan headings (Free and Pro)
-        expect(screen.getByRole('heading', { name: /Free/i, level: 3 })).toBeInTheDocument();
-        expect(screen.getByRole('heading', { name: /Pro/i, level: 3 })).toBeInTheDocument();
-    });
+    // Check for plan headings (Free and Pro)
+    expect(screen.getByRole('heading', { name: /Free/i, level: 3 })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Pro/i, level: 3 })).toBeInTheDocument();
+  });
 });

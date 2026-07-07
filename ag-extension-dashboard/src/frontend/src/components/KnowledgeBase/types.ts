@@ -11,27 +11,27 @@
  */
 
 export interface KPI {
-    label: string;
-    value: string;
-    status: 'good' | 'warning' | 'critical';
+  label: string;
+  value: string;
+  status: 'good' | 'warning' | 'critical';
 }
 
 export interface Chart {
-    type: 'bar' | 'line' | 'pie' | 'area';
-    title: string;
-    data: Array<{ label: string; value: number }>;
+  type: 'bar' | 'line' | 'pie' | 'area';
+  title: string;
+  data: Array<{ label: string; value: number }>;
 }
 
 export interface MediaAsset {
-    url: string;
-    caption?: string;
+  url: string;
+  caption?: string;
 }
 
 export interface VisualsData {
-    kpis?: KPI[];
-    charts?: Chart[];
-    images?: MediaAsset[];
-    videos?: MediaAsset[];
+  kpis?: KPI[];
+  charts?: Chart[];
+  images?: MediaAsset[];
+  videos?: MediaAsset[];
 }
 
 /**
@@ -41,8 +41,8 @@ export interface VisualsData {
  * ensures adding a new field to `VisualsData` keeps this in sync.
  */
 export const EMPTY_VISUALS = {
-    kpis: [],
-    charts: [],
-    images: [],
-    videos: [],
+  kpis: [],
+  charts: [],
+  images: [],
+  videos: [],
 } as const satisfies VisualsData;

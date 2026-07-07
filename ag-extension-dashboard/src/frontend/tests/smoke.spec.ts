@@ -25,10 +25,10 @@ test.describe('Dashboard Smoke Test', () => {
   test('should switch between tabs', async ({ page }) => {
     const portfolioBtn = page.getByRole('button', { name: 'Portfolio' });
     await portfolioBtn.click();
-    
+
     // Check for Portfolio title
     await expect(page.getByRole('heading', { name: 'Farmer Portfolio' })).toBeVisible();
-    
+
     const dashboardBtn = page.getByRole('button', { name: 'Dashboard' });
     await dashboardBtn.click();
     await expect(page.getByRole('heading', { name: 'Dashboard Overview' })).toBeVisible();

@@ -25,10 +25,14 @@ export const ABTestBanner: React.FC<ABTestBannerProps> = ({ onClose, inline = fa
   };
 
   const content = (
-    <div className={`${inline ? 'bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-800' : 'bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 max-w-2xl'}`}>
+    <div
+      className={`${inline ? 'bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-800' : 'bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 max-w-2xl'}`}
+    >
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h3 className={`font-bold text-gray-900 dark:text-white ${inline ? 'text-sm' : 'text-lg'}`}>
+          <h3
+            className={`font-bold text-gray-900 dark:text-white ${inline ? 'text-sm' : 'text-lg'}`}
+          >
             {inline ? 'Design System' : 'Help Us Improve!'}
           </h3>
           {!inline && (
@@ -57,17 +61,15 @@ export const ABTestBanner: React.FC<ABTestBannerProps> = ({ onClose, inline = fa
           }`}
         >
           <div className="flex items-center gap-2 mb-1">
-            {designVariant === 'current' && (
-              <Check className="w-3 h-3 text-red-500" />
-            )}
-            <span className={`font-bold text-gray-900 dark:text-white ${inline ? 'text-xs' : 'text-sm'}`}>
+            {designVariant === 'current' && <Check className="w-3 h-3 text-red-500" />}
+            <span
+              className={`font-bold text-gray-900 dark:text-white ${inline ? 'text-xs' : 'text-sm'}`}
+            >
               Current Design
             </span>
           </div>
           {!inline && (
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              The original design you know
-            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">The original design you know</p>
           )}
         </button>
 
@@ -80,17 +82,15 @@ export const ABTestBanner: React.FC<ABTestBannerProps> = ({ onClose, inline = fa
           }`}
         >
           <div className="flex items-center gap-2 mb-1">
-            {designVariant === 'new' && (
-              <Check className="w-3 h-3 text-green-500" />
-            )}
-            <span className={`font-bold text-gray-900 dark:text-white ${inline ? 'text-xs' : 'text-sm'}`}>
+            {designVariant === 'new' && <Check className="w-3 h-3 text-green-500" />}
+            <span
+              className={`font-bold text-gray-900 dark:text-white ${inline ? 'text-xs' : 'text-sm'}`}
+            >
               New Design 🚀
             </span>
           </div>
           {!inline && (
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Modern, cleaner interface
-            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Modern, cleaner interface</p>
           )}
         </button>
       </div>

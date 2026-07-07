@@ -301,7 +301,7 @@ export class RAGV2Service {
 
     private static async fetchEntityAndRelated(normalizedName: string, entityId?: string): Promise<{ entityRow: Record<string, unknown>; relatedRows: Record<string, unknown>[] } | null> {
         let eId = entityId;
-        let entityRow = null;
+        let entityRow: Record<string, unknown> | null = null;
 
         if (!eId) {
             const { rows: entities } = await query(
@@ -309,8 +309,8 @@ export class RAGV2Service {
                 [`%${normalizedName}%`]
             );
             if (entities.length === 0) return null;
-            entityRow = entities[0];
-            eId = entityRow.id;
+            entityRow = entities[0] as Record<string, unknown>;
+            eId = entityRow.id as string;
         }
 
         const { rows: related } = await query(
@@ -322,7 +322,7 @@ export class RAGV2Service {
             [eId]
         );
 
-        return { entityRow, relatedRows: related };
+        return { entityRow: entityRow as Record<string, unknown>, relatedRows: related };
     }
 
     static async getRelatedEntities(entityName: string, maxDepth: number = 2): Promise<Entity[]> {

@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, Request, Response } from 'express';
+import { query } from '../services/databaseService';
 import { smsService } from '../services/smsService';
 import { validate } from '../middleware/validate';
 import { z } from 'zod';
@@ -7,8 +7,9 @@ import { authorize, AuthRequest } from '@/middleware/authorize';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { usageService } from '../services/usageService';
 
-import { AIRouter } from '../services/aiProvider/aiProvider';
-import { query } from '../services/databaseService';
+import type { SmsHistoryRow } from '@/types/rowTypes';
+import { mapSmsHistoryRows } from '@/types/dtos';
+import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
@@ -57,11 +58,11 @@ router.post('/send', checkUsageLimit('sms'), validate({ body: sendSMSSchema }), 
         const { to, message, farmerId } = req.body;
         const senderId = req.user!.userId;
 
-        const success = await smsService.sendSMS({ 
-            to, 
-            message, 
-            farmerId, 
-            senderId 
+        const success = await smsService.sendSMS({
+            to,
+            message,
+            farmerId,
+            senderId
         });
 
         if (success) {
@@ -70,8 +71,8 @@ router.post('/send', checkUsageLimit('sms'), validate({ body: sendSMSSchema }), 
         } else {
             safeError(res, 500, 'Failed to send SMS');
         }
-    } catch (error: any) {
-        safeError(res, 500, 'Internal server error');
+    } catch (error) {
+        safeError(res, 500, error instanceof Error ? error.message : 'Internal server error');
     }
 });
 
@@ -81,11 +82,11 @@ router.post('/bulk', checkUsageLimit('sms'), validate({ body: bulkSMSSchema }), 
         const { recipients, message, farmerId } = req.body;
         const senderId = req.user!.userId;
 
-        const result = await smsService.sendBulkSMS({ 
-            recipients, 
-            message, 
-            farmerId, 
-            senderId 
+        const result = await smsService.sendBulkSMS({
+            recipients,
+            message,
+            farmerId,
+            senderId
         });
 
         if (result.sent > 0) {
@@ -98,8 +99,8 @@ router.post('/bulk', checkUsageLimit('sms'), validate({ body: bulkSMSSchema }), 
             failed: result.failed,
             results: result.results,
         });
-    } catch (error: any) {
-        safeError(res, 500, 'Internal server error');
+    } catch (error) {
+        safeError(res, 500, error instanceof Error ? error.message : 'Internal server error');
     }
 });
 
@@ -108,7 +109,7 @@ router.get('/history', async (req: AuthRequest, res: Response) => {
     try {
         const { farmerId } = req.query;
         let sql = 'SELECT * FROM sms_history ';
-        const params: any[] = [];
+        const params: unknown[] = [];
 
         if (farmerId) {
             sql += 'WHERE farmer_id = $1 ';
@@ -117,14 +118,14 @@ router.get('/history', async (req: AuthRequest, res: Response) => {
 
         sql += 'ORDER BY created_at DESC LIMIT 100';
 
-        const result = await query(sql, params);
+        const result = await query<SmsHistoryRow>(sql, params);
 
         res.json({
             success: true,
-            data: result.rows,
+            data: mapSmsHistoryRows(result.rows),
         });
-    } catch (error: any) {
-        safeError(res, 500, 'Internal server error');
+    } catch (error) {
+        safeError(res, 500, error instanceof Error ? error.message : 'Internal server error');
     }
 });
 
@@ -134,23 +135,21 @@ router.post('/translate', validate({ body: translateSchema }), async (req: AuthR
         const { text, targetLanguage } = req.body;
 
         const prompt = `Translate the following agricultural message to ${targetLanguage}. Keep it concise for SMS (max 160 chars if possible). Do not add any preamble or quotes.
-        
+
         Message: ${text}`;
 
-        const result = await AIRouter.routeRequest('generate', {
-            prompt,
-            options: { temperature: 0.3, maxTokens: 200 }
-        });
+        const provider = await AIProviderFactory.getProvider();
+        const result = await provider.generateText(prompt, { temperature: 0.3, maxTokens: 200 });
 
         res.json({
             success: true,
             data: {
-                translatedText: result.text.trim(),
+                translatedText: (result?.text ?? '').toString().trim(),
                 targetLanguage
             }
         });
-    } catch (error: any) {
-        safeError(res, 500, 'Internal server error');
+    } catch (error) {
+        safeError(res, 500, error instanceof Error ? error.message : 'Internal server error');
     }
 });
 
@@ -162,22 +161,21 @@ router.post('/ussd/start', validate({ body: ussdSchema }), async (req: Request, 
         const response = await smsService.startUSSDSession({ sessionId, phoneNumber, text });
 
         res.json({ response });
-    } catch (error: any) {
-        safeError(res, 500, 'Internal server error');
+    } catch (error) {
+        safeError(res, 500, error instanceof Error ? error.message : 'Internal server error');
     }
 });
 
 // Handle USSD input
 router.post('/ussd/handle', validate({ body: ussdSchema }), async (req: Request, res: Response) => {
     try {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { sessionId, phoneNumber: _phoneNumber, text } = req.body;
+        const { sessionId, text } = req.body;
 
         const response = await smsService.handleUSSDInput(sessionId, text);
 
         res.json({ response });
-    } catch (error: any) {
-        safeError(res, 500, 'Internal server error');
+    } catch (error) {
+        safeError(res, 500, error instanceof Error ? error.message : 'Internal server error');
     }
 });
 
@@ -199,8 +197,8 @@ router.post('/schedule', validate({ body: scheduleSMSSchema }), async (req: Auth
         } else {
             safeError(res, 500, 'Failed to schedule SMS');
         }
-    } catch (error: any) {
-        safeError(res, 500, 'Internal server error');
+    } catch (error) {
+        safeError(res, 500, error instanceof Error ? error.message : 'Internal server error');
     }
 });
 

@@ -21,11 +21,11 @@ import type { Farmer } from '@/api/farmerService';
  * without forcing every consumer to widen.
  */
 export type PriorityLike = {
-    level?: string;
-    score?: number;
-    reasons?: string[];
-    recommendedAction?: string;
-    [key: string]: unknown;
+  level?: string;
+  score?: number;
+  reasons?: string[];
+  recommendedAction?: string;
+  [key: string]: unknown;
 } & Partial<PriorityData>;
 
 /**
@@ -34,10 +34,10 @@ export type PriorityLike = {
  * response that supplies only `id` and a few display fields).
  */
 export type FarmerLike = {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    locationLat?: number;
-    locationLng?: number;
-    [key: string]: unknown;
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  locationLat?: number;
+  locationLng?: number;
+  [key: string]: unknown;
 } & Partial<Farmer>;

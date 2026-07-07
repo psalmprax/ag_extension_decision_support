@@ -1,11 +1,24 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, Request, Response } from 'express';
 import { query, getPool } from '@/services/databaseService';
+import type {
+  ReportListRow,
+  VisitStatsRow,
+  ConversationStatsRow,
+} from '@/types/rowTypes';
+import {
+  mapReportListRow,
+  mapReportListRows,
+  mapVisitStatsRow,
+  mapConversationStatsRow,
+  type VisitStatsDTO,
+  type ConversationStatsDTO,
+} from '@/types/dtos';
 import { logger } from '@/utils/logger';
 import { authorize, AuthRequest } from '@/middleware/authorize';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { usageService } from '../services/usageService';
 import PDFDocument from 'pdfkit';
+import type PDFKit from 'pdfkit';
 import * as XLSX from 'xlsx';
 import { safeError } from '@/utils/safeResponse';
 
@@ -13,6 +26,43 @@ const router = Router();
 
 // Apply authentication to all reporting routes
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
+
+interface ReportContent {
+  visits?: VisitStatsDTO;
+  conversations?: ConversationStatsDTO;
+  metadata?: {
+    region?: string | null;
+    startDate?: string | null;
+    endDate?: string | null;
+    officerId?: string | null;
+    cropType?: string | null;
+  };
+  // Disease diagnosis fields
+  overallHealth?: 'healthy' | 'stressed' | 'diseased';
+  confidence?: number;
+  diseases?: Array<{
+    disease: string;
+    severity?: string;
+    confidence?: number;
+    description?: string;
+    symptoms?: string[];
+    treatment?: string[];
+  }>;
+  nutrientDeficiencies?: string[];
+  recommendations?: string[];
+  // Soil diagnostic fields
+  overallHealthScore?: number;
+  texture?: string;
+  estimatedMoisture?: string;
+  drainageClass?: string;
+  colorDiscoloration?: string;
+  npkDeficiencies?: {
+    nitrogen?: string;
+    phosphorus?: string;
+    potassium?: string;
+  };
+  cropSuitability?: string[];
+}
 
 // Get reports
 router.get('/', async (req: AuthRequest, res: Response) => {
@@ -48,20 +98,21 @@ router.get('/', async (req: AuthRequest, res: Response) => {
         sql += ' ORDER BY created_at DESC LIMIT $' + paramIndex++ + ' OFFSET $' + paramIndex;
         params.push(parseInt(limit as string), parseInt(offset as string));
 
-        const result = await query(sql, params);
+        const result = await query<ReportListRow>(sql, params);
+        const reports = mapReportListRows(result.rows);
 
         res.json({
             success: true,
             data: {
-                reports: result.rows.map((r: Record<string, any>) => ({
+                reports: reports.map(r => ({
                     id: r.id,
                     type: r.type,
                     title: r.title,
-                    generatedAt: r.created_at,
+                    generatedAt: r.generatedAt,
                     status: r.status,
                     data: r.content,
                 })),
-                total: result.rows.length,
+                total: result.rowCount ?? result.rows.length,
             },
         });
     } catch (error) {
@@ -71,36 +122,40 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 });
 
 async function generateReportData(type: string, effectiveStartDate: string, effectiveEndDate: string, officerId: string | undefined, region: string | undefined, title: string | undefined, req: AuthRequest, res: Response) {
-    const reportData: Record<string, any> = {};
+    const reportData: Partial<ReportContent> = {};
     if (type === 'visit_summary' || type === 'activity_report') {
-        const visitResult = await query(`
-            SELECT COUNT(*) as total, 
+        const visitResult = await query<VisitStatsRow>(`
+            SELECT COUNT(*) as total,
                    SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
                    SUM(duration_minutes) as total_minutes
-            FROM visits 
+            FROM visits
             WHERE scheduled_at >= $1 AND scheduled_at <= $2
             ${officerId ? 'AND officer_id = $3' : ''}
         `, [effectiveStartDate, effectiveEndDate, officerId].filter(Boolean));
 
-        reportData.visits = visitResult.rows[0];
+        if (visitResult.rows[0]) {
+            reportData.visits = mapVisitStatsRow(visitResult.rows[0]);
+        }
     }
 
     if (type === 'impact_metrics' || type === 'activity_report') {
-        const convResult = await query(`
+        const convResult = await query<ConversationStatsRow>(`
             SELECT COUNT(*) as total_conversations,
                    SUM(CASE WHEN satisfaction_score IS NOT NULL THEN 1 ELSE 0 END) as rated,
                    AVG(satisfaction_score) as avg_satisfaction
-            FROM conversations 
+            FROM conversations
             WHERE created_at >= $1 AND created_at <= $2
         `, [effectiveStartDate, effectiveEndDate]);
 
-        reportData.conversations = convResult.rows[0];
+        if (convResult.rows[0]) {
+            reportData.conversations = mapConversationStatsRow(convResult.rows[0]);
+        }
     }
 
     const reportTitle = title || `${type.replace('_', ' ')} - ${new Date(effectiveStartDate).toLocaleDateString()} to ${new Date(effectiveEndDate).toLocaleDateString()}`;
 
     // Combine all metadata into the content JSONB column as per schema
-    const fullReportContent = {
+    const fullReportContent: ReportContent = {
         ...reportData,
         metadata: {
             region,
@@ -110,7 +165,7 @@ async function generateReportData(type: string, effectiveStartDate: string, effe
         }
     };
 
-    const result = await query(`
+    const result = await query<ReportListRow>(`
         INSERT INTO reports (type, title, generated_by, content, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, 'completed', NOW(), NOW())
         RETURNING *
@@ -118,15 +173,21 @@ async function generateReportData(type: string, effectiveStartDate: string, effe
 
     await usageService.incrementUsage(req.user!.userId, 'report');
 
+    const created = result.rows[0] ? mapReportListRow(result.rows[0]) : null;
+    // Flatten the response: fullReportContent fields (visits, conversations,
+    // metadata, plus disease/soil diagnostics) live at `data.*` alongside
+    // the DTO metadata, rather than nested under `data.data.*`.
+    // DTO fields are spread LAST so they win on any future key collision
+    // with ReportContent (e.g. if a future schema adds a `metadata.id`).
     return res.status(201).json({
         success: true,
         data: {
-            id: result.rows[0].id,
-            type: result.rows[0].type,
-            title: result.rows[0].title,
-            generatedAt: result.rows[0].created_at,
-            status: result.rows[0].status,
-            data: fullReportContent,
+            ...fullReportContent,
+            id: created?.id,
+            type: created?.type,
+            title: created?.title,
+            generatedAt: created?.generatedAt,
+            status: created?.status,
         },
     });
 }
@@ -158,25 +219,26 @@ router.get('/:id', async (req: Request, res: Response) => {
         const { id } = req.params;
         const pool = getPool();
 
-        let report = null;
+        let report: ReportListRow | null = null;
         if (pool) {
-            const result = await query('SELECT * FROM reports WHERE id = $1', [id]);
-            report = result.rows[0];
+            const result = await query<ReportListRow>('SELECT * FROM reports WHERE id = $1', [id]);
+            report = result.rows[0] ?? null;
         }
 
         if (!report) {
             return res.status(404).json({ success: false, error: 'Report not found' });
         }
 
+        const dto = mapReportListRow(report);
         res.json({
             success: true,
             data: {
-                id: report.id,
-                type: report.type,
-                title: report.title,
-                generatedAt: report.created_at,
-                status: report.status,
-                data: report.content,
+                id: dto.id,
+                type: dto.type,
+                title: dto.title,
+                generatedAt: dto.generatedAt,
+                status: dto.status,
+                data: dto.content,
             },
         });
     } catch (error) {
@@ -189,25 +251,25 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.get('/:id/download', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const result = await query('SELECT * FROM reports WHERE id = $1', [id]);
-        const report = result.rows[0];
+        const result = await query<ReportListRow>('SELECT * FROM reports WHERE id = $1', [id]);
+        const report: ReportListRow | undefined = result.rows[0];
 
         if (!report) {
             return res.status(404).json({ success: false, error: 'Report not found' });
         }
 
-        const data = report.content;
+        const data = report.content as ReportContent;
         let csv = 'Metric,Value\n';
-        
+
         // Flatten the JSON report data into CSV rows
         if (data.visits) {
             csv += `Total Visits,${data.visits.total || 0}\n`;
             csv += `Completed Visits,${data.visits.completed || 0}\n`;
-            csv += `Total Minutes,${data.visits.total_minutes || 0}\n`;
+            csv += `Total Minutes,${data.visits.totalMinutes || 0}\n`;
         }
         if (data.conversations) {
-            csv += `Total Conversations,${data.conversations.total_conversations || 0}\n`;
-            csv += `Average Satisfaction,${data.conversations.avg_satisfaction || 0}\n`;
+            csv += `Total Conversations,${data.conversations.totalConversations || 0}\n`;
+            csv += `Average Satisfaction,${data.conversations.avgSatisfaction || 0}\n`;
         }
 
         res.setHeader('Content-Type', 'text/csv');
@@ -219,15 +281,15 @@ router.get('/:id/download', async (req: Request, res: Response) => {
     }
 });
 
-function drawDiseaseDiagnosisHeader(doc: Record<string, any>, report: Record<string, any>, data: Record<string, any>) {
+function drawDiseaseDiagnosisHeader(doc: PDFKit.PDFDocument, report: ReportListRow, data: ReportContent) {
     // Elegant Dark Green Header
     doc.rect(0, 0, doc.page.width, 110).fill('#1b5e20');
-    
+
     doc.fillColor('#ffffff')
        .fontSize(20)
        .font('Helvetica-Bold')
        .text('Agricultural Decision-Support System', 50, 30);
-    
+
     doc.fontSize(13)
        .font('Helvetica')
        .text('Plant Pathology & Leaf Diagnosis Report', 50, 60);
@@ -261,7 +323,7 @@ function drawDiseaseDiagnosisHeader(doc: Record<string, any>, report: Record<str
        .text(generatedDate, 400, startY);
 
     doc.moveDown(1.5);
-    
+
     // Overall Health Banner
     const health = data.overallHealth || 'healthy';
     let bannerBg = '#e8f5e9';
@@ -275,13 +337,13 @@ function drawDiseaseDiagnosisHeader(doc: Record<string, any>, report: Record<str
     }
 
     doc.rect(50, doc.y, doc.page.width - 100, 45).fill(bannerBg);
-    
+
     const bannerY = doc.y + 15;
     doc.fillColor(bannerText)
        .fontSize(11)
        .font('Helvetica-Bold')
        .text(`OVERALL CROP HEALTH STATUS:  ${health.toUpperCase()}`, 70, bannerY);
-    
+
     if (data.confidence) {
         doc.font('Helvetica')
            .fontSize(9)
@@ -291,25 +353,25 @@ function drawDiseaseDiagnosisHeader(doc: Record<string, any>, report: Record<str
     doc.y = bannerY + 45;
 }
 
-function drawDiseasePathologies(doc: Record<string, any>, data: Record<string, any>) {
+function drawDiseasePathologies(doc: PDFKit.PDFDocument, data: ReportContent) {
     doc.fillColor('#263238')
        .fontSize(13)
        .font('Helvetica-Bold')
        .text('Detected Pathologies & Issues', 50, doc.y);
-    
+
     doc.moveDown(0.5);
 
     if (data.diseases && data.diseases.length > 0) {
-        data.diseases.forEach((dis: Record<string, any>, idx: number) => {
+        data.diseases.forEach((dis, idx) => {
             const disY = doc.y;
-            
+
             doc.rect(50, disY, doc.page.width - 100, 140).stroke('#cfd8dc');
-            
+
             doc.fillColor('#b71c1c')
                .fontSize(11)
                .font('Helvetica-Bold')
                .text(`${idx + 1}. ${dis.disease}`, 65, disY + 12);
-            
+
             doc.fillColor('#455a64')
                .fontSize(9)
                .font('Helvetica-Bold')
@@ -331,7 +393,7 @@ function drawDiseasePathologies(doc: Record<string, any>, data: Record<string, a
             doc.fillColor('#37474f')
                .font('Helvetica')
                .fontSize(8);
-            
+
             const symptoms = (dis.symptoms || []).slice(0, 3);
             symptoms.forEach((sym: string, sIdx: number) => {
                 doc.text(`• ${sym}`, 65, listY + 15 + (sIdx * 10), { width: 220 });
@@ -353,7 +415,7 @@ function drawDiseasePathologies(doc: Record<string, any>, data: Record<string, a
     }
 }
 
-function generateDiseaseDiagnosisPDF(doc: Record<string, any>, report: Record<string, any>, data: Record<string, any>) {
+function generateDiseaseDiagnosisPDF(doc: PDFKit.PDFDocument, report: ReportListRow, data: ReportContent) {
     drawDiseaseDiagnosisHeader(doc, report, data);
     drawDiseasePathologies(doc, data);
 
@@ -364,7 +426,7 @@ function generateDiseaseDiagnosisPDF(doc: Record<string, any>, report: Record<st
            .fontSize(12)
            .text('Nutrient & Chemical Observations', 50, doc.y);
         doc.moveDown(0.5);
-        
+
         data.nutrientDeficiencies.forEach((def: string) => {
             doc.fillColor('#e65100')
                .font('Helvetica-Bold')
@@ -389,7 +451,7 @@ function generateDiseaseDiagnosisPDF(doc: Record<string, any>, report: Record<st
         doc.fillColor('#37474f')
            .font('Helvetica')
            .fontSize(9);
-        
+
         data.recommendations.forEach((rec: string) => {
             doc.text(`✓   ${rec}`, 65, doc.y);
             doc.moveDown(0.4);
@@ -402,15 +464,15 @@ function generateDiseaseDiagnosisPDF(doc: Record<string, any>, report: Record<st
        .text('This pathology analysis represents an AI-assisted diagnostic estimate and should be validated through direct agronomic inspection.', 50, doc.page.height - 40, { align: 'center', width: doc.page.width - 100 });
 }
 
-function drawSoilDiagnosticHeader(doc: Record<string, any>, report: Record<string, any>, data: Record<string, any>) {
+function drawSoilDiagnosticHeader(doc: PDFKit.PDFDocument, report: ReportListRow, data: ReportContent) {
     // Elegant Earth Brown Header
     doc.rect(0, 0, doc.page.width, 110).fill('#3e2723');
-    
+
     doc.fillColor('#ffffff')
        .fontSize(20)
        .font('Helvetica-Bold')
        .text('Agricultural Decision-Support System', 50, 30);
-    
+
     doc.fontSize(13)
        .font('Helvetica')
        .text('High-Fidelity Soil Diagnostics & Advisory Report', 50, 60);
@@ -444,7 +506,7 @@ function drawSoilDiagnosticHeader(doc: Record<string, any>, report: Record<strin
        .text(generatedDate, 410, startY);
 
     doc.moveDown(1.5);
-    
+
     // Overall Health Score Bar
     const score = data.overallHealthScore || 50;
     let scoreColor = '#1b5e20'; // Green
@@ -458,13 +520,13 @@ function drawSoilDiagnosticHeader(doc: Record<string, any>, report: Record<strin
     }
 
     doc.rect(50, doc.y, doc.page.width - 100, 45).fill(scoreBg);
-    
+
     const bannerY = doc.y + 15;
     doc.fillColor(scoreColor)
        .fontSize(11)
        .font('Helvetica-Bold')
        .text(`SOIL DIAGNOSTIC QUALITY RATING:  ${score} / 100`, 70, bannerY);
-    
+
     if (data.confidence) {
         doc.font('Helvetica')
            .fontSize(9)
@@ -474,7 +536,7 @@ function drawSoilDiagnosticHeader(doc: Record<string, any>, report: Record<strin
     doc.y = bannerY + 45;
 }
 
-function drawSoilPhysicalAttributes(doc: Record<string, any>, data: Record<string, any>) {
+function drawSoilPhysicalAttributes(doc: PDFKit.PDFDocument, data: ReportContent) {
     doc.fillColor('#263238')
        .fontSize(13)
        .font('Helvetica-Bold')
@@ -487,20 +549,20 @@ function drawSoilPhysicalAttributes(doc: Record<string, any>, data: Record<strin
     doc.fontSize(9).fillColor('#3e2723');
     doc.font('Helvetica-Bold').text('Estimated Texture:', 65, tableY + 12)
        .font('Helvetica').fillColor('#37474f').text(data.texture || 'N/A', 170, tableY + 12);
-       
+
     doc.font('Helvetica-Bold').fillColor('#3e2723').text('Moisture Class:', 300, tableY + 12)
        .font('Helvetica').fillColor('#37474f').text(data.estimatedMoisture || 'N/A', 410, tableY + 12);
 
     doc.font('Helvetica-Bold').fillColor('#3e2723').text('Drainage Class:', 65, tableY + 35)
        .font('Helvetica').fillColor('#37474f').text(data.drainageClass || 'N/A', 170, tableY + 35);
-       
+
     doc.font('Helvetica-Bold').fillColor('#3e2723').text('Soil Observations:', 65, tableY + 58)
        .font('Helvetica').fillColor('#37474f').text(data.colorDiscoloration || 'N/A', 170, tableY + 58, { width: doc.page.width - 240 });
 
     doc.y = tableY + 95;
 }
 
-function drawSoilNPKProfile(doc: Record<string, any>, data: Record<string, any>) {
+function drawSoilNPKProfile(doc: PDFKit.PDFDocument, data: ReportContent) {
     doc.fillColor('#263238')
        .fontSize(13)
        .font('Helvetica-Bold')
@@ -534,7 +596,7 @@ function drawSoilNPKProfile(doc: Record<string, any>, data: Record<string, any>)
     doc.y = npkY + 65;
 }
 
-function generateSoilDiagnosticPDF(doc: Record<string, any>, report: Record<string, any>, data: Record<string, any>) {
+function generateSoilDiagnosticPDF(doc: PDFKit.PDFDocument, report: ReportListRow, data: ReportContent) {
     drawSoilDiagnosticHeader(doc, report, data);
     drawSoilPhysicalAttributes(doc, data);
     drawSoilNPKProfile(doc, data);
@@ -565,7 +627,7 @@ function generateSoilDiagnosticPDF(doc: Record<string, any>, report: Record<stri
         doc.fillColor('#37474f')
            .font('Helvetica')
            .fontSize(9);
-        
+
         data.recommendations.forEach((rec: string) => {
             doc.text(`✓   ${rec}`, 65, doc.y, { width: doc.page.width - 130 });
             doc.moveDown(0.4);
@@ -578,7 +640,7 @@ function generateSoilDiagnosticPDF(doc: Record<string, any>, report: Record<stri
        .text('This soil analysis represents an AI-assisted diagnostic estimate and should be validated through direct soil core sampling.', 50, doc.page.height - 40, { align: 'center', width: doc.page.width - 100 });
 }
 
-function drawGeneralReportDetails(doc: Record<string, any>, report: Record<string, any>, data: Record<string, any>) {
+function drawGeneralReportDetails(doc: PDFKit.PDFDocument, report: ReportListRow, data: ReportContent) {
     // Header
     doc.fontSize(20).fillColor('#2c3e50').text('Agricultural Extension Report', { align: 'center' });
     doc.moveDown(0.5);
@@ -607,7 +669,7 @@ function drawGeneralReportDetails(doc: Record<string, any>, report: Record<strin
         doc.fontSize(10).fillColor('#34495e');
         doc.text(`Total Visits: ${data.visits.total || 0}`);
         doc.text(`Completed Visits: ${data.visits.completed || 0}`);
-        doc.text(`Total Minutes: ${data.visits.total_minutes || 0}`);
+        doc.text(`Total Minutes: ${data.visits.totalMinutes || 0}`);
         doc.moveDown(1);
     }
 
@@ -616,9 +678,9 @@ function drawGeneralReportDetails(doc: Record<string, any>, report: Record<strin
         doc.fontSize(12).fillColor('#2c3e50').text('Conversation Statistics', { underline: true });
         doc.moveDown(0.5);
         doc.fontSize(10).fillColor('#34495e');
-        doc.text(`Total Conversations: ${data.conversations.total_conversations || 0}`);
+        doc.text(`Total Conversations: ${data.conversations.totalConversations || 0}`);
         doc.text(`Rated Conversations: ${data.conversations.rated || 0}`);
-        doc.text(`Average Satisfaction: ${data.conversations.avg_satisfaction ? data.conversations.avg_satisfaction.toFixed(1) + '/5' : 'N/A'}`);
+        doc.text(`Average Satisfaction: ${data.conversations.avgSatisfaction ? Number(data.conversations.avgSatisfaction).toFixed(1) + '/5' : 'N/A'}`);
         doc.moveDown(1);
     }
 
@@ -631,8 +693,8 @@ function drawGeneralReportDetails(doc: Record<string, any>, report: Record<strin
 router.get('/:id/download/pdf', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const result = await query('SELECT * FROM reports WHERE id = $1', [id]);
-        const report = result.rows[0];
+        const result = await query<ReportListRow>('SELECT * FROM reports WHERE id = $1', [id]);
+        const report: ReportListRow | undefined = result.rows[0];
 
         if (!report) {
             return res.status(404).json({ success: false, error: 'Report not found' });
@@ -644,7 +706,7 @@ router.get('/:id/download/pdf', async (req: Request, res: Response) => {
 
         doc.pipe(res);
 
-        const data = report.content as Record<string, any>;
+        const data = report.content as ReportContent;
 
         // Custom router for visual diagnostics PDF
         if (report.type === 'disease_diagnosis') {
@@ -671,14 +733,14 @@ router.get('/:id/download/pdf', async (req: Request, res: Response) => {
 router.get('/:id/download/excel', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const result = await query('SELECT * FROM reports WHERE id = $1', [id]);
-        const report = result.rows[0];
+        const result = await query<ReportListRow>('SELECT * FROM reports WHERE id = $1', [id]);
+        const report: ReportListRow | undefined = result.rows[0];
 
         if (!report) {
             return res.status(404).json({ success: false, error: 'Report not found' });
         }
 
-        const data = report.content as Record<string, any>;
+        const data = report.content as ReportContent;
         const wb = XLSX.utils.book_new();
 
         // Summary Sheet
@@ -703,7 +765,7 @@ router.get('/:id/download/excel', async (req: Request, res: Response) => {
                 ['Metric', 'Value'],
                 ['Total Visits', data.visits.total || 0],
                 ['Completed Visits', data.visits.completed || 0],
-                ['Total Minutes', data.visits.total_minutes || 0],
+                ['Total Minutes', data.visits.totalMinutes || 0],
             ];
             const visitsSheet = XLSX.utils.aoa_to_sheet(visitsData);
             XLSX.utils.book_append_sheet(wb, visitsSheet, 'Visits');
@@ -715,9 +777,9 @@ router.get('/:id/download/excel', async (req: Request, res: Response) => {
                 ['Conversation Statistics'],
                 [''],
                 ['Metric', 'Value'],
-                ['Total Conversations', data.conversations.total_conversations || 0],
+                ['Total Conversations', data.conversations.totalConversations || 0],
                 ['Rated Conversations', data.conversations.rated || 0],
-                ['Average Satisfaction', data.conversations.avg_satisfaction || 0],
+                ['Average Satisfaction', data.conversations.avgSatisfaction || 0],
             ];
             const convSheet = XLSX.utils.aoa_to_sheet(convData);
             XLSX.utils.book_append_sheet(wb, convSheet, 'Conversations');

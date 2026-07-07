@@ -1,12 +1,13 @@
 # Codebase Map
 
-Generated: 2026-06-21T06:52:12Z | Files: 500 | Described: 0/500
-<!-- gsd:codebase-meta {"generatedAt":"2026-06-21T06:52:12Z","fingerprint":"8643df7cb8d9eb7727fc79d76f470f49b3e9a128","fileCount":500,"truncated":true} -->
+Generated: 2026-07-06T20:27:29Z | Files: 500 | Described: 0/500
+<!-- gsd:codebase-meta {"generatedAt":"2026-07-06T20:27:29Z","fingerprint":"0979ae0f1bcef42e5679e848df81e95094ea2894","fileCount":500,"truncated":true} -->
 Note: Truncated to first 500 files. Run with higher --max-files to include all.
 
 ### (root)/
 - `.env.example`
 - `.gitignore`
+- `.mcp.json`
 - `CLAUDE.md`
 - `CONTRIBUTING.md`
 - `Jenkinsfile`
@@ -69,6 +70,7 @@ Note: Truncated to first 500 files. Run with higher --max-files to include all.
 
 ### ag-extension-dashboard/
 - `ag-extension-dashboard/.env.example`
+- `ag-extension-dashboard/check_output.txt`
 - `ag-extension-dashboard/deploy.py`
 - `ag-extension-dashboard/deploy.sh`
 - `ag-extension-dashboard/DEPLOYMENT.md`
@@ -104,6 +106,9 @@ Note: Truncated to first 500 files. Run with higher --max-files to include all.
 - `ag-extension-dashboard/src/agents/main.py`
 - `ag-extension-dashboard/src/agents/requirements.txt`
 
+### ag-extension-dashboard/src/agents/tools/
+- `ag-extension-dashboard/src/agents/tools/slop_cleaner.py`
+
 ### ag-extension-dashboard/src/agents/tools/cloakbrowser/
 - `ag-extension-dashboard/src/agents/tools/cloakbrowser/__init__.py`
 - `ag-extension-dashboard/src/agents/tools/cloakbrowser/cloak_facebook_scanner.py`
@@ -130,13 +135,11 @@ Note: Truncated to first 500 files. Run with higher --max-files to include all.
 - `ag-extension-dashboard/src/backend/Dockerfile.production`
 - `ag-extension-dashboard/src/backend/jest.config.js`
 - `ag-extension-dashboard/src/backend/lint_output.txt`
+- `ag-extension-dashboard/src/backend/lint_results.json`
 - `ag-extension-dashboard/src/backend/package-lock.json`
 - `ag-extension-dashboard/src/backend/package.json`
 - `ag-extension-dashboard/src/backend/seed-db.ts`
 - `ag-extension-dashboard/src/backend/seed.js`
-- `ag-extension-dashboard/src/backend/test-fao.ts`
-- `ag-extension-dashboard/src/backend/test-nasa.ts`
-- `ag-extension-dashboard/src/backend/test-tool.ts`
 - `ag-extension-dashboard/src/backend/translation_log.txt`
 - `ag-extension-dashboard/src/backend/tsconfig.json`
 
@@ -189,11 +192,6 @@ Note: Truncated to first 500 files. Run with higher --max-files to include all.
 - `ag-extension-dashboard/src/backend/src/app.ts`
 - `ag-extension-dashboard/src/backend/src/index.ts`
 - `ag-extension-dashboard/src/backend/src/test_phase1.ts`
-- `ag-extension-dashboard/src/backend/src/test-alfa.ts`
-- `ag-extension-dashboard/src/backend/src/test-fao-rag.ts`
-- `ag-extension-dashboard/src/backend/src/test-rag-hybrid.ts`
-- `ag-extension-dashboard/src/backend/src/test-rag.ts`
-- `ag-extension-dashboard/src/backend/src/test-tool-flow.ts`
 - `ag-extension-dashboard/src/backend/src/types.d.ts`
 
 ### ag-extension-dashboard/src/backend/src/__tests__/
@@ -243,7 +241,7 @@ Note: Truncated to first 500 files. Run with higher --max-files to include all.
 - `ag-extension-dashboard/src/backend/src/scripts/seedPlans.ts`
 
 ### ag-extension-dashboard/src/backend/src/services/
-- *(43 files: 43 .ts)*
+- *(42 files: 42 .ts)*
 
 ### ag-extension-dashboard/src/backend/src/services/aiProvider/
 - `ag-extension-dashboard/src/backend/src/services/aiProvider/aiProvider.ts`
@@ -298,7 +296,6 @@ Note: Truncated to first 500 files. Run with higher --max-files to include all.
 - `ag-extension-dashboard/src/backend/src/utils/fallbackData.ts`
 - `ag-extension-dashboard/src/backend/src/utils/generateFrontendTranslations.ts`
 - `ag-extension-dashboard/src/backend/src/utils/logger.ts`
-- `ag-extension-dashboard/src/backend/src/utils/privacy.ts`
 - `ag-extension-dashboard/src/backend/src/utils/response.ts`
 - `ag-extension-dashboard/src/backend/src/utils/retry.ts`
 - `ag-extension-dashboard/src/backend/src/utils/safeResponse.ts`
@@ -326,6 +323,7 @@ Note: Truncated to first 500 files. Run with higher --max-files to include all.
 - `ag-extension-dashboard/src/frontend/Dockerfile.production`
 - `ag-extension-dashboard/src/frontend/index.html`
 - `ag-extension-dashboard/src/frontend/inject_translations_final.ts`
+- `ag-extension-dashboard/src/frontend/lint_results.json`
 - `ag-extension-dashboard/src/frontend/nginx.conf`
 - `ag-extension-dashboard/src/frontend/package-lock.json`
 - `ag-extension-dashboard/src/frontend/package.json`
@@ -353,7 +351,6 @@ Note: Truncated to first 500 files. Run with higher --max-files to include all.
 ### ag-extension-dashboard/src/frontend/src/
 - `ag-extension-dashboard/src/frontend/src/App.tsx`
 - `ag-extension-dashboard/src/frontend/src/index.css`
-- `ag-extension-dashboard/src/frontend/src/main.tsx`
 
 ### ag-extension-dashboard/src/frontend/src/__tests__/
 - `ag-extension-dashboard/src/frontend/src/__tests__/authService.test.ts`
@@ -372,7 +369,7 @@ Note: Truncated to first 500 files. Run with higher --max-files to include all.
 - *(30 files: 30 .ts)*
 
 ### ag-extension-dashboard/src/frontend/src/components/
-- *(32 files: 32 .tsx)*
+- *(33 files: 33 .tsx)*
 
 ### ag-extension-dashboard/src/frontend/src/components/Cyber/
 - `ag-extension-dashboard/src/frontend/src/components/Cyber/ActionableAI.tsx`
@@ -383,13 +380,37 @@ Note: Truncated to first 500 files. Run with higher --max-files to include all.
 - `ag-extension-dashboard/src/frontend/src/components/Cyber/SystemOverview.tsx`
 
 ### ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/
+- `ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/AIResult.tsx`
 - `ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/index.tsx`
 - `ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/KnowledgeSidebar.tsx`
 - `ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/KnowledgeStats.tsx`
 - `ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/ReasoningVisuals.tsx`
+- `ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/SearchBar.tsx`
+- `ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/types.ts`
 
 ### ag-extension-dashboard/src/frontend/src/components/__tests__/
 - `ag-extension-dashboard/src/frontend/src/components/__tests__/BillingDashboard.test.tsx`
+
+### ag-extension-dashboard/src/frontend/src/components/billing/
+- `ag-extension-dashboard/src/frontend/src/components/billing/Invoices.tsx`
+- `ag-extension-dashboard/src/frontend/src/components/billing/PaymentMethods.tsx`
+- `ag-extension-dashboard/src/frontend/src/components/billing/PlanCard.tsx`
+- `ag-extension-dashboard/src/frontend/src/components/billing/SubscriptionStatus.tsx`
+
+### ag-extension-dashboard/src/frontend/src/components/email-workflows/
+- `ag-extension-dashboard/src/frontend/src/components/email-workflows/ApprovalModal.tsx`
+- `ag-extension-dashboard/src/frontend/src/components/email-workflows/ApprovalQueue.tsx`
+- `ag-extension-dashboard/src/frontend/src/components/email-workflows/CategoryFilter.tsx`
+- `ag-extension-dashboard/src/frontend/src/components/email-workflows/EditModal.tsx`
+- `ag-extension-dashboard/src/frontend/src/components/email-workflows/Header.tsx`
+- `ag-extension-dashboard/src/frontend/src/components/email-workflows/PreviewModal.tsx`
+- `ag-extension-dashboard/src/frontend/src/components/email-workflows/StatsRows.tsx`
+- `ag-extension-dashboard/src/frontend/src/components/email-workflows/Tabs.tsx`
+- `ag-extension-dashboard/src/frontend/src/components/email-workflows/TemplateGrid.tsx`
+
+### ag-extension-dashboard/src/frontend/src/components/farmer/
+- `ag-extension-dashboard/src/frontend/src/components/farmer/CyberDashboard.tsx`
+- `ag-extension-dashboard/src/frontend/src/components/farmer/NormalDashboard.tsx`
 
 ### ag-extension-dashboard/src/frontend/src/components/forms/
 - `ag-extension-dashboard/src/frontend/src/components/forms/FarmerRegistrationForm.tsx`
@@ -399,12 +420,24 @@ Note: Truncated to first 500 files. Run with higher --max-files to include all.
 ### ag-extension-dashboard/src/frontend/src/components/layout/
 - `ag-extension-dashboard/src/frontend/src/components/layout/AppHeader.tsx`
 - `ag-extension-dashboard/src/frontend/src/components/layout/AppSidebar.tsx`
+- `ag-extension-dashboard/src/frontend/src/components/layout/GlobalSearch.tsx`
+- `ag-extension-dashboard/src/frontend/src/components/layout/ProfileMenu.tsx`
+
+### ag-extension-dashboard/src/frontend/src/components/mcp/
+- `ag-extension-dashboard/src/frontend/src/components/mcp/ExecutionHistory.tsx`
+- `ag-extension-dashboard/src/frontend/src/components/mcp/HealthCard.tsx`
+- `ag-extension-dashboard/src/frontend/src/components/mcp/ToolExecutionForm.tsx`
+- `ag-extension-dashboard/src/frontend/src/components/mcp/ToolListSidebar.tsx`
 
 ### ag-extension-dashboard/src/frontend/src/components/ui/
 - `ag-extension-dashboard/src/frontend/src/components/ui/Badge.tsx`
+- `ag-extension-dashboard/src/frontend/src/components/ui/Badge.variants.ts`
 - `ag-extension-dashboard/src/frontend/src/components/ui/Button.tsx`
+- `ag-extension-dashboard/src/frontend/src/components/ui/Button.variants.ts`
 - `ag-extension-dashboard/src/frontend/src/components/ui/Dialog.tsx`
 - `ag-extension-dashboard/src/frontend/src/components/ui/Input.tsx`
+- `ag-extension-dashboard/src/frontend/src/components/ui/Input.variants.ts`
+- `ag-extension-dashboard/src/frontend/src/components/ui/LoadingHeaderSkeleton.tsx`
 - `ag-extension-dashboard/src/frontend/src/components/ui/Select.tsx`
 - `ag-extension-dashboard/src/frontend/src/components/ui/Textarea.tsx`
 
@@ -415,45 +448,20 @@ Note: Truncated to first 500 files. Run with higher --max-files to include all.
 - `ag-extension-dashboard/src/frontend/src/hooks/useAppAuth.ts`
 - `ag-extension-dashboard/src/frontend/src/hooks/useAppBootstrap.ts`
 - `ag-extension-dashboard/src/frontend/src/hooks/useAppChat.ts`
+- `ag-extension-dashboard/src/frontend/src/hooks/useAppMenuActions.ts`
 - `ag-extension-dashboard/src/frontend/src/hooks/useAppModalState.ts`
+- `ag-extension-dashboard/src/frontend/src/hooks/useAppQueries.ts`
 - `ag-extension-dashboard/src/frontend/src/hooks/useAppSearch.ts`
 - `ag-extension-dashboard/src/frontend/src/hooks/useAppShortcuts.ts`
 - `ag-extension-dashboard/src/frontend/src/hooks/useAppSync.ts`
 - `ag-extension-dashboard/src/frontend/src/hooks/useAppTheme.ts`
 - `ag-extension-dashboard/src/frontend/src/hooks/useBillingActions.ts`
 - `ag-extension-dashboard/src/frontend/src/hooks/useBulkActions.ts`
+- `ag-extension-dashboard/src/frontend/src/hooks/useResourceLoader.ts`
 - `ag-extension-dashboard/src/frontend/src/hooks/useThemeClasses.ts`
 - `ag-extension-dashboard/src/frontend/src/hooks/useWebRTC.ts`
 
 ### ag-extension-dashboard/src/frontend/src/lib/
 - `ag-extension-dashboard/src/frontend/src/lib/animations.ts`
-- `ag-extension-dashboard/src/frontend/src/lib/cn.ts`
-- `ag-extension-dashboard/src/frontend/src/lib/i18n.ts`
 - `ag-extension-dashboard/src/frontend/src/lib/LanguageContext.tsx`
-- `ag-extension-dashboard/src/frontend/src/lib/missing-translations-report.json`
-- `ag-extension-dashboard/src/frontend/src/lib/realFirst.ts`
-- `ag-extension-dashboard/src/frontend/src/lib/schemas.ts`
-- `ag-extension-dashboard/src/frontend/src/lib/swRegistration.ts`
 - `ag-extension-dashboard/src/frontend/src/lib/ThemeProvider.tsx`
-- `ag-extension-dashboard/src/frontend/src/lib/translationUtils.ts`
-
-### ag-extension-dashboard/src/frontend/src/pages/
-- `ag-extension-dashboard/src/frontend/src/pages/Agents.tsx`
-- `ag-extension-dashboard/src/frontend/src/pages/AnalyticsPage.tsx`
-- `ag-extension-dashboard/src/frontend/src/pages/CropsFields.tsx`
-- `ag-extension-dashboard/src/frontend/src/pages/DashboardPage.tsx`
-- `ag-extension-dashboard/src/frontend/src/pages/DemoPage.tsx`
-- `ag-extension-dashboard/src/frontend/src/pages/DiseaseDiagnosis.tsx`
-- `ag-extension-dashboard/src/frontend/src/pages/EmailWorkflows.tsx`
-- `ag-extension-dashboard/src/frontend/src/pages/FarmerChatPage.tsx`
-- `ag-extension-dashboard/src/frontend/src/pages/ForgotPassword.tsx`
-- `ag-extension-dashboard/src/frontend/src/pages/LandingPage.tsx`
-- `ag-extension-dashboard/src/frontend/src/pages/Login.tsx`
-- `ag-extension-dashboard/src/frontend/src/pages/MCPTools.tsx`
-- `ag-extension-dashboard/src/frontend/src/pages/Memory.tsx`
-- `ag-extension-dashboard/src/frontend/src/pages/PortfolioPage.tsx`
-- `ag-extension-dashboard/src/frontend/src/pages/Register.tsx`
-- `ag-extension-dashboard/src/frontend/src/pages/ReportsPage.tsx`
-- `ag-extension-dashboard/src/frontend/src/pages/SMS.tsx`
-- `ag-extension-dashboard/src/frontend/src/pages/SystemHealth.tsx`
-- `ag-extension-dashboard/src/frontend/src/pages/Telemetry.tsx`

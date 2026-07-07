@@ -15,7 +15,13 @@ export interface SynthesisResponse {
   data: BoxUpdateData;
 }
 
-export const synthesizeVisit = async (notes: string, farmerId?: string): Promise<SynthesisResponse> => {
-  const response = await apiClient.post<SynthesisResponse>('/ai/synthesize-visit', { notes, farmerId });
+export const synthesizeVisit = async (
+  notes: string,
+  farmerId?: string
+): Promise<SynthesisResponse> => {
+  const response = await apiClient.post<SynthesisResponse>('/ai/synthesize-visit', {
+    notes,
+    farmerId,
+  });
   return response.data;
 };

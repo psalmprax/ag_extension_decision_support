@@ -8,8 +8,8 @@
  */
 
 export interface EditForm {
-    subject: string;
-    body: string;
-    category: string;
-    variables: string[];
+  subject: string;
+  body: string;
+  category: string;
+  variables: string[];
 }

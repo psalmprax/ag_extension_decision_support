@@ -1,200 +1,134 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, Request, Response } from 'express';
-import { contextMenuService, UserPermissions } from '@/services/contextMenuService';
+import { query } from '@/services/databaseService';
+import type { ApiClientRow, CountRow, AuthenticatedRequestUser } from '@/types/rowTypes';
+import { mapApiClientRows, mapApiClientRow } from '@/types/dtos';
+import { authorize } from '@/middleware/authorize';
 import { logger } from '@/utils/logger';
-import { authorize, UserRole } from '@/middleware/authorize';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
-// Apply authentication to all context menu routes
-router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
+type AuthedRequest = Request & { user?: AuthenticatedRequestUser };
 
-// Helper function to extract user permissions
-const getUserPermissions = (req: Request): UserPermissions => {
-    const user = req.user;
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
-
-    // Map roles to permissions (this could be expanded based on your permission system)
-    const rolePermissions: Record<UserRole, string[]> = {
-        admin: ['manage_farmers', 'manage_visits', 'manage_reports', 'manage_knowledge', 'manage_users', 'delete_farmers', 'delete_visits', 'delete_reports', 'delete_knowledge', 'delete_users', 'export_data', 'schedule_visits', 'publish_knowledge'],
-        regional_manager: ['manage_farmers', 'manage_visits', 'manage_reports', 'manage_knowledge', 'delete_farmers', 'delete_visits', 'delete_reports', 'delete_knowledge', 'export_data', 'schedule_visits', 'publish_knowledge'],
-        extension_officer: ['manage_visits', 'manage_reports', 'delete_visits', 'delete_reports', 'export_data', 'schedule_visits'],
-        farmer: ['view_own_data', 'export_own_data']
-    };
-
-    return {
-        userId: user.userId,
-        role: user.role,
-        permissions: rolePermissions[user.role] || []
-    };
-};
-
-// Get context menu for a specific entity
-router.get('/:entityType/:entityId', async (req: Request, res: Response) => {
+/**
+ * GET /api/context-menus/clients — list API clients (admin only).
+ */
+router.get('/clients', authorize(['admin']), async (_req: Request, res: Response) => {
     try {
-        const { entityType, entityId } = req.params;
-        const { bulk } = req.query;
-
-        if (!['farmer', 'visit', 'report', 'knowledge', 'user'].includes(entityType)) {
-            return res.status(400).json({
-                success: false,
-                error: 'Invalid entity type'
-            });
-        }
-
-        const userPermissions = getUserPermissions(req);
-        const isBulk = bulk === 'true';
-
-        const menu = await contextMenuService.generateContextMenu(
-            entityType as any,
-            entityId,
-            userPermissions,
-            isBulk
+        const { rows } = await query<ApiClientRow>(
+            'SELECT * FROM api_clients ORDER BY created_at DESC'
         );
-
-        res.json({
-            success: true,
-            data: menu
-        });
+        return res.json({ success: true, data: mapApiClientRows(rows) });
     } catch (error) {
-        logger.error('Get context menu error:', error);
-        safeError(res, 500, 'Failed to get context menu');
+        logger.error('Failed to list API clients:', error);
+        return safeError(res, 500, 'Failed to list API clients');
     }
 });
 
-// Get bulk action context menu for an entity type
-router.get('/bulk/:entityType', async (req: Request, res: Response) => {
+/**
+ * POST /api/context-menus/clients — register an API client.
+ * Schema: id, owner_user_id, name, status, monthly_quota, current_period_start/end, created/updated_at.
+ */
+router.post('/clients', authorize(['admin']), async (req: AuthedRequest, res: Response) => {
     try {
-        const { entityType } = req.params;
+        const userId = req.user?.userId;
+        if (!userId) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+        const body = req.body as { name?: string; monthly_quota?: number };
 
-        if (!['farmer', 'visit', 'report', 'knowledge', 'user'].includes(entityType)) {
-            return res.status(400).json({
-                success: false,
-                error: 'Invalid entity type'
-            });
+        if (!body.name) {
+            return res.status(400).json({ success: false, error: 'name is required' });
         }
 
-        const userPermissions = getUserPermissions(req);
-
-        const menu = await contextMenuService.generateContextMenu(
-            entityType as any,
-            null,
-            userPermissions,
-            true
+        const { rows } = await query<ApiClientRow>(
+            `INSERT INTO api_clients (owner_user_id, name, status, monthly_quota, current_period_start, current_period_end)
+             VALUES ($1, $2, 'active', $3, NOW(), NOW() + INTERVAL '30 days')
+             RETURNING *`,
+            [userId, body.name, body.monthly_quota ?? 1000]
         );
 
-        res.json({
-            success: true,
-            data: menu
-        });
+        const created = rows[0];
+        return res.status(201).json({ success: true, data: created ? mapApiClientRow(created) : null });
     } catch (error) {
-        logger.error('Get bulk context menu error:', error);
-        safeError(res, 500, 'Failed to get bulk context menu');
+        logger.error('Failed to create API client:', error);
+        return safeError(res, 500, 'Failed to create API client');
     }
 });
 
-// Execute a context menu action
-router.post('/action', async (req: Request, res: Response) => {
+/**
+ * PATCH /api/context-menus/clients/:id — update quota / status.
+ */
+router.patch('/clients/:id', authorize(['admin']), async (req: Request, res: Response) => {
     try {
-        const { action, entityType, entityId, data } = req.body;
-
-        if (!action || !entityType || !entityId) {
-            return res.status(400).json({
-                success: false,
-                error: 'Missing required fields: action, entityType, entityId'
-            });
+        const id = req.params.id;
+        if (!id) {
+            return res.status(400).json({ success: false, error: 'Client id is required' });
         }
+        const updates = req.body as Partial<{ name: string; status: string; monthly_quota: number }>;
 
-        if (!['farmer', 'visit', 'report', 'knowledge', 'user'].includes(entityType)) {
-            return res.status(400).json({
-                success: false,
-                error: 'Invalid entity type'
-            });
+        const fields: string[] = [];
+        const params: unknown[] = [];
+        let i = 1;
+        for (const [key, value] of Object.entries(updates)) {
+            if (value === undefined) continue;
+            fields.push(`${key} = $${i++}`);
+            params.push(value);
         }
-
-        const userPermissions = getUserPermissions(req);
-
-        // Additional authorization check for sensitive actions
-        if (action.includes('delete') || action.includes('edit')) {
-            const isOwner = await contextMenuService['checkEntityOwnership'](entityType, entityId, userPermissions.userId);
-            if (!isOwner && !['admin', 'regional_manager'].includes(userPermissions.role)) {
-                return res.status(403).json({
-                    success: false,
-                    error: 'Insufficient permissions'
-                });
-            }
+        if (fields.length === 0) {
+            return res.status(400).json({ success: false, error: 'No updates supplied' });
         }
+        fields.push('updated_at = NOW()');
+        params.push(id);
 
-        const result = await contextMenuService.executeAction(
-            action,
-            entityType,
-            entityId,
-            userPermissions.userId,
-            data
+        const { rows } = await query<ApiClientRow>(
+            `UPDATE api_clients SET ${fields.join(', ')} WHERE id = $${i} RETURNING *`,
+            params
         );
 
-        res.json({
-            success: true,
-            data: result
-        });
+        if (rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Client not found' });
+        }
+        const updated = rows[0];
+        return res.json({ success: true, data: updated ? mapApiClientRow(updated) : null });
     } catch (error) {
-        logger.error('Execute context menu action error:', error);
-        safeError(res, 500, 'Failed to execute action');
+        logger.error('Failed to update API client:', error);
+        return safeError(res, 500, 'Failed to update API client');
     }
 });
 
-// Get available actions for an entity type (for frontend validation)
-router.get('/actions/:entityType', async (req: Request, res: Response) => {
+/**
+ * DELETE /api/context-menus/clients/:id — set status='disabled' (soft-delete).
+ */
+router.delete('/clients/:id', authorize(['admin']), async (req: Request, res: Response) => {
     try {
-        const { entityType } = req.params;
-
-        if (!['farmer', 'visit', 'report', 'knowledge', 'user'].includes(entityType)) {
-            return res.status(400).json({
-                success: false,
-                error: 'Invalid entity type'
-            });
+        const id = req.params.id;
+        if (!id) {
+            return res.status(400).json({ success: false, error: 'Client id is required' });
         }
-
-        const userPermissions = getUserPermissions(req);
-
-        // Generate menu to extract available actions
-        const menu = await contextMenuService.generateContextMenu(
-            entityType as any,
-            'dummy', // We just need the structure
-            userPermissions,
-            false
+        const { rows } = await query<CountRow>(
+            'UPDATE api_clients SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING id',
+            ['disabled', id]
         );
-
-        // Extract all unique actions from the menu
-        const actions = new Set<string>();
-        const extractActions = (items: any[]) => {
-            items.forEach(item => {
-                if (item.action && !item.separator) {
-                    actions.add(item.action);
-                }
-                if (item.children) {
-                    extractActions(item.children);
-                }
-            });
-        };
-
-        menu.sections.forEach(section => {
-            extractActions(section.items);
-        });
-
-        res.json({
-            success: true,
-            data: {
-                entityType,
-                actions: Array.from(actions)
-            }
-        });
+        if (rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Client not found' });
+        }
+        return res.json({ success: true });
     } catch (error) {
-        logger.error('Get available actions error:', error);
-        safeError(res, 500, 'Failed to get available actions');
+        logger.error('Failed to disable API client:', error);
+        return safeError(res, 500, 'Failed to disable API client');
+    }
+});
+
+/**
+ * GET /api/context-menus/templates — list context-menu templates for the caller.
+ */
+router.get('/templates', authorize(['admin', 'regional_manager', 'extension_officer']), async (_req: Request, res: Response) => {
+    try {
+        return res.json({ success: true, data: [] });
+    } catch (error) {
+        logger.error('Failed to list context-menu templates:', error);
+        return safeError(res, 500, 'Failed to list context-menu templates');
     }
 });
 

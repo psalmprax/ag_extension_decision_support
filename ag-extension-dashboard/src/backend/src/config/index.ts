@@ -23,6 +23,7 @@ export interface AppConfig {
     openAI: { apiKey: string };
     anthropic: { apiKey: string };
     groq: { apiKey: string };
+    freebuff: { authToken: string; apiBaseUrl: string; defaultModel: string };
     externalApis: {
         weather: { apiKey: string; url: string };
         fao: { url: string };
@@ -112,6 +113,16 @@ export const config: AppConfig = {
 
     groq: {
         apiKey: getEnv('GROQ_API_KEY'),
+    },
+
+    freebuff: {
+        // Community Freebuff2API proxy — no SLA, may rate-limit or go offline.
+        // The provider class (services/aiProvider/providers/freebuff.ts) currently
+        // reads these directly via process.env; this typed block gives callers and
+        // future refactors a single accessor.
+        authToken: getEnv('FREEBUFF_AUTH_TOKEN'),
+        apiBaseUrl: getEnv('FREEBUFF_API_BASE_URL'),
+        defaultModel: getEnv('FREEBUFF_DEFAULT_MODEL', 'deepseek-chat'),
     },
 
     externalApis: {

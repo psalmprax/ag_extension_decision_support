@@ -1,8 +1,21 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, Request, Response } from 'express';
 import { KnowledgeService } from '@/services/knowledgeService';
 import { cacheGet, cacheSet } from '@/services/cacheService';
 import { getPool, query } from '@/services/databaseService';
+import type {
+  CountRow,
+  KnowledgeArticleRow,
+  KnowledgeCategoryRow,
+  KnowledgeCropRow,
+  KnowledgeArticleForVector,
+} from '@/types/rowTypes';
+import {
+  mapCountRow,
+  mapKnowledgeArticleRows,
+  mapKnowledgeArticleRow,
+  mapKnowledgeCategoryRows,
+  mapKnowledgeCropRows,
+} from '@/types/dtos';
 import { getPrisma } from '@/services/prismaService';
 import { logger } from '@/utils/logger';
 import { authorize, UserRole } from '@/middleware/authorize';
@@ -10,6 +23,7 @@ import { tavilyService } from '@/services/tavilyService';
 import { VectorService, SearchResult } from '@/services/vectorService';
 import type { Citation } from '@/services/ragV2Service';
 import { safeError } from '@/utils/safeResponse';
+import { parseSynthesizeVisitResponse } from '@/schemas/synthesizeVisitResponse';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -18,7 +32,7 @@ import { v4 as uuidv4 } from 'uuid';
 const router = Router();
 const knowledgeAdminRoles: UserRole[] = ['admin', 'regional_manager', 'extension_officer'];
 
-async function upsertVector(article: Record<string, any>): Promise<void> {
+async function upsertVector(article: KnowledgeArticleForVector): Promise<void> {
     await VectorService.upsertDocument(article.id, article.content, {
         title: article.title,
         category: article.category,
@@ -224,7 +238,7 @@ export async function seedKnowledgeArticles(): Promise<void> {
     }
 }
 
-async function performLegacySearch(limit: string, offset: string, category?: string, crop?: string) {
+async function performLegacySearch(limit: string, offset: string, category?: string, crop?: string): Promise<{ articles: SearchResult[]; totalCount: number }> {
     let sql = 'SELECT * FROM knowledge_articles WHERE 1=1';
     let countSql = 'SELECT COUNT(*) as count FROM knowledge_articles WHERE 1=1';
     const params: unknown[] = [];
@@ -245,13 +259,15 @@ async function performLegacySearch(limit: string, offset: string, category?: str
     }
 
     sql += ' ORDER BY "order" ASC, created_at DESC LIMIT $' + paramIndex + ' OFFSET $' + (paramIndex + 1);
-    const countResult = await query(countSql, params);
+    const countResult = await query<CountRow>(countSql, params);
+    const totalCount = mapCountRow(countResult.rows[0]).count;
     params.push(parseInt(limit, 10), parseInt(offset, 10));
 
-    const result = await query(sql, params);
-    const articles = result.rows;
-    (articles as unknown as { totalCount: number }).totalCount = parseInt(countResult.rows[0]?.count || '0', 10);
-    return articles;
+    const result = await query<KnowledgeArticleRow>(sql, params);
+    return {
+        articles: result.rows as unknown as SearchResult[],
+        totalCount,
+    };
 }
 
 async function executeRagV2Search(q: string, limit: string, category: string | undefined, crop: string | undefined, cacheKey: string, res: Response) {
@@ -264,7 +280,7 @@ async function executeRagV2Search(q: string, limit: string, category: string | u
             useReranking: true,
             filters: { category, crop }
         });
-        const articles = enhanced.results.map((r: Record<string, any>) => ({
+        const articles = enhanced.results.map(r => ({
             id: r.articleId,
             content: r.content,
             metadata: r.metadata,
@@ -297,7 +313,9 @@ async function fetchKnowledgeArticles(q: unknown, limit: unknown, offset: unknow
             crop: crop as string | undefined
         });
     } else if (pool) {
-        articles = await performLegacySearch(limit as string, offset as string, category as string | undefined, crop as string | undefined);
+        const legacy = await performLegacySearch(limit as string, offset as string, category as string | undefined, crop as string | undefined);
+        articles = legacy.articles;
+        (articles as unknown as { totalCount: number }).totalCount = legacy.totalCount;
     }
 
     if (!articles || articles.length === 0) {
@@ -420,8 +438,8 @@ router.get('/meta/categories', async (_req: Request, res: Response) => {
         const pool = getPool();
         let categories: string[] = [];
         if (pool) {
-            const result = await query('SELECT DISTINCT category FROM knowledge_articles ORDER BY category');
-            categories = result.rows.map((r: Record<string, any>) => r.category);
+            const result = await query<KnowledgeCategoryRow>('SELECT DISTINCT category FROM knowledge_articles ORDER BY category');
+            categories = mapKnowledgeCategoryRows(result.rows).map(c => c.category);
         }
         if (categories.length === 0) {
             return res.json({ success: true, data: [] });
@@ -439,8 +457,8 @@ router.get('/meta/crops', async (_req: Request, res: Response) => {
         const pool = getPool();
         let crops: string[] = [];
         if (pool) {
-            const result = await query("SELECT DISTINCT unnest(crops) as crop FROM knowledge_articles WHERE crops IS NOT NULL");
-            crops = result.rows.map((r: Record<string, any>) => r.crop);
+            const result = await query<KnowledgeCropRow>("SELECT DISTINCT unnest(crops) as crop FROM knowledge_articles WHERE crops IS NOT NULL");
+            crops = mapKnowledgeCropRows(result.rows).map(c => c.crop);
         }
         if (crops.length === 0) {
             return res.json({ success: true, data: [] });
@@ -547,10 +565,10 @@ router.get('/:id', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const pool = getPool();
-        let article = null;
+        let article: KnowledgeArticleRow | null = null;
         if (pool) {
-            const result = await query('SELECT * FROM knowledge_articles WHERE id = $1', [id]);
-            article = result.rows[0];
+            const result = await query<KnowledgeArticleRow>('SELECT * FROM knowledge_articles WHERE id = $1', [id]);
+            article = result.rows[0] ?? null;
         }
         if (!article) {
             return res.status(errorStatusMap['ARTICLE_NOT_FOUND']).json({
@@ -559,11 +577,83 @@ router.get('/:id', async (req: Request, res: Response) => {
                 error: 'Article not found'
             });
         }
-        res.json({ success: true, data: article });
+        res.json({ success: true, data: mapKnowledgeArticleRow(article) });
     } catch (error) {
         logger.error('Get article error:', error);
         safeError(res, 500, 'Failed to get article');
     }
+});
+
+// Synthesize a field visit from raw notes (returns summary, crop health, actions)
+router.post('/synthesize-visit', async (req: Request, res: Response) => {
+  try {
+    const { farmerId, farmerName, crop, region, notes, visitType } = req.body as {
+      farmerId?: string;
+      farmerName?: string;
+      crop?: string;
+      region?: string;
+      notes?: string;
+      visitType?: string;
+    };
+    const user = (req as Request & { user?: Record<string, unknown> }).user;
+    const userId = user?.userId || user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'User not authenticated' });
+    }
+    if (!notes) {
+      return res.status(400).json({ success: false, error: 'Visit notes are required' });
+    }
+
+    const prompt = `You are an agricultural extension officer. Synthesize the following field visit notes into a structured summary.
+
+Farmer: ${farmerName ?? 'Unknown'}${farmerId ? ` (id: ${farmerId})` : ''}
+Region: ${region ?? 'Unknown'}
+Crop: ${crop ?? 'Unknown'}
+Visit type: ${visitType ?? 'routine'}
+
+Raw notes:
+"""
+${notes}
+"""
+
+Respond with valid JSON only (no markdown, no commentary). Schema:
+{
+  "summary": "2-3 sentence overview of the visit",
+  "cropHealth": { "status": "good" | "fair" | "poor", "notes": "brief crop condition assessment" },
+  "actions": [ { "priority": "high" | "medium" | "low", "description": "concrete next step" } ],
+  "followUpDate": "ISO date string or null"
+}`;
+
+    // Free-tier users (farmers) route to the freebuff best-effort provider;
+    // officers and admins continue to use the primary/fallback chain. The
+    // freebuff provider is already wired into the fallback chain via
+    // AIProviderFactory.getWithFallback, so the 'preferredProvider' hint is
+    // forwarded through KnowledgeService.askQuestion options to nudge the
+    // cascade toward the community proxy first when role === 'farmer'.
+    const isFreeTier = (user as Record<string, unknown> | undefined)?.role === 'farmer';
+    const preferredProvider = isFreeTier ? 'freebuff' : undefined;
+    const result = await KnowledgeService.askQuestion(userId, prompt, undefined, { preferredProvider });
+
+    const rawAnswer = (result.answer ?? '').trim();
+    const summaryFallback = rawAnswer || 'Visit recorded.';
+    const parsed = parseSynthesizeVisitResponse(rawAnswer, summaryFallback);
+
+    res.json({
+      success: true,
+      data: {
+        summary: parsed.summary,
+        cropHealth: parsed.cropHealth,
+        actions: parsed.actions,
+        followUpDate: parsed.followUpDate,
+        cached: result.cached ?? false,
+      },
+    });
+  } catch (error) {
+    logger.error('Synthesize visit error:', error);
+    if (!res.headersSent) {
+      safeError(res, 500, 'Failed to synthesize visit');
+    }
+  }
 });
 
 // Ask AI a question (RAG-based)
@@ -580,7 +670,16 @@ router.post('/ask', async (req: Request, res: Response) => {
             return res.status(401).json({ success: false, error: 'User not authenticated' });
         }
 
-        const result = await KnowledgeService.askQuestion(userId, question);
+        // Free-tier users (farmers) route to the freebuff best-effort provider;
+        // officers and admins continue to use the primary/fallback chain. The
+        // freebuff provider is already wired into the fallback chain via
+        // AIProviderFactory.getWithFallback, so the 'preferredProvider' hint is
+        // forwarded through KnowledgeService.askQuestion options to nudge the
+        // cascade toward the community proxy first when role === 'farmer'.
+        const askUser = user as Record<string, unknown> | undefined;
+        const isFreeTier = askUser?.role === 'farmer';
+        const preferredProvider = isFreeTier ? 'freebuff' : undefined;
+        const result = await KnowledgeService.askQuestion(userId, question, undefined, { preferredProvider });
 
         let citations: Citation[] = [];
         try {
@@ -835,7 +934,7 @@ async function processKnowledgeIngestion(req: Request, res: Response) {
     const { title, category = 'General', crops, regions, tags } = req.body;
     const filePath = req.file.path;
     const ext = path.extname(req.file.originalname).toLowerCase();
-    
+
     const content = await extractContentFromFile(filePath, ext);
 
     if (content === null) {

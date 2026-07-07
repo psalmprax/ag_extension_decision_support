@@ -1,5 +1,22 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, Request, Response } from 'express';
+import type {
+  CountRow,
+  PriorityQueueRow,
+  RecommendedVisitRow,
+  AlertSummaryRow,
+  FarmerDetailRow,
+  PortfolioExportFarmerRow,
+  PortfolioExportVisitRow,
+} from '@/types/rowTypes';
+import {
+  mapCountRow,
+  mapPriorityQueueRows,
+  mapRecommendedVisitRows,
+  mapAlertSummaryRows,
+  mapFarmerDetailRow,
+  mapPortfolioExportFarmerRows,
+  mapPortfolioExportVisitRows,
+} from '@/types/dtos';
 import { query, getPool } from '@/services/databaseService';
 import { cacheGet, cacheSet } from '@/services/cacheService';
 import { logger } from '@/utils/logger';
@@ -38,25 +55,25 @@ router.get('/', async (req: Request, res: Response) => {
             upcomingVisits,
             highPriority
         ] = await Promise.all([
-            query('SELECT COUNT(*) as count FROM farmers WHERE user_id = $1', [oId]),
-            query("SELECT COUNT(*) as count FROM visits WHERE officer_id = $1 AND status = 'scheduled'", [oId]),
-            query("SELECT COUNT(*) as count FROM visits WHERE officer_id = $1 AND status = 'scheduled' AND scheduled_at < NOW()", [oId]),
-            query("SELECT COUNT(*) as count FROM visits WHERE officer_id = $1 AND status = 'scheduled' AND scheduled_at > NOW() AND scheduled_at < NOW() + INTERVAL '7 days'", [oId]),
-            query(`
+            query<CountRow>('SELECT COUNT(*) as count FROM farmers WHERE user_id = $1', [oId]),
+            query<CountRow>("SELECT COUNT(*) as count FROM visits WHERE officer_id = $1 AND status = 'scheduled'", [oId]),
+            query<CountRow>("SELECT COUNT(*) as count FROM visits WHERE officer_id = $1 AND status = 'scheduled' AND scheduled_at < NOW()", [oId]),
+            query<CountRow>("SELECT COUNT(*) as count FROM visits WHERE officer_id = $1 AND status = 'scheduled' AND scheduled_at > NOW() AND scheduled_at < NOW() + INTERVAL '7 days'", [oId]),
+            query<CountRow>(`
                 SELECT COUNT(*) as count FROM visits v
                 JOIN farmers f ON f.id = v.farmer_id
-                WHERE v.officer_id = $1 
+                WHERE v.officer_id = $1
                 AND v.follow_up_required = true
                 AND v.completed_at > NOW() - INTERVAL '30 days'
             `, [oId])
         ]);
 
         // Get priority queue (farmers needing attention)
-        const priorityQueue = await query(`
-            SELECT f.id as farmer_id, 
+        const priorityQueue = await query<PriorityQueueRow>(`
+            SELECT f.id as farmer_id,
                    f.first_name || ' ' || f.last_name as name,
                    'Follow-up required' as reason,
-                   CASE 
+                   CASE
                        WHEN EXISTS (SELECT 1 FROM alerts a WHERE a.is_active = true AND f.region = ANY(a.affected_regions)) THEN 'high'
                        WHEN v.follow_up_required THEN 'medium'
                        ELSE 'low'
@@ -65,7 +82,7 @@ router.get('/', async (req: Request, res: Response) => {
             FROM farmers f
             LEFT JOIN LATERAL (
                 SELECT v.created_at, v.follow_up_required
-                FROM visits v 
+                FROM visits v
                 WHERE v.farmer_id = f.id AND v.status = 'completed'
                 ORDER BY v.completed_at DESC
                 LIMIT 1
@@ -77,19 +94,13 @@ router.get('/', async (req: Request, res: Response) => {
 
         const portfolio = {
             summary: {
-                totalFarmers: parseInt(totalFarmers.rows[0]?.count || '0'),
-                pendingVisits: parseInt(pendingVisits.rows[0]?.count || '0'),
-                overdueVisits: parseInt(overdueVisits.rows[0]?.count || '0'),
-                upcomingVisits: parseInt(upcomingVisits.rows[0]?.count || '0'),
-                highPriority: parseInt(highPriority.rows[0]?.count || '0'),
+                totalFarmers: mapCountRow(totalFarmers.rows[0]).count,
+                pendingVisits: mapCountRow(pendingVisits.rows[0]).count,
+                overdueVisits: mapCountRow(overdueVisits.rows[0]).count,
+                upcomingVisits: mapCountRow(upcomingVisits.rows[0]).count,
+                highPriority: mapCountRow(highPriority.rows[0]).count,
             },
-            priorityQueue: priorityQueue.rows.map((row: Record<string, any>) => ({
-                farmerId: row.farmer_id,
-                name: row.name,
-                reason: row.reason,
-                severity: row.severity,
-                crop: row.crop,
-            })),
+            priorityQueue: mapPriorityQueueRows(priorityQueue.rows),
             recentVisits: [],
         };
 
@@ -115,22 +126,22 @@ router.get('/recommendations', async (req: Request, res: Response) => {
         }
 
         // Get recommended visits based on priority
-        const recommendedVisits = await query(`
+        const recommendedVisits = await query<RecommendedVisitRow>(`
             SELECT f.id as farmer_id,
                    f.first_name || ' ' || f.last_name as name,
                    f.location_lat as lat,
                    f.location_lng as lng,
-                   CASE 
+                   CASE
                        WHEN EXISTS (SELECT 1 FROM alerts a WHERE a.is_active = true) THEN 'Disease alert'
                        WHEN v.follow_up_required THEN 'Follow-up required'
                        ELSE 'Routine check'
                    END as reason,
                    1 as priority,
-                   45 as estimatedTime
+                   45 as estimatedtime
             FROM farmers f
             LEFT JOIN LATERAL (
                 SELECT v.follow_up_required, v.completed_at
-                FROM visits v 
+                FROM visits v
                 WHERE v.farmer_id = f.id AND v.status = 'completed'
                 ORDER BY v.completed_at DESC
                 LIMIT 1
@@ -141,7 +152,7 @@ router.get('/recommendations', async (req: Request, res: Response) => {
         `, [oId]);
 
         // Get active alerts
-        const alerts = await query(`
+        const alerts = await query<AlertSummaryRow>(`
             SELECT type, severity, description, location
             FROM alerts
             WHERE is_active = true
@@ -151,20 +162,8 @@ router.get('/recommendations', async (req: Request, res: Response) => {
 
         const recommendations = {
             date: targetDate,
-            recommendedVisits: recommendedVisits.rows.map((row: Record<string, any>) => ({
-                farmerId: row.farmer_id,
-                name: row.name,
-                location: { lat: row.lat, lng: row.lng },
-                reason: row.reason,
-                priority: row.priority,
-                estimatedTime: row.estimatedtime,
-            })),
-            alerts: alerts.rows.map((row: Record<string, any>) => ({
-                type: row.type,
-                severity: row.severity,
-                location: row.location,
-                description: row.description,
-            })),
+            recommendedVisits: mapRecommendedVisitRows(recommendedVisits.rows),
+            alerts: mapAlertSummaryRows(alerts.rows),
         };
 
         res.json({ success: true, data: recommendations });
@@ -183,38 +182,50 @@ router.get('/farmers/:id', async (req: Request, res: Response) => {
         const { id } = req.params;
         const pool = getPool();
 
-        let farmer = null;
+        let farmer: FarmerDetailRow | null = null;
         if (pool) {
-            const result = await query(`
-                SELECT f.*, 
+            const result = await query<FarmerDetailRow>(`
+                SELECT f.id,
+                       f.first_name,
+                       f.last_name,
+                       f.phone,
+                       f.village,
+                       f.district,
+                       f.region,
+                       f.location_lat,
+                       f.location_lng,
+                       f.farm_size_hectares,
+                       f.crops,
+                       f.language_preference,
                        (SELECT MAX(v.completed_at) FROM visits v WHERE v.farmer_id = f.id AND v.status = 'completed') as last_visit
-                FROM farmers f 
+                FROM farmers f
                 WHERE f.id = $1
             `, [id]);
-            farmer = result.rows[0];
+            farmer = result.rows[0] ?? null;
         }
 
         if (!farmer) {
             return res.status(404).json({ success: false, error: 'Farmer not found' });
         }
 
+        const dto = mapFarmerDetailRow(farmer);
         res.json({
             success: true,
             data: {
-                id: farmer.id,
-                name: farmer.first_name + ' ' + farmer.last_name,
+                id: dto.id,
+                name: `${dto.firstName} ${dto.lastName}`,
                 location: {
-                    lat: farmer.location_lat,
-                    lng: farmer.location_lng,
-                    village: farmer.village,
-                    district: farmer.district,
+                    lat: dto.locationLat,
+                    lng: dto.locationLng,
+                    village: dto.village,
+                    district: dto.district,
                 },
-                farmSize: farmer.farm_size_hectares,
-                crops: farmer.crops,
-                lastVisit: farmer.last_visit,
+                farmSize: dto.farmSizeHectares,
+                crops: dto.crops,
+                lastVisit: dto.lastVisit,
                 contact: {
-                    phone: farmer.phone,
-                    preferredLanguage: farmer.language_preference,
+                    phone: dto.phone,
+                    preferredLanguage: dto.languagePreference,
                 },
             },
         });
@@ -224,8 +235,8 @@ router.get('/farmers/:id', async (req: Request, res: Response) => {
     }
 });
 
-function buildSummarySheet(farmers: Record<string, any>[], oId: string) {
-    const summaryData = [
+function buildSummarySheet(farmers: PortfolioExportFarmerRow[], oId: string) {
+    const summaryData: (string | number)[][] = [
         ['Portfolio Summary'],
         [''],
         ['Extension Officer', oId],
@@ -233,14 +244,14 @@ function buildSummarySheet(farmers: Record<string, any>[], oId: string) {
         [''],
         ['Metric', 'Value'],
         ['Total Farmers', farmers.length],
-        ['Farmers with Visits', farmers.filter((f: Record<string, any>) => f.total_visits > 0).length],
-        ['Total Visits', farmers.reduce((sum: number, f: Record<string, any>) => sum + parseInt(f.total_visits || '0'), 0)],
+        ['Farmers with Visits', farmers.filter(f => parseInt(f.total_visits, 10) > 0).length],
+        ['Total Visits', farmers.reduce((sum, f) => sum + parseInt(f.total_visits, 10), 0)],
     ];
     return XLSX.utils.aoa_to_sheet(summaryData);
 }
 
-function buildFarmersSheet(farmers: Record<string, any>[]) {
-    const farmerRows = [
+function buildFarmersSheet(farmers: PortfolioExportFarmerRow[]) {
+    const farmerRows: (string | number)[][] = [
         ['First Name', 'Last Name', 'Phone', 'Village', 'District', 'Region', 'Farm Size (ha)', 'Crops', 'Total Visits', 'Last Visit']
     ];
     for (const farmer of farmers) {
@@ -251,17 +262,17 @@ function buildFarmersSheet(farmers: Record<string, any>[]) {
             farmer.village || '',
             farmer.district || '',
             farmer.region || '',
-            farmer.farm_size_hectares || 0,
+            farmer.farm_size_hectares != null ? Number(farmer.farm_size_hectares) : 0,
             (farmer.crops || []).join(', '),
-            farmer.total_visits || 0,
+            Number(farmer.total_visits) || 0,
             farmer.last_visit_date ? new Date(farmer.last_visit_date).toLocaleDateString() : 'Never'
         ]);
     }
     return XLSX.utils.aoa_to_sheet(farmerRows);
 }
 
-function buildVisitsSheet(visits: Record<string, any>[]) {
-    const visitsRows = [
+function buildVisitsSheet(visits: PortfolioExportVisitRow[]) {
+    const visitsRows: (string | number)[][] = [
         ['Farmer Name', 'Village', 'Scheduled Date', 'Type', 'Notes']
     ];
     for (const visit of visits) {
@@ -269,7 +280,7 @@ function buildVisitsSheet(visits: Record<string, any>[]) {
             `${visit.first_name} ${visit.last_name}`,
             visit.village || '',
             visit.scheduled_at ? new Date(visit.scheduled_at).toLocaleString() : '',
-            visit.type || 'routine',
+            visit.type || visit.visit_type || 'routine',
             visit.notes || ''
         ]);
     }
@@ -288,11 +299,19 @@ router.get('/export/excel', async (req: Request, res: Response) => {
         }
 
         // Get all farmers for this officer
-        const farmersResult = await query(`
-            SELECT f.*, 
+        const farmersResult = await query<PortfolioExportFarmerRow>(`
+            SELECT f.id,
+                   f.first_name,
+                   f.last_name,
+                   f.phone,
+                   f.village,
+                   f.district,
+                   f.region,
+                   f.farm_size_hectares,
+                   f.crops,
                    (SELECT COUNT(*) FROM visits v WHERE v.farmer_id = f.id AND v.status = 'completed') as total_visits,
                    (SELECT MAX(v.completed_at) FROM visits v WHERE v.farmer_id = f.id AND v.status = 'completed') as last_visit_date
-            FROM farmers f 
+            FROM farmers f
             WHERE f.user_id = $1
             ORDER BY f.last_name, f.first_name
         `, [oId]);
@@ -304,8 +323,17 @@ router.get('/export/excel', async (req: Request, res: Response) => {
         XLSX.utils.book_append_sheet(wb, buildFarmersSheet(farmers), 'Farmers');
 
         // Get upcoming visits
-        const visitsResult = await query(`
-            SELECT v.*, f.first_name, f.last_name, f.village
+        const visitsResult = await query<PortfolioExportVisitRow>(`
+            SELECT v.id,
+                   v.officer_id,
+                   v.farmer_id,
+                   v.visit_type,
+                   v.status,
+                   v.scheduled_at,
+                   v.notes,
+                   f.first_name,
+                   f.last_name,
+                   f.village
             FROM visits v
             JOIN farmers f ON f.id = v.farmer_id
             WHERE v.officer_id = $1 AND v.status = 'scheduled' AND v.scheduled_at > NOW()

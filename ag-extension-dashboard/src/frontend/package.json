@@ -20,6 +20,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@ag-extension/shared": "file:../../../ag-extension-shared",
     "@headlessui/react": "^1.7.17",
     "@hookform/resolvers": "^5.2.2",
     "@tailwindcss/typography": "^0.5.19",

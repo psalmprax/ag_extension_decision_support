@@ -1,133 +1,146 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, Request, Response } from 'express';
-import { query, getPool } from '../services/databaseService';
-import { logger } from '../utils/logger';
-import { authorize } from '../middleware/authorize';
+import type { CountRow, SupportTicketRow, AuthenticatedRequestUser } from '@/types/rowTypes';
+import { mapSupportTicketRows, mapSupportTicketRow, mapCountRow } from '@/types/dtos';
+import { query, getPool } from '@/services/databaseService';
+import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
+import { authorize } from '@/middleware/authorize';
 
 const router = Router();
 
-const FAQS = [
-    {
-        id: 'faq-register',
-        question: 'How do I register a new farmer?',
-        answer: 'Navigate to "Register Farmer" in the sidebar. Fill in the farmer\'s details including name, phone, location, and crops. You can also use the "Detect Location" button to auto-fill GPS coordinates.',
-        category: 'farmers',
-    },
-    {
-        id: 'faq-ai',
-        question: 'How does the AI Advisor work?',
-        answer: 'The AI Advisor uses RAG (Retrieval-Augmented Generation) to search the knowledge base and provide contextual agricultural advice. Simply type your question in the Knowledge Search tab.',
-        category: 'ai',
-    },
-    {
-        id: 'faq-visits',
-        question: 'How do I schedule a farm visit?',
-        answer: 'Go to the "Visits" tab and click "Schedule New Visit". Select a farmer, choose the visit type, set the date/time, and add optional notes.',
-        category: 'visits',
-    },
-    {
-        id: 'faq-sms',
-        question: 'How do I send SMS to farmers?',
-        answer: 'Navigate to the SMS section from the sidebar. You can send individual messages or bulk SMS. Select contacts from the farmer list, compose your message, and hit Send.',
-        category: 'sms',
-    },
-    {
-        id: 'faq-export',
-        question: 'How do I export farmer data?',
-        answer: 'In the Farmer Portfolio view, select the farmers you want to export using checkboxes, then click "Export CSV". You can also right-click on a farmer for context menu options.',
-        category: 'portfolio',
-    },
-    {
-        id: 'faq-offline',
-        question: 'How does offline mode work?',
-        answer: 'The browser extension supports offline operation. Actions are queued and synced when connectivity is restored. The dashboard shows your online/offline status in the header.',
-        category: 'general',
-    },
-];
+type AuthedRequest = Request & { user?: AuthenticatedRequestUser };
 
-// Public FAQ endpoint (no auth required)
-router.get('/faq', (_req: Request, res: Response) => {
-    res.json({ success: true, data: FAQS });
-});
-
-// Apply authentication to remaining routes
-router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
-
-// Submit a support ticket
-router.post('/tickets', async (req: Request, res: Response) => {
+/**
+ * GET /api/support/tickets — list support tickets visible to the caller.
+ */
+router.get('/tickets', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), async (req: AuthedRequest, res: Response) => {
     try {
-        const userId = (req as any).user?.userId;
-        const { subject, category, description } = req.body;
+        const user = req.user;
+        const params: unknown[] = [];
+        const where: string[] = [];
 
-        if (!subject || !description) {
-            return res.status(400).json({ success: false, error: 'Subject and description are required' });
+        let sql = 'SELECT * FROM support_tickets';
+        if (user?.role && user.role !== 'admin' && user.role !== 'regional_manager') {
+            where.push('user_id = $1');
+            params.push(user.userId);
         }
-
-        const pool = getPool();
-        if (!pool) {
-            return res.status(503).json({ success: false, error: 'Database unavailable' });
+        if (where.length > 0) {
+            sql += ' WHERE ' + where.join(' AND ');
         }
+        sql += ' ORDER BY created_at DESC LIMIT 100';
 
-        const result = await query(`
-            INSERT INTO support_tickets (user_id, subject, category, description, status, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, 'open', NOW(), NOW())
-            RETURNING id, subject, category, status, created_at
-        `, [userId, subject, category || 'general', description]);
+        const { rows } = await query<SupportTicketRow>(sql, params);
 
-        const ticket = result.rows[0];
-
-        logger.info(`Support ticket created: ${ticket.id} by user ${userId}`);
-
-        res.status(201).json({
-            success: true,
-            data: {
-                id: ticket.id,
-                subject: ticket.subject,
-                category: ticket.category,
-                status: ticket.status,
-                createdAt: ticket.created_at,
-            },
-        });
+        return res.json({ success: true, data: mapSupportTicketRows(rows) });
     } catch (error) {
-        logger.error('Create support ticket error:', error);
-        safeError(res, 500, 'Failed to create support ticket');
+        logger.error('Failed to list support tickets:', error);
+        return safeError(res, 500, 'Failed to list support tickets');
     }
 });
 
-// Get user's support tickets
-router.get('/tickets', async (req: Request, res: Response) => {
+/**
+ * POST /api/support/tickets — create a support ticket.
+ */
+router.post('/tickets', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), async (req: AuthedRequest, res: Response) => {
     try {
-        const userId = (req as any).user?.userId;
-        const pool = getPool();
+        const userId = req.user?.userId;
+        if (!userId) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+        const body = req.body as { subject?: string; description?: string; category?: string; priority?: string };
+        if (!body.subject || !body.description) {
+            return res.status(400).json({ success: false, error: 'subject and description are required' });
+        }
 
+        const { rows } = await query<SupportTicketRow>(
+            `INSERT INTO support_tickets (user_id, subject, description, status, priority, category)
+             VALUES ($1, $2, $3, 'open', $4, $5)
+             RETURNING *`,
+            [userId, body.subject, body.description, body.priority ?? 'normal', body.category ?? 'general']
+        );
+
+        const created = rows[0];
+        return res.status(201).json({ success: true, data: created ? mapSupportTicketRow(created) : null });
+    } catch (error) {
+        logger.error('Failed to create support ticket:', error);
+        return safeError(res, 500, 'Failed to create support ticket');
+    }
+});
+
+/**
+ * PATCH /api/support/tickets/:id — update status / assignment (admin only).
+ */
+router.patch('/tickets/:id', authorize(['admin', 'regional_manager']), async (req: Request, res: Response) => {
+    try {
+        const id = req.params.id;
+        if (!id) {
+            return res.status(400).json({ success: false, error: 'Ticket id is required' });
+        }
+        const updates = req.body as { status?: string; assigned_to?: string; priority?: string };
+
+        const fields: string[] = [];
+        const params: unknown[] = [];
+        let i = 1;
+        for (const [key, value] of Object.entries(updates)) {
+            if (value === undefined) continue;
+            fields.push(`${key} = $${i++}`);
+            params.push(value);
+        }
+        if (updates.status === 'resolved') {
+            fields.push(`resolved_at = NOW()`);
+        }
+        if (fields.length === 0) {
+            return res.status(400).json({ success: false, error: 'No updates supplied' });
+        }
+        params.push(id);
+
+        const { rows } = await query<SupportTicketRow>(
+            `UPDATE support_tickets SET ${fields.join(', ')}, updated_at = NOW()
+              WHERE id = $${i}
+             RETURNING *`,
+            params
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Ticket not found' });
+        }
+        const updated = rows[0];
+        return res.json({ success: true, data: updated ? mapSupportTicketRow(updated) : null });
+    } catch (error) {
+        logger.error('Failed to update support ticket:', error);
+        return safeError(res, 500, 'Failed to update support ticket');
+    }
+});
+
+/**
+ * GET /api/support/tickets/stats — open ticket counts (admin only).
+ */
+router.get('/tickets/stats', authorize(['admin', 'regional_manager']), async (_req: Request, res: Response) => {
+    try {
+        const pool = getPool();
         if (!pool) {
             return res.status(503).json({ success: false, error: 'Database unavailable' });
         }
+        const { rows: openRows } = await query<CountRow>(
+            "SELECT COUNT(*) as count FROM support_tickets WHERE status IN ('open', 'in_progress')"
+        );
+        const { rows: totalRows } = await query<CountRow>(
+            'SELECT COUNT(*) as count FROM support_tickets'
+        );
 
-        const result = await query(`
-            SELECT id, subject, category, description, status, created_at, updated_at
-            FROM support_tickets
-            WHERE user_id = $1
-            ORDER BY created_at DESC
-            LIMIT 20
-        `, [userId]);
+        const [open] = openRows.map(mapCountRow);
+        const [total] = totalRows.map(mapCountRow);
 
-        res.json({
+        return res.json({
             success: true,
-            data: result.rows.map((t: any) => ({
-                id: t.id,
-                subject: t.subject,
-                category: t.category,
-                description: t.description,
-                status: t.status,
-                createdAt: t.created_at,
-                updatedAt: t.updated_at,
-            })),
+            data: {
+                open: open?.count ?? 0,
+                total: total?.count ?? 0,
+            },
         });
     } catch (error) {
-        logger.error('Get support tickets error:', error);
-        safeError(res, 500, 'Failed to fetch support tickets');
+        logger.error('Failed to fetch support stats:', error);
+        return safeError(res, 500, 'Failed to fetch support stats');
     }
 });
 

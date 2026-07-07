@@ -12,11 +12,11 @@ interface FeatureFlags {
 
 export const useFeatureFlags = create<FeatureFlags>()(
   persist(
-    (set) => ({
+    set => ({
       designVariant: 'current',
-      setDesignVariant: (variant) => set({ designVariant: variant }),
+      setDesignVariant: variant => set({ designVariant: variant }),
       shouldShowABTest: true,
-      setShowABTest: (show) => set({ shouldShowABTest: show }),
+      setShowABTest: show => set({ shouldShowABTest: show }),
     }),
     {
       name: 'ag-feature-flags',

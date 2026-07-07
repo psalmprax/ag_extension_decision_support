@@ -13,6 +13,7 @@
     "postinstall": "wxt prepare"
   },
   "dependencies": {
+    "@ag-extension/shared": "file:../../ag-extension-shared",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "lucide-react": "^0.344.0",

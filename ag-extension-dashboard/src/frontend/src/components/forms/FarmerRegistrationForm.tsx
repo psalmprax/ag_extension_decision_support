@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { farmerSchema, type FarmerInput } from '@/lib/schemas';
 import { useAppStore } from '@/store/useAppStore';
-import { UserPlus, MapPin, Phone, Maximize, Activity } from 'lucide-react';
+import { UserPlus, MapPin, Phone, Maximize, Activity, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
@@ -16,6 +16,7 @@ export const FarmerRegistrationForm: React.FC = () => {
   const { addFarmer, isLoading, setLoading } = useAppStore();
   const { t } = useLanguage();
   const { isModern, headingClass } = useThemeClasses();
+  const isDemo = useAppStore(s => s.isDemo);
 
   const {
     register,
@@ -45,7 +46,7 @@ export const FarmerRegistrationForm: React.FC = () => {
         farmSize: data.farmSize || 0,
         locationLat: data.latitude,
         locationLng: data.longitude,
-        vitalScore: data.vitalScore
+        vitalScore: data.vitalScore,
       });
 
       if (response.success) {
@@ -58,7 +59,7 @@ export const FarmerRegistrationForm: React.FC = () => {
           crops: response.data.crops,
           farmSize: response.data.farmSize,
           latitude: response.data.locationLat,
-          longitude: response.data.locationLng
+          longitude: response.data.locationLng,
         });
         toast.success(t('farmer_register_success'));
         reset();
@@ -71,6 +72,26 @@ export const FarmerRegistrationForm: React.FC = () => {
     }
   };
 
+  if (isDemo) {
+    return (
+      <div className="max-w-2xl mx-auto p-8 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 text-center">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+          <Lock className="w-8 h-8 text-amber-600 dark:text-amber-400" />
+        </div>
+        <h2 className={`text-2xl font-bold ${headingClass} mb-2`}>
+          {isModern ? 'Node Provisioning' : 'Register Client'}
+        </h2>
+        <p className="text-amber-700 dark:text-amber-300 font-semibold mb-1">
+          Not available in demo
+        </p>
+        <p className="text-slate-500 dark:text-slate-400 text-sm">
+          Farmer registration is disabled in demo mode. Sign up for a free account to add and
+          manage farmers.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto p-6 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
       <div className="flex items-center gap-3 mb-6">
@@ -78,7 +99,9 @@ export const FarmerRegistrationForm: React.FC = () => {
           <UserPlus className="w-6 h-6 text-primary-600 dark:text-primary-400" />
         </div>
         <div>
-          <h2 className={`text-2xl font-bold ${headingClass}`}>{isModern ? 'Node Provisioning' : 'Register Client'}</h2>
+          <h2 className={`text-2xl font-bold ${headingClass}`}>
+            {isModern ? 'Node Provisioning' : 'Register Client'}
+          </h2>
           <p className="text-slate-500 dark:text-slate-400">{t('farmer_register_subtitle')}</p>
         </div>
       </div>
@@ -205,13 +228,13 @@ export const FarmerRegistrationForm: React.FC = () => {
                     return;
                   }
                   navigator.geolocation.getCurrentPosition(
-                    (position) => {
+                    position => {
                       const { latitude, longitude } = position.coords;
                       setValue('latitude', latitude);
                       setValue('longitude', longitude);
                       toast.success('Location detected!');
                     },
-                    (error) => {
+                    error => {
                       toast.error('Failed to get location: ' + error.message);
                     }
                   );
@@ -242,11 +265,7 @@ export const FarmerRegistrationForm: React.FC = () => {
           </div>
         </div>
 
-        <Button
-          type="submit"
-          loading={isLoading}
-          className="w-full py-3"
-        >
+        <Button type="submit" loading={isLoading} className="w-full py-3">
           <UserPlus className="w-5 h-5" />
           {t('farmer_register_button')}
         </Button>

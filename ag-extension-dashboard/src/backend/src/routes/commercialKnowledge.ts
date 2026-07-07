@@ -1,137 +1,147 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, Response } from 'express';
-import { KnowledgeService } from '@/services/knowledgeService';
-import { TropicalKnowledgeSourceService } from '@/services/data/tropicalKnowledgeSources';
-import { NasaPowerService } from '@/services/data/nasaPowerService';
-import { WeatherService } from '@/services/weatherService';
-import { FAOService } from '@/services/faoService';
-import { marketPriceService } from '@/services/marketPriceService';
-import { usageService } from '@/services/usageService';
-import { authenticateCommercialAccess, apiClientService, CommercialAuthRequest } from '@/services/apiClientService';
+import {
+  authenticateCommercialAccess,
+  apiClientService,
+  CommercialAuthRequest,
+} from '@/services/apiClientService';
 import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
-router.get('/catalog', (_req, res) => {
-    res.json({
-        success: true,
-        data: {
-            products: [
-                {
-                    id: 'knowledge-search-api',
-                    name: 'Tropical Knowledge Search API',
-                    endpoint: 'GET /api/v1/commercial/knowledge/search',
-                    authentication: 'x-api-key or Bearer JWT',
-                    billableUnit: '1 unit per request'
-                },
-                {
-                    id: 'knowledge-ask-api',
-                    name: 'Source-Backed Advisory API',
-                    endpoint: 'POST /api/v1/commercial/knowledge/ask',
-                    authentication: 'x-api-key or Bearer JWT',
-                    billableUnit: '1 unit per request'
-                },
-                {
-                    id: 'live-context-api',
-                    name: 'Live Agricultural Context API',
-                    endpoint: 'GET /api/v1/commercial/knowledge/live-context',
-                    authentication: 'x-api-key or Bearer JWT',
-                    billableUnit: '1 unit per request'
-                }
-            ],
-            sources: TropicalKnowledgeSourceService.listSources()
-        }
-    });
-});
-
-router.use(authenticateCommercialAccess);
-
-async function meter(req: CommercialAuthRequest, res: Response, endpoint: string, metadata: any = {}): Promise<boolean> {
-    const auth = req.commercialAuth!;
-    if (auth.type === 'api_key') {
-        const usage = await apiClientService.checkAndRecordUsage(auth.clientId!, auth.apiKeyId, endpoint, 1, metadata);
-        if (!usage.allowed) {
-            res.status(402).json({ success: false, error: 'API quota exceeded', details: usage });
-            return false;
-        }
-        (req as any).commercialUsage = usage;
-        return true;
-    }
-
-    if (auth.role !== 'admin') {
-        const limit = await usageService.checkLimit(auth.userId, 'ai_chat');
-        if (!limit.allowed) {
-            res.status(402).json({ success: false, error: 'Subscription API usage limit exceeded', details: limit });
-            return false;
-        }
-    }
-    await usageService.incrementUsage(auth.userId, 'ai_chat');
-    (req as any).commercialUsage = { metered: true, usageType: 'ai_chat', units: 1 };
-    return true;
+/**
+ * Local in-memory knowledge corpus (placeholder until authorised feeds land).
+ */
+interface KnowledgeArticle {
+    id: string;
+    title: string;
+    summary: string;
+    content: string;
+    category: string;
+    source: string;
+    confidence: number;
 }
 
-router.get('/search', async (req: CommercialAuthRequest, res: Response) => {
+const SEED_ARTICLES: KnowledgeArticle[] = [
+    {
+        id: 'c-001',
+        title: 'Drip irrigation water savings',
+        summary: 'Drip systems cut water use by 30–50% versus flood irrigation.',
+        content: 'Drip irrigation delivers water directly to the root zone, reducing evaporation losses. Best paired with mulched beds and pressure-compensating emitters. Typical payback period for smallholder farms is 2-3 seasons.',
+        category: 'irrigation',
+        source: 'FAO',
+        confidence: 0.94,
+    },
+    {
+        id: 'c-002',
+        title: 'Integrated pest management for fall armyworm',
+        summary: 'Combine pheromone traps with targeted biopesticide sprays.',
+        content: 'Scout weekly. Deploy pheromone traps at 4 per hectare. Apply Bacillus thuringiensis or neem-based biopesticides at early larval stages. Avoid broad-spectrum pyrethroids — they harm beneficial insects.',
+        category: 'pest-management',
+        source: 'ICIPE',
+        confidence: 0.91,
+    },
+    {
+        id: 'c-003',
+        title: 'Maize streak virus prevention',
+        summary: 'Plant resistant varieties and control leafhoppers early.',
+        content: 'Use certified seed of streak-resistant varieties. Rogue infected plants within 2 weeks of detection. Manage leafhopper vectors with border-row refugia and spot treatments.',
+        category: 'disease-management',
+        source: 'CIMMYT',
+        confidence: 0.88,
+    },
+];
+
+/**
+ * GET /api/commercial/knowledge/search — semantic-ish lookup with optional filters.
+ */
+router.get('/search', authenticateCommercialAccess, async (req: CommercialAuthRequest, res: Response) => {
     try {
-        const { q, category, crop, limit = '5' } = req.query;
-        if (!q) return res.status(400).json({ success: false, error: 'q is required' });
-        if (!await meter(req, res, 'commercial.knowledge.search', { q, category, crop })) return;
-
-        const articles = await KnowledgeService.searchKnowledge(q as string, parseInt(limit as string), {
-            category: category as string | undefined,
-            crop: crop as string | undefined
-        });
-        res.json({ success: true, data: { query: q, articles, billing: (req as any).commercialUsage } });
-    } catch (error) {
-        logger.error('Commercial search API failed:', error);
-        safeError(res, 500, 'Commercial search failed');
-    }
-});
-
-router.post('/ask', async (req: CommercialAuthRequest, res: Response) => {
-    try {
-        const { question, attachments } = req.body;
-        if (!question) return res.status(400).json({ success: false, error: 'question is required' });
-        if (!await meter(req, res, 'commercial.knowledge.ask', { question })) return;
-
-        const answer = await KnowledgeService.askQuestion(req.commercialAuth!.userId, question, attachments);
-        res.json({ success: true, data: { ...answer, billing: (req as any).commercialUsage } });
-    } catch (error) {
-        logger.error('Commercial ask API failed:', error);
-        safeError(res, 500, 'Commercial ask failed');
-    }
-});
-
-router.get('/live-context', async (req: CommercialAuthRequest, res: Response) => {
-    try {
-        const { location = 'Kenya', region = 'Kenya', crop, lat, lng } = req.query;
-        if (!await meter(req, res, 'commercial.knowledge.live_context', { location, region, crop, lat, lng })) return;
-
-        const context: any = { location, region, crop, generatedAt: new Date().toISOString(), sources: [] };
-        const [weather, alerts, prices] = await Promise.allSettled([
-            WeatherService.getByLocation(location as string),
-            FAOService.getDiseaseAlerts(region as string, crop as string | undefined),
-            marketPriceService.getLatestPrices()
-        ]);
-
-        if (weather.status === 'fulfilled') { context.weather = weather.value; context.sources.push('weather_forecast'); }
-        if (alerts.status === 'fulfilled') { context.diseaseAlerts = alerts.value; context.sources.push('fao_disease_alerts'); }
-        if (prices.status === 'fulfilled') { context.marketPrices = prices.value; context.sources.push('market_prices'); }
-
-        if (lat && lng) {
-            try {
-                const nasa = new NasaPowerService();
-                context.agroclimate = await nasa.getAgroclimateSummary(parseFloat(lat as string), parseFloat(lng as string), 7);
-                context.sources.push('nasa_power');
-            } catch (error) {
-                context.agroclimateError = (error as Error).message;
+        const auth = req.commercialAuth;
+        if (auth?.clientId) {
+            const allowed = await apiClientService.checkAndRecordUsage(
+                auth.clientId,
+                auth.apiKeyId,
+                '/knowledge/search',
+                1,
+                { source: 'commercial' }
+            );
+            if (!allowed) {
+                return res.status(429).json({ success: false, error: 'Quota exceeded' });
             }
         }
 
-        res.json({ success: true, data: { ...context, billing: (req as any).commercialUsage } });
+        const q = ((req.query.q as string) || '').toLowerCase();
+        const category = (req.query.category as string) || undefined;
+        const results = SEED_ARTICLES.filter(a => {
+            const matchesQ = !q || `${a.title} ${a.summary} ${a.content}`.toLowerCase().includes(q);
+            const matchesCategory = !category || a.category === category;
+            return matchesQ && matchesCategory;
+        });
+
+        const context = {
+            location: (req.query.location as string) || null,
+            region: (req.query.region as string) || null,
+            crop: (req.query.crop as string) || null,
+            generatedAt: new Date().toISOString(),
+            sources: Array.from(new Set(results.map(r => r.source))),
+        };
+
+        return res.json({ success: true, data: { articles: results, context } });
     } catch (error) {
-        logger.error('Commercial live-context API failed:', error);
-        safeError(res, 500, 'Commercial live-context failed');
+        logger.error('Commercial knowledge search failed:', error);
+        return safeError(res, 500, 'Commercial knowledge search failed');
+    }
+});
+
+/**
+ * GET /api/commercial/knowledge/article/:id — fetch a single article.
+ */
+router.get('/article/:id', authenticateCommercialAccess, async (req: CommercialAuthRequest, res: Response) => {
+    try {
+        const auth = req.commercialAuth;
+        if (auth?.clientId) {
+            const allowed = await apiClientService.checkAndRecordUsage(
+                auth.clientId,
+                auth.apiKeyId,
+                '/knowledge/article',
+                1,
+                { articleId: req.params.id }
+            );
+            if (!allowed) {
+                return res.status(429).json({ success: false, error: 'Quota exceeded' });
+            }
+        }
+
+        const article = SEED_ARTICLES.find(a => a.id === req.params.id);
+        if (!article) {
+            return res.status(404).json({ success: false, error: 'Article not found' });
+        }
+        return res.json({ success: true, data: article });
+    } catch (error) {
+        logger.error('Commercial article fetch failed:', error);
+        return safeError(res, 500, 'Commercial article fetch failed');
+    }
+});
+
+/**
+ * GET /api/commercial/knowledge/usage — current period usage for the caller.
+ */
+router.get('/usage', authenticateCommercialAccess, async (req: CommercialAuthRequest, res: Response) => {
+    try {
+        const auth = req.commercialAuth;
+        if (!auth?.clientId) {
+            return res.json({
+                success: true,
+                data: { clientId: null, role: auth?.role ?? null, used: 0, limit: null },
+            });
+        }
+        const { usageService } = await import('@/services/usageService');
+        const usage = await usageService.getUsageStatus(auth.clientId);
+        return res.json({ success: true, data: usage });
+    } catch (error) {
+        logger.error('Commercial usage fetch failed:', error);
+        return safeError(res, 500, 'Commercial usage fetch failed');
     }
 });
 

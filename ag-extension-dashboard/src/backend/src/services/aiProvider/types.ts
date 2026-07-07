@@ -2,7 +2,7 @@
 
 // ── Provider type identifier ──────────────────────────────────────────────
 
-export type AIProviderType = 'azure_openai' | 'google_vertex' | 'openai' | 'anthropic' | 'groq' | 'ollama';
+export type AIProviderType = 'azure_openai' | 'google_vertex' | 'openai' | 'anthropic' | 'groq' | 'freebuff' | 'ollama';
 
 // ── Capability interfaces ─────────────────────────────────────────────────
 
@@ -67,6 +67,7 @@ export interface TextToSpeechResult {
 export interface ClassificationOptions {
     taxonomy: string;
     multiLabel?: boolean;
+    preferredProvider?: AIProviderType | string;
 }
 
 export interface ClassificationResult {
@@ -81,6 +82,7 @@ export interface ReasoningOptions {
     maxTokens?: number;
     temperature?: number;
     attachments?: Array<{ type: 'image' | 'file' | 'audio'; data: string; mimeType?: string }>;
+    preferredProvider?: AIProviderType | string;
 }
 
 export interface ReasoningResult {

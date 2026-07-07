@@ -1,14 +1,14 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Eye, 
-  Edit, 
-  Trash2, 
-  Share2, 
-  Download, 
-  Calendar, 
-  History, 
-  RefreshCcw, 
+import {
+  Eye,
+  Edit,
+  Trash2,
+  Share2,
+  Download,
+  Calendar,
+  History,
+  RefreshCcw,
   FileText,
   CheckSquare,
   Square,
@@ -17,7 +17,7 @@ import {
   UserCheck,
   UserX,
   XCircle,
-  MoreVertical
+  MoreVertical,
 } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { fetchContextMenu, getStaticFallbackMenu } from '@/api/contextMenuService';
@@ -68,7 +68,7 @@ const iconMap: Record<string, React.ElementType> = {
   globe: Globe,
   'check-square': CheckSquare,
   square: Square,
-  'x-circle': XCircle
+  'x-circle': XCircle,
 };
 
 export const ContextMenu: React.FC<ContextMenuProps> = ({
@@ -78,7 +78,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   entityId,
   isBulk = false,
   onClose,
-  onAction
+  onAction,
 }) => {
   const [menuData, setMenuData] = useState<ContextMenuData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -135,24 +135,27 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             <RefreshCcw className="w-5 h-5 text-primary-500 animate-spin" />
           </div>
         ) : menuData?.sections.length === 0 ? (
-          <div className="px-4 py-3 text-sm text-gray-500 italic">
-            No actions available
-          </div>
+          <div className="px-4 py-3 text-sm text-gray-500 italic">No actions available</div>
         ) : (
-          menuData?.sections.map((section) => (
-            <div key={section.id} className="last:border-b-0 border-b border-gray-100 dark:border-gray-800 pb-1 last:pb-0">
+          menuData?.sections.map(section => (
+            <div
+              key={section.id}
+              className="last:border-b-0 border-b border-gray-100 dark:border-gray-800 pb-1 last:pb-0"
+            >
               {section.title && (
                 <div className="px-4 py-1.5 text-xxs font-black text-gray-400 uppercase tracking-widest bg-gray-50/50 dark:bg-gray-800/50 mb-1">
                   {section.title}
                 </div>
               )}
-              {section.items.map((item) => {
+              {section.items.map(item => {
                 if (item.separator) {
-                  return <div key={item.id} className="h-px bg-gray-100 dark:bg-gray-800 my-1 mx-2" />;
+                  return (
+                    <div key={item.id} className="h-px bg-gray-100 dark:bg-gray-800 my-1 mx-2" />
+                  );
                 }
-                
+
                 const Icon = item.icon && iconMap[item.icon] ? iconMap[item.icon] : MoreVertical;
-                
+
                 return (
                   <button
                     key={item.id}
@@ -161,9 +164,10 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                       onClose();
                     }}
                     className={`w-full flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors text-left
-                      ${item.action.includes('delete') 
-                        ? 'text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20' 
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400'
+                      ${
+                        item.action.includes('delete')
+                          ? 'text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400'
                       }`}
                   >
                     <Icon className="w-4 h-4 shrink-0" />

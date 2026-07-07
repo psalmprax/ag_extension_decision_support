@@ -1,0 +1,56 @@
+/* Accessibility and layout improvements for Ag-Extension Dashboard */
+
+/* 1. Fix text readability - directly override colors with higher specificity */
+.text-white\/30 {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+.text-white\/20 {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+.text-white\/25 {
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+.text-white\/35 {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+.text-white\/15 {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+.text-white\/10 {
+  color: rgba(255, 255, 255, 0.35) !important;
+}
+
+/* 2. Improve width utilization - make containers wider on large screens */
+.max-w-6xl.mx-auto.px-6 {
+  max-width: 1920px; /* Increased from 1536px */
+}
+.max-w-7xl.mx-auto.px-6 {
+  max-width: 2200px; /* Increased from 1920px */
+}
+
+/* 3. Fix hero section grid ratio to be more balanced */
+.max-w-7xl.mx-auto.px-6[class*='lg:grid-cols-[1fr_1.1fr]'] {
+  grid-template-columns: 1fr 1fr !important;
+}
+
+/* 4. Reduce horizontal padding on large screens for better edge-to-edge feel */
+@media (min-width: 1024px) {
+  /* lg: */
+  .max-w-7xl.mx-auto.px-6 {
+    padding-left: 1rem; /* px-4 */
+    padding-right: 1rem; /* px-4 */
+  }
+}
+
+/* 5. Slightly increase base body text size for better readability */
+body {
+  font-size: 1rem; /* 16px, but ensures base is solid */
+}
+
+/* 6. Ensure interactive elements have clear hover/focus states */
+.hover\:bg-white\/\[0\.14\]:hover {
+  --tw-bg-opacity: 0.2;
+}
+.hover\:bg-white\/\[0\.1\]:hover {
+  --tw-bg-opacity: 0.15;
+}

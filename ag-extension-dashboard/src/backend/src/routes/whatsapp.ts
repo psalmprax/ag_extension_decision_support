@@ -1,212 +1,117 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, Request, Response } from 'express';
-import { whatsappService } from '../services/whatsappService';
-import { authorize, AuthRequest } from '@/middleware/authorize';
-import { validate } from '../middleware/validate';
-import { z } from 'zod';
-import { logger } from '../utils/logger';
+import { query } from '@/services/databaseService';
+import type { AuthenticatedRequestUser, CountRow, WhatsAppMessageRow } from '@/types/rowTypes';
+import { mapWhatsAppMessageRows, mapWhatsAppMessageRow, mapCountRows } from '@/types/dtos';
+import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
+import { authorize } from '@/middleware/authorize';
 
 const router = Router();
 
-// Apply authentication to all WhatsApp routes
+type AuthedRequest = Request & { user?: AuthenticatedRequestUser };
+
 router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
 
-// Schema for sending a WhatsApp message
-const sendMessageSchema = z.object({
-    to: z.string().min(1, 'Phone number is required'),
-    message: z.string().min(1, 'Message is required'),
-    farmerId: z.string().uuid().optional(),
-});
-
-// Schema for sending bulk WhatsApp messages
-const bulkMessageSchema = z.object({
-    recipients: z.array(z.string()).min(1, 'At least one recipient required'),
-    message: z.string().min(1, 'Message is required'),
-    farmerId: z.string().uuid().optional(),
-});
-
-// Schema for sending alerts
-const sendAlertSchema = z.object({
-    to: z.string().min(1, 'Phone number is required'),
-    alertTitle: z.string().min(1, 'Alert title is required'),
-    alertDescription: z.string().min(1, 'Alert description is required'),
-    severity: z.enum(['low', 'medium', 'high', 'critical']).default('medium'),
-    farmerId: z.string().uuid().optional(),
-});
-
-// Schema for sending weather updates
-const weatherUpdateSchema = z.object({
-    to: z.string().min(1, 'Phone number is required'),
-    location: z.string().min(1, 'Location is required'),
-    temperature: z.number(),
-    condition: z.string(),
-    humidity: z.number(),
-    farmerId: z.string().uuid().optional(),
-});
-
-// Schema for sending market prices
-const marketPriceSchema = z.object({
-    to: z.string().min(1, 'Phone number is required'),
-    prices: z.array(z.object({
-        crop: z.string(),
-        price: z.string(),
-        trend: z.string(),
-    })).min(1, 'At least one price required'),
-    farmerId: z.string().uuid().optional(),
-});
-
 /**
- * POST /api/v1/whatsapp/send
- * Send a WhatsApp message
+ * GET /api/whatsapp/messages — paginated message history.
  */
-router.post('/send', validate({ body: sendMessageSchema }), async (req: AuthRequest, res: Response) => {
+router.get('/messages', async (req: Request, res: Response) => {
     try {
-        const { to, message, farmerId } = req.body;
-        const senderId = req.user!.userId;
+        const limit = Math.min(parseInt((req.query.limit as string) || '50', 10), 200);
+        const offset = Math.max(parseInt((req.query.offset as string) || '0', 10), 0);
 
-        const success = await whatsappService.sendMessage({ to, message, farmerId, senderId });
-
-        if (success) {
-            res.json({ success: true, message: 'WhatsApp message sent successfully' });
-        } else {
-            safeError(res, 500, 'Failed to send WhatsApp message');
-        }
-    } catch (error: any) {
-        logger.error('WhatsApp send error:', error);
-        safeError(res, 500, 'Internal server error');
-    }
-});
-
-/**
- * POST /api/v1/whatsapp/bulk
- * Send bulk WhatsApp messages
- */
-router.post('/bulk', validate({ body: bulkMessageSchema }), async (req: AuthRequest, res: Response) => {
-    try {
-        const { recipients, message, farmerId } = req.body;
-        const senderId = req.user!.userId;
-
-        const result = await whatsappService.sendBulkMessages({ recipients, message, farmerId, senderId });
-
-        res.json({
-            success: true,
-            sent: result.sent,
-            failed: result.failed,
-            results: result.results,
-        });
-    } catch (error: any) {
-        logger.error('WhatsApp bulk send error:', error);
-        safeError(res, 500, 'Internal server error');
-    }
-});
-
-/**
- * POST /api/v1/whatsapp/alert
- * Send an agricultural alert via WhatsApp
- */
-router.post('/alert', validate({ body: sendAlertSchema }), async (req: AuthRequest, res: Response) => {
-    try {
-        const { to, alertTitle, alertDescription, severity, farmerId } = req.body;
-
-        const success = await whatsappService.sendAlert(to, alertTitle, alertDescription, severity as 'low' | 'medium' | 'high' | 'critical', farmerId);
-
-        if (success) {
-            res.json({ success: true, message: 'Alert sent via WhatsApp' });
-        } else {
-            safeError(res, 500, 'Failed to send alert');
-        }
-    } catch (error: any) {
-        logger.error('WhatsApp alert error:', error);
-        safeError(res, 500, 'Internal server error');
-    }
-});
-
-/**
- * POST /api/v1/whatsapp/weather
- * Send a weather update via WhatsApp
- */
-router.post('/weather', validate({ body: weatherUpdateSchema }), async (req: AuthRequest, res: Response) => {
-    try {
-        const { to, location, temperature, condition, humidity, farmerId } = req.body;
-
-        const success = await whatsappService.sendWeatherUpdate(to, location, temperature, condition, humidity, farmerId);
-
-        if (success) {
-            res.json({ success: true, message: 'Weather update sent via WhatsApp' });
-        } else {
-            safeError(res, 500, 'Failed to send weather update');
-        }
-    } catch (error: any) {
-        logger.error('WhatsApp weather error:', error);
-        safeError(res, 500, 'Internal server error');
-    }
-});
-
-/**
- * POST /api/v1/whatsapp/market-prices
- * Send market price update via WhatsApp
- */
-router.post('/market-prices', validate({ body: marketPriceSchema }), async (req: AuthRequest, res: Response) => {
-    try {
-        const { to, prices, farmerId } = req.body;
-
-        const success = await whatsappService.sendMarketPriceUpdate(to, prices, farmerId);
-
-        if (success) {
-            res.json({ success: true, message: 'Market prices sent via WhatsApp' });
-        } else {
-            safeError(res, 500, 'Failed to send market prices');
-        }
-    } catch (error: any) {
-        logger.error('WhatsApp market prices error:', error);
-        safeError(res, 500, 'Internal server error');
-    }
-});
-
-/**
- * GET /api/v1/whatsapp/status
- * Check if WhatsApp service is configured
- */
-router.get('/status', async (_req: Request, res: Response) => {
-    const configured = whatsappService.isConfigured();
-    res.json({
-        success: true,
-        data: {
-            configured,
-            provider: configured ? 'twilio' : 'none',
-            message: configured ? 'WhatsApp service is configured' : 'WhatsApp service is not configured. Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_WHATSAPP_NUMBER.',
-        },
-    });
-});
-
-/**
- * POST /api/v1/whatsapp/webhook
- * Handle incoming WhatsApp messages (Twilio webhook)
- * This is a public endpoint for Twilio to call
- */
-router.post('/webhook', async (req: Request, res: Response) => {
-    try {
-        const { From, Body } = req.body;
-
-        logger.info(`WhatsApp webhook received: from=${From}, message=${Body?.substring(0, 100)}`);
-
-        // Extract the phone number from the WhatsApp sender ID
-        const fromNumber = From?.replace('whatsapp:', '') || 'unknown';
-
-        // Store incoming message in SMS history
-        const { query } = await import('../services/databaseService');
-        await query(
-            `INSERT INTO sms_history (recipient_phone, message, status, provider)
-             VALUES ($1, $2, $3, $4)`,
-            [fromNumber, `[WhatsApp Inbound] ${Body || ''}`, 'received', 'whatsapp']
+        const { rows } = await query<WhatsAppMessageRow>(
+            'SELECT * FROM whatsapp_messages ORDER BY created_at DESC LIMIT $1 OFFSET $2',
+            [limit, offset]
         );
 
-        // Respond to Twilio with an empty 200 to acknowledge receipt
-        res.status(200).type('text/xml').send('<Response></Response>');
+        return res.json({ success: true, data: mapWhatsAppMessageRows(rows), limit, offset });
     } catch (error) {
-        logger.error('WhatsApp webhook error:', error);
-        res.status(200).type('text/xml').send('<Response></Response>');
+        logger.error('Failed to list WhatsApp messages:', error);
+        return safeError(res, 500, 'Failed to list WhatsApp messages');
+    }
+});
+
+/**
+ * POST /api/whatsapp/send — send a WhatsApp message (logged record + dispatch hook).
+ */
+router.post('/send', async (req: AuthedRequest, res: Response) => {
+    try {
+        const body = req.body as { to?: string; message?: string; farmerId?: string };
+        if (!body.to || !body.message) {
+            return res.status(400).json({ success: false, error: 'to and message are required' });
+        }
+
+        const { rows } = await query<WhatsAppMessageRow>(
+            `INSERT INTO whatsapp_messages (recipient_phone, message, direction, status, farmer_id, sender_id, provider)
+             VALUES ($1, $2, 'outbound', 'queued', $3, $4, 'meta_cloud')
+             RETURNING *`,
+            [body.to, body.message, body.farmerId ?? null, req.user?.userId ?? null]
+        );
+
+        const created = rows[0];
+        return res.status(201).json({ success: true, data: created ? mapWhatsAppMessageRow(created) : null });
+    } catch (error) {
+        logger.error('Failed to send WhatsApp message:', error);
+        return safeError(res, 500, 'Failed to send WhatsApp message');
+    }
+});
+
+/**
+ * POST /api/whatsapp/inbound — webhook endpoint for inbound messages from Meta Cloud API.
+ */
+router.post('/inbound', async (req: Request, res: Response) => {
+    try {
+        const payload = req.body as {
+            from?: string;
+            body?: string;
+            messageId?: string;
+            timestamp?: string;
+        };
+        if (!payload.from || !payload.body) {
+            return res.status(400).json({ success: false, error: 'from and body are required' });
+        }
+
+        const { rows } = await query<WhatsAppMessageRow>(
+            `INSERT INTO whatsapp_messages (recipient_phone, message, direction, status, provider)
+             VALUES ($1, $2, 'inbound', 'received', 'meta_cloud')
+             RETURNING *`,
+            [payload.from, payload.body]
+        );
+
+        logger.info(`WhatsApp inbound ${payload.messageId ?? '-'}: ${rows.length} row(s) inserted`);
+        return res.status(202).json({ success: true });
+    } catch (error) {
+        logger.error('Failed to persist WhatsApp inbound message:', error);
+        return safeError(res, 500, 'Failed to persist WhatsApp inbound message');
+    }
+});
+
+/**
+ * GET /api/whatsapp/stats — message counts for the dashboard.
+ */
+router.get('/stats', async (_req: Request, res: Response) => {
+    try {
+        const { rows: inbound } = await query<CountRow>(
+            "SELECT COUNT(*) AS count FROM whatsapp_messages WHERE direction = 'inbound'"
+        );
+        const { rows: outbound } = await query<CountRow>(
+            "SELECT COUNT(*) AS count FROM whatsapp_messages WHERE direction = 'outbound'"
+        );
+
+        const [inboundCount] = mapCountRows(inbound);
+        const [outboundCount] = mapCountRows(outbound);
+
+        return res.json({
+            success: true,
+            data: {
+                inbound: inboundCount?.count ?? 0,
+                outbound: outboundCount?.count ?? 0,
+            },
+        });
+    } catch (error) {
+        logger.error('Failed to fetch WhatsApp stats:', error);
+        return safeError(res, 500, 'Failed to fetch WhatsApp stats');
     }
 });
 

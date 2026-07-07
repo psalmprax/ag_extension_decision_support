@@ -1,0 +1,677 @@
+[0;34m[INFO][0;0m Auditing code compliance for newly added changes...
+[0;32m[SUCCESS][0;0m Branch Validation: Confirmed on work branch [stage].
+[0;31m[ERROR][0;0m Found skipped/disabled tests in added changes:
+  -> 6:    "sonarjs/cognitive-complexity": ["error", 15]
+  -> 792:        process.exit(1);
+  -> 805:        process.exit(1);
+  -> 1910:        'sonarjs/cognitive-complexity': ['error', 15],
+  -> 1979:                exit={{ height: 0, opacity: 0 }}
+  -> 3338:            exit={{ opacity: 0, y: -15 }}
+  -> 3536:            exit={{ opacity: 0, y: -15 }}
+  -> 4025:            exit={{ opacity: 0, y: -10 }}
+[0;33m[WARN][0;0m Complexity: File 'ag-extension-dashboard/src/backend/src/routes/analytics.ts' exceeds 300 lines (605 LOC). Consider decomposing it into smaller, reusable components.
+[0;33m[WARN][0;0m Complexity: File 'ag-extension-dashboard/src/backend/src/routes/billing.ts' exceeds 300 lines (1000 LOC). Consider decomposing it into smaller, reusable components.
+[0;33m[WARN][0;0m Complexity: File 'ag-extension-dashboard/src/backend/src/routes/farmers.ts' exceeds 300 lines (799 LOC). Consider decomposing it into smaller, reusable components.
+[0;33m[WARN][0;0m Complexity: File 'ag-extension-dashboard/src/backend/src/routes/knowledge.ts' exceeds 300 lines (963 LOC). Consider decomposing it into smaller, reusable components.
+[0;33m[WARN][0;0m Complexity: Added/modified 242 lines in 'ag-extension-dashboard/src/backend/src/routes/knowledge.ts' in a single change. Large implementations should be broken down into simpler, optimized units.
+[0;33m[WARN][0;0m Complexity: File 'ag-extension-dashboard/src/backend/src/routes/portfolio.ts' exceeds 300 lines (327 LOC). Consider decomposing it into smaller, reusable components.
+[0;33m[WARN][0;0m Complexity: File 'ag-extension-dashboard/src/backend/src/routes/reporting.ts' exceeds 300 lines (735 LOC). Consider decomposing it into smaller, reusable components.
+[0;33m[WARN][0;0m Complexity: Added/modified 114 lines in 'ag-extension-dashboard/src/backend/src/routes/reporting.ts' in a single change. Large implementations should be broken down into simpler, optimized units.
+[0;33m[WARN][0;0m Complexity: File 'ag-extension-dashboard/src/backend/src/services/bulkOperationsService.ts' exceeds 300 lines (456 LOC). Consider decomposing it into smaller, reusable components.
+[0;33m[WARN][0;0m Complexity: Added/modified 129 lines in 'ag-extension-dashboard/src/backend/src/services/bulkOperationsService.ts' in a single change. Large implementations should be broken down into simpler, optimized units.
+[0;33m[WARN][0;0m Complexity: File 'ag-extension-dashboard/src/backend/src/services/knowledgeService.ts' exceeds 300 lines (761 LOC). Consider decomposing it into smaller, reusable components.
+[0;33m[WARN][0;0m Complexity: Added/modified 281 lines in 'ag-extension-dashboard/src/backend/src/services/knowledgeService.ts' in a single change. Large implementations should be broken down into simpler, optimized units.
+[0;33m[WARN][0;0m Complexity: File 'ag-extension-dashboard/src/backend/src/services/ragV2Service.ts' exceeds 300 lines (564 LOC). Consider decomposing it into smaller, reusable components.
+[0;33m[WARN][0;0m Complexity: Added/modified 116 lines in 'ag-extension-dashboard/src/backend/src/services/ragV2Service.ts' in a single change. Large implementations should be broken down into simpler, optimized units.
+[0;33m[WARN][0;0m Complexity: File 'ag-extension-dashboard/src/backend/src/services/selfHealing.ts' exceeds 300 lines (318 LOC). Consider decomposing it into smaller, reusable components.
+[0;33m[WARN][0;0m Complexity: File 'ag-extension-dashboard/src/frontend/src/components/Cyber/AlphaAI.tsx' exceeds 300 lines (337 LOC). Consider decomposing it into smaller, reusable components.
+[0;33m[WARN][0;0m Complexity: Added/modified 201 lines in 'ag-extension-dashboard/src/frontend/src/components/Cyber/AlphaAI.tsx' in a single change. Large implementations should be broken down into simpler, optimized units.
+[0;33m[WARN][0;0m Complexity: File 'ag-extension-dashboard/src/frontend/src/components/Cyber/AlphaAgentOps.tsx' exceeds 300 lines (399 LOC). Consider decomposing it into smaller, reusable components.
+[0;33m[WARN][0;0m Complexity: File 'ag-extension-dashboard/src/frontend/src/components/FarmerDetailPanel.tsx' exceeds 300 lines (624 LOC). Consider decomposing it into smaller, reusable components.
+[0;33m[WARN][0;0m Complexity: Added/modified 209 lines in 'ag-extension-dashboard/src/frontend/src/components/FarmerDetailPanel.tsx' in a single change. Large implementations should be broken down into simpler, optimized units.
+[0;33m[WARN][0;0m Complexity: File 'ag-extension-dashboard/src/frontend/src/components/HelpCenterModal.tsx' exceeds 300 lines (317 LOC). Consider decomposing it into smaller, reusable components.
+[0;33m[WARN][0;0m Complexity: Added/modified 102 lines in 'ag-extension-dashboard/src/frontend/src/components/HelpCenterModal.tsx' in a single change. Large implementations should be broken down into simpler, optimized units.
+[0;33m[WARN][0;0m Complexity: File 'ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/ReasoningVisuals.tsx' exceeds 300 lines (447 LOC). Consider decomposing it into smaller, reusable components.
+[0;33m[WARN][0;0m Complexity: Added/modified 208 lines in 'ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/ReasoningVisuals.tsx' in a single change. Large implementations should be broken down into simpler, optimized units.
+[0;33m[WARN][0;0m Complexity: Added/modified 125 lines in 'ag-extension-dashboard/src/frontend/src/components/SatelliteInsights.tsx' in a single change. Large implementations should be broken down into simpler, optimized units.
+[0;33m[WARN][0;0m Complexity: File 'ag-extension-dashboard/src/frontend/src/hooks/useBillingActions.ts' exceeds 300 lines (343 LOC). Consider decomposing it into smaller, reusable components.
+[0;33m[WARN][0;0m Complexity: File 'ag-extension-dashboard/src/frontend/src/pages/CropsFields.tsx' exceeds 300 lines (1054 LOC). Consider decomposing it into smaller, reusable components.
+[0;33m[WARN][0;0m Complexity: Added/modified 288 lines in 'ag-extension-dashboard/src/frontend/src/pages/CropsFields.tsx' in a single change. Large implementations should be broken down into simpler, optimized units.
+[0;33m[WARN][0;0m Complexity: Added/modified 226 lines in 'ag-extension-dashboard/src/frontend/src/pages/DashboardPage.tsx' in a single change. Large implementations should be broken down into simpler, optimized units.
+[0;33m[WARN][0;0m Complexity: Added/modified 116 lines in 'ag-extension-dashboard/src/frontend/src/pages/ReportsPage.tsx' in a single change. Large implementations should be broken down into simpler, optimized units.
+[0;33m[WARN][0;0m Complexity: File 'ag-extension-dashboard/src/frontend/src/pages/SMS.tsx' exceeds 300 lines (844 LOC). Consider decomposing it into smaller, reusable components.
+[0;33m[WARN][0;0m Complexity: Added/modified 572 lines in 'ag-extension-dashboard/src/frontend/src/pages/SMS.tsx' in a single change. Large implementations should be broken down into simpler, optimized units.
+[0;33m[WARN][0;0m Complexity: File 'ag-extension-dashboard/src/frontend/src/pages/SystemHealth.tsx' exceeds 300 lines (507 LOC). Consider decomposing it into smaller, reusable components.
+[0;33m[WARN][0;0m Complexity: Added/modified 145 lines in 'ag-extension-dashboard/src/frontend/src/pages/SystemHealth.tsx' in a single change. Large implementations should be broken down into simpler, optimized units.
+[0;33m[WARN][0;0m Complexity: File 'ag-extension-dashboard/src/frontend/src/theme/index.ts' exceeds 300 lines (513 LOC). Consider decomposing it into smaller, reusable components.
+[0;33m[WARN][0;0m Found debugging print/console statements in added changes:
+  -> 738:        console.log(`  ✨ ${langCode}: No translations needed.`);
+  -> 740:    console.log(`  🤖 ${langCode}: Translating ${keysToTranslate.length} keys to ${targetLangName}...`);
+  -> 750:    console.log('🚀 Starting Refined AI Translation Process...\n');
+  -> 760:    console.log(`🌍 Processing ${langCodes.length} languages: ${langCodes.join(', ')}`);
+  -> 787:    console.log('🚀 Starting Super Auto-Translation...');
+  -> 813:    console.log(`📊 Total unique keys: ${allKeys.size}`);
+[0;33m[WARN][0;0m TypeScript 'any' usage detected — consider using proper types:
+  -> ag-extension-dashboard/src/backend/src/routes/analytics.ts:
+  -> 1:+function formatPerformanceMetrics(results: any[], days: number) {
+  -> 15:+function formatTimelineData(timelineData: any[]) {
+  -> 16:+    return timelineData.length > 0 ? timelineData.map((row: any) => ({
+  -> 24:+function formatOfficerData(officerData: any[]) {
+  -> 25:+    return officerData.length > 0 ? officerData.map((row: any) => ({
+  -> 37:+function formatChatbotConversations(conversations: any[]) {
+  -> 46:+function formatChatbotEngagement(engagement: any) {
+  -> 54:+function formatChatbotResponseMetrics(response: any, conversations: any[], total: number) {
+  -> 62:+function formatChatbotLanguages(languageData: any[], total: number) {
+  -> 63:+    return languageData.map((row: any) => ({
+  -> ag-extension-dashboard/src/backend/src/routes/billing.ts:
+  -> 1:+async function handleExistingSubscription(currentSubscription: any, priceId: string, billingCycle: string, res: express.Response, userId: string) {
+  -> ag-extension-dashboard/src/backend/src/routes/farmers.ts:
+  -> 1:+async function verifyFarmersAccess(farmers: any[], role: string, userId: string, prisma: any): Promise<boolean> {
+  -> ag-extension-dashboard/src/backend/src/routes/knowledge.ts:
+  -> 4:+    const params: any[] = [];
+  -> 27:+    (articles as any).totalCount = parseInt(countResult.rows[0]?.count || '0', 10);
+  -> 41:+        const articles = enhanced.results.map((r: any) => ({
+  -> 60:+async function fetchKnowledgeArticles(q: any, limit: any, offset: any, category: any, crop: any, v2: any, cacheKey: string, res: Response): Promise<any[] | Response> {
+  -> 61:+    let articles: any[] = [];
+  -> 87:+        const articles = fetchResult as any[];
+  -> 170:+    const updateData: any = {};
+  -> ag-extension-dashboard/src/backend/src/routes/portfolio.ts:
+  -> 1:+function buildSummarySheet(farmers: any[], oId: string) {
+  -> 10:+        ['Farmers with Visits', farmers.filter((f: any) => f.total_visits > 0).length],
+  -> 11:+        ['Total Visits', farmers.reduce((sum: number, f: any) => sum + parseInt(f.total_visits || '0'), 0)],
+  -> 16:+function buildFarmersSheet(farmers: any[]) {
+  -> 37:+function buildVisitsSheet(visits: any[]) {
+  -> ag-extension-dashboard/src/backend/src/routes/reporting.ts:
+  -> 2:+    const reportData: any = {};
+  -> 67:+function drawDiseaseDiagnosisHeader(doc: any, report: any, data: any) {
+  -> 69:+function drawDiseasePathologies(doc: any, data: any) {
+  -> 72:+function generateDiseaseDiagnosisPDF(doc: any, report: any, data: any) {
+  -> 75:+function drawSoilDiagnosticHeader(doc: any, report: any, data: any) {
+  -> 77:+function drawSoilPhysicalAttributes(doc: any, data: any) {
+  -> 79:+function drawSoilNPKProfile(doc: any, data: any) {
+  -> 82:+function generateSoilDiagnosticPDF(doc: any, report: any, data: any) {
+  -> 86:+function drawGeneralReportDetails(doc: any, report: any, data: any) {
+  -> ag-extension-dashboard/src/backend/src/services/bulkOperationsService.ts:
+  -> 1:+    private notifyProgress(onProgress: any, operationId: string, current: number, total: number) {
+  -> 7:+    private async processKnowledgeArticleBatch(batch: string[], onProgress: any, operationId: string, total: number, stats: any) {
+  -> 28:+    private async buildFarmerExportFilters(filters: any, userId: string, userRole: string): Promise<any> {
+  -> 36:+        filters: any,
+  -> 42:+    private mapHeaderToField(header: string, value: string, farmerData: any) {
+  -> 85:+    private async processCSVRow(row: string, headers: string[], tx: any, userRole: string, userId: string): Promise<any> {
+  -> 91:+        const farmerData: any = {};
+  -> ag-extension-dashboard/src/backend/src/services/knowledgeService.ts:
+  -> 75:+    private static assignUserRegion(userResult: any, finalData: any) {
+  -> 82:+    private static assignFarmerData(farmersResult: any, finalData: any) {
+  -> 87:+            const allCrops = farmersResult.rows.flatMap((f: any) => f.crops || []);
+  -> 97:+    private static async fetchUserAndFarmerContext(userId: string, finalData: any) {
+  -> 110:+        const finalData: any = {
+  -> 153:+                    content: `FAO Disease Alerts for ${region} (Crop: ${crop || 'All'}):
+  -> ${alerts.map((a: any) => `- [${a.severity.toUpperCase()}] ${a.title}: ${a.description}`).join('
+  -> ')}`,
+  -> 186:+            const soil = (await soilGridsService.fetchSoilProperties(lat, lng)) as any;
+  -> 204:+                const relevantPrices = crop ? prices.filter((p: any) => p.crop.toLowerCase().includes(crop.toLowerCase())) : prices;
+  -> 208:+                    content: `Latest Market Prices:
+  -> ${priceList.map((p: any) => `- ${p.crop}: ${p.price} (${p.trend})`).join('
+  -> ')}`,
+  -> 225:+    private static cacheAndLogResponse(userId: string, queryText: string, attachments: any[] | undefined, redisKey: string, queryCategories: string[], response: any) {
+  -> ag-extension-dashboard/src/backend/src/services/mcpAdapter.ts:
+  -> 1:+  private processSchemaShape(shape: any, properties: Record<string, unknown>, required: string[], toolName: string): void {
+  -> 5:+          const zodDef = (value as any)?._def;
+  -> ag-extension-dashboard/src/backend/src/services/priorityService.ts:
+  -> 1:+    private async calculateDiseaseScore(farmer: any): Promise<{ score: number; relevantAlerts: any[] }> {
+  -> 3:+        let relevantAlerts: any[] = [];
+  -> 18:+    private async calculateWeatherScore(farmer: any, reasons: string[]): Promise<number> {
+  -> 40:+    private calculateRecencyScore(farmer: any, reasons: string[]): number {
+  -> ag-extension-dashboard/src/backend/src/services/ragV2Service.ts:
+  -> 45:+    private static toEntity(row: any): Entity {
+  -> 49:+    private static async fetchEntityAndRelated(normalizedName: string, entityId?: string): Promise<{ entityRow: any; relatedRows: any[] } | null> {
+  -> 86:+    private static async fetchInitialResults(queryText: string, limit: number, useChunks: boolean, filters: any): Promise<RankedResult[]> {
+  -> 107:+        } catch (err: any) {
+  -> ag-extension-dashboard/src/backend/src/services/socketService.ts:
+  -> 13:+    socket.on('chat_message', (data: { conversationId: string; message: any }) => {
+  -> 35:+    socket.on('alert', (data: { type: string; message: string; data?: any }) => {
+  -> ag-extension-dashboard/src/backend/src/services/webrtcService.ts:
+  -> 1:+    private setupConnectionHandlers(socket: any) {
+  -> 20:+    private setupRoomHandlers(socket: any) {
+  -> 21:+        socket.on('create-room', (data: { userId: string; userName: string }, callback: any) => {
+  -> 37:+        socket.on('join-room', (data: { roomId: string; userId: string; userName: string }, callback: any) => {
+  -> 57:+    private setupSignalingHandlers(socket: any) {
+  -> 68:+    private setupCallControlHandlers(socket: any) {
+  -> ag-extension-dashboard/src/backend/src/tools/apiBudgetTool.ts:
+  -> 15:+    const prov = await AIProviderFactory.getProvider(p as any);
+  -> ag-extension-dashboard/src/backend/src/tools/cropYieldForecastTool.ts:
+  -> 18:+function calculateWeatherScore(weather: any, crop: string): number {
+  -> 23:+  const rain = weather.forecast?.reduce((sum: number, _d: any) => sum + 0, 0) || 0;
+  -> ag-extension-dashboard/src/backend/src/tools/deepResearchTool.ts:
+  -> 6:+      data: JSON.stringify(tavilyResults.results?.slice(0, 5).map((r: any) => ({
+  -> 
+[0;31m[ERROR][0;0m SECURITY: Unsafe eval()/exec()/Function() usage detected:
+  -> 1349:        while ((match = regex.exec(text)) !== null) {
+[0;33m[WARN][0;0m Magic numbers detected — consider using named constants for readability:
+  -> 15:        "node": ">=14"
+  -> 29:        resolutionRate: totalConversations > 0 ? Math.round((resolvedConversations / totalConversations) * 100) : 0,
+  -> 79:        escalationRate: Math.round((parseInt(conversations[0]?.escalated || '0') / total) * 100),
+  -> 822:            onProgress({ operationId, progress: (current / total) * 100, total, current, message: `Deleting articles: ${current}/${total}`, status: 'running' });
+  -> 1328:            return 100; // Never visited
+  -> 1332:        if (daysSinceVisit > 30) {
+  -> 1776:  const tempOptimal = crop.toLowerCase() === 'rice' ? (temp >= 20 && temp <= 35) : (temp >= 15 && temp <= 30);
+  -> 1777:  const humidityOptimal = humidity >= 40 && humidity <= 80;
+  -> 1919:        "node": ">=14"
+  -> 1939:        "node": ">= 14.6"
+[0;33m[WARN][0;0m Fallow flagged complexity/duplication issues in modified files:
+  -> code-duplication:ag-extension-dashboard/src/backend/src/routes/reporting.ts:283-354:fingerprint=dup:b0b298ab,group=1,tokens=62,lines=72,instances=2
+  -> code-duplication:ag-extension-dashboard/src/backend/src/routes/reporting.ts:466-501:fingerprint=dup:b0b298ab,group=1,tokens=62,lines=72,instances=2
+  -> code-duplication:ag-extension-dashboard/src/backend/src/services/knowledgeService.ts:364-368:fingerprint=dup:14b1b9a4,group=2,tokens=72,lines=5,instances=2
+  -> code-duplication:ag-extension-dashboard/src/backend/src/services/knowledgeService.ts:383-387:fingerprint=dup:14b1b9a4,group=2,tokens=72,lines=5,instances=2
+  -> code-duplication:ag-extension-dashboard/src/backend/src/services/selfHealing.ts:4-316:fingerprint=dup:12d3a266,group=3,tokens=59,lines=313,instances=2
+  -> code-duplication:ag-extension-dashboard/src/frontend/src/api/systemHealthService.ts:3-23:fingerprint=dup:12d3a266,group=3,tokens=59,lines=313,instances=2
+  -> code-duplication:ag-extension-dashboard/src/frontend/src/hooks/useAppMenuActions.ts:30-34:fingerprint=dup:481e4cb5,group=4,tokens=57,lines=7,instances=2
+  -> code-duplication:ag-extension-dashboard/src/frontend/src/hooks/useBulkActions.ts:182-188:fingerprint=dup:481e4cb5,group=4,tokens=57,lines=7,instances=2
+  -> code-duplication:ag-extension-dashboard/src/frontend/src/pages/SMS.tsx:81-93:fingerprint=dup:57e45873,group=5,tokens=71,lines=13,instances=2
+  -> code-duplication:ag-extension-dashboard/src/frontend/src/pages/SMS.tsx:274-286:fingerprint=dup:57e45873,group=5,tokens=71,lines=13,instances=2
+  -> vital-signs:total_loc=63373,avg_cyclomatic=2.9,p90_cyclomatic=7,dead_file_pct=10.9,dead_export_pct=15.0,maintainability_avg=88.1,hotspot_count=0,circular_dep_count=0,unused_dep_count=6
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/pages/SystemHealth.tsx:15:DiagnosticsPanel:cyclomatic=29,cognitive=25,severity=critical,crap=870.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/Cyber/AlphaAgentOps.tsx:81:AlphaAgentOps:cyclomatic=24,cognitive=23,severity=critical,crap=600.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/Cyber/AlphaAI.tsx:219:AlphaAI:cyclomatic=22,cognitive=17,severity=critical,crap=506.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/bulkOperationsService.ts:289:mapHeaderToField:cyclomatic=21,cognitive=12,severity=critical,crap=462.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/pages/CropsFields.tsx:297:CropsFields:cyclomatic=21,cognitive=35,severity=critical,crap=462.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/FarmerDetailPanel.tsx:247:FarmerDetailPanel:cyclomatic=19,cognitive=18,severity=critical,crap=380.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/ReasoningVisuals.tsx:272:ReasoningVisuals:cyclomatic=19,cognitive=17,severity=critical,crap=380.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/VideoCall.tsx:95:VideoCall:cyclomatic=19,cognitive=24,severity=critical,crap=380.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/pages/SMS.tsx:65:SMSComposerComposeTab:cyclomatic=18,cognitive=27,severity=critical,crap=342.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/knowledge.ts:722:processUpdateArticle:cyclomatic=17,cognitive=15,severity=critical,crap=306.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/knowledgeService.ts:364:fetchNasaAgroclimateContext:cyclomatic=16,cognitive=12,severity=critical,crap=272.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/analytics.ts:294:formatPerformanceMetrics:cyclomatic=15,cognitive=8,severity=critical,crap=240.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/SatelliteInsights.tsx:176:MetricsGrid:cyclomatic=15,cognitive=11,severity=critical,crap=240.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/HelpCenterModal.tsx:103:HelpCenterModal:cyclomatic=14,cognitive=19,severity=critical,crap=210.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/reporting.ts:581:drawGeneralReportDetails:cyclomatic=14,cognitive=12,severity=critical,crap=210.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/pages/ReportsPage.tsx:22:ReportCard:cyclomatic=14,cognitive=14,severity=critical,crap=210.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/farmer/CyberDashboard.tsx:29:getDashboardMetrics:cyclomatic=14,cognitive=5,severity=critical,crap=210.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/farmer/CyberDashboard.tsx:36:CyberDashboard:cyclomatic=14,cognitive=9,severity=critical,crap=210.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/billing.ts:159:<arrow>:cyclomatic=14,cognitive=13,severity=critical,crap=210.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/diagnostics.ts:129:getSummaryAndRecommendations:cyclomatic=13,cognitive=10,severity=critical,crap=182.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/knowledgeService.ts:176:fallbackAgriQuery:cyclomatic=13,cognitive=11,severity=critical,crap=182.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/knowledge.ts:826:processKnowledgeIngestion:cyclomatic=13,cognitive=14,severity=critical,crap=182.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/VideoCall.tsx:26:PreCallView:cyclomatic=12,cognitive=17,severity=critical,crap=156.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/SatelliteInsights.tsx:100:SpatialDataVisualization:cyclomatic=12,cognitive=11,severity=critical,crap=156.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/portfolio.ts:242:buildFarmersSheet:cyclomatic=12,cognitive=12,severity=critical,crap=156.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/knowledgeService.ts:321:fetchWeatherContext:cyclomatic=12,cognitive=14,severity=critical,crap=156.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/knowledgeService.ts:383:fetchSoilPropertiesContext:cyclomatic=12,cognitive=10,severity=critical,crap=156.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/knowledge.ts:309:<arrow>:cyclomatic=12,cognitive=9,severity=critical,crap=156.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/priorityService.ts:86:calculateUrgencyScore:cyclomatic=12,cognitive=11,severity=critical,crap=156.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/tools/cropYieldForecastTool.ts:31:calculateWeatherScore:cyclomatic=11,cognitive=10,severity=critical,crap=132.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/Cyber/SystemOverview.tsx:39:fetchSystemHealth:cyclomatic=11,cognitive=8,severity=critical,crap=132.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/farmers.ts:463:verifyFarmersAccess:cyclomatic=10,cognitive=13,severity=critical,crap=110.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/SatelliteInsights.tsx:217:SatelliteInsights:cyclomatic=10,cognitive=12,severity=critical,crap=110.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/diagnostics.ts:171:<arrow>:cyclomatic=10,cognitive=9,severity=critical,crap=110.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/utils/startupValidation.ts:37:validateAiConfig:cyclomatic=10,cognitive=8,severity=critical,crap=110.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/hooks/useBillingActions.ts:38:handleSubscribeError:cyclomatic=10,cognitive=10,severity=critical,crap=110.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/Cyber/AlphaAI.tsx:141:handleTerminalCommand:cyclomatic=10,cognitive=6,severity=critical,crap=110.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/pages/CropsFields.tsx:180:CropCycleRow:cyclomatic=10,cognitive=13,severity=critical,crap=110.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/pages/DashboardPage.tsx:48:DashboardStats:cyclomatic=10,cognitive=10,severity=critical,crap=110.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/hooks/useAppSearch.ts:102:handleGlobalSearch:cyclomatic=10,cognitive=8,severity=critical,crap=110.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/analytics.ts:496:formatChatbotConversations:cyclomatic=9,cognitive=4,severity=high,crap=90.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/utils/privacy.ts:103:maskObject:cyclomatic=9,cognitive=7,severity=high,crap=90.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/farmers.ts:511:<arrow>:cyclomatic=9,cognitive=9,severity=high,crap=90.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/hooks/useAppShortcuts.ts:58:handleAppKeyDown:cyclomatic=9,cognitive=9,severity=high,crap=90.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/knowledgeService.ts:401:fetchMarketPricesContext:cyclomatic=9,cognitive=10,severity=high,crap=90.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/knowledgeService.ts:529:askQuestion:cyclomatic=9,cognitive=8,severity=high,crap=90.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/billing.ts:93:handleExistingSubscription:cyclomatic=9,cognitive=13,severity=high,crap=90.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/pages/CropsFields.tsx:53:<arrow>:cyclomatic=9,cognitive=8,severity=high,crap=90.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/mcpAdapter.ts:47:processSchemaShape:cyclomatic=9,cognitive=11,severity=high,crap=90.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/pages/SMS.tsx:247:SMSComposerPanel:cyclomatic=8,cognitive=24,severity=high,crap=72.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/pages/SystemHealth.tsx:167:SystemHealth:cyclomatic=8,cognitive=21,severity=high,crap=72.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/selfHealing.ts:155:checkComponent:cyclomatic=8,cognitive=2,severity=high,crap=72.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/analytics.ts:530:<arrow>:cyclomatic=8,cognitive=7,severity=high,crap=72.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/utils/privacy.ts:60:maskValue:cyclomatic=8,cognitive=9,severity=high,crap=72.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/hooks/useAppMenuActions.ts:23:handleExport:cyclomatic=8,cognitive=8,severity=high,crap=72.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/utils/retry.ts:25:withRetry:cyclomatic=8,cognitive=13,severity=high,crap=72.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/reporting.ts:73:generateReportData:cyclomatic=8,cognitive=8,severity=high,crap=72.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/reporting.ts:222:drawDiseaseDiagnosisHeader:cyclomatic=8,cognitive=6,severity=high,crap=72.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/reporting.ts:405:drawSoilDiagnosticHeader:cyclomatic=8,cognitive=6,severity=high,crap=72.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/hooks/useBillingActions.ts:230:handleSwitch:cyclomatic=8,cognitive=10,severity=high,crap=72.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/Cyber/AlphaAgentOps.tsx:40:getTagColor:cyclomatic=8,cognitive=1,severity=high,crap=72.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/knowledgeService.ts:269:assignFarmerData:cyclomatic=8,cognitive=8,severity=high,crap=72.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/knowledgeService.ts:347:fetchFAOAlertsContext:cyclomatic=8,cognitive=7,severity=high,crap=72.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/knowledgeService.ts:687:enhanceImages:cyclomatic=8,cognitive=14,severity=high,crap=72.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/bulkOperationsService.ts:201:buildFarmerExportFilters:cyclomatic=8,cognitive=7,severity=high,crap=72.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/bulkOperationsService.ts:332:processCSVRow:cyclomatic=8,cognitive=7,severity=high,crap=72.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/knowledge.ts:285:fetchKnowledgeArticles:cyclomatic=8,cognitive=10,severity=high,crap=72.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/pages/DashboardPage.tsx:185:<arrow>:cyclomatic=8,cognitive=6,severity=high,crap=72.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/priorityService.ts:46:calculateWeatherScore:cyclomatic=8,cognitive=7,severity=high,crap=72.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/tools/cropYieldForecastTool.ts:49:execute:cyclomatic=7,cognitive=7,severity=high,crap=56.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/analytics.ts:328:<arrow>:cyclomatic=7,cognitive=7,severity=high,crap=56.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/scripts/ai-translate.ts:47:translateMissingKeys:cyclomatic=7,cognitive=9,severity=high,crap=56.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/tools/deepResearchTool.ts:31:fetchFaoAlerts:cyclomatic=7,cognitive=7,severity=high,crap=56.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/reporting.ts:503:drawSoilNPKProfile:cyclomatic=7,cognitive=3,severity=high,crap=56.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/hooks/useBillingActions.ts:242:handleSubscribe:cyclomatic=7,cognitive=6,severity=high,crap=56.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/ragV2Service.ts:329:traverse:cyclomatic=7,cognitive=7,severity=high,crap=56.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/scripts/ai-translate-all.ts:96:processBatchTranslation:cyclomatic=7,cognitive=7,severity=high,crap=56.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/pages/ReportsPage.tsx:44:<arrow>:cyclomatic=7,cognitive=6,severity=high,crap=56.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/pages/ReportsPage.tsx:128:ReportsPage:cyclomatic=7,cognitive=15,severity=high,crap=56.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/Cyber/AlphaAI.tsx:35:<arrow>:cyclomatic=7,cognitive=5,severity=high,crap=56.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/Cyber/AlphaAI.tsx:177:TopNavigationBar:cyclomatic=7,cognitive=10,severity=high,crap=56.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/knowledgeService.ts:730:addFallbackVisuals:cyclomatic=7,cognitive=8,severity=high,crap=56.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/pages/DashboardPage.tsx:196:<arrow>:cyclomatic=7,cognitive=7,severity=high,crap=56.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/mcpAdapter.ts:72:<arrow>:cyclomatic=7,cognitive=7,severity=high,crap=56.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/selfHealing.ts:130:checkAgentService:cyclomatic=6,cognitive=7,severity=moderate,crap=42.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/hooks/useAppMenuActions.ts:57:handleMenuAction:cyclomatic=6,cognitive=5,severity=moderate,crap=42.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/theme/index.ts:448:getDarkVal:cyclomatic=6,cognitive=1,severity=moderate,crap=42.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/portfolio.ts:263:buildVisitsSheet:cyclomatic=6,cognitive=6,severity=moderate,crap=42.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/ragV2Service.ts:460:buildGraphContext:cyclomatic=6,cognitive=8,severity=moderate,crap=42.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/scripts/ai-translate-all.ts:200:run:cyclomatic=6,cognitive=7,severity=moderate,crap=42.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/VideoCall.tsx:78:LocalVideo:cyclomatic=6,cognitive=7,severity=moderate,crap=42.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/FarmerDetailPanel.tsx:126:<arrow>:cyclomatic=6,cognitive=6,severity=moderate,crap=42.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/Cyber/AlphaAI.tsx:105:handleStatusCmd:cyclomatic=6,cognitive=3,severity=moderate,crap=42.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/ReasoningVisuals.tsx:188:<arrow>:cyclomatic=6,cognitive=5,severity=moderate,crap=42.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/ReasoningVisuals.tsx:230:AudioSynthesisSection:cyclomatic=6,cognitive=6,severity=moderate,crap=42.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/knowledgeService.ts:240:enrichContextWithWebFallbacks:cyclomatic=6,cognitive=5,severity=moderate,crap=42.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/bulkOperationsService.ts:166:bulkDeleteKnowledgeArticles:cyclomatic=6,cognitive=7,severity=moderate,crap=42.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/pages/DashboardPage.tsx:122:SupportEfficiencyCard:cyclomatic=6,cognitive=4,severity=moderate,crap=42.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/hooks/useAppSearch.ts:83:matchedTransactions:cyclomatic=6,cognitive=3,severity=moderate,crap=42.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/selfHealing.ts:67:handleCheckResult:cyclomatic=5,cognitive=8,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/analytics.ts:318:<arrow>:cyclomatic=5,cognitive=3,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/analytics.ts:513:formatChatbotResponseMetrics:cyclomatic=5,cognitive=3,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/utils/privacy.ts:77:maskObjectProperties:cyclomatic=5,cognitive=5,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/diagnostics.ts:63:checkTraefikRouting:cyclomatic=5,cognitive=4,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/diagnostics.ts:109:getDeploymentDetection:cyclomatic=5,cognitive=4,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/tools/deepResearchTool.ts:17:fetchTavilyResults:cyclomatic=5,cognitive=5,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/tools/deepResearchTool.ts:59:execute:cyclomatic=5,cognitive=5,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/socketService.ts:78:handleUserJoinRooms:cyclomatic=5,cognitive=5,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/reporting.ts:135:<arrow>:cyclomatic=5,cognitive=4,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/reporting.ts:356:generateDiseaseDiagnosisPDF:cyclomatic=5,cognitive=4,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/reporting.ts:477:drawSoilPhysicalAttributes:cyclomatic=5,cognitive=4,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/reporting.ts:537:generateSoilDiagnosticPDF:cyclomatic=5,cognitive=4,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/reporting.ts:627:<arrow>:cyclomatic=5,cognitive=4,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/Cyber/SystemOverview.tsx:14:getStatusColor:cyclomatic=5,cognitive=1,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/Cyber/SystemOverview.tsx:24:getHealthGrade:cyclomatic=5,cognitive=4,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/FarmerDetailPanel.tsx:150:VitalStatsSection:cyclomatic=5,cognitive=6,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/FarmerDetailPanel.tsx:181:OverviewTabContent:cyclomatic=5,cognitive=11,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/pages/SMS.tsx:438:<arrow>:cyclomatic=5,cognitive=3,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/pages/SMS.tsx:373:SMSContactsPanel:cyclomatic=5,cognitive=11,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/Cyber/AlphaAI.tsx:124:handleAgentsCmd:cyclomatic=5,cognitive=4,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/ReasoningVisuals.tsx:62:ChartTooltip:cyclomatic=5,cognitive=4,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/ReasoningVisuals.tsx:151:MediaAssetsSection:cyclomatic=5,cognitive=4,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/knowledgeService.ts:215:fallbackGeneralQuery:cyclomatic=5,cognitive=3,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/services/bulkOperationsService.ts:389:importFarmersFromCSV:cyclomatic=5,cognitive=4,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/knowledge.ts:226:performLegacySearch:cyclomatic=5,cognitive=3,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/knowledge.ts:382:<arrow>:cyclomatic=5,cognitive=4,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/backend/src/routes/knowledge.ts:504:<arrow>:cyclomatic=5,cognitive=4,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/pages/CropsFields.tsx:20:CropsOverviewTab:cyclomatic=5,cognitive=11,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/hooks/useAppSearch.ts:25:matchedFarmers:cyclomatic=5,cognitive=2,severity=moderate,crap=30.0
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/hooks/useBillingActions.ts:85:useBillingActions:cyclomatic=2,cognitive=26,severity=high
+  -> high-complexity:ag-extension-dashboard/src/frontend/src/pages/SMS.tsx:580:SMSPage:cyclomatic=2,cognitive=24,severity=moderate
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/FarmerMap.tsx:mi=90.3,fan_in=1,fan_out=3,dead=0.00,density=0.14,crap_max=1722.0,crap_above=6
+  -> file-score:ag-extension-dashboard/src/frontend/src/pages/SystemHealth.tsx:mi=86.2,fan_in=1,fan_out=6,dead=0.00,density=0.20,crap_max=870.0,crap_above=8
+  -> file-score:ag-extension-dashboard/src/backend/src/services/contextMenuService.ts:mi=87.0,fan_in=1,fan_out=4,dead=0.00,density=0.22,crap_max=756.0,crap_above=5
+  -> file-score:ag-extension-browser-ext/entrypoints/sidepanel/App.tsx:mi=87.3,fan_in=1,fan_out=4,dead=0.00,density=0.21,crap_max=756.0,crap_above=8
+  -> file-score:ag-extension-dashboard/src/backend/scripts/ai-translate-all.ts:mi=74.3,fan_in=0,fan_out=0,dead=1.00,density=0.19,crap_max=650.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/TabContent.tsx:mi=78.4,fan_in=1,fan_out=24,dead=0.00,density=0.29,crap_max=650.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/forms/VisitModal.tsx:mi=88.8,fan_in=1,fan_out=3,dead=0.00,density=0.19,crap_max=650.0,crap_above=4
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/Cyber/AlphaAgentOps.tsx:mi=86.2,fan_in=1,fan_out=5,dead=0.00,density=0.22,crap_max=600.0,crap_above=5
+  -> file-score:ag-extension-dashboard/src/backend/src/index.ts:mi=83.1,fan_in=0,fan_out=25,dead=0.00,density=0.13,crap_max=552.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/Cyber/ActionableAI.tsx:mi=88.3,fan_in=1,fan_out=5,dead=0.00,density=0.15,crap_max=552.0,crap_above=4
+  -> file-score:ag-extension-dashboard/src/frontend/src/hooks/useBillingActions.ts:mi=82.2,fan_in=1,fan_out=3,dead=0.00,density=0.41,crap_max=506.0,crap_above=12
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/Cyber/AlphaAI.tsx:mi=85.5,fan_in=1,fan_out=4,dead=0.00,density=0.27,crap_max=506.0,crap_above=6
+  -> file-score:ag-extension-dashboard/src/backend/src/services/bulkOperationsService.ts:mi=76.1,fan_in=2,fan_out=3,dead=0.50,density=0.28,crap_max=462.0,crap_above=10
+  -> file-score:ag-extension-dashboard/src/frontend/src/hooks/useAppQueries.ts:mi=80.3,fan_in=1,fan_out=7,dead=0.00,density=0.38,crap_max=462.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/pages/CropsFields.tsx:mi=87.4,fan_in=1,fan_out=6,dead=0.00,density=0.16,crap_max=462.0,crap_above=10
+  -> file-score:ag-extension-dashboard/src/frontend/src/pages/AnalyticsPage.tsx:mi=89.4,fan_in=1,fan_out=4,dead=0.00,density=0.14,crap_max=462.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/services/aiProvider/providers/groq.ts:mi=84.9,fan_in=1,fan_out=4,dead=0.00,density=0.29,crap_max=420.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/ABTestBanner.tsx:mi=76.5,fan_in=1,fan_out=2,dead=0.67,density=0.19,crap_max=380.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/services/security/skillVetter.ts:mi=82.1,fan_in=1,fan_out=1,dead=0.50,density=0.17,crap_max=380.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/FarmerDetailPanel.tsx:mi=84.3,fan_in=1,fan_out=12,dead=0.00,density=0.18,crap_max=380.0,crap_above=8
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/SettingsPanel.tsx:mi=86.5,fan_in=1,fan_out=6,dead=0.00,density=0.19,crap_max=380.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/VideoCall.tsx:mi=88.4,fan_in=1,fan_out=2,dead=0.00,density=0.24,crap_max=380.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/ReasoningVisuals.tsx:mi=92.1,fan_in=1,fan_out=1,dead=0.00,density=0.17,crap_max=380.0,crap_above=6
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/AppModals.tsx:mi=84.4,fan_in=1,fan_out=15,dead=0.00,density=0.15,crap_max=342.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/BillingDashboard.tsx:mi=86.6,fan_in=1,fan_out=9,dead=0.00,density=0.14,crap_max=342.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/pages/SMS.tsx:mi=88.0,fan_in=1,fan_out=6,dead=0.00,density=0.14,crap_max=342.0,crap_above=6
+  -> file-score:ag-extension-dashboard/src/frontend/src/pages/EmailWorkflows.tsx:mi=89.5,fan_in=1,fan_out=5,dead=0.00,density=0.11,crap_max=342.0,crap_above=5
+  -> file-score:ag-extension-dashboard/src/backend/src/app.ts:mi=79.0,fan_in=1,fan_out=47,dead=0.00,density=0.20,crap_max=306.0,crap_above=4
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/knowledge.ts:mi=83.6,fan_in=2,fan_out=16,dead=0.00,density=0.17,crap_max=306.0,crap_above=11
+  -> file-score:ag-extension-dashboard/src/backend/src/services/aiProvider/providers/openAI.ts:mi=85.5,fan_in=1,fan_out=4,dead=0.00,density=0.27,crap_max=306.0,crap_above=9
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/analytics.ts:mi=85.6,fan_in=1,fan_out=5,dead=0.00,density=0.24,crap_max=306.0,crap_above=9
+  -> file-score:ag-extension-dashboard/src/backend/src/services/aiProvider/providers/googleVertex.ts:mi=86.7,fan_in=1,fan_out=4,dead=0.00,density=0.23,crap_max=306.0,crap_above=4
+  -> file-score:ag-extension-dashboard/src/backend/src/services/aiProvider/providers/ollama.ts:mi=86.7,fan_in=1,fan_out=4,dead=0.00,density=0.23,crap_max=306.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/frontend/src/pages/MCPTools.tsx:mi=87.4,fan_in=1,fan_out=5,dead=0.00,density=0.18,crap_max=306.0,crap_above=6
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/ProfileModal.tsx:mi=89.4,fan_in=1,fan_out=3,dead=0.00,density=0.17,crap_max=306.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/frontend/src/pages/DemoPage.tsx:mi=97.0,fan_in=1,fan_out=0,dead=0.00,density=0.10,crap_max=306.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/services/knowledgeService.ts:mi=80.2,fan_in=3,fan_out=14,dead=0.00,density=0.30,crap_max=272.0,crap_above=17
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/reporting.ts:mi=86.6,fan_in=1,fan_out=7,dead=0.00,density=0.17,crap_max=272.0,crap_above=14
+  -> file-score:ag-extension-dashboard/src/frontend/src/pages/Memory.tsx:mi=88.6,fan_in=1,fan_out=5,dead=0.00,density=0.14,crap_max=272.0,crap_above=4
+  -> file-score:ag-extension-dashboard/src/backend/src/services/usageService.ts:mi=90.0,fan_in=8,fan_out=1,dead=0.00,density=0.24,crap_max=272.0,crap_above=4
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/FarmerDetailHeader.tsx:mi=93.0,fan_in=1,fan_out=1,dead=0.00,density=0.14,crap_max=272.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/services/aiProvider/providers/anthropic.ts:mi=86.4,fan_in=1,fan_out=4,dead=0.00,density=0.24,crap_max=240.0,crap_above=4
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/SatelliteInsights.tsx:mi=87.9,fan_in=1,fan_out=4,dead=0.00,density=0.19,crap_max=240.0,crap_above=5
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/portfolio.ts:mi=88.0,fan_in=1,fan_out=5,dead=0.00,density=0.16,crap_max=240.0,crap_above=4
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/PaymentAnalyticsDashboard.tsx:mi=92.1,fan_in=0,fan_out=3,dead=0.00,density=0.08,crap_max=240.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/client.ts:mi=92.8,fan_in=37,fan_out=0,dead=0.00,density=0.24,crap_max=240.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/farmer/CyberDashboard.tsx:mi=80.5,fan_in=1,fan_out=5,dead=0.00,density=0.41,crap_max=210.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/backend/src/services/data/faostatService.ts:mi=83.9,fan_in=1,fan_out=1,dead=0.50,density=0.11,crap_max=210.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/billing.ts:mi=85.3,fan_in=1,fan_out=10,dead=0.00,density=0.17,crap_max=210.0,crap_above=13
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/visits.ts:mi=86.4,fan_in=1,fan_out=8,dead=0.00,density=0.16,crap_max=210.0,crap_above=5
+  -> file-score:ag-extension-dashboard/src/backend/src/services/aiProvider/providers/azureOpenAI.ts:mi=87.0,fan_in=1,fan_out=4,dead=0.00,density=0.22,crap_max=210.0,crap_above=4
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/billing/PaymentMethods.tsx:mi=87.5,fan_in=1,fan_out=2,dead=0.00,density=0.27,crap_max=210.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/backend/src/middleware/i18nUrlMiddleware.ts:mi=89.0,fan_in=1,fan_out=0,dead=0.40,density=0.10,crap_max=210.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/NotificationPanel.tsx:mi=89.1,fan_in=1,fan_out=3,dead=0.00,density=0.18,crap_max=210.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/frontend/src/pages/ReportsPage.tsx:mi=89.1,fan_in=1,fan_out=3,dead=0.00,density=0.18,crap_max=210.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/HelpCenterModal.tsx:mi=89.7,fan_in=1,fan_out=3,dead=0.00,density=0.16,crap_max=210.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/frontend/src/hooks/useAppBootstrap.ts:mi=81.5,fan_in=1,fan_out=2,dead=0.00,density=0.47,crap_max=182.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/diagnostics.ts:mi=86.7,fan_in=1,fan_out=4,dead=0.00,density=0.23,crap_max=182.0,crap_above=4
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/users.ts:mi=88.2,fan_in=1,fan_out=4,dead=0.00,density=0.18,crap_max=182.0,crap_above=4
+  -> file-score:ag-extension-dashboard/src/frontend/src/pages/Login.tsx:mi=89.1,fan_in=1,fan_out=4,dead=0.00,density=0.15,crap_max=182.0,crap_above=3
+  -> file-score:ag-extension-browser-ext/entrypoints/background/main.ts:mi=89.4,fan_in=0,fan_out=1,dead=0.00,density=0.26,crap_max=182.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/backend/src/services/paymentService.ts:mi=89.7,fan_in=1,fan_out=4,dead=0.00,density=0.13,crap_max=182.0,crap_above=9
+  -> file-score:ag-extension-dashboard/src/frontend/src/pages/Register.tsx:mi=91.7,fan_in=1,fan_out=2,dead=0.00,density=0.13,crap_max=182.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/backend/scripts/verify_multimodal.ts:mi=66.7,fan_in=0,fan_out=4,dead=1.00,density=0.23,crap_max=156.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/services/mcpAdapter.ts:mi=75.1,fan_in=1,fan_out=3,dead=0.67,density=0.20,crap_max=156.0,crap_above=6
+  -> file-score:ag-extension-dashboard/src/backend/src/services/priorityService.ts:mi=77.6,fan_in=1,fan_out=4,dead=0.50,density=0.20,crap_max=156.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/backend/src/services/agentTelemetry.ts:mi=80.2,fan_in=3,fan_out=2,dead=0.50,density=0.18,crap_max=156.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/FarmerDashboard.tsx:mi=85.7,fan_in=1,fan_out=5,dead=0.00,density=0.27,crap_max=156.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/ai.ts:mi=86.8,fan_in=1,fan_out=10,dead=0.00,density=0.12,crap_max=156.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/knowledgeSources.ts:mi=88.0,fan_in=1,fan_out=5,dead=0.00,density=0.16,crap_max=156.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/farmers.ts:mi=88.2,fan_in=1,fan_out=8,dead=0.00,density=0.10,crap_max=156.0,crap_above=8
+  -> file-score:ag-extension-dashboard/src/backend/src/middleware/securityGate.ts:mi=88.4,fan_in=2,fan_out=2,dead=0.00,density=0.24,crap_max=156.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/pages/UserManagementPage.tsx:mi=89.7,fan_in=1,fan_out=3,dead=0.00,density=0.16,crap_max=156.0,crap_above=4
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/Cyber/IsometricFarmOverview.tsx:mi=89.9,fan_in=2,fan_out=2,dead=0.00,density=0.19,crap_max=156.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/lib/LanguageContext.tsx:mi=90.3,fan_in=55,fan_out=1,dead=0.00,density=0.23,crap_max=156.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/UsageQuota.tsx:mi=90.5,fan_in=1,fan_out=2,dead=0.00,density=0.17,crap_max=156.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/backend/src/workers/ingestionWorker.ts:mi=69.4,fan_in=1,fan_out=4,dead=1.00,density=0.14,crap_max=132.0,crap_above=1
+  -> file-score:ag-extension-dashboard/scripts/reembed.js:mi=74.6,fan_in=0,fan_out=0,dead=1.00,density=0.18,crap_max=132.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/services/aiProvider/aiProvider.ts:mi=85.0,fan_in=23,fan_out=11,dead=0.00,density=0.17,crap_max=132.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/chatbot.ts:mi=85.9,fan_in=1,fan_out=10,dead=0.00,density=0.15,crap_max=132.0,crap_above=7
+  -> file-score:ag-extension-dashboard/src/backend/src/tools/cropYieldForecastTool.ts:mi=86.0,fan_in=1,fan_out=2,dead=0.00,density=0.32,crap_max=132.0,crap_above=5
+  -> file-score:ag-extension-dashboard/src/backend/src/services/assetValidationService.ts:mi=87.6,fan_in=1,fan_out=4,dead=0.00,density=0.20,crap_max=132.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/backend/src/services/smsService.ts:mi=88.8,fan_in=2,fan_out=4,dead=0.00,density=0.16,crap_max=132.0,crap_above=8
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/auth.ts:mi=89.0,fan_in=1,fan_out=7,dead=0.00,density=0.09,crap_max=132.0,crap_above=4
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/Cyber/SystemOverview.tsx:mi=89.1,fan_in=1,fan_out=1,dead=0.00,density=0.27,crap_max=132.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/AIResult.tsx:mi=89.4,fan_in=1,fan_out=4,dead=0.00,density=0.14,crap_max=132.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/backend/src/services/vectorService.ts:mi=90.0,fan_in=10,fan_out=3,dead=0.00,density=0.15,crap_max=132.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/pushNotificationService.ts:mi=90.3,fan_in=1,fan_out=1,dead=0.00,density=0.23,crap_max=132.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/forms/FarmerRegistrationForm.tsx:mi=90.4,fan_in=1,fan_out=5,dead=0.00,density=0.08,crap_max=132.0,crap_above=2
+  -> file-score:ag-extension-browser-ext/entrypoints/sidepanel/components/VisitLogger.tsx:mi=90.8,fan_in=1,fan_out=2,dead=0.00,density=0.16,crap_max=132.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/billing/PlanCard.tsx:mi=90.8,fan_in=1,fan_out=2,dead=0.00,density=0.16,crap_max=132.0,crap_above=1
+  -> file-score:ag-extension-browser-ext/entrypoints/content-scripts/main.ts:mi=93.1,fan_in=0,fan_out=0,dead=0.00,density=0.23,crap_max=132.0,crap_above=9
+  -> file-score:ag-extension-dashboard/src/frontend/public/mockServiceWorker.js:mi=76.1,fan_in=0,fan_out=0,dead=1.00,density=0.13,crap_max=110.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/backend/src/services/selfHealing.ts:mi=76.4,fan_in=4,fan_out=4,dead=0.50,density=0.24,crap_max=110.0,crap_above=6
+  -> file-score:ag-extension-dashboard/src/backend/src/services/whatsappService.ts:mi=82.0,fan_in=1,fan_out=2,dead=0.50,density=0.12,crap_max=110.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/frontend/src/hooks/useAppSearch.ts:mi=86.3,fan_in=1,fan_out=2,dead=0.00,density=0.31,crap_max=110.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/frontend/src/pages/DiseaseDiagnosis.tsx:mi=86.9,fan_in=1,fan_out=9,dead=0.00,density=0.13,crap_max=110.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/pages/DashboardPage.tsx:mi=87.4,fan_in=1,fan_out=6,dead=0.00,density=0.16,crap_max=110.0,crap_above=4
+  -> file-score:ag-extension-dashboard/src/backend/src/services/diagnosticsHelpers.ts:mi=88.6,fan_in=1,fan_out=0,dead=0.00,density=0.38,crap_max=110.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/utils/startupValidation.ts:mi=89.0,fan_in=1,fan_out=2,dead=0.00,density=0.22,crap_max=110.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/contextMenus.ts:mi=89.4,fan_in=1,fan_out=4,dead=0.00,density=0.14,crap_max=110.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/hooks/useThemeClasses.ts:mi=90.6,fan_in=32,fan_out=1,dead=0.00,density=0.22,crap_max=110.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/KnowledgeSidebar.tsx:mi=90.9,fan_in=1,fan_out=3,dead=0.00,density=0.12,crap_max=110.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/WeatherWidget.tsx:mi=91.1,fan_in=1,fan_out=2,dead=0.00,density=0.15,crap_max=110.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/services/databaseService.ts:mi=91.2,fan_in=44,fan_out=3,dead=0.00,density=0.11,crap_max=110.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/StatCard.tsx:mi=91.3,fan_in=1,fan_out=1,dead=0.00,density=0.32,crap_max=110.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/lib/realFirst.ts:mi=94.0,fan_in=4,fan_out=0,dead=0.00,density=0.28,crap_max=110.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/ErrorBoundary.tsx:mi=95.8,fan_in=2,fan_out=0,dead=0.00,density=0.14,crap_max=110.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/backend/src/middleware/errorHandler.ts:mi=73.9,fan_in=1,fan_out=1,dead=0.94,density=0.15,crap_max=90.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/backend/src/utils/privacy.ts:mi=74.0,fan_in=0,fan_out=0,dead=1.00,density=0.20,crap_max=90.0,crap_above=4
+  -> file-score:ag-extension-dashboard/src/frontend/inject_translations_final.ts:mi=78.2,fan_in=0,fan_out=0,dead=1.00,density=0.06,crap_max=90.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/services/persistentMemory.ts:mi=80.3,fan_in=3,fan_out=3,dead=0.50,density=0.14,crap_max=90.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/commercialKnowledge.ts:mi=85.3,fan_in=1,fan_out=10,dead=0.00,density=0.17,crap_max=90.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/frontend/src/hooks/useAppShortcuts.ts:mi=86.0,fan_in=1,fan_out=2,dead=0.00,density=0.32,crap_max=90.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/diseases.ts:mi=86.8,fan_in=1,fan_out=5,dead=0.00,density=0.20,crap_max=90.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/backend/src/services/ragV2Service.ts:mi=88.0,fan_in=2,fan_out=5,dead=0.00,density=0.16,crap_max=90.0,crap_above=5
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/fields.ts:mi=88.3,fan_in=1,fan_out=6,dead=0.00,density=0.13,crap_max=90.0,crap_above=4
+  -> file-score:ag-extension-dashboard/src/backend/src/tools/satelliteNDVITool.ts:mi=88.7,fan_in=1,fan_out=2,dead=0.00,density=0.23,crap_max=90.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/forms/VisitSynthesisForm.tsx:mi=88.9,fan_in=1,fan_out=5,dead=0.00,density=0.13,crap_max=90.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/backend/src/services/apiClientService.ts:mi=90.0,fan_in=2,fan_out=4,dead=0.00,density=0.12,crap_max=90.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/FarmerVisitTimeline.tsx:mi=90.8,fan_in=1,fan_out=2,dead=0.00,density=0.16,crap_max=90.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/KnowledgeStats.tsx:mi=94.5,fan_in=1,fan_out=1,dead=0.00,density=0.09,crap_max=90.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/services/aiProvider/assetLibrary.ts:mi=97.9,fan_in=6,fan_out=0,dead=0.00,density=0.07,crap_max=90.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/utils/retry.ts:mi=71.2,fan_in=0,fan_out=1,dead=1.00,density=0.20,crap_max=72.0,crap_above=3
+  -> file-score:ag-extension-dashboard/scripts/check-translations.js:mi=74.3,fan_in=0,fan_out=0,dead=1.00,density=0.19,crap_max=72.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/backend/src/services/agentOrchestrator.ts:mi=79.0,fan_in=3,fan_out=2,dead=0.50,density=0.22,crap_max=72.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/backend/src/services/data/soilGridsService.ts:mi=79.7,fan_in=2,fan_out=1,dead=0.50,density=0.25,crap_max=72.0,crap_above=4
+  -> file-score:ag-extension-dashboard/src/frontend/src/hooks/useAppMenuActions.ts:mi=85.4,fan_in=1,fan_out=2,dead=0.00,density=0.34,crap_max=72.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/alerts.ts:mi=86.4,fan_in=1,fan_out=4,dead=0.00,density=0.24,crap_max=72.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/index.tsx:mi=86.7,fan_in=2,fan_out=8,dead=0.00,density=0.15,crap_max=72.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/notifications.ts:mi=87.4,fan_in=1,fan_out=5,dead=0.00,density=0.18,crap_max=72.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/frontend/src/hooks/useAppChat.ts:mi=88.7,fan_in=1,fan_out=2,dead=0.00,density=0.23,crap_max=72.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/SearchBar.tsx:mi=89.3,fan_in=1,fan_out=2,dead=0.00,density=0.21,crap_max=72.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/services/data/nasaPowerService.ts:mi=90.0,fan_in=4,fan_out=1,dead=0.00,density=0.24,crap_max=72.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/backend/src/services/plantDiseaseService.ts:mi=90.8,fan_in=2,fan_out=2,dead=0.00,density=0.16,crap_max=72.0,crap_above=4
+  -> file-score:ag-extension-dashboard/src/frontend/src/pages/PortfolioPage.tsx:mi=91.2,fan_in=1,fan_out=3,dead=0.00,density=0.11,crap_max=72.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/services/notificationService.ts:mi=91.7,fan_in=1,fan_out=2,dead=0.00,density=0.13,crap_max=72.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/backend/src/tools/translationTool.ts:mi=91.7,fan_in=1,fan_out=2,dead=0.00,density=0.13,crap_max=72.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/ShareModal.tsx:mi=92.6,fan_in=1,fan_out=2,dead=0.00,density=0.10,crap_max=72.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/BulkUpdateModal.tsx:mi=93.0,fan_in=1,fan_out=1,dead=0.00,density=0.14,crap_max=72.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/BulkSmsModal.tsx:mi=94.5,fan_in=1,fan_out=1,dead=0.00,density=0.09,crap_max=72.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/scripts/ai-translate.ts:mi=69.4,fan_in=0,fan_out=1,dead=1.00,density=0.26,crap_max=56.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/services/data/faoKnowledgeService.ts:mi=70.5,fan_in=0,fan_out=2,dead=1.00,density=0.17,crap_max=56.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/backend/src/workers/alertWorker.ts:mi=71.8,fan_in=1,fan_out=3,dead=1.00,density=0.09,crap_max=56.0,crap_above=2
+  -> file-score:ag-extension-dashboard/scripts/verify-real-translations.js:mi=74.0,fan_in=0,fan_out=0,dead=1.00,density=0.20,crap_max=56.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/backend/src/scripts/ai-translate-all.ts:mi=75.2,fan_in=0,fan_out=0,dead=1.00,density=0.16,crap_max=56.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/backend/scripts/extract-locales.ts:mi=76.4,fan_in=0,fan_out=0,dead=1.00,density=0.12,crap_max=56.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/services/emailWorkflowService.ts:mi=80.0,fan_in=2,fan_out=4,dead=0.50,density=0.12,crap_max=56.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/frontend/src/App.tsx:mi=82.5,fan_in=1,fan_out=31,dead=0.00,density=0.12,crap_max=56.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/services/paymentAnalyticsService.ts:mi=83.8,fan_in=1,fan_out=2,dead=0.50,density=0.06,crap_max=56.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/memories.ts:mi=84.7,fan_in=1,fan_out=6,dead=0.00,density=0.25,crap_max=56.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/backend/src/tools/deepResearchTool.ts:mi=85.9,fan_in=1,fan_out=6,dead=0.00,density=0.21,crap_max=56.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/backend/src/tools/nasaPowerTool.ts:mi=86.1,fan_in=1,fan_out=3,dead=0.00,density=0.28,crap_max=56.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/layout/AppHeader.tsx:mi=87.8,fan_in=1,fan_out=9,dead=0.00,density=0.10,crap_max=56.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/tools/weatherTool.ts:mi=88.1,fan_in=1,fan_out=2,dead=0.00,density=0.25,crap_max=56.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/frontend/src/store/useAppStore.ts:mi=88.2,fan_in=35,fan_out=3,dead=0.00,density=0.21,crap_max=56.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/pages/Telemetry.tsx:mi=88.9,fan_in=1,fan_out=6,dead=0.00,density=0.11,crap_max=56.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/layout/ProfileMenu.tsx:mi=90.0,fan_in=1,fan_out=3,dead=0.00,density=0.15,crap_max=56.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/farmer/NormalDashboard.tsx:mi=90.3,fan_in=1,fan_out=4,dead=0.00,density=0.11,crap_max=56.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/support.ts:mi=90.6,fan_in=1,fan_out=4,dead=0.00,density=0.10,crap_max=56.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/pages/FarmerChatPage.tsx:mi=90.6,fan_in=1,fan_out=3,dead=0.00,density=0.13,crap_max=56.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/syncQueueService.ts:mi=91.5,fan_in=1,fan_out=1,dead=0.00,density=0.19,crap_max=56.0,crap_above=1
+  -> file-score:ag-extension-browser-ext/shared/apiQueue.ts:mi=92.5,fan_in=2,fan_out=0,dead=0.00,density=0.25,crap_max=56.0,crap_above=5
+  -> file-score:ag-extension-dashboard/src/backend/src/services/satelliteService.ts:mi=93.0,fan_in=2,fan_out=1,dead=0.00,density=0.14,crap_max=56.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/backend/src/middleware/authorize.ts:mi=93.2,fan_in=37,fan_out=2,dead=0.00,density=0.08,crap_max=56.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/pages/diagnostics/ImageAnalysisTab.tsx:mi=93.6,fan_in=1,fan_out=1,dead=0.00,density=0.12,crap_max=56.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/backend/src/services/weatherService.ts:mi=94.5,fan_in=9,fan_out=1,dead=0.00,density=0.09,crap_max=56.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/pages/LandingPage.tsx:mi=95.4,fan_in=1,fan_out=1,dead=0.00,density=0.06,crap_max=56.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/test_phase1.ts:mi=70.6,fan_in=0,fan_out=4,dead=1.00,density=0.10,crap_max=42.0,crap_above=1
+  -> file-score:ag-extension-dashboard/scripts/audit-locales.js:mi=74.1,fan_in=0,fan_out=0,dead=1.00,density=0.21,crap_max=42.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/services/security/aegisShield.ts:mi=84.2,fan_in=2,fan_out=1,dead=0.50,density=0.10,crap_max=42.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/services/socketService.ts:mi=86.9,fan_in=1,fan_out=2,dead=0.00,density=0.29,crap_max=42.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/backend/src/services/shareService.ts:mi=88.8,fan_in=2,fan_out=4,dead=0.00,density=0.16,crap_max=42.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/frontend/src/pages/Agents.tsx:mi=89.0,fan_in=1,fan_out=7,dead=0.00,density=0.09,crap_max=42.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/hooks/useBulkActions.ts:mi=89.1,fan_in=1,fan_out=3,dead=0.00,density=0.18,crap_max=42.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/services/emailService.ts:mi=90.0,fan_in=3,fan_out=3,dead=0.00,density=0.15,crap_max=42.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/backend/src/tools/marketPriceTool.ts:mi=90.1,fan_in=1,fan_out=3,dead=0.00,density=0.15,crap_max=42.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/services/semanticCacheService.ts:mi=90.9,fan_in=2,fan_out=3,dead=0.00,density=0.12,crap_max=42.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/services/voucherService.ts:mi=92.0,fan_in=1,fan_out=2,dead=0.00,density=0.12,crap_max=42.0,crap_above=3
+  -> file-score:ag-extension-dashboard/src/frontend/src/pages/ForgotPassword.tsx:mi=93.0,fan_in=1,fan_out=1,dead=0.00,density=0.14,crap_max=42.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/backend/src/services/stealthScraperService.ts:mi=93.9,fan_in=2,fan_out=1,dead=0.00,density=0.11,crap_max=42.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/BaseModal.tsx:mi=95.4,fan_in=1,fan_out=1,dead=0.00,density=0.06,crap_max=42.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/middleware/validate.ts:mi=96.7,fan_in=8,fan_out=0,dead=0.00,density=0.11,crap_max=42.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/theme/index.ts:mi=98.8,fan_in=6,fan_out=0,dead=0.00,density=0.04,crap_max=42.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/utils/translateAll.ts:mi=73.9,fan_in=0,fan_out=1,dead=1.00,density=0.11,crap_max=30.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/migrations/add_language_preference.ts:mi=75.1,fan_in=0,fan_out=1,dead=1.00,density=0.07,crap_max=30.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/utils/translationGenerator.ts:mi=76.6,fan_in=0,fan_out=1,dead=1.00,density=0.02,crap_max=30.0,crap_above=1
+  -> file-score:ag-extension-dashboard/scripts/generate-missing-translations.js:mi=77.3,fan_in=0,fan_out=0,dead=1.00,density=0.09,crap_max=30.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/seed.js:mi=78.8,fan_in=0,fan_out=0,dead=1.00,density=0.04,crap_max=30.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/external.ts:mi=84.7,fan_in=1,fan_out=11,dead=0.00,density=0.18,crap_max=30.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/billingService.ts:mi=86.4,fan_in=5,fan_out=1,dead=0.00,density=0.36,crap_max=30.0,crap_above=10
+  -> file-score:ag-extension-dashboard/src/frontend/src/hooks/useAppAuth.ts:mi=89.9,fan_in=1,fan_out=1,dead=0.00,density=0.27,crap_max=30.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/services/tavilyService.ts:mi=90.8,fan_in=4,fan_out=2,dead=0.00,density=0.16,crap_max=30.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/tools/researchTool.ts:mi=90.8,fan_in=1,fan_out=3,dead=0.00,density=0.13,crap_max=30.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/middleware/usageMiddleware.ts:mi=90.9,fan_in=3,fan_out=3,dead=0.00,density=0.12,crap_max=30.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/services/data/knowledgeSyncOrchestrator.ts:mi=90.9,fan_in=2,fan_out=4,dead=0.00,density=0.09,crap_max=30.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/tools/diseaseAlertTool.ts:mi=91.4,fan_in=1,fan_out=3,dead=0.00,density=0.12,crap_max=30.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/shares.ts:mi=91.5,fan_in=1,fan_out=4,dead=0.00,density=0.07,crap_max=30.0,crap_above=1
+  -> file-score:ag-extension-browser-ext/shared/hooks/usePersistence.ts:mi=91.6,fan_in=2,fan_out=0,dead=0.00,density=0.29,crap_max=30.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/ContextMenu.tsx:mi=92.3,fan_in=1,fan_out=2,dead=0.00,density=0.11,crap_max=30.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/billing/Invoices.tsx:mi=92.3,fan_in=1,fan_out=1,dead=0.00,density=0.17,crap_max=30.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/services/transactionService.ts:mi=92.6,fan_in=1,fan_out=2,dead=0.00,density=0.10,crap_max=30.0,crap_above=2
+  -> file-score:ag-extension-browser-ext/shared/components/ErrorBoundary.tsx:mi=93.0,fan_in=2,fan_out=1,dead=0.00,density=0.14,crap_max=30.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/pages/diagnostics/SymptomDiagnosisTab.tsx:mi=93.6,fan_in=1,fan_out=1,dead=0.00,density=0.12,crap_max=30.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/hooks/useWebRTC.ts:mi=94.0,fan_in=1,fan_out=0,dead=0.00,density=0.20,crap_max=30.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/pages/diagnostics/SoilDiagnosticsTab.tsx:mi=94.5,fan_in=1,fan_out=1,dead=0.00,density=0.09,crap_max=30.0,crap_above=2
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/knowledgeService.ts:mi=94.8,fan_in=5,fan_out=1,dead=0.00,density=0.08,crap_max=30.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/Cyber/CropCycleGantt.tsx:mi=94.9,fan_in=1,fan_out=0,dead=0.00,density=0.17,crap_max=30.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/src/config/index.ts:mi=99.1,fan_in=26,fan_out=0,dead=0.00,density=0.03,crap_max=30.0,crap_above=1
+  -> file-score:ag-extension-dashboard/src/backend/seed-db.ts:mi=73.5,fan_in=0,fan_out=2,dead=1.00,density=0.07,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/scripts/sync-locales.js:mi=73.7,fan_in=0,fan_out=0,dead=1.00,density=0.21,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/scripts/check-json-translations.js:mi=75.2,fan_in=0,fan_out=0,dead=1.00,density=0.16,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/scripts/audit-translations.ts:mi=76.1,fan_in=0,fan_out=0,dead=1.00,density=0.13,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/services/systemConfigService.ts:mi=77.7,fan_in=2,fan_out=2,dead=0.50,density=0.28,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/scripts/seedPlans.ts:mi=77.9,fan_in=0,fan_out=0,dead=1.00,density=0.07,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/update_localized_strings.cjs:mi=79.4,fan_in=0,fan_out=0,dead=1.00,density=0.02,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/middleware/auditMiddleware.ts:mi=80.8,fan_in=1,fan_out=2,dead=0.50,density=0.16,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/middleware/rateLimitMiddleware.ts:mi=86.6,fan_in=1,fan_out=3,dead=0.00,density=0.31,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/apiClients.ts:mi=87.3,fan_in=1,fan_out=4,dead=0.00,density=0.21,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/agents.ts:mi=88.2,fan_in=1,fan_out=4,dead=0.00,density=0.18,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/services/cacheService.ts:mi=88.4,fan_in=8,fan_out=2,dead=0.00,density=0.24,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/whatsapp.ts:mi=89.2,fan_in=1,fan_out=6,dead=0.00,density=0.10,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/tools/apiBudgetTool.ts:mi=89.7,fan_in=1,fan_out=3,dead=0.00,density=0.16,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/layout/GlobalSearch.tsx:mi=89.7,fan_in=1,fan_out=1,dead=0.00,density=0.25,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/pages/VisitsPage.tsx:mi=90.0,fan_in=1,fan_out=4,dead=0.00,density=0.12,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/layout/AppSidebar.tsx:mi=90.3,fan_in=1,fan_out=4,dead=0.00,density=0.11,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/upload.ts:mi=90.6,fan_in=1,fan_out=3,dead=0.00,density=0.13,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/lib/ThemeProvider.tsx:mi=90.6,fan_in=1,fan_out=4,dead=0.00,density=0.11,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/utils/schemas.ts:mi=90.7,fan_in=7,fan_out=0,dead=0.45,density=0.01,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/shareRouteFactory.ts:mi=91.4,fan_in=4,fan_out=3,dead=0.00,density=0.13,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/hooks/useAppSync.ts:mi=91.7,fan_in=1,fan_out=2,dead=0.00,density=0.13,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/services/webrtcService.ts:mi=92.4,fan_in=1,fan_out=1,dead=0.00,density=0.16,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/tools/registerAlertTool.ts:mi=92.4,fan_in=1,fan_out=3,dead=0.00,density=0.07,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/ThemeSwitcher.tsx:mi=92.6,fan_in=2,fan_out=2,dead=0.00,density=0.10,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/tools/scheduleVisit.ts:mi=92.7,fan_in=1,fan_out=3,dead=0.00,density=0.06,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/services/pushNotificationService.ts:mi=92.9,fan_in=2,fan_out=2,dead=0.00,density=0.09,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/tools/plantDiseaseTools.ts:mi=92.9,fan_in=1,fan_out=2,dead=0.00,density=0.09,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/services/faoService.ts:mi=93.3,fan_in=8,fan_out=2,dead=0.00,density=0.10,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/services/embeddingCache.ts:mi=93.9,fan_in=4,fan_out=1,dead=0.00,density=0.11,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/pages/diagnostics/DiseaseInfoModal.tsx:mi=94.2,fan_in=1,fan_out=1,dead=0.00,density=0.10,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/Skeleton.tsx:mi=97.0,fan_in=2,fan_out=0,dead=0.00,density=0.10,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/MetricCard.tsx:mi=97.5,fan_in=6,fan_out=0,dead=0.00,density=0.11,crap_max=20.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/workers/emailWorker.ts:mi=68.3,fan_in=1,fan_out=5,dead=1.00,density=0.15,crap_max=12.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/test/setup.ts:mi=71.1,fan_in=0,fan_out=2,dead=1.00,density=0.15,crap_max=12.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/scripts/seed_multimodal.ts:mi=72.1,fan_in=0,fan_out=4,dead=1.00,density=0.05,crap_max=12.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/sw.ts:mi=77.7,fan_in=0,fan_out=0,dead=1.00,density=0.11,crap_max=12.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/lib/translationUtils.ts:mi=78.8,fan_in=0,fan_out=0,dead=1.00,density=0.04,crap_max=12.0,crap_above=0
+  -> file-score:scripts/test-signup-page.js:mi=78.8,fan_in=0,fan_out=0,dead=1.00,density=0.04,crap_max=12.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/prisma/seed.ts:mi=79.4,fan_in=0,fan_out=0,dead=1.00,density=0.02,crap_max=12.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/services/data/tropicalKnowledgeSources.ts:mi=80.2,fan_in=3,fan_out=3,dead=0.67,density=0.03,crap_max=12.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/services/security/credentialVault.ts:mi=82.7,fan_in=2,fan_out=1,dead=0.50,density=0.15,crap_max=12.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/emailWorkflows.ts:mi=87.4,fan_in=1,fan_out=6,dead=0.00,density=0.16,crap_max=12.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/sms.ts:mi=88.5,fan_in=1,fan_out=8,dead=0.00,density=0.09,crap_max=12.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/telemetry.ts:mi=88.5,fan_in=1,fan_out=6,dead=0.00,density=0.18,crap_max=12.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/systemHealth.ts:mi=88.9,fan_in=1,fan_out=6,dead=0.00,density=0.11,crap_max=12.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/main.tsx:mi=89.9,fan_in=1,fan_out=7,dead=0.00,density=0.06,crap_max=12.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/chatbotSpeech.ts:mi=90.6,fan_in=1,fan_out=4,dead=0.00,density=0.10,crap_max=12.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/tools/memoryTools.ts:mi=91.5,fan_in=1,fan_out=3,dead=0.00,density=0.10,crap_max=12.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/hooks/useAppTheme.ts:mi=91.8,fan_in=1,fan_out=1,dead=0.00,density=0.25,crap_max=12.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/tools/agentOrchestrationTools.ts:mi=92.9,fan_in=1,fan_out=2,dead=0.00,density=0.09,crap_max=12.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/services/mapService.ts:mi=93.5,fan_in=1,fan_out=2,dead=0.00,density=0.07,crap_max=12.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/services/marketPriceService.ts:mi=94.1,fan_in=6,fan_out=2,dead=0.00,density=0.05,crap_max=12.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/billing/SubscriptionStatus.tsx:mi=94.4,fan_in=1,fan_out=2,dead=0.00,density=0.04,crap_max=12.0,crap_above=0
+  -> file-score:ag-extension-browser-ext/entrypoints/popup/App.tsx:mi=94.5,fan_in=1,fan_out=1,dead=0.00,density=0.09,crap_max=12.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/lib/swRegistration.ts:mi=96.4,fan_in=1,fan_out=0,dead=0.00,density=0.24,crap_max=12.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/pages/diagnostics/DiseaseLibraryTab.tsx:mi=96.7,fan_in=1,fan_out=0,dead=0.00,density=0.11,crap_max=12.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/utils/translations.ts:mi=97.7,fan_in=1,fan_out=0,dead=0.00,density=0.17,crap_max=12.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/scripts/check_db_from_app.ts:mi=76.0,fan_in=0,fan_out=1,dead=1.00,density=0.07,crap_max=6.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/lib/schemas.ts:mi=80.8,fan_in=1,fan_out=0,dead=0.93,density=0.02,crap_max=6.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/utils/response.ts:mi=83.1,fan_in=1,fan_out=0,dead=0.56,density=0.19,crap_max=6.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/knowledgeSync.ts:mi=91.5,fan_in=1,fan_out=4,dead=0.00,density=0.07,crap_max=6.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/LanguageSwitcher.tsx:mi=92.3,fan_in=3,fan_out=2,dead=0.00,density=0.11,crap_max=6.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/MarkdownRenderer.tsx:mi=93.4,fan_in=1,fan_out=0,dead=0.00,density=0.22,crap_max=6.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/fieldService.ts:mi=93.6,fan_in=1,fan_out=1,dead=0.00,density=0.12,crap_max=6.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/utils/telemetry.ts:mi=93.7,fan_in=1,fan_out=1,dead=0.00,density=0.13,crap_max=6.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/emailWorkflowService.ts:mi=94.2,fan_in=1,fan_out=1,dead=0.00,density=0.10,crap_max=6.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/memoryService.ts:mi=94.2,fan_in=1,fan_out=1,dead=0.00,density=0.15,crap_max=6.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/authService.ts:mi=94.5,fan_in=6,fan_out=1,dead=0.00,density=0.09,crap_max=6.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/FarmerYieldChart.tsx:mi=94.7,fan_in=1,fan_out=2,dead=0.00,density=0.03,crap_max=6.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/services/prismaService.ts:mi=94.9,fan_in=15,fan_out=1,dead=0.00,density=0.17,crap_max=6.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/components/ConfirmModal.tsx:mi=95.0,fan_in=3,fan_out=2,dead=0.00,density=0.02,crap_max=6.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/routes/language.ts:mi=95.4,fan_in=1,fan_out=1,dead=0.00,density=0.06,crap_max=6.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/contextMenuService.ts:mi=96.0,fan_in=1,fan_out=1,dead=0.00,density=0.04,crap_max=6.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/store/useFeatureFlags.ts:mi=96.9,fan_in=2,fan_out=0,dead=0.00,density=0.16,crap_max=6.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/utils/logger.ts:mi=97.0,fan_in=114,fan_out=0,dead=0.00,density=0.11,crap_max=6.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/config/navItems.ts:mi=98.5,fan_in=2,fan_out=0,dead=0.00,density=0.05,crap_max=6.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/utils/safeResponse.ts:mi=98.8,fan_in=33,fan_out=0,dead=0.00,density=0.22,crap_max=6.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/lib/useTheme.ts:mi=98.8,fan_in=1,fan_out=0,dead=0.00,density=0.13,crap_max=6.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/tools/registry.ts:mi=87.8,fan_in=3,fan_out=17,dead=0.00,density=0.02,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/chatbotService.ts:mi=93.0,fan_in=2,fan_out=1,dead=0.00,density=0.19,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/notificationService.ts:mi=94.1,fan_in=2,fan_out=1,dead=0.00,density=0.14,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/farmerService.ts:mi=94.5,fan_in=13,fan_out=1,dead=0.00,density=0.09,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/visitService.ts:mi=94.5,fan_in=8,fan_out=1,dead=0.00,density=0.09,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/reportService.ts:mi=94.7,fan_in=7,fan_out=1,dead=0.00,density=0.09,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/agentService.ts:mi=94.8,fan_in=1,fan_out=1,dead=0.00,density=0.08,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/diseaseService.ts:mi=94.8,fan_in=5,fan_out=1,dead=0.00,density=0.08,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/smsService.ts:mi=94.8,fan_in=3,fan_out=1,dead=0.00,density=0.10,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/queues/emailQueue.ts:mi=95.0,fan_in=3,fan_out=2,dead=0.00,density=0.03,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/hooks/useAppModalState.ts:mi=95.3,fan_in=3,fan_out=1,dead=0.00,density=0.07,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/mcpService.ts:mi=95.4,fan_in=1,fan_out=1,dead=0.00,density=0.11,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/systemHealthService.ts:mi=95.4,fan_in=1,fan_out=1,dead=0.00,density=0.09,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/supportService.ts:mi=96.0,fan_in=1,fan_out=1,dead=0.00,density=0.06,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/uploadService.ts:mi=96.0,fan_in=1,fan_out=1,dead=0.00,density=0.08,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/telemetryService.ts:mi=96.1,fan_in=1,fan_out=1,dead=0.00,density=0.05,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/tools/getDate.ts:mi=96.6,fan_in=1,fan_out=1,dead=0.00,density=0.05,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/utils/swagger.ts:mi=96.6,fan_in=1,fan_out=1,dead=0.00,density=0.02,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/aiService.ts:mi=96.6,fan_in=1,fan_out=1,dead=0.00,density=0.05,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/analyticsService.ts:mi=96.6,fan_in=1,fan_out=1,dead=0.00,density=0.05,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/priceService.ts:mi=96.6,fan_in=2,fan_out=1,dead=0.00,density=0.07,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/weatherService.ts:mi=96.6,fan_in=1,fan_out=1,dead=0.00,density=0.11,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/diagnosticsService.ts:mi=96.7,fan_in=1,fan_out=1,dead=0.00,density=0.02,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/shareService.ts:mi=96.7,fan_in=1,fan_out=1,dead=0.00,density=0.03,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/api/dashboardService.ts:mi=96.9,fan_in=1,fan_out=1,dead=0.00,density=0.01,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/services/aiProvider/types.ts:mi=98.2,fan_in=7,fan_out=0,dead=0.00,density=0.06,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/backend/src/types.d.ts:mi=98.8,fan_in=1,fan_out=0,dead=0.00,density=0.04,crap_max=2.0,crap_above=0
+  -> file-score:ag-extension-dashboard/src/frontend/src/lib/cn.ts:mi=99.4,fan_in=3,fan_out=0,dead=0.00,density=0.14,crap_max=2.0,crap_above=0
+  -> hotspot:ag-extension-dashboard/src/backend/src/services/knowledgeService.ts:score=16.3,commits=27,churn=2541,density=0.30,fan_in=3,trend=stable
+  -> hotspot:ag-extension-dashboard/src/frontend/src/components/FarmerDetailPanel.tsx:score=11.7,commits=36,churn=2456,density=0.18,fan_in=1,trend=cooling
+  -> hotspot:ag-extension-dashboard/src/backend/src/routes/knowledge.ts:score=8.1,commits=24,churn=2495,density=0.17,fan_in=2,trend=stable
+  -> hotspot:ag-extension-dashboard/src/frontend/src/components/Cyber/AlphaAI.tsx:score=7.3,commits=12,churn=383,density=0.27,fan_in=1,trend=stable
+  -> hotspot:ag-extension-dashboard/src/frontend/src/pages/SystemHealth.tsx:score=6.5,commits=14,churn=819,density=0.20,fan_in=1,trend=accelerating
+  -> hotspot:ag-extension-dashboard/src/frontend/src/pages/SMS.tsx:score=6.2,commits=22,churn=1132,density=0.14,fan_in=1,trend=stable
+  -> hotspot:ag-extension-dashboard/src/frontend/src/components/KnowledgeBase/ReasoningVisuals.tsx:score=5.4,commits=16,churn=714,density=0.17,fan_in=1,trend=stable
+  -> hotspot:ag-extension-dashboard/src/backend/src/routes/billing.ts:score=5.4,commits=20,churn=1606,density=0.17,fan_in=1,trend=cooling
+  -> hotspot:ag-extension-dashboard/src/frontend/src/components/SatelliteInsights.tsx:score=5.2,commits=13,churn=512,density=0.19,fan_in=1,trend=stable
+  -> hotspot:ag-extension-dashboard/src/backend/src/routes/analytics.ts:score=4.7,commits=12,churn=1206,density=0.24,fan_in=1,trend=cooling
+  -> hotspot:ag-extension-dashboard/src/backend/src/services/mcpAdapter.ts:score=4.7,commits=14,churn=476,density=0.20,fan_in=1,trend=cooling
+  -> hotspot:ag-extension-dashboard/src/backend/src/routes/reporting.ts:score=4.4,commits=14,churn=847,density=0.17,fan_in=1,trend=cooling
+  -> hotspot:ag-extension-dashboard/src/frontend/src/components/Cyber/AlphaAgentOps.tsx:score=4.3,commits=9,churn=579,density=0.22,fan_in=1,trend=stable
+  -> hotspot:ag-extension-dashboard/src/frontend/src/pages/DashboardPage.tsx:score=3.8,commits=9,churn=322,density=0.16,fan_in=1,trend=cooling
+  -> hotspot:ag-extension-dashboard/src/backend/src/services/selfHealing.ts:score=3.4,commits=8,churn=360,density=0.24,fan_in=4,trend=cooling
+  -> hotspot:ag-extension-dashboard/src/frontend/src/components/Cyber/SystemOverview.tsx:score=2.8,commits=5,churn=127,density=0.27,fan_in=1,trend=cooling
+  -> hotspot:ag-extension-dashboard/src/backend/src/services/ragV2Service.ts:score=2.8,commits=7,churn=662,density=0.16,fan_in=2,trend=cooling
+  -> hotspot:ag-extension-dashboard/src/backend/src/services/socketService.ts:score=2.7,commits=5,churn=194,density=0.29,fan_in=1,trend=cooling
+  -> hotspot:ag-extension-dashboard/src/backend/src/services/bulkOperationsService.ts:score=2.6,commits=4,churn=1129,density=0.28,fan_in=2,trend=accelerating
+  -> hotspot:ag-extension-dashboard/src/backend/src/routes/farmers.ts:score=2.6,commits=13,churn=991,density=0.10,fan_in=1,trend=stable
+  -> hotspot:ag-extension-dashboard/src/frontend/src/pages/ReportsPage.tsx:score=1.8,commits=4,churn=160,density=0.18,fan_in=1,trend=cooling
+  -> hotspot:ag-extension-dashboard/src/frontend/src/components/HelpCenterModal.tsx:score=1.8,commits=7,churn=528,density=0.16,fan_in=1,trend=cooling
+  -> hotspot:ag-extension-dashboard/src/backend/src/routes/diagnostics.ts:score=1.7,commits=3,churn=225,density=0.23,fan_in=1,trend=accelerating
+  -> hotspot:ag-extension-dashboard/src/backend/src/routes/portfolio.ts:score=1.6,commits=6,churn=437,density=0.16,fan_in=1,trend=cooling
+  -> hotspot:ag-extension-dashboard/src/frontend/src/pages/CropsFields.tsx:score=1.3,commits=3,churn=1012,density=0.16,fan_in=1,trend=accelerating
+  -> hotspot:ag-extension-dashboard/src/backend/src/services/priorityService.ts:score=1.0,commits=3,churn=190,density=0.20,fan_in=1,trend=cooling
+  -> hotspot:ag-extension-dashboard/src/frontend/src/theme/index.ts:score=0.9,commits=13,churn=1502,density=0.04,fan_in=6,trend=cooling
+  -> hotspot:ag-extension-dashboard/src/frontend/src/config/navItems.ts:score=0.4,commits=3,churn=53,density=0.05,fan_in=2,trend=cooling
+  -> refactoring-target:ag-extension-dashboard/src/backend/src/utils/retry.ts:priority=27.1,efficiency=13.6,category=dead_code,effort=medium,confidence=high:Remove 4 unused exports to reduce surface area (100% dead)
+  -> refactoring-target:ag-extension-dashboard/src/backend/src/utils/privacy.ts:priority=26.0,efficiency=13.0,category=dead_code,effort=medium,confidence=high:Remove 4 unused exports to reduce surface area (100% dead)
+  -> refactoring-target:ag-extension-dashboard/src/backend/src/services/mcpAdapter.ts:priority=25.8,efficiency=12.9,category=dead_code,effort=medium,confidence=high:Remove 2 unused exports to reduce surface area (67% dead)
+  -> refactoring-target:ag-extension-dashboard/src/frontend/src/components/farmer/CyberDashboard.tsx:priority=19.7,efficiency=9.9,category=untested_risk,effort=medium,confidence=high:2 complex functions lack test coverage path, add tests before modifying
+  -> refactoring-target:ag-extension-dashboard/src/frontend/src/hooks/useBillingActions.ts:priority=17.5,efficiency=8.8,category=untested_risk,effort=medium,confidence=high:12 complex functions lack test coverage path, add tests before modifying
+  -> refactoring-target:ag-extension-dashboard/src/frontend/src/hooks/useAppMenuActions.ts:priority=14.3,efficiency=7.2,category=untested_risk,effort=medium,confidence=high:2 complex functions lack test coverage path, add tests before modifying
+  -> refactoring-target:ag-extension-dashboard/src/backend/src/tools/cropYieldForecastTool.ts:priority=13.7,efficiency=6.9,category=untested_risk,effort=medium,confidence=high:5 complex functions lack test coverage path, add tests before modifying
+  -> refactoring-target:ag-extension-dashboard/src/frontend/src/hooks/useAppSearch.ts:priority=13.4,efficiency=6.7,category=untested_risk,effort=medium,confidence=high:3 complex functions lack test coverage path, add tests before modifying
+  -> refactoring-target:ag-extension-dashboard/src/frontend/src/pages/CropsFields.tsx:priority=13.7,efficiency=4.6,category=complexity,effort=high,confidence=high:Extract CropsFields (cognitive: 35) in 1055-LOC file into smaller functions
+[0;33m[WARN][0;0m Nested ternary operation detected — extract into an independent statement for readability:
+  -> 693:    doc.text(`Period: ${data.metadata?.startDate ? new Date(data.metadata.startDate).toLocaleDateString() : 'N/A'} - ${data.metadata?.endDate ? new Date(data.metadata.endDate).toLocaleDateString() : 'N/A'}`);
+  -> 1132:                    content: `NASA POWER Agroclimate Summary for lat: ${lat}, lng: ${lng}:\n- Temp Range: ${agro.temperatureRange?.min ?? 'N/A'} to ${agro.temperatureRange?.max ?? 'N/A'}°C\n- Avg Relative Humidity: ${agro.relativeHumidity ?? 'N/A'}%\n- Precipitation Sum: ${agro.precipitationSum ?? 'N/A'} mm\n- Avg Solar Radiation: ${agro.solarRadiationAvg ?? 'N/A'} MJ/m²/day`,
+  -> 1150:                    content: `SoilGrids ISRIC Soil Properties for lat: ${lat}, lng: ${lng}:\n- pH at 0-5cm: ${soil.ph_h2o ?? 'N/A'}\n- Clay content: ${soil.clay ?? 'N/A'}%\n- Organic Carbon: ${soil.soc ?? 'N/A'} dg/kg`,
+  -> 1445:                        .map(r => `${r.name} (${r.type}${r.properties?.viaRelation ? ', ' + r.properties.viaRelation : ''})`)
+  -> 1780:  return (tempOptimal ? 0.4 : 0.1) + (humidityOptimal ? 0.3 : 0.1) + (rainAdequate ? 0.3 : 0.1);
+  -> 1786:  const tavilyResults = await tavilyService.search(topic, depth === 'deep' ? 10 : depth === 'standard' ? 5 : 3);
+  -> 2116:                <div className={`w-2 h-2 rounded-full animate-pulse ${healthData?.status === 'healthy' ? 'bg-green-500' : 'bg-yellow-500'}`} />
+  -> 2118:                    {healthData?.status === 'healthy' ? 'System Online' : healthLoading ? 'Checking...' : 'Status Unknown'}
+  -> 2223:    return d > 0 ? `${d}d ${h}h ${m}m` : h > 0 ? `${h}h ${m}m` : `${m}m`;
+  -> 2231:        const score = (dbOk ? 50 : 0) + (cacheOk ? 30 : 0) + (data.status === 'healthy' ? 20 : 0);
+  -> 2870:                    {farmer?.locationLat ? `Lat: ${Number(farmer.locationLat).toFixed(4)} • Lng: ${Number(farmer.locationLng).toFixed(4)}` : 'GPS Tracking Active'}
+  -> 2885:            priority?.level === 'critical' ? 'bg-red-500/5 border-red-500/20' : 
+  -> 2909:                <div className={`p-1.5 rounded-lg ${priority?.level === 'critical' ? 'bg-red-500/20 text-red-500' : 'bg-primary-500/20 text-primary-500'}`}>
+  -> 2910:                    {priority?.level === 'critical' ? <AlertTriangle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
+  -> 2915:                        {isLoading ? 'Calculating...' : (priority?.recommendedAction || 'Monitor and maintain routine visits.')}
+  -> 3041:    { label: 'AVG TEMP', value: stats?.avgTemp as string | undefined || '\u2014', icon: TrendingUp, trend: stats?.avgTemp ? 'Stable' : 'No data' },
+  -> 3702:                { name: t('analytics_satisfaction_score'), progress: performanceData?.metrics?.satisfactionScore ? performanceData.metrics.satisfactionScore * 20 : 0, color: 'bg-purple-500' },
+  -> 3865:                        const content = res.data.content || (typeof res.data.data?.content === 'string' ? res.data.data.content : null);
+  -> 4588:                                <p className="text-sm">{info.resolved ? `→ ${(info.ips as string[])?.join(', ')}` : `✗ ${info.error as string || 'Failed'}`}</p>
+[0;31m[ERROR][0;0m Compliance audit failed with 2 violation(s) and 40 warning(s).

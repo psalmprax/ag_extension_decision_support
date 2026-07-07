@@ -61,17 +61,25 @@ export class AIProviderFactory {
     }
 
     static async getWithFallback(
-        operation: (provider: AICapability) => Promise<any>
+        operation: (provider: AICapability) => Promise<any>,
+        preferredProvider?: AIProviderType
     ): Promise<any> {
         // Define all available providers for cascading fallback
-        const allProviders: AIProviderType[] = Array.from(new Set([
+        let allProviders: AIProviderType[] = Array.from(new Set([
             this.primaryProvider,
             this.fallbackProvider,
             'openai',
             'anthropic',
             'groq',
+            'freebuff',
             'ollama'
         ]));
+
+        // If a caller (e.g. free-tier routing) prefers a specific provider,
+        // put it at the front of the chain so it's tried first.
+        if (preferredProvider) {
+            allProviders = Array.from(new Set([preferredProvider, ...allProviders]));
+        }
 
         let lastError: Error | null = null;
 
@@ -125,6 +133,10 @@ export class AIProviderFactory {
                 const { GroqProvider } = await import('./providers/groq');
                 return new GroqProvider();
             }
+            case 'freebuff': {
+                const { FreebuffProvider } = await import('./providers/freebuff');
+                return new FreebuffProvider();
+            }
             case 'ollama': {
                 const { OllamaProvider } = await import('./providers/ollama');
                 return new OllamaProvider();
@@ -177,6 +189,6 @@ export class AIRouter {
                 default:
                     throw new Error(`Unknown request type: ${requestType}`);
             }
-        });
+        }, params.options?.preferredProvider);
     }
 }
