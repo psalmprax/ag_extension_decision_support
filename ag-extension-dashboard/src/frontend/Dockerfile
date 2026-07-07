@@ -4,8 +4,8 @@
 FROM node:20-slim AS deps
 WORKDIR /app
 COPY ag-extension-shared /ag-extension-shared
-COPY ag-extension-dashboard/src/frontend/package*.json ./
-RUN npm ci 2>/dev/null || npm install
+COPY ag-extension-dashboard/src/frontend/package.json ./
+RUN npm install
 
 # ============================================================
 # Stage 2: Build
@@ -13,8 +13,8 @@ RUN npm ci 2>/dev/null || npm install
 FROM node:20-slim AS build
 WORKDIR /app
 COPY ag-extension-shared /ag-extension-shared
-COPY ag-extension-dashboard/src/frontend/package*.json ./
-RUN npm ci 2>/dev/null || npm install
+COPY ag-extension-dashboard/src/frontend/package.json ./
+RUN npm install
 COPY ag-extension-dashboard/src/frontend/ .
 RUN npm run build:docker
 
@@ -24,8 +24,8 @@ RUN npm run build:docker
 FROM node:20-slim AS development
 WORKDIR /app
 COPY ag-extension-shared /ag-extension-shared
-COPY ag-extension-dashboard/src/frontend/package*.json ./
-RUN npm ci 2>/dev/null || npm install
+COPY ag-extension-dashboard/src/frontend/package.json ./
+RUN npm install
 COPY ag-extension-dashboard/src/frontend/ .
 EXPOSE 5173
 CMD ["npm", "run", "dev", "--", "--host"]
