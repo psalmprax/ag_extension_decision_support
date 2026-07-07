@@ -18,7 +18,10 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "react": ["./node_modules/react"],
+      "react-dom": ["./node_modules/react-dom"],
+      "lucide-react": ["./node_modules/lucide-react"]
     }
   },
   "include": ["src"],

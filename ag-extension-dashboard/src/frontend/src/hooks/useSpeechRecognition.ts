@@ -17,7 +17,8 @@ export interface SpeechRecognitionOptions {
  */
 export const useSpeechRecognition = (options: SpeechRecognitionOptions) => {
   const [isSupported, setIsSupported] = useState<boolean>(true);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recognitionRef = useRef<any>(null);
   const onResultRef = useRef(options.onResult);
   const onErrorRef = useRef(options.onError);
   const onEndRef = useRef(options.onEnd);
@@ -34,9 +35,10 @@ export const useSpeechRecognition = (options: SpeechRecognitionOptions) => {
       setIsSupported(false);
       return;
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SpeechRecognitionConstructor =
-      (window as unknown as { SpeechRecognition?: typeof SpeechRecognition }).SpeechRecognition ||
-      (window as unknown as { webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition;
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognitionConstructor) {
       setIsSupported(false);
@@ -49,7 +51,8 @@ export const useSpeechRecognition = (options: SpeechRecognitionOptions) => {
     recognition.lang =
       (typeof navigator !== 'undefined' && navigator.language) || 'en-US';
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recognition.onresult = (event: any) => {
       let interimTranscript = '';
       let finalTranscript = '';
       for (let i = event.resultIndex; i < event.results.length; i += 1) {
@@ -63,7 +66,8 @@ export const useSpeechRecognition = (options: SpeechRecognitionOptions) => {
       onResultRef.current(transcript, Boolean(finalTranscript));
     };
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => onErrorRef.current(event.error);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recognition.onerror = (event: any) => onErrorRef.current(event.error);
     recognition.onend = () => onEndRef.current();
 
     recognitionRef.current = recognition;

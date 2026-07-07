@@ -3,10 +3,17 @@ import { Droplets, ThermometerSun, Leaf, AlertTriangle, Loader2, CheckCircle2 } 
 import { fetchFarmers, fetchFarmerStats, Farmer, FarmerStats } from '@/api/farmerService';
 import { fetchWeather } from '@/api/weatherService';
 
+interface WeatherData {
+  location?: string;
+  temp_c?: number;
+  condition?: { text: string };
+  precip_mm?: number;
+}
+
 export const FarmerMobileSummary = () => {
   const [farmer, setFarmer] = useState<Farmer | null>(null);
   const [stats, setStats] = useState<FarmerStats | null>(null);
-  const [weather, setWeather] = useState<Record<string, unknown> | null>(null);
+  const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
