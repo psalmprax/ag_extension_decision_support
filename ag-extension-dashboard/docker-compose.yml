@@ -137,7 +137,8 @@ services:
 
   frontend:
     build:
-      context: ./src/frontend
+      context: ..
+      dockerfile: ag-extension-dashboard/src/frontend/Dockerfile
       target: ${FRONTEND_DOCKER_TARGET:-development}
     container_name: ag-dashboard-frontend
     restart: unless-stopped

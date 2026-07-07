@@ -59,7 +59,8 @@ services:
 
   frontend:
     build:
-      context: ./src/frontend
+      context: ..
+      dockerfile: ag-extension-dashboard/src/frontend/Dockerfile
       target: development
     # Bind-mount source for hot-reload
     volumes:

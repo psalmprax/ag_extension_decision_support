@@ -95,7 +95,8 @@ services:
 
   frontend:
     build:
-      context: ./src/frontend
+      context: ..
+      dockerfile: ag-extension-dashboard/src/frontend/Dockerfile
       target: production
     labels:
       # Enable Traefik service discovery

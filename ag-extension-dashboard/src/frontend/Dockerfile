@@ -3,7 +3,8 @@
 # ============================================================
 FROM node:20-slim AS deps
 WORKDIR /app
-COPY package*.json ./
+COPY ag-extension-shared /ag-extension-shared
+COPY ag-extension-dashboard/src/frontend/package*.json ./
 RUN npm ci 2>/dev/null || npm install
 
 # ============================================================
@@ -11,9 +12,10 @@ RUN npm ci 2>/dev/null || npm install
 # ============================================================
 FROM node:20-slim AS build
 WORKDIR /app
-COPY package*.json ./
+COPY ag-extension-shared /ag-extension-shared
+COPY ag-extension-dashboard/src/frontend/package*.json ./
 RUN npm ci 2>/dev/null || npm install
-COPY . .
+COPY ag-extension-dashboard/src/frontend/ .
 RUN npm run build:docker
 
 # ============================================================
@@ -21,9 +23,10 @@ RUN npm run build:docker
 # ============================================================
 FROM node:20-slim AS development
 WORKDIR /app
-COPY package*.json ./
+COPY ag-extension-shared /ag-extension-shared
+COPY ag-extension-dashboard/src/frontend/package*.json ./
 RUN npm ci 2>/dev/null || npm install
-COPY . .
+COPY ag-extension-dashboard/src/frontend/ .
 EXPOSE 5173
 CMD ["npm", "run", "dev", "--", "--host"]
 
@@ -39,7 +42,7 @@ RUN apk add --no-cache tini
 RUN rm /etc/nginx/conf.d/default.conf
 
 # Copy custom nginx config with CSP headers
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY ag-extension-dashboard/src/frontend/nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy built assets from build stage
 COPY --from=build /app/dist /usr/share/nginx/html

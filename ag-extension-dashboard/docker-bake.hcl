@@ -17,8 +17,8 @@ target "backend" {
 }
 
 target "frontend" {
-  context     = "./src/frontend"
-  dockerfile  = "Dockerfile"
+  context     = "../"
+  dockerfile  = "ag-extension-dashboard/src/frontend/Dockerfile"
   tags        = ["ag-extension-dashboard-frontend:latest"]
   cache-from  = ["type=registry,ref=ghcr.io/${GITHUB_REPOSITORY}/buildcache:frontend"]
   cache-to    = ["type=registry,ref=ghcr.io/${GITHUB_REPOSITORY}/buildcache:frontend,mode=max"]

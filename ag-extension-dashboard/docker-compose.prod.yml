@@ -83,7 +83,8 @@ services:
         - ag-network
   frontend:
     build:
-      context: ./src/frontend
+      context: ..
+      dockerfile: ag-extension-dashboard/src/frontend/Dockerfile
       target: production
     # No environment overrides — uses nginx with static asset serving
     labels:
