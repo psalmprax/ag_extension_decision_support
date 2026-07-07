@@ -53,6 +53,17 @@ jest.mock('../services/prismaService', () => {
                         });
                     }
                     return Promise.resolve(null);
+                }),
+                findFirst: jest.fn().mockImplementation((args: { where?: { userId?: string } }) => {
+                    if (args.where?.userId === 'farm-1') {
+                        return Promise.resolve({
+                            id: 'farmer-1',
+                            userId: 'farm-1',
+                            assignedOfficerId: 'off-1',
+                            region: 'Central'
+                        });
+                    }
+                    return Promise.resolve(null);
                 })
             },
             field: {
@@ -83,6 +94,7 @@ jest.mock('../services/prismaService', () => {
                     }
                     return Promise.resolve(null);
                 }),
+                count: jest.fn().mockResolvedValue(1),
                 create: jest.fn().mockImplementation((args: Prisma.FieldCreateArgs) => Promise.resolve({
                     id: 'new-field-id',
                     ...args.data

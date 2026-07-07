@@ -25,8 +25,20 @@ router.get('/', async (req: Request, res: Response) => {
         const user = req.user as { userId?: string; role?: string } | undefined;
 
         const where: Prisma.FieldWhereInput = { isActive: true };
-        if (farmerId) where.farmerId = farmerId as string;
-        if (user?.role === 'farmer') where.farmerId = user.userId;
+        if (user?.role === 'farmer') {
+            const farmer = await prisma.farmer.findFirst({
+                where: { userId: user.userId }
+            });
+            if (!farmer) {
+                return res.status(403).json({ success: false, error: 'Access denied' });
+            }
+            if (farmerId && farmerId !== farmer.id) {
+                return res.status(403).json({ success: false, error: 'Access denied' });
+            }
+            where.farmerId = farmer.id;
+        } else {
+            if (farmerId) where.farmerId = farmerId as string;
+        }
 
         const [fields, total] = await Promise.all([
             prisma.field.findMany({
@@ -74,24 +86,36 @@ router.post('/', async (req: Request, res: Response) => {
     try {
         const body = req.body as {
             farmer_id?: string;
+            farmerId?: string;
             name?: string;
             area_hectares?: number;
+            areaHectares?: number;
             soil_type?: string;
+            soilType?: string;
             soil_ph?: number;
+            soilPh?: number;
             boundary_coordinates?: Prisma.JsonValue;
+            boundaryCoordinates?: Prisma.JsonValue;
         };
-        if (!body.farmer_id || !body.name || typeof body.area_hectares !== 'number') {
-            return res.status(400).json({ success: false, error: 'farmer_id, name, and area_hectares are required' });
+        const farmerId = body.farmerId || body.farmer_id;
+        const name = body.name;
+        const areaHectares = body.areaHectares !== undefined ? body.areaHectares : body.area_hectares;
+        const soilType = body.soilType !== undefined ? body.soilType : body.soil_type;
+        const soilPh = body.soilPh !== undefined ? body.soilPh : body.soil_ph;
+        const boundaryCoordinates = body.boundaryCoordinates !== undefined ? body.boundaryCoordinates : body.boundary_coordinates;
+
+        if (!farmerId || !name || typeof areaHectares !== 'number') {
+            return res.status(400).json({ success: false, error: 'farmerId, name, and areaHectares are required' });
         }
         const prisma = getPrisma();
         const field = await prisma.field.create({
             data: {
-                farmerId: body.farmer_id,
-                name: body.name,
-                areaHectares: body.area_hectares,
-                soilType: body.soil_type ?? null,
-                soilPh: body.soil_ph ?? null,
-                boundaryCoordinates: (body.boundary_coordinates ?? null) as Prisma.InputJsonValue,
+                farmerId,
+                name,
+                areaHectares,
+                soilType: soilType ?? null,
+                soilPh: soilPh ?? null,
+                boundaryCoordinates: (boundaryCoordinates ?? null) as Prisma.InputJsonValue,
                 isActive: true,
             },
         });
@@ -113,19 +137,31 @@ router.put('/:id', async (req: Request, res: Response) => {
         }
         const body = req.body as Partial<{
             name: string;
+            areaHectares: number;
             area_hectares: number;
+            soilType: string;
             soil_type: string;
+            soilPh: number;
             soil_ph: number;
+            boundaryCoordinates: Prisma.JsonValue;
             boundary_coordinates: Prisma.JsonValue;
         }>;
 
         const prisma = getPrisma();
         const data: Prisma.FieldUpdateInput = {};
         if (body.name !== undefined) data.name = body.name;
-        if (body.area_hectares !== undefined) data.areaHectares = body.area_hectares;
-        if (body.soil_type !== undefined) data.soilType = body.soil_type;
-        if (body.soil_ph !== undefined) data.soilPh = body.soil_ph;
-        if (body.boundary_coordinates !== undefined) data.boundaryCoordinates = body.boundary_coordinates as Prisma.InputJsonValue;
+
+        const areaHectares = body.areaHectares !== undefined ? body.areaHectares : body.area_hectares;
+        if (areaHectares !== undefined) data.areaHectares = areaHectares;
+
+        const soilType = body.soilType !== undefined ? body.soilType : body.soil_type;
+        if (soilType !== undefined) data.soilType = soilType;
+
+        const soilPh = body.soilPh !== undefined ? body.soilPh : body.soil_ph;
+        if (soilPh !== undefined) data.soilPh = soilPh;
+
+        const boundaryCoordinates = body.boundaryCoordinates !== undefined ? body.boundaryCoordinates : body.boundary_coordinates;
+        if (boundaryCoordinates !== undefined) data.boundaryCoordinates = boundaryCoordinates as Prisma.InputJsonValue;
 
         const field = await prisma.field.update({ where: { id }, data });
         return res.json({ success: true, data: field });
@@ -150,6 +186,103 @@ router.delete('/:id', async (req: Request, res: Response) => {
     } catch (error) {
         logger.error('Failed to delete field:', error);
         return safeError(res, 500, 'Failed to delete field');
+    }
+});
+
+/**
+ * POST /api/fields/:fieldId/cycles — create crop cycle
+ */
+router.post('/:fieldId/cycles', async (req: Request, res: Response) => {
+    try {
+        const fieldId = req.params.fieldId;
+        if (!fieldId) {
+            return res.status(400).json({ success: false, error: 'fieldId is required' });
+        }
+        const body = req.body;
+        const cropName = body.cropName || body.crop_name;
+        const variety = body.variety ?? null;
+        const status = body.status || 'planned';
+        const plantingDate = body.plantingDate || body.planting_date ? new Date(body.plantingDate || body.planting_date) : null;
+        const expectedHarvestDate = body.expectedHarvestDate || body.expected_harvest_date ? new Date(body.expectedHarvestDate || body.expected_harvest_date) : null;
+
+        if (!cropName) {
+            return res.status(400).json({ success: false, error: 'cropName is required' });
+        }
+
+        const prisma = getPrisma();
+        const cycle = await prisma.cropCycle.create({
+            data: {
+                fieldId,
+                cropName,
+                variety,
+                status,
+                plantingDate,
+                expectedHarvestDate,
+            },
+        });
+        return res.status(201).json({ success: true, data: cycle });
+    } catch (error) {
+        logger.error('Failed to create crop cycle:', error);
+        return safeError(res, 500, 'Failed to create crop cycle');
+    }
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapCropCycleUpdate(body: any): Prisma.CropCycleUpdateInput {
+    const data: Prisma.CropCycleUpdateInput = {};
+    const getVal = (camel: string, snake: string) => body[camel] !== undefined ? body[camel] : body[snake];
+    const getDateVal = (camel: string, snake: string) => {
+        const val = getVal(camel, snake);
+        return val ? new Date(val) : (val === null ? null : undefined);
+    };
+
+    const cropName = getVal('cropName', 'crop_name');
+    if (cropName !== undefined) data.cropName = cropName;
+
+    const variety = body.variety;
+    if (variety !== undefined) data.variety = variety;
+
+    const status = body.status;
+    if (status !== undefined) data.status = status;
+
+    const plantingDate = getDateVal('plantingDate', 'planting_date');
+    if (plantingDate !== undefined) data.plantingDate = plantingDate;
+
+    const expectedHarvestDate = getDateVal('expectedHarvestDate', 'expected_harvest_date');
+    if (expectedHarvestDate !== undefined) data.expectedHarvestDate = expectedHarvestDate;
+
+    const actualHarvestDate = getDateVal('actualHarvestDate', 'actual_harvest_date');
+    if (actualHarvestDate !== undefined) data.actualHarvestDate = actualHarvestDate;
+
+    const yieldKg = getVal('yieldKg', 'yield_kg');
+    if (yieldKg !== undefined) data.yieldKg = yieldKg;
+
+    const notes = body.notes;
+    if (notes !== undefined) data.notes = notes;
+
+    return data;
+}
+
+/**
+ * PATCH /api/fields/:fieldId/cycles/:id — update crop cycle
+ */
+router.patch('/:fieldId/cycles/:id', async (req: Request, res: Response) => {
+    try {
+        const { fieldId, id } = req.params;
+        if (!fieldId || !id) {
+            return res.status(400).json({ success: false, error: 'fieldId and cycle id are required' });
+        }
+        const prisma = getPrisma();
+        const data = mapCropCycleUpdate(req.body);
+
+        const cycle = await prisma.cropCycle.update({
+            where: { id },
+            data,
+        });
+        return res.json({ success: true, data: cycle });
+    } catch (error) {
+        logger.error('Failed to update crop cycle:', error);
+        return safeError(res, 500, 'Failed to update crop cycle');
     }
 });
 
