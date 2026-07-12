@@ -5,7 +5,7 @@ import { priorityService } from '@/services/priorityService';
 import { logger } from '@/utils/logger';
 import { getMapData } from '@/services/mapService';
 import { marketPriceService } from '@/services/marketPriceService';
-import { authorize } from '@/middleware/authorize';
+import { authorize, AuthRequest } from '@/middleware/authorize';
 import { validate } from '@/middleware/validate';
 import { soilDataQuerySchema } from '@/utils/schemas';
 import { SatelliteService } from '@/services/satelliteService';
@@ -77,9 +77,10 @@ router.get('/map', async (_req: Request, res: Response) => {
     }
 });
 
-router.get('/prices', async (_req: Request, res: Response) => {
+router.get('/prices', async (req: AuthRequest, res: Response) => {
     try {
-        const prices = await marketPriceService.getLatestPrices();
+        const userId = req.user?.userId;
+        const prices = await marketPriceService.getLatestPrices(userId);
         res.json({ success: true, data: prices });
     } catch (error) {
         logger.error('Prices route error:', error);
