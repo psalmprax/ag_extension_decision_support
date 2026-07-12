@@ -1,5 +1,8 @@
 import { logger } from '../utils/logger';
 import { AIProviderFactory } from './aiProvider/aiProvider';
+import axios from 'axios';
+import * as path from 'path';
+import * as fs from 'fs';
 
 export interface VideoGenerationRequest {
     topic: 'disease_identification' | 'seasonal_best_practices' | 'market_trends';
@@ -62,10 +65,53 @@ export class VideoGenerationService {
     }
 
     private static async synthesizeSpeech(script: string, language: string): Promise<string> {
-        // Mock TTS integration (e.g., ElevenLabs or Azure TTS)
-        // Ensure local language support (Swahili, Hausa, etc.) is verified here
         logger.info(`Synthesizing speech in ${language}...`);
-        return 'https://storage.example.com/audio/mock-tts-output.mp3';
+        const elevenLabsKey = process.env.ELEVEN_LABS_API_KEY || '';
+
+        if (elevenLabsKey) {
+            try {
+                // ElevenLabs voice synthesis
+                const response = await axios.post(
+                    'https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM',
+                    {
+                        text: script,
+                        model_id: 'eleven_multilingual_v2',
+                        voice_settings: { stability: 0.5, similarity_boost: 0.5 }
+                    },
+                    {
+                        headers: {
+                            'xi-api-key': elevenLabsKey,
+                            'Content-Type': 'application/json'
+                        },
+                        responseType: 'arraybuffer'
+                    }
+                );
+
+                const filename = `tts_${Date.now()}.mp3`;
+                const uploadsDir = path.join(__dirname, '../../uploads');
+                
+                // Create directory if not exists
+                if (!fs.existsSync(uploadsDir)) {
+                    fs.mkdirSync(uploadsDir, { recursive: true });
+                }
+
+                const filePath = path.join(uploadsDir, filename);
+                fs.writeFileSync(filePath, response.data);
+                
+                logger.info(`ElevenLabs TTS synthesized successfully: ${filename}`);
+                return `/uploads/${filename}`;
+            } catch (e: unknown) {
+                const msg = e instanceof Error ? e.message : 'Unknown error';
+                logger.error('ElevenLabs TTS synthesis failed, falling back to Google Translate TTS:', msg);
+            }
+        }
+
+        // Fallback: Public Google Translate TTS service
+        const encodedText = encodeURIComponent(script.substring(0, 200));
+        const fallbackUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${language}&client=tw-ob&q=${encodedText}`;
+        
+        logger.info(`Fallback Google Translate TTS generated: ${fallbackUrl}`);
+        return fallbackUrl;
     }
 
     private static selectAssets(topic: string) {

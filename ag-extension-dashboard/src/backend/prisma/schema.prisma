@@ -36,6 +36,7 @@ model User {
   scheduledSMS  ScheduledSMS[]
   knowledgeSearches KnowledgeSearch[] @relation("UserKnowledgeSearches")
   apiClients    ApiClient[]
+  videoConsultations VideoConsultation[]
 
   @@map("users")
 }
@@ -88,6 +89,7 @@ model Farmer {
    conversations            ChatConversation[]
    analytics                AnalyticsEvent[]
    fields                   Field[]
+   videoConsultations       VideoConsultation[]
 
   @@index([assignedOfficerId])
   @@index([region])
@@ -603,4 +605,27 @@ model KnowledgeRelationship {
   @@map("knowledge_relationships")
 }
 
+model WebRTCRoom {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  hostId       String    @map("host_id") @db.Uuid
+  participants Json      @default("[]") // Stores array of participants { id, socketId, name }
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
 
+  @@map("webrtc_rooms")
+}
+
+model VideoConsultation {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  farmerId           String    @map("farmer_id") @db.Uuid
+  extensionOfficerId String    @map("extension_officer_id") @db.Uuid
+  scheduledTime      DateTime  @map("scheduled_time") @db.Timestamp(6)
+  status             String    @default("pending") @db.VarChar(50) // 'pending', 'active', 'completed', 'cancelled'
+  roomId             String    @map("room_id") @db.Uuid
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+
+  farmer             Farmer    @relation(fields: [farmerId], references: [id])
+  extensionOfficer   User      @relation(fields: [extensionOfficerId], references: [id])
+
+  @@map("video_consultations")
+}

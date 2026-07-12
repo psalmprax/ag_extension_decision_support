@@ -34,7 +34,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   const { isModern, radiusClass } = useThemeClasses();
   const originalQueryRef = useRef('');
 
-  const { start: startSpeech, stop: stopSpeech } = useSpeechRecognition({
+  const { start: startSpeech, stop: stopSpeech, isSupported: isSpeechSupported } = useSpeechRecognition({
     onResult: transcript => {
       const prefix = originalQueryRef.current.trim();
       setSearchQuery(prefix.length > 0 ? `${prefix} ${transcript}` : transcript);
@@ -152,8 +152,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             </label>
             <button
               onClick={handleMicClick}
-              className={`p-3 ${radiusClass} transition-all ${isRecording ? 'bg-rose-100 text-rose-600 animate-pulse' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-400'}`}
-              title="Voice Input"
+              disabled={!isSpeechSupported}
+              className={`p-3 ${radiusClass} transition-all ${!isSpeechSupported ? 'opacity-30 cursor-not-allowed' : isRecording ? 'bg-rose-100 text-rose-600 animate-pulse' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-400'}`}
+              title={isSpeechSupported ? 'Voice Input' : 'Voice input not supported in this browser'}
             >
               <Mic className="w-6 h-6" />
             </button>
