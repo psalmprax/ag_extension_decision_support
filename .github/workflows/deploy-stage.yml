@@ -72,7 +72,7 @@ jobs:
             # `docker compose --profile ai up -d ettametta-ollama`.
             # Budget: 18 retries × 10s = ~350s worst case per script's
             # MAX_WALL_SECONDS formula; applies via the 10m step budget.
-            if ! bash /root/ag_extension_decision_support/scripts/smoke-ollama.sh --retries 18 --interval 10 --expected-model llama3.2:1b; then
+            if ! bash /root/ag_extension_decision_support/scripts/smoke-ollama.sh --retries 18 --interval 10 --expected-model llama3.2:1b --if-running; then
               echo "FATAL: ettametta-ollama smoke gate failed (service missing or unreachable)." >&2
               echo "----- ettametta-ollama container logs (last 50 lines, if present) -----"
               docker compose logs --tail 50 ettametta-ollama 2>&1 || echo "(no logs: container not present in this compose project)"
