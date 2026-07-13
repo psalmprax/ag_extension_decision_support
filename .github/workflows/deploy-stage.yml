@@ -213,7 +213,8 @@ jobs:
             # started at instance-create time so the driver-opts apply to the
             # actual docker run invocation (the lazy-spawn path previously
             # ignored network=host).
-            docker buildx create --use --driver docker-container --driver-opt "network=host" --name stage-builder --bootstrap 2>/dev/null || docker buildx use stage-builder 2>/dev/null || true
+            docker buildx rm stage-builder 2>/dev/null || true
+            docker buildx create --use --driver docker-container --driver-opt "network=host" --name stage-builder --bootstrap
             export DOCKER_BUILDER=stage-builder
 
             docker compose \

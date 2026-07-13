@@ -258,7 +258,8 @@ jobs:
               # started at instance-create time so the `--driver-opt` is applied
               # to the actual docker run invocation (avoiding the lazy-spawn
               # path that previously ignored network=host).
-              docker buildx create --use --driver docker-container --driver-opt "network=host" --name remote-builder --bootstrap 2>/dev/null || docker buildx use remote-builder 2>/dev/null || true
+              docker buildx rm remote-builder 2>/dev/null || true
+              docker buildx create --use --driver docker-container --driver-opt "network=host" --name remote-builder --bootstrap
               docker buildx bake --load -f docker-bake.hcl backend frontend agent-zero crew-ai
             fi
 
@@ -621,7 +622,8 @@ jobs:
               # started at instance-create time so the `--driver-opt` is applied
               # to the actual docker run invocation (avoiding the lazy-spawn
               # path that previously ignored network=host).
-              docker buildx create --use --driver docker-container --driver-opt "network=host" --name remote-builder --bootstrap 2>/dev/null || docker buildx use remote-builder 2>/dev/null || true
+              docker buildx rm remote-builder 2>/dev/null || true
+              docker buildx create --use --driver docker-container --driver-opt "network=host" --name remote-builder --bootstrap
               docker buildx bake --load -f docker-bake.hcl backend frontend agent-zero crew-ai
             fi
 
