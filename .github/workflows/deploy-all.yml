@@ -243,7 +243,7 @@ jobs:
 
             if [ -n "$CLEAN_REBUILD" ]; then
               echo "Clean rebuild forced — building without cache..."
-              docker buildx bake --load -f docker-bake.hcl backend frontend agent-zero crew-ai
+              docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend agent-zero crew-ai
             else
               echo "Authenticating to GHCR for remote Docker layer cache..."
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_REPOSITORY_OWNER" --password-stdin 2>/dev/null
@@ -260,7 +260,7 @@ jobs:
               # path that previously ignored network=host).
               docker buildx rm remote-builder 2>/dev/null || true
               docker buildx create --use --driver docker-container --driver-opt "network=host" --name remote-builder --bootstrap
-              docker buildx bake --load -f docker-bake.hcl backend frontend agent-zero crew-ai
+              docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend agent-zero crew-ai
             fi
 
             # Pre-create external networks referenced by compose
@@ -611,7 +611,7 @@ jobs:
 
             if [ -n "$CLEAN_REBUILD" ]; then
               echo "Clean rebuild forced — building without cache..."
-              docker buildx bake --load -f docker-bake.hcl backend frontend agent-zero crew-ai
+              docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend agent-zero crew-ai
             else
               echo "Authenticating to GHCR for remote Docker layer cache..."
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_REPOSITORY_OWNER" --password-stdin 2>/dev/null
@@ -628,7 +628,7 @@ jobs:
               # path that previously ignored network=host).
               docker buildx rm remote-builder 2>/dev/null || true
               docker buildx create --use --driver docker-container --driver-opt "network=host" --name remote-builder --bootstrap
-              docker buildx bake --load -f docker-bake.hcl backend frontend agent-zero crew-ai
+              docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend agent-zero crew-ai
             fi
 
             # Pre-create external networks referenced by compose
