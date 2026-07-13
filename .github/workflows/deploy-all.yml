@@ -263,6 +263,10 @@ jobs:
               docker buildx bake --load -f docker-bake.hcl backend frontend agent-zero crew-ai
             fi
 
+            # Pre-create external networks referenced by compose
+            docker network create --driver bridge ettametta_ettametta >/dev/null 2>&1 || true
+            docker network create --driver bridge ag-network >/dev/null 2>&1 || true
+
             # Remove any orphaned containers from previous runs
             docker compose -f docker-compose.yml -f docker-compose.agents.yml down --remove-orphans 2>/dev/null || true
 
@@ -626,6 +630,10 @@ jobs:
               docker buildx create --use --driver docker-container --driver-opt "network=host" --name remote-builder --bootstrap
               docker buildx bake --load -f docker-bake.hcl backend frontend agent-zero crew-ai
             fi
+
+            # Pre-create external networks referenced by compose
+            docker network create --driver bridge ettametta_ettametta >/dev/null 2>&1 || true
+            docker network create --driver bridge ag-network >/dev/null 2>&1 || true
 
             # Remove any orphaned containers from previous runs
             docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml down --remove-orphans 2>/dev/null || true

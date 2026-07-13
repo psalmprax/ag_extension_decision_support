@@ -137,6 +137,7 @@ jobs:
             # Pre-create external networks referenced by compose (ettametta_ettametta is external: true)
             echo "=== ensure external networks exist ==="
             docker network create --driver bridge ettametta_ettametta >/dev/null 2>&1 || true
+            docker network create --driver bridge ag-network >/dev/null 2>&1 || true
             docker network ls --format "table {{.Name}}\t{{.Driver}}" | grep -E "ettametta_ettametta|ag-network|NETWORK" || true
             echo
             cd ag-extension-dashboard
