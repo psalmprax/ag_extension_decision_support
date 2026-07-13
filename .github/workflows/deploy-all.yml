@@ -262,6 +262,9 @@ jobs:
               docker buildx bake --load -f docker-bake.hcl backend frontend agent-zero crew-ai
             fi
 
+            # Remove any orphaned containers from previous runs
+            docker compose -f docker-compose.yml -f docker-compose.agents.yml down --remove-orphans 2>/dev/null || true
+
             echo "Starting all services..."
             docker compose -f docker-compose.yml -f docker-compose.agents.yml up -d --force-recreate --no-build backend frontend agent-zero crew-ai ettametta-ollama
 
@@ -621,6 +624,9 @@ jobs:
               docker buildx create --use --driver docker-container --driver-opt "network=host" --name remote-builder --bootstrap 2>/dev/null || docker buildx use remote-builder 2>/dev/null || true
               docker buildx bake --load -f docker-bake.hcl backend frontend agent-zero crew-ai
             fi
+
+            # Remove any orphaned containers from previous runs
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml down --remove-orphans 2>/dev/null || true
 
             echo "Starting all services..."
             docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate --no-build backend frontend agent-zero crew-ai ettametta-ollama
