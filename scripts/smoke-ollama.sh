@@ -118,9 +118,15 @@ fi
 # ─── Pre-check 1: backend container running? ─────────────────────────────
 if ! ( cd "$COMPOSE_DIR" && docker compose ps --services --filter status=running 2>/dev/null \
         | grep -qx "$SERVICE" ); then
-    fail "service '$SERVICE' is not running in $COMPOSE_DIR"
-    info "Start it: cd $COMPOSE_DIR && docker compose up -d $SERVICE"
-    exit 2
+    if [ "$IF_RUNNING" = "1" ]; then
+        warn "service '$SERVICE' is not running in $COMPOSE_DIR (service not yet started)"
+        warn "  --if-running: passing smoke gate. Services will be started in the build step."
+        exit 0
+    else
+        fail "service '$SERVICE' is not running in $COMPOSE_DIR"
+        info "Start it: cd $COMPOSE_DIR && docker compose up -d $SERVICE"
+        exit 2
+    fi
 fi
 pass "$SERVICE is running"
 
