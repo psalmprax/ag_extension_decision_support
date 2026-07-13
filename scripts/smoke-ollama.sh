@@ -167,7 +167,18 @@ LAST_ERR=""
 while [ "$ATTEMPT" -lt "$RETRIES" ]; do
     ATTEMPT=$(( ATTEMPT + 1 ))
     if RESP=$( cd "$COMPOSE_DIR" && docker compose exec -T "$SERVICE" \
-                curl -sf --max-time 10 "$OLLAMA_URL" 2>&1 ); then
+                node -e "
+                  fetch('$OLLAMA_URL', { signal: AbortSignal.timeout(10000) })
+                    .then(r => {
+                      if (!r.ok) throw new Error('HTTP ' + r.status);
+                      return r.text();
+                    })
+                    .then(console.log)
+                    .catch(e => {
+                      console.error(e.message);
+                      process.exit(1);
+                    });
+                " 2>&1 ); then
         # Parse models[] length. python3 may be missing in slim backend images;
         # fallback to a naive grep on the response if python3 isn't available.
         if command -v python3 >/dev/null 2>&1; then
@@ -209,7 +220,7 @@ while [ "$ATTEMPT" -lt "$RETRIES" ]; do
                 ;;
         esac
     else
-        LAST_ERR="curl failed — container may still be starting or model not pulled yet"
+        LAST_ERR="node fetch failed — container may still be starting or model not pulled yet"
     fi
     echo "  attempt $ATTEMPT/$RETRIES ... FAIL — $LAST_ERR"
     if [ "$ATTEMPT" -lt "$RETRIES" ]; then
