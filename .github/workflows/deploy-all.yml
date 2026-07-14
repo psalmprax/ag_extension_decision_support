@@ -317,10 +317,16 @@ jobs:
                   MIGRATION_DONE=1
                   break
                 fi
-                if echo "$MIGRATE_OUTPUT" | grep -qE "(relation \"users\" already exists|20260310213744_init_usage.*failed)"; then
-                  echo "Baseline tables already exist. Resolving baseline migration 20260310213744_init_usage..."
-                  npx prisma migrate resolve --applied 20260310213744_init_usage || true
-                  continue
+                if echo "$MIGRATE_OUTPUT" | grep -qE "(already exists|P3018|P3009)"; then
+                  FAILED_MIG=$(echo "$MIGRATE_OUTPUT" | grep -oE "Migration name: [0-9]+_[a-zA-Z0-9_]+" | cut -d" " -f3 || true)
+                  if [ -z "$FAILED_MIG" ]; then
+                    FAILED_MIG=$(echo "$MIGRATE_OUTPUT" | grep -oE "The \`[0-9]+_[a-zA-Z0-9_]+\` migration started at" | cut -d"\`" -f2 || true)
+                  fi
+                  if [ -n "$FAILED_MIG" ]; then
+                    echo "Schema collision detected for migration $FAILED_MIG. Resolving as applied..."
+                    npx prisma migrate resolve --applied "$FAILED_MIG" || true
+                    continue
+                  fi
                 fi
                 # Visibility: surface the actual error from each failed attempt (was previously silent).
                 echo "Attempt $i/30 failed. Last migrate output:"
@@ -674,10 +680,16 @@ jobs:
                   MIGRATION_DONE=1
                   break
                 fi
-                if echo "$MIGRATE_OUTPUT" | grep -qE "(relation \"users\" already exists|20260310213744_init_usage.*failed)"; then
-                  echo "Baseline tables already exist. Resolving baseline migration 20260310213744_init_usage..."
-                  npx prisma migrate resolve --applied 20260310213744_init_usage || true
-                  continue
+                if echo "$MIGRATE_OUTPUT" | grep -qE "(already exists|P3018|P3009)"; then
+                  FAILED_MIG=$(echo "$MIGRATE_OUTPUT" | grep -oE "Migration name: [0-9]+_[a-zA-Z0-9_]+" | cut -d" " -f3 || true)
+                  if [ -z "$FAILED_MIG" ]; then
+                    FAILED_MIG=$(echo "$MIGRATE_OUTPUT" | grep -oE "The \`[0-9]+_[a-zA-Z0-9_]+\` migration started at" | cut -d"\`" -f2 || true)
+                  fi
+                  if [ -n "$FAILED_MIG" ]; then
+                    echo "Schema collision detected for migration $FAILED_MIG. Resolving as applied..."
+                    npx prisma migrate resolve --applied "$FAILED_MIG" || true
+                    continue
+                  fi
                 fi
                 # Visibility: surface the actual error from each failed attempt (was previously silent).
                 echo "Attempt $i/30 failed. Last migrate output:"
