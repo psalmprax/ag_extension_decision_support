@@ -239,6 +239,10 @@ jobs:
             iptables -C OUTPUT  -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT 2>/dev/null || iptables -I OUTPUT  1 -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT
             echo "  iptables UDP/53 from 172.17.0.0/16: ensured"
 
+            # Always ensure remote-builder is created and active
+            docker buildx rm remote-builder 2>/dev/null || true
+            docker buildx create --use --driver docker-container --driver-opt "network=host" --name remote-builder --bootstrap
+
             CLEAN_REBUILD="${{ github.event.inputs.force_clean_rebuild == 'true' && '--no-cache' || '' }}"
 
             if [ -n "$CLEAN_REBUILD" ]; then
@@ -248,18 +252,6 @@ jobs:
               echo "Authenticating to GHCR for remote Docker layer cache..."
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_REPOSITORY_OWNER" --password-stdin 2>/dev/null
               echo "Building with remote cache (GHCR)..."
-              # `--driver-opt network=host` puts the buildkitd worker in the host
-              # network namespace so base-image pulls go through the host's DNS
-              # path. The default bridge (172.17.0.0/16) on this Contabo VPS
-              # cannot egress UDP/53 to public resolvers (verified error from
-              # the previous run: `dial tcp: lookup registry-1.docker.io on
-              # 8.8.8.8:53: read udp 172.17.0.2:...->8.8.8.8:53: i/o timeout`).
-              # `--bootstrap` forces the worker container to be created and
-              # started at instance-create time so the `--driver-opt` is applied
-              # to the actual docker run invocation (avoiding the lazy-spawn
-              # path that previously ignored network=host).
-              docker buildx rm remote-builder 2>/dev/null || true
-              docker buildx create --use --driver docker-container --driver-opt "network=host" --name remote-builder --bootstrap
               docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend agent-zero crew-ai
             fi
 
@@ -607,6 +599,10 @@ jobs:
             iptables -C OUTPUT  -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT 2>/dev/null || iptables -I OUTPUT  1 -s 172.17.0.0/16 -p udp --dport 53 -j ACCEPT
             echo "  iptables UDP/53 from 172.17.0.0/16: ensured"
 
+            # Always ensure remote-builder is created and active
+            docker buildx rm remote-builder 2>/dev/null || true
+            docker buildx create --use --driver docker-container --driver-opt "network=host" --name remote-builder --bootstrap
+
             CLEAN_REBUILD="${{ github.event.inputs.force_clean_rebuild == 'true' && '--no-cache' || '' }}"
 
             if [ -n "$CLEAN_REBUILD" ]; then
@@ -616,18 +612,6 @@ jobs:
               echo "Authenticating to GHCR for remote Docker layer cache..."
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_REPOSITORY_OWNER" --password-stdin 2>/dev/null
               echo "Building with remote cache (GHCR)..."
-              # `--driver-opt network=host` puts the buildkitd worker in the host
-              # network namespace so base-image pulls go through the host's DNS
-              # path. The default bridge (172.17.0.0/16) on this Contabo VPS
-              # cannot egress UDP/53 to public resolvers (verified error from
-              # the previous run: `dial tcp: lookup registry-1.docker.io on
-              # 8.8.8.8:53: read udp 172.17.0.2:...->8.8.8.8:53: i/o timeout`).
-              # `--bootstrap` forces the worker container to be created and
-              # started at instance-create time so the `--driver-opt` is applied
-              # to the actual docker run invocation (avoiding the lazy-spawn
-              # path that previously ignored network=host).
-              docker buildx rm remote-builder 2>/dev/null || true
-              docker buildx create --use --driver docker-container --driver-opt "network=host" --name remote-builder --bootstrap
               docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend agent-zero crew-ai
             fi
 
