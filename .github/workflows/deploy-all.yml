@@ -636,7 +636,7 @@ jobs:
             docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml down --remove-orphans 2>/dev/null || true
 
             echo "Starting all services..."
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate --no-build backend frontend agent-zero crew-ai ettametta-ollama
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.agents.yml up -d --force-recreate --no-build traefik backend frontend agent-zero crew-ai ettametta-ollama
 
       # ── Step 4/5: Migrations against the FRESHLY BUILT backend image ──
       - name: 4/5 Migrate — prisma migrate deploy (extension pre-create + visible retry)
