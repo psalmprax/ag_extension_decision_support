@@ -63,3 +63,14 @@ To maintain Git hygiene and repository integrity, you MUST follow this branching
 - **Avoid AI Slop & Verbosity**: Avoid AI writing patterns, excessive comments, boilerplate, or over-explanations. Code and logs must remain concise, direct, and professional.
 - **No Code Deduplication**: Rigorously enforce the DRY (Don't Repeat Yourself) principle. Extract duplicate code block sequences, components, and configuration helpers into shared modules.
 - **Diagnostics & Tooling**: Run local auditing tools such as `gsd` and `fallow` to trace unused code, dependencies, and verify project health. Always read and verify against the diagnostic guides inside `.claude/skills/` before altering subsystems.
+
+---
+
+## 🐳 Docker & CI/CD Deployment Rules
+
+- **Container Recreation Safety**: Always run `docker compose down --remove-orphans` before restarting services on the target server. This prevents naming conflicts from orphaned containers.
+- **Buildx Token Refresher**: Persistent Buildx builders (`remote-builder`, `stage-builder`) must be removed (`docker buildx rm <name> 2>/dev/null || true`) before being recreated to force-reload fresh, unexpired `GITHUB_TOKEN` credentials from the current run.
+- **Local Caching (Bake)**: To bypass GHCR registry authorization rate limits and permission issues during workflow builds, direct cache exports (`cache-to`) to a local host directory (e.g., `type=local,dest=/root/docker-cache/<target>`) instead of remote registry endpoints. Ensure `--allow=fs=/root` is passed to the bake execution.
+- **External Shared Networks**: Any shared compose networks (e.g. `ag-network`) should be configured as `external: true` in `docker-compose.yml` to prevent compose label mismatch errors (`com.docker.compose.network`). The deployment pipelines must check/pre-create these networks (`docker network create --driver bridge ag-network || true`) before compose commands are run.
+- **Container-Independent Probes (Smoke Gates)**: When probing running container status during pre-build smoke testing, use Node's native `fetch` API (e.g., `node -e "fetch(...)"`) instead of relying on external utilities like `curl` which may be absent in minimal production/slim container base images.
+- **Dynamic Migration Resolving**: If database migrations fail during pipeline runs due to schema/table structural collisions (e.g. `relation already exists` or `column already exists` errors), parse the conflicting migration name from the error stream and run `npx prisma migrate resolve --applied <migration-name>` to dynamically unblock the migration queue.
