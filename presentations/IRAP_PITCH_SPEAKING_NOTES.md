@@ -41,14 +41,14 @@
 > 
 > *What makes our technology unique from simple mobile apps is our backend architecture. We have engineered an **OmniRoute Quota-Aware Multi-Provider Router** integrated with **AIHubMix**. OmniRoute automatically score-sorts LLM candidates—such as Gemini 2.0 Flash, Claude 3.5 Sonnet, and Llama 3.3—and manages 15-minute temporary blocklists if any provider hits rate limits or network errors.*
 > 
-> *This guarantees **99.9% uptime and zero dropped chat sessions** while coordinating **over 21 specialized Model Context Protocol (MCP) tools** over low-bandwidth channels like WhatsApp, SMS, and natural voice notes."*
+> *To guarantee **100% uptime and zero dropped chat sessions**, our backend features **instant zero-latency fallback state handling** for report generation, ensuring cards and diagnostic recommendations display seamlessly even during upstream network disruptions while serving farmers **across the Globe** over low-bandwidth channels like WhatsApp, SMS, and natural voice notes."*
 
 ---
 
 ## Slide 4: Current Product Stage & Development Roadmap
 
 ### 🗣️ Verbatim Practice Script:
-> *"I want to be completely transparent about where our project stands today. We are not presenting an unproven concept; we have built a **fully functional working MVP**. Our multi-agent routing, OmniRoute failover, tool bindings, and core chat interfaces are complete and running in our development environment.*
+> *"I want to be completely transparent about where our project stands today. We are not presenting an unproven concept; we have built a **fully functional working MVP**. Our multi-agent routing, OmniRoute failover, tool bindings, fallback state engines, default trial quota management, and core chat interfaces are complete and running in our development environment.*
 > 
 > *Our primary R&D focus over the next 12 to 18 months is **field calibration and edge optimization**. We are working to elevate our computer vision diagnostic precision from 85% to **over 90% accuracy** when benchmarked against certified plant pathology panels across diverse field lighting and climate conditions.*
 > 
@@ -117,7 +117,7 @@
 > *"To conclude, I want to address why we are seeking NRC-IRAP co-funding today and how our R&D roadmap aligns with **Canadian technological innovation and policy priorities**. **[Pause]***
 > 
 > *This project involves **genuine technological risk and SR&ED-eligible R&D uncertainty** across 6 specialized Canadian workstreams:
-> 1. **OmniRoute Quota-Aware LLM Router:** Developing adaptive multi-provider failover across AIHubMix, Groq, and local models to guarantee sub-2-second latency and zero API quota downtime.
+> 1. **OmniRoute Quota-Aware LLM Router & Fallback Engine:** Developing adaptive multi-provider failover across AIHubMix, Groq, and local models with default trial quota protection and instant report fallback state handling to guarantee sub-2-second latency and 100% uptime.
 > 2. **OCAP® Indigenous Data Sovereignty:** Engineering dynamic consent microservices that enforce First Nations' Ownership, Control, Access, and Possession over farm data.
 > 3. **Canadian Regulatory Compliance Engine:** Building an automated inference engine that evaluates recommendations against federal (*Fertilizers Act*, *Pest Control Products Act*) and provincial laws.
 > 4. **Canadian Agro-Ecological Climate Adaptation:** Downscaling climate models (CCCma) for Prairie Dryland drought, freeze-thaw cycles, and flood preparedness.

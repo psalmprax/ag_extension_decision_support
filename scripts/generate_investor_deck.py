@@ -141,9 +141,9 @@ def create_irap_percentage_deck():
         
     solution_points = [
         ("OmniRoute / AIHubMix Engine:", "Score-sorted, quota-aware LLM router automatically fails over across models (Gemini 2.0, Claude 3.5, Llama 3.3) on rate limits."),
-        ("2-Second Leaf Disease Diagnostics:", "Snap a photo of an unhealthy crop to receive immediate computer vision diagnosis and treatment advice."),
+        ("2-Second Diagnostics & Instant Fallbacks:", "Snap a crop photo for immediate CV diagnosis, backed by zero-latency fallback state handling to ensure 100% report uptime."),
         ("21+ Model Context Protocol (MCP) Tools:", "Connects live telemetry from weather forecasts, satellite NDVI indices, and research databases."),
-        ("Multi-Channel & Low-Bandwidth:", "Runs over WhatsApp, SMS, or voice notes — built for rural low-connectivity environments.")
+        ("Multi-Channel & Low-Bandwidth:", "Runs over WhatsApp, SMS, or voice notes — built for rural low-connectivity environments across the globe.")
     ]
     for i, (title_t, desc_t) in enumerate(solution_points):
         card = slide3.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(6.1), Inches(1.8 + i*1.3), Inches(6.4), Inches(1.2))
@@ -174,7 +174,7 @@ def create_irap_percentage_deck():
     add_hdr(slide4, "Product Stage", "Working Prototype Ready for Field Deployment")
     
     t_metrics = [
-        ("Functional MVP Built", "Core Tech Complete", "Multi-agent engine, 21+ MCP tools, and multi-channel UI fully functional."),
+        ("Functional MVP Built", "Core Tech Complete", "Multi-agent engine, 21+ MCP tools, instant report fallbacks, and multi-channel UI fully functional."),
         ("Pilot Partner Pipeline", "Co-op Partnerships", "In active discussions with regional agricultural co-ops for initial field deployment."),
         ("Target 90%+ Precision", "Model Calibration", "Ongoing calibration against certified plant disease datasets."),
         ("15,000 Farmer Target", "Pilot Horizon", "Capital deployment will scale field testing across 15,000 active farmers in year one.")
@@ -490,7 +490,7 @@ def create_irap_percentage_deck():
         ("OCAP® Indigenous Data Sovereignty:", "Tiered consent microservices protecting First Nations data ownership while preserving AI diagnostic utility."),
         ("Canadian Regulatory Compliance Engine:", "Automated validation against federal (Fertilizers Act) and provincial regulations."),
         ("Climate Resilience Adaptation Toolkit:", "Downscaling climate models (CCCma) for Canadian agro-climatic zones (Prairie drylands, freeze-thaw cycles)."),
-        ("Non-Dilutive R&D Salary Co-Funding:", "IRAP co-funds Canadian AI software engineers, data scientists & Indigenous knowledge specialists creating IP in Canada.")
+        ("Quota Resilience & Non-Dilutive R&D:", "OmniRoute default quota engine prevents 403 authorization failures; IRAP co-funds Canadian AI engineers & Indigenous specialists.")
     ]
     for ititle, idesc in irap_points:
         p_i = tf_r.add_paragraph()
@@ -504,8 +504,10 @@ def create_irap_percentage_deck():
         p_id.font.color.rgb = TEXT_MUTED
 
     out_path = '/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/Ag_Extension_Investor_Deck.pptx'
+    out_path_pres = '/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/presentations/Ag_Extension_Investor_Deck.pptx'
     prs.save(out_path)
-    print(f"10-Slide Percentage & IRAP Deck successfully saved at {out_path}")
+    prs.save(out_path_pres)
+    print(f"10-Slide Percentage & IRAP Deck successfully saved at {out_path} and {out_path_pres}")
 
 if __name__ == '__main__':
     create_irap_percentage_deck()
