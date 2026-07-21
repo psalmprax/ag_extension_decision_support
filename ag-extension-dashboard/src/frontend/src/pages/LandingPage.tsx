@@ -340,10 +340,8 @@ export function LandingPage() {
       {/* ── NAV ── */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-950/60 backdrop-blur-2xl border-b border-white/[0.04]">
         <div className="max-w-[90rem] w-full mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-              <Leaf className="w-4 h-4 text-white" />
-            </div>
+          <div className="flex items-center gap-3">
+            <img src="/logo.png" alt="AgExtension Logo" className="w-9 h-9 object-contain rounded-lg" />
             <span className="text-lg font-bold tracking-tight">AgExtension</span>
           </div>
 
@@ -463,7 +461,7 @@ export function LandingPage() {
 
             <motion.p variants={fadeUp} className="text-lg text-white/70 leading-relaxed max-w-lg">
               Empower extension officers with AI-driven insights, real-time farmer tracking, and
-              data-powered decisions across Africa.
+              data-powered decisions across the Globe.
             </motion.p>
 
             <motion.div variants={fadeUp} className="text-sm text-white/60 leading-relaxed max-w-lg pt-1 space-y-1">
@@ -893,7 +891,7 @@ export function LandingPage() {
               variants={fadeUp}
               className="text-[clamp(2rem,3.5vw,3rem)] font-bold tracking-tight leading-tight max-w-lg"
             >
-              Built for the realities of <span className="text-white/35">African agriculture</span>
+              Built for the realities of <span className="text-white/35">Global & Tropical agriculture</span>
             </motion.h2>
           </motion.div>
 
@@ -1068,7 +1066,7 @@ export function LandingPage() {
             >
               Serving organizations across{' '}
               <span className="bg-gradient-to-r from-emerald-300 to-amber-400 bg-clip-text text-transparent">
-                Africa
+                the Globe
               </span>
             </motion.h2>
           </motion.div>
@@ -1125,7 +1123,7 @@ export function LandingPage() {
             variants={fadeUp}
             className="text-lg text-white/70 leading-relaxed max-w-2xl mx-auto"
           >
-            Across Africa, extension officers manage thousands of farmers with clipboards and
+            Across the Globe, extension officers manage thousands of farmers with clipboards and
             guesswork. AgExtension replaces that with real-time soil data, satellite weather, and
             AI-powered diagnostics — so every recommendation is backed by evidence, not intuition.
           </motion.p>
@@ -1153,7 +1151,8 @@ export function LandingPage() {
             <span className="bg-gradient-to-r from-emerald-300 to-amber-400 bg-clip-text text-transparent">
               agricultural extension?
             </span>
-          </motion.h2>            <motion.p variants={fadeUp} className="text-lg text-white/70 mb-8">
+          </motion.h2>
+          <motion.p variants={fadeUp} className="text-lg text-white/70 mb-8">
             Start with a free trial. No credit card required.
           </motion.p>
           <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -1178,15 +1177,13 @@ export function LandingPage() {
       <footer id="contact" className="border-t border-white/[0.04] pt-16 pb-8">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-[1.5fr_1fr_1fr_1fr] gap-10 pb-10">
           <div>
-            <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
-                <Leaf className="w-4 h-4 text-white" />
-              </div>
+            <div className="flex items-center gap-3 mb-4">
+              <img src="/logo.png" alt="AgExtension Logo" className="w-9 h-9 object-contain rounded-lg" />
               <span className="text-lg font-bold">AgExtension</span>
             </div>
             <p className="text-sm text-white/30 leading-relaxed max-w-xs">
               Empowering agricultural extension officers with AI-driven decision support across
-              Africa.
+              the Globe.
             </p>
           </div>
           <div>
