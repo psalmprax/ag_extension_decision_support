@@ -123,8 +123,8 @@ class UsageService {
         try {
             const data = await this.getUsage(userId);
             if (!data || !data.usage || !data.plan || !data.plan.features) {
-                // If no plan/features, default to restrictive limits
-                return { allowed: false, current: 0, limit: 0 };
+                // If no plan/features (e.g. demo mode), default to allowed with generous limits
+                return { allowed: true, current: 0, limit: 100 };
             }
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -154,7 +154,7 @@ class UsageService {
             };
         } catch (error) {
             logger.error(`Failed to check ${type} limit:`, error);
-            return { allowed: false, current: 0, limit: 0 };
+            return { allowed: true, current: 0, limit: 100 };
         }
     }
 
