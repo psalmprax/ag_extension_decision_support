@@ -46,13 +46,8 @@ export interface Farmer {
   languagePreference?: string;
 }
 
-export interface Report {
-  id: string;
-  title: string;
-  type: string;
-  generatedAt: string;
-  url?: string;
-}
+import type { Report } from '@/api/reportService';
+export type { Report };
 
 export interface Visit {
   id: string;

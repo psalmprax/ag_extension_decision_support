@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { logout as apiLogout } from '@/api/authService';
 import { fetchFarmers } from '@/api/farmerService';
-import { generateReport } from '@/api/reportService';
+import { generateReport, Report } from '@/api/reportService';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -521,6 +521,7 @@ function App() {
                     setSelectedFarmers={setSelectedFarmers}
                     visits={visits}
                     setShowVisitModal={setShowVisitModal}
+                    refetchVisits={refetchVisits}
                     reports={[
                       ...localGeneratedReports,
                       ...(reports && reports.length > 0 ? reports : [
@@ -542,6 +543,7 @@ function App() {
                         },
                       ]),
                     ]}
+                    handleGenerateReport={handleGenerateReport}
                     isGeneratingReport={isGeneratingReport}
                     viewingReport={viewingReport}
                     setViewingReport={setViewingReport}
