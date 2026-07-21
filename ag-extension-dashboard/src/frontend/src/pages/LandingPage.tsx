@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CH_COLORS } from '@/lib/colors';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { motion, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion';
 import {
   Leaf,
@@ -274,6 +275,7 @@ export function LandingPage() {
   const springY = useSpring(mouseY, { stiffness: 150, damping: 15 });
 
   const [statsInView, setStatsInView] = useState(false);
+  const reducedMotion = useReducedMotion();
 
   // Scroll-driven transforms
   const { scrollYProgress } = useScroll();
@@ -311,7 +313,7 @@ export function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#060b08] text-white overflow-x-hidden">
+    <div className="min-h-screen bg-slate-950 text-white overflow-x-hidden">
       {/* ── CSS for mesh animation ── */}
       <style>{`
                 @keyframes meshShift {
@@ -332,10 +334,11 @@ export function LandingPage() {
                 .mesh-orb-1 { animation: meshShift 12s ease-in-out infinite; }
                 .mesh-orb-2 { animation: meshShift2 15s ease-in-out infinite; }
                 .mesh-orb-3 { animation: meshShift3 10s ease-in-out infinite; }
+                ${(reducedMotion) ? '.mesh-orb-1,.mesh-orb-2,.mesh-orb-3{animation:none !important;}' : ''}
             `}</style>
 
       {/* ── NAV ── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#060b08]/60 backdrop-blur-2xl border-b border-white/[0.04]">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-950/60 backdrop-blur-2xl border-b border-white/[0.04]">
         <div className="max-w-[90rem] w-full mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
@@ -382,6 +385,7 @@ export function LandingPage() {
         </div>
       </nav>
 
+      <main id="main-content">
       {/* ── HERO ── */}
       <section
         ref={heroRef}
@@ -516,7 +520,7 @@ export function LandingPage() {
             {/* Glow behind mockup */}
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-transparent to-amber-500/10 blur-[60px] rounded-full scale-90" />
 
-            <div className="relative rounded-2xl overflow-hidden border border-white/[0.08] bg-[#0a100d] shadow-2xl shadow-black/60 transform perspective-[1200px] rotate-y-[2deg] -rotate-x-[1deg] hover:rotate-y-0 hover:rotate-x-0 transition-transform duration-700">
+            <div className="relative rounded-2xl overflow-hidden border border-white/[0.08] bg-slate-950 shadow-2xl shadow-black/60 transform perspective-[1200px] rotate-y-[2deg] -rotate-x-[1deg] hover:rotate-y-0 hover:rotate-x-0 transition-transform duration-700">
               {/* Window chrome */}
               <div className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.03] border-b border-white/[0.06]">
                 <div className="flex gap-1.5">
@@ -1271,6 +1275,7 @@ export function LandingPage() {
           </div>
         </div>
       </footer>
+      </main>
     </div>
   );
 }

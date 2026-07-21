@@ -15,6 +15,7 @@ import { setupSwagger } from './utils/swagger';
 import { getPool } from './services/databaseService';
 import { getCache } from './services/cacheService';
 
+import { correlationIdMiddleware } from './middleware/correlationIdMiddleware';
 import { perUserRateLimit } from './middleware/rateLimitMiddleware';
 import { optionalAuth } from './middleware/authorize';
 import { AIProviderFactory } from './services/aiProvider/aiProvider';
@@ -57,6 +58,7 @@ import diseaseRoutes from './routes/diseases';
 import whatsappRoutes from './routes/whatsapp';
 import apiClientRoutes from './routes/apiClients';
 import commercialKnowledgeRoutes from './routes/commercialKnowledge';
+import canadianServicesRoutes from './routes/canadianServices';
 
 const app: Application = express();
 app.set('trust proxy', true); // Trust all proxy hops (Traefik/Docker) for X-Forwarded-For
@@ -78,6 +80,7 @@ app.use(helmet({
         },
     },
 }));
+app.use(correlationIdMiddleware);
 app.use(compression());
 const allowedOrigins = config.cors.origin.split(',').map(o => o.trim());
 app.use(cors({
@@ -325,6 +328,7 @@ const routeMounts: RouteMount[] = [
   { path: '/whatsapp', router: whatsappRoutes },
   { path: '/api-clients', router: apiClientRoutes },
   { path: '/commercial/knowledge', router: commercialKnowledgeRoutes },
+  { path: '/canadian', router: canadianServicesRoutes },
 ];
 
 // Mount with i18n support (v1)

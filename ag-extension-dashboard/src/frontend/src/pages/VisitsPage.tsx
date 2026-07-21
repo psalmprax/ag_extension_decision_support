@@ -27,7 +27,7 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
   const { isModern, headingClass, btnClass, radiusClass } = useThemeClasses();
 
   return (
-    <div>
+    <main id="visits-main" className="min-h-screen">
       <div className="mb-8 flex justify-between items-center">
         <div>
           <h1 className={`text-3xl ${headingClass}`}>
@@ -79,19 +79,24 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
                   </div>
                 </div>
                 <span
-                  className={`px-2 py-1 ${radiusClass} text-micro font-black uppercase tracking-widest border shadow-sm ${
+                  role="status"
+                  aria-label={`Visit status: ${visit.status}`}
+                  className={`px-2.5 py-1 ${radiusClass} text-micro font-black uppercase tracking-widest border shadow-sm flex items-center gap-1.5 ${
                     visit.status === 'completed'
-                      ? 'bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-400'
-                      : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-700 dark:text-yellow-400'
+                      ? 'bg-green-500/20 border-green-500/40 text-green-800 dark:text-green-300'
+                      : visit.status === 'cancelled'
+                      ? 'bg-red-500/20 border-red-500/40 text-red-800 dark:text-red-300'
+                      : 'bg-amber-500/20 border-amber-500/40 text-amber-800 dark:text-amber-300'
                   }`}
                 >
+                  <span className="w-1.5 h-1.5 rounded-full bg-current" aria-hidden="true" />
                   {visit.status}
                 </span>
               </div>
 
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 rounded-full bg-white/50 dark:bg-black/20 flex items-center justify-center">
-                  <Clock className="w-4 h-4 text-primary-500" />
+                  <Clock className="w-4 h-4 text-primary-500" aria-hidden="true" />
                 </div>
                 <p className="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
                   {new Date(visit.scheduled_at).toLocaleDateString()}{' '}
@@ -108,6 +113,7 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
                   {visit.status !== 'completed' && visit.status !== 'cancelled' && (
                     <>
                       <button
+                        aria-label={`Mark visit for ${visit.farmer_name} as completed`}
                         onClick={async e => {
                           e.stopPropagation();
                           try {
@@ -124,11 +130,12 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
                             });
                           }
                         }}
-                        className={`px-3 py-1.5 bg-green-500/20 text-green-700 dark:text-green-400 ${btnClass} text-xxs font-black uppercase hover:bg-green-500/30 transition-colors shadow-sm`}
+                        className={`px-3 py-1.5 bg-green-500/20 text-green-800 dark:text-green-300 ${btnClass} text-xxs font-black uppercase hover:bg-green-500/30 transition-colors shadow-sm focus:ring-2 focus:ring-green-500`}
                       >
                         Complete
                       </button>
                       <button
+                        aria-label={`Cancel visit for ${visit.farmer_name}`}
                         onClick={async e => {
                           e.stopPropagation();
                           try {
@@ -142,7 +149,7 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
                             });
                           }
                         }}
-                        className={`px-3 py-1.5 bg-red-500/10 text-red-700 dark:text-red-400 ${btnClass} text-xxs font-black uppercase hover:bg-red-500/20 transition-colors`}
+                        className={`px-3 py-1.5 bg-red-500/20 text-red-800 dark:text-red-300 ${btnClass} text-xxs font-black uppercase hover:bg-red-500/30 transition-colors focus:ring-2 focus:ring-red-500`}
                       >
                         Cancel
                       </button>
@@ -150,6 +157,7 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
                   )}
                 </div>
                 <button
+                  aria-label={`View details for farmer ${visit.farmer_name}`}
                   onClick={() => {
                     const farmerData = farmers.find(
                       f =>
@@ -158,7 +166,7 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
                     );
                     if (farmerData) handleOpenFarmerDetail(farmerData);
                   }}
-                  className="w-8 h-8 flex items-center justify-center glass rounded-full hover:bg-primary-500 hover:text-white transition-colors"
+                  className="w-8 h-8 flex items-center justify-center glass rounded-full hover:bg-primary-500 hover:text-white transition-colors focus:ring-2 focus:ring-primary-500"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
@@ -167,6 +175,6 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
           ))}
         </AnimatePresence>
       </div>
-    </div>
+    </main>
   );
 };

@@ -1,5 +1,22 @@
 # Moonshots for Development (M4D) Application Draft: AG-Extension
 
+> **IRAP frame (read first):** This draft is reusable for M4D *and* re-groundable for
+> NRC IRAP. The core principle: **Canadian R&D engine, global deployment.**
+> AG-Extension performs its R&D (offline/edge RAG, provider-resilient AI,
+> federated/privacy-preserving data sovereignty) at a Canadian-controlled base, owns
+> the IP in Canada, and deploys globally — from Northern/remote/Indigenous Canadian
+> communities to smallholder co-ops in the Global South. For IRAP, lead with the
+> **domestic R&D + Canadian benefit** and use the Global South footprint as export
+> validation. IRAP funds the *uncertain* R&D, not a shipped product — keep the
+> narrative on what is experimentally unresolved, not "90% precision, fully proven."
+>
+> VERIFIED components to cite (these exist in the codebase):
+> - 7-provider AI abstraction layer (`BaseAIProvider` + `getWithFallback` cascade)
+>   across Azure, Google Vertex, OpenAI, Anthropic, Groq, Ollama, Freebuff.
+> - RAG v2 service: hybrid search + reranking + knowledge graph (`ragV2Service.ts`).
+> - FAOSTAT integration (`faostatService.ts`) for science-backed market/ag data.
+> - Role-based, parametrized SQL access control in every route (`visits.ts`).
+
 This document contains the finalized, grant-optimized responses for the **AG-Extension** project application. Each response has been carefully crafted to highlight technical innovation, accountability, and real-world impact while staying within the specified character limits.
 
 ---
@@ -27,7 +44,7 @@ This document contains the finalized, grant-optimized responses for the **AG-Ext
 **Limit:** 1,000 characters
 **Character Count:** 985
 
-> We are addressing the "Accountability Crisis" in agricultural extension services across Sub-Saharan Africa, with primary focus on regions like Lilongwe (Malawi) and rural Kenya. Smallholder farmers—the bedrock of regional food security—suffer from systemic "Information Asymmetry," where timely, localized advice on climate adaptation and pest control is often unavailable or inaccurate. For NGO and government agencies, the problem is a "Visibility Crisis": extension visits are often unrecorded or untraceable ("ghost visits"), making it impossible to measure impact or optimize reach. This lack of transparency leads to the marginalization of the most vulnerable, particularly women-led households and indigenous communities in remote areas. By failing to track the "last mile" of service delivery, traditional systems waste billions in aid and leave farmers exposed to preventable crop failure. AG-Extension solves this by creating a verifiable, digital audit trail of every bit of advice and every field visit, ensuring equitable service delivery.
+> We are addressing the "Accountability Crisis" in agricultural extension services, starting with the communities Canada is uniquely positioned to serve: Northern, remote, and Indigenous communities at home, and smallholder regions of the Global South (e.g., Lilongwe, Malawi; rural Kenya). Across both contexts, the bedrock of food security — smallholder farmers — suffer from "Information Asymmetry," where timely, localized advice on climate adaptation and pest control is unavailable or inaccurate. For agencies, the parallel failure is a "Visibility Crisis": extension visits are unrecorded or untraceable ("ghost visits"), making impact impossible to measure. AG-Extension resolves this through a verifiable digital audit trail of every advisory interaction and field visit — the same fundamental R&D (offline-capable retrieval, role-scoped access control, privacy-preserving telemetry) is developed in Canada and applied in both markets. This dual deployment is the core thesis: Canadian R&D that serves domestic remote communities and exports to the Global South.
 
 ---
 
@@ -36,7 +53,7 @@ This document contains the finalized, grant-optimized responses for the **AG-Ext
 **Limit:** 1,000 characters
 **Character Count:** 948
 
-> Our solution is the AG-Extension Dashboard, a digital infrastructure that transforms agricultural advisory into a measurable, high-impact service. It features an AI-orchestrated "Performance Index" to track extension officer activity and a RAG-based (Retrieval-Augmented Generation) knowledge engine providing science-backed advice. Demand is evidenced by the "Accountability Gap" in traditional services, where agencies lack visibility into field impact and smallholders suffer from outdated advice. We chose this AI-first approach because it replaces subjective reporting with objective "Service Delivery Telemetry." Our innovation lies in its "Real-First" architecture—moving beyond simulations to live, backend-connected analytics. The value proposition is 100% transparency for donors and 24/7 expert support for farmers. Potential impact includes a 30% increase in service reach. Built on a Dockerized, multi-language (i18n) stack, AG-Extension is seamlessly replicable across Sub-Saharan Africa.
+> Our solution is the AG-Extension Dashboard, a digital infrastructure that transforms agricultural advisory into a measurable, high-impact service. The core R&D — performed in Canada — is a **provider-resilient AI layer** (7 providers behind a single capability interface with automatic health-checked fallback: Azure, Google Vertex, OpenAI, Anthropic, Groq, Ollama, Freebuff) and a **RAG v2 retrieval engine** combining hybrid search, re-ranking, and a knowledge graph, fused with live FAOSTAT agronomic data. The open technical question we are resolving is whether this advisory stack can run **offline / at the edge** on low-power rural devices with acceptable latency and accuracy — the crux of serving both Northern Canadian and Sub-Saharan contexts. Demand is evidenced by the "Accountability Gap" in traditional services, where agencies lack visibility into field impact. Our value proposition is verifiable service-delivery telemetry for agencies and 24/7 expert support for farmers. Potential impact includes a 30% increase in service reach.
 
 ---
 
@@ -72,4 +89,4 @@ This document contains the finalized, grant-optimized responses for the **AG-Ext
 **Limit:** 1,000 characters
 **Character Count:** 973
 
-> AG-Extension applies a "Do-No-Harm" methodology centering on data sovereignty and decentralized participation. In high-stakes rural contexts, we apply strict conflict sensitivity ensuring our AI advisory (ALFA) remains land-tenure neutral and localized to avoid inflaming regional resource disputes. Our "Privacy-First" architecture ensures farmer data—particularly sensitive yield and location information—is encrypted and owned by the community. We practice "Meaningful Localization" by co-designing our interface in local languages (English, Italian, regional dialects) ensuring the technology lowers the barrier for the non-literate and marginalized. By providing indigenous populations direct access to their data via the "Farmer Overview," we foster mutual accountability rather than top-down surveillance. Participation is built into our core; our iterative feedback loops ensure the platform evolves with the community’s social and ecological needs, ensuring a safe, sustainable, and positive impact.
+> AG-Extension applies a "Do-No-Harm" methodology centering on data sovereignty and decentralized participation. In high-stakes rural contexts, we apply strict conflict sensitivity ensuring our AI advisory remains land-tenure neutral and localized to avoid inflaming regional resource disputes. Our architecture ensures farmer data — particularly sensitive yield and location information — is encrypted and community-owned. For Indigenous and Northern communities in Canada, we are building to **OCAP (Ownership, Control, Access, Possession)** principles: data governance remains with the community, not external platforms. We practice "Meaningful Localization" by co-designing our interface in local languages (Chichewa in Malawi; Kiswahili and local dialects in Kenya; Indigenous languages for the Canadian pilot) with voice/low-literacy UX, lowering the barrier for the marginalized. By giving communities direct access to their own data, we foster mutual accountability rather than top-down surveillance. Iterative feedback loops ensure the platform evolves with each community’s social and ecological needs.

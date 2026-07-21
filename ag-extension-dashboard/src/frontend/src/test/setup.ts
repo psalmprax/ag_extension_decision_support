@@ -60,3 +60,41 @@ vi.mock('react-hot-toast', () => ({
   default: { success: vi.fn(), error: vi.fn() },
   toast: { success: vi.fn(), error: vi.fn() },
 }));
+
+// jsdom lacks IntersectionObserver / matchMedia — both are used by the app
+// (scroll-reveal observers, prefers-reduced-motion hook). Provide minimal
+// no-op polyfills so component renders don't crash under test.
+class MockIntersectionObserver implements IntersectionObserver {
+  readonly root: Element | Document | null = null;
+  readonly rootMargin: string = '';
+  readonly thresholds: ReadonlyArray<number> = [];
+  private cb: IntersectionObserverCallback;
+  constructor(cb: IntersectionObserverCallback) {
+    this.cb = cb;
+  }
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+  takeRecords = vi.fn(() => []);
+  // Allow tests to drive an intersection event if needed.
+  __trigger(isIntersecting: boolean) {
+    this.cb(
+      [{ isIntersecting } as IntersectionObserverEntry],
+      this as unknown as IntersectionObserver
+    );
+  }
+}
+vi.stubGlobal('IntersectionObserver', MockIntersectionObserver);
+
+if (!window.matchMedia) {
+  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }));
+}

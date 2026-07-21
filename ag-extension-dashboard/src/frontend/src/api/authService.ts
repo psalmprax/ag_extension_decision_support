@@ -1,4 +1,4 @@
-import apiClient from './client';
+import apiClient from '@/api/client';
 
 export type UserRole = 'admin' | 'extension_officer' | 'farmer';
 

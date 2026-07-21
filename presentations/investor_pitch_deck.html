@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ag-Extension AI | NRC-IRAP & Seed Proposal Deck</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0b1912;
+            --card-bg: rgba(19, 46, 35, 0.75);
+            --card-border: rgba(16, 185, 129, 0.35);
+            --accent-green: #10b981;
+            --accent-gold: #f59e0b;
+            --text-white: #ffffff;
+            --text-muted: #a7f3d0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-white);
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        header { text-align: center; margin-bottom: 2.5rem; }
+        .badge {
+            background: var(--accent-green);
+            color: var(--bg-dark);
+            font-weight: 700;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: inline-block;
+            margin-bottom: 0.75rem;
+        }
+        h1 {
+            font-size: 2.6rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff 0%, var(--accent-muted) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .slide-container {
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+        }
+        .slide-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+        .slide-card:hover { transform: translateY(-4px); border-color: var(--accent-green); }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+        .sub-card {
+            background: rgba(11, 25, 18, 0.65);
+            border: 1px solid rgba(255,255,255,0.06);
+            padding: 1.5rem;
+            border-radius: 16px;
+        }
+        .sub-card h3 { color: var(--accent-gold); font-size: 1.25rem; margin-bottom: 0.5rem; }
+        .sub-card p { color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; }
+        .highlight-val { font-size: 1.6rem; font-weight: 800; color: var(--accent-green); margin-bottom: 0.25rem; }
+        .hero-img { width: 100%; border-radius: 16px; object-fit: cover; border: 1px solid var(--card-border); max-height: 380px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <span class="badge">NRC-IRAP Aligned Proposal</span>
+        <h1>Ag-Extension AI Pitch Deck</h1>
+        <p style="color: var(--text-muted); margin-top: 0.5rem;">Relative Metrics, Percentage Proportions & IRAP Innovation Focus</p>
+    </header>
+
+    <div class="slide-container">
+
+        <!-- SLIDE 1 -->
+        <div class="slide-card">
+            <span class="badge">01. Vision</span>
+            <h2>Your AI Agronomist on Demand</h2>
+            <p style="color: var(--text-muted); font-size: 1.1rem; margin-top: 0.5rem;">Giving farmers expert crop advice, instant disease scanning, and fair market prices right on their phones (Bilingual EN / FR).</p>
+            <div style="margin-top: 1.5rem;">
+                <img src="/home/psalmprax/.gemini/antigravity-cli/brain/1c75408d-d945-4163-9d10-c51860a0efb8/smart_farm_hero_1784564335385.jpg" alt="Smart Farm AI Dashboard" class="hero-img">
+            </div>
+        </div>
+
+        <!-- SLIDE 2 -->
+        <div class="slide-card">
+            <span class="badge">02. Problem</span>
+            <h2>Farmers Face Critical Yield & Information Gaps</h2>
+            <div class="grid-3">
+                <div class="sub-card">
+                    <div class="highlight-val" style="color: var(--accent-gold);">1 Advisor : 3,000 Farmers</div>
+                    <h3>Advisor Deficit</h3>
+                    <p>Over 85% of smallholder farmers receive zero expert agronomy advice when crops fall sick.</p>
+                </div>
+                <div class="sub-card">
+                    <div class="highlight-val" style="color: var(--accent-gold);">25% - 30% Yield Loss</div>
+                    <h3>Crop Destruction</h3>
+                    <p>Preventable pests, frost risks, and plant diseases destroy up to a third of annual crop production.</p>
+                </div>
+                <div class="sub-card">
+                    <div class="highlight-val" style="color: var(--accent-gold);">30% Price Loss</div>
+                    <h3>Market Asymmetry</h3>
+                    <p>Without real-time price transparency, farmers are forced to accept depressed buyer pricing.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 3 -->
+        <div class="slide-card">
+            <span class="badge">03. Solution</span>
+            <h2>OmniRoute AI Engine & Multi-Agent Architecture</h2>
+            <div class="grid-2" style="align-items: center;">
+                <img src="/home/psalmprax/.gemini/antigravity-cli/brain/1c75408d-d945-4163-9d10-c51860a0efb8/disease_scanner_1784564346786.jpg" alt="AI Leaf Scanner" class="hero-img">
+                <div>
+                    <div class="sub-card" style="margin-bottom: 1rem;">
+                        <div class="highlight-val">OmniRoute / AIHubMix Engine</div>
+                        <p>Score-sorted, quota-aware LLM router automatically fails over across models (Gemini 2.0, Claude 3.5, Llama 3.3) on rate limits.</p>
+                    </div>
+                    <div class="sub-card" style="margin-bottom: 1rem;">
+                        <div class="highlight-val">21+ Smart Tools</div>
+                        <p>Connected live to weather forecasts, satellite NDVI, and research databases.</p>
+                    </div>
+                    <div class="sub-card">
+                        <div class="highlight-val">Works on Any Phone</div>
+                        <p>Runs over WhatsApp, SMS, or voice notes — built for rural low-bandwidth environments.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 4 -->
+        <div class="slide-card">
+            <span class="badge">04. Product Stage</span>
+            <h2>Working Prototype Ready for Field Deployment</h2>
+            <div class="grid-2">
+                <div class="sub-card">
+                    <div class="highlight-val">Functional MVP Built</div>
+                    <h3>Core Tech Complete</h3>
+                    <p>Multi-agent platform, OmniRoute failover, 21+ MCP tools, and multi-channel UI fully functional.</p>
+                </div>
+                <div class="sub-card">
+                    <div class="highlight-val">Pilot Partner Pipeline</div>
+                    <h3>Co-op Partnerships</h3>
+                    <p>In active discussions with regional agricultural co-ops for initial field deployment.</p>
+                </div>
+                <div class="sub-card">
+                    <div class="highlight-val">Target 90%+ Precision</div>
+                    <h3>Model Calibration</h3>
+                    <p>Ongoing calibration against certified plant disease datasets.</p>
+                </div>
+                <div class="sub-card">
+                    <div class="highlight-val">15,000 Farmer Target</div>
+                    <h3>Pilot Horizon</h3>
+                    <p>Capital deployment will scale field testing across 15,000 active farmers in year one.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 5 -->
+        <div class="slide-card">
+            <span class="badge">05. Growth Strategy</span>
+            <h2>Fast & Low-Cost Customer Growth Plan</h2>
+            <div class="grid-3">
+                <div class="sub-card">
+                    <div class="highlight-val">Phase 1: Co-ops</div>
+                    <h3>Top-Down B2B</h3>
+                    <p>Selling to agricultural co-ops who instantly onboard 10,000+ farmers per deployment.</p>
+                </div>
+                <div class="sub-card">
+                    <div class="highlight-val">Phase 2: Store Kiosks</div>
+                    <h3>Point-of-Sale</h3>
+                    <p>Agro-dealers use our diagnostic kiosks in-store to drive targeted input sales.</p>
+                </div>
+                <div class="sub-card">
+                    <div class="highlight-val">Phase 3: WhatsApp</div>
+                    <h3>Word of Mouth</h3>
+                    <p>Farmers share voice notes and disease reports in community groups, driving viral adoption.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 6 -->
+        <div class="slide-card">
+            <span class="badge">06. Unit Economics</span>
+            <h2>High-Margin Software & Revenue Breakdown</h2>
+            <div class="grid-2">
+                <div class="sub-card">
+                    <div class="highlight-val">26.6x LTV / CAC | 84% Margin</div>
+                    <h3 style="color: var(--accent-gold);">Target Efficiency Profile</h3>
+                    <p>High lifetime value return combined with low compute cost per query.</p>
+                </div>
+                <div class="sub-card">
+                    <h3 style="color: var(--accent-green);">Revenue Stream Breakdown (%)</h3>
+                    <ul style="margin-left: 1.2rem; margin-top: 0.5rem; color: var(--text-white); line-height: 1.6;">
+                        <li><strong>75%</strong> — B2B Co-op Enterprise SaaS Licenses</li>
+                        <li><strong>15%</strong> — Commercial Farm Subscriptions</li>
+                        <li><strong>7%</strong> — Data Insights API Licensing</li>
+                        <li><strong>3%</strong> — Input Marketplace Transaction Fees</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 7 -->
+        <div class="slide-card">
+            <span class="badge">07. Growth Trajectory</span>
+            <h2>3-Year ARR Expansion Multipliers</h2>
+            <div class="grid-3">
+                <div class="sub-card">
+                    <div class="highlight-val">1.0x Base Scale</div>
+                    <h3>Year 1 Goal</h3>
+                    <p>20 Co-ops | 15,000 Farmers | Establish regional pilot footprint and validate unit economics.</p>
+                </div>
+                <div class="sub-card">
+                    <div class="highlight-val">6.4x Expansion</div>
+                    <h3>Year 2 Goal</h3>
+                    <p>110 Co-ops | 120,000 Farmers | Expand across 3 countries & launch Data Insights API.</p>
+                </div>
+                <div class="sub-card">
+                    <div class="highlight-val">25.0x Scale</div>
+                    <h3>Year 3 Goal</h3>
+                    <p>400 Co-ops | 650,000 Farmers | Scale nationwide and integrate with agricultural insurers.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 8 -->
+        <div class="slide-card">
+            <span class="badge">08. Market Share</span>
+            <h2>High-Growth AgTech Market Opportunity</h2>
+            <div class="grid-3">
+                <div class="sub-card">
+                    <div class="highlight-val">100% Market Base</div>
+                    <h3>TAM Share</h3>
+                    <p>Global Smart Agriculture & Decision Support Market.</p>
+                </div>
+                <div class="sub-card">
+                    <div class="highlight-val">27% Addressable</div>
+                    <h3>SAM Share</h3>
+                    <p>Digital Advisory Services in Emerging & Developing Regions.</p>
+                </div>
+                <div class="sub-card">
+                    <div class="highlight-val">3.2% Target Share</div>
+                    <h3>SOM Target</h3>
+                    <p>Targetable Co-ops and Commercial Farms in initial deployment regions.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 9 -->
+        <div class="slide-card">
+            <span class="badge">09. The Team</span>
+            <h2>Proven Execution & Agronomy Expertise</h2>
+            <div class="grid-3">
+                <div class="sub-card">
+                    <h3>CEO & Co-Founder</h3>
+                    <p>Serial AgTech founder with 10+ years experience building and scaling sales networks.</p>
+                </div>
+                <div class="sub-card">
+                    <h3>CTO & Co-Founder</h3>
+                    <p>AI Systems Architect specializing in computer vision, multi-agent AI, and smart tools.</p>
+                </div>
+                <div class="sub-card">
+                    <h3>Head of Agronomy</h3>
+                    <p>Former Director of Agricultural Extension with 15+ years leading field advice teams.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 10: IRAP & INVESTMENT JUSTIFICATION -->
+        <div class="slide-card">
+            <span class="badge">10. Investment & IRAP</span>
+            <h2>Why We Need Investment & Canadian NRC-IRAP R&D Alignment</h2>
+            <div class="grid-2">
+                <div class="sub-card">
+                    <h3 style="color: var(--accent-gold);">Why We Need Investment</h3>
+                    <p><strong>1. Scale Canadian R&D & Edge AI:</strong> Transition working MVP to production-grade distributed edge AI.</p>
+                    <p style="margin-top: 0.5rem;"><strong>2. Expand Co-op & Indigenous Field Pilots:</strong> Fund field validation with 50 co-ops & First Nations agricultural partners.</p>
+                    <p style="margin-top: 0.5rem;"><strong>3. High-Skill Canadian Hiring:</strong> Hire Canadian AI engineers, data scientists, and Indigenous knowledge specialists.</p>
+                </div>
+                <div class="sub-card">
+                    <h3 style="color: var(--accent-green);">Canadian NRC-IRAP R&D Alignment</h3>
+                    <p><strong>• OmniRoute LLM Failover:</strong> Adaptive score-sorted router with blocklists avoiding API quota downtime across AIHubMix & Groq.</p>
+                    <p style="margin-top: 0.5rem;"><strong>• OCAP® Data Sovereignty:</strong> Tiered consent microservices protecting First Nations data ownership while preserving AI utility.</p>
+                    <p style="margin-top: 0.5rem;"><strong>• Canadian Regulatory Engine:</strong> Automated checking against federal (Fertilizers Act) and provincial regulations.</p>
+                    <p style="margin-top: 0.5rem;"><strong>• Climate Resilience Toolkit:</strong> Downscaling climate models (CCCma) for Canadian agro-climatic zones (Prairie drylands, Eastern continental).</p>
+                    <p style="margin-top: 0.5rem;"><strong>• Non-Dilutive Co-Funding:</strong> IRAP co-funds Canadian R&D salary costs & original Canadian AI IP creation.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
