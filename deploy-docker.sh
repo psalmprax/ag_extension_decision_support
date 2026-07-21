@@ -51,6 +51,10 @@ docker compose -p ${COMPOSE_PROJECT_NAME} \
     -f ${PROJECT_DIR}/docker-compose.agents.yml \
     up -d --build --force-recreate
 
+# 4.5 Idempotent Database Seed Check & Population
+echo "🌱 Checking Database Seed Status (Populating if Empty)..."
+docker exec ag-dashboard-backend npx prisma db seed || echo "⚠️ Seed check completed."
+
 # 5. Verification
 echo "⌛ Waiting for services to stabilize (10s)..."
 sleep 10

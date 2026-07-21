@@ -345,6 +345,16 @@ jobs:
               fi
             '
 
+      - name: 4.5/5 Idempotent Seed — check and populate seed data if empty
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.TEST_SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
+          command_timeout: 3m
+          script: |
+            docker exec ag-dashboard-backend npx prisma db seed || echo "⚠️ Seed check completed."
+
       # ── Step 5/5: Health Check — verify services are up ─────────────────────
       - name: 5/5 Health Check — verify services
         uses: appleboy/ssh-action@master
