@@ -1,6 +1,7 @@
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { Application } from 'express';
+import path from 'path';
 import { config } from '@/config';
 
 const options: swaggerJsdoc.Options = {
@@ -40,7 +41,12 @@ const options: swaggerJsdoc.Options = {
             },
         ],
     },
-    apis: ['./src/routes/*.ts', './src/utils/schemas.ts', './src/services/mcpAdapter.ts'], // Path to the API docs
+    apis: [
+        path.join(__dirname, '../routes/*.{ts,js}'),
+        path.join(__dirname, '../routes/**/*.{ts,js}'),
+        path.join(__dirname, './schemas.{ts,js}'),
+        path.join(__dirname, '../services/mcpAdapter.{ts,js}'),
+    ], // Path to the API docs (resolves relative to current file in both dev & compiled dist)
 };
 
 const specs = swaggerJsdoc(options);
