@@ -283,9 +283,9 @@ export function LandingPage() {
   const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0.6]);
 
   // Animated counters
-  const farmerCount = useCounter(2847, 2000, statsInView);
-  const visitCount = useCounter(12400, 2000, statsInView);
-  const countryCount = useCounter(12, 1500, statsInView);
+  const farmerCount = useCounter(120, 2000, statsInView);
+  const visitCount = useCounter(2500, 2000, statsInView);
+  const countryCount = useCounter(3, 1500, statsInView);
 
   // Cursor spotlight
   const handleMouseMove = useCallback(
@@ -341,8 +341,8 @@ export function LandingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-950/60 backdrop-blur-2xl border-b border-white/[0.04]">
         <div className="max-w-[90rem] w-full mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="AgExtension Logo" className="w-9 h-9 object-contain rounded-lg" />
-            <span className="text-lg font-bold tracking-tight">AgExtension</span>
+            <img src="/logo.png" alt="GPExts Logo" className="w-9 h-9 object-contain rounded-lg" />
+            <span className="text-lg font-bold tracking-tight">GPExts</span>
           </div>
 
           <div className="hidden md:flex items-center gap-8">
@@ -832,7 +832,7 @@ export function LandingPage() {
               variants={fadeUp}
               className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400/70 mb-4"
             >
-              Why AgExtension
+              Why GPExts
             </motion.div>
             <motion.h2
               variants={fadeUp}
@@ -1124,7 +1124,7 @@ export function LandingPage() {
             className="text-lg text-white/70 leading-relaxed max-w-2xl mx-auto"
           >
             Across the Globe, extension officers manage thousands of farmers with clipboards and
-            guesswork. AgExtension replaces that with real-time soil data, satellite weather, and
+            guesswork. GPExts replaces that with real-time soil data, satellite weather, and
             AI-powered diagnostics — so every recommendation is backed by evidence, not intuition.
           </motion.p>
         </motion.div>
@@ -1178,8 +1178,8 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-[1.5fr_1fr_1fr_1fr] gap-10 pb-10">
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <img src="/logo.png" alt="AgExtension Logo" className="w-9 h-9 object-contain rounded-lg" />
-              <span className="text-lg font-bold">AgExtension</span>
+              <img src="/logo.png" alt="GPExts Logo" className="w-9 h-9 object-contain rounded-lg" />
+              <span className="text-lg font-bold">GPExts</span>
             </div>
             <p className="text-sm text-white/30 leading-relaxed max-w-xs">
               Empowering agricultural extension officers with AI-driven decision support across
@@ -1260,7 +1260,7 @@ export function LandingPage() {
         </div>
         <div className="max-w-7xl mx-auto px-6 pt-8 border-t border-white/[0.04] flex flex-col md:flex-row justify-between items-center gap-4">
           <span className="text-xs text-white/15">
-            &copy; {new Date().getFullYear()} AgExtension. All rights reserved.
+            &copy; {new Date().getFullYear()} GPExts. All rights reserved.
           </span>
           <div className="flex gap-5 text-xs">
             <a href="#" className="text-white/15 hover:text-emerald-400 transition-colors">
