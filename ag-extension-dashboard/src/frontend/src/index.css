@@ -1,3 +1,4 @@
+@import './styles/overrides.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -414,4 +415,3 @@
   --primary-gradient: from-[#0f172a] via-[#334155] to-[#475569];
   --glow-color: rgba(15, 23, 42, 0.4);
 }
-@import './styles/overrides.css';
