@@ -2,14 +2,21 @@ import { Router, Request, Response } from 'express';
 import { OCapConsentService, OCapConsentPolicy } from '../services/ocapConsentService';
 import { CanadianRegulatoryEngine } from '../services/canadianRegulatoryEngine';
 import { CanadianClimateDownscaler, CanadianAgroZone } from '../services/canadianClimateDownscaler';
+import { authorize } from '../middleware/authorize';
+import { validate } from '../middleware/validate';
+import { canadianSchemas } from '../schemas';
 
 const router = Router();
+
+// These services process sensitive governance and regulatory data. They are
+// intentionally restricted to staff roles and never exposed through optionalAuth.
+router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
 
 /**
  * POST /api/v1/canadian/ocap/consent
  * Enforce OCAP® Indigenous Data Sovereignty policy on farm telemetry
  */
-router.post('/ocap/consent', (req: Request, res: Response) => {
+router.post('/ocap/consent', validate({ body: canadianSchemas.ocapConsent }), (req: Request, res: Response) => {
   const { data, policy } = req.body as { data: Record<string, unknown>; policy: OCapConsentPolicy };
   if (!data || !policy) {
     res.status(400).json({ success: false, error: 'Missing data or policy payload' });
@@ -24,7 +31,7 @@ router.post('/ocap/consent', (req: Request, res: Response) => {
  * POST /api/v1/canadian/regulatory/check
  * Validate agricultural chemical/treatment recommendations against Canadian Fertilizers & Pest Control Acts
  */
-router.post('/regulatory/check', (req: Request, res: Response) => {
+router.post('/regulatory/check', validate({ body: canadianSchemas.regulatoryCheck }), (req: Request, res: Response) => {
   const { treatmentName, activeIngredient, province, dosagePerHectare } = req.body as {
     treatmentName: string;
     activeIngredient: string;
@@ -41,7 +48,7 @@ router.post('/regulatory/check', (req: Request, res: Response) => {
     treatmentName,
     activeIngredient,
     province,
-    dosagePerHectare || 100
+    dosagePerHectare ?? 100
   );
   res.json({ success: true, data: result });
 });
@@ -50,7 +57,7 @@ router.post('/regulatory/check', (req: Request, res: Response) => {
  * POST /api/v1/canadian/climate/assess
  * Assess micro-climate risks for Canadian Agro-Ecological Zones
  */
-router.post('/climate/assess', (req: Request, res: Response) => {
+router.post('/climate/assess', validate({ body: canadianSchemas.climateAssessment }), (req: Request, res: Response) => {
   const { zone, temperatureCelsius, consecutiveDryDays } = req.body as {
     zone: CanadianAgroZone;
     temperatureCelsius: number;

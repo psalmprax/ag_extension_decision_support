@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
 import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
+import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
@@ -9,7 +10,7 @@ const router = Router();
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
 // Speech to text
-router.post('/speech-to-text', async (req: Request, res: Response) => {
+router.post('/speech-to-text', checkUsageLimit('speech'), async (req: Request, res: Response) => {
     try {
         const { audio, language = 'en' } = req.body;
 
@@ -32,7 +33,7 @@ router.post('/speech-to-text', async (req: Request, res: Response) => {
 });
 
 // Text to speech
-router.post('/text-to-speech', async (req: Request, res: Response) => {
+router.post('/text-to-speech', checkUsageLimit('speech'), async (req: Request, res: Response) => {
     try {
         const { text, language = 'en', voice = 'default' } = req.body;
 

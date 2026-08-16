@@ -7,6 +7,7 @@ import { AnalyticsPage } from '@/pages/AnalyticsPage';
 import { FarmerChatPage } from '@/pages/FarmerChatPage';
 import { Farmer, Visit, Conversation, ChatMessage, DashboardData } from '@/types/dashboard';
 import { Report } from '@/api/reportService';
+import { PlanUpgradeGuard } from '@/components/PlanUpgradeGuard';
 interface AnalyticsDataShape {
   metrics?: {
     resolutionRate?: number;
@@ -203,21 +204,27 @@ export function TabContent(props: TabContentProps) {
     case 'knowledge':
       return <KnowledgeBase />;
     case 'aiassistant':
-      return <AlphaAI />;
+      return (
+        <PlanUpgradeGuard category="chat" featureName="AI Agronomic Assistant">
+          <AlphaAI />
+        </PlanUpgradeGuard>
+      );
     case 'farmerchat':
       return (
-        <FarmerChatPage
-          farmerConversations={props.farmerConversations as Conversation[]}
-          activeFarmerConvId={props.activeFarmerConvId}
-          setActiveFarmerConvId={props.setActiveFarmerConvId}
-          loadFarmerMessages={props.loadFarmerMessages}
-          farmerChatMessages={props.farmerChatMessages as ChatMessage[]}
-          farmerChatInput={props.farmerChatInput}
-          setFarmerChatInput={props.setFarmerChatInput}
-          handleFarmerChatSend={props.handleFarmerChatSend}
-          loadFarmers={props.loadFarmers}
-          setShowFarmerModal={props.setShowFarmerModal}
-        />
+        <PlanUpgradeGuard category="chat" featureName="Farmer Chat & Direct Communication">
+          <FarmerChatPage
+            farmerConversations={props.farmerConversations as Conversation[]}
+            activeFarmerConvId={props.activeFarmerConvId}
+            setActiveFarmerConvId={props.setActiveFarmerConvId}
+            loadFarmerMessages={props.loadFarmerMessages}
+            farmerChatMessages={props.farmerChatMessages as ChatMessage[]}
+            farmerChatInput={props.farmerChatInput}
+            setFarmerChatInput={props.setFarmerChatInput}
+            handleFarmerChatSend={props.handleFarmerChatSend}
+            loadFarmers={props.loadFarmers}
+            setShowFarmerModal={props.setShowFarmerModal}
+          />
+        </PlanUpgradeGuard>
       );
     case 'farmer_dashboard':
       return <FarmerDashboard />;
@@ -234,7 +241,11 @@ export function TabContent(props: TabContentProps) {
         </div>
       );
     case 'sms':
-      return <SMSPage />;
+      return (
+        <PlanUpgradeGuard category="sms" featureName="SMS Campaigns & Omnichannel Broadcasting">
+          <SMSPage />
+        </PlanUpgradeGuard>
+      );
     case 'telemetry':
       return (
         <SimplePageWrapper
@@ -258,13 +269,21 @@ export function TabContent(props: TabContentProps) {
     case 'system_health':
       return <SystemHealth />;
     case 'disease_diagnosis':
-      return <DiseaseDiagnosisPage />;
+      return (
+        <PlanUpgradeGuard category="vision" featureName="Plant & Soil Disease Photo Diagnosis">
+          <DiseaseDiagnosisPage />
+        </PlanUpgradeGuard>
+      );
     case 'fields':
       return <CropsFields />;
     case 'memory':
       return <Memory />;
     case 'email_workflows':
-      return <EmailWorkflows />;
+      return (
+        <PlanUpgradeGuard category="workflows" featureName="Automated Email Workflows">
+          <EmailWorkflows />
+        </PlanUpgradeGuard>
+      );
     case 'mcp_tools':
       return <MCPTools />;
     case 'user_management':

@@ -55,14 +55,11 @@ class PaymentService {
     }
 
     private async initializeStripe() {
-        // Skip Stripe init if no database (avoids Prisma errors in CI/test)
-        if (!process.env.DATABASE_URL) {
-            logger.warn('Stripe not configured (no database) - payments will be simulated (Demo Mode)');
-            this.stripe = null;
-            this.isSimulated = true;
-            return;
-        }
-        const stripeKey = await systemConfigService.getStripeKey();
+        // Test processes should not perform asynchronous database lookups during
+        // module initialization. Production/staging may read the admin vault.
+        const stripeKey = process.env.NODE_ENV === 'test'
+            ? process.env.STRIPE_SECRET_KEY || null
+            : await systemConfigService.getStripeKey();
 
         // Check if key is valid (must be real Stripe key, not placeholder)
         const isValidKey = stripeKey &&
@@ -93,13 +90,9 @@ class PaymentService {
 
     // PayPal initialization
     private async initializePayPal() {
-        // Skip PayPal init if no database (avoids Prisma errors in CI/test)
-        if (!process.env.DATABASE_URL) {
-            logger.warn('PayPal not configured (no database) - PayPal payments unavailable');
-            this.paypalConfigured = false;
-            return;
-        }
-        const paypalClientId = await systemConfigService.getPayPalKey();
+        const paypalClientId = process.env.NODE_ENV === 'test'
+            ? process.env.PAYPAL_CLIENT_ID || null
+            : await systemConfigService.getPayPalKey();
         const paypalClientSecret = process.env.PAYPAL_CLIENT_SECRET;
 
         if (paypalClientId && paypalClientSecret) {

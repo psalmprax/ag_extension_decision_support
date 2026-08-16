@@ -1,8 +1,9 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, HelpCircle } from 'lucide-react';
+import { FileText, HelpCircle, Lock } from 'lucide-react';
 import { NavItem } from '../../config/navItems';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
+import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/lib/cn';
 import { sidebarVariants } from '@/lib/animations';
 
@@ -23,7 +24,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   setShowHelpCenter,
   onGenerateReport,
 }) => {
+  const { user } = useAppStore();
   const { isModern, subtextClass, headingClass } = useThemeClasses();
+
+  const isFreeUser = user?.role !== 'admin' && (user?.isFree || user?.planName?.toLowerCase() === 'free' || !user?.planName);
 
   return (
     <AnimatePresence>
@@ -43,29 +47,42 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           <div className="px-4 mb-8"></div>
 
           <nav className="flex flex-col gap-2 grow overflow-y-auto custom-scrollbar pr-2">
-            {navItems.map(item => (
-              <button
-                key={item.id}
-                onClick={() => React.startTransition(() => setActiveTab(item.id))}
-                className={cn(
-                  'flex items-center gap-3 px-4 py-3 transition-all duration-200 text-left',
-                  isModern
-                    ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98]'
-                    : 'rounded-none border border-slate-300 dark:border-slate-700 font-mono text-[0.625rem] uppercase tracking-widest',
-                  activeTab === item.id
-                    ? 'bg-primary-600/10 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400 shadow-[inset_0_0_15px_var(--color-outline),0.1)]'
-                    : cn(
-                        subtextClass,
-                        'hover:bg-black/5 dark:hover:bg-white/5 hover:text-primary-600 dark:hover:text-primary-200'
-                      )
-                )}
-              >
-                <item.icon className="w-4 h-4 flex-shrink-0" />
-                <span className="font-headline font-bold uppercase tracking-widest text-[0.625rem]">
-                  {item.label}
-                </span>
-              </button>
-            ))}
+            {navItems.map(item => {
+              const isLocked = isFreeUser && item.requiresPro;
+
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => React.startTransition(() => setActiveTab(item.id))}
+                  className={cn(
+                    'flex items-center justify-between px-4 py-3 transition-all duration-200 text-left group',
+                    isModern
+                      ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98]'
+                      : 'rounded-none border border-slate-300 dark:border-slate-700 font-mono text-[0.625rem] uppercase tracking-widest',
+                    activeTab === item.id
+                      ? 'bg-primary-600/10 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400 shadow-[inset_0_0_15px_var(--color-outline),0.1)]'
+                      : cn(
+                          subtextClass,
+                          'hover:bg-black/5 dark:hover:bg-white/5 hover:text-primary-600 dark:hover:text-primary-200'
+                        )
+                  )}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <item.icon className="w-4 h-4 flex-shrink-0" />
+                    <span className="font-headline font-bold uppercase tracking-widest text-[0.625rem] truncate">
+                      {item.label}
+                    </span>
+                  </div>
+
+                  {isLocked && (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-500 border border-amber-500/25 shrink-0 ml-2">
+                      <Lock className="w-2.5 h-2.5" />
+                      PRO
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </nav>
 
           <div className="mt-auto flex flex-col gap-2 pt-6 border-t border-white/5">

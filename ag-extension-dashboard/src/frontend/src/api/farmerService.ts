@@ -52,7 +52,10 @@ export interface FarmerStats {
 
 export interface FarmerStatsResponse {
   success: boolean;
-  data: FarmerStats;
+  data: FarmerStats | null;
+  meta?: {
+    state?: 'no_profile' | 'available';
+  };
 }
 
 export const fetchFarmerStats = async (): Promise<FarmerStatsResponse> => {

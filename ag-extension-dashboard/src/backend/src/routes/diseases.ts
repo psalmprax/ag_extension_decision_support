@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { authorize, AuthRequest } from '@/middleware/authorize';
+import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { plantDiseaseService } from '@/services/plantDiseaseService';
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
@@ -56,7 +57,7 @@ router.post('/diagnose', allowedRoles, async (req: Request, res: Response) => {
 });
 
 // Analyze plant image with database log telemetry
-router.post('/diagnose/image', allowedRoles, async (req: AuthRequest, res: Response) => {
+router.post('/diagnose/image', allowedRoles, checkUsageLimit('ai_vision'), async (req: AuthRequest, res: Response) => {
     try {
         const { imageData, cropType } = req.body;
 
@@ -96,7 +97,7 @@ router.post('/diagnose/image', allowedRoles, async (req: AuthRequest, res: Respo
 });
 
 // Analyze soil image with database log telemetry
-router.post('/diagnose/soil', allowedRoles, async (req: AuthRequest, res: Response) => {
+router.post('/diagnose/soil', allowedRoles, checkUsageLimit('ai_vision'), async (req: AuthRequest, res: Response) => {
     try {
         const { imageData, cropType, details } = req.body;
 

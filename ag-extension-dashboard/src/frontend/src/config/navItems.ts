@@ -27,6 +27,8 @@ export interface NavItem {
   roles: string[];
   /** When true, this nav item is hidden for demo users */
   hiddenInDemo?: boolean;
+  /** When true, this feature requires a Pro or Enterprise subscription tier */
+  requiresPro?: boolean;
 }
 
 const getLabel = (isModern: boolean, modernLabel: string, defaultLabel: string) =>
@@ -51,12 +53,14 @@ export const getNavItems = (isModern: boolean): NavItem[] => [
     icon: MessageSquare,
     roles: ['extension_officer', 'admin', 'farmer'],
     hiddenInDemo: true,
+    requiresPro: true,
   },
   {
     id: 'farmerchat',
     label: getLabel(isModern, 'Network Communications', 'Farmer Chat'),
     icon: Users,
     roles: ['extension_officer', 'admin'],
+    requiresPro: true,
   },
   {
     id: 'knowledge',
@@ -99,6 +103,7 @@ export const getNavItems = (isModern: boolean): NavItem[] => [
     label: getLabel(isModern, 'Omnichannel Broadcasting', 'SMS Campaigns'),
     icon: Send,
     roles: ['extension_officer', 'admin'],
+    requiresPro: true,
   },
   {
     id: 'analytics',
@@ -141,6 +146,7 @@ export const getNavItems = (isModern: boolean): NavItem[] => [
     label: getLabel(isModern, 'Pathological Diagnostics', 'Disease Checker'),
     icon: Leaf,
     roles: ['extension_officer', 'admin'],
+    requiresPro: true,
   },
   {
     id: 'memory',
@@ -153,6 +159,7 @@ export const getNavItems = (isModern: boolean): NavItem[] => [
     label: getLabel(isModern, 'Automated Dispatch', 'Email Workflows'),
     icon: Mail,
     roles: ['admin'],
+    requiresPro: true,
   },
   {
     id: 'mcp_tools',

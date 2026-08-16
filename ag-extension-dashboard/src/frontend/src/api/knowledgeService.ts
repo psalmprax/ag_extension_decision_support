@@ -107,3 +107,16 @@ export const fetchKnowledgeStats = async () => {
   const { data } = await apiClient.get('/knowledge/stats');
   return data;
 };
+
+export interface KnowledgeQuotaData {
+  allowed: boolean;
+  current: number;
+  limit: number;
+  remaining: number;
+  isFree: boolean;
+}
+
+export const fetchKnowledgeQuota = async (): Promise<{ success: boolean; data: KnowledgeQuotaData }> => {
+  const { data } = await apiClient.get('/knowledge/quota');
+  return data;
+};

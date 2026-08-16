@@ -11,6 +11,8 @@ import { SoilDiagnosticsTab } from './diagnostics/SoilDiagnosticsTab';
 import { DiseaseLibraryTab } from './diagnostics/DiseaseLibraryTab';
 import { DiseaseInfoModal } from './diagnostics/DiseaseInfoModal';
 
+import { PlanUpgradeGuard } from '@/components/PlanUpgradeGuard';
+
 export function DiseaseDiagnosis() {
   const { t } = useLanguage();
   const { headingClass, isModern, radiusClass, btnClass } = useThemeClasses();
@@ -72,122 +74,124 @@ export function DiseaseDiagnosis() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className={`text-2xl ${headingClass}`}>
-            {isModern ? 'Pathological Diagnostics' : 'Disease Checker'}
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">{t('disease_diagnosis_subtitle')}</p>
+    <PlanUpgradeGuard category="vision" featureName="Pathological Diagnostics (Disease Checker)">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className={`text-2xl ${headingClass}`}>
+              {isModern ? 'Pathological Diagnostics' : 'Disease Checker'}
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">{t('disease_diagnosis_subtitle')}</p>
+          </div>
         </div>
-      </div>
 
-      {/* Tab Navigation */}
-      <div className="card p-1">
-        <div className="flex space-x-1">
-          <button
-            onClick={() => setActiveTab('symptoms')}
-            className={`flex-1 py-2 px-4 ${radiusClass} font-medium text-sm transition-all ${
-              activeTab === 'symptoms'
-                ? 'bg-primary-600 text-white shadow-lg'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }`}
-          >
-            Symptom Diagnosis
-          </button>
-          <button
-            onClick={() => setActiveTab('image')}
-            className={`flex-1 py-2 px-4 ${radiusClass} font-medium text-sm transition-all ${
-              activeTab === 'image'
-                ? 'bg-primary-600 text-white shadow-lg'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }`}
-          >
-            Image Analysis
-          </button>
-          <button
-            onClick={() => setActiveTab('soil')}
-            className={`flex-1 py-2 px-4 ${radiusClass} font-medium text-sm transition-all ${
-              activeTab === 'soil'
-                ? 'bg-primary-600 text-white shadow-lg'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }`}
-          >
-            Soil Diagnostics
-          </button>
-          <button
-            onClick={() => setActiveTab('library')}
-            className={`flex-1 py-2 px-4 ${radiusClass} font-medium text-sm transition-all ${
-              activeTab === 'library'
-                ? 'bg-primary-600 text-white shadow-lg'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }`}
-          >
-            Disease Library
-          </button>
+        {/* Tab Navigation */}
+        <div className="card p-1">
+          <div className="flex space-x-1">
+            <button
+              onClick={() => setActiveTab('symptoms')}
+              className={`flex-1 py-2 px-4 ${radiusClass} font-medium text-sm transition-all ${
+                activeTab === 'symptoms'
+                  ? 'bg-primary-600 text-white shadow-lg'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              Symptom Diagnosis
+            </button>
+            <button
+              onClick={() => setActiveTab('image')}
+              className={`flex-1 py-2 px-4 ${radiusClass} font-medium text-sm transition-all ${
+                activeTab === 'image'
+                  ? 'bg-primary-600 text-white shadow-lg'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              Image Analysis
+            </button>
+            <button
+              onClick={() => setActiveTab('soil')}
+              className={`flex-1 py-2 px-4 ${radiusClass} font-medium text-sm transition-all ${
+                activeTab === 'soil'
+                  ? 'bg-primary-600 text-white shadow-lg'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              Soil Diagnostics
+            </button>
+            <button
+              onClick={() => setActiveTab('library')}
+              className={`flex-1 py-2 px-4 ${radiusClass} font-medium text-sm transition-all ${
+                activeTab === 'library'
+                  ? 'bg-primary-600 text-white shadow-lg'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              Disease Library
+            </button>
+          </div>
         </div>
+
+        {/* Tab Content */}
+        {activeTab === 'symptoms' && (
+          <SymptomDiagnosisTab
+            cropType={cropType}
+            setCropType={setCropType}
+            radiusClass={radiusClass}
+            btnClass={btnClass}
+            t={t}
+            addNotification={
+              addNotification as unknown as (n: { type: string; message: string }) => void
+            }
+            onViewDiseaseInfo={handleViewDiseaseInfo}
+            getSeverityColor={getSeverityColor}
+          />
+        )}
+
+        {activeTab === 'image' && (
+          <ImageAnalysisTab
+            cropType={cropType}
+            setCropType={setCropType}
+            radiusClass={radiusClass}
+            btnClass={btnClass}
+            t={t}
+            addNotification={
+              addNotification as unknown as (n: { type: string; message: string }) => void
+            }
+            getSeverityColor={getSeverityColor}
+          />
+        )}
+
+        {activeTab === 'soil' && (
+          <SoilDiagnosticsTab
+            cropType={cropType}
+            setCropType={setCropType}
+            radiusClass={radiusClass}
+            btnClass={btnClass}
+            addNotification={
+              addNotification as unknown as (n: { type: string; message: string }) => void
+            }
+          />
+        )}
+
+        {activeTab === 'library' && (
+          <DiseaseLibraryTab
+            allDiseases={allDiseases}
+            radiusClass={radiusClass}
+            onViewDiseaseInfo={handleViewDiseaseInfo}
+          />
+        )}
+
+        {/* Disease Info Modal */}
+        <DiseaseInfoModal
+          selectedDisease={selectedDisease}
+          setSelectedDisease={setSelectedDisease}
+          isLoadingInfo={isLoadingInfo}
+          diseaseInfo={diseaseInfo}
+          radiusClass={radiusClass}
+        />
       </div>
-
-      {/* Tab Content */}
-      {activeTab === 'symptoms' && (
-        <SymptomDiagnosisTab
-          cropType={cropType}
-          setCropType={setCropType}
-          radiusClass={radiusClass}
-          btnClass={btnClass}
-          t={t}
-          addNotification={
-            addNotification as unknown as (n: { type: string; message: string }) => void
-          }
-          onViewDiseaseInfo={handleViewDiseaseInfo}
-          getSeverityColor={getSeverityColor}
-        />
-      )}
-
-      {activeTab === 'image' && (
-        <ImageAnalysisTab
-          cropType={cropType}
-          setCropType={setCropType}
-          radiusClass={radiusClass}
-          btnClass={btnClass}
-          t={t}
-          addNotification={
-            addNotification as unknown as (n: { type: string; message: string }) => void
-          }
-          getSeverityColor={getSeverityColor}
-        />
-      )}
-
-      {activeTab === 'soil' && (
-        <SoilDiagnosticsTab
-          cropType={cropType}
-          setCropType={setCropType}
-          radiusClass={radiusClass}
-          btnClass={btnClass}
-          addNotification={
-            addNotification as unknown as (n: { type: string; message: string }) => void
-          }
-        />
-      )}
-
-      {activeTab === 'library' && (
-        <DiseaseLibraryTab
-          allDiseases={allDiseases}
-          radiusClass={radiusClass}
-          onViewDiseaseInfo={handleViewDiseaseInfo}
-        />
-      )}
-
-      {/* Disease Info Modal */}
-      <DiseaseInfoModal
-        selectedDisease={selectedDisease}
-        setSelectedDisease={setSelectedDisease}
-        isLoadingInfo={isLoadingInfo}
-        diseaseInfo={diseaseInfo}
-        radiusClass={radiusClass}
-      />
-    </div>
+    </PlanUpgradeGuard>
   );
 }
 

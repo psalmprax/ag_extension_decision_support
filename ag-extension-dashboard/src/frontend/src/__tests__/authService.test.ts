@@ -1,14 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('../api/client', () => ({
-  default: {
-    get: vi.fn(),
-    post: vi.fn(),
-    put: vi.fn(),
-    delete: vi.fn(),
-  },
-}));
-
 vi.mock('@/api/client', () => ({
   default: {
     get: vi.fn(),
@@ -18,7 +9,7 @@ vi.mock('@/api/client', () => ({
   },
 }));
 
-import apiClient from '../api/client';
+import apiClient from '@/api/client';
 import { login, demoLogin, register, fetchUserProfile, logout } from '../api/authService';
 
 const mockGet = vi.mocked(apiClient.get);

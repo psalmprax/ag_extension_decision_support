@@ -13,6 +13,8 @@ export interface User {
   email: string;
   role: 'admin' | 'extension_officer' | 'farmer';
   region?: string;
+  planName?: string;
+  isFree?: boolean;
 }
 
 export interface Farmer {

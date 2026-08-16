@@ -1,7 +1,17 @@
 import request from 'supertest';
 import app from '../app';
+import { makeOfficerToken } from './helpers/setupMocks';
 
 describe('Canadian Services API (/api/v1/canadian)', () => {
+  const officerToken = makeOfficerToken();
+
+  it('rejects unauthenticated access to governance services', async () => {
+    const response = await request(app)
+      .post('/api/v1/canadian/climate/assess')
+      .send({ zone: 'prairie_drylands' });
+
+    expect(response.status).toBe(401);
+  });
   describe('POST /api/v1/canadian/ocap/consent', () => {
     it('should stamp OCAP metadata and enforce data access policy', async () => {
       const payload = {
@@ -20,7 +30,10 @@ describe('Canadian Services API (/api/v1/canadian)', () => {
         },
       };
 
-      const response = await request(app).post('/api/v1/canadian/ocap/consent').send(payload);
+      const response = await request(app)
+        .post('/api/v1/canadian/ocap/consent')
+        .set('Authorization', `Bearer ${officerToken}`)
+        .send(payload);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -31,6 +44,16 @@ describe('Canadian Services API (/api/v1/canadian)', () => {
   });
 
   describe('POST /api/v1/canadian/regulatory/check', () => {
+    it('rejects malformed treatment payloads before invoking the regulatory engine', async () => {
+      const response = await request(app)
+        .post('/api/v1/canadian/regulatory/check')
+        .set('Authorization', `Bearer ${officerToken}`)
+        .send({ treatmentName: 'Fungicide Delta', dosagePerHectare: '150' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Validation failed');
+    });
+
     it('should validate treatment against Fertilizers Act and Pest Control Products Act', async () => {
       const payload = {
         treatmentName: 'Fungicide Delta',
@@ -39,7 +62,10 @@ describe('Canadian Services API (/api/v1/canadian)', () => {
         dosagePerHectare: 150,
       };
 
-      const response = await request(app).post('/api/v1/canadian/regulatory/check').send(payload);
+      const response = await request(app)
+        .post('/api/v1/canadian/regulatory/check')
+        .set('Authorization', `Bearer ${officerToken}`)
+        .send(payload);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -56,7 +82,10 @@ describe('Canadian Services API (/api/v1/canadian)', () => {
         consecutiveDryDays: 18,
       };
 
-      const response = await request(app).post('/api/v1/canadian/climate/assess').send(payload);
+      const response = await request(app)
+        .post('/api/v1/canadian/climate/assess')
+        .set('Authorization', `Bearer ${officerToken}`)
+        .send(payload);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);

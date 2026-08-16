@@ -5,6 +5,7 @@ import { mapWhatsAppMessageRows, mapWhatsAppMessageRow, mapCountRows } from '@/t
 import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 import { authorize } from '@/middleware/authorize';
+import { checkUsageLimit } from '@/middleware/usageMiddleware';
 
 const router = Router();
 
@@ -35,7 +36,7 @@ router.get('/messages', async (req: Request, res: Response) => {
 /**
  * POST /api/whatsapp/send — send a WhatsApp message (logged record + dispatch hook).
  */
-router.post('/send', async (req: AuthedRequest, res: Response) => {
+router.post('/send', checkUsageLimit('whatsapp'), async (req: AuthedRequest, res: Response) => {
     try {
         const body = req.body as { to?: string; message?: string; farmerId?: string };
         if (!body.to || !body.message) {

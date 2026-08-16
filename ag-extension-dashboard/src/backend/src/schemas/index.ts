@@ -277,3 +277,28 @@ export const cropCycleSchemas = {
     }),
 };
 
+export const canadianSchemas = {
+    ocapConsent: z.object({
+        data: z.record(z.string(), z.unknown()),
+        policy: z.object({
+            communityId: z.string().min(1),
+            ownershipClaimed: z.boolean(),
+            allowThirdPartySharing: z.boolean(),
+            accessTier: z.enum(['community_only', 'regional_agronomy', 'anonymized_research']),
+            possessionMode: z.enum(['local_on_prem', 'encrypted_cloud_canada']),
+            purposeScopes: z.array(z.string().min(1)).min(1),
+        }),
+    }),
+    regulatoryCheck: z.object({
+        treatmentName: z.string().min(1),
+        activeIngredient: z.string().min(1),
+        province: z.string().min(1),
+        dosagePerHectare: z.number().nonnegative().max(10000).optional(),
+    }),
+    climateAssessment: z.object({
+        zone: z.enum(['prairie_drylands', 'eastern_continental', 'pacific_maritime', 'boreal_fringe']).optional(),
+        temperatureCelsius: z.number().finite().min(-80).max(80).optional(),
+        consecutiveDryDays: z.number().int().nonnegative().max(365).optional(),
+    }),
+};
+

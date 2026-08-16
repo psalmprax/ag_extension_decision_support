@@ -27,9 +27,33 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
+import { usageService } from '@/services/usageService';
 
 const router = Router();
 const knowledgeAdminRoles: UserRole[] = ['admin', 'regional_manager', 'extension_officer'];
+
+// Check daily knowledge query quota (3 per day for Free tier)
+router.get('/quota', async (req: Request, res: Response) => {
+    try {
+        const user = (req as Request & { user?: Record<string, unknown> }).user;
+        const userId = (user?.userId || user?.id) as string;
+        if (!userId) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+        const quota = await usageService.checkDailyKnowledgeLimit(userId);
+        const isFree = await usageService.isFreeUser(userId);
+        return res.json({
+            success: true,
+            data: {
+                ...quota,
+                isFree,
+            }
+        });
+    } catch (error) {
+        logger.error('Failed to get knowledge quota:', error);
+        safeError(res, 500, 'Failed to fetch knowledge quota');
+    }
+});
 
 async function upsertVector(article: KnowledgeArticleForVector): Promise<void> {
     await VectorService.upsertDocument(article.id, article.content, {
@@ -660,7 +684,7 @@ router.post('/ask', async (req: Request, res: Response) => {
     try {
         const { question } = req.body;
         const user = (req as Request & { user?: Record<string, unknown> }).user;
-        const userId = user?.userId || user?.id;
+        const userId = (user?.userId || user?.id) as string;
 
         if (!question) {
             return res.status(400).json({ success: false, error: 'Question is required' });
@@ -669,16 +693,30 @@ router.post('/ask', async (req: Request, res: Response) => {
             return res.status(401).json({ success: false, error: 'User not authenticated' });
         }
 
+        // Daily knowledge quota check (3 per day for Free tier)
+        const dailyQuota = await usageService.checkDailyKnowledgeLimit(userId);
+        if (!dailyQuota.allowed) {
+            return res.status(403).json({
+                success: false,
+                limitReached: true,
+                error: 'Daily free knowledge base limit reached (3/3 queries). Please upgrade to Pro for unlimited queries.',
+                data: {
+                    dailyRemaining: 0,
+                    limit: dailyQuota.limit,
+                    upgradeRequired: true,
+                }
+            });
+        }
+
         // Free-tier users (farmers) route to the freebuff best-effort provider;
-        // officers and admins continue to use the primary/fallback chain. The
-        // freebuff provider is already wired into the fallback chain via
-        // AIProviderFactory.getWithFallback, so the 'preferredProvider' hint is
-        // forwarded through KnowledgeService.askQuestion options to nudge the
-        // cascade toward the community proxy first when role === 'farmer'.
+        // officers and admins continue to use the primary/fallback chain.
         const askUser = user as Record<string, unknown> | undefined;
         const isFreeTier = askUser?.role === 'farmer';
         const preferredProvider = isFreeTier ? 'freebuff' : undefined;
         const result = await KnowledgeService.askQuestion(userId, question, undefined, { preferredProvider });
+
+        // Record search for daily quota tracking
+        await usageService.recordKnowledgeSearch(userId, question, result.answer);
 
         let citations: Citation[] = [];
         try {
@@ -694,6 +732,8 @@ router.post('/ask', async (req: Request, res: Response) => {
             // Non-fatal
         }
 
+        const remainingAfter = Math.max(0, dailyQuota.remaining - 1);
+
         res.json({
             success: true,
             data: {
@@ -703,7 +743,9 @@ router.post('/ask', async (req: Request, res: Response) => {
                 audio: (result as unknown as Record<string, unknown>).audio,
                 contextUsed: result.contextUsed,
                 cached: result.cached,
-                citations
+                citations,
+                dailyRemaining: remainingAfter,
+                dailyLimit: dailyQuota.limit,
             },
         });
     } catch (error) {

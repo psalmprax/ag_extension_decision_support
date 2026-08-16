@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import apiClient from '@/api/client';
-import { withRealFallback } from '@/lib/realFirst';
 
 interface IsometricFarmOverviewProps {
   farmSize?: number;
@@ -25,25 +24,23 @@ const IsometricFarmOverview: React.FC<IsometricFarmOverviewProps> = ({
     if (!farmerId) return;
 
     const fetchSatellite = async () => {
-      const fallbackData = {
-        ndvi: 0.45,
-        soilMoisture: 32.5,
-        timestamp: new Date().toISOString(),
-        farmSize: externalFarmSize,
-      };
-
-      const res = await withRealFallback(
-        apiClient.get(`/external/satellite/${farmerId}`).then(r => r.data),
-        { success: true, data: fallbackData }
-      );
-
-      if (res.success && res.data) {
-        setSatelliteData({
-          ndvi: res.data.ndvi,
-          soilMoisture: res.data.soilMoisture,
-          lastUpdated: res.data.timestamp,
-        });
-        if (res.data.farmSize) setFarmSize(res.data.farmSize);
+      try {
+        const res = await apiClient.get(`/external/satellite/${farmerId}`);
+        if (res.data?.success && res.data.data) {
+          setSatelliteData({
+            ndvi: res.data.data.ndvi,
+            soilMoisture: res.data.data.soilMoisture,
+            lastUpdated: res.data.data.timestamp,
+          });
+          if (res.data.data.farmSize) setFarmSize(res.data.data.farmSize);
+        } else {
+          setSatelliteData(null);
+        }
+      } catch (error) {
+        setSatelliteData(null);
+        if (import.meta.env.DEV) {
+          console.warn('Satellite telemetry unavailable:', error);
+        }
       }
     };
 

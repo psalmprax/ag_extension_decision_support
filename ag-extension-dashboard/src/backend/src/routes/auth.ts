@@ -77,6 +77,21 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
             { expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
         );
 
+        let planName = 'Free';
+        try {
+            const subResult = await query(`
+                SELECT COALESCE(sp.name, 'Free') as plan_name
+                FROM subscriptions s
+                JOIN subscription_plans sp ON sp.id = s.plan_id
+                WHERE s.user_id = $1
+            `, [user.id]);
+            if (subResult.rows.length > 0) {
+                planName = subResult.rows[0].plan_name;
+            }
+        } catch {
+            // fallback
+        }
+
         res.json({
             success: true,
             data: {
@@ -88,6 +103,8 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
                     lastName: user.last_name,
                     role: user.role,
                     region: user.region,
+                    planName,
+                    isFree: planName.toLowerCase() === 'free',
                 },
             },
         });
@@ -363,12 +380,22 @@ router.get('/me', async (req: Request, res: Response) => {
         const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, config.jwt.secret as string) as JWTPayload;
 
-        const result = await query('SELECT id, email, first_name, last_name, role, region FROM users WHERE id = $1', [decoded.userId]);
+        const result = await query(`
+            SELECT u.id, u.email, u.first_name, u.last_name, u.role, u.region,
+                   COALESCE(sp.name, 'Free') as plan_name,
+                   COALESCE(s.status, 'active') as subscription_status
+            FROM users u
+            LEFT JOIN subscriptions s ON s.user_id = u.id
+            LEFT JOIN subscription_plans sp ON sp.id = s.plan_id
+            WHERE u.id = $1
+        `, [decoded.userId]);
         const user = result.rows[0];
 
         if (!user) {
             return res.status(401).json({ success: false, error: 'User not found' });
         }
+
+        const planName = user.plan_name || 'Free';
 
         res.json({
             success: true,
@@ -379,6 +406,8 @@ router.get('/me', async (req: Request, res: Response) => {
                 lastName: user.last_name,
                 role: user.role,
                 region: user.region,
+                planName,
+                isFree: planName.toLowerCase() === 'free',
             },
         });
     } catch {

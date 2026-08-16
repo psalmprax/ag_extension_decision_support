@@ -224,22 +224,12 @@ router.get('/farmer-stats', async (req: Request, res: Response) => {
         `, [userId]);
         
         if (farmerResult.length === 0) {
-            logger.warn(`No farmer profile found for user_id: ${userId}. Providing simulation fallback.`);
-            const fallbackData = {
-                crops: ['Maize', 'Soybeans'],
-                farmSize: 0,
-                vitalScore: 0,
-                yieldHistory: [],
-                soilMoisture: 'N/A',
-                avgTemp: 'N/A',
-                phLevel: 'N/A',
-                aiConfidence: 'N/A',
-                nextVisitDate: 'None',
-                alertsCount: 0,
-                aiTipsCount: 0,
-                isSimulated: true
-            };
-            return res.json({ success: true, data: fallbackData });
+            logger.info(`No farmer profile found for user_id: ${userId}. Returning an honest empty state.`);
+            return res.json({
+                success: true,
+                data: null,
+                meta: { state: 'no_profile' },
+            });
         }
         
         const farmer = farmerResult[0];

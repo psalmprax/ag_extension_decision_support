@@ -295,16 +295,10 @@ function App() {
     setIsGeneratingReport(true);
     try {
       const res = await generateReport('synthesis', 'AI Synthesis Report');
-      const newReport: Report = (res && res.data) ? res.data : {
-        id: `report-${Date.now()}`,
-        type: 'synthesis',
-        title: `AI Synthesis Report #${localGeneratedReports.length + 1}`,
-        generatedAt: new Date().toISOString(),
-        status: 'ready',
-        data: {
-          content: '# AI Agricultural Synthesis Report\n\n- Active Farmers Audited: 15,420\n- Soil Health Index: 92%\n- Risk Score: Low\n\nGenerated automatically by AgExtension Decision Engine.',
-        },
-      };
+      if (!res?.data) {
+        throw new Error('Report service returned no report data');
+      }
+      const newReport: Report = res.data;
       setLocalGeneratedReports(prev => [newReport, ...prev]);
       addNotification({
         type: 'success',
@@ -312,18 +306,10 @@ function App() {
       });
       refetchReports();
     } catch {
-      const fallbackReport: Report = {
-        id: `report-${Date.now()}`,
-        type: 'synthesis',
-        title: `AI Regional Synthesis Report #${localGeneratedReports.length + 1}`,
-        generatedAt: new Date().toISOString(),
-        status: 'ready',
-        data: {
-          content: '# AI Regional Agronomic Performance Report\n\n- Farmers Monitored: 15,420\n- Soil pH Baseline: 6.5\n- Yield Forecast: +18.4% YoY\n\nGenerated automatically by AgExtension Engine.',
-        },
-      };
-      setLocalGeneratedReports(prev => [fallbackReport, ...prev]);
-      addNotification({ type: 'success', message: 'Report generated successfully!' });
+      addNotification({
+        type: 'error',
+        message: t('reports_generation_failed') || 'Report generation failed. No report was created.',
+      });
     } finally {
       setIsGeneratingReport(false);
     }
@@ -522,27 +508,7 @@ function App() {
                     visits={visits}
                     setShowVisitModal={setShowVisitModal}
                     refetchVisits={refetchVisits}
-                    reports={[
-                      ...localGeneratedReports,
-                      ...(reports && reports.length > 0 ? reports : [
-                        {
-                          id: 'report-demo-1',
-                          type: 'visit_summary',
-                          title: 'Q2 Regional Field Visit Audit',
-                          generatedAt: '2026-06-15T10:00:00Z',
-                          status: 'ready',
-                          data: { content: '# Q2 Regional Field Visit Audit\n\n- Active Extension Officers: 142\n- Completed Visits: 1,240\n- High Priority Diagnostic Follow-ups: 12\n\nReport compiled by AgExtension Analytics Engine.' },
-                        },
-                        {
-                          id: 'report-demo-2',
-                          type: 'impact_metrics',
-                          title: 'Co-op Crop Health & Yield Impact Report',
-                          generatedAt: '2026-07-01T14:30:00Z',
-                          status: 'ready',
-                          data: { content: '# Co-op Crop Health & Yield Impact Report\n\n- Target Yield Growth: +18.4%\n- Farmers Reached: 15,420\n- Disease Mitigation Efficiency: 94.2%\n\nPrepared for Regional Agriculture Directorate.' },
-                        },
-                      ]),
-                    ]}
+                    reports={[...localGeneratedReports, ...(reports || [])]}
                     handleGenerateReport={handleGenerateReport}
                     isGeneratingReport={isGeneratingReport}
                     viewingReport={viewingReport}

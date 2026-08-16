@@ -19,6 +19,7 @@ import {
 import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 import { authorize } from '@/middleware/authorize';
+import { checkUsageLimit } from '@/middleware/usageMiddleware';
 
 const router = Router();
 
@@ -28,7 +29,7 @@ type AuthedRequest = Request & { user?: AuthenticatedRequestUser };
  * POST /api/chatbot/messages — persist a single chat turn.
  * The Prisma `ChatMessage` model stores role + content + language metadata.
  */
-router.post('/messages', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), async (req: Request, res: Response) => {
+router.post('/messages', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), checkUsageLimit('ai_chat'), async (req: Request, res: Response) => {
     try {
         const body = req.body as {
             conversation_id?: string;
@@ -181,7 +182,7 @@ router.post('/conversations', authorize(['admin', 'regional_manager', 'extension
  * POST /api/chatbot/completions — inference proxy. Persists user + assistant turns
  * and dispatches to the configured AI provider via AIProviderFactory.
  */
-router.post('/completions', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), async (req: AuthedRequest, res: Response) => {
+router.post('/completions', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), checkUsageLimit('ai_chat'), async (req: AuthedRequest, res: Response) => {
     try {
         const user = req.user;
         if (!user) {

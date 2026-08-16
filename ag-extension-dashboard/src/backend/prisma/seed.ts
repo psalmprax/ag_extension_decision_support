@@ -31,9 +31,13 @@ async function main() {
     update: {
       stripePriceId: 'price_free',
       features: {
-        smsLimit: 50,
-        aiChatLimit: 20,
-        reportLimit: 5,
+        smsLimit: 0,
+        aiChatLimit: 0,
+        reportLimit: 0,
+        aiVisionLimit: 0,
+        speechLimit: 0,
+        whatsappLimit: 0,
+        knowledgeDailyLimit: 3,
         prioritySupport: false,
         advancedAnalytics: false
       },
@@ -45,9 +49,13 @@ async function main() {
       price: 0,
       stripePriceId: 'price_free',
       features: {
-        smsLimit: 50,
-        aiChatLimit: 20,
-        reportLimit: 5,
+        smsLimit: 0,
+        aiChatLimit: 0,
+        reportLimit: 0,
+        aiVisionLimit: 0,
+        speechLimit: 0,
+        whatsappLimit: 0,
+        knowledgeDailyLimit: 3,
         prioritySupport: false,
         advancedAnalytics: false
       },

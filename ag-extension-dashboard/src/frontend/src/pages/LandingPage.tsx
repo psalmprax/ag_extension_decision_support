@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CH_COLORS } from '@/lib/colors';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
@@ -12,7 +12,6 @@ import {
   ArrowRight,
   CheckCircle,
   XCircle,
-  Zap,
   Database,
   TrendingUp,
   FileText,
@@ -23,6 +22,9 @@ import {
   Wifi,
   ChevronDown,
   Play,
+  CloudSun,
+  Layers,
+  Mail,
 } from 'lucide-react';
 
 // ─── Animation variants ─────────────────────────────────────────
@@ -142,27 +144,7 @@ const africaNodes = [
   { x: 50, y: 52, label: 'Zambia' },
 ];
 
-// ─── Animated counter hook ──────────────────────────────────────
-function useCounter(end: number, duration: number = 2000, inView: boolean = false) {
-  const [count, setCount] = useState(0);
-  const started = useRef(false);
 
-  useEffect(() => {
-    if (!inView || started.current) return;
-    started.current = true;
-    const start = performance.now();
-    const animate = (now: number) => {
-      const elapsed = now - start;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setCount(Math.floor(eased * end));
-      if (progress < 1) requestAnimationFrame(animate);
-    };
-    requestAnimationFrame(animate);
-  }, [inView, end, duration]);
-
-  return count;
-}
 
 // ─── Sparkline component ────────────────────────────────────────
 function Sparkline({
@@ -266,25 +248,17 @@ function AfricaVisualization() {
 export function LandingPage() {
   const navigate = useNavigate();
   const heroRef = useRef<HTMLDivElement>(null);
-  const statsRef = useRef<HTMLDivElement>(null);
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
   const springX = useSpring(mouseX, { stiffness: 150, damping: 15 });
   const springY = useSpring(mouseY, { stiffness: 150, damping: 15 });
 
-  const [statsInView, setStatsInView] = useState(false);
   const reducedMotion = useReducedMotion();
 
   // Scroll-driven transforms
   const { scrollYProgress } = useScroll();
   const heroY = useTransform(scrollYProgress, [0, 0.3], [0, -80]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0.6]);
-
-  // Animated counters
-  const dataPointsCount = useCounter(10000, 2000, statsInView);
-  const diseaseCount = useCounter(50, 1500, statsInView);
-  const timeSavedCount = useCounter(70, 1800, statsInView);
-  const accuracyCount = useCounter(94, 1800, statsInView);
 
   // Cursor spotlight
   const handleMouseMove = useCallback(
@@ -296,20 +270,6 @@ export function LandingPage() {
     },
     [mouseX, mouseY]
   );
-
-  // Intersection observer for stats
-  useEffect(() => {
-    const el = statsRef.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) setStatsInView(true);
-      },
-      { threshold: 0.3 }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
 
   return (
     <div className="min-h-screen bg-slate-950 text-white overflow-x-hidden">
@@ -362,6 +322,12 @@ export function LandingPage() {
               className="text-sm font-medium text-white/50 hover:text-white transition-colors"
             >
               How It Works
+            </a>
+            <a
+              href="#contact"
+              className="text-sm font-medium text-white/50 hover:text-white transition-colors"
+            >
+              Contact
             </a>
           </div>
 
@@ -445,7 +411,7 @@ export function LandingPage() {
 
             <motion.h1
               variants={fadeUp}
-              className="text-[clamp(2.8rem,5.5vw,4.2rem)] font-bold leading-[1.02] tracking-tight"
+              className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold leading-[1.08] tracking-tight text-white"
             >
               Smarter Farming
               <br />
@@ -458,12 +424,12 @@ export function LandingPage() {
               </span>
             </motion.h1>
 
-            <motion.p variants={fadeUp} className="text-lg text-white/70 leading-relaxed max-w-lg">
+            <motion.p variants={fadeUp} className="text-base sm:text-lg text-white/75 leading-relaxed max-w-lg font-normal">
               Empower extension officers with AI-driven insights, real-time farmer tracking, and
               data-powered decisions across the Globe.
             </motion.p>
 
-            <motion.div variants={fadeUp} className="text-sm text-white/60 leading-relaxed max-w-lg pt-1 space-y-1">
+            <motion.div variants={fadeUp} className="text-sm text-white/65 leading-relaxed max-w-lg pt-1 space-y-1.5 font-normal">
               <p>
                 <span className="text-emerald-400 font-semibold">What it is:</span> A field-ready
                 decision-support platform for agricultural extension officers managing thousands of
@@ -497,16 +463,16 @@ export function LandingPage() {
               </button>
             </motion.div>
 
-            {/* Mini stats */}
-            <motion.div variants={fadeUp} className="flex gap-8 pt-2">
+            {/* Feature highlights replacing numeric stats */}
+            <motion.div variants={fadeUp} className="grid grid-cols-3 gap-2.5 pt-2">
               {[
-                { value: '10k+', label: 'Data Points' },
-                { value: '70%', label: 'Time Saved' },
-                { value: '100%', label: 'Offline Ready' },
-              ].map((s, i) => (
-                <div key={i}>
-                  <div className="text-xl font-bold text-white/90">{s.value}</div>
-                  <div className="text-xs text-white/25 mt-0.5">{s.label}</div>
+                { title: 'Satellite Weather', sub: 'NASA POWER' },
+                { title: 'Soil Telemetry', sub: 'SoilGrids ISRIC' },
+                { title: 'Offline-First', sub: 'Instant Local Sync' },
+              ].map((item, i) => (
+                <div key={i} className="p-3 rounded-xl bg-white/[0.025] border border-white/[0.05] hover:border-emerald-500/20 transition-colors">
+                  <div className="text-xs font-bold text-emerald-400">{item.title}</div>
+                  <div className="text-[11px] text-white/40 mt-0.5 font-medium">{item.sub}</div>
                 </div>
               ))}
             </motion.div>
@@ -1010,9 +976,9 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── PLATFORM METRICS & OPERATIONAL IMPACT ── */}
+      {/* ── CORE CAPABILITIES & DATA ECOSYSTEM ── */}
       <section
-        ref={statsRef}
+        id="capabilities"
         className="relative py-24 border-t border-b border-white/[0.04] overflow-hidden"
       >
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/[0.03] via-transparent to-amber-500/[0.02] pointer-events-none" />
@@ -1022,73 +988,82 @@ export function LandingPage() {
             whileInView="visible"
             viewport={{ once: true }}
             variants={stagger}
-            className="text-center mb-12"
+            className="text-center mb-14"
           >
             <motion.div
               variants={fadeUp}
-              className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400/70 mb-3"
+              className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-400 mb-3"
             >
-              Platform Metrics & Impact
+              Integrated Decision Ecosystem
             </motion.div>
             <motion.h2
               variants={fadeUp}
-              className="text-[clamp(1.8rem,3.5vw,2.6rem)] font-bold tracking-tight text-white/90"
+              className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white/90"
             >
-              Engineered for precision, speed, and field reality
+              Engineered for precision, resilience, and field reality
             </motion.h2>
+            <motion.p
+              variants={fadeUp}
+              className="text-sm sm:text-base text-white/60 max-w-2xl mx-auto mt-3 font-normal leading-relaxed"
+            >
+              Connecting extension officers to verified global agricultural datasets, localized soil chemistry, and real-time offline workflows.
+            </motion.p>
           </motion.div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
             {[
               {
-                value: dataPointsCount,
-                suffix: '+',
-                label: 'Data Integrations',
-                desc: 'NASA POWER + SoilGrids',
-                icon: Database,
+                icon: CloudSun,
+                title: 'Satellite Weather',
+                badge: 'NASA POWER API',
+                desc: 'Solar irradiance, precipitation coefficients, and thermal forecasts tailored to exact GPS farm coordinates.',
               },
               {
-                value: diseaseCount,
-                suffix: '+',
-                label: 'Disease Models',
-                desc: 'AI-assisted diagnosis',
-                icon: Shield,
+                icon: Layers,
+                title: 'Soil Telemetry',
+                badge: 'SoilGrids ISRIC',
+                desc: 'Sub-surface pH mapping, organic carbon densities, and precision lime and nutrient recovery formulas.',
               },
               {
-                value: timeSavedCount,
-                suffix: '%',
-                label: 'Time Saved',
-                desc: 'vs paper visit logging',
-                icon: Zap,
-              },
-              {
-                value: accuracyCount,
-                suffix: '%',
-                label: 'Diagnostic Accuracy',
-                desc: 'Verified agronomic models',
                 icon: Brain,
+                title: 'AI Advisory Engine',
+                badge: 'RAG Knowledge Graph',
+                desc: 'Instant pest and disease diagnosis referencing verified FAOSTAT agronomic manuals and extension research.',
               },
-            ].map((stat, i) => (
+              {
+                icon: Wifi,
+                title: 'Offline-First Sync',
+                badge: 'Zero Latency',
+                desc: 'Record visit notes and audio logs with no cell coverage; auto-syncs securely once back in range.',
+              },
+            ].map((cap, i) => (
               <motion.div
                 key={i}
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true }}
                 variants={fadeUp}
-                className="p-6 rounded-2xl bg-white/[0.015] border border-white/[0.04] hover:border-emerald-500/20 transition-all space-y-2"
+                className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:border-emerald-500/25 hover:bg-white/[0.035] transition-all duration-300 flex flex-col justify-between"
               >
-                <stat.icon className="w-5 h-5 text-emerald-400/50 mx-auto mb-2" />
-                <div className="text-[clamp(2rem,3.5vw,2.6rem)] font-bold bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
-                  {stat.value.toLocaleString()}
-                  {stat.suffix}
+                <div>
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4">
+                    <cap.icon className="w-5 h-5 text-emerald-400" />
+                  </div>
+                  <div className="text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-1">
+                    {cap.badge}
+                  </div>
+                  <h3 className="text-base font-bold text-white/90 mb-2">
+                    {cap.title}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-white/50 leading-relaxed font-normal">
+                    {cap.desc}
+                  </p>
                 </div>
-                <div className="text-xs font-semibold text-white/80 uppercase tracking-wider">{stat.label}</div>
-                <div className="text-[11px] text-white/35">{stat.desc}</div>
               </motion.div>
             ))}
           </div>
 
-          {/* Secondary capability indicators */}
+          {/* Operational Standards Strip */}
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -1097,20 +1072,20 @@ export function LandingPage() {
             className="mt-10 pt-8 border-t border-white/[0.04] grid grid-cols-2 sm:grid-cols-4 gap-6 text-center"
           >
             <div className="space-y-1">
-              <div className="text-xl font-bold text-emerald-400">&lt; 2 min</div>
-              <div className="text-xs text-white/45">Field Diagnostic Speed</div>
+              <div className="text-sm sm:text-base font-bold text-emerald-400">FAOSTAT Integrated</div>
+              <div className="text-xs text-white/40">Verified Agro Standards</div>
             </div>
             <div className="space-y-1">
-              <div className="text-xl font-bold text-emerald-400">100%</div>
-              <div className="text-xs text-white/45">Offline Sync Ready</div>
+              <div className="text-sm sm:text-base font-bold text-emerald-400">Voice Synthesis</div>
+              <div className="text-xs text-white/40">Automated Visit Logs</div>
             </div>
             <div className="space-y-1">
-              <div className="text-xl font-bold text-emerald-400">3+</div>
-              <div className="text-xs text-white/45">Agro-Climatic Zones</div>
+              <div className="text-sm sm:text-base font-bold text-emerald-400">Multi-District</div>
+              <div className="text-xs text-white/40">Climatic Zone Profiling</div>
             </div>
             <div className="space-y-1">
-              <div className="text-xl font-bold text-emerald-400">24 hrs</div>
-              <div className="text-xs text-white/45">Threat Alert Window</div>
+              <div className="text-sm sm:text-base font-bold text-emerald-400">Encrypted Store</div>
+              <div className="text-xs text-white/40">Tamper-Proof Records</div>
             </div>
           </motion.div>
         </div>
@@ -1252,22 +1227,29 @@ export function LandingPage() {
           <div>
             <div className="flex items-center gap-3 mb-4">
               <img src="/logo.png" alt="GPExts Logo" className="w-9 h-9 object-contain rounded-lg" />
-              <span className="text-lg font-bold">GPExts</span>
+              <span className="text-lg font-bold tracking-tight">GPExts</span>
             </div>
-            <p className="text-sm text-white/30 leading-relaxed max-w-xs">
+            <p className="text-sm text-white/40 leading-relaxed max-w-xs mb-4 font-normal">
               Empowering agricultural extension officers with AI-driven decision support across
               the Globe.
             </p>
+            <a
+              href="mailto:info@gpfed.com"
+              className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-2 rounded-xl"
+            >
+              <Mail className="w-4 h-4" />
+              info@gpfed.com
+            </a>
           </div>
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-white/20 mb-5">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-white/30 mb-5">
               Product
             </h4>
-            <ul className="space-y-3 text-sm">
+            <ul className="space-y-3 text-sm font-normal">
               <li>
                 <a
                   href="#features"
-                  className="text-white/35 hover:text-emerald-400 transition-colors"
+                  className="text-white/50 hover:text-emerald-400 transition-colors"
                 >
                   Features
                 </a>
@@ -1275,56 +1257,56 @@ export function LandingPage() {
               <li>
                 <a
                   href="#how-it-works"
-                  className="text-white/35 hover:text-emerald-400 transition-colors"
+                  className="text-white/50 hover:text-emerald-400 transition-colors"
                 >
                   How It Works
                 </a>
               </li>
               <li>
-                <a href="/demo" className="text-white/35 hover:text-emerald-400 transition-colors">
+                <a href="/demo" className="text-white/50 hover:text-emerald-400 transition-colors">
                   Live Demo
                 </a>
               </li>
             </ul>
           </div>
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-white/20 mb-5">
-              Resources
+            <h4 className="text-xs font-bold uppercase tracking-wider text-white/30 mb-5">
+              Contact & Inquiries
             </h4>
-            <ul className="space-y-3 text-sm">
+            <ul className="space-y-3 text-sm font-normal">
               <li>
                 <a
                   href="#mission"
-                  className="text-white/35 hover:text-emerald-400 transition-colors"
+                  className="text-white/50 hover:text-emerald-400 transition-colors"
                 >
-                  About
+                  Our Mission
                 </a>
               </li>
               <li>
                 <a
-                  href="mailto:hello@gpexts.com"
-                  className="text-white/35 hover:text-emerald-400 transition-colors"
+                  href="mailto:info@gpfed.com"
+                  className="text-emerald-400 hover:text-emerald-300 transition-colors font-medium"
                 >
-                  Contact
+                  info@gpfed.com
                 </a>
               </li>
             </ul>
           </div>
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-white/20 mb-5">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-white/30 mb-5">
               Get Started
             </h4>
-            <ul className="space-y-3 text-sm">
+            <ul className="space-y-3 text-sm font-normal">
               <li>
                 <a
                   href="/register"
-                  className="text-white/35 hover:text-emerald-400 transition-colors"
+                  className="text-white/50 hover:text-emerald-400 transition-colors"
                 >
                   Create Account
                 </a>
               </li>
               <li>
-                <a href="/login" className="text-white/35 hover:text-emerald-400 transition-colors">
+                <a href="/login" className="text-white/50 hover:text-emerald-400 transition-colors">
                   Sign In
                 </a>
               </li>
@@ -1332,14 +1314,14 @@ export function LandingPage() {
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-6 pt-8 border-t border-white/[0.04] flex flex-col md:flex-row justify-between items-center gap-4">
-          <span className="text-xs text-white/15">
+          <span className="text-xs text-white/25">
             &copy; {new Date().getFullYear()} GPExts. All rights reserved.
           </span>
           <div className="flex gap-5 text-xs">
-            <a href="#" className="text-white/15 hover:text-emerald-400 transition-colors">
+            <a href="#" className="text-white/25 hover:text-emerald-400 transition-colors">
               Privacy Policy
             </a>
-            <a href="#" className="text-white/15 hover:text-emerald-400 transition-colors">
+            <a href="#" className="text-white/25 hover:text-emerald-400 transition-colors">
               Terms of Service
             </a>
           </div>

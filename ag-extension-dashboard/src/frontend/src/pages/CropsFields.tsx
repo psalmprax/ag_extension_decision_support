@@ -487,7 +487,7 @@ export function CropsFields() {
     } finally {
       setIsLoading(false);
     }
-  }, [isFarmer, selectedFarmerId, addNotification]);
+  }, [isFarmer, selectedFarmerId]);
 
   useEffect(() => {
     loadFieldsData();

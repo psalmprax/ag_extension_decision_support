@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Leaf,
   Brain,
   Smartphone,
   Database,
@@ -126,10 +125,8 @@ export function DemoPage({
             </button>
             <div className="w-px h-5 bg-white/10" />
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-emerald-700 flex items-center justify-center">
-                <Leaf className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-bold text-sm">AgExtension</span>
+              <img src="/logo.png" alt="GPExts Logo" className="w-7 h-7 object-contain rounded-lg" />
+              <span className="font-bold text-sm tracking-tight">GPExts</span>
             </div>
           </div>
           <button
@@ -148,7 +145,7 @@ export function DemoPage({
             <Sparkles className="w-4 h-4 text-emerald-400" />
             <span className="text-xs font-semibold text-emerald-400">Interactive Sandbox</span>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-3">Experience AgExtension</h1>
+          <h1 className="text-3xl md:text-4xl font-bold mb-3 tracking-tight">Experience GPExts</h1>
           <p className="text-stone-400 max-w-lg mx-auto">
             Explore the AI-powered capabilities that help agricultural extension officers make
             data-driven decisions in the field.
@@ -192,7 +189,7 @@ export function DemoPage({
             <div className="h-3 w-3 rounded-full bg-red-500" />
             <div className="h-3 w-3 rounded-full bg-yellow-500" />
             <div className="h-3 w-3 rounded-full bg-green-500" />
-            <span className="text-xs font-mono text-stone-500 ml-2">sandbox@agextension.io</span>
+            <span className="text-xs font-mono text-stone-500 ml-2">info@gpfed.com</span>
           </div>
 
           {/* RAG Tab */}
