@@ -4,7 +4,6 @@ import { CH_COLORS } from '@/lib/colors';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { motion, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion';
 import {
-  Leaf,
   Users,
   MapPin,
   Brain,
@@ -13,7 +12,6 @@ import {
   ArrowRight,
   CheckCircle,
   XCircle,
-  Globe,
   Zap,
   Database,
   TrendingUp,
@@ -283,9 +281,10 @@ export function LandingPage() {
   const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0.6]);
 
   // Animated counters
-  const farmerCount = useCounter(120, 2000, statsInView);
-  const visitCount = useCounter(2500, 2000, statsInView);
-  const countryCount = useCounter(3, 1500, statsInView);
+  const dataPointsCount = useCounter(10000, 2000, statsInView);
+  const diseaseCount = useCounter(50, 1500, statsInView);
+  const timeSavedCount = useCounter(70, 1800, statsInView);
+  const accuracyCount = useCounter(94, 1800, statsInView);
 
   // Cursor spotlight
   const handleMouseMove = useCallback(
@@ -501,9 +500,9 @@ export function LandingPage() {
             {/* Mini stats */}
             <motion.div variants={fadeUp} className="flex gap-8 pt-2">
               {[
-                { value: '3', label: 'Countries' },
-                { value: '120', label: 'Farmers' },
-                { value: '99.9%', label: 'Uptime' },
+                { value: '10k+', label: 'Data Points' },
+                { value: '70%', label: 'Time Saved' },
+                { value: '100%', label: 'Offline Ready' },
               ].map((s, i) => (
                 <div key={i}>
                   <div className="text-xl font-bold text-white/90">{s.value}</div>
@@ -1011,35 +1010,109 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── LIVE STATS ── */}
+      {/* ── PLATFORM METRICS & OPERATIONAL IMPACT ── */}
       <section
         ref={statsRef}
         className="relative py-24 border-t border-b border-white/[0.04] overflow-hidden"
       >
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/[0.03] via-transparent to-amber-500/[0.02] pointer-events-none" />
-        <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-10 text-center relative z-10">
-          {[
-            { value: countryCount, suffix: '+', label: 'Countries', icon: Globe },
-            { value: farmerCount, suffix: '', label: 'Farmers Managed', icon: Users },
-            { value: visitCount, suffix: '+', label: 'Field Visits', icon: MapPin },
-            { value: 99.9, suffix: '%', label: 'Uptime', icon: Zap, isDecimal: true },
-          ].map((stat, i) => (
+        <div className="max-w-6xl mx-auto px-6 relative z-10">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={stagger}
+            className="text-center mb-12"
+          >
             <motion.div
-              key={i}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
               variants={fadeUp}
-              className="space-y-2"
+              className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400/70 mb-3"
             >
-              <stat.icon className="w-5 h-5 text-emerald-400/30 mx-auto mb-2" />
-              <div className="text-[clamp(2rem,4vw,2.8rem)] font-bold bg-gradient-to-b from-white to-white/50 bg-clip-text text-transparent">
-                {stat.isDecimal ? stat.value : stat.value.toLocaleString()}
-                {stat.suffix}
-              </div>
-              <div className="text-xs text-white/25 uppercase tracking-wider">{stat.label}</div>
+              Platform Metrics & Impact
             </motion.div>
-          ))}
+            <motion.h2
+              variants={fadeUp}
+              className="text-[clamp(1.8rem,3.5vw,2.6rem)] font-bold tracking-tight text-white/90"
+            >
+              Engineered for precision, speed, and field reality
+            </motion.h2>
+          </motion.div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            {[
+              {
+                value: dataPointsCount,
+                suffix: '+',
+                label: 'Data Integrations',
+                desc: 'NASA POWER + SoilGrids',
+                icon: Database,
+              },
+              {
+                value: diseaseCount,
+                suffix: '+',
+                label: 'Disease Models',
+                desc: 'AI-assisted diagnosis',
+                icon: Shield,
+              },
+              {
+                value: timeSavedCount,
+                suffix: '%',
+                label: 'Time Saved',
+                desc: 'vs paper visit logging',
+                icon: Zap,
+              },
+              {
+                value: accuracyCount,
+                suffix: '%',
+                label: 'Diagnostic Accuracy',
+                desc: 'Verified agronomic models',
+                icon: Brain,
+              },
+            ].map((stat, i) => (
+              <motion.div
+                key={i}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                variants={fadeUp}
+                className="p-6 rounded-2xl bg-white/[0.015] border border-white/[0.04] hover:border-emerald-500/20 transition-all space-y-2"
+              >
+                <stat.icon className="w-5 h-5 text-emerald-400/50 mx-auto mb-2" />
+                <div className="text-[clamp(2rem,3.5vw,2.6rem)] font-bold bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
+                  {stat.value.toLocaleString()}
+                  {stat.suffix}
+                </div>
+                <div className="text-xs font-semibold text-white/80 uppercase tracking-wider">{stat.label}</div>
+                <div className="text-[11px] text-white/35">{stat.desc}</div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Secondary capability indicators */}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeUp}
+            className="mt-10 pt-8 border-t border-white/[0.04] grid grid-cols-2 sm:grid-cols-4 gap-6 text-center"
+          >
+            <div className="space-y-1">
+              <div className="text-xl font-bold text-emerald-400">&lt; 2 min</div>
+              <div className="text-xs text-white/45">Field Diagnostic Speed</div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-xl font-bold text-emerald-400">100%</div>
+              <div className="text-xs text-white/45">Offline Sync Ready</div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-xl font-bold text-emerald-400">3+</div>
+              <div className="text-xs text-white/45">Agro-Climatic Zones</div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-xl font-bold text-emerald-400">24 hrs</div>
+              <div className="text-xs text-white/45">Threat Alert Window</div>
+            </div>
+          </motion.div>
         </div>
       </section>
 
