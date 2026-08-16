@@ -17,6 +17,7 @@ export interface DiseaseDiagnosis {
   confidence: number;
   reviewStatus: DiagnosticReviewStatus;
   provenance: DiagnosticProvenance;
+  safetyNotice: string;
   severity: 'mild' | 'moderate' | 'severe';
   description: string;
   symptoms: string[];

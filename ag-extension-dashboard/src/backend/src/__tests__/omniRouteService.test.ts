@@ -4,7 +4,9 @@ describe('OmniRouteService (Ported from money_time_revenue)', () => {
   it('should execute with failover to baseline offline provider if no keys configured', async () => {
     const messages = [{ role: 'user', content: 'What treatment is recommended for maize leaf blight?' }];
 
-    const result = await OmniRouteService.executeWithFailover(messages);
+    const result = await OmniRouteService.executeWithFailover(messages, [
+      { providerName: 'ollama', model: 'local-test-model', score: 1, isFree: true },
+    ]);
 
     expect(result).toBeDefined();
     expect(result.text).toBeDefined();

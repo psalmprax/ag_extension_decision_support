@@ -40,7 +40,7 @@ router.get('/:diseaseName', allowedRoles, async (req: Request, res: Response) =>
 });
 
 // Diagnose diseases from symptoms
-router.post('/diagnose', allowedRoles, async (req: Request, res: Response) => {
+router.post('/diagnose', allowedRoles, checkUsageLimit('ai_vision'), async (req: AuthRequest, res: Response) => {
     try {
         const { symptoms, cropType } = req.body;
 

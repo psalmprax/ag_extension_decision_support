@@ -164,7 +164,10 @@ export function SymptomDiagnosisTab({
                 className={`p-4 border border-gray-200 dark:border-gray-700 ${radiusClass}`}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-semibold text-gray-900 dark:text-white">{result.disease}</h4>
+                  <h4 className="font-semibold text-gray-900 dark:text-white">
+                    {result.reviewStatus === 'needs_expert_review' ? 'Possible match: ' : ''}
+                    {result.disease}
+                  </h4>
                   <div
                     className={`px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(result.severity)}`}
                   >
@@ -186,6 +189,9 @@ export function SymptomDiagnosisTab({
                   )}
                 </div>
                 <p className="text-sm text-gray-900 dark:text-white mb-3">{result.description}</p>
+                <p className="text-xs text-amber-700 dark:text-amber-300 mb-3">
+                  {result.safetyNotice}
+                </p>
                 <button
                   onClick={() => onViewDiseaseInfo(result.disease)}
                   className="text-primary-600 hover:text-primary-700 text-sm font-medium"

@@ -220,6 +220,7 @@ export function ImageAnalysisTab({
                     >
                       <div className="flex items-center justify-between mb-1">
                         <h5 className="font-medium text-gray-900 dark:text-white">
+                          {disease.reviewStatus === 'needs_expert_review' ? 'Possible match: ' : ''}
                           {disease.disease}
                         </h5>
                         <div
@@ -230,6 +231,9 @@ export function ImageAnalysisTab({
                       </div>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         {t('disease_diagnosis_confidence')}: {(disease.confidence * 100).toFixed(1)}%
+                      </p>
+                      <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+                        {disease.safetyNotice}
                       </p>
                     </div>
                   ))}

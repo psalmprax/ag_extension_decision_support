@@ -20,6 +20,7 @@ export interface DiseaseDiagnosis {
   confidence: number;
   reviewStatus: DiagnosticReviewStatus;
   provenance: DiagnosticProvenance;
+  safetyNotice: string;
   severity: 'mild' | 'moderate' | 'severe';
   description: string;
   symptoms: string[];
@@ -57,6 +58,8 @@ export interface SoilAnalysisResult {
 }
 
 const DIAGNOSTIC_REVIEW_THRESHOLD = 0.75;
+const DIAGNOSTIC_SAFETY_NOTICE =
+  'General guidance only. Confirm the diagnosis with a qualified agronomist and follow locally approved product labels before treatment.';
 
 function normalizeConfidence(value: number): number {
   if (!Number.isFinite(value)) return 0;
@@ -256,6 +259,7 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
           confidence: diseaseConfidence,
           reviewStatus: getReviewStatus(diseaseConfidence),
           provenance,
+          safetyNotice: disease.safetyNotice ?? DIAGNOSTIC_SAFETY_NOTICE,
         };
       }),
     };
@@ -418,6 +422,7 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
           confidence,
           reviewStatus: getReviewStatus(confidence),
           provenance,
+          safetyNotice: DIAGNOSTIC_SAFETY_NOTICE,
           severity: similarity > 0.7 ? 'severe' : similarity > 0.4 ? 'moderate' : 'mild',
           description: diseaseInfo.description,
           symptoms: matchedSymptoms.length > 0 ? matchedSymptoms : [diseaseInfo.symptoms[0]],
