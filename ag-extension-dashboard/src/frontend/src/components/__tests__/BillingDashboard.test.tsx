@@ -60,10 +60,28 @@ vi.mock('@/api/billingService', () => ({
 // Mock framer-motion to avoid animation issues in tests
 vi.mock('framer-motion', () => {
   type MotionMockProps = { children?: ReactNode; [key: string]: unknown };
+  const motionOnlyProps = new Set([
+    'animate',
+    'exit',
+    'initial',
+    'layout',
+    'layoutId',
+    'onAnimationComplete',
+    'onAnimationStart',
+    'transition',
+    'variants',
+    'viewport',
+    'whileHover',
+    'whileInView',
+    'whileTap',
+  ]);
 
-  const mockComponent = ({ children, ...props }: MotionMockProps) => (
-    <div {...props}>{children}</div>
-  );
+  const mockComponent = ({ children, ...props }: MotionMockProps) => {
+    const domProps = Object.fromEntries(
+      Object.entries(props).filter(([key]) => !motionOnlyProps.has(key))
+    );
+    return <div {...domProps}>{children}</div>;
+  };
   return {
     motion: {
       div: mockComponent,

@@ -17,6 +17,9 @@
     "test:coverage": "vitest run --coverage",
     "audit-locales": "node ../../scripts/audit-locales.js",
     "sync-locales": "node ../../scripts/sync-locales.js",
+    "cap:sync": "cap sync",
+    "cap:android": "cap open android",
+    "cap:ios": "cap open ios",
     "prepare": "husky"
   },
   "dependencies": {

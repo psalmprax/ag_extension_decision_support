@@ -1,11 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Brain, Info, Sparkles, Zap } from 'lucide-react';
+import { AlertTriangle, Brain, Info, Sparkles, Zap } from 'lucide-react';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { Badge } from '../ui/Badge';
 import { ReasoningVisuals } from './ReasoningVisuals';
 import { MarkdownRenderer } from '../MarkdownRenderer';
-import { Citation } from '@/api/knowledgeService';
+import { Citation, KnowledgeEvidenceStatus } from '@/api/knowledgeService';
 import type { VisualsData } from './types';
 
 interface ContextItem {
@@ -29,6 +29,7 @@ interface Result {
   visuals?: VisualsData;
   audio?: string;
   citations?: Citation[];
+  evidenceStatus?: KnowledgeEvidenceStatus;
 }
 
 interface AIResultProps {
@@ -72,6 +73,20 @@ export const AIResult: React.FC<AIResultProps> = ({ result }) => {
 
         {/* Markdown results */}
         <MarkdownRenderer content={result.answer} />
+
+        {result.evidenceStatus && result.evidenceStatus !== 'verified_sources' && (
+          <div className="mt-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-900/40 dark:bg-amber-900/10 dark:text-amber-200">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider">Evidence status</p>
+              <p className="mt-1 text-sm">
+                {result.evidenceStatus === 'context_only'
+                  ? 'This answer uses retrieved context, but no verified citations were attached.'
+                  : 'No verified source was available. Treat this answer as unverified and confirm it with an agronomist.'}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Visual Intelligence Layer */}
         {(result.visuals || result.audio) && (

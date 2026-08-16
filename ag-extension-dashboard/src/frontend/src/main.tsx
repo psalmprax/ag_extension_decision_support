@@ -36,12 +36,12 @@ const queryClient = new QueryClient({
   },
 });
 
-// Force unregister any existing service workers to clear stale content
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(registrations => {
-    for (const registration of registrations) {
-      registration.unregister();
-    }
+// Register PWA Service Worker for offline field operations and caching
+if ('serviceWorker' in navigator && typeof window !== 'undefined') {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {
+      // Graceful fallback if sw is unavailable during development
+    });
   });
 }
 

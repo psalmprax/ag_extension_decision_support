@@ -21,6 +21,7 @@ import { authorize, UserRole } from '@/middleware/authorize';
 import { tavilyService } from '@/services/tavilyService';
 import { VectorService, SearchResult } from '@/services/vectorService';
 import type { Citation } from '@/services/ragV2Service';
+import { getKnowledgeEvidenceStatus } from '@/services/knowledgeService';
 import { safeError } from '@/utils/safeResponse';
 import { parseSynthesizeVisitResponse } from '@/schemas/synthesizeVisitResponse';
 import multer from 'multer';
@@ -733,6 +734,7 @@ router.post('/ask', async (req: Request, res: Response) => {
         }
 
         const remainingAfter = Math.max(0, dailyQuota.remaining - 1);
+        const evidenceStatus = getKnowledgeEvidenceStatus(citations.length, result.contextUsed.length);
 
         res.json({
             success: true,
@@ -744,6 +746,7 @@ router.post('/ask', async (req: Request, res: Response) => {
                 contextUsed: result.contextUsed,
                 cached: result.cached,
                 citations,
+                evidenceStatus,
                 dailyRemaining: remainingAfter,
                 dailyLimit: dailyQuota.limit,
             },

@@ -13,6 +13,9 @@ translate.engine = 'google';
 // Language mapping from our codes to Google Translate codes
 const languageMap: Record<string, string> = {
   pt: 'pt',
+  fr: 'fr',
+  de: 'de',
+  sw: 'sw',
   oro: 'am', // Oromo -> Amharic (closest available)
   lug: 'lg', // Luganda (not directly available, will use closest)
   zu: 'zu', // Zulu

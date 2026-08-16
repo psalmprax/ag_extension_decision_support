@@ -1,4 +1,4 @@
-import { KnowledgeService } from '../services/knowledgeService';
+import { getKnowledgeEvidenceStatus, KnowledgeService } from '../services/knowledgeService';
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
@@ -76,6 +76,14 @@ const fastClassificationLabels = [
 ];
 
 const timeoutError = new Error('categorizeQuery timed out after 10000ms');
+
+describe('KnowledgeService evidence status', () => {
+    it('requires citations before marking an answer as verified', () => {
+        expect(getKnowledgeEvidenceStatus(2, 0)).toBe('verified_sources');
+        expect(getKnowledgeEvidenceStatus(0, 2)).toBe('context_only');
+        expect(getKnowledgeEvidenceStatus(0, 0)).toBe('no_verified_source');
+    });
+});
 
 // ─── categorizeQuery timeout wrapper tests ───────────────────────────────────
 

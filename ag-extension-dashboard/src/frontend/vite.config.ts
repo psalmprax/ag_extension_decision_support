@@ -19,24 +19,63 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Ag-Extension Decision Support',
-        short_name: 'AgExt',
-        description: 'Agricultural Extension Decision Support Dashboard',
-        theme_color: '#22c55e',
-        background_color: '#ffffff',
+        name: 'GPExts - Agricultural Decision Support',
+        short_name: 'GPExts',
+        description: 'AI-driven agricultural extension decision support, pathological crop diagnostics, and offline field operations.',
+        theme_color: '#059669',
+        background_color: '#0c0a09',
         display: 'standalone',
+        orientation: 'portrait-primary',
+        categories: ['productivity', 'agriculture', 'utilities', 'business'],
         scope: '/',
         start_url: '/',
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: '/pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png',
+            purpose: 'any',
           },
           {
-            src: 'pwa-512x512.png',
+            src: '/pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+          {
+            src: '/pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
+            purpose: 'any',
+          },
+          {
+            src: '/pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+        ],
+        shortcuts: [
+          {
+            name: 'Disease Diagnostics',
+            short_name: 'Diagnostics',
+            description: 'Capture leaf or soil photos for real-time pathology diagnosis',
+            url: '/disease-diagnosis',
+            icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }],
+          },
+          {
+            name: 'Farmer Map',
+            short_name: 'Map',
+            description: 'View geospatial farmer portfolio and field telemetry',
+            url: '/dashboard',
+            icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }],
+          },
+          {
+            name: 'Knowledge Base',
+            short_name: 'Knowledge',
+            description: 'Search agronomic guides and localized pest treatments',
+            url: '/knowledge',
+            icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }],
           },
         ],
       },
@@ -84,6 +123,9 @@ export default defineConfig({
     },
   },
   build: {
+    // Keep the warning threshold aligned with the largest intentionally shared
+    // application chunk (602 kB minified, approximately 121 kB gzip).
+    chunkSizeWarningLimit: 650,
     // CDN configuration for production
     assetsDir: 'assets',
     sourcemap: process.env.NODE_ENV !== 'production',
@@ -94,6 +136,25 @@ export default defineConfig({
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]',
+        manualChunks(id) {
+          if (!id.includes('/node_modules/')) return undefined;
+          if (
+            id.includes('/node_modules/react/') ||
+            id.includes('/node_modules/react-dom/') ||
+            id.includes('/node_modules/react-router-dom/') ||
+            id.includes('/node_modules/@tanstack/')
+          ) {
+            return 'core-vendor';
+          }
+          if (id.includes('/node_modules/framer-motion/') || id.includes('/node_modules/lucide-react/')) {
+            return 'ui-vendor';
+          }
+          if (id.includes('/node_modules/recharts/')) return 'charts-vendor';
+          if (id.includes('/node_modules/leaflet/') || id.includes('/node_modules/react-leaflet/')) {
+            return 'maps-vendor';
+          }
+          return undefined;
+        },
       },
     },
   },

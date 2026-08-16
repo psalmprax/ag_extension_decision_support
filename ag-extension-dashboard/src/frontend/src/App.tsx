@@ -18,6 +18,7 @@ import { AppHeader } from './components/layout/AppHeader';
 import { AppSidebar } from './components/layout/AppSidebar';
 import { AppModals } from './components/AppModals';
 import { TabContent } from './components/TabContent';
+import { PwaInstallPrompt } from './components/PwaInstallPrompt';
 import { Farmer } from './types/dashboard';
 import { useAppSync } from './hooks/useAppSync';
 import { useAppShortcuts } from './hooks/useAppShortcuts';
@@ -582,6 +583,7 @@ function App() {
           activeTab={activeTab}
           addNotification={addNotification}
         />
+        <PwaInstallPrompt />
       </div>
     </>
   );

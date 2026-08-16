@@ -9,6 +9,7 @@ import {
   KnowledgeQuotaData,
   Attachment,
   Citation,
+  KnowledgeEvidenceStatus,
 } from '@/api/knowledgeService';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
@@ -40,6 +41,7 @@ interface Result {
   visuals?: VisualsData;
   audio?: string;
   citations?: Citation[];
+  evidenceStatus?: KnowledgeEvidenceStatus;
   dailyRemaining?: number;
 }
 
@@ -317,6 +319,7 @@ export const KnowledgeBase: React.FC = () => {
                     visuals?: VisualsData;
                     audio?: string;
                     citations?: Citation[];
+                    evidenceStatus?: KnowledgeEvidenceStatus;
                   }
                 }
               />

@@ -12,6 +12,14 @@ import { StealthScraperService } from '@/services/stealthScraperService';
 const STATS_CACHE_KEY = 'knowledge:search:stats';
 const STATS_CACHE_TTL = 300; // 5 minutes
 
+export type KnowledgeEvidenceStatus = 'verified_sources' | 'context_only' | 'no_verified_source';
+
+export function getKnowledgeEvidenceStatus(citationCount: number, contextCount: number): KnowledgeEvidenceStatus {
+    if (citationCount > 0) return 'verified_sources';
+    if (contextCount > 0) return 'context_only';
+    return 'no_verified_source';
+}
+
 export interface KnowledgeArticle {
     id: string;
     title: string;

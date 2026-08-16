@@ -5,6 +5,7 @@ import { plantDiseaseService } from '@/services/plantDiseaseService';
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
+import { logSensitiveAction } from '@/middleware/auditMiddleware';
 
 const router = Router();
 
@@ -49,6 +50,20 @@ router.post('/diagnose', allowedRoles, checkUsageLimit('ai_vision'), async (req:
         }
 
         const diagnosis = await plantDiseaseService.diagnoseFromSymptoms(symptoms, cropType);
+        const userId = req.user?.userId;
+        if (userId) {
+            void logSensitiveAction(userId, 'disease_diagnosis_recommendation', {
+                cropType: typeof cropType === 'string' ? cropType : null,
+                resultCount: diagnosis.length,
+                recommendations: diagnosis.map(result => ({
+                    disease: result.disease,
+                    confidence: result.confidence,
+                    reviewStatus: result.reviewStatus,
+                    evidenceStatus: result.provenance.evidenceStatus,
+                    treatmentCount: result.treatment.length,
+                })),
+            });
+        }
         res.json({ success: true, data: diagnosis });
     } catch (error) {
         logger.error('Failed to diagnose disease:', error);

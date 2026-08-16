@@ -51,6 +51,8 @@ export interface Citation {
   score: number;
 }
 
+export type KnowledgeEvidenceStatus = 'verified_sources' | 'context_only' | 'no_verified_source';
+
 export interface AskResponse {
   success: boolean;
   data: {
@@ -58,6 +60,7 @@ export interface AskResponse {
     contextUsed: ContextItem[];
     cached?: boolean;
     citations?: Citation[];
+    evidenceStatus?: KnowledgeEvidenceStatus;
     visuals?: {
       kpis?: KnowledgeKPI[];
       charts?: KnowledgeChart[];

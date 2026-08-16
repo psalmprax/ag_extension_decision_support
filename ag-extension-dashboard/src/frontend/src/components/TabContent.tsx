@@ -1,10 +1,4 @@
 import React from 'react';
-import { DashboardPage } from '@/pages/DashboardPage';
-import { PortfolioPage } from '@/pages/PortfolioPage';
-import { VisitsPage } from '@/pages/VisitsPage';
-import { ReportsPage } from '@/pages/ReportsPage';
-import { AnalyticsPage } from '@/pages/AnalyticsPage';
-import { FarmerChatPage } from '@/pages/FarmerChatPage';
 import { Farmer, Visit, Conversation, ChatMessage, DashboardData } from '@/types/dashboard';
 import { Report } from '@/api/reportService';
 import { PlanUpgradeGuard } from '@/components/PlanUpgradeGuard';
@@ -18,6 +12,25 @@ interface AnalyticsDataShape {
   };
   timeline?: Record<string, string | number>[];
 }
+
+const DashboardPage = React.lazy(() =>
+  import('@/pages/DashboardPage').then(m => ({ default: m.DashboardPage }))
+);
+const PortfolioPage = React.lazy(() =>
+  import('@/pages/PortfolioPage').then(m => ({ default: m.PortfolioPage }))
+);
+const VisitsPage = React.lazy(() =>
+  import('@/pages/VisitsPage').then(m => ({ default: m.VisitsPage }))
+);
+const ReportsPage = React.lazy(() =>
+  import('@/pages/ReportsPage').then(m => ({ default: m.ReportsPage }))
+);
+const AnalyticsPage = React.lazy(() =>
+  import('@/pages/AnalyticsPage').then(m => ({ default: m.AnalyticsPage }))
+);
+const FarmerChatPage = React.lazy(() =>
+  import('@/pages/FarmerChatPage').then(m => ({ default: m.FarmerChatPage }))
+);
 
 const FarmerDashboard = React.lazy(() =>
   import('@/components/FarmerDashboard').then(m => ({ default: m.FarmerDashboard }))

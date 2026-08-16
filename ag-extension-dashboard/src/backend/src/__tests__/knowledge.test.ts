@@ -50,6 +50,9 @@ jest.mock('../middleware/authorize', () => ({
 
 // Mock the RAG / KnowledgeService path so the legacy search branch is exercised
 jest.mock('../services/knowledgeService', () => ({
+    getKnowledgeEvidenceStatus: jest.fn((citationCount: number, contextCount: number) =>
+        citationCount > 0 ? 'verified_sources' : contextCount > 0 ? 'context_only' : 'no_verified_source'
+    ),
     KnowledgeService: {
         searchKnowledge: jest.fn().mockResolvedValue([]),
         logSearch: jest.fn().mockResolvedValue(undefined),

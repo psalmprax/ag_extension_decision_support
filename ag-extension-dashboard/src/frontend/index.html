@@ -3,55 +3,34 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#059669" />
+    <meta name="color-scheme" content="dark light" />
     <meta
       name="description"
-      content="Ag-Extension Decision Support Dashboard - Empowering agricultural extension officers and farming communities"
+      content="GPExts - AI-driven agricultural extension decision support, pathological crop diagnostics, and offline field operations."
     />
-    <title>Ag-Extension Dashboard</title>
+    
+    <!-- Apple PWA Meta -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="GPExts" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    
+    <!-- Microsoft / Windows Tile -->
+    <meta name="msapplication-TileColor" content="#059669" />
+    <meta name="msapplication-TileImage" content="/pwa-192x192.png" />
+
+    <title>GPExts - Agricultural Decision Support</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
       rel="stylesheet"
     />
-    <script>
-      // Programmatic Cache & Service Worker Buster
-      (function () {
-        const VERSION = '1.0.2'; // Increment this to force a refresh
-        const storedVersion = localStorage.getItem('ag_app_version');
-
-        if (storedVersion !== VERSION) {
-          console.log('New version detected (' + VERSION + '). Clearing cache and reloading...');
-
-          // 1. Unregister all service workers
-          if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function (registrations) {
-              for (let registration of registrations) {
-                registration.unregister();
-              }
-            });
-          }
-
-          // 2. Clear Cache Storage
-          if ('caches' in window) {
-            caches.keys().then(function (names) {
-              for (let name of names) caches.delete(name);
-            });
-          }
-
-          // 3. Clear Local Storage (except version)
-          localStorage.clear();
-          localStorage.setItem('ag_app_version', VERSION);
-
-          // 4. Force reload from server
-          window.location.reload(true);
-        }
-      })();
-    </script>
   </head>
 
-  <body>
+  <body className="bg-white dark:bg-stone-950 text-slate-900 dark:text-slate-100 antialiased selection:bg-emerald-500 selection:text-white">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
