@@ -501,8 +501,8 @@ export function LandingPage() {
             {/* Mini stats */}
             <motion.div variants={fadeUp} className="flex gap-8 pt-2">
               {[
-                { value: '12', label: 'Countries' },
-                { value: '2,847', label: 'Farmers' },
+                { value: '3', label: 'Countries' },
+                { value: '120', label: 'Farmers' },
                 { value: '99.9%', label: 'Uptime' },
               ].map((s, i) => (
                 <div key={i}>
@@ -549,7 +549,7 @@ export function LandingPage() {
                     </div>
                   </div>
                   {[
-                    { icon: Users, label: 'Farmers', count: '2,847' },
+                    { icon: Users, label: 'Farmers', count: '120' },
                     { icon: MapPin, label: 'Visits', count: '156' },
                     { icon: Brain, label: 'AI Assistant' },
                     { icon: TrendingUp, label: 'Analytics' },
@@ -596,7 +596,7 @@ export function LandingPage() {
                   <div className="grid grid-cols-4 gap-2">
                     {[
                       {
-                        value: '2,847',
+                        value: '120',
                         label: 'Farmers',
                         change: '+12%',
                         color: CH_COLORS.success,
