@@ -19,6 +19,7 @@ import { AppSidebar } from './components/layout/AppSidebar';
 import { AppModals } from './components/AppModals';
 import { TabContent } from './components/TabContent';
 import { PwaInstallPrompt } from './components/PwaInstallPrompt';
+import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { Farmer } from './types/dashboard';
 import { useAppSync } from './hooks/useAppSync';
 import { useAppShortcuts } from './hooks/useAppShortcuts';
@@ -468,7 +469,7 @@ function App() {
           />
 
           <main
-            className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarOpen ? 'ml-72' : ''} relative`}
+            className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarOpen ? 'ml-72' : ''} relative pb-24 md:pb-6`}
           >
             <ErrorBoundary componentName="MainContent">
               <Suspense
@@ -582,6 +583,12 @@ function App() {
           handleStartConversation={handleStartConversation}
           activeTab={activeTab}
           addNotification={addNotification}
+        />
+        <MobileBottomNav
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
         />
         <PwaInstallPrompt />
       </div>

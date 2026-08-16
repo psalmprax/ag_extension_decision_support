@@ -1,8 +1,11 @@
 import CONFIG from '../../shared/config';
 
 // Types for offline queue
+type QueueState = 'pending' | 'failed' | 'conflict';
+
 interface QueuedRequest {
     id: string;
+    idempotencyKey: string;
     url: string;
     method: string;
     headers: Record<string, string>;
@@ -10,6 +13,8 @@ interface QueuedRequest {
     timestamp: number;
     retries: number;
     maxRetries: number;
+    state: QueueState;
+    lastError?: string;
 }
 
 interface OfflineStatus {
@@ -120,15 +125,18 @@ export default defineBackground(() => {
     };
 
     // Queue a request
-    const queueRequest = async (request: Omit<QueuedRequest, 'id' | 'timestamp' | 'retries'>): Promise<void> => {
+    const queueRequest = async (request: Omit<QueuedRequest, 'id' | 'idempotencyKey' | 'timestamp' | 'retries' | 'state'> & { idempotencyKey?: string }): Promise<void> => {
         if (!db) await initDB();
 
+        const id = `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
         const queuedRequest: QueuedRequest = {
             ...request,
-            id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+            id,
+            idempotencyKey: request.idempotencyKey || id,
             timestamp: Date.now(),
             retries: 0,
-            maxRetries: 3
+            maxRetries: request.maxRetries || 3,
+            state: 'pending',
         };
 
         return new Promise((resolve, reject) => {
@@ -161,7 +169,14 @@ export default defineBackground(() => {
             request.onsuccess = () => {
                 const cursor = request.result;
                 if (cursor) {
-                    requests.push(cursor.value);
+                    const value = cursor.value as Partial<QueuedRequest> & Pick<QueuedRequest, 'id'>;
+                    requests.push({
+                        ...value,
+                        idempotencyKey: value.idempotencyKey || value.id,
+                        state: value.state || 'pending',
+                        retries: value.retries || 0,
+                        maxRetries: value.maxRetries || 3,
+                    } as QueuedRequest);
                     cursor.continue();
                 } else {
                     resolve(requests);
@@ -194,27 +209,43 @@ export default defineBackground(() => {
         try {
             const response = await fetch(request.url, {
                 method: request.method,
-                headers: request.headers,
-                body: request.body ? JSON.stringify(request.body) : undefined
+                headers: {
+                    ...request.headers,
+                    ...(request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : {}),
+                },
+                body: request.body === undefined
+                    ? undefined
+                    : typeof request.body === 'string'
+                        ? request.body
+                        : JSON.stringify(request.body)
             });
 
             if (response.ok) {
                 console.log('Queued request processed successfully:', request.id);
                 await removeQueuedRequest(request.id);
+            } else if (response.status === 409) {
+                request.state = 'conflict';
+                request.lastError = (await response.text()).slice(0, 500);
+                if (db) {
+                    const transaction = db.transaction([QUEUE_STORE], 'readwrite');
+                    transaction.objectStore(QUEUE_STORE).put(request);
+                }
+                notifyQueueUpdate();
             } else {
                 throw new Error(`HTTP ${response.status}`);
             }
         } catch (error) {
             console.error('Failed to process queued request:', request.id, error);
             request.retries++;
+            request.lastError = error instanceof Error ? error.message : 'Sync failed';
 
             if (request.retries >= request.maxRetries) {
-                console.log('Max retries reached, removing request:', request.id);
-                await removeQueuedRequest(request.id);
-            } else if (db) {
+                request.state = 'failed';
+            }
+            if (db) {
                 const transaction = db.transaction([QUEUE_STORE], 'readwrite');
-                const store = transaction.objectStore(QUEUE_STORE);
-                store.put(request);
+                transaction.objectStore(QUEUE_STORE).put(request);
+                notifyQueueUpdate();
             }
         }
     };
@@ -223,7 +254,7 @@ export default defineBackground(() => {
     const processQueue = async (): Promise<void> => {
         const requests = await getQueuedRequests();
 
-        for (const request of requests) {
+        for (const request of requests.filter(item => item.state === 'pending')) {
             await processSingleRequest(request);
         }
     };

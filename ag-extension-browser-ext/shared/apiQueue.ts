@@ -6,6 +6,7 @@ export interface QueuedRequest {
     headers: Record<string, string>;
     body?: any;
     maxRetries?: number;
+    idempotencyKey?: string;
 }
 
 export interface OfflineStatus {
@@ -94,7 +95,8 @@ class APIQueueService {
                 method: request.method,
                 headers: request.headers,
                 body: request.body,
-                maxRetries: request.maxRetries || 3
+                maxRetries: request.maxRetries || 3,
+                idempotencyKey: request.idempotencyKey,
             }
         });
 
@@ -105,15 +107,26 @@ class APIQueueService {
 
     public async makeRequest(url: string, options: RequestInit = {}): Promise<Response> {
         const isOnline = await this.isCurrentlyOnline();
+        const method = (options.method || 'GET').toUpperCase();
+        const isMutation = !['GET', 'HEAD', 'OPTIONS'].includes(method);
+        const idempotencyKey = isMutation
+            ? (typeof crypto !== 'undefined' && crypto.randomUUID
+                ? crypto.randomUUID()
+                : `ext_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`)
+            : undefined;
+        const requestHeaders = new Headers(options.headers);
+        if (idempotencyKey) requestHeaders.set('Idempotency-Key', idempotencyKey);
+        const requestOptions: RequestInit = { ...options, method, headers: requestHeaders };
 
         if (!isOnline) {
             // Queue the request
             await this.queueRequest({
                 url,
-                method: options.method || 'GET',
-                headers: (options.headers as Record<string, string>) || {},
+                method,
+                headers: Object.fromEntries(requestHeaders.entries()),
                 body: options.body,
-                maxRetries: 3
+                maxRetries: 3,
+                idempotencyKey,
             });
 
             // Return a mock response for offline state
@@ -130,17 +143,18 @@ class APIQueueService {
 
         // Make the request normally
         try {
-            const response = await fetch(url, options);
+            const response = await fetch(url, requestOptions);
             return response;
         } catch (error) {
             // If fetch fails, queue the request
             console.warn('Request failed, queuing for later:', error);
             await this.queueRequest({
                 url,
-                method: options.method || 'GET',
-                headers: (options.headers as Record<string, string>) || {},
+                method,
+                headers: Object.fromEntries(requestHeaders.entries()),
                 body: options.body,
-                maxRetries: 3
+                maxRetries: 3,
+                idempotencyKey,
             });
 
             throw error;

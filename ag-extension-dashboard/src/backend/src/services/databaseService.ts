@@ -188,6 +188,29 @@ async function syncPrismaSchema(): Promise<void> {
 export async function createTables(): Promise<void> {
   if (!pool) return;
 
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS offline_mutations (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL,
+        mutation_key VARCHAR(128) NOT NULL,
+        operation VARCHAR(20) NOT NULL,
+        entity_type VARCHAR(50) NOT NULL,
+        request_hash CHAR(64) NOT NULL,
+        status VARCHAR(20) NOT NULL DEFAULT 'processing',
+        response_status INTEGER,
+        response_body JSONB,
+        created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT offline_mutations_user_key_unique UNIQUE (user_id, mutation_key)
+      );
+      CREATE INDEX IF NOT EXISTS offline_mutations_user_id_idx ON offline_mutations(user_id);
+      CREATE INDEX IF NOT EXISTS offline_mutations_status_idx ON offline_mutations(status);
+    `);
+  } catch (error) {
+    logger.warn('Offline mutation ledger provisioning failed:', error);
+  }
+
   // Enable vector extension if available in database
   try {
     await pool.query("CREATE EXTENSION IF NOT EXISTS vector");
@@ -363,6 +386,25 @@ export async function query<T = DefaultSqlRow>(
   const duration = Date.now() - start;
   logger.debug('Executed query', { text: text.substring(0, 50), duration, rows: res.rowCount });
   return res as unknown as TypedQueryResult<T>;
+}
+
+export async function withTransaction<T>(callback: (client: PoolClient) => Promise<T>): Promise<T> {
+  if (!pool) {
+    throw new Error('Database not initialized');
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await callback(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export async function closeDatabase(): Promise<void> {

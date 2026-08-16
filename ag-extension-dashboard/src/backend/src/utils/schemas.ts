@@ -140,11 +140,24 @@ export const createFarmerSchema = z.object({
 // Visit Schemas
 export const createVisitSchema = z.object({
   body: z.object({
-    farmerId: z.string().uuid(),
-    visitType: z.string(),
-    scheduledAt: z.string().datetime(),
+    farmerId: z.string().uuid().optional(),
+    farmer_id: z.string().uuid().optional(),
+    visitType: z.string().min(1).optional(),
+    visit_type: z.string().min(1).optional(),
+    type: z.string().min(1).optional(),
+    scheduledAt: z.string().datetime().optional(),
+    scheduled_at: z.string().datetime().optional(),
     notes: z.string().optional(),
-  }),
+  }).refine(
+    body => Boolean(body.farmerId || body.farmer_id),
+    { message: 'farmerId is required' }
+  ).refine(
+    body => Boolean(body.visitType || body.visit_type || body.type),
+    { message: 'visitType is required' }
+  ).refine(
+    body => Boolean(body.scheduledAt || body.scheduled_at),
+    { message: 'scheduledAt is required' }
+  ),
 });
 
 export const updateFarmerSchema = z.object({

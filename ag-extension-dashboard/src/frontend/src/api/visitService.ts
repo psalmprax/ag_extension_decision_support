@@ -1,4 +1,5 @@
 import apiClient from './client';
+import { syncQueue } from './syncQueueService';
 
 export interface Visit {
   id: string;
@@ -37,19 +38,77 @@ export const fetchSynthesis = async (
   return response.data;
 };
 
-export const createVisit = async (
-  data: Partial<Visit>
-): Promise<{ success: boolean; data: Visit }> => {
-  const response = await apiClient.post('/visits', data);
-  return response.data;
+type VisitMutationResponse = { success: boolean; data: Visit; queued?: boolean };
+
+function createMutationKey(): string {
+  return typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `visit_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function isNetworkFailure(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && !('response' in error);
+}
+
+function queueVisitMutation(
+  action: 'create' | 'update',
+  endpoint: string,
+  data: Partial<Visit>,
+  idempotencyKey: string
+): VisitMutationResponse {
+  syncQueue.enqueue({
+    action,
+    entity: 'visit',
+    endpoint,
+    method: action === 'create' ? 'POST' : 'PATCH',
+    data: data as Record<string, unknown>,
+    idempotencyKey,
+  });
+
+  return {
+    success: true,
+    queued: true,
+    data: {
+      ...data,
+      id: idempotencyKey,
+      status: action === 'create' ? 'scheduled' : data.status || 'scheduled',
+    } as Visit,
+  };
+}
+
+export const createVisit = async (data: Partial<Visit>): Promise<VisitMutationResponse> => {
+  const idempotencyKey = createMutationKey();
+  if (!navigator.onLine) {
+    return queueVisitMutation('create', '/visits', data, idempotencyKey);
+  }
+
+  try {
+    const response = await apiClient.post<{ success: boolean; data: Visit }>('/visits', data, {
+      headers: { 'Idempotency-Key': idempotencyKey },
+    });
+    return response.data;
+  } catch (error: unknown) {
+    if (!isNetworkFailure(error)) throw error;
+    return queueVisitMutation('create', '/visits', data, idempotencyKey);
+  }
 };
 
-export const updateVisit = async (
-  id: string,
-  data: Partial<Visit>
-): Promise<{ success: boolean; data: Visit }> => {
-  const response = await apiClient.patch(`/visits/${id}`, data);
-  return response.data;
+export const updateVisit = async (id: string, data: Partial<Visit>): Promise<VisitMutationResponse> => {
+  const idempotencyKey = createMutationKey();
+  const endpoint = `/visits/${id}`;
+  if (!navigator.onLine) {
+    return queueVisitMutation('update', endpoint, { ...data, id }, idempotencyKey);
+  }
+
+  try {
+    const response = await apiClient.patch<{ success: boolean; data: Visit }>(endpoint, data, {
+      headers: { 'Idempotency-Key': idempotencyKey },
+    });
+    return response.data;
+  } catch (error: unknown) {
+    if (!isNetworkFailure(error)) throw error;
+    return queueVisitMutation('update', endpoint, { ...data, id }, idempotencyKey);
+  }
 };
 
 export interface PriorityData {

@@ -37,8 +37,29 @@ model User {
   knowledgeSearches KnowledgeSearch[] @relation("UserKnowledgeSearches")
   apiClients    ApiClient[]
   videoConsultations VideoConsultation[]
+  offlineMutations OfflineMutation[]
 
   @@map("users")
+}
+
+model OfflineMutation {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  mutationKey    String   @map("mutation_key") @db.VarChar(128)
+  operation      String   @db.VarChar(20)
+  entityType     String   @map("entity_type") @db.VarChar(50)
+  requestHash    String   @map("request_hash") @db.Char(64)
+  status         String   @default("processing") @db.VarChar(20)
+  responseStatus Int?     @map("response_status")
+  responseBody   Json?    @map("response_body")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, mutationKey])
+  @@index([userId])
+  @@index([status])
+  @@map("offline_mutations")
 }
 
 model ScheduledSMS {

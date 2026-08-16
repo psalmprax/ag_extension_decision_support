@@ -1,7 +1,10 @@
 import apiClient from './client';
 
-interface SyncQueueItem {
+export type SyncState = 'pending' | 'failed' | 'conflict';
+
+export interface SyncQueueItem {
   id: string;
+  idempotencyKey: string;
   action: 'create' | 'update' | 'delete';
   entity: string;
   endpoint: string;
@@ -9,6 +12,8 @@ interface SyncQueueItem {
   data?: Record<string, unknown>;
   timestamp: number;
   retryCount: number;
+  state: SyncState;
+  lastError?: string;
 }
 
 const STORAGE_KEY = 'ag-sync-queue';
@@ -27,7 +32,13 @@ class SyncQueueService {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        this.queue = JSON.parse(stored);
+        const parsed = JSON.parse(stored) as Array<Partial<SyncQueueItem> & Pick<SyncQueueItem, 'id'>>;
+        this.queue = parsed.map(item => ({
+          ...(item as SyncQueueItem),
+          idempotencyKey: item.idempotencyKey || item.id,
+          state: item.state || 'pending',
+          retryCount: item.retryCount || 0,
+        }));
       }
     } catch {
       this.queue = [];
@@ -57,13 +68,18 @@ class SyncQueueService {
     };
   }
 
-  enqueue(item: Omit<SyncQueueItem, 'id' | 'timestamp' | 'retryCount'>): string {
-    const id = `sync_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  enqueue(item: Omit<SyncQueueItem, 'id' | 'idempotencyKey' | 'timestamp' | 'retryCount' | 'state'> & { idempotencyKey?: string }): string {
+    const id =
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? `sync_${crypto.randomUUID()}`
+        : `sync_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const queueItem: SyncQueueItem = {
       ...item,
       id,
+      idempotencyKey: item.idempotencyKey || id,
       timestamp: Date.now(),
       retryCount: 0,
+      state: 'pending',
     };
     this.queue.push(queueItem);
     this.saveToStorage();
@@ -83,31 +99,62 @@ class SyncQueueService {
     this.notifyListeners();
   }
 
-  async processQueue(): Promise<{ success: number; failed: number }> {
+  retry(id: string): void {
+    const item = this.queue.find(queueItem => queueItem.id === id);
+    if (!item) return;
+    item.state = 'pending';
+    item.retryCount = 0;
+    item.lastError = undefined;
+    this.saveToStorage();
+    this.notifyListeners();
+  }
+
+  private async executeSyncItem(item: SyncQueueItem): Promise<'success' | 'conflict' | 'failed' | 'retry'> {
+    try {
+      await apiClient.request({
+        url: item.endpoint,
+        method: item.method,
+        data: item.data,
+        headers: { 'Idempotency-Key': item.idempotencyKey },
+      });
+      return 'success';
+    } catch (error: unknown) {
+      const response = (error as { response?: { status?: number; data?: { error?: string } } }).response;
+      item.lastError = response?.data?.error || (error instanceof Error ? error.message : 'Sync failed');
+      if (response?.status === 409) {
+        item.state = 'conflict';
+        return 'conflict';
+      }
+      item.retryCount++;
+      if (item.retryCount >= MAX_RETRIES) {
+        item.state = 'failed';
+        return 'failed';
+      }
+      return 'retry';
+    }
+  }
+
+  async processQueue(): Promise<{ success: number; failed: number; conflicts: number }> {
     if (this.isProcessing || this.queue.length === 0 || !navigator.onLine) {
-      return { success: 0, failed: 0 };
+      return { success: 0, failed: 0, conflicts: 0 };
     }
 
     this.isProcessing = true;
     let success = 0;
     let failed = 0;
+    let conflicts = 0;
     const toRemove: string[] = [];
 
-    for (const item of [...this.queue]) {
-      try {
-        await apiClient.request({
-          url: item.endpoint,
-          method: item.method,
-          data: item.data,
-        });
+    const pendingItems = this.queue.filter(queueItem => queueItem.state === 'pending');
+    for (const item of pendingItems) {
+      const result = await this.executeSyncItem(item);
+      if (result === 'success') {
         toRemove.push(item.id);
         success++;
-      } catch {
-        item.retryCount++;
-        if (item.retryCount >= MAX_RETRIES) {
-          toRemove.push(item.id);
-          failed++;
-        }
+      } else if (result === 'conflict') {
+        conflicts++;
+      } else if (result === 'failed') {
+        failed++;
       }
     }
 
@@ -116,7 +163,7 @@ class SyncQueueService {
     this.notifyListeners();
     this.isProcessing = false;
 
-    return { success, failed };
+    return { success, failed, conflicts };
   }
 
   getQueue(): SyncQueueItem[] {
