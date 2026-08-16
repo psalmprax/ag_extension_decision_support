@@ -160,10 +160,10 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
             <button
-              onClick={() => setActiveTab('knowledge')}
+              onClick={() => setActiveTab('billing')}
               className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 font-semibold text-sm transition-all"
             >
-              Explore Free Knowledge Base (3/day)
+              View Full Cost & Access Matrix
             </button>
           </div>
         </div>

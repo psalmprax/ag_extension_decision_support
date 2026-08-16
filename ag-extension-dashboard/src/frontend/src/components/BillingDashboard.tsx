@@ -15,6 +15,7 @@ import { SubscriptionStatus } from './billing/SubscriptionStatus';
 import { PlanCard } from './billing/PlanCard';
 import { PaymentMethods } from './billing/PaymentMethods';
 import { Invoices } from './billing/Invoices';
+import { AccessAndCostMatrix } from './billing/AccessAndCostMatrix';
 
 export const BillingDashboard: React.FC = () => {
   const { isModern, headingClass, radiusClass } = useThemeClasses();
@@ -149,6 +150,11 @@ export const BillingDashboard: React.FC = () => {
                 actionLoading={billing.actionLoading}
               />
             ))}
+          </section>
+
+          {/* Feature Access & Cost Matrix */}
+          <section aria-label="Feature Access and Cost Matrix">
+            <AccessAndCostMatrix onSelectPlan={billing.handleSubscribe} />
           </section>
 
           {/* Payment Methods Section */}

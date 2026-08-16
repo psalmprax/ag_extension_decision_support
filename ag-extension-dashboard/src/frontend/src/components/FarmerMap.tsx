@@ -23,6 +23,7 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { themes, ThemeName } from '@/theme';
 import { useLanguage } from '@/lib/LanguageContext';
+import { DEMO_FARMERS } from '@/data/demoFarmers';
 import toast from 'react-hot-toast';
 
 // Fix for default marker icons in Leaflet with webpack/Vite
@@ -284,7 +285,18 @@ const CROP_ICONS: Record<string, string> = {
 // Default starting coordinates for the map (Kenya)
 const DEFAULT_CENTER: [number, number] = [-1.2863, 36.8172];
 const DEFAULT_ZOOM = 6;
-const EMPTY_FARMERS: FarmerData[] = [];
+
+const DEFAULT_DEMO_MAP_FARMERS: FarmerData[] = DEMO_FARMERS.map(f => ({
+  id: f.id,
+  name: `${f.firstName} ${f.lastName}`,
+  lat: f.latitude,
+  lng: f.longitude,
+  crop: f.crops[0] || 'Maize',
+  region: f.region || 'Unknown',
+  size: f.farmSize || 0,
+  phone: f.phone,
+  yield: f.yield || 0,
+}));
 
 // Map tile layer types
 type MapLayer = 'street' | 'satellite' | 'terrain';
@@ -501,7 +513,8 @@ export function FarmerMap({
   isExternalExpanded,
   onToggleExpand,
 }: FarmerMapProps) {
-  const farmers = propFarmers || EMPTY_FARMERS;
+  const farmers =
+    propFarmers && propFarmers.length > 0 ? propFarmers : DEFAULT_DEMO_MAP_FARMERS;
   const [currentLayer, setCurrentLayer] = useState<MapLayer>('street');
   const [selectedFarmer, setSelectedFarmer] = useState<FarmerData | null>(null);
   const [internalExpanded, setInternalExpanded] = useState(false);

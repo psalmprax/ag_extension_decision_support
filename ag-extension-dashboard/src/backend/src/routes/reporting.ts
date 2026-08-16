@@ -38,12 +38,24 @@ interface ReportContent {
     cropType?: string | null;
   };
   // Disease diagnosis fields
-  overallHealth?: 'healthy' | 'stressed' | 'diseased';
+  overallHealth?: 'healthy' | 'stressed' | 'diseased' | 'unknown';
   confidence?: number;
+  reviewStatus?: 'ready' | 'needs_expert_review';
+  provenance?: {
+    evidenceStatus: 'verified_source' | 'no_verified_source';
+    source: string;
+    sourceUrl: string | null;
+    sourceTimestamp: string | null;
+    provider: string | null;
+    model: string | null;
+    generatedAt: string;
+  };
   diseases?: Array<{
     disease: string;
     severity?: string;
     confidence?: number;
+    reviewStatus?: 'ready' | 'needs_expert_review';
+    provenance?: ReportContent['provenance'];
     description?: string;
     symptoms?: string[];
     treatment?: string[];
@@ -51,7 +63,7 @@ interface ReportContent {
   nutrientDeficiencies?: string[];
   recommendations?: string[];
   // Soil diagnostic fields
-  overallHealthScore?: number;
+  overallHealthScore?: number | null;
   texture?: string;
   estimatedMoisture?: string;
   drainageClass?: string;
@@ -347,7 +359,7 @@ function drawDiseaseDiagnosisHeader(doc: PDFKit.PDFDocument, report: ReportListR
     if (data.confidence) {
         doc.font('Helvetica')
            .fontSize(9)
-           .text(`Confidence Score: ${data.confidence}%`, doc.page.width - 200, bannerY, { align: 'right' });
+           .text(`Confidence Score: ${(data.confidence * 100).toFixed(1)}%`, doc.page.width - 200, bannerY, { align: 'right' });
     }
 
     doc.y = bannerY + 45;
@@ -508,10 +520,13 @@ function drawSoilDiagnosticHeader(doc: PDFKit.PDFDocument, report: ReportListRow
     doc.moveDown(1.5);
 
     // Overall Health Score Bar
-    const score = data.overallHealthScore || 50;
+    const score = data.overallHealthScore;
     let scoreColor = '#1b5e20'; // Green
     let scoreBg = '#e8f5e9';
-    if (score < 50) {
+    if (score === null || score === undefined) {
+        scoreColor = '#616161';
+        scoreBg = '#f5f5f5';
+    } else if (score < 50) {
         scoreColor = '#b71c1c'; // Red
         scoreBg = '#ffebee';
     } else if (score < 80) {
@@ -525,12 +540,12 @@ function drawSoilDiagnosticHeader(doc: PDFKit.PDFDocument, report: ReportListRow
     doc.fillColor(scoreColor)
        .fontSize(11)
        .font('Helvetica-Bold')
-       .text(`SOIL DIAGNOSTIC QUALITY RATING:  ${score} / 100`, 70, bannerY);
+       .text(`SOIL DIAGNOSTIC QUALITY RATING:  ${score === null || score === undefined ? 'UNAVAILABLE' : `${score} / 100`}`, 70, bannerY);
 
     if (data.confidence) {
         doc.font('Helvetica')
            .fontSize(9)
-           .text(`Confidence Score: ${data.confidence}%`, doc.page.width - 200, bannerY, { align: 'right' });
+           .text(`Confidence Score: ${(data.confidence * 100).toFixed(1)}%`, doc.page.width - 200, bannerY, { align: 'right' });
     }
 
     doc.y = bannerY + 45;

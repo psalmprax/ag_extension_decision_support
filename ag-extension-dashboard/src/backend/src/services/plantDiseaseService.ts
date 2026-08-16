@@ -2,9 +2,24 @@
 import { logger } from '@/utils/logger';
 import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
 
+export type DiagnosticEvidenceStatus = 'verified_source' | 'no_verified_source';
+export type DiagnosticReviewStatus = 'ready' | 'needs_expert_review';
+
+export interface DiagnosticProvenance {
+  evidenceStatus: DiagnosticEvidenceStatus;
+  source: string;
+  sourceUrl: string | null;
+  sourceTimestamp: string | null;
+  provider: string | null;
+  model: string | null;
+  generatedAt: string;
+}
+
 export interface DiseaseDiagnosis {
   disease: string;
   confidence: number;
+  reviewStatus: DiagnosticReviewStatus;
+  provenance: DiagnosticProvenance;
   severity: 'mild' | 'moderate' | 'severe';
   description: string;
   symptoms: string[];
@@ -14,27 +29,59 @@ export interface DiseaseDiagnosis {
 }
 
 export interface PlantImageAnalysis {
-  overallHealth: 'healthy' | 'stressed' | 'diseased';
+  overallHealth: 'healthy' | 'stressed' | 'diseased' | 'unknown';
   diseases: DiseaseDiagnosis[];
   nutrientDeficiencies: string[];
   recommendations: string[];
   confidence: number;
+  reviewStatus: DiagnosticReviewStatus;
+  provenance: DiagnosticProvenance;
 }
 
 export interface SoilAnalysisResult {
-  overallHealthScore: number;
+  overallHealthScore: number | null;
   texture: string;
   estimatedMoisture: string;
   drainageClass: string;
   colorDiscoloration: string;
   npkDeficiencies: {
-    nitrogen: 'low' | 'optimal' | 'high';
-    phosphorus: 'low' | 'optimal' | 'high';
-    potassium: 'low' | 'optimal' | 'high';
+    nitrogen: 'low' | 'optimal' | 'high' | 'unknown';
+    phosphorus: 'low' | 'optimal' | 'high' | 'unknown';
+    potassium: 'low' | 'optimal' | 'high' | 'unknown';
   };
   recommendations: string[];
   cropSuitability: string[];
   confidence: number;
+  reviewStatus: DiagnosticReviewStatus;
+  provenance: DiagnosticProvenance;
+}
+
+const DIAGNOSTIC_REVIEW_THRESHOLD = 0.75;
+
+function normalizeConfidence(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  const normalized = value > 1 ? value / 100 : value;
+  return Math.max(0, Math.min(1, normalized));
+}
+
+function getReviewStatus(confidence: number): DiagnosticReviewStatus {
+  return normalizeConfidence(confidence) >= DIAGNOSTIC_REVIEW_THRESHOLD ? 'ready' : 'needs_expert_review';
+}
+
+function createProvenance(
+  source: string,
+  generatedAt: string,
+  options: Partial<Pick<DiagnosticProvenance, 'evidenceStatus' | 'sourceUrl' | 'sourceTimestamp' | 'provider' | 'model'>> = {}
+): DiagnosticProvenance {
+  return {
+    evidenceStatus: options.evidenceStatus ?? 'no_verified_source',
+    source,
+    sourceUrl: options.sourceUrl ?? null,
+    sourceTimestamp: options.sourceTimestamp ?? null,
+    provider: options.provider ?? null,
+    model: options.model ?? null,
+    generatedAt,
+  };
 }
 
 class PlantDiseaseService {
@@ -116,16 +163,24 @@ Provide a diagnostic analysis in JSON format. The JSON MUST strictly match the f
 IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do not write any conversational text.`;
 
       const result = await provider.analyzeImage(base64Image, prompt);
+      const generatedAt = new Date().toISOString();
+      const provenance = createProvenance('AI vision analysis; no verified agronomic source attached', generatedAt, {
+        provider: provider.provider,
+        model: result.model,
+      });
       const parsed = this.parseJSONResponse<PlantImageAnalysis>(result.analysis);
 
       if (parsed) {
-        return parsed;
+        return this.normalizeImageAnalysis(parsed, provenance);
       }
 
-      return this.generateFallbackAnalysis('Failed to parse LLM vision analysis');
+      return this.generateFallbackAnalysis('Failed to parse LLM vision analysis', provenance);
     } catch (error) {
       logger.error('Plant disease analysis failed:', error);
-      return this.generateFallbackAnalysis(error instanceof Error ? error.message : 'Unknown error');
+      return this.generateFallbackAnalysis(
+        error instanceof Error ? error.message : 'Unknown error',
+        createProvenance('AI vision analysis unavailable; no verified source', new Date().toISOString())
+      );
     }
   }
 
@@ -162,17 +217,70 @@ Provide a detailed soil analysis in JSON format. The JSON MUST strictly match th
 IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do not write any conversational text.`;
 
       const result = await provider.analyzeImage(base64Image, prompt);
+      const generatedAt = new Date().toISOString();
+      const provenance = createProvenance('AI soil image analysis; no verified laboratory source attached', generatedAt, {
+        provider: provider.provider,
+        model: result.model,
+      });
       const parsed = this.parseJSONResponse<SoilAnalysisResult>(result.analysis);
 
       if (parsed) {
-        return parsed;
+        return this.normalizeSoilAnalysis(parsed, provenance);
       }
 
-      return this.generateFallbackSoilAnalysis('Failed to parse LLM soil analysis');
+      return this.generateFallbackSoilAnalysis('Failed to parse LLM soil analysis', provenance);
     } catch (error) {
       logger.error('Soil analysis failed:', error);
-      return this.generateFallbackSoilAnalysis(error instanceof Error ? error.message : 'Unknown error');
+      return this.generateFallbackSoilAnalysis(
+        error instanceof Error ? error.message : 'Unknown error',
+        createProvenance('AI soil image analysis unavailable; no verified source', new Date().toISOString())
+      );
     }
+  }
+
+  private normalizeImageAnalysis(
+    analysis: PlantImageAnalysis,
+    provenance: DiagnosticProvenance
+  ): PlantImageAnalysis {
+    const confidence = normalizeConfidence(analysis.confidence);
+    const reviewStatus = getReviewStatus(confidence);
+    return {
+      ...analysis,
+      confidence,
+      reviewStatus,
+      provenance,
+      diseases: (analysis.diseases ?? []).map(disease => {
+        const diseaseConfidence = normalizeConfidence(disease.confidence);
+        return {
+          ...disease,
+          confidence: diseaseConfidence,
+          reviewStatus: getReviewStatus(diseaseConfidence),
+          provenance,
+        };
+      }),
+    };
+  }
+
+  private normalizeSoilAnalysis(
+    analysis: SoilAnalysisResult,
+    provenance: DiagnosticProvenance
+  ): SoilAnalysisResult {
+    const confidence = normalizeConfidence(analysis.confidence);
+    return {
+      ...analysis,
+      overallHealthScore:
+        typeof analysis.overallHealthScore === 'number'
+          ? Math.max(0, Math.min(100, analysis.overallHealthScore))
+          : null,
+      confidence,
+      reviewStatus: getReviewStatus(confidence),
+      provenance,
+      npkDeficiencies: {
+        nitrogen: analysis.npkDeficiencies?.nitrogen ?? 'unknown',
+        phosphorus: analysis.npkDeficiencies?.phosphorus ?? 'unknown',
+        potassium: analysis.npkDeficiencies?.potassium ?? 'unknown',
+      },
+    };
   }
 
   private parseJSONResponse<T>(content: string): T | null {
@@ -192,25 +300,29 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
     }
   }
 
-  private generateFallbackSoilAnalysis(error: string): SoilAnalysisResult {
+  private generateFallbackSoilAnalysis(
+    error: string,
+    provenance: DiagnosticProvenance
+  ): SoilAnalysisResult {
     return {
-      overallHealthScore: 50,
-      texture: 'Loamy Soil (Estimated)',
-      estimatedMoisture: 'Moderate (Estimated)',
-      drainageClass: 'Well-drained (Estimated)',
-      colorDiscoloration: `Analyzed with note: ${error}`,
+      overallHealthScore: null,
+      texture: 'Unavailable',
+      estimatedMoisture: 'Unavailable',
+      drainageClass: 'Unavailable',
+      colorDiscoloration: `Analysis unavailable: ${error}`,
       npkDeficiencies: {
-        nitrogen: 'optimal',
-        phosphorus: 'optimal',
-        potassium: 'optimal',
+        nitrogen: 'unknown',
+        phosphorus: 'unknown',
+        potassium: 'unknown',
       },
       recommendations: [
-        'Ensure the image clearly shows the soil sample with good lighting',
-        'Avoid extreme camera flash, glare, or heavy shadows',
-        'Consider getting a physical laboratory NPK test for 100% accurate results',
+        'Upload a clearer soil image with even lighting',
+        'Use a physical laboratory NPK test for verified soil measurements',
       ],
-      cropSuitability: ['Maize', 'Beans', 'Potatoes'],
-      confidence: 30,
+      cropSuitability: [],
+      confidence: 0,
+      reviewStatus: 'needs_expert_review',
+      provenance,
     };
   }
 
@@ -295,9 +407,17 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
           return symptomTokens.some(tok => queryTokens.includes(tok));
         });
 
+        const confidence = normalizeConfidence(similarity);
+        const provenance = createProvenance(
+          'Internal Plant Disease Knowledge Base',
+          new Date().toISOString(),
+          { evidenceStatus: 'verified_source', model: 'tfidf-symptom-matcher' }
+        );
         diagnoses.push({
           disease: diseaseId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-          confidence: Math.round(similarity * 100),
+          confidence,
+          reviewStatus: getReviewStatus(confidence),
+          provenance,
           severity: similarity > 0.7 ? 'severe' : similarity > 0.4 ? 'moderate' : 'mild',
           description: diseaseInfo.description,
           symptoms: matchedSymptoms.length > 0 ? matchedSymptoms : [diseaseInfo.symptoms[0]],
@@ -321,18 +441,25 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
     );
   }
 
-  private generateFallbackAnalysis(_error: string): PlantImageAnalysis {
+  private generateFallbackAnalysis(
+    error: string,
+    provenance: DiagnosticProvenance
+  ): PlantImageAnalysis {
     return {
-      overallHealth: 'stressed',
+      overallHealth: 'unknown',
       diseases: [],
       nutrientDeficiencies: [],
       recommendations: [
-        'For accurate disease diagnosis, please provide clear photos of affected plant parts',
-        'Include both the top and underside of leaves if possible',
-        'Note any visible symptoms: spots, wilting, discoloration, or growth abnormalities',
-        'Consider using the symptom-based diagnosis tool as an alternative',
+        'Analysis was unavailable; do not treat this as a diagnosis',
+        'Provide clear photos of affected plant parts for another attempt',
+        'Consider an in-person agronomist or laboratory assessment',
       ],
       confidence: 0,
+      reviewStatus: 'needs_expert_review',
+      provenance: {
+        ...provenance,
+        source: `${provenance.source} (${error})`,
+      },
     };
   }
 }

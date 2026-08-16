@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { searchKnowledge, KnowledgeArticle } from '@/api/knowledgeService';
 import { Farmer, Visit, Report } from '../types/dashboard';
 import { useAppStore } from '@/store/useAppStore';
+import { DEMO_FARMERS } from '@/data/demoFarmers';
 
 interface SearchResult {
   type: string;
@@ -39,24 +40,6 @@ export const useAppSearch = (
 
   // Demo fallback data so search returns useful results without live API.
   // Note: types/dashboard uses snake_case (farmer_name, scheduled_at, visit_type).
-  const DEMO_FARMERS: Farmer[] = [
-    {
-      id: 'demo-1',
-      firstName: 'Demo',
-      lastName: 'Farmer',
-      phone: '+0000000001',
-      region: 'Demo Region',
-      village: 'Demo Village',
-    } as unknown as Farmer,
-    {
-      id: 'demo-2',
-      firstName: 'Sample',
-      lastName: 'Grower',
-      phone: '+0000000002',
-      region: 'Demo Region',
-      village: 'Demo Village',
-    } as unknown as Farmer,
-  ];
   const DEMO_VISITS: Visit[] = [
     {
       id: 'demo-v1',

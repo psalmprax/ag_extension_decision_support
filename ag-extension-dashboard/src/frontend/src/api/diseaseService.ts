@@ -1,8 +1,22 @@
 import apiClient from './client';
 
+export interface DiagnosticProvenance {
+  evidenceStatus: 'verified_source' | 'no_verified_source';
+  source: string;
+  sourceUrl: string | null;
+  sourceTimestamp: string | null;
+  provider: string | null;
+  model: string | null;
+  generatedAt: string;
+}
+
+export type DiagnosticReviewStatus = 'ready' | 'needs_expert_review';
+
 export interface DiseaseDiagnosis {
   disease: string;
   confidence: number;
+  reviewStatus: DiagnosticReviewStatus;
+  provenance: DiagnosticProvenance;
   severity: 'mild' | 'moderate' | 'severe';
   description: string;
   symptoms: string[];
@@ -48,6 +62,9 @@ export const analyzePlantImage = async (
     overallHealth: string;
     diseases: DiseaseDiagnosis[];
     recommendations: string[];
+    confidence: number;
+    reviewStatus: DiagnosticReviewStatus;
+    provenance: DiagnosticProvenance;
     reportId?: string;
   };
 }> => {
@@ -56,19 +73,21 @@ export const analyzePlantImage = async (
 };
 
 export interface SoilAnalysisResult {
-  overallHealthScore: number;
+  overallHealthScore: number | null;
   texture: string;
   estimatedMoisture: string;
   drainageClass: string;
   colorDiscoloration: string;
   npkDeficiencies: {
-    nitrogen: 'low' | 'optimal' | 'high';
-    phosphorus: 'low' | 'optimal' | 'high';
-    potassium: 'low' | 'optimal' | 'high';
+    nitrogen: 'low' | 'optimal' | 'high' | 'unknown';
+    phosphorus: 'low' | 'optimal' | 'high' | 'unknown';
+    potassium: 'low' | 'optimal' | 'high' | 'unknown';
   };
   recommendations: string[];
   cropSuitability: string[];
   confidence: number;
+  reviewStatus: DiagnosticReviewStatus;
+  provenance: DiagnosticProvenance;
   reportId?: string;
 }
 

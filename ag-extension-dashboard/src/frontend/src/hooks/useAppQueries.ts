@@ -1,15 +1,50 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchDashboardData } from '@/api/dashboardService';
-import { fetchFarmers } from '@/api/farmerService';
+import { fetchFarmers, type Farmer as ApiFarmer } from '@/api/farmerService';
 import { fetchVisits } from '@/api/visitService';
 import { fetchReports } from '@/api/reportService';
 import { fetchPerformanceData } from '@/api/analyticsService';
 import { getMyTransactions } from '@/api/billingService';
-import { useAppStore } from '@/store/useAppStore';
+import { useAppStore, type Farmer } from '@/store/useAppStore';
+import { DEMO_FARMERS } from '@/data/demoFarmers';
+
+function mapApiFarmerToStoreFarmer(farmer: ApiFarmer): Farmer {
+  return {
+    id: farmer.id,
+    firstName: farmer.firstName,
+    lastName: farmer.lastName,
+    location: farmer.village || farmer.region,
+    village: farmer.village,
+    phone: farmer.phone,
+    languagePreference: farmer.languagePreference,
+    crops: farmer.crops,
+    farmSize: farmer.farmSize,
+    latitude: farmer.locationLat,
+    longitude: farmer.locationLng,
+    region: farmer.region,
+  };
+}
+
+function resolveEffectiveFarmers(
+  queryFarmers: ApiFarmer[],
+  storeFarmers: Farmer[],
+  isDemo: boolean
+): Farmer[] {
+  if (queryFarmers.length > 0) return queryFarmers.map(mapApiFarmerToStoreFarmer);
+  if (storeFarmers.length > 0) return storeFarmers;
+  return isDemo ? DEMO_FARMERS : [];
+}
 
 export function useAppQueries(activeTab: string, searchQuery: string) {
   const user = useAppStore(s => s.user);
   const storeFarmers = useAppStore(s => s.farmers);
+  const isDemo = useAppStore(s => s.isDemo);
+  const hasUser = Boolean(user);
+
+  const isDashboard = activeTab === 'dashboard';
+  const isPortfolioOrDash = isDashboard || activeTab === 'portfolio';
+  const isAnalyticsOrDash = isDashboard || activeTab === 'analytics';
+  const isBillingOrSearch = activeTab === 'billing' || searchQuery.trim().length > 0;
 
   const {
     data: dashboardResponse,
@@ -18,56 +53,55 @@ export function useAppQueries(activeTab: string, searchQuery: string) {
   } = useQuery({
     queryKey: ['dashboard'],
     queryFn: fetchDashboardData,
-    enabled: activeTab === 'dashboard' && !!user,
+    enabled: isDashboard && hasUser,
   });
-  const dashboardData = dashboardResponse?.data;
 
   const { data: farmersResponse } = useQuery({
     queryKey: ['farmers'],
     queryFn: fetchFarmers,
-    enabled: (activeTab === 'portfolio' || activeTab === 'dashboard') && !!user,
+    enabled: isPortfolioOrDash && hasUser,
   });
-  const queryFarmers = farmersResponse?.data?.farmers || [];
-  const effectiveFarmers = queryFarmers.length > 0 ? queryFarmers : storeFarmers;
+
+  const effectiveFarmers = resolveEffectiveFarmers(
+    farmersResponse?.data?.farmers || [],
+    storeFarmers,
+    isDemo
+  );
 
   const { data: visitsResponse, refetch: refetchVisits } = useQuery({
     queryKey: ['visits'],
     queryFn: fetchVisits,
-    enabled: activeTab === 'visits' && !!user,
+    enabled: activeTab === 'visits' && hasUser,
   });
-  const visits = visitsResponse?.data?.visits || [];
 
   const { data: reportsResponse, refetch: refetchReports } = useQuery({
     queryKey: ['reports'],
     queryFn: fetchReports,
-    enabled: activeTab === 'reports' && !!user,
+    enabled: activeTab === 'reports' && hasUser,
   });
-  const reports = reportsResponse?.data?.reports || [];
 
   const { data: performanceResponse } = useQuery({
     queryKey: ['performance'],
     queryFn: fetchPerformanceData,
-    enabled: (activeTab === 'analytics' || activeTab === 'dashboard') && !!user,
+    enabled: isAnalyticsOrDash && hasUser,
   });
-  const performanceData = performanceResponse?.data;
 
   const { data: transactionsResponse } = useQuery({
     queryKey: ['transactions'],
     queryFn: getMyTransactions,
-    enabled: (activeTab === 'billing' || searchQuery.trim().length > 0) && !!user,
+    enabled: isBillingOrSearch && hasUser,
   });
-  const transactions = transactionsResponse?.data || [];
 
   return {
-    dashboardData,
+    dashboardData: dashboardResponse?.data,
     isLoading,
     isError,
     effectiveFarmers,
-    visits,
+    visits: visitsResponse?.data?.visits || [],
     refetchVisits,
-    reports,
+    reports: reportsResponse?.data?.reports || [],
     refetchReports,
-    performanceData,
-    transactions,
+    performanceData: performanceResponse?.data,
+    transactions: transactionsResponse?.data || [],
   };
 }

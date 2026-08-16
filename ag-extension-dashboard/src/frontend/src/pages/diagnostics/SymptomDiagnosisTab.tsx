@@ -172,8 +172,19 @@ export function SymptomDiagnosisTab({
                   </div>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                  Confidence: {(result.confidence * 100).toFixed(1)}%
+                  {t('disease_diagnosis_confidence')}: {(result.confidence * 100).toFixed(1)}%
                 </p>
+                <div className="mb-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 p-3 text-xs">
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-gray-600 dark:text-gray-300">
+                    <span>{result.reviewStatus === 'needs_expert_review' ? 'Needs expert review' : 'Evidence-backed match'}</span>
+                    <span>Source: {result.provenance.source}</span>
+                  </div>
+                  {result.provenance.sourceTimestamp && (
+                    <div className="mt-1 text-gray-500 dark:text-gray-400">
+                      Source date: {new Date(result.provenance.sourceTimestamp).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
                 <p className="text-sm text-gray-900 dark:text-white mb-3">{result.description}</p>
                 <button
                   onClick={() => onViewDiseaseInfo(result.disease)}

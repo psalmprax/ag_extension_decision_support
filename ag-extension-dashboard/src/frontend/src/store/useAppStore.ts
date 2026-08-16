@@ -21,9 +21,9 @@ export interface Farmer {
   id: string;
   firstName: string;
   lastName: string;
-  location: string;
+  location?: string;
   village?: string;
-  phone: string;
+  phone?: string;
   languagePreference?: string;
   crops?: string[];
   farmSize?: number;

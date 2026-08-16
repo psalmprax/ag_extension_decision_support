@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import { Camera, FileImage, Loader2, CheckCircle } from 'lucide-react';
-import { analyzePlantImage, type DiseaseDiagnosis } from '../../api/diseaseService';
+import {
+  analyzePlantImage,
+  type DiagnosticProvenance,
+  type DiseaseDiagnosis,
+  type DiagnosticReviewStatus,
+} from '../../api/diseaseService';
 import toast from 'react-hot-toast';
 
 interface Props {
@@ -29,6 +34,9 @@ export function ImageAnalysisTab({
     overallHealth: string;
     diseases: DiseaseDiagnosis[];
     recommendations: string[];
+    confidence: number;
+    reviewStatus: DiagnosticReviewStatus;
+    provenance: DiagnosticProvenance;
   } | null>(null);
 
   const handleImageSelect = (file: File) => {
@@ -183,6 +191,20 @@ export function ImageAnalysisTab({
                 </h4>
               </div>
               <p className="text-green-700 dark:text-green-300">{imageAnalysis.overallHealth}</p>
+              <div className="mt-2 text-xs text-gray-600 dark:text-gray-300">
+                <div>
+                  {t('disease_diagnosis_confidence')}: {(imageAnalysis.confidence * 100).toFixed(1)}%
+                </div>
+                <div>
+                  {imageAnalysis.reviewStatus === 'needs_expert_review'
+                    ? 'Needs expert review'
+                    : 'Evidence review available'}
+                </div>
+                <div>Source: {imageAnalysis.provenance.source}</div>
+                {imageAnalysis.provenance.provider && (
+                  <div>Provider: {imageAnalysis.provenance.provider}</div>
+                )}
+              </div>
             </div>
 
             {imageAnalysis.diseases.length > 0 && (
@@ -207,7 +229,7 @@ export function ImageAnalysisTab({
                         </div>
                       </div>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Confidence: {(disease.confidence * 100).toFixed(1)}%
+                        {t('disease_diagnosis_confidence')}: {(disease.confidence * 100).toFixed(1)}%
                       </p>
                     </div>
                   ))}

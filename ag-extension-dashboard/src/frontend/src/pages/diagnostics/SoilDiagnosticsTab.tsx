@@ -215,12 +215,25 @@ export function SoilDiagnosticsTab({
                 <div className="flex-1 h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-red-500 via-yellow-400 to-green-500 transition-all duration-1000"
-                    style={{ width: `${soilAnalysis.overallHealthScore}%` }}
+                    style={{ width: `${soilAnalysis.overallHealthScore ?? 0}%` }}
                   />
                 </div>
                 <span className="text-lg font-bold text-primary-700 dark:text-primary-300">
-                  {soilAnalysis.overallHealthScore}/100
+                  {soilAnalysis.overallHealthScore === null
+                    ? 'Unavailable'
+                    : `${soilAnalysis.overallHealthScore}/100`}
                 </span>
+              </div>
+              <div className="mt-2 text-xs text-gray-600 dark:text-gray-300">
+                <div>
+                  {soilAnalysis.reviewStatus === 'needs_expert_review'
+                    ? 'Needs expert review'
+                    : 'Evidence review available'}
+                </div>
+                <div>Source: {soilAnalysis.provenance.source}</div>
+                {soilAnalysis.provenance.provider && (
+                  <div>Provider: {soilAnalysis.provenance.provider}</div>
+                )}
               </div>
             </div>
 
