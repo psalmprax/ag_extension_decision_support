@@ -13,13 +13,15 @@ import {
   Activity,
   CheckCircle,
   MapPin,
+  Wand2,
 } from 'lucide-react';
+import { CanvasUiLab } from '@/components/canvas-ui/CanvasUiLab';
 
 export function DemoPage({
   initialTab = 'rag',
-}: { initialTab?: 'rag' | 'synthesis' | 'telemetry' } = {}) {
+}: { initialTab?: 'rag' | 'synthesis' | 'telemetry' | 'canvas' } = {}) {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'rag' | 'synthesis' | 'telemetry'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'rag' | 'synthesis' | 'telemetry' | 'canvas'>(initialTab);
 
   // RAG states
   const [isTyping, setIsTyping] = useState(false);
@@ -153,7 +155,7 @@ export function DemoPage({
         </div>
 
         {/* Tab bar */}
-        <div className="flex gap-2 mb-8 bg-white/5 p-1.5 rounded-xl border border-white/5 max-w-xl mx-auto">
+        <div className="flex gap-2 mb-8 bg-white/5 p-1.5 rounded-xl border border-white/5 max-w-2xl mx-auto">
           {[
             { key: 'rag' as const, icon: Brain, label: 'RAG Assistant', color: 'text-purple-400' },
             {
@@ -167,6 +169,12 @@ export function DemoPage({
               icon: Database,
               label: 'Soil Telemetry',
               color: 'text-cyan-400',
+            },
+            {
+              key: 'canvas' as const,
+              icon: Wand2,
+              label: 'Canvas UI Lab',
+              color: 'text-amber-400',
             },
           ].map(tab => (
             <button
@@ -409,6 +417,9 @@ export function DemoPage({
               </div>
             </div>
           )}
+
+          {/* Canvas UI Effects Lab Tab */}
+          {activeTab === 'canvas' && <CanvasUiLab />}
         </div>
 
         {/* Bottom CTA */}

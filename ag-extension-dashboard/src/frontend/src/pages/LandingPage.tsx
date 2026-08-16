@@ -26,6 +26,7 @@ import {
   Layers,
   Mail,
 } from 'lucide-react';
+import { LiquidCanvas } from '@/components/canvas-ui/LiquidCanvas';
 
 // ─── Animation variants ─────────────────────────────────────────
 const stagger = {
@@ -362,6 +363,7 @@ export function LandingPage() {
             palette override for the orb gradients. Add assets to public/images/farm/ and
             reference as <img src="/images/farm/hero.jpg" alt="..." />. */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <LiquidCanvas opacity={0.45} />
           <div className="mesh-orb-1 absolute top-[-30%] left-[-15%] w-[700px] h-[700px] rounded-full bg-emerald-600/[0.08] blur-[150px]" />
           <div className="mesh-orb-2 absolute bottom-[-25%] right-[-15%] w-[600px] h-[600px] rounded-full bg-amber-500/[0.06] blur-[120px]" />
           <div className="mesh-orb-3 absolute top-[30%] left-[40%] w-[400px] h-[400px] rounded-full bg-emerald-400/[0.04] blur-[100px]" />

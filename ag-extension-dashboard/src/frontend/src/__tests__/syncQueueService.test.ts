@@ -84,4 +84,24 @@ describe('syncQueueService', () => {
     syncQueue.retry(id);
     expect(syncQueue.getQueue()[0].state).toBe('pending');
   });
+
+  it('retries transient failures and marks the mutation failed at the retry limit', async () => {
+    mockRequest.mockRejectedValue(new Error('Network unavailable'));
+    syncQueue.enqueue({
+      action: 'create',
+      entity: 'visit',
+      endpoint: '/visits',
+      method: 'POST',
+      data: { farmer_id: 'farmer-1' },
+    });
+
+    expect((await syncQueue.processQueue()).failed).toBe(0);
+    expect((await syncQueue.processQueue()).failed).toBe(0);
+    expect((await syncQueue.processQueue()).failed).toBe(1);
+
+    const [item] = syncQueue.getQueue();
+    expect(item.state).toBe('failed');
+    expect(item.retryCount).toBe(3);
+    expect(item.lastError).toBe('Network unavailable');
+  });
 });

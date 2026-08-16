@@ -119,66 +119,177 @@ router.get('/:id', async (req: Request, res: Response) => {
     }
 });
 
+interface InsertVisitParams {
+    farmerId: string;
+    officerId?: string;
+    visitType: string;
+    scheduledAt: string;
+    notes?: string;
+    userId?: string;
+}
+
+async function performInsertVisit(
+    params: InsertVisitParams,
+    executor: typeof query | PoolClient
+) {
+    const { farmerId, officerId, visitType, scheduledAt, notes, userId } = params;
+    const values = [farmerId, officerId || userId || 'u1', visitType, scheduledAt, notes];
+    const sql = `INSERT INTO visits (farmer_id, officer_id, visit_type, status, scheduled_at, notes, created_at)
+                 VALUES ($1, $2, $3, 'scheduled', $4, $5, NOW())
+                 RETURNING *`;
+
+    const result = executor === query
+        ? await query<VisitInsertRow>(sql, values)
+        : await (executor as PoolClient).query<VisitInsertRow>(sql, values);
+    const created = result.rows[0];
+    return { success: true, data: created ? mapVisitInsertRow(created) : null };
+}
+
+interface UpdateVisitParams {
+    id: string;
+    status?: string;
+    notes?: string;
+    outcomes?: string;
+    startedAt?: string;
+    completedAt?: string;
+    duration?: number;
+}
+
+async function performUpdateVisit(
+    params: UpdateVisitParams,
+    executor: typeof query | PoolClient
+) {
+    const { id, status, notes, outcomes, startedAt, completedAt, duration } = params;
+    const updates: string[] = [];
+    const sqlParams: unknown[] = [];
+    let paramIndex = 1;
+
+    if (status !== undefined) {
+        updates.push(`status = $${paramIndex++}`);
+        sqlParams.push(status);
+    }
+    if (notes !== undefined) {
+        updates.push(`notes = $${paramIndex++}`);
+        sqlParams.push(notes);
+    }
+    if (outcomes !== undefined) {
+        updates.push(`outcomes = $${paramIndex++}`);
+        sqlParams.push(outcomes);
+    }
+    if (startedAt !== undefined) {
+        updates.push(`started_at = $${paramIndex++}`);
+        sqlParams.push(startedAt);
+    }
+    if (completedAt !== undefined) {
+        updates.push(`completed_at = $${paramIndex++}`);
+        sqlParams.push(completedAt);
+    }
+    if (duration !== undefined) {
+        updates.push(`duration_minutes = $${paramIndex++}`);
+        sqlParams.push(duration);
+    }
+
+    updates.push('updated_at = NOW()');
+    sqlParams.push(id);
+    const sql = `UPDATE visits SET ${updates.join(', ')} WHERE id = $${paramIndex}`;
+
+    if (executor === query) {
+        await query<Record<string, unknown>>(sql, sqlParams);
+    } else {
+        await (executor as PoolClient).query(sql, sqlParams);
+    }
+
+    return {
+        success: true,
+        data: {
+            id,
+            status,
+            notes,
+            outcomes,
+            startedAt,
+            completedAt,
+            duration,
+            updatedAt: new Date().toISOString(),
+        },
+    };
+}
+
+interface MutationExecution {
+    status: number;
+    body: Record<string, unknown>;
+}
+
+function getMutationContext(req: Request): { mutationKey: string; userId: string } | MutationExecution | null {
+    const mutationKey = req.get('Idempotency-Key');
+    if (!mutationKey) return null;
+    if (!req.user?.userId) {
+        return {
+            status: 401,
+            body: { success: false, error: 'Authentication required for idempotent writes' },
+        };
+    }
+    if (mutationKey.length > 128) {
+        return {
+            status: 400,
+            body: { success: false, error: 'Idempotency-Key must be 128 characters or fewer' },
+        };
+    }
+    return { mutationKey, userId: req.user.userId };
+}
+
+async function executeVisitMutation(
+    req: Request,
+    operation: 'create' | 'update',
+    payload: Record<string, unknown>,
+    defaultStatus: number,
+    mutation: (executor: typeof query | PoolClient) => Promise<Record<string, unknown>>
+): Promise<MutationExecution> {
+    const context = getMutationContext(req);
+    if (!context) {
+        return { status: defaultStatus, body: await mutation(query) };
+    }
+    if ('body' in context) return context;
+
+    return executeIdempotentMutation(
+        {
+            userId: context.userId,
+            mutationKey: context.mutationKey,
+            operation,
+            entityType: 'visit',
+            payload,
+        },
+        async client => ({
+            status: defaultStatus,
+            body: await mutation(client),
+        })
+    );
+}
+
 // Create visit
 router.post('/', validate(createVisitSchema), async (req: Request, res: Response) => {
     try {
         const body = req.body as Record<string, unknown>;
-        const farmerId = (body.farmerId ?? body.farmer_id) as string;
-        const officerId = body.officerId as string | undefined;
-        const visitType = (body.visitType ?? body.visit_type ?? body.type ?? 'routine') as string;
-        const scheduledAt = (body.scheduledAt ?? body.scheduled_at) as string;
-        const notes = body.notes as string | undefined;
-        const pool = getPool();
+        const insertParams: InsertVisitParams = {
+            farmerId: (body.farmerId ?? body.farmer_id) as string,
+            officerId: body.officerId as string | undefined,
+            visitType: (body.visitType ?? body.visit_type ?? body.type ?? 'routine') as string,
+            scheduledAt: (body.scheduledAt ?? body.scheduled_at) as string,
+            notes: body.notes as string | undefined,
+            userId: req.user?.userId,
+        };
 
-        if (!pool) {
+        if (!getPool()) {
             return res.status(503).json({ success: false, error: 'Database connection unavailable' });
         }
 
-        const insertVisit = async (executor: typeof query | PoolClient) => {
-            const result = executor === query
-                ? await query<VisitInsertRow>(
-                    `INSERT INTO visits (farmer_id, officer_id, visit_type, status, scheduled_at, notes, created_at)
-                     VALUES ($1, $2, $3, 'scheduled', $4, $5, NOW())
-                     RETURNING *`,
-                    [farmerId, officerId || req.user?.userId || 'u1', visitType, scheduledAt, notes]
-                )
-                : await (executor as PoolClient).query<VisitInsertRow>(
-                    `INSERT INTO visits (farmer_id, officer_id, visit_type, status, scheduled_at, notes, created_at)
-                     VALUES ($1, $2, $3, 'scheduled', $4, $5, NOW())
-                     RETURNING *`,
-                    [farmerId, officerId || req.user?.userId || 'u1', visitType, scheduledAt, notes]
-                );
-            const created = result.rows[0];
-            return { success: true, data: created ? mapVisitInsertRow(created) : null };
-        };
-
-        const mutationKey = req.get('Idempotency-Key');
-        if (mutationKey) {
-            const userId = req.user?.userId;
-            if (!userId) {
-                return res.status(401).json({ success: false, error: 'Authentication required for idempotent writes' });
-            }
-            if (mutationKey.length > 128) {
-                return res.status(400).json({ success: false, error: 'Idempotency-Key must be 128 characters or fewer' });
-            }
-
-            const result = await executeIdempotentMutation(
-                {
-                    userId,
-                    mutationKey,
-                    operation: 'create',
-                    entityType: 'visit',
-                    payload: { farmerId, officerId, visitType, scheduledAt, notes },
-                },
-                async client => ({
-                    status: 201,
-                    body: await insertVisit(client),
-                })
-            );
-            return res.status(result.status).json(result.body);
-        }
-
-        return res.status(201).json(await insertVisit(query));
+        const result = await executeVisitMutation(
+            req,
+            'create',
+            insertParams as unknown as Record<string, unknown>,
+            201,
+            executor => performInsertVisit(insertParams, executor)
+        );
+        return res.status(result.status).json(result.body);
     } catch (error) {
         logger.error('Create visit error:', error);
         safeError(res, 500, 'Failed to create visit');
@@ -190,100 +301,28 @@ router.patch('/:id', validate(updateVisitSchema), async (req: Request, res: Resp
     try {
         const { id } = req.params;
         const body = req.body as Record<string, unknown>;
-        const status = body.status as string | undefined;
-        const notes = body.notes as string | undefined;
-        const outcomes = body.outcomes as string | undefined;
-        const startedAt = body.startedAt as string | undefined;
-        const completedAt = body.completedAt as string | undefined;
-        const duration = body.duration as number | undefined;
-        const pool = getPool();
+        const updateParams: UpdateVisitParams = {
+            id,
+            status: body.status as string | undefined,
+            notes: body.notes as string | undefined,
+            outcomes: body.outcomes as string | undefined,
+            startedAt: body.startedAt as string | undefined,
+            completedAt: body.completedAt as string | undefined,
+            duration: body.duration as number | undefined,
+        };
 
-        if (!pool) {
+        if (!getPool()) {
             return res.status(503).json({ success: false, error: 'Database connection unavailable' });
         }
 
-        const updateVisit = async (executor: typeof query | PoolClient) => {
-            const updates: string[] = [];
-            const params: unknown[] = [];
-            let paramIndex = 1;
-
-            if (status !== undefined) {
-                updates.push('status = $' + paramIndex++);
-                params.push(status);
-            }
-            if (notes !== undefined) {
-                updates.push('notes = $' + paramIndex++);
-                params.push(notes);
-            }
-            if (outcomes !== undefined) {
-                updates.push('outcomes = $' + paramIndex++);
-                params.push(outcomes);
-            }
-            if (startedAt !== undefined) {
-                updates.push('started_at = $' + paramIndex++);
-                params.push(startedAt);
-            }
-            if (completedAt !== undefined) {
-                updates.push('completed_at = $' + paramIndex++);
-                params.push(completedAt);
-            }
-            if (duration !== undefined) {
-                updates.push('duration_minutes = $' + paramIndex++);
-                params.push(duration);
-            }
-
-            updates.push('updated_at = NOW()');
-            params.push(id);
-            const sql = 'UPDATE visits SET ' + updates.join(', ') + ' WHERE id = $' + paramIndex;
-
-            if (executor === query) {
-                await query<Record<string, unknown>>(sql, params);
-            } else {
-                await (executor as PoolClient).query(sql, params);
-            }
-
-            return {
-                success: true,
-                data: {
-                    id,
-                    status,
-                    notes,
-                    outcomes,
-                    startedAt,
-                    completedAt,
-                    duration,
-                    updatedAt: new Date().toISOString(),
-                },
-            };
-        };
-
-        const mutationKey = req.get('Idempotency-Key');
-        if (mutationKey) {
-            const userId = req.user?.userId;
-            if (!userId) {
-                return res.status(401).json({ success: false, error: 'Authentication required for idempotent writes' });
-            }
-            if (mutationKey.length > 128) {
-                return res.status(400).json({ success: false, error: 'Idempotency-Key must be 128 characters or fewer' });
-            }
-
-            const result = await executeIdempotentMutation(
-                {
-                    userId,
-                    mutationKey,
-                    operation: 'update',
-                    entityType: 'visit',
-                    payload: { id, status, notes, outcomes, startedAt, completedAt, duration },
-                },
-                async client => ({
-                    status: 200,
-                    body: await updateVisit(client),
-                })
-            );
-            return res.status(result.status).json(result.body);
-        }
-
-        return res.json(await updateVisit(query));
+        const result = await executeVisitMutation(
+            req,
+            'update',
+            updateParams as unknown as Record<string, unknown>,
+            200,
+            executor => performUpdateVisit(updateParams, executor)
+        );
+        return res.status(result.status).json(result.body);
     } catch (error) {
         logger.error('Update visit error:', error);
         safeError(res, 500, 'Failed to update visit');
