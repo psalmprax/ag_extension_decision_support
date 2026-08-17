@@ -67,6 +67,8 @@ export interface DashboardData {
     visitsThisMonth: number;
     avgSatisfaction: number;
     avgConversationsPerFarmer: number;
+    totalHectares?: number;
+    avgYield?: number;
   };
   trends: {
     farmersGrowth: number;
@@ -74,4 +76,6 @@ export interface DashboardData {
     visitsGrowth: number;
     satisfactionChange: number;
   };
+  geography?: { region: string; farmers: number }[];
+  crops?: { name: string; count: number }[];
 }

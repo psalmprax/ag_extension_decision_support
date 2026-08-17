@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
+import { DEMO_SEED_FARMERS } from './demoFarmers';
 
 dotenv.config();
 
@@ -21,7 +22,7 @@ async function main() {
       firstName: 'Demo',
       lastName: 'User',
       role: 'extension_officer',
-      region: 'Central',
+      region: 'Kenya',
     },
   });
 
@@ -147,138 +148,165 @@ async function main() {
     });
   }
 
-  // Farmers
-  const farmerCount = await prisma.farmer.count();
-  if (farmerCount === 0) {
-    const farmer1 = await prisma.farmer.create({
-      data: {
-        firstName: 'Jane',
-        lastName: 'Smith',
-        phone: '+254700111222',
-        region: 'Central',
-        village: 'Village A',
-        crops: ['Corn', 'Wheat'],
-        userId: user.id,
-        vitalScore: 82,
-        yieldHistory: [
-          { month: 'Jan', yield: 45 },
-          { month: 'Feb', yield: 52 },
-          { month: 'Mar', yield: 48 },
-          { month: 'Apr', yield: 61 },
-          { month: 'May', yield: 55 },
-          { month: 'Jun', yield: 67 },
-        ]
-      }
+  // Farmers — canonical demo dataset (12 Kenyan farmers matching the frontend
+  // DEMO_FARMERS). Upsert by fixed UUID so this converges regardless of whether
+  // `fix-demo-user.sql` or this Prisma seed ran first. Assigned to the demo
+  // officer so the live /analytics/dashboard aggregation returns the same
+  // counts, regions and crop distribution as the static demo.
+  for (const seed of DEMO_SEED_FARMERS) {
+    await prisma.farmer.upsert({
+      where: { id: seed.id },
+      update: {
+        firstName: seed.firstName,
+        lastName: seed.lastName,
+        phone: seed.phone,
+        location: seed.location,
+        village: seed.village,
+        district: seed.district,
+        region: seed.region,
+        country: seed.country,
+        farmSizeHectares: seed.farmSizeHectares,
+        crops: seed.crops,
+        vitalScore: seed.vitalScore,
+        soilMoisture: seed.soilMoisture,
+        temperature: seed.temperature,
+        phLevel: seed.phLevel,
+        aiConfidence: seed.aiConfidence,
+        yieldHistory: seed.yieldHistory,
+        locationLat: seed.locationLat,
+        locationLng: seed.locationLng,
+        languagePreference: seed.languagePreference,
+        assignedOfficerId: user.id,
+        isActive: true,
+      },
+      create: {
+        id: seed.id,
+        firstName: seed.firstName,
+        lastName: seed.lastName,
+        phone: seed.phone,
+        location: seed.location,
+        village: seed.village,
+        district: seed.district,
+        region: seed.region,
+        country: seed.country,
+        farmSizeHectares: seed.farmSizeHectares,
+        crops: seed.crops,
+        vitalScore: seed.vitalScore,
+        soilMoisture: seed.soilMoisture,
+        temperature: seed.temperature,
+        phLevel: seed.phLevel,
+        aiConfidence: seed.aiConfidence,
+        yieldHistory: seed.yieldHistory,
+        locationLat: seed.locationLat,
+        locationLng: seed.locationLng,
+        languagePreference: seed.languagePreference,
+        assignedOfficerId: user.id,
+        isActive: true,
+      },
     });
+  }
 
-    const farmer2 = await prisma.farmer.create({
-      data: {
-        firstName: 'Peter',
-        lastName: 'Kamau',
-        phone: '+254700222333',
-        region: 'Central',
-        village: 'Village B',
-        crops: ['Coffee', 'Tea'],
-        userId: user.id,
-        vitalScore: 65,
-        yieldHistory: [
-          { month: 'Jan', yield: 38 },
-          { month: 'Feb', yield: 42 },
-          { month: 'Mar', yield: 40 },
-          { month: 'Apr', yield: 45 },
-          { month: 'May', yield: 48 },
-          { month: 'Jun', yield: 50 },
-        ]
-      }
-    });
+  const farmer1 = DEMO_SEED_FARMERS[0];
+  const farmer2 = DEMO_SEED_FARMERS[1];
 
-    // Fields
+  // Fields (only when empty)
+  const fieldCount = await prisma.field.count();
+  if (fieldCount === 0) {
     const field1 = await prisma.field.create({
-        data: {
-            farmerId: farmer1.id,
-            name: 'North Plot',
-            areaHectares: 2.5,
-            soilType: 'Loam',
-            soilPh: 6.5
-        }
+      data: {
+        farmerId: farmer1.id,
+        name: 'North Plot',
+        areaHectares: 2.5,
+        soilType: 'Loam',
+        soilPh: 6.5
+      }
     });
 
     const field2 = await prisma.field.create({
-        data: {
-            farmerId: farmer2.id,
-            name: 'Valley Farm',
-            areaHectares: 1.8,
-            soilType: 'Clay',
-            soilPh: 5.8
-        }
+      data: {
+        farmerId: farmer2.id,
+        name: 'Valley Farm',
+        areaHectares: 1.8,
+        soilType: 'Clay',
+        soilPh: 5.8
+      }
     });
 
     // Crop Cycles
     await prisma.cropCycle.create({
-        data: {
-            fieldId: field1.id,
-            cropName: 'Corn',
-            status: 'growing',
-            plantingDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-        }
+      data: {
+        fieldId: field1.id,
+        cropName: 'Maize',
+        status: 'growing',
+        plantingDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+      }
     });
 
     await prisma.cropCycle.create({
-        data: {
-            fieldId: field2.id,
-            cropName: 'Coffee',
-            status: 'harvested',
-            plantingDate: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000),
-            actualHarvestDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-            yieldKg: 1500
-        }
+      data: {
+        fieldId: field2.id,
+        cropName: 'Coffee',
+        status: 'harvested',
+        plantingDate: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000),
+        actualHarvestDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+        yieldKg: 1500
+      }
     });
+  }
 
-    // Visits
+  // Visits (only when empty)
+  const visitCount = await prisma.visit.count();
+  if (visitCount === 0) {
     await prisma.visit.create({
-        data: {
-            officerId: user.id,
-            farmerId: farmer1.id,
-            visitType: 'routine',
-            status: 'completed',
-            scheduledAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-            completedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-            notes: 'Crop looking healthy, advised on fertilizer.'
-        }
+      data: {
+        officerId: user.id,
+        farmerId: farmer1.id,
+        visitType: 'routine',
+        status: 'completed',
+        scheduledAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+        completedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+        notes: 'Crop looking healthy, advised on fertilizer.'
+      }
     });
 
     await prisma.visit.create({
-        data: {
-            officerId: user.id,
-            farmerId: farmer2.id,
-            visitType: 'emergency',
-            status: 'scheduled',
-            scheduledAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-            notes: 'Check for leaf rust.'
-        }
+      data: {
+        officerId: user.id,
+        farmerId: farmer2.id,
+        visitType: 'emergency',
+        status: 'scheduled',
+        scheduledAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+        notes: 'Check for leaf rust.'
+      }
     });
+  }
 
-    // Alerts
+  // Alerts (only when empty)
+  const alertCount = await prisma.alert.count();
+  if (alertCount === 0) {
     await prisma.alert.create({
-        data: {
-            type: 'weather',
-            severity: 'high',
-            title: 'Heavy Rainfall Warning',
-            description: 'Expected heavy rainfall in the Central region over the next 48 hours.',
-            location: 'Central',
-            affectedFarmers: [farmer1.id, farmer2.id]
-        }
+      data: {
+        type: 'weather',
+        severity: 'high',
+        title: 'Heavy Rainfall Warning',
+        description: 'Expected heavy rainfall in the Central region over the next 48 hours.',
+        location: 'Kenya',
+        affectedFarmers: [farmer1.id, farmer2.id]
+      }
     });
+  }
 
-    // Reports
+  // Reports (only when empty)
+  const reportCount = await prisma.report.count();
+  if (reportCount === 0) {
     await prisma.report.create({
-        data: {
-            type: 'monthly_summary',
-            title: 'Monthly Extension Report - June',
-            content: { summary: 'Completed 15 visits, identified 2 outbreaks.' },
-            generatedBy: user.id,
-            status: 'published'
-        }
+      data: {
+        type: 'monthly_summary',
+        title: 'Monthly Extension Report - June',
+        content: { summary: 'Completed 15 visits, identified 2 outbreaks.' },
+        generatedBy: user.id,
+        status: 'published'
+      }
     });
   }
 

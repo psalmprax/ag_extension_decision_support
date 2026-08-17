@@ -25,6 +25,7 @@ import {
 } from '../api/memoryService';
 import { MetricCard } from '@/components/MetricCard';
 import { LoadingHeaderSkeleton } from '@/components/ui/LoadingHeaderSkeleton';
+import { RagKnowledgeGraphCanvas } from '@/components/canvas-ui/RagKnowledgeGraphCanvas';
 
 export function Memory() {
   const { t } = useLanguage();
@@ -233,6 +234,39 @@ export function Memory() {
           value={memories.length > 0 ? Math.max(...memories.map(m => m.accessCount)) : 0}
           icon={Clock}
           color="orange"
+        />
+      </div>
+
+      {/* Interactive Neural RAG Knowledge Graph Constellation */}
+      <div className="card p-6">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <Brain className="w-5 h-5 text-purple-500" />
+              <span>Neural Knowledge Graph & Vector Constellation</span>
+            </h3>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+              Interactive 2D physics-modeled memory topology showing FAO technical guidelines, soil indices, atmospheric forecasts, and farmer records.
+            </p>
+          </div>
+          <span className="px-2.5 py-1 rounded-full text-xxs font-mono uppercase bg-purple-500/10 text-purple-500 border border-purple-500/20">
+            Real-Time Impulse Graph
+          </span>
+        </div>
+        <RagKnowledgeGraphCanvas
+          customNodes={
+            memories.length > 0
+              ? memories.slice(0, 10).map((m, idx) => ({
+                  id: `mem-${m.id || idx}`,
+                  label: m.key,
+                  category: (m.category === 'fao' || m.category === 'soil' || m.category === 'nasa' || m.category === 'farmer' || m.category === 'rule'
+                    ? m.category
+                    : 'rule') as 'fao' | 'soil' | 'nasa' | 'farmer' | 'rule',
+                  snippet: typeof m.value === 'string' ? m.value : JSON.stringify(m.value),
+                  score: m.importance || 0.85,
+                }))
+              : undefined
+          }
         />
       </div>
 

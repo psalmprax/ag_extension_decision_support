@@ -276,7 +276,7 @@ router.post('/demo', async (req: Request, res: Response) => {
                 INSERT INTO users (email, password_hash, first_name, last_name, role, region, phone, created_at)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
                 RETURNING id, email, first_name, last_name, role, region, phone
-            `, [email, passwordHash, 'Demo', 'User', 'extension_officer', 'Lilongwe', '+265880000000']);
+            `, [email, passwordHash, 'Demo', 'User', 'extension_officer', 'Kenya', '+254700000000']);
             
             user = insertResult.rows[0];
         }

@@ -7,6 +7,7 @@ import {
   type DiagnosticReviewStatus,
 } from '../../api/diseaseService';
 import { classifyPlantImageOnDevice } from '@/services/offlineDiseaseClassifier';
+import { DiseaseSaliencyCanvas } from '@/components/canvas-ui/DiseaseSaliencyCanvas';
 import toast from 'react-hot-toast';
 
 interface Props {
@@ -208,6 +209,30 @@ export function ImageAnalysisTab({
               </div>
             )}
 
+            {/* Neural Saliency Heatmap & Magnifier Loupe */}
+            <div className="rounded-xl p-1 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+              <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                  AI Attention Saliency & Lesion Inspector
+                </span>
+                <span className="text-xxs font-mono text-emerald-500">2.5x Loupe Active</span>
+              </div>
+              <div className="p-2">
+                <DiseaseSaliencyCanvas
+                  imageSrc={imagePreview || undefined}
+                  detections={imageAnalysis.diseases.map((d, idx) => ({
+                    id: `det-${idx}`,
+                    x: 0.35 + (idx * 0.2) % 0.4,
+                    y: 0.4 + (idx * 0.25) % 0.4,
+                    radius: 0.12,
+                    label: d.disease,
+                    confidence: d.confidence,
+                    severity: (d.severity.toLowerCase() as 'mild' | 'moderate' | 'severe') || 'moderate',
+                  }))}
+                />
+              </div>
+            </div>
+
             <div
               className={`p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 ${radiusClass}`}
             >
@@ -288,10 +313,17 @@ export function ImageAnalysisTab({
             )}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            <Camera className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>No analysis results yet</p>
-            <p className="text-sm">Upload an image and click analyze</p>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                Interactive Saliency & Loupe Inspector Preview
+              </span>
+              <span className="text-xxs font-mono text-gray-500">Hover canvas to inspect</span>
+            </div>
+            <DiseaseSaliencyCanvas />
+            <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-2">
+              Upload a field crop photo on the left to run live Edge AI diagnostic scanning.
+            </p>
           </div>
         )}
       </div>

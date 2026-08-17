@@ -8,14 +8,22 @@ import {
   Sliders,
   ShieldCheck,
   Cpu,
+  Droplets,
+  Eye,
+  Network,
 } from 'lucide-react';
 import { LiquidCanvas } from './LiquidCanvas';
 import { RefractiveGlassCard } from './RefractiveGlassCard';
 import { TelemetryRadarCanvas } from './TelemetryRadarCanvas';
 import { LuminousForceField } from './LuminousForceField';
+import { SoilNutrientHeatmapCanvas } from './SoilNutrientHeatmapCanvas';
+import { DiseaseSaliencyCanvas } from './DiseaseSaliencyCanvas';
+import { RagKnowledgeGraphCanvas } from './RagKnowledgeGraphCanvas';
 
 export const CanvasUiLab: React.FC = () => {
-  const [selectedEffect, setSelectedEffect] = useState<'liquid' | 'glass' | 'radar' | 'forcefield'>('liquid');
+  const [selectedEffect, setSelectedEffect] = useState<
+    'liquid' | 'glass' | 'radar' | 'forcefield' | 'soil_heatmap' | 'disease_saliency' | 'rag_graph'
+  >('liquid');
   const [fluidColor, setFluidColor] = useState('#059669');
   const [tiltIntensity, setTiltIntensity] = useState(20);
 
@@ -29,22 +37,25 @@ export const CanvasUiLab: React.FC = () => {
             Canvas UI & Shader Effects Lab (Test Environment)
           </h3>
           <p className="text-xs text-stone-400 mt-0.5">
-            GPU-accelerated interactive canvas shaders and glassmorphic cards for GPExts.
+            GPU-accelerated interactive canvas shaders, spatial telemetry heatmaps, and neural RAG graphs.
           </p>
         </div>
 
         {/* Effect Selector */}
-        <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-xl border border-white/5">
+        <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-xl border border-white/5 overflow-x-auto max-w-full">
           {[
             { id: 'liquid' as const, label: 'Liquid Fluid', icon: Layers },
-            { id: 'glass' as const, label: 'Refractive Glass', icon: Compass },
+            { id: 'glass' as const, label: '3D Glass', icon: Compass },
             { id: 'radar' as const, label: 'Telemetry Radar', icon: Cpu },
-            { id: 'forcefield' as const, label: 'Force Field Aura', icon: Zap },
+            { id: 'forcefield' as const, label: 'Force Field', icon: Zap },
+            { id: 'soil_heatmap' as const, label: 'Soil Heatmap', icon: Droplets },
+            { id: 'disease_saliency' as const, label: 'Saliency Loupe', icon: Eye },
+            { id: 'rag_graph' as const, label: 'RAG Graph', icon: Network },
           ].map(effect => (
             <button
               key={effect.id}
               onClick={() => setSelectedEffect(effect.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
                 selectedEffect === effect.id
                   ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25'
                   : 'text-stone-400 hover:text-white'
@@ -58,7 +69,7 @@ export const CanvasUiLab: React.FC = () => {
       </div>
 
       {/* Interactive Playground Area */}
-      <div className="relative min-h-[360px] rounded-2xl border border-white/10 bg-black/40 overflow-hidden flex items-center justify-center p-8">
+      <div className="relative min-h-[380px] rounded-2xl border border-white/10 bg-black/40 overflow-hidden flex items-center justify-center p-6">
         {/* Effect 1: Liquid Fluid Shader */}
         {selectedEffect === 'liquid' && (
           <div className="relative w-full h-full min-h-[320px] flex flex-col items-center justify-center text-center">
@@ -176,6 +187,27 @@ export const CanvasUiLab: React.FC = () => {
                 </button>
               </div>
             </LuminousForceField>
+          </div>
+        )}
+
+        {/* Effect 5: Soil Nutrient Heatmap */}
+        {selectedEffect === 'soil_heatmap' && (
+          <div className="w-full max-w-2xl bg-black/50 p-6 rounded-2xl border border-white/10 backdrop-blur-md">
+            <SoilNutrientHeatmapCanvas initialLayer="ph" />
+          </div>
+        )}
+
+        {/* Effect 6: Disease Saliency & Loupe Lens */}
+        {selectedEffect === 'disease_saliency' && (
+          <div className="w-full max-w-2xl bg-black/50 p-6 rounded-2xl border border-white/10 backdrop-blur-md">
+            <DiseaseSaliencyCanvas />
+          </div>
+        )}
+
+        {/* Effect 7: RAG Knowledge Graph */}
+        {selectedEffect === 'rag_graph' && (
+          <div className="w-full max-w-2xl bg-black/50 p-6 rounded-2xl border border-white/10 backdrop-blur-md">
+            <RagKnowledgeGraphCanvas />
           </div>
         )}
       </div>

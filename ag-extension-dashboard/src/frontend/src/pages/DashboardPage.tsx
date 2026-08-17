@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
   AlertCircle,
+  BarChart3,
   Loader2,
   MapPin,
   MessageSquare,
@@ -469,6 +470,77 @@ const MapSkeletonWithRetry: React.FC<{
   </div>
 );
 
+const DistributionPanels: React.FC<{
+  dashboardData?: DashboardData;
+  t: (key: string) => string;
+  cardClass: string;
+}> = ({ dashboardData, t, cardClass }) => {
+  const crops = dashboardData?.crops || [];
+  const regions = dashboardData?.geography || [];
+  const maxCropCount = Math.max(1, ...crops.map(c => c.count));
+  const maxRegionCount = Math.max(1, ...regions.map(r => r.farmers));
+
+  if (crops.length === 0 && regions.length === 0) return null;
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div className={cardClass}>
+        <div className="flex items-center gap-2 mb-6">
+          <BarChart3 className="w-5 h-5 text-emerald-400" />
+          <h3 className="text-lg font-headline font-bold text-gray-900 dark:text-white">
+            {t('viz_crop_planning') || 'Crop Distribution'}
+          </h3>
+        </div>
+        <div className="space-y-4">
+          {crops.map(crop => (
+            <div key={crop.name}>
+              <div className="flex justify-between items-center mb-1.5">
+                <span className="text-xs font-bold text-slate-300">{crop.name}</span>
+                <span className="text-xs font-black text-emerald-400">{crop.count}</span>
+              </div>
+              <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(crop.count / maxCropCount) * 100}%` }}
+                  transition={{ duration: 0.8 }}
+                  className="h-full bg-emerald-500 rounded-full"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className={cardClass}>
+        <div className="flex items-center gap-2 mb-6">
+          <Users className="w-5 h-5 text-cyan-400" />
+          <h3 className="text-lg font-headline font-bold text-gray-900 dark:text-white">
+            {t('stat_regional_distribution') || 'Regional Distribution'}
+          </h3>
+        </div>
+        <div className="space-y-4">
+          {regions.map(region => (
+            <div key={region.region}>
+              <div className="flex justify-between items-center mb-1.5">
+                <span className="text-xs font-bold text-slate-300">{region.region}</span>
+                <span className="text-xs font-black text-cyan-400">{region.farmers}</span>
+              </div>
+              <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(region.farmers / maxRegionCount) * 100}%` }}
+                  transition={{ duration: 0.8 }}
+                  className="h-full bg-cyan-500 rounded-full"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const MapFallbackEmptyState: React.FC<{
   onRetry: () => void;
   t: (key: string) => string;
@@ -549,6 +621,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           <ActivePulseCard cardClass={cardClass} />
         </div>
       </div>
+
+      <DistributionPanels dashboardData={dashboardData} t={t} cardClass={cardClass} />
     </div>
   );
 };

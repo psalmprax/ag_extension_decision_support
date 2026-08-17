@@ -25,7 +25,7 @@ function mapApiFarmerToStoreFarmer(farmer: ApiFarmer): Farmer {
   };
 }
 
-function resolveEffectiveFarmers(
+export function resolveEffectiveFarmers(
   queryFarmers: ApiFarmer[],
   storeFarmers: Farmer[],
   isDemo: boolean
@@ -33,6 +33,95 @@ function resolveEffectiveFarmers(
   if (queryFarmers.length > 0) return queryFarmers.map(mapApiFarmerToStoreFarmer);
   if (storeFarmers.length > 0) return storeFarmers;
   return isDemo ? DEMO_FARMERS : [];
+}
+
+// Demo accounts surface the static DEMO_FARMERS dataset on the map, so the
+// dashboard metrics must be aggregated from the same source to stay coherent
+// with the map instead of falling back to an empty backend aggregation.
+function sumFarmerNumeric(farmers: Farmer[], pick: (f: Farmer) => number): number {
+  return farmers.reduce((sum, f) => sum + (Number(pick(f)) || 0), 0);
+}
+
+function avgFarmerYield(farmers: Farmer[]): number {
+  const total = farmers.length;
+  const totalYield = sumFarmerNumeric(farmers, f => (f as Farmer & { yield?: number }).yield ?? 0);
+  return total > 0 ? totalYield / total : 0;
+}
+
+export function buildCropDistribution(farmers: Farmer[]) {
+  const counts = new Map<string, number>();
+  farmers.forEach(farmer => {
+    (farmer.crops || []).forEach(crop => {
+      counts.set(crop, (counts.get(crop) || 0) + 1);
+    });
+  });
+  return [...counts.entries()]
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+export function buildRegionBreakdown(farmers: Farmer[]) {
+  const counts = new Map<string, number>();
+  farmers.forEach(farmer => {
+    const region = farmer.region || 'Unknown';
+    counts.set(region, (counts.get(region) || 0) + 1);
+  });
+  return [...counts.entries()]
+    .map(([region, count]) => ({ region, farmers: count }))
+    .sort((a, b) => b.farmers - a.farmers);
+}
+
+export function buildDemoDashboardData(farmers: Farmer[]) {
+  const totalFarmers = farmers.length;
+  const totalHectares = sumFarmerNumeric(farmers, f => f.farmSize ?? 0);
+  const avgYield = avgFarmerYield(farmers);
+  const activeConversations = Math.max(1, Math.round(totalFarmers * 0.75));
+  const visitsThisMonth = Math.max(1, Math.round(totalFarmers * 0.6));
+
+  return {
+    overview: {
+      totalFarmers,
+      totalHectares,
+      avgYield: Math.round(avgYield * 10) / 10,
+      activeConversations,
+      visitsThisMonth,
+      avgSatisfaction: 4.6,
+      avgConversationsPerFarmer: Math.round((activeConversations / totalFarmers) * 10) / 10,
+    },
+    trends: {
+      farmersGrowth: 4.2,
+      conversationsGrowth: 6.1,
+      visitsGrowth: 3.4,
+      satisfactionChange: 0.2,
+    },
+    geography: buildRegionBreakdown(farmers),
+    crops: buildCropDistribution(farmers),
+  };
+}
+
+function demoResolutionRate(total: number): number {
+  return total > 0 ? Math.round(((total - 1) / total) * 1000) / 10 : 92;
+}
+
+export function buildDemoPerformanceData(farmers: Farmer[]) {
+  const total = farmers.length;
+  return {
+    metrics: {
+      resolutionRate: demoResolutionRate(total),
+      satisfactionScore: 4.6,
+      avgResponseTime: '2.4m',
+      followUpRate: 68,
+      firstContactResolution: 74,
+    },
+    timeline: farmers.slice(0, 6).map((_f, i) => ({
+      date: `Week ${i + 1}`,
+      farmers: total,
+    })),
+  };
+}
+
+function isDemoQueryEnabled(condition: boolean, hasUser: boolean, isDemo: boolean): boolean {
+  return condition && hasUser && !isDemo;
 }
 
 export function useAppQueries(activeTab: string, searchQuery: string) {
@@ -53,13 +142,13 @@ export function useAppQueries(activeTab: string, searchQuery: string) {
   } = useQuery({
     queryKey: ['dashboard'],
     queryFn: fetchDashboardData,
-    enabled: isDashboard && hasUser,
+    enabled: isDemoQueryEnabled(isDashboard, hasUser, isDemo),
   });
 
   const { data: farmersResponse } = useQuery({
     queryKey: ['farmers'],
     queryFn: fetchFarmers,
-    enabled: isPortfolioOrDash && hasUser,
+    enabled: isDemoQueryEnabled(isPortfolioOrDash, hasUser, isDemo),
   });
 
   const effectiveFarmers = resolveEffectiveFarmers(
@@ -71,26 +160,41 @@ export function useAppQueries(activeTab: string, searchQuery: string) {
   const { data: visitsResponse, refetch: refetchVisits } = useQuery({
     queryKey: ['visits'],
     queryFn: fetchVisits,
-    enabled: activeTab === 'visits' && hasUser,
+    enabled: isDemoQueryEnabled(activeTab === 'visits', hasUser, isDemo),
   });
 
   const { data: reportsResponse, refetch: refetchReports } = useQuery({
     queryKey: ['reports'],
     queryFn: fetchReports,
-    enabled: activeTab === 'reports' && hasUser,
+    enabled: isDemoQueryEnabled(activeTab === 'reports', hasUser, isDemo),
   });
 
   const { data: performanceResponse } = useQuery({
     queryKey: ['performance'],
     queryFn: fetchPerformanceData,
-    enabled: isAnalyticsOrDash && hasUser,
+    enabled: isDemoQueryEnabled(isAnalyticsOrDash, hasUser, isDemo),
   });
 
   const { data: transactionsResponse } = useQuery({
     queryKey: ['transactions'],
     queryFn: getMyTransactions,
-    enabled: isBillingOrSearch && hasUser,
+    enabled: isDemoQueryEnabled(isBillingOrSearch, hasUser, isDemo),
   });
+
+  if (isDemo) {
+    return {
+      dashboardData: buildDemoDashboardData(effectiveFarmers),
+      isLoading: false,
+      isError: false,
+      effectiveFarmers,
+      visits: [],
+      refetchVisits,
+      reports: [],
+      refetchReports,
+      performanceData: buildDemoPerformanceData(effectiveFarmers),
+      transactions: [],
+    };
+  }
 
   return {
     dashboardData: dashboardResponse?.data,
