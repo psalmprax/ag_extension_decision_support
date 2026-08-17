@@ -93,8 +93,8 @@ describe('WhatsApp Route — Mapper-before-response: mapWhatsAppMessageRows + ma
             farmer_id: null,
             message: 'Test message',
             direction: 'outbound',
-            status: 'queued',
-            provider: 'meta_cloud',
+            status: 'not_configured',
+            provider: 'none',
             created_at: '2024-12-15T10:00:00Z',
         };
         mockQuery.mockResolvedValueOnce({ rows: [insertedRow], rowCount: 1 });
@@ -104,12 +104,14 @@ describe('WhatsApp Route — Mapper-before-response: mapWhatsAppMessageRows + ma
             .set('Authorization', `Bearer ${officerToken}`)
             .send({ to: '+265999000222', message: 'Test message' });
 
-        expect(response.status).toBe(201);
+        expect(response.status).toBe(503);
+        expect(response.body.success).toBe(false);
+        expect(response.body.status).toBe('not_configured');
         // The response is the mapped row from INSERT ... RETURNING
         expect(response.body.data.senderId).toBe('off-1');
         expect(response.body.data.recipientPhone).toBe('+265999000222');
         expect(response.body.data.direction).toBe('outbound');
-        expect(response.body.data.status).toBe('queued');
+        expect(response.body.data.status).toBe('not_configured');
         // Must NOT leak snake_case
         expect(response.body.data.sender_id).toBeUndefined();
         expect(response.body.data.recipient_phone).toBeUndefined();

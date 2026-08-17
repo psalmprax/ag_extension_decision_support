@@ -14,6 +14,7 @@ export interface TelemetryEvent {
   status: 'success' | 'error' | 'timeout';
   metadata?: Record<string, unknown>;
   timestamp: string;
+  correlationId?: string;
 }
 
 export interface TelemetrySummary {
@@ -62,6 +63,7 @@ export class AgentTelemetry {
           cost_usd FLOAT,
           status VARCHAR(20) NOT NULL DEFAULT 'success',
           metadata JSONB,
+          correlation_id VARCHAR(128),
           timestamp TIMESTAMP DEFAULT NOW()
         )
       `);
@@ -69,6 +71,10 @@ export class AgentTelemetry {
       await query(`
         CREATE INDEX IF NOT EXISTS idx_telemetry_type 
         ON agent_telemetry(event_type)
+      `);
+
+      await query(`
+        ALTER TABLE agent_telemetry ADD COLUMN IF NOT EXISTS correlation_id VARCHAR(128)
       `);
 
       await query(`
@@ -83,31 +89,38 @@ export class AgentTelemetry {
     }
   }
 
+  private async saveEventToDatabase(telemetryEvent: TelemetryEvent): Promise<boolean> {
+    const pool = getPool();
+    if (!pool) return false;
+    await query(`
+      INSERT INTO agent_telemetry (event_type, agent_id, tool_name, user_id, duration_ms, tokens_used, cost_usd, status, metadata, correlation_id)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    `, [
+      telemetryEvent.eventType,
+      telemetryEvent.agentId || null,
+      telemetryEvent.toolName || null,
+      telemetryEvent.userId || null,
+      telemetryEvent.durationMs || null,
+      telemetryEvent.tokensUsed || null,
+      telemetryEvent.costUsd || null,
+      telemetryEvent.status,
+      telemetryEvent.metadata ? JSON.stringify(telemetryEvent.metadata) : null,
+      telemetryEvent.correlationId || null,
+    ]);
+    return true;
+  }
+
   async record(event: Omit<TelemetryEvent, 'id' | 'timestamp'>): Promise<void> {
     const telemetryEvent: TelemetryEvent = {
       ...event,
       id: `evt_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
       timestamp: new Date().toISOString(),
+      correlationId: event.correlationId,
     };
 
     if (this.initialized) {
       try {
-        const pool = getPool();
-        if (pool) {
-          await query(`
-            INSERT INTO agent_telemetry (event_type, agent_id, tool_name, user_id, duration_ms, tokens_used, cost_usd, status, metadata)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-          `, [
-            telemetryEvent.eventType,
-            telemetryEvent.agentId || null,
-            telemetryEvent.toolName || null,
-            telemetryEvent.userId || null,
-            telemetryEvent.durationMs || null,
-            telemetryEvent.tokensUsed || null,
-            telemetryEvent.costUsd || null,
-            telemetryEvent.status,
-            telemetryEvent.metadata ? JSON.stringify(telemetryEvent.metadata) : null,
-          ]);
+        if (await this.saveEventToDatabase(telemetryEvent)) {
           return;
         }
       } catch (error) {
@@ -132,7 +145,14 @@ export class AgentTelemetry {
     });
   }
 
-  async recordAgentRequest(agentId: string, userId: string, tokensUsed: number, costUsd: number, durationMs: number): Promise<void> {
+  async recordAgentRequest(
+    agentId: string,
+    userId: string,
+    tokensUsed: number,
+    costUsd: number,
+    durationMs: number,
+    correlationId?: string
+  ): Promise<void> {
     await this.record({
       eventType: 'agent_request',
       agentId,
@@ -141,6 +161,7 @@ export class AgentTelemetry {
       costUsd,
       durationMs,
       status: 'success',
+      correlationId,
     });
   }
 
@@ -241,6 +262,7 @@ export class AgentTelemetry {
         status: row.status,
         metadata: row.metadata,
         timestamp: row.timestamp,
+        correlationId: row.correlation_id,
       }));
     } catch (error) {
       logger.error('Failed to get recent events:', error);

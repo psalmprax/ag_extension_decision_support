@@ -12,6 +12,15 @@ export interface WhatsAppOptions {
     templateParams?: string[];
 }
 
+export type WhatsAppDeliveryStatus = 'not_configured' | 'queued' | 'sent' | 'logged' | 'failed';
+
+export interface WhatsAppDeliveryResult {
+    success: boolean;
+    status: WhatsAppDeliveryStatus;
+    provider: 'twilio' | 'none';
+    error?: string;
+}
+
 export interface WhatsAppTemplate {
     name: string;
     language: string;
@@ -55,40 +64,24 @@ class WhatsAppService {
         return digits;
     }
 
-    /**
-     * Send a WhatsApp message via Twilio
-     */
-    async sendMessage(options: WhatsAppOptions): Promise<boolean> {
-        if (!options.to) {
-            logger.warn('WhatsApp sendMessage called without a recipient');
-            return false;
-        }
+    private async dispatchTwilioWhatsApp(options: WhatsAppOptions & { to: string }): Promise<WhatsAppDeliveryResult> {
+        const toWhatsApp = `whatsapp:+${this.formatWhatsAppId(options.to)}`;
+        const fromWhatsApp = `whatsapp:${this.twilioWhatsAppNumber}`;
 
-        if (!this.twilioAccountSid || !this.twilioWhatsAppNumber) {
-            logger.info(`[WhatsApp Mock] Would send to ${options.to}: ${options.message}`);
-            await this.persistMessage(options, 'logged');
-            return true; // Don't fail if not configured
+        const url = `https://api.twilio.com/2010-04-01/Accounts/${this.twilioAccountSid}/Messages.json`;
+        const auth = Buffer.from(`${this.twilioAccountSid}:${this.twilioAuthToken}`).toString('base64');
+
+        const params: Record<string, string> = {
+            To: toWhatsApp,
+            From: fromWhatsApp,
+            Body: options.message,
+        };
+
+        if (options.templateName) {
+            params.ProvideFeedback = 'true';
         }
 
         try {
-            const toWhatsApp = `whatsapp:+${this.formatWhatsAppId(options.to)}`;
-            const fromWhatsApp = `whatsapp:${this.twilioWhatsAppNumber}`;
-
-            const url = `https://api.twilio.com/2010-04-01/Accounts/${this.twilioAccountSid}/Messages.json`;
-            const auth = Buffer.from(`${this.twilioAccountSid}:${this.twilioAuthToken}`).toString('base64');
-
-            const params: Record<string, string> = {
-                To: toWhatsApp,
-                From: fromWhatsApp,
-                Body: options.message,
-            };
-
-            // If a template is specified, use it instead
-            if (options.templateName) {
-                params.Body = options.message;
-                params.ProvideFeedback = 'true';
-            }
-
             const response = await axios.post(url, new URLSearchParams(params), {
                 headers: {
                     'Authorization': `Basic ${auth}`,
@@ -105,18 +98,54 @@ class WhatsAppService {
                 logger.error(`WhatsApp message failed: ${response.data.error_message}`);
             }
 
-            return success;
+            return {
+                success,
+                status: success ? 'sent' : 'failed',
+                provider: 'twilio',
+                ...(success ? {} : { error: response.data.error_message || 'WhatsApp provider rejected the message' }),
+            };
         } catch (error: any) {
             logger.error('WhatsApp send error:', error.response?.data || error.message);
             await this.persistMessage(options, 'failed');
-            return false;
+            return {
+                success: false,
+                status: 'failed',
+                provider: 'twilio',
+                error: error instanceof Error ? error.message : 'WhatsApp provider request failed',
+            };
         }
+    }
+
+    /**
+     * Send a WhatsApp message via Twilio
+     */
+    async sendMessage(options: WhatsAppOptions): Promise<WhatsAppDeliveryResult> {
+        if (!options.to) {
+            logger.warn('WhatsApp sendMessage called without a recipient');
+            return { success: false, status: 'failed', provider: 'none', error: 'Recipient is required' };
+        }
+
+        if (!this.twilioAccountSid || !this.twilioWhatsAppNumber || !this.twilioAuthToken) {
+            const status = process.env.WHATSAPP_LOG_ONLY === 'true' && process.env.NODE_ENV !== 'production'
+                ? 'logged'
+                : 'not_configured';
+            await this.persistMessage(options, status);
+            logger.warn(`WhatsApp delivery unavailable for ${options.to}: ${status}`);
+            return {
+                success: false,
+                status,
+                provider: 'none',
+                error: 'WhatsApp provider is not configured',
+            };
+        }
+
+        return this.dispatchTwilioWhatsApp(options as WhatsAppOptions & { to: string });
     }
 
     /**
      * Send a templated WhatsApp message (for notifications, alerts, etc.)
      */
-    async sendTemplateMessage(options: WhatsAppOptions & { templateName: string }): Promise<boolean> {
+    async sendTemplateMessage(options: WhatsAppOptions & { templateName: string }): Promise<WhatsAppDeliveryResult> {
         // Templates are sent as regular messages with structured content
         // Twilio WhatsApp supports templates via the Content API
         return this.sendMessage(options);
@@ -128,19 +157,19 @@ class WhatsAppService {
     async sendBulkMessages(options: WhatsAppOptions & { recipients: string[] }): Promise<{
         sent: number;
         failed: number;
-        results: Array<{ to: string; success: boolean }>;
+        results: Array<{ to: string; success: boolean; status: WhatsAppDeliveryStatus }>;
     }> {
-        const results: Array<{ to: string; success: boolean }> = [];
+        const results: Array<{ to: string; success: boolean; status: WhatsAppDeliveryStatus }> = [];
         let sent = 0;
         let failed = 0;
 
         for (const recipient of options.recipients) {
-            const success = await this.sendMessage({
+            const result = await this.sendMessage({
                 ...options,
                 to: recipient,
             });
-            results.push({ to: recipient, success });
-            if (success) sent++;
+            results.push({ to: recipient, success: result.success, status: result.status });
+            if (result.success) sent++;
             else failed++;
         }
 
@@ -156,7 +185,7 @@ class WhatsAppService {
         alertDescription: string,
         severity: 'low' | 'medium' | 'high' | 'critical',
         farmerId?: string
-    ): Promise<boolean> {
+    ): Promise<WhatsAppDeliveryResult> {
         const severityEmoji = {
             low: 'ℹ️',
             medium: '⚠️',
@@ -185,7 +214,7 @@ class WhatsAppService {
         condition: string,
         humidity: number,
         farmerId?: string
-    ): Promise<boolean> {
+    ): Promise<WhatsAppDeliveryResult> {
         const message = [
             `🌤 *Weather Update for ${location}*`,
             '',
@@ -206,7 +235,7 @@ class WhatsAppService {
         to: string,
         prices: Array<{ crop: string; price: string; trend: string }>,
         farmerId?: string
-    ): Promise<boolean> {
+    ): Promise<WhatsAppDeliveryResult> {
         const priceLines = prices.map(p => `• ${p.crop}: ${p.price} (${p.trend})`).join('\n');
         const message = [
             `📊 *Market Price Update*`,
@@ -245,7 +274,7 @@ class WhatsAppService {
      * Check if WhatsApp service is configured
      */
     isConfigured(): boolean {
-        return !!(this.twilioAccountSid && this.twilioWhatsAppNumber);
+        return !!(this.twilioAccountSid && this.twilioWhatsAppNumber && this.twilioAuthToken);
     }
 }
 

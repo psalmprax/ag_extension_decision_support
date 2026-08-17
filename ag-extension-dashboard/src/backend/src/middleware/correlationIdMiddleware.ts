@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
+import { runWithRequestContext } from '@/services/requestContext';
 
 /* eslint-disable @typescript-eslint/no-namespace */
 declare global {
@@ -23,5 +24,5 @@ export const correlationIdMiddleware = (req: Request, res: Response, next: NextF
   req.correlationId = correlationId;
   res.setHeader('x-correlation-id', correlationId);
 
-  next();
+  runWithRequestContext({ correlationId, userId: req.user?.userId }, next);
 };

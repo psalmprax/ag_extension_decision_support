@@ -6,6 +6,7 @@ import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 import { authorize } from '@/middleware/authorize';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
+import { whatsappService } from '@/services/whatsappService';
 
 const router = Router();
 
@@ -43,15 +44,23 @@ router.post('/send', checkUsageLimit('whatsapp'), async (req: AuthedRequest, res
             return res.status(400).json({ success: false, error: 'to and message are required' });
         }
 
+        const providerConfigured = whatsappService.isConfigured();
+        const deliveryStatus = providerConfigured ? 'queued' : 'not_configured';
+        const provider = providerConfigured ? 'twilio' : 'none';
         const { rows } = await query<WhatsAppMessageRow>(
             `INSERT INTO whatsapp_messages (recipient_phone, message, direction, status, farmer_id, sender_id, provider)
-             VALUES ($1, $2, 'outbound', 'queued', $3, $4, 'meta_cloud')
+             VALUES ($1, $2, 'outbound', $3, $4, $5, $6)
              RETURNING *`,
-            [body.to, body.message, body.farmerId ?? null, req.user?.userId ?? null]
+            [body.to, body.message, deliveryStatus, body.farmerId ?? null, req.user?.userId ?? null, provider]
         );
 
         const created = rows[0];
-        return res.status(201).json({ success: true, data: created ? mapWhatsAppMessageRow(created) : null });
+        return res.status(providerConfigured ? 202 : 503).json({
+            success: providerConfigured,
+            status: deliveryStatus,
+            data: created ? mapWhatsAppMessageRow(created) : null,
+            error: providerConfigured ? undefined : 'WhatsApp provider is not configured',
+        });
     } catch (error) {
         logger.error('Failed to send WhatsApp message:', error);
         return safeError(res, 500, 'Failed to send WhatsApp message');

@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
+import { agentTelemetry } from '@/services/agentTelemetry';
+import { getRequestContext } from '@/services/requestContext';
 
 // Re-export types from the isolated types module (no circular deps)
 export type {
@@ -62,7 +64,8 @@ export class AIProviderFactory {
 
     static async getWithFallback(
         operation: (provider: AICapability) => Promise<any>,
-        preferredProvider?: AIProviderType
+        preferredProvider?: AIProviderType,
+        telemetryContext?: { correlationId?: string; userId?: string; operation?: string }
     ): Promise<any> {
         // Define all available providers for cascading fallback
         let allProviders: AIProviderType[] = Array.from(new Set([
@@ -82,33 +85,75 @@ export class AIProviderFactory {
         }
 
         let lastError: Error | null = null;
+        const requestContext = getRequestContext();
+        const context = {
+            correlationId: telemetryContext?.correlationId || requestContext?.correlationId,
+            userId: telemetryContext?.userId || requestContext?.userId,
+            operation: telemetryContext?.operation || 'ai_provider_request',
+        };
 
-        for (const providerType of allProviders) {
+        for (const [attempt, providerType] of allProviders.entries()) {
+            const startedAt = Date.now();
             try {
                 const provider = await this.getProvider(providerType);
-                
-                // First check if configured, then check health
+
                 if (!provider.isConfigured()) {
                     logger.debug(`AI provider ${providerType} not configured, skipping...`);
                     continue;
                 }
 
                 const isHealthy = await provider.healthCheck();
-
-                if (isHealthy) {
-                    logger.info(`Using AI provider: ${providerType}`);
-                    return await operation(provider);
+                if (!isHealthy) {
+                    await this.recordProviderAttempt(providerType, attempt, startedAt, context, 'error', 'provider_unhealthy');
+                    logger.warn(`AI provider ${providerType} unhealthy, trying next...`);
+                    continue;
                 }
 
-                logger.warn(`AI provider ${providerType} unhealthy, trying next...`);
+                logger.info(`Using AI provider: ${providerType}`);
+                const result = await operation(provider);
+                await this.recordProviderAttempt(providerType, attempt, startedAt, context, 'success', undefined, result);
+                return result;
             } catch (error) {
-                lastError = error as Error;
+                lastError = error instanceof Error ? error : new Error(String(error));
+                await this.recordProviderAttempt(providerType, attempt, startedAt, context, 'error', lastError.message);
                 logger.warn(`AI provider ${providerType} failed:`, error);
             }
         }
 
         logger.error('All AI providers failed');
         throw lastError || new Error('All AI providers failed — no provider is configured or healthy');
+    }
+
+    private static async recordProviderAttempt(
+        provider: AIProviderType,
+        attempt: number,
+        startedAt: number,
+        context: { correlationId?: string; userId?: string; operation: string },
+        status: 'success' | 'error',
+        error?: string,
+        result?: any
+    ): Promise<void> {
+        try {
+            await agentTelemetry.record({
+                eventType: status === 'success' ? 'agent_request' : 'error',
+                agentId: provider,
+                userId: context.userId,
+                durationMs: Date.now() - startedAt,
+                tokensUsed: result?.usage?.totalTokens,
+                costUsd: 0,
+                status,
+                correlationId: context.correlationId,
+                metadata: {
+                    operation: context.operation,
+                    provider,
+                    attempt: attempt + 1,
+                    fallbackUsed: attempt > 0,
+                    ...(error ? { error } : {}),
+                },
+            });
+        } catch (telemetryError) {
+            logger.warn('Failed to record AI provider telemetry:', telemetryError);
+        }
     }
 
     private static async createProvider(type: AIProviderType): Promise<AICapability> {
