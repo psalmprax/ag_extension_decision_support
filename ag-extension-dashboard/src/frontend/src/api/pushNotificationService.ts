@@ -11,7 +11,7 @@ export const subscribeUserToPush = async () => {
     let vapidKey = VAPID_PUBLIC_KEY || '';
     try {
       const res = await apiClient.get<{ success: boolean; publicKey: string }>(
-        '/api/v1/notifications/vapid-public-key'
+        '/v1/notifications/vapid-public-key'
       );
       if (res.data?.success && res.data.publicKey) {
         vapidKey = res.data.publicKey;
@@ -35,7 +35,7 @@ export const subscribeUserToPush = async () => {
       });
     }
 
-    await apiClient.post('/api/v1/notifications/subscribe', subscription);
+    await apiClient.post('/v1/notifications/subscribe', subscription);
     return subscription;
   } catch (error) {
     console.error('Error subscribing to push notifications:', error);

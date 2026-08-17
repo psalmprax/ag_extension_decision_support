@@ -41,18 +41,19 @@ import './workers/ingestionWorker';
 const httpServer = createServer(app);
 
 // Socket.IO setup
+const isAllowedSocketOrigin = (origin?: string): boolean => {
+    if (!origin || config.nodeEnv !== 'production') return true;
+    const allowedOrigins = config.cors.origin.split(',').map(o => o.trim());
+    if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) return true;
+    if (/^https?:\/\/(?:[a-zA-Z0-9-]+\.)*gpexts\.com(?::\d+)?$/i.test(origin)) return true;
+    if (/^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/i.test(origin)) return true;
+    return false;
+};
+
 const io = new SocketServer(httpServer, {
     cors: {
         origin: (origin, callback) => {
-            // In production, we allow the configured origin OR if the origin is missing (compatible clients)
-            // or if it's the server's own IP. For now, we'll be permissive in dev and use config in prod.
-            if (!origin || config.nodeEnv !== 'production') {
-                callback(null, true);
-                return;
-            }
-            
-            const allowedOrigins = config.cors.origin.split(',').map(o => o.trim());
-            if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+            if (isAllowedSocketOrigin(origin)) {
                 callback(null, true);
             } else {
                 logger.warn(`Socket.IO: Rejected connection from origin: ${origin}`);

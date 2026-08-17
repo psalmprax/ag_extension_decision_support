@@ -87,7 +87,20 @@ app.use(correlationIdMiddleware);
 app.use(compression());
 const allowedOrigins = config.cors.origin.split(',').map(o => o.trim());
 app.use(cors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+        if (
+            !origin ||
+            config.nodeEnv !== 'production' ||
+            allowedOrigins.includes('*') ||
+            allowedOrigins.includes(origin) ||
+            /^https?:\/\/(?:[a-zA-Z0-9-]+\.)*gpexts\.com(?::\d+)?$/i.test(origin) ||
+            /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/i.test(origin)
+        ) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true
 }));
 app.use(morgan('combined', { stream: { write: (message) => logger.info(message) } }));

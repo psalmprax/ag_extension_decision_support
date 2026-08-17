@@ -50,9 +50,10 @@ export function useWebRTC(): UseWebRTCReturn {
     const socket = io(window.location.origin, {
       path: '/socket.io',
       transports: ['websocket', 'polling'],
+      autoConnect: false,
       reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
+      reconnectionAttempts: 3,
+      reconnectionDelay: 2000,
     });
 
     socket.on('connect', () => {
@@ -200,6 +201,10 @@ export function useWebRTC(): UseWebRTCReturn {
         });
         setLocalStream(stream);
 
+        if (socketRef.current && !socketRef.current.connected) {
+          socketRef.current.connect();
+        }
+
         socketRef.current?.emit('register', userId);
 
         socketRef.current?.emit(
@@ -237,6 +242,10 @@ export function useWebRTC(): UseWebRTCReturn {
       });
       setLocalStream(stream);
 
+      if (socketRef.current && !socketRef.current.connected) {
+        socketRef.current.connect();
+      }
+
       socketRef.current?.emit('register', userId);
 
       socketRef.current?.emit(
@@ -268,6 +277,7 @@ export function useWebRTC(): UseWebRTCReturn {
         roomId: currentRoomRef.current,
         userId: currentUserRef.current.id,
       });
+      socketRef.current.disconnect();
     }
 
     setRemoteStreams(new Map());

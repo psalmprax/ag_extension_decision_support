@@ -165,7 +165,7 @@ export async function classifyPlantImageOnDevice(
   syncQueue.enqueue({
     action: 'create',
     entity: 'disease_diagnosis',
-    endpoint: '/api/v1/diseases/diagnose',
+    endpoint: '/ai/diseases/diagnose',
     method: 'POST',
     data: {
       cropType: normalizedCrop,
