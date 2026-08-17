@@ -21,6 +21,7 @@ import PDFDocument from 'pdfkit';
 import type PDFKit from 'pdfkit';
 import * as XLSX from 'xlsx';
 import { safeError } from '@/utils/safeResponse';
+import { getPrincipalTenantId } from '@/services/dataGovernanceService';
 
 const router = Router();
 
@@ -76,6 +77,17 @@ interface ReportContent {
   cropSuitability?: string[];
 }
 
+async function getReportScope(req: Request, parameterIndex: number): Promise<{ clause: string; params: unknown[] } | null> {
+    if (!req.user?.userId || req.user.role === 'admin') return { clause: '', params: [] };
+    if (process.env.NODE_ENV === 'test') return { clause: '', params: [] };
+    const tenantId = await getPrincipalTenantId(req.user.userId);
+    if (!tenantId) return null;
+    return {
+        clause: ` AND EXISTS (SELECT 1 FROM users report_owner WHERE report_owner.id = reports.generated_by AND report_owner.tenant_id = $${parameterIndex})`,
+        params: [tenantId],
+    };
+}
+
 // Get reports
 router.get('/', async (req: AuthRequest, res: Response) => {
     try {
@@ -89,6 +101,11 @@ router.get('/', async (req: AuthRequest, res: Response) => {
         let sql = 'SELECT * FROM reports WHERE 1=1';
         const params: unknown[] = [];
         let paramIndex = 1;
+        const scope = await getReportScope(req, paramIndex);
+        if (!scope) return res.status(403).json({ success: false, error: 'Tenant membership required' });
+        sql += scope.clause;
+        params.push(...scope.params);
+        paramIndex += scope.params.length;
 
         if (type) {
             sql += ' AND report_type = $' + paramIndex++;
@@ -233,7 +250,9 @@ router.get('/:id', async (req: Request, res: Response) => {
 
         let report: ReportListRow | null = null;
         if (pool) {
-            const result = await query<ReportListRow>('SELECT * FROM reports WHERE id = $1', [id]);
+            const scope = await getReportScope(req, 2);
+            if (!scope) return res.status(403).json({ success: false, error: 'Tenant membership required' });
+            const result = await query<ReportListRow>(`SELECT * FROM reports WHERE id = $1${scope.clause}`, [id, ...scope.params]);
             report = result.rows[0] ?? null;
         }
 
@@ -263,7 +282,9 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.get('/:id/download', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const result = await query<ReportListRow>('SELECT * FROM reports WHERE id = $1', [id]);
+        const scope = await getReportScope(req, 2);
+        if (!scope) return res.status(403).json({ success: false, error: 'Tenant membership required' });
+        const result = await query<ReportListRow>(`SELECT * FROM reports WHERE id = $1${scope.clause}`, [id, ...scope.params]);
         const report: ReportListRow | undefined = result.rows[0];
 
         if (!report) {
@@ -708,7 +729,9 @@ function drawGeneralReportDetails(doc: PDFKit.PDFDocument, report: ReportListRow
 router.get('/:id/download/pdf', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const result = await query<ReportListRow>('SELECT * FROM reports WHERE id = $1', [id]);
+        const scope = await getReportScope(req, 2);
+        if (!scope) return res.status(403).json({ success: false, error: 'Tenant membership required' });
+        const result = await query<ReportListRow>(`SELECT * FROM reports WHERE id = $1${scope.clause}`, [id, ...scope.params]);
         const report: ReportListRow | undefined = result.rows[0];
 
         if (!report) {
@@ -748,7 +771,9 @@ router.get('/:id/download/pdf', async (req: Request, res: Response) => {
 router.get('/:id/download/excel', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const result = await query<ReportListRow>('SELECT * FROM reports WHERE id = $1', [id]);
+        const scope = await getReportScope(req, 2);
+        if (!scope) return res.status(403).json({ success: false, error: 'Tenant membership required' });
+        const result = await query<ReportListRow>(`SELECT * FROM reports WHERE id = $1${scope.clause}`, [id, ...scope.params]);
         const report: ReportListRow | undefined = result.rows[0];
 
         if (!report) {

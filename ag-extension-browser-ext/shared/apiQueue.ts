@@ -4,9 +4,10 @@ export interface QueuedRequest {
     url: string;
     method: string;
     headers: Record<string, string>;
-    body?: any;
+    body?: string | Record<string, unknown>;
     maxRetries?: number;
     idempotencyKey?: string;
+    attachmentRefs?: string[];
 }
 
 export interface OfflineStatus {
@@ -66,6 +67,16 @@ class APIQueueService {
         this.emit('statusChange', isOnline);
     }
 
+    private isReplaySafeBody(body: BodyInit | null | undefined): boolean {
+        return body === undefined || typeof body === 'string' || (typeof body === 'object' && !(body instanceof FormData) && !(body instanceof Blob) && !(body instanceof ArrayBuffer));
+    }
+
+    private rejectUnqueueableBody(body: BodyInit | null | undefined): void {
+        if (!this.isReplaySafeBody(body)) {
+            throw new Error('File uploads require an active connection and cannot be queued as a visit mutation');
+        }
+    }
+
     public async isCurrentlyOnline(): Promise<boolean> {
         try {
             const browserAPI = browser;
@@ -80,6 +91,17 @@ class APIQueueService {
             console.error('Failed to get offline status:', error);
         }
         return this.isOnline;
+    }
+
+    public async storeOfflineAttachment(file: File, farmerId: string): Promise<string> {
+        const browserAPI = browser;
+        if (!browserAPI?.runtime) throw new Error('Browser API not available');
+        const response = await browserAPI.runtime.sendMessage({
+            action: 'store_offline_attachment',
+            attachment: { file, farmerId },
+        });
+        if (!response.success || !response.id) throw new Error(response.error || 'Unable to store photo offline');
+        return response.id as string;
     }
 
     public async queueRequest(request: QueuedRequest): Promise<void> {
@@ -97,6 +119,7 @@ class APIQueueService {
                 body: request.body,
                 maxRetries: request.maxRetries || 3,
                 idempotencyKey: request.idempotencyKey,
+                attachmentRefs: request.attachmentRefs,
             }
         });
 
@@ -118,15 +141,19 @@ class APIQueueService {
         if (idempotencyKey) requestHeaders.set('Idempotency-Key', idempotencyKey);
         const requestOptions: RequestInit = { ...options, method, headers: requestHeaders };
 
+        const attachmentRefs = this.getAttachmentRefs(options.body);
+
         if (!isOnline) {
+            this.rejectUnqueueableBody(options.body);
             // Queue the request
             await this.queueRequest({
                 url,
                 method,
                 headers: Object.fromEntries(requestHeaders.entries()),
-                body: options.body,
+                body: options.body as string | Record<string, unknown> | undefined,
                 maxRetries: 3,
                 idempotencyKey,
+                attachmentRefs,
             });
 
             // Return a mock response for offline state
@@ -146,18 +173,33 @@ class APIQueueService {
             const response = await fetch(url, requestOptions);
             return response;
         } catch (error) {
-            // If fetch fails, queue the request
+            // Binary bodies cannot be serialized safely for replay. Keep them
+            // visible as failed instead of silently queuing an empty object.
+            this.rejectUnqueueableBody(options.body);
             console.warn('Request failed, queuing for later:', error);
             await this.queueRequest({
                 url,
                 method,
                 headers: Object.fromEntries(requestHeaders.entries()),
-                body: options.body,
+                body: options.body as string | Record<string, unknown> | undefined,
                 maxRetries: 3,
                 idempotencyKey,
+                attachmentRefs,
             });
 
             throw error;
+        }
+    }
+
+    private getAttachmentRefs(body: BodyInit | null | undefined): string[] | undefined {
+        if (typeof body !== 'string') return undefined;
+        try {
+            const parsed = JSON.parse(body) as { attachmentRefs?: unknown };
+            return Array.isArray(parsed.attachmentRefs) && parsed.attachmentRefs.every(ref => typeof ref === 'string')
+                ? parsed.attachmentRefs
+                : undefined;
+        } catch {
+            return undefined;
         }
     }
 

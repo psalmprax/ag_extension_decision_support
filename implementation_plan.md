@@ -288,6 +288,177 @@ Each wave must pass its own unit/integration checks before the next wave is merg
 | Schema changes drift across environments | Use Prisma migrations and run schema checks in CI |
 | Parallel workstreams conflict | Shared status/provenance/offline contracts reviewed before implementation |
 
+## Gap-Closure Implementation Plan
+
+This section governs the follow-up work requested after the Wave 5 assessment. It closes the remaining production-readiness gaps without changing the approved product direction.
+
+### Gap Wave A — Release reliability
+
+**Goal:** Prove clean-install delivery for the dashboard, Playwright smoke suite, and browser extension.
+
+**Files:**
+- `.github/workflows/ci-cd.yml`
+- `ag-extension-browser-ext/package.json`
+- `ag-extension-browser-ext/package-lock.json`
+- `ag-extension-browser-ext/tsconfig.json`
+- `ag-extension-browser-ext/wxt.config.ts`
+- `ag-extension-dashboard/src/frontend/playwright.config.ts`
+- `ag-extension-dashboard/src/frontend/tests/`
+
+**Work:**
+- Make extension installation deterministic and verify WXT-generated types in CI.
+- Add isolated Playwright fixtures and mock API responses for public/authenticated smoke tests.
+- Add a release artifact check for extension output and frontend bundle budgets.
+- Keep local browser and registry failures explicit rather than treating them as passing gates.
+
+**Acceptance:**
+- Clean CI install passes extension typecheck and build.
+- Release smoke tests pass without live backend credentials.
+- Generated artifacts are excluded from source changes.
+
+### Gap Wave B — Tenant, security, and farmer data governance
+
+**Goal:** Ensure farmer data is isolated, exportable, deletable, and auditable.
+
+**Files:**
+- `ag-extension-dashboard/src/backend/prisma/schema.prisma`
+- `ag-extension-dashboard/src/backend/prisma/migrations/`
+- `ag-extension-dashboard/src/backend/src/routes/farmers.ts`
+- `ag-extension-dashboard/src/backend/src/routes/visits.ts`
+- `ag-extension-dashboard/src/backend/src/routes/upload.ts`
+- `ag-extension-dashboard/src/backend/src/routes/canadianServices.ts`
+- `ag-extension-dashboard/src/backend/src/middleware/authorize.ts`
+- `ag-extension-dashboard/src/backend/src/middleware/securityGate.ts`
+- `ag-extension-dashboard/src/backend/src/services/auditService.ts`
+- `ag-extension-dashboard/src/backend/src/services/uploadService.ts`
+- `ag-extension-dashboard/src/backend/src/__tests__/`
+
+**Work:**
+- Add explicit organization/tenant ownership checks to farmer, visit, report, memory, share, and upload access.
+- Add consent records, farmer data export, and authenticated deletion workflows with audit events.
+- Enforce upload size/type/content validation and use opaque media references instead of raw data URLs in queued mutations.
+- Add cross-tenant, role, consent, upload, export, and deletion regression tests.
+
+**Acceptance:**
+- Cross-tenant reads and mutations fail closed.
+- Export and deletion are authenticated, auditable, and idempotent.
+- Uploaded content cannot execute as active content.
+
+### Gap Wave C — Offline media and field continuity
+
+**Goal:** Make offline operation safe for visits and attachments.
+
+**Files:**
+- `ag-extension-browser-ext/shared/apiQueue.ts`
+- `ag-extension-browser-ext/entrypoints/background/main.ts`
+- `ag-extension-browser-ext/entrypoints/sidepanel/App.tsx`
+- `ag-extension-browser-ext/entrypoints/sidepanel/components/VisitLogger.tsx`
+- `ag-extension-dashboard/src/frontend/src/api/syncQueueService.ts`
+- `ag-extension-dashboard/src/backend/src/routes/extensionSync.ts`
+- `ag-extension-dashboard/src/backend/src/routes/upload.ts`
+- `ag-extension-dashboard/src/backend/prisma/schema.prisma`
+- `ag-extension-dashboard/src/backend/prisma/migrations/`
+
+**Work:**
+- Replace arbitrary request replay with typed domain commands and bounded queue storage.
+- Store attachment metadata plus upload state; upload binary content separately and resume safely.
+- Add retry classification, conflict resolution UI, stale-auth recovery, and queue eviction policy.
+- Add a small signed/offline knowledge pack or explicit unavailable-offline capability states.
+
+**Acceptance:**
+- Offline visits replay once and remain inspectable on failure.
+- Photos never serialize into invalid or unbounded request bodies.
+- Reconnection, conflict, eviction, and attachment retry tests pass.
+
+### Gap Wave D — Regionalization and localization integrity
+
+**Goal:** Align global product claims with configurable, honest regional support.
+
+**Files:**
+- `ag-extension-dashboard/src/backend/prisma/schema.prisma`
+- `ag-extension-dashboard/src/backend/prisma/migrations/`
+- `ag-extension-dashboard/src/backend/src/config/index.ts`
+- `ag-extension-dashboard/src/backend/src/routes/organizations.ts` (new if required)
+- `ag-extension-dashboard/src/frontend/src/config/`
+- `ag-extension-dashboard/src/frontend/src/lib/LanguageContext.tsx`
+- `ag-extension-dashboard/src/frontend/public/locales/`
+- `ag-extension-dashboard/src/frontend/src/pages/LandingPage.tsx`
+- `ag-extension-dashboard/src/frontend/src/pages/DemoPage.tsx`
+- `docs/PRODUCT_SCOPE.md`
+
+**Work:**
+- Add tenant region, currency, language, crop, and capability configuration.
+- Remove hardcoded Malawi/Africa/Canada assumptions from authenticated operational views.
+- Separate supported and experimental locales; never silently claim complete translation coverage.
+- Label demo, cached, estimated, AI-generated, and live data consistently.
+- Translate the supported release locale set using reviewed source files; keep non-release locales explicitly beta.
+
+**Acceptance:**
+- Region and currency come from tenant configuration, not source edits.
+- Authenticated empty states contain no synthetic operational metrics.
+- Product claims match the configured release regions and language coverage.
+
+### Gap Wave E — AI review and measurable farmer outcomes
+
+**Goal:** Turn AI confidence metadata into an operational safety and impact workflow.
+
+**Files:**
+- `ag-extension-dashboard/src/backend/src/services/plantDiseaseService.ts`
+- `ag-extension-dashboard/src/backend/src/services/knowledgeService.ts`
+- `ag-extension-dashboard/src/backend/src/routes/diseases.ts`
+- `ag-extension-dashboard/src/backend/src/routes/visits.ts`
+- `ag-extension-dashboard/src/backend/src/routes/reporting.ts`
+- `ag-extension-dashboard/src/frontend/src/pages/DiseaseDiagnosis.tsx`
+- `ag-extension-dashboard/src/frontend/src/pages/VisitsPage.tsx`
+- `ag-extension-dashboard/src/frontend/src/pages/ReportsPage.tsx`
+- `ag-extension-dashboard/src/backend/prisma/schema.prisma`
+- `ag-extension-dashboard/src/backend/prisma/migrations/`
+
+**Work:**
+- Add explicit review queues for low-confidence or unverified recommendations.
+- Require safe-use disclaimers, evidence status, model metadata, and escalation actions in diagnosis/report views.
+- Record follow-up outcomes, officer disposition, and recommendation status without persisting unnecessary raw prompts.
+- Add outcome and review metrics to supervisor reporting.
+
+**Acceptance:**
+- Low-confidence guidance is never presented as a definitive diagnosis.
+- Officers can escalate, dismiss, or confirm recommendations.
+- Supervisors can measure recommendation review and follow-up outcomes.
+
+### Gap Wave F — Production storage, observability, and performance
+
+**Goal:** Make media, costs, failures, and frontend budgets operationally measurable.
+
+**Files:**
+- `ag-extension-dashboard/src/backend/src/services/uploadService.ts`
+- `ag-extension-dashboard/src/backend/src/services/agentTaskService.ts`
+- `ag-extension-dashboard/src/backend/src/services/agentOrchestrator.ts`
+- `ag-extension-dashboard/src/backend/src/services/usageService.ts`
+- `ag-extension-dashboard/src/backend/src/routes/systemHealth.ts`
+- `ag-extension-dashboard/src/backend/src/services/aiProvider/aiProvider.ts`
+- `ag-extension-dashboard/src/backend/src/utils/logger.ts`
+- `ag-extension-dashboard/src/frontend/vite.config.ts`
+- `ag-extension-dashboard/src/frontend/scripts/` (new budget check if needed)
+- `docs/OBSERVABILITY.md`
+
+**Work:**
+- Define a storage adapter boundary with local/test and production object-storage implementations.
+- Persist agent task transitions for restart recovery and expose queue age/failure metrics.
+- Add cost/error/latency dashboards and actionable health thresholds.
+- Add per-route bundle budgets and fail CI on regressions rather than only raising warning limits.
+
+**Acceptance:**
+- Upload and agent state survive process restart through defined persistence boundaries.
+- AI cost, latency, fallback, and queue metrics are queryable.
+- CI rejects bundle regressions above documented budgets.
+
+### External prerequisites and constraints
+
+- No production deployment or third-party account creation is included.
+- Object-storage provider selection remains an adapter decision until credentials and residency requirements are supplied.
+- Full language completion requires reviewed translations or an approved translation provider; unreviewed machine output will not be presented as production-ready.
+- Clean extension and browser gates require registry access and a browser binary in the execution environment.
+
 ## Approval gate
 
-Do not begin production implementation until the user approves this plan and any remaining scope decisions. After approval, implement Wave 1 first, write tests alongside each change, and report verification results before proceeding to the next wave.
+Do not begin Gap Wave A production implementation until the user approves the sequencing and scope above. After approval, implement one gap wave at a time, add tests alongside each change, and report the verification result before advancing.

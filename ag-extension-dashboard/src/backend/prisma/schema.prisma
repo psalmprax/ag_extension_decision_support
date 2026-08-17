@@ -38,7 +38,13 @@ model User {
   apiClients    ApiClient[]
   videoConsultations VideoConsultation[]
   offlineMutations OfflineMutation[]
+  createdRecommendationReviews RecommendationReview[] @relation("ReviewCreator")
+  completedRecommendationReviews RecommendationReview[] @relation("ReviewAssignee")
+  tenantId       String?            @map("tenant_id") @db.Uuid
+  tenant         Tenant?            @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  tenantMemberships TenantMembership[]
 
+  @@index([tenantId])
   @@map("users")
 }
 
@@ -106,15 +112,20 @@ model Farmer {
    updatedAt                DateTime?          @default(now()) @map("updated_at") @db.Timestamp(6)
    user                     User?              @relation(fields: [userId], references: [id])
    assignedOfficer          User?              @relation("FarmerOfficer", fields: [assignedOfficerId], references: [id])
+   tenantId                 String?            @map("tenant_id") @db.Uuid
+   tenant                   Tenant?            @relation(fields: [tenantId], references: [id], onDelete: SetNull)
    visits                   Visit[]
    conversations            ChatConversation[]
    analytics                AnalyticsEvent[]
    fields                   Field[]
    videoConsultations       VideoConsultation[]
+   consents                 DataConsent[]
+   recommendationReviews   RecommendationReview[]
 
   @@index([assignedOfficerId])
   @@index([region])
   @@index([userId])
+  @@index([tenantId])
   @@map("farmers")
 }
 
@@ -141,6 +152,7 @@ model Visit {
   updatedAt            DateTime? @default(now()) @map("updated_at") @db.Timestamp(6)
   officer              User?     @relation(fields: [officerId], references: [id])
   farmer               Farmer?   @relation(fields: [farmerId], references: [id])
+  attachments          VisitAttachment[]
 
   @@index([farmerId])
   @@index([officerId])
@@ -218,7 +230,8 @@ model Report {
   status      String?   @default("draft") @db.VarChar(50)
   createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt   DateTime? @default(now()) @map("updated_at") @db.Timestamp(6)
-  user        User?     @relation(fields: [generatedBy], references: [id])
+  user        User?         @relation(fields: [generatedBy], references: [id])
+  recommendationReviews RecommendationReview[]
 
   @@index([generatedBy])
   @@index([type])
@@ -372,6 +385,7 @@ model SystemConfig {
 
 model Share {
   id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String?   @map("tenant_id") @db.Uuid
   token       String    @unique @db.VarChar(255)
   entityType  String    @map("entity_type") @db.VarChar(50) // 'farmer', 'visit', 'report', 'knowledge'
   entityId    String    @map("entity_id") @db.Uuid
@@ -384,8 +398,10 @@ model Share {
   createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt   DateTime? @default(now()) @map("updated_at") @db.Timestamp(6)
   accesses    ShareAccess[]
+  tenant      Tenant?   @relation(fields: [tenantId], references: [id], onDelete: SetNull)
 
   @@index([entityType, entityId])
+  @@index([tenantId])
   @@map("shares")
 }
 
@@ -624,6 +640,131 @@ model KnowledgeRelationship {
   @@index([targetId])
   @@index([relationType])
   @@map("knowledge_relationships")
+}
+
+model Tenant {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String             @db.VarChar(160)
+  region           String?            @db.VarChar(100)
+  defaultCurrency  String             @default("USD") @map("default_currency") @db.VarChar(10)
+  defaultLanguage  String             @default("en") @map("default_language") @db.VarChar(20)
+  capabilities     Json               @default("{}")
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt        DateTime           @default(now()) @map("updated_at") @db.Timestamp(6)
+  users            User[]
+  farmers          Farmer[]
+  memberships      TenantMembership[]
+  consents         DataConsent[]
+  recommendationReviews RecommendationReview[]
+  shares           Share[]
+
+  @@map("tenants")
+}
+
+model TenantMembership {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String   @map("tenant_id") @db.Uuid
+  userId   String   @map("user_id") @db.Uuid
+  role     String   @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+  @@index([userId])
+  @@map("tenant_memberships")
+}
+
+model DataConsent {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String?   @map("tenant_id") @db.Uuid
+  farmerId    String    @map("farmer_id") @db.Uuid
+  recordedBy  String    @map("recorded_by") @db.Uuid
+  purpose     String    @db.VarChar(120)
+  version     String    @db.VarChar(40)
+  status      String    @default("granted") @db.VarChar(20)
+  metadata    Json      @default("{}")
+  consentedAt DateTime  @default(now()) @map("consented_at") @db.Timestamp(6)
+  withdrawnAt DateTime? @map("withdrawn_at") @db.Timestamp(6)
+  tenant      Tenant?   @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  farmer      Farmer    @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  @@index([farmerId, purpose, status])
+  @@index([tenantId])
+  @@map("data_consents")
+}
+
+model DataExportRequest {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String?   @map("tenant_id") @db.Uuid
+  farmerId    String    @map("farmer_id") @db.Uuid
+  requestedBy String    @map("requested_by") @db.Uuid
+  status      String    @default("completed") @db.VarChar(20)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  completedAt DateTime? @map("completed_at") @db.Timestamp(6)
+
+  @@index([farmerId])
+  @@index([tenantId])
+  @@map("data_export_requests")
+}
+
+model UploadRecord {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId     String?   @map("tenant_id") @db.Uuid
+  ownerUserId  String    @map("owner_user_id") @db.Uuid
+  farmerId     String?   @map("farmer_id") @db.Uuid
+  storageKey   String    @unique @map("storage_key") @db.VarChar(255)
+  originalName String    @map("original_name") @db.VarChar(255)
+  mimeType     String    @map("mime_type") @db.VarChar(120)
+  sizeBytes    Int       @map("size_bytes")
+  sha256       String    @db.Char(64)
+  status       String    @default("active") @db.VarChar(20)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamp(6)
+
+  @@index([ownerUserId])
+  @@index([farmerId])
+  visitAttachments VisitAttachment[]
+
+  @@index([tenantId])
+  @@map("upload_records")
+}
+
+model VisitAttachment {
+  visitId   String   @map("visit_id") @db.Uuid
+  uploadId  String   @map("upload_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  visit     Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  upload    UploadRecord @relation(fields: [uploadId], references: [id], onDelete: Restrict)
+
+  @@id([visitId, uploadId])
+  @@index([uploadId])
+  @@map("visit_attachments")
+}
+
+model RecommendationReview {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String?  @map("tenant_id") @db.Uuid
+  farmerId       String?  @map("farmer_id") @db.Uuid
+  reportId       String?  @map("report_id") @db.Uuid
+  createdBy      String   @map("created_by") @db.Uuid
+  recommendation String
+  confidence     Decimal? @db.Decimal(5, 2)
+  evidenceStatus String   @default("no_verified_source") @map("evidence_status") @db.VarChar(40)
+  status         String   @default("pending") @db.VarChar(30)
+  disposition    String?
+  reviewedBy     String?  @map("reviewed_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  reviewedAt     DateTime? @map("reviewed_at") @db.Timestamp(6)
+  tenant         Tenant?  @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  farmer         Farmer?  @relation(fields: [farmerId], references: [id], onDelete: SetNull)
+  report         Report?  @relation(fields: [reportId], references: [id], onDelete: SetNull)
+  creator        User     @relation("ReviewCreator", fields: [createdBy], references: [id])
+  reviewer       User?    @relation("ReviewAssignee", fields: [reviewedBy], references: [id])
+
+  @@index([tenantId, status])
+  @@index([farmerId])
+  @@map("recommendation_reviews")
 }
 
 model WebRTCRoom {

@@ -21,11 +21,15 @@ describe('translationUtils', () => {
 
     it('should return original text on translation failure', async () => {
       const translate = (await import('translate')).default;
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
       vi.mocked(translate).mockRejectedValueOnce(new Error('Translation service unavailable'));
 
-      const result = await translateText('Hello', 'sw');
-
-      expect(result).toBe('Hello');
+      try {
+        const result = await translateText('Hello', 'sw');
+        expect(result).toBe('Hello');
+      } finally {
+        consoleError.mockRestore();
+      }
     });
 
     it('should handle empty input', async () => {

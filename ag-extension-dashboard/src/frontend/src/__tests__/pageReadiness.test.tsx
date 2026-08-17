@@ -3,7 +3,11 @@ import { act, render, screen, within } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { LanguageProvider } from '@/lib/LanguageContext';
-import { expectAccessibleLandmarks, expectNoOrphanButtons } from '@/test/a11y';
+import {
+  expectAccessibleLandmarks,
+  expectFormControlsLabelled,
+  expectNoOrphanButtons,
+} from '@/test/a11y';
 
 import Login from '@/pages/Login';
 import LandingPage from '@/pages/LandingPage';
@@ -26,6 +30,7 @@ describe('Page readiness — Accessibility & smoke', () => {
     const { container } = render(wrap(<Login />));
     await settleLanguage();
     expectAccessibleLandmarks(container);
+    expectFormControlsLabelled(container);
     const password = screen.getByLabelText(/password/i);
     expect(password).toBeInTheDocument();
     // No icon-only button left without an aria-label
@@ -36,6 +41,7 @@ describe('Page readiness — Accessibility & smoke', () => {
     const { container } = render(wrap(<LandingPage />));
     await settleLanguage();
     expectAccessibleLandmarks(container);
+    expectFormControlsLabelled(container);
     expectNoOrphanButtons(container);
   });
 
@@ -57,6 +63,7 @@ describe('Page readiness — Accessibility & smoke', () => {
     expectAccessibleLandmarks(container);
     // Heading or region that communicates the visits context exists.
     expect(within(container as HTMLElement).getAllByRole('heading').length).toBeGreaterThanOrEqual(0);
+    expectFormControlsLabelled(container);
   });
 
   it('FarmerChatPage exposes an interactive chat input region', async () => {

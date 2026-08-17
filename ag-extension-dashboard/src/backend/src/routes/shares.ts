@@ -3,6 +3,7 @@ import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
 import { shareService } from '@/services/shareService';
 import { safeError } from '@/utils/safeResponse';
+import { getPrincipalTenantId } from '@/services/dataGovernanceService';
 
 const router = Router();
 
@@ -59,11 +60,16 @@ router.post('/', async (req: Request, res: Response) => {
     try {
         const { entityType, entityId, isPublic, expiresAt, permissions } = req.body;
         const createdBy = req.user?.userId;
+        const tenantId = createdBy ? await getPrincipalTenantId(createdBy) : null;
+        if (!createdBy || !tenantId) {
+            return res.status(403).json({ success: false, error: 'Tenant membership required' });
+        }
 
         const shareLink = await shareService.createShare({
             entityType,
             entityId,
             createdBy,
+            tenantId,
             isPublic,
             expiresAt: expiresAt ? new Date(expiresAt) : undefined,
             permissions,
@@ -113,14 +119,15 @@ router.post('/', async (req: Request, res: Response) => {
 router.get('/', async (req: Request, res: Response) => {
     try {
         const creatorId = req.user?.userId;
-        if (!creatorId) {
+        const tenantId = creatorId ? await getPrincipalTenantId(creatorId) : null;
+        if (!creatorId || !tenantId) {
             return res.status(401).json({
                 success: false,
                 error: 'User not authenticated',
             });
         }
 
-        const shares = await shareService.getSharesByCreator(creatorId);
+        const shares = await shareService.getSharesByCreator(creatorId, tenantId);
 
         res.json({
             success: true,
@@ -158,15 +165,16 @@ router.delete('/:token', async (req: Request, res: Response) => {
     try {
         const { token } = req.params;
         const creatorId = req.user?.userId;
+        const tenantId = creatorId ? await getPrincipalTenantId(creatorId) : null;
 
-        if (!creatorId) {
+        if (!creatorId || !tenantId) {
             return res.status(401).json({
                 success: false,
                 error: 'User not authenticated',
             });
         }
 
-        const deleted = await shareService.deleteShare(token, creatorId);
+        const deleted = await shareService.deleteShare(token, creatorId, tenantId);
 
         if (!deleted) {
             return res.status(404).json({
@@ -233,6 +241,11 @@ router.post('/:token/email', async (req: Request, res: Response) => {
             });
         }
 
+        const creatorId = req.user?.userId;
+        const tenantId = creatorId ? await getPrincipalTenantId(creatorId) : null;
+        if (!creatorId || !tenantId || !(await shareService.canManageShare(token, creatorId, tenantId))) {
+            return res.status(404).json({ success: false, error: 'Share not found or not authorized' });
+        }
         await shareService.shareViaEmail(token, recipients, message);
 
         res.json({
@@ -293,6 +306,11 @@ router.post('/:token/sms', async (req: Request, res: Response) => {
             });
         }
 
+        const creatorId = req.user?.userId;
+        const tenantId = creatorId ? await getPrincipalTenantId(creatorId) : null;
+        if (!creatorId || !tenantId || !(await shareService.canManageShare(token, creatorId, tenantId))) {
+            return res.status(404).json({ success: false, error: 'Share not found or not authorized' });
+        }
         await shareService.shareViaSMS(token, recipients, message);
 
         res.json({

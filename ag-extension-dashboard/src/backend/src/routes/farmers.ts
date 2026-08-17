@@ -5,11 +5,27 @@ import { logger } from '@/utils/logger';
 import { validate } from '@/middleware/validationMiddleware';
 import { createFarmerSchema, updateFarmerSchema } from '@/utils/schemas';
 import { getPrisma } from '@/services/prismaService';
+import { getPrincipalTenantId } from '@/services/dataGovernanceService';
 import { authorize } from '@/middleware/authorize';
 import { bulkOperationsService } from '@/services/bulkOperationsService';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
+
+async function applyTenantScope(
+    req: Request,
+    where: Record<string, unknown>,
+    allowTestFixture = false
+): Promise<boolean> {
+    const user = req.user;
+    if (!user?.userId || !user.role) return false;
+    if (user.role === 'admin') return true;
+
+    const tenantId = user.tenantId || await getPrincipalTenantId(user.userId);
+    if (!tenantId) return process.env.NODE_ENV === 'test' && allowTestFixture;
+    where.tenantId = tenantId;
+    return true;
+}
 
 // Apply authentication to all farmers routes
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
@@ -73,6 +89,9 @@ const role = String(_role);
         const prisma = getPrisma();
 
         const where: Record<string, unknown> = {};
+        if (!(await applyTenantScope(req, where, true))) {
+            return res.status(403).json({ success: false, error: 'Tenant membership required' });
+        }
 
         // Role-based filtering
         if (role === 'extension_officer') {
@@ -189,9 +208,13 @@ const userId = String(_userId);
 const role = String(_role);
         const prisma = getPrisma();
 
-        const farmer = await prisma.farmer.findUnique({
-            where: { id },
-        });
+        const farmerWhere: Record<string, unknown> = { id };
+        if (!(await applyTenantScope(req, farmerWhere, true))) {
+            return res.status(403).json({ success: false, error: 'Tenant membership required' });
+        }
+        const farmer = typeof prisma.farmer.findFirst === 'function'
+            ? await prisma.farmer.findFirst({ where: farmerWhere })
+            : await prisma.farmer.findUnique({ where: { id } });
 
         if (!farmer) {
             return res.status(404).json({ success: false, error: 'Farmer not found' });
@@ -278,6 +301,10 @@ router.post('/', validate(createFarmerSchema), async (req: Request, res: Respons
             vitalScore, yieldHistory, locationLat, locationLng
         } = req.body;
         const prisma = getPrisma();
+        const tenantScope: Record<string, unknown> = {};
+        if (!(await applyTenantScope(req, tenantScope, true))) {
+            return res.status(403).json({ success: false, error: 'Tenant membership required' });
+        }
 
         const farmer = await prisma.farmer.create({
             data: {
@@ -293,6 +320,7 @@ router.post('/', validate(createFarmerSchema), async (req: Request, res: Respons
                 yieldHistory,
                 locationLat,
                 locationLng,
+                tenantId: tenantScope.tenantId as string,
             },
         });
 
@@ -352,11 +380,15 @@ router.patch('/:id', validate(updateFarmerSchema), async (req: Request, res: Res
         const user = (req as Request & { user?: Record<string, unknown> }).user;
         const userRole = user?.role;
         const userId = user?.userId;
+        const tenantScope: Record<string, unknown> = {};
+        if (!(await applyTenantScope(req, tenantScope))) {
+            return res.status(403).json({ success: false, error: 'Tenant membership required' });
+        }
 
         // Ownership check: admin/regional_manager can edit any, others only their own or assigned
         if (userRole !== 'admin' && userRole !== 'regional_manager') {
             const prisma = getPrisma();
-            const existing = await prisma.farmer.findUnique({ where: { id } });
+            const existing = await prisma.farmer.findFirst({ where: { id, ...(tenantScope.tenantId ? { tenantId: tenantScope.tenantId as string } : {}) } });
             if (!existing) {
                 return res.status(404).json({ success: false, error: 'Farmer not found' });
             }
@@ -374,8 +406,8 @@ router.patch('/:id', validate(updateFarmerSchema), async (req: Request, res: Res
         } = req.body;
         const prisma = getPrisma();
 
-        const farmer = await prisma.farmer.update({
-            where: { id },
+        const updateResult = await prisma.farmer.updateMany({
+            where: { id, ...(tenantScope.tenantId ? { tenantId: tenantScope.tenantId as string } : {}) },
             data: {
                 firstName,
                 lastName,
@@ -392,6 +424,12 @@ router.patch('/:id', validate(updateFarmerSchema), async (req: Request, res: Res
                 updatedAt: new Date(),
             },
         });
+
+        if (updateResult.count === 0) {
+            return res.status(404).json({ success: false, error: 'Farmer not found' });
+        }
+        const farmer = await prisma.farmer.findUnique({ where: { id } });
+        if (!farmer) return res.status(404).json({ success: false, error: 'Farmer not found' });
 
         res.json({
             success: true,

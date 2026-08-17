@@ -18,6 +18,7 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [attachedPhoto, setAttachedPhoto] = useState<string | null>(null);
+  const [attachedFile, setAttachedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -42,15 +43,16 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setError('Please select an image file');
+    if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)) {
+      setError('Please select a supported image file');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setAttachedPhoto(ev.target?.result as string);
-    };
-    reader.readAsDataURL(file);
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Photo must be smaller than 10MB');
+      return;
+    }
+    setAttachedFile(file);
+    setAttachedPhoto(URL.createObjectURL(file));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,17 +66,39 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
     setError(null);
 
     try {
+      const attachmentIds: string[] = [];
+      const attachmentRefs: string[] = [];
+      const isOnline = await apiQueue.isCurrentlyOnline();
+      if (attachedFile && !isOnline) {
+        attachmentRefs.push(await apiQueue.storeOfflineAttachment(attachedFile, selectedFarmerId));
+      } else if (attachedFile) {
+        const formData = new FormData();
+        formData.append('file', attachedFile);
+        formData.append('farmerId', selectedFarmerId);
+        const uploadResponse = await apiQueue.makeRequest(`${CONFIG.API_BASE_URL}/upload/upload`, {
+          method: 'POST',
+          body: formData,
+        });
+        const uploadResult = await uploadResponse.json() as { success?: boolean; data?: { id?: string }; error?: string };
+        if (!uploadResponse.ok || !uploadResult.success || !uploadResult.data?.id) {
+          throw new Error(uploadResult.error || 'Photo upload failed');
+        }
+        attachmentIds.push(uploadResult.data.id);
+      }
+
       const payload: Record<string, unknown> = {
         farmerId: selectedFarmerId,
         visit_type: observationType,
-        reason: notes,
+        notes,
         scheduled_at: new Date().toISOString(),
         status: 'completed'
       };
 
-      // If photo is attached, include it in the payload
-      if (attachedPhoto) {
-        payload.attachments = [attachedPhoto];
+      if (attachmentIds.length > 0) {
+        payload.attachmentIds = attachmentIds;
+      }
+      if (attachmentRefs.length > 0) {
+        payload.attachmentRefs = attachmentRefs;
       }
 
       const response = await apiQueue.makeRequest(`${CONFIG.API_BASE_URL}/visits`, {
@@ -86,7 +110,9 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
       if (response.ok) {
         setIsSuccess(true);
         setNotes('');
+        if (attachedPhoto) URL.revokeObjectURL(attachedPhoto);
         setAttachedPhoto(null);
+        setAttachedFile(null);
         setTimeout(() => setIsSuccess(false), 3000);
       } else {
         const result = await response.json();
@@ -94,13 +120,15 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
           setIsSuccess(true);
           setError('Offline: Visit queued for sync.');
           setNotes('');
+          if (attachedPhoto) URL.revokeObjectURL(attachedPhoto);
           setAttachedPhoto(null);
+          setAttachedFile(null);
         } else {
           throw new Error('Failed to save visit');
         }
       }
     } catch (err) {
-      setError('Failed to log visit. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to log visit. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -118,9 +146,10 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Farmer Selection */}
         <div className="space-y-1.5">
-          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Farmer</label>
+          <label htmlFor="visit-farmer" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Farmer</label>
           <div className="relative">
             <select
+              id="visit-farmer"
               value={selectedFarmerId}
               onChange={(e) => setSelectedFarmerId(e.target.value)}
               className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm appearance-none outline-none focus:border-emerald-500 transition-all text-slate-200"
@@ -136,13 +165,15 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
 
         {/* Observation Type */}
         <div className="space-y-1.5">
-          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Type</label>
+          <span id="visit-type-label" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Type</span>
           <div className="grid grid-cols-2 gap-2">
             {['Routine Inspection', 'Pest Outbreak', 'Soil Analysis', 'Growth Check'].map(type => (
               <button
                 key={type}
                 type="button"
                 onClick={() => setObservationType(type)}
+                aria-pressed={observationType === type}
+                aria-labelledby="visit-type-label"
                 className={`text-[10px] font-black uppercase tracking-tight py-2 rounded-lg border transition-all ${
                   observationType === type 
                     ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400' 
@@ -157,8 +188,9 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
 
         {/* Notes */}
         <div className="space-y-1.5">
-          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Observations & Notes</label>
+          <label htmlFor="visit-notes" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Observations & Notes</label>
           <textarea
+            id="visit-notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Describe crop health, pest presence, etc..."
@@ -173,6 +205,7 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
             <button
               type="button"
               onClick={() => setAttachedPhoto(null)}
+              aria-label="Remove attached photo"
               className="absolute -top-2 -right-2 w-5 h-5 bg-rose-500 rounded-full flex items-center justify-center"
             >
               <X className="w-3 h-3 text-white" />
@@ -219,7 +252,7 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
         </div>
 
         {error && (
-          <p className={`text-[10px] font-bold text-center ${error.includes('Offline') ? 'text-orange-400' : 'text-red-400'}`}>
+          <p role="alert" className={`text-[10px] font-bold text-center ${error.includes('Offline') ? 'text-orange-400' : 'text-red-400'}`}>
             {error}
           </p>
         )}

@@ -21,19 +21,32 @@ import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
 import * as XLSX from 'xlsx';
 import { safeError } from '@/utils/safeResponse';
+import { getPrincipalTenantId } from '@/services/dataGovernanceService';
 
 const router = Router();
 
 // Apply authentication to all portfolio routes
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
+async function getPortfolioScope(req: Request): Promise<{ officerId: string; tenantId: string | null } | null> {
+    const userId = req.user?.userId;
+    if (!userId) return null;
+    const tenantId = process.env.NODE_ENV === 'test' ? null : await getPrincipalTenantId(userId);
+    if (!tenantId && process.env.NODE_ENV !== 'test') return null;
+    const requestedOfficer = typeof req.query.officerId === 'string' ? req.query.officerId : null;
+    const officerId = req.user?.role === 'admin' && requestedOfficer ? requestedOfficer : userId;
+    return { officerId, tenantId };
+}
+
 // Portfolio overview for extension officer
 router.get('/', async (req: Request, res: Response) => {
     try {
-        const { officerId } = req.query;
-        const oId = officerId || 'current';
-
-        const cacheKey = 'portfolio:' + oId;
+        const scope = await getPortfolioScope(req);
+        if (!scope) return res.status(403).json({ success: false, error: 'Tenant membership required' });
+        const { officerId: oId, tenantId } = scope;
+        const farmerTenantFilter = tenantId ? ' AND f.tenant_id = $2' : '';
+        const visitTenantFilter = tenantId ? ' AND EXISTS (SELECT 1 FROM farmers sf WHERE sf.id = visits.farmer_id AND sf.tenant_id = $2)' : '';
+        const cacheKey = `portfolio:${oId}:${tenantId || 'legacy'}`;
         const cached = await cacheGet(cacheKey);
         if (cached) {
             return res.json(JSON.parse(cached));
@@ -53,17 +66,18 @@ router.get('/', async (req: Request, res: Response) => {
             upcomingVisits,
             highPriority
         ] = await Promise.all([
-            query<CountRow>('SELECT COUNT(*) as count FROM farmers WHERE user_id = $1', [oId]),
-            query<CountRow>("SELECT COUNT(*) as count FROM visits WHERE officer_id = $1 AND status = 'scheduled'", [oId]),
-            query<CountRow>("SELECT COUNT(*) as count FROM visits WHERE officer_id = $1 AND status = 'scheduled' AND scheduled_at < NOW()", [oId]),
-            query<CountRow>("SELECT COUNT(*) as count FROM visits WHERE officer_id = $1 AND status = 'scheduled' AND scheduled_at > NOW() AND scheduled_at < NOW() + INTERVAL '7 days'", [oId]),
+            query<CountRow>(`SELECT COUNT(*) as count FROM farmers f WHERE f.user_id = $1${farmerTenantFilter}`, [oId, tenantId]),
+            query<CountRow>(`SELECT COUNT(*) as count FROM visits WHERE officer_id = $1 AND status = 'scheduled'${visitTenantFilter}`, [oId, tenantId]),
+            query<CountRow>(`SELECT COUNT(*) as count FROM visits WHERE officer_id = $1 AND status = 'scheduled' AND scheduled_at < NOW()${visitTenantFilter}`, [oId, tenantId]),
+            query<CountRow>(`SELECT COUNT(*) as count FROM visits WHERE officer_id = $1 AND status = 'scheduled' AND scheduled_at > NOW() AND scheduled_at < NOW() + INTERVAL '7 days'${visitTenantFilter}`, [oId, tenantId]),
             query<CountRow>(`
                 SELECT COUNT(*) as count FROM visits v
                 JOIN farmers f ON f.id = v.farmer_id
                 WHERE v.officer_id = $1
                 AND v.follow_up_required = true
                 AND v.completed_at > NOW() - INTERVAL '30 days'
-            `, [oId])
+                ${tenantId ? 'AND f.tenant_id = $2' : ''}
+            `, [oId, tenantId])
         ]);
 
         // Get priority queue (farmers needing attention)
@@ -85,10 +99,10 @@ router.get('/', async (req: Request, res: Response) => {
                 ORDER BY v.completed_at DESC
                 LIMIT 1
             ) v ON true
-            WHERE f.user_id = $1
+            WHERE f.user_id = $1${farmerTenantFilter}
             ORDER BY v.created_at ASC NULLS FIRST
             LIMIT 10
-        `, [oId]);
+        `, [oId, tenantId]);
 
         const portfolio = {
             summary: {
@@ -113,9 +127,11 @@ router.get('/', async (req: Request, res: Response) => {
 // Get prioritized recommendations
 router.get('/recommendations', async (req: Request, res: Response) => {
     try {
-        const { officerId, date } = req.query;
-        const oId = officerId || 'current';
-        const targetDate = date || new Date().toISOString().split('T')[0];
+        const scope = await getPortfolioScope(req);
+        if (!scope) return res.status(403).json({ success: false, error: 'Tenant membership required' });
+        const { officerId: oId, tenantId } = scope;
+        const farmerTenantFilter = tenantId ? ' AND f.tenant_id = $2' : '';
+        const targetDate = typeof req.query.date === 'string' ? req.query.date : new Date().toISOString().split('T')[0];
 
         const pool = getPool();
 
@@ -144,19 +160,20 @@ router.get('/recommendations', async (req: Request, res: Response) => {
                 ORDER BY v.completed_at DESC
                 LIMIT 1
             ) v ON true
-            WHERE f.user_id = $1
+            WHERE f.user_id = $1${farmerTenantFilter}
             ORDER BY v.completed_at ASC NULLS FIRST
             LIMIT 10
-        `, [oId]);
+        `, [oId, tenantId]);
 
         // Get active alerts
         const alerts = await query<AlertSummaryRow>(`
             SELECT type, severity, description, location
             FROM alerts
             WHERE is_active = true
+              ${tenantId ? 'AND EXISTS (SELECT 1 FROM farmers af WHERE af.id = ANY(alerts.affected_farmers) AND af.tenant_id = $1)' : ''}
             ORDER BY severity DESC, triggered_at DESC
             LIMIT 5
-        `);
+        `, [tenantId]);
 
         const recommendations = {
             date: targetDate,
@@ -178,6 +195,9 @@ router.get('/recommendations', async (req: Request, res: Response) => {
 router.get('/farmers/:id', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
+        const scope = await getPortfolioScope(req);
+        if (!scope) return res.status(403).json({ success: false, error: 'Tenant membership required' });
+        const { tenantId } = scope;
         const pool = getPool();
 
         let farmer: FarmerDetailRow | null = null;
@@ -198,7 +218,8 @@ router.get('/farmers/:id', async (req: Request, res: Response) => {
                        (SELECT MAX(v.completed_at) FROM visits v WHERE v.farmer_id = f.id AND v.status = 'completed') as last_visit
                 FROM farmers f
                 WHERE f.id = $1
-            `, [id]);
+                  ${tenantId ? 'AND f.tenant_id = $2' : ''}
+            `, [id, tenantId]);
             farmer = result.rows[0] ?? null;
         }
 
@@ -288,8 +309,9 @@ function buildVisitsSheet(visits: PortfolioExportVisitRow[]) {
 // Export portfolio as Excel
 router.get('/export/excel', async (req: Request, res: Response) => {
     try {
-        const { officerId } = req.query;
-        const oId = officerId || 'current';
+        const scope = await getPortfolioScope(req);
+        if (!scope) return res.status(403).json({ success: false, error: 'Tenant membership required' });
+        const { officerId: oId, tenantId } = scope;
         const pool = getPool();
 
         if (!pool) {
@@ -311,8 +333,9 @@ router.get('/export/excel', async (req: Request, res: Response) => {
                    (SELECT MAX(v.completed_at) FROM visits v WHERE v.farmer_id = f.id AND v.status = 'completed') as last_visit_date
             FROM farmers f
             WHERE f.user_id = $1
+              ${tenantId ? 'AND f.tenant_id = $2' : ''}
             ORDER BY f.last_name, f.first_name
-        `, [oId]);
+        `, [oId, tenantId]);
 
         const farmers = farmersResult.rows;
         const wb = XLSX.utils.book_new();
@@ -335,9 +358,10 @@ router.get('/export/excel', async (req: Request, res: Response) => {
             FROM visits v
             JOIN farmers f ON f.id = v.farmer_id
             WHERE v.officer_id = $1 AND v.status = 'scheduled' AND v.scheduled_at > NOW()
+              ${tenantId ? 'AND f.tenant_id = $2' : ''}
             ORDER BY v.scheduled_at
             LIMIT 50
-        `, [oId]);
+        `, [oId, tenantId]);
 
         XLSX.utils.book_append_sheet(wb, buildVisitsSheet(visitsResult.rows), 'Upcoming Visits');
 

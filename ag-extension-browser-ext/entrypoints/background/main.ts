@@ -10,6 +10,7 @@ interface QueuedRequest {
     method: string;
     headers: Record<string, string>;
     body?: any;
+    attachmentRefs?: string[];
     timestamp: number;
     retries: number;
     maxRetries: number;
@@ -22,14 +23,25 @@ interface OfflineStatus {
     lastChecked: number;
 }
 
+interface OfflineAttachment {
+    id: string;
+    file: Blob;
+    farmerId: string;
+    sizeBytes: number;
+    createdAt: number;
+    uploadedId?: string;
+}
+
 export default defineBackground(() => {
     console.log('Ag-Extension Background Script Active');
 
     // IndexedDB setup for offline queue
     const DB_NAME = 'AgExtensionOffline';
-    const DB_VERSION = 1;
+    const DB_VERSION = 2;
     const QUEUE_STORE = 'queuedRequests';
     const STATUS_STORE = 'offlineStatus';
+    const ATTACHMENT_STORE = 'offlineAttachments';
+    const ATTACHMENT_BUDGET_BYTES = 50 * 1024 * 1024;
 
     let db: IDBDatabase | null = null;
 
@@ -59,6 +71,11 @@ export default defineBackground(() => {
                 // Create status store
                 if (!dbInstance.objectStoreNames.contains(STATUS_STORE)) {
                     dbInstance.createObjectStore(STATUS_STORE, { keyPath: 'key' });
+                }
+
+                if (!dbInstance.objectStoreNames.contains(ATTACHMENT_STORE)) {
+                    const attachmentStore = dbInstance.createObjectStore(ATTACHMENT_STORE, { keyPath: 'id' });
+                    attachmentStore.createIndex('createdAt', 'createdAt', { unique: false });
                 }
             };
         });
@@ -124,6 +141,88 @@ export default defineBackground(() => {
         });
     };
 
+    const storeOfflineAttachment = async (input: { file: Blob; farmerId: string }): Promise<string> => {
+        if (!db) await initDB();
+        const id = `attachment-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+        const attachment: OfflineAttachment = { id, file: input.file, farmerId: input.farmerId, sizeBytes: input.file.size, createdAt: Date.now() };
+        await new Promise<void>((resolve, reject) => {
+            const transaction = db!.transaction([ATTACHMENT_STORE], 'readwrite');
+            const request = transaction.objectStore(ATTACHMENT_STORE).add(attachment);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(new Error(request.error?.message || 'Store attachment failed'));
+        });
+
+        const attachments = await new Promise<OfflineAttachment[]>((resolve, reject) => {
+            const transaction = db!.transaction([ATTACHMENT_STORE], 'readonly');
+            const request = transaction.objectStore(ATTACHMENT_STORE).getAll();
+            request.onsuccess = () => resolve(request.result as OfflineAttachment[]);
+            request.onerror = () => reject(new Error(request.error?.message || 'Read attachments failed'));
+        });
+        let total = attachments.reduce((sum, item) => sum + item.sizeBytes, 0);
+        for (const oldest of attachments.sort((a, b) => a.createdAt - b.createdAt)) {
+            if (total <= ATTACHMENT_BUDGET_BYTES) break;
+            if (oldest.id === id) continue;
+            await new Promise<void>((resolve, reject) => {
+                const transaction = db!.transaction([ATTACHMENT_STORE], 'readwrite');
+                const request = transaction.objectStore(ATTACHMENT_STORE).delete(oldest.id);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(new Error(request.error?.message || 'Evict attachment failed'));
+            });
+            total -= oldest.sizeBytes;
+        }
+        if (total > ATTACHMENT_BUDGET_BYTES) {
+            await new Promise<void>((resolve, reject) => {
+                const transaction = db!.transaction([ATTACHMENT_STORE], 'readwrite');
+                const request = transaction.objectStore(ATTACHMENT_STORE).delete(id);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(new Error(request.error?.message || 'Remove oversized attachment failed'));
+            });
+            throw new Error('Offline attachment storage is full; save the visit without a photo or free local storage');
+        }
+        return id;
+    };
+
+    const getOfflineAttachment = async (id: string): Promise<OfflineAttachment | null> => {
+        if (!db) await initDB();
+        return new Promise((resolve, reject) => {
+            const transaction = db!.transaction([ATTACHMENT_STORE], 'readonly');
+            const request = transaction.objectStore(ATTACHMENT_STORE).get(id);
+            request.onsuccess = () => resolve((request.result as OfflineAttachment | undefined) || null);
+            request.onerror = () => reject(new Error(request.error?.message || 'Read attachment failed'));
+        });
+    };
+
+    const removeOfflineAttachment = async (id: string): Promise<void> => {
+        if (!db) await initDB();
+        await new Promise<void>((resolve, reject) => {
+            const transaction = db!.transaction([ATTACHMENT_STORE], 'readwrite');
+            const request = transaction.objectStore(ATTACHMENT_STORE).delete(id);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(new Error(request.error?.message || 'Remove attachment failed'));
+        });
+    };
+
+    const uploadOfflineAttachment = async (attachment: OfflineAttachment, headers: Record<string, string>): Promise<string> => {
+        if (attachment.uploadedId) return attachment.uploadedId;
+        const formData = new FormData();
+        formData.append('file', attachment.file, `${attachment.id}.jpg`);
+        formData.append('farmerId', attachment.farmerId);
+        const uploadHeaders = { ...headers };
+        delete uploadHeaders['Content-Type'];
+        delete uploadHeaders['content-type'];
+        const response = await fetch(`${CONFIG.API_BASE_URL}/upload/upload`, { method: 'POST', headers: uploadHeaders, body: formData });
+        const result = await response.json() as { success?: boolean; data?: { id?: string }; error?: string };
+        if (!response.ok || !result.success || !result.data?.id) throw new Error(result.error || `Attachment upload failed (${response.status})`);
+        attachment.uploadedId = result.data.id;
+        await new Promise<void>((resolve, reject) => {
+            const transaction = db!.transaction([ATTACHMENT_STORE], 'readwrite');
+            const request = transaction.objectStore(ATTACHMENT_STORE).put(attachment);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(new Error(request.error?.message || 'Update attachment failed'));
+        });
+        return result.data.id;
+    };
+
     // Queue a request
     const queueRequest = async (request: Omit<QueuedRequest, 'id' | 'idempotencyKey' | 'timestamp' | 'retries' | 'state'> & { idempotencyKey?: string }): Promise<void> => {
         if (!db) await initDB();
@@ -173,6 +272,7 @@ export default defineBackground(() => {
                     requests.push({
                         ...value,
                         idempotencyKey: value.idempotencyKey || value.id,
+                        attachmentRefs: value.attachmentRefs || [],
                         state: value.state || 'pending',
                         retries: value.retries || 0,
                         maxRetries: value.maxRetries || 3,
@@ -207,21 +307,36 @@ export default defineBackground(() => {
     // Process a single queued request
     const processSingleRequest = async (request: QueuedRequest): Promise<void> => {
         try {
+            const headers = {
+                ...request.headers,
+                ...(request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : {}),
+            };
+            let requestBody = request.body === undefined
+                ? undefined
+                : typeof request.body === 'string'
+                    ? request.body
+                    : JSON.stringify(request.body);
+            const uploadedIds: string[] = [];
+            for (const ref of request.attachmentRefs || []) {
+                const attachment = await getOfflineAttachment(ref);
+                if (!attachment) throw new Error(`Offline attachment ${ref} was evicted before sync`);
+                uploadedIds.push(await uploadOfflineAttachment(attachment, headers));
+            }
+            if (uploadedIds.length > 0 && typeof requestBody === 'string') {
+                const payload = JSON.parse(requestBody) as Record<string, unknown>;
+                payload.attachmentIds = [...(Array.isArray(payload.attachmentIds) ? payload.attachmentIds : []), ...uploadedIds];
+                delete payload.attachmentRefs;
+                requestBody = JSON.stringify(payload);
+            }
             const response = await fetch(request.url, {
                 method: request.method,
-                headers: {
-                    ...request.headers,
-                    ...(request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : {}),
-                },
-                body: request.body === undefined
-                    ? undefined
-                    : typeof request.body === 'string'
-                        ? request.body
-                        : JSON.stringify(request.body)
+                headers,
+                body: requestBody
             });
 
             if (response.ok) {
                 console.log('Queued request processed successfully:', request.id);
+                for (const ref of request.attachmentRefs || []) await removeOfflineAttachment(ref);
                 await removeQueuedRequest(request.id);
             } else if (response.status === 409) {
                 request.state = 'conflict';
@@ -373,6 +488,10 @@ export default defineBackground(() => {
                 if (message.action === 'queue_request') {
                     await queueRequest(message.request);
                     sendResponse({ success: true });
+                } else if (message.action === 'store_offline_attachment') {
+                    const attachment = message.attachment as { file: Blob; farmerId: string };
+                    const id = await storeOfflineAttachment(attachment);
+                    sendResponse({ success: true, id });
                 } else if (message.action === 'get_queued_requests') {
                     const requests = await getQueuedRequests();
                     sendResponse({ success: true, requests });

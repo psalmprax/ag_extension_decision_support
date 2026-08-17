@@ -18,9 +18,38 @@ import { authorize } from '@/middleware/authorize';
 import { bulkOperationsService } from '@/services/bulkOperationsService';
 import { safeError } from '@/utils/safeResponse';
 import { executeIdempotentMutation } from '@/services/idempotencyService';
+import { getFarmerForPrincipal, getPrincipalTenantId } from '@/services/dataGovernanceService';
 import type { PoolClient } from 'pg';
 
 const router = Router();
+
+type VisitPrincipal = { userId: string; role: string };
+
+async function buildVisitScope(user: VisitPrincipal | undefined): Promise<{ clause: string; params: unknown[] }> {
+    if (!user?.userId || !user.role) throw new Error('AUTHENTICATION_REQUIRED');
+    if (user.role === 'admin') return { clause: '', params: [] };
+
+    const tenantId = await getPrincipalTenantId(user.userId);
+    if (!tenantId) throw new Error('TENANT_MEMBERSHIP_REQUIRED');
+
+    const params: unknown[] = [tenantId];
+    let clause = ' AND f.tenant_id = $1';
+    if (user.role === 'extension_officer') {
+        params.push(user.userId);
+        clause += ' AND f.assigned_officer_id = $2';
+    }
+    if (user.role === 'farmer') {
+        params.push(user.userId);
+        clause += ' AND f.user_id = $2';
+    }
+    return { clause, params };
+}
+
+async function canAccessFarmer(req: Request, farmerId: string): Promise<boolean> {
+    if (!req.user?.userId || !req.user.role) return false;
+    if (req.user.role === 'admin') return true;
+    return Boolean(await getFarmerForPrincipal(farmerId, { userId: req.user.userId, role: req.user.role }));
+}
 
 // Apply authentication to all visits routes
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
@@ -36,29 +65,22 @@ router.get('/', async (req: Request, res: Response) => {
             return res.status(503).json({ success: false, error: 'Database connection unavailable' });
         }
 
-        let sql = "SELECT v.*, f.first_name || ' ' || f.last_name as farmer_name FROM visits v LEFT JOIN farmers f ON f.id = v.farmer_id WHERE 1=1";
-        const params: unknown[] = [];
-        let paramIndex = 1;
-
-        // Role-based filtering
-        if (user?.role === 'extension_officer') {
-            const officerIdVal = user.userId;
-            if (!officerIdVal) {
-                return res.status(401).json({ success: false, error: 'Missing user id' });
+        let scope: { clause: string; params: unknown[] };
+        try {
+            scope = await buildVisitScope(user);
+        } catch (error) {
+            if (error instanceof Error && error.message === 'TENANT_MEMBERSHIP_REQUIRED') {
+                return res.status(403).json({ success: false, error: 'Tenant membership required' });
             }
-            sql += ` AND v.farmer_id IN (SELECT id FROM farmers WHERE assigned_officer_id = $${paramIndex++})`;
-            params.push(officerIdVal);
-        } else if (user?.role === 'farmer') {
-            const userIdVal = user.userId;
-            if (!userIdVal) {
-                return res.status(401).json({ success: false, error: 'Missing user id' });
-            }
-            sql += ` AND v.farmer_id IN (SELECT id FROM farmers WHERE user_id = $${paramIndex++})`;
-            params.push(userIdVal);
+            return res.status(401).json({ success: false, error: 'Authentication required' });
         }
-        // admin and regional_manager see all visits (no additional filter)
 
-        // Optional explicit filters (override or refine role-based filtering for admins)
+        let sql = "SELECT v.*, f.first_name || ' ' || f.last_name as farmer_name FROM visits v LEFT JOIN farmers f ON f.id = v.farmer_id WHERE 1=1";
+        const params: unknown[] = [...scope.params];
+        let paramIndex = params.length + 1;
+        sql += scope.clause;
+
+        // Optional explicit filters refine the tenant and role scope.
         if (officerId && (user?.role === 'admin' || user?.role === 'regional_manager')) {
             sql += ' AND v.officer_id = $' + paramIndex++;
             params.push(officerId);
@@ -111,6 +133,9 @@ router.get('/:id', async (req: Request, res: Response) => {
         if (!visit) {
             return res.status(404).json({ success: false, error: 'Visit not found' });
         }
+        if (!visit.farmer_id || !(await canAccessFarmer(req, visit.farmer_id))) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
 
         res.json({ success: true, data: mapVisitWithFarmerRow(visit) });
     } catch (error) {
@@ -126,14 +151,26 @@ interface InsertVisitParams {
     scheduledAt: string;
     notes?: string;
     userId?: string;
+    attachmentIds?: string[];
 }
 
 async function performInsertVisit(
     params: InsertVisitParams,
     executor: typeof query | PoolClient
 ) {
-    const { farmerId, officerId, visitType, scheduledAt, notes, userId } = params;
+    const { farmerId, officerId, visitType, scheduledAt, notes, userId, attachmentIds = [] } = params;
     const values = [farmerId, officerId || userId || 'u1', visitType, scheduledAt, notes];
+    if (attachmentIds.length > 0) {
+        if (!userId) throw new Error('Attachment owner is required');
+        const attachmentCheckSql = `SELECT id FROM upload_records
+            WHERE id = ANY($1::uuid[]) AND owner_user_id = $2 AND farmer_id = $3 AND status = 'active'`;
+        const attachmentCheck = executor === query
+            ? await query<{ id: string }>(attachmentCheckSql, [attachmentIds, userId, farmerId])
+            : await (executor as PoolClient).query<{ id: string }>(attachmentCheckSql, [attachmentIds, userId, farmerId]);
+        if (attachmentCheck.rows.length !== attachmentIds.length) {
+            throw new Error('One or more attachments are not owned by the current user or farmer');
+        }
+    }
     const sql = `INSERT INTO visits (farmer_id, officer_id, visit_type, status, scheduled_at, notes, created_at)
                  VALUES ($1, $2, $3, 'scheduled', $4, $5, NOW())
                  RETURNING *`;
@@ -142,6 +179,15 @@ async function performInsertVisit(
         ? await query<VisitInsertRow>(sql, values)
         : await (executor as PoolClient).query<VisitInsertRow>(sql, values);
     const created = result.rows[0];
+    if (created && attachmentIds.length > 0) {
+        const attachmentSql = `INSERT INTO visit_attachments (visit_id, upload_id)
+            SELECT $1::uuid, unnest($2::uuid[]) ON CONFLICT DO NOTHING`;
+        if (executor === query) {
+            await query(attachmentSql, [created.id, attachmentIds]);
+        } else {
+            await (executor as PoolClient).query(attachmentSql, [created.id, attachmentIds]);
+        }
+    }
     return { success: true, data: created ? mapVisitInsertRow(created) : null };
 }
 
@@ -276,10 +322,16 @@ router.post('/', validate(createVisitSchema), async (req: Request, res: Response
             scheduledAt: (body.scheduledAt ?? body.scheduled_at) as string,
             notes: body.notes as string | undefined,
             userId: req.user?.userId,
+            attachmentIds: Array.isArray(body.attachmentIds)
+                ? body.attachmentIds.filter((id): id is string => typeof id === 'string')
+                : [],
         };
 
         if (!getPool()) {
             return res.status(503).json({ success: false, error: 'Database connection unavailable' });
+        }
+        if (!(await canAccessFarmer(req, insertParams.farmerId))) {
+            return res.status(403).json({ success: false, error: 'Access denied to farmer' });
         }
 
         const result = await executeVisitMutation(
@@ -313,6 +365,16 @@ router.patch('/:id', validate(updateVisitSchema), async (req: Request, res: Resp
 
         if (!getPool()) {
             return res.status(503).json({ success: false, error: 'Database connection unavailable' });
+        }
+        if (!req.user?.userId || !req.user.role) {
+            return res.status(401).json({ success: false, error: 'Authentication required' });
+        }
+        const existingVisit = await query<{ farmer_id: string | null }>(
+            'SELECT farmer_id FROM visits WHERE id = $1', [id]
+        );
+        const existingFarmerId = existingVisit.rows[0]?.farmer_id;
+        if (!existingFarmerId || !(await canAccessFarmer(req, existingFarmerId))) {
+            return res.status(403).json({ success: false, error: 'Access denied to visit' });
         }
 
         const result = await executeVisitMutation(

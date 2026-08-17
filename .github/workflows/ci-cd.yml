@@ -42,10 +42,25 @@ jobs:
           cd ag-extension-dashboard/src/frontend
           npm run build
       
+      - name: Check frontend bundle budget
+        run: |
+          cd ag-extension-dashboard/src/frontend
+          npm run check:bundle
+
       - name: Run frontend tests
         run: |
           cd ag-extension-dashboard/src/frontend
           npm run test -- --run
+
+      - name: Install Playwright browser
+        run: |
+          cd ag-extension-dashboard/src/frontend
+          npx playwright install --with-deps chromium
+
+      - name: Run release smoke tests
+        run: |
+          cd ag-extension-dashboard/src/frontend
+          npm run test:e2e -- --grep @release
 
   # Backend checks
   backend:
@@ -121,6 +136,41 @@ jobs:
           DATABASE_URL: postgres://psalmprax:password@localhost:5432/ag_extension
           REDIS_URL: redis://localhost:6379
           NODE_ENV: test
+
+  # Browser extension checks
+  extension:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ag-extension-browser-ext/package-lock.json
+
+      - name: Install extension dependencies
+        run: |
+          cd ag-extension-browser-ext
+          npm ci
+
+      - name: Type check extension
+        run: |
+          cd ag-extension-browser-ext
+          npm run typecheck
+
+      - name: Build extension
+        run: |
+          cd ag-extension-browser-ext
+          npm run build
+
+      - name: Verify extension artifact
+        run: |
+          cd ag-extension-browser-ext
+          test -n "$(find .output -name manifest.json -print -quit)"
 
   # Security audit
   security:

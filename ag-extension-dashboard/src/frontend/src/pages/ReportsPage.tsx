@@ -4,6 +4,7 @@ import { Report } from '@/api/reportService';
 import { downloadReport, getReportContent } from '@/api/reportService';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
+import { RecommendationReviewQueue } from '@/components/RecommendationReviewQueue';
 
 interface ReportsPageProps {
   reports: Report[];
@@ -184,6 +185,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
             : t('reports_generate_new')}
         </button>
       </div>
+      <RecommendationReviewQueue addNotification={addNotification} />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {reports.map((report: Report) => (
           <ReportCard

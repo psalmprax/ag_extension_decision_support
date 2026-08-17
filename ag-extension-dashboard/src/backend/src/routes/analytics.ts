@@ -5,6 +5,7 @@ import { cacheGet, cacheSet } from '@/services/cacheService';
 import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
 import { safeError } from '@/utils/safeResponse';
+import { getPrincipalTenantId } from '@/services/dataGovernanceService';
 
 const router = Router();
 
@@ -37,44 +38,78 @@ function computeGrowth(current: number, previous: number): number {
     return previous > 0 ? ((current - previous) / previous * PERCENTAGE_MULTIPLIER) : 0;
 }
 
+const EMPTY_TENANT_ID = '00000000-0000-0000-0000-000000000000';
+
+async function getAnalyticsTenantId(req: Request): Promise<string | null> {
+    if (process.env.NODE_ENV === 'test') return null;
+    return req.user?.userId ? getPrincipalTenantId(req.user.userId) : null;
+}
+
+async function getSafeAnalyticsTenantId(req: Request): Promise<string> {
+    const tenantId = await getAnalyticsTenantId(req);
+    return tenantId || EMPTY_TENANT_ID;
+}
+
+function tenantPredicate(tenantId: string | null, alias: string): string {
+    if (!tenantId) return '';
+    if (!/^[0-9a-f-]{36}$/i.test(tenantId)) return ' AND 1 = 0';
+    if (alias === 'f' || alias === 'u') return ` AND ${alias}.tenant_id = '${tenantId}'`;
+    return ` AND EXISTS (SELECT 1 FROM farmers scoped_f WHERE scoped_f.id = ${alias}.farmer_id AND scoped_f.tenant_id = '${tenantId}')`;
+}
+
 interface UserScope {
     isOfficer: boolean;
     isManager: boolean;
     officerId: string | null;
     managerRegion: string | null;
+    tenantId: string | null;
 }
 
-function buildScopeFilter(user: UserScope, column: string = 'assigned_officer_id'): { whereClause: string; params: unknown[] } {
+function tenantFilter(user: UserScope, alias: string): string {
+    if (!user.tenantId) return '';
+    if (!/^[0-9a-f-]{36}$/i.test(user.tenantId)) return ' AND 1 = 0';
+    if (alias === 'f') return ` AND f.tenant_id = '${user.tenantId}'`;
+    return ` AND EXISTS (SELECT 1 FROM farmers scoped_f WHERE scoped_f.id = ${alias}.farmer_id AND scoped_f.tenant_id = '${user.tenantId}')`;
+}
+
+function buildScopeFilter(user: UserScope, column = 'assigned_officer_id', alias = 'f'): { whereClause: string; params: unknown[] } {
+    const tenantClause = tenantFilter(user, alias);
     if (user.isOfficer) {
-        return { whereClause: `AND ${column} = $1`, params: [user.officerId] };
+        return { whereClause: `AND ${alias}.${column} = $1${tenantClause}`, params: [user.officerId] };
     }
     if (user.isManager) {
-        return { whereClause: `AND f.region = $1`, params: [user.managerRegion] };
+        const regionClause = alias === 'f'
+            ? 'AND f.region = $1'
+            : `AND EXISTS (SELECT 1 FROM farmers scoped_region WHERE scoped_region.id = ${alias}.farmer_id AND scoped_region.region = $1)`;
+        return { whereClause: `${regionClause}${tenantClause}`, params: [user.managerRegion] };
     }
-    return { whereClause: '', params: [] };
+    return { whereClause: tenantClause, params: [] };
 }
 
 function buildCacheKey(user: UserScope): string {
-    if (user.isOfficer) return `analytics:dashboard:${user.officerId}`;
-    if (user.isManager) return `analytics:dashboard:region:${user.managerRegion || 'unknown'}`;
-    return 'analytics:dashboard:global';
+    const tenant = user.tenantId || 'legacy';
+    if (user.isOfficer) return `analytics:dashboard:${tenant}:${user.officerId}`;
+    if (user.isManager) return `analytics:dashboard:${tenant}:region:${user.managerRegion || 'unknown'}`;
+    return `analytics:dashboard:${tenant}:global`;
 }
 
 async function fetchOverviewCounts(user: UserScope) {
-    const sf = buildScopeFilter(user);
+    const farmerScope = buildScopeFilter(user, 'assigned_officer_id', 'f');
+    const visitScope = buildScopeFilter(user, 'officer_id', 'v');
+    const conversationScope = buildScopeFilter(user, 'officer_id', 'c');
     const [farmersCount, officersCount, activeConversations, recentVisits, avgSatisfactionResult, resolvedQueries] = await Promise.all([
-        getFromDB(`SELECT COUNT(*) as count FROM farmers WHERE is_active = true ${sf.whereClause}`, sf.params),
-        getFromDB("SELECT COUNT(*) as count FROM users WHERE role = 'extension_officer' AND is_active = true"),
-        getFromDB(`SELECT COUNT(*) as count FROM chat_conversations WHERE status = 'active' ${user.isOfficer ? 'AND officer_id = $1' : user.isManager ? `c JOIN farmers f ON f.id = c.farmer_id WHERE c.status = 'active' AND f.region = $1` : ''}`, sf.params),
-        getFromDB(`SELECT COUNT(*) as count FROM visits WHERE created_at > NOW() - INTERVAL '30 days' ${sf.whereClause}`, sf.params),
-        getFromDB(`SELECT AVG(satisfaction_score) as avg FROM chat_conversations WHERE satisfaction_score IS NOT NULL ${sf.whereClause}`, sf.params),
-        getFromDB(`SELECT COUNT(*) as count FROM chat_conversations WHERE status = 'resolved' ${sf.whereClause}`, sf.params),
+        getFromDB(`SELECT COUNT(*) as count FROM farmers f WHERE f.is_active = true ${farmerScope.whereClause}`, farmerScope.params),
+        getFromDB(`SELECT COUNT(*) as count FROM users u WHERE u.role = 'extension_officer' AND u.is_active = true${user.tenantId ? ` AND u.tenant_id = '${user.tenantId}'` : ''}`),
+        getFromDB(`SELECT COUNT(*) as count FROM chat_conversations c WHERE c.status = 'active' ${conversationScope.whereClause}`, conversationScope.params),
+        getFromDB(`SELECT COUNT(*) as count FROM visits v WHERE v.created_at > NOW() - INTERVAL '30 days' ${visitScope.whereClause}`, visitScope.params),
+        getFromDB(`SELECT AVG(c.satisfaction_score) as avg FROM chat_conversations c WHERE c.satisfaction_score IS NOT NULL ${conversationScope.whereClause}`, conversationScope.params),
+        getFromDB(`SELECT COUNT(*) as count FROM chat_conversations c WHERE c.status = 'resolved' ${conversationScope.whereClause}`, conversationScope.params),
     ]);
     return { farmersCount, officersCount, activeConversations, recentVisits, avgSatisfactionResult, resolvedQueries };
 }
 
 async function fetchGeography(user: UserScope) {
-    const sf = buildScopeFilter(user);
+    const sf = buildScopeFilter(user, 'assigned_officer_id', 'f');
     return getFromDB(`
         SELECT f.region, COUNT(DISTINCT f.id) as farmers, COUNT(DISTINCT u.id) as officers 
         FROM farmers f 
@@ -85,10 +120,10 @@ async function fetchGeography(user: UserScope) {
 }
 
 async function fetchCropDistribution(user: UserScope) {
-    const sf = buildScopeFilter(user);
+    const sf = buildScopeFilter(user, 'assigned_officer_id', 'f');
     const cropsData = await getFromDB(`
         SELECT unnest(crops) as crop, COUNT(*) as count 
-        FROM farmers WHERE crops IS NOT NULL ${sf.whereClause}
+        FROM farmers f WHERE f.crops IS NOT NULL ${sf.whereClause}
         GROUP BY crop ORDER BY count DESC
     `, sf.params);
     const totalCropCount = cropsData.reduce((sum: number, row: Record<string, unknown>) => sum + parseInt(row.count as string), 0);
@@ -99,49 +134,60 @@ async function fetchCropDistribution(user: UserScope) {
 }
 
 async function fetchRecentActivity(user: UserScope) {
+    const visitScope = buildScopeFilter(user, 'officer_id', 'v');
+    const conversationScope = buildScopeFilter(user, 'officer_id', 'c');
     return getFromDB(`
         (SELECT 'visit' as type, 'Visit completed in ' || COALESCE(f.village, f.region) as description, NOW() - v.created_at as time_diff
          FROM visits v JOIN farmers f ON f.id = v.farmer_id
-         WHERE v.status = 'completed' ${user.isOfficer ? 'AND v.officer_id = $1' : ''}
+         WHERE v.status = 'completed' ${visitScope.whereClause}
          ORDER BY v.completed_at DESC LIMIT 3)
         UNION ALL
         (SELECT 'query' as type, 'New query from ' || f.first_name || ' ' || f.last_name as description, NOW() - c.started_at as time_diff
          FROM chat_conversations c JOIN farmers f ON f.id = c.farmer_id
-         WHERE 1=1 ${user.isOfficer ? 'AND c.officer_id = $1' : ''}
+         WHERE 1=1 ${conversationScope.whereClause}
          ORDER BY c.started_at DESC LIMIT 2)
         ORDER BY time_diff LIMIT 5
-    `, user.isOfficer ? [user.officerId] : []);
+    `, visitScope.params.length > 0 ? visitScope.params : conversationScope.params);
 }
 
 async function fetchTrendData(user: UserScope) {
-    const sf = buildScopeFilter(user);
+    const farmerScope = buildScopeFilter(user, 'assigned_officer_id', 'f');
+    const conversationScope = buildScopeFilter(user, 'officer_id', 'c');
+    const visitScope = buildScopeFilter(user, 'officer_id', 'v');
     const [lastMonthFarmers, lastMonthConversations, lastMonthVisits, lastMonthSatisfactionResult] = await Promise.all([
-        getFromDB(`SELECT COUNT(*) as count FROM farmers WHERE created_at > NOW() - INTERVAL '60 days' AND created_at < NOW() - INTERVAL '30 days' ${sf.whereClause}`, sf.params),
-        getFromDB(`SELECT COUNT(*) as count FROM chat_conversations WHERE started_at > NOW() - INTERVAL '60 days' AND started_at < NOW() - INTERVAL '30 days' ${sf.whereClause}`, sf.params),
-        getFromDB(`SELECT COUNT(*) as count FROM visits WHERE created_at > NOW() - INTERVAL '60 days' AND created_at < NOW() - INTERVAL '30 days' ${sf.whereClause}`, sf.params),
-        getFromDB(`SELECT AVG(satisfaction_score) as avg FROM chat_conversations WHERE satisfaction_score IS NOT NULL AND created_at > NOW() - INTERVAL '60 days' AND created_at < NOW() - INTERVAL '30 days' ${sf.whereClause}`, sf.params),
+        getFromDB(`SELECT COUNT(*) as count FROM farmers f WHERE f.created_at > NOW() - INTERVAL '60 days' AND f.created_at < NOW() - INTERVAL '30 days' ${farmerScope.whereClause}`, farmerScope.params),
+        getFromDB(`SELECT COUNT(*) as count FROM chat_conversations c WHERE c.started_at > NOW() - INTERVAL '60 days' AND c.started_at < NOW() - INTERVAL '30 days' ${conversationScope.whereClause}`, conversationScope.params),
+        getFromDB(`SELECT COUNT(*) as count FROM visits v WHERE v.created_at > NOW() - INTERVAL '60 days' AND v.created_at < NOW() - INTERVAL '30 days' ${visitScope.whereClause}`, visitScope.params),
+        getFromDB(`SELECT AVG(c.satisfaction_score) as avg FROM chat_conversations c WHERE c.satisfaction_score IS NOT NULL AND c.created_at > NOW() - INTERVAL '60 days' AND c.created_at < NOW() - INTERVAL '30 days' ${conversationScope.whereClause}`, conversationScope.params),
     ]);
     return { lastMonthFarmers, lastMonthConversations, lastMonthVisits, lastMonthSatisfactionResult };
 }
 
-async function fetchPriorityQueue() {
+async function fetchPriorityQueue(user: UserScope) {
+    const scope = buildScopeFilter(user, 'assigned_officer_id', 'f');
     return getFromDB(`
         SELECT f.id as farmer_id, f.first_name || ' ' || f.last_name as name,
             'Scheduled consultation' as reason, 'medium' as severity, f.crops[1] as crop
         FROM farmers f JOIN visits v ON v.farmer_id = f.id
-        WHERE v.status = 'scheduled' ORDER BY v.scheduled_at ASC LIMIT 5
-    `);
+        WHERE v.status = 'scheduled' ${scope.whereClause}
+        ORDER BY v.scheduled_at ASC LIMIT 5
+    `, scope.params);
 }
 
 // Dashboard overview - fetches real data from database
 router.get('/dashboard', async (req: Request, res: Response) => {
     try {
         const { userId, role } = req.user as Record<string, unknown>;
+        const tenantId = await getPrincipalTenantId(String(userId));
+        if (!tenantId && process.env.NODE_ENV !== 'test') {
+            return res.status(403).json({ success: false, error: 'Tenant membership required' });
+        }
         const user: UserScope = {
             isOfficer: role === 'extension_officer',
             isManager: role === 'regional_manager',
             officerId: role === 'extension_officer' ? String(userId) : null,
             managerRegion: null,
+            tenantId,
         };
 
         if (user.isManager) {
@@ -159,7 +205,7 @@ router.get('/dashboard', async (req: Request, res: Response) => {
             fetchCropDistribution(user),
             fetchRecentActivity(user),
             fetchTrendData(user),
-            fetchPriorityQueue(),
+            fetchPriorityQueue(user),
         ]);
 
         const { farmersCount, officersCount, activeConversations, recentVisits, avgSatisfactionResult, resolvedQueries } = overviewData;
@@ -214,12 +260,15 @@ router.get('/dashboard', async (req: Request, res: Response) => {
 router.get('/farmer-stats', async (req: Request, res: Response) => {
     try {
         const { userId } = req.user as Record<string, unknown>;
-        
+        const tenantId = await getSafeAnalyticsTenantId(req);
+        const tenantClause = ` AND tenant_id = '${tenantId}'`;
+
         const farmerResult = await getFromDB(`
-            SELECT crops, farm_size_hectares, vital_score, yield_history, 
+            SELECT crops, farm_size_hectares, vital_score, yield_history,
                    soil_moisture, temperature, ph_level, ai_confidence
-            FROM farmers 
-            WHERE user_id = $1 
+            FROM farmers
+            WHERE user_id = $1
+              ${tenantClause}
             LIMIT 1
         `, [userId]);
         
@@ -238,7 +287,7 @@ router.get('/farmer-stats', async (req: Request, res: Response) => {
         const nextVisitResult = await getFromDB(`
             SELECT scheduled_at 
             FROM visits 
-            WHERE farmer_id = (SELECT id FROM farmers WHERE user_id = $1)
+            WHERE farmer_id = (SELECT id FROM farmers WHERE user_id = $1${tenantClause})
               AND status = 'scheduled'
               AND scheduled_at > NOW()
             ORDER BY scheduled_at ASC
@@ -250,14 +299,14 @@ router.get('/farmer-stats', async (req: Request, res: Response) => {
             SELECT COUNT(*) as count 
             FROM alerts 
             WHERE is_active = true 
-              AND (affected_farmers @> ARRAY[(SELECT id FROM farmers WHERE user_id = $1)::uuid])
+              AND (affected_farmers @> ARRAY[(SELECT id FROM farmers WHERE user_id = $1${tenantClause})::uuid])
         `, [userId]);
 
         // Fetch AI tips count (resolved conversations)
         const aiTipsCountResult = await getFromDB(`
             SELECT COUNT(*) as count 
             FROM chat_conversations 
-            WHERE farmer_id = (SELECT id FROM farmers WHERE user_id = $1)
+            WHERE farmer_id = (SELECT id FROM farmers WHERE user_id = $1${tenantClause})
               AND status = 'resolved'
         `, [userId]);
         
@@ -319,10 +368,13 @@ function formatOfficerData(officerData: Record<string, unknown>[]) {
 // Performance metrics
 router.get('/performance', async (req: Request, res: Response) => {
     try {
+        const tenantId = await getSafeAnalyticsTenantId(req);
         const { period = 'month', officerId, region } = req.query;
+        const visitTenant = tenantPredicate(tenantId, 'v');
+        const conversationTenant = tenantPredicate(tenantId, 'c');
         const days = period === 'week' ? 7 : period === 'month' ? 30 : 90;
 
-        const cacheKey = `analytics:performance:${period}:${officerId || 'all'}:${region || 'all'}`;
+        const cacheKey = `analytics:performance:${tenantId || 'legacy'}:${period}:${officerId || 'all'}:${region || 'all'}`;
         const cached = await cacheGet(cacheKey);
         if (cached) {
             return res.json(JSON.parse(cached));
@@ -340,41 +392,41 @@ router.get('/performance', async (req: Request, res: Response) => {
         ] = await Promise.all([
             getFromDB(`
                 SELECT AVG(EXTRACT(EPOCH FROM (completed_at - started_at)) / 60) as avg_minutes
-                FROM visits 
-                WHERE status = 'completed' AND started_at > NOW() - INTERVAL '${days} days'
+                FROM visits v
+                WHERE v.status = 'completed' AND v.started_at > NOW() - INTERVAL '${days} days'${visitTenant}
             `),
             getFromDB(`
                 SELECT COUNT(*) as total,
                        COUNT(CASE WHEN status = 'resolved' THEN 1 END) as resolved
-                FROM chat_conversations 
-                WHERE started_at > NOW() - INTERVAL '${days} days'
+                FROM chat_conversations c
+                WHERE c.started_at > NOW() - INTERVAL '${days} days'${conversationTenant}
             `),
             getFromDB(`
                 SELECT AVG(satisfaction_score) as avg
-                FROM chat_conversations 
-                WHERE satisfaction_score IS NOT NULL 
-                AND created_at > NOW() - INTERVAL '${days} days'
+                FROM chat_conversations c
+                WHERE c.satisfaction_score IS NOT NULL
+                AND c.created_at > NOW() - INTERVAL '${days} days'${conversationTenant}
             `),
             getFromDB(`
                 SELECT COUNT(*) as count
-                FROM visits 
-                WHERE follow_up_required = true 
-                AND created_at > NOW() - INTERVAL '${days} days'
+                FROM visits v
+                WHERE v.follow_up_required = true
+                AND v.created_at > NOW() - INTERVAL '${days} days'${visitTenant}
             `),
             getFromDB(`
                 SELECT COUNT(*) as count
-                FROM chat_conversations 
-                WHERE status = 'resolved' 
-                AND started_at > NOW() - INTERVAL '${days} days'
+                FROM chat_conversations c
+                WHERE c.status = 'resolved'
+                AND c.started_at > NOW() - INTERVAL '${days} days'${conversationTenant}
             `),
             getFromDB(`
                 SELECT DATE(created_at) as date,
                        COUNT(*) FILTER (WHERE status = 'completed') as visits,
                        COUNT(*) FILTER (WHERE type = 'query') as queries
                 FROM (
-                    SELECT created_at, 'visit' as type, status FROM visits
+                    SELECT v.created_at, 'visit' as type, v.status FROM visits v WHERE 1 = 1${visitTenant}
                     UNION ALL
-                    SELECT started_at, 'query', status FROM chat_conversations
+                    SELECT c.started_at, 'query', c.status FROM chat_conversations c WHERE 1 = 1${conversationTenant}
                 ) combined
                 WHERE created_at > NOW() - INTERVAL '${days} days'
                 GROUP BY DATE(created_at)
@@ -389,7 +441,7 @@ router.get('/performance', async (req: Request, res: Response) => {
                 FROM users u
                 LEFT JOIN visits v ON v.officer_id = u.id AND v.status = 'completed' AND v.created_at > NOW() - INTERVAL '${days} days'
                 LEFT JOIN chat_conversations c ON c.officer_id = u.id AND c.created_at > NOW() - INTERVAL '${days} days'
-                WHERE u.role = 'extension_officer' AND u.is_active = true
+                WHERE u.role = 'extension_officer' AND u.is_active = true${tenantPredicate(tenantId, 'u')}
                 GROUP BY u.id, u.first_name, u.last_name
                 ORDER BY visits DESC
                 LIMIT 10
@@ -414,6 +466,8 @@ router.get('/performance', async (req: Request, res: Response) => {
 // Query analytics
 router.get('/queries', async (req: Request, res: Response) => {
     try {
+        const tenantId = await getSafeAnalyticsTenantId(req);
+        const conversationTenant = tenantPredicate(tenantId, 'c');
         const { period = 'month' } = req.query;
         const days = period === 'week' ? 7 : period === 'month' ? 30 : 90;
 
@@ -426,33 +480,34 @@ router.get('/queries', async (req: Request, res: Response) => {
             avgResolutionTime,
             topKeywords
         ] = await Promise.all([
-            getFromDB(`SELECT COUNT(*) as count FROM chat_conversations WHERE started_at > NOW() - INTERVAL '${days} days'`),
-            getFromDB(`SELECT COUNT(*) as count FROM chat_conversations WHERE status = 'resolved' AND started_at > NOW() - INTERVAL '${days} days'`),
-            getFromDB(`SELECT COUNT(*) as count FROM chat_conversations WHERE status = 'pending' AND started_at > NOW() - INTERVAL '${days} days'`),
+            getFromDB(`SELECT COUNT(*) as count FROM chat_conversations c WHERE c.started_at > NOW() - INTERVAL '${days} days'${conversationTenant}`),
+            getFromDB(`SELECT COUNT(*) as count FROM chat_conversations c WHERE c.status = 'resolved' AND c.started_at > NOW() - INTERVAL '${days} days'${conversationTenant}`),
+            getFromDB(`SELECT COUNT(*) as count FROM chat_conversations c WHERE c.status = 'pending' AND c.started_at > NOW() - INTERVAL '${days} days'${conversationTenant}`),
             getFromDB(`
                 SELECT COALESCE(c.category, 'Other') as name, COUNT(*) as count
                 FROM chat_conversations c
-                WHERE c.started_at > NOW() - INTERVAL '${days} days'
+                WHERE c.started_at > NOW() - INTERVAL '${days} days'${conversationTenant}
                 GROUP BY c.category
                 ORDER BY count DESC
             `),
             getFromDB(`
                 SELECT language, COUNT(*) as count
-                FROM chat_conversations
-                WHERE started_at > NOW() - INTERVAL '${days} days'
+                FROM chat_conversations c
+                WHERE c.started_at > NOW() - INTERVAL '${days} days'${conversationTenant}
                 GROUP BY language
                 ORDER BY count DESC
             `),
             getFromDB(`
                 SELECT AVG(EXTRACT(EPOCH FROM (ended_at - started_at)) / 60) as avg_minutes
-                FROM chat_conversations 
-                WHERE status = 'resolved' AND ended_at IS NOT NULL AND started_at > NOW() - INTERVAL '${days} days'
+                FROM chat_conversations c
+                WHERE c.status = 'resolved' AND c.ended_at IS NOT NULL AND c.started_at > NOW() - INTERVAL '${days} days'${conversationTenant}
             `),
             getFromDB(`
-                SELECT LOWER(content) as keyword, COUNT(*) as count
-                FROM chat_messages
-                WHERE role = 'farmer' AND created_at > NOW() - INTERVAL '${days} days'
-                GROUP BY LOWER(content)
+                SELECT LOWER(m.content) as keyword, COUNT(*) as count
+                FROM chat_messages m
+                JOIN chat_conversations c ON c.id = m.conversation_id
+                WHERE m.role = 'farmer' AND m.created_at > NOW() - INTERVAL '${days} days'${conversationTenant}
+                GROUP BY LOWER(m.content)
                 ORDER BY count DESC
                 LIMIT 10
             `)
@@ -521,6 +576,8 @@ function formatChatbotLanguages(languageData: Record<string, unknown>[], total: 
 // Chatbot metrics
 router.get('/chatbot', async (req: Request, res: Response) => {
     try {
+        const tenantId = await getSafeAnalyticsTenantId(req);
+        const conversationTenant = tenantPredicate(tenantId, 'c');
         const { period = 'month' } = req.query;
         const days = period === 'week' ? 7 : period === 'month' ? 30 : 90;
 
@@ -537,13 +594,13 @@ router.get('/chatbot', async (req: Request, res: Response) => {
                     COUNT(CASE WHEN status = 'active' THEN 1 END) as active,
                     COUNT(CASE WHEN status = 'abandoned' THEN 1 END) as abandoned,
                     COUNT(CASE WHEN officer_id IS NOT NULL THEN 1 END) as escalated
-                FROM chat_conversations
-                WHERE started_at > NOW() - INTERVAL '${days} days'
+                FROM chat_conversations c
+                WHERE c.started_at > NOW() - INTERVAL '${days} days'${conversationTenant}
             `),
             getFromDB(`
                 SELECT language, COUNT(*) as count
-                FROM chat_conversations
-                WHERE started_at > NOW() - INTERVAL '${days} days'
+                FROM chat_conversations c
+                WHERE c.started_at > NOW() - INTERVAL '${days} days'${conversationTenant}
                 GROUP BY language
                 ORDER BY count DESC
             `),
@@ -558,7 +615,7 @@ router.get('/chatbot', async (req: Request, res: Response) => {
                            bool_or(m.is_voice) as is_voice
                     FROM chat_conversations c
                     LEFT JOIN chat_messages m ON m.conversation_id = c.id
-                    WHERE c.started_at > NOW() - INTERVAL '${days} days'
+                    WHERE c.started_at > NOW() - INTERVAL '${days} days'${conversationTenant}
                     GROUP BY c.id
                 ) stats
             `),
@@ -570,7 +627,7 @@ router.get('/chatbot', async (req: Request, res: Response) => {
                     SELECT c.id, c.started_at, c.ended_at,
                            (SELECT MIN(created_at) FROM chat_messages WHERE conversation_id = c.id AND role IN ('assistant', 'officer')) as first_reply
                     FROM chat_conversations c
-                    WHERE c.status = 'resolved' AND c.started_at > NOW() - INTERVAL '${days} days'
+                    WHERE c.status = 'resolved' AND c.started_at > NOW() - INTERVAL '${days} days'${conversationTenant}
                 ) reply_stats
                 WHERE first_reply IS NOT NULL
             `)

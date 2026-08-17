@@ -11,6 +11,7 @@ const files = fs.readdirSync(localesDir).filter(f => f.endsWith('.json') && f !=
 console.log(`Auditing ${files.length} language files against en.json (${enKeys.length} keys)...`);
 
 let hasErrors = false;
+let fallbackCount = 0;
 const universalValues = new Set(['AI', 'API', 'GPS', 'ID', 'PDF', 'SMS', 'USD', 'KES', 'MWK']);
 
 files.forEach(file => {
@@ -40,8 +41,9 @@ files.forEach(file => {
 
         if (missing.length === 0 && extra.length === 0) {
             if (untranslated.length > 0) {
-                console.log(`⚠️ ${lang} is synchronized but has ${untranslated.length} values identical to English.`);
-                console.log(`   Sample: ${untranslated.slice(0, 5).join(', ')}`);
+                fallbackCount += untranslated.length;
+                console.log(`ℹ️ ${lang} is synchronized; ${untranslated.length} values use the English source text.`);
+                console.log(`   Coverage sample: ${untranslated.slice(0, 5).join(', ')}`);
             } else {
                 console.log(`✅ ${lang} is synchronized with no detected English fallbacks.`);
             }
@@ -57,5 +59,8 @@ if (hasErrors) {
     process.exit(1);
 } else {
     console.log('\n🎉 All locale files are synchronized!');
+    if (fallbackCount > 0) {
+        console.log(`ℹ️ Translation coverage: ${fallbackCount} values currently use the English source text.`);
+    }
     process.exit(0);
 }

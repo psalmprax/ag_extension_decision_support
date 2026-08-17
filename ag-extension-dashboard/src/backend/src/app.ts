@@ -5,7 +5,6 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
-import path from 'path';
 import { config } from './config';
 import { logger } from './utils/logger';
 import { errorHandler } from './middleware/errorHandler';
@@ -41,6 +40,9 @@ import externalRoutes from './routes/external';
 import languageRoutes from './routes/language';
 import aiRoutes from './routes/ai';
 import uploadRoutes from './routes/upload';
+import dataRightsRoutes from './routes/dataRights';
+import organizationsRoutes from './routes/organizations';
+import recommendationReviewRoutes from './routes/recommendationReviews';
 import notificationRoutes from './routes/notifications';
 import smsRoutes from './routes/sms';
 import billingRoutes from './routes/billing';
@@ -113,8 +115,8 @@ app.use((req, res, next) => {
     next();
 });
 
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
+// Uploaded files are served through the authenticated upload route below;
+// never expose the storage directory as a public static path.
 
 // Setup Swagger
 setupSwagger(app);
@@ -315,6 +317,9 @@ const routeMounts: RouteMount[] = [
   { path: '/language', router: languageRoutes },
   { path: '/ai', router: aiRoutes },
   { path: '/upload', router: uploadRoutes },
+  { path: '/data-rights', router: dataRightsRoutes },
+  { path: '/organizations', router: organizationsRoutes },
+  { path: '/ai/reviews', router: recommendationReviewRoutes },
   { path: '/notifications', router: notificationRoutes },
   { path: '/sms', router: smsRoutes },
   { path: '/billing', router: billingRoutes },

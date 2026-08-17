@@ -12,6 +12,7 @@ export interface CreateShareOptions {
     isPublic?: boolean;
     expiresAt?: Date;
     permissions?: string[];
+    tenantId?: string;
 }
 
 export interface ShareLink {
@@ -43,11 +44,12 @@ class ShareService {
             createdBy,
             isPublic = false,
             expiresAt,
-            permissions = ['view']
+            permissions = ['view'],
+            tenantId,
         } = options;
 
         // Validate entity exists
-        await this.validateEntity(entityType, entityId);
+        await this.validateEntity(entityType, entityId, tenantId);
 
         const token = this.generateToken();
         const prisma = getPrisma();
@@ -58,6 +60,7 @@ class ShareService {
                 entityType,
                 entityId,
                 createdBy,
+                tenantId,
                 isPublic,
                 expiresAt,
                 permissions,
@@ -172,18 +175,18 @@ class ShareService {
         return results.every(result => result);
     }
 
-    async getSharesByCreator(creatorId: string): Promise<any[]> {
+    async getSharesByCreator(creatorId: string, tenantId?: string): Promise<any[]> {
         const prisma = getPrisma();
         return await prisma.share.findMany({
-            where: { createdBy: creatorId },
+            where: { createdBy: creatorId, ...(tenantId ? { tenantId } : {}) },
             orderBy: { createdAt: 'desc' },
         }) as any[];
     }
 
-    async deleteShare(token: string, creatorId: string): Promise<boolean> {
+    async deleteShare(token: string, creatorId: string, tenantId?: string): Promise<boolean> {
         const prisma = getPrisma();
         const share = await prisma.share.findUnique({ where: { token } });
-        if (!share || share.createdBy !== creatorId) {
+        if (!share || share.createdBy !== creatorId || (tenantId && share.tenantId !== tenantId)) {
             return false;
         }
 
@@ -192,19 +195,25 @@ class ShareService {
         return true;
     }
 
-    private async validateEntity(entityType: string, entityId: string): Promise<void> {
+    async canManageShare(token: string, creatorId: string, tenantId?: string): Promise<boolean> {
+        const prisma = getPrisma();
+        const share = await prisma.share.findUnique({ where: { token } });
+        return Boolean(share && share.createdBy === creatorId && (!tenantId || share.tenantId === tenantId));
+    }
+
+    private async validateEntity(entityType: string, entityId: string, tenantId?: string): Promise<void> {
         let exists = false;
         const prisma = getPrisma();
 
         switch (entityType) {
             case 'farmer':
-                exists = !!(await prisma.farmer.findUnique({ where: { id: entityId } }));
+                exists = !!(await prisma.farmer.findFirst({ where: { id: entityId, ...(tenantId ? { tenantId } : {}) } }));
                 break;
             case 'visit':
-                exists = !!(await prisma.visit.findUnique({ where: { id: entityId } }));
+                exists = !!(await prisma.visit.findFirst({ where: { id: entityId, ...(tenantId ? { farmer: { tenantId } } : {}) } }));
                 break;
             case 'report':
-                exists = !!(await prisma.report.findUnique({ where: { id: entityId } }));
+                exists = !!(await prisma.report.findFirst({ where: { id: entityId, ...(tenantId ? { user: { tenantId } } : {}) } }));
                 break;
             case 'knowledge':
                 exists = !!(await prisma.knowledgeArticle.findUnique({ where: { id: entityId } }));

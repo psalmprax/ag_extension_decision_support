@@ -101,6 +101,18 @@ export const askAI = async (question: string, attachments?: Attachment[]): Promi
   return response.data;
 };
 
+export const downloadKnowledgePack = async (region?: string, limit = 200): Promise<void> => {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (region) params.set('region', region);
+  const response = await apiClient.get(`/knowledge/offline-pack?${params.toString()}`, { responseType: 'blob' });
+  const url = URL.createObjectURL(response.data as Blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `knowledge-pack-${region || 'global'}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+};
+
 export const fetchKnowledgeHistory = async () => {
   const { data } = await apiClient.get('/knowledge/history');
   return data;

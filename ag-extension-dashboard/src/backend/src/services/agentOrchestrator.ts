@@ -1,5 +1,6 @@
 import { logger } from '@/utils/logger';
 import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
+import { query } from '@/services/databaseService';
 
 export interface AgentTask {
   id: string;
@@ -29,6 +30,44 @@ export interface AgentCapability {
   lastHeartbeat: string;
 }
 
+interface PersistedAgentTaskRow {
+  id: string;
+  agent_id: string;
+  task_type: string;
+  payload: Record<string, unknown>;
+  priority: AgentTask['priority'];
+  status: AgentTask['status'];
+  created_at: Date | string;
+  started_at: Date | string | null;
+  completed_at: Date | string | null;
+  result: string | null;
+  error: string | null;
+  handed_off_to: string | null;
+  handoff_reason: string | null;
+  retry_count: number;
+  max_retries: number;
+}
+
+function mapPersistedTask(row: PersistedAgentTaskRow): AgentTask {
+  return {
+    id: row.id,
+    agentId: row.agent_id,
+    type: row.task_type,
+    payload: row.payload || {},
+    priority: row.priority,
+    status: row.status === 'running' ? 'pending' : row.status,
+    createdAt: new Date(row.created_at).toISOString(),
+    startedAt: row.started_at ? new Date(row.started_at).toISOString() : undefined,
+    completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : undefined,
+    result: row.result || undefined,
+    error: row.error || undefined,
+    handedOffTo: row.handed_off_to || undefined,
+    handoffReason: row.handoff_reason || undefined,
+    retryCount: row.retry_count,
+    maxRetries: row.max_retries,
+  };
+}
+
 export class AgentOrchestrator {
   private static instance: AgentOrchestrator;
   private taskQueue: AgentTask[] = [];
@@ -36,12 +75,64 @@ export class AgentOrchestrator {
   private completedTasks: AgentTask[] = [];
   private agentRegistry: Map<string, AgentCapability> = new Map();
   private handoffLog: Array<{ from: string; to: string; taskId: string; reason: string; timestamp: string }> = [];
+  private persistenceLoaded = false;
 
   static getInstance(): AgentOrchestrator {
     if (!AgentOrchestrator.instance) {
       AgentOrchestrator.instance = new AgentOrchestrator();
     }
     return AgentOrchestrator.instance;
+  }
+
+  private async ensurePersistenceLoaded(): Promise<void> {
+    if (this.persistenceLoaded) return;
+    this.persistenceLoaded = true;
+    try {
+      const result = await query<PersistedAgentTaskRow>(
+        `SELECT * FROM agent_tasks WHERE status IN ('pending', 'running') ORDER BY created_at ASC`
+      );
+      for (const row of result.rows) {
+        const task = mapPersistedTask(row);
+        if (!this.taskQueue.some(queued => queued.id === task.id)) this.taskQueue.push(task);
+      }
+    } catch (error) {
+      logger.warn('Agent task persistence unavailable; continuing with in-memory queue:', error instanceof Error ? error.message : error);
+    }
+  }
+
+  private async persistTask(task: AgentTask): Promise<void> {
+    try {
+      await query(
+        `INSERT INTO agent_tasks
+          (id, agent_id, task_type, payload, priority, status, created_at, started_at, completed_at,
+           result, error, handed_off_to, handoff_reason, retry_count, max_retries, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW())
+         ON CONFLICT (id) DO UPDATE SET
+           agent_id = EXCLUDED.agent_id, status = EXCLUDED.status, started_at = EXCLUDED.started_at,
+           completed_at = EXCLUDED.completed_at, result = EXCLUDED.result, error = EXCLUDED.error,
+           handed_off_to = EXCLUDED.handed_off_to, handoff_reason = EXCLUDED.handoff_reason,
+           retry_count = EXCLUDED.retry_count, max_retries = EXCLUDED.max_retries, updated_at = NOW()`,
+        [
+          task.id,
+          task.agentId,
+          task.type,
+          JSON.stringify(task.payload),
+          task.priority,
+          task.status,
+          task.createdAt,
+          task.startedAt || null,
+          task.completedAt || null,
+          task.result || null,
+          task.error || null,
+          task.handedOffTo || null,
+          task.handoffReason || null,
+          task.retryCount,
+          task.maxRetries,
+        ]
+      );
+    } catch (error) {
+      logger.warn('Agent task persistence write failed:', error instanceof Error ? error.message : error);
+    }
   }
 
   registerAgent(config: {
@@ -64,6 +155,7 @@ export class AgentOrchestrator {
   }
 
   async dispatchTask(task: Omit<AgentTask, 'id' | 'status' | 'createdAt' | 'retryCount'>): Promise<AgentTask> {
+    await this.ensurePersistenceLoaded();
     const taskId = `task_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
     const fullTask: AgentTask = {
       ...task,
@@ -78,17 +170,20 @@ export class AgentOrchestrator {
     if (!bestAgent) {
       fullTask.status = 'failed';
       fullTask.error = 'No available agent for this task type';
+      await this.persistTask(fullTask);
       return fullTask;
     }
 
     fullTask.agentId = bestAgent.agentId;
     this.taskQueue.push(fullTask);
+    await this.persistTask(fullTask);
 
     logger.info(`Task dispatched: ${taskId} → ${bestAgent.agentId} (${task.type})`);
     return fullTask;
   }
 
   async executeNext(): Promise<AgentTask | null> {
+    await this.ensurePersistenceLoaded();
     if (this.taskQueue.length === 0) return null;
 
     const task = this.taskQueue.shift()!;
@@ -104,6 +199,7 @@ export class AgentOrchestrator {
     task.startedAt = new Date().toISOString();
     agent.currentLoad++;
     this.activeTasks.set(task.id, task);
+    await this.persistTask(task);
 
     try {
       const result = await this.executeTaskOnAgent(task, agent);
@@ -113,6 +209,7 @@ export class AgentOrchestrator {
       agent.currentLoad--;
       this.activeTasks.delete(task.id);
       this.completedTasks.push(task);
+      await this.persistTask(task);
 
       logger.info(`Task completed: ${task.id} by ${agent.name}`);
       return task;
@@ -124,6 +221,7 @@ export class AgentOrchestrator {
         task.retryCount++;
         task.status = 'pending';
         this.taskQueue.push(task);
+        await this.persistTask(task);
         logger.warn(`Task ${task.id} failed, retrying (${task.retryCount}/${task.maxRetries})`);
         return null;
       }
@@ -132,6 +230,7 @@ export class AgentOrchestrator {
       task.error = error instanceof Error ? error.message : String(error);
       task.completedAt = new Date().toISOString();
       this.completedTasks.push(task);
+      await this.persistTask(task);
 
       logger.error(`Task ${task.id} failed permanently: ${task.error}`);
       return task;
@@ -169,6 +268,7 @@ export class AgentOrchestrator {
     if (!this.taskQueue.includes(task)) {
       this.taskQueue.push(task);
     }
+    await this.persistTask(task);
 
     logger.info(`Task ${taskId} handed off: ${previousAgent} → ${targetAgentId} (${reason})`);
     return true;
