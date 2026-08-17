@@ -81,7 +81,17 @@ router.get('/prices', async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user?.userId;
         const prices = await marketPriceService.getLatestPrices(userId);
-        res.json({ success: true, data: prices });
+        const firstPrice = prices[0];
+        res.json({
+            success: true,
+            data: prices,
+            metadata: {
+                dataStatus: firstPrice?.dataStatus || 'unavailable',
+                source: firstPrice?.source || null,
+                fetchedAt: firstPrice?.fetchedAt || null,
+                exchangeRateSource: firstPrice?.exchangeRateSource || null,
+            },
+        });
     } catch (error) {
         logger.error('Prices route error:', error);
         safeError(res, 500, 'Failed to fetch market prices');

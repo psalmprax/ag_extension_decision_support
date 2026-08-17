@@ -63,17 +63,23 @@ router.get('/recovery-log', authorize(['admin']), async (req: Request, res: Resp
     }
 });
 
-// Trigger recovery for a specific component
+// Trigger a bounded recovery action for a registered component
 router.post('/recover/:component', authorize(['admin']), async (req: Request, res: Response) => {
     try {
-        const { component } = req.params;
-        // Note: Manual recovery triggering not implemented in service yet
-        // This is a placeholder for future implementation
-        logger.info(`Recovery requested for component: ${component}`);
-        res.json({ success: true, message: 'Recovery request logged - automatic recovery will be attempted' });
+        const result = await selfHealingService.requestRecovery(req.params.component);
+        const statusCode = result.status === 'completed'
+            ? 200
+            : result.status === 'rejected' || result.status === 'not_found'
+                ? 400
+                : 503;
+        return res.status(statusCode).json({
+            success: result.success,
+            data: result,
+            ...(result.success ? {} : { error: result.details }),
+        });
     } catch (error) {
         logger.error(`Failed to process recovery request for ${req.params.component}:`, error);
-        safeError(res, 500, 'Failed to process recovery request');
+        return safeError(res, 500, 'Failed to process recovery request');
     }
 });
 

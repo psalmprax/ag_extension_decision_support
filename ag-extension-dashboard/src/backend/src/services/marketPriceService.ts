@@ -2,12 +2,23 @@ import { getPrisma } from './prismaService';
 import { logger } from '@/utils/logger';
 import axios from 'axios';
 
+export type MarketDataStatus = 'estimated' | 'unavailable';
+
 export interface MarketPrice {
     id: string;
     crop: string;
     price: string;
     trend: string;
     updatedAt: Date;
+    source: 'baseline_estimate';
+    dataStatus: MarketDataStatus;
+    fetchedAt: string;
+    exchangeRateSource: 'live' | 'fallback';
+}
+
+interface ExchangeRateResult {
+    rate: number;
+    source: 'live' | 'fallback';
 }
 
 /**
@@ -59,14 +70,14 @@ function getCurrencyForCountry(country: string): string {
 /**
  * Fetch live exchange rate from USD to target currency.
  */
-async function fetchExchangeRate(targetCurrency: string): Promise<number> {
-    if (targetCurrency === 'USD') return 1.0;
+async function fetchExchangeRate(targetCurrency: string): Promise<ExchangeRateResult> {
+    if (targetCurrency === 'USD') return { rate: 1.0, source: 'live' };
     try {
         const rateResponse = await axios.get('https://open.er-api.com/v6/latest/USD', { timeout: 3000 });
         if (rateResponse.data && rateResponse.data.rates && rateResponse.data.rates[targetCurrency]) {
             const rate = rateResponse.data.rates[targetCurrency];
             logger.info(`Live USD/${targetCurrency} exchange rate fetched successfully: ${rate}`);
-            return rate;
+            return { rate, source: 'live' };
         }
     } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : 'Unknown error';
@@ -84,7 +95,7 @@ async function fetchExchangeRate(targetCurrency: string): Promise<number> {
         BRL: 5.5,
         KES: 129.50
     };
-    return fallbacks[targetCurrency] || 129.50;
+    return { rate: fallbacks[targetCurrency] || 129.50, source: 'fallback' };
 }
 
 /**
@@ -102,9 +113,9 @@ function roundPrice(rawPrice: number, targetCurrency: string): number {
 
 export const marketPriceService = {
     /**
-     * Get real market prices.
-     * Fetches live USD exchange rates dynamically and maps base commodity values to the current 
-     * local currency of the logged-in User/Farmer or their region.
+     * Get explicitly labeled market price estimates.
+     * Uses a live USD exchange rate when available, but the commodity baseline remains an estimate
+     * until a verified market-data feed is configured.
      */
     async getLatestPrices(userId?: string): Promise<MarketPrice[]> {
         try {
@@ -113,6 +124,7 @@ export const marketPriceService = {
             const country = await getUserCountry(userId);
             const targetCurrency = getCurrencyForCountry(country);
             const exchangeRate = await fetchExchangeRate(targetCurrency);
+            const fetchedAt = new Date().toISOString();
 
             // Base USD prices for agricultural commodities
             const basePrices = [
@@ -130,7 +142,7 @@ export const marketPriceService = {
             for (const item of basePrices) {
                 // Add a small deterministic daily fluctuation based on the day of year (+/- 4%)
                 const fluctuation = 1.0 + Math.sin(dayOfYear + item.baseUSD) * 0.04;
-                const rawPrice = item.baseUSD * exchangeRate * fluctuation;
+                const rawPrice = item.baseUSD * exchangeRate.rate * fluctuation;
                 const finalPrice = roundPrice(rawPrice, targetCurrency);
 
                 const pctChange = Math.round((fluctuation - 1.0) * 100);
@@ -155,7 +167,13 @@ export const marketPriceService = {
                 ORDER BY crop ASC
             `;
 
-            return prices;
+            return prices.map(price => ({
+                ...price,
+                source: 'baseline_estimate',
+                dataStatus: 'estimated',
+                fetchedAt,
+                exchangeRateSource: exchangeRate.source,
+            }));
         } catch (error) {
             logger.error('Failed to fetch/seed dynamic market prices:', error);
             return [];

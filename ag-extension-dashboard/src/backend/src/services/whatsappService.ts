@@ -52,7 +52,7 @@ class WhatsAppService {
             this.twilioWhatsAppNumber = process.env.TWILIO_WHATSAPP_NUMBER;
             logger.info('WhatsApp service initialized with Twilio');
         } else {
-            logger.warn('WhatsApp service not configured - messages will be logged only');
+            logger.warn('WhatsApp service not configured - outbound delivery is unavailable');
         }
     }
 

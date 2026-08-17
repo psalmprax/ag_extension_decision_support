@@ -12,6 +12,21 @@ export interface SocialMediaPost {
     url: string;
 }
 
+export type SocialDataStatus = 'live' | 'not_configured' | 'failed';
+
+export interface SocialMonitoringResult {
+    summary: string;
+    hasCriticalAlerts: boolean;
+    dataStatus: SocialDataStatus;
+    sources: string[];
+    categories?: Record<string, unknown>;
+}
+
+interface SocialFetchResult {
+    posts: SocialMediaPost[];
+    dataStatus: SocialDataStatus;
+}
+
 export class SocialIntelligenceAgent {
     public readonly agentId = 'agent_social_intel';
 
@@ -37,34 +52,48 @@ export class SocialIntelligenceAgent {
             logger.info('Starting Social Intelligence monitoring pipeline...');
             
             // 1. Fetch mock data (simulating scraping Twitter/Reddit/YouTube)
-            const posts = await this.fetchRecentPosts();
-            
+            const fetched = await this.fetchRecentPosts();
+
+            // Do not turn missing social credentials into fabricated field intelligence.
+            if (fetched.posts.length === 0) {
+                return {
+                    summary: fetched.dataStatus === 'not_configured'
+                        ? 'No verified social intelligence source is configured.'
+                        : 'Social intelligence sources did not return usable data.',
+                    hasCriticalAlerts: false,
+                    dataStatus: fetched.dataStatus,
+                    sources: [],
+                } satisfies SocialMonitoringResult;
+            }
+
             // 2. Evaluate data quality & relevance
-            const relevantPosts = await this.evaluateDataReliability(posts);
-            
+            const relevantPosts = await this.evaluateDataReliability(fetched.posts);
+
             // 3. Analyze for emerging patterns
             const analysisResult = await this.analyzeTrends(relevantPosts);
-            
+            const result: SocialMonitoringResult = {
+                ...analysisResult,
+                dataStatus: fetched.dataStatus,
+                sources: relevantPosts.map(post => post.url),
+            };
+
             // 4. Dispatch alerts for critical findings
-            if (analysisResult.hasCriticalAlerts) {
-                await this.dispatchAlerts(analysisResult.summary);
+            if (result.hasCriticalAlerts) {
+                await this.dispatchAlerts(result.summary);
             }
 
             logger.info('Completed Social Intelligence monitoring pipeline.');
-            return analysisResult;
+            return result;
         } catch (error) {
             logger.error('Error in Social Intelligence pipeline:', error);
             throw error;
         }
     }
 
-    private async fetchRecentPosts(): Promise<SocialMediaPost[]> {
+    private async fetchRecentPosts(): Promise<SocialFetchResult> {
         if (!tavilyService.isConfigured()) {
-            logger.warn('Tavily is not configured. Falling back to mock data for social intelligence.');
-            return [
-                { platform: 'twitter', content: 'Farmers in Rift Valley are reporting a new type of fall armyworm that resists usual pesticides.', timestamp: new Date().toISOString(), author: '@AgriKen', url: 'https://twitter.com/AgriKen/status/123' },
-                { platform: 'reddit', content: 'Did anyone hear about the new fertilizer subsidies announced today?', timestamp: new Date().toISOString(), author: 'u/farmer_joe', url: 'https://reddit.com/r/farming/123' },
-            ];
+            logger.warn('Tavily is not configured; social intelligence is unavailable.');
+            return { posts: [], dataStatus: 'not_configured' };
         }
 
         const queries = [
@@ -73,9 +102,11 @@ export class SocialIntelligenceAgent {
         ];
 
         const posts: SocialMediaPost[] = [];
+        let successfulSearches = 0;
 
         for (const query of queries) {
             const result = await tavilyService.search(query, 5);
+            if (result) successfulSearches++;
             if (result && result.results) {
                 result.results.forEach(r => {
                     let platform: 'twitter' | 'reddit' | 'youtube' = 'twitter';
@@ -93,7 +124,10 @@ export class SocialIntelligenceAgent {
             }
         }
 
-        return posts;
+        return {
+            posts,
+            dataStatus: successfulSearches > 0 ? 'live' : 'failed',
+        };
     }
 
     private async evaluateDataReliability(posts: SocialMediaPost[]): Promise<SocialMediaPost[]> {
@@ -101,9 +135,7 @@ export class SocialIntelligenceAgent {
         return posts.filter(post => post.content.length > 20); // Simple mock filter
     }
 
-    private async analyzeTrends(posts: SocialMediaPost[]) {
-        const provider = await AIProviderFactory.getPrimaryProvider();
-        
+    private async analyzeTrends(posts: SocialMediaPost[]): Promise<Omit<SocialMonitoringResult, 'dataStatus' | 'sources'>> {
         const prompt = `
             Analyze the following social media posts from agricultural communities.
             Identify any emerging patterns across the following categories:
@@ -124,17 +156,31 @@ export class SocialIntelligenceAgent {
         `;
 
         try {
-            const response = await provider.generateText(prompt);
+            const response = await AIProviderFactory.getWithFallback(
+                provider => provider.generateText(prompt),
+                undefined,
+                { operation: 'social_trend_analysis' }
+            );
             if (!response.text) {
                 throw new Error('Empty response from AI provider');
             }
             // Assuming the LLM returns a valid JSON structure
             const cleanedText = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
-            const result = JSON.parse(cleanedText);
-            return result;
+            const parsed = JSON.parse(cleanedText) as {
+                summary?: unknown;
+                hasCriticalAlerts?: unknown;
+                categories?: unknown;
+            };
+            return {
+                summary: typeof parsed.summary === 'string' ? parsed.summary : 'No trend summary was returned.',
+                hasCriticalAlerts: parsed.hasCriticalAlerts === true,
+                ...(parsed.categories && typeof parsed.categories === 'object'
+                    ? { categories: parsed.categories as Record<string, unknown> }
+                    : {}),
+            };
         } catch (e) {
             logger.warn('Failed to parse AI trend analysis, returning fallback', e);
-            return { summary: 'Error analyzing trends.', hasCriticalAlerts: false };
+            return { summary: 'Trend analysis failed; no alert was dispatched.', hasCriticalAlerts: false };
         }
     }
 

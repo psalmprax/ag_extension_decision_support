@@ -18,6 +18,14 @@ export interface RecoveryAction {
   details?: string;
 }
 
+export interface RecoveryRequestResult {
+  success: boolean;
+  status: 'completed' | 'failed' | 'rejected' | 'not_found';
+  component: string;
+  action?: string;
+  details?: string;
+}
+
 export class SelfHealingService {
   private static instance: SelfHealingService;
   private healthChecks: Map<string, HealthCheck> = new Map();
@@ -144,12 +152,49 @@ export class SelfHealingService {
       return isHealthy;
     } catch (error) {
       logger.warn(`Health check failed for ${component}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      if (component === 'openclaw') {
-        logger.info(`OpenClaw agent not running yet (expected for planned agent)`);
-        return true; 
-      }
       return false;
     }
+  }
+
+  async requestRecovery(component: string): Promise<RecoveryRequestResult> {
+    const allowedComponents = new Set(['ai-provider', 'database', 'cache', 'agent-zero', 'crew-ai', 'openclaw']);
+    if (!allowedComponents.has(component)) {
+      return {
+        success: false,
+        status: 'rejected',
+        component,
+        details: 'Component is not eligible for manual recovery',
+      };
+    }
+
+    if (!this.healthChecks.has(component)) {
+      return {
+        success: false,
+        status: 'not_found',
+        component,
+        details: 'Component is not registered with the self-healing service',
+      };
+    }
+
+    const before = this.recoveryLog.length;
+    await this.attemptRecovery(component);
+    const action = this.recoveryLog.slice(before).find(entry => entry.component === component);
+    if (!action) {
+      return {
+        success: false,
+        status: 'failed',
+        component,
+        details: 'Recovery did not produce an action record',
+      };
+    }
+
+    return {
+      success: action.success,
+      status: action.success ? 'completed' : 'failed',
+      component,
+      action: action.action,
+      details: action.details,
+    };
   }
 
   async checkComponent(component: string): Promise<boolean> {
@@ -261,19 +306,8 @@ export class SelfHealingService {
       if (!url) return;
 
       // For openclaw, if it's not running yet (planned agent), don't fail recovery
-      if (agentId === 'openclaw') {
-        try {
-          await fetch(`${url}/health`, { signal: AbortSignal.timeout(5000) });
-          await this.triggerRecovery(agentId, 'health_check_retried', true);
-        } catch {
-          // OpenClaw is planned but not implemented yet - consider this successful
-          logger.debug(`OpenClaw agent recovery skipped (planned agent not yet implemented)`);
-          await this.triggerRecovery(agentId, 'recovery_skipped_planned_agent', true);
-        }
-      } else {
-        await fetch(`${url}/health`, { signal: AbortSignal.timeout(5000) });
-        await this.triggerRecovery(agentId, 'health_check_retried', true);
-      }
+      await fetch(`${url}/health`, { signal: AbortSignal.timeout(5000) });
+      await this.triggerRecovery(agentId, 'health_check_retried', true);
     } catch {
       await this.triggerRecovery(agentId, 'agent_unreachable', false);
     }

@@ -14,3 +14,8 @@ export function runWithRequestContext<T>(context: RequestContext, callback: () =
 export function getRequestContext(): RequestContext | undefined {
   return storage.getStore();
 }
+
+export function setRequestUserId(userId: string | undefined): void {
+  const context = storage.getStore();
+  if (context && userId) context.userId = userId;
+}

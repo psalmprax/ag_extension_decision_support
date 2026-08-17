@@ -102,7 +102,7 @@ class EmailService {
 
         try {
             const result = await this.transporter.sendMail({
-                from: process.env.EMAIL_FROM || '"Ag Extension" <noreply@agextension.org>',
+                from: process.env.EMAIL_FROM || '"GPExts" <info@gpfed.com>',
                 to: recipients,
                 subject,
                 html,

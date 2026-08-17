@@ -14,6 +14,7 @@ import { securityGate } from './middleware/securityGate';
 import { setupSwagger } from './utils/swagger';
 import { getPool } from './services/databaseService';
 import { getCache } from './services/cacheService';
+import { setRequestUserId } from './services/requestContext';
 
 import { correlationIdMiddleware } from './middleware/correlationIdMiddleware';
 import { perUserRateLimit } from './middleware/rateLimitMiddleware';
@@ -93,6 +94,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(securityGate); // Security gate runs FIRST — before auth and rate limiting
 app.use(optionalAuth); // Parse optional user credentials before applying rate limiting
+app.use((req, _res, next) => {
+    setRequestUserId(req.user?.userId);
+    next();
+});
 
 // Request timeout middleware — AI-heavy routes (knowledge/ask, chatbot) get 120s, rest get 30s
 app.use((req, res, next) => {

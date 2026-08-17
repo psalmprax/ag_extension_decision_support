@@ -43,7 +43,7 @@ class NotificationService {
         this.twilioToken = process.env.TWILIO_AUTH_TOKEN;
         this.twilioPhone = process.env.TWILIO_PHONE_NUMBER;
         this.sendgridKey = process.env.SENDGRID_API_KEY;
-        this.fromEmail = process.env.FROM_EMAIL || 'noreply@agextension.com';
+        this.fromEmail = process.env.FROM_EMAIL || 'info@gpfed.com';
     }
 
     /**
