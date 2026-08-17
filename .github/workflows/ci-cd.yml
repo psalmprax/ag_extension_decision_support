@@ -31,7 +31,12 @@ jobs:
         run: |
           cd ag-extension-dashboard/src/frontend
           npm run lint
-      
+
+      - name: Validate locale translations
+        run: |
+          cd ag-extension-dashboard/src/frontend
+          npm run validate-locales
+
       - name: Type check frontend
         run: |
           cd ag-extension-dashboard/src/frontend
