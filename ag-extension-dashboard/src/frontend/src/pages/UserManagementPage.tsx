@@ -399,7 +399,7 @@ export function UserManagementPage() {
                       value={formData.region}
                       onChange={e => setFormData({ ...formData, region: e.target.value })}
                       className={`w-full px-4 py-2.5 ${radiusClass} border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500`}
-                      placeholder="e.g., Lilongwe"
+                      placeholder="e.g., Machakos"
                     />
                   </div>
                   <div>

@@ -1,5 +1,6 @@
 import { Pool, PoolClient } from 'pg';
 import { execSync } from 'child_process';
+import bcrypt from 'bcryptjs';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
 import { getPrisma } from './prismaService';
@@ -78,10 +79,11 @@ async function seedInitialData(): Promise<void> {
     
     if (parseInt(userCount.rows[0].count) === 0) {
       logger.info('Seeding default officer...');
+      const passwordHash = await bcrypt.hash(config.demo.password, 10);
       await pool.query(`
         INSERT INTO users (id, email, password_hash, first_name, last_name, role, region, phone, is_active)
-        VALUES ($1, 'demo@ag-extension.com', 'hashed_password', 'Demo', 'User', 'admin', 'Central Region', '+254712345678', true)
-      `, [officerId]);
+        VALUES ($1, 'demo@agridemo.com', $2, 'Demo', 'User', 'extension_officer', 'Kenya', '+254700000000', true)
+      `, [officerId, passwordHash]);
     } else {
       // Get existing user ID if it's the demo one or just pick first one
       const existingUser = await pool.query('SELECT id FROM users LIMIT 1');
@@ -94,8 +96,8 @@ async function seedInitialData(): Promise<void> {
     if (parseInt(farmerCount.rows[0].count) === 0) {
       logger.info('Seeding initial farmers...');
       await pool.query(`
-        INSERT INTO farmers (id, user_id, first_name, last_name, location, village, region, crops, farm_size_hectares, temperature, soil_moisture, ph_level, ai_confidence)
-        VALUES ($1, $2, 'John', 'Kariuki', 'Kiambu County', 'Limuru', 'Central Region', ARRAY['Maize', 'Beans'], 2.5, 22.5, 45.0, 6.5, 88.0)
+        INSERT INTO farmers (id, user_id, assigned_officer_id, first_name, last_name, location, village, region, crops, farm_size_hectares, temperature, soil_moisture, ph_level, ai_confidence)
+        VALUES ($1, $2, $2, 'Emmanuel', 'Mwangi', 'Machakos Rural, Eastern Zone', 'Kathiani', 'Machakos', ARRAY['Maize', 'Beans'], 3.5, 23.5, 42.0, 6.1, 74.0)
       `, [farmerId, officerId]);
     } else {
       const existingFarmer = await pool.query('SELECT id FROM farmers LIMIT 1');

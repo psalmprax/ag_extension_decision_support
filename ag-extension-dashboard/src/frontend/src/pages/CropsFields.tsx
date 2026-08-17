@@ -401,8 +401,8 @@ export function CropsFields() {
           } else {
             // Fallback demo farmers if backend list is empty
             const fallbackFarmers: Farmer[] = [
-              { id: 'demo-farmer-1', firstName: 'John', lastName: 'Banda', region: 'Lilongwe' },
-              { id: 'demo-farmer-2', firstName: 'Mary', lastName: 'Phiri', region: 'Kasungu' },
+              { id: 'demo-farmer-1', firstName: 'Emmanuel', lastName: 'Mwangi', region: 'Machakos' },
+              { id: 'demo-farmer-2', firstName: 'Grace', lastName: 'Wanjiku', region: 'Kiambu' },
             ];
             setFarmers(fallbackFarmers);
             setSelectedFarmerId('demo-farmer-1');
@@ -410,8 +410,8 @@ export function CropsFields() {
         } catch (error) {
           console.error('Failed to load farmers:', error);
           const fallbackFarmers: Farmer[] = [
-            { id: 'demo-farmer-1', firstName: 'John', lastName: 'Banda', region: 'Lilongwe' },
-            { id: 'demo-farmer-2', firstName: 'Mary', lastName: 'Phiri', region: 'Kasungu' },
+            { id: 'demo-farmer-1', firstName: 'Emmanuel', lastName: 'Mwangi', region: 'Machakos' },
+            { id: 'demo-farmer-2', firstName: 'Grace', lastName: 'Wanjiku', region: 'Kiambu' },
           ];
           setFarmers(fallbackFarmers);
           setSelectedFarmerId('demo-farmer-1');
@@ -440,12 +440,12 @@ export function CropsFields() {
           {
             id: 'field-demo-1',
             farmerId: selectedFarmerId || 'demo-farmer-1',
-            name: 'Lilongwe Maize Sector A',
+            name: 'Machakos Maize Sector A',
             areaHectares: 4.5,
             soilType: 'loam',
             soilPh: 6.5,
-            latitude: -13.9626,
-            longitude: 33.7741,
+            latitude: -1.5177,
+            longitude: 37.2634,
             isActive: true,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
@@ -472,12 +472,12 @@ export function CropsFields() {
         {
           id: 'field-demo-1',
           farmerId: selectedFarmerId || 'demo-farmer-1',
-          name: 'Lilongwe Maize Sector A',
+          name: 'Machakos Maize Sector A',
           areaHectares: 4.5,
           soilType: 'loam',
           soilPh: 6.5,
-          latitude: -13.9626,
-          longitude: 33.7741,
+          latitude: -1.5177,
+          longitude: 37.2634,
           isActive: true,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),

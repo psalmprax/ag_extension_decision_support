@@ -97,15 +97,17 @@ async function fetchOverviewCounts(user: UserScope) {
     const farmerScope = buildScopeFilter(user, 'assigned_officer_id', 'f');
     const visitScope = buildScopeFilter(user, 'officer_id', 'v');
     const conversationScope = buildScopeFilter(user, 'officer_id', 'c');
-    const [farmersCount, officersCount, activeConversations, recentVisits, avgSatisfactionResult, resolvedQueries] = await Promise.all([
+    const [farmersCount, officersCount, activeConversations, recentVisits, avgSatisfactionResult, resolvedQueries, totalHectaresResult, avgYieldResult] = await Promise.all([
         getFromDB(`SELECT COUNT(*) as count FROM farmers f WHERE f.is_active = true ${farmerScope.whereClause}`, farmerScope.params),
         getFromDB(`SELECT COUNT(*) as count FROM users u WHERE u.role = 'extension_officer' AND u.is_active = true${user.tenantId ? ` AND u.tenant_id = '${user.tenantId}'` : ''}`),
         getFromDB(`SELECT COUNT(*) as count FROM chat_conversations c WHERE c.status = 'active' ${conversationScope.whereClause}`, conversationScope.params),
         getFromDB(`SELECT COUNT(*) as count FROM visits v WHERE v.created_at > NOW() - INTERVAL '30 days' ${visitScope.whereClause}`, visitScope.params),
         getFromDB(`SELECT AVG(c.satisfaction_score) as avg FROM chat_conversations c WHERE c.satisfaction_score IS NOT NULL ${conversationScope.whereClause}`, conversationScope.params),
         getFromDB(`SELECT COUNT(*) as count FROM chat_conversations c WHERE c.status = 'resolved' ${conversationScope.whereClause}`, conversationScope.params),
+        getFromDB(`SELECT COALESCE(SUM(f.farm_size_hectares), 0) as total FROM farmers f WHERE f.is_active = true ${farmerScope.whereClause}`, farmerScope.params),
+        getFromDB(`SELECT COALESCE(AVG((f.yield_history -> -1 ->> 'yield')::numeric), 0) as avg FROM farmers f WHERE f.is_active = true AND f.yield_history IS NOT NULL ${farmerScope.whereClause}`, farmerScope.params),
     ]);
-    return { farmersCount, officersCount, activeConversations, recentVisits, avgSatisfactionResult, resolvedQueries };
+    return { farmersCount, officersCount, activeConversations, recentVisits, avgSatisfactionResult, resolvedQueries, totalHectaresResult, avgYieldResult };
 }
 
 async function fetchGeography(user: UserScope) {
@@ -208,7 +210,7 @@ router.get('/dashboard', async (req: Request, res: Response) => {
             fetchPriorityQueue(user),
         ]);
 
-        const { farmersCount, officersCount, activeConversations, recentVisits, avgSatisfactionResult, resolvedQueries } = overviewData;
+        const { farmersCount, officersCount, activeConversations, recentVisits, avgSatisfactionResult, resolvedQueries, totalHectaresResult, avgYieldResult } = overviewData;
         const { lastMonthFarmers, lastMonthConversations, lastMonthVisits, lastMonthSatisfactionResult } = trendData;
 
         const currentFarmers = parseIntCount(farmersCount);
@@ -224,7 +226,9 @@ router.get('/dashboard', async (req: Request, res: Response) => {
                 visitsThisMonth: currentVisits,
                 avgSatisfaction: Math.round(currentSatisfaction * 10) / 10,
                 queriesResolved: parseIntCount(resolvedQueries),
-                avgConversationsPerFarmer: currentFarmers > 0 ? Math.round((currentConversations / currentFarmers) * 10) / 10 : 0
+                avgConversationsPerFarmer: currentFarmers > 0 ? Math.round((currentConversations / currentFarmers) * 10) / 10 : 0,
+                totalHectares: Math.round(parseFloat((totalHectaresResult[0] as Record<string, unknown>)?.total as string || '0') * 10) / 10,
+                avgYield: Math.round(parseFloat((avgYieldResult[0] as Record<string, unknown>)?.avg as string || '0') * 10) / 10
             },
             trends: {
                 farmersGrowth: Math.round(computeGrowth(currentFarmers, parseIntCount(lastMonthFarmers)) * 10) / 10,
