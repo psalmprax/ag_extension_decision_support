@@ -35,7 +35,6 @@ describe('Cybersecurity Suite — SkillVetter Supply Chain & Code Sandboxing', (
     });
 
     it('should flag obfuscated base64 payload sequences', async () => {
-      const b64Block = "'A'.repeat(120)";
       const b64Payload = `"data:text/javascript;base64,${'A'.repeat(150)}"`;
       const obfuscatedCode = `
         const a = ${b64Payload};

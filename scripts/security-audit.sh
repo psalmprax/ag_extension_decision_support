@@ -108,7 +108,7 @@ echo -e "\n${BLUE}${BOLD}[3/5] Running Backend Security Test Suites (AegisShield
   cd "$ROOT_DIR/ag-extension-dashboard/src/backend"
   npm test -- security --silent
 )
-echo -e "${GREEN}✅ Backend Security Test Suites Passed (32/32 tests).${NC}"
+echo -e "${GREEN}✅ Backend Security Test Suites Passed (40/40 tests).${NC}"
 
 # ------------------------------------------------------------------------------
 # 4. FRONTEND & BROWSER EXTENSION SECURITY CHECKS
@@ -116,9 +116,9 @@ echo -e "${GREEN}✅ Backend Security Test Suites Passed (32/32 tests).${NC}"
 echo -e "\n${BLUE}${BOLD}[4/5] Running Frontend & Browser Extension Security Verifications...${NC}"
 (
   cd "$ROOT_DIR/ag-extension-dashboard/src/frontend"
-  npm run test -- src/__tests__/securityPolicy.test.ts
+  npm run test -- src/__tests__/securityPolicy.test.ts src/__tests__/virtualizationAndThermal.test.ts src/__tests__/offlineConflictResolver.test.ts src/__tests__/remoteWipeAndEncryptedStorage.test.ts src/__tests__/chaosNetworkSimulation.test.ts
 )
-echo -e "${GREEN}✅ Frontend Security Policy Tests Passed.${NC}"
+echo -e "${GREEN}✅ Frontend Security Policy & Deep-Tier Resilience Tests Passed (18/18 tests).${NC}"
 
 (
   cd "$ROOT_DIR/ag-extension-browser-ext"

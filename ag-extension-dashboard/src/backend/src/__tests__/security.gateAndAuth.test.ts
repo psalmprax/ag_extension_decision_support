@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { securityGate } from '@/middleware/securityGate';
-import { authorize, UserRole } from '@/middleware/authorize';
+import { authorize } from '@/middleware/authorize';
 import jwt from 'jsonwebtoken';
 import { config } from '@/config';
 

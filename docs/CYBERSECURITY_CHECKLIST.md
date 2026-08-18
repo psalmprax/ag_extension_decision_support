@@ -163,6 +163,20 @@ graph TD
 
 ---
 
+### 9. Deep-Tier Mission-Critical Controls (Field & AI Resilience)
+
+| ID | Control Requirement | Implementation / File Location | Status | Verification Method |
+| :--- | :--- | :--- | :---: | :--- |
+| **DTP-01** | **Deterministic Agronomic Boundary Validator**: Deterministic safety engine enforcing FAO dosage ceilings (Nitrogen <=300kg/ha, Pesticides <=4L/ha, pH 3.5-9.5) and quarantine disease escalation. | [`backend/src/services/security/agronomicSafetyGuard.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/security/agronomicSafetyGuard.ts) | ✅ Enforced | Automated Jest tests (`security.agronomicSafetyGuard.test.ts`) |
+| **DTP-02** | **Network Idempotency Replay Protection**: `X-Idempotency-Key` middleware caching 2xx responses for 24h to prevent double-writes or duplicate charges on spotty 2G mobile retries. | [`backend/src/middleware/idempotencyMiddleware.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/middleware/idempotencyMiddleware.ts) | ✅ Enforced | Automated Jest tests (`security.idempotency.test.ts`) |
+| **DTP-03** | **Client-Side Storage Cryptography (AES-256-GCM)**: Web Crypto PBKDF2 + AES-GCM encryption for offline farmer PII, GPS coordinates, and cached records on device. | [`frontend/src/services/encryptedStorageService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/services/encryptedStorageService.ts) | ✅ Enforced | Automated Vitest tests (`remoteWipeAndEncryptedStorage.test.ts`) |
+| **DTP-04** | **Stolen Device Remote Wipe Protocol**: Responds to admin account revocation signals (`ACCOUNT_REVOKED_WIPE_DEVICE`) to instantly purge IndexedDB databases, cached photos, and tokens. | [`frontend/src/services/remoteWipeService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/services/remoteWipeService.ts) | ✅ Enforced | Automated Vitest tests (`remoteWipeAndEncryptedStorage.test.ts`) |
+| **DTP-05** | **Offline 3-Way Field-Level Conflict Resolution**: Granular field-by-field merge with timestamps to prevent concurrent edit data loss between offline field officers and headquarters. | [`frontend/src/services/offlineConflictResolver.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/services/offlineConflictResolver.ts) | ✅ Enforced | Automated Vitest tests (`offlineConflictResolver.test.ts`) |
+| **DTP-06** | **Low-End Hardware & Thermal Adaptation**: DOM window virtualization + dynamic memory hooks (`navigator.deviceMemory` / low-power mode) to prevent WebView crashes on 2GB RAM phones. | [`frontend/src/components/common/VirtualizedList.tsx`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/common/VirtualizedList.tsx)<br>[`frontend/src/hooks/useDeviceThermalMemoryBudget.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/hooks/useDeviceThermalMemoryBudget.ts) | ✅ Enforced | Automated Vitest tests (`virtualizationAndThermal.test.ts`) |
+| **DTP-07** | **Chaos Network Drop & Backoff Recovery**: Exponential backoff with jitter retry wrapper for 2G packet loss resilience and network blackout handling. | Frontend Services | ✅ Enforced | Automated Vitest tests (`chaosNetworkSimulation.test.ts`) |
+
+---
+
 ## 🛠️ Security Verification Command Quick Reference
 
 Developers and administrators can execute the full security verification suite using standard commands:
@@ -171,12 +185,15 @@ Developers and administrators can execute the full security verification suite u
 # 1. Run full repository security audit (Secrets, Dependency CVEs, and Security Tests)
 npm run security:audit
 
-# 2. Run all backend security test suites (AegisShield, CredentialVault, SkillVetter, RBAC Gate)
-npm run security:test
+# 2. Run all backend security test suites (AegisShield, CredentialVault, SkillVetter, RBAC Gate, Agronomic Guard, Idempotency)
+npm run security:test:backend
 
-# 3. Run frontend security tests
-cd ag-extension-dashboard/src/frontend && npm run test -- security
+# 3. Run all frontend security & deep-tier resilience test suites
+npm run security:test:frontend
 
 # 4. Run AI Agent security tests
-cd ag-extension-dashboard/src/agents && pytest tests/test_security.py
+npm run security:test:agents
+
+# 5. Run all security test suites across all 4 services
+npm run security:test
 ```
