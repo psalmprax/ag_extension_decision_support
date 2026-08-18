@@ -1,26 +1,12 @@
 import apiClient from './client';
+import type { Report, ReportListResponse } from '@ag-extension/shared/api';
 
-export interface Report {
-  id: string;
-  type: string;
-  title: string;
-  generatedAt: string;
-  status: string;
-  content?: string;
-  createdBy?: string;
-  data: { content?: string; [key: string]: unknown };
-}
+// Canonical shapes come from the shared API contract (@ag-extension/shared/api).
+export type { Report };
+export type ReportsResponse = ReportListResponse;
 
-export interface ReportsResponse {
-  success: boolean;
-  data: {
-    reports: Report[];
-    total: number;
-  };
-}
-
-export const fetchReports = async (): Promise<ReportsResponse> => {
-  const response = await apiClient.get<ReportsResponse>('/reporting');
+export const fetchReports = async (): Promise<ReportListResponse> => {
+  const response = await apiClient.get<ReportListResponse>('/reporting');
   return response.data;
 };
 

@@ -1,52 +1,21 @@
 import apiClient from '@/api/client';
+import type {
+  AuthResponse,
+  LoginCredentials,
+  MeResponse,
+  RegisterData,
+  User,
+  UserRole,
+} from '@ag-extension/shared/api';
 
-export type UserRole = 'admin' | 'extension_officer' | 'farmer';
-
-export interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: UserRole;
-  region?: string;
-  phone?: string;
-  avatarUrl?: string;
-}
-
-export interface AuthResponse {
-  success: boolean;
-  data: {
-    user: User;
-    token: string;
-  };
-  // Support legacy/flat structures
-  user?: User;
-  token?: string;
-}
-
-export interface ProfileResponse {
-  success: boolean;
-  data: User;
-}
+// Canonical shapes come from the shared API contract (@ag-extension/shared/api).
+export type { AuthResponse, LoginCredentials, RegisterData, User, UserRole };
+export type ProfileResponse = MeResponse;
 
 export const fetchUserProfile = async (): Promise<ProfileResponse> => {
   const response = await apiClient.get<ProfileResponse>('/auth/me');
   return response.data;
 };
-
-export interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-export interface RegisterData {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  role: string;
-  region?: string;
-}
 
 export const login = async (credentials: LoginCredentials): Promise<AuthResponse> => {
   const response = await apiClient.post<AuthResponse>('/auth/login', credentials);

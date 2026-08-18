@@ -1,35 +1,8 @@
 import apiClient from './client';
+import type { Field, CropCycle } from '@ag-extension/shared/api';
 
-export interface Field {
-  id: string;
-  farmerId: string;
-  name: string;
-  areaHectares: number;
-  soilType?: string;
-  soilPh?: number;
-  latitude?: number;
-  longitude?: number;
-  boundaryCoordinates?: unknown; // GeoJSON or JSON structure
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  cropCycles?: CropCycle[];
-}
-
-export interface CropCycle {
-  id: string;
-  fieldId: string;
-  cropName: string;
-  variety?: string;
-  status: 'planned' | 'growing' | 'harvested' | 'failed';
-  plantingDate?: string;
-  expectedHarvestDate?: string;
-  actualHarvestDate?: string;
-  yieldKg?: number;
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+// Canonical shapes come from the shared API contract (@ag-extension/shared/api).
+export type { Field, CropCycle };
 
 export const fetchFields = async (farmerId?: string) => {
   const url = farmerId ? `/fields?farmerId=${farmerId}` : '/fields';

@@ -1,31 +1,12 @@
 import apiClient from './client';
+import type { Farmer, FarmerListResponse } from '@ag-extension/shared/api';
 
-export interface Farmer {
-  id: string;
-  firstName: string;
-  lastName: string;
-  phone?: string;
-  region?: string;
-  village?: string;
-  crops?: string[];
-  farmSize?: number;
-  vitalScore?: number;
-  yieldHistory?: Array<{ month: string; yield: number }>;
-  locationLat?: number;
-  locationLng?: number;
-  languagePreference?: string;
-}
+// Canonical shapes come from the shared API contract (@ag-extension/shared/api).
+export type { Farmer };
+export type FarmersResponse = FarmerListResponse;
 
-export interface FarmersResponse {
-  success: boolean;
-  data: {
-    farmers: Farmer[];
-    total: number;
-  };
-}
-
-export const fetchFarmers = async (): Promise<FarmersResponse> => {
-  const response = await apiClient.get<FarmersResponse>('/farmers');
+export const fetchFarmers = async (): Promise<FarmerListResponse> => {
+  const response = await apiClient.get<FarmerListResponse>('/farmers');
   return response.data;
 };
 

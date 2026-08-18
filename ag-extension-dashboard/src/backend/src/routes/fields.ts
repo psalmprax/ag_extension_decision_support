@@ -7,14 +7,11 @@ import { mapFieldStatsRows, mapCountRow } from '@/types/dtos';
 import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
 import { safeError } from '@/utils/safeResponse';
+import { UUID_REGEX } from '@/utils/uuid';
 
 const router = Router();
 
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
-
-// The farmers.id / fields.farmer_id columns are UUIDs. A non-UUID farmerId in a
-// query would make Postgres throw (invalid input syntax for type uuid) → 500.
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * GET /api/fields — list fields. Officers and farmers are auto-filtered by
@@ -117,6 +114,11 @@ router.post('/', async (req: Request, res: Response) => {
 
         if (!farmerId || !name || typeof areaHectares !== 'number') {
             return res.status(400).json({ success: false, error: 'farmerId, name, and areaHectares are required' });
+        }
+        // farmer_id is a UUID FK — reject malformed ids up front. Mirrors the
+        // shared createFieldSchema contract (see __tests__/apiContract.test.ts).
+        if (!UUID_REGEX.test(String(farmerId))) {
+            return res.status(400).json({ success: false, error: 'farmerId must be a valid UUID' });
         }
         const prisma = getPrisma();
         const field = await prisma.field.create({

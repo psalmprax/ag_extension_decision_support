@@ -1,17 +1,8 @@
 import apiClient from './client';
+import type { Notification } from '@ag-extension/shared/api';
 
-export interface Notification {
-  id: string;
-  type: string;
-  title: string;
-  message: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  metadata: Record<string, any>;
-  isRead: boolean;
-  channel: string;
-  createdAt: string;
-  readAt: string | null;
-}
+// Canonical shape comes from the shared API contract (@ag-extension/shared/api).
+export type { Notification };
 
 export const fetchNotifications = async (): Promise<Notification[]> => {
   const { data } = await apiClient.get('/notifications');

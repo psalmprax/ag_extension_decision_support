@@ -11,7 +11,7 @@ export interface User {
   firstName: string;
   lastName: string;
   email: string;
-  role: 'admin' | 'extension_officer' | 'farmer';
+  role: 'admin' | 'regional_manager' | 'extension_officer' | 'farmer';
   region?: string;
   planName?: string;
   isFree?: boolean;

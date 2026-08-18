@@ -157,6 +157,26 @@ describe('Fields & Crops API Integration Tests', () => {
         expect(response.body.data[0].name).toBe('North Plot');
     });
 
+    it('should return empty list (not 500) for demo-style non-UUID farmerId', async () => {
+        // Regression: the live dashboard used to send demo-farmer-1 against the
+        // UUID farmer_id column, which made Postgres throw -> 500 on every load.
+        const response = await request(app)
+            .get('/api/v1/fields?farmerId=demo-farmer-1')
+            .set('Authorization', `Bearer ${officerToken}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({ success: true, data: [], total: 0 });
+    });
+
+    it('should return empty list for a malformed farmerId that is not a UUID', async () => {
+        const response = await request(app)
+            .get('/api/v1/fields?farmerId=not-a-uuid-at-all')
+            .set('Authorization', `Bearer ${officerToken}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({ success: true, data: [], total: 0 });
+    });
+
     it('should reject access to field list of another farmer', async () => {
         const response = await request(app)
             .get('/api/v1/fields?farmerId=11111111-1111-1111-1111-111111111111')
