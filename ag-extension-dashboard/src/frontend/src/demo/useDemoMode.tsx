@@ -4,7 +4,7 @@ import { Lock } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 
-interface UseDemoGuardResult {
+interface UseDemoModeResult {
   isDemo: boolean;
   /** Renders a disabled overlay when isDemo is true; renders children otherwise. */
   DemoBlocker: React.FC<{ children: React.ReactNode; label?: string }>;
@@ -48,7 +48,7 @@ export const DemoBlocker: React.FC<{ children: React.ReactNode; label?: string }
   );
 };
 
-export function useDemoGuard(): UseDemoGuardResult {
+export function useDemoMode(): UseDemoModeResult {
   const isDemo = useAppStore(s => s.isDemo);
   return { isDemo, DemoBlocker, can: () => !isDemo };
 }

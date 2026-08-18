@@ -14,6 +14,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import ErrorBoundary from '@ag-extension/shared';
 import { getNavItems } from './config/navItems';
+import { useDemoMode } from '@/demo';
 import { AppHeader } from './components/layout/AppHeader';
 import { AppSidebar } from './components/layout/AppSidebar';
 import { AppModals } from './components/AppModals';
@@ -90,24 +91,36 @@ function App() {
     hideShareModal,
     removeFarmers,
   } = useAppStore();
+  const { isDemo } = useDemoMode();
 
-  // Sync activeTab from URL pathname on mount or route changes
-  React.useEffect(() => {
-    const tab = PATH_TO_TAB[location.pathname];
-    if (tab && tab !== activeTab) {
-      setActiveTab(tab);
-    }
-  }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Keep activeTab and the URL pathname in sync — one direction per render.
+  // Two independent effects used to fight each other on deep links: a reload
+  // on /fields with a persisted activeTab of 'dashboard' flipped both values
+  // forever (each effect re-triggering the other). Tracking the previous
+  // values makes the *changed* side the source of truth, so the pair settles
+  // in a single pass.
+  const prevPathRef = React.useRef<string | null>(null);
+  const prevTabRef = React.useRef(activeTab);
 
-  // Sync URL pathname from activeTab change for authenticated users
   React.useEffect(() => {
-    if (storeUser) {
+    const pathChanged =
+      prevPathRef.current === null || prevPathRef.current !== location.pathname;
+    const tabChanged = prevTabRef.current !== activeTab;
+    prevPathRef.current = location.pathname;
+    prevTabRef.current = activeTab;
+
+    if (!storeUser) return;
+
+    if (pathChanged && !tabChanged) {
+      // Deep link / direct navigation — the URL is the source of truth.
+      const tab = PATH_TO_TAB[location.pathname];
+      if (tab && tab !== activeTab) setActiveTab(tab);
+    } else if (tabChanged && !pathChanged) {
+      // Tab click — mirror the active tab in the URL.
       const targetPath = TAB_TO_PATH[activeTab];
-      if (targetPath && location.pathname !== targetPath) {
-        navigate(targetPath);
-      }
+      if (targetPath && location.pathname !== targetPath) navigate(targetPath);
     }
-  }, [activeTab, storeUser]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [location.pathname, activeTab, storeUser, navigate, setActiveTab]);
 
   const { isModern, headingClass } = useThemeClasses();
 
@@ -338,7 +351,7 @@ function App() {
 
   const navItems = getNavItems(isModern).filter(item => {
     if (!user || !item.roles.includes(user.role)) return false;
-    if (useAppStore.getState().isDemo && item.hiddenInDemo) return false;
+    if (isDemo && item.hiddenInDemo) return false;
     return true;
   });
 

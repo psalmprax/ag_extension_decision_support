@@ -1,4 +1,5 @@
 import axios, { AxiosError } from 'axios';
+import { containsDemoId } from '@/demo/demoIds';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -29,6 +30,21 @@ apiClient.interceptors.request.use(
   }
 );
 
+// Hard demo-mode guarantee: demo ids are synthetic and never exist in the live
+// DB (farmers.id / fields.farmer_id are UUIDs), so any outbound request that
+// carries one is blocked here at the network boundary — no UI code path can
+// leak a demo id to the live API, now or in the future.
+apiClient.interceptors.request.use(config => {
+  if (config.url && containsDemoId(config.url)) {
+    return Promise.reject(
+      Object.assign(new Error('Request carrying a demo id was blocked before reaching the API'), {
+        code: 'ERR_DEMO_BLOCKED',
+      })
+    );
+  }
+  return config;
+});
+
 // Retry configuration for specific HTTP methods and status codes
 const shouldRetry = (error: AxiosError): boolean => {
   const config = error.config;
@@ -46,7 +62,7 @@ const shouldRetry = (error: AxiosError): boolean => {
 
   // Retry on network errors, but skip timeouts — retrying connection timeouts
   // only adds noise since the server is likely down
-  const skipCodes = ['ECONNABORTED', 'ERR_CONNECTION_TIMED_OUT', 'ETIMEDOUT', 'ENOTFOUND'];
+  const skipCodes = ['ECONNABORTED', 'ERR_CONNECTION_TIMED_OUT', 'ETIMEDOUT', 'ENOTFOUND', 'ERR_DEMO_BLOCKED'];
   if (!error.response && error.code && skipCodes.includes(error.code)) {
     return false;
   }
@@ -117,6 +133,7 @@ apiClient.interceptors.response.use(
         'ERR_CONNECTION_TIMED_OUT',
         'ETIMEDOUT',
         'ENOTFOUND',
+        'ERR_DEMO_BLOCKED',
       ];
       if (error.code && silentCodes.includes(error.code)) {
         // Silent - backend not running or unreachable

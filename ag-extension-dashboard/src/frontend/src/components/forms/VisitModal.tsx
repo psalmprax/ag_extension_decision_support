@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, MapPin, Calendar, FileText, User } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
-import { useAppStore } from '@/store/useAppStore';
+import { useDemoMode } from '@/demo';
 import { fetchFarmers } from '@/api/farmerService';
 import { createVisit } from '@/api/visitService';
 import toast from 'react-hot-toast';
@@ -25,7 +25,7 @@ interface VisitModalProps {
 
 export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const { t } = useLanguage();
-  const isDemo = useAppStore(s => s.isDemo);
+  const { isDemo } = useDemoMode();
   const [loading, setLoading] = useState(false);
   const [farmers, setFarmers] = useState<Farmer[]>([]);
   const [loadingFarmers, setLoadingFarmers] = useState(false);

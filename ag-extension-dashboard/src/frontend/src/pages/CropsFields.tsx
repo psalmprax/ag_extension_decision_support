@@ -29,45 +29,7 @@ import {
 } from '../api/fieldService';
 import { fetchFarmers } from '../api/farmerService';
 import type { Farmer } from '../types/dashboard';
-import { DEMO_FARMERS } from '@/data/demoFarmers';
-
-// Demo fallback IDs (demo-farmer-1, …) don't exist in the live DB — farmers.id
-// is a UUID column, so querying fields with a fake ID would 500 on the backend.
-const isDemoFarmerId = (id?: string) => !!id && /^demo-farmer-/i.test(id);
-
-function buildDemoFields(farmerId: string, withCycles: boolean): Field[] {
-  return [
-    {
-      id: 'field-demo-1',
-      farmerId: farmerId || 'demo-farmer-1',
-      name: 'Machakos Maize Sector A',
-      areaHectares: 4.5,
-      soilType: 'loam',
-      soilPh: 6.5,
-      latitude: -1.5177,
-      longitude: 37.2634,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      cropCycles: withCycles
-        ? [
-            {
-              id: 'cycle-1',
-              fieldId: 'field-demo-1',
-              cropName: 'Maize',
-              variety: 'SC 719',
-              status: 'growing',
-              plantingDate: '2026-11-15',
-              expectedHarvestDate: '2026-04-10',
-              yieldKg: 3500,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            },
-          ]
-        : [],
-    },
-  ];
-}
+import { DEMO_FARMERS, isDemoFarmerId, buildDemoFields, useDemoMode } from '@/demo';
 
 export function CropsOverviewTab({
   fields,
@@ -381,7 +343,8 @@ export function CropsCyclesTab({
 export function CropsFields() {
   const { t: _t } = useLanguage();
   const { headingClass, isModern, radiusClass, btnClass, cardClass } = useThemeClasses();
-  const { addNotification, user, isDemo } = useAppStore();
+  const { addNotification, user } = useAppStore();
+  const { isDemo } = useDemoMode();
 
   const isFarmer = user?.role === 'farmer';
 

@@ -5,6 +5,7 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAppStore, type User } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { enterDemoMode, exitDemoMode } from '@/demo';
 
 import { login, demoLogin } from '@/api/authService';
 
@@ -43,7 +44,7 @@ export function Login({ onDemo }: LoginProps) {
       if (userData) {
         localStorage.setItem('user', JSON.stringify(userData));
         setUser(userData as User);
-        setIsDemo(false);
+        exitDemoMode();
       }
 
       if (!token) {
@@ -72,12 +73,11 @@ export function Login({ onDemo }: LoginProps) {
 
       if (token) localStorage.setItem('token', token);
       if (userData) {
-        localStorage.setItem('user', JSON.stringify(userData));
-        setUser(userData as User);
+        // Centralized demo entry — sets the demo user + flips the mode flag.
+        enterDemoMode(userData as User);
+      } else {
         setIsDemo(true);
       }
-      // Activate demo mode so guarded UI elements restrict accordingly
-      setIsDemo(true);
 
       if (!token) {
         throw new Error('Demo login failed: No access token received');

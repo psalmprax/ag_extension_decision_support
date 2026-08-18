@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
+import { resolveEffectiveFarmers } from '@/hooks/useAppQueries';
 import {
+  DEMO_FARMERS,
   buildCropDistribution,
   buildDemoDashboardData,
   buildDemoPerformanceData,
   buildRegionBreakdown,
-  resolveEffectiveFarmers,
-} from '@/hooks/useAppQueries';
-import { DEMO_FARMERS } from '@/data/demoFarmers';
+} from '@/demo';
 import type { Farmer } from '@/store/useAppStore';
 
 type FarmerWithYield = Farmer & { yield?: number };

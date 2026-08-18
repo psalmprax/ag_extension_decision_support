@@ -23,7 +23,7 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { themes, ThemeName } from '@/theme';
 import { useLanguage } from '@/lib/LanguageContext';
-import { DEMO_FARMERS } from '@/data/demoFarmers';
+import { DEMO_FARMERS } from '@/demo';
 import toast from 'react-hot-toast';
 
 // Fix for default marker icons in Leaflet with webpack/Vite

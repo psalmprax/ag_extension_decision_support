@@ -4,7 +4,7 @@ import { Users, Send, FileText, Trash2, X, Lock } from 'lucide-react';
 import { Farmer } from '../types/dashboard';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
-import { useAppStore } from '@/store/useAppStore';
+import { useDemoMode } from '@/demo';
 
 interface PortfolioPageProps {
   effectiveFarmers: Farmer[];
@@ -37,7 +37,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
 }) => {
   const { t } = useLanguage();
   const { isModern, headingClass, btnClass, radiusClass } = useThemeClasses();
-  const isDemo = useAppStore(s => s.isDemo);
+  const { isDemo } = useDemoMode();
 
   return (
     <div>

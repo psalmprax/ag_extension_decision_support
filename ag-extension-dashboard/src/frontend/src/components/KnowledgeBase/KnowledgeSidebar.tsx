@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAppStore } from '@/store/useAppStore';
+import { useDemoMode } from '@/demo';
 import { logout as apiLogout } from '@/api/authService';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 
@@ -43,7 +44,8 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
   onSelect,
   onNewQuery,
 }) => {
-  const { user, isDemo } = useAppStore();
+  const { user } = useAppStore();
+  const { isDemo } = useDemoMode();
   const { isModern, radiusClass } = useThemeClasses();
 
   const handleLogout = async () => {

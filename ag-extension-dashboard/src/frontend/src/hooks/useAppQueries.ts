@@ -6,7 +6,7 @@ import { fetchReports } from '@/api/reportService';
 import { fetchPerformanceData } from '@/api/analyticsService';
 import { getMyTransactions } from '@/api/billingService';
 import { useAppStore, type Farmer } from '@/store/useAppStore';
-import { DEMO_FARMERS } from '@/data/demoFarmers';
+import { useDemoMode, DEMO_FARMERS, buildDemoDashboardData, buildDemoPerformanceData } from '@/demo';
 
 function mapApiFarmerToStoreFarmer(farmer: ApiFarmer): Farmer {
   return {
@@ -35,91 +35,6 @@ export function resolveEffectiveFarmers(
   return isDemo ? DEMO_FARMERS : [];
 }
 
-// Demo accounts surface the static DEMO_FARMERS dataset on the map, so the
-// dashboard metrics must be aggregated from the same source to stay coherent
-// with the map instead of falling back to an empty backend aggregation.
-function sumFarmerNumeric(farmers: Farmer[], pick: (f: Farmer) => number): number {
-  return farmers.reduce((sum, f) => sum + (Number(pick(f)) || 0), 0);
-}
-
-function avgFarmerYield(farmers: Farmer[]): number {
-  const total = farmers.length;
-  const totalYield = sumFarmerNumeric(farmers, f => (f as Farmer & { yield?: number }).yield ?? 0);
-  return total > 0 ? totalYield / total : 0;
-}
-
-export function buildCropDistribution(farmers: Farmer[]) {
-  const counts = new Map<string, number>();
-  farmers.forEach(farmer => {
-    (farmer.crops || []).forEach(crop => {
-      counts.set(crop, (counts.get(crop) || 0) + 1);
-    });
-  });
-  return [...counts.entries()]
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count);
-}
-
-export function buildRegionBreakdown(farmers: Farmer[]) {
-  const counts = new Map<string, number>();
-  farmers.forEach(farmer => {
-    const region = farmer.region || 'Unknown';
-    counts.set(region, (counts.get(region) || 0) + 1);
-  });
-  return [...counts.entries()]
-    .map(([region, count]) => ({ region, farmers: count }))
-    .sort((a, b) => b.farmers - a.farmers);
-}
-
-export function buildDemoDashboardData(farmers: Farmer[]) {
-  const totalFarmers = farmers.length;
-  const totalHectares = sumFarmerNumeric(farmers, f => f.farmSize ?? 0);
-  const avgYield = avgFarmerYield(farmers);
-  const activeConversations = Math.max(1, Math.round(totalFarmers * 0.75));
-  const visitsThisMonth = Math.max(1, Math.round(totalFarmers * 0.6));
-
-  return {
-    overview: {
-      totalFarmers,
-      totalHectares,
-      avgYield: Math.round(avgYield * 10) / 10,
-      activeConversations,
-      visitsThisMonth,
-      avgSatisfaction: 4.6,
-      avgConversationsPerFarmer: Math.round((activeConversations / totalFarmers) * 10) / 10,
-    },
-    trends: {
-      farmersGrowth: 4.2,
-      conversationsGrowth: 6.1,
-      visitsGrowth: 3.4,
-      satisfactionChange: 0.2,
-    },
-    geography: buildRegionBreakdown(farmers),
-    crops: buildCropDistribution(farmers),
-  };
-}
-
-function demoResolutionRate(total: number): number {
-  return total > 0 ? Math.round(((total - 1) / total) * 1000) / 10 : 92;
-}
-
-export function buildDemoPerformanceData(farmers: Farmer[]) {
-  const total = farmers.length;
-  return {
-    metrics: {
-      resolutionRate: demoResolutionRate(total),
-      satisfactionScore: 4.6,
-      avgResponseTime: '2.4m',
-      followUpRate: 68,
-      firstContactResolution: 74,
-    },
-    timeline: farmers.slice(0, 6).map((_f, i) => ({
-      date: `Week ${i + 1}`,
-      farmers: total,
-    })),
-  };
-}
-
 function isDemoQueryEnabled(condition: boolean, hasUser: boolean, isDemo: boolean): boolean {
   return condition && hasUser && !isDemo;
 }
@@ -127,7 +42,7 @@ function isDemoQueryEnabled(condition: boolean, hasUser: boolean, isDemo: boolea
 export function useAppQueries(activeTab: string, searchQuery: string) {
   const user = useAppStore(s => s.user);
   const storeFarmers = useAppStore(s => s.farmers);
-  const isDemo = useAppStore(s => s.isDemo);
+  const { isDemo } = useDemoMode();
   const hasUser = Boolean(user);
 
   const isDashboard = activeTab === 'dashboard';

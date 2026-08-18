@@ -3,7 +3,7 @@ import { Users, Plus, Send, Lock } from 'lucide-react';
 import { Conversation, ChatMessage } from '../types/dashboard';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
-import { useAppStore } from '@/store/useAppStore';
+import { useDemoMode } from '@/demo';
 
 interface FarmerChatPageProps {
   farmerConversations: Conversation[];
@@ -32,7 +32,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
 }) => {
   const { t } = useLanguage();
   const { isModern, headingClass, btnClass, radiusClass } = useThemeClasses();
-  const isDemo = useAppStore(s => s.isDemo);
+  const { isDemo } = useDemoMode();
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] gap-6">

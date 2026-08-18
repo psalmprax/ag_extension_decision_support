@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { searchKnowledge, KnowledgeArticle } from '@/api/knowledgeService';
 import { Farmer, Visit, Report } from '../types/dashboard';
-import { useAppStore } from '@/store/useAppStore';
-import { DEMO_FARMERS } from '@/data/demoFarmers';
+import { useDemoMode, DEMO_FARMERS, DEMO_VISITS, DEMO_REPORTS } from '@/demo';
 
 interface SearchResult {
   type: string;
@@ -33,25 +32,10 @@ export const useAppSearch = (
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
   const [isGlobalSearching, setIsGlobalSearching] = useState(false);
   const [globalSearchResults, setGlobalSearchResults] = useState<SearchResult[]>([]);
-  const isDemo = useAppStore(s => s.isDemo);
+  const { isDemo } = useDemoMode();
 
   // transactions intentionally not used in demo; suppress unused-arg lint
   void transactions;
-
-  // Demo fallback data so search returns useful results without live API.
-  // Note: types/dashboard uses snake_case (farmer_name, scheduled_at, visit_type).
-  const DEMO_VISITS: Visit[] = [
-    {
-      id: 'demo-v1',
-      farmer_id: 'demo-1',
-      farmer_name: 'Demo Farmer',
-      scheduled_at: new Date().toISOString(),
-      status: 'pending',
-    } as unknown as Visit,
-  ];
-  const DEMO_REPORTS: Report[] = [
-    { id: 'demo-r1', title: 'Demo Region Overview' } as unknown as Report,
-  ];
 
   const getFarmerResultsLocal = (query: string, source: Farmer[]): SearchResult | null => {
     const matchedFarmers = (source || [])
