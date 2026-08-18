@@ -122,22 +122,19 @@ export class AnthropicProvider extends BaseAIProvider {
         }
     }
 
-    async analyzeWithReasoning(context: string, query: string, options?: ReasoningOptions): Promise<ReasoningResult> {
-        const client = await this.getClient();
-        const model = options?.model || 'claude-3-5-sonnet-20241022';
-        
+    private buildUserContent(context: string, query: string, attachments?: ReasoningOptions['attachments']): any[] {
         const userContent: any[] = [
             { type: 'text', text: `Context: ${context}\n\nQuestion: ${query}` }
         ];
 
-        if (options?.attachments && options.attachments.length > 0) {
-            for (const attachment of options.attachments) {
+        if (attachments && attachments.length > 0) {
+            for (const attachment of attachments) {
                 if (attachment.type === 'image') {
                     let base64Image = attachment.data;
                     if (attachment.data.includes('base64,')) {
                         base64Image = attachment.data.split('base64,')[1];
                     }
-                    
+
                     userContent.push({
                         type: 'image',
                         source: {
@@ -149,6 +146,15 @@ export class AnthropicProvider extends BaseAIProvider {
                 }
             }
         }
+
+        return userContent;
+    }
+
+    async analyzeWithReasoning(context: string, query: string, options?: ReasoningOptions): Promise<ReasoningResult> {
+        const client = await this.getClient();
+        const model = options?.model || 'claude-3-5-sonnet-20241022';
+
+        const userContent = this.buildUserContent(context, query, options?.attachments);
 
         const response = await client.messages.create({
             model,

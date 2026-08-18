@@ -51,20 +51,41 @@ export class AgronomicSafetyGuard {
     return AgronomicSafetyGuard.instance;
   }
 
+  private static detectQuarantineConditions(conditions: string[]): string[] {
+    const found: string[] = [];
+    for (const condition of conditions) {
+      const lower = condition.toLowerCase();
+      for (const quarantine of AgronomicSafetyGuard.QUARANTINE_DISEASES) {
+        if (lower.includes(quarantine)) found.push(quarantine);
+      }
+    }
+    return found;
+  }
+
+  private static computeHazardLevel(
+    violations: string[],
+    quarantineDiseases: string[]
+  ): 'safe' | 'warning' | 'critical_hazard' {
+    if (quarantineDiseases.length > 0) return 'critical_hazard';
+    const hasCritical = violations.some(
+      v => v.startsWith('Excessive Nitrogen') || v.startsWith('Lethal pesticide')
+    );
+    if (hasCritical) return 'critical_hazard';
+    return violations.length > 0 ? 'warning' : 'safe';
+  }
+
   /**
    * Validates structured numerical agronomic metrics against hard safety ceilings.
    */
   validateStructuredMetrics(metrics: AgronomicMetricInput): AgronomicBoundaryCheck {
     const violations: string[] = [];
-    const quarantineDiseases: string[] = [];
-    let hazardLevel: 'safe' | 'warning' | 'critical_hazard' = 'safe';
+    const quarantineDiseases = AgronomicSafetyGuard.detectQuarantineConditions(metrics.identifiedPestsOrDiseases ?? []);
 
     // 1. Nitrogen validation
     if (metrics.nitrogenKgHa !== undefined && metrics.nitrogenKgHa > AgronomicSafetyGuard.SAFETY_BOUNDS.nitrogenMaxKgHa) {
       violations.push(
         `Excessive Nitrogen dosage: ${metrics.nitrogenKgHa} kg/ha exceeds safe ceiling of ${AgronomicSafetyGuard.SAFETY_BOUNDS.nitrogenMaxKgHa} kg/ha (Risk of crop burn & groundwater contamination)`
       );
-      hazardLevel = 'critical_hazard';
     }
 
     // 2. Phosphorus validation
@@ -72,7 +93,6 @@ export class AgronomicSafetyGuard {
       violations.push(
         `Excessive Phosphorus dosage: ${metrics.phosphorusKgHa} kg/ha exceeds safe ceiling of ${AgronomicSafetyGuard.SAFETY_BOUNDS.phosphorusMaxKgHa} kg/ha`
       );
-      hazardLevel = 'warning';
     }
 
     // 3. Pesticide application rate validation
@@ -80,30 +100,14 @@ export class AgronomicSafetyGuard {
       violations.push(
         `Lethal pesticide dosage: ${metrics.pesticideMlHa} mL/ha exceeds maximum safe application threshold of ${AgronomicSafetyGuard.SAFETY_BOUNDS.pesticideMaxMlHa} mL/ha (High risk of phytotoxicity & toxicity)`
       );
-      hazardLevel = 'critical_hazard';
     }
 
     // 4. Soil pH range
-    if (metrics.soilPh !== undefined) {
-      if (metrics.soilPh < AgronomicSafetyGuard.SAFETY_BOUNDS.minSoilPh || metrics.soilPh > AgronomicSafetyGuard.SAFETY_BOUNDS.maxSoilPh) {
-        violations.push(`Unrealistic or extreme Soil pH: ${metrics.soilPh} (Valid arable range is 3.5 - 9.5)`);
-        if (hazardLevel !== 'critical_hazard') hazardLevel = 'warning';
-      }
+    if (metrics.soilPh !== undefined && (metrics.soilPh < AgronomicSafetyGuard.SAFETY_BOUNDS.minSoilPh || metrics.soilPh > AgronomicSafetyGuard.SAFETY_BOUNDS.maxSoilPh)) {
+      violations.push(`Unrealistic or extreme Soil pH: ${metrics.soilPh} (Valid arable range is 3.5 - 9.5)`);
     }
 
-    // 5. Quarantine disease detection
-    if (metrics.identifiedPestsOrDiseases && metrics.identifiedPestsOrDiseases.length > 0) {
-      for (const condition of metrics.identifiedPestsOrDiseases) {
-        const lower = condition.toLowerCase();
-        for (const quarantine of AgronomicSafetyGuard.QUARANTINE_DISEASES) {
-          if (lower.includes(quarantine)) {
-            quarantineDiseases.push(quarantine);
-            hazardLevel = 'critical_hazard';
-          }
-        }
-      }
-    }
-
+    const hazardLevel = AgronomicSafetyGuard.computeHazardLevel(violations, quarantineDiseases);
     const safe = violations.length === 0 && quarantineDiseases.length === 0;
 
     if (!safe) {

@@ -140,6 +140,35 @@ export class FaostatService {
         }
     }
 
+    private static groupByElement(records: FaostatCropRecord[]): Map<string, FaostatCropRecord[]> {
+        const byElement = new Map<string, FaostatCropRecord[]>();
+        for (const r of records) {
+            const existing = byElement.get(r.elementName) || [];
+            existing.push(r);
+            byElement.set(r.elementName, existing);
+        }
+        return byElement;
+    }
+
+    private static formatCropSummary(cropName: string, records: FaostatCropRecord[]): string | null {
+        const byElement = FaostatService.groupByElement(records);
+        const production = byElement.get('Production');
+        const area = byElement.get('Area harvested');
+        const yield_ = byElement.get('Yield');
+
+        const latestProd = production?.filter(r => r.value != null).sort((a, b) => b.year - a.year)[0];
+        const latestArea = area?.filter(r => r.value != null).sort((a, b) => b.year - a.year)[0];
+        const latestYield = yield_?.filter(r => r.value != null).sort((a, b) => b.year - a.year)[0];
+
+        if (!latestProd && !latestArea) return null;
+
+        const parts = [`${cropName}:`];
+        if (latestProd?.value) parts.push(`${Math.round(latestProd.value).toLocaleString()} tonnes (${latestProd.year})`);
+        if (latestArea?.value) parts.push(`${Math.round(latestArea.value).toLocaleString()} ha harvested`);
+        if (latestYield?.value) parts.push(`yield ${Math.round(latestYield.value)} hg/ha`);
+        return parts.join(' ');
+    }
+
     /**
      * Fetch summary data for all tropical crops in a country.
      * Returns a compact knowledge article string.
@@ -153,28 +182,9 @@ export class FaostatService {
             const records = await this.fetchCropData(cropCode, areaCode, 2020, 2023);
             if (records.length === 0) continue;
 
-            // Group by element
-            const byElement = new Map<string, FaostatCropRecord[]>();
-            for (const r of records) {
-                const existing = byElement.get(r.elementName) || [];
-                existing.push(r);
-                byElement.set(r.elementName, existing);
-            }
-
-            const production = byElement.get('Production');
-            const area = byElement.get('Area harvested');
-            const yield_ = byElement.get('Yield');
-
-            const latestProd = production?.filter(r => r.value != null).sort((a, b) => b.year - a.year)[0];
-            const latestArea = area?.filter(r => r.value != null).sort((a, b) => b.year - a.year)[0];
-            const latestYield = yield_?.filter(r => r.value != null).sort((a, b) => b.year - a.year)[0];
-
-            if (latestProd || latestArea) {
-                const parts = [`${cropName}:`];
-                if (latestProd?.value) parts.push(`${Math.round(latestProd.value).toLocaleString()} tonnes (${latestProd.year})`);
-                if (latestArea?.value) parts.push(`${Math.round(latestArea.value).toLocaleString()} ha harvested`);
-                if (latestYield?.value) parts.push(`yield ${Math.round(latestYield.value)} hg/ha`);
-                lines.push(parts.join(' '));
+            const summary = FaostatService.formatCropSummary(cropName, records);
+            if (summary) {
+                lines.push(summary);
                 fetchCount++;
             }
 

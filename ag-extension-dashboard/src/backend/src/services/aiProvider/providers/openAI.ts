@@ -155,14 +155,12 @@ export class OpenAIProvider extends BaseAIProvider {
         }
     }
 
-    async analyzeWithReasoning(context: string, query: string, options?: ReasoningOptions): Promise<ReasoningResult> {
-        const systemPrompt = REASONING_SYSTEM_PROMPT;
-
+    private buildUserContent(context: string, query: string, attachments?: ReasoningOptions['attachments']): any[] {
         const groundedPrompt = `Use the context below as the authoritative source for this answer. If the context is incomplete, say what is missing before adding general agricultural guidance. Cite source titles or URLs when available.\n\nContext:\n${context || 'No specific context found in knowledge base.'}\n\nQuestion: ${query}`;
         const userContent: any[] = [{ type: 'text', text: groundedPrompt }];
 
-        if (options?.attachments && options.attachments.length > 0) {
-            for (const attachment of options.attachments) {
+        if (attachments && attachments.length > 0) {
+            for (const attachment of attachments) {
                 if (attachment.type === 'image') {
                     userContent.push({
                         type: 'image_url',
@@ -171,6 +169,14 @@ export class OpenAIProvider extends BaseAIProvider {
                 }
             }
         }
+
+        return userContent;
+    }
+
+    async analyzeWithReasoning(context: string, query: string, options?: ReasoningOptions): Promise<ReasoningResult> {
+        const systemPrompt = REASONING_SYSTEM_PROMPT;
+
+        const userContent = this.buildUserContent(context, query, options?.attachments);
 
         const messages = [
             { role: 'system', content: systemPrompt },

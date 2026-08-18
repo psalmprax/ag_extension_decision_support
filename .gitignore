@@ -2,6 +2,8 @@ node_modules/
 .DS_Store
 dist/
 build/
+__pycache__/
+*.py[cod]
 .env
 .env.local
 *.log
@@ -31,3 +33,24 @@ prisma/migrations/*.sql.bak
 test-results/
 playwright-report/
 .gstack/
+
+# Tool-run debris (empty exit-code/timeout artifacts, check snapshots)
+/30
+/60
+/120
+/300
+lint_output.txt
+check_output.txt
+/be-lint-snapshot.txt
+/fe-lint-snapshot.txt
+/fe-lint-step6-end.txt
+/fe-lint-after-autofix.txt
+/run_logs.txt
+/run_logs_failed.txt
+/compliance_output.txt
+/test-failure.png
+ag-extension-dashboard/src/frontend/60
+ag-extension-dashboard/src/frontend/180
+ag-extension-dashboard/src/frontend/240
+ag-extension-dashboard/src/frontend/300
+ag-extension-dashboard/src/frontend/400

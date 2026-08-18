@@ -169,6 +169,31 @@ export class SkillVetter {
     return { trusted: isTrusted };
   }
 
+  private classifyPattern(pattern: RegExp): { weight: number; recommendation?: string } {
+    if (pattern.source.includes('eval') || pattern.source.includes('Function')) {
+      return { weight: SkillVetter.RISK_WEIGHTS.evalUsage, recommendation: 'Remove eval/Function usage — use safe alternatives' };
+    }
+    if (pattern.source.includes('child_process') || pattern.source.includes('exec') || pattern.source.includes('spawn')) {
+      return { weight: SkillVetter.RISK_WEIGHTS.processControl, recommendation: 'Remove child process execution — execute within sandbox' };
+    }
+    if (pattern.source.includes('fetch') || pattern.source.includes('http') || pattern.source.includes('net')) {
+      return { weight: SkillVetter.RISK_WEIGHTS.networkAccess };
+    }
+    if (pattern.source.includes('writeFile') || pattern.source.includes('appendFile')) {
+      return { weight: SkillVetter.RISK_WEIGHTS.fileWrite };
+    }
+    if (pattern.source.includes('env')) {
+      return { weight: SkillVetter.RISK_WEIGHTS.envAccess };
+    }
+    if (pattern.source.includes('exit') || pattern.source.includes('kill') || pattern.source.includes('SIG')) {
+      return { weight: SkillVetter.RISK_WEIGHTS.processControl };
+    }
+    if (pattern.source.includes('__proto__') || pattern.source.includes('constructor') || pattern.source.includes('prototype')) {
+      return { weight: SkillVetter.RISK_WEIGHTS.protoManipulation };
+    }
+    return { weight: 0 };
+  }
+
   private reviewCode(code: string): { score: number; flags: string[]; recommendations: string[] } {
     let score = 0;
     const flags: string[] = [];
@@ -176,28 +201,13 @@ export class SkillVetter {
 
     for (const pattern of this.suspiciousPatterns) {
       const matches = code.match(pattern);
-      if (matches) {
-        const patternName = pattern.source.substring(0, 30);
-        flags.push(`Suspicious pattern detected: ${patternName}`);
+      if (!matches) continue;
+      const patternName = pattern.source.substring(0, 30);
+      flags.push(`Suspicious pattern detected: ${patternName}`);
 
-        if (pattern.source.includes('eval') || pattern.source.includes('Function')) {
-          score += SkillVetter.RISK_WEIGHTS.evalUsage;
-          recommendations.push('Remove eval/Function usage — use safe alternatives');
-        } else if (pattern.source.includes('child_process') || pattern.source.includes('exec') || pattern.source.includes('spawn')) {
-          score += SkillVetter.RISK_WEIGHTS.processControl;
-          recommendations.push('Remove child process execution — execute within sandbox');
-        } else if (pattern.source.includes('fetch') || pattern.source.includes('http') || pattern.source.includes('net')) {
-          score += SkillVetter.RISK_WEIGHTS.networkAccess;
-        } else if (pattern.source.includes('writeFile') || pattern.source.includes('appendFile')) {
-          score += SkillVetter.RISK_WEIGHTS.fileWrite;
-        } else if (pattern.source.includes('env')) {
-          score += SkillVetter.RISK_WEIGHTS.envAccess;
-        } else if (pattern.source.includes('exit') || pattern.source.includes('kill') || pattern.source.includes('SIG')) {
-          score += SkillVetter.RISK_WEIGHTS.processControl;
-        } else if (pattern.source.includes('__proto__') || pattern.source.includes('constructor') || pattern.source.includes('prototype')) {
-          score += SkillVetter.RISK_WEIGHTS.protoManipulation;
-        }
-      }
+      const { weight, recommendation } = this.classifyPattern(pattern);
+      score += weight;
+      if (recommendation) recommendations.push(recommendation);
     }
 
     // Check for obfuscation (high entropy strings, base64 encoded code)

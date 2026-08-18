@@ -65,203 +65,156 @@ const io = new SocketServer(httpServer, {
     },
 });
 
+// Runs a startup step with uniform error handling: logs a success line on
+// completion, or a failure line (warn-only for optional services) on error.
+async function initializeStep(label: string, init: () => Promise<void> | void, warnOnly = false): Promise<void> {
+    try {
+        await init();
+        logger.info(`${label} initialized`);
+    } catch (error) {
+        if (warnOnly) {
+            logger.warn(`${label} not available:`, error);
+        } else {
+            logger.error(`Failed to initialize ${label}:`, error);
+        }
+    }
+}
+
 // Initialize services and start server
 async function bootstrap() {
+    // Run startup configuration validation
+    const startupWarnings = validateStartupConfiguration();
+    logStartupWarnings(startupWarnings);
+
+    if (!shouldProceedAtStartup(startupWarnings)) {
+        logger.error('Critical configuration issues detected. Server will start but some features may be unavailable.');
+    }
+
+    await initializeStep('database', () => initializeDatabase());
+    await initializeStep('cache', () => initializeCache());
+
+    // Attach Redis adapter to Socket.IO for multi-instance scaling
+    await initializeStep('Socket.IO Redis adapter', async () => {
+        const pubClient = createClient({ url: config.redis.url });
+        const subClient = pubClient.duplicate();
+        await Promise.all([pubClient.connect(), subClient.connect()]);
+        io.adapter(createAdapter(pubClient, subClient));
+    }, true);
+
+    // Initialize Socket.IO handlers
+    await initializeStep('WebRTC service', () => {
+        initializeSocketHandlers(io);
+        webrtcService.initialize(io);
+    });
+
+    await initializeStep('AI Provider Factory', () => AIProviderFactory.initialize());
+
+    // Seed Knowledge Articles (async)
+    await initializeStep('knowledge articles', async () => {
+        const { seedKnowledgeArticles, mockKnowledgeArticles } = await import('./routes/knowledge');
+        seedKnowledgeArticles().catch((err: unknown) =>
+            logger.error('Failed to seed knowledge articles:', err)
+        );
+
+        // Seed Vector Knowledge Base (async)
+        VectorService.seedKnowledge(mockKnowledgeArticles).catch(err =>
+            logger.error('Failed to seed vector knowledge:', err)
+        );
+    });
+
+    // Sync external knowledge sources (curated tropical articles — fast, no API calls)
+    await initializeStep('knowledge sync orchestrator', async () => {
+        const { KnowledgeSyncOrchestrator } = await import('./services/data/knowledgeSyncOrchestrator');
+        KnowledgeSyncOrchestrator.syncLightweight().catch(err =>
+            logger.error('Failed to sync lightweight knowledge sources:', err)
+        );
+    });
+
+    // Bootstrap RAG v2 (chunking + knowledge graph)
+    await initializeStep('RAG v2 service', async () => {
+        const { RAGV2Service } = await import('./services/ragV2Service');
+        RAGV2Service.bootstrap().catch(err =>
+            logger.error('Failed to bootstrap RAG v2:', err)
+        );
+    });
+
+    await initializeStep('persistent memory layer', () => persistentMemory.initialize());
+
+    // Register internal tools as vetted in the skill vetter
+    await initializeStep('internal tools', async () => {
+        const { toolRegistry } = await import('./tools/registry');
+        for (const tool of toolRegistry) {
+            skillVetter.registerVettedSkill({
+                name: tool.name,
+                source: 'internal',
+                version: '1.0.0',
+                author: 'ag-extension-team',
+                description: tool.description,
+                permissions: [],
+                dependencies: [],
+                installDate: new Date().toISOString(),
+                hash: skillVetter.computeHash(tool.description),
+                trustScore: 95,
+                riskLevel: 'low',
+                vetted: true,
+                vettedAt: new Date().toISOString(),
+                flags: [],
+            });
+        }
+    });
+
+    // Seed credentials from environment into secure vault
+    await initializeStep('credentials', () => {
+        if (process.env.OPENAI_API_KEY) {
+            credentialVault.storeCredential('openai_api_key', 'ai_provider', process.env.OPENAI_API_KEY, 90);
+        }
+        if (process.env.GROQ_API_KEY) {
+            credentialVault.storeCredential('groq_api_key', 'ai_provider', process.env.GROQ_API_KEY, 90);
+        }
+        if (process.env.TAVILY_API_KEY) {
+            credentialVault.storeCredential('tavily_api_key', 'search', process.env.TAVILY_API_KEY, 90);
+        }
+    });
+
+    // Register agents in orchestrator
+    await initializeStep('agents', () => {
+        agentOrchestrator.registerAgent({
+            agentId: 'agent-zero',
+            name: 'Agent Zero',
+            capabilities: ['farmer_outreach', 'data_collection', 'weather_monitoring', '*'],
+            maxConcurrentTasks: 3,
+        });
+        agentOrchestrator.registerAgent({
+            agentId: 'crew-ai',
+            name: 'Crew AI',
+            capabilities: ['market_analysis', 'disease_diagnosis', 'policy_research', '*'],
+            maxConcurrentTasks: 5,
+        });
+        // OpenClaw agent - planned for future implementation
+        agentOrchestrator.registerAgent({
+            agentId: 'openclaw',
+            name: 'OpenClaw',
+            capabilities: ['bug_fixes', 'unit_testing', 'doc_gen', '*'],
+            maxConcurrentTasks: 3,
+        });
+    });
+
+    await initializeStep('email workflow service', () => emailWorkflowService.initialize());
+    await initializeStep('agent telemetry', () => agentTelemetry.initialize());
+
+    // Register components for self-healing monitoring
+    await initializeStep('self-healing monitoring', () => {
+        selfHealingService.registerComponent('ai-provider');
+        selfHealingService.registerComponent('database');
+        selfHealingService.registerComponent('cache');
+        selfHealingService.registerComponent('agent-zero');
+        selfHealingService.registerComponent('crew-ai');
+        selfHealingService.registerComponent('openclaw');
+        selfHealingService.startMonitoring(60000);
+    });
+
+    // Start server
     try {
-        // Run startup configuration validation
-        const startupWarnings = validateStartupConfiguration();
-        logStartupWarnings(startupWarnings);
-
-        if (!shouldProceedAtStartup(startupWarnings)) {
-            logger.error('Critical configuration issues detected. Server will start but some features may be unavailable.');
-        }
-
-        // Initialize database
-        try {
-            await initializeDatabase();
-            logger.info('Database initialized');
-        } catch (error) {
-            logger.error('Failed to initialize database, continuing without:', error);
-        }
-
-        // Initialize cache
-        try {
-            await initializeCache();
-            logger.info('Cache initialized');
-        } catch (error) {
-            logger.error('Failed to initialize cache, continuing without:', error);
-        }
-
-        // Attach Redis adapter to Socket.IO for multi-instance scaling
-        try {
-            const pubClient = createClient({ url: config.redis.url });
-            const subClient = pubClient.duplicate();
-            await Promise.all([pubClient.connect(), subClient.connect()]);
-            io.adapter(createAdapter(pubClient, subClient));
-            logger.info('Socket.IO Redis adapter attached');
-        } catch (error) {
-            logger.warn('Socket.IO Redis adapter not available, using in-memory adapter:', error);
-        }
-
-        // Initialize Socket.IO handlers
-        try {
-            initializeSocketHandlers(io);
-            webrtcService.initialize(io);
-            logger.info('WebRTC service initialized');
-        } catch (error) {
-            logger.error('Failed to initialize WebRTC service:', error);
-        }
-
-        // Initialize AI Provider Factory
-        try {
-            AIProviderFactory.initialize();
-            logger.info('AI Provider Factory initialized');
-        } catch (error) {
-            logger.error('Failed to initialize AI Provider Factory:', error);
-        }
-
-        // Seed Knowledge Articles (async)
-        try {
-            const { seedKnowledgeArticles, mockKnowledgeArticles } = await import('./routes/knowledge');
-            seedKnowledgeArticles().catch((err: unknown) =>
-                logger.error('Failed to seed knowledge articles:', err)
-            );
-
-            // Seed Vector Knowledge Base (async)
-            VectorService.seedKnowledge(mockKnowledgeArticles).catch(err =>
-                logger.error('Failed to seed vector knowledge:', err)
-            );
-        } catch (error) {
-            logger.error('Failed to import knowledge routes:', error);
-        }
-
-        // Sync external knowledge sources (curated tropical articles — fast, no API calls)
-        try {
-            const { KnowledgeSyncOrchestrator } = await import('./services/data/knowledgeSyncOrchestrator');
-            KnowledgeSyncOrchestrator.syncLightweight().catch(err =>
-                logger.error('Failed to sync lightweight knowledge sources:', err)
-            );
-        } catch (error) {
-            logger.error('Failed to import knowledge sync orchestrator:', error);
-        }
-
-        // Bootstrap RAG v2 (chunking + knowledge graph)
-        try {
-            const { RAGV2Service } = await import('./services/ragV2Service');
-            RAGV2Service.bootstrap().catch(err =>
-                logger.error('Failed to bootstrap RAG v2:', err)
-            );
-        } catch (error) {
-            logger.error('Failed to import RAG v2 service:', error);
-        }
-
-        // Initialize persistent memory layer
-        try {
-            await persistentMemory.initialize();
-            logger.info('Persistent memory layer initialized');
-        } catch (error) {
-            logger.error('Failed to initialize persistent memory:', error);
-        }
-
-        // Register internal tools as vetted in the skill vetter
-        try {
-            const { toolRegistry } = await import('./tools/registry');
-            for (const tool of toolRegistry) {
-                skillVetter.registerVettedSkill({
-                    name: tool.name,
-                    source: 'internal',
-                    version: '1.0.0',
-                    author: 'ag-extension-team',
-                    description: tool.description,
-                    permissions: [],
-                    dependencies: [],
-                    installDate: new Date().toISOString(),
-                    hash: skillVetter.computeHash(tool.description),
-                    trustScore: 95,
-                    riskLevel: 'low',
-                    vetted: true,
-                    vettedAt: new Date().toISOString(),
-                    flags: [],
-                });
-            }
-            logger.info(`${toolRegistry.length} internal tools registered as vetted`);
-        } catch (error) {
-            logger.error('Failed to register internal tools:', error);
-        }
-
-        // Seed credentials from environment into secure vault
-        try {
-            if (process.env.OPENAI_API_KEY) {
-                credentialVault.storeCredential('openai_api_key', 'ai_provider', process.env.OPENAI_API_KEY, 90);
-            }
-            if (process.env.GROQ_API_KEY) {
-                credentialVault.storeCredential('groq_api_key', 'ai_provider', process.env.GROQ_API_KEY, 90);
-            }
-            if (process.env.TAVILY_API_KEY) {
-                credentialVault.storeCredential('tavily_api_key', 'search', process.env.TAVILY_API_KEY, 90);
-            }
-            logger.info('Credentials migrated to secure vault');
-        } catch (error) {
-            logger.error('Failed to migrate credentials:', error);
-        }
-
-        // Register agents in orchestrator
-        try {
-            agentOrchestrator.registerAgent({
-                agentId: 'agent-zero',
-                name: 'Agent Zero',
-                capabilities: ['farmer_outreach', 'data_collection', 'weather_monitoring', '*'],
-                maxConcurrentTasks: 3,
-            });
-            agentOrchestrator.registerAgent({
-                agentId: 'crew-ai',
-                name: 'Crew AI',
-                capabilities: ['market_analysis', 'disease_diagnosis', 'policy_research', '*'],
-                maxConcurrentTasks: 5,
-            });
-            // OpenClaw agent - planned for future implementation
-            agentOrchestrator.registerAgent({
-                agentId: 'openclaw',
-                name: 'OpenClaw',
-                capabilities: ['bug_fixes', 'unit_testing', 'doc_gen', '*'],
-                maxConcurrentTasks: 3,
-            });
-            logger.info('Agents registered in orchestrator');
-        } catch (error) {
-            logger.error('Failed to register agents:', error);
-        }
-
-        // Initialize email workflow service
-        try {
-            await emailWorkflowService.initialize();
-            logger.info('Email workflow service initialized');
-        } catch (error) {
-            logger.error('Failed to initialize email workflow service:', error);
-        }
-
-        // Initialize agent telemetry
-        try {
-            await agentTelemetry.initialize();
-            logger.info('Agent telemetry initialized');
-        } catch (error) {
-            logger.error('Failed to initialize agent telemetry:', error);
-        }
-
-        // Register components for self-healing monitoring
-        try {
-            selfHealingService.registerComponent('ai-provider');
-            selfHealingService.registerComponent('database');
-            selfHealingService.registerComponent('cache');
-            selfHealingService.registerComponent('agent-zero');
-            selfHealingService.registerComponent('crew-ai');
-            selfHealingService.registerComponent('openclaw');
-            selfHealingService.startMonitoring(60000);
-            logger.info('Self-healing monitoring started');
-        } catch (error) {
-            logger.error('Failed to start self-healing monitoring:', error);
-        }
-
-        // Start server
         httpServer.listen(config.port, '0.0.0.0', () => {
             logger.info(`Server running on port ${config.port} in ${config.nodeEnv} mode`);
         });
