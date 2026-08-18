@@ -67,9 +67,10 @@ export function useDeviceThermalMemoryBudget(): DeviceThermalBudget {
       setBudget(calculateDeviceBudget(memory, cores, saveData));
     };
 
-    if (nav.connection) {
-      nav.connection.addEventListener('change', handleNetworkChange);
-      return () => nav.connection.removeEventListener('change', handleNetworkChange);
+    const connection = nav.connection;
+    if (connection) {
+      connection.addEventListener('change', handleNetworkChange);
+      return () => connection.removeEventListener('change', handleNetworkChange);
     }
   }, []);
 

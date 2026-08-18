@@ -1,9 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import { idempotencyMiddleware, clearIdempotencyStore } from '@/middleware/idempotencyMiddleware';
 
+interface MockResponse extends Partial<Response> {
+  body?: unknown;
+  json: (body: unknown) => Response;
+}
+
 describe('Deep-Tier Network Reliability — Idempotency Key Middleware', () => {
-  let mockRequest: any;
-  let mockResponse: any;
+  let mockRequest: Partial<Request>;
+  let mockResponse: MockResponse;
   let nextFunction: NextFunction;
   let originalJsonSpy: jest.Mock;
 
@@ -40,7 +45,7 @@ describe('Deep-Tier Network Reliability — Idempotency Key Middleware', () => {
     expect(nextFunction).toHaveBeenCalled();
 
     // Emulate route handler completing
-    mockResponse.json({ success: true, visitId: 'visit_999' });
+    mockResponse.json!({ success: true, visitId: 'visit_999' });
 
     expect(originalJsonSpy).toHaveBeenCalledWith({ success: true, visitId: 'visit_999' });
     expect(mockResponse.body).toEqual({ success: true, visitId: 'visit_999' });
@@ -49,11 +54,11 @@ describe('Deep-Tier Network Reliability — Idempotency Key Middleware', () => {
   it('should replay cached response on duplicate retry without calling next() handler again', () => {
     // 1st request
     idempotencyMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
-    mockResponse.json({ success: true, visitId: 'visit_999' });
+    mockResponse.json!({ success: true, visitId: 'visit_999' });
 
     // 2nd request (spotty 2G retry with identical key)
     const secondReq = { ...mockRequest };
-    const secondRes: any = {
+    const secondRes: MockResponse = {
       statusCode: 200,
       status: jest.fn().mockReturnThis(),
       setHeader: jest.fn(),

@@ -4,8 +4,12 @@ import { authorize } from '@/middleware/authorize';
 import jwt from 'jsonwebtoken';
 import { config } from '@/config';
 
+interface MockRequest extends Omit<Partial<Request>, 'path'> {
+  path?: string;
+}
+
 describe('Cybersecurity Suite — Perimeter Security Gate & RBAC Authorization', () => {
-  let mockRequest: any;
+  let mockRequest: MockRequest;
   let mockResponse: Partial<Response>;
   let nextFunction: NextFunction;
 

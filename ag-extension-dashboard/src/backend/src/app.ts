@@ -158,38 +158,49 @@ async function checkCache(): Promise<{ status: string; error?: string }> {
     }
 }
 
+async function checkFallbackProvider(): Promise<{ healthy: boolean; name: string }> {
+    try {
+        const fallbackProvider = await AIProviderFactory.getFallbackProvider();
+        const healthy = fallbackProvider.isConfigured() && await fallbackProvider.healthCheck();
+        return { healthy, name: healthy ? fallbackProvider.provider : 'none' };
+    } catch (error) {
+        logger.debug('Fallback AI provider health check failed:', error);
+        return { healthy: false, name: 'none' };
+    }
+}
+
+async function checkCascadeProviders(): Promise<{ healthy: boolean; name: string }> {
+    // See AI_CASCADE_FALLBACK in services/aiProvider/cascade.ts for order rationale.
+    for (const type of AI_CASCADE_FALLBACK) {
+        try {
+            const p = await AIProviderFactory.getProvider(type);
+            if (p.isConfigured() && await p.healthCheck()) {
+                return { healthy: true, name: p.provider };
+            }
+        } catch (error) {
+            logger.debug(`Cascade AI provider ${type} health check failed:`, error);
+        }
+    }
+    return { healthy: false, name: 'none' };
+}
+
 async function checkAIProvider(): Promise<{ status: string; error?: string }> {
     try {
         const primaryProvider = await AIProviderFactory.getPrimaryProvider();
         const primaryHealthy = primaryProvider.isConfigured() && await primaryProvider.healthCheck();
-        
-        let fallbackHealthy = false;
-        let fallbackActiveName = 'none';
-        try {
-            const fallbackProvider = await AIProviderFactory.getFallbackProvider();
-            fallbackHealthy = fallbackProvider.isConfigured() && await fallbackProvider.healthCheck();
-            if (fallbackHealthy) fallbackActiveName = fallbackProvider.provider;
-        } catch {
-            fallbackHealthy = false;
-        }
+
+        const fallback = await checkFallbackProvider();
+        let fallbackActiveName = fallback.name;
 
         let anyCascadingHealthy = false;
-        if (!primaryHealthy && !fallbackHealthy) {
-            // See AI_CASCADE_FALLBACK in services/aiProvider/cascade.ts for order rationale.
-            for (const type of AI_CASCADE_FALLBACK) {
-                try {
-                    const p = await AIProviderFactory.getProvider(type);
-                    if (p.isConfigured() && await p.healthCheck()) {
-                        anyCascadingHealthy = true;
-                        fallbackActiveName = p.provider;
-                        break;
-                    }
-                } catch {}
-            }
+        if (!primaryHealthy && !fallback.healthy) {
+            const cascade = await checkCascadeProviders();
+            anyCascadingHealthy = cascade.healthy;
+            if (cascade.healthy) fallbackActiveName = cascade.name;
         }
 
         if (primaryHealthy) return { status: 'healthy' };
-        if (fallbackHealthy) return { status: 'degraded (fallback active)' };
+        if (fallback.healthy) return { status: 'degraded (fallback active)' };
         if (anyCascadingHealthy) return { status: `degraded (fell back to ${fallbackActiveName})` };
         if (!primaryProvider.isConfigured() && !await (await AIProviderFactory.getFallbackProvider()).isConfigured()) {
             return { status: 'not configured' };
@@ -242,6 +253,34 @@ function checkAgentServices(): { status: string; error?: string } {
 const HEALTH_WARMUP_WINDOW_MS = 60_000;
 const PROCESS_START_TIME = Date.now();
 
+type HealthStatus = 'healthy' | 'degraded' | 'unhealthy' | 'healthy (warmup)' | 'starting (warmup)';
+
+// Warm-up window: the DB dependency is tolerated (Prisma pool cold-start can
+// outlast a single curl probe). The AI provider doesn't share this cold-start
+// path, so it is still gated on during warmup.
+function resolveHealthStatus(opts: {
+    dbOk: boolean;
+    aiOk: boolean;
+    errors: string[];
+    inWarmup: boolean;
+}): { statusCode: number; statusText: HealthStatus } {
+    const { dbOk, aiOk, errors, inWarmup } = opts;
+
+    if (inWarmup) {
+        if (!aiOk) return { statusCode: 503, statusText: 'unhealthy' };
+        if (dbOk && errors.length === 0) return { statusCode: 200, statusText: 'healthy (warmup)' };
+        return { statusCode: 200, statusText: 'starting (warmup)' };
+    }
+
+    // Strict post-warmup behavior -- original logic verbatim.
+    const isHealthyStrict = dbOk && aiOk;
+    const isDegradedStrict = dbOk && errors.length > 0;
+    return {
+        statusCode: isHealthyStrict || isDegradedStrict ? 200 : 503,
+        statusText: isHealthyStrict ? 'healthy' : isDegradedStrict ? 'degraded' : 'unhealthy',
+    };
+}
+
 // Health check handler with full dependency checks
 const healthHandler = async (_req: Request, res: Response) => {
     const [db, cache, ai, external, agents] = await Promise.all([
@@ -252,35 +291,14 @@ const healthHandler = async (_req: Request, res: Response) => {
         Promise.resolve(checkAgentServices()),
     ]);
 
-    const errors = [db.error, cache.error, ai.error, external.error, agents.error].filter(Boolean);
+    const errors = [db.error, cache.error, ai.error, external.error, agents.error].filter((e): e is string => Boolean(e));
     const inWarmup = Date.now() - PROCESS_START_TIME < HEALTH_WARMUP_WINDOW_MS;
-    const dbOk = db.status === 'connected';
-    const aiOk = ai.status !== 'unhealthy';
-
-    let statusCode: number;
-    let statusText: 'healthy' | 'degraded' | 'unhealthy' | 'healthy (warmup)' | 'starting (warmup)';
-
-    if (inWarmup) {
-        // Warm-up window: the DB dependency is tolerated (Prisma pool cold-start can
-        // outlast a single curl probe). The AI provider doesn't share this cold-start
-        // path, so we still gate on it.
-        if (!aiOk) {
-            statusCode = 503;
-            statusText = 'unhealthy';
-        } else if (dbOk && errors.length === 0) {
-            statusCode = 200;
-            statusText = 'healthy (warmup)';
-        } else {
-            statusCode = 200;
-            statusText = 'starting (warmup)';
-        }
-    } else {
-        // Strict post-warmup behavior -- original logic verbatim.
-        const isHealthyStrict = dbOk && aiOk;
-        const isDegradedStrict = dbOk && errors.length > 0;
-        statusCode = isHealthyStrict || isDegradedStrict ? 200 : 503;
-        statusText = isHealthyStrict ? 'healthy' : isDegradedStrict ? 'degraded' : 'unhealthy';
-    }
+    const { statusCode, statusText } = resolveHealthStatus({
+        dbOk: db.status === 'connected',
+        aiOk: ai.status !== 'unhealthy',
+        errors,
+        inWarmup,
+    });
 
     res.status(statusCode).json({
         status: statusText,
