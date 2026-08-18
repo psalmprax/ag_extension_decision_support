@@ -13,7 +13,7 @@ export class AegisShield {
   private static readonly INJECTION_PATTERNS = [
     {
       name: 'system_prompt_override',
-      pattern: /(?:ignore\s+(?:previous|all)\s+(?:instructions|prompt|rules|context))|(?:disregard\s+everything)|(?:forget\s+everything)/gi,
+      pattern: /(?:ignore\s+(?:all\s+)?(?:previous\s+|the\s+)?(?:instructions|prompt|rules|context))|(?:disregard\s+(?:everything|all))|(?:forget\s+(?:everything|all))/gi,
       severity: 'critical' as const,
     },
     {
@@ -28,7 +28,7 @@ export class AegisShield {
     },
     {
       name: 'data_exfiltration',
-      pattern: /(?:send\s+(?:all|your)\s+(?:data|memory|config|env|keys|secrets))|(?:exfiltrate)|(?:leak\s+data)/gi,
+      pattern: /(?:send\s+(?:all\s+)?(?:your\s+)?(?:data|memory|config|env|keys|secrets))|(?:exfiltrate)|(?:leak\s+data)/gi,
       severity: 'critical' as const,
     },
     {
@@ -84,8 +84,10 @@ export class AegisShield {
     }
 
     for (const { name, pattern, severity } of AegisShield.INJECTION_PATTERNS) {
+      pattern.lastIndex = 0;
       const matches = input.match(pattern);
-      if (matches) {
+      pattern.lastIndex = 0;
+      if (matches && matches.length > 0) {
         threats.push(`${name}: ${matches.length} occurrence(s) detected`);
         if (this.isMoreSevere(severity, highestSeverity)) {
           highestSeverity = severity;

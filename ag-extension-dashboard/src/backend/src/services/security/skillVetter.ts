@@ -68,16 +68,16 @@ export class SkillVetter {
   ];
 
   private static readonly RISK_WEIGHTS = {
-    evalUsage: 30,
+    evalUsage: 35,
     networkAccess: 20,
     fileWrite: 25,
     envAccess: 15,
-    processControl: 20,
-    protoManipulation: 25,
-    obfuscation: 20,
-    unknownOrigin: 10,
-    noDescription: 5,
-    excessivePerms: 15,
+    processControl: 30,
+    protoManipulation: 30,
+    obfuscation: 25,
+    unknownOrigin: 20,
+    noDescription: 10,
+    excessivePerms: 40,
   };
 
   static getInstance(): SkillVetter {
@@ -183,6 +183,9 @@ export class SkillVetter {
         if (pattern.source.includes('eval') || pattern.source.includes('Function')) {
           score += SkillVetter.RISK_WEIGHTS.evalUsage;
           recommendations.push('Remove eval/Function usage — use safe alternatives');
+        } else if (pattern.source.includes('child_process') || pattern.source.includes('exec') || pattern.source.includes('spawn')) {
+          score += SkillVetter.RISK_WEIGHTS.processControl;
+          recommendations.push('Remove child process execution — execute within sandbox');
         } else if (pattern.source.includes('fetch') || pattern.source.includes('http') || pattern.source.includes('net')) {
           score += SkillVetter.RISK_WEIGHTS.networkAccess;
         } else if (pattern.source.includes('writeFile') || pattern.source.includes('appendFile')) {
@@ -198,8 +201,8 @@ export class SkillVetter {
     }
 
     // Check for obfuscation (high entropy strings, base64 encoded code)
-    const base64Blocks = code.match(/['"][A-Za-z0-9+/]{100,}={0,2}['"]/g);
-    if (base64Blocks && base64Blocks.length > 3) {
+    const base64Blocks = code.match(/(?:['"](?:data:[^;]+;base64,)?[A-Za-z0-9+/]{80,}={0,2}['"])/g);
+    if (base64Blocks && base64Blocks.length >= 3) {
       score += SkillVetter.RISK_WEIGHTS.obfuscation;
       flags.push('Possible code obfuscation: multiple large base64 strings');
       recommendations.push('Review base64 encoded content for hidden payloads');
@@ -216,16 +219,16 @@ export class SkillVetter {
     const dangerousPerms = ['filesystem:write', 'network:outbound', 'process:spawn', 'env:read', 'shell:execute'];
     const criticalPerms = ['filesystem:write:all', 'network:unrestricted', 'process:full', 'shell:unrestricted'];
 
-    const hasExcessive = permissions.some(p => criticalPerms.includes(p));
-    if (hasExcessive) {
-      score += SkillVetter.RISK_WEIGHTS.excessivePerms;
+    const criticalCount = permissions.filter(p => criticalPerms.includes(p)).length;
+    if (criticalCount > 0) {
+      score += SkillVetter.RISK_WEIGHTS.excessivePerms + (criticalCount - 1) * 20;
       flags.push('Excessive permissions requested');
       recommendations.push('Request minimum required permissions only');
     }
 
     const dangerousCount = permissions.filter(p => dangerousPerms.includes(p)).length;
     if (dangerousCount > 2) {
-      score += SkillVetter.RISK_WEIGHTS.excessivePerms;
+      score += 20;
       flags.push(`Multiple dangerous permissions: ${dangerousCount}`);
     }
 

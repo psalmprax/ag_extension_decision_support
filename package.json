@@ -6,7 +6,13 @@
     "test:e2e": "npx playwright test",
     "lint:frontend": "cd ag-extension-dashboard/src/frontend && npm run lint",
     "lint:backend": "cd ag-extension-dashboard/src/backend && npm run lint",
-    "lint": "npm run lint:frontend && npm run lint:backend"
+    "lint": "npm run lint:frontend && npm run lint:backend",
+    "security:audit": "bash scripts/security-audit.sh",
+    "security:test:backend": "cd ag-extension-dashboard/src/backend && npm test -- security",
+    "security:test:frontend": "cd ag-extension-dashboard/src/frontend && npm run test -- src/__tests__/securityPolicy.test.ts",
+    "security:test:agents": "cd ag-extension-dashboard/src/agents && python3 -m pytest tests/test_security.py",
+    "security:test:extension": "cd ag-extension-browser-ext && npm run test:security",
+    "security:test": "npm run security:test:backend && npm run security:test:frontend && npm run security:test:agents && npm run security:test:extension"
   },
   "dependencies": {
     "playwright": "^1.59.1"

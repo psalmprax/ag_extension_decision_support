@@ -1,0 +1,228 @@
+name: Comprehensive Cybersecurity Audit & Security Gate
+
+on:
+  push:
+    branches: [main, stage, develop]
+  pull_request:
+    branches: [main, stage, develop]
+  schedule:
+    # Run every Monday at 04:00 UTC
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+jobs:
+  # ----------------------------------------------------------------------------
+  # Job 1: Secret Scanning & Token Leak Detection
+  # ----------------------------------------------------------------------------
+  secret-scan:
+    name: Secret & Credential Leak Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan for Exposed Secrets and Private Keys
+        run: |
+          echo "Scanning for high-entropy secret patterns..."
+          PATTERNS=(
+            "-----BEGIN (RSA|EC|OPENSSH|DSA|PRIVATE) KEY-----"
+            "AIza[0-9A-Za-z-_]{35}"
+            "sk-[a-zA-Z0-9]{20,48}"
+            "ghp_[a-zA-Z0-9]{36}"
+          )
+
+          LEAKS=0
+          for pattern in "${PATTERNS[@]}"; do
+            MATCHES=$(grep -rnEI "$pattern" \
+              --exclude-dir={node_modules,.git,dist,.output,.wxt,coverage,logs} \
+              --exclude={"*.lock","package-lock.json","*.min.js",".env.example"} \
+              . || true)
+            if [ -n "$MATCHES" ]; then
+              echo "::error::Potential secret match found: $pattern"
+              echo "$MATCHES"
+              LEAKS=$((LEAKS + 1))
+            fi
+          done
+
+          if [ "$LEAKS" -gt 0 ]; then
+            echo "::error::Secret scanning failed: $LEAKS potential credential leak(s) detected."
+            exit 1
+          fi
+          echo "✅ Secret scanning passed: No exposed private keys or API tokens detected."
+
+  # ----------------------------------------------------------------------------
+  # Job 2: Multi-Service Dependency Vulnerability Audits
+  # ----------------------------------------------------------------------------
+  dependency-audit:
+    name: Multi-Service Dependency CVE Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Audit Backend Dependencies
+        run: |
+          cd ag-extension-dashboard/src/backend
+          npm audit --audit-level=high
+
+      - name: Audit Frontend Dependencies
+        run: |
+          cd ag-extension-dashboard/src/frontend
+          npm audit --audit-level=high
+
+      - name: Audit Shared Package Dependencies
+        run: |
+          cd ag-extension-shared
+          npm audit --audit-level=high
+
+      - name: Audit Browser Extension Dependencies
+        run: |
+          cd ag-extension-browser-ext
+          npm audit --audit-level=high || true
+
+      - name: Audit Python Agent Dependencies
+        run: |
+          pip install pip-audit
+          cd ag-extension-dashboard/src/agents
+          pip-audit -r requirements.txt || true
+
+  # ----------------------------------------------------------------------------
+  # Job 3: Backend Security Test Suites
+  # ----------------------------------------------------------------------------
+  backend-security-tests:
+    name: Backend Security Tests (AegisShield, Vault, Vetter, RBAC)
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ag-extension-dashboard/src/backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: |
+          cd ag-extension-dashboard/src/backend
+          npm ci
+
+      - name: Run Backend Security Test Suites
+        run: |
+          cd ag-extension-dashboard/src/backend
+          npm test -- security
+        env:
+          NODE_ENV: test
+          JWT_SECRET: ci_test_jwt_secret_32_characters_minimum!!
+          CREDENTIAL_ENCRYPTION_KEY: ci_test_encryption_key_32_chars_minimum!
+          REDIS_URL: redis://localhost:6379
+
+  # ----------------------------------------------------------------------------
+  # Job 4: Frontend & Browser Extension Security Verifications
+  # ----------------------------------------------------------------------------
+  frontend-and-extension-security:
+    name: Frontend & Browser Extension Security
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install and Test Frontend Security Policy
+        run: |
+          cd ag-extension-dashboard/src/frontend
+          npm ci
+          npm run test -- src/__tests__/securityPolicy.test.ts
+
+      - name: Install and Verify Browser Extension Security
+        run: |
+          cd ag-extension-browser-ext
+          npm ci
+          npm run test:security
+
+  # ----------------------------------------------------------------------------
+  # Job 5: AI Agents Microservice Security Tests
+  # ----------------------------------------------------------------------------
+  agents-security-tests:
+    name: AI Agents FastAPI Security Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Agent Dependencies
+        run: |
+          cd ag-extension-dashboard/src/agents
+          pip install -r requirements.txt pytest httpx
+
+      - name: Run AI Agent Security Pytest Suite
+        run: |
+          cd ag-extension-dashboard/src/agents
+          python -m pytest tests/test_security.py
+        env:
+          NODE_ENV: test
+          JWT_SECRET: test_jwt_secret_32_characters_minimum!!
+          CORS_ORIGINS: https://www.gpexts.com,http://localhost:7503
+
+  # ----------------------------------------------------------------------------
+  # Job 6: Dockerfile & Container Hardening Lint
+  # ----------------------------------------------------------------------------
+  container-security-lint:
+    name: Container Hardening & Dockerfile Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify Dockerfiles Avoid Dangerous Patterns
+        run: |
+          echo "Auditing Dockerfiles for security baseline..."
+          DOCKERFILES=$(find . -name "Dockerfile*" -not -path "*/node_modules/*")
+
+          for df in $DOCKERFILES; do
+            echo "  Checking $df..."
+            # Check for plaintext password environment injections
+            if grep -EI "ENV\s+(PASSWORD|SECRET|KEY)\s*=" "$df"; then
+              echo "::warning file=$df::Potential hardcoded secret in Dockerfile ENV instruction"
+            fi
+          done
+          echo "✅ Dockerfile hardening inspection completed."
