@@ -81,10 +81,17 @@ async function getReportScope(req: Request, parameterIndex: number): Promise<{ c
     if (!req.user?.userId || req.user.role === 'admin') return { clause: '', params: [] };
     if (process.env.NODE_ENV === 'test') return { clause: '', params: [] };
     const tenantId = await getPrincipalTenantId(req.user.userId);
-    if (!tenantId) return null;
+    if (tenantId) {
+        return {
+            clause: ` AND EXISTS (SELECT 1 FROM users report_owner WHERE report_owner.id = reports.generated_by AND report_owner.tenant_id = $${parameterIndex})`,
+            params: [tenantId],
+        };
+    }
+    // Users without a tenant (e.g. demo/legacy accounts) are scoped to their own
+    // reports instead of being locked out with a 403 'Tenant membership required'.
     return {
-        clause: ` AND EXISTS (SELECT 1 FROM users report_owner WHERE report_owner.id = reports.generated_by AND report_owner.tenant_id = $${parameterIndex})`,
-        params: [tenantId],
+        clause: ` AND reports.generated_by = $${parameterIndex}`,
+        params: [req.user.userId],
     };
 }
 

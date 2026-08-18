@@ -54,6 +54,9 @@ export function useWebRTC(): UseWebRTCReturn {
       reconnection: true,
       reconnectionAttempts: 3,
       reconnectionDelay: 2000,
+      // Backend socket.io middleware requires a valid JWT — resolve it lazily so
+      // the token is current when the socket (re)connects.
+      auth: cb => cb({ token: localStorage.getItem('token') || undefined }),
     });
 
     socket.on('connect', () => {

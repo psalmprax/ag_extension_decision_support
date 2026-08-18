@@ -29,6 +29,45 @@ import {
 } from '../api/fieldService';
 import { fetchFarmers } from '../api/farmerService';
 import type { Farmer } from '../types/dashboard';
+import { DEMO_FARMERS } from '@/data/demoFarmers';
+
+// Demo fallback IDs (demo-farmer-1, …) don't exist in the live DB — farmers.id
+// is a UUID column, so querying fields with a fake ID would 500 on the backend.
+const isDemoFarmerId = (id?: string) => !!id && /^demo-farmer-/i.test(id);
+
+function buildDemoFields(farmerId: string, withCycles: boolean): Field[] {
+  return [
+    {
+      id: 'field-demo-1',
+      farmerId: farmerId || 'demo-farmer-1',
+      name: 'Machakos Maize Sector A',
+      areaHectares: 4.5,
+      soilType: 'loam',
+      soilPh: 6.5,
+      latitude: -1.5177,
+      longitude: 37.2634,
+      isActive: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      cropCycles: withCycles
+        ? [
+            {
+              id: 'cycle-1',
+              fieldId: 'field-demo-1',
+              cropName: 'Maize',
+              variety: 'SC 719',
+              status: 'growing',
+              plantingDate: '2026-11-15',
+              expectedHarvestDate: '2026-04-10',
+              yieldKg: 3500,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+          ]
+        : [],
+    },
+  ];
+}
 
 export function CropsOverviewTab({
   fields,
@@ -342,7 +381,7 @@ export function CropsCyclesTab({
 export function CropsFields() {
   const { t: _t } = useLanguage();
   const { headingClass, isModern, radiusClass, btnClass, cardClass } = useThemeClasses();
-  const { addNotification, user } = useAppStore();
+  const { addNotification, user, isDemo } = useAppStore();
 
   const isFarmer = user?.role === 'farmer';
 
@@ -394,6 +433,19 @@ export function CropsFields() {
     if (!isFarmer) {
       const loadFarmersList = async () => {
         try {
+          // Demo accounts surface the static DEMO_FARMERS dataset — no live call.
+          if (isDemo) {
+            const demoFarmers: Farmer[] = DEMO_FARMERS.map(f => ({
+              id: f.id,
+              firstName: f.firstName,
+              lastName: f.lastName,
+              region: f.region,
+            }));
+            setFarmers(demoFarmers);
+            setSelectedFarmerId(demoFarmers[0]?.id || '');
+            return;
+          }
+
           const res = await fetchFarmers();
           if (res.success && res.data?.farmers && res.data.farmers.length > 0) {
             setFarmers(res.data.farmers);
@@ -419,7 +471,7 @@ export function CropsFields() {
       };
       loadFarmersList();
     }
-  }, [isFarmer]);
+  }, [isFarmer, isDemo]);
 
   // Load fields when selected farmer changes (or on mount if farmer)
   const loadFieldsData = useCallback(async () => {
@@ -432,58 +484,23 @@ export function CropsFields() {
         return;
       }
 
+      // Demo fallback IDs don't exist in the live DB (farmer_id is a UUID FK) —
+      // render static demo fields instead of hitting the API and getting a 500.
+      if (targetId && isDemoFarmerId(targetId)) {
+        setFields(buildDemoFields(targetId, true));
+        setIsLoading(false);
+        return;
+      }
+
       const res = await fetchFields(targetId);
       if (res.success && res.data && res.data.length > 0) {
         setFields(res.data);
       } else {
-        setFields([
-          {
-            id: 'field-demo-1',
-            farmerId: selectedFarmerId || 'demo-farmer-1',
-            name: 'Machakos Maize Sector A',
-            areaHectares: 4.5,
-            soilType: 'loam',
-            soilPh: 6.5,
-            latitude: -1.5177,
-            longitude: 37.2634,
-            isActive: true,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            cropCycles: [
-              {
-                id: 'cycle-1',
-                fieldId: 'field-demo-1',
-                cropName: 'Maize',
-                variety: 'SC 719',
-                status: 'growing',
-                plantingDate: '2026-11-15',
-                expectedHarvestDate: '2026-04-10',
-                yieldKg: 3500,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-              },
-            ],
-          },
-        ]);
+        setFields(buildDemoFields(selectedFarmerId || 'demo-farmer-1', true));
       }
     } catch (error) {
       console.error('Failed to load fields:', error);
-      setFields([
-        {
-          id: 'field-demo-1',
-          farmerId: selectedFarmerId || 'demo-farmer-1',
-          name: 'Machakos Maize Sector A',
-          areaHectares: 4.5,
-          soilType: 'loam',
-          soilPh: 6.5,
-          latitude: -1.5177,
-          longitude: 37.2634,
-          isActive: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          cropCycles: [],
-        },
-      ]);
+      setFields(buildDemoFields(selectedFarmerId || 'demo-farmer-1', false));
     } finally {
       setIsLoading(false);
     }

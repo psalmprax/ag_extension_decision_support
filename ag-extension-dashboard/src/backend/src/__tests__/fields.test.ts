@@ -3,6 +3,10 @@
 // tests cover Prisma-based CRUD via the prismaService mock. The fields route's
 // `/stats` endpoint does use `mapFieldStatsRows` + `mapCountRow` but is
 // tested via the Prisma mock infrastructure above.
+//
+// Fixture IDs use real UUIDs because the fields/farmers tables store UUIDs — a
+// non-UUID farmerId would be rejected by the route's input guard (and would 500
+// against a real Postgres UUID column).
 
 import request from 'supertest';
 import app from '../app';
@@ -44,9 +48,9 @@ jest.mock('../services/prismaService', () => {
             },
             farmer: {
                 findUnique: jest.fn().mockImplementation((args: Prisma.FarmerFindUniqueArgs) => {
-                    if (args.where.id === 'farmer-1') {
+                    if (args.where.id === '11111111-1111-1111-1111-111111111111') {
                         return Promise.resolve({
-                            id: 'farmer-1',
+                            id: '11111111-1111-1111-1111-111111111111',
                             userId: 'farm-1',
                             assignedOfficerId: 'off-1',
                             region: 'Central'
@@ -57,7 +61,7 @@ jest.mock('../services/prismaService', () => {
                 findFirst: jest.fn().mockImplementation((args: { where?: { userId?: string } }) => {
                     if (args.where?.userId === 'farm-1') {
                         return Promise.resolve({
-                            id: 'farmer-1',
+                            id: '11111111-1111-1111-1111-111111111111',
                             userId: 'farm-1',
                             assignedOfficerId: 'off-1',
                             region: 'Central'
@@ -69,8 +73,8 @@ jest.mock('../services/prismaService', () => {
             field: {
                 findMany: jest.fn().mockResolvedValue([
                     {
-                        id: 'field-1',
-                        farmerId: 'farmer-1',
+                        id: '22222222-2222-2222-2222-222222222222',
+                        farmerId: '11111111-1111-1111-1111-111111111111',
                         name: 'North Plot',
                         areaHectares: 2.0,
                         soilType: 'clay-loam',
@@ -80,10 +84,10 @@ jest.mock('../services/prismaService', () => {
                     }
                 ]),
                 findUnique: jest.fn().mockImplementation((args: Prisma.FieldFindUniqueArgs) => {
-                    if (args.where.id === 'field-1') {
+                    if (args.where.id === '22222222-2222-2222-2222-222222222222') {
                         return Promise.resolve({
-                            id: 'field-1',
-                            farmerId: 'farmer-1',
+                            id: '22222222-2222-2222-2222-222222222222',
+                            farmerId: '11111111-1111-1111-1111-111111111111',
                             name: 'North Plot',
                             areaHectares: 2.0,
                             soilType: 'clay-loam',
@@ -145,7 +149,7 @@ describe('Fields & Crops API Integration Tests', () => {
 
     it('should allow extension officer to list fields for farmer', async () => {
         const response = await request(app)
-            .get('/api/v1/fields?farmerId=farmer-1')
+            .get('/api/v1/fields?farmerId=11111111-1111-1111-1111-111111111111')
             .set('Authorization', `Bearer ${officerToken}`);
 
         expect(response.status).toBe(200);
@@ -155,7 +159,7 @@ describe('Fields & Crops API Integration Tests', () => {
 
     it('should reject access to field list of another farmer', async () => {
         const response = await request(app)
-            .get('/api/v1/fields?farmerId=farmer-1')
+            .get('/api/v1/fields?farmerId=11111111-1111-1111-1111-111111111111')
             .set('Authorization', `Bearer ${unauthorizedToken}`);
 
         expect(response.status).toBe(403);
@@ -163,7 +167,7 @@ describe('Fields & Crops API Integration Tests', () => {
 
     it('should allow farmer to get details of their own field', async () => {
         const response = await request(app)
-            .get('/api/v1/fields/field-1')
+            .get('/api/v1/fields/22222222-2222-2222-2222-222222222222')
             .set('Authorization', `Bearer ${farmerToken}`);
 
         expect(response.status).toBe(200);
@@ -175,7 +179,7 @@ describe('Fields & Crops API Integration Tests', () => {
             .post('/api/v1/fields')
             .set('Authorization', `Bearer ${farmerToken}`)
             .send({
-                farmerId: 'farmer-1',
+                farmerId: '11111111-1111-1111-1111-111111111111',
                 name: 'East Slope',
                 areaHectares: 1.5,
                 soilType: 'sand',
@@ -189,7 +193,7 @@ describe('Fields & Crops API Integration Tests', () => {
 
     it('should allow farmer to create a new crop cycle', async () => {
         const response = await request(app)
-            .post('/api/v1/fields/field-1/cycles')
+            .post('/api/v1/fields/22222222-2222-2222-2222-222222222222/cycles')
             .set('Authorization', `Bearer ${farmerToken}`)
             .send({
                 cropName: 'Maize',
@@ -205,7 +209,7 @@ describe('Fields & Crops API Integration Tests', () => {
 
     it('should allow recording yield when harvesting', async () => {
         const response = await request(app)
-            .patch('/api/v1/fields/field-1/cycles/cycle-1')
+            .patch('/api/v1/fields/22222222-2222-2222-2222-222222222222/cycles/cycle-1')
             .set('Authorization', `Bearer ${farmerToken}`)
             .send({
                 status: 'harvested',

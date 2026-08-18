@@ -12,6 +12,10 @@ const router = Router();
 
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
+// The farmers.id / fields.farmer_id columns are UUIDs. A non-UUID farmerId in a
+// query would make Postgres throw (invalid input syntax for type uuid) → 500.
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /**
  * GET /api/fields — list fields. Officers and farmers are auto-filtered by
  * Prisma's `where` clause; admins/managers see everything.
@@ -37,7 +41,14 @@ router.get('/', async (req: Request, res: Response) => {
             }
             where.farmerId = farmer.id;
         } else {
-            if (farmerId) where.farmerId = farmerId as string;
+            if (farmerId) {
+                // Guard against malformed (non-UUID) farmerId — the column is a
+                // UUID FK, so an invalid value would otherwise throw and 500.
+                if (!UUID_REGEX.test(String(farmerId))) {
+                    return res.json({ success: true, data: [], total: 0 });
+                }
+                where.farmerId = farmerId as string;
+            }
         }
 
         const [fields, total] = await Promise.all([
