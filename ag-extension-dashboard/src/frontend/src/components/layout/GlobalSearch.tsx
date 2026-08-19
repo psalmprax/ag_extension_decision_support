@@ -41,7 +41,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
         type="text"
         aria-label="Search system or location"
         placeholder="Search system or location..."
-        className="bg-white/5 border border-white/10 rounded-full pl-10 pr-4 py-1.5 text-xs focus:ring-1 focus:ring-cyan-400 outline-none w-64 transition-all text-gray-900 dark:text-white"
+        className="bg-white/5 border border-white/10 rounded-full pl-10 pr-4 py-1.5 text-xs focus:ring-1 focus:ring-primary-400 outline-none w-64 transition-all text-gray-900 dark:text-white"
         value={searchQuery}
         onChange={e => {
           setSearchQuery(e.target.value);

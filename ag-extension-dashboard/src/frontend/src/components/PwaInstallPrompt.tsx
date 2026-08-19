@@ -1,14 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Download,
-  X,
-  Smartphone,
-  Share,
-  PlusSquare,
-  ShieldCheck,
-  WifiOff,
-} from 'lucide-react';
+import { Download, X, Smartphone, Share, PlusSquare, ShieldCheck, WifiOff } from 'lucide-react';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -23,7 +15,7 @@ export const PwaInstallPrompt: React.FC = () => {
   const [showIOSInstructions, setShowIOSInstructions] = useState<boolean>(false);
   const [isStandalone, setIsStandalone] = useState<boolean>(false);
 
-  const { isModern, radiusClass } = useThemeClasses();
+  const { radiusClass } = useThemeClasses();
 
   useEffect(() => {
     // Check if running in standalone mode (already installed as PWA or native app)
@@ -107,9 +99,7 @@ export const PwaInstallPrompt: React.FC = () => {
         className="fixed bottom-4 left-4 right-4 md:left-auto md:right-6 md:max-w-md z-50 pointer-events-auto"
       >
         <div
-          className={`p-4 bg-slate-900/95 dark:bg-slate-950/95 text-white border border-emerald-500/30 backdrop-blur-xl shadow-2xl shadow-emerald-950/50 ${
-            isModern ? radiusClass : 'rounded-none'
-          }`}
+          className={`p-4 bg-slate-900/95 dark:bg-slate-950/95 text-white border border-emerald-500/30 backdrop-blur-xl shadow-2xl shadow-emerald-950/50 ${radiusClass}`}
         >
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -119,7 +109,7 @@ export const PwaInstallPrompt: React.FC = () => {
               <div>
                 <h4 className="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
                   Install GPExts App
-                  <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  <span className="px-1.5 py-0.5 rounded text-xs font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                     Mobile
                   </span>
                 </h4>
@@ -139,7 +129,7 @@ export const PwaInstallPrompt: React.FC = () => {
           </div>
 
           {/* Quick Perks */}
-          <div className="grid grid-cols-2 gap-2 my-3 text-[11px] font-medium text-slate-300 bg-white/[0.03] p-2.5 rounded-xl border border-white/5">
+          <div className="grid grid-cols-2 gap-2 my-3 text-xs font-medium text-slate-300 bg-white/[0.03] p-2.5 rounded-xl border border-white/5">
             <div className="flex items-center gap-1.5">
               <WifiOff className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
               <span>Works Offline in Field</span>
@@ -162,8 +152,8 @@ export const PwaInstallPrompt: React.FC = () => {
                   1
                 </span>
                 <span>
-                  Tap the <Share className="w-3.5 h-3.5 inline mx-1 text-cyan-400" /> Share button in
-                  Safari menu.
+                  Tap the <Share className="w-3.5 h-3.5 inline mx-1 text-primary-400" /> Share
+                  button in Safari menu.
                 </span>
               </div>
               <div className="flex items-center gap-2">

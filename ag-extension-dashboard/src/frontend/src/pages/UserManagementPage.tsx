@@ -54,7 +54,7 @@ const getRoleBadge = (role: string) => ROLES.find(r => r.value === role) || ROLE
 
 export function UserManagementPage() {
   const { t: _t } = useLanguage();
-  const { isModern, radiusClass, btnClass, headingClass } = useThemeClasses();
+  const { radiusClass, btnClass, headingClass } = useThemeClasses();
   const queryClient = useQueryClient();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -145,7 +145,7 @@ export function UserManagementPage() {
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className={`px-6 py-3 ${isModern ? 'bg-primary-600 hover:bg-primary-700 shadow-primary-500/20 shadow-lg' : 'bg-white dark:bg-slate-900 border-2 border-slate-800 dark:border-slate-200 text-slate-900 dark:text-white'} ${btnClass} transition-all flex items-center gap-2`}
+          className={`px-6 py-3 bg-primary-600 hover:bg-primary-700 shadow-primary-500/20 shadow-lg ${btnClass} transition-all flex items-center gap-2`}
         >
           <UserPlus className="w-4 h-4" />
           Create User
@@ -188,7 +188,7 @@ export function UserManagementPage() {
         </div>
       ) : (
         <div
-          className={`${isModern ? 'bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl' : 'bg-white dark:bg-gray-800'} rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden`}
+          className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden`}
         >
           <div className="overflow-x-auto">
             <table className="w-full">

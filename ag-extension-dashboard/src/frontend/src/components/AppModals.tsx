@@ -112,7 +112,7 @@ interface AppModalsProps {
 }
 
 export const AppModals: React.FC<AppModalsProps> = props => {
-  const { isModern, btnClass, radiusClass } = useThemeClasses();
+  const { btnClass, radiusClass } = useThemeClasses();
   const { t } = useLanguage();
 
   return (
@@ -214,7 +214,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
                         props.addNotification({ type: 'error', message: 'Download failed' });
                       }
                     }}
-                    className={`mt-4 px-4 py-2 ${isModern ? 'bg-primary-600 hover:bg-primary-700' : 'bg-white dark:bg-slate-900 border-2 border-slate-800 dark:border-slate-200 text-slate-900 dark:text-white'} ${btnClass} text-sm font-bold`}
+                    className={`mt-4 px-4 py-2 bg-primary-600 hover:bg-primary-700 ${btnClass} text-sm font-bold`}
                   >
                     Download Report
                   </button>
@@ -236,7 +236,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
                     props.addNotification({ type: 'error', message: 'Download failed' });
                   }
                 }}
-                className={`px-4 py-2 ${isModern ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300' : 'bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 text-gray-700 dark:text-gray-300'} ${btnClass} text-sm font-bold transition-colors`}
+                className={`px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 ${btnClass} text-sm font-bold transition-colors`}
               >
                 Download
               </button>
@@ -245,7 +245,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
                   props.setViewingReport(null);
                   props.setReportContent(null);
                 }}
-                className={`px-4 py-2 ${isModern ? 'bg-primary-600 hover:bg-primary-700' : 'bg-white dark:bg-slate-900 border-2 border-slate-800 dark:border-slate-200 text-slate-900 dark:text-white'} ${btnClass} text-sm font-bold transition-colors`}
+                className={`px-4 py-2 bg-primary-600 hover:bg-primary-700 ${btnClass} text-sm font-bold transition-colors`}
               >
                 Close
               </button>

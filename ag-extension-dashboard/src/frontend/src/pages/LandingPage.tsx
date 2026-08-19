@@ -2,7 +2,14 @@ import React, { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CH_COLORS } from '@/lib/colors';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
-import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion';
+import {
+  motion,
+  AnimatePresence,
+  useScroll,
+  useTransform,
+  useMotionValue,
+  useSpring,
+} from 'framer-motion';
 import {
   Users,
   MapPin,
@@ -31,7 +38,7 @@ import {
   Sprout,
   Activity,
 } from 'lucide-react';
-import { LiquidCanvas } from '@/components/canvas-ui/LiquidCanvas';
+import { Liquid } from '@/components/canvasui/Liquid';
 
 // ─── Animation variants ─────────────────────────────────────────
 const stagger = {
@@ -211,7 +218,13 @@ function Sparkline({
   return (
     <svg width={width} height={height} className="overflow-visible" aria-hidden="true">
       <defs>
-        <linearGradient id={`spark-${color.replace(/[^a-zA-Z0-9]/g, '')}`} x1="0" y1="0" x2="0" y2="1">
+        <linearGradient
+          id={`spark-${color.replace(/[^a-zA-Z0-9]/g, '')}`}
+          x1="0"
+          y1="0"
+          x2="0"
+          y2="1"
+        >
           <stop offset="0%" stopColor={color} stopOpacity="0.3" />
           <stop offset="100%" stopColor={color} stopOpacity="0" />
         </linearGradient>
@@ -224,7 +237,10 @@ function Sparkline({
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <polygon points={`0,${height} ${points} ${width},${height}`} fill={`url(#spark-${color.replace(/[^a-zA-Z0-9]/g, '')})`} />
+      <polygon
+        points={`0,${height} ${points} ${width},${height}`}
+        fill={`url(#spark-${color.replace(/[^a-zA-Z0-9]/g, '')})`}
+      />
     </svg>
   );
 }
@@ -235,26 +251,71 @@ function GlobalConstellationVisualization() {
     <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[540px] h-[540px] opacity-[0.08] pointer-events-none hidden xl:block">
       <svg viewBox="0 0 100 100" className="w-full h-full" aria-hidden="true">
         {/* Stylized world lat/long concentric rings & orbit guides */}
-        <ellipse cx="50" cy="50" rx="46" ry="46" fill="none" stroke="var(--color-outline)" strokeWidth="0.25" strokeDasharray="2,2" />
-        <ellipse cx="50" cy="50" rx="46" ry="24" fill="none" stroke="var(--color-outline)" strokeWidth="0.2" strokeDasharray="1.5,1.5" />
-        <ellipse cx="50" cy="50" rx="46" ry="12" fill="none" stroke="var(--color-outline)" strokeWidth="0.15" strokeDasharray="1,1" />
-        <line x1="4" y1="50" x2="96" y2="50" stroke="var(--color-outline)" strokeWidth="0.2" strokeDasharray="2,2" />
-        <line x1="50" y1="4" x2="50" y2="96" stroke="var(--color-outline)" strokeWidth="0.2" strokeDasharray="2,2" />
+        <ellipse
+          cx="50"
+          cy="50"
+          rx="46"
+          ry="46"
+          fill="none"
+          stroke="var(--color-outline)"
+          strokeWidth="0.25"
+          strokeDasharray="2,2"
+        />
+        <ellipse
+          cx="50"
+          cy="50"
+          rx="46"
+          ry="24"
+          fill="none"
+          stroke="var(--color-outline)"
+          strokeWidth="0.2"
+          strokeDasharray="1.5,1.5"
+        />
+        <ellipse
+          cx="50"
+          cy="50"
+          rx="46"
+          ry="12"
+          fill="none"
+          stroke="var(--color-outline)"
+          strokeWidth="0.15"
+          strokeDasharray="1,1"
+        />
+        <line
+          x1="4"
+          y1="50"
+          x2="96"
+          y2="50"
+          stroke="var(--color-outline)"
+          strokeWidth="0.2"
+          strokeDasharray="2,2"
+        />
+        <line
+          x1="50"
+          y1="4"
+          x2="50"
+          y2="96"
+          stroke="var(--color-outline)"
+          strokeWidth="0.2"
+          strokeDasharray="2,2"
+        />
 
         {/* Inter-hub telemetry orbital arcs */}
         {globalTelemetryNodes.map((node, i) =>
-          globalTelemetryNodes.slice(i + 1, i + 4).map((other, j) => (
-            <line
-              key={`${i}-${j}`}
-              x1={node.x}
-              y1={node.y}
-              x2={other.x}
-              y2={other.y}
-              stroke="var(--color-outline)"
-              strokeWidth="0.18"
-              strokeDasharray="1.5,1.5"
-            />
-          ))
+          globalTelemetryNodes
+            .slice(i + 1, i + 4)
+            .map((other, j) => (
+              <line
+                key={`${i}-${j}`}
+                x1={node.x}
+                y1={node.y}
+                x2={other.x}
+                y2={other.y}
+                stroke="var(--color-outline)"
+                strokeWidth="0.18"
+                strokeDasharray="1.5,1.5"
+              />
+            ))
         )}
 
         {/* Global Telemetry Beacons */}
@@ -477,7 +538,9 @@ export function LandingPage() {
         >
           {/* Animated mesh gradient background */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <LiquidCanvas opacity={0.45} />
+            <Liquid style={{ position: 'absolute', inset: 0 }} color={[0.02, 0.59, 0.41]}>
+              {null}
+            </Liquid>
             <div className="mesh-orb-1 absolute top-[-30%] left-[-15%] w-[700px] h-[700px] rounded-full bg-emerald-600/[0.08] blur-[150px]" />
             <div className="mesh-orb-2 absolute bottom-[-25%] right-[-15%] w-[600px] h-[600px] rounded-full bg-amber-500/[0.06] blur-[120px]" />
             <div className="mesh-orb-3 absolute top-[30%] left-[40%] w-[400px] h-[400px] rounded-full bg-emerald-400/[0.04] blur-[100px]" />
@@ -540,25 +603,32 @@ export function LandingPage() {
                 </span>
               </motion.h1>
 
-              <motion.p variants={fadeUp} className="text-base sm:text-lg text-white/80 leading-relaxed max-w-lg font-normal">
+              <motion.p
+                variants={fadeUp}
+                className="text-base sm:text-lg text-white/80 leading-relaxed max-w-lg font-normal"
+              >
                 Empower extension officers with AI-driven insights, real-time farmer tracking, and
                 data-powered decisions across the Globe.
               </motion.p>
 
-              <motion.div variants={fadeUp} className="text-sm text-white/70 leading-relaxed max-w-lg pt-1 space-y-1.5 font-normal">
+              <motion.div
+                variants={fadeUp}
+                className="text-sm text-white/70 leading-relaxed max-w-lg pt-1 space-y-1.5 font-normal"
+              >
                 <p>
                   <span className="text-emerald-400 font-semibold">What it is:</span> A field-ready
-                  decision-support platform for agricultural extension officers managing thousands of
-                  farmers across districts.
+                  decision-support platform for agricultural extension officers managing thousands
+                  of farmers across districts.
                 </p>
                 <p>
-                  <span className="text-emerald-400 font-semibold">Who it&apos;s for:</span> Government
-                  agencies, NGOs, and cooperatives running agricultural improvement programs.
+                  <span className="text-emerald-400 font-semibold">Who it&apos;s for:</span>{' '}
+                  Government agencies, NGOs, and cooperatives running agricultural improvement
+                  programs.
                 </p>
                 <p>
-                  <span className="text-emerald-400 font-semibold">What it solves:</span> Paper-based
-                  field visits, guesswork recommendations, delayed disease response, and zero
-                  visibility into farmer outcomes.
+                  <span className="text-emerald-400 font-semibold">What it solves:</span>{' '}
+                  Paper-based field visits, guesswork recommendations, delayed disease response, and
+                  zero visibility into farmer outcomes.
                 </p>
               </motion.div>
 
@@ -586,7 +656,10 @@ export function LandingPage() {
                   { title: 'Soil Telemetry', sub: 'SoilGrids ISRIC' },
                   { title: 'Offline-First', sub: 'Instant Local Sync' },
                 ].map((item, i) => (
-                  <div key={i} className="p-3 rounded-xl bg-white/[0.025] border border-white/[0.05] hover:border-emerald-500/20 transition-colors">
+                  <div
+                    key={i}
+                    className="p-3 rounded-xl bg-white/[0.025] border border-white/[0.05] hover:border-emerald-500/20 transition-colors"
+                  >
                     <div className="text-xs font-bold text-emerald-400">{item.title}</div>
                     <div className="text-[11px] text-white/50 mt-0.5 font-medium">{item.sub}</div>
                   </div>
@@ -710,7 +783,9 @@ export function LandingPage() {
                           className="bg-white/[0.025] rounded-lg p-2.5 border border-white/[0.04]"
                         >
                           <div className="flex justify-between items-start mb-1">
-                            <span className="text-[14px] font-bold text-white/90">{stat.value}</span>
+                            <span className="text-[14px] font-bold text-white/90">
+                              {stat.value}
+                            </span>
                             <span
                               className="text-[8px] font-semibold px-1.5 py-0.5 rounded-full"
                               style={{ color: stat.color, background: `${stat.color}15` }}
@@ -851,7 +926,9 @@ export function LandingPage() {
                             {f.initials}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <span className="font-medium text-white/70 block truncate">{f.name}</span>
+                            <span className="font-medium text-white/70 block truncate">
+                              {f.name}
+                            </span>
                             <span className="text-[8px] text-white/30">{f.crop}</span>
                           </div>
                           <div className="flex items-center gap-2">
@@ -972,7 +1049,8 @@ export function LandingPage() {
                 variants={fadeUp}
                 className="text-[clamp(2rem,3.5vw,3rem)] font-bold tracking-tight leading-tight max-w-xl"
               >
-                Built for the realities of <span className="text-white/45">Global & Tropical agriculture</span>
+                Built for the realities of{' '}
+                <span className="text-white/45">Global & Tropical agriculture</span>
               </motion.h2>
             </motion.div>
 
@@ -1122,7 +1200,8 @@ export function LandingPage() {
                 variants={fadeUp}
                 className="text-sm sm:text-base text-white/65 max-w-2xl mx-auto mt-3 font-normal leading-relaxed"
               >
-                Connecting extension officers to verified global agricultural datasets, localized soil chemistry, and real-time offline workflows.
+                Connecting extension officers to verified global agricultural datasets, localized
+                soil chemistry, and real-time offline workflows.
               </motion.p>
             </motion.div>
 
@@ -1168,9 +1247,7 @@ export function LandingPage() {
                     <div className="text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-1">
                       {cap.badge}
                     </div>
-                    <h3 className="text-base font-bold text-white/90 mb-2">
-                      {cap.title}
-                    </h3>
+                    <h3 className="text-base font-bold text-white/90 mb-2">{cap.title}</h3>
                     <p className="text-xs sm:text-sm text-white/50 leading-relaxed font-normal">
                       {cap.desc}
                     </p>
@@ -1200,7 +1277,8 @@ export function LandingPage() {
                       </span>
                     </div>
                     <div className="text-xs text-white/50">
-                      Multi-parameter field data stream synthesized into evidence-backed recommendations
+                      Multi-parameter field data stream synthesized into evidence-backed
+                      recommendations
                     </div>
                   </div>
                 </div>
@@ -1212,23 +1290,39 @@ export function LandingPage() {
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
                 <div className="p-3.5 rounded-xl bg-white/[0.025] border border-white/[0.04]">
-                  <div className="text-[11px] uppercase tracking-wider text-white/40 mb-1">NDVI Canopy Vigor</div>
-                  <div className="text-lg font-bold text-emerald-400">0.78 <span className="text-xs font-normal text-white/50">High</span></div>
+                  <div className="text-[11px] uppercase tracking-wider text-white/40 mb-1">
+                    NDVI Canopy Vigor
+                  </div>
+                  <div className="text-lg font-bold text-emerald-400">
+                    0.78 <span className="text-xs font-normal text-white/50">High</span>
+                  </div>
                   <div className="text-[10px] text-white/40 mt-1">Sentinel-2 Multispectral</div>
                 </div>
                 <div className="p-3.5 rounded-xl bg-white/[0.025] border border-white/[0.04]">
-                  <div className="text-[11px] uppercase tracking-wider text-white/40 mb-1">Soil pH & Carbon</div>
-                  <div className="text-lg font-bold text-amber-400">6.4 pH <span className="text-xs font-normal text-white/50">Optimal</span></div>
+                  <div className="text-[11px] uppercase tracking-wider text-white/40 mb-1">
+                    Soil pH & Carbon
+                  </div>
+                  <div className="text-lg font-bold text-amber-400">
+                    6.4 pH <span className="text-xs font-normal text-white/50">Optimal</span>
+                  </div>
                   <div className="text-[10px] text-white/40 mt-1">SoilGrids 0-30cm Depth</div>
                 </div>
                 <div className="p-3.5 rounded-xl bg-white/[0.025] border border-white/[0.04]">
-                  <div className="text-[11px] uppercase tracking-wider text-white/40 mb-1">Soil Moisture</div>
-                  <div className="text-lg font-bold text-blue-400">31.2% <span className="text-xs font-normal text-white/50">Field Cap.</span></div>
+                  <div className="text-[11px] uppercase tracking-wider text-white/40 mb-1">
+                    Soil Moisture
+                  </div>
+                  <div className="text-lg font-bold text-blue-400">
+                    31.2% <span className="text-xs font-normal text-white/50">Field Cap.</span>
+                  </div>
                   <div className="text-[10px] text-white/40 mt-1">NASA POWER 7-Day Model</div>
                 </div>
                 <div className="p-3.5 rounded-xl bg-white/[0.025] border border-white/[0.04]">
-                  <div className="text-[11px] uppercase tracking-wider text-white/40 mb-1">Pest Risk Index</div>
-                  <div className="text-lg font-bold text-emerald-400">Low Risk <span className="text-xs font-normal text-white/50">9%</span></div>
+                  <div className="text-[11px] uppercase tracking-wider text-white/40 mb-1">
+                    Pest Risk Index
+                  </div>
+                  <div className="text-lg font-bold text-emerald-400">
+                    Low Risk <span className="text-xs font-normal text-white/50">9%</span>
+                  </div>
                   <div className="text-[10px] text-white/40 mt-1">FAO Early-Warning Vector</div>
                 </div>
               </div>
@@ -1243,19 +1337,27 @@ export function LandingPage() {
               className="mt-10 pt-8 border-t border-white/[0.04] grid grid-cols-2 sm:grid-cols-4 gap-6 text-center"
             >
               <div className="space-y-1">
-                <div className="text-sm sm:text-base font-bold text-emerald-400">FAOSTAT Integrated</div>
+                <div className="text-sm sm:text-base font-bold text-emerald-400">
+                  FAOSTAT Integrated
+                </div>
                 <div className="text-xs text-white/45">Verified Agro Standards</div>
               </div>
               <div className="space-y-1">
-                <div className="text-sm sm:text-base font-bold text-emerald-400">Voice Synthesis</div>
+                <div className="text-sm sm:text-base font-bold text-emerald-400">
+                  Voice Synthesis
+                </div>
                 <div className="text-xs text-white/45">Automated Visit Logs</div>
               </div>
               <div className="space-y-1">
-                <div className="text-sm sm:text-base font-bold text-emerald-400">Multi-District</div>
+                <div className="text-sm sm:text-base font-bold text-emerald-400">
+                  Multi-District
+                </div>
                 <div className="text-xs text-white/45">Climatic Zone Profiling</div>
               </div>
               <div className="space-y-1">
-                <div className="text-sm sm:text-base font-bold text-emerald-400">Encrypted Store</div>
+                <div className="text-sm sm:text-base font-bold text-emerald-400">
+                  Encrypted Store
+                </div>
                 <div className="text-xs text-white/45">Tamper-Proof Records</div>
               </div>
             </motion.div>
@@ -1340,7 +1442,8 @@ export function LandingPage() {
                 variants={fadeUp}
                 className="text-sm sm:text-base text-white/60 max-w-xl mx-auto mt-3 font-normal"
               >
-                Transparent answers on data ownership, offline reliability, agronomic accuracy, and institutional rollout.
+                Transparent answers on data ownership, offline reliability, agronomic accuracy, and
+                institutional rollout.
               </motion.p>
             </motion.div>
 
@@ -1367,7 +1470,11 @@ export function LandingPage() {
                         {item.question}
                       </span>
                       <div className="w-8 h-8 rounded-full bg-white/[0.04] border border-white/[0.06] flex items-center justify-center flex-shrink-0 text-white/60 group-hover:text-emerald-400">
-                        {isOpen ? <ChevronUp className="w-4 h-4 text-emerald-400" /> : <ChevronDown className="w-4 h-4" />}
+                        {isOpen ? (
+                          <ChevronUp className="w-4 h-4 text-emerald-400" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4" />
+                        )}
                       </div>
                     </button>
                     <AnimatePresence initial={false}>
@@ -1455,7 +1562,10 @@ export function LandingPage() {
             <motion.p variants={fadeUp} className="text-lg text-white/75 mb-8">
               Start with a free trial. No credit card required.
             </motion.p>
-            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 justify-center">
+            <motion.div
+              variants={fadeUp}
+              className="flex flex-col sm:flex-row gap-3 justify-center"
+            >
               <button
                 onClick={() => navigate('/register')}
                 className="group px-8 py-4 text-base font-bold bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-400 hover:to-emerald-500 transition-all shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5 flex items-center justify-center gap-2"
@@ -1478,7 +1588,11 @@ export function LandingPage() {
           <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-[1.5fr_1fr_1fr_1fr] gap-10 pb-10">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <img src="/logo.png" alt="GPExts Logo" className="w-9 h-9 object-contain rounded-lg" />
+                <img
+                  src="/logo.png"
+                  alt="GPExts Logo"
+                  className="w-9 h-9 object-contain rounded-lg"
+                />
                 <span className="text-lg font-bold tracking-tight text-white">GPExts</span>
               </div>
               <p className="text-sm text-white/50 leading-relaxed max-w-xs mb-4 font-normal">
@@ -1523,15 +1637,15 @@ export function LandingPage() {
                   </a>
                 </li>
                 <li>
-                  <a
-                    href="#faq"
-                    className="text-white/60 hover:text-emerald-400 transition-colors"
-                  >
+                  <a href="#faq" className="text-white/60 hover:text-emerald-400 transition-colors">
                     FAQ
                   </a>
                 </li>
                 <li>
-                  <a href="/demo" className="text-white/60 hover:text-emerald-400 transition-colors">
+                  <a
+                    href="/demo"
+                    className="text-white/60 hover:text-emerald-400 transition-colors"
+                  >
                     Live Demo
                   </a>
                 </li>
@@ -1574,7 +1688,10 @@ export function LandingPage() {
                   </a>
                 </li>
                 <li>
-                  <a href="/login" className="text-white/60 hover:text-emerald-400 transition-colors">
+                  <a
+                    href="/login"
+                    className="text-white/60 hover:text-emerald-400 transition-colors"
+                  >
                     Sign In
                   </a>
                 </li>

@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/Button';
 export const FarmerRegistrationForm: React.FC = () => {
   const { addFarmer, isLoading, setLoading } = useAppStore();
   const { t } = useLanguage();
-  const { isModern, headingClass } = useThemeClasses();
+  const { headingClass } = useThemeClasses();
   const { isDemo } = useDemoMode();
 
   const {
@@ -79,15 +79,13 @@ export const FarmerRegistrationForm: React.FC = () => {
         <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
           <Lock className="w-8 h-8 text-amber-600 dark:text-amber-400" />
         </div>
-        <h2 className={`text-2xl font-bold ${headingClass} mb-2`}>
-          {isModern ? 'Node Provisioning' : 'Register Client'}
-        </h2>
+        <h2 className={`text-2xl font-bold ${headingClass} mb-2`}>Register Client</h2>
         <p className="text-amber-700 dark:text-amber-300 font-semibold mb-1">
           Not available in demo
         </p>
         <p className="text-slate-500 dark:text-slate-400 text-sm">
-          Farmer registration is disabled in demo mode. Sign up for a free account to add and
-          manage farmers.
+          Farmer registration is disabled in demo mode. Sign up for a free account to add and manage
+          farmers.
         </p>
       </div>
     );
@@ -100,9 +98,7 @@ export const FarmerRegistrationForm: React.FC = () => {
           <UserPlus className="w-6 h-6 text-primary-600 dark:text-primary-400" />
         </div>
         <div>
-          <h2 className={`text-2xl font-bold ${headingClass}`}>
-            {isModern ? 'Node Provisioning' : 'Register Client'}
-          </h2>
+          <h2 className={`text-2xl font-bold ${headingClass}`}>Register Client</h2>
           <p className="text-slate-500 dark:text-slate-400">{t('farmer_register_subtitle')}</p>
         </div>
       </div>

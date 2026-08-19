@@ -10,7 +10,7 @@ interface ThemeProviderProps {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const { designVariant } = useFeatureFlags();
-  const { themeName, darkMode, designSystemMode } = useAppStore();
+  const { themeName, darkMode } = useAppStore();
 
   useEffect(() => {
     let activeTheme = themeName;
@@ -33,8 +33,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     }
 
     root.setAttribute('data-design-variant', designVariant);
-    root.setAttribute('data-design-mode', designSystemMode);
-  }, [designVariant, themeName, darkMode, designSystemMode]);
+  }, [designVariant, themeName, darkMode]);
 
   return (
     <ThemeContext.Provider value={{ variant: designVariant }}>{children}</ThemeContext.Provider>

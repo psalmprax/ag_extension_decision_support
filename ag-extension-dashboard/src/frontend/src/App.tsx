@@ -103,8 +103,7 @@ function App() {
   const prevTabRef = React.useRef(activeTab);
 
   React.useEffect(() => {
-    const pathChanged =
-      prevPathRef.current === null || prevPathRef.current !== location.pathname;
+    const pathChanged = prevPathRef.current === null || prevPathRef.current !== location.pathname;
     const tabChanged = prevTabRef.current !== activeTab;
     prevPathRef.current = location.pathname;
     prevTabRef.current = activeTab;
@@ -122,7 +121,7 @@ function App() {
     }
   }, [location.pathname, activeTab, storeUser, navigate, setActiveTab]);
 
-  const { isModern, headingClass } = useThemeClasses();
+  const { headingClass } = useThemeClasses();
 
   // Theme, auth, and bootstrap hooks
   useAppTheme(themeName, darkMode);
@@ -323,7 +322,8 @@ function App() {
     } catch {
       addNotification({
         type: 'error',
-        message: t('reports_generation_failed') || 'Report generation failed. No report was created.',
+        message:
+          t('reports_generation_failed') || 'Report generation failed. No report was created.',
       });
     } finally {
       setIsGeneratingReport(false);
@@ -349,7 +349,7 @@ function App() {
       </div>
     );
 
-  const navItems = getNavItems(isModern).filter(item => {
+  const navItems = getNavItems().filter(item => {
     if (!user || !item.roles.includes(user.role)) return false;
     if (isDemo && item.hiddenInDemo) return false;
     return true;
@@ -423,12 +423,12 @@ function App() {
           <motion.div
             animate={{ x: [0, 100, 0], y: [0, -50, 0], scale: [1, 1.1, 1] }}
             transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-            className="absolute -top-[10%] -left-[10%] w-[800px] h-[800px] bg-blue-600/30 mix-blend-screen rounded-full blur-[150px]"
+            className="absolute -top-[10%] -left-[10%] w-[800px] h-[800px] bg-sky-600/25 mix-blend-screen rounded-full blur-[150px]"
           />
           <motion.div
             animate={{ x: [0, -100, 0], y: [0, 50, 0], scale: [1, 1.2, 1] }}
             transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
-            className="absolute top-[20%] -right-[10%] w-[600px] h-[600px] bg-purple-600/30 mix-blend-screen rounded-full blur-[180px]"
+            className="absolute top-[20%] -right-[10%] w-[600px] h-[600px] bg-emerald-600/25 mix-blend-screen rounded-full blur-[180px]"
           />
         </div>
 
@@ -447,7 +447,6 @@ function App() {
         <AppHeader
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
-          activeTab={activeTab}
           setActiveTab={setActiveTab}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
@@ -488,7 +487,7 @@ function App() {
               <Suspense
                 fallback={
                   <div className="p-6">
-                    <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
+                    <Loader2 className="w-8 h-8 animate-spin text-primary-400" />
                   </div>
                 }
               >
@@ -496,7 +495,6 @@ function App() {
                   <TabContent
                     activeTab={activeTab}
                     headingClass={headingClass}
-                    isModern={isModern}
                     isOfficer={isOfficer}
                     user={user}
                     addNotification={addNotification as (n: unknown) => void}

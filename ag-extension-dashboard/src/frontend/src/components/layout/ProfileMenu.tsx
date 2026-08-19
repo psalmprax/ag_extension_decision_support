@@ -28,8 +28,8 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
         onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
         className="flex items-center gap-3 pl-4 border-l border-white/10 hover:opacity-80 transition-opacity"
       >
-        <div className="w-8 h-8 rounded-full border border-cyan-400/30 overflow-hidden ring-2 ring-cyan-400/10 flex items-center justify-center bg-slate-800">
-          <span className="text-xxs text-cyan-400 font-bold">
+        <div className="w-8 h-8 rounded-full border border-primary-400/30 overflow-hidden ring-2 ring-primary-400/10 flex items-center justify-center bg-slate-800">
+          <span className="text-xxs text-primary-400 font-bold">
             {storeUser?.firstName?.[0]}
             {storeUser?.lastName?.[0]}
           </span>
@@ -70,7 +70,7 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
                 }}
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300"
               >
-                <User className="w-4 h-4 text-cyan-400" />
+                <User className="w-4 h-4 text-primary-400" />
                 <span className="text-xs font-bold uppercase tracking-widest">Profile</span>
               </button>
               <button

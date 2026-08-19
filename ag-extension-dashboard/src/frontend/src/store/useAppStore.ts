@@ -138,16 +138,11 @@ export interface AppState {
   shareModal: { entityType: string; entityId: string; entityName?: string } | null;
   showShareModal: (data: AppState['shareModal']) => void;
   hideShareModal: () => void;
-
-  // Design System Mode
-  designSystemMode: 'classic' | 'modern';
-  setDesignSystemMode: (mode: 'classic' | 'modern') => void;
-  toggleDesignSystemMode: () => void;
 }
 
 export const useAppStore = create<AppState>()(
   persist(
-    (set) => ({
+    set => ({
       // Initial state
       user: null,
       isDemo: false,
@@ -165,8 +160,8 @@ export const useAppStore = create<AppState>()(
       shareModal: null,
 
       // Actions
-      setUser: (user) => set({ user }),
-      setIsDemo: (isDemo) => set({ isDemo }),
+      setUser: user => set({ user }),
+      setIsDemo: isDemo => set({ isDemo }),
 
       setSidebarOpen: sidebarOpen => set({ sidebarOpen }),
       toggleSidebar: () => set(state => ({ sidebarOpen: !state.sidebarOpen })),
@@ -344,24 +339,16 @@ export const useAppStore = create<AppState>()(
 
       showShareModal: shareModal => set({ shareModal }),
       hideShareModal: () => set({ shareModal: null }),
-
-      designSystemMode: 'modern',
-      setDesignSystemMode: designSystemMode => set({ designSystemMode }),
-      toggleDesignSystemMode: () =>
-        set(state => ({
-          designSystemMode: state.designSystemMode === 'classic' ? 'modern' : 'classic',
-        })),
     }),
     {
       name: 'ag-extension-storage',
-      partialize: (state) => ({
+      partialize: state => ({
         themeName: state.themeName,
         darkMode: state.darkMode,
         sidebarOpen: state.sidebarOpen,
         activeTab: state.activeTab,
         user: state.user,
         isDemo: state.isDemo,
-        designSystemMode: state.designSystemMode,
       }),
     }
   )

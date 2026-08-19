@@ -39,7 +39,7 @@ function getDefaultArgs(tool: MCPTool): Record<string, unknown> {
 
 export function MCPTools() {
   const { t } = useLanguage();
-  const { headingClass, isModern, radiusClass, btnClass } = useThemeClasses();
+  const { headingClass, radiusClass, btnClass } = useThemeClasses();
   const { addNotification } = useAppStore();
 
   // State
@@ -162,9 +162,7 @@ export function MCPTools() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className={`text-2xl ${headingClass}`}>
-            {isModern ? 'Protocol Toolchain' : 'System Tools'}
-          </h1>
+          <h1 className={`text-2xl ${headingClass}`}>System Tools</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">{t('mcp_tools_subtitle')}</p>
         </div>
         <button

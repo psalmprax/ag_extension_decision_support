@@ -3,6 +3,8 @@ import { Users, Plus, Send, Lock } from 'lucide-react';
 import { Conversation, ChatMessage } from '../types/dashboard';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
+import { useDeviceThermalMemoryBudget } from '@/hooks/useDeviceThermalMemoryBudget';
+import { VirtualizedList } from '@/components/common/VirtualizedList';
 import { useDemoMode } from '@/demo';
 
 interface FarmerChatPageProps {
@@ -31,15 +33,14 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   setShowFarmerModal,
 }) => {
   const { t } = useLanguage();
-  const { isModern, headingClass, btnClass, radiusClass } = useThemeClasses();
+  const { headingClass, btnClass, radiusClass } = useThemeClasses();
+  const { isLowEndDevice } = useDeviceThermalMemoryBudget();
   const { isDemo } = useDemoMode();
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] gap-6">
       <div className="mb-2">
-        <h1 className={`text-3xl font-bold ${headingClass}`}>
-          {isModern ? 'Network Communications' : 'Farmer Chat'}
-        </h1>
+        <h1 className={`text-3xl font-bold ${headingClass}`}>Farmer Chat</h1>
         <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">{t('chat_subtitle')}</p>
       </div>
       <div className="flex flex-1 gap-6 overflow-hidden">
@@ -69,49 +70,52 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
               </button>
             )}
           </div>
-          <div className="flex-1 overflow-y-auto p-2 space-y-1">
-            {farmerConversations.length === 0 ? (
+          <VirtualizedList
+            items={farmerConversations}
+            itemHeight={68}
+            overscan={isLowEndDevice ? 2 : 5}
+            keyExtractor={conv => conv.id}
+            className="flex-1 p-2"
+            emptyComponent={
               <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
                 {t('chat_no_conversations')}
                 <br />
                 {t('chat_start_new_chat')}
               </div>
-            ) : (
-              farmerConversations.map(conv => (
-                <button
-                  key={conv.id}
-                  onClick={() => {
-                    setActiveFarmerConvId(conv.id);
-                    loadFarmerMessages(conv.id);
-                  }}
-                  className={`w-full p-3 ${radiusClass} text-left transition-all ${
-                    activeFarmerConvId === conv.id
-                      ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-100 dark:border-primary-800'
-                      : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold">
-                      {conv.farmerName?.[0]}
-                    </div>
-                    <div className="flex-1 overflow-hidden">
-                      <div className="flex justify-between items-center">
-                        <span className="font-bold text-sm text-gray-900 dark:text-white truncate">
-                          {conv.farmerName}
-                        </span>
-                        <span className="text-xxs text-gray-400">
-                          {new Date(conv.startedAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                        {conv.lastMessage}
-                      </p>
-                    </div>
+            }
+            renderItem={conv => (
+              <button
+                onClick={() => {
+                  setActiveFarmerConvId(conv.id);
+                  loadFarmerMessages(conv.id);
+                }}
+                className={`w-full h-[64px] p-3 ${radiusClass} text-left transition-all ${
+                  activeFarmerConvId === conv.id
+                    ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-100 dark:border-primary-800'
+                    : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold">
+                    {conv.farmerName?.[0]}
                   </div>
-                </button>
-              ))
+                  <div className="flex-1 overflow-hidden">
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-sm text-gray-900 dark:text-white truncate">
+                        {conv.farmerName}
+                      </span>
+                      <span className="text-xxs text-gray-400">
+                        {new Date(conv.startedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                      {conv.lastMessage}
+                    </p>
+                  </div>
+                </div>
+              </button>
             )}
-          </div>
+          />
         </div>
 
         <div className="flex-1 flex flex-col bg-theme-bg-card dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
@@ -178,7 +182,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                   <button
                     type="submit"
                     disabled={!farmerChatInput.trim()}
-                    className={`p-3 ${isModern ? 'bg-primary-600 hover:bg-primary-700 shadow-primary-500/20 shadow-lg' : 'bg-white dark:bg-slate-900 border-2 border-slate-800 dark:border-slate-200 text-slate-900 dark:text-white'} ${btnClass} transition-all disabled:opacity-50`}
+                    className={`p-3 bg-primary-600 hover:bg-primary-700 shadow-primary-500/20 shadow-lg ${btnClass} transition-all disabled:opacity-50`}
                   >
                     <Send className="w-5 h-5" />
                   </button>

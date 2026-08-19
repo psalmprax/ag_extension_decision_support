@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  PhoneCall,
-  Send,
-  Radio,
-  CheckCircle2,
-  Smartphone,
-  RotateCcw,
-} from 'lucide-react';
+import { PhoneCall, Send, Radio, CheckCircle2, Smartphone, RotateCcw } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const UssdGatewayTester: React.FC = () => {
@@ -28,12 +21,19 @@ export const UssdGatewayTester: React.FC = () => {
   );
   const [isSendingSms, setIsSendingSms] = useState(false);
   const [smsLogs, setSmsLogs] = useState<
-    { id: string; phone: string; message: string; timestamp: string; status: 'Delivered' | 'Pending' }[]
+    {
+      id: string;
+      phone: string;
+      message: string;
+      timestamp: string;
+      status: 'Delivered' | 'Pending';
+    }[]
   >([
     {
       id: 'sms-901',
       phone: '+254 722 100 200',
-      message: 'GPExts: Mvua inatarajiwa Kiambu wiki hii. Andaa mashamba kwa ajili ya upanzi wa mahindi.',
+      message:
+        'GPExts: Mvua inatarajiwa Kiambu wiki hii. Andaa mashamba kwa ajili ya upanzi wa mahindi.',
       timestamp: '10 mins ago',
       status: 'Delivered',
     },
@@ -115,7 +115,8 @@ export const UssdGatewayTester: React.FC = () => {
             Telecom Gateway & USSD/SMS Simulator
           </h3>
           <p className="text-xs text-stone-400 mt-0.5">
-            Simulate smallholder 2G feature phone interactions (Africa&apos;s Talking / Twilio bridge).
+            Simulate smallholder 2G feature phone interactions (Africa&apos;s Talking / Twilio
+            bridge).
           </p>
         </div>
 
@@ -162,7 +163,10 @@ export const UssdGatewayTester: React.FC = () => {
                       {ussdScreen}
                     </div>
                     {ussdScreen.startsWith('CON') && (
-                      <form onSubmit={handleSendUssdInput} className="mt-3 pt-2 border-t border-[#788e6d]">
+                      <form
+                        onSubmit={handleSendUssdInput}
+                        className="mt-3 pt-2 border-t border-[#788e6d]"
+                      >
                         <div className="flex gap-1">
                           <input
                             type="text"
@@ -186,7 +190,7 @@ export const UssdGatewayTester: React.FC = () => {
                   <div className="flex flex-col items-center justify-center h-[180px] text-center">
                     <Radio className="w-8 h-8 opacity-40 mb-2" />
                     <span className="font-bold text-sm">GPExts GSM Ready</span>
-                    <span className="text-[10px] opacity-75 mt-1">Dial {ussdDialCode} to begin</span>
+                    <span className="text-xs opacity-75 mt-1">Dial {ussdDialCode} to begin</span>
                   </div>
                 )}
               </div>
@@ -221,11 +225,15 @@ export const UssdGatewayTester: React.FC = () => {
                 <span className="text-xxs font-mono uppercase text-emerald-400 font-bold">
                   Live USSD Session Trace
                 </span>
-                <span className="text-xxs text-stone-400">Telco: Africa&apos;s Talking Gateway</span>
+                <span className="text-xxs text-stone-400">
+                  Telco: Africa&apos;s Talking Gateway
+                </span>
               </div>
               <div className="bg-slate-950 p-4 rounded-xl font-mono text-xs text-stone-300 min-h-[160px] space-y-1.5 border border-white/5">
                 {ussdHistory.length === 0 ? (
-                  <span className="text-stone-500 italic">No active session. Click Dial on the virtual phone.</span>
+                  <span className="text-stone-500 italic">
+                    No active session. Click Dial on the virtual phone.
+                  </span>
                 ) : (
                   ussdHistory.map((h, i) => (
                     <div key={i} className="text-emerald-400">
@@ -237,7 +245,9 @@ export const UssdGatewayTester: React.FC = () => {
             </div>
 
             <div className="mt-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-stone-300">
-              <span className="font-bold text-emerald-400">Smallholder Inclusivity:</span> USSD requires zero internet, zero smartphone capabilities, and functions on any $10 2G phone across Sub-Saharan Africa.
+              <span className="font-bold text-emerald-400">Smallholder Inclusivity:</span> USSD
+              requires zero internet, zero smartphone capabilities, and functions on any $10 2G
+              phone across Sub-Saharan Africa.
             </div>
           </div>
         </div>
@@ -246,9 +256,14 @@ export const UssdGatewayTester: React.FC = () => {
       {/* SMS Gateway Tester */}
       {activeChannel === 'sms' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <form onSubmit={handleSendSms} className="p-6 rounded-2xl bg-black/40 border border-white/10 space-y-4">
+          <form
+            onSubmit={handleSendSms}
+            className="p-6 rounded-2xl bg-black/40 border border-white/10 space-y-4"
+          >
             <div>
-              <label className="text-xs font-bold text-stone-300 block mb-1.5">Recipient Phone (E.164)</label>
+              <label className="text-xs font-bold text-stone-300 block mb-1.5">
+                Recipient Phone (E.164)
+              </label>
               <input
                 type="text"
                 value={smsPhone}
@@ -282,10 +297,15 @@ export const UssdGatewayTester: React.FC = () => {
 
           {/* SMS Logs */}
           <div className="p-6 rounded-2xl bg-black/40 border border-white/10 space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-stone-400">Dispatched SMS Outbox</h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-stone-400">
+              Dispatched SMS Outbox
+            </h4>
             <div className="space-y-2.5 max-h-[260px] overflow-y-auto">
               {smsLogs.map(log => (
-                <div key={log.id} className="p-3 rounded-xl bg-slate-900/80 border border-white/5 space-y-1">
+                <div
+                  key={log.id}
+                  className="p-3 rounded-xl bg-slate-900/80 border border-white/5 space-y-1"
+                >
                   <div className="flex items-center justify-between text-xxs font-mono text-stone-400">
                     <span className="text-emerald-400 font-bold">{log.phone}</span>
                     <span className="flex items-center gap-1 text-emerald-400">

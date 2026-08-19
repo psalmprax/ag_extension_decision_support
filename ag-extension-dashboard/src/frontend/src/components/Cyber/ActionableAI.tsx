@@ -203,7 +203,7 @@ const ActionableAI = () => {
                       className="p-3 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between"
                     >
                       <div>
-                        <div className="text-[8px] font-black text-white/40 uppercase mb-1">
+                        <div className="text-xs font-black text-white/40 uppercase mb-1">
                           Commodity
                         </div>
                         <div className="text-xs font-bold text-white uppercase tracking-wider">
@@ -212,7 +212,7 @@ const ActionableAI = () => {
                       </div>
                       <div className="text-right">
                         <div
-                          className={`text-[8px] font-black uppercase mb-1 ${item.trend.startsWith('+') ? 'text-green-400' : item.trend.startsWith('-') ? 'text-red-400' : 'text-white/40'}`}
+                          className={`text-xs font-black uppercase mb-1 ${item.trend.startsWith('+') ? 'text-green-400' : item.trend.startsWith('-') ? 'text-red-400' : 'text-white/40'}`}
                         >
                           {item.trend}
                         </div>
@@ -238,7 +238,7 @@ const ActionableAI = () => {
                   Yield History
                 </h3>
                 {yieldBars && (
-                  <div className="px-2 py-0.5 bg-green-500/10 rounded text-[8px] font-black text-green-400 uppercase tracking-widest">
+                  <div className="px-2 py-0.5 bg-green-500/10 rounded text-xs font-black text-green-400 uppercase tracking-widest">
                     {yieldBars.length} Records
                   </div>
                 )}
@@ -326,21 +326,21 @@ const ActionableAI = () => {
               <div className="grid grid-cols-3 gap-2">
                 <div className="text-center p-3 bg-white/5 rounded-2xl border border-white/5">
                   <ThermometerSun className="w-4 h-4 text-orange-400 mx-auto mb-2" />
-                  <div className="text-[8px] font-black text-white/40 uppercase mb-1">Temp</div>
+                  <div className="text-xs font-black text-white/40 uppercase mb-1">Temp</div>
                   <div className="text-xs-plus font-black text-white">
                     {weatherData.temperature ?? '—'}°C
                   </div>
                 </div>
                 <div className="text-center p-3 bg-white/5 rounded-2xl border border-white/5">
                   <Droplets className="w-4 h-4 text-blue-400 mx-auto mb-2" />
-                  <div className="text-[8px] font-black text-white/40 uppercase mb-1">Humid</div>
+                  <div className="text-xs font-black text-white/40 uppercase mb-1">Humid</div>
                   <div className="text-xs-plus font-black text-white">
                     {weatherData.humidity ?? '—'}%
                   </div>
                 </div>
                 <div className="text-center p-3 bg-white/5 rounded-2xl border border-white/5">
                   <Wind className="w-4 h-4 text-primary-400 mx-auto mb-2" />
-                  <div className="text-[8px] font-black text-white/40 uppercase mb-1">Wind</div>
+                  <div className="text-xs font-black text-white/40 uppercase mb-1">Wind</div>
                   <div className="text-xs-plus font-black text-white">
                     {weatherData.windSpeed ?? '—'}km/h
                   </div>
@@ -375,7 +375,7 @@ const ActionableAI = () => {
                   %
                 </div>
                 <div className="text-left">
-                  <span className="block text-[8px] font-black text-green-400 uppercase">
+                  <span className="block text-xs font-black text-green-400 uppercase">
                     {performanceData.metrics.satisfactionScore || 0}/5 satisfaction
                   </span>
                   <span className="block text-xxs font-black text-white/60 uppercase">

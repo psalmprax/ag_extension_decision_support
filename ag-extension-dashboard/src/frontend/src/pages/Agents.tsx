@@ -32,16 +32,19 @@ import {
   Bar,
   XAxis,
   YAxis,
+  CartesianGrid,
   Tooltip,
 } from 'recharts';
 import toast from 'react-hot-toast';
 import { MetricCard } from '@/components/MetricCard';
 import { CH_COLORS } from '@/lib/colors';
+import { ChartTooltip } from '@/components/charts/ChartTooltip';
+import { chartGrid, chartTick } from '@/components/charts/chartConfig';
 import { LoadingHeaderSkeleton } from '@/components/ui/LoadingHeaderSkeleton';
 
 export function Agents() {
   const { t } = useLanguage();
-  const { headingClass, isModern, radiusClass, btnClass } = useThemeClasses();
+  const { headingClass, radiusClass, btnClass } = useThemeClasses();
   const { addNotification } = useAppStore();
 
   // State
@@ -208,9 +211,7 @@ export function Agents() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className={`text-2xl ${headingClass}`}>
-            {isModern ? 'Autonomous Orchestration' : 'Agent Manager'}
-          </h1>
+          <h1 className={`text-2xl ${headingClass}`}>Agent Manager</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">{t('agents_subtitle')}</p>
         </div>
         <button
@@ -275,7 +276,7 @@ export function Agents() {
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip content={<ChartTooltip />} />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -293,9 +294,10 @@ export function Agents() {
                 max: agent.maxConcurrentTasks,
               }))}
             >
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
+              <CartesianGrid {...chartGrid} />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={chartTick} />
+              <YAxis axisLine={false} tickLine={false} tick={chartTick} />
+              <Tooltip content={<ChartTooltip />} />
               <Bar dataKey="load" fill={CH_COLORS.blue} />
               <Bar dataKey="max" fill="var(--color-primary-500)" />
             </BarChart>

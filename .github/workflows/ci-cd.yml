@@ -62,10 +62,10 @@ jobs:
           cd ag-extension-dashboard/src/frontend
           npx playwright install --with-deps chromium
 
-      - name: Run release smoke tests
+      - name: Run Playwright e2e tests
         run: |
           cd ag-extension-dashboard/src/frontend
-          npm run test:e2e -- --grep @release
+          npm run test:e2e
 
   # Backend checks
   backend:
@@ -141,6 +141,27 @@ jobs:
           DATABASE_URL: postgres://psalmprax:password@localhost:5432/ag_extension
           REDIS_URL: redis://localhost:6379
           NODE_ENV: test
+
+  # Dead-code regression gate (fallow)
+  fallow:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install fallow (pinned)
+        run: npm install --no-audit --no-fund
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+
+      - name: Fallow dead-code regression gate
+        run: npm run fallow:check
 
   # Browser extension checks
   extension:

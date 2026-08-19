@@ -2,14 +2,12 @@ import React from 'react';
 import { RefreshCw } from 'lucide-react';
 
 export function EmailWorkflowsHeader({
-  isModern,
   headingClass,
   subtitle,
   isRefreshing,
   onRefresh,
   btnClass,
 }: {
-  isModern: boolean;
   headingClass: string;
   subtitle: string;
   isRefreshing: boolean;
@@ -19,9 +17,7 @@ export function EmailWorkflowsHeader({
   return (
     <div className="flex items-center justify-between">
       <div>
-        <h1 className={`text-2xl ${headingClass}`}>
-          {isModern ? 'Automated Dispatch' : 'Email Workflows'}
-        </h1>
+        <h1 className={`text-2xl ${headingClass}`}>Email Workflows</h1>
         <p className="text-gray-600 dark:text-gray-400 mt-1">{subtitle}</p>
       </div>
       <button

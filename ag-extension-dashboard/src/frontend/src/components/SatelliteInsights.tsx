@@ -174,7 +174,7 @@ const SpatialDataVisualization = ({
               <div
                 className={`absolute inset-0 w-2 h-2 m-auto rounded-full ${String(point['pulseClass'] ?? '')} border border-white/40 shadow-lg`}
               />
-              <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[8px] font-black text-white/60 uppercase whitespace-nowrap">
+              <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-black text-white/60 uppercase whitespace-nowrap">
                 NDVI {String(point['ndvi'] ?? 0)}
               </div>
             </motion.div>
@@ -200,7 +200,7 @@ const SpatialDataVisualization = ({
 
       {/* Status Overlays */}
       <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
-        <p className="text-[8px] font-black text-primary-400 uppercase tracking-[0.2em] flex items-center gap-2">
+        <p className="text-xs font-black text-primary-400 uppercase tracking-[0.2em] flex items-center gap-2">
           <Layers className="w-3 h-3" />
           Spectral Layer IV
         </p>
@@ -210,7 +210,7 @@ const SpatialDataVisualization = ({
         <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
           {' '}
           <div
-            className={`text-[8px] font-black uppercase tracking-[0.2em] flex items-center gap-2 ${priorityTextClass}`}
+            className={`text-xs font-black uppercase tracking-[0.2em] flex items-center gap-2 ${priorityTextClass}`}
           >
             {isHighOrCritical ? (
               <AlertTriangle className="w-3 h-3" />

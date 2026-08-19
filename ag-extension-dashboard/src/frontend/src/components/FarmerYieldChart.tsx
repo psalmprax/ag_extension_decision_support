@@ -12,6 +12,8 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { useLanguage } from '@/lib/LanguageContext';
+import { ChartTooltip } from '@/components/charts/ChartTooltip';
+import { chartGrid } from '@/components/charts/chartConfig';
 
 interface FarmerYieldChartProps {
   farmer: Farmer;
@@ -43,25 +45,10 @@ export const FarmerYieldChart: React.FC<FarmerYieldChartProps> = ({ farmer, radi
                 <stop offset="95%" stopColor="var(--color-primary-500)" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              vertical={false}
-              stroke="var(--color-outline)"
-              strokeOpacity={0.2}
-            />
+            <CartesianGrid {...chartGrid} />
             <XAxis dataKey="month" hide />
             <YAxis hide />
-            <Tooltip
-              contentStyle={{
-                borderRadius: 'var(--radius-card)',
-                border: 'none',
-                backgroundColor: 'var(--color-bg-card)',
-                boxShadow: 'var(--shadow-premium)',
-                fontSize: '12px',
-                fontWeight: 'bold',
-                color: 'var(--color-on-surface)',
-              }}
-            />
+            <Tooltip content={<ChartTooltip />} />
             <Area
               type="monotone"
               dataKey="yield"

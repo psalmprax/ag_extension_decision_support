@@ -31,10 +31,14 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   setShowStats,
   onSearch,
 }) => {
-  const { isModern, radiusClass } = useThemeClasses();
+  const { radiusClass } = useThemeClasses();
   const originalQueryRef = useRef('');
 
-  const { start: startSpeech, stop: stopSpeech, isSupported: isSpeechSupported } = useSpeechRecognition({
+  const {
+    start: startSpeech,
+    stop: stopSpeech,
+    isSupported: isSpeechSupported,
+  } = useSpeechRecognition({
     onResult: transcript => {
       const prefix = originalQueryRef.current.trim();
       setSearchQuery(prefix.length > 0 ? `${prefix} ${transcript}` : transcript);
@@ -95,13 +99,13 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     <div className="relative group mb-12">
       <div
         className="absolute -inset-1 bg-gradient-to-r from-primary-600 to-indigo-600 blur opacity-20 group-hover:opacity-40 transition-opacity"
-        style={{ borderRadius: isModern ? 'calc(var(--radius-card) + 4px)' : '0px' }}
+        style={{ borderRadius: 'calc(var(--radius-card) + 4px)' }}
       ></div>
       <div
-        className="relative bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/50 p-1.5 shadow-2xl"
+        className="relative bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/50 p-1.5 shadow-2xl focus-within:ring-2 focus-within:ring-primary-500/30 focus-within:border-primary-500/50"
         style={{
-          borderRadius: isModern ? 'var(--radius-card)' : '0px',
-          boxShadow: isModern ? 'var(--shadow-premium)' : 'none',
+          borderRadius: 'var(--radius-card)',
+          boxShadow: 'var(--shadow-premium)',
         }}
       >
         {/* Attachment Previews */}
@@ -154,7 +158,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({
               onClick={handleMicClick}
               disabled={!isSpeechSupported}
               className={`p-3 ${radiusClass} transition-all ${!isSpeechSupported ? 'opacity-30 cursor-not-allowed' : isRecording ? 'bg-rose-100 text-rose-600 animate-pulse' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-400'}`}
-              title={isSpeechSupported ? 'Voice Input' : 'Voice input not supported in this browser'}
+              title={
+                isSpeechSupported ? 'Voice Input' : 'Voice input not supported in this browser'
+              }
             >
               <Mic className="w-6 h-6" />
             </button>

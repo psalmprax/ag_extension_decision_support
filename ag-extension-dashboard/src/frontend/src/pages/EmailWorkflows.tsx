@@ -26,7 +26,7 @@ import type { EditForm } from '@/types/emailWorkflows';
 
 export function EmailWorkflows() {
   const { t } = useLanguage();
-  const { headingClass, isModern, radiusClass, btnClass } = useThemeClasses();
+  const { headingClass, radiusClass, btnClass } = useThemeClasses();
   const { addNotification } = useAppStore();
 
   // Resource loader encapsulates the category-filter + parallel-fetch + refresh
@@ -175,7 +175,6 @@ export function EmailWorkflows() {
   return (
     <div className="space-y-6">
       <EmailWorkflowsHeader
-        isModern={isModern}
         headingClass={headingClass}
         subtitle={t('email_workflows_subtitle')}
         isRefreshing={isRefreshing}

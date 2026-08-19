@@ -45,7 +45,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
       <div ref={ref} className={`relative ${className}`}>
         <button
           onClick={() => setOpen(o => !o)}
-          className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xxs font-black uppercase tracking-widest focus:outline-none focus:ring-1 focus:ring-cyan-400/50 text-slate-300 hover:text-white transition-all backdrop-blur-xl"
+          className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xxs font-black uppercase tracking-widest focus:outline-none focus:ring-1 focus:ring-primary-400/50 text-slate-300 hover:text-white transition-all backdrop-blur-xl"
           aria-label={t('common_select_language')}
           aria-expanded={open}
         >

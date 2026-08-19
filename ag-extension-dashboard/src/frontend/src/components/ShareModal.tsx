@@ -252,7 +252,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                   <input
                     readOnly
                     value={shareData.shareUrl}
-                    className="w-full px-4 py-4 rounded-2xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-800 text-sm font-mono pr-12 focus:outline-none"
+                    className="w-full px-4 py-4 rounded-2xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-800 text-sm font-mono pr-12 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400/50"
                   />
                   <button
                     onClick={copyToClipboard}

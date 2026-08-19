@@ -24,22 +24,20 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
   addNotification,
 }) => {
   const { t } = useLanguage();
-  const { isModern, headingClass, btnClass, radiusClass } = useThemeClasses();
+  const { headingClass, btnClass, radiusClass } = useThemeClasses();
 
   return (
     <main id="visits-main" className="min-h-screen">
       <div className="mb-8 flex justify-between items-center">
         <div>
-          <h1 className={`text-3xl ${headingClass}`}>
-            {isModern ? 'Field Telemetry' : 'Field Visits'}
-          </h1>
+          <h1 className={`text-3xl ${headingClass}`}>Field Visits</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">
             {t('visits_subtitle')}
           </p>
         </div>
         <button
           onClick={() => setShowVisitModal(true)}
-          className={`px-6 py-3 ${isModern ? 'bg-primary-600 hover:bg-primary-700 shadow-primary-500/20 shadow-lg' : 'bg-white dark:bg-slate-900 border-2 border-slate-800 dark:border-slate-200 text-slate-900 dark:text-white'} ${btnClass} transition-all flex items-center gap-2`}
+          className={`px-6 py-3 bg-primary-600 hover:bg-primary-700 shadow-primary-500/20 shadow-lg ${btnClass} transition-all flex items-center gap-2`}
         >
           <MapPin className="w-4 h-4" />
           {t('visits_schedule_new')}
@@ -85,8 +83,8 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
                     visit.status === 'completed'
                       ? 'bg-green-500/20 border-green-500/40 text-green-800 dark:text-green-300'
                       : visit.status === 'cancelled'
-                      ? 'bg-red-500/20 border-red-500/40 text-red-800 dark:text-red-300'
-                      : 'bg-amber-500/20 border-amber-500/40 text-amber-800 dark:text-amber-300'
+                        ? 'bg-red-500/20 border-red-500/40 text-red-800 dark:text-red-300'
+                        : 'bg-amber-500/20 border-amber-500/40 text-amber-800 dark:text-amber-300'
                   }`}
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-current" aria-hidden="true" />

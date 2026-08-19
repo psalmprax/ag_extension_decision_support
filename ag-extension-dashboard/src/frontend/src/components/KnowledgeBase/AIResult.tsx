@@ -37,7 +37,7 @@ interface AIResultProps {
 }
 
 export const AIResult: React.FC<AIResultProps> = ({ result }) => {
-  const { isModern, radiusClass } = useThemeClasses();
+  const { radiusClass } = useThemeClasses();
 
   return (
     <motion.div
@@ -91,7 +91,7 @@ export const AIResult: React.FC<AIResultProps> = ({ result }) => {
         {/* Visual Intelligence Layer */}
         {(result.visuals || result.audio) && (
           <div
-            className={`mt-12 mb-16 p-1 bg-gradient-to-br from-primary-500/5 to-transparent ${isModern ? 'rounded-[2.5rem]' : 'rounded-none'} border border-primary-500/10`}
+            className={`mt-12 mb-16 p-1 bg-gradient-to-br from-primary-500/5 to-transparent rounded-[2.5rem] border border-primary-500/10`}
           >
             <ReasoningVisuals
               visuals={(result.visuals ?? {}) as VisualsData}

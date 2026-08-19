@@ -99,20 +99,24 @@ if (!window.matchMedia) {
   }));
 }
 
-HTMLCanvasElement.prototype.getContext = vi.fn().mockImplementation(() => ({
-  clearRect: vi.fn(),
-  fillRect: vi.fn(),
-  beginPath: vi.fn(),
-  arc: vi.fn(),
-  fill: vi.fn(),
-  stroke: vi.fn(),
-  moveTo: vi.fn(),
-  lineTo: vi.fn(),
-  setLineDash: vi.fn(),
-  createRadialGradient: vi.fn().mockReturnValue({
-    addColorStop: vi.fn(),
-  }),
-  createConicGradient: vi.fn().mockReturnValue({
-    addColorStop: vi.fn(),
-  }),
-}));
+HTMLCanvasElement.prototype.getContext = vi.fn().mockImplementation((type: string) => {
+  // jsdom has no WebGL — return null so canvasui.dev components degrade gracefully.
+  if (type === 'webgl' || type === 'webgl2') return null;
+  return {
+    clearRect: vi.fn(),
+    fillRect: vi.fn(),
+    beginPath: vi.fn(),
+    arc: vi.fn(),
+    fill: vi.fn(),
+    stroke: vi.fn(),
+    moveTo: vi.fn(),
+    lineTo: vi.fn(),
+    setLineDash: vi.fn(),
+    createRadialGradient: vi.fn().mockReturnValue({
+      addColorStop: vi.fn(),
+    }),
+    createConicGradient: vi.fn().mockReturnValue({
+      addColorStop: vi.fn(),
+    }),
+  };
+});

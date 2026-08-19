@@ -563,7 +563,7 @@ function useSystemHealthData(
 
 export function SystemHealth() {
   const { t } = useLanguage();
-  const { headingClass, isModern, radiusClass, btnClass } = useThemeClasses();
+  const { headingClass, radiusClass, btnClass } = useThemeClasses();
   const { addNotification } = useAppStore();
   const { healthChecks, recoveryLog, isLoading, isRefreshing, overallHealth, reload } =
     useSystemHealthData(addNotification, t);
@@ -624,9 +624,7 @@ export function SystemHealth() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className={`text-2xl ${headingClass}`}>
-            {isModern ? 'Infrastructure Vitality' : 'System Health'}
-          </h1>
+          <h1 className={`text-2xl ${headingClass}`}>System Health</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">{t('system_health_subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">

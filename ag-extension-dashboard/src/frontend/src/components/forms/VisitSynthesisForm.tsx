@@ -15,7 +15,7 @@ export const VisitSynthesisForm: React.FC = () => {
   const [result, setResult] = useState<BoxUpdateData | null>(null);
   const { setLoading, user } = useAppStore();
   const { t } = useLanguage();
-  const { isModern, headingClass } = useThemeClasses();
+  const { headingClass } = useThemeClasses();
 
   const handleSynthesize = async () => {
     if (notes.length < 10) {
@@ -91,9 +91,7 @@ export const VisitSynthesisForm: React.FC = () => {
             <Sparkles className="w-6 h-6 text-purple-600 dark:text-purple-400" />
           </div>
           <div>
-            <h2 className={`text-2xl font-bold ${headingClass}`}>
-              {isModern ? 'Encounter Analysis' : 'Visit Synthesis'}
-            </h2>
+            <h2 className={`text-2xl font-bold ${headingClass}`}>Visit Synthesis</h2>
             <p className="text-slate-500 dark:text-slate-400">{t('visit_synthesis_subtitle')}</p>
           </div>
         </div>

@@ -1,6 +1,17 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Lock, Sparkles, ArrowRight, ShieldCheck, Zap, MessageSquare, Send, Bot, FileText, CheckCircle2 } from 'lucide-react';
+import {
+  Lock,
+  Sparkles,
+  ArrowRight,
+  ShieldCheck,
+  Zap,
+  MessageSquare,
+  Send,
+  Bot,
+  FileText,
+  CheckCircle2,
+} from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 
@@ -21,7 +32,9 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
   const { headingClass } = useThemeClasses();
 
   // If user is not on free plan (e.g. Pro or Enterprise or Admin), render feature content
-  const isFree = user?.role !== 'admin' && (user?.isFree || user?.planName?.toLowerCase() === 'free' || !user?.planName);
+  const isFree =
+    user?.role !== 'admin' &&
+    (user?.isFree || user?.planName?.toLowerCase() === 'free' || !user?.planName);
 
   if (!isFree) {
     return <>{children}</>;
@@ -36,8 +49,8 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
         '500+ monthly SMS broadcast quota',
         'Direct multi-recipient campaigns',
         'Automated weather & pest alerts',
-        'Localized language translation'
-      ]
+        'Localized language translation',
+      ],
     },
     chat: {
       icon: MessageSquare,
@@ -47,8 +60,8 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
         '1,000+ monthly AI reasoning credits',
         'Direct extension-to-farmer live chat',
         'Speech-to-text audio field notes',
-        'Real-time agronomic recommendations'
-      ]
+        'Real-time agronomic recommendations',
+      ],
     },
     whatsapp: {
       icon: Bot,
@@ -58,8 +71,8 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
         'Meta Cloud WhatsApp Business integration',
         'Telegram community bot broadcast',
         'Automated inbound inquiry triage',
-        'Rich media diagnostic delivery'
-      ]
+        'Rich media diagnostic delivery',
+      ],
     },
     vision: {
       icon: Sparkles,
@@ -69,8 +82,8 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
         'Instant plant disease photo identification',
         'Soil deficiency & NPK visual scoring',
         'Automated treatment recommendation log',
-        'Downloadable field diagnosis PDF'
-      ]
+        'Downloadable field diagnosis PDF',
+      ],
     },
     reports: {
       icon: FileText,
@@ -80,8 +93,8 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
         'Custom executive PDF & Excel exports',
         'Seasonal yield & vital analytics',
         'Agronomic officer activity telemetry',
-        'Multi-district comparative trends'
-      ]
+        'Multi-district comparative trends',
+      ],
     },
     workflows: {
       icon: Zap,
@@ -91,9 +104,9 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
         'Custom workflow trigger sequences',
         'Automated follow-up reminders',
         'Stakeholder briefing summaries',
-        'High-deliverability email relay'
-      ]
-    }
+        'High-deliverability email relay',
+      ],
+    },
   };
 
   const details = categoryDetails[category] || categoryDetails.sms;
@@ -104,7 +117,7 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
         className="max-w-2xl w-full rounded-3xl bg-white/70 dark:bg-slate-900/80 backdrop-blur-2xl border border-gray-200 dark:border-white/10 p-8 md:p-12 shadow-2xl relative overflow-hidden"
       >
         {/* Glow effect */}
@@ -142,7 +155,10 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {details.benefits.map((benefit, i) => (
-                <div key={i} className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                <div
+                  key={i}
+                  className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300"
+                >
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                   <span>{benefit}</span>
                 </div>

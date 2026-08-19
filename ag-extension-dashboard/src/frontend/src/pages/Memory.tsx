@@ -29,7 +29,7 @@ import { RagKnowledgeGraphCanvas } from '@/components/canvas-ui/RagKnowledgeGrap
 
 export function Memory() {
   const { t } = useLanguage();
-  const { headingClass, isModern, radiusClass, btnClass } = useThemeClasses();
+  const { headingClass, radiusClass, btnClass } = useThemeClasses();
   const { addNotification } = useAppStore();
 
   // Resource loader encapsulates the category-filter + parallel-fetch + refresh
@@ -178,9 +178,7 @@ export function Memory() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className={`text-2xl ${headingClass}`}>
-            {isModern ? 'Cognitive Persistence' : 'Memory Manager'}
-          </h1>
+          <h1 className={`text-2xl ${headingClass}`}>Memory Manager</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">{t('memory_subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
@@ -246,7 +244,8 @@ export function Memory() {
               <span>Neural Knowledge Graph & Vector Constellation</span>
             </h3>
             <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
-              Interactive 2D physics-modeled memory topology showing FAO technical guidelines, soil indices, atmospheric forecasts, and farmer records.
+              Interactive 2D physics-modeled memory topology showing FAO technical guidelines, soil
+              indices, atmospheric forecasts, and farmer records.
             </p>
           </div>
           <span className="px-2.5 py-1 rounded-full text-xxs font-mono uppercase bg-purple-500/10 text-purple-500 border border-purple-500/20">
@@ -259,7 +258,11 @@ export function Memory() {
               ? memories.slice(0, 10).map((m, idx) => ({
                   id: `mem-${m.id || idx}`,
                   label: m.key,
-                  category: (m.category === 'fao' || m.category === 'soil' || m.category === 'nasa' || m.category === 'farmer' || m.category === 'rule'
+                  category: (m.category === 'fao' ||
+                  m.category === 'soil' ||
+                  m.category === 'nasa' ||
+                  m.category === 'farmer' ||
+                  m.category === 'rule'
                     ? m.category
                     : 'rule') as 'fao' | 'soil' | 'nasa' | 'farmer' | 'rule',
                   snippet: typeof m.value === 'string' ? m.value : JSON.stringify(m.value),

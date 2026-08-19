@@ -12,15 +12,8 @@ import {
   Cell,
 } from 'recharts';
 import { TrendingUp, PieChart as PieIcon, BarChart3, Info } from 'lucide-react';
-import { CH_COLORS } from '@/lib/colors';
-
-const COLORS = [
-  CH_COLORS.blue,
-  CH_COLORS.green,
-  CH_COLORS.warning,
-  CH_COLORS.error,
-  CH_COLORS.purple,
-];
+import { ChartTooltip } from '@/components/charts/ChartTooltip';
+import { CHART_PALETTE, chartGrid, chartTick } from '@/components/charts/chartConfig';
 
 interface KnowledgeStatsData {
   crops?: { name: string; count: number }[];
@@ -111,30 +104,11 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
           <div className="h-64 mt-auto">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={cropsData}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  vertical={false}
-                  stroke="var(--color-primary-500)20"
-                />
-                <XAxis
-                  dataKey="crop"
-                  tick={{ fontSize: 10, fontWeight: 'bold', fill: 'var(--color-primary-500)' }}
-                  axisLine={false}
-                  tickLine={false}
-                />
+                <CartesianGrid {...chartGrid} />
+                <XAxis dataKey="crop" tick={chartTick} axisLine={false} tickLine={false} />
                 <YAxis hide />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'var(--color-bg-secondary)',
-                    border: 'none',
-                    borderRadius: '0px',
-                    color: 'var(--color-primary-500)',
-                    fontSize: '10px',
-                    fontWeight: 'bold',
-                    boxShadow: '0 10px 15px -3px var(--color-outline)',
-                  }}
-                />
-                <Bar dataKey="count" fill={CH_COLORS.blue} radius={[0, 0, 0, 0]} />
+                <Tooltip content={<ChartTooltip />} />
+                <Bar dataKey="count" fill={CHART_PALETTE[0]} radius={[0, 0, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -162,7 +136,10 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
                     dataKey="count"
                   >
                     {categoriesData.map((_entry: unknown, index: number) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={CHART_PALETTE[index % CHART_PALETTE.length]}
+                      />
                     ))}
                   </Pie>
                 </PieChart>
@@ -173,7 +150,7 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
                 <div key={i} className="flex items-center gap-3">
                   <div
                     className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: COLORS[i % COLORS.length] }}
+                    style={{ backgroundColor: CHART_PALETTE[i % CHART_PALETTE.length] }}
                   ></div>
                   <span className="text-xs font-bold text-gray-600 dark:text-gray-400 truncate w-32 capitalize">
                     {String(cat.category ?? '')}

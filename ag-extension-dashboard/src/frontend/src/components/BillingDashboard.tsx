@@ -18,7 +18,7 @@ import { Invoices } from './billing/Invoices';
 import { AccessAndCostMatrix } from './billing/AccessAndCostMatrix';
 
 export const BillingDashboard: React.FC = () => {
-  const { isModern, headingClass, radiusClass } = useThemeClasses();
+  const { headingClass, radiusClass } = useThemeClasses();
   const { t } = useLanguage();
   const billing = useBillingActions();
 
@@ -104,7 +104,7 @@ export const BillingDashboard: React.FC = () => {
             </span>
           </motion.div>
           <h1 className={`text-4xl font-black tracking-tighter mb-4 leading-none ${headingClass}`}>
-            {isModern ? 'Capital Utilization' : 'Billing & Subscriptions'}
+            Billing & Subscriptions
           </h1>
           <p className="text-gray-500 dark:text-gray-400 text-xl font-medium max-w-2xl leading-relaxed">
             {t('billing_subtitle')}

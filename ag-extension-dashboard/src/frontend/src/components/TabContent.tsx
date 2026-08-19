@@ -70,7 +70,6 @@ const CropsFields = React.lazy(() =>
 interface TabContentProps {
   activeTab: string;
   headingClass: string;
-  isModern: boolean;
   isOfficer: boolean;
   user: unknown;
   addNotification: (n: unknown) => void;
@@ -123,23 +122,21 @@ interface TabContentProps {
 
 const SimplePageWrapper = ({
   title,
-  isModern,
   headingClass,
   children,
 }: {
   title: string;
-  isModern: boolean;
   headingClass: string;
   children: React.ReactNode;
 }) => (
   <div>
-    <h1 className={`text-3xl font-bold ${headingClass} mb-8`}>{isModern ? title : title}</h1>
+    <h1 className={`text-3xl font-bold ${headingClass} mb-8`}>{title}</h1>
     {children}
   </div>
 );
 
 export function TabContent(props: TabContentProps) {
-  const { activeTab, headingClass, isModern, isOfficer, user, addNotification } = props;
+  const { activeTab, headingClass, isOfficer, user, addNotification } = props;
 
   switch (activeTab) {
     case 'dashboard':
@@ -255,27 +252,19 @@ export function TabContent(props: TabContentProps) {
       );
     case 'sms':
       return (
-        <PlanUpgradeGuard category="sms" featureName="SMS Campaigns & Omnichannel Broadcasting">
+        <PlanUpgradeGuard category="sms" featureName="SMS Campaigns">
           <SMSPage />
         </PlanUpgradeGuard>
       );
     case 'telemetry':
       return (
-        <SimplePageWrapper
-          title={isModern ? 'Neural Telemetry' : 'System Telemetry'}
-          isModern={isModern}
-          headingClass={headingClass}
-        >
+        <SimplePageWrapper title="System Telemetry" headingClass={headingClass}>
           <Telemetry />
         </SimplePageWrapper>
       );
     case 'agents':
       return (
-        <SimplePageWrapper
-          title={isModern ? 'Autonomous Orchestration' : 'Agent Manager'}
-          isModern={isModern}
-          headingClass={headingClass}
-        >
+        <SimplePageWrapper title="Agent Manager" headingClass={headingClass}>
           <Agents />
         </SimplePageWrapper>
       );

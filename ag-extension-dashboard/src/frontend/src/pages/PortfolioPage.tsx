@@ -36,15 +36,13 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
   setSelectedFarmers,
 }) => {
   const { t } = useLanguage();
-  const { isModern, headingClass, btnClass, radiusClass } = useThemeClasses();
+  const { headingClass, btnClass, radiusClass } = useThemeClasses();
   const { isDemo } = useDemoMode();
 
   return (
     <div>
       <div className="mb-8">
-        <h1 className={`text-3xl ${headingClass}`}>
-          {isModern ? 'Human Capital Network' : 'Client Portfolio'}
-        </h1>
+        <h1 className={`text-3xl ${headingClass}`}>Client Portfolio</h1>
         <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">
           {t('portfolio_subtitle')}
         </p>

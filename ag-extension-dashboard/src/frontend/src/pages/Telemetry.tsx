@@ -10,16 +10,27 @@ import {
   TelemetrySummary,
   TelemetryEvent,
 } from '../api/telemetryService';
-import { XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import {
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  Cell,
+} from 'recharts';
 import { MetricCard } from '@/components/MetricCard';
 import { CH_COLORS } from '@/lib/colors';
+import { ChartTooltip } from '@/components/charts/ChartTooltip';
+import { chartGrid, chartTick } from '@/components/charts/chartConfig';
 import { LoadingHeaderSkeleton } from '@/components/ui/LoadingHeaderSkeleton';
 import { SoilNutrientHeatmapCanvas } from '@/components/canvas-ui/SoilNutrientHeatmapCanvas';
 import { LiveSparklineCanvas } from '@/components/canvas-ui/LiveSparklineCanvas';
 
 export function Telemetry() {
   const { t } = useLanguage();
-  const { headingClass, isModern, radiusClass, btnClass } = useThemeClasses();
+  const { headingClass, radiusClass, btnClass } = useThemeClasses();
   const { addNotification } = useAppStore();
 
   // State
@@ -80,6 +91,12 @@ export function Telemetry() {
     pending: events.filter(e => e.status === 'pending').length,
   };
 
+  const statusData = [
+    { name: t('telemetry_success'), value: statusStats.success, color: CH_COLORS.success },
+    { name: t('telemetry_error'), value: statusStats.error, color: CH_COLORS.error },
+    { name: t('telemetry_pending'), value: statusStats.pending, color: CH_COLORS.warning },
+  ];
+
   if (isLoading) {
     return (
       <LoadingHeaderSkeleton
@@ -94,9 +111,7 @@ export function Telemetry() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className={`text-2xl ${headingClass}`}>
-            {isModern ? 'Neural Telemetry' : 'System Telemetry'}
-          </h1>
+          <h1 className={`text-2xl ${headingClass}`}>System Telemetry</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">{t('telemetry_subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
@@ -133,7 +148,7 @@ export function Telemetry() {
             />
             <div className="mt-3 pt-2 border-t border-gray-100 dark:border-gray-800">
               <LiveSparklineCanvas
-                data={[12, 19, 15, 27, 24, 32, 28, 41, 38, summary.totalRequests % 50 + 20]}
+                data={[12, 19, 15, 27, 24, 32, 28, 41, 38, (summary.totalRequests % 50) + 20]}
                 color="#0284c7"
                 fillColor="rgba(2, 132, 199, 0.12)"
                 height={28}
@@ -150,7 +165,18 @@ export function Telemetry() {
             />
             <div className="mt-3 pt-2 border-t border-gray-100 dark:border-gray-800">
               <LiveSparklineCanvas
-                data={[340, 290, 310, 280, 260, 240, 250, 230, 210, summary.avgResponseTimeMs || 220]}
+                data={[
+                  340,
+                  290,
+                  310,
+                  280,
+                  260,
+                  240,
+                  250,
+                  230,
+                  210,
+                  summary.avgResponseTimeMs || 220,
+                ]}
                 color="#10b981"
                 fillColor="rgba(16, 185, 129, 0.12)"
                 height={28}
@@ -205,7 +231,8 @@ export function Telemetry() {
               </span>
             </h3>
             <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-              Hardware-accelerated 2D IDW interpolation mesh for sub-surface acidity, NPK, moisture saturation, and SOC.
+              Hardware-accelerated 2D IDW interpolation mesh for sub-surface acidity, NPK, moisture
+              saturation, and SOC.
             </p>
           </div>
         </div>
@@ -220,25 +247,16 @@ export function Telemetry() {
             {t('telemetry_request_distribution')}
           </h3>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart
-              data={[
-                {
-                  name: t('telemetry_success'),
-                  value: statusStats.success,
-                  color: CH_COLORS.success,
-                },
-                { name: t('telemetry_error'), value: statusStats.error, color: CH_COLORS.error },
-                {
-                  name: t('telemetry_pending'),
-                  value: statusStats.pending,
-                  color: CH_COLORS.warning,
-                },
-              ]}
-            >
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="value" fill={CH_COLORS.blue} />
+            <BarChart data={statusData}>
+              <CartesianGrid {...chartGrid} />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={chartTick} />
+              <YAxis axisLine={false} tickLine={false} tick={chartTick} />
+              <Tooltip content={<ChartTooltip />} />
+              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                {statusData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -256,10 +274,11 @@ export function Telemetry() {
                   usage: count,
                 }))}
               >
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="usage" fill={CH_COLORS.purple} />
+                <CartesianGrid {...chartGrid} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={chartTick} />
+                <YAxis axisLine={false} tickLine={false} tick={chartTick} />
+                <Tooltip content={<ChartTooltip />} />
+                <Bar dataKey="usage" fill={CH_COLORS.purple} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

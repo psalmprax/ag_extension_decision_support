@@ -31,7 +31,7 @@ import { fetchFarmers } from '../api/farmerService';
 import type { Farmer } from '../types/dashboard';
 import { DEMO_FARMERS, isDemoFarmerId, buildDemoFields, useDemoMode } from '@/demo';
 
-export function CropsOverviewTab({
+function CropsOverviewTab({
   fields,
   isFarmer,
   selectedFarmerId,
@@ -83,7 +83,7 @@ export function CropsOverviewTab({
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleOpenEditField(field)}
-                        className="p-1.5 hover:bg-white/5 text-slate-400 hover:text-cyan-400 rounded-lg transition-colors"
+                        className="p-1.5 hover:bg-white/5 text-slate-400 hover:text-primary-400 rounded-lg transition-colors"
                         title="Edit Field details"
                       >
                         <Edit className="w-4 h-4" />
@@ -139,11 +139,11 @@ export function CropsOverviewTab({
                   {/* Active Cycle Status Banner */}
                   <div className="mt-4">
                     {currentCycle ? (
-                      <div className="bg-cyan-500/10 border border-cyan-500/20 p-4 rounded-xl flex items-start gap-3">
-                        <Sprout className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
+                      <div className="bg-primary-500/10 border border-primary-500/20 p-4 rounded-xl flex items-start gap-3">
+                        <Sprout className="w-5 h-5 text-primary-400 shrink-0 mt-0.5" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-black text-cyan-400 uppercase tracking-wider">
+                            <span className="text-xs font-black text-primary-400 uppercase tracking-wider">
                               Growing
                             </span>
                             <span className="text-xxs font-medium text-slate-400">
@@ -168,7 +168,7 @@ export function CropsOverviewTab({
                         </p>
                         <button
                           onClick={() => handleOpenStartCycle(field)}
-                          className="text-xs font-bold text-cyan-400 bg-cyan-400/10 border border-cyan-400/20 hover:bg-cyan-400/20 px-3 py-1.5 rounded-xl transition-all"
+                          className="text-xs font-bold text-primary-400 bg-primary-400/10 border border-primary-400/20 hover:bg-primary-400/20 px-3 py-1.5 rounded-xl transition-all"
                         >
                           Plant New Crop
                         </button>
@@ -205,7 +205,7 @@ export function CropsOverviewTab({
           <button
             onClick={handleOpenAddField}
             disabled={!isFarmer && !selectedFarmerId}
-            className={`px-6 py-2.5 bg-cyan-500 hover:bg-cyan-600 text-white font-bold transition-all ${btnClass} disabled:opacity-50`}
+            className={`px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white font-bold transition-all ${btnClass} disabled:opacity-50`}
           >
             Create First Sector
           </button>
@@ -215,7 +215,7 @@ export function CropsOverviewTab({
   );
 }
 
-export function CropCycleRow({
+function CropCycleRow({
   field,
   cycle,
   handleDeleteCycle,
@@ -233,7 +233,7 @@ export function CropCycleRow({
         <span
           className={`px-2.5 py-1 rounded-full text-xxs font-black uppercase tracking-widest ${
             cycle.status === 'growing'
-              ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
+              ? 'bg-primary-500/10 text-primary-400 border border-primary-500/20'
               : cycle.status === 'harvested'
                 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                 : cycle.status === 'failed'
@@ -272,7 +272,7 @@ export function CropCycleRow({
   );
 }
 
-export function CropsCyclesTab({
+function CropsCyclesTab({
   fields,
   cardClass,
   handleDeleteCycle,
@@ -294,7 +294,7 @@ export function CropsCyclesTab({
         <div className={`${cardClass} overflow-hidden border-white/5`}>
           <div className="p-6 border-b border-white/5 bg-slate-900/20">
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <Sprout className="w-5 h-5 text-cyan-400" />
+              <Sprout className="w-5 h-5 text-primary-400" />
               Crop Growth Timeline & Performance History
             </h3>
           </div>
@@ -342,7 +342,7 @@ export function CropsCyclesTab({
 
 export function CropsFields() {
   const { t: _t } = useLanguage();
-  const { headingClass, isModern, radiusClass, btnClass, cardClass } = useThemeClasses();
+  const { headingClass, radiusClass, btnClass, cardClass } = useThemeClasses();
   const { addNotification, user } = useAppStore();
   const { isDemo } = useDemoMode();
 
@@ -416,7 +416,12 @@ export function CropsFields() {
           } else {
             // Fallback demo farmers if backend list is empty
             const fallbackFarmers: Farmer[] = [
-              { id: 'demo-farmer-1', firstName: 'Emmanuel', lastName: 'Mwangi', region: 'Machakos' },
+              {
+                id: 'demo-farmer-1',
+                firstName: 'Emmanuel',
+                lastName: 'Mwangi',
+                region: 'Machakos',
+              },
               { id: 'demo-farmer-2', firstName: 'Grace', lastName: 'Wanjiku', region: 'Kiambu' },
             ];
             setFarmers(fallbackFarmers);
@@ -707,7 +712,7 @@ export function CropsFields() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className={`text-4xl font-black tracking-tighter font-headline mb-2 ${headingClass}`}>
-            {isModern ? 'Agronomic Topology' : 'Fields & Crop Cycles'}
+            Fields & Crop Cycles
           </h1>
           <p className="text-slate-400 font-medium">
             {isFarmer
@@ -720,11 +725,11 @@ export function CropsFields() {
           {/* Farmer Select (Officer/Admin only) */}
           {!isFarmer && farmers.length > 0 && (
             <div className="flex items-center gap-2 bg-slate-900/50 backdrop-blur-md px-3 py-2 rounded-2xl border border-white/5 shadow-inner">
-              <User className="w-4 h-4 text-cyan-400" />
+              <User className="w-4 h-4 text-primary-400" />
               <select
                 value={selectedFarmerId}
                 onChange={e => setSelectedFarmerId(e.target.value)}
-                className="bg-transparent border-0 text-sm font-semibold text-slate-200 focus:ring-0 focus:outline-none cursor-pointer pr-8"
+                className="bg-transparent border-0 text-sm font-semibold text-slate-200 focus:ring-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 cursor-pointer pr-8"
               >
                 {farmers.map(farmer => (
                   <option key={farmer.id} value={farmer.id} className="bg-slate-950 text-slate-200">
@@ -738,7 +743,7 @@ export function CropsFields() {
           <button
             onClick={handleOpenAddField}
             disabled={!isFarmer && !selectedFarmerId}
-            className={`flex items-center gap-2 px-5 py-2.5 bg-cyan-500 hover:bg-cyan-600 text-white font-bold transition-all shadow-lg shadow-cyan-500/20 active:scale-95 ${btnClass} disabled:opacity-50`}
+            className={`flex items-center gap-2 px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white font-bold transition-all shadow-lg shadow-primary-500/20 active:scale-95 ${btnClass} disabled:opacity-50`}
           >
             <Plus className="w-5 h-5" />
             Add Field Sector
@@ -778,7 +783,7 @@ export function CropsFields() {
               onClick={() => setActiveTab(tab.id as 'overview' | 'cycles')}
               className={`flex items-center gap-2 pb-4 font-bold text-sm tracking-wide transition-all border-b-2 uppercase ${
                 isActive
-                  ? 'text-cyan-400 border-cyan-400'
+                  ? 'text-primary-400 border-primary-400'
                   : 'text-slate-500 border-transparent hover:text-slate-300'
               }`}
             >
@@ -792,7 +797,7 @@ export function CropsFields() {
       {/* Tab content renders */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
-          <Loader2 className="w-10 h-10 animate-spin text-cyan-400" />
+          <Loader2 className="w-10 h-10 animate-spin text-primary-400" />
           <p className="text-slate-400 text-sm font-semibold tracking-wide">
             Retrieving Agronomic Data...
           </p>
@@ -835,7 +840,7 @@ export function CropsFields() {
             <div className="p-6 space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-white/5">
                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                  <Map className="w-5 h-5 text-cyan-400" />
+                  <Map className="w-5 h-5 text-primary-400" />
                   {editingField ? 'Modify Sector Details' : 'Provision New Sector'}
                 </h3>
                 <button
@@ -857,7 +862,7 @@ export function CropsFields() {
                       value={fieldForm.name}
                       onChange={e => setFieldForm(prev => ({ ...prev, name: e.target.value }))}
                       placeholder="e.g. North Plot, Hillside Sector"
-                      className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none`}
+                      className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-white focus:ring-2 focus:ring-primary-500 focus:outline-none`}
                     />
                   </div>
                   <div>
@@ -872,7 +877,7 @@ export function CropsFields() {
                         setFieldForm(prev => ({ ...prev, areaHectares: e.target.value }))
                       }
                       placeholder="e.g. 2.5"
-                      className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none`}
+                      className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-white focus:ring-2 focus:ring-primary-500 focus:outline-none`}
                     />
                   </div>
                   <div>
@@ -885,7 +890,7 @@ export function CropsFields() {
                       value={fieldForm.soilPh}
                       onChange={e => setFieldForm(prev => ({ ...prev, soilPh: e.target.value }))}
                       placeholder="e.g. 6.5"
-                      className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none`}
+                      className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-white focus:ring-2 focus:ring-primary-500 focus:outline-none`}
                     />
                   </div>
                   <div className="col-span-2">
@@ -895,7 +900,7 @@ export function CropsFields() {
                     <select
                       value={fieldForm.soilType}
                       onChange={e => setFieldForm(prev => ({ ...prev, soilType: e.target.value }))}
-                      className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-slate-300 focus:ring-2 focus:ring-cyan-500 focus:outline-none`}
+                      className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-slate-300 focus:ring-2 focus:ring-primary-500 focus:outline-none`}
                     >
                       <option value="loam">Loam (Optimal)</option>
                       <option value="clay">Clay</option>
@@ -915,7 +920,7 @@ export function CropsFields() {
                       value={fieldForm.latitude}
                       onChange={e => setFieldForm(prev => ({ ...prev, latitude: e.target.value }))}
                       placeholder="e.g. -1.2863"
-                      className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none`}
+                      className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-white focus:ring-2 focus:ring-primary-500 focus:outline-none`}
                     />
                   </div>
                   <div>
@@ -928,7 +933,7 @@ export function CropsFields() {
                       value={fieldForm.longitude}
                       onChange={e => setFieldForm(prev => ({ ...prev, longitude: e.target.value }))}
                       placeholder="e.g. 36.8172"
-                      className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none`}
+                      className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-white focus:ring-2 focus:ring-primary-500 focus:outline-none`}
                     />
                   </div>
                 </div>
@@ -936,7 +941,7 @@ export function CropsFields() {
                 <div className="flex gap-3 pt-4 border-t border-white/5">
                   <button
                     onClick={handleSaveField}
-                    className="flex-1 px-5 py-2.5 bg-cyan-500 hover:bg-cyan-600 text-white font-bold transition-all rounded-xl"
+                    className="flex-1 px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white font-bold transition-all rounded-xl"
                   >
                     Save Sector
                   </button>
@@ -964,7 +969,7 @@ export function CropsFields() {
             <div className="p-6 space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-white/5">
                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                  <Sprout className="w-5 h-5 text-cyan-400" />
+                  <Sprout className="w-5 h-5 text-primary-400" />
                   Plant Crop: {selectedField.name}
                 </h3>
                 <button
@@ -985,7 +990,7 @@ export function CropsFields() {
                     value={cycleForm.cropName}
                     onChange={e => setCycleForm(prev => ({ ...prev, cropName: e.target.value }))}
                     placeholder="e.g. Maize, Beans, Coffee"
-                    className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none`}
+                    className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-white focus:ring-2 focus:ring-primary-500 focus:outline-none`}
                   />
                 </div>
 
@@ -998,7 +1003,7 @@ export function CropsFields() {
                     value={cycleForm.variety}
                     onChange={e => setCycleForm(prev => ({ ...prev, variety: e.target.value }))}
                     placeholder="e.g. H614, Katumani"
-                    className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none`}
+                    className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-white focus:ring-2 focus:ring-primary-500 focus:outline-none`}
                   />
                 </div>
 
@@ -1013,7 +1018,7 @@ export function CropsFields() {
                       onChange={e =>
                         setCycleForm(prev => ({ ...prev, plantingDate: e.target.value }))
                       }
-                      className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:outline-none`}
+                      className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-slate-200 focus:ring-2 focus:ring-primary-500 focus:outline-none`}
                     />
                   </div>
                   <div>
@@ -1026,7 +1031,7 @@ export function CropsFields() {
                       onChange={e =>
                         setCycleForm(prev => ({ ...prev, expectedHarvestDate: e.target.value }))
                       }
-                      className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:outline-none`}
+                      className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-slate-200 focus:ring-2 focus:ring-primary-500 focus:outline-none`}
                     />
                   </div>
                 </div>
@@ -1040,14 +1045,14 @@ export function CropsFields() {
                     onChange={e => setCycleForm(prev => ({ ...prev, notes: e.target.value }))}
                     placeholder="Add details on fertilizers applied or seeds used..."
                     rows={3}
-                    className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none resize-none`}
+                    className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-white focus:ring-2 focus:ring-primary-500 focus:outline-none resize-none`}
                   />
                 </div>
 
                 <div className="flex gap-3 pt-4 border-t border-white/5">
                   <button
                     onClick={handleStartCycle}
-                    className="flex-1 px-5 py-2.5 bg-cyan-500 hover:bg-cyan-600 text-white font-bold transition-all rounded-xl"
+                    className="flex-1 px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white font-bold transition-all rounded-xl"
                   >
                     Initialize Growth Cycle
                   </button>
@@ -1128,7 +1133,7 @@ export function CropsFields() {
                       onChange={e =>
                         setHarvestForm(prev => ({ ...prev, actualHarvestDate: e.target.value }))
                       }
-                      className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:outline-none`}
+                      className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-slate-200 focus:ring-2 focus:ring-primary-500 focus:outline-none`}
                     />
                   </div>
                   <div>
@@ -1141,7 +1146,7 @@ export function CropsFields() {
                       value={harvestForm.status === 'failed' ? '' : harvestForm.yieldKg}
                       onChange={e => setHarvestForm(prev => ({ ...prev, yieldKg: e.target.value }))}
                       placeholder="e.g. 4500"
-                      className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none disabled:opacity-50`}
+                      className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-white focus:ring-2 focus:ring-primary-500 focus:outline-none disabled:opacity-50`}
                     />
                   </div>
                 </div>
@@ -1155,7 +1160,7 @@ export function CropsFields() {
                     onChange={e => setHarvestForm(prev => ({ ...prev, notes: e.target.value }))}
                     placeholder="Add concluding notes on yield, conditions, or causes of crop failure..."
                     rows={3}
-                    className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none resize-none`}
+                    className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-white focus:ring-2 focus:ring-primary-500 focus:outline-none resize-none`}
                   />
                 </div>
 

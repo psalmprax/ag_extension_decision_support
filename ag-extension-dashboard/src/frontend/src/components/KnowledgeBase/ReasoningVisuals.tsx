@@ -30,42 +30,13 @@ import {
   Maximize2,
 } from 'lucide-react';
 import { EMPTY_VISUALS, type Chart, type KPI, type MediaAsset, type VisualsData } from './types';
+import { ChartTooltip } from '@/components/charts/ChartTooltip';
+import { CHART_PALETTE } from '@/components/charts/chartConfig';
 
 interface ReasoningVisualsProps {
   visuals: VisualsData;
   audio?: string; // Base64 or URL
 }
-
-const COLORS = [
-  CH_COLORS.blue,
-  CH_COLORS.purple,
-  'var(--color-primary-500)',
-  CH_COLORS.warning,
-  CH_COLORS.success,
-];
-
-const ChartTooltip = ({
-  active,
-  payload,
-  isPie = false,
-}: {
-  active?: boolean;
-  payload?: unknown[];
-  isPie?: boolean;
-}) => {
-  if (active && payload && payload.length) {
-    const item = payload[0] as { name?: unknown; value?: unknown; payload?: { label?: unknown } };
-    const label = isPie ? String(item.name ?? '') : String(item.payload?.label ?? '');
-    const value = String(item.value ?? '');
-    return (
-      <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md p-3 rounded-2xl shadow-2xl border border-white/20">
-        <p className="text-xxs font-black uppercase tracking-widest text-gray-400 mb-1">{label}</p>
-        <p className="text-lg font-black text-primary-600 dark:text-primary-400">{value}</p>
-      </div>
-    );
-  }
-  return null;
-};
 
 const BarChartRenderer = ({ data }: { data: Array<Record<string, unknown>> }) => (
   <BarChart data={data}>
@@ -128,10 +99,10 @@ const PieChartRenderer = ({ data }: { data: Array<Record<string, unknown>> }) =>
       stroke="none"
     >
       {data.map((_, index) => (
-        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+        <Cell key={`cell-${index}`} fill={CHART_PALETTE[index % CHART_PALETTE.length]} />
       ))}
     </Pie>
-    <Tooltip content={<ChartTooltip isPie />} />
+    <Tooltip content={<ChartTooltip />} />
   </PieChart>
 );
 
@@ -197,7 +168,7 @@ const MediaAssetsSection = ({
               <ImageIcon className="w-3 h-3" />
               Image
             </div>
-            <div className="absolute bottom-3 left-3 px-3 py-1 bg-primary-600/90 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-[8px] font-black uppercase tracking-widest">
+            <div className="absolute bottom-3 left-3 px-3 py-1 bg-primary-600/90 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-xs font-black uppercase tracking-widest">
               <CheckCircle2 className="w-2.5 h-2.5" />
               Verified ALFA Asset
             </div>
@@ -248,7 +219,7 @@ const MediaAssetsSection = ({
                 </a>
               </>
             )}
-            <div className="absolute bottom-3 left-3 px-3 py-1 bg-primary-600/90 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-[8px] font-black uppercase tracking-widest pointer-events-none">
+            <div className="absolute bottom-3 left-3 px-3 py-1 bg-primary-600/90 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-xs font-black uppercase tracking-widest pointer-events-none">
               <CheckCircle2 className="w-2.5 h-2.5" />
               Verified Source
             </div>

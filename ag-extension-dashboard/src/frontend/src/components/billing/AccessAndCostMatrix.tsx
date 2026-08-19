@@ -22,7 +22,7 @@ import {
   Send,
   Database,
   Building2,
-  Users
+  Users,
 } from 'lucide-react';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 
@@ -81,7 +81,8 @@ const MATRIX_FEATURES: FeatureRow[] = [
   {
     category: 'AI & Intelligence',
     name: 'Speech & Audio Synthesis (TTS / STT)',
-    description: 'Voice note transcription and automated speech generation for low-literacy farmers',
+    description:
+      'Voice note transcription and automated speech generation for low-literacy farmers',
     icon: Mic,
     free: false,
     pro: '200 mins / mo',
@@ -527,8 +528,8 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                   Pre-purchased Volume Packages Available
                 </h4>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-xl">
-                  Organizations managing over 10,000 farmers can activate dedicated Twilio / Africa’s
-                  Talking carrier routes with wholesale SMS rates under $0.009/SMS.
+                  Organizations managing over 10,000 farmers can activate dedicated Twilio /
+                  Africa’s Talking carrier routes with wholesale SMS rates under $0.009/SMS.
                 </p>
               </div>
               <a
@@ -633,7 +634,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                 <label className="font-semibold text-gray-700 dark:text-gray-300">
                   AI Crop & Soil Photo Diagnoses
                 </label>
-                <span className="font-mono font-bold text-cyan-600 dark:text-cyan-400">
+                <span className="font-mono font-bold text-primary-600 dark:text-primary-400">
                   {calcVision.toLocaleString()} Scans
                 </span>
               </div>
@@ -644,7 +645,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                 step={10}
                 value={calcVision}
                 onChange={e => setCalcVision(Number(e.target.value))}
-                className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+                className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary-500"
               />
               <span className="text-xxs text-gray-400 block">
                 100 included with Pro. Additional: $0.05/scan.
@@ -724,7 +725,9 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                 </div>
 
                 <div className="pt-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center font-bold text-xs">
-                  <span className="text-emerald-600 dark:text-emerald-400">Total Net Estimate:</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    Total Net Estimate:
+                  </span>
                   <span className="font-mono text-emerald-600 dark:text-emerald-400">
                     ${proCost.total.toFixed(2)}
                   </span>

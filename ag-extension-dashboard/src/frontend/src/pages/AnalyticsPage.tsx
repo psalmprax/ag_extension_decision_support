@@ -3,8 +3,9 @@ import { TrendingUp, Clock, Activity, AlertTriangle, MessageSquare, BarChart3 } 
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
-import { useAppStore } from '@/store/useAppStore';
 import { CH_COLORS } from '@/lib/colors';
+import { ChartTooltip } from '@/components/charts/ChartTooltip';
+import { chartTick } from '@/components/charts/chartConfig';
 
 interface AnalyticsPageProps {
   performanceData:
@@ -23,19 +24,14 @@ interface AnalyticsPageProps {
 
 export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData }) => {
   const { t } = useLanguage();
-  const { isModern, headingClass, radiusClass } = useThemeClasses();
-  const darkMode = useAppStore(s => s.darkMode);
+  const { headingClass, radiusClass } = useThemeClasses();
 
   return (
     <div>
       <div className="mb-8">
-        <h1 className={`text-3xl font-bold ${headingClass}`}>
-          {isModern ? 'Growth Optimization' : 'System Analytics'}
-        </h1>
+        <h1 className={`text-3xl font-bold ${headingClass}`}>System Analytics</h1>
         <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">
-          {isModern
-            ? 'Real-time yield modeling and resource allocation metrics'
-            : 'Detailed breakdown of system throughput and regional activity'}
+          Detailed breakdown of system throughput and regional activity
         </p>
       </div>
 
@@ -130,28 +126,9 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData })
                       <stop offset="95%" stopColor="var(--color-chart-blue)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <XAxis
-                    dataKey="date"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: CH_COLORS.gray, fontSize: 10, fontWeight: 600 }}
-                  />
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: CH_COLORS.gray, fontSize: 10, fontWeight: 600 }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: darkMode
-                        ? 'var(--color-bg-secondary)'
-                        : 'var(--color-primary-500)',
-                      borderColor: darkMode ? 'var(--color-outline)' : 'var(--color-bg-secondary)',
-                      borderRadius: isModern ? '12px' : '0px',
-                      fontSize: '12px',
-                      fontWeight: 'bold',
-                    }}
-                  />
+                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={chartTick} />
+                  <YAxis axisLine={false} tickLine={false} tick={chartTick} />
+                  <Tooltip content={<ChartTooltip />} />
                   <Area
                     type="monotone"
                     dataKey="visits"

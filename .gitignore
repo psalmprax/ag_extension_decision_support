@@ -34,6 +34,12 @@ test-results/
 playwright-report/
 .gstack/
 
+# Fallow analysis cache (the committed .fallow/regression-baseline.json is intentional)
+.fallow/cache.bin
+
+# Husky generated shims
+.husky/_
+
 # Tool-run debris (empty exit-code/timeout artifacts, check snapshots)
 /30
 /60

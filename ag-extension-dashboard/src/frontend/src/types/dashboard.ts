@@ -7,8 +7,6 @@ export interface StatCardProps {
   cardClass?: string;
   headingClass?: string;
   dataClass?: string;
-  isModern?: boolean;
-  subtextClass?: string;
 }
 
 export interface Conversation {

@@ -1,0 +1,6 @@
+#!/bin/sh
+# Dead-code gate: block commits that introduce new dead code, complexity, or duplication.
+# `fallow audit --base HEAD` is a changed-file, new-only gate, so pre-existing debt
+# never blocks you — only what this commit adds. Run `npm run fallow:check` for the
+# full-repo regression gate (same command CI runs).
+npm run fallow:audit

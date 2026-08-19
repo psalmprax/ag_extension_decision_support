@@ -19,10 +19,18 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  /* Serialize workers — the Vite dev server cold-compiles each route chunk on first
+     hit, and parallel workers trigger overlapping cold compiles that time out. */
+  workers: 1,
+  /* Warm the dev server (pre-compile landing/login) before the first spec runs. */
+  globalSetup: './tests/global-setup.ts',
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
+  reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'html',
+  /* Global timeouts — the first cold Vite compile of this large app can take a while. */
+  timeout: 120 * 1000,
+  expect: {
+    timeout: 30 * 1000,
+  },
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */

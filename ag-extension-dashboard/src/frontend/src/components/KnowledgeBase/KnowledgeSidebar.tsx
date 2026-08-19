@@ -46,7 +46,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
 }) => {
   const { user } = useAppStore();
   const { isDemo } = useDemoMode();
-  const { isModern, radiusClass } = useThemeClasses();
+  const { radiusClass } = useThemeClasses();
 
   const handleLogout = async () => {
     await apiLogout();
@@ -67,22 +67,14 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
           <button
             onClick={() => (onNewQuery ? onNewQuery() : window.location.reload())}
             disabled={isDemo}
-            title={
-              isDemo
-                ? 'Not available in demo version'
-                : 'Start a new expert query'
-            }
+            title={isDemo ? 'Not available in demo version' : 'Start a new expert query'}
             className={`flex items-center gap-2 w-full p-4 mb-8 text-white ${radiusClass} font-black text-sm uppercase tracking-widest shadow-lg transition-all transform ${
               isDemo
                 ? 'bg-gray-400 dark:bg-gray-700 cursor-not-allowed opacity-70'
                 : 'bg-primary-600 hover:bg-primary-700 shadow-primary-500/20 active:scale-95'
             }`}
           >
-            {isDemo ? (
-              <Lock className="w-5 h-5" />
-            ) : (
-              <Plus className="w-5 h-5" />
-            )}
+            {isDemo ? <Lock className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
             New Expert Query
           </button>
 
@@ -113,7 +105,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
                   >
                     <div className="flex items-start gap-4">
                       <div
-                        className={`p-2 bg-gray-100 dark:bg-gray-800 ${isModern ? 'rounded-xl' : 'rounded-none'} group-hover:bg-primary-500/10 group-hover:text-primary-500 transition-colors`}
+                        className={`p-2 bg-gray-100 dark:bg-gray-800 rounded-xl group-hover:bg-primary-500/10 group-hover:text-primary-500 transition-colors`}
                       >
                         <MessageSquare className="w-4 h-4" />
                       </div>

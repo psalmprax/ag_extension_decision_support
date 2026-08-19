@@ -19,10 +19,20 @@ import { LuminousForceField } from './LuminousForceField';
 import { SoilNutrientHeatmapCanvas } from './SoilNutrientHeatmapCanvas';
 import { DiseaseSaliencyCanvas } from './DiseaseSaliencyCanvas';
 import { RagKnowledgeGraphCanvas } from './RagKnowledgeGraphCanvas';
+import { Liquid } from '@/components/canvasui/Liquid';
+import { ParticleReveal } from '@/components/canvasui/ParticleReveal';
 
 export const CanvasUiLab: React.FC = () => {
   const [selectedEffect, setSelectedEffect] = useState<
-    'liquid' | 'glass' | 'radar' | 'forcefield' | 'soil_heatmap' | 'disease_saliency' | 'rag_graph'
+    | 'liquid'
+    | 'glass'
+    | 'radar'
+    | 'forcefield'
+    | 'soil_heatmap'
+    | 'disease_saliency'
+    | 'rag_graph'
+    | 'particle_reveal'
+    | 'canvasui_liquid'
   >('liquid');
   const [fluidColor, setFluidColor] = useState('#059669');
   const [tiltIntensity, setTiltIntensity] = useState(20);
@@ -37,7 +47,8 @@ export const CanvasUiLab: React.FC = () => {
             Canvas UI & Shader Effects Lab (Test Environment)
           </h3>
           <p className="text-xs text-stone-400 mt-0.5">
-            GPU-accelerated interactive canvas shaders, spatial telemetry heatmaps, and neural RAG graphs.
+            GPU-accelerated interactive canvas shaders, spatial telemetry heatmaps, and neural RAG
+            graphs.
           </p>
         </div>
 
@@ -51,6 +62,8 @@ export const CanvasUiLab: React.FC = () => {
             { id: 'soil_heatmap' as const, label: 'Soil Heatmap', icon: Droplets },
             { id: 'disease_saliency' as const, label: 'Saliency Loupe', icon: Eye },
             { id: 'rag_graph' as const, label: 'RAG Graph', icon: Network },
+            { id: 'particle_reveal' as const, label: 'Particle Reveal', icon: Sparkles },
+            { id: 'canvasui_liquid' as const, label: 'WebGL Liquid', icon: Droplets },
           ].map(effect => (
             <button
               key={effect.id}
@@ -80,7 +93,8 @@ export const CanvasUiLab: React.FC = () => {
               </span>
               <h4 className="text-xl font-bold text-white mb-2">Organic Liquid Canopy</h4>
               <p className="text-xs text-stone-300 mb-4 leading-relaxed">
-                Physics-based fluid meta-balls morph in real time and gravitate towards pointer coordinates.
+                Physics-based fluid meta-balls morph in real time and gravitate towards pointer
+                coordinates.
               </p>
               <div className="flex items-center justify-center gap-2">
                 {['#059669', '#0284c7', '#7c3aed', '#ea580c'].map(c => (
@@ -89,7 +103,9 @@ export const CanvasUiLab: React.FC = () => {
                     onClick={() => setFluidColor(c)}
                     style={{ backgroundColor: c }}
                     className={`w-6 h-6 rounded-full transition-transform cursor-pointer ${
-                      fluidColor === c ? 'ring-2 ring-white scale-110' : 'opacity-70 hover:opacity-100'
+                      fluidColor === c
+                        ? 'ring-2 ring-white scale-110'
+                        : 'opacity-70 hover:opacity-100'
                     }`}
                   />
                 ))}
@@ -107,7 +123,9 @@ export const CanvasUiLab: React.FC = () => {
                   <span className="text-xxs font-mono uppercase text-emerald-400 tracking-wider">
                     3D Perspective Tilt & Specular Glare
                   </span>
-                  <h4 className="text-2xl font-bold text-white mt-1">Field Diagnostic Scan #8492</h4>
+                  <h4 className="text-2xl font-bold text-white mt-1">
+                    Field Diagnostic Scan #8492
+                  </h4>
                 </div>
                 <ShieldCheck className="w-6 h-6 text-emerald-400" />
               </div>
@@ -118,7 +136,9 @@ export const CanvasUiLab: React.FC = () => {
                 </div>
                 <div className="flex justify-between border-b border-white/5 pb-2">
                   <span className="text-stone-400">Pathology Diagnosis:</span>
-                  <span className="font-semibold text-amber-400">Coffee Leaf Rust (12% incidence)</span>
+                  <span className="font-semibold text-amber-400">
+                    Coffee Leaf Rust (12% incidence)
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-stone-400">Multimodal Confidence:</span>
@@ -153,7 +173,8 @@ export const CanvasUiLab: React.FC = () => {
               </div>
               <h4 className="text-lg font-bold text-white mb-1">Orbital Telemetry Sweep</h4>
               <p className="text-xs text-stone-300">
-                Simulates real-time satellite data point sweeps, connecting 12 regional East African extension hubs.
+                Simulates real-time satellite data point sweeps, connecting 12 regional East African
+                extension hubs.
               </p>
             </div>
           </div>
@@ -168,14 +189,21 @@ export const CanvasUiLab: React.FC = () => {
                   <span className="px-2.5 py-1 rounded-full text-xxs font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                     Pro Plan Highlight
                   </span>
-                  <span className="text-2xl font-black text-white">$29<span className="text-xs font-normal text-stone-400">/mo</span></span>
+                  <span className="text-2xl font-black text-white">
+                    $29<span className="text-xs font-normal text-stone-400">/mo</span>
+                  </span>
                 </div>
                 <h4 className="text-xl font-bold text-white mb-2">Extension Officer Pro</h4>
                 <p className="text-xs text-stone-300 mb-6 leading-relaxed">
-                  Hover anywhere around the card to see the reactive edge lighting aura follow your mouse in real time.
+                  Hover anywhere around the card to see the reactive edge lighting aura follow your
+                  mouse in real time.
                 </p>
                 <div className="space-y-2 mb-6 text-xs text-stone-200">
-                  {['Unlimited Knowledge Base Queries', '500 Outbound SMS & Alerts', '100 AI Photo Leaf Scans'].map((perk, i) => (
+                  {[
+                    'Unlimited Knowledge Base Queries',
+                    '500 Outbound SMS & Alerts',
+                    '100 AI Photo Leaf Scans',
+                  ].map((perk, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                       <span>{perk}</span>
@@ -208,6 +236,59 @@ export const CanvasUiLab: React.FC = () => {
         {selectedEffect === 'rag_graph' && (
           <div className="w-full max-w-2xl bg-black/50 p-6 rounded-2xl border border-white/10 backdrop-blur-md">
             <RagKnowledgeGraphCanvas />
+          </div>
+        )}
+
+        {/* Effect 8: canvasui.dev Particle Reveal */}
+        {selectedEffect === 'particle_reveal' && (
+          <div className="w-full max-w-xl">
+            <ParticleReveal background="#0c0a09" className="rounded-2xl">
+              <div className="p-8 rounded-2xl bg-stone-900/80 border border-white/10">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xxs font-mono uppercase mb-3">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  canvasui.dev · Particle Reveal
+                </div>
+                <h4 className="text-xl font-bold text-white mb-2">
+                  HTML dissolves into cursor-driven dust
+                </h4>
+                <p className="text-xs text-stone-300 mb-4 leading-relaxed">
+                  Live HTML becomes fine grayscale particles and reassembles around the cursor.
+                  Requires Chrome&apos;s <code className="text-amber-400">canvas-draw-element</code>{' '}
+                  flag (or an origin trial token). Without support, this content renders normally.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {['Satellite', 'Soil Grids', 'Disease AI', 'Yield Models'].map(tag => (
+                    <span
+                      key={tag}
+                      className="px-3 py-1 rounded-full text-xxs font-bold bg-white/5 border border-white/10 text-stone-300"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </ParticleReveal>
+          </div>
+        )}
+
+        {/* Effect 9: canvasui.dev Liquid (WebGL fluid over live HTML) */}
+        {selectedEffect === 'canvasui_liquid' && (
+          <div className="w-full h-[380px] relative">
+            <Liquid className="w-full h-full" color={[0.02, 0.59, 0.41]}>
+              <div className="w-full h-full flex items-center justify-center p-6">
+                <div className="max-w-md p-6 rounded-2xl bg-black/50 border border-white/10 backdrop-blur-md text-center">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xxs font-mono uppercase mb-3">
+                    <Droplets className="w-3.5 h-3.5" />
+                    canvasui.dev · Liquid
+                  </div>
+                  <h4 className="text-xl font-bold text-white mb-2">Pointer-driven WebGL fluid</h4>
+                  <p className="text-xs text-stone-300 leading-relaxed">
+                    A real WebGL fluid simulation runs over the live HTML. Move the cursor to inject
+                    vortices. Works in every browser — no flag required.
+                  </p>
+                </div>
+              </div>
+            </Liquid>
           </div>
         )}
       </div>

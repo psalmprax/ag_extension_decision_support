@@ -40,7 +40,6 @@ interface FarmerDetailPanelProps {
   farmer: Farmer | null;
   visits?: Visit[];
 }
-const isModern = true;
 const radiusClass = 'rounded-2xl';
 
 const getLogTypeColor = (type: string) => {
@@ -87,13 +86,13 @@ const HistoryTabContent = ({
             <div className="flex justify-between items-start mb-2">
               <div className="flex items-center gap-2">
                 <span
-                  className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${getLogTypeColor(log.type as string)}`}
+                  className={`px-2 py-0.5 rounded text-xs font-black uppercase tracking-widest ${getLogTypeColor(log.type as string)}`}
                 >
                   {log.type as string}
                 </span>
                 <span className="text-xxs text-gray-400">{log.date as string}</span>
               </div>
-              <span className="text-[8px] font-black uppercase tracking-widest text-emerald-500">
+              <span className="text-xs font-black uppercase tracking-widest text-emerald-500">
                 {log.status as string}
               </span>
             </div>
@@ -386,7 +385,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
     showShareModal,
   } = useAppStore();
 
-  const isCyber = themeName === 'cyber' && isModern;
+  const isCyber = themeName === 'cyber';
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = React.useState<'overview' | 'history' | 'insights'>('overview');

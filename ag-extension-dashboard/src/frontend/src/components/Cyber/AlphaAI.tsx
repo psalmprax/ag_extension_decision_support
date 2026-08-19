@@ -130,7 +130,7 @@ const TerminalPanel = ({
               if (e.key === 'Enter') handleTerminalCommand(terminalInput);
             }}
             placeholder="Type a command (help, status, agents, uptime, clear)..."
-            className="w-full bg-transparent text-white/80 text-xxs font-mono outline-none placeholder-white/20 px-2"
+            className="w-full bg-transparent text-white/80 text-xxs font-mono outline-none focus-visible:ring-1 focus-visible:ring-primary-400/60 placeholder-white/20 px-2"
           />
         </div>
       </motion.div>
@@ -424,7 +424,7 @@ const AlphaAI = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
+          transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
         >
           {activeMode === 'actionable' ? <ActionableAI /> : <AlphaAgentOps />}
         </motion.div>

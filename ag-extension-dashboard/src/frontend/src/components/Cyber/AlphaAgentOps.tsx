@@ -262,7 +262,7 @@ const AlphaAgentOps = () => {
           <div className="px-4 py-2 bg-black/40 border border-white/10 rounded-xl backdrop-blur-md">
             <div className="flex items-center gap-2 mb-1">
               <Activity className="w-3 h-3 text-secondary-400" />
-              <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">
+              <span className="text-xs font-black text-white/40 uppercase tracking-widest">
                 System Status
               </span>
             </div>
@@ -302,7 +302,7 @@ const AlphaAgentOps = () => {
                     />
                   </div>
                   <div
-                    className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${
+                    className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-black uppercase tracking-widest ${
                       agent.status === 'online' || agent.status === 'running'
                         ? 'bg-green-500/10 text-green-400'
                         : 'bg-white/5 text-white/40'
@@ -323,7 +323,7 @@ const AlphaAgentOps = () => {
 
                 {agent.load > 0 && (
                   <div className="mt-3 space-y-1">
-                    <div className="flex justify-between text-[8px] font-black uppercase tracking-tighter text-white/20">
+                    <div className="flex justify-between text-xs font-black uppercase tracking-tighter text-white/20">
                       <span>Allocated Compute</span>
                       <span>{agent.load}%</span>
                     </div>
@@ -441,7 +441,7 @@ const AlphaAgentOps = () => {
                 <Database className="w-5 h-5 text-secondary-400" />
               </div>
               <div>
-                <div className="text-[8px] font-black text-white/40 uppercase tracking-widest">
+                <div className="text-xs font-black text-white/40 uppercase tracking-widest">
                   Knowledge Base
                 </div>
                 <div className="text-sm font-black text-white">
@@ -455,7 +455,7 @@ const AlphaAgentOps = () => {
                 <Search className="w-5 h-5 text-green-400" />
               </div>
               <div>
-                <div className="text-[8px] font-black text-white/40 uppercase tracking-widest">
+                <div className="text-xs font-black text-white/40 uppercase tracking-widest">
                   Active Farmers
                 </div>
                 <div className="text-sm font-black text-white">
@@ -469,7 +469,7 @@ const AlphaAgentOps = () => {
                 <AlertCircle className="w-5 h-5 text-orange-400" />
               </div>
               <div>
-                <div className="text-[8px] font-black text-white/40 uppercase tracking-widest">
+                <div className="text-xs font-black text-white/40 uppercase tracking-widest">
                   Active Alerts
                 </div>
                 <div className="text-sm font-black text-white">

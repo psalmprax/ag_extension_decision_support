@@ -66,7 +66,7 @@ export default defineConfig({
           {
             name: 'Farmer Map',
             short_name: 'Map',
-            description: 'View geospatial farmer portfolio and field telemetry',
+            description: 'View geospatial farmer portfolio and field visits',
             url: '/dashboard',
             icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }],
           },

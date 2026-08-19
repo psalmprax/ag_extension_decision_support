@@ -18,7 +18,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ currentTheme, onTh
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-cyan-400/50 transition-all text-slate-300 hover:text-cyan-400"
+        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-primary-400/50 transition-all text-slate-300 hover:text-primary-400"
       >
         <Palette className="w-4 h-4" />
         <span className="text-xxs font-black uppercase tracking-widest">{t('theme_choose')}</span>
@@ -49,7 +49,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ currentTheme, onTh
                     }}
                     className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${
                       isActive
-                        ? 'bg-cyan-400/10 border border-cyan-400/30'
+                        ? 'bg-primary-400/10 border border-primary-400/30'
                         : 'hover:bg-white/5 border border-transparent'
                     }`}
                   >
@@ -64,7 +64,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ currentTheme, onTh
                     {/* Theme Name */}
                     <div className="flex-1 text-left">
                       <p
-                        className={`text-xxs font-black uppercase tracking-widest ${isActive ? 'text-cyan-400' : 'text-slate-300'}`}
+                        className={`text-xxs font-black uppercase tracking-widest ${isActive ? 'text-primary-400' : 'text-slate-300'}`}
                       >
                         {theme}
                       </p>
@@ -74,7 +74,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ currentTheme, onTh
                     </div>
 
                     {/* Checkmark */}
-                    {isActive && <Check className="w-4 h-4 text-cyan-400" />}
+                    {isActive && <Check className="w-4 h-4 text-primary-400" />}
                   </button>
                 );
               })}
@@ -92,43 +92,6 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ currentTheme, onTh
           </div>
         </>
       )}
-    </div>
-  );
-};
-
-/**
- * Theme Preview Card - Shows all themes at once
- */
-export const ThemePreview: React.FC<{ onSelect: (theme: ThemeName) => void }> = ({ onSelect }) => {
-  const themeKeys = Object.keys(themes) as ThemeName[];
-
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-      {themeKeys.map(theme => (
-        <button
-          key={theme}
-          onClick={() => onSelect(theme)}
-          className="group relative overflow-hidden rounded-xl border-2 border-transparent hover:border-gray-300 transition-all"
-        >
-          {/* Color Bar */}
-          <div className="flex h-16">
-            <div className="flex-1" style={{ backgroundColor: themes[theme].primary[500] }} />
-            <div className="flex-1" style={{ backgroundColor: themes[theme].secondary[500] }} />
-            <div className="flex-1" style={{ backgroundColor: themes[theme].accent[500] }} />
-          </div>
-
-          {/* Background Preview */}
-          <div
-            className="p-3 text-left"
-            style={{ backgroundColor: themes[theme].background.primary }}
-          >
-            <p className="font-medium text-gray-900">
-              {theme.charAt(0).toUpperCase() + theme.slice(1)}
-            </p>
-            <p className="text-xs text-gray-500 mt-0.5">{themeDescriptions[theme]}</p>
-          </div>
-        </button>
-      ))}
     </div>
   );
 };

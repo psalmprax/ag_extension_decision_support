@@ -3,76 +3,13 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Default theme CSS variables (Forest theme) - will be overridden at runtime */
+/*
+ * Color tokens (primary/secondary/accent/error/background/semantic/surface) are
+ * emitted at runtime by applyTheme() from src/theme/tokens.ts — the single
+ * source of truth. This stylesheet only owns non-color design tokens and
+ * structural/component styles.
+ */
 :root {
-  /* Primary colors (Forest Green) */
-  --color-primary-50-rgb: 240, 253, 244;
-  --color-primary-100-rgb: 220, 252, 231;
-  --color-primary-200-rgb: 187, 247, 208;
-  --color-primary-300-rgb: 134, 239, 172;
-  --color-primary-400-rgb: 74, 222, 128;
-  --color-primary-500-rgb: 34, 197, 94;
-  --color-primary-600-rgb: 22, 163, 74;
-  --color-primary-700-rgb: 21, 128, 61;
-  --color-primary-800-rgb: 22, 101, 52;
-  --color-primary-900-rgb: 20, 83, 45;
-
-  /* Secondary colors */
-  --color-secondary-50-rgb: 250, 250, 250;
-  --color-secondary-100-rgb: 244, 244, 245;
-  --color-secondary-200-rgb: 228, 228, 231;
-  --color-secondary-300-rgb: 212, 212, 216;
-  --color-secondary-400-rgb: 161, 161, 170;
-  --color-secondary-500-rgb: 113, 113, 122;
-  --color-secondary-600-rgb: 82, 82, 89;
-  --color-secondary-700-rgb: 63, 63, 70;
-  --color-secondary-800-rgb: 39, 39, 42;
-  --color-secondary-900-rgb: 24, 24, 27;
-
-  /* Accent colors */
-  --color-accent-50-rgb: 254, 249, 195;
-  --color-accent-100-rgb: 254, 240, 138;
-  --color-accent-200-rgb: 253, 224, 71;
-  --color-accent-300-rgb: 252, 211, 77;
-  --color-accent-400-rgb: 251, 191, 36;
-  --color-accent-500-rgb: 245, 158, 11;
-  --color-accent-600-rgb: 217, 119, 6;
-  --color-accent-700-rgb: 180, 83, 9;
-  --color-accent-800-rgb: 146, 64, 14;
-  --color-accent-900-rgb: 120, 53, 15;
-
-  /* Error colors */
-  --color-error-50-rgb: 254, 226, 226;
-  --color-error-100-rgb: 254, 202, 202;
-  --color-error-200-rgb: 252, 165, 165;
-  --color-error-300-rgb: 248, 113, 113;
-  --color-error-400-rgb: 248, 113, 113;
-  --color-error-500-rgb: 239, 68, 68;
-  --color-error-600-rgb: 220, 38, 38;
-  --color-error-700-rgb: 185, 28, 28;
-  --color-error-800-rgb: 153, 27, 27;
-  --color-error-900-rgb: 127, 29, 29;
-
-  /* Background colors */
-  --color-bg-primary-rgb: 250, 250, 249;
-  --color-bg-secondary-rgb: 245, 245, 244;
-  --color-bg-card-rgb: 255, 255, 255;
-
-  /* Hex versions for direct use */
-  --color-primary-50: #f0fdf4;
-  --color-primary-100: #dcfce7;
-  --color-primary-200: #bbf7d0;
-  --color-primary-300: #86efac;
-  --color-primary-400: #4ade80;
-  --color-primary-500: #22c55e;
-  --color-primary-600: #16a34a;
-  --color-primary-700: #15803d;
-  --color-primary-800: #166534;
-  --color-primary-900: #14532d;
-  --color-bg-primary: #fafaf9;
-  --color-bg-secondary: #f5f5f4;
-  --color-bg-card: #ffffff;
-
   /* Design Variant Specific Overrides */
   --font-heading: 'Inter', system-ui, sans-serif;
   --radius-card: 0.75rem;
@@ -91,82 +28,14 @@
   --shadow-premium: 0 35px 60px -15px rgba(0, 0, 0, 0.35);
 }
 
-/* Dark mode CSS variables */
+/* Dark mode non-color tokens */
 .dark {
-  /* Primary colors - darker forest green for dark mode */
-  --color-primary-50-rgb: 20, 83, 45;
-  --color-primary-100-rgb: 22, 101, 52;
-  --color-primary-200-rgb: 21, 128, 61;
-  --color-primary-300-rgb: 22, 163, 74;
-  --color-primary-400-rgb: 34, 197, 94;
-  --color-primary-500-rgb: 74, 222, 128;
-  --color-primary-600-rgb: 134, 239, 172;
-  --color-primary-700-rgb: 187, 247, 208;
-  --color-primary-800-rgb: 220, 252, 231;
-  --color-primary-900-rgb: 240, 253, 244;
-
-  /* Secondary colors - dark grays */
-  --color-secondary-50-rgb: 24, 24, 27;
-  --color-secondary-100-rgb: 39, 39, 42;
-  --color-secondary-200-rgb: 63, 63, 70;
-  --color-secondary-300-rgb: 82, 82, 89;
-  --color-secondary-400-rgb: 113, 113, 122;
-  --color-secondary-500-rgb: 161, 161, 170;
-  --color-secondary-600-rgb: 212, 212, 216;
-  --color-secondary-700-rgb: 228, 228, 231;
-  --color-secondary-800-rgb: 244, 244, 245;
-  --color-secondary-900-rgb: 250, 250, 250;
-
-  /* Accent colors */
-  --color-accent-50-rgb: 120, 53, 15;
-  --color-accent-100-rgb: 146, 64, 14;
-  --color-accent-200-rgb: 180, 83, 9;
-  --color-accent-300-rgb: 217, 119, 6;
-  --color-accent-400-rgb: 251, 191, 36;
-  --color-accent-500-rgb: 252, 211, 77;
-  --color-accent-600-rgb: 253, 224, 71;
-  --color-accent-700-rgb: 254, 240, 138;
-  --color-accent-800-rgb: 254, 249, 195;
-  --color-accent-900-rgb: 255, 255, 245;
-
-  /* Error colors - dark mode */
-  --color-error-50-rgb: 127, 29, 29;
-  --color-error-100-rgb: 153, 27, 27;
-  --color-error-200-rgb: 185, 28, 28;
-  --color-error-300-rgb: 220, 38, 38;
-  --color-error-400-rgb: 239, 68, 68;
-  --color-error-500-rgb: 248, 113, 113;
-  --color-error-600-rgb: 252, 165, 165;
-  --color-error-700-rgb: 254, 202, 202;
-  --color-error-800-rgb: 254, 226, 226;
-  --color-error-900-rgb: 255, 245, 245;
-
-  /* Background colors - dark */
-  --color-bg-primary-rgb: 12, 19, 36;
-  --color-bg-secondary-rgb: 21, 27, 45;
-  --color-bg-card-rgb: 25, 31, 49;
-
-  /* Hex versions for direct use */
-  --color-primary-50: #14532d;
-  --color-primary-100: #166534;
-  --color-primary-200: #15803d;
-  --color-primary-300: #10b981; /* Neons */
-  --color-primary-400: #3b82f6; /* Neons */
-  --color-primary-500: #8b5cf6; /* Neons */
-  --color-primary-600: #86efac;
-  --color-primary-700: #bbf7d0;
-  --color-primary-800: #dcfce7;
-  --color-primary-900: #f0fdf4;
-  --color-bg-primary: #0c1324; /* Deep space cyber black */
-  --color-bg-secondary: #151b2d;
-  --color-bg-card: rgba(255, 255, 255, 0.05); /* Barely there glass */
-
   --radius-card: 0.75rem;
   --shadow-premium: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
 
 @layer base {
-  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
   html {
     font-family: 'Inter', system-ui, sans-serif;
@@ -205,7 +74,7 @@
   }
 
   .dark ::-webkit-scrollbar-thumb:hover {
-    @apply bg-cyan-400/50;
+    @apply bg-primary-400/50;
   }
 
   ::-webkit-scrollbar-corner {
@@ -220,7 +89,7 @@
   }
 
   .neon-glow {
-    @apply shadow-[0_0_15px_rgba(0,245,255,0.3)];
+    @apply shadow-[0_0_15px_rgba(var(--color-primary-500-rgb),0.3)];
   }
 
   .rim-lighting {
@@ -237,7 +106,7 @@
   }
 
   .card-hover {
-    @apply transition-all duration-300 hover:scale-[1.02] hover:bg-white/10 hover:border-white/20;
+    @apply transition-all duration-200 hover:scale-[1.02] hover:bg-white/10 hover:border-white/20;
   }
 
   /* Button styles */
@@ -246,17 +115,17 @@
   }
 
   .btn-primary {
-    @apply bg-cyan-400 text-[#003739] hover:brightness-110 active:scale-95 shadow-[0_0_20px_rgba(0,245,255,0.2)];
+    @apply bg-primary-500 text-white hover:brightness-110 active:scale-95 shadow-[0_0_20px_rgba(var(--color-primary-500-rgb),0.2)];
   }
 
   .btn-secondary {
-    @apply glass-panel text-white hover:bg-white/10 border-cyan-400/30;
+    @apply glass-panel text-white hover:bg-white/10 border-primary-400/30;
   }
 
   /* Input styles */
   .input {
     @apply w-full px-4 py-3 rounded-lg border border-white/10 bg-white/5 text-white placeholder-slate-500 transition-all duration-200;
-    @apply focus:outline-none focus:ring-1 focus:ring-cyan-400/50 focus:border-cyan-400;
+    @apply focus:outline-none focus:ring-1 focus:ring-primary-400/50 focus:border-primary-400;
   }
 
   /* Badge styles */
@@ -277,37 +146,14 @@
   }
 
   .badge-info {
-    @apply bg-cyan-500/20 text-cyan-400 border border-cyan-400/30;
+    @apply bg-primary-500/20 text-primary-400 border border-primary-400/30;
   }
 }
 
 @layer utilities {
   .text-glow {
-    @apply drop-shadow-[0_0_8px_rgba(0,245,255,0.5)];
+    @apply drop-shadow-[0_0_8px_rgba(var(--color-primary-500-rgb),0.5)];
   }
-
-  .font-headline {
-    font-family: 'Space Grotesk', sans-serif;
-  }
-}
-
-/* Classic Design System Mode Overrides */
-:root[data-design-mode='classic'] {
-  --radius-card: 0px !important;
-}
-
-:root[data-design-mode='classic'] .card,
-:root[data-design-mode='classic'] .btn,
-:root[data-design-mode='classic'] .input,
-:root[data-design-mode='classic'] .rounded,
-:root[data-design-mode='classic'] .rounded-sm,
-:root[data-design-mode='classic'] .rounded-md,
-:root[data-design-mode='classic'] .rounded-lg,
-:root[data-design-mode='classic'] .rounded-xl,
-:root[data-design-mode='classic'] .rounded-2xl,
-:root[data-design-mode='classic'] .rounded-3xl,
-:root[data-design-mode='classic'] [class*='rounded-['] {
-  border-radius: 0px !important;
 }
 
 /* Premium Markdown Content Typography Polish */
@@ -414,4 +260,30 @@
 .theme-minimalist-tech {
   --primary-gradient: from-[#0f172a] via-[#334155] to-[#475569];
   --glow-color: rgba(15, 23, 42, 0.4);
+}
+
+/* Consistent, theme-aware keyboard focus indicator (WCAG 2.4.7 / 2.4.13).
+   :where() keeps specificity at zero so it only restyles the browser's
+   default outline and never fights Tailwind's explicit focus utilities. */
+:where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-primary-500, #06b6d4);
+  outline-offset: 2px;
+}
+
+/* Honor reduced-motion: disable all CSS animation/transition motion (WCAG 2.3.3). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* GRP-03: numeric/data text uses tabular numerals so column digits align.
+   Unlayered so it always wins over Tailwind's font-family-only .font-mono. */
+.font-mono {
+  font-variant-numeric: tabular-nums;
 }

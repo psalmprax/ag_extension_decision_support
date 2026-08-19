@@ -275,7 +275,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
             >
               <div className="flex items-center gap-4">
                 <div
-                  className={`w-12 h-8 bg-gray-900 ${radiusClass} flex items-center justify-center text-[8px] font-black text-white uppercase tracking-tighter`}
+                  className={`w-12 h-8 bg-gray-900 ${radiusClass} flex items-center justify-center text-xs font-black text-white uppercase tracking-tighter`}
                 >
                   {pm.card?.brand || 'Card'}
                 </div>

@@ -258,7 +258,7 @@ class ErrorBoundary extends Component<Props, State> {
         {error && (
           <div className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 mb-6 flex flex-col gap-2">
             <div className="flex items-start justify-between gap-2">
-              <span className="text-[11px] font-mono text-red-400 break-all select-all">
+              <span className="text-xs font-mono text-red-400 break-all select-all">
                 {error.message}
               </span>
               <button

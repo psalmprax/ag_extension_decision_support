@@ -41,16 +41,13 @@ interface DashboardPageProps {
 }
 
 const DashboardHeader: React.FC<{
-  isModern: boolean;
   userName?: string;
   t: (key: string) => string;
   headingClass: string;
-}> = ({ isModern, userName, t, headingClass }) => (
+}> = ({ userName, t, headingClass }) => (
   <div className="mb-12">
-    <h1
-      className={`text-5xl font-black tracking-tighter font-headline mb-2 drop-shadow-[0_0_15px_var(--color-outline)] dark:drop-shadow-[0_0_15px_var(--color-outline)] ${headingClass}`}
-    >
-      {isModern ? 'Strategic Intelligence' : 'Operations Dashboard'}
+    <h1 className={`text-4xl font-black tracking-tight font-headline mb-2 ${headingClass}`}>
+      Operations Dashboard
     </h1>
     <p className="text-slate-400 font-headline font-medium text-lg">
       {t('dashboard_welcome').replace('{name}', userName || 'Extension Officer')}
@@ -121,7 +118,7 @@ const DashboardStats: React.FC<{
 const ActivePulseCard: React.FC<{ cardClass: string }> = ({ cardClass }) => (
   <div className={cardClass}>
     <div className="flex items-center gap-3 mb-6">
-      <div className="w-2 h-2 bg-cyan-400 rounded-full animate-ping"></div>
+      <div className="w-2 h-2 bg-primary-400 rounded-full animate-ping"></div>
       <h3 className="text-sm font-headline font-bold text-gray-900 dark:text-white uppercase tracking-widest">
         Active Pulse
       </h3>
@@ -142,7 +139,7 @@ const ActivePulseCard: React.FC<{ cardClass: string }> = ({ cardClass }) => (
             </p>
             <p className="text-xxs text-slate-500">{item.time}</p>
           </div>
-          <span className="text-xxs font-black text-cyan-400 uppercase">{item.status}</span>
+          <span className="text-xxs font-black text-primary-400 uppercase">{item.status}</span>
         </div>
       ))}
     </div>
@@ -169,7 +166,7 @@ const SupportEfficiencyCard: React.FC<{
             {
               name: t('analytics_resolution_rate'),
               progress: resolutionRate,
-              color: 'bg-cyan-400',
+              color: 'bg-primary-400',
             },
             {
               name: t('analytics_satisfaction_score'),
@@ -180,7 +177,7 @@ const SupportEfficiencyCard: React.FC<{
             <div key={i} className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-bold text-slate-300">{item.name}</span>
-                <span className="text-xs font-black text-cyan-400">
+                <span className="text-xs font-black text-primary-400">
                   {Math.round(item.progress)}%
                 </span>
               </div>
@@ -197,7 +194,7 @@ const SupportEfficiencyCard: React.FC<{
         </div>
       ) : (
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-6 h-6 animate-spin text-cyan-400" />
+          <Loader2 className="w-6 h-6 animate-spin text-primary-400" />
         </div>
       )}
     </div>
@@ -259,21 +256,10 @@ const DashboardMapSection: React.FC<{
   // offline data to fall back on. Once a retry cycle is in flight, the
   // attempts/0 guard prevents re-triggering.
   useEffect(() => {
-    if (
-      farmersQuery.isError &&
-      !isRetrying &&
-      attempts === 0 &&
-      effectiveFarmers.length === 0
-    ) {
+    if (farmersQuery.isError && !isRetrying && attempts === 0 && effectiveFarmers.length === 0) {
       refetchWithRetry();
     }
-  }, [
-    farmersQuery.isError,
-    isRetrying,
-    attempts,
-    effectiveFarmers.length,
-    refetchWithRetry,
-  ]);
+  }, [farmersQuery.isError, isRetrying, attempts, effectiveFarmers.length, refetchWithRetry]);
 
   // Clear retry bookkeeping once the query is back so a later error can retry cleanly.
   useEffect(() => {
@@ -302,12 +288,12 @@ const DashboardMapSection: React.FC<{
     <div className={`lg:col-span-2 ${cardClass} group`}>
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-lg font-headline font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <MapPin className="w-5 h-5 text-cyan-400" />
+          <MapPin className="w-5 h-5 text-primary-400" />
           {t('stat_regional_distribution')}
         </h3>
         <div className="flex gap-2">
           <span
-            className={`px-2 py-1 bg-cyan-400/10 text-cyan-400 ${radiusClass} text-xxs font-bold uppercase tracking-widest border border-cyan-400/20`}
+            className={`px-2 py-1 bg-primary-400/10 text-primary-400 ${radiusClass} text-xxs font-bold uppercase tracking-widest border border-primary-400/20`}
           >
             {t('stat_kenya_overview') || 'Kenya Overview'}
           </span>
@@ -347,19 +333,11 @@ const DashboardMapSection: React.FC<{
         )}
 
         {showMapWithRetry && (
-          <MapRetryOverlay
-            attempts={attempts}
-            maxAttempts={REGION_MAP_MAX_RETRIES}
-            t={t}
-          />
+          <MapRetryOverlay attempts={attempts} maxAttempts={REGION_MAP_MAX_RETRIES} t={t} />
         )}
 
         {showSkeletonWithRetry && (
-          <MapSkeletonWithRetry
-            attempts={attempts}
-            maxAttempts={REGION_MAP_MAX_RETRIES}
-            t={t}
-          />
+          <MapSkeletonWithRetry attempts={attempts} maxAttempts={REGION_MAP_MAX_RETRIES} t={t} />
         )}
 
         {showFallback && <MapFallbackEmptyState onRetry={handleManualRetry} t={t} />}
@@ -370,7 +348,7 @@ const DashboardMapSection: React.FC<{
           >
             <div className="flex gap-4">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
+                <div className="w-2 h-2 bg-primary-400 rounded-full"></div>
                 <span className="text-xxs font-bold text-slate-300 uppercase tracking-widest">
                   {t('table_active')}
                 </span>
@@ -384,7 +362,7 @@ const DashboardMapSection: React.FC<{
             </div>
             <button
               onClick={() => setIsMapExpanded(true)}
-              className={`text-xxs font-black text-cyan-400 uppercase bg-cyan-400/10 px-3 py-1 ${radiusClass} border border-cyan-400/20 hover:bg-cyan-400/20 transition-colors`}
+              className={`text-xxs font-black text-primary-400 uppercase bg-primary-400/10 px-3 py-1 ${radiusClass} border border-primary-400/20 hover:bg-primary-400/20 transition-colors`}
             >
               {t('viz_detail_view')}
             </button>
@@ -403,12 +381,12 @@ const MapSectionSkeleton: React.FC<{
   <div className={`lg:col-span-2 ${cardClass} group`}>
     <div className="flex justify-between items-center mb-6">
       <h3 className="text-lg font-headline font-bold text-gray-900 dark:text-white flex items-center gap-2">
-        <MapPin className="w-5 h-5 text-cyan-400" />
+        <MapPin className="w-5 h-5 text-primary-400" />
         {t('stat_regional_distribution')}
       </h3>
       <div className="flex gap-2">
         <span
-          className={`px-2 py-1 bg-cyan-400/10 text-cyan-400 ${radiusClass} text-xxs font-bold uppercase tracking-widest border border-cyan-400/20`}
+          className={`px-2 py-1 bg-primary-400/10 text-primary-400 ${radiusClass} text-xxs font-bold uppercase tracking-widest border border-primary-400/20`}
         >
           {t('stat_kenya_overview') || 'Kenya Overview'}
         </span>
@@ -421,7 +399,7 @@ const MapSectionSkeleton: React.FC<{
       aria-label={t('map_loading') || 'Loading regional distribution'}
     >
       <div className="flex flex-col items-center gap-4">
-        <Loader2 className="w-10 h-10 text-cyan-400 animate-spin" />
+        <Loader2 className="w-10 h-10 text-primary-400 animate-spin" />
         <p className="text-sm font-medium text-slate-400">
           {t('map_loading_distribution') || 'Loading regional distribution...'}
         </p>
@@ -502,7 +480,7 @@ const DistributionPanels: React.FC<{
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${(crop.count / maxCropCount) * 100}%` }}
-                  transition={{ duration: 0.8 }}
+                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                   className="h-full bg-emerald-500 rounded-full"
                 />
               </div>
@@ -513,7 +491,7 @@ const DistributionPanels: React.FC<{
 
       <div className={cardClass}>
         <div className="flex items-center gap-2 mb-6">
-          <Users className="w-5 h-5 text-cyan-400" />
+          <Users className="w-5 h-5 text-primary-400" />
           <h3 className="text-lg font-headline font-bold text-gray-900 dark:text-white">
             {t('stat_regional_distribution') || 'Regional Distribution'}
           </h3>
@@ -523,14 +501,14 @@ const DistributionPanels: React.FC<{
             <div key={region.region}>
               <div className="flex justify-between items-center mb-1.5">
                 <span className="text-xs font-bold text-slate-300">{region.region}</span>
-                <span className="text-xs font-black text-cyan-400">{region.farmers}</span>
+                <span className="text-xs font-black text-primary-400">{region.farmers}</span>
               </div>
               <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${(region.farmers / maxRegionCount) * 100}%` }}
-                  transition={{ duration: 0.8 }}
-                  className="h-full bg-cyan-500 rounded-full"
+                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                  className="h-full bg-primary-500 rounded-full"
                 />
               </div>
             </div>
@@ -559,7 +537,7 @@ const MapFallbackEmptyState: React.FC<{
       </p>
       <button
         onClick={onRetry}
-        className="px-6 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xxs font-black uppercase tracking-widest transition-all flex items-center gap-2 mx-auto"
+        className="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xxs font-black uppercase tracking-widest transition-all flex items-center gap-2 mx-auto"
       >
         <RefreshCw className="w-3.5 h-3.5" />
         {t('action_try_again') || 'Try Again'}
@@ -580,18 +558,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   handleOpenFarmerDetail,
   user,
 }) => {
-  const { t } = useLanguage();
-  const { isModern, cardClass, headingClass, dataClass, subtextClass, radiusClass } =
+  const { t } = useLanguage();  const { cardClass, headingClass, dataClass, radiusClass } =
     useThemeClasses();
 
   return (
     <div className="animate-in fade-in duration-500">
-      <DashboardHeader
-        isModern={isModern}
-        userName={user?.firstName}
-        t={t}
-        headingClass={headingClass}
-      />
+      <DashboardHeader userName={user?.firstName} t={t} headingClass={headingClass} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <DashboardStats
@@ -599,7 +571,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           dashboardData={dashboardData}
           isOfficer={isOfficer}
           t={t}
-          classes={{ cardClass, headingClass, dataClass, subtextClass, isModern }}
+          classes={{ cardClass, headingClass, dataClass }}
         />
       </div>
 

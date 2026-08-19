@@ -25,9 +25,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   onGenerateReport,
 }) => {
   const { user } = useAppStore();
-  const { isModern, subtextClass, headingClass } = useThemeClasses();
+  const { subtextClass, headingClass } = useThemeClasses();
 
-  const isFreeUser = user?.role !== 'admin' && (user?.isFree || user?.planName?.toLowerCase() === 'free' || !user?.planName);
+  const isFreeUser =
+    user?.role !== 'admin' &&
+    (user?.isFree || user?.planName?.toLowerCase() === 'free' || !user?.planName);
 
   return (
     <AnimatePresence>
@@ -39,9 +41,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           exit="exit"
           className={cn(
             'fixed left-0 top-0 h-full flex flex-col pt-20 pb-8 px-4 border-r border-gray-200 dark:border-white/10 w-72 z-40',
-            isModern
-              ? 'bg-white/70 dark:bg-slate-950/40 backdrop-blur-2xl'
-              : 'bg-white dark:bg-slate-900 shadow-xl'
+            'bg-white/70 dark:bg-slate-950/40 backdrop-blur-2xl'
           )}
         >
           <div className="px-4 mb-8"></div>
@@ -55,12 +55,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                   key={item.id}
                   onClick={() => React.startTransition(() => setActiveTab(item.id))}
                   className={cn(
-                    'flex items-center justify-between px-4 py-3 transition-all duration-200 text-left group',
-                    isModern
-                      ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98]'
-                      : 'rounded-none border border-slate-300 dark:border-slate-700 font-mono text-[0.625rem] uppercase tracking-widest',
+                    'flex items-center justify-between px-4 py-3 min-h-[48px] transition-all duration-200 text-left group',
+                    'rounded-xl hover:scale-[1.02] active:scale-[0.98]',
                     activeTab === item.id
-                      ? 'bg-primary-600/10 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400 shadow-[inset_0_0_15px_var(--color-outline),0.1)]'
+                      ? 'bg-primary-600/10 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400 shadow-[inset_0_0_15px_var(--color-outline)]'
                       : cn(
                           subtextClass,
                           'hover:bg-black/5 dark:hover:bg-white/5 hover:text-primary-600 dark:hover:text-primary-200'
@@ -68,14 +66,14 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                   )}
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <item.icon className="w-4 h-4 flex-shrink-0" />
-                    <span className="font-headline font-bold uppercase tracking-widest text-[0.625rem] truncate">
+                    <item.icon className="w-5 h-5 flex-shrink-0" />
+                    <span className="font-headline font-bold uppercase tracking-widest text-xs truncate">
                       {item.label}
                     </span>
                   </div>
 
                   {isLocked && (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-500 border border-amber-500/25 shrink-0 ml-2">
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-black uppercase tracking-wider bg-amber-500/15 text-amber-500 border border-amber-500/25 shrink-0 ml-2">
                       <Lock className="w-2.5 h-2.5" />
                       PRO
                     </span>
@@ -89,18 +87,18 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             <button
               onClick={onGenerateReport}
               className={cn(
-                'bg-primary-500 text-white px-4 py-3 flex items-center justify-center gap-2 shadow-lg shadow-primary-500/20 transition-all',
-                isModern ? 'rounded-xl hover:scale-[1.02] active:scale-[0.98]' : 'rounded-none'
+                'bg-primary-500 text-white px-4 py-3 min-h-[48px] flex items-center justify-center gap-2 shadow-lg shadow-primary-500/20 transition-all',
+                'rounded-xl hover:scale-[1.02] active:scale-[0.98]'
               )}
             >
-              <FileText className="w-3 h-3" />
+              <FileText className="w-4 h-4" />
               <span className={headingClass}>Generate Report</span>
             </button>
             <button
               onClick={() => setShowHelpCenter(true)}
-              className="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-200 text-[0.625rem] uppercase font-bold tracking-widest"
+              className="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-200 text-xs uppercase font-bold tracking-widest"
             >
-              <HelpCircle className="w-3 h-3" />
+              <HelpCircle className="w-4 h-4" />
               Support
             </button>
           </div>

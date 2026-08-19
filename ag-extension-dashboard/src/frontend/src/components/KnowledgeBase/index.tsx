@@ -94,8 +94,7 @@ const KnowledgeQuotaBanner: React.FC<{
 
 const KnowledgeSuggestions: React.FC<{
   onSelect: (q: string) => void;
-  isModern: boolean;
-}> = ({ onSelect, isModern }) => {
+}> = ({ onSelect }) => {
   const suggestions = [
     'How to manage fall armyworm?',
     'Best time for maize harvesting?',
@@ -110,7 +109,7 @@ const KnowledgeSuggestions: React.FC<{
           key={i}
           onClick={() => onSelect(suggestion)}
           className="p-6 bg-theme-bg-card border border-gray-100 dark:border-gray-700 hover:border-primary-500 transition-all text-left flex items-start gap-4 group cursor-pointer"
-          style={{ borderRadius: isModern ? 'var(--radius-card)' : '0px' }}
+          style={{ borderRadius: 'var(--radius-card)' }}
         >
           <div className="p-2 bg-gray-100 dark:bg-gray-700 group-hover:bg-primary-500 group-hover:text-white transition-colors">
             <Lightbulb className="w-5 h-5" />
@@ -122,9 +121,8 @@ const KnowledgeSuggestions: React.FC<{
   );
 };
 
-const KnowledgeHeader: React.FC<{ headingClass: string; isModern: boolean; subtitle: string }> = ({
+const KnowledgeHeader: React.FC<{ headingClass: string; subtitle: string }> = ({
   headingClass,
-  isModern,
   subtitle,
 }) => (
   <div className="mb-12 text-center">
@@ -136,9 +134,7 @@ const KnowledgeHeader: React.FC<{ headingClass: string; isModern: boolean; subti
       <Sparkles className="w-3 h-3" />
       ALFA reasoning engine active
     </motion.div>
-    <h1 className={`text-4xl md:text-5xl font-black mb-4 tracking-tighter ${headingClass}`}>
-      {isModern ? 'Ontological Repository' : 'Knowledge Base'}
-    </h1>
+    <h1 className={`text-4xl font-black mb-4 tracking-tight ${headingClass}`}>Knowledge Base</h1>
     <p className="text-gray-500 dark:text-gray-400 font-medium text-lg max-w-2xl mx-auto">
       {subtitle}
     </p>
@@ -148,7 +144,7 @@ const KnowledgeHeader: React.FC<{ headingClass: string; isModern: boolean; subti
 export const KnowledgeBase: React.FC = () => {
   const { t } = useLanguage();
   const { addNotification, setActiveTab } = useAppStore();
-  const { isModern, headingClass } = useThemeClasses();
+  const { headingClass } = useThemeClasses();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -237,7 +233,10 @@ export const KnowledgeBase: React.FC = () => {
       if (err.response?.data?.limitReached) {
         setQuota(prev => (prev ? { ...prev, remaining: 0, allowed: false } : null));
       }
-      addNotification({ type: 'error', message: err.response?.data?.error || 'Knowledge search failed' });
+      addNotification({
+        type: 'error',
+        message: err.response?.data?.error || 'Knowledge search failed',
+      });
     } finally {
       setIsAsking(false);
     }
@@ -250,7 +249,8 @@ export const KnowledgeBase: React.FC = () => {
     if (quota?.isFree && quota.remaining <= 0) {
       addNotification({
         type: 'warning',
-        message: 'Daily Free limit of 3 knowledge base queries reached. Upgrade to Pro for unlimited searches.',
+        message:
+          'Daily Free limit of 3 knowledge base queries reached. Upgrade to Pro for unlimited searches.',
       });
       return;
     }
@@ -274,11 +274,7 @@ export const KnowledgeBase: React.FC = () => {
 
       <main className="flex-1 overflow-y-auto p-4 md:p-8 scrollbar-hide">
         <div className="max-w-4xl mx-auto">
-          <KnowledgeHeader
-            headingClass={headingClass}
-            isModern={isModern}
-            subtitle={t('knowledge_subtitle')}
-          />
+          <KnowledgeHeader headingClass={headingClass} subtitle={t('knowledge_subtitle')} />
 
           {quota?.isFree && (
             <KnowledgeQuotaBanner quota={quota} onUpgrade={() => setActiveTab('billing')} />
@@ -324,7 +320,7 @@ export const KnowledgeBase: React.FC = () => {
                 }
               />
             ) : (
-              <KnowledgeSuggestions onSelect={handleSelectQuery} isModern={isModern} />
+              <KnowledgeSuggestions onSelect={handleSelectQuery} />
             )}
           </AnimatePresence>
         </div>

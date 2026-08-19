@@ -20,7 +20,7 @@ interface ReportsPageProps {
   user: { firstName?: string; lastName?: string; avatarUrl?: string } | undefined;
 }
 
-export function ReportCard({
+function ReportCard({
   report,
   setIsLoadingReport,
   setViewingReport,
@@ -118,7 +118,7 @@ export function ReportCard({
                 className="w-6 h-6 rounded-full border-2 border-white dark:border-gray-800 object-cover"
               />
             ) : (
-              <div className="w-6 h-6 rounded-full border-2 border-white dark:border-gray-800 bg-primary-500 flex items-center justify-center text-[8px] text-white font-bold">
+              <div className="w-6 h-6 rounded-full border-2 border-white dark:border-gray-800 bg-primary-500 flex items-center justify-center text-xs text-white font-bold">
                 {report.createdBy
                   ? report.createdBy
                       .split(/[\s_]+/)
@@ -155,25 +155,21 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
   user,
 }) => {
   const { t } = useLanguage();
-  const { isModern, headingClass, btnClass, radiusClass } = useThemeClasses();
+  const { headingClass, btnClass, radiusClass } = useThemeClasses();
 
   return (
     <div>
       <div className="mb-8 flex justify-between items-center">
         <div>
-          <h1 className={`text-3xl font-bold ${headingClass}`}>
-            {isModern ? 'Executive Reporting' : 'Data Reports'}
-          </h1>
+          <h1 className={`text-3xl font-bold ${headingClass}`}>Data Reports</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">
-            {isModern
-              ? 'Enterprise-grade performance documentation'
-              : 'Operational audit logs and data exports'}
+            Operational audit logs and data exports
           </p>
         </div>
         <button
           onClick={handleGenerateReport}
           disabled={isGeneratingReport}
-          className={`px-6 py-3 ${isModern ? 'bg-primary-600 hover:bg-primary-700 shadow-primary-500/20 shadow-lg' : 'bg-white dark:bg-slate-900 border-2 border-slate-800 dark:border-slate-200 text-slate-900 dark:text-white'} ${btnClass} transition-all flex items-center gap-2`}
+          className={`px-6 py-3 bg-primary-600 hover:bg-primary-700 shadow-primary-500/20 shadow-lg ${btnClass} transition-all flex items-center gap-2`}
         >
           {isGeneratingReport ? (
             <Loader2 className="w-4 h-4 animate-spin" />

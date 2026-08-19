@@ -513,8 +513,7 @@ export function FarmerMap({
   isExternalExpanded,
   onToggleExpand,
 }: FarmerMapProps) {
-  const farmers =
-    propFarmers && propFarmers.length > 0 ? propFarmers : DEFAULT_DEMO_MAP_FARMERS;
+  const farmers = propFarmers && propFarmers.length > 0 ? propFarmers : DEFAULT_DEMO_MAP_FARMERS;
   const [currentLayer, setCurrentLayer] = useState<MapLayer>('street');
   const [selectedFarmer, setSelectedFarmer] = useState<FarmerData | null>(null);
   const [internalExpanded, setInternalExpanded] = useState(false);
@@ -911,7 +910,7 @@ export function FarmerMap({
                 onChange={e => setSearchQuery(e.target.value)}
                 onFocus={() => setShowMiniSearch(true)}
                 onBlur={() => setShowMiniSearch(false)}
-                className="flex-1 text-sm bg-transparent outline-none text-gray-700 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 font-medium"
+                className="flex-1 text-sm bg-transparent outline-none focus-visible:ring-1 focus-visible:ring-primary-400/50 text-gray-700 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 font-medium"
               />
               {searchQuery && (
                 <button

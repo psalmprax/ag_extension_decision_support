@@ -15,7 +15,7 @@ import { PlanUpgradeGuard } from '@/components/PlanUpgradeGuard';
 
 export function DiseaseDiagnosis() {
   const { t } = useLanguage();
-  const { headingClass, isModern, radiusClass, btnClass } = useThemeClasses();
+  const { headingClass, radiusClass, btnClass } = useThemeClasses();
   const { addNotification } = useAppStore();
 
   // Shared State
@@ -74,15 +74,15 @@ export function DiseaseDiagnosis() {
   };
 
   return (
-    <PlanUpgradeGuard category="vision" featureName="Pathological Diagnostics (Disease Checker)">
+    <PlanUpgradeGuard category="vision" featureName="Disease Checker">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className={`text-2xl ${headingClass}`}>
-              {isModern ? 'Pathological Diagnostics' : 'Disease Checker'}
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">{t('disease_diagnosis_subtitle')}</p>
+            <h1 className={`text-2xl ${headingClass}`}>Disease Checker</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
+              {t('disease_diagnosis_subtitle')}
+            </p>
           </div>
         </div>
 
