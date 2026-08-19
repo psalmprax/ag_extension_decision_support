@@ -21,6 +21,8 @@ import { AppModals } from './components/AppModals';
 import { TabContent } from './components/TabContent';
 import { PwaInstallPrompt } from './components/PwaInstallPrompt';
 import { MobileBottomNav } from './components/layout/MobileBottomNav';
+import { FloatingAIPill } from './components/FloatingAIPill';
+import { USSDSimulatorDrawer } from './components/USSDSimulatorDrawer';
 import { Farmer } from './types/dashboard';
 import { useAppSync } from './hooks/useAppSync';
 import { useAppShortcuts } from './hooks/useAppShortcuts';
@@ -164,6 +166,8 @@ function App() {
     confirmModal,
     setConfirmModal,
   } = useAppModalState();
+
+  const [isUSSDSimulatorOpen, setIsUSSDSimulatorOpen] = useState(false);
 
   // Data state
   const [searchQuery, setSearchQuery] = useState('');
@@ -540,6 +544,7 @@ function App() {
                     handleFarmerChatSend={handleFarmerChatSend as (...args: unknown[]) => void}
                     loadFarmers={loadFarmers}
                     setShowFarmerModal={setShowFarmerModal}
+                    onOpenUSSDSimulator={() => setIsUSSDSimulatorOpen(true)}
                   />
                 </div>
               </Suspense>
@@ -595,6 +600,25 @@ function App() {
           activeTab={activeTab}
           addNotification={addNotification}
         />
+
+        {/* ── KnockKnock-Inspired Floating Multimodal AI Pill ── */}
+        <FloatingAIPill
+          onOpenUSSDSandbox={() => setIsUSSDSimulatorOpen(true)}
+          onNavigateToDiagnosis={() => setActiveTab('disease_diagnosis')}
+        />
+
+        {/* ── Interactive USSD & SMS Sandbox Drawer ── */}
+        <USSDSimulatorDrawer
+          isOpen={isUSSDSimulatorOpen}
+          onClose={() => setIsUSSDSimulatorOpen(false)}
+          onEscalate={(farmerName, reason) => {
+            addNotification({
+              type: 'warning',
+              message: `🚨 USSD Escalation: ${farmerName} - ${reason}`,
+            });
+          }}
+        />
+
         <MobileBottomNav
           activeTab={activeTab}
           setActiveTab={setActiveTab}

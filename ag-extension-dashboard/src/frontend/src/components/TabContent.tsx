@@ -118,6 +118,7 @@ interface TabContentProps {
   handleFarmerChatSend: (...args: unknown[]) => void;
   loadFarmers: () => void;
   setShowFarmerModal: (v: boolean) => void;
+  onOpenUSSDSimulator?: () => void;
 }
 
 const SimplePageWrapper = ({
@@ -157,6 +158,7 @@ export function TabContent(props: TabContentProps) {
               | undefined
           }
           addNotification={addNotification}
+          onOpenUSSDSimulator={props.onOpenUSSDSimulator}
         />
       );
     case 'portfolio':

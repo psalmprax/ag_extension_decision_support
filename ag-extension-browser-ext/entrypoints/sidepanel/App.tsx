@@ -37,7 +37,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [pageContext, setPageContext] = useState<PageContext | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [queuedRequests, setQueuedRequests] = useState<any[]>([]);
+  const [queuedRequests, setQueuedRequests] = useState<QueuedRequest[]>([]);
   const [showOfflineManager, setShowOfflineManager] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   
@@ -46,14 +46,14 @@ function App() {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [farmers, setFarmers] = useState<any[]>([]);
+  const [farmers, setFarmers] = useState<( { id: string; firstName: string; lastName: string } | null )[]>([]);
 
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const sendMessageToAI = async (message: string, imageData?: string, pageCtx?: PageContext, fileData?: any): Promise<string> => {
+  const sendMessageToAI = async (message: string, imageData?: string, pageCtx?: PageContext, fileData?: Record<string, unknown>): Promise<string> => {
     try {
       const payload: any = {
         message,
@@ -210,7 +210,7 @@ function App() {
   };
 
   const handleVoiceInput = () => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognition = (window as { SpeechRecognition: new (...args: any[]) => any }).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       alert('Speech recognition is not supported in this browser.');
       return;
@@ -355,7 +355,7 @@ function App() {
     const browserAPI = browser;
     
     if (browserAPI && browserAPI.runtime) {
-      const handlePopupMessage = async (message: any) => {
+      const handlePopupMessage = async (message: { action: string; actionType?: string; text?: string; tab?: any; imageData?: string }) => {
         if (message.action === 'trigger_quick_action') {
           handleQuickAction(message.actionType);
         } else if (message.action === 'analyze_selection' && message.text) {

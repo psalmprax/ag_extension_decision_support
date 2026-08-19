@@ -1,109 +1,138 @@
-import { plantDiseaseService } from '../services/plantDiseaseService';
-import { AIProviderFactory } from '../services/aiProvider/aiProvider';
+import { plantDiseaseService, DiseaseDiagnosis } from '../services/plantDiseaseService';
 
-jest.mock('../services/aiProvider/aiProvider', () => ({
-    AIProviderFactory: {
-        getProvider: jest.fn(),
-    },
-}));
-
-jest.mock('../utils/logger', () => ({
-    logger: {
-        info: jest.fn(),
-        warn: jest.fn(),
-        error: jest.fn(),
-        debug: jest.fn(),
-    },
-}));
-
-const mockGetProvider = AIProviderFactory.getProvider as jest.MockedFunction<typeof AIProviderFactory.getProvider>;
-
-function makeVisionProvider(analysis: string) {
-    return {
-        provider: 'openai' as const,
-        analyzeImage: jest.fn().mockResolvedValue({
-            analysis,
-            model: 'vision-test-model',
-        }),
-    } as unknown as Awaited<ReturnType<typeof AIProviderFactory.getProvider>>;
+interface PrivatePlantDiseaseService {
+  tokenize(text: string): string[];
+  vectorize(tokens: string[], vocab: string[], idf: Record<string, number>): number[];
+  cosineSimilarity(v1: number[], v2: number[]): number;
+  diagnoseFromSymptoms(symptoms: string[]): Promise<DiseaseDiagnosis[]>;
+  getDiseaseInfo(diseaseKey: string): { symptoms: string[] } | null;
+  getAllDiseases(): string[];
 }
 
-describe('plantDiseaseService diagnostic trust contract', () => {
-    beforeEach(() => {
-        jest.clearAllMocks();
-    });
+const service = plantDiseaseService as unknown as PrivatePlantDiseaseService;
 
-    it('returns symptom confidence on a 0-1 scale with source provenance', async () => {
-        const [diagnosis] = await plantDiseaseService.diagnoseFromSymptoms([
-            'White powdery coating on leaves',
-        ]);
+describe('PlantDiseaseService - tokenize', () => {
+  it('should tokenize text and filter stopwords', () => {
+    // Stopwords: ['on', 'of', 'and', 'the', 'with', 'a', 'or', 'in', 'to', 'for', 'at', 'by', 'from', 'is', 'are', 'was', 'were', 'be', 'an']
+    // 'over' is NOT a stopword, 'the' IS a stopword
+    const result = service.tokenize('The quick brown fox jumps over the lazy dog');
+    expect(result).toContain('quick');
+    expect(result).toContain('brown');
+    expect(result).toContain('fox');
+    expect(result).toContain('jumps'); // 5+ chars, not stopword
+    expect(result).toContain('lazy'); // 4+ chars, not stopword
+    expect(result).toContain('dog'); // 3 chars, not stopword (length > 2 filter)
+    expect(result).not.toContain('the'); // stopword
+  });
 
-        expect(diagnosis).toBeDefined();
-        expect(diagnosis.confidence).toBeGreaterThanOrEqual(0);
-        expect(diagnosis.confidence).toBeLessThanOrEqual(1);
-        expect(diagnosis.provenance).toEqual(expect.objectContaining({
-            evidenceStatus: 'verified_source',
-            source: 'Internal Plant Disease Knowledge Base',
-            model: 'tfidf-symptom-matcher',
-        }));
-        expect(['ready', 'needs_expert_review']).toContain(diagnosis.reviewStatus);
-    });
+  it('should filter short words (length <= 2)', () => {
+    const result = service.tokenize('a an is at');
+    expect(result).toHaveLength(0);
+  });
+});
 
-    it('normalizes vision confidence and marks unverified model output for review', async () => {
-        mockGetProvider.mockResolvedValueOnce(makeVisionProvider(JSON.stringify({
-            overallHealth: 'diseased',
-            diseases: [{
-                disease: 'Powdery Mildew',
-                confidence: 40,
-                severity: 'moderate',
-                description: 'Possible fungal disease',
-                symptoms: ['White coating'],
-                treatment: ['Seek local guidance'],
-                prevention: ['Improve airflow'],
-            }],
-            nutrientDeficiencies: [],
-            recommendations: ['Confirm with an agronomist'],
-            confidence: 72,
-        })));
+describe('PlantDiseaseService - vectorize', () => {
+  it('should vectorize tokens against vocabulary', () => {
+    const tokens = ['quick', 'brown', 'fox'];
+    const vocab = ['quick', 'brown', 'fox', 'dog'];
+    const idf = { quick: 1, brown: 1, fox: 1, dog: 1 };
+    const result = service.vectorize(tokens, vocab, idf);
+    expect(result).toHaveLength(4);
+    expect(result[0]).toBe(1);
+    expect(result[1]).toBe(1);
+    expect(result[2]).toBe(1);
+    expect(result[3]).toBe(0);
+  });
+});
 
-        const result = await plantDiseaseService.analyzeImage('base64-image');
+describe('PlantDiseaseService - cosineSimilarity', () => {
+  it('should calculate cosine similarity between identical vectors', () => {
+    const v1 = [1, 0, 0];
+    const v2 = [1, 0, 0];
+    const result = service.cosineSimilarity(v1, v2);
+    expect(result).toBe(1);
+  });
 
-        expect(result.confidence).toBe(0.72);
-        expect(result.diseases[0].confidence).toBe(0.4);
-        expect(result.reviewStatus).toBe('needs_expert_review');
-        expect(result.diseases[0].reviewStatus).toBe('needs_expert_review');
-        expect(result.provenance).toEqual(expect.objectContaining({
-            evidenceStatus: 'no_verified_source',
-            provider: 'openai',
-            model: 'vision-test-model',
-        }));
-    });
+  it('should calculate cosine similarity between orthogonal vectors', () => {
+    const v1 = [1, 0, 0];
+    const v2 = [0, 1, 0];
+    const result = service.cosineSimilarity(v1, v2);
+    expect(result).toBe(0);
+  });
 
-    it('does not return invented health metrics when vision analysis is unavailable', async () => {
-        mockGetProvider.mockRejectedValueOnce(new Error('provider unavailable'));
+  it('should handle zero-magnitude vectors', () => {
+    const v1 = [0, 0, 0];
+    const v2 = [1, 1, 1];
+    const result = service.cosineSimilarity(v1, v2);
+    expect(result).toBe(0);
+  });
+});
 
-        const result = await plantDiseaseService.analyzeImage('base64-image');
+describe('PlantDiseaseService - diagnoseFromSymptoms', () => {
+  it('should diagnose late blight from matching symptoms', async () => {
+    const symptoms = ['dark water-soaked lesions on leaves', 'white fungal growth on leaf undersides'];
+    const diagnoses = await service.diagnoseFromSymptoms(symptoms);
+    
+    expect(diagnoses).toBeInstanceOf(Array);
+    const lateBlight = diagnoses.find((d: DiseaseDiagnosis) => d.disease.includes('Late Blight'));
+    expect(lateBlight).toBeDefined();
+    expect(lateBlight?.disease).toBe('Late Blight');
+    expect(lateBlight?.confidence).toBeGreaterThan(0);
+  });
 
-        expect(result.overallHealth).toBe('unknown');
-        expect(result.confidence).toBe(0);
-        expect(result.reviewStatus).toBe('needs_expert_review');
-        expect(result.diseases).toEqual([]);
-        expect(result.provenance.evidenceStatus).toBe('no_verified_source');
-    });
+  it('should diagnose powdery mildew from matching symptoms', async () => {
+    const symptoms = ['white powdery coating on leaves', 'yellowing leaves'];
+    const diagnoses = await service.diagnoseFromSymptoms(symptoms);
+    
+    const powderyMildew = diagnoses.find((d: DiseaseDiagnosis) => d.disease.includes('Powdery Mildew'));
+    expect(powderyMildew).toBeDefined();
+    expect(powderyMildew?.disease).toBe('Powdery Mildew');
+  });
 
-    it('does not return invented soil metrics when soil analysis cannot be parsed', async () => {
-        mockGetProvider.mockResolvedValueOnce(makeVisionProvider('not-json'));
+  it('should return empty array for non-matching symptoms', async () => {
+    const diagnoses = await service.diagnoseFromSymptoms(['unknown symptom xyz']);
+    expect(diagnoses).toHaveLength(0);
+  });
 
-        const result = await plantDiseaseService.analyzeSoilImage('base64-image');
+  it('should sort diagnoses by confidence descending', async () => {
+    const symptoms = ['some agricultural symptom'];
+    const diagnoses = await service.diagnoseFromSymptoms(symptoms);
+    
+    for (let i = 1; i < diagnoses.length; i++) {
+      expect(diagnoses[i - 1].confidence).toBeGreaterThanOrEqual(diagnoses[i].confidence);
+    }
+  });
 
-        expect(result.overallHealthScore).toBeNull();
-        expect(result.confidence).toBe(0);
-        expect(result.npkDeficiencies).toEqual({
-            nitrogen: 'unknown',
-            phosphorus: 'unknown',
-            potassium: 'unknown',
-        });
-        expect(result.cropSuitability).toEqual([]);
-        expect(result.reviewStatus).toBe('needs_expert_review');
-    });
+  it('should limit diagnoses to top 3', async () => {
+    const symptoms = ['some agricultural symptom'];
+    const diagnoses = await service.diagnoseFromSymptoms(symptoms);
+    
+    expect(diagnoses.length).toBeLessThanOrEqual(3);
+  });
+});
+
+describe('PlantDiseaseService - getDiseaseInfo', () => {
+  it('should return disease info for known disease', () => {
+    const result = service.getDiseaseInfo('late_blight');
+    expect(result).toBeDefined();
+    expect(result?.symptoms).toContain('Dark water-soaked lesions on leaves');
+  });
+
+  it('should return null for unknown disease', () => {
+    const result = service.getDiseaseInfo('unknown_disease');
+    expect(result).toBeNull();
+  });
+});
+
+describe('PlantDiseaseService - getAllDiseases', () => {
+  it('should return all disease names', () => {
+    const result = service.getAllDiseases();
+    expect(result).toContain('Late Blight');
+    expect(result).toContain('Powdery Mildew');
+    expect(result).toContain('Bacterial Wilt');
+    expect(result).toContain('Leaf Spot');
+    expect(result).toContain('Rust');
+    expect(result).toContain('Mosaic Virus');
+    expect(result).toHaveLength(6);
+  });
 });

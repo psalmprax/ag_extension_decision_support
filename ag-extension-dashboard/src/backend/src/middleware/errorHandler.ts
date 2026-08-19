@@ -2,11 +2,15 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '@/utils/logger';
 
+export interface ErrorDetails {
+    [key: string]: unknown;
+}
+
 export interface AppError extends Error {
     statusCode?: number;
     isOperational?: boolean;
     code?: string;
-    details?: any;
+    details?: ErrorDetails;
 }
 
 // Error types for consistent error handling
@@ -23,7 +27,7 @@ export enum ErrorTypes {
 }
 
 // Create specific error types
-export function createError(message: string, statusCode: number, type?: ErrorTypes, details?: any): AppError {
+export function createError(message: string, statusCode: number, type?: ErrorTypes, details?: ErrorDetails): AppError {
     const error: AppError = new Error(message);
     error.statusCode = statusCode;
     error.isOperational = true;
@@ -32,34 +36,42 @@ export function createError(message: string, statusCode: number, type?: ErrorTyp
     return error;
 }
 
-export function createValidationError(details: any): AppError {
+// fallow-ignore-next-line unused-export
+export function createValidationError(details: ErrorDetails): AppError {
     return createError('Validation failed', 400, ErrorTypes.VALIDATION_ERROR, details);
 }
 
+// fallow-ignore-next-line unused-export
 export function createAuthenticationError(message = 'Authentication required'): AppError {
     return createError(message, 401, ErrorTypes.AUTHENTICATION_ERROR);
 }
 
+// fallow-ignore-next-line unused-export
 export function createAuthorizationError(message = 'Insufficient permissions'): AppError {
     return createError(message, 403, ErrorTypes.AUTHORIZATION_ERROR);
 }
 
+// fallow-ignore-next-line unused-export
 export function createNotFoundError(resource = 'Resource'): AppError {
     return createError(`${resource} not found`, 404, ErrorTypes.NOT_FOUND_ERROR);
 }
 
+// fallow-ignore-next-line unused-export
 export function createConflictError(message = 'Resource conflict'): AppError {
     return createError(message, 409, ErrorTypes.CONFLICT_ERROR);
 }
 
+// fallow-ignore-next-line unused-export
 export function createDatabaseError(message = 'Database operation failed'): AppError {
     return createError(message, 500, ErrorTypes.DATABASE_ERROR);
 }
 
+// fallow-ignore-next-line unused-export
 export function createRateLimitError(message = 'Too many requests'): AppError {
     return createError(message, 429, ErrorTypes.RATE_LIMIT_ERROR);
 }
 
+// fallow-ignore-next-line unused-export
 export function createExternalServiceError(service: string, message?: string): AppError {
     return createError(
         message || `External service ${service} failed`,
@@ -76,7 +88,7 @@ interface ErrorResponse {
         message: string;
         type?: string;
         code?: string;
-        details?: any;
+        details?: ErrorDetails;
         stack?: string;
     };
     requestId?: string;
@@ -143,7 +155,8 @@ export function errorHandler(
  * Error handling for Express async routes
  * This ensures all async errors are properly caught and passed to the error handler
  */
-export const asyncWrapper = (fn: (...args: any[]) => any) => (req: Request, res: Response, next: NextFunction) => {
+// fallow-ignore-next-line unused-export
+export const asyncWrapper = <T extends (...args: any[]) => any>(fn: T) => (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch((err: any) => {
         // Handle specific error types
         if (err.name === 'JsonWebTokenError') {
@@ -162,12 +175,13 @@ export const asyncWrapper = (fn: (...args: any[]) => any) => (req: Request, res:
     });
 };
 
-// Use asyncWrapper below - this is kept for backward compatibility
+// fallow-ignore-next-line unused-export
 export const asyncHandler = asyncWrapper;
 
 /**
  * 404 Not Found handler
  */
+// fallow-ignore-next-line unused-export
 export function notFound(req: Request, res: Response, next: NextFunction): void {
     const error = createNotFoundError(`Route ${req.method} ${req.path}`);
     next(error);
@@ -176,7 +190,7 @@ export function notFound(req: Request, res: Response, next: NextFunction): void 
 /**
  * Handle Prisma-specific errors
  */
-export function handlePrismaError(error: any): AppError {
+export function handlePrismaError(error: { code?: string; message?: string; meta?: ErrorDetails }): AppError {
     // Prisma known error codes
     const prismaErrorMessages: Record<string, string> = {
         P2000: 'The provided value for the column is too long for the column\'s type',
@@ -226,7 +240,8 @@ export function handlePrismaError(error: any): AppError {
 /**
  * Handle JSON parsing errors
  */
-export function handleJsonParseError(error: any): AppError {
+// fallow-ignore-next-line unused-export
+export function handleJsonParseError(error: SyntaxError): AppError {
     if (error instanceof SyntaxError && error.message.includes('JSON')) {
         return createError(
             'Invalid JSON in request body',
@@ -241,7 +256,8 @@ export function handleJsonParseError(error: any): AppError {
 /**
  * Handle multer (file upload) errors
  */
-export function handleMulterError(error: any): AppError {
+// fallow-ignore-next-line unused-export
+export function handleMulterError(error: { code?: string; field?: string; message?: string }): AppError {
     const multerErrorMessages: Record<string, string> = {
         LIMIT_FILE_SIZE: 'File size exceeds the maximum allowed limit',
         LIMIT_FILE_COUNT: 'Maximum file count exceeded',

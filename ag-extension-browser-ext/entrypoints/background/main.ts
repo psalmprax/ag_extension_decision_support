@@ -3,13 +3,69 @@ import CONFIG from '../../shared/config';
 // Types for offline queue
 type QueueState = 'pending' | 'failed' | 'conflict';
 
-interface QueuedRequest {
+// Encryption support for IndexedDB storage
+// Uses Web Crypto API with AES-GCM
+// Key is derived once and cached
+let encryptionKey: CryptoKey | null = null;
+
+const getEncryptionKey = async (): Promise<CryptoKey> => {
+    if (encryptionKey) return encryptionKey;
+
+    const keyMaterial = await crypto.subtle.importKey(
+        'raw',
+        new TextEncoder().encode('ag-extension-indexeddb-key'),
+        'PBKDF2',
+        false,
+        ['deriveBits', 'deriveKey']
+    );
+
+    encryptionKey = await crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt: new TextEncoder().encode('ag-extension-salt'), iterations: 100000, hash: 'SHA-256' },
+        keyMaterial,
+        'AES-GCM',
+        false,
+        ['encrypt', 'decrypt']
+    );
+
+    return encryptionKey;
+};
+
+const encryptString = async (str: string): Promise<string> => {
+    const key = await getEncryptionKey();
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const encrypted = await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv },
+        key,
+        new TextEncoder().encode(str)
+    );
+    const ivBuf = new Uint8Array(iv);
+    const combined = new Uint8Array(iv.byteLength + encrypted.byteLength);
+    combined.set(ivBuf, 0);
+    combined.set(new Uint8Array(encrypted), ivBuf.byteLength);
+    return btoa(String.fromCharCode(...combined));
+};
+
+const decryptString = async (encrypted: string): Promise<string> => {
+    const combined = new Uint8Array(atob(encrypted).split('').map((c) => c.charCodeAt(0)));
+    const iv = combined.slice(0, 12);
+    const encryptedData = combined.slice(12);
+    const key = await getEncryptionKey();
+    const decrypted = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv },
+        key,
+        encryptedData
+    );
+    return new TextDecoder().decode(decrypted);
+};
+
+// Types for offline queue
+interface QueuedRequest<T = any> {
     id: string;
     idempotencyKey: string;
     url: string;
     method: string;
     headers: Record<string, string>;
-    body?: any;
+    body?: T;
     attachmentRefs?: string[];
     timestamp: number;
     retries: number;
@@ -144,7 +200,8 @@ export default defineBackground(() => {
     const storeOfflineAttachment = async (input: { file: Blob; farmerId: string }): Promise<string> => {
         if (!db) await initDB();
         const id = `attachment-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-        const attachment: OfflineAttachment = { id, file: input.file, farmerId: input.farmerId, sizeBytes: input.file.size, createdAt: Date.now() };
+        const encryptedFarmerId = await encryptString(input.farmerId);
+        const attachment: OfflineAttachment = { id, file: input.file, farmerId: input.farmerId, sizeBytes: input.file.size, createdAt: Date.now(), encryptedFarmerId };
         await new Promise<void>((resolve, reject) => {
             const transaction = db!.transaction([ATTACHMENT_STORE], 'readwrite');
             const request = transaction.objectStore(ATTACHMENT_STORE).add(attachment);
@@ -187,7 +244,16 @@ export default defineBackground(() => {
         return new Promise((resolve, reject) => {
             const transaction = db!.transaction([ATTACHMENT_STORE], 'readonly');
             const request = transaction.objectStore(ATTACHMENT_STORE).get(id);
-            request.onsuccess = () => resolve((request.result as OfflineAttachment | undefined) || null);
+            request.onsuccess = () => {
+                const result = request.result as OfflineAttachment | undefined;
+                if (result) {
+                    // Decrypt farmerId if encrypted
+                    const decryptedFarmerId = result.encryptedFarmerId ? await decryptString(result.encryptedFarmerId) : result.farmerId;
+                    resolve({ ...result, farmerId: decryptedFarmerId });
+                } else {
+                    resolve(null);
+                }
+            };
             request.onerror = () => reject(new Error(request.error?.message || 'Read attachment failed'));
         });
     };

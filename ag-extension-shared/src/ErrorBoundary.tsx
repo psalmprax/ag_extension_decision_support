@@ -1,6 +1,17 @@
 import React, { Component, ErrorInfo, ReactNode, useCallback, useContext, useMemo, useState } from 'react';
 import { AlertTriangle, Check, Copy, Home, RefreshCw, RotateCcw } from 'lucide-react';
 
+// Sanitize error messages to prevent XSS
+const sanitizeErrorMessage = (message: string | null | undefined): string => {
+  if (!message) return '';
+  return message
+    .replace(/&/g, '&')
+    .replace(/</g, '<')
+    .replace(/>/g, '>')
+    .replace(/"/g, '"')
+    .replace(/'/g, '&#039;');
+};
+
 export interface Props {
   children: ReactNode;
   fallback?: ReactNode;
@@ -175,7 +186,7 @@ class ErrorBoundary extends Component<Props, State> {
                   className="text-sm font-mono text-red-600 dark:text-red-400 truncate flex-1"
                   aria-label="Error message"
                 >
-                  {error.message}
+                  {sanitizeErrorMessage(error.message)}
                 </p>
                 <button
                   onClick={this.handleCopyError}
@@ -233,9 +244,9 @@ class ErrorBoundary extends Component<Props, State> {
                 Technical Details
               </summary>
               <pre className="mt-2 text-xs bg-gray-100 dark:bg-gray-700 p-3 rounded-lg overflow-auto max-h-40 text-gray-600 dark:text-gray-300">
-                {error?.stack}
+                {sanitizeErrorMessage(error?.stack ?? '')}
                 {'\n\n'}
-                {errorInfo.componentStack}
+                {sanitizeErrorMessage(errorInfo.componentStack)}
               </pre>
             </details>
           )}
@@ -259,7 +270,7 @@ class ErrorBoundary extends Component<Props, State> {
           <div className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 mb-6 flex flex-col gap-2">
             <div className="flex items-start justify-between gap-2">
               <span className="text-xs font-mono text-red-400 break-all select-all">
-                {error.message}
+                {sanitizeErrorMessage(error.message)}
               </span>
               <button
                 onClick={this.handleCopyError}

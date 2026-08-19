@@ -173,6 +173,8 @@
   "ignoreDependencies": [
     "@headlessui/react",
     "@tailwindcss/typography",
-    "class-variance-authority"
+    "class-variance-authority",
+    "react-dom",
+    "@opengsd/gsd-pi"
   ]
 }

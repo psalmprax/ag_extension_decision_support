@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { authorize, AuthRequest } from '@/middleware/authorize';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { plantDiseaseService } from '@/services/plantDiseaseService';
+import { MAX_UPLOAD_BYTES } from '@/services/uploadService';
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
@@ -80,6 +81,13 @@ router.post('/diagnose/image', allowedRoles, checkUsageLimit('ai_vision'), async
             return res.status(400).json({ success: false, error: 'Image data is required' });
         }
 
+        // Validate file size (max 10MB decoded)
+        const base64Data = imageData.split(',')[1] || imageData;
+        const decodedBytes = Buffer.from(base64Data, 'base64').length;
+        if (decodedBytes > MAX_UPLOAD_BYTES) {
+            return res.status(400).json({ success: false, error: `Image size exceeds maximum limit of ${MAX_UPLOAD_BYTES / (1024 * 1024)}MB` });
+        }
+
         const analysis = await plantDiseaseService.analyzeImage(imageData);
 
         // Save report telemetry
@@ -118,6 +126,13 @@ router.post('/diagnose/soil', allowedRoles, checkUsageLimit('ai_vision'), async 
 
         if (!imageData) {
             return res.status(400).json({ success: false, error: 'Soil image data is required' });
+        }
+
+        // Validate file size (max 10MB decoded)
+        const base64Data = imageData.split(',')[1] || imageData;
+        const decodedBytes = Buffer.from(base64Data, 'base64').length;
+        if (decodedBytes > MAX_UPLOAD_BYTES) {
+            return res.status(400).json({ success: false, error: `Image size exceeds maximum limit of ${MAX_UPLOAD_BYTES / (1024 * 1024)}MB` });
         }
 
         const analysis = await plantDiseaseService.analyzeSoilImage(imageData, details);

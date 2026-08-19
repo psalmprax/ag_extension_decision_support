@@ -18,6 +18,7 @@ coverage/
 _agents/
 _agent/
 brain/
+.kilo/
 tmp/
 .output/
 .wxt/

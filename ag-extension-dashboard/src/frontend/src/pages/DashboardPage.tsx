@@ -20,6 +20,7 @@ import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '@/store/useAppStore';
 import { useRetryWithBackoff } from '@/hooks/useRetryWithBackoff';
 import { fetchFarmers } from '@/api/farmerService';
+import { LiveActivityStream } from '@/components/LiveActivityStream';
 
 const REGION_MAP_MAX_RETRIES = 3;
 const REGION_MAP_RETRY_BASE_DELAY_MS = 800;
@@ -38,6 +39,7 @@ interface DashboardPageProps {
   handleOpenFarmerDetail: (farmer: Farmer) => void;
   user: { role?: string; firstName?: string } | undefined;
   addNotification: (n: { type: 'info' | 'warning' | 'error' | 'success'; message: string }) => void;
+  onOpenUSSDSimulator?: () => void;
 }
 
 const DashboardHeader: React.FC<{
@@ -557,8 +559,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   handleStartConversation,
   handleOpenFarmerDetail,
   user,
+  onOpenUSSDSimulator,
 }) => {
-  const { t } = useLanguage();  const { cardClass, headingClass, dataClass, radiusClass } =
+  const { t } = useLanguage();
+  const { cardClass, headingClass, dataClass, radiusClass } =
     useThemeClasses();
 
   return (
@@ -592,6 +596,22 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           <SupportEfficiencyCard performanceData={performanceData} t={t} cardClass={cardClass} />
           <ActivePulseCard cardClass={cardClass} />
         </div>
+      </div>
+
+      {/* KnockKnock-style Real-Time Intelligence & Severity Stream */}
+      <div className="mb-8">
+        <LiveActivityStream
+          cardClass={cardClass}
+          onOpenUSSDSimulator={onOpenUSSDSimulator}
+          onStartChat={(phone, name) => {
+            const farmer = effectiveFarmers.find(
+              f => f.phone === phone || `${f.firstName} ${f.lastName}` === name
+            );
+            if (farmer) {
+              handleStartConversation(farmer, 'farmer');
+            }
+          }}
+        />
       </div>
 
       <DistributionPanels dashboardData={dashboardData} t={t} cardClass={cardClass} />
