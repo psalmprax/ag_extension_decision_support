@@ -19,6 +19,9 @@ import {
   TrendingUp,
   Calendar,
   ChevronRight,
+  ChevronLeft,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { themes, ThemeName } from '@/theme';
@@ -502,6 +505,369 @@ export interface FarmerMapProps {
   onToggleExpand?: (isExpanded: boolean) => void;
 }
 
+function executeContextMenuAction(
+  action: string,
+  farmer: FarmerData,
+  onFarmerClick?: (farmer: FarmerData) => void,
+  setMapCenter?: (coords: [number, number]) => void
+) {
+  switch (action) {
+    case 'view':
+    case 'chat':
+      onFarmerClick?.(farmer);
+      break;
+    case 'call':
+      if (farmer.phone) {
+        window.location.href = `tel:${farmer.phone}`;
+      }
+      break;
+    case 'navigate':
+      setMapCenter?.([farmer.lat, farmer.lng]);
+      break;
+  }
+}
+
+interface FarmlistSidebarProps {
+  isFarmlistCollapsed: boolean;
+  setIsFarmlistCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
+  filteredFarmers: FarmerData[];
+  selectedFarmer: FarmerData | null;
+  setSelectedFarmer: (f: FarmerData) => void;
+  setMapCenter: (coords: [number, number]) => void;
+  setMapZoom: (z: number) => void;
+  setMapBounds: (b: L.LatLngBoundsExpression | undefined) => void;
+  searchQuery: string;
+  themeName: ThemeName;
+}
+
+const FarmlistSidebar: React.FC<FarmlistSidebarProps> = ({
+  isFarmlistCollapsed,
+  setIsFarmlistCollapsed,
+  filteredFarmers,
+  selectedFarmer,
+  setSelectedFarmer,
+  setMapCenter,
+  setMapZoom,
+  setMapBounds,
+  searchQuery,
+  themeName,
+}) => {
+  return (
+    <div
+      className={`transition-all duration-300 ease-in-out flex flex-col border-r shrink-0 z-20 ${
+        isFarmlistCollapsed
+          ? 'w-0 opacity-0 overflow-hidden border-r-0 pointer-events-none'
+          : 'w-full sm:w-80 opacity-100'
+      } ${
+        themeName === 'cyber'
+          ? 'border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/30'
+          : 'bg-white dark:bg-gray-900'
+      }`}
+    >
+      <div
+        className={`p-4 border-b flex items-center justify-between ${
+          themeName === 'cyber'
+            ? 'border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50'
+            : 'bg-gray-50 dark:bg-gray-800/50'
+        }`}
+      >
+        <div className="text-xs-plus uppercase tracking-wider font-bold text-gray-400">
+          Farmlist ({filteredFarmers.length})
+        </div>
+        <button
+          onClick={() => setIsFarmlistCollapsed(true)}
+          className="p-1 rounded-lg text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          title="Collapse Farmlist"
+          aria-label="Collapse Farmlist"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+      </div>
+      <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
+        {filteredFarmers.length > 0 ? (
+          filteredFarmers.map(farmer => {
+            const isSelected = selectedFarmer?.id === farmer.id;
+            return (
+              <button
+                key={farmer.id}
+                onClick={() => {
+                  setMapCenter([farmer.lat, farmer.lng]);
+                  setMapZoom(16);
+                  setMapBounds(undefined);
+                  setSelectedFarmer(farmer);
+                  if (typeof window !== 'undefined' && window.innerWidth < 640) {
+                    setIsFarmlistCollapsed(true);
+                  }
+                }}
+                className={`w-full text-left p-3 rounded-2xl transition-all flex items-center gap-3 group ${
+                  isSelected
+                    ? 'bg-white dark:bg-gray-800 shadow-md border border-gray-100 dark:border-gray-700'
+                    : 'hover:bg-white/60 dark:hover:bg-gray-800/60 border border-transparent hover:border-gray-100 dark:border-gray-700'
+                }`}
+              >
+                <div className="text-2xl group-hover:scale-110 transition-transform">
+                  {CROP_ICONS[farmer.crop.toLowerCase()] || CROP_ICONS.default}
+                </div>
+                <div className="min-w-0">
+                  <div className="font-bold text-sm truncate text-gray-800 dark:text-white">
+                    {farmer.name || `${farmer.firstName} ${farmer.lastName}`}
+                  </div>
+                  <div className="text-xxs font-medium truncate text-gray-400">
+                    {farmer.region} • {farmer.size}ha
+                  </div>
+                </div>
+              </button>
+            );
+          })
+        ) : (
+          <div className="p-8 text-center">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3 bg-gray-100 dark:bg-gray-800">
+              <Search className="w-6 h-6 text-gray-300" />
+            </div>
+            <p className="text-sm text-gray-500">No farmers found for "{searchQuery}"</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+interface ModalFooterStatsProps {
+  stats: {
+    cropCounts: Record<string, number>;
+    totalSize: number;
+    avgYield: number;
+    topCrops: [string, number][];
+    totalFarms: number;
+  };
+  farmersCount: number;
+  theme: (typeof themes)[ThemeName];
+  themeName: ThemeName;
+  t: (key: string) => string;
+}
+
+const ModalFooterStats: React.FC<ModalFooterStatsProps> = ({
+  stats,
+  farmersCount,
+  theme,
+  themeName,
+  t,
+}) => {
+  const cropColors = ['500', '600', '700'] as const;
+  return (
+    <div className="px-8 py-4 border-t flex items-center justify-between backdrop-blur-sm bg-gray-50/80 dark:bg-gray-800/80 border-gray-100 dark:border-gray-800">
+      <div className="flex items-center gap-8">
+        <div className="flex flex-col">
+          <span className="text-xxs uppercase font-black tracking-widest text-gray-400">
+            {t('map_farms')}
+          </span>
+          <span className="text-xl font-bold text-gray-800 dark:text-white">{farmersCount}</span>
+        </div>
+        <div className="h-8 w-px bg-gray-200 dark:bg-gray-700" />
+        <div className="flex items-center gap-6">
+          {stats.topCrops.map(([crop], idx) => (
+            <div key={crop} className="flex items-center gap-2">
+              <div
+                className="w-2.5 h-2.5 rounded-full"
+                style={{ backgroundColor: theme.primary[cropColors[idx]] }}
+              />
+              <span className="text-sm font-bold capitalize text-gray-600 dark:text-gray-300">
+                {crop}: <span className="font-normal text-gray-400">{stats.cropCounts[crop]}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div
+        className="flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl border"
+        style={{
+          color: theme.primary[600],
+          backgroundColor:
+            themeName === 'cyber' ? 'var(--color-outline)' : `${theme.primary[50]}`,
+          borderColor:
+            themeName === 'cyber' ? 'var(--color-outline)' : `${theme.primary[100]}`,
+        }}
+      >
+        <div
+          className="w-2 h-2 rounded-full animate-ping"
+          style={{ backgroundColor: theme.primary[500] }}
+        />
+        <span className={themeName === 'cyber' ? 'text-primary-300' : ''}>System Online</span>
+      </div>
+    </div>
+  );
+};
+
+interface ExpandedMapModalProps {
+  theme: (typeof themes)[ThemeName];
+  themeName: ThemeName;
+  farmers: FarmerData[];
+  filteredFarmers: FarmerData[];
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
+  isFarmlistCollapsed: boolean;
+  setIsFarmlistCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
+  selectedFarmer: FarmerData | null;
+  setSelectedFarmer: (f: FarmerData) => void;
+  setMapCenter: (coords: [number, number]) => void;
+  setMapZoom: (z: number) => void;
+  setMapBounds: (b: L.LatLngBoundsExpression | undefined) => void;
+  setIsExpanded: (exp: boolean) => void;
+  mapContent: React.ReactNode;
+  stats: {
+    cropCounts: Record<string, number>;
+    totalSize: number;
+    avgYield: number;
+    topCrops: [string, number][];
+    totalFarms: number;
+  };
+  t: (key: string) => string;
+}
+
+const ExpandedMapModal: React.FC<ExpandedMapModalProps> = ({
+  theme,
+  themeName,
+  farmers,
+  filteredFarmers,
+  searchQuery,
+  setSearchQuery,
+  isFarmlistCollapsed,
+  setIsFarmlistCollapsed,
+  selectedFarmer,
+  setSelectedFarmer,
+  setMapCenter,
+  setMapZoom,
+  setMapBounds,
+  setIsExpanded,
+  mapContent,
+  stats,
+  t,
+}) => {
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-0">
+      <div
+        className="bg-white dark:bg-gray-900 rounded-none shadow-2xl w-screen h-screen max-w-none flex flex-col overflow-hidden border-0"
+        style={{ width: '100vw', height: '100vh' }}
+      >
+        {/* Modal Header */}
+        <div className="flex items-center justify-between px-8 py-5 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+          <div className="flex items-center gap-4">
+            <div
+              className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg"
+              style={{
+                background: `linear-gradient(135deg, ${theme.primary[500]}, ${theme.primary[600]})`,
+                boxShadow: `0 10px 25px -5px ${theme.primary[500]}40`,
+              }}
+            >
+              <MapPin className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-black tracking-tight text-gray-800 dark:text-white">
+                {t('map_overview')}
+              </h2>
+              <p className="text-sm font-medium flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                <span
+                  className="flex h-2 w-2 rounded-full animate-pulse"
+                  style={{ backgroundColor: theme.primary[500] }}
+                />
+                {t('common_ai_powered')} • {farmers.length} {t('map_farms')}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsFarmlistCollapsed(prev => !prev)}
+              className={`px-3.5 py-2.5 rounded-2xl transition-all border flex items-center gap-2 text-xs font-bold ${
+                isFarmlistCollapsed
+                  ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-emerald-950/40'
+                  : 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+              title={isFarmlistCollapsed ? 'Show Farmlist' : 'Collapse Farmlist'}
+              aria-label={isFarmlistCollapsed ? 'Show Farmlist' : 'Collapse Farmlist'}
+            >
+              {isFarmlistCollapsed ? (
+                <PanelLeftOpen className="w-4 h-4 text-emerald-400" />
+              ) : (
+                <PanelLeftClose className="w-4 h-4" />
+              )}
+              <span className="hidden sm:inline">
+                {isFarmlistCollapsed ? 'Show Farmlist' : 'Hide Farmlist'}
+              </span>
+            </button>
+
+            <div className="relative group">
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:transition-colors"
+                style={{ color: theme.primary[500] }}
+              />
+              <input
+                type="text"
+                placeholder={t('map_search_placeholder') || 'Search farmers, regions, crops...'}
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 py-2.5 border rounded-2xl w-48 sm:w-80 text-sm focus:outline-none focus:ring-2 transition-all bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700 text-gray-800 dark:text-white placeholder-gray-400"
+                style={{ '--tw-ring-color': `${theme.primary[500]}33` } as React.CSSProperties}
+              />
+            </div>
+            <button
+              onClick={() => setIsExpanded(false)}
+              className={`p-3 rounded-2xl transition-all border ${
+                themeName === 'cyber'
+                  ? 'bg-primary-500/20 hover:text-white'
+                  : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-900 dark:hover:text-white border-gray-100 dark:border-gray-700'
+              }`}
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+        </div>
+
+        {/* Modal Main Content */}
+        <div className="flex-1 flex overflow-hidden relative">
+          <FarmlistSidebar
+            isFarmlistCollapsed={isFarmlistCollapsed}
+            setIsFarmlistCollapsed={setIsFarmlistCollapsed}
+            filteredFarmers={filteredFarmers}
+            selectedFarmer={selectedFarmer}
+            setSelectedFarmer={setSelectedFarmer}
+            setMapCenter={setMapCenter}
+            setMapZoom={setMapZoom}
+            setMapBounds={setMapBounds}
+            searchQuery={searchQuery}
+            themeName={themeName}
+          />
+
+          {/* Map View */}
+          <div className="flex-1 relative">
+            {isFarmlistCollapsed && (
+              <button
+                onClick={() => setIsFarmlistCollapsed(false)}
+                className="absolute top-4 left-4 z-[1000] px-3.5 py-2 rounded-2xl bg-slate-950/90 text-emerald-400 border border-emerald-500/40 shadow-2xl backdrop-blur-xl flex items-center gap-2 text-xs font-bold hover:scale-105 active:scale-95 transition-all shadow-emerald-950/60"
+                title="Open Farmlist"
+                aria-label="Open Farmlist"
+              >
+                <PanelLeftOpen className="w-4 h-4" />
+                <span>Farmlist ({filteredFarmers.length})</span>
+              </button>
+            )}
+            {mapContent}
+          </div>
+        </div>
+
+        {/* Modal Footer Stats */}
+        <ModalFooterStats
+          stats={stats}
+          farmersCount={farmers.length}
+          theme={theme}
+          themeName={themeName}
+          t={t}
+        />
+      </div>
+    </div>,
+    document.body
+  );
+};
+
 export function FarmerMap({
   initialCenter = DEFAULT_CENTER,
   initialZoom = DEFAULT_ZOOM,
@@ -534,23 +900,7 @@ export function FarmerMap({
 
   const handleContextMenuAction = (action: string) => {
     if (!contextMenu) return;
-
-    switch (action) {
-      case 'view':
-        onFarmerClick?.(contextMenu.farmer);
-        break;
-      case 'chat':
-        handleChat(contextMenu.farmer);
-        break;
-      case 'call':
-        if (contextMenu.farmer.phone) {
-          handleCall(contextMenu.farmer.phone);
-        }
-        break;
-      case 'navigate':
-        setMapCenter([contextMenu.farmer.lat, contextMenu.farmer.lng]);
-        break;
-    }
+    executeContextMenuAction(action, contextMenu.farmer, onFarmerClick, setMapCenter);
     setContextMenu(null);
   };
 
@@ -566,6 +916,7 @@ export function FarmerMap({
   const [searchQuery, setSearchQuery] = useState('');
   const [showMiniSearch, setShowMiniSearch] = useState(false);
   const [visibleStats, setVisibleStats] = useState(true);
+  const [isFarmlistCollapsed, setIsFarmlistCollapsed] = useState(false);
 
   // Get theme from store
   const darkMode = useAppStore(state => state.darkMode);
@@ -614,44 +965,29 @@ export function FarmerMap({
     // We can keep the effect if we use it, otherwise remove it too if we removed state
   }, []);
 
+  const applyGpsLocation = (lat: number, lng: number, message: string) => {
+    setCurrentUserLocation([lat, lng]);
+    setMapCenter([lat, lng]);
+    setMapZoom(14);
+    setMapBounds(undefined);
+    toast.success(message, { id: 'gps-detect' });
+  };
+
   const handleLocateMe = () => {
-    if ('geolocation' in navigator) {
-      toast.loading('Detecting your location...', { id: 'gps-detect' });
-      navigator.geolocation.getCurrentPosition(
-        position => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
+    const fallbackLat = farmers.length > 0 ? farmers[0].lat + 0.003 : -1.2863;
+    const fallbackLng = farmers.length > 0 ? farmers[0].lng + 0.003 : 36.8172;
 
-          setCurrentUserLocation([lat, lng]);
-          setMapCenter([lat, lng]);
-          setMapZoom(14);
-          setMapBounds(undefined);
-          toast.success('Location updated!', { id: 'gps-detect' });
-        },
-        error => {
-          console.warn('Failed to get geolocation:', error);
-          // Use a realistic regional default near the first active farmer or Nairobi center to simulate it perfectly
-          const defaultUserLat = farmers.length > 0 ? farmers[0].lat + 0.003 : -1.2863;
-          const defaultUserLng = farmers.length > 0 ? farmers[0].lng + 0.003 : 36.8172;
-
-          setCurrentUserLocation([defaultUserLat, defaultUserLng]);
-          setMapCenter([defaultUserLat, defaultUserLng]);
-          setMapZoom(14);
-          setMapBounds(undefined);
-          toast.success('Using regional GPS fallback (East Africa Hub)', { id: 'gps-detect' });
-        },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-      );
-    } else {
-      const defaultUserLat = farmers.length > 0 ? farmers[0].lat + 0.003 : -1.2863;
-      const defaultUserLng = farmers.length > 0 ? farmers[0].lng + 0.003 : 36.8172;
-
-      setCurrentUserLocation([defaultUserLat, defaultUserLng]);
-      setMapCenter([defaultUserLat, defaultUserLng]);
-      setMapZoom(14);
-      setMapBounds(undefined);
-      toast.success('Using regional GPS fallback (East Africa Hub)');
+    if (!('geolocation' in navigator)) {
+      applyGpsLocation(fallbackLat, fallbackLng, 'Using regional GPS fallback (East Africa Hub)');
+      return;
     }
+
+    toast.loading('Detecting your location...', { id: 'gps-detect' });
+    navigator.geolocation.getCurrentPosition(
+      pos => applyGpsLocation(pos.coords.latitude, pos.coords.longitude, 'Location updated!'),
+      () => applyGpsLocation(fallbackLat, fallbackLng, 'Using regional GPS fallback (East Africa Hub)'),
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+    );
   };
 
   const handleResetView = () => {
@@ -1091,202 +1427,27 @@ export function FarmerMap({
       </div>
 
       {/* Fullscreen Modal */}
-      {isExpanded &&
-        document.body &&
-        createPortal(
-          <div
-            className={`fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-0 `}
-          >
-            <div
-              className={` bg-white dark:bg-gray-900 rounded-none shadow-2xl w-screen h-screen max-w-none flex flex-col overflow-hidden border-0`}
-              style={{ width: '100vw', height: '100vh' }}
-            >
-              {/* Modal Header */}
-              <div
-                className={`flex items-center justify-between px-8 py-5 border-b 'border-gray-100 dark:border-gray-800' 'bg-white dark:bg-gray-900'`}
-              >
-                <div className="flex items-center gap-4">
-                  <div
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg"
-                    style={{
-                      background: `linear-gradient(135deg, ${theme.primary[500]}, ${theme.primary[600]})`,
-                      boxShadow: `0 10px 25px -5px ${theme.primary[500]}40`,
-                    }}
-                  >
-                    <MapPin className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h2
-                      className={`text-2xl font-black tracking-tight 'text-gray-800 dark:text-white'`}
-                    >
-                      {t('map_overview')}
-                    </h2>
-                    <p
-                      className={`text-sm font-medium flex items-center gap-2 'text-gray-500 dark:text-gray-400'`}
-                    >
-                      <span
-                        className="flex h-2 w-2 rounded-full animate-pulse"
-                        style={{ backgroundColor: theme.primary[500] }}
-                      ></span>
-                      {t('common_ai_powered')} • {farmers.length} {t('map_farms')}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="relative group">
-                    <Search
-                      className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:transition-colors"
-                      style={{ color: theme.primary[500] }}
-                    />
-                    <input
-                      type="text"
-                      placeholder={
-                        t('map_search_placeholder') || 'Search farmers, regions, crops...'
-                      }
-                      value={searchQuery}
-                      onChange={e => setSearchQuery(e.target.value)}
-                      className={`pl-10 pr-4 py-2.5 border rounded-2xl w-80 text-sm focus:outline-none focus:ring-2 transition-all bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700 text-gray-800 dark:text-white placeholder-gray-400`}
-                      style={
-                        { '--tw-ring-color': `${theme.primary[500]}33` } as React.CSSProperties
-                      }
-                    />
-                  </div>
-                  <button
-                    onClick={() => setIsExpanded(false)}
-                    className={`p-3 rounded-2xl transition-all border ${themeName === 'cyber' ? 'bg-primary-500/20 hover:text-white' : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-900 dark:hover:text-white border-gray-100 dark:border-gray-700'}`}
-                  >
-                    <X className="w-6 h-6" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Modal Main Content */}
-              <div className="flex-1 flex overflow-hidden">
-                {/* Side Panel */}
-                <div
-                  className={`w-80 border-r flex flex-col ${themeName === 'cyber' ? 'border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/30' : 'bg-white dark:bg-gray-900'}`}
-                >
-                  <div
-                    className={`p-4 border-b ${themeName === 'cyber' ? 'border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50' : 'bg-gray-50 dark:bg-gray-800/50'}`}
-                  >
-                    <div className="text-xs-plus uppercase tracking-wider font-bold text-gray-400">
-                      Farmlist
-                    </div>
-                  </div>
-                  <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
-                    {filteredFarmers.length > 0 ? (
-                      filteredFarmers.map(farmer => (
-                        <button
-                          key={farmer.id}
-                          onClick={() => {
-                            setMapCenter([farmer.lat, farmer.lng]);
-                            setMapZoom(16);
-                            setMapBounds(undefined);
-                            setSelectedFarmer(farmer);
-                          }}
-                          className={`w-full text-left p-3 rounded-2xl transition-all flex items-center gap-3 group ${
-                            selectedFarmer?.id === farmer.id
-                              ? 'bg-white dark:bg-gray-800 shadow-md border border-gray-100 dark:border-gray-700'
-                              : themeName === 'cyber'
-                                ? 'hover:bg-primary-500/5 border border-transparent hover:border-primary-500/10'
-                                : 'hover:bg-white/60 dark:hover:bg-gray-800/60 border border-transparent hover:border-gray-100 dark:hover:border-gray-700'
-                          }`}
-                        >
-                          <div className="text-2xl group-hover:scale-110 transition-transform">
-                            {CROP_ICONS[farmer.crop.toLowerCase()] || CROP_ICONS.default}
-                          </div>
-                          <div className="min-w-0">
-                            <div
-                              className={`font-bold text-sm truncate 'text-gray-800 dark:text-white'`}
-                            >
-                              {farmer.name || `${farmer.firstName} ${farmer.lastName}`}
-                            </div>
-                            <div className={`text-xxs font-medium truncate 'text-gray-400'`}>
-                              {farmer.region} • {farmer.size}ha
-                            </div>
-                          </div>
-                        </button>
-                      ))
-                    ) : (
-                      <div className="p-8 text-center">
-                        <div
-                          className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3 'bg-gray-100 dark:bg-gray-800'`}
-                        >
-                          <Search className={`w-6 h-6 'text-gray-300'`} />
-                        </div>
-                        <p className={`text-sm 'text-gray-500'`}>
-                          No farmers found for "{searchQuery}"
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Map View */}
-                <div className="flex-1 relative">{mapContent}</div>
-              </div>
-
-              {/* Modal Footer Stats */}
-              <div
-                className={`px-8 py-4 border-t flex items-center justify-between backdrop-blur-sm 'bg-gray-50/80 dark:bg-gray-800/80 border-gray-100 dark:border-gray-800'`}
-              >
-                <div className="flex items-center gap-8">
-                  <div className="flex flex-col">
-                    <span
-                      className={`text-xxs uppercase font-black tracking-widest 'text-gray-400'`}
-                    >
-                      {t('map_farms')}
-                    </span>
-                    <span className={`text-xl font-bold 'text-gray-800 dark:text-white'`}>
-                      {farmers.length}
-                    </span>
-                  </div>
-                  <div className={`h-8 w-px 'bg-gray-200 dark:bg-gray-700'`}></div>
-                  <div className="flex items-center gap-6">
-                    {stats.topCrops.map(([crop], idx) => {
-                      const colors = ['500', '600', '700'] as const;
-                      return (
-                        <div key={crop} className="flex items-center gap-2">
-                          <div
-                            className="w-2.5 h-2.5 rounded-full"
-                            style={{ backgroundColor: theme.primary[colors[idx]] }}
-                          ></div>
-                          <span
-                            className={`text-sm font-bold capitalize 'text-gray-600 dark:text-gray-300'`}
-                          >
-                            {crop}:{' '}
-                            <span className={`font-normal 'text-gray-400'`}>
-                              {stats.cropCounts[crop]}
-                            </span>
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div
-                  className="flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl border"
-                  style={{
-                    color: theme.primary[600],
-                    backgroundColor:
-                      themeName === 'cyber' ? 'var(--color-outline)' : `${theme.primary[50]}`,
-                    borderColor:
-                      themeName === 'cyber' ? 'var(--color-outline)' : `${theme.primary[100]}`,
-                  }}
-                >
-                  <div
-                    className="w-2 h-2 rounded-full animate-ping"
-                    style={{ backgroundColor: theme.primary[500] }}
-                  ></div>
-                  <span className={themeName === 'cyber' ? 'text-primary-300' : ''}>
-                    System Online
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+      {isExpanded && (
+        <ExpandedMapModal
+          theme={theme}
+          themeName={themeName}
+          farmers={farmers}
+          filteredFarmers={filteredFarmers}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          isFarmlistCollapsed={isFarmlistCollapsed}
+          setIsFarmlistCollapsed={setIsFarmlistCollapsed}
+          selectedFarmer={selectedFarmer}
+          setSelectedFarmer={setSelectedFarmer}
+          setMapCenter={setMapCenter}
+          setMapZoom={setMapZoom}
+          setMapBounds={setMapBounds}
+          setIsExpanded={setIsExpanded}
+          mapContent={mapContent}
+          stats={stats}
+          t={t}
+        />
+      )}
 
       {/* Context Menu */}
       {contextMenu && (
