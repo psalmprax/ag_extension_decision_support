@@ -11,8 +11,15 @@ import {
   ExternalLink,
   Smartphone,
   Flame,
+  Video,
+  X,
+  Calendar,
+  Mic,
+  Camera,
 } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
+import { JourneyBreadcrumbs, JourneyStep } from './JourneyBreadcrumbs';
+import { InlineVisitBookingCard } from './InlineVisitBookingCard';
 
 export interface ActivityItem {
   id: string;
@@ -28,6 +35,7 @@ export interface ActivityItem {
   timestamp: string;
   isClaimed: boolean;
   claimedBy?: string;
+  journeySteps: JourneyStep[];
 }
 
 const SAMPLE_ACTIVITIES: ActivityItem[] = [
@@ -44,6 +52,11 @@ const SAMPLE_ACTIVITIES: ActivityItem[] = [
     aiSummary: 'Water-soaked leaf lesions spreading rapidly after heavy rain. High spore germination risk.',
     timestamp: '2m ago',
     isClaimed: false,
+    journeySteps: [
+      { label: 'USSD Dialed', dwellTime: '2m ago' },
+      { label: 'Diagnosis Menu', dwellTime: '1m ago' },
+      { label: 'Leaf Blight Query', dwellTime: 'Now', status: 'active' },
+    ],
   },
   {
     id: 'act-2',
@@ -58,6 +71,11 @@ const SAMPLE_ACTIVITIES: ActivityItem[] = [
     aiSummary: 'Windowpaning on whorl leaves. Larvae detected in upper canopy. Recommends Emamectin benzoate.',
     timestamp: '7m ago',
     isClaimed: false,
+    journeySteps: [
+      { label: 'SMS Received', dwellTime: '7m ago' },
+      { label: 'Pest AI Parser', dwellTime: '6m ago' },
+      { label: 'Triage Queue', dwellTime: 'Now', status: 'active' },
+    ],
   },
   {
     id: 'act-3',
@@ -72,6 +90,11 @@ const SAMPLE_ACTIVITIES: ActivityItem[] = [
     aiSummary: 'Isolated orange pustules under lower leaves. Recommended cultural pruning and copper fungicide.',
     timestamp: '15m ago',
     isClaimed: false,
+    journeySteps: [
+      { label: 'Mobile App Opened', dwellTime: '15m ago' },
+      { label: 'Leaf Photo Upload', dwellTime: '12m ago' },
+      { label: 'Advice Viewed', dwellTime: 'Now', status: 'active' },
+    ],
   },
   {
     id: 'act-4',
@@ -87,6 +110,11 @@ const SAMPLE_ACTIVITIES: ActivityItem[] = [
     timestamp: '28m ago',
     isClaimed: true,
     claimedBy: 'Officer Mwangi',
+    journeySteps: [
+      { label: 'USSD Dialed', dwellTime: '28m ago' },
+      { label: 'Fertilizer Menu', dwellTime: '25m ago' },
+      { label: 'Officer Intervened', dwellTime: 'Now', status: 'active' },
+    ],
   },
 ];
 
@@ -104,8 +132,11 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
   useLanguage();
   const [activities, setActivities] = useState<ActivityItem[]>(SAMPLE_ACTIVITIES);
   const [filterSeverity, setFilterSeverity] = useState<'all' | 'critical' | 'moderate'>('all');
+  const [sortByUrgency, setSortByUrgency] = useState<boolean>(true);
   const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
+  const [showBookingId, setShowBookingId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
+  const [activeVideoCall, setActiveVideoCall] = useState<{ farmerName: string; phone: string; issue: string } | null>(null);
 
   const handleClaim = (id: string) => {
     setActivities(prev =>
@@ -137,11 +168,13 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
     if (activeReplyId === id) setActiveReplyId(null);
   };
 
-  const filtered = activities.filter(act => {
-    if (filterSeverity === 'critical') return act.severityScore >= 70;
-    if (filterSeverity === 'moderate') return act.severityScore < 70 && act.severityScore >= 30;
-    return true;
-  });
+  const filtered = activities
+    .filter(act => {
+      if (filterSeverity === 'critical') return act.severityScore >= 70;
+      if (filterSeverity === 'moderate') return act.severityScore < 70 && act.severityScore >= 30;
+      return true;
+    })
+    .sort((a, b) => (sortByUrgency ? b.severityScore - a.severityScore : 0));
 
   const getScoreBadge = (score: number) => {
     if (score >= 70) {
@@ -216,7 +249,7 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
               </span>
             </div>
             <p className="text-xs text-slate-400">
-              Live farmer triage, severity scoring, and human-in-the-loop takeover
+              Live farmer triage, journey breadcrumbs, and 1-click tele-agronomy handoff
             </p>
           </div>
         </div>
@@ -232,6 +265,19 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
               <span>USSD Sandbox</span>
             </button>
           )}
+
+          <button
+            onClick={() => setSortByUrgency(prev => !prev)}
+            title="Toggle Urgency Heat Ranking"
+            className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 transition-all ${
+              sortByUrgency
+                ? 'bg-rose-500/15 border-rose-500/40 text-rose-300 shadow-sm'
+                : 'bg-slate-900 text-slate-400 border-slate-800'
+            }`}
+          >
+            <Flame className="w-3.5 h-3.5" />
+            <span>Urgency Heat</span>
+          </button>
 
           <div className="flex rounded-lg bg-slate-900/60 p-0.5 border border-slate-800">
             {(['all', 'critical', 'moderate'] as const).map(f => (
@@ -263,7 +309,7 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
               activity.isClaimed
                 ? 'bg-emerald-950/20 border-emerald-500/40 shadow-lg shadow-emerald-950/30'
                 : activity.severityScore >= 70
-                ? 'bg-slate-900/90 border-rose-500/30 hover:border-rose-500/50'
+                ? 'bg-slate-900/90 border-rose-500/30 hover:border-rose-500/50 shadow-md shadow-rose-950/20'
                 : 'bg-slate-900/80 border-slate-800/80 hover:border-slate-700'
             }`}
           >
@@ -285,6 +331,9 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
                 {getScoreBadge(activity.severityScore)}
               </div>
             </div>
+
+            {/* Contextual Journey Breadcrumb Radar */}
+            <JourneyBreadcrumbs steps={activity.journeySteps} className="mb-2" />
 
             {/* Middle Row: Crop & Issue Details */}
             <div className="mb-2">
@@ -317,8 +366,23 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
               </div>
             )}
 
+            {/* Inline Visit Booking Card for Critical Outbreaks */}
+            {showBookingId === activity.id && (
+              <div className="my-2.5">
+                <InlineVisitBookingCard
+                  farmerName={activity.farmerName}
+                  farmerPhone={activity.phone}
+                  issue={activity.issue}
+                  region={activity.region}
+                  onBooked={() => {
+                    setTimeout(() => setShowBookingId(null), 1800);
+                  }}
+                />
+              </div>
+            )}
+
             {/* Quick Actions Footer */}
-            <div className="flex items-center justify-between pt-2 border-t border-slate-800/60 mt-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/60 mt-2">
               <div className="flex items-center gap-2">
                 {!activity.isClaimed ? (
                   <button
@@ -338,13 +402,39 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
                   </button>
                 )}
 
+                {/* 1-Click Tele-Agronomy Video Call */}
+                <button
+                  onClick={() =>
+                    setActiveVideoCall({
+                      farmerName: activity.farmerName,
+                      phone: activity.phone,
+                      issue: activity.issue,
+                    })
+                  }
+                  className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1"
+                >
+                  <Video className="w-3.5 h-3.5 text-emerald-400" />
+                  Tele-Call
+                </button>
+
+                {/* Priority Visit Schedule Toggle */}
+                {activity.severityScore >= 70 && (
+                  <button
+                    onClick={() => setShowBookingId(showBookingId === activity.id ? null : activity.id)}
+                    className="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 rounded-lg text-xs font-bold transition-all flex items-center gap-1"
+                  >
+                    <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                    Dispatch Visit
+                  </button>
+                )}
+
                 {onStartChat && (
                   <button
                     onClick={() => onStartChat(activity.phone, activity.farmerName)}
                     className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1"
                   >
                     <ExternalLink className="w-3 h-3" />
-                    Open Chat
+                    Chat View
                   </button>
                 )}
               </div>
@@ -388,6 +478,70 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
           </motion.div>
         ))}
       </div>
+
+      {/* ── Tele-Agronomy Floating Call Bridge Modal ── */}
+      <AnimatePresence>
+        {activeVideoCall && (
+          <div className="fixed inset-0 z-[1300] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-lg bg-slate-950 border border-emerald-500/40 rounded-2xl shadow-2xl p-5 space-y-4 text-white"
+            >
+              <div className="flex justify-between items-center pb-3 border-b border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+                    <Video className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-white">Tele-Agronomy Video Consultation</h4>
+                    <p className="text-xs text-slate-400">
+                      Live with {activeVideoCall.farmerName} ({activeVideoCall.phone})
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setActiveVideoCall(null)}
+                  className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Simulated Camera Video View */}
+              <div className="relative h-56 bg-slate-900 rounded-xl overflow-hidden border border-slate-800 flex items-center justify-center">
+                <div className="absolute top-3 left-3 bg-rose-500/20 text-rose-300 border border-rose-500/40 px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1">
+                  <Radio className="w-2.5 h-2.5 animate-pulse text-rose-400" />
+                  LIVE ENCRYPTED WebRTC
+                </div>
+                <div className="text-center space-y-2">
+                  <Camera className="w-10 h-10 text-emerald-400 animate-pulse mx-auto opacity-80" />
+                  <p className="text-xs text-slate-300 font-medium">Farmer Camera Feed (Live Inspection)</p>
+                  <span className="text-[10px] text-slate-500 font-mono">Case: {activeVideoCall.issue}</span>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center pt-2">
+                <div className="flex gap-2">
+                  <button className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300">
+                    <Mic className="w-4 h-4" />
+                  </button>
+                  <button className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300">
+                    <Camera className="w-4 h-4" />
+                  </button>
+                </div>
+                <button
+                  onClick={() => setActiveVideoCall(null)}
+                  className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl transition-all shadow-md shadow-rose-950"
+                >
+                  End Tele-Consultation
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

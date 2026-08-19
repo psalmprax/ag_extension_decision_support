@@ -13,15 +13,26 @@ import {
   Volume2,
   Leaf,
   ArrowRight,
+  Video,
+  Radio,
 } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
+import { ProgressiveProfileChips, ProfileParameter } from './ProgressiveProfileChips';
 
 interface FloatingAIPillProps {
   onOpenUSSDSandbox?: () => void;
   onNavigateToDiagnosis?: () => void;
 }
 
-type TabType = 'chat' | 'scan' | 'voice' | 'sms';
+type TabType = 'chat' | 'scan' | 'voice' | 'telecall';
+
+const INITIAL_PROFILE: ProfileParameter[] = [
+  { key: 'name', label: 'Farmer', value: 'Samuel Kiprop' },
+  { key: 'crop', label: 'Crop', value: 'Potatoes / Maize' },
+  { key: 'acreage', label: 'Acreage', value: '4.5 Ha' },
+  { key: 'location', label: 'Ward', value: 'Njoro, Nakuru' },
+  { key: 'soil', label: 'Soil pH', value: null },
+];
 
 export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
   onOpenUSSDSandbox,
@@ -31,6 +42,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('chat');
   const [chatInput, setChatInput] = useState('');
+  const [profileParams, setProfileParams] = useState<ProfileParameter[]>(INITIAL_PROFILE);
   const [messages, setMessages] = useState<Array<{ sender: 'ai' | 'user'; text: string; time: string }>>([
     {
       sender: 'ai',
@@ -61,6 +73,13 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
     const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     setMessages(prev => [...prev, { sender: 'user', text: userText, time: now }]);
     setChatInput('');
+
+    // Check if user mentioned soil parameter to demonstrate progressive profiling
+    if (userText.toLowerCase().includes('ph') || userText.toLowerCase().includes('soil')) {
+      setProfileParams(prev =>
+        prev.map(p => (p.key === 'soil' ? { ...p, value: '6.4 (Optimal)' } : p))
+      );
+    }
 
     // Generate responsive agronomic advice
     setTimeout(() => {
@@ -98,7 +117,10 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
       setVoiceTranscript('Listening in English / Swahili...');
       setTimeout(() => {
         setIsRecording(false);
-        setVoiceTranscript('"Farmer Otieno reports yellowing potato leaves in Ward 4 after continuous overnight rainfall."');
+        setVoiceTranscript('"Farmer Otieno reports yellowing potato leaves in Ward 4 after continuous overnight rainfall. Soil pH tested at 6.2."');
+        setProfileParams(prev =>
+          prev.map(p => (p.key === 'soil' ? { ...p, value: '6.2 (Loam)' } : p))
+        );
       }, 2500);
     } else {
       setIsRecording(false);
@@ -151,7 +173,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 30 }}
             transition={{ type: 'spring', damping: 25, stiffness: 260 }}
-            className="fixed bottom-6 right-6 z-[1100] w-[380px] sm:w-[420px] max-h-[600px] h-[85vh] bg-slate-950/95 border border-emerald-500/30 rounded-3xl shadow-2xl backdrop-blur-2xl flex flex-col overflow-hidden text-slate-100 shadow-emerald-950/80"
+            className="fixed bottom-6 right-6 z-[1100] w-[380px] sm:w-[420px] max-h-[640px] h-[88vh] bg-slate-950/95 border border-emerald-500/30 rounded-3xl shadow-2xl backdrop-blur-2xl flex flex-col overflow-hidden text-slate-100 shadow-emerald-950/80"
           >
             {/* Drawer Header */}
             <div className="p-4 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md flex items-center justify-between">
@@ -194,7 +216,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
             <div className="px-3 py-2 bg-slate-900/40 border-b border-slate-800/60 flex items-center justify-around text-xs">
               <button
                 onClick={() => setActiveTab('chat')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl font-bold transition-all ${
                   activeTab === 'chat'
                     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
                     : 'text-slate-400 hover:text-slate-200'
@@ -205,7 +227,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
               </button>
               <button
                 onClick={() => setActiveTab('scan')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl font-bold transition-all ${
                   activeTab === 'scan'
                     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
                     : 'text-slate-400 hover:text-slate-200'
@@ -216,7 +238,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
               </button>
               <button
                 onClick={() => setActiveTab('voice')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl font-bold transition-all ${
                   activeTab === 'voice'
                     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
                     : 'text-slate-400 hover:text-slate-200'
@@ -225,6 +247,17 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
                 <Mic className="w-3.5 h-3.5" />
                 Voice
               </button>
+              <button
+                onClick={() => setActiveTab('telecall')}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl font-bold transition-all ${
+                  activeTab === 'telecall'
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Video className="w-3.5 h-3.5" />
+                Tele-Call
+              </button>
             </div>
 
             {/* Drawer Body */}
@@ -232,6 +265,9 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
               {/* TAB 1: AGRONOMIST CHAT */}
               {activeTab === 'chat' && (
                 <div className="flex flex-col h-full space-y-3">
+                  {/* Progressive Conversational Profile Intake Header */}
+                  <ProgressiveProfileChips parameters={profileParams} />
+
                   <div className="space-y-3 flex-1">
                     {messages.map((msg, idx) => (
                       <motion.div
@@ -256,7 +292,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
 
                   {/* Preset quick prompts */}
                   <div className="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5">
-                    {['Maize stem borers', 'Tomato late blight', 'CAN fertilizer timing'].map(prompt => (
+                    {['Maize stem borers', 'Tomato late blight', 'Soil pH 6.5 recommendations'].map(prompt => (
                       <button
                         key={prompt}
                         onClick={() => {
@@ -381,6 +417,42 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
                       </button>
                     </motion.div>
                   )}
+                </div>
+              )}
+
+              {/* TAB 4: TELE-AGRONOMY CALL BRIDGE */}
+              {activeTab === 'telecall' && (
+                <div className="space-y-4 text-center p-2">
+                  <div className="p-5 rounded-2xl bg-slate-900 border border-emerald-500/30 space-y-3">
+                    <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mx-auto">
+                      <Video className="w-6 h-6" />
+                    </div>
+                    <h4 className="text-xs font-bold text-white">Instant Tele-Agronomy Call</h4>
+                    <p className="text-[11px] text-slate-400">
+                      Establish an encrypted low-bandwidth video & audio session with field farmers for visual leaf inspection.
+                    </p>
+                    <div className="flex items-center justify-center gap-1.5 text-[10px] text-emerald-400 font-mono">
+                      <Radio className="w-3 h-3 animate-pulse" />
+                      WebRTC Mesh Ready (H.264 / Opus)
+                    </div>
+                    <button
+                      onClick={() => {
+                        setMessages(prev => [
+                          ...prev,
+                          {
+                            sender: 'ai',
+                            text: '📹 Tele-Agronomy consultation link generated: https://ag-extension.org/tele-call/session-8821. Farmer notified via SMS.',
+                            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                          },
+                        ]);
+                        setActiveTab('chat');
+                      }}
+                      className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition-all shadow-md shadow-emerald-950 flex items-center justify-center gap-2"
+                    >
+                      <Video className="w-4 h-4" />
+                      Generate Live Call Link & Dispatch SMS
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
