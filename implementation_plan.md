@@ -181,3 +181,77 @@ graph TD
    - Validate YAML structures of `.github/workflows/security-audit.yml` and `.github/workflows/ci-cd.yml`.
 4. **Git Hygiene Verification**:
    - Verify all work is committed to `stage` branch according to `CLAUDE.md`.
+
+---
+
+# Implementation Plan: Fix Goal Campaign Trace Type Import
+
+## Objective
+
+Resolve the frontend TypeScript build failure where `GoalModeCampaignModal.tsx` references `CampaignStepTrace` without a local declaration or import.
+
+## Scope and Changes
+
+- `ag-extension-dashboard/src/frontend/src/api/campaignService.ts`: export the existing `CampaignStepTrace` interface so API consumers can use the response type.
+- `ag-extension-dashboard/src/frontend/src/components/campaigns/GoalModeCampaignModal.tsx`: import `CampaignStepTrace` as a type and retain the existing execution-trace state shape.
+- No backend, API behavior, or localization changes will be modified.
+- With approval during verification, remove the stale `heroRef` usage in the pre-existing `LandingPage.tsx` edit so the frontend can compile and its smoke test can run.
+
+## Verification
+
+- Run `npm run typecheck` from `ag-extension-dashboard/src/frontend`.
+- Run the frontend Vitest suite with `npm test` from `ag-extension-dashboard/src/frontend`.
+- Run the frontend lint command and review the diff for unused or incorrect imports.
+
+## Regression Risk
+
+Low. The trace change is type-only, while the approved follow-ups only restore the existing page interaction and expose an already-managed loading state; API payloads remain unchanged.
+
+---
+
+# Implementation Plan: Reduce Frontend Initial Bundle Size
+
+## Objective
+
+Reduce the production entry chunk currently exceeding the 650 kB warning threshold by removing closed modal/panel trees from the initial JavaScript load, while preserving authenticated UI behavior and existing route-level lazy loading.
+
+## Scope and Changes
+
+- `ag-extension-dashboard/src/frontend/src/components/AppModals.tsx`: replace eager modal imports with `React.lazy` imports and render each modal only when its corresponding state is open. Add a local `Suspense` boundary for the asynchronous modal trees.
+- `ag-extension-dashboard/src/frontend/vite.config.ts`: modify only if the measured build confirms that additional vendor grouping is required after modal code-splitting; do not suppress the warning by merely raising `chunkSizeWarningLimit`.
+- No API, route, data, or visual behavior changes are intended beyond asynchronous loading of a modal immediately before it opens.
+
+## Verification
+
+- Run `npm run typecheck`, `npm test`, and `npm run lint` from `ag-extension-dashboard/src/frontend`.
+- Run `npm run build` and confirm the largest initial chunk is below the warning threshold or document any remaining non-initial chunk warnings.
+- Review the generated asset list and diff for accidental eager imports or behavior changes.
+
+## Regression Risk
+
+Low to moderate. Modal opening now has a dynamic-import boundary; the `Suspense` fallback must remain safe, and all existing open/close callbacks and props must be preserved.
+
+---
+
+# Implementation Plan: Clean React `act()` Warnings in Frontend Tests
+
+## Objective
+
+Eliminate the existing React `act()` warnings caused by `LanguageProvider` completing its asynchronous locale initialization after synchronous test renders.
+
+## Scope and Changes
+
+- `ag-extension-dashboard/src/frontend/src/test/languageTestUtils.tsx`: add a reusable `renderWithLanguage` helper that renders `LanguageProvider` and awaits its initial async update inside `act`.
+- `ag-extension-dashboard/src/frontend/src/__tests__/KnockKnockAesthetic.test.tsx`: use the helper for all provider-backed renders.
+- `ag-extension-dashboard/src/frontend/src/__tests__/Phase2Aesthetic.test.tsx`: use the helper for all provider-backed renders.
+- Production components and provider behavior remain unchanged; no warning suppression or test-only provider mock will be added.
+
+## Verification
+
+- Run the two affected Vitest files and confirm their output contains no React `act()` warnings.
+- Run the full frontend Vitest suite, typecheck, and lint.
+- Review the diff to ensure test assertions and interaction sequences remain unchanged.
+
+## Regression Risk
+
+Low. The helper only waits for the provider’s existing initialization to settle before assertions begin; it does not change application behavior or test data.

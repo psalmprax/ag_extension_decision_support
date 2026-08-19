@@ -1,21 +1,44 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, Loader2, X } from 'lucide-react';
-import { VisitModal } from '@/components/forms/VisitModal';
-import { FarmerDetailPanel } from '@/components/FarmerDetailPanel';
-import { NotificationPanel } from '@/components/NotificationPanel';
-import { ContextMenu } from '@/components/ContextMenu';
-import { ShareModal } from '@/components/ShareModal';
-import { ProfileModal } from '@/components/ProfileModal';
-import { SettingsPanel } from '@/components/SettingsPanel';
-import { HelpCenterModal } from '@/components/HelpCenterModal';
-import { BulkSmsModal } from '@/components/BulkSmsModal';
-import { BulkUpdateModal } from '@/components/BulkUpdateModal';
-import { ConfirmModal } from '@/components/ConfirmModal';
 import { Farmer, Visit } from '../types/dashboard';
 import { Report, downloadReport } from '@/api/reportService';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
+
+const VisitModal = React.lazy(() =>
+  import('@/components/forms/VisitModal').then(module => ({ default: module.VisitModal }))
+);
+const FarmerDetailPanel = React.lazy(() =>
+  import('@/components/FarmerDetailPanel').then(module => ({ default: module.FarmerDetailPanel }))
+);
+const NotificationPanel = React.lazy(() =>
+  import('@/components/NotificationPanel').then(module => ({ default: module.NotificationPanel }))
+);
+const ContextMenu = React.lazy(() =>
+  import('@/components/ContextMenu').then(module => ({ default: module.ContextMenu }))
+);
+const ShareModal = React.lazy(() =>
+  import('@/components/ShareModal').then(module => ({ default: module.ShareModal }))
+);
+const ProfileModal = React.lazy(() =>
+  import('@/components/ProfileModal').then(module => ({ default: module.ProfileModal }))
+);
+const SettingsPanel = React.lazy(() =>
+  import('@/components/SettingsPanel').then(module => ({ default: module.SettingsPanel }))
+);
+const HelpCenterModal = React.lazy(() =>
+  import('@/components/HelpCenterModal').then(module => ({ default: module.HelpCenterModal }))
+);
+const BulkSmsModal = React.lazy(() =>
+  import('@/components/BulkSmsModal').then(module => ({ default: module.BulkSmsModal }))
+);
+const BulkUpdateModal = React.lazy(() =>
+  import('@/components/BulkUpdateModal').then(module => ({ default: module.BulkUpdateModal }))
+);
+const ConfirmModal = React.lazy(() =>
+  import('@/components/ConfirmModal').then(module => ({ default: module.ConfirmModal }))
+);
 
 interface AppModalsProps {
   // Visit Modal
@@ -116,7 +139,8 @@ export const AppModals: React.FC<AppModalsProps> = props => {
   const { t } = useLanguage();
 
   return (
-    <>
+    <React.Suspense fallback={null}>
+      <>
       {/* Report Generation Overlay */}
       <AnimatePresence>
         {props.isGeneratingReport && (
@@ -355,23 +379,29 @@ export const AppModals: React.FC<AppModalsProps> = props => {
         )}
 
       {/* Visit Modal */}
-      <VisitModal
-        isOpen={props.showVisitModal}
-        onClose={() => props.setShowVisitModal(false)}
-        onSuccess={() => props.refetchVisits()}
-      />
+      {props.showVisitModal && (
+        <VisitModal
+          isOpen
+          onClose={() => props.setShowVisitModal(false)}
+          onSuccess={() => props.refetchVisits()}
+        />
+      )}
 
       {/* Farmer Detail Panel */}
-      <FarmerDetailPanel
-        isOpen={props.isDetailPanelOpen}
-        onClose={() => props.setIsDetailPanelOpen(false)}
-        farmer={props.selectedFarmer}
-        visits={props.visits}
-      />
-      <NotificationPanel
-        isOpen={props.isNotificationPanelOpen}
-        onClose={() => props.setIsNotificationPanelOpen(false)}
-      />
+      {props.isDetailPanelOpen && (
+        <FarmerDetailPanel
+          isOpen
+          onClose={() => props.setIsDetailPanelOpen(false)}
+          farmer={props.selectedFarmer}
+          visits={props.visits}
+        />
+      )}
+      {props.isNotificationPanelOpen && (
+        <NotificationPanel
+          isOpen
+          onClose={() => props.setIsNotificationPanelOpen(false)}
+        />
+      )}
       {/* Global UI Elements */}
       {props.contextMenu && (
         <ContextMenu
@@ -393,33 +423,32 @@ export const AppModals: React.FC<AppModalsProps> = props => {
           entityName={props.shareModal.entityName}
         />
       )}
-      <ProfileModal
-        isOpen={props.showProfileModal}
-        onClose={() => props.setShowProfileModal(false)}
-      />
-      <SettingsPanel
-        isOpen={props.showSettingsPanel}
-        onClose={() => props.setShowSettingsPanel(false)}
-      />
-      <HelpCenterModal
-        isOpen={props.showHelpCenter}
-        onClose={() => props.setShowHelpCenter(false)}
-      />
-      <BulkSmsModal
-        isOpen={props.showBulkSmsComposer}
-        onClose={() => props.setShowBulkSmsComposer(false)}
-        onSend={props.onBulkSmsSend}
-        selectedCount={props.selectedFarmersCount}
-        isLoading={props.isSendingBulkSms}
-      />
+      {props.showProfileModal && (
+        <ProfileModal isOpen onClose={() => props.setShowProfileModal(false)} />
+      )}
+      {props.showSettingsPanel && (
+        <SettingsPanel isOpen onClose={() => props.setShowSettingsPanel(false)} />
+      )}
+      {props.showHelpCenter && <HelpCenterModal isOpen onClose={() => props.setShowHelpCenter(false)} />}
+      {props.showBulkSmsComposer && (
+        <BulkSmsModal
+          isOpen
+          onClose={() => props.setShowBulkSmsComposer(false)}
+          onSend={props.onBulkSmsSend}
+          selectedCount={props.selectedFarmersCount}
+          isLoading={props.isSendingBulkSms}
+        />
+      )}
 
-      <BulkUpdateModal
-        isOpen={props.isBulkUpdateModalOpen}
-        onClose={() => props.setIsBulkUpdateModalOpen(false)}
-        onUpdate={props.onBulkUpdateFarmers}
-        selectedCount={props.selectedFarmersCount}
-        isLoading={props.isUpdatingBulk}
-      />
+      {props.isBulkUpdateModalOpen && (
+        <BulkUpdateModal
+          isOpen
+          onClose={() => props.setIsBulkUpdateModalOpen(false)}
+          onUpdate={props.onBulkUpdateFarmers}
+          selectedCount={props.selectedFarmersCount}
+          isLoading={props.isUpdatingBulk}
+        />
+      )}
       {props.confirmModal && (
         <ConfirmModal
           isOpen={!!props.confirmModal}
@@ -431,6 +460,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
           confirmText={props.confirmModal.confirmText}
         />
       )}
-    </>
+      </>
+    </React.Suspense>
   );
 };

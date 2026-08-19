@@ -346,7 +346,7 @@ function GlobalConstellationVisualization() {
 // ─── Main component ─────────────────────────────────────────────
 export function LandingPage() {
   const navigate = useNavigate();
-  const heroRef = useRef<HTMLDivElement>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
@@ -362,10 +362,10 @@ export function LandingPage() {
   const heroY = useTransform(scrollYProgress, [0, 0.3], [0, -80]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0.6]);
 
-  // Cursor spotlight
+  // Global Cursor spotlight tracking
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
-      const rect = heroRef.current?.getBoundingClientRect();
+      const rect = pageRef.current?.getBoundingClientRect();
       if (!rect) return;
       mouseX.set(e.clientX - rect.left);
       mouseY.set(e.clientY - rect.top);
@@ -378,7 +378,34 @@ export function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white overflow-x-hidden">
+    <div
+      ref={pageRef}
+      onMouseMove={handleMouseMove}
+      className="relative min-h-screen bg-slate-950 text-white overflow-x-hidden"
+    >
+      {/* ── Global Animated Mesh & Liquid WebGL Background ── */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <Liquid style={{ position: 'absolute', inset: 0 }} color={[0.02, 0.59, 0.41]}>
+          {null}
+        </Liquid>
+        <div className="mesh-orb-1 absolute top-[-10%] left-[-10%] w-[800px] h-[800px] rounded-full bg-emerald-600/[0.07] blur-[160px]" />
+        <div className="mesh-orb-2 absolute top-[30%] right-[-15%] w-[700px] h-[700px] rounded-full bg-amber-500/[0.05] blur-[140px]" />
+        <div className="mesh-orb-3 absolute top-[60%] left-[10%] w-[600px] h-[600px] rounded-full bg-emerald-400/[0.04] blur-[120px]" />
+        <div className="mesh-orb-2 absolute top-[85%] right-[5%] w-[500px] h-[500px] rounded-full bg-teal-500/[0.05] blur-[100px]" />
+      </div>
+
+      {/* Global Cursor spotlight */}
+      <motion.div
+        className="fixed w-[600px] h-[600px] rounded-full pointer-events-none z-0 opacity-40"
+        style={{
+          x: springX,
+          y: springY,
+          translateX: '-50%',
+          translateY: '-50%',
+          background: 'radial-gradient(circle, var(--color-outline) 0%, transparent 70%)',
+        }}
+      />
+
       {/* ── CSS for mesh animation ── */}
       <style>{`
         @keyframes meshShift {
@@ -532,33 +559,8 @@ export function LandingPage() {
       <main id="main-content">
         {/* ── HERO ── */}
         <section
-          ref={heroRef}
-          onMouseMove={handleMouseMove}
           className="relative min-h-screen flex items-center pt-20 pb-16 overflow-hidden"
         >
-          {/* Animated mesh gradient background */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <Liquid style={{ position: 'absolute', inset: 0 }} color={[0.02, 0.59, 0.41]}>
-              {null}
-            </Liquid>
-            <div className="mesh-orb-1 absolute top-[-30%] left-[-15%] w-[700px] h-[700px] rounded-full bg-emerald-600/[0.08] blur-[150px]" />
-            <div className="mesh-orb-2 absolute bottom-[-25%] right-[-15%] w-[600px] h-[600px] rounded-full bg-amber-500/[0.06] blur-[120px]" />
-            <div className="mesh-orb-3 absolute top-[30%] left-[40%] w-[400px] h-[400px] rounded-full bg-emerald-400/[0.04] blur-[100px]" />
-            <div className="mesh-orb-2 absolute top-[60%] left-[-5%] w-[300px] h-[300px] rounded-full bg-teal-500/[0.04] blur-[80px]" />
-          </div>
-
-          {/* Cursor spotlight */}
-          <motion.div
-            className="absolute w-[600px] h-[600px] rounded-full pointer-events-none z-[1]"
-            style={{
-              x: springX,
-              y: springY,
-              translateX: '-50%',
-              translateY: '-50%',
-              background: 'radial-gradient(circle, var(--color-outline) 0%, transparent 70%)',
-            }}
-          />
-
           {/* Grid pattern */}
           <div
             className="absolute inset-0 pointer-events-none opacity-[0.025]"
@@ -1013,13 +1015,13 @@ export function LandingPage() {
                   variants={fadeUp}
                   className="grid md:grid-cols-2 gap-3"
                 >
-                  <div className="flex items-start gap-3 p-5 rounded-xl bg-red-500/[0.03] border border-red-500/[0.08] hover:border-red-500/[0.16] transition-colors">
+                  <div className="flex items-start gap-3 p-5 rounded-xl backdrop-blur-md bg-rose-950/20 border border-rose-500/20 hover:border-rose-500/40 hover:bg-rose-950/30 transition-all duration-300">
                     <XCircle className="w-4 h-4 text-red-400/70 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-white/50 leading-relaxed">{item.problem}</span>
+                    <span className="text-sm text-white/60 leading-relaxed">{item.problem}</span>
                   </div>
-                  <div className="flex items-start gap-3 p-5 rounded-xl bg-emerald-500/[0.03] border border-emerald-500/[0.08] hover:border-emerald-500/[0.16] transition-colors">
+                  <div className="flex items-start gap-3 p-5 rounded-xl backdrop-blur-md bg-emerald-950/20 border border-emerald-500/20 hover:border-emerald-500/40 hover:bg-emerald-950/30 transition-all duration-300">
                     <CheckCircle className="w-4 h-4 text-emerald-400/80 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-white/75 leading-relaxed">{item.solution}</span>
+                    <span className="text-sm text-white/80 leading-relaxed">{item.solution}</span>
                   </div>
                 </motion.div>
               ))}
@@ -1062,20 +1064,20 @@ export function LandingPage() {
                   whileInView="visible"
                   viewport={{ once: true, margin: '-60px' }}
                   variants={fadeUp}
-                  className={`group relative p-7 rounded-2xl bg-white/[0.015] border border-white/[0.04] hover:border-emerald-500/25 hover:bg-white/[0.03] transition-all duration-500 overflow-hidden ${
+                  className={`group relative p-7 rounded-2xl backdrop-blur-md bg-slate-900/60 border border-white/[0.08] hover:border-emerald-500/30 hover:bg-slate-900/80 hover:shadow-2xl hover:shadow-emerald-950/25 transition-all duration-500 overflow-hidden ${
                     feat.highlight ? 'lg:col-span-2 lg:row-span-2 lg:p-10' : ''
                   }`}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/[0.04] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                   <div className="relative z-10">
                     <div
-                      className={`rounded-xl bg-white/[0.04] border border-white/[0.05] flex items-center justify-center mb-5 group-hover:bg-emerald-500/10 group-hover:border-emerald-500/20 transition-all duration-500 ${
+                      className={`rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-5 group-hover:bg-emerald-500/20 group-hover:border-emerald-500/40 transition-all duration-500 ${
                         feat.highlight ? 'w-14 h-14 mb-7' : 'w-11 h-11'
                       }`}
                     >
                       <feat.icon
-                        className={`text-white/50 group-hover:text-emerald-400 transition-colors duration-500 ${
+                        className={`text-emerald-400/70 group-hover:text-emerald-400 transition-colors duration-500 ${
                           feat.highlight ? 'w-7 h-7' : 'w-5 h-5'
                         }`}
                       />
@@ -1086,7 +1088,7 @@ export function LandingPage() {
                       {feat.title}
                     </h3>
                     <p
-                      className={`text-white/45 leading-relaxed group-hover:text-white/60 transition-colors duration-500 ${
+                      className={`text-white/50 leading-relaxed group-hover:text-white/70 transition-colors duration-500 ${
                         feat.highlight ? 'text-base max-w-md' : 'text-sm'
                       }`}
                     >
@@ -1094,7 +1096,7 @@ export function LandingPage() {
                     </p>
 
                     {feat.highlight && (
-                      <div className="mt-8 pt-6 border-t border-white/[0.04] grid grid-cols-3 gap-4">
+                      <div className="mt-8 pt-6 border-t border-white/[0.06] grid grid-cols-3 gap-4">
                         {[
                           { val: 'Real-time', label: 'Sync Engine' },
                           { val: 'Offline-First', label: 'Local Encrypted DB' },
@@ -1155,13 +1157,13 @@ export function LandingPage() {
                   whileInView="visible"
                   viewport={{ once: true }}
                   variants={fadeUp}
-                  className="text-center relative"
+                  className="p-6 rounded-2xl backdrop-blur-md bg-slate-900/50 border border-white/[0.08] hover:border-emerald-500/30 transition-all duration-300 text-center relative"
                 >
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500/[0.08] to-amber-500/[0.04] border border-emerald-500/15 flex items-center justify-center text-lg font-bold text-emerald-400/90 mx-auto mb-6 relative z-10">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-amber-500/10 border border-emerald-500/30 flex items-center justify-center text-lg font-bold text-emerald-400 mx-auto mb-6 relative z-10 shadow-lg shadow-emerald-950/30">
                     {step.num}
                   </div>
                   <h3 className="text-lg font-bold mb-3 text-white/90">{step.title}</h3>
-                  <p className="text-sm text-white/45 max-w-[280px] mx-auto leading-relaxed">
+                  <p className="text-sm text-white/50 max-w-[280px] mx-auto leading-relaxed">
                     {step.desc}
                   </p>
                 </motion.div>
@@ -1238,7 +1240,7 @@ export function LandingPage() {
                   whileInView="visible"
                   viewport={{ once: true }}
                   variants={fadeUp}
-                  className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:border-emerald-500/25 hover:bg-white/[0.035] transition-all duration-300 flex flex-col justify-between"
+                  className="p-6 rounded-2xl backdrop-blur-md bg-slate-900/60 border border-white/[0.08] hover:border-emerald-500/30 hover:bg-slate-900/80 hover:shadow-xl hover:shadow-emerald-950/20 transition-all duration-300 flex flex-col justify-between"
                 >
                   <div>
                     <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4">
@@ -1262,9 +1264,9 @@ export function LandingPage() {
               whileInView="visible"
               viewport={{ once: true }}
               variants={fadeUp}
-              className="mt-10 p-6 sm:p-8 rounded-2xl bg-gradient-to-br from-emerald-950/20 via-slate-900/40 to-slate-950 border border-emerald-500/20 shadow-xl"
+              className="mt-10 p-6 sm:p-8 rounded-2xl backdrop-blur-md bg-slate-900/70 border border-emerald-500/25 shadow-2xl shadow-emerald-950/30"
             >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/[0.06]">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/[0.08]">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
                     <Sprout className="w-5 h-5 text-emerald-400" />
@@ -1289,7 +1291,7 @@ export function LandingPage() {
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
-                <div className="p-3.5 rounded-xl bg-white/[0.025] border border-white/[0.04]">
+                <div className="p-3.5 rounded-xl backdrop-blur-sm bg-slate-950/60 border border-white/[0.06]">
                   <div className="text-[11px] uppercase tracking-wider text-white/40 mb-1">
                     NDVI Canopy Vigor
                   </div>
@@ -1298,7 +1300,7 @@ export function LandingPage() {
                   </div>
                   <div className="text-[10px] text-white/40 mt-1">Sentinel-2 Multispectral</div>
                 </div>
-                <div className="p-3.5 rounded-xl bg-white/[0.025] border border-white/[0.04]">
+                <div className="p-3.5 rounded-xl backdrop-blur-sm bg-slate-950/60 border border-white/[0.06]">
                   <div className="text-[11px] uppercase tracking-wider text-white/40 mb-1">
                     Soil pH & Carbon
                   </div>
@@ -1307,7 +1309,7 @@ export function LandingPage() {
                   </div>
                   <div className="text-[10px] text-white/40 mt-1">SoilGrids 0-30cm Depth</div>
                 </div>
-                <div className="p-3.5 rounded-xl bg-white/[0.025] border border-white/[0.04]">
+                <div className="p-3.5 rounded-xl backdrop-blur-sm bg-slate-950/60 border border-white/[0.06]">
                   <div className="text-[11px] uppercase tracking-wider text-white/40 mb-1">
                     Soil Moisture
                   </div>
@@ -1316,7 +1318,7 @@ export function LandingPage() {
                   </div>
                   <div className="text-[10px] text-white/40 mt-1">NASA POWER 7-Day Model</div>
                 </div>
-                <div className="p-3.5 rounded-xl bg-white/[0.025] border border-white/[0.04]">
+                <div className="p-3.5 rounded-xl backdrop-blur-sm bg-slate-950/60 border border-white/[0.06]">
                   <div className="text-[11px] uppercase tracking-wider text-white/40 mb-1">
                     Pest Risk Index
                   </div>
@@ -1334,7 +1336,7 @@ export function LandingPage() {
               whileInView="visible"
               viewport={{ once: true }}
               variants={fadeUp}
-              className="mt-10 pt-8 border-t border-white/[0.04] grid grid-cols-2 sm:grid-cols-4 gap-6 text-center"
+              className="mt-10 pt-8 border-t border-white/[0.06] grid grid-cols-2 sm:grid-cols-4 gap-6 text-center"
             >
               <div className="space-y-1">
                 <div className="text-sm sm:text-base font-bold text-emerald-400">
@@ -1400,13 +1402,13 @@ export function LandingPage() {
                   whileInView="visible"
                   viewport={{ once: true }}
                   variants={fadeUp}
-                  className="group p-7 rounded-2xl bg-white/[0.015] border border-white/[0.04] hover:border-emerald-500/20 hover:bg-white/[0.03] transition-all duration-500"
+                  className="group p-7 rounded-2xl backdrop-blur-md bg-slate-900/60 border border-white/[0.08] hover:border-emerald-500/30 hover:bg-slate-900/80 hover:shadow-2xl hover:shadow-emerald-950/20 transition-all duration-500"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-emerald-500/[0.06] border border-emerald-500/[0.08] flex items-center justify-center mb-5 group-hover:bg-emerald-500/[0.12] transition-all duration-500">
-                    <aud.icon className="w-6 h-6 text-emerald-400/60 group-hover:text-emerald-400 transition-colors" />
+                  <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-5 group-hover:bg-emerald-500/20 transition-all duration-500">
+                    <aud.icon className="w-6 h-6 text-emerald-400/80 group-hover:text-emerald-400 transition-colors" />
                   </div>
                   <h3 className="text-base font-bold mb-2 text-white/90">{aud.title}</h3>
-                  <p className="text-sm text-white/45 leading-relaxed">{aud.desc}</p>
+                  <p className="text-sm text-white/50 leading-relaxed">{aud.desc}</p>
                 </motion.div>
               ))}
             </div>
@@ -1457,7 +1459,7 @@ export function LandingPage() {
                     whileInView="visible"
                     viewport={{ once: true, margin: '-40px' }}
                     variants={fadeUp}
-                    className="rounded-2xl border border-white/[0.06] bg-white/[0.015] hover:border-emerald-500/20 transition-colors overflow-hidden"
+                    className="rounded-2xl border border-white/[0.08] backdrop-blur-md bg-slate-900/60 hover:border-emerald-500/30 transition-all duration-300 overflow-hidden"
                   >
                     <button
                       type="button"

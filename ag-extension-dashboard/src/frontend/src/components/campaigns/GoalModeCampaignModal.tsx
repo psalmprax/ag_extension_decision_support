@@ -19,6 +19,7 @@ import {
   synthesizeSkillFromVisit,
   CampaignHistoryItem,
   RegionalSkillCard,
+  type CampaignStepTrace,
 } from '@/api/campaignService';
 
 interface GoalModeCampaignModalProps {
@@ -538,26 +539,33 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
 
                 {/* Skills Cards Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {skills.map(skill => (
-                    <div key={skill.id} className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-xs text-white">{skill.title}</span>
-                        <span className="text-xxs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-mono">
-                          {Math.round(skill.confidence_score * 100)}% Conf
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xxs text-slate-400">
-                        <span>📍 {skill.region}</span>
-                        <span>•</span>
-                        <span>🌱 {skill.crop}</span>
-                        <span>•</span>
-                        <span>Source: {skill.source_type}</span>
-                      </div>
-                      <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 text-xxs text-slate-300 whitespace-pre-line font-mono max-h-36 overflow-y-auto">
-                        {skill.skill_markdown}
-                      </div>
+                  {isLoadingSkills ? (
+                    <div className="col-span-full flex items-center justify-center py-10 gap-3 text-slate-400 text-sm">
+                      <RefreshCw className="w-5 h-5 animate-spin text-amber-400" />
+                      <span>Loading regional agronomy skills...</span>
                     </div>
-                  ))}
+                  ) : (
+                    skills.map(skill => (
+                      <div key={skill.id} className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs text-white">{skill.title}</span>
+                          <span className="text-xxs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-mono">
+                            {Math.round(skill.confidence_score * 100)}% Conf
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xxs text-slate-400">
+                          <span>📍 {skill.region}</span>
+                          <span>•</span>
+                          <span>🌱 {skill.crop}</span>
+                          <span>•</span>
+                          <span>Source: {skill.source_type}</span>
+                        </div>
+                        <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 text-xxs text-slate-300 whitespace-pre-line font-mono max-h-36 overflow-y-auto">
+                          {skill.skill_markdown}
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             )}

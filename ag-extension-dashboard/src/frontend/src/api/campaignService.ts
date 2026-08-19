@@ -1,6 +1,6 @@
 import apiClient from './client';
 
-interface CampaignStepTrace {
+export interface CampaignStepTrace {
   step: string;
   status: 'completed' | 'in_progress' | 'skipped' | 'failed';
   detail: string;
