@@ -90,25 +90,48 @@ export const BillingDashboard: React.FC = () => {
         </motion.div>
       )}
 
-      <header className="mb-16 relative overflow-hidden">
-        <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary-500/10 rounded-full blur-[120px] pointer-events-none" />
-        <div className="relative z-10">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-2 mb-4"
-          >
-            <span className="w-12 h-1 text-primary-500 bg-primary-500 rounded-full inline-block"></span>
-            <span className="text-xxs font-black uppercase tracking-[0.3em] text-primary-500">
-              {t('billing_account_control')}
-            </span>
-          </motion.div>
-          <h1 className={`text-4xl font-black tracking-tighter mb-4 leading-none ${headingClass}`}>
-            Billing & Subscriptions
-          </h1>
-          <p className="text-gray-500 dark:text-gray-400 text-xl font-medium max-w-2xl leading-relaxed">
-            {t('billing_subtitle')}
-          </p>
+      <header className="mb-12 relative overflow-hidden p-8 rounded-3xl bg-slate-900/80 dark:bg-slate-950/80 border border-emerald-500/20 backdrop-blur-2xl shadow-2xl">
+        <div className="absolute -top-24 -left-24 w-96 h-96 bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-teal-500/10 rounded-full blur-[120px] pointer-events-none" />
+        
+        <div className="relative z-10 flex flex-wrap items-center justify-between gap-6">
+          <div>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-2 mb-3"
+            >
+              <span className="w-8 h-1 bg-emerald-400 rounded-full inline-block" />
+              <span className="text-xxs font-black uppercase tracking-[0.25em] text-emerald-400">
+                {t('billing_account_control') || 'AG-EXTENSION COMMERCE & SEATS'}
+              </span>
+            </motion.div>
+            <h1 className={`text-4xl font-black tracking-tight mb-3 text-white ${headingClass}`}>
+              Billing & Subscriptions
+            </h1>
+            <p className="text-slate-400 text-sm max-w-xl leading-relaxed">
+              {t('billing_subtitle') || 'Manage individual farmer quotas, cooperative multi-county extension officer pools, and automated billing methods.'}
+            </p>
+          </div>
+
+          {/* KnockKnock-Style Billing Cycle Toggle */}
+          <div className="flex items-center gap-3 p-1.5 bg-slate-950/90 rounded-2xl border border-slate-800 backdrop-blur-md shadow-inner">
+            <button
+              type="button"
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white shadow-md shadow-emerald-950"
+            >
+              Monthly Billing
+            </button>
+            <button
+              type="button"
+              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors"
+            >
+              <span>Annual</span>
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                SAVE 20%
+              </span>
+            </button>
+          </div>
         </div>
       </header>
 
