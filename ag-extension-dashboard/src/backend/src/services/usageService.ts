@@ -17,7 +17,8 @@ export type UsageType =
     | 'ai_vision'
     | 'speech'
     | 'whatsapp'
-    | 'knowledge';
+    | 'knowledge'
+    | 'sms_feedback';
 
 export interface PlanLimits {
     smsLimit: number;

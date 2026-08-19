@@ -11,6 +11,7 @@ import type { SmsHistoryRow } from '@/types/rowTypes';
 import { mapSmsHistoryRows } from '@/types/dtos';
 import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
 import { safeError } from '@/utils/safeResponse';
+import { detectLanguage } from '@/utils/languageDetector';
 
 const router = Router();
 
@@ -35,6 +36,13 @@ const bulkSMSSchema = z.object({
 const translateSchema = z.object({
     text: z.string().min(1, 'Text is required'),
     targetLanguage: z.string().min(2, 'Target language is required'),
+});
+
+// AI Diagnosis Schema
+const aiDiagnosisSchema = z.object({
+    symptoms: z.string().min(1, 'Symptoms description is required'),
+    cropType: z.string().optional(),
+    language: z.string().default('en'),
 });
 
 // USSD Schema
@@ -134,7 +142,10 @@ router.post('/translate', validate({ body: translateSchema }), async (req: AuthR
     try {
         const { text, targetLanguage } = req.body;
 
-        const prompt = `Translate the following agricultural message to ${targetLanguage}. Keep it concise for SMS (max 160 chars if possible). Do not add any preamble or quotes.
+        // Auto-detect source language
+        const sourceLanguage = detectLanguage(text) || 'en';
+
+        const prompt = `Translate this agricultural message from ${sourceLanguage} to ${targetLanguage}. Keep it concise for SMS (max 160 chars if possible). Do not add any preamble or quotes.
 
         Message: ${text}`;
 
@@ -145,13 +156,76 @@ router.post('/translate', validate({ body: translateSchema }), async (req: AuthR
             success: true,
             data: {
                 translatedText: (result?.text ?? '').toString().trim(),
-                targetLanguage
+                targetLanguage,
+                sourceLanguage
             }
         });
     } catch (error) {
-        safeError(res, 500, error instanceof Error ? error.message : 'Internal server error');
+        safeError(res, 500, error instanceof Error ? error.message : 'Translation failed');
     }
 });
+
+// AI-Powered Disease Diagnosis via SMS
+router.post('/ai-diagnosis', checkUsageLimit('ai_vision'), validate({ body: aiDiagnosisSchema }), async (req: AuthRequest, res: Response) => {
+    try {
+        const { symptoms, cropType, language } = req.body;
+
+        if (!symptoms) {
+            return res.status(400).json({ success: false, error: 'Symptoms description is required' });
+        }
+
+        const provider = await AIProviderFactory.getProvider();
+        const prompt = `You are a professional agricultural plant pathologist. Analyze this SMS description and provide a concise disease diagnosis.
+
+        Symptoms: ${symptoms}
+        Crop Type: ${cropType || 'Not specified'}
+
+        Provide response in this exact format:
+        DISEASE: [Disease Name]
+        CONFIDENCE: [0-100]
+        SEVERITY: [mild/moderate/severe]
+        TREATMENT: [Recommended treatment]
+        PREVENTION: [Prevention measures]
+
+        IMPORTANT: Return ONLY the above fields, no conversational text.`;
+
+        const result = await provider.generateText([
+            { role: 'system', content: 'You are an agricultural extension assistant.' },
+            { role: 'user', content: prompt },
+        ]);
+
+        const analysis = result?.text ?? '';
+        // Parse the structured response using helper function
+        res.json({
+            success: true,
+            data: {
+                rawResponse: analysis,
+                disease: parseDiagnosisField(analysis, 'DISEASE'),
+                confidence: parseInt(parseDiagnosisField(analysis, 'CONFIDENCE')) || 0,
+                severity: parseDiagnosisField(analysis, 'SEVERITY') || 'unknown',
+                treatment: parseDiagnosisField(analysis, 'TREATMENT') || 'No specific treatment recommended',
+                language: language
+            }
+        });
+    } catch (error) {
+        safeError(res, 500, error instanceof Error ? error.message : 'AI diagnosis failed');
+    }
+});
+
+// Helper function to parse diagnosis fields from AI response
+// Previously defined above, now moved after the route handler
+// Helper function to parse diagnosis fields from AI response
+const parseDiagnosisField = (response: string, field: string): string => {
+    const lines = response.split('\n');
+    const fieldRegex = new RegExp(`^${field}:\\s*(.+)$`, 'i');
+    for (const line of lines) {
+        const match = line.match(fieldRegex);
+        if (match) {
+            return match[1].trim();
+        }
+    }
+    return '';
+};
 
 // Start USSD session
 router.post('/ussd/start', validate({ body: ussdSchema }), async (req: Request, res: Response) => {
@@ -199,6 +273,38 @@ router.post('/schedule', validate({ body: scheduleSMSSchema }), async (req: Auth
         }
     } catch (error) {
         safeError(res, 500, error instanceof Error ? error.message : 'Internal server error');
+    }
+});
+
+// SMS Feedback endpoint
+router.post('/feedback', validate({
+    body: z.object({
+        rating: z.number().min(1).max(5),
+        feedback: z.string().optional(),
+        farmerId: z.string().uuid().optional(),
+    })
+}), async (req: AuthRequest, res: Response) => {
+    try {
+        const { rating, feedback, farmerId } = req.body;
+        const userId = req.user!.userId;
+
+        // Persist feedback to database
+        await query(
+            `INSERT INTO sms_feedback (user_id, farmer_id, rating, feedback, created_at)
+             VALUES ($1, $2, $3, $4, NOW())`,
+            [userId, farmerId || null, rating, feedback || '']
+        );
+
+        // Also track usage
+        await usageService.incrementUsage(userId, 'sms_feedback');
+
+        res.json({
+            success: true,
+            message: `Thank you for your rating ${rating}/5`,
+            thanked: true
+        });
+    } catch (error) {
+        safeError(res, 500, error instanceof Error ? error.message : 'Failed to submit feedback');
     }
 });
 
