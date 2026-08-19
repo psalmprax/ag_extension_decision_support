@@ -459,3 +459,38 @@ export interface FarmerOnboardingSessionRow {
   updated_at: Date | string | null;
 }
 
+export interface AutonomousCampaignRunRow {
+  id: string;
+  tenant_id: string | null;
+  created_by: string | null;
+  goal_prompt: string;
+  target_region: string | null;
+  target_crop: string | null;
+  status: string;
+  affected_farmers_count: number;
+  dispatched_messages_count: number;
+  scheduled_visits_count: number;
+  execution_trace: Array<Record<string, unknown>>;
+  advisory_summary: string | null;
+  created_at: Date | string | null;
+  updated_at: Date | string | null;
+}
+
+export interface RegionalAgronomySkillRow {
+  id: string;
+  tenant_id: string | null;
+  region: string;
+  crop: string;
+  topic: string;
+  title: string;
+  skill_markdown: string;
+  source_type: string;
+  source_visit_id: string | null;
+  created_by: string | null;
+  confidence_score: number | null;
+  usage_count: number;
+  created_at: Date | string | null;
+  updated_at: Date | string | null;
+}
+
+

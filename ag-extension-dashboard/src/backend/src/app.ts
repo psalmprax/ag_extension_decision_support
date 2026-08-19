@@ -63,6 +63,7 @@ import apiClientRoutes from './routes/apiClients';
 import commercialKnowledgeRoutes from './routes/commercialKnowledge';
 import canadianServicesRoutes from './routes/canadianServices';
 import channelsRoutes from './routes/channels';
+import campaignsRoutes from './routes/autonomousCampaigns';
 
 const app: Application = express();
 app.set('trust proxy', true); // Trust all proxy hops (Traefik/Docker) for X-Forwarded-For
@@ -372,6 +373,7 @@ const routeMounts: RouteMount[] = [
   { path: '/commercial/knowledge', router: commercialKnowledgeRoutes },
   { path: '/canadian', router: canadianServicesRoutes },
   { path: '/channels', router: channelsRoutes },
+  { path: '/campaigns', router: campaignsRoutes },
 ];
 
 // Mount with i18n support (v1)

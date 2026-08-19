@@ -394,6 +394,42 @@ export async function createTables(): Promise<void> {
         UNIQUE(channel, external_identifier)
       );
       CREATE INDEX IF NOT EXISTS farmer_onboarding_channel_identifier_idx ON farmer_onboarding_sessions(channel, external_identifier);
+
+      CREATE TABLE IF NOT EXISTS autonomous_campaign_runs (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+        created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+        goal_prompt TEXT NOT NULL,
+        target_region VARCHAR(100),
+        target_crop VARCHAR(100),
+        status VARCHAR(30) NOT NULL DEFAULT 'completed',
+        affected_farmers_count INTEGER NOT NULL DEFAULT 0,
+        dispatched_messages_count INTEGER NOT NULL DEFAULT 0,
+        scheduled_visits_count INTEGER NOT NULL DEFAULT 0,
+        execution_trace JSONB NOT NULL DEFAULT '[]'::jsonb,
+        advisory_summary TEXT,
+        created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS autonomous_campaign_runs_tenant_idx ON autonomous_campaign_runs(tenant_id, created_at DESC);
+
+      CREATE TABLE IF NOT EXISTS regional_agronomy_skills (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id UUID REFERENCES tenants(id) ON DELETE SET NULL,
+        region VARCHAR(100) NOT NULL,
+        crop VARCHAR(100) NOT NULL,
+        topic VARCHAR(120) NOT NULL,
+        title VARCHAR(200) NOT NULL,
+        skill_markdown TEXT NOT NULL,
+        source_type VARCHAR(40) NOT NULL DEFAULT 'field_visit',
+        source_visit_id UUID REFERENCES visits(id) ON DELETE SET NULL,
+        created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+        confidence_score NUMERIC(5,2) DEFAULT 0.90,
+        usage_count INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS regional_agronomy_skills_region_crop_idx ON regional_agronomy_skills(region, crop);
     `);
     logger.info('Tenant and data-governance tables provisioned');
   } catch (error) {

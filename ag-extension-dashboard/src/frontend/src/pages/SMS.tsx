@@ -18,6 +18,7 @@ import {
   MapPin,
   AlertTriangle,
   Zap,
+  Target,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
@@ -27,6 +28,7 @@ import { fetchFarmers } from '../api/farmerService';
 import { fetchUsage } from '../api/billingService';
 import { withRealFallback } from '../lib/realFirst';
 import { ChannelOnboardingModal } from '../components/channels/ChannelOnboardingModal';
+import { GoalModeCampaignModal } from '../components/campaigns/GoalModeCampaignModal';
 import toast from 'react-hot-toast';
 
 interface SMSMessage {
@@ -306,6 +308,7 @@ export function SMSComposerPanel({
   history,
   radiusClass,
   onOpenGateways,
+  onOpenGoalMode,
 }: {
   activeTab: 'compose' | 'history';
   setActiveTab: (tab: 'compose' | 'history') => void;
@@ -328,6 +331,7 @@ export function SMSComposerPanel({
   history: SMSMessage[];
   radiusClass: string;
   onOpenGateways?: () => void;
+  onOpenGoalMode?: () => void;
 }) {
   const { t } = useLanguage();
 
@@ -387,6 +391,15 @@ export function SMSComposerPanel({
         )}
 
         <div className="flex items-center gap-2 ml-auto">
+          <button
+            type="button"
+            onClick={onOpenGoalMode}
+            className={`px-3 py-1.5 ${radiusClass} bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs font-bold flex items-center gap-1.5 hover:bg-amber-500/20 transition-all`}
+            title="Launch Autonomous Agronomy Goal Campaign"
+          >
+            <Target className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Goal Mode Campaigns</span>
+          </button>
           <button
             type="button"
             onClick={onOpenGateways}
@@ -723,6 +736,7 @@ export function SMSPage() {
   const [isTranslating, setIsTranslating] = useState(false);
   const [showRightPanel, setShowRightPanel] = useState(true);
   const [isGatewaysOpen, setIsGatewaysOpen] = useState(false);
+  const [isGoalModeOpen, setIsGoalModeOpen] = useState(false);
 
   // Status State
 
@@ -970,6 +984,7 @@ export function SMSPage() {
         history={history}
         radiusClass={radiusClass}
         onOpenGateways={() => setIsGatewaysOpen(true)}
+        onOpenGoalMode={() => setIsGoalModeOpen(true)}
       />
 
       {/* RIGHT PANEL: Analytics & Utilities */}
@@ -989,6 +1004,12 @@ export function SMSPage() {
       <ChannelOnboardingModal
         isOpen={isGatewaysOpen}
         onClose={() => setIsGatewaysOpen(false)}
+      />
+
+      {/* Goal Mode Autonomous Campaigns & Closed Loop Skills Modal */}
+      <GoalModeCampaignModal
+        isOpen={isGoalModeOpen}
+        onClose={() => setIsGoalModeOpen(false)}
       />
     </div>
   );
