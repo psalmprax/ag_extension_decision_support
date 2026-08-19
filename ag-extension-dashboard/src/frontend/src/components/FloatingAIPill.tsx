@@ -136,7 +136,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
             initial={{ opacity: 0, scale: 0.8, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 20 }}
-            className="fixed bottom-6 right-6 z-[1000] flex items-center gap-2"
+            className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-[1000] flex items-center gap-2"
           >
             <button
               onClick={() => setIsOpen(true)}
@@ -173,7 +173,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 30 }}
             transition={{ type: 'spring', damping: 25, stiffness: 260 }}
-            className="fixed bottom-6 right-6 z-[1100] w-[380px] sm:w-[420px] max-h-[640px] h-[88vh] bg-slate-950/95 border border-emerald-500/30 rounded-3xl shadow-2xl backdrop-blur-2xl flex flex-col overflow-hidden text-slate-100 shadow-emerald-950/80"
+            className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-[1100] w-[calc(100vw-2rem)] sm:w-[420px] max-w-[420px] max-h-[85vh] h-[85vh] bg-slate-950/95 border border-emerald-500/30 rounded-3xl shadow-2xl backdrop-blur-2xl flex flex-col overflow-hidden text-slate-100 shadow-emerald-950/80"
           >
             {/* Drawer Header */}
             <div className="p-4 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md flex items-center justify-between">
