@@ -109,7 +109,7 @@ const queryClient = new QueryClient({
 const renderComponent = () => {
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <MemoryRouter>
         <LanguageProvider>
           <BillingDashboard />
         </LanguageProvider>

@@ -15,7 +15,7 @@ import { VisitsPage } from '@/pages/VisitsPage';
 
 const wrap = (ui: React.ReactElement) => (
   <LanguageProvider>
-    <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>{ui}</MemoryRouter>
+    <MemoryRouter>{ui}</MemoryRouter>
   </LanguageProvider>
 );
 
