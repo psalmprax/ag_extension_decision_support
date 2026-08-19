@@ -12,25 +12,25 @@
 :root {
   /* Design Variant Specific Overrides */
   --font-heading: 'Inter', system-ui, sans-serif;
-  --radius-card: 0.75rem;
+  --radius-card: 0.25rem;
   --shadow-premium: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
 :root[data-design-variant='current'] {
   --font-heading: 'Inter', system-ui, sans-serif;
-  --radius-card: 0.75rem;
+  --radius-card: 0.25rem;
   --shadow-premium: 0 4px 6px -1px rgb(0 0 0 / 0.1);
 }
 
 :root[data-design-variant='new'] {
   --font-heading: 'Outfit', 'Inter', system-ui, sans-serif;
-  --radius-card: 2.5rem;
+  --radius-card: 0.25rem;
   --shadow-premium: 0 35px 60px -15px rgba(0, 0, 0, 0.35);
 }
 
 /* Dark mode non-color tokens */
 .dark {
-  --radius-card: 0.75rem;
+  --radius-card: 0.25rem;
   --shadow-premium: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
 

@@ -498,12 +498,12 @@ export const designTokens = {
   borderRadius: {
     card: 'var(--radius-card)',
     sm: '0.125rem',
-    DEFAULT: '0.25rem',
-    md: '0.375rem',
-    lg: 'calc(var(--radius-card) * 0.75)',
+    DEFAULT: 'var(--radius-card)',
+    md: 'var(--radius-card)',
+    lg: 'var(--radius-card)',
     xl: 'var(--radius-card)',
-    '2xl': 'calc(var(--radius-card) * 1.5)',
-    '3xl': 'calc(var(--radius-card) * 2)',
+    '2xl': 'var(--radius-card)',
+    '3xl': 'var(--radius-card)',
     full: '9999px',
   },
   boxShadow: {
