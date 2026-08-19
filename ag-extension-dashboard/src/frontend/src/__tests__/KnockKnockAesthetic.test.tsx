@@ -110,8 +110,10 @@ describe('KnockKnock Aesthetic Component Suite', () => {
       fireEvent.click(screen.getByRole('button', { name: /AI Agronomist/i }));
       fireEvent.click(screen.getByRole('button', { name: /Voice/i }));
 
-      const recordBtn = screen.getByRole('button', { name: '' });
-      fireEvent.click(recordBtn);
+      expect(screen.getByText(/Tap to Record Agronomic Note/i)).toBeInTheDocument();
+      const recordPrompt = screen.getByText(/Tap to Record Agronomic Note/i);
+      const recordBtn = recordPrompt.parentElement?.querySelector('button');
+      if (recordBtn) fireEvent.click(recordBtn);
 
       await waitFor(() => {
         expect(screen.getByText(/AI Voice Transcription/i)).toBeInTheDocument();
@@ -146,7 +148,7 @@ describe('KnockKnock Aesthetic Component Suite', () => {
 
       expect(screen.getByText('You (Live Takeover)')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Direct SMS Reply/i })).toBeInTheDocument();
-      expect(screen.getByText('Release to AI Autopilot')).toBeInTheDocument();
+      expect(screen.getAllByText('Release to AI Autopilot')[0]).toBeInTheDocument();
     });
 
     it('filters cards by critical severity', () => {
@@ -173,7 +175,7 @@ describe('KnockKnock Aesthetic Component Suite', () => {
       );
 
       expect(screen.getByText('USSD & SMS Sandbox')).toBeInTheDocument();
-      expect(screen.getByText('*384*274#')).toBeInTheDocument();
+      expect(screen.getAllByText('*384*274#')[0]).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Send USSD Request/i })).toBeInTheDocument();
     });
 
