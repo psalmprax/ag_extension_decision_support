@@ -7,11 +7,84 @@ import { safeError } from '@/utils/safeResponse';
 import { authorize } from '@/middleware/authorize';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { whatsappService } from '@/services/whatsappService';
+import { onboardingEngine } from '@/services/onboardingEngine';
 
 const router = Router();
 
 type AuthedRequest = Request & { user?: AuthenticatedRequestUser };
 
+/**
+ * GET /api/whatsapp/inbound — Meta Cloud API Webhook Verification Challenge
+ */
+router.get('/inbound', (req: Request, res: Response) => {
+    const mode = req.query['hub.mode'];
+    const token = req.query['hub.verify_token'];
+    const challenge = req.query['hub.challenge'];
+
+    const expectedToken = process.env.META_WEBHOOK_VERIFY_TOKEN || 'ag_extension_verify_2026';
+    if (mode === 'subscribe' && token === expectedToken) {
+        logger.info('Meta WhatsApp webhook verified successfully');
+        return res.status(200).send(challenge);
+    }
+    return res.status(403).json({ error: 'Verification token mismatch' });
+});
+
+/**
+ * POST /api/whatsapp/inbound — webhook endpoint for inbound messages from Meta Cloud API or Twilio WhatsApp.
+ */
+router.post('/inbound', async (req: Request, res: Response) => {
+    try {
+        const payload = req.body as {
+            from?: string;
+            body?: string;
+            messageId?: string;
+            timestamp?: string;
+            From?: string; // Twilio format fallback
+            Body?: string; // Twilio format fallback
+            ProfileName?: string;
+        };
+
+        const from = payload.from || payload.From?.replace('whatsapp:', '');
+        const body = payload.body || payload.Body;
+        const senderName = payload.ProfileName;
+
+        if (!from || !body) {
+            return res.status(400).json({ success: false, error: 'from and body are required' });
+        }
+
+        const { rows } = await query<WhatsAppMessageRow>(
+            `INSERT INTO whatsapp_messages (recipient_phone, message, direction, status, provider)
+             VALUES ($1, $2, 'inbound', 'received', 'meta_cloud')
+             RETURNING *`,
+            [from, body]
+        );
+
+        logger.info(`WhatsApp inbound ${payload.messageId ?? '-'}: ${rows.length} row(s) inserted`);
+
+        // Run through auto-onboarding engine
+        const onboardingResult = await onboardingEngine.processIncomingMessage({
+            channel: 'whatsapp',
+            identifier: from,
+            message: body,
+            senderName,
+        });
+
+        if (onboardingResult.isHandled && onboardingResult.responseMessage) {
+            await whatsappService.sendMessage({
+                to: from,
+                message: onboardingResult.responseMessage,
+                farmerId: onboardingResult.farmerId,
+            });
+        }
+
+        return res.status(202).json({ success: true, handled: onboardingResult.isHandled });
+    } catch (error) {
+        logger.error('Failed to persist WhatsApp inbound message:', error);
+        return safeError(res, 500, 'Failed to persist WhatsApp inbound message');
+    }
+});
+
+// Authenticated Routes
 router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
 
 /**
@@ -64,36 +137,6 @@ router.post('/send', checkUsageLimit('whatsapp'), async (req: AuthedRequest, res
     } catch (error) {
         logger.error('Failed to send WhatsApp message:', error);
         return safeError(res, 500, 'Failed to send WhatsApp message');
-    }
-});
-
-/**
- * POST /api/whatsapp/inbound — webhook endpoint for inbound messages from Meta Cloud API.
- */
-router.post('/inbound', async (req: Request, res: Response) => {
-    try {
-        const payload = req.body as {
-            from?: string;
-            body?: string;
-            messageId?: string;
-            timestamp?: string;
-        };
-        if (!payload.from || !payload.body) {
-            return res.status(400).json({ success: false, error: 'from and body are required' });
-        }
-
-        const { rows } = await query<WhatsAppMessageRow>(
-            `INSERT INTO whatsapp_messages (recipient_phone, message, direction, status, provider)
-             VALUES ($1, $2, 'inbound', 'received', 'meta_cloud')
-             RETURNING *`,
-            [payload.from, payload.body]
-        );
-
-        logger.info(`WhatsApp inbound ${payload.messageId ?? '-'}: ${rows.length} row(s) inserted`);
-        return res.status(202).json({ success: true });
-    } catch (error) {
-        logger.error('Failed to persist WhatsApp inbound message:', error);
-        return safeError(res, 500, 'Failed to persist WhatsApp inbound message');
     }
 });
 

@@ -12,10 +12,48 @@ import { mapSmsHistoryRows } from '@/types/dtos';
 import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
 import { safeError } from '@/utils/safeResponse';
 import { detectLanguage } from '@/utils/languageDetector';
+import { onboardingEngine } from '@/services/onboardingEngine';
+import { logger } from '@/utils/logger';
 
 const router = Router();
 
-// Apply authentication to all SMS routes
+/**
+ * POST /api/sms/inbound — Inbound SMS Webhook for Africa's Talking and Twilio
+ */
+router.post('/inbound', async (req: Request, res: Response) => {
+    try {
+        const from = req.body.from || req.body.From || req.body.phoneNumber;
+        const text = req.body.text || req.body.Body || req.body.message;
+
+        if (!from || !text) {
+            return res.status(400).json({ success: false, error: 'from and text are required' });
+        }
+
+        logger.info(`Inbound SMS received from ${from}: ${text}`);
+
+        // Run through auto-onboarding engine
+        const onboardingResult = await onboardingEngine.processIncomingMessage({
+            channel: 'sms',
+            identifier: from,
+            message: text,
+        });
+
+        if (onboardingResult.isHandled && onboardingResult.responseMessage) {
+            await smsService.sendSMS({
+                to: from,
+                message: onboardingResult.responseMessage,
+                farmerId: onboardingResult.farmerId,
+            });
+        }
+
+        return res.status(200).json({ success: true, handled: onboardingResult.isHandled });
+    } catch (error) {
+        logger.error('Failed to process inbound SMS:', error);
+        return safeError(res, 500, 'Failed to process inbound SMS');
+    }
+});
+
+// Apply authentication to protected SMS management routes
 router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
 
 // SMS Schema

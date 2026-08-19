@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Bell, Palette, Globe, Monitor, Moon, Sun, Volume2, VolumeX } from 'lucide-react';
+import { X, Bell, Palette, Globe, Monitor, Moon, Sun, Volume2, VolumeX, Zap, MessageSquare } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 import { ThemeSwitcher } from './ThemeSwitcher';
@@ -10,6 +10,7 @@ import apiClient from '@/api/client';
 import toast from 'react-hot-toast';
 import { fetchOrganizationConfig, updateOrganizationConfig, OrganizationConfig } from '@/api/organizationService';
 import { downloadKnowledgePack } from '@/api/knowledgeService';
+import { ChannelOnboardingModal } from './channels/ChannelOnboardingModal';
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
   const [organizationForm, setOrganizationForm] = useState({ name: '', region: '', currency: 'USD', language: 'en' });
   const [isOrganizationLoading, setIsOrganizationLoading] = useState(false);
   const [isOrganizationSaving, setIsOrganizationSaving] = useState(false);
+  const [isChannelModalOpen, setIsChannelModalOpen] = useState(false);
 
   useEffect(() => {
     if (!isOpen || !user) return;
@@ -256,6 +258,27 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                   </div>
                 )}
 
+                {/* Communication Gateways & Onboarding */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-emerald-500" />
+                    <span>Communication Gateways & Onboarding</span>
+                  </h3>
+                  <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl space-y-3 border border-gray-100 dark:border-gray-700">
+                    <div className="text-xs text-gray-600 dark:text-gray-300">
+                      Manage SMS (Africa's Talking / Twilio), WhatsApp Business Cloud API, and Telegram Bot credentials for automated farmer advisory and self-registration.
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsChannelModalOpen(true)}
+                      className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-900/20"
+                    >
+                      <Zap className="w-4 h-4" />
+                      <span>Configure Channels & Onboarding Wizard</span>
+                    </button>
+                  </div>
+                </div>
+
                 {/* Data & Storage */}
                 <div className="space-y-3">
                   <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
@@ -334,6 +357,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
           </motion.div>
         </>
       )}
+      <ChannelOnboardingModal
+        isOpen={isChannelModalOpen}
+        onClose={() => setIsChannelModalOpen(false)}
+      />
     </AnimatePresence>
   );
 };

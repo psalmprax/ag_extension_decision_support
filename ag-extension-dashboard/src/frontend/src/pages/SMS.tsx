@@ -17,6 +17,7 @@ import {
   Sparkles,
   MapPin,
   AlertTriangle,
+  Zap,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
@@ -25,6 +26,7 @@ import { fetchSMSHistory, sendSMS, sendBulkSMS, translateMessage } from '../api/
 import { fetchFarmers } from '../api/farmerService';
 import { fetchUsage } from '../api/billingService';
 import { withRealFallback } from '../lib/realFirst';
+import { ChannelOnboardingModal } from '../components/channels/ChannelOnboardingModal';
 import toast from 'react-hot-toast';
 
 interface SMSMessage {
@@ -303,6 +305,7 @@ export function SMSComposerPanel({
   handleSend,
   history,
   radiusClass,
+  onOpenGateways,
 }: {
   activeTab: 'compose' | 'history';
   setActiveTab: (tab: 'compose' | 'history') => void;
@@ -324,6 +327,7 @@ export function SMSComposerPanel({
   handleSend: (e: React.FormEvent) => void;
   history: SMSMessage[];
   radiusClass: string;
+  onOpenGateways?: () => void;
 }) {
   const { t } = useLanguage();
 
@@ -382,13 +386,24 @@ export function SMSComposerPanel({
           </div>
         )}
 
-        <button
-          onClick={() => setShowRightPanel(!showRightPanel)}
-          className={`p-2 ${radiusClass} transition-all ml-auto ${showRightPanel ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
-          title="Toggle Sidebar"
-        >
-          <Info className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-2 ml-auto">
+          <button
+            type="button"
+            onClick={onOpenGateways}
+            className={`px-3 py-1.5 ${radiusClass} bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold flex items-center gap-1.5 hover:bg-emerald-500/20 transition-all`}
+            title="Configure SMS, WhatsApp & Telegram Gateways"
+          >
+            <Zap className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Gateways & Onboarding</span>
+          </button>
+          <button
+            onClick={() => setShowRightPanel(!showRightPanel)}
+            className={`p-2 ${radiusClass} transition-all ${showRightPanel ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+            title="Toggle Sidebar"
+          >
+            <Info className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 p-6 overflow-y-auto">
@@ -707,6 +722,7 @@ export function SMSPage() {
   const [isSending, setIsSending] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
   const [showRightPanel, setShowRightPanel] = useState(true);
+  const [isGatewaysOpen, setIsGatewaysOpen] = useState(false);
 
   // Status State
 
@@ -953,6 +969,7 @@ export function SMSPage() {
         handleSend={handleSend}
         history={history}
         radiusClass={radiusClass}
+        onOpenGateways={() => setIsGatewaysOpen(true)}
       />
 
       {/* RIGHT PANEL: Analytics & Utilities */}
@@ -967,6 +984,12 @@ export function SMSPage() {
           radiusClass={radiusClass}
         />
       )}
+
+      {/* Channel Gateways & Farmer Onboarding Modal */}
+      <ChannelOnboardingModal
+        isOpen={isGatewaysOpen}
+        onClose={() => setIsGatewaysOpen(false)}
+      />
     </div>
   );
 }

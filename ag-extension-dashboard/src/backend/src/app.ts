@@ -62,6 +62,7 @@ import whatsappRoutes from './routes/whatsapp';
 import apiClientRoutes from './routes/apiClients';
 import commercialKnowledgeRoutes from './routes/commercialKnowledge';
 import canadianServicesRoutes from './routes/canadianServices';
+import channelsRoutes from './routes/channels';
 
 const app: Application = express();
 app.set('trust proxy', true); // Trust all proxy hops (Traefik/Docker) for X-Forwarded-For
@@ -370,6 +371,7 @@ const routeMounts: RouteMount[] = [
   { path: '/api-clients', router: apiClientRoutes },
   { path: '/commercial/knowledge', router: commercialKnowledgeRoutes },
   { path: '/canadian', router: canadianServicesRoutes },
+  { path: '/channels', router: channelsRoutes },
 ];
 
 // Mount with i18n support (v1)

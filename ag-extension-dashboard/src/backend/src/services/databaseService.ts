@@ -349,6 +349,51 @@ export async function createTables(): Promise<void> {
         updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
       CREATE INDEX IF NOT EXISTS agent_tasks_status_updated_idx ON agent_tasks(status, updated_at);
+
+      CREATE TABLE IF NOT EXISTS tenant_channel_configs (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+        channel VARCHAR(30) NOT NULL,
+        provider VARCHAR(50) NOT NULL,
+        is_enabled BOOLEAN NOT NULL DEFAULT false,
+        config JSONB NOT NULL DEFAULT '{}'::jsonb,
+        auto_onboarding BOOLEAN NOT NULL DEFAULT true,
+        welcome_template TEXT,
+        created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(tenant_id, channel)
+      );
+      CREATE INDEX IF NOT EXISTS tenant_channel_configs_tenant_channel_idx ON tenant_channel_configs(tenant_id, channel);
+
+      CREATE TABLE IF NOT EXISTS telegram_messages (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id UUID REFERENCES tenants(id) ON DELETE SET NULL,
+        chat_id VARCHAR(64) NOT NULL,
+        username VARCHAR(100),
+        first_name VARCHAR(100),
+        message TEXT NOT NULL,
+        direction VARCHAR(10) NOT NULL DEFAULT 'inbound',
+        status VARCHAR(20) NOT NULL DEFAULT 'received',
+        farmer_id UUID REFERENCES farmers(id) ON DELETE SET NULL,
+        sender_id UUID REFERENCES users(id) ON DELETE SET NULL,
+        created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS telegram_messages_chat_id_idx ON telegram_messages(chat_id);
+      CREATE INDEX IF NOT EXISTS telegram_messages_farmer_id_idx ON telegram_messages(farmer_id);
+
+      CREATE TABLE IF NOT EXISTS farmer_onboarding_sessions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id UUID REFERENCES tenants(id) ON DELETE SET NULL,
+        channel VARCHAR(30) NOT NULL,
+        external_identifier VARCHAR(64) NOT NULL,
+        step VARCHAR(40) NOT NULL DEFAULT 'awaiting_name',
+        collected_data JSONB NOT NULL DEFAULT '{}'::jsonb,
+        created_farmer_id UUID REFERENCES farmers(id) ON DELETE SET NULL,
+        created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(channel, external_identifier)
+      );
+      CREATE INDEX IF NOT EXISTS farmer_onboarding_channel_identifier_idx ON farmer_onboarding_sessions(channel, external_identifier);
     `);
     logger.info('Tenant and data-governance tables provisioned');
   } catch (error) {

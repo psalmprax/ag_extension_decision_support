@@ -417,3 +417,45 @@ export interface AuthenticatedRequestUser {
   email: string;
   role: 'admin' | 'regional_manager' | 'extension_officer' | 'farmer';
 }
+
+// --- Channel Gateway & Onboarding types (channels.ts, telegram.ts) -----------
+
+export interface TenantChannelConfigRow {
+  id: string;
+  tenant_id: string;
+  channel: string;
+  provider: string;
+  is_enabled: boolean;
+  config: Record<string, unknown>;
+  auto_onboarding: boolean;
+  welcome_template: string | null;
+  created_at: Date | string | null;
+  updated_at: Date | string | null;
+}
+
+export interface TelegramMessageRow {
+  id: string;
+  tenant_id: string | null;
+  chat_id: string;
+  username: string | null;
+  first_name: string | null;
+  message: string;
+  direction: string;
+  status: string;
+  farmer_id: string | null;
+  sender_id: string | null;
+  created_at: Date | string | null;
+}
+
+export interface FarmerOnboardingSessionRow {
+  id: string;
+  tenant_id: string | null;
+  channel: string;
+  external_identifier: string;
+  step: string;
+  collected_data: Record<string, unknown>;
+  created_farmer_id: string | null;
+  created_at: Date | string | null;
+  updated_at: Date | string | null;
+}
+
