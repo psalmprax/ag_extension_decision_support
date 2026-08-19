@@ -110,6 +110,7 @@
   "overrides": {
     "@grpc/grpc-js": "^1.14.4",
     "@opentelemetry/core": "^2.8.0",
+    "@opentelemetry/propagator-jaeger": "^2.10.0",
     "body-parser": "^1.20.6",
     "brace-expansion": "^2.1.4",
     "deepmerge-ts": "^8.0.0",
