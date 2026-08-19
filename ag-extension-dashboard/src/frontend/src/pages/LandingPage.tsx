@@ -37,6 +37,12 @@ import {
   X,
   Sprout,
   Activity,
+  Target,
+  Zap,
+  Sparkles,
+  Radio,
+  CheckCircle2,
+  MessageSquare,
 } from 'lucide-react';
 import { Liquid } from '@/components/canvasui/Liquid';
 
@@ -343,12 +349,89 @@ function GlobalConstellationVisualization() {
   );
 }
 
+const SANDBOX_PRESETS = [
+  {
+    id: 'armyworm',
+    badge: 'PEST INTERVENTION',
+    title: '🌽 Fall Armyworm Containment',
+    goalPrompt: 'Identify Nakuru maize farmers at risk of Armyworm post-rainfall, inject local bio-control skill card, dispatch Swahili advisory, and schedule scouting for vital score < 60.',
+    targetRegion: 'Nakuru County',
+    targetCrop: 'Maize',
+    affectedFarmers: 45,
+    alertsDispatched: 45,
+    visitsQueued: 3,
+    confidence: '96%',
+    skillTitle: 'Nakuru Bio-Control Protocol (2026)',
+    skillBody: 'Apply Neem extract + Pyrethrum at dusk (18:00-19:30). Alternate with Bacillus thuringiensis. Avoid mid-day application to protect pollinators.',
+    channelPreview: {
+      sms: 'Hello Amina Okafor,\n🌾 GP-Ext Alert: Early Fall Armyworm detected in Rongai. Inspect leaf whorls at sunset. Spray Neem extract today to prevent spread.',
+      whatsapp: '🌿 *GP-Ext Regional Advisory (Nakuru)*\n\nHello Amina,\nFollowing recent rain and 78% humidity, scouting reveals early Armyworm instar in maize.\n\n✅ *Action:* Apply Neem/Pyrethrum at sunset.\n📍 *Extension Officer:* J. Mwangi visiting Thursday.',
+      telegram: '🚨 *Automated Campaign Alert*\nRegion: Nakuru | Crop: Maize\nAction: Spray bio-control at dusk. Officer visit queued.',
+    },
+  },
+  {
+    id: 'potato-blight',
+    badge: 'PATHOLOGY SHIELD',
+    title: '🥔 Potato Late Blight Prevention',
+    goalPrompt: 'Detect 3-day continuous damp cloud cover in Nyandarua, broadcast preventive copper fungicide timing to potato growers, and alert zonal officers.',
+    targetRegion: 'Nyandarua County',
+    targetCrop: 'Irish Potatoes',
+    affectedFarmers: 62,
+    alertsDispatched: 62,
+    visitsQueued: 5,
+    confidence: '94%',
+    skillTitle: 'Kinangop Late Blight Spray Calendar',
+    skillBody: 'Apply preventive Mancozeb or Copper oxychloride before rain onset. Ensure full under-leaf canopy coverage. Re-apply if rainfall exceeds 25mm.',
+    channelPreview: {
+      sms: 'Hello Joseph Mensah,\n🥔 GP-Ext Alert: Damp overcast week forecast in Nyandarua. Apply preventive copper spray before Thursday rains.',
+      whatsapp: '🥔 *GP-Ext Disease Warning*\n\nHello Joseph,\nHigh humidity (>85%) increases late blight risk.\n\n✅ *Action:* Apply copper fungicide to Irish potatoes today.',
+      telegram: '🚨 *Pathology Alert:* Nyandarua Late Blight fungicide window active.',
+    },
+  },
+  {
+    id: 'nutrient-recovery',
+    badge: 'SOIL & WEATHER',
+    title: '🌧️ Heavy Rain Nutrient Recovery',
+    goalPrompt: 'Evaluate nitrogen leaching in Eldoret cereal plots after 80mm rainfall anomaly, dispatch split top-dressing guidance, and queue soil check.',
+    targetRegion: 'Uasin Gishu County',
+    targetCrop: 'Maize & Wheat',
+    affectedFarmers: 38,
+    alertsDispatched: 38,
+    visitsQueued: 2,
+    confidence: '98%',
+    skillTitle: 'Eldoret Post-Storm Leaching Recovery',
+    skillBody: 'Wait 24h for topsoil drainage before top dressing. Apply CAN at 50kg/acre in split dose to prevent secondary root burn.',
+    channelPreview: {
+      sms: 'Hello Ngozi Kalu,\n🌾 GP-Ext Alert: Heavy rain caused nitrogen leaching. Apply split CAN top-dressing once field drains.',
+      whatsapp: '🌾 *Soil Fertility Alert*\n\nHello Ngozi,\n80mm rain anomaly recorded in Eldoret.\n\n✅ *Action:* Apply CAN fertilizer 50kg/acre once topsoil drains.',
+      telegram: '🚨 *Agronomy Alert:* Eldoret Post-Storm top-dressing guide dispatched.',
+    },
+  },
+];
+
 // ─── Main component ─────────────────────────────────────────────
 export function LandingPage() {
   const navigate = useNavigate();
   const pageRef = useRef<HTMLDivElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+
+  // Agent OS Sandbox Interactive State
+  const [activePreset, setActivePreset] = useState(SANDBOX_PRESETS[0]);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simProgress, setSimProgress] = useState(4);
+  const [activeChannelTab, setActiveChannelTab] = useState<'sms' | 'whatsapp' | 'telegram'>('sms');
+
+  const handleRunSimulation = () => {
+    setIsSimulating(true);
+    setSimProgress(1);
+    setTimeout(() => setSimProgress(2), 350);
+    setTimeout(() => setSimProgress(3), 700);
+    setTimeout(() => {
+      setSimProgress(4);
+      setIsSimulating(false);
+    }, 1050);
+  };
 
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -451,6 +534,13 @@ export function LandingPage() {
               Features
             </a>
             <a
+              href="#agent-os"
+              className="text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1.5"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Agent OS
+            </a>
+            <a
               href="#how-it-works"
               className="text-sm font-medium text-white/60 hover:text-white transition-colors"
             >
@@ -515,6 +605,7 @@ export function LandingPage() {
                 {[
                   { label: 'Why Us', href: '#problem' },
                   { label: 'Features', href: '#features' },
+                  { label: 'Agent OS (Goal Mode)', href: '#agent-os' },
                   { label: 'How It Works', href: '#how-it-works' },
                   { label: 'Ecosystem & Soil Telemetry', href: '#capabilities' },
                   { label: 'Frequently Asked Questions', href: '#faq' },
@@ -1114,6 +1205,243 @@ export function LandingPage() {
                   </div>
                 </motion.div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── AGENT OS & LIVE GOAL MODE SIMULATOR ── */}
+        <section id="agent-os" className="relative py-28 border-t border-white/[0.04] overflow-hidden">
+          <div className="max-w-[90rem] w-full mx-auto px-6 relative z-10">
+            {/* Live Telemetry Ribbons */}
+            <div className="flex flex-wrap items-center justify-center gap-3 mb-10">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full backdrop-blur-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                <span className="w-2 h-2 rounded-full bg-emerald-400 -ml-4" />
+                <span>Autonomous Agent Fleet: 24/7 Monitoring</span>
+              </div>
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full backdrop-blur-md bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold">
+                <Radio className="w-3.5 h-3.5" />
+                <span>NASA POWER Satellite Stream Synced</span>
+              </div>
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full backdrop-blur-md bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-semibold">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Closed-Loop Regional Skill Synthesis</span>
+              </div>
+            </div>
+
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: '-100px' }}
+              variants={stagger}
+              className="text-center mb-16"
+            >
+              <motion.div
+                variants={fadeUp}
+                className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400/80 mb-4"
+              >
+                Autonomous Agent Architecture
+              </motion.div>
+              <motion.h2
+                variants={fadeUp}
+                className="text-[clamp(2rem,3.5vw,3rem)] font-bold tracking-tight leading-tight"
+              >
+                From Natural-Language Goal to{' '}
+                <span className="bg-gradient-to-r from-emerald-300 via-emerald-400 to-amber-400 bg-clip-text text-transparent">
+                  Multi-Channel Execution
+                </span>
+              </motion.h2>
+              <motion.p
+                variants={fadeUp}
+                className="text-sm sm:text-base text-white/60 max-w-2xl mx-auto mt-3"
+              >
+                Extension directors define high-level agronomic goals. The agent analyzes micro-climates, queries farmer vital scores, injects localized skill cards, dispatches SMS/WhatsApp alerts, and schedules field visits.
+              </motion.p>
+            </motion.div>
+
+            {/* Interactive Bento Sandbox */}
+            <div className="grid lg:grid-cols-[1.2fr_1fr] gap-6 items-start">
+              {/* Left Column: Interactive Simulation Sandbox */}
+              <div className="backdrop-blur-xl bg-slate-900/70 border border-white/[0.1] rounded-3xl p-6 sm:p-8 shadow-2xl shadow-emerald-950/30 space-y-6">
+                <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                      <Target className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-sm text-white flex items-center gap-2">
+                        Live Goal Mode Sandbox
+                        <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                          Interactive
+                        </span>
+                      </div>
+                      <div className="text-xs text-white/40">Select an objective or run real-time orchestration</div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleRunSimulation}
+                    disabled={isSimulating}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-amber-500 hover:from-emerald-400 hover:to-amber-400 text-slate-950 font-bold text-xs flex items-center gap-2 transition-all shadow-lg shadow-emerald-950/40 disabled:opacity-50"
+                  >
+                    <Zap className={`w-4 h-4 ${isSimulating ? 'animate-spin' : ''}`} />
+                    <span>{isSimulating ? 'Orchestrating...' : 'Run Simulation'}</span>
+                  </button>
+                </div>
+
+                {/* Preset Chips */}
+                <div className="space-y-2">
+                  <div className="text-xxs font-bold uppercase tracking-wider text-white/50">
+                    Select Agronomic Goal Scenario:
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {SANDBOX_PRESETS.map(preset => (
+                      <button
+                        key={preset.id}
+                        onClick={() => {
+                          setActivePreset(preset);
+                          handleRunSimulation();
+                        }}
+                        className={`p-3 rounded-xl border text-left transition-all ${
+                          activePreset.id === preset.id
+                            ? 'bg-emerald-500/15 border-emerald-500/40 text-white shadow-md'
+                            : 'bg-slate-950/60 border-white/[0.06] text-white/60 hover:border-white/[0.15] hover:text-white'
+                        }`}
+                      >
+                        <div className="text-xs font-bold truncate">{preset.title}</div>
+                        <div className="text-[10px] text-white/40 mt-0.5 font-mono">{preset.targetRegion}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Goal Prompt Display */}
+                <div className="p-4 rounded-2xl bg-slate-950/80 border border-white/[0.08] space-y-2">
+                  <div className="flex items-center justify-between text-xxs text-emerald-400 font-mono">
+                    <span>OBJECTIVE PROMPT</span>
+                    <span>REGION: {activePreset.targetRegion}</span>
+                  </div>
+                  <p className="text-xs text-white/90 leading-relaxed font-mono">
+                    &quot;{activePreset.goalPrompt}&quot;
+                  </p>
+                </div>
+
+                {/* Execution Trace Stepper */}
+                <div className="space-y-2.5">
+                  <div className="text-xxs font-bold uppercase tracking-wider text-white/50 flex items-center justify-between">
+                    <span>Autonomous Execution Trace</span>
+                    <span className="font-mono text-emerald-400">{simProgress}/4 Steps Completed</span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {[
+                      { step: '1. Intent & Environmental Sensor Query', detail: `Analyzed weather anomaly for ${activePreset.targetRegion}. Cross-checked SoilGrids telemetry.`, icon: CloudSun },
+                      { step: '2. Closed-Loop Skill Synthesis', detail: `Injected local skill: "${activePreset.skillTitle}" (${activePreset.confidence} confidence).`, icon: Sparkles },
+                      { step: '3. Precision Cohort Mapping', detail: `Identified ${activePreset.affectedFarmers} vulnerable ${activePreset.targetCrop} farmers with vital scores < 70.`, icon: Users },
+                      { step: '4. Multi-Channel Dispatch & Visit Queuing', detail: `Dispatched ${activePreset.alertsDispatched} localized advisories. Queued ${activePreset.visitsQueued} priority field visits.`, icon: Zap },
+                    ].map((t, idx) => (
+                      <div
+                        key={idx}
+                        className={`flex items-start gap-3 p-3 rounded-xl border transition-all duration-300 ${
+                          idx + 1 <= simProgress
+                            ? 'bg-emerald-950/30 border-emerald-500/30 text-white'
+                            : 'bg-slate-950/30 border-white/[0.04] text-white/30 opacity-40'
+                        }`}
+                      >
+                        <t.icon className={`w-4 h-4 mt-0.5 shrink-0 ${idx + 1 <= simProgress ? 'text-emerald-400' : 'text-white/20'}`} />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-bold flex items-center justify-between">
+                            <span>{t.step}</span>
+                            {idx + 1 <= simProgress && (
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                            )}
+                          </div>
+                          <p className="text-xxs text-white/60 mt-0.5">{t.detail}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Multi-Channel Advisory & Skill Cards */}
+              <div className="space-y-6">
+                {/* Closed-Loop Knowledge Card */}
+                <div className="backdrop-blur-xl bg-slate-900/70 border border-white/[0.1] rounded-3xl p-6 shadow-2xl shadow-emerald-950/20 space-y-4">
+                  <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="font-bold text-xs text-white">Closed-Loop Regional Skill Card</span>
+                    </div>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+                      {activePreset.confidence} Verified
+                    </span>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-slate-950/80 border border-white/[0.06] space-y-2">
+                    <div className="font-bold text-xs text-emerald-300">{activePreset.skillTitle}</div>
+                    <p className="text-xxs text-white/70 leading-relaxed font-mono">
+                      {activePreset.skillBody}
+                    </p>
+                    <div className="pt-2 border-t border-white/[0.04] flex items-center justify-between text-[9px] font-mono text-white/40">
+                      <span>SOURCE: FIELD_VISIT_CONSENSUS</span>
+                      <span>REGION: {activePreset.targetRegion}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Multi-Channel Message Simulator Card */}
+                <div className="backdrop-blur-xl bg-slate-900/70 border border-white/[0.1] rounded-3xl p-6 shadow-2xl shadow-emerald-950/20 space-y-4">
+                  <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4 text-emerald-400" />
+                      <span className="font-bold text-xs text-white">Multi-Channel Advisory Dispatch</span>
+                    </div>
+
+                    <div className="flex bg-slate-950 rounded-lg p-0.5 border border-white/[0.06]">
+                      {(['sms', 'whatsapp', 'telegram'] as const).map(ch => (
+                        <button
+                          key={ch}
+                          onClick={() => setActiveChannelTab(ch)}
+                          className={`px-2.5 py-1 rounded text-xxs font-bold uppercase transition-all ${
+                            activeChannelTab === ch
+                              ? 'bg-emerald-500/20 text-emerald-400'
+                              : 'text-white/40 hover:text-white'
+                          }`}
+                        >
+                          {ch}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-slate-950/90 border border-white/[0.08] space-y-3">
+                    <div className="flex items-center justify-between text-xxs font-mono text-white/40">
+                      <span>CHANNEL: {activeChannelTab.toUpperCase()}</span>
+                      <span className="text-emerald-400">DISPATCHED (45/45)</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-900/80 border border-white/[0.06] text-xs text-white/90 whitespace-pre-line leading-relaxed font-sans">
+                      {activePreset.channelPreview[activeChannelTab]}
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 text-center text-xxs font-mono pt-1">
+                      <div className="p-2 rounded-lg bg-slate-900/50 border border-white/[0.04]">
+                        <div className="text-emerald-400 font-bold">{activePreset.affectedFarmers}</div>
+                        <div className="text-[9px] text-white/40">Farmers</div>
+                      </div>
+                      <div className="p-2 rounded-lg bg-slate-900/50 border border-white/[0.04]">
+                        <div className="text-amber-400 font-bold">{activePreset.alertsDispatched}</div>
+                        <div className="text-[9px] text-white/40">Alerts</div>
+                      </div>
+                      <div className="p-2 rounded-lg bg-slate-900/50 border border-white/[0.04]">
+                        <div className="text-sky-400 font-bold">{activePreset.visitsQueued}</div>
+                        <div className="text-[9px] text-white/40">Visits Queued</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
