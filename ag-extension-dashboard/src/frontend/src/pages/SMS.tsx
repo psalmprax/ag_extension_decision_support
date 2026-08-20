@@ -337,55 +337,55 @@ export function SMSComposerPanel({
 
   return (
     <div
-      className={`flex-1 bg-white dark:bg-slate-900 ${radiusClass} border border-slate-200 dark:border-slate-800 flex flex-col shadow-sm`}
+      className="flex-1 backdrop-blur-xl bg-slate-900/60 rounded-2xl border border-white/10 flex flex-col shadow-xl"
     >
-      <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800">
-        <div className={`flex bg-slate-100 dark:bg-slate-800 p-1 ${radiusClass}`}>
+      <div className="flex flex-wrap items-center justify-between p-4 border-b border-white/5 gap-3">
+        <div className="flex bg-white/[0.03] border border-white/5 p-1 rounded-xl">
           <button
             onClick={() => setActiveTab('compose')}
-            className={`px-4 py-1.5 text-sm font-bold ${radiusClass} transition-all ${
+            className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all ${
               activeTab === 'compose'
-                ? 'bg-white dark:bg-slate-700 text-primary-600 shadow-sm'
-                : 'text-slate-500 dark:text-slate-400'
+                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm'
+                : 'text-white/50 hover:text-white'
             }`}
           >
-            <Layout className="w-4 h-4 inline-block mr-2" />
-            {t('sms_tab_compose')}
+            <Layout className="w-3.5 h-3.5 inline-block mr-1.5" />
+            {t('sms_tab_compose') || 'Compose'}
           </button>
           <button
             onClick={() => setActiveTab('history')}
-            className={`px-4 py-1.5 text-sm font-bold ${radiusClass} transition-all ${
+            className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all ${
               activeTab === 'history'
-                ? 'bg-white dark:bg-slate-700 text-primary-600 shadow-sm'
-                : 'text-slate-500 dark:text-slate-400'
+                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm'
+                : 'text-white/50 hover:text-white'
             }`}
           >
-            <History className="w-4 h-4 inline-block mr-2" />
-            {t('sms_tab_history')}
+            <History className="w-3.5 h-3.5 inline-block mr-1.5" />
+            {t('sms_tab_history') || 'History'}
           </button>
         </div>
 
         {activeTab === 'compose' && (
-          <div className={`flex bg-slate-100 dark:bg-slate-800 p-1 ${radiusClass}`}>
+          <div className="flex bg-white/[0.03] border border-white/5 p-1 rounded-xl">
             <button
               onClick={() => setSendMode('single')}
-              className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider ${radiusClass} transition-all ${
+              className={`px-3 py-1 text-xxs font-bold uppercase tracking-wider rounded-lg transition-all ${
                 sendMode === 'single'
-                  ? 'bg-white dark:bg-slate-700 text-emerald-600 shadow-sm'
-                  : 'text-slate-500 dark:text-slate-400'
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm'
+                  : 'text-white/40 hover:text-white'
               }`}
             >
-              {t('sms_single_tab')}
+              {t('sms_single_tab') || 'Single'}
             </button>
             <button
               onClick={() => setSendMode('bulk')}
-              className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider ${radiusClass} transition-all ${
+              className={`px-3 py-1 text-xxs font-bold uppercase tracking-wider rounded-lg transition-all ${
                 sendMode === 'bulk'
-                  ? 'bg-white dark:bg-slate-700 text-emerald-600 shadow-sm'
-                  : 'text-slate-500 dark:text-slate-400'
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm'
+                  : 'text-white/40 hover:text-white'
               }`}
             >
-              {t('sms_bulk_tab')}
+              {t('sms_bulk_tab') || 'Bulk Cohort'}
             </button>
           </div>
         )}
@@ -394,27 +394,27 @@ export function SMSComposerPanel({
           <button
             type="button"
             onClick={onOpenGoalMode}
-            className={`px-3 py-1.5 ${radiusClass} bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs font-bold flex items-center gap-1.5 hover:bg-amber-500/20 transition-all`}
+            className="px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-300 border border-amber-500/20 text-xs font-bold flex items-center gap-1.5 hover:bg-amber-500/20 transition-all shadow-sm"
             title="Launch Autonomous Agronomy Goal Campaign"
           >
-            <Target className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Goal Mode Campaigns</span>
+            <Target className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden sm:inline">Goal Mode</span>
           </button>
           <button
             type="button"
             onClick={onOpenGateways}
-            className={`px-3 py-1.5 ${radiusClass} bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold flex items-center gap-1.5 hover:bg-emerald-500/20 transition-all`}
+            className="px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 text-xs font-bold flex items-center gap-1.5 hover:bg-emerald-500/20 transition-all shadow-sm"
             title="Configure SMS, WhatsApp & Telegram Gateways"
           >
-            <Zap className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Gateways & Onboarding</span>
+            <Zap className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="hidden sm:inline">Gateways</span>
           </button>
           <button
             onClick={() => setShowRightPanel(!showRightPanel)}
-            className={`p-2 ${radiusClass} transition-all ${showRightPanel ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+            className="p-1.5 rounded-xl bg-white/[0.04] text-white/60 hover:text-white hover:bg-white/[0.08] border border-white/10 transition-all"
             title="Toggle Sidebar"
           >
-            <Info className="w-5 h-5" />
+            <Info className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -476,31 +476,31 @@ export function SMSContactsPanel({
 
   return (
     <div
-      className={`w-full lg:w-1/4 bg-white dark:bg-slate-900 ${radiusClass} border border-slate-200 dark:border-slate-800 flex flex-col shadow-sm`}
+      className="w-full lg:w-1/4 backdrop-blur-xl bg-slate-900/60 rounded-2xl border border-white/10 flex flex-col shadow-xl"
     >
-      <div className="p-4 border-b border-slate-200 dark:border-slate-800">
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <Users className="w-5 h-5 text-primary-600" />
-          {t('sms_recent_recipients')}
+      <div className="p-4 border-b border-white/5">
+        <h2 className="text-base font-bold text-white mb-3 flex items-center gap-2">
+          <Users className="w-4 h-4 text-emerald-400" />
+          {t('sms_recent_recipients') || 'Recipients & Cohorts'}
         </h2>
         <div className="flex items-center justify-between gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
             <input
               type="text"
-              placeholder={t('farmer_search_placeholder')}
+              placeholder={t('farmer_search_placeholder') || 'Search recipients...'}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className={`w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none ${radiusClass} focus:ring-2 focus:ring-primary-500 text-sm`}
+              className="w-full pl-9 pr-3 py-1.5 bg-white/[0.03] border border-white/10 rounded-xl focus:ring-1 focus:ring-emerald-400 text-xs text-white placeholder-white/30 outline-none"
             />
           </div>
           {sendMode === 'bulk' && (
             <button
               onClick={handleBulkSelectAll}
-              className={`p-2 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 ${radiusClass} hover:bg-primary-200 transition-colors`}
+              className="p-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl hover:bg-emerald-500/20 transition-colors"
               title="Select All"
             >
-              <CheckCircle className="w-5 h-5" />
+              <CheckCircle className="w-4 h-4" />
             </button>
           )}
         </div>
@@ -509,7 +509,7 @@ export function SMSContactsPanel({
       <div className="flex-1 overflow-y-auto p-2 space-y-1">
         {isLoadingContacts ? (
           <div className="flex flex-col items-center justify-center py-10">
-            <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
+            <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
           </div>
         ) : (
           recentContacts
@@ -532,13 +532,13 @@ export function SMSContactsPanel({
             ))
         )}
         {!isLoadingContacts && recentContacts.length === 0 && (
-          <div className="text-center py-10 text-slate-400 text-xs uppercase font-bold tracking-widest">
-            No farmers found
+          <div className="text-center py-10 text-white/30 text-xs uppercase font-bold tracking-widest">
+            No contacts found
           </div>
         )}
       </div>
 
-      <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+      <div className="p-3.5 border-t border-white/5">
         <button
           onClick={() => {
             if (selectedContact) {
@@ -548,10 +548,10 @@ export function SMSContactsPanel({
               toast.error('Select a contact first');
             }
           }}
-          className={`w-full flex items-center justify-center gap-2 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 ${radiusClass} font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors`}
+          className="w-full flex items-center justify-center gap-1.5 py-2 bg-white/[0.04] hover:bg-emerald-500/15 border border-white/10 hover:border-emerald-500/30 text-white/80 hover:text-emerald-300 rounded-xl text-xs font-bold transition-all"
         >
-          <Plus className="w-4 h-4" />
-          {t('common_add')}
+          <Plus className="w-3.5 h-3.5" />
+          {t('common_add') || 'Add Recipient'}
         </button>
       </div>
     </div>
@@ -587,20 +587,20 @@ export function SMSRightPanel({
     <div className="w-full lg:w-1/4 space-y-4 overflow-y-auto pr-1">
       {/* GLASS DASHBOARD CARD */}
       <div
-        className={`relative overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 dark:border-slate-800/50 ${radiusClass} p-6 shadow-xl space-y-6`}
+        className="relative overflow-hidden backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-5 shadow-xl space-y-5"
       >
-        <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute -top-12 -right-12 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl"></div>
 
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
-            <Plus className="w-5 h-5 text-emerald-500 p-1 bg-emerald-100 dark:bg-emerald-900/50 rounded-lg" />
-            {t('sms_quota_title')}
+          <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <Zap className="w-4 h-4 text-emerald-400" />
+            {t('sms_quota_title') || 'Delivery & Quota'}
           </h3>
           <button
             onClick={onClose}
-            className="relative z-10 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-400 hover:text-rose-500"
+            className="p-1 hover:bg-white/5 rounded-lg text-white/40 hover:text-white transition-colors"
           >
-            <XCircle className="w-5 h-5" />
+            &times;
           </button>
         </div>
 
