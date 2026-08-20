@@ -848,7 +848,7 @@ export function LandingPage() {
                     </div>
 
                     {/* Stats row */}
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {[
                         {
                           value: '120',
@@ -908,7 +908,7 @@ export function LandingPage() {
                     </div>
 
                     {/* Chart + Activity */}
-                    <div className="grid grid-cols-[1.4fr_1fr] gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-[1.4fr_1fr] gap-2">
                       {/* Chart */}
                       <div className="bg-white/[0.02] rounded-lg p-2.5 border border-white/[0.04]">
                         <div className="flex justify-between items-center mb-2">
@@ -1195,7 +1195,7 @@ export function LandingPage() {
                     </p>
 
                     {feat.highlight && (
-                      <div className="mt-8 pt-6 border-t border-white/[0.06] grid grid-cols-3 gap-4">
+                      <div className="mt-8 pt-6 border-t border-white/[0.06] grid grid-cols-1 sm:grid-cols-3 gap-4">
                         {[
                           { val: 'Real-time', label: 'Sync Engine' },
                           { val: 'Offline-First', label: 'Local Encrypted DB' },
@@ -1248,15 +1248,15 @@ export function LandingPage() {
                 variants={fadeUp}
                 className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400/80 mb-4"
               >
-                Autonomous Agent Architecture
+                Agentic Extension Decision Architecture
               </motion.div>
               <motion.h2
                 variants={fadeUp}
-                className="text-[clamp(2rem,3.5vw,3rem)] font-bold tracking-tight leading-tight"
+                className="text-[clamp(2rem,3.5vw,3rem)] font-bold tracking-tight leading-tight max-w-xl mx-auto"
               >
-                From Natural-Language Goal to{' '}
-                <span className="bg-gradient-to-r from-emerald-300 via-emerald-400 to-amber-400 bg-clip-text text-transparent">
-                  Multi-Channel Execution
+                Goal Mode:{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-amber-300">
+                  Autonomous Agronomic Tele-Advisory
                 </span>
               </motion.h2>
               <motion.p
@@ -1270,8 +1270,8 @@ export function LandingPage() {
             {/* Interactive Bento Sandbox */}
             <div className="grid lg:grid-cols-[1.2fr_1fr] gap-6 items-start">
               {/* Left Column: Interactive Simulation Sandbox */}
-              <div className="backdrop-blur-xl bg-slate-900/70 border border-white/[0.1] rounded-3xl p-6 sm:p-8 shadow-2xl shadow-emerald-950/30 space-y-6">
-                <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
+              <div className="backdrop-blur-xl bg-slate-900/70 border border-white/[0.1] rounded-3xl p-5 sm:p-8 shadow-2xl shadow-emerald-950/30 space-y-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-white/[0.08] pb-4 gap-4">
                   <div className="flex items-center gap-2.5">
                     <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
                       <Target className="w-5 h-5" />
@@ -1290,7 +1290,7 @@ export function LandingPage() {
                   <button
                     onClick={handleRunSimulation}
                     disabled={isSimulating}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-amber-500 hover:from-emerald-400 hover:to-amber-400 text-slate-950 font-bold text-xs flex items-center gap-2 transition-all shadow-lg shadow-emerald-950/40 disabled:opacity-50"
+                    className="w-full sm:w-auto justify-center px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-amber-500 hover:from-emerald-400 hover:to-amber-400 text-slate-950 font-bold text-xs flex items-center gap-2 transition-all shadow-lg shadow-emerald-950/40 disabled:opacity-50"
                   >
                     <Zap className={`w-4 h-4 ${isSimulating ? 'animate-spin' : ''}`} />
                     <span>{isSimulating ? 'Orchestrating...' : 'Run Simulation'}</span>

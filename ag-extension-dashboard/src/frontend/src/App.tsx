@@ -489,6 +489,7 @@ function App() {
         <div className="flex flex-1 overflow-hidden pt-16">
           <AppSidebar
             sidebarOpen={sidebarOpen}
+            setSidebarOpen={setSidebarOpen}
             navItems={navItems}
             activeTab={activeTab}
             setActiveTab={setActiveTab}
@@ -497,7 +498,7 @@ function App() {
           />
 
           <main
-            className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarOpen ? 'ml-72' : ''} relative pb-24 md:pb-6`}
+            className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarOpen ? 'md:ml-72' : ''} relative pb-24 md:pb-6`}
           >
             <ErrorBoundary componentName="MainContent">
               <Suspense
@@ -507,7 +508,7 @@ function App() {
                   </div>
                 }
               >
-                <div className="p-6">
+                <div className="p-3.5 sm:p-6">
                   <TabContent
                     activeTab={activeTab}
                     headingClass={headingClass}

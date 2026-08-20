@@ -90,16 +90,16 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
           </div>
 
           {/* Quick Telemetry Metric Badges */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-xs">
+          <div className="grid grid-cols-3 sm:flex items-center gap-2 w-full lg:w-auto">
+            <div className="px-3 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-center sm:text-left">
               <span className="text-xxs font-semibold text-white/40 uppercase block">Total Clients</span>
               <strong className="text-sm font-bold text-white font-mono">{effectiveFarmers.length}</strong>
             </div>
-            <div className="px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-xs">
+            <div className="px-3 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-center sm:text-left">
               <span className="text-xxs font-semibold text-white/40 uppercase block">Total Land</span>
               <strong className="text-sm font-bold text-emerald-400 font-mono">{totalLandHa.toFixed(1)} ha</strong>
             </div>
-            <div className="px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-xs">
+            <div className="px-3 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-center sm:text-left">
               <span className="text-xxs font-semibold text-white/40 uppercase block">Selected</span>
               <strong className="text-sm font-bold text-purple-400 font-mono">{selectedFarmers.size}</strong>
             </div>
@@ -314,7 +314,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 30 }}
-            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 backdrop-blur-2xl bg-slate-900/90 border border-emerald-500/40 shadow-2xl shadow-emerald-950/60 rounded-2xl px-6 py-3.5 flex items-center gap-4 flex-wrap"
+            className="fixed bottom-20 md:bottom-8 left-1/2 -translate-x-1/2 z-50 backdrop-blur-2xl bg-slate-900/95 border border-emerald-500/40 shadow-2xl shadow-emerald-950/60 rounded-2xl px-4 sm:px-6 py-3 flex items-center justify-between sm:justify-start gap-3 sm:gap-4 flex-wrap w-[calc(100%-1.5rem)] max-w-xl md:w-auto"
           >
             <div className="flex items-center gap-2 pr-2 border-r border-white/10 text-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />

@@ -945,7 +945,7 @@ export function SMSPage() {
   }, [bulkSelectedIds, sendMode, recentContacts]);
 
   return (
-    <div className="flex flex-col lg:flex-row h-[calc(100vh-80px)] overflow-hidden gap-4 p-4 lg:p-6 bg-slate-50 dark:bg-slate-950">
+    <div className="flex flex-col lg:flex-row min-h-[calc(100vh-80px)] lg:h-[calc(100vh-80px)] overflow-y-auto lg:overflow-hidden gap-4 p-3.5 sm:p-4 lg:p-6 bg-slate-50 dark:bg-slate-950 pb-28 md:pb-6">
       {/* LEFT PANEL: Contacts & Search */}
       <SMSContactsPanel
         searchQuery={searchQuery}
