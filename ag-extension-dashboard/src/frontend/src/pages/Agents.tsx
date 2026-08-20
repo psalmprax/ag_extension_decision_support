@@ -3,12 +3,15 @@ import {
   Server,
   Activity,
   CheckCircle,
-  AlertTriangle,
   XCircle,
   Clock,
-  Users,
   RefreshCw,
   Send,
+  Zap,
+  Sparkles,
+  Radio,
+  ArrowRight,
+  ShieldCheck,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
@@ -23,28 +26,15 @@ import {
   QueueStatus,
 } from '../api/agentService';
 import { withRealFallback } from '../lib/realFirst';
-import {
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-} from 'recharts';
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import toast from 'react-hot-toast';
-import { MetricCard } from '@/components/MetricCard';
 import { CH_COLORS } from '@/lib/colors';
 import { ChartTooltip } from '@/components/charts/ChartTooltip';
-import { chartGrid, chartTick } from '@/components/charts/chartConfig';
 import { LoadingHeaderSkeleton } from '@/components/ui/LoadingHeaderSkeleton';
 
 export function Agents() {
   const { t } = useLanguage();
-  const { headingClass, radiusClass, btnClass } = useThemeClasses();
+  const { headingClass, btnClass } = useThemeClasses();
   const { addNotification } = useAppStore();
 
   // State
@@ -68,7 +58,7 @@ export function Agents() {
           {
             agentId: 'ag-001',
             name: 'Alpha-Analytic',
-            capabilities: ['diagnosis', 'soil-analysis'],
+            capabilities: ['diagnosis', 'soil-analysis', 'vital-scoring'],
             maxConcurrentTasks: 10,
             currentLoad: 3,
             health: 'healthy',
@@ -77,7 +67,7 @@ export function Agents() {
           {
             agentId: 'ag-002',
             name: 'Beta-Synthesizer',
-            capabilities: ['synthesis', 'reporting'],
+            capabilities: ['synthesis', 'reporting', 'skill-synthesis'],
             maxConcurrentTasks: 5,
             currentLoad: 1,
             health: 'healthy',
@@ -86,7 +76,7 @@ export function Agents() {
           {
             agentId: 'ag-003',
             name: 'Gamma-Optimizer',
-            capabilities: ['irrigation', 'weather-pivoting'],
+            capabilities: ['irrigation', 'weather-pivoting', 'channel-dispatch'],
             maxConcurrentTasks: 8,
             currentLoad: 5,
             health: 'degraded',
@@ -100,8 +90,15 @@ export function Agents() {
             from: 'Alpha-Analytic',
             to: 'Beta-Synthesizer',
             taskId: 'task-882',
-            reason: 'Synthesis required',
+            reason: 'Regional skill synthesis required',
             timestamp: new Date().toISOString(),
+          },
+          {
+            from: 'Beta-Synthesizer',
+            to: 'Gamma-Optimizer',
+            taskId: 'task-883',
+            reason: 'Multi-channel broadcast dispatch',
+            timestamp: new Date(Date.now() - 60000).toISOString(),
           },
         ];
 
@@ -118,7 +115,7 @@ export function Agents() {
         console.error('Failed to load agent data:', error);
         addNotification({
           type: 'error',
-          message: t('agents_failed_load'),
+          message: t('agents_failed_load') || 'Failed to load agent orchestration status',
         });
       } finally {
         setIsLoading(false);
@@ -162,32 +159,6 @@ export function Agents() {
     }
   };
 
-  const getHealthColor = (health: string) => {
-    switch (health) {
-      case 'healthy':
-        return 'text-green-600 bg-green-50 dark:bg-green-900/20';
-      case 'degraded':
-        return 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20';
-      case 'offline':
-        return 'text-red-600 bg-red-50 dark:bg-red-900/20';
-      default:
-        return 'text-gray-600 bg-gray-50 dark:bg-gray-900/20';
-    }
-  };
-
-  const getHealthIcon = (health: string) => {
-    switch (health) {
-      case 'healthy':
-        return CheckCircle;
-      case 'degraded':
-        return AlertTriangle;
-      case 'offline':
-        return XCircle;
-      default:
-        return Clock;
-    }
-  };
-
   if (isLoading) {
     return (
       <LoadingHeaderSkeleton
@@ -207,61 +178,213 @@ export function Agents() {
     : [];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-8">
+      {/* Header & Status Ribbons */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className={`text-2xl ${headingClass}`}>Agent Manager</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">{t('agents_subtitle')}</p>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <span className="text-xs font-mono font-bold uppercase tracking-widest text-emerald-400">
+              Autonomous Mesh Fleet
+            </span>
+          </div>
+          <h1 className={`text-3xl font-extrabold text-white tracking-tight ${headingClass}`}>
+            Agent Orchestration
+          </h1>
+          <p className="text-white/60 text-sm mt-1">
+            Real-time telemetry, auto-handoff coordination, and execution matrix.
+          </p>
         </div>
-        <button
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className={`flex items-center gap-2 px-4 py-2 bg-primary-600 text-white ${btnClass} hover:bg-primary-700 disabled:opacity-50`}
-        >
-          <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          Refresh
-        </button>
+
+        <div className="flex items-center gap-3">
+          <div className="hidden lg:inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
+            <Radio className="w-3.5 h-3.5" />
+            <span>3 NODES ONLINE</span>
+          </div>
+
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 border border-white/[0.1] text-white hover:border-emerald-500/40 hover:bg-slate-800 text-xs font-bold transition-all disabled:opacity-50 ${btnClass}`}
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-emerald-400' : ''}`} />
+            <span>Refresh</span>
+          </button>
+        </div>
       </div>
 
-      {/* Queue Stats */}
+      {/* Queue Stats Bento Strip */}
       {queueStatus && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <MetricCard
-            title={t('agents_queued_tasks')}
-            value={queueStatus.queued}
-            icon={Clock}
-            color="yellow"
-          />
-          <MetricCard
-            title={t('agents_active_tasks')}
-            value={queueStatus.active}
-            icon={Activity}
-            color="blue"
-          />
-          <MetricCard
-            title={t('agents_completed')}
-            value={queueStatus.completed}
-            icon={CheckCircle}
-            color="green"
-          />
-          <MetricCard
-            title={t('agents_failed')}
-            value={queueStatus.failed}
-            icon={XCircle}
-            color="red"
-          />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 rounded-2xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-1">
+            <div className="flex items-center gap-2 text-white/40 text-xxs uppercase tracking-wider font-mono">
+              <Clock className="w-3.5 h-3.5 text-amber-400" />
+              <span>Queued Tasks</span>
+            </div>
+            <div className="text-xl font-bold text-amber-400 flex items-baseline gap-2">
+              {queueStatus.queued}
+              <span className="text-xxs font-normal text-white/40">In Buffer</span>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-2xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-1">
+            <div className="flex items-center gap-2 text-white/40 text-xxs uppercase tracking-wider font-mono">
+              <Activity className="w-3.5 h-3.5 text-sky-400" />
+              <span>Active Workers</span>
+            </div>
+            <div className="text-xl font-bold text-sky-400 flex items-baseline gap-2">
+              {queueStatus.active}
+              <span className="text-xxs font-normal text-white/40">Executing</span>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-2xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-1">
+            <div className="flex items-center gap-2 text-white/40 text-xxs uppercase tracking-wider font-mono">
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Completed Total</span>
+            </div>
+            <div className="text-xl font-bold text-emerald-400 flex items-baseline gap-2">
+              {queueStatus.completed}
+              <span className="text-xxs font-normal text-emerald-400/80">98.5% Pass</span>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-2xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-1">
+            <div className="flex items-center gap-2 text-white/40 text-xxs uppercase tracking-wider font-mono">
+              <XCircle className="w-3.5 h-3.5 text-rose-400" />
+              <span>Failed / Retried</span>
+            </div>
+            <div className="text-xl font-bold text-rose-400 flex items-baseline gap-2">
+              {queueStatus.failed}
+              <span className="text-xxs font-normal text-white/40">Auto-Handed Off</span>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Charts Row */}
+      {/* Agent Status Grid (KnockKnock Bento Style) */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+          <div className="text-sm font-bold text-white flex items-center gap-2">
+            <Server className="w-4 h-4 text-emerald-400" />
+            <span>Active Agent Nodes</span>
+          </div>
+          <span className="text-xxs font-mono text-white/40">CLUSTER: PROD-EAST-AFRICA</span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {agents.map(agent => {
+            const isHealthy = agent.health === 'healthy';
+            const isDegraded = agent.health === 'degraded';
+            const loadPercent = Math.round((agent.currentLoad / agent.maxConcurrentTasks) * 100);
+
+            return (
+              <motion.div
+                key={agent.agentId}
+                whileHover={{ y: -3 }}
+                transition={{ duration: 0.2 }}
+                className="p-6 rounded-3xl backdrop-blur-xl bg-slate-900/70 border border-white/[0.1] hover:border-emerald-500/30 hover:bg-slate-900/90 hover:shadow-2xl hover:shadow-emerald-950/30 transition-all flex flex-col justify-between space-y-5"
+              >
+                <div className="space-y-4">
+                  {/* Top Status Strip */}
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 rounded-2xl bg-slate-950 border border-white/[0.08] text-emerald-400">
+                        <Zap className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-white text-base leading-tight">{agent.name}</h4>
+                        <p className="text-[10px] font-mono text-white/40 mt-0.5">ID: {agent.agentId}</p>
+                      </div>
+                    </div>
+
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold font-mono uppercase tracking-wider ${
+                        isHealthy
+                          ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                          : isDegraded
+                          ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                          : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                      }`}
+                    >
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          isHealthy ? 'bg-emerald-400 animate-ping' : 'bg-amber-400'
+                        }`}
+                      />
+                      {agent.health}
+                    </span>
+                  </div>
+
+                  {/* Load Progress Bar */}
+                  <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-white/[0.06] space-y-2">
+                    <div className="flex justify-between text-xxs font-mono">
+                      <span className="text-white/50 uppercase">Concurrency Load</span>
+                      <span className="text-emerald-400 font-bold">
+                        {agent.currentLoad} / {agent.maxConcurrentTasks} ({loadPercent}%)
+                      </span>
+                    </div>
+                    <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className="bg-gradient-to-r from-emerald-500 to-amber-400 h-full rounded-full transition-all duration-500"
+                        style={{ width: `${loadPercent}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Capabilities Chips */}
+                  <div className="space-y-1.5">
+                    <div className="text-[10px] font-mono uppercase text-white/40">Capabilities</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {agent.capabilities.map(cap => (
+                        <span
+                          key={cap}
+                          className="px-2 py-0.5 rounded-lg text-[10px] font-mono bg-slate-950 text-white/70 border border-white/[0.06]"
+                        >
+                          {cap}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dispatch Trigger Button */}
+                <div className="pt-4 border-t border-white/[0.06] space-y-2">
+                  <div className="text-[9px] font-mono text-white/30 truncate">
+                    HEARTBEAT: {new Date(agent.lastHeartbeat).toLocaleTimeString()}
+                  </div>
+                  <button
+                    onClick={() => handleDispatch(agent.agentId)}
+                    disabled={isDispatching === agent.agentId || agent.health === 'offline'}
+                    className="w-full py-2 px-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center gap-2 transition-all disabled:opacity-40"
+                  >
+                    {isDispatching === agent.agentId ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Send className="w-3.5 h-3.5" />
+                    )}
+                    <span>Dispatch Probe</span>
+                  </button>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Analytics & Handoff Logs Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Queue Status Pie Chart */}
-        <div className="card p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            {t('agents_task_queue_status')}
-          </h3>
-          <ResponsiveContainer width="100%" height={300}>
+        {/* Task Queue Distribution */}
+        <div className="p-6 rounded-3xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-emerald-400" />
+              <span>Queue Status Telemetry</span>
+            </h3>
+            <span className="text-xxs font-mono text-white/40">REAL-TIME DENSITY</span>
+          </div>
+
+          <ResponsiveContainer width="100%" height={240}>
             <PieChart>
               <Pie
                 data={queueData}
@@ -269,8 +392,9 @@ export function Agents() {
                 nameKey="name"
                 cx="50%"
                 cy="50%"
-                outerRadius={100}
-                label={({ name, value }) => `${name}: ${value}`}
+                outerRadius={80}
+                innerRadius={45}
+                paddingAngle={4}
               >
                 {queueData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
@@ -281,140 +405,39 @@ export function Agents() {
           </ResponsiveContainer>
         </div>
 
-        {/* Agent Load Chart */}
-        <div className="card p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            {t('agents_agent_load_distribution')}
-          </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart
-              data={agents.map(agent => ({
-                name: agent.name,
-                load: agent.currentLoad,
-                max: agent.maxConcurrentTasks,
-              }))}
-            >
-              <CartesianGrid {...chartGrid} />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={chartTick} />
-              <YAxis axisLine={false} tickLine={false} tick={chartTick} />
-              <Tooltip content={<ChartTooltip />} />
-              <Bar dataKey="load" fill={CH_COLORS.blue} />
-              <Bar dataKey="max" fill="var(--color-primary-500)" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+        {/* Handoff Log Terminal */}
+        <div className="p-6 rounded-3xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-4 flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-sky-400" />
+              <span>Autonomous Handoff Stream</span>
+            </h3>
+            <span className="text-xxs font-mono text-emerald-400">0 ERRORS</span>
+          </div>
 
-      {/* Agent Status Grid */}
-      <div className="card p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-          {t('agents_agent_status')}
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {agents.map(agent => {
-            const HealthIcon = getHealthIcon(agent.health);
-            return (
-              <motion.div
-                key={agent.agentId}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className={`p-6 border border-gray-200 dark:border-gray-700 ${radiusClass} bg-white dark:bg-gray-800 flex flex-col justify-between`}
+          <div className="space-y-2.5 max-h-60 overflow-y-auto font-mono text-xs pr-1">
+            {handoffLog.map((handoff, index) => (
+              <div
+                key={index}
+                className="p-3 rounded-xl bg-slate-950/80 border border-white/[0.06] flex items-center justify-between gap-3"
               >
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <Server className="w-8 h-8 text-gray-600 dark:text-gray-400" />
-                      <div>
-                        <h4 className="font-semibold text-gray-900 dark:text-white">
-                          {agent.name}
-                        </h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          ID: {agent.agentId}
-                        </p>
-                      </div>
-                    </div>
-                    <div
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${getHealthColor(agent.health)}`}
-                    >
-                      <HealthIcon className="w-4 h-4 inline mr-1" />
-                      {agent.health}
-                    </div>
+                <div className="space-y-0.5 min-w-0">
+                  <div className="font-bold text-white/90 flex items-center gap-1.5 truncate">
+                    <span className="text-emerald-400">{handoff.from}</span>
+                    <ArrowRight className="w-3 h-3 text-white/40 shrink-0" />
+                    <span className="text-sky-400">{handoff.to}</span>
                   </div>
-
-                  <div className="space-y-3 mb-6">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">Load</span>
-                      <span className="font-medium">
-                        {agent.currentLoad}/{agent.maxConcurrentTasks}
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div
-                        className="bg-primary-600 h-2 rounded-full"
-                        style={{
-                          width: `${(agent.currentLoad / agent.maxConcurrentTasks) * 100}%`,
-                        }}
-                      />
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">Capabilities</span>
-                      <span className="font-medium">{agent.capabilities.length}</span>
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      Last heartbeat: {new Date(agent.lastHeartbeat).toLocaleString()}
-                    </div>
+                  <div className="text-[10px] text-white/50 truncate">
+                    TASK: {handoff.taskId} • {handoff.reason}
                   </div>
                 </div>
 
-                <button
-                  onClick={() => handleDispatch(agent.agentId)}
-                  disabled={isDispatching === agent.agentId || agent.health === 'offline'}
-                  className={`w-full flex items-center justify-center gap-2 py-2 bg-slate-100 dark:bg-gray-700 text-gray-900 dark:text-white ${btnClass} hover:bg-slate-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 font-bold uppercase tracking-tight text-xs`}
-                >
-                  {isDispatching === agent.agentId ? (
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <Send className="w-3.5 h-3.5" />
-                  )}
-                  Dispatch Health Check
-                </button>
-              </motion.div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Handoff Log */}
-      <div className="card p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-          {t('agents_recent_handoffs')}
-        </h3>
-        <div className="space-y-3 max-h-80 overflow-y-auto">
-          {handoffLog.slice(0, 10).map((handoff, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className={`flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 ${radiusClass}`}
-            >
-              <div className="flex items-center gap-4">
-                <Users className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    {handoff.from} → {handoff.to}
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Task: {handoff.taskId} • Reason: {handoff.reason}
-                  </p>
+                <div className="text-[9px] text-white/30 shrink-0">
+                  {new Date(handoff.timestamp).toLocaleTimeString()}
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {new Date(handoff.timestamp).toLocaleString()}
-                </p>
-              </div>
-            </motion.div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>

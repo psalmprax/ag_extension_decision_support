@@ -1,10 +1,10 @@
 import React, { ReactNode } from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { FloatingAIPill } from '../components/FloatingAIPill';
 import { LiveActivityStream } from '../components/LiveActivityStream';
 import { USSDSimulatorDrawer } from '../components/USSDSimulatorDrawer';
-import { LanguageProvider } from '../lib/LanguageContext';
+import { renderWithLanguage } from '../test/languageTestUtils';
 
 // Mock framer-motion to avoid animation timing issues in test environment
 vi.mock('framer-motion', () => {
@@ -49,23 +49,15 @@ vi.mock('framer-motion', () => {
 
 describe('KnockKnock Aesthetic Component Suite', () => {
   describe('FloatingAIPill Component', () => {
-    it('renders the docked floating pill in initial state', () => {
-      render(
-        <LanguageProvider>
-          <FloatingAIPill />
-        </LanguageProvider>
-      );
+    it('renders the docked floating pill in initial state', async () => {
+      await renderWithLanguage(<FloatingAIPill />);
 
       expect(screen.getByText('AI Agronomist')).toBeInTheDocument();
       expect(screen.getByText('ONLINE')).toBeInTheDocument();
     });
 
-    it('expands into the multimodal drawer upon click', () => {
-      render(
-        <LanguageProvider>
-          <FloatingAIPill />
-        </LanguageProvider>
-      );
+    it('expands into the multimodal drawer upon click', async () => {
+      await renderWithLanguage(<FloatingAIPill />);
 
       const pillButton = screen.getByRole('button', { name: /AI Agronomist/i });
       fireEvent.click(pillButton);
@@ -77,11 +69,7 @@ describe('KnockKnock Aesthetic Component Suite', () => {
     });
 
     it('switches to Leaf Scan tab and simulates analysis', async () => {
-      render(
-        <LanguageProvider>
-          <FloatingAIPill />
-        </LanguageProvider>
-      );
+      await renderWithLanguage(<FloatingAIPill />);
 
       // Open drawer
       fireEvent.click(screen.getByRole('button', { name: /AI Agronomist/i }));
@@ -101,11 +89,7 @@ describe('KnockKnock Aesthetic Component Suite', () => {
     });
 
     it('switches to Voice tab and provides transcription', async () => {
-      render(
-        <LanguageProvider>
-          <FloatingAIPill />
-        </LanguageProvider>
-      );
+      await renderWithLanguage(<FloatingAIPill />);
 
       fireEvent.click(screen.getByRole('button', { name: /AI Agronomist/i }));
       fireEvent.click(screen.getByRole('button', { name: /Voice/i }));
@@ -122,12 +106,8 @@ describe('KnockKnock Aesthetic Component Suite', () => {
   });
 
   describe('LiveActivityStream Component', () => {
-    it('renders activity cards with severity scores and channel badges', () => {
-      render(
-        <LanguageProvider>
-          <LiveActivityStream />
-        </LanguageProvider>
-      );
+    it('renders activity cards with severity scores and channel badges', async () => {
+      await renderWithLanguage(<LiveActivityStream />);
 
       expect(screen.getByText('Live Intelligence Stream')).toBeInTheDocument();
       expect(screen.getByText('Ezekiel Kiprono')).toBeInTheDocument();
@@ -136,12 +116,8 @@ describe('KnockKnock Aesthetic Component Suite', () => {
       expect(screen.getByText('74/100')).toBeInTheDocument();
     });
 
-    it('allows extension officer to claim and intervene on an activity', () => {
-      render(
-        <LanguageProvider>
-          <LiveActivityStream />
-        </LanguageProvider>
-      );
+    it('allows extension officer to claim and intervene on an activity', async () => {
+      await renderWithLanguage(<LiveActivityStream />);
 
       const claimBtns = screen.getAllByRole('button', { name: /Claim & Intervene/i });
       fireEvent.click(claimBtns[0]);
@@ -151,12 +127,8 @@ describe('KnockKnock Aesthetic Component Suite', () => {
       expect(screen.getAllByText('Release to AI Autopilot')[0]).toBeInTheDocument();
     });
 
-    it('filters cards by critical severity', () => {
-      render(
-        <LanguageProvider>
-          <LiveActivityStream />
-        </LanguageProvider>
-      );
+    it('filters cards by critical severity', async () => {
+      await renderWithLanguage(<LiveActivityStream />);
 
       const criticalFilterBtn = screen.getByRole('button', { name: /critical/i });
       fireEvent.click(criticalFilterBtn);
@@ -167,11 +139,9 @@ describe('KnockKnock Aesthetic Component Suite', () => {
   });
 
   describe('USSDSimulatorDrawer Component', () => {
-    it('renders device frame with dial code when opened', () => {
-      render(
-        <LanguageProvider>
-          <USSDSimulatorDrawer isOpen={true} onClose={vi.fn()} />
-        </LanguageProvider>
+    it('renders device frame with dial code when opened', async () => {
+      await renderWithLanguage(
+        <USSDSimulatorDrawer isOpen={true} onClose={vi.fn()} />
       );
 
       expect(screen.getByText('USSD & SMS Sandbox')).toBeInTheDocument();
@@ -179,11 +149,9 @@ describe('KnockKnock Aesthetic Component Suite', () => {
       expect(screen.getByRole('button', { name: /Send USSD Request/i })).toBeInTheDocument();
     });
 
-    it('initiates USSD session and displays main menu options', () => {
-      render(
-        <LanguageProvider>
-          <USSDSimulatorDrawer isOpen={true} onClose={vi.fn()} />
-        </LanguageProvider>
+    it('initiates USSD session and displays main menu options', async () => {
+      await renderWithLanguage(
+        <USSDSimulatorDrawer isOpen={true} onClose={vi.fn()} />
       );
 
       const dialBtn = screen.getByRole('button', { name: /Send USSD Request/i });
@@ -194,11 +162,9 @@ describe('KnockKnock Aesthetic Component Suite', () => {
       expect(screen.getByText(/3. Request Field Officer Call/i)).toBeInTheDocument();
     });
 
-    it('navigates through diagnosis branch upon user response', () => {
-      render(
-        <LanguageProvider>
-          <USSDSimulatorDrawer isOpen={true} onClose={vi.fn()} />
-        </LanguageProvider>
+    it('navigates through diagnosis branch upon user response', async () => {
+      await renderWithLanguage(
+        <USSDSimulatorDrawer isOpen={true} onClose={vi.fn()} />
       );
 
       fireEvent.click(screen.getByRole('button', { name: /Send USSD Request/i }));
@@ -210,12 +176,10 @@ describe('KnockKnock Aesthetic Component Suite', () => {
       expect(screen.getByText(/Describe your crop symptoms/i)).toBeInTheDocument();
     });
 
-    it('triggers escalation callback when officer request option is chosen', () => {
+    it('triggers escalation callback when officer request option is chosen', async () => {
       const mockEscalate = vi.fn();
-      render(
-        <LanguageProvider>
-          <USSDSimulatorDrawer isOpen={true} onClose={vi.fn()} onEscalate={mockEscalate} />
-        </LanguageProvider>
+      await renderWithLanguage(
+        <USSDSimulatorDrawer isOpen={true} onClose={vi.fn()} onEscalate={mockEscalate} />
       );
 
       fireEvent.click(screen.getByRole('button', { name: /Send USSD Request/i }));

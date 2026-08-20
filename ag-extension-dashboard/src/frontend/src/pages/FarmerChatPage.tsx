@@ -1,5 +1,15 @@
-import React from 'react';
-import { Users, Plus, Send, Lock } from 'lucide-react';
+import React, { useState } from 'react';
+import {
+  Users,
+  Plus,
+  Send,
+  Lock,
+  MessageSquare,
+  Radio,
+  Sparkles,
+  Sprout,
+  CheckCircle2,
+} from 'lucide-react';
 import { Conversation, ChatMessage } from '../types/dashboard';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
@@ -33,29 +43,63 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   setShowFarmerModal,
 }) => {
   const { t } = useLanguage();
-  const { headingClass, btnClass, radiusClass } = useThemeClasses();
+  const { headingClass, btnClass } = useThemeClasses();
   const { isLowEndDevice } = useDeviceThermalMemoryBudget();
   const { isDemo } = useDemoMode();
+  const [selectedChannel, setSelectedChannel] = useState<'all' | 'sms' | 'whatsapp' | 'telegram'>('all');
+
+  const activeConv = farmerConversations.find(c => c.id === activeFarmerConvId);
+
+  // AI Copilot quick suggestions
+  const copilotSuggestions = [
+    '🌾 Inspect maize leaf whorls today at sunset for early instar caterpillars.',
+    '🥔 Damp overcast forecast. Apply preventive copper spray before Thursday.',
+    '🌧️ 45mm rainfall recorded. Apply second split CAN top-dressing once topsoil drains.',
+  ];
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] gap-6">
-      <div className="mb-2">
-        <h1 className={`text-3xl font-bold ${headingClass}`}>Farmer Chat</h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">{t('chat_subtitle')}</p>
+      {/* Header & Status Ribbon */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <span className="text-xs font-mono font-bold uppercase tracking-widest text-emerald-400">
+              Multi-Channel Advisory Bridge
+            </span>
+          </div>
+          <h1 className={`text-3xl font-extrabold text-white tracking-tight ${headingClass}`}>
+            Farmer Chat
+          </h1>
+          <p className="text-white/60 text-sm mt-1 font-medium">
+            {t('chat_subtitle') || 'Bi-directional advisory across SMS, WhatsApp, Telegram, and USSD.'}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
+            <Radio className="w-3.5 h-3.5" />
+            <span>CHANNELS ONLINE (4/4)</span>
+          </span>
+        </div>
       </div>
+
       <div className="flex flex-1 gap-6 overflow-hidden">
-        <div
-          className={`w-80 flex flex-col bg-theme-bg-card dark:bg-gray-800 ${radiusClass} border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden`}
-        >
-          <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-            <h3 className="font-bold text-gray-900 dark:text-white">{t('chat_farmer_chats')}</h3>
+        {/* Left Column: Farmer Conversations Roster */}
+        <div className="w-80 flex flex-col backdrop-blur-xl bg-slate-900/70 border border-white/[0.08] rounded-3xl shadow-xl shadow-emerald-950/20 overflow-hidden">
+          <div className="p-4 border-b border-white/[0.08] flex justify-between items-center bg-slate-950/40">
+            <div>
+              <h3 className="font-bold text-sm text-white">{t('chat_farmer_chats') || 'Conversations'}</h3>
+              <div className="text-[10px] font-mono text-white/40">{farmerConversations.length} Active Smallholders</div>
+            </div>
+
             {isDemo ? (
               <span
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 ${btnClass} border border-amber-200 dark:border-amber-800`}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/15 text-amber-400 border border-amber-500/25 rounded-lg text-xxs font-bold uppercase tracking-wider"
                 title={t('demo_not_available') ?? 'Not available in demo version'}
               >
-                <Lock className="w-3.5 h-3.5" />
-                <span className="text-xxs font-bold uppercase tracking-wider">Demo</span>
+                <Lock className="w-3 h-3" />
+                <span>Demo</span>
               </span>
             ) : (
               <button
@@ -63,149 +107,244 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                   loadFarmers();
                   setShowFarmerModal(true);
                 }}
-                className={`p-2 bg-primary-600 hover:bg-primary-700 text-white ${btnClass} transition-colors`}
-                title={t('common_new_conversation')}
+                className="p-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition-all shadow-md"
+                title={t('common_new_conversation') || 'New Conversation'}
               >
                 <Plus className="w-4 h-4" />
               </button>
             )}
           </div>
-          <VirtualizedList
-            items={farmerConversations}
-            itemHeight={68}
-            overscan={isLowEndDevice ? 2 : 5}
-            keyExtractor={conv => conv.id}
-            className="flex-1 p-2"
-            emptyComponent={
-              <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
-                {t('chat_no_conversations')}
-                <br />
-                {t('chat_start_new_chat')}
-              </div>
-            }
-            renderItem={conv => (
+
+          {/* Channel Filter Strip */}
+          <div className="p-2 border-b border-white/[0.04] flex gap-1 bg-slate-950/20">
+            {(['all', 'sms', 'whatsapp', 'telegram'] as const).map(ch => (
               <button
-                onClick={() => {
-                  setActiveFarmerConvId(conv.id);
-                  loadFarmerMessages(conv.id);
-                }}
-                className={`w-full h-[64px] p-3 ${radiusClass} text-left transition-all ${
-                  activeFarmerConvId === conv.id
-                    ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-100 dark:border-primary-800'
-                    : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                key={ch}
+                onClick={() => setSelectedChannel(ch)}
+                className={`flex-1 py-1 rounded-lg text-[10px] font-mono font-bold uppercase transition-all ${
+                  selectedChannel === ch
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                    : 'text-white/40 hover:text-white'
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold">
-                    {conv.farmerName?.[0]}
-                  </div>
-                  <div className="flex-1 overflow-hidden">
-                    <div className="flex justify-between items-center">
-                      <span className="font-bold text-sm text-gray-900 dark:text-white truncate">
-                        {conv.farmerName}
-                      </span>
-                      <span className="text-xxs text-gray-400">
-                        {new Date(conv.startedAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                      {conv.lastMessage}
-                    </p>
-                  </div>
-                </div>
+                {ch}
               </button>
-            )}
+            ))}
+          </div>
+
+          <VirtualizedList
+            items={farmerConversations}
+            itemHeight={76}
+            overscan={isLowEndDevice ? 2 : 5}
+            keyExtractor={conv => conv.id}
+            className="flex-1 p-2 space-y-1.5"
+            emptyComponent={
+              <div className="p-8 text-center text-white/40 text-xs space-y-2">
+                <Users className="w-8 h-8 text-white/20 mx-auto" />
+                <div>{t('chat_no_conversations') || 'No conversations yet'}</div>
+                <div className="text-[10px] text-white/30">{t('chat_start_new_chat') || 'Click + to start'}</div>
+              </div>
+            }
+            renderItem={conv => {
+              const isSelected = activeFarmerConvId === conv.id;
+              return (
+                <button
+                  onClick={() => {
+                    setActiveFarmerConvId(conv.id);
+                    loadFarmerMessages(conv.id);
+                  }}
+                  className={`w-full p-3 rounded-2xl text-left transition-all border ${
+                    isSelected
+                      ? 'bg-emerald-500/15 border-emerald-500/40 text-white shadow-lg'
+                      : 'bg-slate-950/40 border-white/[0.04] hover:border-white/[0.1] hover:bg-slate-950/80 text-white/70'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold shrink-0">
+                      {conv.farmerName?.[0] || 'F'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-xs text-white truncate">
+                          {conv.farmerName}
+                        </span>
+                        <span className="text-[9px] font-mono text-white/40">
+                          {new Date(conv.startedAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-white/50 truncate mt-0.5 font-sans">
+                        {conv.lastMessage || 'Advisory session active'}
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              );
+            }}
           />
         </div>
 
-        <div className="flex-1 flex flex-col bg-theme-bg-card dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-          {activeFarmerConvId ? (
+        {/* Center Column: Active Chat Thread */}
+        <div className="flex-1 flex flex-col backdrop-blur-xl bg-slate-900/70 border border-white/[0.08] rounded-3xl shadow-xl shadow-emerald-950/20 overflow-hidden">
+          {activeFarmerConvId && activeConv ? (
             <>
-              <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
+              {/* Active Conversation Top Bar */}
+              <div className="p-4 border-b border-white/[0.08] flex justify-between items-center bg-slate-950/40">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center text-white font-bold shadow-lg shadow-primary-500/20">
-                    {farmerConversations.find(c => c.id === activeFarmerConvId)?.farmerName?.[0]}
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-300 font-bold shadow-md shadow-emerald-950/30">
+                    {activeConv.farmerName?.[0] || 'F'}
                   </div>
                   <div>
-                    <h4 className="font-bold text-gray-900 dark:text-white">
-                      {farmerConversations.find(c => c.id === activeFarmerConvId)?.farmerName}
-                    </h4>
-                    <div className="flex items-center gap-1">
-                      <span className="w-2 h-2 bg-secondary-500 rounded-full animate-pulse"></span>
-                      <span className="text-xxs text-gray-500 uppercase font-bold tracking-wider">
-                        {t('chat_direct_chat')}
+                    <h4 className="font-bold text-sm text-white flex items-center gap-2">
+                      {activeConv.farmerName}
+                      <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+                        SMS & WhatsApp Synced
                       </span>
+                    </h4>
+                    <div className="flex items-center gap-2 text-xxs text-white/40 font-mono">
+                      <span>VITAL SCORE: 84/100</span>
+                      <span>•</span>
+                      <span>REGION: NAKURU RURAL</span>
                     </div>
                   </div>
                 </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                  <span className="text-xxs font-mono text-emerald-400 font-bold uppercase">
+                    Live Channel
+                  </span>
+                </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                {farmerChatMessages.map((msg, i) => (
-                  <div
-                    key={i}
-                    className={`flex ${msg.role === 'officer' ? 'justify-end' : 'justify-start'}`}
-                  >
+              {/* Messages Scroll Area */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {farmerChatMessages.map((msg, i) => {
+                  const isOfficer = msg.role === 'officer';
+                  return (
                     <div
-                      className={`max-w-[80%] p-4 rounded-2xl shadow-sm ${
-                        msg.role === 'officer'
-                          ? 'bg-primary-600 text-white rounded-tr-none'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-tl-none'
-                      }`}
+                      key={i}
+                      className={`flex ${isOfficer ? 'justify-end' : 'justify-start'}`}
                     >
-                      <p className="text-sm leading-relaxed">{msg.content}</p>
-                      <span
-                        className={`text-micro mt-2 block ${msg.role === 'officer' ? 'text-primary-200' : 'text-gray-400'}`}
+                      <div
+                        className={`max-w-[75%] p-4 rounded-2xl shadow-md space-y-1.5 ${
+                          isOfficer
+                            ? 'bg-gradient-to-br from-emerald-600 to-emerald-700 text-white rounded-tr-none border border-emerald-500/40'
+                            : 'backdrop-blur-md bg-slate-950/80 text-white/90 rounded-tl-none border border-white/[0.08]'
+                        }`}
                       >
-                        {new Date(msg.timestamp).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </span>
+                        <p className="text-xs sm:text-sm leading-relaxed">{msg.content}</p>
+                        <div className="flex items-center justify-between gap-3 text-[9px] font-mono text-white/50 pt-1 border-t border-white/[0.08]">
+                          <span>{isOfficer ? 'OFFICER DISPATCH' : 'FARMER INCOMING'}</span>
+                          <span>
+                            {new Date(msg.timestamp).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
+              {/* AI Copilot Suggestion Bar */}
+              <div className="px-4 py-2 bg-slate-950/60 border-t border-white/[0.04] space-y-1.5">
+                <div className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400">
+                  <Sparkles className="w-3 h-3" />
+                  <span>AI Copilot Verified Advisory Suggestions:</span>
+                </div>
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {copilotSuggestions.map((sug, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setFarmerChatInput(sug)}
+                      className="px-2.5 py-1 rounded-lg text-xxs font-sans bg-slate-900 border border-white/[0.08] hover:border-emerald-500/40 text-white/70 hover:text-white shrink-0 transition-all text-left max-w-xs truncate"
+                    >
+                      {sug}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Chat Input Form */}
               <form
                 onSubmit={handleFarmerChatSend}
-                className="p-4 bg-gray-50 dark:bg-gray-800/80 border-t border-gray-100 dark:border-gray-700"
+                className="p-4 bg-slate-950/80 border-t border-white/[0.08]"
               >
                 <div className="relative flex items-center gap-3">
                   <input
                     type="text"
                     value={farmerChatInput}
                     onChange={e => setFarmerChatInput(e.target.value)}
-                    placeholder={t('farmer_chat_placeholder')}
-                    className="flex-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-500 transition-all dark:text-white"
+                    placeholder={t('farmer_chat_placeholder') || 'Type agronomic guidance or broadcast prompt...'}
+                    className="flex-1 bg-slate-900 border border-white/[0.1] rounded-xl px-4 py-3 text-xs text-white placeholder-white/40 focus:ring-2 focus:ring-emerald-500/40 focus:outline-none transition-all"
                   />
                   <button
                     type="submit"
                     disabled={!farmerChatInput.trim()}
-                    className={`p-3 bg-primary-600 hover:bg-primary-700 shadow-primary-500/20 shadow-lg ${btnClass} transition-all disabled:opacity-50`}
+                    className={`p-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl shadow-lg shadow-emerald-950/40 transition-all disabled:opacity-40 ${btnClass}`}
                   >
-                    <Send className="w-5 h-5" />
+                    <Send className="w-4 h-4" />
                   </button>
                 </div>
               </form>
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-8">
-              <div
-                className={`w-20 h-20 ${radiusClass} bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-600 dark:text-primary-400 mb-4`}
-              >
-                <Users className="w-10 h-10" />
+            <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-3">
+              <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-2">
+                <MessageSquare className="w-8 h-8" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                {t('chat_select_conversation')}
+              <h3 className="text-base font-bold text-white">
+                {t('chat_select_conversation') || 'Select a Farmer Conversation'}
               </h3>
-              <p className="text-gray-500 dark:text-gray-400 max-w-xs">
-                {t('chat_connect_farmers')}
+              <p className="text-xs text-white/50 max-w-xs text-center">
+                {t('chat_connect_farmers') || 'Connect with smallholders across SMS, WhatsApp, and Telegram in real time.'}
               </p>
             </div>
           )}
         </div>
+
+        {/* Right Column: Farmer Mini Telemetry Drawer (Bento Style) */}
+        {activeConv && (
+          <div className="hidden xl:flex w-72 flex-col backdrop-blur-xl bg-slate-900/70 border border-white/[0.08] rounded-3xl p-5 shadow-xl shadow-emerald-950/20 space-y-4 overflow-y-auto">
+            <div className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+              <Sprout className="w-4 h-4" />
+              <span>Plot Telemetry</span>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-white/[0.06] space-y-1">
+              <div className="text-[10px] font-mono text-white/40">NDVI CANOPY VIGOR</div>
+              <div className="text-base font-bold text-emerald-400">0.78 (Optimal)</div>
+              <div className="text-[9px] text-white/40">Sentinel-2 Multispectral</div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-white/[0.06] space-y-1">
+              <div className="text-[10px] font-mono text-white/40">SOIL pH & CARBON</div>
+              <div className="text-base font-bold text-amber-400">6.4 pH / 2.1% C</div>
+              <div className="text-[9px] text-white/40">ISRIC SoilGrids 0-30cm</div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-white/[0.06] space-y-1">
+              <div className="text-[10px] font-mono text-white/40">NASA POWER WEATHER</div>
+              <div className="text-base font-bold text-sky-400">22°C • 74% Humidity</div>
+              <div className="text-[9px] text-white/40">3-Day Forecast: Mild Rain</div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-white/[0.06] space-y-1">
+              <div className="text-[10px] font-mono text-white/40">OUTBREAK RISK</div>
+              <div className="text-base font-bold text-emerald-400 flex items-center gap-1">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>Low (8%)</span>
+              </div>
+              <div className="text-[9px] text-white/40">FAO Fall Armyworm Model</div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 };
+
+export default FarmerChatPage;

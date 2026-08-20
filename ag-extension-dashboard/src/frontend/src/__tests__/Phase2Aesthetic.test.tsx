@@ -6,7 +6,7 @@ import { InlineVisitBookingCard } from '../components/InlineVisitBookingCard';
 import { ProgressiveProfileChips, ProfileParameter } from '../components/ProgressiveProfileChips';
 import { LiveActivityStream } from '../components/LiveActivityStream';
 import { FloatingAIPill } from '../components/FloatingAIPill';
-import { LanguageProvider } from '../lib/LanguageContext';
+import { renderWithLanguage } from '../test/languageTestUtils';
 
 // Mock framer-motion
 vi.mock('framer-motion', () => {
@@ -120,12 +120,8 @@ describe('Phase 2 KnockKnock Aesthetic Component Suite', () => {
   });
 
   describe('LiveActivityStream Phase 2 Enhancements', () => {
-    it('opens Tele-Agronomy consultation modal when Tele-Call button is clicked', () => {
-      render(
-        <LanguageProvider>
-          <LiveActivityStream />
-        </LanguageProvider>
-      );
+    it('opens Tele-Agronomy consultation modal when Tele-Call button is clicked', async () => {
+      await renderWithLanguage(<LiveActivityStream />);
 
       const teleCallBtns = screen.getAllByRole('button', { name: /Tele-Call/i });
       fireEvent.click(teleCallBtns[0]);
@@ -139,12 +135,8 @@ describe('Phase 2 KnockKnock Aesthetic Component Suite', () => {
       expect(screen.queryByText('Tele-Agronomy Video Consultation')).not.toBeInTheDocument();
     });
 
-    it('toggles Inline Visit Booking card for critical activities', () => {
-      render(
-        <LanguageProvider>
-          <LiveActivityStream />
-        </LanguageProvider>
-      );
+    it('toggles Inline Visit Booking card for critical activities', async () => {
+      await renderWithLanguage(<LiveActivityStream />);
 
       const dispatchBtns = screen.getAllByRole('button', { name: /Dispatch Visit/i });
       fireEvent.click(dispatchBtns[0]);
@@ -154,12 +146,8 @@ describe('Phase 2 KnockKnock Aesthetic Component Suite', () => {
   });
 
   describe('FloatingAIPill Phase 2 Enhancements', () => {
-    it('renders progressive profile chips and Tele-Call tab in drawer', () => {
-      render(
-        <LanguageProvider>
-          <FloatingAIPill />
-        </LanguageProvider>
-      );
+    it('renders progressive profile chips and Tele-Call tab in drawer', async () => {
+      await renderWithLanguage(<FloatingAIPill />);
 
       // Open drawer
       fireEvent.click(screen.getByRole('button', { name: /AI Agronomist/i }));

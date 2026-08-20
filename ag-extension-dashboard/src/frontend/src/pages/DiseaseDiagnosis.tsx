@@ -1,4 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import {
+  Activity,
+  Camera,
+  Layers,
+  Search,
+  Radio,
+} from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '../store/useAppStore';
@@ -19,7 +26,7 @@ export function DiseaseDiagnosis() {
   const { addNotification } = useAppStore();
 
   // Shared State
-  const [activeTab, setActiveTab] = useState<'symptoms' | 'image' | 'soil' | 'library'>('symptoms');
+  const [activeTab, setActiveTab] = useState<'symptoms' | 'image' | 'soil' | 'library'>('image');
   const [cropType, setCropType] = useState('');
 
   // Disease Library State
@@ -63,124 +70,121 @@ export function DiseaseDiagnosis() {
   const getSeverityColor = (severity: string) => {
     switch (severity.toLowerCase()) {
       case 'mild':
-        return 'text-green-600 bg-green-50 dark:bg-green-900/20';
+        return 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/30';
       case 'moderate':
-        return 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20';
+        return 'text-amber-400 bg-amber-500/10 border border-amber-500/30';
       case 'severe':
-        return 'text-red-600 bg-red-50 dark:bg-red-900/20';
+        return 'text-rose-400 bg-rose-500/10 border border-rose-500/30';
       default:
-        return 'text-gray-600 bg-gray-50 dark:bg-gray-900/20';
+        return 'text-sky-400 bg-sky-500/10 border border-sky-500/30';
     }
   };
 
   return (
     <PlanUpgradeGuard category="vision" featureName="Disease Checker">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+      <div className="space-y-8">
+        {/* Header & Status Ribbons */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className={`text-2xl ${headingClass}`}>Disease Checker</h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              {t('disease_diagnosis_subtitle')}
+            <div className="flex items-center gap-2 mb-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              <span className="text-xs font-mono font-bold uppercase tracking-widest text-emerald-400">
+                AI Vision & Plant Pathology
+              </span>
+            </div>
+            <h1 className={`text-3xl font-extrabold text-white tracking-tight ${headingClass}`}>
+              Disease Checker
+            </h1>
+            <p className="text-white/60 text-sm mt-1">
+              {t('disease_diagnosis_subtitle') ||
+                'On-device leaf vision diagnosis, symptom inference, and localized bio-remedies.'}
             </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
+              <Radio className="w-3.5 h-3.5" />
+              <span>EDGE VISION READY</span>
+            </span>
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="card p-1">
-          <div className="flex space-x-1">
-            <button
-              onClick={() => setActiveTab('symptoms')}
-              className={`flex-1 py-2 px-4 ${radiusClass} font-medium text-sm transition-all ${
-                activeTab === 'symptoms'
-                  ? 'bg-primary-600 text-white shadow-lg'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-              }`}
-            >
-              Symptom Diagnosis
-            </button>
-            <button
-              onClick={() => setActiveTab('image')}
-              className={`flex-1 py-2 px-4 ${radiusClass} font-medium text-sm transition-all ${
-                activeTab === 'image'
-                  ? 'bg-primary-600 text-white shadow-lg'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-              }`}
-            >
-              Image Analysis
-            </button>
-            <button
-              onClick={() => setActiveTab('soil')}
-              className={`flex-1 py-2 px-4 ${radiusClass} font-medium text-sm transition-all ${
-                activeTab === 'soil'
-                  ? 'bg-primary-600 text-white shadow-lg'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-              }`}
-            >
-              Soil Diagnostics
-            </button>
-            <button
-              onClick={() => setActiveTab('library')}
-              className={`flex-1 py-2 px-4 ${radiusClass} font-medium text-sm transition-all ${
-                activeTab === 'library'
-                  ? 'bg-primary-600 text-white shadow-lg'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-              }`}
-            >
-              Disease Library
-            </button>
+        {/* Diagnostic Tabs (KnockKnock Glassmorphic Bar) */}
+        <div className="p-1.5 rounded-2xl backdrop-blur-xl bg-slate-900/70 border border-white/[0.08]">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5">
+            {[
+              { id: 'image', label: 'Image Analysis', icon: Camera },
+              { id: 'symptoms', label: 'Symptom Diagnosis', icon: Activity },
+              { id: 'soil', label: 'Soil Diagnostics', icon: Layers },
+              { id: 'library', label: 'Disease Library', icon: Search },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as 'symptoms' | 'image' | 'soil' | 'library')}
+                className={`py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all ${
+                  activeTab === tab.id
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-lg shadow-emerald-950/20'
+                    : 'text-white/50 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                <tab.icon className="w-4 h-4" />
+                <span>{tab.label}</span>
+              </button>
+            ))}
           </div>
         </div>
 
         {/* Tab Content */}
-        {activeTab === 'symptoms' && (
-          <SymptomDiagnosisTab
-            cropType={cropType}
-            setCropType={setCropType}
-            radiusClass={radiusClass}
-            btnClass={btnClass}
-            t={t}
-            addNotification={
-              addNotification as unknown as (n: { type: string; message: string }) => void
-            }
-            onViewDiseaseInfo={handleViewDiseaseInfo}
-            getSeverityColor={getSeverityColor}
-          />
-        )}
+        <div className="backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] rounded-3xl p-6 sm:p-8 shadow-2xl shadow-emerald-950/20">
+          {activeTab === 'symptoms' && (
+            <SymptomDiagnosisTab
+              cropType={cropType}
+              setCropType={setCropType}
+              radiusClass={radiusClass}
+              btnClass={btnClass}
+              t={t}
+              addNotification={
+                addNotification as unknown as (n: { type: string; message: string }) => void
+              }
+              onViewDiseaseInfo={handleViewDiseaseInfo}
+              getSeverityColor={getSeverityColor}
+            />
+          )}
 
-        {activeTab === 'image' && (
-          <ImageAnalysisTab
-            cropType={cropType}
-            setCropType={setCropType}
-            radiusClass={radiusClass}
-            btnClass={btnClass}
-            t={t}
-            addNotification={
-              addNotification as unknown as (n: { type: string; message: string }) => void
-            }
-            getSeverityColor={getSeverityColor}
-          />
-        )}
+          {activeTab === 'image' && (
+            <ImageAnalysisTab
+              cropType={cropType}
+              setCropType={setCropType}
+              radiusClass={radiusClass}
+              btnClass={btnClass}
+              t={t}
+              addNotification={
+                addNotification as unknown as (n: { type: string; message: string }) => void
+              }
+              getSeverityColor={getSeverityColor}
+            />
+          )}
 
-        {activeTab === 'soil' && (
-          <SoilDiagnosticsTab
-            cropType={cropType}
-            setCropType={setCropType}
-            radiusClass={radiusClass}
-            btnClass={btnClass}
-            addNotification={
-              addNotification as unknown as (n: { type: string; message: string }) => void
-            }
-          />
-        )}
+          {activeTab === 'soil' && (
+            <SoilDiagnosticsTab
+              cropType={cropType}
+              setCropType={setCropType}
+              radiusClass={radiusClass}
+              btnClass={btnClass}
+              addNotification={
+                addNotification as unknown as (n: { type: string; message: string }) => void
+              }
+            />
+          )}
 
-        {activeTab === 'library' && (
-          <DiseaseLibraryTab
-            allDiseases={allDiseases}
-            radiusClass={radiusClass}
-            onViewDiseaseInfo={handleViewDiseaseInfo}
-          />
-        )}
+          {activeTab === 'library' && (
+            <DiseaseLibraryTab
+              allDiseases={allDiseases}
+              radiusClass={radiusClass}
+              onViewDiseaseInfo={handleViewDiseaseInfo}
+            />
+          )}
+        </div>
 
         {/* Disease Info Modal */}
         <DiseaseInfoModal
