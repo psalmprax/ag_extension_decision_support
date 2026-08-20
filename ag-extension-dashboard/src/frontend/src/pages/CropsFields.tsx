@@ -342,7 +342,7 @@ function CropsCyclesTab({
 
 export function CropsFields() {
   const { t: _t } = useLanguage();
-  const { headingClass, radiusClass, btnClass, cardClass } = useThemeClasses();
+  const { radiusClass, btnClass, cardClass } = useThemeClasses();
   const { addNotification, user } = useAppStore();
   const { isDemo } = useDemoMode();
 
@@ -669,42 +669,6 @@ export function CropsFields() {
     .flatMap(f => f.cropCycles || [])
     .filter(c => c.status === 'harvested')
     .reduce((sum, c) => sum + (c.yieldKg || 0), 0);
-
-  const StatCard = ({
-    title,
-    value,
-    icon: Icon,
-    color = 'blue',
-  }: {
-    title: string;
-    value: string | number;
-    icon: React.ComponentType<{ className?: string }>;
-    color?: string;
-  }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`${cardClass} p-6 hover:scale-[1.02] transition-transform duration-300 relative overflow-hidden`}
-    >
-      <div className="flex items-start justify-between relative z-10">
-        <div>
-          <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-            {title}
-          </p>
-          <p className="text-3xl font-black text-gray-900 dark:text-white mt-2">{value}</p>
-        </div>
-        <div
-          className={`p-3 bg-${color}-50 dark:bg-${color}-900/20 ${radiusClass} border border-${color}-200 dark:border-${color}-800/30`}
-        >
-          <Icon className={`w-6 h-6 text-${color}-600 dark:text-${color}-400`} />
-        </div>
-      </div>
-      {/* Ambient background glow */}
-      <div
-        className={`absolute -right-4 -bottom-4 w-20 h-20 bg-${color}-500/5 dark:bg-${color}-400/5 rounded-full blur-xl pointer-events-none`}
-      />
-    </motion.div>
-  );
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">

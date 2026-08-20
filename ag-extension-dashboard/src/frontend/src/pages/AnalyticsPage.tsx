@@ -8,7 +8,6 @@ import {
   BarChart3,
   Radio,
   Zap,
-  CheckCircle2,
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useLanguage } from '@/lib/LanguageContext';

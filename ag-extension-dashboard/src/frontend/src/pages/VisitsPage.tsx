@@ -6,13 +6,8 @@ import {
   ChevronRight,
   Plus,
   Calendar,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
   Radio,
   User,
-  Navigation,
-  Sparkles,
 } from 'lucide-react';
 import { Visit, Farmer } from '../types/dashboard';
 import { updateVisit } from '@/api/visitService';

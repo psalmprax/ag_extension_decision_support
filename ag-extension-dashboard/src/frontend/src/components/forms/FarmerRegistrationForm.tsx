@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { motion, AnimatePresence } from 'framer-motion';
 import { farmerSchema, type FarmerInput } from '@/lib/schemas';
 import { useAppStore } from '@/store/useAppStore';
 import { useDemoMode } from '@/demo';
@@ -17,7 +16,6 @@ import {
   Globe,
   Radio,
   Plus,
-  X,
   CheckCircle2,
   AlertCircle,
   Compass,

@@ -12,7 +12,6 @@ import {
   Mic,
   MicOff,
   Radio,
-  Send,
   Leaf,
   Layers,
   ArrowRight,

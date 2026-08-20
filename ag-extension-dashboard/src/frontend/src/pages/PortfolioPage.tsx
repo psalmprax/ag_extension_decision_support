@@ -9,13 +9,7 @@ import {
   Lock,
   Radio,
   Search,
-  CheckCircle2,
-  Phone,
-  MapPin,
-  Maximize,
-  Sparkles,
   ChevronRight,
-  ShieldAlert,
 } from 'lucide-react';
 import { Farmer } from '../types/dashboard';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -50,7 +44,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
   handleBulkDelete,
   setSelectedFarmers,
 }) => {
-  const { t } = useLanguage();
+  const { t: _t } = useLanguage();
   const { isDemo } = useDemoMode();
   const [searchQuery, setSearchQuery] = useState('');
 
