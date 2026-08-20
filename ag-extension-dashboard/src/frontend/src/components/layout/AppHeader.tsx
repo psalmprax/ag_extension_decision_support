@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Sun as SunIcon, Moon as MoonIcon, Menu, Bell, Settings } from 'lucide-react';
+import { Sun as SunIcon, Moon as MoonIcon, Menu, Bell, Settings, Leaf, Activity, Send } from 'lucide-react';
 import { WeatherWidget } from '@/components/WeatherWidget';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
@@ -73,7 +73,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
   return (
     <header className={headerClass}>
-      <div className="flex items-center gap-8">
+      <div className="flex items-center gap-6">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -88,6 +88,36 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               className="w-8 h-8 rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
             />
           </Link>
+        </div>
+
+        {/* ── Quick-Action Interest Pills for First-Time Clients ── */}
+        <div className="hidden md:flex items-center gap-2 border-l border-white/10 pl-4">
+          <button
+            onClick={() => React.startTransition(() => setActiveTab('disease_diagnosis'))}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/25 hover:border-emerald-500/40 text-xs font-bold transition-all shadow-sm shadow-emerald-950/20 active:scale-95"
+            title="Instant Edge AI Plant Disease Scanner"
+          >
+            <Leaf className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Instant AI Scan</span>
+          </button>
+
+          <button
+            onClick={() => React.startTransition(() => setActiveTab('telemetry'))}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/25 hover:border-sky-500/40 text-xs font-bold transition-all shadow-sm shadow-sky-950/20 active:scale-95"
+            title="Live Geospatial Weather & Soil Telemetry"
+          >
+            <Activity className="w-3.5 h-3.5 text-sky-400" />
+            <span>Live Field Radar</span>
+          </button>
+
+          <button
+            onClick={() => React.startTransition(() => setActiveTab('sms'))}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/25 hover:border-purple-500/40 text-xs font-bold transition-all shadow-sm shadow-purple-950/20 active:scale-95"
+            title="Interactive SMS & USSD Bot Sandbox"
+          >
+            <Send className="w-3.5 h-3.5 text-purple-400" />
+            <span>Test SMS Bot</span>
+          </button>
         </div>
       </div>
 
