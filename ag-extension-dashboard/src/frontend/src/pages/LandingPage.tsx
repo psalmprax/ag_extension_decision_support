@@ -468,13 +468,21 @@ export function LandingPage() {
     >
       {/* ── Global Animated Mesh & Liquid WebGL Background ── */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <Liquid style={{ position: 'absolute', inset: 0 }} color={[0.02, 0.59, 0.41]}>
+        <Liquid
+          style={{ position: 'absolute', inset: 0 }}
+          color={[0.03, 0.76, 0.52]}
+          intensity={1.7}
+          radius={0.35}
+          force={1.4}
+          distortion={1.1}
+          blend={0.65}
+        >
           {null}
         </Liquid>
-        <div className="mesh-orb-1 absolute top-[-10%] left-[-10%] w-[800px] h-[800px] rounded-full bg-emerald-600/[0.07] blur-[160px]" />
-        <div className="mesh-orb-2 absolute top-[30%] right-[-15%] w-[700px] h-[700px] rounded-full bg-amber-500/[0.05] blur-[140px]" />
-        <div className="mesh-orb-3 absolute top-[60%] left-[10%] w-[600px] h-[600px] rounded-full bg-emerald-400/[0.04] blur-[120px]" />
-        <div className="mesh-orb-2 absolute top-[85%] right-[5%] w-[500px] h-[500px] rounded-full bg-teal-500/[0.05] blur-[100px]" />
+        <div className="mesh-orb-1 absolute top-[-10%] left-[-10%] w-[800px] h-[800px] rounded-full bg-emerald-600/[0.09] blur-[160px]" />
+        <div className="mesh-orb-2 absolute top-[30%] right-[-15%] w-[700px] h-[700px] rounded-full bg-amber-500/[0.07] blur-[140px]" />
+        <div className="mesh-orb-3 absolute top-[60%] left-[10%] w-[600px] h-[600px] rounded-full bg-emerald-400/[0.06] blur-[120px]" />
+        <div className="mesh-orb-2 absolute top-[85%] right-[5%] w-[500px] h-[500px] rounded-full bg-teal-500/[0.06] blur-[100px]" />
       </div>
 
       {/* Global Cursor spotlight */}
@@ -1055,7 +1063,7 @@ export function LandingPage() {
           </motion.div>
 
           {/* Bottom fade */}
-          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#060b08] to-transparent pointer-events-none z-20" />
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent pointer-events-none z-20" />
 
           {/* Scroll indicator */}
           <motion.div

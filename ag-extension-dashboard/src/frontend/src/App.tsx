@@ -23,6 +23,7 @@ import { PwaInstallPrompt } from './components/PwaInstallPrompt';
 import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { FloatingAIPill } from './components/FloatingAIPill';
 import { USSDSimulatorDrawer } from './components/USSDSimulatorDrawer';
+import { Liquid } from './components/canvasui/Liquid';
 import { Farmer } from './types/dashboard';
 import { useAppSync } from './hooks/useAppSync';
 import { useAppShortcuts } from './hooks/useAppShortcuts';
@@ -422,17 +423,28 @@ function App() {
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        {/* Ambient Aurora Background */}
+        {/* Ambient Aurora & Liquid WebGL Background */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10 hidden dark:block">
+          <Liquid
+            style={{ position: 'absolute', inset: 0 }}
+            color={[0.02, 0.65, 0.44]}
+            intensity={1.3}
+            radius={0.3}
+            force={1.1}
+            distortion={0.9}
+            blend={0.5}
+          >
+            {null}
+          </Liquid>
           <motion.div
             animate={{ x: [0, 100, 0], y: [0, -50, 0], scale: [1, 1.1, 1] }}
             transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-            className="absolute -top-[10%] -left-[10%] w-[800px] h-[800px] bg-sky-600/25 mix-blend-screen rounded-full blur-[150px]"
+            className="absolute -top-[10%] -left-[10%] w-[800px] h-[800px] bg-sky-600/20 mix-blend-screen rounded-full blur-[150px]"
           />
           <motion.div
             animate={{ x: [0, -100, 0], y: [0, 50, 0], scale: [1, 1.2, 1] }}
             transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
-            className="absolute top-[20%] -right-[10%] w-[600px] h-[600px] bg-emerald-600/25 mix-blend-screen rounded-full blur-[180px]"
+            className="absolute top-[20%] -right-[10%] w-[600px] h-[600px] bg-emerald-600/20 mix-blend-screen rounded-full blur-[180px]"
           />
         </div>
 

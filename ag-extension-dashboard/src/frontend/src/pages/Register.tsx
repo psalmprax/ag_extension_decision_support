@@ -5,6 +5,7 @@ import { Eye, EyeOff, Loader2, Check } from 'lucide-react';
 import { AxiosError } from 'axios';
 import { useLanguage } from '@/lib/LanguageContext';
 import { register } from '@/api/authService';
+import { Liquid } from '@/components/canvasui/Liquid';
 
 export function Register() {
   const navigate = useNavigate();
@@ -80,11 +81,28 @@ export function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4 relative overflow-hidden">
+      {/* ── Liquid WebGL Fluid Background & Ambient Glow ── */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <Liquid
+          style={{ position: 'absolute', inset: 0 }}
+          color={[0.03, 0.76, 0.52]}
+          intensity={1.7}
+          radius={0.35}
+          force={1.4}
+          distortion={1.1}
+          blend={0.65}
+        >
+          {null}
+        </Liquid>
+        <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full bg-emerald-600/[0.12] blur-[150px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-amber-500/[0.08] blur-[150px]" />
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md`}
+        className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 shadow-2xl rounded-2xl p-8 w-full max-w-md relative z-10"
         style={{ pointerEvents: 'auto', touchAction: 'auto' }}
       >
         {/* Logo */}
@@ -92,28 +110,28 @@ export function Register() {
           <img
             src="/logo.png"
             alt="Ag-Extension Logo"
-            className="w-20 h-20 mx-auto mb-3 rounded-2xl shadow-lg"
+            className="w-16 h-16 mx-auto mb-3 rounded-2xl shadow-xl shadow-emerald-950/40 object-contain"
           />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold tracking-tight text-white">
             {t('register_title')}
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">{t('register_subtitle')}</p>
+          <p className="text-white/60 text-sm mt-1">{t('register_subtitle')}</p>
         </div>
 
         {/* Error Message */}
         {error && (
           <div
-            className={`mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg`}
+            className="mb-4 p-3 bg-rose-950/40 border border-rose-500/30 rounded-xl backdrop-blur-sm"
           >
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            <p className="text-sm text-rose-300">{error}</p>
           </div>
         )}
 
         {/* Register Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-xs font-medium text-white/70 mb-1.5 uppercase tracking-wide">
                 {t('register_first_name')}
               </label>
               <input
@@ -121,12 +139,12 @@ export function Register() {
                 name="firstName"
                 value={formData.firstName}
                 onChange={e => setFormData({ ...formData, firstName: e.target.value })}
-                className={`w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] text-white placeholder-white/30 focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all outline-none text-sm"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-xs font-medium text-white/70 mb-1.5 uppercase tracking-wide">
                 {t('register_last_name')}
               </label>
               <input
@@ -134,14 +152,14 @@ export function Register() {
                 name="lastName"
                 value={formData.lastName}
                 onChange={e => setFormData({ ...formData, lastName: e.target.value })}
-                className={`w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] text-white placeholder-white/30 focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all outline-none text-sm"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-xs font-medium text-white/70 mb-1.5 uppercase tracking-wide">
               {t('login_email')}
             </label>
             <input
@@ -149,21 +167,21 @@ export function Register() {
               name="email"
               value={formData.email}
               onChange={e => setFormData({ ...formData, email: e.target.value })}
-              className={`w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+              className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] text-white placeholder-white/30 focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all outline-none text-sm"
               placeholder="you@example.com"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-xs font-medium text-white/70 mb-1.5 uppercase tracking-wide">
               {t('register_role')}
             </label>
             <select
               name="role"
               value={formData.role}
               onChange={e => setFormData({ ...formData, role: e.target.value })}
-              className={`w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+              className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-800 text-white focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all outline-none text-sm"
             >
               <option value="extension_officer">{t('register_role_extension')}</option>
               <option value="farmer">{t('register_role_farmer')}</option>
@@ -171,7 +189,7 @@ export function Register() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-xs font-medium text-white/70 mb-1.5 uppercase tracking-wide">
               {t('register_region_optional')}
             </label>
             <input
@@ -179,13 +197,13 @@ export function Register() {
               name="region"
               value={formData.region}
               onChange={e => setFormData({ ...formData, region: e.target.value })}
-              className={`w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+              className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] text-white placeholder-white/30 focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all outline-none text-sm"
               placeholder="e.g., Machakos"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-xs font-medium text-white/70 mb-1.5 uppercase tracking-wide">
               {t('login_password')}
             </label>
             <div className="relative">
@@ -194,16 +212,16 @@ export function Register() {
                 name="password"
                 value={formData.password}
                 onChange={e => setFormData({ ...formData, password: e.target.value })}
-                className={`w-full px-4 py-3 pr-12 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+                className="w-full px-4 py-2.5 pr-12 rounded-xl border border-white/10 bg-white/[0.04] text-white placeholder-white/30 focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all outline-none text-sm"
                 placeholder="••••••••"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
               >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
 
@@ -212,9 +230,9 @@ export function Register() {
               {passwordRequirements.map((req, i) => (
                 <div
                   key={i}
-                  className={`flex items-center gap-1 text-xs ${req.met ? 'text-green-600' : 'text-gray-400'}`}
+                  className={`flex items-center gap-1.5 text-xxs ${req.met ? 'text-emerald-400 font-medium' : 'text-white/40'}`}
                 >
-                  <Check className={`w-3 h-3 ${req.met ? 'opacity-100' : 'opacity-30'}`} />
+                  <Check className={`w-3 h-3 ${req.met ? 'opacity-100 text-emerald-400' : 'opacity-30'}`} />
                   {i === 0
                     ? t('password_req_8_chars')
                     : i === 1
@@ -228,7 +246,7 @@ export function Register() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-xs font-medium text-white/70 mb-1.5 uppercase tracking-wide">
               {t('register_confirm_password')}
             </label>
             <input
@@ -236,7 +254,7 @@ export function Register() {
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
-              className={`w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+              className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] text-white placeholder-white/30 focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all outline-none text-sm"
               placeholder="••••••••"
               required
             />
@@ -245,7 +263,7 @@ export function Register() {
           <button
             type="submit"
             disabled={isLoading}
-            className={`w-full py-3 px-4 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-semibold btn btn-primary w-full transition-colors flex items-center justify-center gap-2`}
+            className="w-full py-3.5 px-4 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 disabled:opacity-50 text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-2 mt-2"
           >
             {isLoading ? (
               <>
@@ -259,11 +277,11 @@ export function Register() {
         </form>
 
         {/* Login Link */}
-        <p className="mt-6 text-center text-gray-600 dark:text-gray-400">
+        <p className="mt-6 text-center text-sm text-white/60">
           {t('register_have_account')}{' '}
           <Link
             to="/login"
-            className="text-green-600 dark:text-green-400 font-medium hover:underline"
+            className="text-emerald-400 font-semibold hover:text-emerald-300 transition-colors"
           >
             {t('register_sign_in')}
           </Link>
