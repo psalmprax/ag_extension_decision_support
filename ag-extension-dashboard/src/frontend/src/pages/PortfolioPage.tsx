@@ -51,7 +51,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
   const filteredFarmers = effectiveFarmers.filter(f => {
     const term = searchQuery.toLowerCase();
     const fullName = `${f.firstName} ${f.lastName}`.toLowerCase();
-    const loc = `${f.location || ''} ${f.region || ''} ${f.village || ''}`.toLowerCase();
+    const loc = `${f.district || ''} ${f.region || ''} ${f.village || ''}`.toLowerCase();
     const crops = (f.crops || []).join(' ').toLowerCase();
     return fullName.includes(term) || loc.includes(term) || crops.includes(term);
   });
@@ -254,7 +254,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
                           Location
                         </span>
                         <p className="font-semibold text-white/90 truncate">
-                          {farmer.location || farmer.region || '—'}
+                          {farmer.district || farmer.region || farmer.village || '—'}
                         </p>
                       </div>
                       <div className="space-y-0.5">
