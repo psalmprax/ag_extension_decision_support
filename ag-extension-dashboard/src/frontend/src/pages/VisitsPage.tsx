@@ -129,10 +129,25 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
 
       {/* ── Visits Cards Grid ── */}
       {filteredVisits.length === 0 ? (
-        <div className="p-12 text-center backdrop-blur-xl bg-slate-900/40 border border-white/10 rounded-2xl">
-          <Calendar className="w-10 h-10 text-white/20 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-white mb-1">No visits found in this view</h3>
-          <p className="text-xs text-white/50">Schedule a new visit or adjust your active status filter.</p>
+        <div className="p-12 text-center backdrop-blur-xl bg-slate-900/40 border border-white/10 rounded-2xl space-y-4">
+          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-950/40">
+            <Calendar className="w-8 h-8 opacity-70" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-base font-bold text-white">No Field Visits Scheduled</h3>
+            <p className="text-xs text-white/50 max-w-sm mx-auto">
+              {filter === 'all'
+                ? 'No farm visits in queue. Dispatch your extension team or schedule an agronomic visit.'
+                : `No visits matching status "${filter}". Try switching filters or scheduling a visit.`}
+            </p>
+          </div>
+          <button
+            onClick={() => setShowVisitModal(true)}
+            className="px-5 py-2.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Schedule Field Visit</span>
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -5,18 +5,21 @@ import {
   AlertTriangle,
   XCircle,
   RotateCcw,
-  Clock,
   RefreshCw,
   Shield,
   Server,
   Database,
   Zap,
   Wifi,
+  Radio,
+  Terminal,
+  Cpu,
+  Globe,
+  Lock,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
 import { useAppStore } from '../store/useAppStore';
-import { useThemeClasses } from '@/hooks/useThemeClasses';
 import {
   fetchHealthStatus,
   fetchRecoveryLog,
@@ -25,26 +28,29 @@ import {
   RecoveryAction,
 } from '../api/systemHealthService';
 import { runDiagnostics, DiagnosticResult } from '../api/diagnosticsService';
-import { MetricCard } from '@/components/MetricCard';
 import { LoadingHeaderSkeleton } from '@/components/ui/LoadingHeaderSkeleton';
 import { RATE_LIMIT_STATUS, CERT_EXPIRY_WARN_DAYS, ERROR_COOLDOWN_MS } from '@/lib/constants';
 
 function IssuesSummary({ issues, summary }: { issues?: string[]; summary?: string }) {
   if (!issues || issues.length === 0) {
     return (
-      <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-        <p className="text-sm font-bold text-green-700 dark:text-green-300">{summary ?? ''}</p>
+      <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center gap-3">
+        <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+        <p className="text-xs font-bold text-emerald-300">{summary || 'All edge subsystems and container clusters operating at optimal SLO latency.'}</p>
       </div>
     );
   }
   return (
-    <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-      <p className="text-sm font-bold text-red-700 dark:text-red-300 mb-2">
-        {issues.length} Issue(s) Detected
-      </p>
-      <ul className="list-disc list-inside space-y-1">
+    <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl">
+      <div className="flex items-center gap-2 mb-2">
+        <AlertTriangle className="w-5 h-5 text-rose-400" />
+        <p className="text-xs font-bold text-rose-300">
+          {issues.length} Infrastructure Incident(s) Detected
+        </p>
+      </div>
+      <ul className="list-disc list-inside space-y-1 pl-1">
         {issues.map((issue, i) => (
-          <li key={i} className="text-sm text-red-600 dark:text-red-400">
+          <li key={i} className="text-xs text-rose-200 font-mono">
             {issue}
           </li>
         ))}
@@ -57,8 +63,8 @@ function DnsSection({ dns }: { dns?: Record<string, Record<string, unknown>> }) 
   if (!dns) return null;
   return (
     <div className="mb-4">
-      <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">
-        DNS Resolution
+      <h4 className="text-xxs font-bold text-white/50 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+        <Globe className="w-3.5 h-3.5 text-emerald-400" /> DNS Resolution & Edge Routing
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {Object.entries(dns).map(([domain, info]) => {
@@ -66,14 +72,18 @@ function DnsSection({ dns }: { dns?: Record<string, Record<string, unknown>> }) 
           const resolvedIps = (info.ips as string[] | undefined)?.join(', ');
           const dnsDetail = isResolved
             ? `→ ${resolvedIps}`
-            : `✗ ${(info.error as string) || 'Failed'}`;
+            : `✗ ${(info.error as string) || 'Resolution Failed'}`;
           return (
             <div
               key={domain}
-              className={`p-3 rounded-lg border ${getHealthBorderClass(isResolved, 'redOrGreen')}`}
+              className={`p-3 rounded-xl border text-xs ${
+                isResolved
+                  ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-300'
+                  : 'bg-rose-500/10 border-rose-500/25 text-rose-300'
+              }`}
             >
-              <p className="text-xs font-mono font-bold">{domain}</p>
-              <p className="text-sm">{String(dnsDetail)}</p>
+              <p className="font-mono font-bold text-white">{domain}</p>
+              <p className="font-mono text-xxs mt-0.5 opacity-80">{String(dnsDetail)}</p>
             </div>
           );
         })}
@@ -86,17 +96,21 @@ function PortsSection({ ports }: { ports?: Array<Record<string, unknown>> }) {
   if (!ports) return null;
   return (
     <div className="mb-4">
-      <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">
-        Port Connectivity
+      <h4 className="text-xxs font-bold text-white/50 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+        <Terminal className="w-3.5 h-3.5 text-emerald-400" /> Port Connectivity & Sockets
       </h4>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
         {ports.map(p => (
           <div
             key={p.port as string}
-            className={`flex items-center gap-2 p-2 rounded-lg text-xs font-mono ${p.open ? 'bg-green-50 dark:bg-green-900/10 text-green-700 dark:text-green-300' : 'bg-red-50 dark:bg-red-900/10 text-red-700 dark:text-red-300'}`}
+            className={`flex items-center gap-2 p-2.5 rounded-xl text-xs font-mono border ${
+              p.open
+                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
+                : 'bg-rose-500/10 border-rose-500/20 text-rose-300'
+            }`}
           >
             <span className="font-bold">{p.open ? '✓' : '✗'}</span>
-            <span>
+            <span className="truncate">
               {p.name as string} ({String(p.port ?? '')})
             </span>
           </div>
@@ -112,21 +126,33 @@ function TraefikSection({ traefik }: { traefik?: Record<string, unknown> }) {
   const frontendOk = traefik.frontend_via_traefik === 'reachable';
   return (
     <div className="mb-4">
-      <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">
-        Traefik Routing
+      <h4 className="text-xxs font-bold text-white/50 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+        <Cpu className="w-3.5 h-3.5 text-emerald-400" /> Reverse Proxy Ingress (Traefik)
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className={`p-3 rounded-lg border ${getHealthBorderClass(backendOk, 'redOrGreen')}`}>
-          <p className="text-xs font-bold mb-1">Backend via Traefik</p>
-          <p className="text-sm">
-            {backendOk ? '✓ Reachable' : '✗ Unreachable'} (HTTP{' '}
+        <div
+          className={`p-3 rounded-xl border text-xs ${
+            backendOk
+              ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-300'
+              : 'bg-rose-500/10 border-rose-500/25 text-rose-300'
+          }`}
+        >
+          <p className="font-bold text-white mb-0.5">Backend API Ingress</p>
+          <p className="font-mono text-xxs">
+            {backendOk ? '✓ Reachable & Handshaking' : '✗ Upstream Unreachable'} (HTTP{' '}
             {String(traefik.backend_http_status ?? '')})
           </p>
         </div>
-        <div className={`p-3 rounded-lg border ${getHealthBorderClass(frontendOk, 'redOrGreen')}`}>
-          <p className="text-xs font-bold mb-1">Frontend via Traefik</p>
-          <p className="text-sm">
-            {frontendOk ? '✓ Reachable' : '✗ Unreachable'} (HTTP{' '}
+        <div
+          className={`p-3 rounded-xl border text-xs ${
+            frontendOk
+              ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-300'
+              : 'bg-rose-500/10 border-rose-500/25 text-rose-300'
+          }`}
+        >
+          <p className="font-bold text-white mb-0.5">Frontend SPA Ingress</p>
+          <p className="font-mono text-xxs">
+            {frontendOk ? '✓ Reachable & Serving' : '✗ Ingress Failed'} (HTTP{' '}
             {String(traefik.frontend_http_status ?? '')})
           </p>
         </div>
@@ -143,17 +169,21 @@ function ContainerNetworkSection({
   if (!container_network) return null;
   return (
     <div className="mb-4">
-      <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">
-        Container Network
+      <h4 className="text-xxs font-bold text-white/50 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+        <Server className="w-3.5 h-3.5 text-emerald-400" /> Container Mesh Topology
       </h4>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
         {container_network.map(c => (
           <div
             key={c.name as string}
-            className={`flex items-center gap-2 p-2 rounded-lg text-xs font-mono ${c.reachable ? 'bg-green-50 dark:bg-green-900/10 text-green-700 dark:text-green-300' : 'bg-red-50 dark:bg-red-900/10 text-red-700 dark:text-red-300'}`}
+            className={`flex items-center gap-2 p-2.5 rounded-xl text-xs font-mono border ${
+              c.reachable
+                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
+                : 'bg-rose-500/10 border-rose-500/20 text-rose-300'
+            }`}
           >
             <span className="font-bold">{c.reachable ? '✓' : '✗'}</span>
-            <span>{String(c.name ?? '')}</span>
+            <span className="truncate">{String(c.name ?? '')}</span>
           </div>
         ))}
       </div>
@@ -168,34 +198,6 @@ type SslCert = {
   daysLeft?: number;
 };
 
-/**
- * Renders the Issuer / Subject / conditional Expires lines for a healthy SSL cert.
- * Extracted from SslSection to flatten the prior nested-ternary (outer guard plus
- * an inline daysLeft color guard wedged into a className attribute).
- */
-function SslCertDetails({ cert }: { cert: SslCert }) {
-  const daysLeftColorClass =
-    cert.daysLeft != null && cert.daysLeft < CERT_EXPIRY_WARN_DAYS
-      ? 'text-red-500 font-bold'
-      : 'text-green-500';
-  return (
-    <div className="text-sm space-y-1">
-      <p>
-        <span className="font-bold">Issuer:</span> {cert.issuer ?? '—'}
-      </p>
-      <p>
-        <span className="font-bold">Subject:</span> {cert.subject ?? '—'}
-      </p>
-      {cert.validTo && (
-        <p>
-          <span className="font-bold">Expires:</span> {new Date(cert.validTo).toLocaleDateString()}{' '}
-          <span className={daysLeftColorClass}>({cert.daysLeft ?? '—'} days)</span>
-        </p>
-      )}
-    </div>
-  );
-}
-
 function SslSection({ ssl }: { ssl?: Record<string, unknown> }) {
   if (!ssl) return null;
   const isHealthy = Boolean(ssl.ok);
@@ -203,14 +205,31 @@ function SslSection({ ssl }: { ssl?: Record<string, unknown> }) {
   const errorText = String(ssl.error ?? 'Not available (HTTPS not configured)');
   return (
     <div className="mb-4">
-      <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">
-        SSL Certificate
+      <h4 className="text-xxs font-bold text-white/50 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+        <Lock className="w-3.5 h-3.5 text-emerald-400" /> TLS / SSL Certificate Status
       </h4>
-      <div className={`p-3 rounded-lg border ${getHealthBorderClass(isHealthy, 'amberOrGreen')}`}>
+      <div
+        className={`p-3.5 rounded-xl border text-xs ${
+          isHealthy
+            ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-200'
+            : 'bg-amber-500/10 border-amber-500/25 text-amber-200'
+        }`}
+      >
         {isHealthy && cert ? (
-          <SslCertDetails cert={cert} />
+          <div className="space-y-1 font-mono text-xs">
+            <p><span className="text-white/60">Issuer:</span> {cert.issuer ?? 'Let\'s Encrypt'}</p>
+            <p><span className="text-white/60">Subject:</span> {cert.subject ?? 'gpexts.com'}</p>
+            {cert.validTo && (
+              <p>
+                <span className="text-white/60">Expires:</span> {new Date(cert.validTo).toLocaleDateString()}{' '}
+                <span className={cert.daysLeft != null && cert.daysLeft < CERT_EXPIRY_WARN_DAYS ? 'text-rose-400 font-bold' : 'text-emerald-400 font-bold'}>
+                  ({cert.daysLeft ?? '—'} days remaining)
+                </span>
+              </p>
+            )}
+          </div>
         ) : (
-          <p className="text-sm">{errorText}</p>
+          <p className="font-mono text-xs">{errorText}</p>
         )}
       </div>
     </div>
@@ -224,25 +243,25 @@ function DeploymentSection({ deployment }: { deployment?: Record<string, unknown
   const acmeOk = Boolean(deployment.acme_email_configured);
   return (
     <div className="mb-4">
-      <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">
-        Deployment
+      <h4 className="text-xxs font-bold text-white/50 mb-2 uppercase tracking-wider">
+        Deployment Runtime Specs
       </h4>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="p-3 rounded-lg border bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-          <p className="text-xs font-bold text-gray-500">NODE_ENV</p>
-          <p className="text-sm font-mono">{String(deployment.node_env ?? '')}</p>
+        <div className="p-3 rounded-xl border bg-white/[0.02] border-white/10 text-xs">
+          <p className="text-xxs font-bold text-white/40 uppercase">NODE_ENV</p>
+          <p className="text-xs font-mono font-bold text-white mt-0.5">{String(deployment.node_env ?? 'production')}</p>
         </div>
-        <div className={`p-3 rounded-lg border ${getHealthBorderClass(prodOk, 'redOrGreen')}`}>
-          <p className="text-xs font-bold text-gray-500">Prod Override</p>
-          <p className="text-sm font-bold">{prodOk ? '✓ Active' : '✗ Missing'}</p>
+        <div className={`p-3 rounded-xl border text-xs ${prodOk ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-300' : 'bg-rose-500/10 border-rose-500/25 text-rose-300'}`}>
+          <p className="text-xxs font-bold opacity-60 uppercase">Prod Override</p>
+          <p className="text-xs font-bold mt-0.5">{prodOk ? '✓ Active' : '✗ Missing'}</p>
         </div>
-        <div className={`p-3 rounded-lg border ${getHealthBorderClass(httpsOk, 'amberOrGreen')}`}>
-          <p className="text-xs font-bold text-gray-500">HTTPS</p>
-          <p className="text-sm font-bold">{httpsOk ? '✓ Active' : '✗ Inactive'}</p>
+        <div className={`p-3 rounded-xl border text-xs ${httpsOk ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-300' : 'bg-amber-500/10 border-amber-500/25 text-amber-300'}`}>
+          <p className="text-xxs font-bold opacity-60 uppercase">HTTPS TLS</p>
+          <p className="text-xs font-bold mt-0.5">{httpsOk ? '✓ Enforced' : '✗ Inactive'}</p>
         </div>
-        <div className={`p-3 rounded-lg border ${getHealthBorderClass(acmeOk, 'amberOrGreen')}`}>
-          <p className="text-xs font-bold text-gray-500">ACME Email</p>
-          <p className="text-sm font-bold">{acmeOk ? '✓ Set' : '✗ Not set'}</p>
+        <div className={`p-3 rounded-xl border text-xs ${acmeOk ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-300' : 'bg-amber-500/10 border-amber-500/25 text-amber-300'}`}>
+          <p className="text-xxs font-bold opacity-60 uppercase">ACME Email</p>
+          <p className="text-xs font-bold mt-0.5">{acmeOk ? '✓ Configured' : '✗ Not set'}</p>
         </div>
       </div>
     </div>
@@ -252,14 +271,11 @@ function DeploymentSection({ deployment }: { deployment?: Record<string, unknown
 function RecommendationsSection({ recommendations }: { recommendations?: string[] }) {
   if (!recommendations || recommendations.length === 0) return null;
   return (
-    <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-      <p className="text-sm font-bold text-blue-700 dark:text-blue-300 mb-2">Recommendations</p>
+    <div className="mt-4 p-4 bg-sky-500/10 border border-sky-500/30 rounded-2xl">
+      <p className="text-xs font-bold text-sky-300 mb-2">Automated SRE Recommendations</p>
       <ul className="list-disc list-inside space-y-1">
         {recommendations.map((rec, i) => (
-          <li
-            key={i}
-            className="text-sm text-blue-600 dark:text-blue-400 whitespace-pre-wrap font-mono text-xs"
-          >
+          <li key={i} className="text-xs text-sky-200 whitespace-pre-wrap font-mono">
             {rec}
           </li>
         ))}
@@ -270,16 +286,16 @@ function RecommendationsSection({ recommendations }: { recommendations?: string[
 
 function DiagnosticsPanel({ diagnostics }: { diagnostics: DiagnosticResult }) {
   return (
-    <div className="card p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <Activity className="w-5 h-5 text-amber-500" />
-          Infrastructure Diagnostics
+    <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl space-y-6">
+      <div className="flex items-center justify-between border-b border-white/10 pb-4">
+        <h3 className="text-sm font-bold text-white flex items-center gap-2">
+          <Activity className="w-4 h-4 text-emerald-400" />
+          Infrastructure Diagnostic Telemetry
           {diagnostics.cached && (
-            <span className="text-xs text-gray-400 font-normal">(cached)</span>
+            <span className="text-xxs text-white/40 font-mono">(cached)</span>
           )}
         </h3>
-        <span className="text-xs text-gray-500">
+        <span className="text-xs text-white/40 font-mono">
           {new Date(diagnostics.timestamp).toLocaleTimeString()}
         </span>
       </div>
@@ -294,50 +310,38 @@ function DiagnosticsPanel({ diagnostics }: { diagnostics: DiagnosticResult }) {
     </div>
   );
 }
-function getHealthBorderClass(isHealthy: boolean, palette: 'redOrGreen' | 'amberOrGreen'): string {
-  const healthyClass = 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800';
-  if (palette === 'redOrGreen') {
-    return isHealthy
-      ? healthyClass
-      : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800';
-  }
-  return isHealthy
-    ? healthyClass
-    : 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800';
-}
 
-function getStatusColor(status: string): string {
+function getStatusStyle(status: string) {
   switch (status) {
     case 'healthy':
-      return 'text-green-600 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
+      return {
+        pill: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+        dot: 'bg-emerald-400',
+        border: 'border-emerald-500/30',
+      };
     case 'degraded':
-      return 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800';
+      return {
+        pill: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+        dot: 'bg-amber-400',
+        border: 'border-amber-500/30',
+      };
     case 'unhealthy':
-      return 'text-red-600 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
-    case 'offline':
-      return 'text-gray-600 bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800';
+      return {
+        pill: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+        dot: 'bg-rose-400',
+        border: 'border-rose-500/30',
+      };
     default:
-      return 'text-gray-600 bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800';
-  }
-}
-
-function getStatusIcon(status: string) {
-  switch (status) {
-    case 'healthy':
-      return CheckCircle;
-    case 'degraded':
-      return AlertTriangle;
-    case 'unhealthy':
-      return XCircle;
-    case 'offline':
-      return XCircle;
-    default:
-      return Clock;
+      return {
+        pill: 'bg-slate-500/15 text-slate-300 border-slate-500/30',
+        dot: 'bg-slate-400',
+        border: 'border-slate-500/30',
+      };
   }
 }
 
 function getComponentIcon(component: string) {
-  if (component.toLowerCase().includes('database')) return Database;
+  if (component.toLowerCase().includes('database') || component.toLowerCase().includes('postgres')) return Database;
   if (component.toLowerCase().includes('redis') || component.toLowerCase().includes('cache'))
     return Zap;
   if (component.toLowerCase().includes('network') || component.toLowerCase().includes('api'))
@@ -349,66 +353,64 @@ function ComponentHealthCard({
   check,
   isTriggering,
   onRecover,
-  radiusClass,
-  btnClass,
   t,
 }: {
   check: HealthCheck;
   isTriggering: boolean;
   onRecover: () => void;
-  radiusClass: string;
-  btnClass: string;
   t: (key: string) => string;
 }) {
-  const StatusIcon = getStatusIcon(check.status);
   const ComponentIcon = getComponentIcon(check.component);
   const canRecover = check.status !== 'healthy' && check.consecutiveFailures > 0;
+  const style = getStatusStyle(check.status);
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className={`p-6 border-2 ${radiusClass} bg-white dark:bg-gray-800 ${getStatusColor(check.status)}`}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`backdrop-blur-xl bg-slate-900/60 border ${style.border} rounded-2xl p-5 shadow-lg space-y-4 hover:border-white/20 transition-all duration-300 group`}
     >
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <ComponentIcon className="w-8 h-8 text-gray-600 dark:text-gray-400" />
+          <div className="w-10 h-10 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-center text-emerald-400">
+            <ComponentIcon className="w-5 h-5" />
+          </div>
           <div>
-            <h4 className="font-semibold text-gray-900 dark:text-white">{check.component}</h4>
+            <h4 className="font-bold text-sm text-white group-hover:text-emerald-300 transition-colors">{check.component}</h4>
             <div
-              className={`inline-flex items-center gap-2 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(check.status)}`}
+              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xxs font-bold uppercase tracking-wider border mt-1 ${style.pill}`}
             >
-              <StatusIcon className="w-4 h-4" />
+              <span className={`w-1.5 h-1.5 rounded-full ${style.dot} animate-pulse`} />
               {check.status}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="space-y-3">
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600 dark:text-gray-400">Last Check</span>
-          <span className="font-medium">{new Date(check.lastCheck).toLocaleString()}</span>
+      <div className="space-y-2 p-3 rounded-xl bg-white/[0.02] border border-white/5 text-xs font-mono">
+        <div className="flex justify-between text-white/60">
+          <span>Last Poll</span>
+          <span className="text-white">{new Date(check.lastCheck).toLocaleTimeString()}</span>
         </div>
 
         {check.lastSuccess && (
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600 dark:text-gray-400">Last Success</span>
-            <span className="font-medium">{new Date(check.lastSuccess).toLocaleString()}</span>
+          <div className="flex justify-between text-white/60">
+            <span>Last Ack</span>
+            <span className="text-emerald-400">{new Date(check.lastSuccess).toLocaleTimeString()}</span>
           </div>
         )}
 
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600 dark:text-gray-400">Consecutive Failures</span>
-          <span className="font-medium">{check.consecutiveFailures}</span>
+        <div className="flex justify-between text-white/60">
+          <span>Failures</span>
+          <span className={check.consecutiveFailures > 0 ? 'text-rose-400 font-bold' : 'text-white'}>
+            {check.consecutiveFailures}
+          </span>
         </div>
 
         {check.error && (
-          <div
-            className={`mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 ${radiusClass}`}
-          >
-            <p className="text-sm text-red-700 dark:text-red-300 font-medium">Error:</p>
-            <p className="text-xs text-red-600 dark:text-red-400 mt-1">{check.error}</p>
+          <div className="mt-2 p-2.5 bg-rose-500/15 border border-rose-500/30 rounded-lg text-rose-300 text-xxs">
+            <p className="font-bold">Error:</p>
+            <p className="mt-0.5 opacity-90">{check.error}</p>
           </div>
         )}
 
@@ -416,10 +418,10 @@ function ComponentHealthCard({
           <button
             onClick={onRecover}
             disabled={isTriggering}
-            className={`w-full mt-3 flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white ${btnClass} hover:bg-primary-700 disabled:opacity-50 text-sm`}
+            className="w-full mt-2 flex items-center justify-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-emerald-950/40 disabled:opacity-50"
           >
-            <RotateCcw className={`w-4 h-4 ${isTriggering ? 'animate-spin' : ''}`} />
-            {t('system_health_trigger_recovery')}
+            <RotateCcw className={`w-3.5 h-3.5 ${isTriggering ? 'animate-spin' : ''}`} />
+            {t('system_health_trigger_recovery') || 'Execute Self-Healing'}
           </button>
         )}
       </div>
@@ -449,58 +451,56 @@ function notifyLoadError(
 
 function RecoveryLogList({
   actions,
-  radiusClass,
   t,
 }: {
   actions: RecoveryAction[];
-  radiusClass: string;
   t: (key: string) => string;
 }) {
   return (
-    <div className="card p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-        {t('system_health_recovery_log')}
-      </h3>
-      <div className="space-y-3 max-h-96 overflow-y-auto">
-        {actions.slice(0, 20).map((action, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className={`flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 ${radiusClass}`}
-          >
-            <div className="flex items-center gap-4">
-              <Shield className={`w-5 h-5 ${action.success ? 'text-green-600' : 'text-red-600'}`} />
-              <div>
-                <p className="font-medium text-gray-900 dark:text-white">
-                  {action.component}: {action.action}
-                </p>
-                {action.details && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{action.details}</p>
-                )}
+    <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
+      <div className="flex items-center justify-between border-b border-white/10 pb-4">
+        <h3 className="text-sm font-bold text-white flex items-center gap-2">
+          <Shield className="w-4 h-4 text-emerald-400" />
+          {t('system_health_recovery_log') || 'Automated SRE Recovery Audit Log'}
+        </h3>
+        <span className="text-xs text-white/40 font-mono">Real-time Stream</span>
+      </div>
+
+      <div className="space-y-2.5 max-h-96 overflow-y-auto custom-scrollbar pr-1">
+        {actions.length === 0 ? (
+          <div className="text-center py-8 text-white/40 text-xs font-mono">
+            No recovery interventions recorded. Cluster operating autonomously.
+          </div>
+        ) : (
+          actions.slice(0, 20).map((action, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center justify-between p-3.5 rounded-xl bg-white/[0.02] border border-white/5 hover:border-white/15 transition-all text-xs"
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${action.success ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rose-500/15 text-rose-400'}`}>
+                  {action.success ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+                </div>
+                <div>
+                  <p className="font-bold text-white">
+                    {action.component}: <span className="font-normal text-white/70">{action.action}</span>
+                  </p>
+                  {action.details && (
+                    <p className="text-xxs font-mono text-white/40 mt-0.5">{action.details}</p>
+                  )}
+                </div>
               </div>
-            </div>
-            <div className="text-right">
-              <div
-                className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                  action.success
-                    ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300'
-                    : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300'
-                }`}
-              >
-                {action.success ? (
-                  <CheckCircle className="w-3 h-3" />
-                ) : (
-                  <XCircle className="w-3 h-3" />
-                )}
-                {action.success ? t('system_health_success') : t('system_health_failed')}
+              <div className="text-right font-mono text-xxs text-white/40">
+                <span className={`inline-block px-2 py-0.5 rounded-full uppercase font-bold text-xxs mb-1 ${action.success ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}`}>
+                  {action.success ? 'Success' : 'Failed'}
+                </span>
+                <div>{new Date(action.triggeredAt).toLocaleTimeString()}</div>
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {new Date(action.triggeredAt).toLocaleString()}
-              </p>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          ))
+        )}
       </div>
     </div>
   );
@@ -563,7 +563,6 @@ function useSystemHealthData(
 
 export function SystemHealth() {
   const { t } = useLanguage();
-  const { headingClass, radiusClass, btnClass } = useThemeClasses();
   const { addNotification } = useAppStore();
   const { healthChecks, recoveryLog, isLoading, isRefreshing, overallHealth, reload } =
     useSystemHealthData(addNotification, t);
@@ -579,7 +578,7 @@ export function SystemHealth() {
       if (res.success) {
         addNotification({
           type: 'success',
-          message: `Recovery triggered for ${component}`,
+          message: `Self-healing recovery triggered for ${component}`,
         });
         setTimeout(() => reload(), 2000);
       }
@@ -599,6 +598,10 @@ export function SystemHealth() {
     try {
       const result = await runDiagnostics();
       setDiagnostics(result);
+      addNotification({
+        type: 'success',
+        message: 'Diagnostics scan completed successfully.',
+      });
     } catch (error) {
       console.error('Diagnostics failed:', error);
       addNotification({
@@ -620,88 +623,115 @@ export function SystemHealth() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className={`text-2xl ${headingClass}`}>System Health</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">{t('system_health_subtitle')}</p>
+    <div className="max-w-7xl mx-auto space-y-6 pb-24">
+      {/* ── Top Bento Banner: SRE & Telemetry Health Hub ── */}
+      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40">
+              <Activity className="w-6 h-6 text-emerald-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h1 className="text-2xl font-bold tracking-tight text-white">SRE & Self-Healing Telemetry</h1>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                  <Radio className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />
+                  Cluster Online
+                </span>
+              </div>
+              <p className="text-xs text-white/60 mt-0.5">
+                Real-time node latency, database connections, and autonomous self-healing monitors.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end flex-wrap">
+            <button
+              onClick={handleRunDiagnostics}
+              disabled={isRunningDiagnostics}
+              className="px-4 py-2.5 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 text-xs font-bold rounded-xl shadow-lg shadow-amber-950/40 transition-all flex items-center gap-2 disabled:opacity-50"
+            >
+              <Activity className={`w-4 h-4 ${isRunningDiagnostics ? 'animate-spin' : ''}`} />
+              <span>{isRunningDiagnostics ? 'Running Scan...' : 'Deep Diagnostic'}</span>
+            </button>
+            <button
+              onClick={() => reload(true)}
+              disabled={isRefreshing}
+              className="px-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/10 text-xs font-bold rounded-xl transition-all flex items-center gap-2 disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleRunDiagnostics}
-            disabled={isRunningDiagnostics}
-            className={`flex items-center gap-2 px-4 py-2 bg-amber-600 text-white ${btnClass} hover:bg-amber-700 disabled:opacity-50 transition-all`}
-          >
-            <Activity className={`w-4 h-4 ${isRunningDiagnostics ? 'animate-pulse' : ''}`} />
-            {isRunningDiagnostics ? 'Running...' : 'Run Diagnostics'}
-          </button>
-          <button
-            onClick={() => reload(true)}
-            disabled={isRefreshing}
-            className={`flex items-center gap-2 px-4 py-2 bg-primary-600 text-white ${btnClass} hover:bg-primary-700 disabled:opacity-50`}
-          >
-            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
+
+        {/* ── Subsystem Metric Tiles ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 mt-6 border-t border-white/5">
+          <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10">
+            <span className="text-xxs font-bold text-white/40 uppercase block">Healthy Services</span>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <strong className="text-lg font-mono font-bold text-emerald-400">{overallHealth.healthy}</strong>
+            </div>
+          </div>
+          <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10">
+            <span className="text-xxs font-bold text-white/40 uppercase block">Degraded Nodes</span>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="w-2 h-2 rounded-full bg-amber-400" />
+              <strong className="text-lg font-mono font-bold text-amber-400">{overallHealth.degraded}</strong>
+            </div>
+          </div>
+          <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10">
+            <span className="text-xxs font-bold text-white/40 uppercase block">Unhealthy</span>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="w-2 h-2 rounded-full bg-rose-400" />
+              <strong className="text-lg font-mono font-bold text-rose-400">{overallHealth.unhealthy}</strong>
+            </div>
+          </div>
+          <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10">
+            <span className="text-xxs font-bold text-white/40 uppercase block">Offline</span>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="w-2 h-2 rounded-full bg-slate-400" />
+              <strong className="text-lg font-mono font-bold text-slate-400">{overallHealth.offline}</strong>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Overall Health Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricCard
-          title={t('system_health_healthy_components')}
-          value={overallHealth.healthy}
-          icon={CheckCircle}
-          color="green"
-        />
-        <MetricCard
-          title={t('system_health_degraded')}
-          value={overallHealth.degraded}
-          icon={AlertTriangle}
-          color="yellow"
-        />
-        <MetricCard
-          title={t('system_health_unhealthy')}
-          value={overallHealth.unhealthy}
-          icon={XCircle}
-          color="red"
-        />
-        <MetricCard
-          title={t('system_health_offline')}
-          value={overallHealth.offline}
-          icon={XCircle}
-          color="gray"
-        />
-      </div>
+      {/* ── Component Health Radar Grid ── */}
+      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl space-y-6">
+        <div className="flex items-center justify-between border-b border-white/10 pb-4">
+          <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <Server className="w-4 h-4 text-emerald-400" />
+            Core Infrastructure Nodes ({healthChecks.length})
+          </h3>
+          <span className="text-xs font-mono text-emerald-400 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+            Active Mesh
+          </span>
+        </div>
 
-      {/* Component Health Grid */}
-      <div className="card p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-          {t('system_health_component_status')}
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {healthChecks.map(check => (
             <ComponentHealthCard
               key={check.component}
               check={check}
               isTriggering={triggeringRecovery === check.component}
               onRecover={() => handleTriggerRecovery(check.component)}
-              radiusClass={radiusClass}
-              btnClass={btnClass}
               t={t}
             />
           ))}
         </div>
       </div>
 
-      {/* Diagnostics Results */}
+      {/* ── Deep Diagnostics Output ── */}
       {diagnostics && <DiagnosticsPanel diagnostics={diagnostics} />}
 
-      {/* Recovery Log */}
-      <RecoveryLogList actions={recoveryLog} radiusClass={radiusClass} t={t} />
+      {/* ── Recovery Audit Log ── */}
+      <RecoveryLogList actions={recoveryLog} t={t} />
     </div>
   );
 }
 
 export default SystemHealth;
+

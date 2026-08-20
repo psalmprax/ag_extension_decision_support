@@ -16,6 +16,41 @@ interface ChartTooltipProps {
   valueFormatter?: (value: string | number, name: string | number) => string;
 }
 
+function formatAgroMetricValue(
+  rawValue: string | number,
+  name: string | number,
+  customFormatter?: (value: string | number, name: string | number) => string
+): string {
+  if (customFormatter) {
+    return customFormatter(rawValue, name);
+  }
+  if (typeof rawValue !== 'number') {
+    return String(rawValue);
+  }
+  const lower = String(name).toLowerCase();
+  if (lower.includes('rain') || lower.includes('precip')) {
+    return `${rawValue.toFixed(1)} mm`;
+  }
+  if (lower.includes('land') || lower.includes('area') || lower.includes('ha')) {
+    return `${rawValue.toFixed(1)} ha`;
+  }
+  if (
+    lower.includes('rate') ||
+    lower.includes('satisfaction') ||
+    lower.includes('health') ||
+    lower.includes('percent')
+  ) {
+    return `${Number.isInteger(rawValue) ? rawValue : rawValue.toFixed(1)}%`;
+  }
+  if (lower === 'visits') {
+    return `${rawValue} visits`;
+  }
+  if (lower === 'queries') {
+    return `${rawValue} queries`;
+  }
+  return String(rawValue);
+}
+
 /**
  * Theme-aware tooltip shared by all Recharts charts. Colors resolve through CSS
  * variables so the tooltip follows the active theme and dark mode automatically.
@@ -55,7 +90,7 @@ export const ChartTooltip: React.FC<ChartTooltipProps> = ({
             'var(--color-primary-500)';
           const name = entry.name ?? entry.dataKey ?? '';
           const rawValue = entry.value ?? '';
-          const value = valueFormatter ? valueFormatter(rawValue, name) : String(rawValue);
+          const value = formatAgroMetricValue(rawValue, name, valueFormatter);
 
           return (
             <div
