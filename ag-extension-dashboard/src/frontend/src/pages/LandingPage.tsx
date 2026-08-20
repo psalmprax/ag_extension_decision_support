@@ -433,6 +433,8 @@ export function LandingPage() {
     }, 1050);
   };
 
+  const [legalModal, setLegalModal] = useState<'privacy' | 'terms' | null>(null);
+
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
   const springX = useSpring(mouseX, { stiffness: 150, damping: 15 });
@@ -523,10 +525,14 @@ export function LandingPage() {
       {/* ── NAV ── */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-950/75 backdrop-blur-2xl border-b border-white/[0.06]">
         <div className="max-w-[90rem] w-full mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="GPExts Logo" className="w-9 h-9 object-contain rounded-lg" />
-            <span className="text-lg font-bold tracking-tight text-white">GPExts</span>
-          </div>
+          <button
+            type="button"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="flex items-center gap-3 cursor-pointer group text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 rounded-lg"
+          >
+            <img src="/logo.png" alt="GPExts Logo" className="w-9 h-9 object-contain rounded-lg group-hover:scale-105 transition-transform" />
+            <span className="text-lg font-bold tracking-tight text-white group-hover:text-emerald-300 transition-colors">GPExts</span>
+          </button>
 
           <div className="hidden md:flex items-center gap-8">
             <a
@@ -759,17 +765,21 @@ export function LandingPage() {
               {/* Feature highlights */}
               <motion.div variants={fadeUp} className="grid grid-cols-3 gap-2.5 pt-2">
                 {[
-                  { title: 'Satellite Weather', sub: 'NASA POWER API' },
-                  { title: 'Soil Telemetry', sub: 'SoilGrids ISRIC' },
-                  { title: 'Offline-First', sub: 'Instant Local Sync' },
+                  { title: 'Satellite Weather', sub: 'NASA POWER API', target: '#capabilities' },
+                  { title: 'Soil Telemetry', sub: 'SoilGrids ISRIC', target: '#capabilities' },
+                  { title: 'Offline-First', sub: 'Instant Local Sync', target: '#features' },
                 ].map((item, i) => (
-                  <div
+                  <a
                     key={i}
-                    className="p-3 rounded-xl bg-white/[0.025] border border-white/[0.05] hover:border-emerald-500/20 transition-colors"
+                    href={item.target}
+                    className="p-3 rounded-xl bg-white/[0.025] border border-white/[0.05] hover:border-emerald-500/30 hover:bg-white/[0.06] transition-all group block text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
                   >
-                    <div className="text-xs font-bold text-emerald-400">{item.title}</div>
-                    <div className="text-[11px] text-white/50 mt-0.5 font-medium">{item.sub}</div>
-                  </div>
+                    <div className="text-xs font-bold text-emerald-400 group-hover:text-emerald-300 transition-colors flex items-center justify-between">
+                      <span>{item.title}</span>
+                      <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-emerald-400" />
+                    </div>
+                    <div className="text-[11px] text-white/50 mt-0.5 font-medium group-hover:text-white/70 transition-colors">{item.sub}</div>
+                  </a>
                 ))}
               </motion.div>
             </motion.div>
@@ -1521,8 +1531,9 @@ export function LandingPage() {
         {/* ── CORE CAPABILITIES & DATA ECOSYSTEM ── */}
         <section
           id="capabilities"
-          className="relative py-28 border-t border-b border-white/[0.04] overflow-hidden"
+          className="relative py-28 border-t border-b border-white/[0.04] overflow-hidden scroll-mt-10"
         >
+          <div id="architecture" className="absolute -top-16" />
           <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/[0.03] via-transparent to-amber-500/[0.02] pointer-events-none" />
           <div className="max-w-6xl mx-auto px-6 relative z-10">
             <motion.div
@@ -1684,36 +1695,29 @@ export function LandingPage() {
               variants={fadeUp}
               className="mt-10 pt-8 border-t border-white/[0.06] grid grid-cols-2 sm:grid-cols-4 gap-6 text-center"
             >
-              <div className="space-y-1">
-                <div className="text-sm sm:text-base font-bold text-emerald-400">
-                  FAOSTAT Integrated
-                </div>
-                <div className="text-xs text-white/45">Verified Agro Standards</div>
-              </div>
-              <div className="space-y-1">
-                <div className="text-sm sm:text-base font-bold text-emerald-400">
-                  Voice Synthesis
-                </div>
-                <div className="text-xs text-white/45">Automated Visit Logs</div>
-              </div>
-              <div className="space-y-1">
-                <div className="text-sm sm:text-base font-bold text-emerald-400">
-                  Multi-District
-                </div>
-                <div className="text-xs text-white/45">Climatic Zone Profiling</div>
-              </div>
-              <div className="space-y-1">
-                <div className="text-sm sm:text-base font-bold text-emerald-400">
-                  Encrypted Store
-                </div>
-                <div className="text-xs text-white/45">Tamper-Proof Records</div>
-              </div>
+              {[
+                { title: 'FAOSTAT Integrated', sub: 'Verified Agro Standards', target: '#capabilities' },
+                { title: 'Voice Synthesis', sub: 'Automated Visit Logs', target: '#features' },
+                { title: 'Multi-District', sub: 'Climatic Zone Profiling', target: '#agent-os' },
+                { title: 'Encrypted Store', sub: 'Tamper-Proof Records', target: '#faq' },
+              ].map((item, idx) => (
+                <a
+                  key={idx}
+                  href={item.target}
+                  className="space-y-1 p-2 rounded-xl hover:bg-white/[0.04] transition-all group focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                >
+                  <div className="text-sm sm:text-base font-bold text-emerald-400 group-hover:text-emerald-300 transition-colors">
+                    {item.title}
+                  </div>
+                  <div className="text-xs text-white/45 group-hover:text-white/70 transition-colors">{item.sub}</div>
+                </a>
+              ))}
             </motion.div>
           </div>
         </section>
 
-        {/* ── BUILT FOR ── */}
-        <section className="relative py-28 overflow-hidden">
+        {/* ── BUILT FOR (IMPACT & ROI) ── */}
+        <section id="roi" className="relative py-28 overflow-hidden scroll-mt-10">
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-emerald-500/[0.02] to-transparent pointer-events-none" />
           <div className="max-w-6xl mx-auto px-6 relative z-10">
             <motion.div
@@ -1939,14 +1943,18 @@ export function LandingPage() {
         <footer id="contact" className="border-t border-white/[0.04] pt-16 pb-8">
           <div className="max-w-[90rem] w-full mx-auto px-6 grid grid-cols-1 md:grid-cols-[1.5fr_1fr_1fr_1fr] gap-10 pb-10">
             <div>
-              <div className="flex items-center gap-3 mb-4">
+              <button
+                type="button"
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                className="flex items-center gap-3 mb-4 cursor-pointer group text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 rounded-lg"
+              >
                 <img
                   src="/logo.png"
                   alt="GPExts Logo"
-                  className="w-9 h-9 object-contain rounded-lg"
+                  className="w-9 h-9 object-contain rounded-lg group-hover:scale-105 transition-transform"
                 />
-                <span className="text-lg font-bold tracking-tight text-white">GPExts</span>
-              </div>
+                <span className="text-lg font-bold tracking-tight text-white group-hover:text-emerald-300 transition-colors">GPExts</span>
+              </button>
               <p className="text-sm text-white/50 leading-relaxed max-w-xs mb-4 font-normal">
                 Empowering agricultural extension officers with AI-driven decision support across
                 the Globe.
@@ -2041,12 +2049,13 @@ export function LandingPage() {
                   </a>
                 </li>
                 <li>
-                  <a
-                    href="/demo"
-                    className="text-white/60 hover:text-emerald-400 transition-colors"
+                  <button
+                    type="button"
+                    onClick={() => navigate('/demo')}
+                    className="text-white/60 hover:text-emerald-400 transition-colors text-left"
                   >
                     Live Interactive Demo
-                  </a>
+                  </button>
                 </li>
                 <li>
                   <a
@@ -2064,20 +2073,22 @@ export function LandingPage() {
               </h4>
               <ul className="space-y-3 text-sm font-normal">
                 <li>
-                  <a
-                    href="/register"
-                    className="text-white/60 hover:text-emerald-400 transition-colors"
+                  <button
+                    type="button"
+                    onClick={() => navigate('/register')}
+                    className="text-white/60 hover:text-emerald-400 transition-colors text-left"
                   >
                     Create Account
-                  </a>
+                  </button>
                 </li>
                 <li>
-                  <a
-                    href="/login"
-                    className="text-white/60 hover:text-emerald-400 transition-colors"
+                  <button
+                    type="button"
+                    onClick={() => navigate('/login')}
+                    className="text-white/60 hover:text-emerald-400 transition-colors text-left"
                   >
                     Sign In
-                  </a>
+                  </button>
                 </li>
               </ul>
             </div>
@@ -2087,15 +2098,111 @@ export function LandingPage() {
               &copy; {new Date().getFullYear()} GPExts. All rights reserved.
             </span>
             <div className="flex gap-5 text-xs">
-              <a href="#" className="text-white/35 hover:text-emerald-400 transition-colors">
+              <button
+                type="button"
+                onClick={() => setLegalModal('privacy')}
+                className="text-white/35 hover:text-emerald-400 transition-colors cursor-pointer"
+              >
                 Privacy Policy
-              </a>
-              <a href="#" className="text-white/35 hover:text-emerald-400 transition-colors">
+              </button>
+              <button
+                type="button"
+                onClick={() => setLegalModal('terms')}
+                className="text-white/35 hover:text-emerald-400 transition-colors cursor-pointer"
+              >
                 Terms of Service
-              </a>
+              </button>
             </div>
           </div>
         </footer>
+
+        {/* ── Legal Policy Modal ── */}
+        <AnimatePresence>
+          {legalModal && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setLegalModal(null)}
+                className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 16 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 16 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className="relative w-full max-w-2xl max-h-[85vh] bg-slate-900 border border-white/10 rounded-2xl p-6 sm:p-8 shadow-2xl overflow-y-auto space-y-6 z-10"
+              >
+                <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                      <Shield className="w-4 h-4" />
+                    </div>
+                    <h3 className="text-lg font-bold text-white">
+                      {legalModal === 'privacy' ? 'Privacy Policy & Data Sovereignty' : 'Terms of Service'}
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setLegalModal(null)}
+                    className="p-1.5 rounded-lg text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {legalModal === 'privacy' ? (
+                  <div className="space-y-4 text-xs sm:text-sm text-white/70 leading-relaxed font-normal">
+                    <p>
+                      <strong className="text-white">1. Data Ownership & OCAP Compliance:</strong> Your organization retains 100% legal ownership and control of all farmer registries, field visit logs, geospatial coordinates, and diagnostic imagery. GPExts strictly adheres to the OCAP (Ownership, Control, Access, and Possession) principles.
+                    </p>
+                    <p>
+                      <strong className="text-white">2. Encryption Standards:</strong> All data is encrypted at rest using AES-256 and in transit via TLS 1.3. Tenant databases are strictly isolated to prevent cross-organizational data leakage.
+                    </p>
+                    <p>
+                      <strong className="text-white">3. Offline-First Caching:</strong> Agronomic manuals and farmer logs cached on field officer devices remain encrypted locally and synchronize securely upon cellular re-connection with conflict-free cryptographic reconciliation.
+                    </p>
+                    <p>
+                      <strong className="text-white">4. External Telemetry:</strong> Integrations with NASA POWER weather and SoilGrids ISRIC querying only submit bounding GPS coordinates to fetch environmental telemetry, and never transmit identifying personal farmer records.
+                    </p>
+                    <p>
+                      <strong className="text-white">5. Right to Erasure & Portability:</strong> Administrators can export full tenant datasets as encrypted JSON/CSV archives or trigger audited record erasure at any time via the User Management and System Settings panel.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4 text-xs sm:text-sm text-white/70 leading-relaxed font-normal">
+                    <p>
+                      <strong className="text-white">1. Purpose & Agricultural Decision Support:</strong> GPExts provides agronomic insights, soil recommendations, and disease diagnostics for agricultural extension officers and institutions. Recommendations are designed to support, not replace, certified agronomic judgment.
+                    </p>
+                    <p>
+                      <strong className="text-white">2. Account Responsibility:</strong> Organizations are responsible for maintaining the confidentiality of officer authentication tokens and assigning appropriate Role-Based Access Control (RBAC) permissions.
+                    </p>
+                    <p>
+                      <strong className="text-white">3. Offline & PWA Usage:</strong> The Progressive Web App (PWA) operates in disconnected environments; officers are responsible for periodic syncing to ensure institutional records remain updated.
+                    </p>
+                    <p>
+                      <strong className="text-white">4. Service Availability & Telemetry SLAs:</strong> While core platform operations feature 99.9% uptime and offline continuity, third-party satellite telemetry availability (e.g. NASA POWER) depends on upstream agency feeds.
+                    </p>
+                    <p>
+                      <strong className="text-white">5. Institutional Inquiries:</strong> For multi-district deployment contracts or custom data hosting terms, please contact <a href="mailto:info@gpfed.com" className="text-emerald-400 hover:underline">info@gpfed.com</a>.
+                    </p>
+                  </div>
+                )}
+
+                <div className="pt-4 border-t border-white/[0.08] flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setLegalModal(null)}
+                    className="px-5 py-2 text-xs font-semibold bg-emerald-500 text-white rounded-xl hover:bg-emerald-400 transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </main>
     </div>
   );
