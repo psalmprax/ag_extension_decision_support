@@ -114,27 +114,13 @@ class TelegramService {
         }
     }
 
-    /**
-     * Send a message to a Telegram chat
-     */
-    async sendMessage(options: TelegramSendOptions): Promise<TelegramDeliveryResult> {
-        const { chatId, text, parseMode = 'Markdown', farmerId, senderId, tenantId, replyMarkup } = options;
-        const botToken = await this.getBotTokenForTenant(tenantId);
-
-        if (!botToken) {
-            logger.warn('Telegram send attempted but bot token is not configured');
-            await this.persistMessage({
-                tenantId: tenantId || null,
-                chatId: String(chatId),
-                message: text,
-                direction: 'outbound',
-                status: 'not_configured',
-                farmerId: farmerId || null,
-                senderId: senderId || null,
-            });
-            return { success: false, error: 'Telegram bot is not configured' };
-        }
-
+    private async dispatchTelegramHttpRequest(
+        botToken: string,
+        chatId: string | number,
+        text: string,
+        parseMode: string,
+        replyMarkup?: unknown
+    ): Promise<{ ok: boolean; messageId?: number; error?: string }> {
         try {
             const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
             const payload: Record<string, unknown> = {
@@ -148,44 +134,47 @@ class TelegramService {
 
             const response = await axios.post(url, payload, { timeout: 15000 });
             if (response.data?.ok) {
-                const messageId = response.data.result?.message_id;
-                await this.persistMessage({
-                    tenantId: tenantId || null,
-                    chatId: String(chatId),
-                    message: text,
-                    direction: 'outbound',
-                    status: 'sent',
-                    farmerId: farmerId || null,
-                    senderId: senderId || null,
-                });
-                return { success: true, messageId };
+                return { ok: true, messageId: response.data.result?.message_id };
             }
-
-            const errorDesc = response.data?.description || 'Unknown Telegram error';
-            await this.persistMessage({
-                tenantId: tenantId || null,
-                chatId: String(chatId),
-                message: text,
-                direction: 'outbound',
-                status: 'failed',
-                farmerId: farmerId || null,
-                senderId: senderId || null,
-            });
-            return { success: false, error: errorDesc };
+            return { ok: false, error: response.data?.description || 'Unknown Telegram error' };
         } catch (error: any) {
             const errorDesc = error.response?.data?.description || error.message || 'Failed to dispatch Telegram message';
             logger.error('Telegram dispatch error:', errorDesc);
-            await this.persistMessage({
-                tenantId: tenantId || null,
-                chatId: String(chatId),
-                message: text,
-                direction: 'outbound',
-                status: 'failed',
-                farmerId: farmerId || null,
-                senderId: senderId || null,
-            });
-            return { success: false, error: errorDesc };
+            return { ok: false, error: errorDesc };
         }
+    }
+
+    /**
+     * Send a message to a Telegram chat
+     */
+    async sendMessage(options: TelegramSendOptions): Promise<TelegramDeliveryResult> {
+        const { chatId, text, parseMode = 'Markdown', farmerId, senderId, tenantId, replyMarkup } = options;
+        const botToken = await this.getBotTokenForTenant(tenantId);
+
+        const recordPersistence = (status: string) => this.persistMessage({
+            tenantId: tenantId || null,
+            chatId: String(chatId),
+            message: text,
+            direction: 'outbound',
+            status,
+            farmerId: farmerId || null,
+            senderId: senderId || null,
+        });
+
+        if (!botToken) {
+            logger.warn('Telegram send attempted but bot token is not configured');
+            await recordPersistence('not_configured');
+            return { success: false, error: 'Telegram bot is not configured' };
+        }
+
+        const res = await this.dispatchTelegramHttpRequest(botToken, chatId, text, parseMode, replyMarkup);
+        if (res.ok) {
+            await recordPersistence('sent');
+            return { success: true, messageId: res.messageId };
+        }
+
+        await recordPersistence('failed');
+        return { success: false, error: res.error };
     }
 
     /**

@@ -67,6 +67,128 @@ class OnboardingEngine {
         }
     }
 
+    private async handleInitialGreeting(
+        session: FarmerOnboardingSessionRow,
+        text: string,
+        senderName: string | undefined,
+        isTriggerKeyword: boolean,
+        data: Record<string, any>
+    ): Promise<OnboardingProcessResult> {
+        const defaultName = senderName && senderName.trim().length > 2 ? senderName.trim() : '';
+        if (defaultName && isTriggerKeyword) {
+            data.name = defaultName;
+            await this.updateSession(session.id, 'awaiting_crop', data);
+            return {
+                isHandled: true,
+                isRegistered: false,
+                responseMessage: `🌾 Welcome to the Agricultural Advisory Network, *${defaultName}*!\n\nLet's configure your advisory profile.\n\n👉 What is your *Primary Crop*? (e.g. Maize, Coffee, Cassava, Rice, Tea, Tomato)`,
+            };
+        }
+
+        await this.updateSession(session.id, 'awaiting_name', data);
+        return {
+            isHandled: true,
+            isRegistered: false,
+            responseMessage: `🌾 *Welcome to the Agricultural Advisory Network!*\n\nLet's get your farm registered for real-time weather forecasts, AI disease diagnosis, and extension support.\n\n👉 What is your *Full Name*?`,
+        };
+    }
+
+    private async handleAwaitingName(
+        session: FarmerOnboardingSessionRow,
+        text: string,
+        data: Record<string, any>
+    ): Promise<OnboardingProcessResult> {
+        const name = text.replace(/^(my name is|i am|naitwa)\s+/i, '').trim();
+        data.name = name || 'Farmer';
+        await this.updateSession(session.id, 'awaiting_crop', data);
+        return {
+            isHandled: true,
+            isRegistered: false,
+            responseMessage: `Great to connect, *${data.name}*! 🌽\n\n👉 What is your *Primary Crop*? (e.g. Maize, Coffee, Cassava, Rice, Beans, Tea)`,
+        };
+    }
+
+    private async handleAwaitingCrop(
+        session: FarmerOnboardingSessionRow,
+        text: string,
+        data: Record<string, any>
+    ): Promise<OnboardingProcessResult> {
+        data.crop = text.replace(/^(i grow|crop is|crop:)\s+/i, '').trim();
+        await this.updateSession(session.id, 'awaiting_region', data);
+        return {
+            isHandled: true,
+            isRegistered: false,
+            responseMessage: `Noted: *${data.crop}* 🌱\n\n👉 In which *Region or County* is your farm located? (e.g. Nakuru, Uasin Gishu, Kiambu, Machakos, Meru)`,
+        };
+    }
+
+    private async handleAwaitingRegion(
+        session: FarmerOnboardingSessionRow,
+        text: string,
+        data: Record<string, any>
+    ): Promise<OnboardingProcessResult> {
+        data.region = text.replace(/^(i am in|region is|county:)\s+/i, '').trim();
+        await this.updateSession(session.id, 'awaiting_size', data);
+        return {
+            isHandled: true,
+            isRegistered: false,
+            responseMessage: `Got it: *${data.region}* 📍\n\n👉 Almost done! What is the estimated *Size of your Farm* in hectares or acres? (e.g. 2.5 ha, 5 acres)`,
+        };
+    }
+
+    private async handleAwaitingSize(
+        session: FarmerOnboardingSessionRow,
+        text: string,
+        data: Record<string, any>,
+        channel: 'sms' | 'whatsapp' | 'telegram',
+        identifier: string,
+        tenantId?: string | null
+    ): Promise<OnboardingProcessResult> {
+        const rawSize = text.replace(/[^\d.]/g, '');
+        const parsedSize = parseFloat(rawSize) || 2.0;
+        data.farmSize = parsedSize;
+
+        const nameParts = (data.name || 'Valued Farmer').trim().split(/\s+/);
+        const firstName = nameParts[0] || 'Valued';
+        const lastName = nameParts.slice(1).join(' ') || 'Farmer';
+        const coords = getRegionCoordinates(data.region || 'default');
+
+        const finalTenantId = tenantId || (await this.getDefaultTenantId());
+        const notes = channel === 'telegram' ? `Auto-enrolled via Telegram [tg:${identifier}]` : `Auto-enrolled via ${channel.toUpperCase()} [${identifier}]`;
+
+        const insertResult = await query(
+            `INSERT INTO farmers (
+                first_name, last_name, phone, region, crops, farm_size_hectares,
+                location_lat, location_lng, notes, tenant_id, language_preference
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            RETURNING id`,
+            [
+                firstName,
+                lastName,
+                identifier,
+                data.region || 'Central Hub',
+                [data.crop || 'Maize'],
+                parsedSize,
+                coords.lat,
+                coords.lng,
+                notes,
+                finalTenantId,
+                'en',
+            ]
+        );
+
+        const newFarmerId = insertResult.rows[0]?.id;
+        await this.updateSession(session.id, 'completed', data, newFarmerId);
+
+        return {
+            isHandled: true,
+            isRegistered: true,
+            completedNow: true,
+            farmerId: newFarmerId,
+            responseMessage: `🎉 *Registration Complete!*\n\nWelcome aboard, *${data.name}*!\nYour Farm Profile is active for *${data.region}* (${data.crop}, ${parsedSize} ha).\n\n📱 *How you can use this channel:*\n• Ask any crop management question or disease symptom\n• Type *WEATHER* for local 7-day agricultural forecasts\n• Type *PRICES* for regional market commodity trends\n• Type *VISIT* to request an extension officer field visit`,
+        };
+    }
+
     /**
      * Process an incoming message through the auto-onboarding state machine
      */
@@ -97,110 +219,26 @@ class OnboardingEngine {
 
         const isTriggerKeyword = /^(start|habari|join|register|mambo|hello|hi|\/start|\/register)$/i.test(text);
 
-        // Step 1: Initial greeting / Restart
-        if (isTriggerKeyword || currentStep === 'awaiting_name' && !data.name) {
-            const defaultName = senderName && senderName.trim().length > 2 ? senderName.trim() : '';
-            if (defaultName && isTriggerKeyword) {
-                data.name = defaultName;
-                await this.updateSession(session.id, 'awaiting_crop', data);
-                return {
-                    isHandled: true,
-                    isRegistered: false,
-                    responseMessage: `🌾 Welcome to the Agricultural Advisory Network, *${defaultName}*!\n\nLet's configure your advisory profile.\n\n👉 What is your *Primary Crop*? (e.g. Maize, Coffee, Cassava, Rice, Tea, Tomato)`,
-                };
-            }
-
-            await this.updateSession(session.id, 'awaiting_name', data);
-            return {
-                isHandled: true,
-                isRegistered: false,
-                responseMessage: `🌾 *Welcome to the Agricultural Advisory Network!*\n\nLet's get your farm registered for real-time weather forecasts, AI disease diagnosis, and extension support.\n\n👉 What is your *Full Name*?`,
-            };
+        if (isTriggerKeyword || (currentStep === 'awaiting_name' && !data.name)) {
+            return this.handleInitialGreeting(session, text, senderName, isTriggerKeyword, data);
         }
 
-        // Step 2: Name submitted -> Ask for Primary Crop
         if (currentStep === 'awaiting_name') {
-            const name = text.replace(/^(my name is|i am|naitwa)\s+/i, '').trim();
-            data.name = name || 'Farmer';
-            await this.updateSession(session.id, 'awaiting_crop', data);
-            return {
-                isHandled: true,
-                isRegistered: false,
-                responseMessage: `Great to connect, *${data.name}*! 🌽\n\n👉 What is your *Primary Crop*? (e.g. Maize, Coffee, Cassava, Rice, Beans, Tea)`,
-            };
+            return this.handleAwaitingName(session, text, data);
         }
 
-        // Step 3: Crop submitted -> Ask for Location/Region
         if (currentStep === 'awaiting_crop') {
-            data.crop = text.replace(/^(i grow|crop is|crop:)\s+/i, '').trim();
-            await this.updateSession(session.id, 'awaiting_region', data);
-            return {
-                isHandled: true,
-                isRegistered: false,
-                responseMessage: `Noted: *${data.crop}* 🌱\n\n👉 In which *Region or County* is your farm located? (e.g. Nakuru, Uasin Gishu, Kiambu, Machakos, Meru)`,
-            };
+            return this.handleAwaitingCrop(session, text, data);
         }
 
-        // Step 4: Region submitted -> Ask for Farm Size
         if (currentStep === 'awaiting_region') {
-            data.region = text.replace(/^(i am in|region is|county:)\s+/i, '').trim();
-            await this.updateSession(session.id, 'awaiting_size', data);
-            return {
-                isHandled: true,
-                isRegistered: false,
-                responseMessage: `Got it: *${data.region}* 📍\n\n👉 Almost done! What is the estimated *Size of your Farm* in hectares or acres? (e.g. 2.5 ha, 5 acres)`,
-            };
+            return this.handleAwaitingRegion(session, text, data);
         }
 
-        // Step 5: Farm Size submitted -> Complete Registration in DB
         if (currentStep === 'awaiting_size') {
-            const rawSize = text.replace(/[^\d.]/g, '');
-            const parsedSize = parseFloat(rawSize) || 2.0;
-            data.farmSize = parsedSize;
-
-            const nameParts = (data.name || 'Valued Farmer').trim().split(/\s+/);
-            const firstName = nameParts[0] || 'Valued';
-            const lastName = nameParts.slice(1).join(' ') || 'Farmer';
-            const coords = getRegionCoordinates(data.region || 'default');
-
-            // Insert into farmers table
-            const finalTenantId = tenantId || (await this.getDefaultTenantId());
-            const notes = channel === 'telegram' ? `Auto-enrolled via Telegram [tg:${identifier}]` : `Auto-enrolled via ${channel.toUpperCase()} [${identifier}]`;
-
-            const insertResult = await query(
-                `INSERT INTO farmers (
-                    first_name, last_name, phone, region, crops, farm_size_hectares,
-                    location_lat, location_lng, notes, tenant_id, language_preference
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-                RETURNING id`,
-                [
-                    firstName,
-                    lastName,
-                    identifier,
-                    data.region || 'Central Hub',
-                    [data.crop || 'Maize'],
-                    parsedSize,
-                    coords.lat,
-                    coords.lng,
-                    notes,
-                    finalTenantId,
-                    'en',
-                ]
-            );
-
-            const newFarmerId = insertResult.rows[0]?.id;
-            await this.updateSession(session.id, 'completed', data, newFarmerId);
-
-            return {
-                isHandled: true,
-                isRegistered: true,
-                completedNow: true,
-                farmerId: newFarmerId,
-                responseMessage: `🎉 *Registration Complete!*\n\nWelcome aboard, *${data.name}*!\nYour Farm Profile is active for *${data.region}* (${data.crop}, ${parsedSize} ha).\n\n📱 *How you can use this channel:*\n• Ask any crop management question or disease symptom\n• Type *WEATHER* for local 7-day agricultural forecasts\n• Type *PRICES* for regional market commodity trends\n• Type *VISIT* to request an extension officer field visit`,
-            };
+            return this.handleAwaitingSize(session, text, data, channel, identifier, tenantId);
         }
 
-        // Fallback for unexpected state
         return {
             isHandled: true,
             isRegistered: false,

@@ -37,6 +37,215 @@ interface GoalCampaignResult {
 }
 
 class AutonomousCampaignService {
+    private async fetchRegionalSkillsContext(
+        targetRegion?: string | null,
+        targetCrop?: string | null
+    ): Promise<{ skillsContext: string; count: number }> {
+        try {
+            let skillSql = `SELECT * FROM regional_agronomy_skills WHERE 1=1`;
+            const skillParams: any[] = [];
+            if (targetRegion) {
+                skillParams.push(`%${targetRegion}%`);
+                skillSql += ` AND region ILIKE $${skillParams.length}`;
+            }
+            if (targetCrop) {
+                skillParams.push(`%${targetCrop}%`);
+                skillSql += ` AND crop ILIKE $${skillParams.length}`;
+            }
+            skillSql += ` ORDER BY confidence_score DESC LIMIT 3`;
+
+            const { rows: skillRows } = await query<RegionalAgronomySkillRow>(skillSql, skillParams);
+            if (skillRows.length > 0) {
+                const skillsContext = skillRows.map(s => `[Skill: ${s.title}] ${s.skill_markdown}`).join('\n\n');
+                return { skillsContext, count: skillRows.length };
+            }
+        } catch (err) {
+            logger.warn('Failed to retrieve regional skills for campaign:', err);
+        }
+        return { skillsContext: '', count: 0 };
+    }
+
+    private async queryTargetFarmers(
+        tenantId?: string | null,
+        targetRegion?: string | null,
+        targetCrop?: string | null
+    ): Promise<any[]> {
+        let farmerSql = `SELECT * FROM farmers WHERE 1=1`;
+        const farmerParams: any[] = [];
+
+        if (tenantId) {
+            farmerParams.push(tenantId);
+            farmerSql += ` AND (tenant_id = $${farmerParams.length} OR tenant_id IS NULL)`;
+        }
+        if (targetRegion && targetRegion !== 'all') {
+            farmerParams.push(`%${targetRegion}%`);
+            farmerSql += ` AND region ILIKE $${farmerParams.length}`;
+        }
+        if (targetCrop && targetCrop !== 'all') {
+            farmerParams.push(`%${targetCrop}%`);
+            farmerSql += ` AND array_to_string(crops, ',') ILIKE $${farmerParams.length}`;
+        }
+
+        farmerSql += ` ORDER BY vital_score ASC LIMIT 100`;
+        const { rows } = await query<any>(farmerSql, farmerParams);
+        return rows;
+    }
+
+    private async synthesizeAdvisoryText(
+        goalPrompt: string,
+        targetRegion?: string | null,
+        targetCrop?: string | null,
+        skillsContext?: string
+    ): Promise<string> {
+        try {
+            const ai = await AIProviderFactory.getProvider();
+            const prompt = `You are the Agricultural Extension Autonomous Campaign Agent.
+User Objective: "${goalPrompt}"
+Target Region: ${targetRegion || 'Regional Hub'}
+Target Crop: ${targetCrop || 'General Crops'}
+Regional Knowledge Skills Context:
+${skillsContext || 'No regional overrides found; use standard agronomic best practices.'}
+
+Generate a concise, actionable, and warm advisory SMS/WhatsApp message (max 150 words) suitable for smallholder farmers. Include key action items and emoji indicators.`;
+
+            const aiResponse = await ai.generateText(prompt);
+            return (aiResponse.text || '').trim();
+        } catch {
+            return `🌾 Agricultural Advisory Alert: Regarding ${goalPrompt}. Please inspect your crops, monitor soil moisture, and contact your extension officer for guidance.`;
+        }
+    }
+
+    private async dispatchToFarmer(
+        farmer: any,
+        personalizedMsg: string,
+        channel: string,
+        userId?: string | null
+    ): Promise<number> {
+        let count = 0;
+        const farmerPhone = farmer.phone;
+        if ((channel === 'all' || channel === 'sms') && farmerPhone) {
+            await smsService.sendSMS({
+                to: farmerPhone,
+                message: personalizedMsg,
+                farmerId: farmer.id,
+                senderId: userId || undefined,
+            });
+            count++;
+        }
+        if (channel === 'whatsapp' && farmerPhone) {
+            await whatsappService.sendMessage({
+                to: farmerPhone,
+                message: personalizedMsg,
+                farmerId: farmer.id,
+                senderId: userId || undefined,
+            });
+            count++;
+        }
+        if (channel === 'telegram' && farmer.notes?.includes('tg:')) {
+            const tgChatId = farmer.notes.match(/tg:(\d+)/)?.[1];
+            if (tgChatId) {
+                await telegramService.sendMessage({
+                    chatId: tgChatId,
+                    text: personalizedMsg,
+                    farmerId: farmer.id,
+                    senderId: userId || undefined,
+                });
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private async dispatchToFarmerCohort(
+        farmers: any[],
+        advisoryText: string,
+        channel: string,
+        userId?: string | null
+    ): Promise<number> {
+        let dispatchedCount = 0;
+        for (const farmer of farmers) {
+            const farmerName = `${farmer.first_name || 'Farmer'} ${farmer.last_name || ''}`.trim();
+            const personalizedMsg = `Hello ${farmerName},\n${advisoryText}`;
+            try {
+                const sent = await this.dispatchToFarmer(farmer, personalizedMsg, channel, userId);
+                dispatchedCount += sent;
+            } catch (dispatchErr) {
+                logger.warn(`Failed to dispatch campaign message to farmer ${farmer.id}:`, dispatchErr);
+            }
+        }
+        return dispatchedCount;
+    }
+
+    private async scheduleAtRiskVisits(
+        farmers: any[],
+        goalPrompt: string,
+        tenantId?: string | null,
+        userId?: string | null
+    ): Promise<number> {
+        let count = 0;
+        const atRiskFarmers = farmers.filter(f => (f.vital_score || 80) < 65);
+        for (const atRisk of atRiskFarmers) {
+            try {
+                const officerId = userId || (await this.getDefaultOfficerId(tenantId));
+                await query(
+                    `INSERT INTO visits (
+                        farmer_id, user_id, scheduled_date, status, notes, created_at, updated_at
+                    ) VALUES ($1, $2, NOW() + INTERVAL '2 days', 'scheduled', $3, NOW(), NOW())`,
+                    [
+                        atRisk.id,
+                        officerId,
+                        `Autonomous Campaign Action Item: Inspect for ${goalPrompt} (Vital score: ${atRisk.vital_score})`,
+                    ]
+                );
+                count++;
+            } catch (visitErr) {
+                logger.warn('Failed to queue automated field visit:', visitErr);
+            }
+        }
+        return count;
+    }
+
+    private async persistCampaignRun(params: {
+        tenantId?: string | null;
+        userId?: string | null;
+        goalPrompt: string;
+        targetRegion?: string | null;
+        targetCrop?: string | null;
+        affectedFarmersCount: number;
+        dispatchedMessagesCount: number;
+        scheduledVisitsCount: number;
+        trace: CampaignStepTrace[];
+        advisoryText: string;
+    }): Promise<string> {
+        let campaignId = 'run-' + Date.now();
+        try {
+            const { rows } = await query<AutonomousCampaignRunRow>(
+                `INSERT INTO autonomous_campaign_runs (
+                    tenant_id, created_by, goal_prompt, target_region, target_crop,
+                    status, affected_farmers_count, dispatched_messages_count, scheduled_visits_count,
+                    execution_trace, advisory_summary
+                ) VALUES ($1, $2, $3, $4, $5, 'completed', $6, $7, $8, $9, $10)
+                RETURNING id`,
+                [
+                    params.tenantId || null,
+                    params.userId || null,
+                    params.goalPrompt,
+                    params.targetRegion || null,
+                    params.targetCrop || null,
+                    params.affectedFarmersCount,
+                    params.dispatchedMessagesCount,
+                    params.scheduledVisitsCount,
+                    JSON.stringify(params.trace),
+                    params.advisoryText,
+                ]
+            );
+            if (rows[0]) campaignId = rows[0].id;
+        } catch (saveErr) {
+            logger.error('Failed to persist autonomous campaign run:', saveErr);
+        }
+        return campaignId;
+    }
+
     /**
      * Executes an autonomous goal-driven campaign end-to-end
      */
@@ -62,58 +271,18 @@ class AutonomousCampaignService {
             });
         };
 
-        // 1. Trace Step: Analyze Goal
+        // 1. Analyze Goal
         addTrace('Intent Analysis', `Parsing objective: "${goalPrompt}"`);
 
-        // 2. Fetch Relevant Regional Agronomy Skills
-        let skillsContext = '';
-        try {
-            let skillSql = `SELECT * FROM regional_agronomy_skills WHERE 1=1`;
-            const skillParams: any[] = [];
-            if (targetRegion) {
-                skillParams.push(`%${targetRegion}%`);
-                skillSql += ` AND region ILIKE $${skillParams.length}`;
-            }
-            if (targetCrop) {
-                skillParams.push(`%${targetCrop}%`);
-                skillSql += ` AND crop ILIKE $${skillParams.length}`;
-            }
-            skillSql += ` ORDER BY confidence_score DESC LIMIT 3`;
-
-            const { rows: skillRows } = await query<RegionalAgronomySkillRow>(skillSql, skillParams);
-            if (skillRows.length > 0) {
-                skillsContext = skillRows.map(s => `[Skill: ${s.title}] ${s.skill_markdown}`).join('\n\n');
-                addTrace(
-                    'Closed-Loop Knowledge Retrieval',
-                    `Injected ${skillRows.length} regional agronomy skill card(s) from field reports.`
-                );
-            }
-        } catch (err) {
-            logger.warn('Failed to retrieve regional skills for campaign:', err);
+        // 2. Fetch Regional Skills
+        const { skillsContext, count: skillCount } = await this.fetchRegionalSkillsContext(targetRegion, targetCrop);
+        if (skillCount > 0) {
+            addTrace('Closed-Loop Knowledge Retrieval', `Injected ${skillCount} regional agronomy skill card(s) from field reports.`);
         }
 
-        // 3. Query Matching Farmer Cohort
-        let farmerSql = `SELECT * FROM farmers WHERE 1=1`;
-        const farmerParams: any[] = [];
-
-        if (tenantId) {
-            farmerParams.push(tenantId);
-            farmerSql += ` AND (tenant_id = $${farmerParams.length} OR tenant_id IS NULL)`;
-        }
-        if (targetRegion && targetRegion !== 'all') {
-            farmerParams.push(`%${targetRegion}%`);
-            farmerSql += ` AND region ILIKE $${farmerParams.length}`;
-        }
-        if (targetCrop && targetCrop !== 'all') {
-            farmerParams.push(`%${targetCrop}%`);
-            farmerSql += ` AND array_to_string(crops, ',') ILIKE $${farmerParams.length}`;
-        }
-
-        farmerSql += ` ORDER BY vital_score ASC LIMIT 100`;
-
-        const { rows: farmers } = await query<any>(farmerSql, farmerParams);
+        // 3. Query Farmers
+        const farmers = await this.queryTargetFarmers(tenantId, targetRegion, targetCrop);
         const affectedFarmersCount = farmers.length;
-
         addTrace(
             'Target Cohort Selection',
             `Identified ${affectedFarmersCount} farmers matching criteria (Region: ${targetRegion || 'Any'}, Crop: ${targetCrop || 'Any'}).`
@@ -131,134 +300,36 @@ class AutonomousCampaignService {
             };
         }
 
-        // 4. Synthesize Advisory Message via AI Provider
-        let advisoryText = '';
-        try {
-            const ai = await AIProviderFactory.getProvider();
-            const prompt = `You are the Agricultural Extension Autonomous Campaign Agent.
-User Objective: "${goalPrompt}"
-Target Region: ${targetRegion || 'Regional Hub'}
-Target Crop: ${targetCrop || 'General Crops'}
-Regional Knowledge Skills Context:
-${skillsContext || 'No regional overrides found; use standard agronomic best practices.'}
+        // 4. Synthesize Advisory Message
+        const advisoryText = await this.synthesizeAdvisoryText(goalPrompt, targetRegion, targetCrop, skillsContext);
+        addTrace('Advisory Synthesis', 'Generated contextualized advisory message.');
 
-Generate a concise, actionable, and warm advisory SMS/WhatsApp message (max 150 words) suitable for smallholder farmers. Include key action items and emoji indicators.`;
+        // 5. Multi-Channel Dispatch
+        const dispatchedMessagesCount = await this.dispatchToFarmerCohort(farmers, advisoryText, channel, userId);
+        addTrace('Multi-Channel Dispatch', `Dispatched ${dispatchedMessagesCount} broadcast messages across SMS, WhatsApp, and Telegram.`);
 
-            const aiResponse = await ai.generateText(prompt);
-            advisoryText = (aiResponse.text || '').trim();
-            addTrace('Advisory Synthesis', 'Generated contextualized advisory message using LLM & regional skill cards.');
-        } catch {
-            advisoryText = `🌾 Agricultural Advisory Alert: Regarding ${goalPrompt}. Please inspect your crops, monitor soil moisture, and contact your extension officer for guidance.`;
-            addTrace('Advisory Synthesis', 'Generated rule-based fallback advisory message.');
-        }
-
-        // 5. Multi-Channel Dispatching Loop
-        let dispatchedMessagesCount = 0;
-        for (const farmer of farmers) {
-            const farmerPhone = farmer.phone;
-            const farmerName = `${farmer.first_name || 'Farmer'} ${farmer.last_name || ''}`.trim();
-            const personalizedMsg = `Hello ${farmerName},\n${advisoryText}`;
-
-            try {
-                if ((channel === 'all' || channel === 'sms') && farmerPhone) {
-                    await smsService.sendSMS({
-                        to: farmerPhone,
-                        message: personalizedMsg,
-                        farmerId: farmer.id,
-                        senderId: userId || undefined,
-                    });
-                    dispatchedMessagesCount++;
-                }
-
-                if (channel === 'whatsapp' && farmerPhone) {
-                    await whatsappService.sendMessage({
-                        to: farmerPhone,
-                        message: personalizedMsg,
-                        farmerId: farmer.id,
-                        senderId: userId || undefined,
-                    });
-                    dispatchedMessagesCount++;
-                }
-
-                if (channel === 'telegram' && farmer.notes?.includes('tg:')) {
-                    const tgChatId = farmer.notes.match(/tg:(\d+)/)?.[1];
-                    if (tgChatId) {
-                        await telegramService.sendMessage({
-                            chatId: tgChatId,
-                            text: personalizedMsg,
-                            farmerId: farmer.id,
-                            senderId: userId || undefined,
-                        });
-                        dispatchedMessagesCount++;
-                    }
-                }
-            } catch (dispatchErr) {
-                logger.warn(`Failed to dispatch campaign message to farmer ${farmer.id}:`, dispatchErr);
-            }
-        }
-
-        addTrace(
-            'Multi-Channel Dispatch',
-            `Dispatched ${dispatchedMessagesCount} broadcast messages across SMS, WhatsApp, and Telegram.`
-        );
-
-        // 6. Schedule Field Visits for At-Risk Farmers (vital_score < 65)
+        // 6. Schedule Field Visits
         let scheduledVisitsCount = 0;
         if (autoScheduleVisits) {
-            const atRiskFarmers = farmers.filter(f => (f.vital_score || 80) < 65);
-            for (const atRisk of atRiskFarmers) {
-                try {
-                    await query(
-                        `INSERT INTO visits (
-                            farmer_id, user_id, scheduled_date, status, notes, created_at, updated_at
-                        ) VALUES ($1, $2, NOW() + INTERVAL '2 days', 'scheduled', $3, NOW(), NOW())`,
-                        [
-                            atRisk.id,
-                            userId || (await this.getDefaultOfficerId(tenantId)),
-                            `Autonomous Campaign Action Item: Inspect for ${goalPrompt} (Vital score: ${atRisk.vital_score})`,
-                        ]
-                    );
-                    scheduledVisitsCount++;
-                } catch (visitErr) {
-                    logger.warn('Failed to queue automated field visit:', visitErr);
-                }
-            }
-
+            scheduledVisitsCount = await this.scheduleAtRiskVisits(farmers, goalPrompt, tenantId, userId);
             if (scheduledVisitsCount > 0) {
-                addTrace(
-                    'Field Inspection Scheduling',
-                    `Automatically queued ${scheduledVisitsCount} priority field inspection visits for at-risk farmers (Vital Score < 65).`
-                );
+                addTrace('Field Inspection Scheduling', `Automatically queued ${scheduledVisitsCount} priority field inspection visits for at-risk farmers.`);
             }
         }
 
         // 7. Persist Campaign Run
-        let campaignId = 'run-' + Date.now();
-        try {
-            const { rows } = await query<AutonomousCampaignRunRow>(
-                `INSERT INTO autonomous_campaign_runs (
-                    tenant_id, created_by, goal_prompt, target_region, target_crop,
-                    status, affected_farmers_count, dispatched_messages_count, scheduled_visits_count,
-                    execution_trace, advisory_summary
-                ) VALUES ($1, $2, $3, $4, $5, 'completed', $6, $7, $8, $9, $10)
-                RETURNING id`,
-                [
-                    tenantId || null,
-                    userId || null,
-                    goalPrompt,
-                    targetRegion || null,
-                    targetCrop || null,
-                    affectedFarmersCount,
-                    dispatchedMessagesCount,
-                    scheduledVisitsCount,
-                    JSON.stringify(trace),
-                    advisoryText,
-                ]
-            );
-            if (rows[0]) campaignId = rows[0].id;
-        } catch (saveErr) {
-            logger.error('Failed to persist autonomous campaign run:', saveErr);
-        }
+        const campaignId = await this.persistCampaignRun({
+            tenantId,
+            userId,
+            goalPrompt,
+            targetRegion,
+            targetCrop,
+            affectedFarmersCount,
+            dispatchedMessagesCount,
+            scheduledVisitsCount,
+            trace,
+            advisoryText,
+        });
 
         return {
             success: true,

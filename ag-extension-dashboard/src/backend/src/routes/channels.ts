@@ -115,6 +115,78 @@ router.post('/telegram/webhook', async (req: Request, res: Response) => {
 
 router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
 
+async function buildDefaultChannelConfigs(tenantId: string): Promise<Record<string, any>> {
+    const baseUrl = process.env.API_BASE_URL || 'https://api.gpexts.com';
+    return {
+        sms: {
+            channel: 'sms',
+            provider: process.env.AFRICASTALKING_API_KEY ? 'africas_talking' : 'twilio',
+            isEnabled: Boolean(process.env.AFRICASTALKING_API_KEY || process.env.TWILIO_ACCOUNT_SID),
+            autoOnboarding: true,
+            config: {
+                africasTalkingUsername: process.env.AFRICASTALKING_USERNAME || 'sandbox',
+                africasTalkingApiKey: maskSecret(process.env.AFRICASTALKING_API_KEY),
+                twilioAccountSid: maskSecret(process.env.TWILIO_ACCOUNT_SID),
+                twilioPhoneNumber: process.env.TWILIO_PHONE_NUMBER || '+1234567890',
+                senderId: 'AG-EXTEND',
+            },
+            webhookUrl: `${baseUrl}/api/sms/inbound`,
+        },
+        whatsapp: {
+            channel: 'whatsapp',
+            provider: 'meta_cloud',
+            isEnabled: whatsappService.isConfigured(),
+            autoOnboarding: true,
+            config: {
+                phoneNumber: process.env.TWILIO_WHATSAPP_NUMBER || '+14155238886',
+                metaPhoneNumberId: maskSecret(process.env.META_PHONE_NUMBER_ID),
+                metaAccessToken: maskSecret(process.env.META_ACCESS_TOKEN),
+                webhookVerifyToken: 'ag_extension_verify_2026',
+            },
+            webhookUrl: `${baseUrl}/api/whatsapp/inbound`,
+        },
+        telegram: {
+            channel: 'telegram',
+            provider: 'telegram_bot',
+            isEnabled: await telegramService.isConfigured(tenantId),
+            autoOnboarding: true,
+            config: {
+                botToken: maskSecret(process.env.TELEGRAM_BOT_TOKEN),
+                botUsername: process.env.TELEGRAM_BOT_USERNAME || 'AgExtensionBot',
+            },
+            webhookUrl: `${baseUrl}/api/channels/telegram/webhook`,
+        },
+    };
+}
+
+function applyChannelConfigOverrides(
+    configsMap: Record<string, any>,
+    rows: TenantChannelConfigRow[]
+): void {
+    for (const row of rows) {
+        const target = configsMap[row.channel];
+        if (!target) continue;
+        target.isEnabled = row.is_enabled;
+        target.provider = row.provider;
+        target.autoOnboarding = row.auto_onboarding;
+        target.welcomeTemplate = row.welcome_template;
+        if (row.config && typeof row.config === 'object') {
+            target.config = { ...target.config, ...row.config };
+        }
+    }
+}
+
+async function getOnboardingStats(): Promise<Record<string, number>> {
+    const countRes = await query<{ channel: string; total: string }>(
+        `SELECT channel, COUNT(*)::text as total FROM farmer_onboarding_sessions GROUP BY channel`
+    );
+    const stats: Record<string, number> = { sms: 0, whatsapp: 0, telegram: 0 };
+    for (const r of countRes.rows) {
+        stats[r.channel] = parseInt(r.total, 10);
+    }
+    return stats;
+}
+
 /**
  * GET /api/channels/config — Load channel configurations for the tenant
  */
@@ -130,71 +202,9 @@ router.get('/config', async (req: Request, res: Response) => {
             [tenantId]
         );
 
-        const configsMap: Record<string, any> = {
-            sms: {
-                channel: 'sms',
-                provider: process.env.AFRICASTALKING_API_KEY ? 'africas_talking' : 'twilio',
-                isEnabled: Boolean(process.env.AFRICASTALKING_API_KEY || process.env.TWILIO_ACCOUNT_SID),
-                autoOnboarding: true,
-                config: {
-                    africasTalkingUsername: process.env.AFRICASTALKING_USERNAME || 'sandbox',
-                    africasTalkingApiKey: maskSecret(process.env.AFRICASTALKING_API_KEY),
-                    twilioAccountSid: maskSecret(process.env.TWILIO_ACCOUNT_SID),
-                    twilioPhoneNumber: process.env.TWILIO_PHONE_NUMBER || '+1234567890',
-                    senderId: 'AG-EXTEND',
-                },
-                webhookUrl: `${process.env.API_BASE_URL || 'https://api.gpexts.com'}/api/sms/inbound`,
-            },
-            whatsapp: {
-                channel: 'whatsapp',
-                provider: 'meta_cloud',
-                isEnabled: whatsappService.isConfigured(),
-                autoOnboarding: true,
-                config: {
-                    phoneNumber: process.env.TWILIO_WHATSAPP_NUMBER || '+14155238886',
-                    metaPhoneNumberId: maskSecret(process.env.META_PHONE_NUMBER_ID),
-                    metaAccessToken: maskSecret(process.env.META_ACCESS_TOKEN),
-                    webhookVerifyToken: 'ag_extension_verify_2026',
-                },
-                webhookUrl: `${process.env.API_BASE_URL || 'https://api.gpexts.com'}/api/whatsapp/inbound`,
-            },
-            telegram: {
-                channel: 'telegram',
-                provider: 'telegram_bot',
-                isEnabled: await telegramService.isConfigured(tenantId),
-                autoOnboarding: true,
-                config: {
-                    botToken: maskSecret(process.env.TELEGRAM_BOT_TOKEN),
-                    botUsername: process.env.TELEGRAM_BOT_USERNAME || 'AgExtensionBot',
-                },
-                webhookUrl: `${process.env.API_BASE_URL || 'https://api.gpexts.com'}/api/channels/telegram/webhook`,
-            },
-        };
-
-        // Merge DB overrides
-        for (const row of rows) {
-            if (configsMap[row.channel]) {
-                configsMap[row.channel].isEnabled = row.is_enabled;
-                configsMap[row.channel].provider = row.provider;
-                configsMap[row.channel].autoOnboarding = row.auto_onboarding;
-                configsMap[row.channel].welcomeTemplate = row.welcome_template;
-                if (row.config && typeof row.config === 'object') {
-                    configsMap[row.channel].config = {
-                        ...configsMap[row.channel].config,
-                        ...row.config,
-                    };
-                }
-            }
-        }
-
-        // Get onboarding stats
-        const countRes = await query<{ channel: string; total: string }>(
-            `SELECT channel, COUNT(*)::text as total FROM farmer_onboarding_sessions GROUP BY channel`
-        );
-        const stats: Record<string, number> = { sms: 0, whatsapp: 0, telegram: 0 };
-        for (const r of countRes.rows) {
-            stats[r.channel] = parseInt(r.total, 10);
-        }
+        const configsMap = await buildDefaultChannelConfigs(tenantId);
+        applyChannelConfigOverrides(configsMap, rows);
+        const stats = await getOnboardingStats();
 
         return res.json({
             success: true,
