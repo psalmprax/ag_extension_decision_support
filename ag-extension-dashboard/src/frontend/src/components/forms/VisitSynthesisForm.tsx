@@ -20,6 +20,7 @@ import {
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '@/lib/LanguageContext';
+import { AntiFraudVerificationBadge } from '@/components/AntiFraudVerificationBadge';
 
 const FIELD_PRESETS = [
   {
@@ -258,6 +259,13 @@ export const VisitSynthesisForm: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* ── Zero-Trust Anti-Fraud Verification Badge ── */}
+      <AntiFraudVerificationBadge
+        farmerId={user?.id || 'farmer-session-active'}
+        farmerName={user ? `${user.firstName} ${user.lastName}` : 'Assigned Smallholder'}
+        visitId={`synth-${Date.now()}`}
+      />
 
       {/* ── Synthesis Key-Findings Bento Grid ── */}
       <AnimatePresence>
