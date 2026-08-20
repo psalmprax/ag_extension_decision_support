@@ -219,75 +219,72 @@ export const BillingDashboard: React.FC = () => {
           {billing.user?.role === 'admin' && (
             <section
               aria-labelledby="admin-billing-title"
-              className="card p-10 bg-indigo-50/30 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/50 shadow-xl rounded-[2.5rem] relative overflow-hidden group"
+              className="p-8 backdrop-blur-xl bg-slate-900/60 border border-indigo-500/30 shadow-2xl rounded-2xl relative overflow-hidden group"
             >
-              <div className="absolute top-0 right-0 p-8 opacity-5">
-                <Settings className="w-32 h-32 text-indigo-500" />
+              <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
+                <Settings className="w-32 h-32 text-indigo-400" />
               </div>
               <div className="flex items-center gap-4 mb-8">
-                <div className="p-3 bg-indigo-500 rounded-2xl shadow-lg shadow-indigo-500/20">
-                  <Shield className="w-6 h-6 text-white" />
+                <div className="p-3 bg-indigo-500/20 border border-indigo-500/40 rounded-xl shadow-lg shadow-indigo-950/40">
+                  <Shield className="w-6 h-6 text-indigo-400" />
                 </div>
                 <div className="space-y-1">
                   <h3
                     id="admin-billing-title"
-                    className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter"
+                    className="text-xl font-black text-white uppercase tracking-tight"
                   >
                     {t('billing_admin_vault_title')}
                   </h3>
-                  <p className="text-xxs font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-[0.2em]">
+                  <p className="text-xxs font-bold text-indigo-400 uppercase tracking-[0.2em]">
                     {t('billing_admin_vault_subtitle')}
                   </p>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-xxs font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">
-                      {t('billing_stripe_secret')}
-                    </p>
-                    <Input
-                      type="password"
-                      value={billing.adminKeys.stripeSecretKey}
-                      onChange={e =>
-                        billing.setAdminKeys({
-                          ...billing.adminKeys,
-                          stripeSecretKey: e.target.value,
-                        })
-                      }
-                      placeholder="sk_test_••••••••••••••••••••••••"
-                      className="font-mono"
-                    />
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div className="space-y-2">
+                  <p className="text-xxs font-bold text-white/60 uppercase tracking-widest ml-1">
+                    {t('billing_stripe_secret')}
+                  </p>
+                  <Input
+                    type="password"
+                    value={billing.adminKeys.stripeSecretKey}
+                    onChange={e =>
+                      billing.setAdminKeys({
+                        ...billing.adminKeys,
+                        stripeSecretKey: e.target.value,
+                      })
+                    }
+                    placeholder="sk_test_••••••••••••••••••••••••"
+                    className="font-mono bg-white/[0.03] border-white/10 text-white rounded-xl"
+                  />
                 </div>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-xxs font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">
-                      {t('billing_paypal_id')}
-                    </p>
-                    <Input
-                      type="text"
-                      value={billing.adminKeys.paypalClientId}
-                      onChange={e =>
-                        billing.setAdminKeys({
-                          ...billing.adminKeys,
-                          paypalClientId: e.target.value,
-                        })
-                      }
-                      placeholder="Client ID"
-                      className="font-mono"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <p className="text-xxs font-bold text-white/60 uppercase tracking-widest ml-1">
+                    {t('billing_paypal_id')}
+                  </p>
+                  <Input
+                    type="text"
+                    value={billing.adminKeys.paypalClientId}
+                    onChange={e =>
+                      billing.setAdminKeys({
+                        ...billing.adminKeys,
+                        paypalClientId: e.target.value,
+                      })
+                    }
+                    placeholder="Client ID"
+                    className="font-mono bg-white/[0.03] border-white/10 text-white rounded-xl"
+                  />
                 </div>
               </div>
-              <div className="flex items-center justify-between pt-6 border-t border-gray-100 dark:border-gray-800 text-xxs font-black text-gray-400 uppercase tracking-widest">
+              <div className="flex items-center justify-between pt-6 border-t border-white/10 text-xxs font-bold text-white/50 uppercase tracking-widest">
                 <span className="flex items-center gap-2">
-                  <span className="w-3.5 h-3.5" />
+                  <Shield className="w-3.5 h-3.5 text-indigo-400" />
                   {t('billing_secure_storage')}
                 </span>
                 <Button
                   loading={billing.actionLoading === 'admin-update'}
                   onClick={billing.handleAdminUpdate}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl"
                 >
                   {t('billing_update_credentials')}
                 </Button>
@@ -301,50 +298,50 @@ export const BillingDashboard: React.FC = () => {
           {/* Admin Audit & Voucher Management */}
           {billing.user?.role === 'admin' && (
             <div className="space-y-8 mt-12 pb-20">
-              <section className="card p-10 bg-white dark:bg-gray-900 border-none shadow-2xl rounded-[2.5rem] overflow-hidden">
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="p-3 bg-amber-500/10 rounded-2xl shadow-inner">
-                    <AlertCircle className="w-6 h-6 text-amber-500" />
+              <section className="p-8 backdrop-blur-xl bg-slate-900/60 border border-amber-500/20 shadow-2xl rounded-2xl overflow-hidden">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="p-3 bg-amber-500/15 border border-amber-500/30 rounded-xl shadow-inner">
+                    <AlertCircle className="w-6 h-6 text-amber-400" />
                   </div>
                   <div className="space-y-1">
-                    <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
+                    <h3 className="text-xl font-black text-white uppercase tracking-tight">
                       {t('billing_admin_transactions')}
                     </h3>
-                    <p className="text-xxs font-black text-amber-500 uppercase tracking-[0.2em]">
+                    <p className="text-xxs font-bold text-amber-400 uppercase tracking-[0.2em]">
                       Manual Verification Required
                     </p>
                   </div>
                 </div>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto rounded-xl border border-white/5">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-gray-50/30 dark:bg-gray-800/20">
+                      <tr className="bg-white/[0.03]">
                         {['User', 'Method', 'TX ID', 'Amount', 'Plan', 'Actions'].map(h => (
                           <th
                             key={h}
-                            className="px-6 py-4 text-xxs font-black uppercase text-gray-400"
+                            className="px-6 py-4 text-xxs font-bold uppercase tracking-wider text-white/50"
                           >
                             {h}
                           </th>
                         ))}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                    <tbody className="divide-y divide-white/5">
                       {billing.adminTransactions.length > 0 ? (
                         billing.adminTransactions.map(tx => (
                           <tr
                             key={tx.id}
-                            className="hover:bg-amber-50/30 dark:hover:bg-amber-900/10 transition-colors"
+                            className="hover:bg-white/[0.02] transition-colors"
                           >
-                            <td className="px-6 py-4 text-xs font-bold">{tx.userEmail}</td>
-                            <td className="px-6 py-4 text-xs font-black uppercase text-amber-600">
+                            <td className="px-6 py-4 text-xs font-bold text-white">{tx.userEmail}</td>
+                            <td className="px-6 py-4 text-xs font-black uppercase text-amber-400">
                               {tx.method}
                             </td>
-                            <td className="px-6 py-4 text-xs font-mono">{tx.transactionId}</td>
-                            <td className="px-6 py-4 text-xs font-black">
+                            <td className="px-6 py-4 text-xs font-mono text-white/70">{tx.transactionId}</td>
+                            <td className="px-6 py-4 text-xs font-bold text-white">
                               {tx.amount} {tx.currency}
                             </td>
-                            <td className="px-6 py-4 text-xs uppercase">
+                            <td className="px-6 py-4 text-xs uppercase text-white/60">
                               {tx.planId?.split('_')[1]}
                             </td>
                             <td className="px-6 py-4">
@@ -353,7 +350,7 @@ export const BillingDashboard: React.FC = () => {
                                   size="sm"
                                   loading={billing.actionLoading === `verify-${tx.id}`}
                                   onClick={() => billing.handleVerifyTransaction(tx.id)}
-                                  className="bg-green-500 text-white hover:bg-green-600 text-xxs font-black uppercase tracking-widest"
+                                  className="bg-emerald-600 text-white hover:bg-emerald-500 text-xxs font-black uppercase tracking-widest rounded-lg"
                                 >
                                   {t('billing_admin_verify')}
                                 </Button>
@@ -361,7 +358,7 @@ export const BillingDashboard: React.FC = () => {
                                   size="sm"
                                   variant="danger"
                                   onClick={() => billing.setSelectedTransactionId(tx.id)}
-                                  className="text-xxs font-black uppercase tracking-widest"
+                                  className="text-xxs font-black uppercase tracking-widest rounded-lg"
                                 >
                                   {t('billing_admin_reject')}
                                 </Button>
@@ -373,7 +370,7 @@ export const BillingDashboard: React.FC = () => {
                         <tr>
                           <td
                             colSpan={6}
-                            className="px-6 py-10 text-center text-xs text-gray-400 font-bold uppercase tracking-widest italic"
+                            className="px-6 py-10 text-center text-xs text-white/40 font-semibold uppercase tracking-widest italic"
                           >
                             {t('billing_admin_no_pending')}
                           </td>
@@ -383,23 +380,24 @@ export const BillingDashboard: React.FC = () => {
                   </table>
                 </div>
               </section>
-              <section className="card p-10 bg-white dark:bg-gray-900 border-none shadow-2xl rounded-[2.5rem] overflow-hidden">
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="p-3 bg-purple-500/10 rounded-2xl shadow-inner">
-                    <Ticket className="w-6 h-6 text-purple-500" />
+
+              <section className="p-8 backdrop-blur-xl bg-slate-900/60 border border-purple-500/20 shadow-2xl rounded-2xl overflow-hidden">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="p-3 bg-purple-500/15 border border-purple-500/30 rounded-xl shadow-inner">
+                    <Ticket className="w-6 h-6 text-purple-400" />
                   </div>
                   <div className="space-y-1">
-                    <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
+                    <h3 className="text-xl font-black text-white uppercase tracking-tight">
                       {t('billing_admin_vouchers')}
                     </h3>
-                    <p className="text-xxs font-black text-purple-500 uppercase tracking-[0.2em]">
+                    <p className="text-xxs font-bold text-purple-400 uppercase tracking-[0.2em]">
                       Batch Generation Unit
                     </p>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                   <div>
-                    <label className="text-xxs font-black text-gray-400 uppercase tracking-widest mb-1.5 block ml-1">
+                    <label className="text-xxs font-bold text-white/60 uppercase tracking-widest mb-1.5 block ml-1">
                       Plan
                     </label>
                     <Select
@@ -412,11 +410,11 @@ export const BillingDashboard: React.FC = () => {
                         { value: 'price_pro_yearly', label: 'PRO (Yearly)' },
                         { value: 'price_enterprise_monthly', label: 'ENTERPRISE (Monthly)' },
                       ]}
-                      className="font-black uppercase tracking-widest"
+                      className="font-bold uppercase tracking-wider bg-slate-900 border-white/10 text-white rounded-xl"
                     />
                   </div>
                   <div>
-                    <label className="text-xxs font-black text-gray-400 uppercase tracking-widest mb-1.5 block ml-1">
+                    <label className="text-xxs font-bold text-white/60 uppercase tracking-widest mb-1.5 block ml-1">
                       {t('billing_admin_batch_count')}
                     </label>
                     <Input
@@ -428,10 +426,11 @@ export const BillingDashboard: React.FC = () => {
                           count: parseInt(e.target.value),
                         })
                       }
+                      className="bg-white/[0.03] border-white/10 text-white rounded-xl"
                     />
                   </div>
                   <div>
-                    <label className="text-xxs font-black text-gray-400 uppercase tracking-widest mb-1.5 block ml-1">
+                    <label className="text-xxs font-bold text-white/60 uppercase tracking-widest mb-1.5 block ml-1">
                       {t('billing_admin_expiry_days')}
                     </label>
                     <Input
@@ -443,13 +442,14 @@ export const BillingDashboard: React.FC = () => {
                           expiresInDays: parseInt(e.target.value),
                         })
                       }
+                      className="bg-white/[0.03] border-white/10 text-white rounded-xl"
                     />
                   </div>
                 </div>
                 <Button
                   loading={billing.actionLoading === 'generate-vouchers'}
                   onClick={billing.handleGenerateVouchers}
-                  className="w-full py-4 bg-purple-500 text-white rounded-2xl hover:bg-purple-600 shadow-lg shadow-purple-500/20 font-black uppercase tracking-widest text-xs"
+                  className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white rounded-xl shadow-lg shadow-purple-950/40 font-bold uppercase tracking-wider text-xs"
                 >
                   {t('billing_admin_generate_vouchers')}
                 </Button>

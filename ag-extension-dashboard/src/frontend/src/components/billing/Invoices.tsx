@@ -22,21 +22,21 @@ export const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
   return (
     <section
       aria-labelledby="invoices-title"
-      className="card p-0 bg-white dark:bg-gray-900 border-none shadow-2xl overflow-hidden group"
+      className="p-8 backdrop-blur-xl bg-slate-900/60 border border-white/10 shadow-2xl rounded-2xl overflow-hidden group"
     >
-      <div className="p-10 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/30">
+      <div className="flex justify-between items-center pb-6 border-b border-white/5">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-primary-500/10 rounded-2xl shadow-inner group-hover:bg-primary-500 transition-colors duration-500">
-            <Receipt className="w-6 h-6 text-primary-500 group-hover:text-white" />
+          <div className="p-3 bg-emerald-500/15 border border-emerald-500/30 rounded-xl shadow-inner text-emerald-400">
+            <Receipt className="w-6 h-6" />
           </div>
           <div className="space-y-1">
             <h3
               id="invoices-title"
-              className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter"
+              className="text-xl font-black text-white uppercase tracking-tight"
             >
               {t('billing_legacy_transactions')}
             </h3>
-            <p className="text-xxs font-black text-gray-400 uppercase tracking-[0.2em]">
+            <p className="text-xxs font-bold text-emerald-400 uppercase tracking-[0.2em]">
               {t('billing_transaction_archive')}
             </p>
           </div>
