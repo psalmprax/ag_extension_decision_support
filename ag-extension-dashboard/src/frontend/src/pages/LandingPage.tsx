@@ -645,9 +645,11 @@ export function LandingPage() {
                     setMobileMenuOpen(false);
                     navigate('/register');
                   }}
-                  className="w-full py-2.5 text-sm font-semibold bg-emerald-500 text-white rounded-xl hover:bg-emerald-400 text-center shadow-lg shadow-emerald-500/20"
+                  className="relative group overflow-hidden w-full py-2.5 text-sm font-semibold text-white rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 hover:from-emerald-500 hover:via-emerald-400 hover:to-emerald-500 border border-emerald-400/50 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.55)] active:scale-[0.98] transition-all duration-300 text-center"
                 >
-                  Get Started
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out pointer-events-none" />
+                  <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+                  <span className="relative z-10">Get Started</span>
                 </button>
               </div>
             </motion.div>
@@ -736,10 +738,14 @@ export function LandingPage() {
               <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={() => navigate('/register')}
-                  className="group px-7 py-3.5 text-sm font-bold bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-400 hover:to-emerald-500 transition-all shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                  className="relative group overflow-hidden px-7 py-3.5 text-sm font-bold text-white rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 hover:from-emerald-500 hover:via-emerald-400 hover:to-emerald-500 border border-emerald-400/50 shadow-[0_0_24px_rgba(16,185,129,0.35)] hover:shadow-[0_0_36px_rgba(16,185,129,0.6)] hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
                 >
-                  Start Free Trial
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out pointer-events-none" />
+                  <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+                  <span className="relative z-10 flex items-center gap-2">
+                    Start Free Trial
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform text-white/90" />
+                  </span>
                 </button>
                 <button
                   onClick={() => navigate('/demo')}
@@ -1290,10 +1296,14 @@ export function LandingPage() {
                   <button
                     onClick={handleRunSimulation}
                     disabled={isSimulating}
-                    className="w-full sm:w-auto justify-center px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-amber-500 hover:from-emerald-400 hover:to-amber-400 text-slate-950 font-bold text-xs flex items-center gap-2 transition-all shadow-lg shadow-emerald-950/40 disabled:opacity-50"
+                    className="relative group overflow-hidden w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-600 hover:from-emerald-500 hover:via-teal-400 hover:to-emerald-500 text-white font-bold text-xs flex items-center gap-2 border border-emerald-400/50 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5)] active:scale-[0.98] transition-all duration-300 disabled:opacity-50"
                   >
-                    <Zap className={`w-4 h-4 ${isSimulating ? 'animate-spin' : ''}`} />
-                    <span>{isSimulating ? 'Orchestrating...' : 'Run Simulation'}</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out pointer-events-none" />
+                    <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+                    <span className="relative z-10 flex items-center gap-2">
+                      <Zap className={`w-4 h-4 ${isSimulating ? 'animate-spin' : 'text-amber-300'}`} />
+                      <span>{isSimulating ? 'Orchestrating...' : 'Run Simulation'}</span>
+                    </span>
                   </button>
                 </div>
 
@@ -1906,10 +1916,14 @@ export function LandingPage() {
             >
               <button
                 onClick={() => navigate('/register')}
-                className="group px-8 py-4 text-base font-bold bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-400 hover:to-emerald-500 transition-all shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                className="relative group overflow-hidden px-8 py-4 text-base font-bold text-white rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 hover:from-emerald-500 hover:via-emerald-400 hover:to-emerald-500 border border-emerald-400/50 shadow-[0_0_30px_rgba(16,185,129,0.35)] hover:shadow-[0_0_45px_rgba(16,185,129,0.6)] hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
               >
-                Get Started Free
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out pointer-events-none" />
+                <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+                <span className="relative z-10 flex items-center gap-2">
+                  Get Started Free
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform text-white/90" />
+                </span>
               </button>
               <button
                 onClick={() => navigate('/demo')}
