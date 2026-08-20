@@ -21,6 +21,7 @@ import {
 } from '@/api/verificationFraudService';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import { triggerHaptic } from '@/lib/haptics';
 
 interface AntiFraudVerificationBadgeProps {
   farmerId: string;
@@ -66,9 +67,11 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
           });
           setGeofence(res);
           if (res.isValid) {
+            triggerHaptic('success');
             toast.success(`Geofence Verified: ${res.distanceMeters}m from parcel.`);
             onVerificationComplete?.(true);
           } else {
+            triggerHaptic('warning');
             toast.error(res.details);
           }
         } catch {
@@ -82,6 +85,7 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
             riskScore: 5,
             details: `Officer presence verified within ${fallbackDist}m of registered parcel.`,
           });
+          triggerHaptic('success');
           toast.success(`Geofence Verified: ${fallbackDist}m from parcel.`);
           onVerificationComplete?.(true);
         } finally {
@@ -99,6 +103,7 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
           riskScore: 8,
           details: 'Device GPS synchronized. Verified within 22m of parcel.',
         });
+        triggerHaptic('success');
         toast.success('Geofence Verified: 22m from parcel.');
         onVerificationComplete?.(true);
       },
@@ -107,6 +112,7 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
   };
 
   const handleGenerateCoSign = async () => {
+    triggerHaptic('light');
     try {
       const res = await generateCoSignToken(visitId, farmerId);
       setCoSignOtp(res.otp);
@@ -120,6 +126,7 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
 
   const handleVerifyCoSign = async () => {
     if (enteredOtp.length !== 6) {
+      triggerHaptic('warning');
       toast.error('Please enter the full 6-digit code provided to the farmer.');
       return;
     }
@@ -128,15 +135,19 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
       const res = await verifyCoSignToken(visitId, enteredOtp);
       if (res.verified) {
         setIsCoSignVerified(true);
+        triggerHaptic('success');
         toast.success('Farmer physical handshake confirmed!');
       } else {
+        triggerHaptic('error');
         toast.error(res.message);
       }
     } catch {
       if (coSignOtp && enteredOtp === coSignOtp) {
         setIsCoSignVerified(true);
+        triggerHaptic('success');
         toast.success('Farmer physical handshake confirmed!');
       } else {
+        triggerHaptic('error');
         toast.error('Invalid OTP. Please check the code.');
       }
     }

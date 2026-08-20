@@ -6,6 +6,7 @@ import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/lib/cn';
 import { sidebarVariants } from '@/lib/animations';
+import { triggerHaptic } from '@/lib/haptics';
 
 interface AppSidebarProps {
   sidebarOpen: boolean;
@@ -34,6 +35,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     (user?.isFree || user?.planName?.toLowerCase() === 'free' || !user?.planName);
 
   const handleNavClick = (id: string) => {
+    triggerHaptic('light');
     React.startTransition(() => setActiveTab(id));
     if (window.innerWidth < 768 && setSidebarOpen) {
       setSidebarOpen(false);

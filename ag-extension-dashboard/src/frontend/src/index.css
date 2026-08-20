@@ -287,3 +287,18 @@
 .font-mono {
   font-variant-numeric: tabular-nums;
 }
+
+/* Mobile Safe Area Inset utilities */
+.pt-safe {
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+.pb-safe-dock {
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+}
+.mb-safe {
+  margin-bottom: env(safe-area-inset-bottom);
+}
+
