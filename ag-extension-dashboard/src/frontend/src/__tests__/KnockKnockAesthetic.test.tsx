@@ -1,10 +1,14 @@
 import React, { ReactNode } from 'react';
-import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { FloatingAIPill } from '../components/FloatingAIPill';
 import { LiveActivityStream } from '../components/LiveActivityStream';
 import { USSDSimulatorDrawer } from '../components/USSDSimulatorDrawer';
-import { renderWithLanguage } from '../test/languageTestUtils';
+import { LanguageProvider } from '@/lib/LanguageContext';
+
+const renderWithLanguage = async (ui: React.ReactElement) => {
+  return render(<LanguageProvider>{ui}</LanguageProvider>);
+};
 
 // Mock framer-motion to avoid animation timing issues in test environment
 vi.mock('framer-motion', () => {

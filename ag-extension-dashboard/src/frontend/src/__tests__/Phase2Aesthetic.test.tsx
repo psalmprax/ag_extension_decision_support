@@ -6,7 +6,11 @@ import { InlineVisitBookingCard } from '../components/InlineVisitBookingCard';
 import { ProgressiveProfileChips, ProfileParameter } from '../components/ProgressiveProfileChips';
 import { LiveActivityStream } from '../components/LiveActivityStream';
 import { FloatingAIPill } from '../components/FloatingAIPill';
-import { renderWithLanguage } from '../test/languageTestUtils';
+import { LanguageProvider } from '@/lib/LanguageContext';
+
+const renderWithLanguage = async (ui: React.ReactElement) => {
+  return render(<LanguageProvider>{ui}</LanguageProvider>);
+};
 
 // Mock framer-motion
 vi.mock('framer-motion', () => {
