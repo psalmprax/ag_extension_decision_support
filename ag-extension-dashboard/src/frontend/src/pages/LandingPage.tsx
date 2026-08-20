@@ -1923,7 +1923,7 @@ export function LandingPage() {
 
         {/* ── FOOTER ── */}
         <footer id="contact" className="border-t border-white/[0.04] pt-16 pb-8">
-          <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-[1.5fr_1fr_1fr_1fr] gap-10 pb-10">
+          <div className="max-w-[90rem] w-full mx-auto px-6 grid grid-cols-1 md:grid-cols-[1.5fr_1fr_1fr_1fr] gap-10 pb-10">
             <div>
               <div className="flex items-center gap-3 mb-4">
                 <img
@@ -1947,7 +1947,7 @@ export function LandingPage() {
             </div>
             <div>
               <h4 className="text-xs font-bold uppercase tracking-wider text-white/40 mb-5">
-                Product
+                Product & Features
               </h4>
               <ul className="space-y-3 text-sm font-normal">
                 <li>
@@ -1956,6 +1956,14 @@ export function LandingPage() {
                     className="text-white/60 hover:text-emerald-400 transition-colors"
                   >
                     Features
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#agent-os"
+                    className="text-white/60 hover:text-emerald-400 transition-colors"
+                  >
+                    Agent OS
                   </a>
                 </li>
                 <li>
@@ -1975,8 +1983,47 @@ export function LandingPage() {
                   </a>
                 </li>
                 <li>
+                  <a
+                    href="#architecture"
+                    className="text-white/60 hover:text-emerald-400 transition-colors"
+                  >
+                    Architecture
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#roi"
+                    className="text-white/60 hover:text-emerald-400 transition-colors"
+                  >
+                    Impact & ROI
+                  </a>
+                </li>
+                <li>
                   <a href="#faq" className="text-white/60 hover:text-emerald-400 transition-colors">
                     FAQ
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-white/40 mb-5">
+                Overview & Contact
+              </h4>
+              <ul className="space-y-3 text-sm font-normal">
+                <li>
+                  <a
+                    href="#problem"
+                    className="text-white/60 hover:text-emerald-400 transition-colors"
+                  >
+                    Why Us
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#mission"
+                    className="text-white/60 hover:text-emerald-400 transition-colors"
+                  >
+                    Our Mission
                   </a>
                 </li>
                 <li>
@@ -1984,22 +2031,7 @@ export function LandingPage() {
                     href="/demo"
                     className="text-white/60 hover:text-emerald-400 transition-colors"
                   >
-                    Live Demo
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-white/40 mb-5">
-                Contact & Inquiries
-              </h4>
-              <ul className="space-y-3 text-sm font-normal">
-                <li>
-                  <a
-                    href="#mission"
-                    className="text-white/60 hover:text-emerald-400 transition-colors"
-                  >
-                    Our Mission
+                    Live Interactive Demo
                   </a>
                 </li>
                 <li>
@@ -2036,7 +2068,7 @@ export function LandingPage() {
               </ul>
             </div>
           </div>
-          <div className="max-w-7xl mx-auto px-6 pt-8 border-t border-white/[0.04] flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="max-w-[90rem] w-full mx-auto px-6 pt-8 border-t border-white/[0.04] flex flex-col md:flex-row justify-between items-center gap-4">
             <span className="text-xs text-white/35">
               &copy; {new Date().getFullYear()} GPExts. All rights reserved.
             </span>
