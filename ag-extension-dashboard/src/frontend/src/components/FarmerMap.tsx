@@ -405,34 +405,36 @@ function LayerSwitcher({
   onLayerChange: (layer: MapLayer) => void;
   t: (key: string) => string;
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
     <div className="leaflet-top leaflet-right" style={{ marginTop: '10px', marginRight: '10px' }}>
-      <div className="leaflet-control leaflet-control-layers bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 dark:border-gray-700/50 p-3">
-        <div className="text-xxs font-black mb-3 text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-          <Layers className="w-3.5 h-3.5" /> {t('map_type') || 'Map Type'}
-        </div>
-        <div className="flex flex-col gap-1.5">
+      <div className="leaflet-control leaflet-control-layers bg-slate-900/95 text-white backdrop-blur-xl rounded-2xl shadow-xl border border-white/10 p-2 sm:p-3">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="sm:hidden flex items-center gap-1.5 px-2 py-1 text-xxs font-bold uppercase tracking-wider text-emerald-400"
+          title="Switch Map Tile Layer"
+        >
+          <Layers className="w-3.5 h-3.5" />
+          <span>{TILE_LAYERS[currentLayer].name}</span>
+        </button>
+
+        <div className={`${isOpen ? 'flex' : 'hidden sm:flex'} flex-col gap-1.5 mt-2 sm:mt-0`}>
+          <div className="hidden sm:flex text-xxs font-black mb-2 text-white/50 uppercase tracking-wider items-center gap-1.5">
+            <Layers className="w-3.5 h-3.5 text-emerald-400" /> {t('map_type') || 'Map Type'}
+          </div>
           {(Object.keys(TILE_LAYERS) as MapLayer[]).map(layer => (
             <button
               key={layer}
-              onClick={() => onLayerChange(layer)}
-              className={`px-4 py-2.5 text-xs font-bold rounded-xl transition-all ${
+              onClick={() => {
+                onLayerChange(layer);
+                setIsOpen(false);
+              }}
+              className={`px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-bold rounded-xl transition-all ${
                 currentLayer === layer
-                  ? 'shadow-lg shadow-emerald-500/25'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
+                  : 'text-white/60 hover:text-white hover:bg-white/5'
               }`}
-              style={
-                currentLayer === layer
-                  ? {
-                      background: `linear-gradient(135deg, var(--color-primary-500), var(--color-primary-500))`,
-                      color: 'white',
-                    }
-                  : {
-                      background: 'white',
-                      color: 'var(--color-outline)',
-                      border: '1px solid var(--color-primary-500)',
-                    }
-              }
               aria-pressed={currentLayer === layer}
             >
               {TILE_LAYERS[layer].name}
@@ -446,6 +448,7 @@ function LayerSwitcher({
 
 // Legend component
 function MapLegend({ show, t }: { show: boolean; t: (key: string) => string }) {
+  const [isOpen, setIsOpen] = useState(false);
   if (!show) return null;
 
   return (
@@ -453,21 +456,27 @@ function MapLegend({ show, t }: { show: boolean; t: (key: string) => string }) {
       className="leaflet-bottom leaflet-left"
       style={{ marginBottom: '30px', marginLeft: '10px' }}
     >
-      <div className="leaflet-control bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100/50 dark:border-gray-700/50 p-3.5 min-w-[170px]">
-        <div className="text-xxs font-black mb-3 text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-          <Info className="w-3.5 h-3.5" /> {t('map_legend') || 'Crop Legend'}
-        </div>
-        <div className="flex flex-col gap-2">
+      <div className="leaflet-control bg-slate-900/95 text-white backdrop-blur-xl rounded-2xl shadow-xl border border-white/10 p-2.5 sm:p-3.5 min-w-[120px] sm:min-w-[170px]">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center justify-between w-full text-xxs font-black text-white/60 uppercase tracking-wider gap-1.5"
+        >
+          <span className="flex items-center gap-1.5">
+            <Info className="w-3.5 h-3.5 text-emerald-400" /> {t('map_legend') || 'Crop Legend'}
+          </span>
+          <span className="sm:hidden text-emerald-400 text-xs font-mono">{isOpen ? '▲' : '▼'}</span>
+        </button>
+        <div className={`${isOpen ? 'flex' : 'hidden sm:flex'} flex-col gap-1.5 sm:gap-2 mt-2`}>
           {Object.entries(CROP_COLORS)
             .filter(([key]) => key !== 'default')
-            .slice(0, 8)
+            .slice(0, 6)
             .map(([crop, color]) => (
-              <div key={crop} className="flex items-center gap-2.5 group cursor-pointer">
+              <div key={crop} className="flex items-center gap-2 group cursor-pointer">
                 <div
-                  className="w-3.5 h-3.5 rounded-full border-2 border-white dark:border-gray-700 shadow-sm group-hover:scale-125 transition-transform"
+                  className="w-2.5 sm:w-3.5 h-2.5 sm:h-3.5 rounded-full border border-white/20 shadow-sm"
                   style={{ backgroundColor: color }}
                 />
-                <span className="text-xs capitalize text-gray-600 dark:text-gray-300 font-medium group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
+                <span className="text-xxs sm:text-xs capitalize text-white/70 font-medium group-hover:text-white transition-colors">
                   {crop}
                 </span>
               </div>
@@ -655,23 +664,23 @@ const ModalFooterStats: React.FC<ModalFooterStatsProps> = ({
 }) => {
   const cropColors = ['500', '600', '700'] as const;
   return (
-    <div className="px-8 py-4 border-t flex items-center justify-between backdrop-blur-sm bg-gray-50/80 dark:bg-gray-800/80 border-gray-100 dark:border-gray-800">
-      <div className="flex items-center gap-8">
+    <div className="px-4 sm:px-8 py-3 sm:py-4 border-t flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 backdrop-blur-sm bg-gray-50/80 dark:bg-gray-800/80 border-gray-100 dark:border-gray-800">
+      <div className="flex flex-wrap items-center gap-4 sm:gap-8">
         <div className="flex flex-col">
           <span className="text-xxs uppercase font-black tracking-widest text-gray-400">
             {t('map_farms')}
           </span>
-          <span className="text-xl font-bold text-gray-800 dark:text-white">{farmersCount}</span>
+          <span className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">{farmersCount}</span>
         </div>
-        <div className="h-8 w-px bg-gray-200 dark:bg-gray-700" />
-        <div className="flex items-center gap-6">
+        <div className="h-8 w-px bg-gray-200 dark:bg-gray-700 hidden sm:block" />
+        <div className="flex flex-wrap items-center gap-3 sm:gap-6">
           {stats.topCrops.map(([crop], idx) => (
-            <div key={crop} className="flex items-center gap-2">
+            <div key={crop} className="flex items-center gap-1.5 sm:gap-2">
               <div
                 className="w-2.5 h-2.5 rounded-full"
                 style={{ backgroundColor: theme.primary[cropColors[idx]] }}
               />
-              <span className="text-sm font-bold capitalize text-gray-600 dark:text-gray-300">
+              <span className="text-xs sm:text-sm font-bold capitalize text-gray-600 dark:text-gray-300">
                 {crop}: <span className="font-normal text-gray-400">{stats.cropCounts[crop]}</span>
               </span>
             </div>
@@ -679,7 +688,7 @@ const ModalFooterStats: React.FC<ModalFooterStatsProps> = ({
         </div>
       </div>
       <div
-        className="flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl border"
+        className="flex items-center gap-2 text-xs font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border"
         style={{
           color: theme.primary[600],
           backgroundColor:
@@ -750,34 +759,45 @@ const ExpandedMapModal: React.FC<ExpandedMapModalProps> = ({
         style={{ width: '100vw', height: '100vh' }}
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-8 py-5 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
-          <div className="flex items-center gap-4">
-            <div
-              className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg"
-              style={{
-                background: `linear-gradient(135deg, ${theme.primary[500]}, ${theme.primary[600]})`,
-                boxShadow: `0 10px 25px -5px ${theme.primary[500]}40`,
-              }}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 sm:px-8 py-3 sm:py-5 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+          <div className="flex items-center justify-between w-full sm:w-auto gap-4">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-10 sm:w-12 h-10 sm:h-12 rounded-2xl flex items-center justify-center shadow-lg shrink-0"
+                style={{
+                  background: `linear-gradient(135deg, ${theme.primary[500]}, ${theme.primary[600]})`,
+                  boxShadow: `0 10px 25px -5px ${theme.primary[500]}40`,
+                }}
+              >
+                <MapPin className="w-5 sm:w-6 h-5 sm:h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg sm:text-2xl font-black tracking-tight text-gray-800 dark:text-white">
+                  {t('map_overview')}
+                </h2>
+                <p className="text-xxs sm:text-sm font-medium flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
+                  <span
+                    className="flex h-2 w-2 rounded-full animate-pulse"
+                    style={{ backgroundColor: theme.primary[500] }}
+                  />
+                  {t('common_ai_powered')} • {farmers.length} {t('map_farms')}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setIsExpanded(false)}
+              className="sm:hidden p-2 rounded-xl text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Close Map Modal"
             >
-              <MapPin className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-black tracking-tight text-gray-800 dark:text-white">
-                {t('map_overview')}
-              </h2>
-              <p className="text-sm font-medium flex items-center gap-2 text-gray-500 dark:text-gray-400">
-                <span
-                  className="flex h-2 w-2 rounded-full animate-pulse"
-                  style={{ backgroundColor: theme.primary[500] }}
-                />
-                {t('common_ai_powered')} • {farmers.length} {t('map_farms')}
-              </p>
-            </div>
+              <X className="w-5 h-5" />
+            </button>
           </div>
-          <div className="flex items-center gap-3">
+
+          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between">
             <button
               onClick={() => setIsFarmlistCollapsed(prev => !prev)}
-              className={`px-3.5 py-2.5 rounded-2xl transition-all border flex items-center gap-2 text-xs font-bold ${
+              className={`px-3 py-2 rounded-xl transition-all border flex items-center gap-1.5 text-xs font-bold shrink-0 ${
                 isFarmlistCollapsed
                   ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-emerald-950/40'
                   : 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -790,12 +810,10 @@ const ExpandedMapModal: React.FC<ExpandedMapModalProps> = ({
               ) : (
                 <PanelLeftClose className="w-4 h-4" />
               )}
-              <span className="hidden sm:inline">
-                {isFarmlistCollapsed ? 'Show Farmlist' : 'Hide Farmlist'}
-              </span>
+              <span>{isFarmlistCollapsed ? 'Farmlist' : 'Hide List'}</span>
             </button>
 
-            <div className="relative group">
+            <div className="relative group flex-1 sm:w-80">
               <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:transition-colors"
                 style={{ color: theme.primary[500] }}
@@ -805,19 +823,17 @@ const ExpandedMapModal: React.FC<ExpandedMapModalProps> = ({
                 placeholder={t('map_search_placeholder') || 'Search farmers, regions, crops...'}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2.5 border rounded-2xl w-48 sm:w-80 text-sm focus:outline-none focus:ring-2 transition-all bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700 text-gray-800 dark:text-white placeholder-gray-400"
+                className="w-full pl-9 pr-3 py-2 border rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 transition-all bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700 text-gray-800 dark:text-white placeholder-gray-400"
                 style={{ '--tw-ring-color': `${theme.primary[500]}33` } as React.CSSProperties}
               />
             </div>
+
             <button
               onClick={() => setIsExpanded(false)}
-              className={`p-3 rounded-2xl transition-all border ${
-                themeName === 'cyber'
-                  ? 'bg-primary-500/20 hover:text-white'
-                  : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-900 dark:hover:text-white border-gray-100 dark:border-gray-700'
-              }`}
+              className="hidden sm:flex p-2.5 rounded-2xl transition-all border bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-900 dark:hover:text-white border-gray-100 dark:border-gray-700"
+              aria-label="Close Map Modal"
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
