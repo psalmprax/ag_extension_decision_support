@@ -10,6 +10,69 @@ const router = Router();
 
 type AuthedRequest = Request & { user?: AuthenticatedRequestUser };
 
+interface FAQItem {
+    id: string;
+    question: string;
+    answer: string;
+    category: string;
+}
+
+const SUPPORT_FAQS: FAQItem[] = [
+    {
+        id: 'faq-1',
+        question: 'How does offline-first sync work in remote rural areas without cellular coverage?',
+        answer: 'GPExts is engineered with a resilient offline-first architecture. Extension officers can register farmers, record visit observations, capture diagnostic photos, and log notes completely offline. When returning to cellular range or Wi-Fi, all pending records synchronize seamlessly with conflict-free reconciliation and cryptographic timestamps.',
+        category: 'sync',
+    },
+    {
+        id: 'faq-2',
+        question: 'How do I register a new farmer and map their plot boundaries?',
+        answer: 'Navigate to the Farmers or Crops & Fields tab and click "Add Farmer" or "Draw Boundary". You can capture GPS coordinates directly on mobile/tablet, draw field polygons on the satellite map, or use the Bulk Import tool to ingest Excel/CSV registries with automatic geocoding.',
+        category: 'farmers',
+    },
+    {
+        id: 'faq-3',
+        question: 'How does AI Crop Disease Diagnosis work?',
+        answer: 'Under the Disease Diagnosis tab, capture or upload a clear photo of affected leaves, stems, or fruits. The on-device vision model analyzes visual pathology patterns, generates an interpretable saliency heat map, identifies the pathogen with confidence scores, and provides immediate agronomic treatment protocols.',
+        category: 'ai',
+    },
+    {
+        id: 'faq-4',
+        question: 'How do I broadcast SMS, WhatsApp, and Telegram agronomic advisories?',
+        answer: 'Use the Broadcast & Channels hub or Autonomous Campaign Agent to draft personalized alerts. You can filter by crop, district, or health vital score, preview the message template, and dispatch multi-channel broadcasts across Africa\'s Talking SMS, Meta WhatsApp Cloud API, and Telegram Bot.',
+        category: 'channels',
+    },
+    {
+        id: 'faq-5',
+        question: 'What meteorological and soil data sources are integrated?',
+        answer: 'Every plot is automatically connected to NASA POWER daily solar & precipitation data for localized microclimate modeling, alongside ISRIC SoilGrids for soil pH, organic carbon, cation exchange capacity, and texture telemetry.',
+        category: 'telemetry',
+    },
+    {
+        id: 'faq-6',
+        question: 'How is organizational and farmer data protected?',
+        answer: 'GPExts enforces tenant database isolation, AES-256 encryption at rest, TLS 1.3 in transit, and role-based access control (RBAC). In addition, full Data Rights tools enable audited compliance exports and cryptographic erasure upon request.',
+        category: 'security',
+    },
+    {
+        id: 'faq-7',
+        question: 'How does the Priority Queue schedule field inspection visits?',
+        answer: 'The system continuously evaluates farmer vital health scores (0–100) based on days since last visit, disease severity alerts, and climate stress. Farmers scoring below 65 are automatically prioritized for field visits.',
+        category: 'visits',
+    },
+];
+
+/**
+ * GET /api/support/faq — Retrieve frequently asked questions for the Help Center.
+ */
+router.get('/faq', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), (req: Request, res: Response) => {
+    const category = typeof req.query.category === 'string' ? req.query.category : null;
+    const data = category
+        ? SUPPORT_FAQS.filter(f => f.category.toLowerCase() === category.toLowerCase())
+        : SUPPORT_FAQS;
+    return res.json({ success: true, data });
+});
+
 /**
  * GET /api/support/tickets — list support tickets visible to the caller.
  */
