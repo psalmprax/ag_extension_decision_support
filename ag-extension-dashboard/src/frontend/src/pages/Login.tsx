@@ -6,7 +6,8 @@ import { useAppStore, type User } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { enterDemoMode, exitDemoMode } from '@/demo';
-import { Liquid } from '@/components/canvasui/Liquid';
+import { LiquidBackgroundCanvas } from '@/components/canvasui/LiquidBackgroundCanvas';
+import { LiquidToggleSwitch } from '@/components/canvasui/LiquidToggleSwitch';
 
 import { login, demoLogin } from '@/api/authService';
 
@@ -102,18 +103,8 @@ export function Login({ onDemo }: LoginProps) {
       aria-label="Login page"
     >
       {/* ── Liquid WebGL Fluid Background & Ambient Glow ── */}
+      <LiquidBackgroundCanvas />
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <Liquid
-          style={{ position: 'absolute', inset: 0 }}
-          color={[0.03, 0.76, 0.52]}
-          intensity={1.7}
-          radius={0.35}
-          force={1.4}
-          distortion={1.1}
-          blend={0.65}
-        >
-          {null}
-        </Liquid>
         <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full bg-emerald-600/[0.12] blur-[150px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-amber-500/[0.08] blur-[150px]" />
       </div>
@@ -136,7 +127,8 @@ export function Login({ onDemo }: LoginProps) {
             <h1 className="text-2xl font-bold tracking-tight text-white">{t('login_title')}</h1>
             <p className="text-white/60 text-sm mt-1">{t('login_subtitle')}</p>
           </div>
-          <div className="pt-1">
+          <div className="pt-1 flex items-center gap-2">
+            <LiquidToggleSwitch compact />
             <LanguageSwitcher compact />
           </div>
         </div>

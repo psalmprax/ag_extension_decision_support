@@ -5,7 +5,8 @@ import { Eye, EyeOff, Loader2, Check } from 'lucide-react';
 import { AxiosError } from 'axios';
 import { useLanguage } from '@/lib/LanguageContext';
 import { register } from '@/api/authService';
-import { Liquid } from '@/components/canvasui/Liquid';
+import { LiquidBackgroundCanvas } from '@/components/canvasui/LiquidBackgroundCanvas';
+import { LiquidToggleSwitch } from '@/components/canvasui/LiquidToggleSwitch';
 
 export function Register() {
   const navigate = useNavigate();
@@ -83,18 +84,8 @@ export function Register() {
   return (
     <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4 relative overflow-hidden">
       {/* ── Liquid WebGL Fluid Background & Ambient Glow ── */}
+      <LiquidBackgroundCanvas />
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <Liquid
-          style={{ position: 'absolute', inset: 0 }}
-          color={[0.03, 0.76, 0.52]}
-          intensity={1.7}
-          radius={0.35}
-          force={1.4}
-          distortion={1.1}
-          blend={0.65}
-        >
-          {null}
-        </Liquid>
         <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full bg-emerald-600/[0.12] blur-[150px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-amber-500/[0.08] blur-[150px]" />
       </div>
@@ -105,17 +96,22 @@ export function Register() {
         className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 shadow-2xl rounded-2xl p-8 w-full max-w-md relative z-10"
         style={{ pointerEvents: 'auto', touchAction: 'auto' }}
       >
-        {/* Logo */}
-        <div className="text-center mb-6">
-          <img
-            src="/logo.png"
-            alt="Ag-Extension Logo"
-            className="w-16 h-16 mx-auto mb-3 rounded-2xl shadow-xl shadow-emerald-950/40 object-contain"
-          />
-          <h1 className="text-2xl font-bold tracking-tight text-white">
-            {t('register_title')}
-          </h1>
-          <p className="text-white/60 text-sm mt-1">{t('register_subtitle')}</p>
+        {/* Logo and Controls */}
+        <div className="flex justify-between items-start mb-6">
+          <div className="flex-1 text-center">
+            <img
+              src="/logo.png"
+              alt="Ag-Extension Logo"
+              className="w-16 h-16 mx-auto mb-3 rounded-2xl shadow-xl shadow-emerald-950/40 object-contain"
+            />
+            <h1 className="text-2xl font-bold tracking-tight text-white">
+              {t('register_title')}
+            </h1>
+            <p className="text-white/60 text-sm mt-1">{t('register_subtitle')}</p>
+          </div>
+          <div className="pt-1">
+            <LiquidToggleSwitch compact />
+          </div>
         </div>
 
         {/* Error Message */}
