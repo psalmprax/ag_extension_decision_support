@@ -49,9 +49,28 @@ const options: swaggerJsdoc.Options = {
     ], // Path to the API docs (resolves relative to current file in both dev & compiled dist)
 };
 
-const specs = swaggerJsdoc(options);
+let specs: object | undefined;
+
+function getSwaggerSpecs(): object {
+    if (!specs) {
+        try {
+            specs = swaggerJsdoc(options);
+        } catch {
+            specs = options.definition as object;
+        }
+    }
+    return specs;
+}
 
 export function setupSwagger(app: Application): void {
-    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
-    console.log('Swagger API documentation available at /api-docs');
+    if (process.env.NODE_ENV === 'test') {
+        return;
+    }
+    try {
+        const swaggerSpecs = getSwaggerSpecs();
+        app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
+        console.log('Swagger API documentation available at /api-docs');
+    } catch (err) {
+        console.warn('Swagger setup skipped:', err);
+    }
 }
