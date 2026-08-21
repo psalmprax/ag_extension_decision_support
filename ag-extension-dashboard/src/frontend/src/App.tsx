@@ -24,6 +24,7 @@ import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { FloatingAIPill } from './components/FloatingAIPill';
 import { USSDSimulatorDrawer } from './components/USSDSimulatorDrawer';
 import { Liquid } from './components/canvasui/Liquid';
+import { LiquidBackgroundCanvas } from './components/canvasui/LiquidBackgroundCanvas';
 import { Farmer } from './types/dashboard';
 import { useAppSync } from './hooks/useAppSync';
 import { useAppShortcuts } from './hooks/useAppShortcuts';
@@ -447,6 +448,9 @@ function App() {
             className="absolute top-[20%] -right-[10%] w-[600px] h-[600px] bg-emerald-600/20 mix-blend-screen rounded-full blur-[180px]"
           />
         </div>
+
+        {/* ── WebGL / CanvasUI Fluid Dynamics Background ── */}
+        <LiquidBackgroundCanvas />
 
         {/* Drag overlay */}
         {isDragOver && (

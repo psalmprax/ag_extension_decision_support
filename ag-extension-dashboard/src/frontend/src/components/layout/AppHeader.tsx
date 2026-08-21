@@ -4,6 +4,7 @@ import { Sun as SunIcon, Moon as MoonIcon, Menu, Bell, Settings, Leaf, Activity,
 import { WeatherWidget } from '@/components/WeatherWidget';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { LiquidToggleSwitch } from '@/components/canvasui/LiquidToggleSwitch';
 import { Farmer } from '../../types/dashboard';
 import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/lib/cn';
@@ -146,6 +147,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             <LanguageSwitcher compact />
             <ThemeSwitcher currentTheme={themeName} onThemeChange={setThemeName} />
           </div>
+          <LiquidToggleSwitch compact />
           <button
             onClick={() => setDarkMode(!darkMode)}
             className="h-12 w-12 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 hover:border-primary-400/50 hover:bg-white/10 transition-all text-slate-400 hover:text-primary-400 backdrop-blur-sm"

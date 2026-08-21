@@ -45,6 +45,8 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { Liquid } from '@/components/canvasui/Liquid';
+import { LiquidToggleSwitch } from '@/components/canvasui/LiquidToggleSwitch';
+import { LiquidBackgroundCanvas } from '@/components/canvasui/LiquidBackgroundCanvas';
 
 // ─── Animation variants ─────────────────────────────────────────
 const stagger = {
@@ -522,6 +524,9 @@ export function LandingPage() {
         ${reducedMotion ? '.mesh-orb-1,.mesh-orb-2,.mesh-orb-3{animation:none !important;}' : ''}
       `}</style>
 
+      {/* ── WebGL / CanvasUI Fluid Dynamics Background ── */}
+      <LiquidBackgroundCanvas />
+
       {/* ── NAV ── */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-950/75 backdrop-blur-2xl border-b border-white/[0.06]">
         <div className="max-w-[90rem] w-full mx-auto px-6 h-16 flex items-center justify-between">
@@ -581,6 +586,7 @@ export function LandingPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            <LiquidToggleSwitch compact className="hidden sm:flex" />
             <button
               onClick={() => navigate('/login')}
               className="hidden sm:inline-flex text-sm font-medium text-white/70 hover:text-white transition-colors px-3 py-1.5"
@@ -637,6 +643,9 @@ export function LandingPage() {
                 ))}
               </div>
               <div className="pt-4 border-t border-white/[0.08] flex flex-col gap-2.5">
+                <div className="pb-1">
+                  <LiquidToggleSwitch className="w-full justify-between py-2" />
+                </div>
                 <button
                   onClick={() => {
                     setMobileMenuOpen(false);

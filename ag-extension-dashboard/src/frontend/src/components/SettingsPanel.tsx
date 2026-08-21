@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Bell, Palette, Globe, Monitor, Moon, Sun, Volume2, VolumeX, Zap, MessageSquare } from 'lucide-react';
+import { X, Bell, Palette, Globe, Monitor, Moon, Sun, Volume2, VolumeX, Zap, MessageSquare, Droplets } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 import { ThemeSwitcher } from './ThemeSwitcher';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { DesignToggle } from './ABTestBanner';
+import { LiquidToggleSwitch } from './canvasui/LiquidToggleSwitch';
 import apiClient from '@/api/client';
 import toast from 'react-hot-toast';
 import { fetchOrganizationConfig, updateOrganizationConfig, OrganizationConfig } from '@/api/organizationService';
@@ -166,6 +167,22 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                         </span>
                       </div>
                       <DesignToggle />
+                    </div>
+
+                    {/* Liquid Fluid Dynamics Effect */}
+                    <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <Droplets className="w-4 h-4 text-emerald-500" />
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Liquid Fluid Dynamics
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          CanvasUI GPU fluid simulation on pointer and touch motion
+                        </p>
+                      </div>
+                      <LiquidToggleSwitch />
                     </div>
                   </div>
                 </div>
