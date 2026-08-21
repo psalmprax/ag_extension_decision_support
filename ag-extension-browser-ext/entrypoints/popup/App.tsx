@@ -109,11 +109,11 @@ function App() {
       {/* Header */}
       <header className="p-4 bg-gradient-to-r from-primary-600 to-primary-800 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center backdrop-blur-sm border border-white/30">
-            <Zap className="w-5 h-5 text-white" />
+          <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center backdrop-blur-sm border border-white/20">
+            <img src="/logo.png" alt="GPExts Logo" className="w-6 h-6 object-contain" />
           </div>
           <div>
-            <h1 className="text-sm font-bold tracking-tight">AG-EXTENSION</h1>
+            <h1 className="text-sm font-bold tracking-tight">GPExts</h1>
             <p className="text-[10px] text-primary-100 font-medium opacity-80 uppercase tracking-widest">Alpha v0.1.0</p>
           </div>
         </div>

@@ -425,11 +425,11 @@ function App() {
       {/* Header */}
       <header className="p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center border border-primary-500/20 shadow-lg shadow-primary-500/5">
-            <Brain className="w-6 h-6 text-primary-400" />
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-lg shadow-emerald-500/5">
+            <img src="/logo.png" alt="GPExts Logo" className="w-7 h-7 object-contain" />
           </div>
           <div>
-            <h1 className="text-sm font-black tracking-tighter text-white uppercase italic">ALFA ADVISOR</h1>
+            <h1 className="text-sm font-black tracking-tight text-white uppercase">GPExts Advisor</h1>
             <div className="flex items-center gap-2">
               <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'}`} />
               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
