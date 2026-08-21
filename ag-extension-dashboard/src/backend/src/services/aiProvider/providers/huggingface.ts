@@ -1,0 +1,93 @@
+import axios from 'axios';
+import { logger } from '../../../utils/logger';
+
+export interface HuggingFaceRequest {
+  model?: string;
+  messages: Array<{ role: string; content: string }>;
+  temperature?: number;
+  max_tokens?: number;
+}
+
+export interface HuggingFaceResponse {
+  id: string;
+  model: string;
+  choices: Array<{
+    message: {
+      role: string;
+      content: string;
+    };
+    finish_reason: string;
+  }>;
+}
+
+/**
+ * Hugging Face Provider — OpenAI-compatible chat completions via the HF
+ * Inference Providers router (https://router.huggingface.co/v1).
+ * Reads HUGGINGFACE_API_KEY (hf_...) from the environment.
+ */
+export class HuggingFaceProvider {
+  private apiKey: string;
+  private baseUrl: string;
+
+  constructor(apiKey?: string, baseUrl = 'https://router.huggingface.co/v1') {
+    this.apiKey = apiKey || process.env.HUGGINGFACE_API_KEY || '';
+    this.baseUrl = baseUrl;
+  }
+
+  private getApiKey(): string {
+    return this.apiKey || process.env.HUGGINGFACE_API_KEY || '';
+  }
+
+  public isConfigured(): boolean {
+    return Boolean(this.getApiKey());
+  }
+
+  public async chat(req: HuggingFaceRequest): Promise<string> {
+    const key = this.getApiKey();
+    if (!key) {
+      throw new Error('Hugging Face API key not configured (HUGGINGFACE_API_KEY missing).');
+    }
+
+    const model = req.model || 'meta-llama/Llama-3.1-8B-Instruct';
+
+    try {
+      logger.info(`Routing request to Hugging Face provider (model: ${model})`);
+
+      const response = await axios.post<HuggingFaceResponse>(
+        `${this.baseUrl}/chat/completions`,
+        {
+          model,
+          messages: req.messages,
+          temperature: req.temperature ?? 0.7,
+          max_tokens: req.max_tokens ?? 1024,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${key}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 30000,
+        }
+      );
+
+      const content = response.data.choices?.[0]?.message?.content;
+      if (!content) {
+        throw new Error('Empty completion content returned from Hugging Face.');
+      }
+
+      return content;
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { status?: number; data?: unknown }; message?: string };
+      const status = axiosError.response?.status;
+      const responseBodyStr = JSON.stringify(axiosError.response?.data || '');
+
+      if (status === 429 || status === 402 || responseBodyStr.includes('quota') || responseBodyStr.includes('insufficient')) {
+        logger.warn(`Hugging Face quota/rate limit exceeded (HTTP ${status}) for model ${model}. Triggering OmniRoute failover.`);
+        throw new Error(`HUGGINGFACE_QUOTA_EXCEEDED: Quota/Rate limit reached for ${model}`);
+      }
+
+      logger.error(`Hugging Face API error (${status || 'Network'}):`, axiosError.message);
+      throw err;
+    }
+  }
+}

@@ -1,9 +1,11 @@
 import { AIHubMixProvider } from './aiProvider/providers/aihubmix';
 import { OpenRouterProvider } from './aiProvider/providers/openRouter';
+import { HuggingFaceProvider } from './aiProvider/providers/huggingface';
+import { NVIDIAProvider } from './aiProvider/providers/nvidia';
 import { logger } from '../utils/logger';
 
 export interface RouteCandidate {
-  providerName: 'aihubmix' | 'openrouter' | 'groq' | 'openai' | 'ollama';
+  providerName: 'aihubmix' | 'openrouter' | 'groq' | 'openai' | 'ollama' | 'huggingface' | 'nvidia';
   model: string;
   score: number;
   isFree?: boolean;
@@ -17,6 +19,8 @@ export class OmniRouteService {
   private static blocklist: Set<string> = new Set();
   private static aihubmix = new AIHubMixProvider();
   private static openrouter = new OpenRouterProvider();
+  private static huggingface = new HuggingFaceProvider();
+  private static nvidia = new NVIDIAProvider();
 
   public static readonly FREE_LLM_CATALOG: RouteCandidate[] = [
     // --- AIHubMix Free LLM Tier ---
@@ -39,6 +43,14 @@ export class OmniRouteService {
     { providerName: 'groq', model: 'mixtral-8x7b-32768', score: 86, isFree: true },
     { providerName: 'groq', model: 'gemma2-9b-it', score: 84, isFree: true },
 
+    // --- Hugging Face Inference Router ---
+    { providerName: 'huggingface', model: 'mistralai/Mistral-7B-Instruct-v0.3', score: 83, isFree: true },
+    { providerName: 'huggingface', model: 'google/gemma-2-9b-it', score: 80, isFree: true },
+
+    // --- NVIDIA NIM Free Credits ---
+    { providerName: 'nvidia', model: 'meta/llama-3.1-8b-instruct', score: 82, isFree: true },
+    { providerName: 'nvidia', model: 'nvidia/llama-3.1-nemotron-70b-instruct', score: 85, isFree: true },
+
     // --- OpenAI Fallback Paid ---
     { providerName: 'openai', model: 'gpt-4o-mini', score: 80, isFree: false },
   ];
@@ -55,6 +67,16 @@ export class OmniRouteService {
     if (candidate.providerName === 'openrouter' && this.openrouter.isConfigured()) {
       const text = await this.openrouter.chat({ model: candidate.model, messages });
       return { text, providerUsed: 'openrouter', modelUsed: candidate.model, isFreeModel: !!candidate.isFree };
+    }
+
+    if (candidate.providerName === 'huggingface' && this.huggingface.isConfigured()) {
+      const text = await this.huggingface.chat({ model: candidate.model, messages });
+      return { text, providerUsed: 'huggingface', modelUsed: candidate.model, isFreeModel: !!candidate.isFree };
+    }
+
+    if (candidate.providerName === 'nvidia' && this.nvidia.isConfigured()) {
+      const text = await this.nvidia.chat({ model: candidate.model, messages });
+      return { text, providerUsed: 'nvidia', modelUsed: candidate.model, isFreeModel: !!candidate.isFree };
     }
 
     return null;

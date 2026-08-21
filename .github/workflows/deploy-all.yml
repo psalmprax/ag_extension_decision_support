@@ -25,6 +25,29 @@ jobs:
   # 1. CI Checks (Runs for all triggers)
   ci-checks:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: psalmprax
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: ag_extension
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -38,11 +61,6 @@ jobs:
             ag-extension-dashboard/src/frontend/package-lock.json
             ag-extension-dashboard/src/backend/package-lock.json
 
-      - name: Install Dependencies
-        run: |
-          cd ag-extension-dashboard
-          npm install
-
       - name: Lint, Build & Test Frontend (with coverage)
         run: |
           cd ag-extension-dashboard/src/frontend
@@ -51,19 +69,38 @@ jobs:
           npm run build
           npm run test:coverage
 
+      - name: Install Playwright chromium
+        run: |
+          cd ag-extension-dashboard/src/frontend
+          npx playwright install --with-deps chromium
+
+      - name: Run Playwright e2e tests
+        run: |
+          cd ag-extension-dashboard/src/frontend
+          npm run test:e2e
+
       - name: Lint, Build & Test Backend
         run: |
           cd ag-extension-dashboard/src/backend
           npm ci
           npx prisma generate
+          npx prisma db push --skip-generate
           npm run lint
           npm run build
           npm test -- --forceExit
+        env:
+          DATABASE_URL: postgres://psalmprax:password@localhost:5432/ag_extension
+          REDIS_URL: redis://localhost:6379
+          NODE_ENV: test
 
-  # 2. Deploy to Testing (Old Server) — 5 timed steps, parallel builds via BuildKit
+  # 2. Deploy to Testing — DISABLED (superseded by deploy-stage.yml)
+  # deploy-stage.yml now owns all testing-server deploys and gates them on its
+  # own ci-checks job. Keeping this job enabled would double-deploy to
+  # TEST_SERVER_IP on every stage push (racing deploy-stage.yml). Re-enable
+  # only if feature-branch auto-deploys to the shared testing server are wanted.
   deploy-testing:
     needs: ci-checks
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/stage' || startsWith(github.ref, 'refs/heads/feature/'))
+    if: false
     runs-on: ubuntu-latest
     steps:
       # ── Step 1/5: Git sync & .env (fast) ─────────────────────
@@ -378,7 +415,7 @@ jobs:
             exit 1
 
   sync-master:
-    needs: deploy-testing
+    needs: ci-checks
     if: github.ref == 'refs/heads/stage' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
@@ -409,16 +446,38 @@ jobs:
         uses: appleboy/ssh-action@master
         env:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          # LLM provider API keys (secrets)
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+          GOOGLE_VERTEX_PROJECT_ID: ${{ secrets.GOOGLE_VERTEX_PROJECT_ID }}
+          AIHUBMIX_API_KEY: ${{ secrets.AIHUBMIX_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          HUGGINGFACE_API_KEY: ${{ secrets.HUGGINGFACE_API_KEY }}
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          FREEBUFF_AUTH_TOKEN: ${{ secrets.FREEBUFF_AUTH_TOKEN }}
+          WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
           ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
           DEMO_ENABLED: ${{ secrets.DEMO_ENABLED }}
           DEMO_PASSWORD: ${{ secrets.DEMO_PASSWORD }}
+          # LLM selection & endpoint config (repo variables)
+          AI_PRIMARY_PROVIDER: ${{ vars.AI_PRIMARY_PROVIDER || 'groq' }}
+          AI_PRIMARY_MODEL: ${{ vars.AI_PRIMARY_MODEL || 'llama-3.3-70b-versatile' }}
+          AI_FALLBACK_PROVIDER: ${{ vars.AI_FALLBACK_PROVIDER || 'ollama' }}
+          AI_FALLBACK_MODEL: ${{ vars.AI_FALLBACK_MODEL || 'llama3.2:3b' }}
+          AI_EMBEDDINGS_PROVIDER: ${{ vars.AI_EMBEDDINGS_PROVIDER || 'openai' }}
+          AI_EMBEDDINGS_MODEL: ${{ vars.AI_EMBEDDINGS_MODEL || 'text-embedding-3-large' }}
+          AZURE_OPENAI_ENDPOINT: ${{ vars.AZURE_OPENAI_ENDPOINT }}
+          AZURE_OPENAI_DEPLOYMENT_NAME: ${{ vars.AZURE_OPENAI_DEPLOYMENT_NAME || 'gpt-4' }}
+          OLLAMA_HOST: ${{ vars.OLLAMA_HOST || 'http://ettametta-ollama:11434' }}
+          OLLAMA_MODEL: ${{ vars.OLLAMA_MODEL || 'llama3.2:3b' }}
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
-          envs: JWT_SECRET,OPENAI_API_KEY,ANTHROPIC_API_KEY,ACME_EMAIL,DEMO_ENABLED,DEMO_PASSWORD
+          envs: JWT_SECRET,OPENAI_API_KEY,GROQ_API_KEY,ANTHROPIC_API_KEY,AZURE_OPENAI_API_KEY,GOOGLE_VERTEX_PROJECT_ID,AIHUBMIX_API_KEY,OPENROUTER_API_KEY,HUGGINGFACE_API_KEY,NVIDIA_API_KEY,FREEBUFF_AUTH_TOKEN,WEATHER_API_KEY,TAVILY_API_KEY,ACME_EMAIL,DEMO_ENABLED,DEMO_PASSWORD,AI_PRIMARY_PROVIDER,AI_PRIMARY_MODEL,AI_FALLBACK_PROVIDER,AI_FALLBACK_MODEL,AI_EMBEDDINGS_PROVIDER,AI_EMBEDDINGS_MODEL,AZURE_OPENAI_ENDPOINT,AZURE_OPENAI_DEPLOYMENT_NAME,OLLAMA_HOST,OLLAMA_MODEL
           command_timeout: 3m
           script: |
             set -e
@@ -435,14 +494,14 @@ jobs:
               echo ".env created from .env.example"
             fi
 
-            for var in JWT_SECRET OPENAI_API_KEY ANTHROPIC_API_KEY ACME_EMAIL DEMO_ENABLED DEMO_PASSWORD; do
+            for var in JWT_SECRET OPENAI_API_KEY GROQ_API_KEY ANTHROPIC_API_KEY AZURE_OPENAI_API_KEY GOOGLE_VERTEX_PROJECT_ID AIHUBMIX_API_KEY OPENROUTER_API_KEY HUGGINGFACE_API_KEY NVIDIA_API_KEY FREEBUFF_AUTH_TOKEN WEATHER_API_KEY TAVILY_API_KEY ACME_EMAIL DEMO_ENABLED DEMO_PASSWORD AI_PRIMARY_PROVIDER AI_PRIMARY_MODEL AI_FALLBACK_PROVIDER AI_FALLBACK_MODEL AI_EMBEDDINGS_PROVIDER AI_EMBEDDINGS_MODEL AZURE_OPENAI_ENDPOINT AZURE_OPENAI_DEPLOYMENT_NAME OLLAMA_HOST OLLAMA_MODEL; do
               val="${!var}"
               if [ -n "$val" ]; then
                 # Remove existing key if it exists
                 sed -i "/^$var=/d" .env
                 # Append the new key/value
                 printf '%s=%s\n' "$var" "$val" >> .env
-                echo "Updated $var in .env from GitHub secrets"
+                echo "Updated $var in .env from GitHub secrets/variables"
               fi
             done
 

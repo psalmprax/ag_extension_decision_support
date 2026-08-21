@@ -100,8 +100,9 @@ services:
       NODE_ENV: ${NODE_ENV:-development}
       JWT_SECRET: ${JWT_SECRET}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
-      AI_PRIMARY_PROVIDER: ${AI_PRIMARY_PROVIDER:-openai}
-      AI_PRIMARY_MODEL: ${AI_PRIMARY_MODEL:-gpt-4o}
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      AI_PRIMARY_PROVIDER: ${AI_PRIMARY_PROVIDER:-groq}
+      AI_PRIMARY_MODEL: ${AI_PRIMARY_MODEL:-llama-3.3-70b-versatile}
       AI_EMBEDDINGS_PROVIDER: ${AI_EMBEDDINGS_PROVIDER:-openai}
       AI_EMBEDDINGS_MODEL: ${AI_EMBEDDINGS_MODEL:-text-embedding-3-large}
       OLLAMA_HOST: ${OLLAMA_HOST:-http://ettametta-ollama:11434}

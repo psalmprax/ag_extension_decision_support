@@ -4,11 +4,16 @@ import {
     AIProviderType,
     TextGenerationOptions,
     TextGenerationResult,
+    ReasoningOptions,
+    ReasoningResult,
+    ClassificationOptions,
+    ClassificationResult,
     ImageAnalysisOptions,
     ImageAnalysisResult,
     VideoAnalysisOptions,
     VideoAnalysisResult,
 } from '../types';
+import { REASONING_SYSTEM_PROMPT, extractVisuals } from '../assetLibrary';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
 import Groq from 'groq-sdk';
@@ -147,6 +152,54 @@ export class GroqProvider extends BaseAIProvider {
                 model,
                 usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
             };
+        }
+    }
+
+    async analyzeWithReasoning(context: string, query: string, options?: ReasoningOptions): Promise<ReasoningResult> {
+        const groundedPrompt = `Use the context below as the authoritative source for this answer. If the context is incomplete, say what is missing before adding general agricultural guidance. Cite source titles or URLs when available.\n\nContext:\n${context || 'No specific context found in knowledge base.'}\n\nQuestion: ${query}`;
+        const messages = [
+            { role: 'system', content: REASONING_SYSTEM_PROMPT },
+            { role: 'user', content: groundedPrompt },
+        ];
+
+        const result = await this.generateText(messages, {
+            temperature: options?.temperature ?? 0.2,
+            maxTokens: options?.maxTokens ?? 2000,
+        });
+
+        const text = result.text ?? '';
+        const visuals = extractVisuals(text);
+
+        const cleanAnswer = text
+            .replace(/<visuals>[\s\S]*?<\/visuals>/gi, '')
+            .replace(/```json[\s\S]*?```/gi, '')
+            .trim();
+
+        return {
+            reasoning: 'Detailed Intelligence Analysis completed.',
+            answer: cleanAnswer,
+            confidence: 0.9,
+            visuals,
+        };
+    }
+
+    async classify(input: string, options: ClassificationOptions): Promise<ClassificationResult> {
+        const prompt = `Classify the following agricultural query into one of these categories: ${options.taxonomy}. \n        Return ONLY a JSON array of objects with "label" and "score" (0-1).\n        Query: "${input}"`;
+
+        try {
+            const result = await this.generateText(
+                [{ role: 'user', content: prompt }],
+                { temperature: 0.1, maxTokens: 200 }
+            );
+            const text = (result.text || '').trim();
+            const jsonMatch = text.match(/\[.*\]/s);
+            if (jsonMatch) {
+                return { labels: JSON.parse(jsonMatch[0]) };
+            }
+            return { labels: [{ label: 'general', score: 1.0 }] };
+        } catch (error) {
+            logger.error('Groq classify error:', error);
+            return { labels: [{ label: 'general', score: 1.0 }] };
         }
     }
 
