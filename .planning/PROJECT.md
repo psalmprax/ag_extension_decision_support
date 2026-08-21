@@ -36,7 +36,7 @@ ag-extension-shared/               # Shared zod schemas — frontend/backend API
 - **Tests:** 454 passing across all layers — backend 346 (40 suites), frontend 103 (23 files), Python agents 5
 - **Type safety:** `tsc --noEmit` clean in both backend and frontend
 - **Lint:** ESLint clean in both backend and frontend (sonarjs complexity gate at 15)
-- **Dependency audit:** frontend 0 vulns; backend audit currently blocked by an `uuid` override conflict in `package.json` (see Known Issues)
+- **Dependency audit:** frontend 0 vulns; backend 0 vulns (`npm audit --audit-level=high` exits 0 — the `uuid` override conflict was resolved 2026-08-19)
 - **Repo hygiene:** committed tool-run debris removed and gitignored (2026-08-18)
 
 ## Milestone Status
@@ -49,7 +49,7 @@ See `STATE.md` and `ROADMAP.md` for phase detail.
 
 ## Known Issues
 
-- **Backend dependency audit blocked:** `npm audit` fails with `EOVERRIDE — Override for uuid@^9.0.1 conflicts with direct dependency`.
+- ~~**Backend dependency audit blocked** — `EOVERRIDE` for `uuid@^9.0.1`~~ **Resolved** (2026-08-19): direct dep aligned to `uuid@^11.1.1`; audit clean.
 - **Complexity hotspots remain:** `FarmerMap.tsx` (cognitive 61, 839 LOC), browser-extension sidepanel `App.tsx` (cognitive 47), `CropsFields.tsx` (cognitive 35, 811 LOC), and `LandingPage.tsx` (1,316 LOC) top the list of untested, high-CRAP functions.
 - **Test coverage is thin at the UI layer:** most of the high-CRAP findings carry `coverage_tier: none`.
 - **E2E (Playwright) is configured but not yet wired into a CI gate.**

@@ -37,7 +37,7 @@ Planned phases (API standardization, error handling, performance, state consolid
 | Backend lint | Clean (sonarjs cognitive-complexity ≤ 15) |
 | Frontend lint | Clean |
 | Frontend vulns | 0 |
-| Backend vulns | Audit blocked (see Known Issues) |
+| Backend vulns | 0 (audit clean — uuid override conflict resolved 2026-08-19) |
 
 ## Session Progress (2026-08-18)
 
@@ -56,7 +56,8 @@ Planned phases (API standardization, error handling, performance, state consolid
 
 ## Known Issues
 
-1. **Backend dependency audit blocked** — `npm audit` fails with `EOVERRIDE — Override for uuid@^9.0.1 conflicts with direct dependency`. Root cause to investigate in `ag-extension-dashboard/src/backend/package.json`.
-2. **Remaining complexity hotspots (untested, high CRAP):** `FarmerMap.tsx` (61 cognitive), extension sidepanel `App.tsx` (47), `CropsFields.tsx` (35), `LandingPage.tsx` (1,316 LOC).
-3. **E2E (Playwright) not in CI** — suite exists but is not gated in `.github/workflows/`.
-4. **Test coverage gaps** — most high-complexity UI components have `coverage_tier: none`.
+1. **Remaining complexity hotspots (untested, high CRAP):** `FarmerMap.tsx` (61 cognitive), extension sidepanel `App.tsx` (47), `CropsFields.tsx` (35), `LandingPage.tsx` (1,316 LOC).
+2. **E2E (Playwright) not in CI** — suite exists but is not gated in `.github/workflows/`.
+3. **Test coverage gaps** — most high-complexity UI components have `coverage_tier: none`.
+
+> ✅ **Resolved (2026-08-19):** the backend `npm audit` EOVERRIDE conflict is gone. Commit `4dc9b989` aligned the direct `uuid` dependency to `^11.1.1` (matching the override), and `npm audit --audit-level=high` now exits 0 with 0 vulnerabilities.
