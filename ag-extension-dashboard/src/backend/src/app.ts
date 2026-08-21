@@ -253,12 +253,20 @@ function checkExternalAPIs(): { status: string; error?: string } {
     }
 }
 
+// Agents registered for orchestration but intentionally not yet implemented as a
+// service (e.g. OpenClaw is "planned for future implementation"). They are kept in
+// the registry so the UI can show them, but a permanently-absent service must not
+// flag the production health check as unhealthy.
+const PLANNED_AGENTS = new Set(['openclaw']);
+
 function checkAgentServices(): { status: string; error?: string } {
     try {
         const agentHealth = selfHealingService.getHealthStatus();
         const registeredCount = agentHealth.size;
-        const unhealthyCount = Array.from(agentHealth.values()).filter(h => h.status === 'unhealthy' || h.status === 'offline').length;
-        
+        const unhealthyCount = Array.from(agentHealth.values()).filter(h =>
+            (h.status === 'unhealthy' || h.status === 'offline') && !PLANNED_AGENTS.has(h.component)
+        ).length;
+
         if (registeredCount === 0) return { status: 'not initialized' };
         if (unhealthyCount === 0) return { status: `${registeredCount} registered, all healthy` };
         return { status: `${registeredCount} registered, ${unhealthyCount} unhealthy`, error: `agents: ${unhealthyCount} unhealthy` };

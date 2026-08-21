@@ -103,5 +103,26 @@ describe('Health Check Helpers', () => {
             const status = unhealthyCount > 0 ? `2 registered, ${unhealthyCount} unhealthy` : 'all healthy';
             expect(status).toBe('2 registered, 1 unhealthy');
         });
+
+        it('should exclude planned (not-yet-implemented) agents from the unhealthy count', () => {
+            // Mirrors the PLANNED_AGENTS exclusion in app.ts checkAgentServices:
+            // a registered-but-unimplemented agent (e.g. openclaw) must not flag
+            // the production health check as unhealthy.
+            const plannedAgents = new Set(['openclaw']);
+            const now = new Date().toISOString();
+            const healthMap = new Map([
+                ['agent-zero', { status: 'healthy' as const, component: 'agent-zero', lastCheck: now, consecutiveFailures: 0, lastSuccess: now }],
+                ['crew-ai', { status: 'healthy' as const, component: 'crew-ai', lastCheck: now, consecutiveFailures: 0, lastSuccess: now }],
+                ['openclaw', { status: 'offline' as const, component: 'openclaw', lastCheck: now, consecutiveFailures: 5, lastSuccess: null }],
+            ]);
+            mockSelfHealingService.getHealthStatus.mockReturnValue(healthMap);
+            const agentHealth = selfHealingService.getHealthStatus();
+            const registeredCount = agentHealth.size;
+            const unhealthyCount = Array.from(agentHealth.values()).filter(h =>
+                (h.status === 'unhealthy' || h.status === 'offline') && !plannedAgents.has(h.component)
+            ).length;
+            const status = unhealthyCount === 0 ? `${registeredCount} registered, all healthy` : `${registeredCount} registered, ${unhealthyCount} unhealthy`;
+            expect(status).toBe('3 registered, all healthy');
+        });
     });
 });
