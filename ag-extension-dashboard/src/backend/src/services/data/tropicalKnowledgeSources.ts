@@ -165,7 +165,7 @@ export const tropicalArticleSeeds: TropicalKnowledgeArticleSeed[] = [
         crops: ['maize'],
         regions: ['Africa', 'tropical'],
         source: 'AG Extension Tropical Library - FAO/CGIAR aligned',
-        sourceUrl: 'https://www.fao.org/fall-armyworm/',
+        sourceUrl: 'https://www.fao.org/pest-and-pesticide-management/en/',
         content: 'Scout maize fields from emergence through tasseling, checking the whorl for fresh windowing, frass and larvae. Prioritize early control when larvae are small. Conserve natural enemies, avoid unnecessary broad-spectrum insecticide sprays, use locally approved biopesticides or selective products when thresholds are exceeded, and rotate modes of action to reduce resistance. Good crop nutrition, timely planting and destruction of heavily infested residues reduce risk.'
     },
     {
@@ -187,7 +187,7 @@ export const tropicalArticleSeeds: TropicalKnowledgeArticleSeed[] = [
         crops: ['banana', 'plantain'],
         regions: ['Africa', 'tropical'],
         source: 'AG Extension Tropical Library - FAO/CGIAR aligned',
-        sourceUrl: 'https://www.iita.org/cropsnew/banana-plantain/',
+        sourceUrl: 'https://www.iita.org/cropsnew/banana-and-plantain/',
         content: 'Banana bacterial wilt spreads through infected planting material, insects visiting male buds, contaminated tools and movement of infected plant parts. Use clean planting material, remove male buds with a forked stick where recommended, disinfect cutting tools, uproot and destroy infected mats according to local guidance, and restrict movement of infected suckers. Early symptoms include yellowing, wilting, premature ripening and bacterial ooze from cut tissues.'
     },
     {
@@ -198,7 +198,7 @@ export const tropicalArticleSeeds: TropicalKnowledgeArticleSeed[] = [
         crops: ['cocoa'],
         regions: ['West Africa', 'tropical'],
         source: 'AG Extension Tropical Library - FAO/CGIAR aligned',
-        sourceUrl: 'https://www.cgiar.org/research/program-platform/cocoa/',
+        sourceUrl: 'https://worldcocoafoundation.org',
         content: 'Cocoa black pod risk rises under high humidity, dense canopy and poor sanitation. Prune to improve airflow, maintain moderate shade, remove infected pods quickly, improve drainage and avoid overhead irrigation that keeps pods wet. Where locally approved, copper-based fungicides or other recommended products may be used preventively in high-risk periods. Harvest and pod sanitation are essential to reduce inoculum.'
     },
     {
@@ -209,7 +209,7 @@ export const tropicalArticleSeeds: TropicalKnowledgeArticleSeed[] = [
         crops: ['rice'],
         regions: ['Africa', 'Asia', 'tropical'],
         source: 'AG Extension Tropical Library - AfricaRice/IRRI aligned',
-        sourceUrl: 'https://www.irri.org/alternate-wetting-and-drying-awd',
+        sourceUrl: 'http://www.knowledgebank.irri.org/step-by-step-production/growth/water-management',
         content: 'Alternate Wetting and Drying saves irrigation water in lowland rice by allowing the field water level to fall below the soil surface before re-irrigation. Use a field water tube where possible. Avoid severe drying during flowering because drought stress at this stage reduces grain set. AWD works best on fields with good bunds and level land, and it should be adapted to local soil type and farmer water control.'
     }
 ];

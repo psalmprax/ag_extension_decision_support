@@ -18,8 +18,8 @@ const multimodalArticles = [
         Watch the identification guide video to see the 'Y' mark clearly on a live specimen.`,
         category: 'pest_control',
         crop: 'maize',
-        sourceUrl: 'https://www.youtube.com/watch?v=identification_video_stub',
-        contentType: 'video/mp4'
+        sourceUrl: 'https://www.fao.org/pest-and-pesticide-management/en/',
+        contentType: 'text'
     },
     {
         id: uuidv4(),
@@ -30,7 +30,7 @@ const multimodalArticles = [
         Refer to the spacing diagram image for a visual layout of the field.`,
         category: 'crop_management',
         crop: 'maize',
-        sourceUrl: 'https://images.unsplash.com/photo-1594488311340-025537618991?auto=format&fit=crop&q=80&w=1000',
+        sourceUrl: 'https://images.unsplash.com/photo-1551754655-cd27e38d2076?auto=format&fit=crop&q=80&w=1000',
         contentType: 'image/jpeg'
     },
     {

@@ -212,7 +212,7 @@ export class KnowledgeService {
                         title: `Tropical DB: ${r.topic}`,
                         category: 'Validated Scientific Guidance',
                         crop: 'Dynamic',
-                        sourceUrl: r.url || `https://tropical-database-search`,
+                        sourceUrl: r.url || 'https://www.fao.org/pest-and-pesticide-management/en/',
                         contentType: 'text'
                     },
                     score: 0.5

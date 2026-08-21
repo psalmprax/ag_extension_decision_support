@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { AlertTriangle, Brain, Info, Sparkles, Zap } from 'lucide-react';
+import { AlertTriangle, Brain, Info, Sparkles, Zap, ExternalLink } from 'lucide-react';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { Badge } from '../ui/Badge';
 import { ReasoningVisuals } from './ReasoningVisuals';
@@ -109,26 +109,40 @@ export const AIResult: React.FC<AIResultProps> = ({ result }) => {
             </span>
           </div>
           <div className="flex flex-wrap gap-3">
-            {result.contextUsed.map((ctx, i) => (
-              <div
-                key={i}
-                className={`px-4 py-2 bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700/50 ${radiusClass} flex items-center gap-2 group hover:border-primary-500/50 transition-colors cursor-pointer`}
-              >
-                <div className="w-2 h-2 bg-primary-500 rounded-full shadow-[0_0_8px_var(--color-outline)]"></div>
-                <div className="flex flex-col">
-                  <span className="text-xxs font-black text-gray-400 uppercase leading-none mb-1">
-                    Source
-                  </span>
-                  <span
-                    className="text-xs font-bold text-gray-700 dark:text-gray-300 max-w-[220px] truncate"
-                    title={ctx.metadata?.sourceUrl || ctx.metadata?.title || ''}
-                  >
-                    {ctx.metadata?.title ||
-                      `${ctx.metadata?.crop || 'General'} / ${ctx.metadata?.category || 'Expert Advice'}`}
-                  </span>
-                </div>
-              </div>
-            ))}
+            {result.contextUsed.map((ctx, i) => {
+              const hasUrl = ctx.metadata?.sourceUrl && ctx.metadata.sourceUrl.startsWith('http');
+              const Component = hasUrl ? 'a' : 'div';
+              const linkProps = hasUrl
+                ? {
+                    href: ctx.metadata?.sourceUrl,
+                    target: '_blank',
+                    rel: 'noopener noreferrer',
+                  }
+                : {};
+
+              return (
+                <Component
+                  key={i}
+                  {...linkProps}
+                  className={`px-4 py-2 bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700/50 ${radiusClass} flex items-center gap-2 group hover:border-primary-500/50 transition-colors cursor-pointer text-left no-underline`}
+                >
+                  <div className="w-2 h-2 bg-primary-500 rounded-full shadow-[0_0_8px_var(--color-outline)] shrink-0"></div>
+                  <div className="flex flex-col">
+                    <span className="text-xxs font-black text-gray-400 uppercase leading-none mb-1 flex items-center gap-1">
+                      Source
+                      {hasUrl && <ExternalLink className="w-2.5 h-2.5 opacity-60 group-hover:opacity-100 transition-opacity" />}
+                    </span>
+                    <span
+                      className="text-xs font-bold text-gray-700 dark:text-gray-300 max-w-[220px] truncate"
+                      title={ctx.metadata?.sourceUrl || ctx.metadata?.title || ''}
+                    >
+                      {ctx.metadata?.title ||
+                        `${ctx.metadata?.crop || 'General'} / ${ctx.metadata?.category || 'Expert Advice'}`}
+                    </span>
+                  </div>
+                </Component>
+              );
+            })}
           </div>
         </div>
 
