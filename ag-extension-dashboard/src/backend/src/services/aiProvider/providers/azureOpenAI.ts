@@ -316,8 +316,10 @@ export class AzureOpenAIProvider extends BaseAIProvider {
                 [{ role: 'user', content: 'Hi' }],
                 { maxTokens: 1 }
             );
+            this.recordHealthError();
             return true;
-        } catch {
+        } catch (error) {
+            this.recordHealthError(error instanceof Error ? error.message : String(error));
             return false;
         }
     }

@@ -187,25 +187,43 @@ async function checkCascadeProviders(): Promise<{ healthy: boolean; name: string
     return { healthy: false, name: 'none' };
 }
 
+async function checkPrimaryProviderHealth(): Promise<{ healthy: boolean; configured: boolean; name: string; error?: string }> {
+    const primaryProvider = await AIProviderFactory.getPrimaryProvider();
+    const configured = primaryProvider.isConfigured();
+    const healthy = configured && await primaryProvider.healthCheck();
+    // Surface *why* the primary is unhealthy so /api/health is actionable:
+    // missing key, invalid key (401), model access (404), quota (429), etc.
+    const error = !healthy
+        ? configured
+            ? primaryProvider.getLastHealthError?.() || 'health check failed'
+            : 'not configured (missing API key)'
+        : undefined;
+    return { healthy, configured, name: primaryProvider.provider, error };
+}
+
 async function checkAIProvider(): Promise<{ status: string; error?: string }> {
     try {
-        const primaryProvider = await AIProviderFactory.getPrimaryProvider();
-        const primaryHealthy = primaryProvider.isConfigured() && await primaryProvider.healthCheck();
+        const primary = await checkPrimaryProviderHealth();
 
         const fallback = await checkFallbackProvider();
         let fallbackActiveName = fallback.name;
 
         let anyCascadingHealthy = false;
-        if (!primaryHealthy && !fallback.healthy) {
+        if (!primary.healthy && !fallback.healthy) {
             const cascade = await checkCascadeProviders();
             anyCascadingHealthy = cascade.healthy;
             if (cascade.healthy) fallbackActiveName = cascade.name;
         }
 
-        if (primaryHealthy) return { status: 'healthy' };
-        if (fallback.healthy) return { status: 'degraded (fallback active)' };
+        if (primary.healthy) return { status: 'healthy' };
+        if (fallback.healthy) {
+            return {
+                status: `degraded (fallback active) — primary ${primary.name}: ${primary.error}`,
+                error: `ai_provider: primary ${primary.name} unhealthy — ${primary.error}`,
+            };
+        }
         if (anyCascadingHealthy) return { status: `degraded (fell back to ${fallbackActiveName})` };
-        if (!primaryProvider.isConfigured() && !await (await AIProviderFactory.getFallbackProvider()).isConfigured()) {
+        if (!primary.configured && !(await AIProviderFactory.getFallbackProvider()).isConfigured()) {
             return { status: 'not configured' };
         }
         return { status: 'unhealthy', error: 'ai_provider: primary, fallback, and cascade options are all unhealthy' };

@@ -145,6 +145,13 @@ export interface AICapability {
 
     isConfigured(): boolean;
     healthCheck(): Promise<boolean>;
+    /**
+     * Optional human-readable reason for the most recent failed healthCheck.
+     * Returns undefined when the provider is healthy or has never been probed.
+     * Used by the /api/health endpoint to surface *why* a provider is degraded
+     * (e.g. "401 invalid api key" vs "404 model not found" vs "429 rate limit").
+     */
+    getLastHealthError?(): string | undefined;
 
     generateText(prompt: string | any[], options?: TextGenerationOptions): Promise<TextGenerationResult>;
     streamText(prompt: string, options?: TextGenerationOptions): AsyncGenerator<string>;
@@ -211,6 +218,21 @@ export abstract class BaseAIProvider implements AICapability {
 
     async analyzeVideo(_videoData: Buffer, _prompt?: string, _options?: VideoAnalysisOptions): Promise<VideoAnalysisResult> {
         throw new Error('Method not implemented');
+    }
+
+    private lastHealthError: string | undefined;
+
+    /**
+     * Records the reason a healthCheck failed so diagnostics can surface it.
+     * Call with a reason inside the catch block of a provider healthCheck, or
+     * with no argument to clear the error on a successful probe.
+     */
+    protected recordHealthError(reason?: string): void {
+        this.lastHealthError = reason || undefined;
+    }
+
+    getLastHealthError(): string | undefined {
+        return this.lastHealthError;
     }
 
     async healthCheck(): Promise<boolean> {

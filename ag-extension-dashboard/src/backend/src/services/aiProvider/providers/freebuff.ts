@@ -156,9 +156,11 @@ export class FreebuffProvider extends BaseAIProvider {
         try {
             const client = await this.getClient();
             await client.models.list();
+            this.recordHealthError();
             return true;
         } catch (error) {
             logger.warn('Freebuff healthCheck failed (community proxy may be down):', error);
+            this.recordHealthError(error instanceof Error ? error.message : String(error));
             return false;
         }
     }

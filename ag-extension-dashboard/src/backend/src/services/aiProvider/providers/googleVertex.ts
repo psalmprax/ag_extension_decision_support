@@ -273,8 +273,10 @@ export class GoogleVertexProvider extends BaseAIProvider {
             const client = await this.getClient();
             const model = client.getGenerativeModel({ model: config.ai.fallback.model });
             await model.generateContent('test');
+            this.recordHealthError();
             return true;
-        } catch {
+        } catch (error) {
+            this.recordHealthError(error instanceof Error ? error.message : String(error));
             return false;
         }
     }

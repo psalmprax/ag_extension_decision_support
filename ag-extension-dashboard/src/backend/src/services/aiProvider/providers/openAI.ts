@@ -367,9 +367,11 @@ export class OpenAIProvider extends BaseAIProvider {
                 messages: [{ role: 'user', content: 'test' }],
                 max_tokens: 1,
             });
+            this.recordHealthError();
             return true;
         } catch (error) {
             logger.error('OpenAI healthCheck error:', error);
+            this.recordHealthError(error instanceof Error ? error.message : String(error));
             return false;
         }
     }

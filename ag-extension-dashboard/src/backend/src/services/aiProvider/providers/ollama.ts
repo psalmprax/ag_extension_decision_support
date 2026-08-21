@@ -157,9 +157,15 @@ export class OllamaProvider extends BaseAIProvider {
     async healthCheck(): Promise<boolean> {
         try {
             const response = await axios.get(`${config.ollama.host}/api/tags`, { timeout: 2000 });
-            return response.status === 200;
+            if (response.status === 200) {
+                this.recordHealthError();
+                return true;
+            }
+            this.recordHealthError(`ollama returned HTTP ${response.status}`);
+            return false;
         } catch (error) {
             logger.warn(`Ollama health check failed for ${config.ollama.host}:`, (error as Error).message);
+            this.recordHealthError(error instanceof Error ? error.message : String(error));
             return false;
         }
     }

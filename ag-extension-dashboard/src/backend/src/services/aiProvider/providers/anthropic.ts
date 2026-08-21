@@ -248,8 +248,10 @@ export class AnthropicProvider extends BaseAIProvider {
                 max_tokens: 1,
                 messages: [{ role: 'user', content: 'test' }],
             });
+            this.recordHealthError();
             return true;
-        } catch {
+        } catch (error) {
+            this.recordHealthError(error instanceof Error ? error.message : String(error));
             return false;
         }
     }

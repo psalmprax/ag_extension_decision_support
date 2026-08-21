@@ -161,9 +161,11 @@ export class GroqProvider extends BaseAIProvider {
                 messages: [{ role: 'user', content: 'test' }],
                 max_tokens: 1,
             });
+            this.recordHealthError();
             return true;
         } catch (error) {
             logger.error('Groq health check failed:', error);
+            this.recordHealthError(error instanceof Error ? error.message : String(error));
             return false;
         }
     }
