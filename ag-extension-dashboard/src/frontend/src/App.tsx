@@ -131,6 +131,7 @@ function App() {
   useAppTheme(themeName, darkMode);
   const { weatherLocation } = useAppBootstrap(storeUser, setActiveTab);
   const { user, isOfficer } = useAppAuth(storeUser, setUser as (user: unknown) => void);
+  const effectiveUser = user || storeUser;
 
   // Logout handler
   const handleLogout = async () => {
@@ -348,7 +349,7 @@ function App() {
     }
   };
 
-  if (user && isError)
+  if (effectiveUser && isError)
     return (
       <div className="flex items-center justify-center min-h-screen text-red-500 bg-gray-50 dark:bg-gray-900">
         {t('error_loading')}
@@ -356,13 +357,13 @@ function App() {
     );
 
   const navItems = getNavItems().filter(item => {
-    if (!user || !item.roles.includes(user.role)) return false;
+    if (!effectiveUser || !item.roles.includes(effectiveUser.role)) return false;
     if (isDemo && item.hiddenInDemo) return false;
     return true;
   });
 
   // Public routes
-  if (!user) {
+  if (!effectiveUser) {
     return (
       <ErrorBoundary componentName="PublicAuth">
         <Suspense

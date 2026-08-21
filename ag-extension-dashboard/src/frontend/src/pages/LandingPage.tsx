@@ -44,7 +44,6 @@ import {
   CheckCircle2,
   MessageSquare,
 } from 'lucide-react';
-import { Liquid } from '@/components/canvasui/Liquid';
 import { LiquidToggleSwitch } from '@/components/canvasui/LiquidToggleSwitch';
 import { LiquidBackgroundCanvas } from '@/components/canvasui/LiquidBackgroundCanvas';
 
@@ -687,10 +686,10 @@ export function LandingPage() {
             <motion.div initial="hidden" animate="visible" variants={stagger} className="space-y-8">
               <motion.div
                 variants={fadeUp}
-                className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/[0.04] border border-white/[0.06] backdrop-blur-sm"
+                className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded bg-white/[0.04] border border-white/[0.08] backdrop-blur-md shadow-sm"
               >
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-xs font-medium text-white/70">
+                <div className="w-1.5 h-1.5 rounded-sm bg-emerald-400 animate-pulse" />
+                <span className="text-xs font-medium tracking-wide text-white/80 font-mono">
                   Global Agricultural Decision Support Platform
                 </span>
               </motion.div>

@@ -24,7 +24,7 @@ export const ProgressiveProfileChips: React.FC<ProgressiveProfileChipsProps> = (
   const percentage = Math.round((completedCount / totalCount) * 100);
 
   return (
-    <div className={`p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2.5 backdrop-blur-md ${className}`}>
+    <div className={`p-3 rounded bg-slate-950/70 border border-slate-800 space-y-2.5 backdrop-blur-md ${className}`}>
       {/* Top Completion Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-xs font-bold text-slate-200">
@@ -35,9 +35,9 @@ export const ProgressiveProfileChips: React.FC<ProgressiveProfileChipsProps> = (
           <span className="text-[11px] font-mono font-bold text-emerald-400">
             {completedCount}/{totalCount} ({percentage}%)
           </span>
-          <div className="w-12 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+          <div className="w-12 h-1.5 bg-slate-800 rounded-sm overflow-hidden">
             <div
-              className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+              className="h-full bg-emerald-500 rounded-sm transition-all duration-500"
               style={{ width: `${percentage}%` }}
             />
           </div>
@@ -51,7 +51,7 @@ export const ProgressiveProfileChips: React.FC<ProgressiveProfileChipsProps> = (
           return (
             <div
               key={param.key}
-              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-mono transition-all ${
+              className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-mono transition-all ${
                 isFilled
                   ? 'bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 shadow-sm'
                   : 'bg-slate-900 border border-slate-800 text-slate-500'

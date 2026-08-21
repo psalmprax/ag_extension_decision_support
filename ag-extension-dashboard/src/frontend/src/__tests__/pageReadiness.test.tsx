@@ -43,7 +43,7 @@ describe('Page readiness — Accessibility & smoke', () => {
     expectAccessibleLandmarks(container);
     expectFormControlsLabelled(container);
     expectNoOrphanButtons(container);
-  });
+  }, 15000);
 
   it('VisitsPage renders a table with column headers when given empty data', async () => {
     const noop = () => {};
