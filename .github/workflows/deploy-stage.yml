@@ -41,8 +41,10 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
+          port: ${{ secrets.TEST_SERVER_PORT || 22 }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
+          timeout: 60s
           command_timeout: 5m
           script: |
             set -euo pipefail
@@ -58,8 +60,10 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
+          port: ${{ secrets.TEST_SERVER_PORT || 22 }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
+          timeout: 60s
           command_timeout: 10m
           script: |
             set -euo pipefail
@@ -91,8 +95,10 @@ jobs:
           COMPOSE_PROFILES: ai
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
+          port: ${{ secrets.TEST_SERVER_PORT || 22 }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
+          timeout: 60s
           command_timeout: 15m
           script: |
             set -euo pipefail
