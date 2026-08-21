@@ -3,8 +3,18 @@ module.exports = {
   testEnvironment: 'node',
   forceExit: true,
   detectOpenHandles: true,
+  moduleDirectories: ['node_modules', '<rootDir>/node_modules'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^zod$': '<rootDir>/node_modules/zod',
+  },
+  transform: {
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        tsconfig: '<rootDir>/tsconfig.json',
+      },
+    ],
   },
   testMatch: ['**/__tests__/**/*.test.ts'],
   setupFilesAfterEnv: ['<rootDir>/src/test/setup.ts'],

@@ -20,7 +20,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "zod": "^4.3.6"
+    "zod": "^3.25.76"
   },
   "peerDependencies": {
     "react": "^18.0.0",
