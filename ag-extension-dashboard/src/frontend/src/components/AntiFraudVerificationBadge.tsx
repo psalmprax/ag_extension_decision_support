@@ -1,14 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Shield,
   MapPin,
   CheckCircle2,
   AlertTriangle,
   Radio,
-  Lock,
-  Sparkles,
   KeyRound,
-  RotateCcw,
   Check,
 } from 'lucide-react';
 import {
@@ -20,7 +17,7 @@ import {
   type CropLossAuditResult,
 } from '@/api/verificationFraudService';
 import toast from 'react-hot-toast';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { triggerHaptic } from '@/lib/haptics';
 
 interface AntiFraudVerificationBadgeProps {

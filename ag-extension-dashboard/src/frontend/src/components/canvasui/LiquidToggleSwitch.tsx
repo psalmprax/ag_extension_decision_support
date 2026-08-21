@@ -1,5 +1,5 @@
 import React from 'react';
-import { Droplets, Sparkles } from 'lucide-react';
+import { Droplets } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { triggerHaptic } from '@/lib/haptics';
 
