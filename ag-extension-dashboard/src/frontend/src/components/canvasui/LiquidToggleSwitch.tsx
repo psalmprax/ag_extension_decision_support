@@ -24,6 +24,7 @@ export const LiquidToggleSwitch: React.FC<LiquidToggleSwitchProps> = ({
       <button
         type="button"
         onClick={handleToggle}
+        aria-label={liquidEffect ? 'Disable liquid background effect' : 'Enable liquid background effect'}
         title={liquidEffect ? 'Liquid Background: Active (Click to disable)' : 'Liquid Background: Disabled (Click to enable)'}
         className={`relative p-2 rounded-xl border transition-all duration-300 active:scale-95 flex items-center justify-center ${
           liquidEffect
@@ -40,6 +41,7 @@ export const LiquidToggleSwitch: React.FC<LiquidToggleSwitchProps> = ({
     <button
       type="button"
       onClick={handleToggle}
+      aria-label={liquidEffect ? 'Disable liquid background effect' : 'Enable liquid background effect'}
       className={`group relative flex items-center gap-2.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all duration-300 active:scale-95 shadow-sm ${
         liquidEffect
           ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.2)]'
