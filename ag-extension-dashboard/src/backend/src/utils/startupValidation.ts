@@ -34,21 +34,46 @@ function validateJwtConfig(warnings: ValidationWarning[], isProduction: boolean)
     }
 }
 
-function validateAiConfig(warnings: ValidationWarning[], isProduction: boolean): void {
-    if (!config.openAI.apiKey && !config.azureOpenAI.apiKey && !config.anthropic.apiKey && !config.groq.apiKey) {
-        warnings.push({
-            type: 'missing',
-            key: 'AI_API_KEY',
-            message: `No AI provider is configured. Set OPENAI_API_KEY, AZURE_OPENAI_API_KEY, ANTHROPIC_API_KEY, or GROQ_API_KEY. Current primary provider: ${config.ai.primary.provider}`,
-            severity: 'critical',
-        });
+// Maps a configured AI provider to the environment variable(s) that provide its
+// credential, so startup validation can warn when the PRIMARY provider is unconfigured.
+function getPrimaryAiCredentialStatus(provider: string): { key: string; isConfigured: boolean } {
+    switch (provider) {
+        case 'openai':
+            return { key: 'OPENAI_API_KEY', isConfigured: !!config.openAI.apiKey };
+        case 'azure_openai':
+            return { key: 'AZURE_OPENAI_API_KEY', isConfigured: !!config.azureOpenAI.apiKey };
+        case 'anthropic':
+            return { key: 'ANTHROPIC_API_KEY', isConfigured: !!config.anthropic.apiKey };
+        case 'groq':
+            return { key: 'GROQ_API_KEY', isConfigured: !!config.groq.apiKey };
+        case 'google_vertex':
+            return { key: 'GOOGLE_VERTEX_PROJECT_ID', isConfigured: !!config.googleVertex.projectId };
+        case 'freebuff':
+            return { key: 'FREEBUFF_AUTH_TOKEN', isConfigured: !!config.freebuff.authToken };
+        case 'ollama':
+            // Ollama needs no API key — only a reachable host.
+            return { key: 'OLLAMA_HOST', isConfigured: !!config.ollama.host };
+        default:
+            // Unknown provider — flag it with the provider name so the message is actionable.
+            return { key: 'AI_PRIMARY_PROVIDER', isConfigured: false };
     }
+}
 
-    if (config.ai.primary.provider === 'openai' && !config.openAI.apiKey) {
+function validateAiConfig(warnings: ValidationWarning[], isProduction: boolean): void {
+    const primary = config.ai.primary.provider;
+    const primaryCred = getPrimaryAiCredentialStatus(primary);
+
+    // Warn specifically when the configured PRIMARY provider is missing its key —
+    // this is the one that gates every AI request and is the most common cause of
+    // the health check reporting "degraded (fallback active)".
+    if (!primaryCred.isConfigured) {
+        const isUnknownProvider = primaryCred.key === 'AI_PRIMARY_PROVIDER';
         warnings.push({
             type: 'missing',
-            key: 'OPENAI_API_KEY',
-            message: 'Primary AI provider is set to OpenAI but OPENAI_API_KEY is not configured.',
+            key: primaryCred.key,
+            message: isUnknownProvider
+                ? `Unknown AI primary provider "${primary}". Set AI_PRIMARY_PROVIDER to a supported provider.`
+                : `Primary AI provider is set to ${primary} but ${primaryCred.key} is not configured. AI features will fail over to the fallback provider.`,
             severity: isProduction ? 'critical' : 'warning',
         });
     }
