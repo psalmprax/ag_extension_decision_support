@@ -12,6 +12,7 @@
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
         "resolveJsonModule": true,
+        "isolatedModules": true,
         "declaration": true,
         "declarationMap": true,
         "sourceMap": true,
@@ -23,6 +24,9 @@
         "allowSyntheticDefaultImports": true,
         "baseUrl": "./src",
         "paths": {
+            "zod": [
+                "../node_modules/zod"
+            ],
             "@/*": [
                 "./*"
             ],

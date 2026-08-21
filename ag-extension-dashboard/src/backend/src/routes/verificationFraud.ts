@@ -9,7 +9,6 @@ import {
   calculateInputQuota,
   generateAuditIntegrityHash,
 } from '@/services/verificationFraudService';
-import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 
 const router = Router();
