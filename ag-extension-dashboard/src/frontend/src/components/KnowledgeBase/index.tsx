@@ -264,7 +264,7 @@ export const KnowledgeBase: React.FC = () => {
   };
 
   return (
-    <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-theme-bg/50 backdrop-blur-sm">
+    <div className="flex h-[calc(100dvh-130px)] md:h-[calc(100vh-64px)] overflow-hidden bg-theme-bg/50 backdrop-blur-sm rounded-2xl">
       <KnowledgeSidebar
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
@@ -272,7 +272,7 @@ export const KnowledgeBase: React.FC = () => {
         onSelect={h => handleSelectQuery(h.queryText || h.query || '')}
       />
 
-      <main className="flex-1 overflow-y-auto p-4 md:p-8 scrollbar-hide">
+      <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-8 scrollbar-hide">
         <div className="max-w-4xl mx-auto">
           <KnowledgeHeader headingClass={headingClass} subtitle={t('knowledge_subtitle')} />
 

@@ -564,27 +564,28 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
             initial={{ opacity: 0, scale: 0.8, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 20 }}
-            className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-[1000] flex items-center gap-2"
+            className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-3 md:bottom-6 md:right-6 z-[1000] flex items-center gap-2"
           >
             <button
               onClick={() => setIsOpen(true)}
-              className="group flex items-center gap-3 px-3.5 py-2.5 rounded-[4px] bg-slate-950/90 hover:bg-slate-900 border border-emerald-500/40 hover:border-emerald-400 text-white shadow-2xl backdrop-blur-xl transition-all hover:scale-105 active:scale-95 shadow-emerald-950/60"
+              className="group flex items-center gap-2.5 sm:gap-3 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-2xl bg-slate-950/90 hover:bg-slate-900 border border-emerald-500/40 hover:border-emerald-400 text-white shadow-2xl backdrop-blur-xl transition-all hover:scale-105 active:scale-95 shadow-emerald-950/60"
+              aria-label="Open AI Agronomist"
             >
               <div className="relative">
-                <div className="w-8 h-8 rounded-[4px] bg-emerald-500/20 border border-emerald-500/50 flex items-center justify-center text-emerald-400">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/50 flex items-center justify-center text-emerald-400">
                   <Bot className="w-4 h-4" />
                 </div>
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-400 rounded-[2px] ring-2 ring-slate-950 animate-pulse" />
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-400 rounded-full ring-2 ring-slate-950 animate-pulse" />
               </div>
 
               <div className="text-left pr-1">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-black tracking-wide text-white">AI Agronomist</span>
-                  <span className="px-1.5 py-0.5 rounded-[3px] text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  <span className="text-xs font-bold tracking-wide text-white">AI Agronomist</span>
+                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                     ONLINE
                   </span>
                 </div>
-                <span className="text-[10px] text-slate-400 font-medium">Live Chat, Leaf Scan & Voice STT</span>
+                <span className="text-[10px] text-slate-400 font-medium hidden sm:block">Live Chat, Leaf Scan & Voice STT</span>
               </div>
             </button>
           </motion.div>
@@ -599,7 +600,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 30 }}
             transition={{ type: 'spring', damping: 25, stiffness: 260 }}
-            className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-[1100] w-[calc(100vw-2rem)] sm:w-[440px] max-w-[440px] max-h-[85vh] h-[85vh] bg-slate-950/95 border border-emerald-500/30 rounded shadow-2xl backdrop-blur-2xl flex flex-col overflow-hidden text-slate-100 shadow-emerald-950/80"
+            className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-2 sm:right-6 md:bottom-6 md:right-6 z-[1100] w-[calc(100vw-1rem)] sm:w-[440px] max-w-[440px] max-h-[calc(100dvh-6rem)] h-[calc(100dvh-6rem)] md:max-h-[85vh] md:h-[85vh] bg-slate-950/95 border border-emerald-500/30 rounded-2xl shadow-2xl backdrop-blur-2xl flex flex-col overflow-hidden text-slate-100 shadow-emerald-950/80"
           >
             {/* Drawer Header */}
             <div className="p-4 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md flex items-center justify-between">

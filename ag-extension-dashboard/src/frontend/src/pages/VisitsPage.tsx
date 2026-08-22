@@ -57,16 +57,16 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
   return (
     <main id="visits-main" className="max-w-7xl mx-auto space-y-6">
       {/* ── Top Bento Banner & Quick Actions ── */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40">
-              <MapPin className="w-6 h-6 text-emerald-400" />
+      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-4 sm:p-6 shadow-xl relative overflow-hidden">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40 shrink-0">
+              <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
             </div>
             <div>
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl font-bold tracking-tight text-white">Field Visits & Itineraries</h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+              <div className="flex items-center gap-2 sm:gap-2.5">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Field Visits & Itineraries</h1>
+                <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                   <Radio className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />
                   Dispatch Radar
                 </span>
@@ -79,21 +79,21 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
 
           <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end flex-wrap">
             {/* Telemetry Stat Chips */}
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-white/80 font-mono">
+            <div className="flex items-center gap-2 overflow-x-auto">
+              <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-white/80 font-mono whitespace-nowrap">
                 Total: <strong className="text-white">{visits.length}</strong>
               </span>
-              <span className="px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 font-mono">
+              <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 font-mono whitespace-nowrap">
                 Pending: <strong>{pendingCount}</strong>
               </span>
-              <span className="px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 font-mono">
+              <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 font-mono whitespace-nowrap">
                 Done: <strong>{completedCount}</strong>
               </span>
             </div>
 
             <button
               onClick={() => setShowVisitModal(true)}
-              className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-950/40 transition-all flex items-center gap-2"
+              className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-950/40 transition-all flex items-center justify-center gap-2 active:scale-95"
             >
               <Plus className="w-4 h-4" />
               <span>{t('visits_schedule_new') || 'Schedule Field Visit'}</span>
@@ -102,7 +102,7 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
         </div>
 
         {/* Status Filter Tabs */}
-        <div className="flex items-center gap-2 pt-6 mt-6 border-t border-white/5 overflow-x-auto">
+        <div className="flex items-center gap-2 pt-4 sm:pt-6 mt-4 sm:mt-6 border-t border-white/5 overflow-x-auto pb-1">
           {[
             { id: 'all', label: 'All Itineraries', count: visits.length },
             { id: 'pending', label: 'Active & Pending', count: pendingCount },
@@ -112,7 +112,7 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
             <button
               key={tab.id}
               onClick={() => setFilter(tab.id as typeof filter)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border whitespace-nowrap ${
                 filter === tab.id
                   ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm shadow-emerald-950/40'
                   : 'bg-white/[0.02] text-white/50 border-white/5 hover:border-white/15 hover:text-white'

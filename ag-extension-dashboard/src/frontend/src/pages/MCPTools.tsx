@@ -160,18 +160,18 @@ export function MCPTools() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className={`text-2xl ${headingClass}`}>System Tools</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">{t('mcp_tools_subtitle')}</p>
+          <h1 className={`text-2xl font-bold tracking-tight text-white ${headingClass}`}>System Tools</h1>
+          <p className="text-white/60 text-xs sm:text-sm mt-1">{t('mcp_tools_subtitle')}</p>
         </div>
         <button
           onClick={handleRefresh}
           disabled={isRefreshing}
-          className={`flex items-center gap-2 px-4 py-2 bg-primary-600 text-white ${btnClass} hover:bg-primary-700 disabled:opacity-50`}
+          className={`flex items-center gap-2 px-4 py-2 bg-primary-600 text-white ${btnClass} hover:bg-primary-700 disabled:opacity-50 text-xs sm:text-sm font-bold rounded-xl transition-all shadow-md self-start sm:self-auto`}
         >
           <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          Refresh
+          <span>Refresh</span>
         </button>
       </div>
 

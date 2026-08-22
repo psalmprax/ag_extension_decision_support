@@ -9,6 +9,7 @@ import {
   Sparkles,
   Sprout,
   CheckCircle2,
+  ArrowLeft,
 } from 'lucide-react';
 import { Conversation, ChatMessage } from '../types/dashboard';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -20,7 +21,7 @@ import { useDemoMode } from '@/demo';
 interface FarmerChatPageProps {
   farmerConversations: Conversation[];
   activeFarmerConvId: string | null;
-  setActiveFarmerConvId: (id: string) => void;
+  setActiveFarmerConvId: (id: string | null) => void;
   loadFarmerMessages: (id: string) => void;
   farmerChatMessages: ChatMessage[];
   farmerChatInput: string;
@@ -58,7 +59,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   ];
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] gap-6">
+    <div className="flex flex-col h-[calc(100dvh-150px)] md:h-[calc(100vh-140px)] gap-4 md:gap-6">
       {/* Header & Status Ribbon */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -68,10 +69,10 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
               Multi-Channel Advisory Bridge
             </span>
           </div>
-          <h1 className={`text-3xl font-extrabold text-white tracking-tight ${headingClass}`}>
+          <h1 className={`text-2xl sm:text-3xl font-extrabold text-white tracking-tight ${headingClass}`}>
             Farmer Chat
           </h1>
-          <p className="text-white/60 text-sm mt-1 font-medium">
+          <p className="text-white/60 text-xs sm:text-sm mt-1 font-medium">
             {t('chat_subtitle') || 'Bi-directional advisory across SMS, WhatsApp, Telegram, and USSD.'}
           </p>
         </div>
@@ -84,9 +85,13 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
         </div>
       </div>
 
-      <div className="flex flex-1 gap-6 overflow-hidden">
+      <div className="flex flex-1 gap-4 md:gap-6 overflow-hidden relative">
         {/* Left Column: Farmer Conversations Roster */}
-        <div className="w-80 flex flex-col backdrop-blur-xl bg-slate-900/70 border border-white/[0.08] rounded-3xl shadow-xl shadow-emerald-950/20 overflow-hidden">
+        <div
+          className={`w-full md:w-80 flex flex-col backdrop-blur-xl bg-slate-900/70 border border-white/[0.08] rounded-3xl shadow-xl shadow-emerald-950/20 overflow-hidden ${
+            activeFarmerConvId ? 'hidden md:flex' : 'flex'
+          }`}
+        >
           <div className="p-4 border-b border-white/[0.08] flex justify-between items-center bg-slate-950/40">
             <div>
               <h3 className="font-bold text-sm text-white">{t('chat_farmer_chats') || 'Conversations'}</h3>
@@ -98,7 +103,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                 className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/15 text-amber-400 border border-amber-500/25 rounded-lg text-xxs font-bold uppercase tracking-wider"
                 title={t('demo_not_available') ?? 'Not available in demo version'}
               >
-                <Lock className="w-3 h-3" />
+                <Lock className="w-3.5 h-3.5" />
                 <span>Demo</span>
               </span>
             ) : (
@@ -184,33 +189,44 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
         </div>
 
         {/* Center Column: Active Chat Thread */}
-        <div className="flex-1 flex flex-col backdrop-blur-xl bg-slate-900/70 border border-white/[0.08] rounded-3xl shadow-xl shadow-emerald-950/20 overflow-hidden">
+        <div
+          className={`flex-1 flex flex-col backdrop-blur-xl bg-slate-900/70 border border-white/[0.08] rounded-3xl shadow-xl shadow-emerald-950/20 overflow-hidden ${
+            activeFarmerConvId ? 'flex' : 'hidden md:flex'
+          }`}
+        >
           {activeFarmerConvId && activeConv ? (
             <>
               {/* Active Conversation Top Bar */}
-              <div className="p-4 border-b border-white/[0.08] flex justify-between items-center bg-slate-950/40">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-300 font-bold shadow-md shadow-emerald-950/30">
+              <div className="p-3 sm:p-4 border-b border-white/[0.08] flex justify-between items-center bg-slate-950/40">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <button
+                    onClick={() => setActiveFarmerConvId(null)}
+                    className="md:hidden p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white transition-all mr-1"
+                    aria-label="Back to conversations"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </button>
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-300 font-bold shadow-md shadow-emerald-950/30 shrink-0">
                     {activeConv.farmerName?.[0] || 'F'}
                   </div>
-                  <div>
-                    <h4 className="font-bold text-sm text-white flex items-center gap-2">
-                      {activeConv.farmerName}
-                      <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+                  <div className="min-w-0">
+                    <h4 className="font-bold text-xs sm:text-sm text-white flex items-center gap-2 truncate">
+                      <span className="truncate">{activeConv.farmerName}</span>
+                      <span className="hidden sm:inline text-[9px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 shrink-0">
                         SMS & WhatsApp Synced
                       </span>
                     </h4>
                     <div className="flex items-center gap-2 text-xxs text-white/40 font-mono">
                       <span>VITAL SCORE: 84/100</span>
                       <span>•</span>
-                      <span>REGION: NAKURU RURAL</span>
+                      <span className="truncate">NAKURU RURAL</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                  <span className="text-xxs font-mono text-emerald-400 font-bold uppercase">
+                  <span className="text-xxs font-mono text-emerald-400 font-bold uppercase hidden sm:inline">
                     Live Channel
                   </span>
                 </div>

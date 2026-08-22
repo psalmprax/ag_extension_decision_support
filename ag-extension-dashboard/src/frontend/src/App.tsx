@@ -503,7 +503,7 @@ function App() {
           />
 
           <main
-            className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarOpen ? 'md:ml-72' : ''} relative pb-24 md:pb-6`}
+            className={`flex-1 overflow-y-auto overflow-x-hidden transition-all duration-300 ${sidebarOpen ? 'md:ml-72' : ''} relative pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-6`}
           >
             <ErrorBoundary componentName="MainContent">
               <Suspense
@@ -513,7 +513,7 @@ function App() {
                   </div>
                 }
               >
-                <div className="p-3.5 sm:p-6">
+                <div className="p-3 sm:p-6 max-w-full overflow-x-hidden">
                   <TabContent
                     activeTab={activeTab}
                     headingClass={headingClass}

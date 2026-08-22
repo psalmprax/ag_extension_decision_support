@@ -109,16 +109,16 @@ export function Telemetry() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className={`text-2xl ${headingClass}`}>System Telemetry</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">{t('telemetry_subtitle')}</p>
+          <h1 className={`text-2xl font-bold tracking-tight text-white ${headingClass}`}>System Telemetry</h1>
+          <p className="text-white/60 text-xs sm:text-sm mt-1">{t('telemetry_subtitle')}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <select
             value={timeRange}
             onChange={e => setTimeRange(Number(e.target.value))}
-            className={`px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 ${radiusClass} text-sm`}
+            className={`px-3 py-2 bg-slate-900 border border-white/10 ${radiusClass} text-xs sm:text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary-400`}
           >
             <option value={1}>Last Hour</option>
             <option value={24}>Last 24 Hours</option>
@@ -128,10 +128,10 @@ export function Telemetry() {
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className={`flex items-center gap-2 px-4 py-2 bg-primary-600 text-white ${btnClass} hover:bg-primary-700 disabled:opacity-50`}
+            className={`flex items-center gap-2 px-4 py-2 bg-primary-600 text-white ${btnClass} hover:bg-primary-700 disabled:opacity-50 text-xs sm:text-sm font-bold transition-all shadow-md`}
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            Refresh
+            <span>Refresh</span>
           </button>
         </div>
       </div>

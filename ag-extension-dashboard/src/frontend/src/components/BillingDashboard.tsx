@@ -319,16 +319,16 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
   const { t } = useLanguage();
 
   return (
-    <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden">
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40">
-            <CreditCard className="w-6 h-6 text-emerald-400" />
+    <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-4 sm:p-6 shadow-xl relative overflow-hidden">
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40 shrink-0">
+            <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
           </div>
           <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl font-bold tracking-tight text-white">Billing & Subscriptions</h1>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Billing & Subscriptions</h1>
+              <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                 <Radio className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />
                 Commerce Radar
               </span>
@@ -341,14 +341,14 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
 
         <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end flex-wrap">
           {/* Telemetry Stat Chips matching VisitsPage */}
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-white/80 font-mono">
+          <div className="flex items-center gap-2 overflow-x-auto">
+            <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-white/80 font-mono whitespace-nowrap">
               Tier: <strong className="text-white">{currentPlanName}</strong>
             </span>
-            <span className="px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 font-mono">
+            <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 font-mono whitespace-nowrap">
               Status: <strong>{isProActive ? 'Active' : 'Starter'}</strong>
             </span>
-            <span className="px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 font-mono">
+            <span className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 font-mono whitespace-nowrap">
               Billing: <strong>{isAnnual ? 'Annual (-20%)' : 'Monthly'}</strong>
             </span>
           </div>
@@ -359,7 +359,7 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
               void onPortal();
             }}
             disabled={actionLoading === 'portal'}
-            className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-950/40 transition-all flex items-center gap-2"
+            className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-950/40 transition-all flex items-center justify-center gap-2 active:scale-95"
           >
             {actionLoading === 'portal' ? (
               <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
@@ -372,8 +372,8 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
       </div>
 
       {/* Status Filter / Navigation Tabs matching VisitsPage */}
-      <div className="flex items-center justify-between gap-2 pt-6 mt-6 border-t border-white/5 overflow-x-auto">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 sm:pt-6 mt-4 sm:mt-6 border-t border-white/5">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
           {[
             { id: 'plans', label: 'Plans & Pricing', icon: Sparkles },
             { id: 'usage', label: 'Quota & Telemetry', icon: Activity },
@@ -387,7 +387,7 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
                 triggerHaptic('light');
                 setActiveTab(tab.id as 'plans' | 'usage' | 'payments' | 'invoices' | 'admin');
               }}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm shadow-emerald-950/40'
                   : 'bg-white/[0.02] text-white/50 border-white/5 hover:border-white/15 hover:text-white'
@@ -399,8 +399,10 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
           ))}
         </div>
 
-        <div className="flex items-center gap-3">
-          <LiquidToggleSwitch compact={true} />
+        <div className="flex items-center gap-3 self-start sm:self-auto shrink-0">
+          <div className="hidden sm:block">
+            <LiquidToggleSwitch compact={true} />
+          </div>
           <div className="flex items-center gap-1 p-1 bg-white/[0.03] rounded-xl border border-white/10">
             <button
               type="button"

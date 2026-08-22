@@ -68,25 +68,26 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const { darkMode, setDarkMode, themeName, setThemeName } = useAppStore();
 
   const headerClass = cn(
-    'fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 backdrop-blur-xl border-b border-gray-200 dark:border-white/10 shadow-[0_4px_30px_var(--color-outline)] dark:shadow-[0_4px_30px_var(--color-outline)]',
+    'fixed top-0 w-full z-50 flex justify-between items-center px-3 sm:px-6 h-16 backdrop-blur-xl border-b border-gray-200 dark:border-white/10 shadow-[0_4px_30px_var(--color-outline)] dark:shadow-[0_4px_30px_var(--color-outline)]',
     'bg-white/30 dark:bg-slate-950/30'
   );
 
   return (
     <header className={headerClass}>
-      <div className="flex items-center gap-6">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-6">
+        <div className="flex items-center gap-1.5 sm:gap-3">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="h-12 w-12 flex items-center justify-center rounded-lg hover:bg-white/5 transition-all text-gray-400"
+            className="h-10 w-10 sm:h-12 sm:w-12 flex items-center justify-center rounded-lg hover:bg-white/5 transition-all text-gray-400"
+            aria-label="Toggle navigation menu"
           >
-            <Menu className="w-6 h-6" />
+            <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
           <Link to="/dashboard" aria-label="Go to dashboard">
             <img
               src="/logo.png"
               alt="Logo"
-              className="w-8 h-8 rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
             />
           </Link>
         </div>
@@ -122,7 +123,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-1.5 sm:gap-4">
         <GlobalSearch
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
@@ -142,36 +143,41 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <WeatherWidget location={weatherLocation} />
         </div>
 
-        <div className="flex items-center gap-3 border-r border-gray-200 dark:border-white/10 pr-4">
+        <div className="flex items-center gap-1.5 sm:gap-3 border-r border-gray-200 dark:border-white/10 pr-2 sm:pr-4">
           <div className="hidden lg:flex items-center gap-2 scale-90 origin-right">
             <LanguageSwitcher compact />
             <ThemeSwitcher currentTheme={themeName} onThemeChange={setThemeName} />
           </div>
-          <LiquidToggleSwitch compact />
+          <div className="hidden sm:block">
+            <LiquidToggleSwitch compact />
+          </div>
           <button
             onClick={() => setDarkMode(!darkMode)}
-            className="h-12 w-12 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 hover:border-primary-400/50 hover:bg-white/10 transition-all text-slate-400 hover:text-primary-400 backdrop-blur-sm"
+            className="h-9 w-9 sm:h-12 sm:w-12 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 hover:border-primary-400/50 hover:bg-white/10 transition-all text-slate-400 hover:text-primary-400 backdrop-blur-sm"
             title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            aria-label={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           >
-            {darkMode ? <SunIcon className="w-6 h-6" /> : <MoonIcon className="w-6 h-6" />}
+            {darkMode ? <SunIcon className="w-4 h-4 sm:w-6 sm:h-6" /> : <MoonIcon className="w-4 h-4 sm:w-6 sm:h-6" />}
           </button>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <button
             onClick={() => setIsNotificationPanelOpen(true)}
-            className="text-slate-400 hover:text-primary-400 transition-colors h-12 w-12 flex items-center justify-center rounded-full hover:bg-white/5 relative"
+            className="text-slate-400 hover:text-primary-400 transition-colors h-9 w-9 sm:h-12 sm:w-12 flex items-center justify-center rounded-full hover:bg-white/5 relative"
+            aria-label="Open notifications"
           >
-            <Bell className="w-6 h-6" />
+            <Bell className="w-4 h-4 sm:w-6 sm:h-6" />
             {apiUnreadCount > 0 && (
-              <span className="absolute top-2 right-2 w-2 h-2 bg-primary-400 rounded-full animate-pulse"></span>
+              <span className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-2 h-2 bg-primary-400 rounded-full animate-pulse"></span>
             )}
           </button>
           <button
             onClick={() => setShowSettingsPanel(true)}
-            className="text-slate-400 hover:text-primary-400 transition-colors h-12 w-12 flex items-center justify-center rounded-full hover:bg-white/5"
+            className="text-slate-400 hover:text-primary-400 transition-colors h-9 w-9 sm:h-12 sm:w-12 flex items-center justify-center rounded-full hover:bg-white/5"
+            aria-label="Open settings"
           >
-            <Settings className="w-6 h-6" />
+            <Settings className="w-4 h-4 sm:w-6 sm:h-6" />
           </button>
         </div>
 
