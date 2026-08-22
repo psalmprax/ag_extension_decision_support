@@ -5,9 +5,9 @@ import {
   Layers,
   Droplet,
   AlertTriangle,
-  CheckCircle,
   Download,
   Loader2,
+  FlaskConical,
 } from 'lucide-react';
 import { analyzeSoilImage, type SoilAnalysisResult } from '../../api/diseaseService';
 import toast from 'react-hot-toast';
@@ -20,11 +20,322 @@ interface Props {
   addNotification: (notification: { type: string; message: string }) => void;
 }
 
+const SoilUploadSection: React.FC<{
+  cropType: string;
+  setCropType: (v: string) => void;
+  farmNotes: string;
+  setFarmNotes: (v: string) => void;
+  soilImagePreview: string | null;
+  selectedSoilImage: File | null;
+  onSelectImage: (f: File) => void;
+  onRemoveImage: () => void;
+  onAnalyze: () => void;
+  isAnalyzing: boolean;
+}> = ({
+  cropType,
+  setCropType,
+  farmNotes,
+  setFarmNotes,
+  soilImagePreview,
+  selectedSoilImage,
+  onSelectImage,
+  onRemoveImage,
+  onAnalyze,
+  isAnalyzing,
+}) => (
+  <div className="p-5 rounded-[4px] bg-slate-900/80 border border-slate-800 flex flex-col justify-between space-y-4">
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
+          <FlaskConical className="w-4 h-4 text-emerald-400" />
+          Soil Chemistry & Texture Sample
+        </h3>
+        <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-[3px] border border-emerald-500/30">
+          MULTISPECTRAL SENSOR
+        </span>
+      </div>
+
+      <div className="space-y-3">
+        <div>
+          <label className="block text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider mb-1">
+            Target Crop Context
+          </label>
+          <input
+            type="text"
+            value={cropType}
+            onChange={e => setCropType(e.target.value)}
+            placeholder="e.g. Maize, Coffee, Legumes, Vegetables"
+            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-[3px] text-xs text-white placeholder-slate-600 focus:border-emerald-500/60 font-mono transition-all"
+          />
+        </div>
+
+        <div>
+          <label className="block text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider mb-1">
+            Field Observation Notes
+          </label>
+          <textarea
+            value={farmNotes}
+            onChange={e => setFarmNotes(e.target.value)}
+            placeholder="Soil slope, topsoil drainage, previous season fertilizer..."
+            rows={2}
+            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-[3px] text-xs text-white placeholder-slate-600 focus:border-emerald-500/60 font-mono transition-all resize-none"
+          />
+        </div>
+
+        {/* Viewfinder Dropzone */}
+        <div className="relative rounded-[4px] border-2 border-dashed border-slate-700/80 hover:border-emerald-500/60 bg-slate-950/80 p-5 text-center transition-all group overflow-hidden">
+          {/* Corner Reticles */}
+          <div className="absolute top-1.5 left-1.5 w-3 h-3 border-t-2 border-l-2 border-emerald-400/80" />
+          <div className="absolute top-1.5 right-1.5 w-3 h-3 border-t-2 border-r-2 border-emerald-400/80" />
+          <div className="absolute bottom-1.5 left-1.5 w-3 h-3 border-b-2 border-l-2 border-emerald-400/80" />
+          <div className="absolute bottom-1.5 right-1.5 w-3 h-3 border-b-2 border-r-2 border-emerald-400/80" />
+
+          {soilImagePreview ? (
+            <div className="space-y-3 relative z-10">
+              <div className="relative max-w-xs mx-auto rounded-[3px] overflow-hidden border border-emerald-500/40 shadow-lg shadow-emerald-950/60">
+                <img src={soilImagePreview} alt="Soil Specimen" className="w-full h-40 object-cover" />
+                {isAnalyzing && (
+                  <div className="absolute inset-0 bg-emerald-500/20 backdrop-blur-[1px] flex items-center justify-center">
+                    <div className="w-full h-0.5 bg-emerald-400 shadow-[0_0_8px_#10b981] animate-pulse" />
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={onRemoveImage}
+                className="text-[11px] font-mono text-rose-400 hover:text-rose-300 underline uppercase tracking-wider"
+              >
+                [ Clear & Retake ]
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3 py-3">
+              <div className="w-11 h-11 mx-auto rounded-[4px] bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 group-hover:text-emerald-400 group-hover:border-emerald-500/40 transition-colors">
+                <Upload className="w-5 h-5" />
+              </div>
+              <div>
+                <label htmlFor="soil-upload" className="cursor-pointer">
+                  <span className="text-xs font-bold text-emerald-400 hover:text-emerald-300 uppercase tracking-wider">
+                    Upload Soil Profile Photo
+                  </span>
+                  <p className="text-[10px] font-mono text-slate-500 mt-1">
+                    Direct topsoil or clod close-up (Max 10MB)
+                  </p>
+                </label>
+                <input
+                  id="soil-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (file) onSelectImage(file);
+                  }}
+                  className="hidden"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+
+    <button
+      onClick={onAnalyze}
+      disabled={!selectedSoilImage || isAnalyzing}
+      className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black rounded-[4px] shadow-lg shadow-emerald-950/60 uppercase tracking-widest disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+    >
+      {isAnalyzing ? (
+        <>
+          <Loader2 className="w-4 h-4 animate-spin text-white" />
+          <span>Analyzing Soil Chemistry & Texture...</span>
+        </>
+      ) : (
+        <>
+          <Activity className="w-4 h-4" />
+          <span>Execute Soil Diagnostics</span>
+        </>
+      )}
+    </button>
+  </div>
+);
+
+const SoilNpkGrid: React.FC<{ npk: SoilAnalysisResult['npkDeficiencies'] }> = ({ npk }) => {
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'optimal':
+        return 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30';
+      case 'low':
+        return 'text-rose-300 bg-rose-500/10 border-rose-500/30';
+      default:
+        return 'text-amber-300 bg-amber-500/10 border-amber-500/30';
+    }
+  };
+
+  return (
+    <div>
+      <h4 className="text-xs font-black text-white uppercase tracking-wider mb-2">
+        Nutrient Balance Matrix (NPK)
+      </h4>
+      <div className="grid grid-cols-3 gap-2.5">
+        <div className="p-2.5 rounded-[4px] bg-slate-950 border border-slate-800 text-center">
+          <div className="w-7 h-7 rounded-[3px] bg-rose-500/15 border border-rose-500/30 flex items-center justify-center mx-auto mb-1 text-rose-400 font-bold font-mono text-xs">
+            N
+          </div>
+          <p className="text-[10px] font-mono text-slate-400 uppercase">Nitrogen</p>
+          <span className={`inline-block mt-1 px-1.5 py-0.2 rounded-[2px] text-[9px] font-mono font-bold uppercase border ${getStatusBadge(npk.nitrogen)}`}>
+            {npk.nitrogen}
+          </span>
+        </div>
+
+        <div className="p-2.5 rounded-[4px] bg-slate-950 border border-slate-800 text-center">
+          <div className="w-7 h-7 rounded-[3px] bg-sky-500/15 border border-sky-500/30 flex items-center justify-center mx-auto mb-1 text-sky-400 font-bold font-mono text-xs">
+            P
+          </div>
+          <p className="text-[10px] font-mono text-slate-400 uppercase">Phosphorus</p>
+          <span className={`inline-block mt-1 px-1.5 py-0.2 rounded-[2px] text-[9px] font-mono font-bold uppercase border ${getStatusBadge(npk.phosphorus)}`}>
+            {npk.phosphorus}
+          </span>
+        </div>
+
+        <div className="p-2.5 rounded-[4px] bg-slate-950 border border-slate-800 text-center">
+          <div className="w-7 h-7 rounded-[3px] bg-amber-500/15 border border-amber-500/30 flex items-center justify-center mx-auto mb-1 text-amber-400 font-bold font-mono text-xs">
+            K
+          </div>
+          <p className="text-[10px] font-mono text-slate-400 uppercase">Potassium</p>
+          <span className={`inline-block mt-1 px-1.5 py-0.2 rounded-[2px] text-[9px] font-mono font-bold uppercase border ${getStatusBadge(npk.potassium)}`}>
+            {npk.potassium}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SoilResultsHUD: React.FC<{ soilAnalysis: SoilAnalysisResult | null }> = ({
+  soilAnalysis,
+}) => {
+  if (!soilAnalysis) {
+    return (
+      <div className="p-5 rounded-[4px] bg-slate-900/80 border border-slate-800 flex flex-col justify-center space-y-4 text-center">
+        <div className="py-12 text-slate-500 space-y-2">
+          <FlaskConical className="w-10 h-10 mx-auto opacity-30 text-emerald-400" />
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+            Awaiting Soil Sample
+          </p>
+          <p className="text-[11px] font-mono text-slate-500 max-w-xs mx-auto">
+            Upload topsoil photos on the left to infer texture, NPK balance, and moisture retention.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-5 rounded-[4px] bg-slate-900/80 border border-slate-800 space-y-4">
+      {/* Overall Health Score Pod */}
+      <div className="p-3.5 rounded-[4px] bg-slate-950 border border-emerald-500/30">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Activity className="w-4 h-4 text-emerald-400" />
+            <h4 className="text-xs font-black text-white uppercase tracking-wider">
+              Agronomic Soil Index
+            </h4>
+          </div>
+          <span className="text-[10px] font-mono text-emerald-400 font-bold">
+            CONFIDENCE: {(soilAnalysis.confidence * 100).toFixed(1)}%
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-2 bg-slate-900 rounded-[2px] overflow-hidden border border-slate-800">
+            <div
+              className="h-full bg-gradient-to-r from-rose-500 via-amber-400 to-emerald-500 transition-all duration-1000"
+              style={{ width: `${soilAnalysis.overallHealthScore ?? 0}%` }}
+            />
+          </div>
+          <span className="text-lg font-mono font-black text-emerald-400">
+            {soilAnalysis.overallHealthScore ?? 'N/A'}/100
+          </span>
+        </div>
+      </div>
+
+      {/* Physics Bento Grid */}
+      <div className="grid grid-cols-2 gap-2">
+        <div className="p-2.5 rounded-[4px] bg-slate-950 border border-slate-800">
+          <div className="flex items-center gap-1 text-[10px] font-mono text-slate-400 mb-0.5 uppercase">
+            <Layers className="w-3 h-3 text-emerald-400" />
+            <span>Texture Class</span>
+          </div>
+          <p className="text-xs font-bold text-white">{soilAnalysis.texture}</p>
+        </div>
+
+        <div className="p-2.5 rounded-[4px] bg-slate-950 border border-slate-800">
+          <div className="flex items-center gap-1 text-[10px] font-mono text-slate-400 mb-0.5 uppercase">
+            <Droplet className="w-3 h-3 text-sky-400" />
+            <span>Moisture Level</span>
+          </div>
+          <p className="text-xs font-bold text-white">{soilAnalysis.estimatedMoisture}</p>
+        </div>
+
+        <div className="p-2.5 rounded-[4px] bg-slate-950 border border-slate-800">
+          <div className="flex items-center gap-1 text-[10px] font-mono text-slate-400 mb-0.5 uppercase">
+            <Activity className="w-3 h-3 text-purple-400" />
+            <span>Drainage Class</span>
+          </div>
+          <p className="text-xs font-bold text-white">{soilAnalysis.drainageClass}</p>
+        </div>
+
+        <div className="p-2.5 rounded-[4px] bg-slate-950 border border-slate-800">
+          <div className="flex items-center gap-1 text-[10px] font-mono text-slate-400 mb-0.5 uppercase">
+            <AlertTriangle className="w-3 h-3 text-amber-400" />
+            <span>Discoloration</span>
+          </div>
+          <p className="text-xs font-bold text-white truncate" title={soilAnalysis.colorDiscoloration}>
+            {soilAnalysis.colorDiscoloration}
+          </p>
+        </div>
+      </div>
+
+      {/* NPK Grid */}
+      <SoilNpkGrid npk={soilAnalysis.npkDeficiencies} />
+
+      {/* Suitable Crops */}
+      {soilAnalysis.cropSuitability.length > 0 && (
+        <div>
+          <h4 className="text-xs font-black text-white uppercase tracking-wider mb-1.5">
+            Optimal Crop Suitability
+          </h4>
+          <div className="flex flex-wrap gap-1.5">
+            {soilAnalysis.cropSuitability.map((crop, idx) => (
+              <span
+                key={idx}
+                className="px-2 py-0.5 rounded-[3px] bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[11px] font-mono"
+              >
+                ✓ {crop}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* PDF Export Button */}
+      <div className="pt-2 border-t border-slate-800">
+        <button
+          onClick={() => toast.success('Exported Soil Diagnostics Telemetry Report (PDF)')}
+          className="w-full py-2.5 bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:border-emerald-500/40 text-slate-300 text-xs font-bold rounded-[3px] transition-all flex items-center justify-center gap-2 uppercase tracking-wider"
+        >
+          <Download className="w-3.5 h-3.5" />
+          <span>Export Soil Report (PDF)</span>
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export function SoilDiagnosticsTab({
   cropType,
   setCropType,
-  radiusClass,
-  btnClass,
+  radiusClass: _radiusClass,
+  btnClass: _btnClass,
   addNotification,
 }: Props) {
   const [selectedSoilImage, setSelectedSoilImage] = useState<File | null>(null);
@@ -78,312 +389,25 @@ export function SoilDiagnosticsTab({
     }
   };
 
-  const getNpkStatusClass = (status: string) => {
-    if (status === 'optimal') return 'text-green-700 bg-green-50 dark:bg-green-900/20';
-    if (status === 'low') return 'text-red-700 bg-red-50 dark:bg-red-900/20';
-    return 'text-amber-700 bg-amber-50 dark:bg-amber-900/20';
-  };
-
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Input & Upload Column */}
-      <div className="card p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Soil Sample Diagnostics
-        </h3>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <SoilUploadSection
+        cropType={cropType}
+        setCropType={setCropType}
+        farmNotes={farmNotes}
+        setFarmNotes={setFarmNotes}
+        soilImagePreview={soilImagePreview}
+        selectedSoilImage={selectedSoilImage}
+        onSelectImage={handleSoilImageSelect}
+        onRemoveImage={() => {
+          setSelectedSoilImage(null);
+          setSoilImagePreview(null);
+        }}
+        onAnalyze={handleAnalyzeSoil}
+        isAnalyzing={isAnalyzingSoil}
+      />
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Target Crop (Optional)
-            </label>
-            <input
-              type="text"
-              value={cropType}
-              onChange={e => setCropType(e.target.value)}
-              placeholder="e.g., maize, tomato, wheat"
-              className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 ${radiusClass} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Field / Farm Notes (Optional)
-            </label>
-            <textarea
-              value={farmNotes}
-              onChange={e => setFarmNotes(e.target.value)}
-              placeholder="Describe soil location, previous crop, visible anomalies..."
-              rows={3}
-              className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 ${radiusClass} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}
-            />
-          </div>
-
-          {/* Soil Image Upload */}
-          <div
-            className={`border-2 border-dashed border-gray-300 dark:border-gray-600 ${radiusClass} p-6 text-center`}
-          >
-            {soilImagePreview ? (
-              <div className="space-y-4">
-                <img
-                  src={soilImagePreview}
-                  alt="Soil Sample"
-                  className={`max-w-full max-h-48 mx-auto ${radiusClass}`}
-                />
-                <button
-                  onClick={() => {
-                    setSelectedSoilImage(null);
-                    setSoilImagePreview(null);
-                  }}
-                  className="text-red-600 hover:text-red-700 text-sm"
-                >
-                  Remove Soil Sample Image
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <Upload className="w-12 h-12 mx-auto text-gray-400" />
-                <div>
-                  <label htmlFor="soil-upload" className="cursor-pointer">
-                    <span className="text-primary-600 hover:text-primary-700 font-medium">
-                      Click to upload soil photo
-                    </span>
-                    <span className="text-gray-600 dark:text-gray-400"> or drag and drop</span>
-                  </label>
-                  <input
-                    id="soil-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={e => {
-                      const file = e.target.files?.[0];
-                      if (file) handleSoilImageSelect(file);
-                    }}
-                    className="hidden"
-                  />
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Capture clear, close-up soil samples (PNG, JPG up to 10MB)
-                </p>
-              </div>
-            )}
-          </div>
-
-          <button
-            onClick={handleAnalyzeSoil}
-            disabled={!selectedSoilImage || isAnalyzingSoil}
-            className={`w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary-600 text-white ${btnClass} hover:bg-primary-700 disabled:opacity-50`}
-          >
-            {isAnalyzingSoil ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Analyzing Soil Sample...
-              </>
-            ) : (
-              <>
-                <Activity className="w-4 h-4" />
-                Analyze Soil Sample
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Diagnostics Dashboard Column */}
-      <div className="card p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Diagnostics Dashboard
-        </h3>
-
-        {soilAnalysis ? (
-          <div className="space-y-6">
-            {/* Overall Score & Confidence */}
-            <div
-              className={`p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-800 ${radiusClass}`}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-primary-600" />
-                  <h4 className="font-semibold text-primary-800 dark:text-primary-200">
-                    Overall Soil Health Score
-                  </h4>
-                </div>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  Confidence: {(soilAnalysis.confidence * 100).toFixed(1)}%
-                </span>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="flex-1 h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-red-500 via-yellow-400 to-green-500 transition-all duration-1000"
-                    style={{ width: `${soilAnalysis.overallHealthScore ?? 0}%` }}
-                  />
-                </div>
-                <span className="text-lg font-bold text-primary-700 dark:text-primary-300">
-                  {soilAnalysis.overallHealthScore === null
-                    ? 'Unavailable'
-                    : `${soilAnalysis.overallHealthScore}/100`}
-                </span>
-              </div>
-              <div className="mt-2 text-xs text-gray-600 dark:text-gray-300">
-                <div>
-                  {soilAnalysis.reviewStatus === 'needs_expert_review'
-                    ? 'Needs expert review'
-                    : 'Evidence review available'}
-                </div>
-                <div>Source: {soilAnalysis.provenance.source}</div>
-                {soilAnalysis.provenance.provider && (
-                  <div>Provider: {soilAnalysis.provenance.provider}</div>
-                )}
-              </div>
-            </div>
-
-            {/* Physical Attributes Grid */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg">
-                <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
-                  <Layers className="w-3.5 h-3.5 text-primary-500" />
-                  <span>Soil Texture</span>
-                </div>
-                <p className="font-semibold text-sm text-gray-900 dark:text-white">
-                  {soilAnalysis.texture}
-                </p>
-              </div>
-              <div className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg">
-                <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
-                  <Droplet className="w-3.5 h-3.5 text-blue-500" />
-                  <span>Moisture Level</span>
-                </div>
-                <p className="font-semibold text-sm text-gray-900 dark:text-white">
-                  {soilAnalysis.estimatedMoisture}
-                </p>
-              </div>
-              <div className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg">
-                <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
-                  <Activity className="w-3.5 h-3.5 text-purple-500" />
-                  <span>Drainage Class</span>
-                </div>
-                <p className="font-semibold text-sm text-gray-900 dark:text-white">
-                  {soilAnalysis.drainageClass}
-                </p>
-              </div>
-              <div className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg">
-                <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
-                  <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Discoloration</span>
-                </div>
-                <p
-                  className="font-semibold text-xs text-gray-900 dark:text-white line-clamp-2"
-                  title={soilAnalysis.colorDiscoloration}
-                >
-                  {soilAnalysis.colorDiscoloration}
-                </p>
-              </div>
-            </div>
-
-            {/* NPK Deficiencies Dashboard */}
-            <div>
-              <h4 className="font-semibold text-sm text-gray-900 dark:text-white mb-2">
-                Nutrient Composition (NPK)
-              </h4>
-              <div className="grid grid-cols-3 gap-3">
-                {/* Nitrogen */}
-                <div className="p-3 border border-gray-100 dark:border-gray-700 rounded-lg text-center bg-gray-50 dark:bg-gray-800/50">
-                  <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-1.5">
-                    <span className="text-red-700 dark:text-red-300 font-bold text-sm">N</span>
-                  </div>
-                  <div className="text-xs text-gray-500 mb-1">Nitrogen</div>
-                  <span
-                    className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${getNpkStatusClass(soilAnalysis.npkDeficiencies.nitrogen)}`}
-                  >
-                    {soilAnalysis.npkDeficiencies.nitrogen.toUpperCase()}
-                  </span>
-                </div>
-                {/* Phosphorus */}
-                <div className="p-3 border border-gray-100 dark:border-gray-700 rounded-lg text-center bg-gray-50 dark:bg-gray-800/50">
-                  <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mx-auto mb-1.5">
-                    <span className="text-blue-700 dark:text-blue-300 font-bold text-sm">P</span>
-                  </div>
-                  <div className="text-xs text-gray-500 mb-1">Phosphorus</div>
-                  <span
-                    className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${getNpkStatusClass(soilAnalysis.npkDeficiencies.phosphorus)}`}
-                  >
-                    {soilAnalysis.npkDeficiencies.phosphorus.toUpperCase()}
-                  </span>
-                </div>
-                {/* Potassium */}
-                <div className="p-3 border border-gray-100 dark:border-gray-700 rounded-lg text-center bg-gray-50 dark:bg-gray-800/50">
-                  <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mx-auto mb-1.5">
-                    <span className="text-amber-700 dark:text-amber-300 font-bold text-sm">K</span>
-                  </div>
-                  <div className="text-xs text-gray-500 mb-1">Potassium</div>
-                  <span
-                    className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${getNpkStatusClass(soilAnalysis.npkDeficiencies.potassium)}`}
-                  >
-                    {soilAnalysis.npkDeficiencies.potassium.toUpperCase()}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Crop Suitability */}
-            <div>
-              <h4 className="font-semibold text-sm text-gray-900 dark:text-white mb-2">
-                Suitable Crop Recommendations
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {soilAnalysis.cropSuitability.map((crop, index) => (
-                  <span
-                    key={index}
-                    className="px-2.5 py-1 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 text-xs font-medium rounded-full"
-                  >
-                    {crop}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* High Efficacy Recommendations */}
-            <div>
-              <h4 className="font-semibold text-sm text-gray-900 dark:text-white mb-2">
-                Targeted Recommendations
-              </h4>
-              <ul className="space-y-1.5">
-                {soilAnalysis.recommendations.map((rec, index) => (
-                  <li
-                    key={index}
-                    className="flex items-start gap-2 text-xs text-gray-700 dark:text-gray-300"
-                  >
-                    <CheckCircle className="w-3.5 h-3.5 text-primary-600 mt-0.5 flex-shrink-0" />
-                    <span>{rec}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="pt-2">
-              <button
-                onClick={() => {
-                  toast.success('Successfully downloaded Soil Diagnostics PDF Report!');
-                }}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-primary-600 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-950/20 font-medium text-sm rounded-lg transition-all"
-              >
-                <Download className="w-4 h-4" />
-                Export Diagnostic Report (PDF)
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="text-center py-16 text-gray-500 dark:text-gray-400">
-            <Activity className="w-12 h-12 mx-auto mb-4 opacity-30 animate-pulse" />
-            <p className="font-medium">No Soil Data Available</p>
-            <p className="text-xs max-w-xs mx-auto mt-1">
-              Upload a clear photo of your field soil and input optional parameters to generate
-              multi-dimensional diagnostics.
-            </p>
-          </div>
-        )}
-      </div>
+      <SoilResultsHUD soilAnalysis={soilAnalysis} />
     </div>
   );
 }

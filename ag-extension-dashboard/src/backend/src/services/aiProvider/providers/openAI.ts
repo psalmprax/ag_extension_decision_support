@@ -239,12 +239,10 @@ export class OpenAIProvider extends BaseAIProvider {
     async speechToText(audio: Buffer, options?: SpeechToTextOptions): Promise<SpeechToTextResult> {
         const client = await this.getClient();
         try {
+            const { toFile } = await import('openai');
+            const file = await toFile(audio, 'audio.wav', { type: 'audio/wav' });
             const transcription = await client.audio.transcriptions.create({
-                file: await (async () => {
-                    const f: any = audio;
-                    f.name = 'audio.wav';
-                    return f;
-                })(),
+                file,
                 model: options?.model || 'whisper-1',
                 language: options?.language,
             });

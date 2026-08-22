@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Loader2, Leaf } from 'lucide-react';
+import { Search, Loader2, Leaf, BookOpen, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface Props {
@@ -8,65 +8,78 @@ interface Props {
   onViewDiseaseInfo: (disease: string) => void;
 }
 
-export function DiseaseLibraryTab({ allDiseases, radiusClass, onViewDiseaseInfo }: Props) {
+export function DiseaseLibraryTab({ allDiseases, radiusClass: _radiusClass, onViewDiseaseInfo }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
 
+  const filteredDiseases = allDiseases.filter(d =>
+    d.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div className="card p-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+    <div className="p-5 rounded-[4px] bg-slate-900/80 border border-slate-800 space-y-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Disease Encyclopedia
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Browse or search our comprehensive database of crop diseases.
+          <div className="flex items-center gap-2 mb-1">
+            <BookOpen className="w-4 h-4 text-emerald-400" />
+            <h3 className="text-xs font-black text-white uppercase tracking-wider">
+              Pathology Encyclopedia & Protocols
+            </h3>
+          </div>
+          <p className="text-[11px] font-mono text-slate-400">
+            Browse FAO and National Extension verified pathology dossiers, bio-remedies, and preventative schedules.
           </p>
         </div>
+
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
           <input
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Search diseases..."
-            className={`w-full md:w-64 pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 ${radiusClass} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}
+            placeholder="Search plant pathogen or crop..."
+            className="w-full md:w-72 pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-[3px] text-xs text-white placeholder-slate-600 focus:border-emerald-500/60 font-mono transition-all"
           />
         </div>
       </div>
 
       {allDiseases.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {allDiseases
-            .filter(disease => disease.toLowerCase().includes(searchQuery.toLowerCase()))
-            .map((disease, index) => (
-              <motion.div
-                key={disease}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                onClick={() => onViewDiseaseInfo(disease)}
-                className={`p-4 border border-gray-200 dark:border-gray-700 ${radiusClass} hover:border-primary-500 hover:shadow-md transition-all cursor-pointer bg-gray-50 dark:bg-gray-800/50`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
-                    <Leaf className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-                  </div>
-                  <h4 className="font-semibold text-gray-900 dark:text-white line-clamp-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {filteredDiseases.map((disease, index) => (
+            <motion.div
+              key={disease}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.03 }}
+              onClick={() => onViewDiseaseInfo(disease)}
+              className="p-3.5 rounded-[4px] bg-slate-950 border border-slate-800 hover:border-emerald-500/40 hover:bg-slate-900/80 transition-all cursor-pointer group shadow-lg shadow-black/40 flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-8 h-8 rounded-[3px] bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 group-hover:scale-105 transition-transform">
+                  <Leaf className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors truncate">
                     {disease}
                   </h4>
+                  <span className="text-[9px] font-mono text-slate-500 uppercase tracking-wider">
+                    VERIFIED PROTOCOL
+                  </span>
                 </div>
-              </motion.div>
-            ))}
-          {allDiseases.filter(disease => disease.toLowerCase().includes(searchQuery.toLowerCase()))
-            .length === 0 && (
-            <div className="col-span-full text-center py-8 text-gray-500 dark:text-gray-400">
-              <p>No diseases match your search query.</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-emerald-400 transition-colors shrink-0" />
+            </motion.div>
+          ))}
+
+          {filteredDiseases.length === 0 && (
+            <div className="col-span-full text-center py-12 text-slate-500">
+              <p className="text-xs font-bold uppercase tracking-wider">No matching pathology dossiers</p>
+              <p className="text-[10px] font-mono mt-1">Try a different crop or disease keyword</p>
             </div>
           )}
         </div>
       ) : (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
         </div>
       )}
     </div>

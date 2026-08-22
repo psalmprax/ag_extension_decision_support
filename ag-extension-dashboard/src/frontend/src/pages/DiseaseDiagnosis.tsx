@@ -5,6 +5,7 @@ import {
   Layers,
   Search,
   Radio,
+  Sparkles,
 } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
@@ -82,60 +83,68 @@ export function DiseaseDiagnosis() {
 
   return (
     <PlanUpgradeGuard category="vision" featureName="Disease Checker">
-      <div className="space-y-8">
-        {/* Header & Status Ribbons */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="space-y-6">
+        {/* Header & Live Status Telemetry Bar */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-5 rounded-[4px] bg-slate-950/80 border border-emerald-500/20 backdrop-blur-2xl shadow-xl shadow-emerald-950/30">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-              <span className="text-xs font-mono font-bold uppercase tracking-widest text-emerald-400">
-                AI Vision & Plant Pathology
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-[3px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-mono font-black uppercase tracking-wider">
+                <Radio className="w-3 h-3 animate-pulse text-emerald-400" />
+                NEURAL PATHOLOGY HUD
+              </span>
+              <span className="text-[11px] font-mono text-slate-400">
+                EDGE VISION + MULTIMODAL LLM
               </span>
             </div>
-            <h1 className={`text-3xl font-extrabold text-white tracking-tight ${headingClass}`}>
-              Disease Checker
+            <h1 className={`text-2xl font-black text-white tracking-tight uppercase ${headingClass}`}>
+              Crop & Soil Pathology Suite
             </h1>
-            <p className="text-white/60 text-sm mt-1">
+            <p className="text-slate-400 text-xs mt-1">
               {t('disease_diagnosis_subtitle') ||
                 'On-device leaf vision diagnosis, symptom inference, and localized bio-remedies.'}
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
-              <Radio className="w-3.5 h-3.5" />
-              <span>EDGE VISION READY</span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-slate-900 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold shadow-md shadow-emerald-950/40">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>OFFLINE READY</span>
             </span>
           </div>
         </div>
 
-        {/* Diagnostic Tabs (KnockKnock Glassmorphic Bar) */}
-        <div className="p-1.5 rounded-2xl backdrop-blur-xl bg-slate-900/70 border border-white/[0.08]">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5">
+        {/* Diagnostic Tabs (KnockKnock 4px Precision Bar) */}
+        <div className="p-1 rounded-[4px] bg-slate-950/80 border border-slate-800/80 backdrop-blur-2xl shadow-lg">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-1">
             {[
-              { id: 'image', label: 'Image Analysis', icon: Camera },
-              { id: 'symptoms', label: 'Symptom Diagnosis', icon: Activity },
-              { id: 'soil', label: 'Soil Diagnostics', icon: Layers },
-              { id: 'library', label: 'Disease Library', icon: Search },
+              { id: 'image', label: 'Leaf Image Analysis', icon: Camera, badge: 'VISION' },
+              { id: 'symptoms', label: 'Symptom Inference', icon: Activity, badge: 'EXPERT' },
+              { id: 'soil', label: 'Soil Diagnostics', icon: Layers, badge: 'CHEMISTRY' },
+              { id: 'library', label: 'Pathology Library', icon: Search, badge: 'FAO DB' },
             ].map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as 'symptoms' | 'image' | 'soil' | 'library')}
-                className={`py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all ${
+                className={`py-2.5 px-3 rounded-[3px] font-bold text-xs flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
                   activeTab === tab.id
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-lg shadow-emerald-950/20'
-                    : 'text-white/50 hover:text-white hover:bg-slate-800/50'
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-md shadow-emerald-950/40'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
                 }`}
               >
-                <tab.icon className="w-4 h-4" />
-                <span>{tab.label}</span>
+                <div className="flex items-center gap-1.5">
+                  <tab.icon className="w-3.5 h-3.5" />
+                  <span className="uppercase tracking-wider">{tab.label}</span>
+                </div>
+                <span className="text-[8px] font-mono font-black text-slate-500 uppercase tracking-widest px-1 py-0.2 rounded bg-slate-950/60 border border-white/5">
+                  {tab.badge}
+                </span>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Tab Content */}
-        <div className="backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] rounded-3xl p-6 sm:p-8 shadow-2xl shadow-emerald-950/20">
+        {/* Tab Content Container */}
+        <div className="backdrop-blur-2xl bg-slate-950/90 border border-slate-800/80 rounded-[4px] p-5 sm:p-6 shadow-2xl shadow-emerald-950/30 text-slate-100">
           {activeTab === 'symptoms' && (
             <SymptomDiagnosisTab
               cropType={cropType}

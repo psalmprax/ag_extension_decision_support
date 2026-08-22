@@ -14,6 +14,58 @@ const router = Router();
 // Apply authentication to all AI routes
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
+interface StructuredVisitData {
+    summary: string;
+    keyObservations: string[];
+    recommendedActions: string[];
+    cropHealthStatus: 'good' | 'fair' | 'poor' | 'diseased';
+    pestIssues: string;
+    followUpRequired: boolean;
+    nextVisitDateHint: string;
+}
+
+function parseCropHealthStatus(rawStatus: unknown): 'good' | 'fair' | 'poor' | 'diseased' {
+    const valid = ['good', 'fair', 'poor', 'diseased'] as const;
+    const str = String(rawStatus || '').toLowerCase();
+    return (valid as readonly string[]).includes(str) ? (str as 'good' | 'fair' | 'poor' | 'diseased') : 'fair';
+}
+
+function extractStringArray(value: unknown, fallback: string[]): string[] {
+    if (Array.isArray(value)) {
+        const filtered = value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
+        if (filtered.length > 0) return filtered;
+    } else if (typeof value === 'string' && value.trim().length > 0) {
+        return [value.trim()];
+    }
+    return fallback;
+}
+
+function normalizeVisitSynthesisResult(rawResponse: string, originalNotes: string): StructuredVisitData {
+    try {
+        const jsonMatch = rawResponse.match(/\{[\s\S]*\}/)?.[0] || rawResponse;
+        const parsed = JSON.parse(jsonMatch);
+        return {
+            summary: typeof parsed.summary === 'string' && parsed.summary.trim() ? parsed.summary.trim() : originalNotes.slice(0, 300),
+            keyObservations: extractStringArray(parsed.keyObservations, ['Field observations recorded.']),
+            recommendedActions: extractStringArray(parsed.recommendedActions, ['Schedule follow-up assessment.']),
+            cropHealthStatus: parseCropHealthStatus(parsed.cropHealthStatus),
+            pestIssues: typeof parsed.pestIssues === 'string' && parsed.pestIssues.trim() ? parsed.pestIssues.trim() : 'None reported',
+            followUpRequired: Boolean(parsed.followUpRequired),
+            nextVisitDateHint: typeof parsed.nextVisitDateHint === 'string' && parsed.nextVisitDateHint.trim() ? parsed.nextVisitDateHint.trim() : '7-14 days',
+        };
+    } catch {
+        return {
+            summary: rawResponse.slice(0, 500) || originalNotes.slice(0, 300),
+            keyObservations: [originalNotes.slice(0, 200)],
+            recommendedActions: ['Conduct follow-up field inspection.'],
+            cropHealthStatus: 'fair',
+            pestIssues: 'None detected',
+            followUpRequired: true,
+            nextVisitDateHint: '7-10 days',
+        };
+    }
+}
+
 /**
  * @swagger
  * /api/ai/synthesize-visit:
@@ -62,21 +114,8 @@ router.post('/synthesize-visit', [checkUsageLimit('ai_chat'), validate({ body: a
             options: { temperature: 0.1 }
         });
 
-        // The result.text usually contains the JSON
-        let structuredData = {};
-        try {
-            // Basic extraction if the model adds markdown backticks
-            const jsonText = result.text.match(/\{[\s\S]*\}/)?.[0] || result.text;
-            structuredData = JSON.parse(jsonText);
-            
-            // 2. Save to Semantic Cache for future similar queries
-            await SemanticCacheService.save(notes, JSON.stringify(structuredData), { userId, type: 'visit_synthesis' });
-        } catch (e) {
-            logger.error('Failed to parse AI JSON response:', e);
-            structuredData = { rawResponse: result.text };
-        }
-
-        // Increment usage
+        const structuredData = normalizeVisitSynthesisResult(result.text || '', notes);
+        await SemanticCacheService.save(notes, JSON.stringify(structuredData), { userId, type: 'visit_synthesis' });
         await usageService.incrementUsage(userId, 'ai_chat');
 
         res.json({
@@ -87,6 +126,51 @@ router.post('/synthesize-visit', [checkUsageLimit('ai_chat'), validate({ body: a
     } catch (error) {
         logger.error('Visit synthesis failed:', error);
         safeError(res, 500, 'Failed to synthesize visit data');
+    }
+});
+
+/**
+ * @swagger
+ * /api/ai/transcribe-audio:
+ *   post:
+ *     summary: Transcribe field observation audio memo via Whisper STT
+ *     tags: [AI]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post('/transcribe-audio', [checkUsageLimit('ai_chat')], async (req: AuthRequest, res: Response) => {
+    try {
+        const { audio, language } = req.body;
+        const userId = req.user!.userId;
+
+        if (!audio || typeof audio !== 'string') {
+            return res.status(400).json({ success: false, error: 'Audio data is required (base64 string).' });
+        }
+
+        const base64Data = audio.includes('base64,') ? audio.split('base64,')[1] : audio;
+        const audioBuffer = Buffer.from(base64Data, 'base64');
+
+        if (audioBuffer.length === 0) {
+            return res.status(400).json({ success: false, error: 'Invalid audio payload.' });
+        }
+
+        const result = await AIRouter.routeRequest('speech', {
+            audio: audioBuffer,
+            options: { language: language || 'en' }
+        });
+
+        await usageService.incrementUsage(userId, 'ai_chat');
+
+        return res.json({
+            success: true,
+            data: {
+                text: result?.text || '',
+                language: result?.language || language || 'en',
+            }
+        });
+    } catch (error) {
+        logger.error('Audio transcription failed:', error);
+        return safeError(res, 500, 'Failed to transcribe audio recording');
     }
 });
 

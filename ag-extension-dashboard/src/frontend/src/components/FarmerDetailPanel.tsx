@@ -272,39 +272,35 @@ const OverviewTabContent = ({
 }) => (
   <>
     {/* Action Buttons */}
-    <div className="grid grid-cols-4 gap-4">
+    <div className="grid grid-cols-4 gap-3">
       {[
         {
           id: 'chat',
           icon: MessageSquare,
-          label: t('action_chat'),
-          color: isCyber
-            ? 'bg-primary-500/10 border border-primary-500/20 text-primary-400'
-            : 'bg-primary-500 text-white',
+          label: t('action_chat') || 'Chat',
+          badge: 'ADVISORY',
+          color: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400',
         },
         {
           id: 'sms',
           icon: Mail,
-          label: t('action_sms'),
-          color: isCyber
-            ? 'bg-secondary-500/10 border border-secondary-500/20 text-secondary-400'
-            : 'bg-secondary-500 text-white',
+          label: t('action_sms') || 'SMS',
+          badge: 'TWILIO',
+          color: 'bg-sky-500/15 border-sky-500/30 text-sky-400',
         },
         {
           id: 'call',
           icon: Phone,
-          label: t('action_call'),
-          color: isCyber
-            ? 'bg-green-500/10 border border-green-500/20 text-green-400'
-            : 'bg-green-500 text-white',
+          label: t('action_call') || 'Call',
+          badge: 'GSM DIAL',
+          color: 'bg-teal-500/15 border-teal-500/30 text-teal-400',
         },
         {
           id: 'video',
           icon: Video,
-          label: t('action_video'),
-          color: isCyber
-            ? 'bg-purple-500/10 border border-purple-500/20 text-purple-400'
-            : 'bg-purple-500 text-white',
+          label: t('action_video') || 'Video',
+          badge: 'WEBRTC',
+          color: 'bg-purple-500/15 border-purple-500/30 text-purple-400',
         },
       ].map(action => (
         <button
@@ -321,17 +317,18 @@ const OverviewTabContent = ({
               }) => void
             )({ x: e.clientX, y: e.clientY, entityType: 'farmer', entityId: farmer.id });
           }}
-          className="flex flex-col items-center gap-2 group"
+          className="flex flex-col items-center p-3 rounded-[4px] bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-emerald-500/40 transition-all hover:scale-105 active:scale-95 group shadow-lg shadow-black/40 text-center"
         >
           <div
-            className={`w-12 h-12 ${radiusClass} ${action.color} flex items-center justify-center shadow-lg transition-all group-hover:scale-110 group-hover:rotate-3 outline outline-4 outline-transparent hover:outline-white/20`}
+            className={`w-10 h-10 rounded-[4px] border ${action.color} flex items-center justify-center mb-2 shadow-inner transition-transform group-hover:scale-110`}
           >
-            <action.icon className="w-6 h-6" />
+            <action.icon className="w-5 h-5" />
           </div>
-          <span
-            className={`text-xxs font-black uppercase tracking-widest transition-colors ${isCyber ? 'text-primary-300' : 'text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-200'}`}
-          >
+          <span className="text-xs font-black text-white tracking-wide">
             {action.label}
+          </span>
+          <span className="text-[8px] font-mono font-bold text-slate-500 mt-0.5 uppercase tracking-wider">
+            {action.badge}
           </span>
         </button>
       ))}
@@ -610,17 +607,14 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
           />
 
           {/* Panel */}
+          {/* Panel */}
           <motion.aside
             key="panel-content"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className={`fixed right-0 top-0 bottom-0 w-full max-w-xl z-[70] shadow-2xl overflow-hidden flex flex-col ${isCyber ? 'bg-black/90 dark:bg-gray-900/90' : 'bg-white/90 dark:bg-gray-900/90'} backdrop-blur-xl border-l border-white/20 dark:border-gray-800/50`}
-            style={{
-              borderTopLeftRadius: 'var(--radius-card)',
-              borderBottomLeftRadius: 'var(--radius-card)',
-            }}
+            transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+            className="fixed right-0 top-0 bottom-0 w-full max-w-xl z-[70] shadow-2xl shadow-emerald-950/80 overflow-hidden flex flex-col bg-slate-950/95 backdrop-blur-2xl border-l border-emerald-500/30 text-slate-100"
           >
             {/* Header Section */}
             <FarmerDetailHeader
@@ -639,41 +633,29 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
             />
 
             {/* Tabs */}
-            <div className={`px-8 pt-6 border-b bg-white border-gray-100 dark:border-gray-800`}>
-              <div className="flex items-center gap-8">
-                {[
-                  { id: 'overview', label: t('nav_dashboard') || 'Overview', icon: FileText },
-                  { id: 'history', label: t('nav_sms_history') || 'Communication', icon: History },
-                  { id: 'insights', label: t('nav_analytics') || 'Insights', icon: TrendingUp },
-                ].map(tab => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id as 'overview' | 'history' | 'insights')}
-                    className={`pb-4 text-xxs font-black uppercase tracking-[0.2em] relative transition-all ${
-                      activeTab === tab.id
-                        ? isCyber
-                          ? 'text-primary-400'
-                          : 'text-primary-600'
-                        : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <tab.icon className="w-4 h-4" />
-                      {tab.label}
-                    </span>
-                    {activeTab === tab.id && (
-                      <motion.div
-                        layoutId="activeTab"
-                        className={`absolute bottom-0 left-0 right-0 h-1 rounded-t-full bg-primary-500`}
-                      />
-                    )}
-                  </button>
-                ))}
-              </div>
+            <div className="px-6 py-2 border-b bg-slate-900/60 border-slate-800 flex items-center gap-2 text-xs">
+              {[
+                { id: 'overview', label: t('nav_dashboard') || 'Overview', icon: FileText },
+                { id: 'history', label: t('nav_sms_history') || 'Communication', icon: History },
+                { id: 'insights', label: t('nav_analytics') || 'Insights', icon: TrendingUp },
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as 'overview' | 'history' | 'insights')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-xs font-black uppercase tracking-wider transition-all ${
+                    activeTab === tab.id
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm shadow-emerald-950'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <tab.icon className="w-3.5 h-3.5" />
+                  <span>{tab.label}</span>
+                </button>
+              ))}
             </div>
 
             {/* Content Section */}
-            <div className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar overflow-x-hidden">
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar overflow-x-hidden">
               {activeTab === 'overview' ? (
                 <OverviewTabContent
                   farmer={farmer}
@@ -702,43 +684,39 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
             </div>
 
             {/* Footer Quick Action */}
-            <div
-              className={`p-8 border-t flex items-center justify-between bg-white border-gray-100 dark:border-gray-800`}
-            >
+            <div className="p-4 border-t flex items-center justify-between bg-slate-900/80 border-slate-800">
               <div className="flex items-center gap-3">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center bg-secondary-100 dark:bg-secondary-900/30 text-secondary-600 dark:text-secondary-400`}
-                >
-                  <Clock className="w-5 h-5" />
+                <div className="w-9 h-9 rounded-[4px] flex items-center justify-center bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+                  <Clock className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className={`text-xxs font-black uppercase tracking-widest text-gray-400`}>
-                    {t('visit_next_scheduled')}
+                  <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                    {t('visit_next_scheduled') || 'Next Scheduled'}
                   </p>
-                  <p className={`text-sm font-bold text-gray-900 dark:text-white`}>
+                  <p className="text-xs font-bold text-white">
                     {nextScheduledVisit
                       ? new Date(nextScheduledVisit.scheduled_at).toLocaleDateString()
                       : t('no_visit_scheduled') || 'None scheduled'}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <Button
                   variant="secondary"
                   loading={isRefreshingPriority}
                   onClick={handleRefreshPriority}
-                  className="font-black text-xs"
+                  className="font-bold text-xs !rounded-[4px] !bg-slate-800 !hover:bg-slate-700 !text-slate-200 !border-slate-700"
                 >
-                  <Activity className="w-4 h-4" />
-                  REFRESH ANALYSIS
+                  <Activity className="w-3.5 h-3.5" />
+                  REFRESH
                 </Button>
                 <Button
                   loading={isSynthesizing}
                   onClick={handleStartSynthesis}
-                  className="font-black text-xs"
+                  className="font-bold text-xs !rounded-[4px] !bg-emerald-600 !hover:bg-emerald-500 !text-white shadow-md shadow-emerald-950"
                 >
-                  {t('action_start_synthesis')}
-                  <ChevronRight className="w-4 h-4" />
+                  {t('action_start_synthesis') || 'Start Synthesis'}
+                  <ChevronRight className="w-3.5 h-3.5" />
                 </Button>
               </div>
             </div>

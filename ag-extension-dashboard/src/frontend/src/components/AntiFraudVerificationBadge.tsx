@@ -29,6 +29,14 @@ interface AntiFraudVerificationBadgeProps {
   onVerificationComplete?: (verified: boolean) => void;
 }
 
+function extractErrorMessage(err: unknown, fallback: string): string {
+  if (typeof err === 'object' && err !== null && 'response' in err) {
+    const res = (err as { response?: { data?: { error?: string } } }).response;
+    return res?.data?.error || fallback;
+  }
+  return fallback;
+}
+
 export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProps> = ({
   farmerId,
   farmerName = 'Farmer',
@@ -45,79 +53,94 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
   const [satelliteAudit, setSatelliteAudit] = useState<CropLossAuditResult | null>(null);
   const [activeTab, setActiveTab] = useState<'geofence' | 'cosign' | 'satellite'>('geofence');
 
+  const onGpsSuccess = async (position: GeolocationPosition) => {
+    try {
+      const res = await verifyVisitGeofence({
+        officerLat: position.coords.latitude,
+        officerLng: position.coords.longitude,
+        farmerId,
+        maxRadiusMeters: 200,
+      });
+      setGeofence(res);
+      if (res.isValid) {
+        triggerHaptic('success');
+        toast.success(`Geofence Verified: ${res.distanceMeters}m from parcel.`);
+        onVerificationComplete?.(true);
+      } else {
+        triggerHaptic('warning');
+        toast.error(res.details || 'Geofence breach: location outside registered parcel boundary.');
+        onVerificationComplete?.(false);
+      }
+    } catch (err: unknown) {
+      const errorMsg = extractErrorMessage(err, 'Failed to verify GPS with server.');
+      setGeofence({
+        isValid: false,
+        distanceMeters: -1,
+        maxRadiusMeters: 200,
+        status: 'GEOFENCE_BREACH',
+        riskScore: 75,
+        details: errorMsg,
+      });
+      triggerHaptic('error');
+      toast.error(errorMsg);
+      onVerificationComplete?.(false);
+    } finally {
+      setIsVerifyingGps(false);
+    }
+  };
+
+  const onGpsError = (error: GeolocationPositionError) => {
+    setIsVerifyingGps(false);
+    const details = error.code === error.PERMISSION_DENIED
+      ? 'Device location permission denied.'
+      : 'Failed to acquire device GPS coordinates.';
+    setGeofence({
+      isValid: false,
+      distanceMeters: -1,
+      maxRadiusMeters: 200,
+      status: 'COORDINATES_MISSING',
+      riskScore: 100,
+      details,
+    });
+    triggerHaptic('error');
+    toast.error(details);
+    onVerificationComplete?.(false);
+  };
+
   // Trigger live browser GPS check
   const handleVerifyGps = () => {
+    if (!farmerId || farmerId === 'farmer-session-active') {
+      toast.error('Please select a registered farmer to run proximity check.');
+      return;
+    }
+
     if (!navigator.geolocation) {
       toast.error('Geolocation is not supported by this device.');
+      onVerificationComplete?.(false);
       return;
     }
 
     setIsVerifyingGps(true);
-    navigator.geolocation.getCurrentPosition(
-      async position => {
-        try {
-          const res = await verifyVisitGeofence({
-            officerLat: position.coords.latitude,
-            officerLng: position.coords.longitude,
-            farmerId,
-            maxRadiusMeters: 200,
-          });
-          setGeofence(res);
-          if (res.isValid) {
-            triggerHaptic('success');
-            toast.success(`Geofence Verified: ${res.distanceMeters}m from parcel.`);
-            onVerificationComplete?.(true);
-          } else {
-            triggerHaptic('warning');
-            toast.error(res.details);
-          }
-        } catch {
-          // Fallback simulation if offline or demo
-          const fallbackDist = Math.floor(15 + Math.random() * 25);
-          setGeofence({
-            isValid: true,
-            distanceMeters: fallbackDist,
-            maxRadiusMeters: 200,
-            status: 'VERIFIED',
-            riskScore: 5,
-            details: `Officer presence verified within ${fallbackDist}m of registered parcel.`,
-          });
-          triggerHaptic('success');
-          toast.success(`Geofence Verified: ${fallbackDist}m from parcel.`);
-          onVerificationComplete?.(true);
-        } finally {
-          setIsVerifyingGps(false);
-        }
-      },
-      () => {
-        setIsVerifyingGps(false);
-        // Fallback simulation
-        setGeofence({
-          isValid: true,
-          distanceMeters: 22,
-          maxRadiusMeters: 200,
-          status: 'VERIFIED',
-          riskScore: 8,
-          details: 'Device GPS synchronized. Verified within 22m of parcel.',
-        });
-        triggerHaptic('success');
-        toast.success('Geofence Verified: 22m from parcel.');
-        onVerificationComplete?.(true);
-      },
-      { timeout: 8000, enableHighAccuracy: true }
-    );
+    navigator.geolocation.getCurrentPosition(onGpsSuccess, onGpsError, {
+      timeout: 10000,
+      enableHighAccuracy: true,
+    });
   };
 
   const handleGenerateCoSign = async () => {
+    if (!farmerId || farmerId === 'farmer-session-active') {
+      toast.error('Please select a farmer before generating OTP.');
+      return;
+    }
+
     triggerHaptic('light');
     try {
       const res = await generateCoSignToken(visitId, farmerId);
       setCoSignOtp(res.otp);
       toast.success('Generated 6-digit physical handshake code for farmer.');
-    } catch {
-      const mockOtp = Math.floor(100000 + Math.random() * 900000).toString();
-      setCoSignOtp(mockOtp);
-      toast.success('Generated 6-digit physical handshake code for farmer.');
+    } catch (err: unknown) {
+      const errorMsg = extractErrorMessage(err, 'Failed to generate verification OTP from server.');
+      toast.error(errorMsg);
     }
   };
 
@@ -136,40 +159,34 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
         toast.success('Farmer physical handshake confirmed!');
       } else {
         triggerHaptic('error');
-        toast.error(res.message);
+        toast.error(res.message || 'Invalid verification OTP.');
       }
-    } catch {
-      if (coSignOtp && enteredOtp === coSignOtp) {
-        setIsCoSignVerified(true);
-        triggerHaptic('success');
-        toast.success('Farmer physical handshake confirmed!');
-      } else {
-        triggerHaptic('error');
-        toast.error('Invalid OTP. Please check the code.');
-      }
+    } catch (err: unknown) {
+      const errorMsg = extractErrorMessage(err, 'OTP verification failed.');
+      triggerHaptic('error');
+      toast.error(errorMsg);
     }
   };
 
   const handleRunSatelliteAudit = async () => {
+    if (farmerLat === undefined || farmerLng === undefined) {
+      toast.error('Selected farmer has no registered GPS parcel coordinates.');
+      return;
+    }
+
     try {
       const res = await auditCropLoss({
-        farmerLat: farmerLat || -0.3031,
-        farmerLng: farmerLng || 36.08,
+        farmerLat,
+        farmerLng,
         reportedLossSeverity: 'MODERATE',
         observedCanopyScore: 0.74,
       });
       setSatelliteAudit(res);
       toast.success('Sentinel-2 satellite canopy index synchronized.');
-    } catch {
-      setSatelliteAudit({
-        anomalyDetected: false,
-        anomalyScore: 10,
-        reportedLossSeverity: 'MODERATE',
-        satelliteVigorLevel: 'High (Healthy NDVI: 0.74)',
-        weatherConsistencyScore: 92,
-        flagReason: null,
-        recommendedAction: 'AUTO_APPROVED',
-      });
+    } catch (err: unknown) {
+      const errorMsg = extractErrorMessage(err, 'Failed to retrieve satellite NDVI telemetry.');
+      toast.error(errorMsg);
+      setSatelliteAudit(null);
     }
   };
 
