@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
+import { triggerHaptic } from '@/lib/haptics';
 
 interface BaseModalProps {
   isOpen: boolean;
@@ -22,8 +23,8 @@ export const BaseModal: React.FC<BaseModalProps> = ({
   title,
   subtitle,
   icon,
-  iconBg = 'bg-gray-100 dark:bg-gray-700',
-  maxWidth = 'max-w-md',
+  iconBg = 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400',
+  maxWidth = 'max-w-lg',
   children,
   footer,
   showCloseButton = true,
@@ -38,30 +39,41 @@ export const BaseModal: React.FC<BaseModalProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => {
+              triggerHaptic('light');
+              onClose();
+            }}
+            className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, scale: 0.95, y: 15 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className={`relative w-full ${maxWidth} bg-white dark:bg-gray-800 ${radiusClass} shadow-2xl overflow-hidden flex flex-col`}
+            exit={{ opacity: 0, scale: 0.95, y: 15 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+            className={`relative w-full ${maxWidth} bg-slate-950/95 dark:bg-slate-950/95 border border-emerald-500/30 ${radiusClass} shadow-2xl overflow-hidden flex flex-col backdrop-blur-2xl`}
+            style={{ borderRadius: 'var(--radius-card, 1.25rem)' }}
           >
+            {/* KnockKnock Ambient Mesh Gradient Orb */}
+            <div className="absolute -top-24 -right-24 w-72 h-72 bg-emerald-500/15 rounded-full blur-[90px] pointer-events-none" />
+            <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-teal-500/10 rounded-full blur-[90px] pointer-events-none" />
+
             {/* Header */}
-            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+            <div className="p-6 border-b border-slate-800/80 relative z-10">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3.5">
                   {icon && (
                     <div
-                      className={`w-10 h-10 rounded-xl ${iconBg} flex items-center justify-center`}
+                      className={`w-11 h-11 rounded-2xl ${iconBg} flex items-center justify-center shadow-inner shrink-0`}
                     >
                       {icon}
                     </div>
                   )}
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h3>
+                    <h3 className="text-xl font-black text-white tracking-tight leading-tight">
+                      {title}
+                    </h3>
                     {subtitle && (
-                      <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                      <p className="text-xxs font-black text-emerald-400 uppercase tracking-widest mt-0.5">
                         {subtitle}
                       </p>
                     )}
@@ -69,21 +81,29 @@ export const BaseModal: React.FC<BaseModalProps> = ({
                 </div>
                 {showCloseButton && (
                   <button
-                    onClick={onClose}
-                    className={`p-2 hover:bg-gray-100 dark:hover:bg-gray-700 ${btnClass} transition-colors rounded-lg`}
+                    onClick={() => {
+                      triggerHaptic('light');
+                      onClose();
+                    }}
+                    className={`p-2 bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700 ${btnClass} transition-colors rounded-xl`}
+                    aria-label="Close modal"
                   >
-                    <X className="w-5 h-5 text-gray-400" />
+                    <X className="w-4 h-4" />
                   </button>
                 )}
               </div>
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6">{children}</div>
+            <div className="flex-1 overflow-y-auto p-6 relative z-10 text-slate-300 text-sm leading-relaxed">
+              {children}
+            </div>
 
             {/* Footer */}
             {footer && (
-              <div className="p-6 border-t border-gray-100 dark:border-gray-700">{footer}</div>
+              <div className="p-6 border-t border-slate-800/80 bg-slate-900/40 relative z-10">
+                {footer}
+              </div>
             )}
           </motion.div>
         </div>

@@ -6,10 +6,10 @@ import { useBillingActions } from '@/hooks/useBillingActions';
 import { useLanguage } from '@/lib/LanguageContext';
 import { UsageQuota } from './UsageQuota';
 import { ConfirmModal } from './ConfirmModal';
+import { BaseModal } from './BaseModal';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
-import { Dialog, DialogTitle, DialogContent, DialogActions } from './ui/Dialog';
 import { Textarea } from './ui/Textarea';
 import { SubscriptionStatus } from './billing/SubscriptionStatus';
 import { PlanCard } from './billing/PlanCard';
@@ -484,43 +484,50 @@ export const BillingDashboard: React.FC = () => {
           )}
 
           {/* Rejection Modal */}
-          <Dialog
-            open={!!billing.selectedTransactionId}
+          <BaseModal
+            isOpen={!!billing.selectedTransactionId}
             onClose={() => billing.setSelectedTransactionId(null)}
-            size="md"
-          >
-            <DialogContent>
-              <div className="flex items-center gap-4 mb-6">
-                <div className="p-3 bg-red-500/10 rounded-2xl shadow-inner">
-                  <span className="w-6 h-6 text-red-500" />
-                </div>
-                <DialogTitle className="text-xl font-black uppercase tracking-tighter">
-                  Reject Transaction
-                </DialogTitle>
+            title="Reject Transaction"
+            subtitle="Admin Verification Action"
+            icon={<AlertCircle className="w-5 h-5 text-rose-400" />}
+            iconBg="bg-rose-500/15 border border-rose-500/30 text-rose-400"
+            footer={
+              <div className="flex gap-3">
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    triggerHaptic('light');
+                    billing.setSelectedTransactionId(null);
+                  }}
+                  className="flex-1 text-slate-300 hover:text-white"
+                >
+                  {t('common_cancel') || 'Cancel'}
+                </Button>
+                <Button
+                  variant="danger"
+                  loading={billing.actionLoading?.startsWith('reject-')}
+                  onClick={() => {
+                    triggerHaptic('medium');
+                    billing.handleRejectTransaction();
+                  }}
+                  className="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-bold"
+                >
+                  {t('billing_admin_reject') || 'Confirm Rejection'}
+                </Button>
               </div>
-              <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-4">
-                {t('billing_admin_pending_reason')}
-              </p>
-              <Textarea
-                value={billing.rejectReason}
-                onChange={e => billing.setRejectReason(e.target.value)}
-                placeholder="Enter reason for rejection..."
-                className="mb-6"
-              />
-            </DialogContent>
-            <DialogActions>
-              <Button variant="ghost" onClick={() => billing.setSelectedTransactionId(null)}>
-                {t('common_cancel')}
-              </Button>
-              <Button
-                variant="danger"
-                loading={billing.actionLoading?.startsWith('reject-')}
-                onClick={billing.handleRejectTransaction}
-              >
-                {t('billing_admin_reject')}
-              </Button>
-            </DialogActions>
-          </Dialog>
+            }
+          >
+            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-3">
+              {t('billing_admin_pending_reason') || 'Specify reason for rejection to notify user'}
+            </p>
+            <Textarea
+              value={billing.rejectReason}
+              onChange={e => billing.setRejectReason(e.target.value)}
+              placeholder="Enter reason for rejection..."
+              className="w-full bg-slate-900/80 border-slate-800 text-white rounded-xl text-xs"
+              rows={4}
+            />
+          </BaseModal>
         </div>
       </div>
       {billing.confirmModal && (

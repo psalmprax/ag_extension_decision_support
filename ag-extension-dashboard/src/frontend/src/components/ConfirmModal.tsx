@@ -2,6 +2,7 @@ import React from 'react';
 import { AlertTriangle, CheckCircle, Info, AlertCircle } from 'lucide-react';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { BaseModal } from './BaseModal';
+import { triggerHaptic } from '@/lib/haptics';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -26,31 +27,27 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   variant = 'warning',
   isLoading = false,
 }) => {
-  const { btnClass } = useThemeClasses();
+  const { radiusClass } = useThemeClasses();
   const variants = {
     danger: {
       icon: AlertTriangle,
-      iconBg: 'bg-red-100 dark:bg-red-900/30',
-      iconColor: 'text-red-600 dark:text-red-400',
-      confirmBg: 'bg-red-600 hover:bg-red-700',
+      iconBg: 'bg-rose-500/15 border border-rose-500/30 text-rose-400',
+      confirmBg: 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-950/50',
     },
     warning: {
       icon: AlertCircle,
-      iconBg: 'bg-amber-100 dark:bg-amber-900/30',
-      iconColor: 'text-amber-600 dark:text-amber-400',
-      confirmBg: 'bg-amber-600 hover:bg-amber-700',
+      iconBg: 'bg-amber-500/15 border border-amber-500/30 text-amber-400',
+      confirmBg: 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-950/50',
     },
     info: {
       icon: Info,
-      iconBg: 'bg-blue-100 dark:bg-blue-900/30',
-      iconColor: 'text-blue-600 dark:text-blue-400',
-      confirmBg: 'bg-blue-600 hover:bg-blue-700',
+      iconBg: 'bg-indigo-500/15 border border-indigo-500/30 text-indigo-400',
+      confirmBg: 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-950/50',
     },
     success: {
       icon: CheckCircle,
-      iconBg: 'bg-green-100 dark:bg-green-900/30',
-      iconColor: 'text-green-600 dark:text-green-400',
-      confirmBg: 'bg-green-600 hover:bg-green-700',
+      iconBg: 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400',
+      confirmBg: 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-950/50',
     },
   };
 
@@ -60,16 +57,22 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   const footer = (
     <div className="flex gap-3">
       <button
-        onClick={onClose}
+        onClick={() => {
+          triggerHaptic('light');
+          onClose();
+        }}
         disabled={isLoading}
-        className={`flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold ${btnClass} hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50`}
+        className={`flex-1 px-4 py-3 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 ${radiusClass} font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50 active:scale-[0.98]`}
       >
         {cancelText}
       </button>
       <button
-        onClick={onConfirm}
+        onClick={() => {
+          triggerHaptic('medium');
+          onConfirm();
+        }}
         disabled={isLoading}
-        className={`flex-1 px-4 py-2.5 ${config.confirmBg} text-white font-semibold ${btnClass} transition-colors disabled:opacity-50 flex items-center justify-center gap-2`}
+        className={`flex-1 px-4 py-3 ${config.confirmBg} ${radiusClass} font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg active:scale-[0.98]`}
       >
         {isLoading ? (
           <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -84,11 +87,11 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title={title}
-      icon={<Icon className={`w-5 h-5 ${config.iconColor}`} />}
+      icon={<Icon className="w-5 h-5" />}
       iconBg={config.iconBg}
       footer={footer}
     >
-      <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{message}</p>
+      <p className="text-sm text-slate-300 leading-relaxed font-medium">{message}</p>
     </BaseModal>
   );
 };
