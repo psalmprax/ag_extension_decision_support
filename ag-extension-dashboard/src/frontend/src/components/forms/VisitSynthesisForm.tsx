@@ -638,8 +638,8 @@ export const VisitSynthesisForm: React.FC = () => {
         <AntiFraudVerificationBadge
           farmerId={selectedFarmer.id}
           farmerName={`${selectedFarmer.firstName} ${selectedFarmer.lastName}`}
-          farmerLat={selectedFarmer.latitude}
-          farmerLng={selectedFarmer.longitude}
+          farmerLat={(selectedFarmer as { latitude?: number }).latitude}
+          farmerLng={(selectedFarmer as { longitude?: number }).longitude}
           visitId={visitSessionId}
           onVerificationComplete={verified => setIsFraudVerified(verified)}
         />
