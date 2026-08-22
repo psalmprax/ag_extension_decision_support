@@ -398,7 +398,7 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
               </h2>
             </div>
           </div>
-          <Badge variant={isProActive ? 'success' : 'neutral'} size="sm">
+          <Badge variant={isProActive ? 'success' : 'default'} size="sm">
             <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse mr-1" />
             {isProActive ? 'ACTIVE' : 'STARTER'}
           </Badge>
