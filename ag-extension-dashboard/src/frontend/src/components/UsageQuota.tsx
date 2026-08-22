@@ -107,19 +107,19 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
   if (!plan || usageData.length === 0) {
     return (
       <div
-        className={`relative overflow-hidden ${compact ? '' : 'p-8 bg-slate-950/90 border border-emerald-500/25 rounded-2xl shadow-2xl backdrop-blur-2xl'}`}
+        className={`relative overflow-hidden ${compact ? '' : 'p-6 bg-slate-900/60 border border-white/10 rounded-2xl shadow-xl backdrop-blur-xl'}`}
       >
         <div className="relative z-10 flex flex-col items-center text-center py-4">
-          <div className="w-14 h-14 bg-emerald-500/15 rounded-2xl flex items-center justify-center mb-3 border border-emerald-500/30 text-emerald-400 shadow-xl">
-            <Activity className="w-7 h-7 animate-pulse" />
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center mb-3 shadow-lg shadow-emerald-950/40 text-emerald-400">
+            <Activity className="w-6 h-6 animate-pulse" />
           </div>
-          <h4 className="text-xs font-black text-white uppercase tracking-widest mb-1.5">
+          <h4 className="text-sm font-bold text-white mb-1">
             {t('usage_init_title') || 'Realtime Quota Telemetry'}
           </h4>
-          <p className="text-xxs text-slate-400 max-w-[220px] leading-relaxed mb-4">
+          <p className="text-xs text-white/60 max-w-xs leading-relaxed mb-4">
             {t('usage_init_desc') || 'Automatic telemetry tracking for SMS dispatch, AI queries, and telemetry synthesis.'}
           </p>
-          <div className="w-full h-1 bg-slate-900 rounded-full overflow-hidden">
+          <div className="w-full h-1 bg-white/[0.05] rounded-full overflow-hidden">
             <motion.div
               animate={{ x: ['-100%', '100%'] }}
               transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
@@ -150,40 +150,32 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
 
   return (
     <div
-      className={`relative overflow-hidden transition-all duration-500 ${compact ? '' : 'p-8 bg-slate-950/90 dark:bg-slate-950/95 border border-emerald-500/25 shadow-2xl backdrop-blur-2xl group'}`}
-      style={{ borderRadius: compact ? '0' : 'var(--radius-card, 1.25rem)' }}
+      className={`relative overflow-hidden transition-all duration-500 ${compact ? '' : 'p-6 bg-slate-900/60 border border-white/10 rounded-2xl shadow-xl backdrop-blur-xl group'}`}
     >
       {!compact && (
-        <>
-          <div
-            className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none"
-            aria-hidden="true"
-          />
-
-          <div className="flex items-center justify-between mb-8 relative z-10">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-emerald-500/15 rounded-xl border border-emerald-500/30 text-emerald-400 shadow-inner">
-                <TrendingUp className="w-4 h-4" />
-              </div>
-              <div>
-                <h4 className="text-xs font-black text-white uppercase tracking-[0.2em] leading-none mb-1">
-                  {t('billing_quota_usage') || 'Quota & Seats'}
-                </h4>
-                <p className="text-xxs font-black text-emerald-400 uppercase tracking-widest">
-                  {t('usage_realtime_telemetry') || 'Live Agronomy Quota'}
-                </p>
-              </div>
+        <div className="flex items-center justify-between mb-6 relative z-10">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-inner">
+              <TrendingUp className="w-5 h-5" />
             </div>
-            <div className="flex flex-col items-end">
-              <span className="px-3 py-1 rounded-full bg-slate-900 border border-slate-700 text-xxs font-black text-emerald-400 uppercase tracking-widest shadow-md">
-                {plan.name}
-              </span>
+            <div>
+              <h4 className="text-sm font-bold text-white tracking-tight">
+                {t('billing_quota_usage') || 'Quota & Seats'}
+              </h4>
+              <p className="text-xs text-white/60">
+                {t('usage_realtime_telemetry') || 'Live Agronomy Quota'}
+              </p>
             </div>
           </div>
-        </>
+          <div className="flex flex-col items-end">
+            <span className="px-3 py-1 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-white/80 font-mono">
+              Tier: <strong className="text-white">{plan.name}</strong>
+            </span>
+          </div>
+        </div>
       )}
 
-      <div className={`grid gap-6 ${compact ? 'space-y-3' : 'grid-cols-1'} relative z-10`}>
+      <div className={`grid gap-5 ${compact ? 'space-y-3' : 'grid-cols-1'} relative z-10`}>
         {usageData.map((item: { type: string; label: string; current: number; limit: number }) => {
           const config = typeConfig[item.type] || typeConfig['sms'];
           return (
@@ -215,10 +207,10 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
                 <AlertCircle className="w-4 h-4" />
               </div>
               <div className="relative z-10">
-                <h5 className="text-xxs font-black text-rose-400 uppercase tracking-[0.2em] mb-0.5">
+                <h5 className="text-xxs font-bold text-rose-400 uppercase tracking-widest mb-0.5">
                   {t('usage_critical_threshold') || 'Quota Warning'}
                 </h5>
-                <p className="text-xs text-slate-300 leading-relaxed">
+                <p className="text-xs text-white/70 leading-relaxed">
                   {t('billing_limit_warning') || 'You have utilized over 90% of your SMS broadcast pool. Upgrade tier to avoid disruption.'}
                 </p>
               </div>

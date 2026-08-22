@@ -23,32 +23,30 @@ export const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
   return (
     <section
       aria-labelledby="invoices-title"
-      className="p-8 lg:p-10 backdrop-blur-2xl bg-slate-950/90 dark:bg-slate-950/95 border border-emerald-500/25 shadow-2xl overflow-hidden group relative"
-      style={{ borderRadius: 'var(--radius-card, 1.25rem)' }}
+      className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl overflow-hidden relative"
     >
-      <div className="absolute top-0 right-0 w-72 h-72 bg-emerald-500/10 rounded-full blur-[90px] pointer-events-none" />
-      <div className="flex flex-wrap justify-between items-center gap-4 pb-6 border-b border-slate-800 relative z-10">
+      <div className="flex flex-wrap justify-between items-center gap-4 pb-6 border-b border-white/10 relative z-10">
         <div className="flex items-center gap-4">
-          <div className="p-3.5 bg-emerald-500/15 border border-emerald-500/30 rounded-2xl shadow-inner text-emerald-400">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40 text-emerald-400">
             <Receipt className="w-6 h-6" />
           </div>
-          <div className="space-y-1">
+          <div>
             <h3
               id="invoices-title"
-              className="text-xl font-black text-white uppercase tracking-tight"
+              className="text-xl font-bold tracking-tight text-white"
             >
               {t('billing_legacy_transactions') || 'Billing & Receipt History'}
             </h3>
-            <p className="text-xxs font-bold text-emerald-400 uppercase tracking-[0.2em]">
+            <p className="text-xs text-white/60 mt-0.5">
               {t('billing_transaction_archive') || 'Audited Invoices & Direct Downloads'}
             </p>
           </div>
         </div>
       </div>
-      <div className="overflow-x-auto relative z-10 mt-4">
+      <div className="overflow-x-auto rounded-xl border border-white/10 relative z-10 mt-6">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-slate-900/60 border-b border-slate-800">
+            <tr className="bg-white/[0.03] border-b border-white/10">
               {[
                 'billing_timeframe',
                 'billing_evaluation',
@@ -57,29 +55,29 @@ export const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
               ].map(h => (
                 <th
                   key={h}
-                  className="px-6 py-4 text-xxs font-black uppercase tracking-[0.2em] text-slate-400"
+                  className="px-6 py-4 text-xxs font-bold uppercase tracking-wider text-white/60"
                 >
                   {t(h)}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/80">
+          <tbody className="divide-y divide-white/5">
             {invoices.length > 0 ? (
               invoices.map(invoice => (
                 <tr
                   key={invoice.id}
-                  className="hover:bg-slate-900/50 transition-colors duration-200 group/row"
+                  className="hover:bg-white/[0.02] transition-colors duration-200"
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2.5">
-                      <Clock className="w-4 h-4 text-slate-500 group-hover/row:text-emerald-400 transition-colors" />
-                      <span className="text-xs font-mono text-slate-300">
+                      <Clock className="w-4 h-4 text-emerald-400" />
+                      <span className="text-xs font-mono text-white/80">
                         {new Date(invoice.created * 1000).toLocaleDateString()}
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm font-black text-white font-mono">
+                  <td className="px-6 py-4 text-xs font-bold text-white font-mono">
                     {(invoice.amount_paid / 100).toLocaleString('en-US', {
                       style: 'currency',
                       currency: invoice.currency,
@@ -102,16 +100,16 @@ export const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
                       <a
                         href={invoice.invoice_pdf}
                         target="_blank"
-                        rel="noopener noreferrer"
+                        rel="noreferrer"
                         onClick={() => triggerHaptic('light')}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold transition-all group/pdf"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/10 text-white border border-white/10 text-xxs font-bold uppercase tracking-wider transition-all"
                       >
-                        <Download className="w-3.5 h-3.5 group-hover/pdf:scale-110 transition-transform" />
-                        PDF
+                        <Download className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>PDF</span>
                       </a>
                     ) : (
-                      <span className="text-slate-500 text-xs font-mono">
-                        {t('billing_unavailable') || 'Unavailable'}
+                      <span className="text-xxs text-white/40 uppercase tracking-widest italic">
+                        {t('billing_no_pdf') || 'Unavailable'}
                       </span>
                     )}
                   </td>
@@ -119,12 +117,13 @@ export const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
               ))
             ) : (
               <tr>
-                <td colSpan={4} className="px-6 py-16 text-center">
-                  <div className="flex flex-col items-center gap-3 opacity-40">
-                    <FileText className="w-10 h-10 text-slate-500" />
-                    <p className="font-black uppercase tracking-[0.25em] text-xxs text-slate-400">
-                      {t('billing_no_records') || 'No transaction records found'}
-                    </p>
+                <td
+                  colSpan={4}
+                  className="px-6 py-12 text-center text-xs text-white/40 font-semibold uppercase tracking-widest italic"
+                >
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <FileText className="w-8 h-8 text-white/20" />
+                    <span>{t('billing_no_invoices') || 'No audited invoices found for this account'}</span>
                   </div>
                 </td>
               </tr>

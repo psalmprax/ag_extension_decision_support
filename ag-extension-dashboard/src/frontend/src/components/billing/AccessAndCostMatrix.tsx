@@ -4,7 +4,6 @@ import {
   Check,
   X,
   Sparkles,
-  Zap,
   Shield,
   MessageSquare,
   Bot,
@@ -24,7 +23,6 @@ import {
   Building2,
   Users,
 } from 'lucide-react';
-import { useThemeClasses } from '@/hooks/useThemeClasses';
 
 interface AccessAndCostMatrixProps {
   onSelectPlan?: (planId: string) => void;
@@ -245,8 +243,6 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
   onSelectPlan,
   className = '',
 }) => {
-  const { headingClass } = useThemeClasses();
-
   const [activeTab, setActiveTab] = useState<'matrix' | 'costs' | 'calculator'>('matrix');
 
   // Calculator State
@@ -290,70 +286,67 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
   };
 
   return (
-    <div className={`space-y-8 ${className}`}>
+    <div className={`space-y-6 ${className}`}>
       {/* Header & Mode Switcher */}
-      <div className="p-8 rounded-3xl bg-slate-950/90 dark:bg-slate-950/95 border border-emerald-500/25 shadow-2xl backdrop-blur-2xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none" />
+      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="p-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
-              <Zap className="w-4 h-4" />
-            </span>
-            <span className="text-xxs font-black tracking-widest uppercase text-emerald-400">
-              Platform Governance & Transparent Unit Rates
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+              <Radio className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />
+              Transparent Unit Rates
             </span>
           </div>
-          <h2 className={`text-2xl md:text-3xl font-black text-white ${headingClass}`}>
+          <h2 className="text-xl font-bold tracking-tight text-white">
             Feature Access & Cost Matrix
           </h2>
-          <p className="text-xs md:text-sm text-slate-400 mt-1 max-w-2xl leading-relaxed">
+          <p className="text-xs text-white/60 mt-0.5 max-w-2xl leading-relaxed">
             Transparent breakdown of tier quotas, unit rates, and interactive cooperative budget simulator for SMS, LLM reasoning, WhatsApp, AI Vision, and Speech synthesis.
           </p>
         </div>
 
-        {/* Tab switcher */}
-        <div className="flex bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800 backdrop-blur-md shadow-inner self-start md:self-auto relative z-10">
+        {/* Tab switcher matching VisitsPage status filter */}
+        <div className="flex items-center gap-2 overflow-x-auto self-start md:self-auto relative z-10">
           <button
             onClick={() => {
               triggerHaptic('light');
               setActiveTab('matrix');
             }}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${
               activeTab === 'matrix'
-                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm shadow-emerald-950/40'
+                : 'bg-white/[0.02] text-white/50 border-white/5 hover:border-white/15 hover:text-white'
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            Tier Access
+            <span>Tier Access</span>
           </button>
           <button
             onClick={() => {
               triggerHaptic('light');
               setActiveTab('costs');
             }}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${
               activeTab === 'costs'
-                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm shadow-emerald-950/40'
+                : 'bg-white/[0.02] text-white/50 border-white/5 hover:border-white/15 hover:text-white'
             }`}
           >
             <DollarSign className="w-3.5 h-3.5" />
-            Unit Rates
+            <span>Unit Rates</span>
           </button>
           <button
             onClick={() => {
               triggerHaptic('light');
               setActiveTab('calculator');
             }}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${
               activeTab === 'calculator'
-                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm shadow-emerald-950/40'
+                : 'bg-white/[0.02] text-white/50 border-white/5 hover:border-white/15 hover:text-white'
             }`}
           >
             <Calculator className="w-3.5 h-3.5" />
-            Cost Estimator
+            <span>Cost Estimator</span>
           </button>
         </div>
       </div>
@@ -365,58 +358,58 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"
         >
-          <div className="overflow-x-auto rounded-2xl border border-emerald-500/25 bg-slate-950/90 backdrop-blur-2xl shadow-2xl">
+          <div className="overflow-x-auto rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur-xl shadow-xl">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-800 bg-slate-900/80">
-                  <th className="p-4 md:p-5 text-xs font-black text-slate-400 uppercase tracking-wider w-[40%]">
+                <tr className="border-b border-white/10 bg-white/[0.03]">
+                  <th className="p-4 md:p-5 text-xxs font-bold text-white/60 uppercase tracking-wider w-[40%]">
                     Platform Capability / Service
                   </th>
-                  <th className="p-4 md:p-5 text-xs font-black text-center uppercase tracking-wider w-[20%] text-slate-400">
+                  <th className="p-4 md:p-5 text-xxs font-bold text-center uppercase tracking-wider w-[20%] text-white/60">
                     <div className="flex flex-col items-center gap-1">
                       <span>Free Starter</span>
-                      <span className="text-xxs px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 font-bold">
+                      <span className="text-xxs px-2.5 py-0.5 rounded-full bg-white/[0.05] text-white/80 font-mono">
                         $0 / month
                       </span>
                     </div>
                   </th>
-                  <th className="p-4 md:p-5 text-xs font-black text-center uppercase tracking-wider w-[20%] text-emerald-400 bg-emerald-500/10 border-x border-emerald-500/30">
+                  <th className="p-4 md:p-5 text-xxs font-bold text-center uppercase tracking-wider w-[20%] text-emerald-300 bg-emerald-500/10 border-x border-emerald-500/20">
                     <div className="flex flex-col items-center gap-1">
                       <div className="flex items-center gap-1">
                         <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
                         <span>Pro Officer</span>
                       </div>
-                      <span className="text-xxs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-black">
+                      <span className="text-xxs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold font-mono">
                         $29 / month
                       </span>
                     </div>
                   </th>
-                  <th className="p-4 md:p-5 text-xs font-black text-center uppercase tracking-wider w-[20%] text-purple-400">
+                  <th className="p-4 md:p-5 text-xxs font-bold text-center uppercase tracking-wider w-[20%] text-purple-300">
                     <div className="flex flex-col items-center gap-1">
                       <div className="flex items-center gap-1">
                         <Building2 className="w-3.5 h-3.5 text-purple-400" />
                         <span>Enterprise Org</span>
                       </div>
-                      <span className="text-xxs px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 font-black">
+                      <span className="text-xxs px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-bold">
                         Custom Tier
                       </span>
                     </div>
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/80 text-sm">
+              <tbody className="divide-y divide-white/5 text-xs">
                 {MATRIX_FEATURES.map((item, idx) => {
                   const Icon = item.icon;
                   return (
                     <tr
                       key={idx}
-                      className={`hover:bg-slate-900/60 transition-colors ${
+                      className={`hover:bg-white/[0.02] transition-colors ${
                         item.highlight ? 'bg-emerald-500/[0.02]' : ''
                       }`}
                     >
                       <td className="p-4 md:p-5">
                         <div className="flex items-start gap-3.5">
-                          <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-emerald-400 mt-0.5 shrink-0 shadow-inner">
+                          <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 text-emerald-400 mt-0.5 shrink-0 shadow-inner">
                             <Icon className="w-4 h-4" />
                           </div>
                           <div>
@@ -424,11 +417,11 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                               <span className="font-bold text-white text-xs md:text-sm">
                                 {item.name}
                               </span>
-                              <span className="text-xxs px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400 font-mono">
+                              <span className="text-xxs px-1.5 py-0.5 rounded bg-white/[0.03] border border-white/10 text-white/60 font-mono">
                                 {item.category}
                               </span>
                             </div>
-                            <p className="text-xxs md:text-xs text-slate-400 mt-0.5 leading-relaxed">
+                            <p className="text-xs text-white/60 mt-0.5 leading-relaxed">
                               {item.description}
                             </p>
                           </div>
@@ -450,10 +443,10 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
             </table>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-4 p-5 rounded-2xl bg-slate-950/90 border border-slate-800 shadow-xl">
+          <div className="flex flex-wrap items-center justify-between gap-4 p-5 rounded-2xl bg-slate-900/60 border border-white/10 shadow-xl backdrop-blur-xl">
             <div className="flex items-center gap-3">
               <Info className="w-5 h-5 text-emerald-400 shrink-0" />
-              <p className="text-xs text-slate-300">
+              <p className="text-xs text-white/70">
                 <strong className="text-white">Free tier restrictions:</strong> Paid consumable services (SMS, LLM,
                 WhatsApp, AI Vision diagnostics) require an active Pro subscription to prevent API
                 overuse. Knowledge Base is limited to 3 queries/day on Free.
@@ -465,10 +458,10 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                   triggerHaptic('medium');
                   onSelectPlan('pro-monthly');
                 }}
-                className="px-5 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-lg shadow-emerald-950 flex items-center gap-2 active:scale-95"
+                className="px-5 py-2.5 text-xs font-bold rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white transition-all shadow-lg shadow-emerald-950/40 flex items-center gap-2 active:scale-95"
               >
                 <Sparkles className="w-4 h-4" />
-                Upgrade to Pro Plan
+                <span>Upgrade to Pro Plan</span>
               </button>
             )}
           </div>
@@ -488,41 +481,41 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
               return (
                 <div
                   key={svc.id}
-                  className="p-6 rounded-2xl border border-emerald-500/25 bg-slate-950/90 backdrop-blur-2xl shadow-xl hover:border-emerald-400/50 transition-all flex flex-col justify-between group"
+                  className="p-5 rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur-xl shadow-xl hover:border-emerald-500/30 transition-all flex flex-col justify-between group"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 shadow-inner group-hover:scale-105 transition-transform">
-                        <Icon className="w-6 h-6" />
+                        <Icon className="w-5 h-5" />
                       </div>
                       <div className="text-right">
-                        <span className="text-2xl font-black text-white font-mono">
+                        <span className="text-2xl font-bold text-white font-mono">
                           ${svc.rate.toFixed(3)}
                         </span>
-                        <span className="text-xxs text-slate-400 block font-mono">{svc.unit}</span>
+                        <span className="text-xxs text-white/50 block font-mono">{svc.unit}</span>
                       </div>
                     </div>
 
-                    <h3 className="text-sm font-bold text-white mb-1 group-hover:text-emerald-400 transition-colors">
+                    <h3 className="text-sm font-bold text-white mb-1 group-hover:text-emerald-300 transition-colors">
                       {svc.name}
                     </h3>
-                    <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+                    <p className="text-xs text-white/60 mb-4 leading-relaxed">
                       {svc.description}
                     </p>
                   </div>
 
-                  <div className="pt-4 border-t border-slate-800 space-y-2 text-xs">
-                    <div className="flex justify-between items-center text-slate-400">
+                  <div className="pt-4 border-t border-white/5 space-y-2 text-xs">
+                    <div className="flex justify-between items-center text-white/60">
                       <span>Free Tier Allowance:</span>
                       <span className="font-semibold text-rose-400 font-mono">0 (Locked)</span>
                     </div>
-                    <div className="flex justify-between items-center text-slate-400">
+                    <div className="flex justify-between items-center text-white/60">
                       <span>Pro Plan Included:</span>
                       <span className="font-semibold text-emerald-400 font-mono">
                         {svc.proQuota} / mo
                       </span>
                     </div>
-                    <div className="flex justify-between items-center text-slate-400">
+                    <div className="flex justify-between items-center text-white/60">
                       <span>Enterprise Quota:</span>
                       <span className="font-semibold text-purple-400 font-mono">
                         {svc.enterpriseQuota}
@@ -534,14 +527,14 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
             })}
           </div>
 
-          <div className="p-6 rounded-2xl bg-slate-950/90 border border-emerald-500/30 backdrop-blur-2xl shadow-2xl">
+          <div className="p-6 rounded-2xl bg-slate-900/60 border border-white/10 backdrop-blur-xl shadow-xl">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div>
-                <h4 className="text-sm font-black text-white uppercase tracking-tight flex items-center gap-2">
+                <h4 className="text-sm font-bold text-white flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-emerald-400" />
                   Pre-purchased Volume Packages Available
                 </h4>
-                <p className="text-xs text-slate-400 mt-1 max-w-xl leading-relaxed">
+                <p className="text-xs text-white/60 mt-1 max-w-xl leading-relaxed">
                   Organizations managing over 10,000 farmers can activate dedicated Twilio /
                   Africa’s Talking carrier routes with wholesale SMS rates under $0.009/SMS.
                 </p>
@@ -549,7 +542,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
               <a
                 href="mailto:info@gpfed.com?subject=Enterprise%20Volume%20Inquiry"
                 onClick={() => triggerHaptic('light')}
-                className="px-5 py-2.5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition-all whitespace-nowrap shadow-md shadow-emerald-950"
+                className="px-5 py-2.5 text-xs font-bold rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white transition-all whitespace-nowrap shadow-lg shadow-emerald-950/40"
               >
                 Inquire for Enterprise Rates
               </a>
@@ -563,13 +556,13 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start"
+          className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start"
         >
           {/* Sliders Area */}
-          <div className="lg:col-span-7 p-6 md:p-8 rounded-3xl border border-emerald-500/25 bg-slate-950/90 backdrop-blur-2xl shadow-2xl space-y-6">
-            <div className="flex items-center gap-2 pb-4 border-b border-slate-800">
+          <div className="lg:col-span-7 p-6 rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur-xl shadow-xl space-y-6">
+            <div className="flex items-center gap-2 pb-4 border-b border-white/10">
               <Sliders className="w-5 h-5 text-emerald-400" />
-              <h3 className="text-base font-black text-white uppercase tracking-tight">
+              <h3 className="text-sm font-bold text-white">
                 Monthly Usage Estimator & Cost Simulator
               </h3>
             </div>
@@ -577,7 +570,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
             {/* Slider: Farmers */}
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
-                <label className="font-semibold text-slate-300">
+                <label className="font-semibold text-white/80">
                   Target Registered Farmers
                 </label>
                 <span className="font-mono font-bold text-emerald-400">
@@ -591,14 +584,14 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                 step={25}
                 value={calcFarmers}
                 onChange={e => setCalcFarmers(Number(e.target.value))}
-                className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-400"
+                className="w-full h-2 bg-white/[0.05] rounded-lg appearance-none cursor-pointer accent-emerald-400"
               />
             </div>
 
             {/* Slider: SMS Broadcasts */}
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
-                <label className="font-semibold text-slate-300">
+                <label className="font-semibold text-white/80">
                   Monthly SMS Broadcasts
                 </label>
                 <span className="font-mono font-bold text-emerald-400">
@@ -612,9 +605,9 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                 step={100}
                 value={calcSms}
                 onChange={e => setCalcSms(Number(e.target.value))}
-                className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-400"
+                className="w-full h-2 bg-white/[0.05] rounded-lg appearance-none cursor-pointer accent-emerald-400"
               />
-              <span className="text-xxs text-slate-500 block font-mono">
+              <span className="text-xxs text-white/40 block font-mono">
                 500 included with Pro. Additional: $0.018/SMS.
               </span>
             </div>
@@ -622,7 +615,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
             {/* Slider: LLM Generative AI Assistant */}
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
-                <label className="font-semibold text-slate-300">
+                <label className="font-semibold text-white/80">
                   AI Generative Assistant Reasoning Queries
                 </label>
                 <span className="font-mono font-bold text-purple-400">
@@ -636,9 +629,9 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                 step={50}
                 value={calcAiChat}
                 onChange={e => setCalcAiChat(Number(e.target.value))}
-                className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-400"
+                className="w-full h-2 bg-white/[0.05] rounded-lg appearance-none cursor-pointer accent-purple-400"
               />
-              <span className="text-xxs text-slate-500 block font-mono">
+              <span className="text-xxs text-white/40 block font-mono">
                 1,000 included with Pro. Additional: $0.005/chat.
               </span>
             </div>
@@ -646,7 +639,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
             {/* Slider: AI Vision Scans */}
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
-                <label className="font-semibold text-slate-300">
+                <label className="font-semibold text-white/80">
                   AI Crop & Soil Photo Diagnoses
                 </label>
                 <span className="font-mono font-bold text-cyan-400">
@@ -660,9 +653,9 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                 step={10}
                 value={calcVision}
                 onChange={e => setCalcVision(Number(e.target.value))}
-                className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+                className="w-full h-2 bg-white/[0.05] rounded-lg appearance-none cursor-pointer accent-cyan-400"
               />
-              <span className="text-xxs text-slate-500 block font-mono">
+              <span className="text-xxs text-white/40 block font-mono">
                 100 included with Pro. Additional: $0.05/scan.
               </span>
             </div>
@@ -670,7 +663,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
             {/* Slider: WhatsApp Broadcasts */}
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
-                <label className="font-semibold text-slate-300">
+                <label className="font-semibold text-white/80">
                   WhatsApp & Telegram Broadcasts
                 </label>
                 <span className="font-mono font-bold text-teal-400">
@@ -684,9 +677,9 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                 step={50}
                 value={calcWhatsapp}
                 onChange={e => setCalcWhatsapp(Number(e.target.value))}
-                className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-teal-400"
+                className="w-full h-2 bg-white/[0.05] rounded-lg appearance-none cursor-pointer accent-teal-400"
               />
-              <span className="text-xxs text-slate-500 block font-mono">
+              <span className="text-xxs text-white/40 block font-mono">
                 500 included with Pro. Additional: $0.015/broadcast.
               </span>
             </div>
@@ -694,57 +687,56 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
 
           {/* Estimation Breakdown Card */}
           <div className="lg:col-span-5 space-y-6">
-            <div className="p-6 md:p-8 rounded-3xl border-2 border-emerald-500/40 bg-slate-950/95 backdrop-blur-2xl shadow-2xl space-y-6 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none" />
+            <div className="p-6 rounded-2xl border border-emerald-500/30 bg-slate-900/60 backdrop-blur-xl shadow-xl space-y-6 relative overflow-hidden">
               <div className="relative z-10">
-                <span className="text-xxs font-black uppercase tracking-widest text-emerald-400">
+                <span className="text-xxs font-bold uppercase tracking-widest text-emerald-400">
                   Estimated Monthly Total (Pro Tier)
                 </span>
-                <div className="flex items-baseline gap-2 mt-2">
-                  <span className="text-4xl md:text-5xl font-black text-white font-mono tracking-tight">
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="text-4xl font-bold text-white font-mono tracking-tight">
                     ${proCost.total.toFixed(2)}
                   </span>
-                  <span className="text-xs text-slate-400 font-semibold">/ month</span>
+                  <span className="text-xs text-white/60 font-semibold">/ month</span>
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2.5 text-xs relative z-10">
-                <div className="flex justify-between items-center text-slate-300">
+              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-2 text-xs relative z-10">
+                <div className="flex justify-between items-center text-white/80">
                   <span>Pro Plan Base Price:</span>
                   <span className="font-mono font-bold text-white">
                     ${proCost.base.toFixed(2)}
                   </span>
                 </div>
-                <div className="flex justify-between items-center text-slate-300">
-                  <span>Extra SMS Overage ({Math.max(0, calcSms - 500)} units):</span>
+                <div className="flex justify-between items-center text-white/80">
+                  <span>Extra SMS ({Math.max(0, calcSms - 500)} units):</span>
                   <span className="font-mono font-bold text-white">
                     ${(Math.max(0, calcSms - 500) * 0.018).toFixed(2)}
                   </span>
                 </div>
-                <div className="flex justify-between items-center text-slate-300">
+                <div className="flex justify-between items-center text-white/80">
                   <span>Extra AI Chats ({Math.max(0, calcAiChat - 1000)} units):</span>
                   <span className="font-mono font-bold text-white">
                     ${(Math.max(0, calcAiChat - 1000) * 0.005).toFixed(2)}
                   </span>
                 </div>
-                <div className="flex justify-between items-center text-slate-300">
+                <div className="flex justify-between items-center text-white/80">
                   <span>Extra Vision Scans ({Math.max(0, calcVision - 100)} units):</span>
                   <span className="font-mono font-bold text-white">
                     ${(Math.max(0, calcVision - 100) * 0.05).toFixed(2)}
                   </span>
                 </div>
-                <div className="flex justify-between items-center text-slate-300">
+                <div className="flex justify-between items-center text-white/80">
                   <span>Extra WhatsApp ({Math.max(0, calcWhatsapp - 500)} units):</span>
                   <span className="font-mono font-bold text-white">
                     ${(Math.max(0, calcWhatsapp - 500) * 0.015).toFixed(2)}
                   </span>
                 </div>
 
-                <div className="pt-3 border-t border-slate-800 flex justify-between items-center font-bold text-xs">
+                <div className="pt-3 border-t border-white/10 flex justify-between items-center font-bold text-xs">
                   <span className="text-emerald-400 uppercase tracking-wider text-xxs">
                     Total Net Estimate:
                   </span>
-                  <span className="font-mono text-base font-black text-emerald-400">
+                  <span className="font-mono text-base font-bold text-emerald-400">
                     ${proCost.total.toFixed(2)}
                   </span>
                 </div>
@@ -756,10 +748,10 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                     triggerHaptic('medium');
                     onSelectPlan('pro-monthly');
                   }}
-                  className="w-full py-4 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-emerald-950 flex items-center justify-center gap-2 relative z-10 active:scale-95"
+                  className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-2 relative z-10 active:scale-95"
                 >
                   <Sparkles className="w-4 h-4" />
-                  Select Pro Plan
+                  <span>Select Pro Plan</span>
                 </button>
               )}
             </div>
