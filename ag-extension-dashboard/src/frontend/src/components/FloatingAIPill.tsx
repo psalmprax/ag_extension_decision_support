@@ -151,7 +151,7 @@ const AIAgronomistScanTab: React.FC<ScanTabProps> = ({
           <div className="w-12 h-12 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mx-auto mb-2">
             <Camera className="w-6 h-6" />
           </div>
-          <h4 className="text-xs font-bold text-white mb-1">Upload or Snap Leaf Photo</h4>
+          <h4 className="text-xs font-bold text-white mb-1">Upload or Capture Leaf Photo</h4>
           <p className="text-[11px] text-slate-400 mb-3">
             Neural vision analyzes fungal lesions, pest bites, and nutrient deficiencies.
           </p>
@@ -243,7 +243,7 @@ const AIAgronomistVoiceTab: React.FC<VoiceTabProps> = ({
           ? `Recording Field Memo (${formatDuration(recordingDuration)})...`
           : isTranscribing
           ? 'Transcribing with Whisper STT...'
-          : 'Tap to Record Live Agronomic Note'}
+          : 'Tap to Record Agronomic Note'}
       </p>
       <p className="text-[11px] text-slate-400 mt-1">
         Live speech recognition with Whisper AI noise suppression
@@ -297,7 +297,7 @@ const AIAgronomistTelecallTab: React.FC<TelecallTabProps> = ({
       <div className="w-12 h-12 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mx-auto">
         <Video className="w-6 h-6" />
       </div>
-      <h4 className="text-xs font-bold text-white">Instant Tele-Agronomy Session</h4>
+      <h4 className="text-xs font-bold text-white">Instant Tele-Agronomy Call</h4>
       <p className="text-[11px] text-slate-400">
         Establish a low-bandwidth video & audio link with farmers for live crop examination.
       </p>
@@ -312,7 +312,7 @@ const AIAgronomistTelecallTab: React.FC<TelecallTabProps> = ({
           className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded transition-all flex items-center justify-center gap-1.5"
         >
           {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-          <span>{copiedLink ? 'Copied Link!' : 'Copy Invite Link'}</span>
+          <span>{copiedLink ? 'Copied Link!' : 'Generate Live Call Link'}</span>
         </button>
         <button
           onClick={() => {
@@ -526,7 +526,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
                       Gemini / OpenAI
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-400">Multimodal Field Copilot</p>
+                  <p className="text-[11px] text-slate-400">Multimodal Decision Support</p>
                 </div>
               </div>
 
