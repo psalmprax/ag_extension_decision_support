@@ -34,7 +34,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -50,7 +50,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 15 }}
             transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-            className={`relative w-full ${maxWidth} bg-slate-950/95 dark:bg-slate-950/95 border border-emerald-500/30 ${radiusClass} shadow-2xl overflow-hidden flex flex-col backdrop-blur-2xl`}
+            className={`relative w-full ${maxWidth} max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] bg-slate-950/95 dark:bg-slate-950/95 border border-emerald-500/30 ${radiusClass} shadow-2xl overflow-hidden flex flex-col backdrop-blur-2xl`}
             style={{ borderRadius: 'var(--radius-card, 1.25rem)' }}
           >
             {/* KnockKnock Ambient Mesh Gradient Orb */}
@@ -58,18 +58,18 @@ export const BaseModal: React.FC<BaseModalProps> = ({
             <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-teal-500/10 rounded-full blur-[90px] pointer-events-none" />
 
             {/* Header */}
-            <div className="p-6 border-b border-slate-800/80 relative z-10">
+            <div className="p-4 sm:p-6 border-b border-slate-800/80 relative z-10">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3.5">
+                <div className="flex items-center gap-3 sm:gap-3.5">
                   {icon && (
                     <div
-                      className={`w-11 h-11 rounded-2xl ${iconBg} flex items-center justify-center shadow-inner shrink-0`}
+                      className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl ${iconBg} flex items-center justify-center shadow-inner shrink-0`}
                     >
                       {icon}
                     </div>
                   )}
                   <div>
-                    <h3 className="text-xl font-black text-white tracking-tight leading-tight">
+                    <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight leading-tight">
                       {title}
                     </h3>
                     {subtitle && (
@@ -85,7 +85,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
                       triggerHaptic('light');
                       onClose();
                     }}
-                    className={`p-2 bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700 ${btnClass} transition-colors rounded-xl`}
+                    className={`p-2 bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700 ${btnClass} transition-colors rounded-xl active:scale-95`}
                     aria-label="Close modal"
                   >
                     <X className="w-4 h-4" />
@@ -95,13 +95,13 @@ export const BaseModal: React.FC<BaseModalProps> = ({
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6 relative z-10 text-slate-300 text-sm leading-relaxed">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 relative z-10 text-slate-300 text-sm leading-relaxed">
               {children}
             </div>
 
             {/* Footer */}
             {footer && (
-              <div className="p-6 border-t border-slate-800/80 bg-slate-900/40 relative z-10">
+              <div className="p-4 sm:p-6 border-t border-slate-800/80 bg-slate-900/40 relative z-10">
                 {footer}
               </div>
             )}

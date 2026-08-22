@@ -421,18 +421,18 @@ function App() {
   }, [pageContext, isLoaded]); 
 
   return (
-    <div className="flex flex-col h-screen bg-slate-950 text-slate-200 font-sans">
+    <div className="flex flex-col h-[100dvh] bg-slate-950 text-slate-100 font-sans">
       {/* Header */}
-      <header className="p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md flex items-center justify-between">
+      <header className="p-3.5 sm:p-4 border-b border-white/10 bg-slate-900/60 backdrop-blur-xl flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-lg shadow-emerald-500/5">
-            <img src="/logo.png" alt="GPExts Logo" className="w-7 h-7 object-contain" />
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-emerald-500/15 flex items-center justify-center border border-emerald-500/30 shadow-lg shadow-emerald-950/40 shrink-0">
+            <img src="/logo.png" alt="GPExts Logo" className="w-6 h-6 object-contain" />
           </div>
           <div>
-            <h1 className="text-sm font-black tracking-tight text-white uppercase">GPExts Advisor</h1>
+            <h1 className="text-xs sm:text-sm font-bold tracking-tight text-white uppercase">GPExts Advisor</h1>
             <div className="flex items-center gap-2">
-              <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'}`} />
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+              <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]'}`} />
+              <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest">
                 {isOnline ? 'Online' : 'Offline'} • {activeAgent.split(' ')[1]}
               </p>
             </div>
@@ -440,16 +440,17 @@ function App() {
         </div>
         <div className="flex items-center gap-2">
           {queuedRequests.length > 0 && (
-            <span className="px-2 py-1 bg-orange-500/10 border border-orange-500/20 rounded-full text-[10px] font-bold text-orange-400">
+            <span className="px-2 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full text-[10px] font-bold text-amber-400">
               {queuedRequests.length}
             </span>
           )}
           <button
             onClick={() => setShowOfflineManager(!showOfflineManager)}
-            className="p-2 hover:bg-slate-800 rounded-lg transition-colors border border-transparent hover:border-slate-700"
+            className="p-2 hover:bg-white/5 rounded-xl transition-colors border border-transparent hover:border-white/10 active:scale-95"
+            aria-label="Offline status"
           >
             {isOnline ? (
-              <Wifi className="w-4 h-4 text-slate-400" />
+              <Wifi className="w-4 h-4 text-white/50" />
             ) : (
               <WifiOff className="w-4 h-4 text-red-400" />
             )}
@@ -458,23 +459,23 @@ function App() {
       </header>
 
       {/* Tabs */}
-      <div className="flex border-b border-slate-800 bg-slate-900/30">
+      <div className="flex border-b border-white/10 bg-slate-900/40">
         <button 
           onClick={() => setActiveTab('chat')}
-          className={`flex-1 py-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all border-b-2 ${activeTab === 'chat' ? 'text-primary-400 border-primary-500 bg-primary-500/5' : 'text-slate-500 border-transparent hover:text-slate-300'}`}
+          className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-[0.15em] transition-all border-b-2 ${activeTab === 'chat' ? 'text-emerald-400 border-emerald-400 bg-emerald-500/10' : 'text-white/40 border-transparent hover:text-white/70'}`}
         >
           AI Advisor
         </button>
         <button 
           onClick={() => setActiveTab('log')}
-          className={`flex-1 py-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all border-b-2 ${activeTab === 'log' ? 'text-emerald-400 border-emerald-500 bg-emerald-500/5' : 'text-slate-500 border-transparent hover:text-slate-300'}`}
+          className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-[0.15em] transition-all border-b-2 ${activeTab === 'log' ? 'text-emerald-400 border-emerald-400 bg-emerald-500/10' : 'text-white/40 border-transparent hover:text-white/70'}`}
         >
           Visit Logger
         </button>
       </div>
 
       {/* Farmer Context Selector */}
-      <div className="px-4 py-2 bg-slate-900/50 border-b border-slate-800 flex items-center gap-2">
+      <div className="px-4 py-2 bg-slate-900/50 border-b border-white/5 flex items-center gap-2">
         <User className="w-3 h-3 text-slate-500" />
         <select
           value={activeFarmerId}

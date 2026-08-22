@@ -85,14 +85,14 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4">
       {/* Backdrop */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
       />
 
       {/* Modal */}
@@ -100,34 +100,35 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="relative w-full max-w-md bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl overflow-hidden"
+        className="relative w-full max-w-md bg-slate-900 border border-white/10 text-white rounded-3xl shadow-2xl overflow-hidden max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] overflow-y-auto"
       >
         {/* Header */}
-        <div className="px-8 py-6 border-b border-gray-100 dark:border-gray-800">
+        <div className="p-4 sm:p-6 border-b border-white/10">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-2xl flex items-center justify-center">
-                <Share2 className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-500/20 border border-emerald-500/30 rounded-2xl flex items-center justify-center shrink-0">
+                <Share2 className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
               </div>
-              <div>
-                <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">
+              <div className="min-w-0">
+                <h2 className="text-lg sm:text-xl font-bold text-white uppercase tracking-tight truncate">
                   Share {entityType}
                 </h2>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-white/50 truncate">
                   {entityName || `Entity ID: ${entityId}`}
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
+              className="p-2 hover:bg-white/5 rounded-xl transition-colors text-white/40 hover:text-white active:scale-95"
+              aria-label="Close modal"
             >
-              <X className="w-5 h-5 text-gray-400" />
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        <div className="p-8">
+        <div className="p-4 sm:p-6">
           {!shareData ? (
             <div className="space-y-6">
               {/* Access Settings */}

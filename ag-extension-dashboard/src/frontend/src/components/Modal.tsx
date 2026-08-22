@@ -17,18 +17,18 @@ const SIZE_CLASS: Record<'sm' | 'md' | 'lg', string> = {
 
 export function Modal({ title, onClose, size = 'md', children }: ModalProps) {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 z-50">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className={`bg-white dark:bg-gray-800 rounded-lg w-full ${SIZE_CLASS[size]} max-h-[80vh] overflow-y-auto`}
+        className={`bg-slate-900 border border-white/10 text-white rounded-2xl w-full ${SIZE_CLASS[size]} max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] overflow-y-auto shadow-2xl`}
       >
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{title}</h3>
+        <div className="p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
+            <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">{title}</h3>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 text-2xl"
+              className="text-white/40 hover:text-white text-xl p-1 rounded-lg hover:bg-white/5 transition-colors"
               aria-label="Close modal"
             >
               ×

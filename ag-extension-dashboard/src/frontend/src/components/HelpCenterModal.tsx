@@ -226,17 +226,17 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[80]"
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[80]"
           />
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed inset-0 z-[90] flex items-center justify-center p-4"
+            className="fixed inset-0 z-[90] flex items-center justify-center p-3 sm:p-4"
           >
-            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="bg-slate-900 border border-white/10 text-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] overflow-hidden flex flex-col">
               {/* Header */}
-              <div className="p-6 bg-gradient-to-br from-blue-500 to-blue-700 text-white">
+              <div className="p-4 sm:p-6 bg-gradient-to-br from-emerald-600 to-teal-700 text-white">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">

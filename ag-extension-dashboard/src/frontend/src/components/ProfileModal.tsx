@@ -63,35 +63,36 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[80]"
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[80]"
           />
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed inset-0 z-[90] flex items-center justify-center p-4"
+            className="fixed inset-0 z-[90] flex items-center justify-center p-3 sm:p-4"
           >
-            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div className="bg-slate-900 border border-white/10 text-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] overflow-y-auto">
               {/* Header */}
-              <div className="relative p-6 bg-gradient-to-br from-primary-500 to-primary-700 text-white">
+              <div className="relative p-4 sm:p-6 bg-gradient-to-br from-emerald-600 to-teal-700 text-white">
                 <button
                   onClick={onClose}
-                  className="absolute top-4 right-4 p-2 rounded-xl hover:bg-white/20 transition-colors"
+                  className="absolute top-4 right-4 p-2 rounded-xl hover:bg-white/20 transition-colors active:scale-95"
+                  aria-label="Close modal"
                 >
                   <X className="w-5 h-5" />
                 </button>
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center text-2xl font-bold backdrop-blur-sm">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-2xl flex items-center justify-center text-xl sm:text-2xl font-bold backdrop-blur-sm shrink-0">
                     {user.firstName?.[0]}
                     {user.lastName?.[0]}
                   </div>
-                  <div>
-                    <h2 className="text-xl font-bold">
+                  <div className="min-w-0">
+                    <h2 className="text-lg sm:text-xl font-bold truncate">
                       {user.firstName} {user.lastName}
                     </h2>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Shield className="w-4 h-4 opacity-80" />
-                      <span className="text-sm opacity-90 capitalize">
+                    <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1">
+                      <Shield className="w-3.5 h-3.5 opacity-80 shrink-0" />
+                      <span className="text-xs sm:text-sm opacity-90 capitalize truncate">
                         {user.role?.replace('_', ' ')}
                       </span>
                     </div>
@@ -100,7 +101,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
               </div>
 
               {/* Content */}
-              <div className="p-6 space-y-4">
+              <div className="p-4 sm:p-6 space-y-4">
                 <div className="space-y-3">
                   <div>
                     <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
