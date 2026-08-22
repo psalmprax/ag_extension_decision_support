@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { MessageSquare, Send, FileText, AlertCircle, TrendingUp, Sparkles, Activity } from 'lucide-react';
+import { MessageSquare, Send, FileText, AlertCircle, TrendingUp, Activity } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchUsage } from '@/api/billingService';
 import { useLanguage } from '@/lib/LanguageContext';

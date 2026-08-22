@@ -1,5 +1,5 @@
 import React from 'react';
-import { Zap, Clock, ExternalLink, TrendingUp, ShieldCheck, Sparkles } from 'lucide-react';
+import { Clock, ExternalLink, TrendingUp, ShieldCheck, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';

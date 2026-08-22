@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, Download, FileText, Receipt, Sparkles } from 'lucide-react';
+import { Clock, Download, FileText, Receipt } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { Badge } from '../ui/Badge';
 import { triggerHaptic } from '@/lib/haptics';

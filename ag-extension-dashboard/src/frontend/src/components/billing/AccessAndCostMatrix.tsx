@@ -245,7 +245,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
   onSelectPlan,
   className = '',
 }) => {
-  const { headingClass, radiusClass } = useThemeClasses();
+  const { headingClass } = useThemeClasses();
 
   const [activeTab, setActiveTab] = useState<'matrix' | 'costs' | 'calculator'>('matrix');
 

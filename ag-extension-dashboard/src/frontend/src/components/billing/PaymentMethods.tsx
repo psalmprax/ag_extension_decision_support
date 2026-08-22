@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   CreditCard as CardIcon,
   Smartphone,
@@ -7,11 +6,8 @@ import {
   Plus,
   Trash2,
   Lock,
-  Zap,
-  CheckCircle,
 } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
-import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
@@ -66,7 +62,6 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
   formMessage,
 }) => {
   const { t } = useLanguage();
-  const { radiusClass } = useThemeClasses();
 
   return (
     <section
