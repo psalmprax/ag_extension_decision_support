@@ -112,6 +112,7 @@ interface FarmerSelectorCardProps {
   onSelectFarmer: (f: Farmer) => void;
   onSearchChange: (search: string) => void;
   onToggleDropdown: () => void;
+  onCloseDropdown: () => void;
 }
 
 const FarmerSelectorCard: React.FC<FarmerSelectorCardProps> = ({
@@ -123,9 +124,31 @@ const FarmerSelectorCard: React.FC<FarmerSelectorCardProps> = ({
   onSelectFarmer,
   onSearchChange,
   onToggleDropdown,
+  onCloseDropdown,
 }) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        onCloseDropdown();
+      }
+    };
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isDropdownOpen, onCloseDropdown]);
+
   return (
-    <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-5 shadow-xl space-y-3">
+    <div
+      ref={containerRef}
+      className={`backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-5 shadow-xl space-y-3 relative transition-all duration-200 ${
+        isDropdownOpen ? 'z-40' : 'z-10'
+      }`}
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <UserCheck className="w-4 h-4 text-purple-400" />
@@ -178,7 +201,7 @@ const FarmerSelectorCard: React.FC<FarmerSelectorCardProps> = ({
         </div>
 
         {isDropdownOpen && (
-          <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-slate-900 border border-white/10 rounded-xl shadow-2xl p-2 max-h-60 overflow-y-auto">
+          <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-slate-900/95 border border-purple-500/30 rounded-xl shadow-2xl backdrop-blur-2xl p-2 max-h-60 overflow-y-auto">
             <div className="relative mb-2">
               <Search className="w-3.5 h-3.5 text-white/40 absolute left-3 top-2.5" />
               <input
@@ -538,6 +561,7 @@ export const VisitSynthesisForm: React.FC = () => {
         }}
         onSearchChange={setFarmerSearch}
         onToggleDropdown={() => setIsDropdownOpen(!isDropdownOpen)}
+        onCloseDropdown={() => setIsDropdownOpen(false)}
       />
 
       {/* ── Input Terminal Card ── */}
