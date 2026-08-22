@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { MessageSquare, Send, FileText, AlertCircle, TrendingUp } from 'lucide-react';
+import { MessageSquare, Send, FileText, AlertCircle, TrendingUp, Sparkles, Activity } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchUsage } from '@/api/billingService';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -27,23 +27,23 @@ const QuotaBar = ({
   const isHigh = !isUnlimited && percentage > 80;
 
   return (
-    <div className="space-y-3 group/bar">
+    <div className="space-y-2.5 group/bar">
       <div className="flex justify-between items-end">
         <div className="flex items-center gap-3">
           <div
-            className={`p-2 rounded-xl bg-white/5 shadow-sm transition-all group-hover/bar:scale-110 duration-500 border border-white/5`}
+            className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 shadow-inner transition-all group-hover/bar:scale-105"
           >
-            <Icon className={`w-3.5 h-3.5 ${color.replace('from-', 'text-').split(' ')[0]}`} />
+            <Icon className="w-3.5 h-3.5" />
           </div>
           <div>
-            <span className="text-xxs font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 block leading-none mb-1.5">
+            <span className="text-xxs font-black uppercase tracking-widest text-slate-400 block leading-none mb-1">
               {label}
             </span>
             <span
-              className={`text-xs font-black ${isHigh ? 'text-red-500' : 'text-gray-900 dark:text-white'}`}
+              className={`text-xs font-mono font-bold ${isHigh ? 'text-rose-400' : 'text-white'}`}
             >
               {current.toLocaleString()}{' '}
-              <span className="text-gray-400 dark:text-gray-600 font-bold">
+              <span className="text-slate-500 font-normal">
                 / {isUnlimited ? '∞' : limit.toLocaleString()}
               </span>
             </span>
@@ -51,31 +51,27 @@ const QuotaBar = ({
         </div>
         <div className="text-right">
           <span
-            className={`text-xxs font-black ${isHigh ? 'text-red-500 animate-pulse' : 'text-gray-400 dark:text-gray-500'}`}
+            className={`text-xxs font-black font-mono ${isHigh ? 'text-rose-400 animate-pulse' : 'text-emerald-400'}`}
           >
-            {isUnlimited ? t('usage_unlimited') : `${percentage}%`}
+            {isUnlimited ? t('usage_unlimited') || 'UNLIMITED' : `${percentage}%`}
           </span>
         </div>
       </div>
-      <div className="relative h-2.5 w-full bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden border border-gray-200/50 dark:border-white/5 shadow-inner">
+      <div className="relative h-2 w-full bg-slate-900 rounded-full overflow-hidden border border-slate-800 shadow-inner">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: isUnlimited ? '100%' : `${percentage}%` }}
-          transition={{ duration: 1.5, ease: [0.34, 1.56, 0.64, 1] }}
-          className={`absolute inset-y-0 left-0 rounded-full bg-gradient-to-r ${color} transition-all duration-300 ${isUnlimited ? 'opacity-20' : ''}`}
+          transition={{ duration: 1.2, ease: [0.34, 1.56, 0.64, 1] }}
+          className={`absolute inset-y-0 left-0 rounded-full bg-gradient-to-r ${color} transition-all duration-300 ${isUnlimited ? 'opacity-30' : ''}`}
           style={{
-            boxShadow: isUnlimited || percentage > 5 ? `0 0 20px ${glowColor}` : 'none',
+            boxShadow: isUnlimited || percentage > 5 ? `0 0 15px ${glowColor}` : 'none',
           }}
         >
-          {/* Liquid Wave Effect */}
+          {/* Shimmer wave effect */}
           <motion.div
             animate={{ x: ['-100%', '100%'] }}
-            transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-            className="absolute inset-0 opacity-30 bg-[linear-gradient(90deg,transparent_0%,var(--color-outline)_50%,transparent_100%)] skew-x-12"
-          />
-          {/* Secondary Glow Pulse */}
-          <div
-            className={`absolute inset-0 bg-white/20 animate-pulse ${percentage < 100 ? 'rounded-r-none' : ''}`}
+            transition={{ duration: 2.5, repeat: Infinity, ease: 'linear' }}
+            className="absolute inset-0 opacity-40 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.6)_50%,transparent_100%)] skew-x-12"
           />
         </motion.div>
       </div>
@@ -97,21 +93,12 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
 
   if (isLoading) {
     return (
-      <div className="p-8 space-y-8 animate-pulse bg-white/5 rounded-3xl border border-white/5">
-        <div className="h-4 bg-white/10 rounded-full w-1/3"></div>
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <div className="h-2 bg-white/10 rounded-full w-1/4"></div>
-            <div className="h-3 bg-white/10 rounded-full"></div>
-          </div>
-          <div className="space-y-2">
-            <div className="h-2 bg-white/10 rounded-full w-1/4"></div>
-            <div className="h-3 bg-white/10 rounded-full"></div>
-          </div>
-          <div className="space-y-2">
-            <div className="h-2 bg-white/10 rounded-full w-1/4"></div>
-            <div className="h-3 bg-white/10 rounded-full"></div>
-          </div>
+      <div className="p-8 space-y-6 animate-pulse bg-slate-950/80 rounded-2xl border border-slate-800">
+        <div className="h-4 bg-slate-800 rounded-full w-1/3"></div>
+        <div className="space-y-4">
+          <div className="h-3 bg-slate-800/60 rounded-full"></div>
+          <div className="h-3 bg-slate-800/60 rounded-full"></div>
+          <div className="h-3 bg-slate-800/60 rounded-full"></div>
         </div>
       </div>
     );
@@ -120,23 +107,23 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
   if (!plan || usageData.length === 0) {
     return (
       <div
-        className={`relative overflow-hidden ${compact ? '' : 'p-8 bg-gray-900 border border-white/10 rounded-3xl shadow-2xl'}`}
+        className={`relative overflow-hidden ${compact ? '' : 'p-8 bg-slate-950/90 border border-emerald-500/25 rounded-2xl shadow-2xl backdrop-blur-2xl'}`}
       >
-        <div className="relative z-10 flex flex-col items-center text-center py-6">
-          <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-4 border border-white/10 shadow-xl">
-            <TrendingUp className="w-8 h-8 text-primary-500 animate-pulse" />
+        <div className="relative z-10 flex flex-col items-center text-center py-4">
+          <div className="w-14 h-14 bg-emerald-500/15 rounded-2xl flex items-center justify-center mb-3 border border-emerald-500/30 text-emerald-400 shadow-xl">
+            <Activity className="w-7 h-7 animate-pulse" />
           </div>
-          <h4 className="text-sm font-black text-white uppercase tracking-widest mb-2">
-            {t('usage_init_title')}
+          <h4 className="text-xs font-black text-white uppercase tracking-widest mb-1.5">
+            {t('usage_init_title') || 'Realtime Quota Telemetry'}
           </h4>
-          <p className="text-xs text-gray-400 max-w-[200px] leading-relaxed mb-6">
-            {t('usage_init_desc')}
+          <p className="text-xxs text-slate-400 max-w-[220px] leading-relaxed mb-4">
+            {t('usage_init_desc') || 'Automatic telemetry tracking for SMS dispatch, AI queries, and telemetry synthesis.'}
           </p>
-          <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+          <div className="w-full h-1 bg-slate-900 rounded-full overflow-hidden">
             <motion.div
               animate={{ x: ['-100%', '100%'] }}
               transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-              className="w-1/2 h-full bg-primary-500/50 blur-[2px]"
+              className="w-1/2 h-full bg-emerald-500/50 blur-[1px]"
             />
           </div>
         </div>
@@ -148,47 +135,47 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
     string,
     { icon: React.ComponentType<{ className?: string }>; color: string; glow: string }
   > = {
-    sms: { icon: Send, color: 'from-primary-400 to-primary-600', glow: 'var(--color-outline)' },
+    sms: { icon: Send, color: 'from-emerald-500 to-teal-400', glow: 'rgba(16,185,129,0.5)' },
     ai_chat: {
       icon: MessageSquare,
-      color: 'from-blue-400 to-indigo-600',
-      glow: 'var(--color-outline)',
+      color: 'from-indigo-500 to-cyan-400',
+      glow: 'rgba(99,102,241,0.5)',
     },
     report: {
       icon: FileText,
-      color: 'from-purple-400 to-fuchsia-600',
-      glow: 'var(--color-outline)',
+      color: 'from-purple-500 to-pink-500',
+      glow: 'rgba(168,85,247,0.5)',
     },
   };
 
   return (
     <div
-      className={`relative overflow-hidden transition-all duration-500 ${compact ? '' : 'p-8 bg-white dark:bg-gray-900 border border-gray-100 dark:border-white/10 shadow-2xl group'}`}
-      style={{ borderRadius: compact ? '0' : 'var(--radius-card)' }}
+      className={`relative overflow-hidden transition-all duration-500 ${compact ? '' : 'p-8 bg-slate-950/90 dark:bg-slate-950/95 border border-emerald-500/25 shadow-2xl backdrop-blur-2xl group'}`}
+      style={{ borderRadius: compact ? '0' : 'var(--radius-card, 1.25rem)' }}
     >
       {!compact && (
         <>
           <div
-            className="absolute top-0 right-0 w-48 h-48 bg-primary-500/5 rounded-full blur-[80px] -translate-y-24 translate-x-24 group-hover:bg-primary-500/10 transition-colors duration-700"
+            className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none"
             aria-hidden="true"
           />
 
-          <div className="flex items-center justify-between mb-10 relative z-10">
+          <div className="flex items-center justify-between mb-8 relative z-10">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-primary-500/10 rounded-xl border border-primary-500/20 shadow-lg shadow-primary-500/5">
-                <TrendingUp className="w-4 h-4 text-primary-500" />
+              <div className="p-2.5 bg-emerald-500/15 rounded-xl border border-emerald-500/30 text-emerald-400 shadow-inner">
+                <TrendingUp className="w-4 h-4" />
               </div>
               <div>
-                <h4 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em] leading-none mb-1.5">
-                  {t('billing_quota_usage')}
+                <h4 className="text-xs font-black text-white uppercase tracking-[0.2em] leading-none mb-1">
+                  {t('billing_quota_usage') || 'Quota & Seats'}
                 </h4>
-                <p className="text-xxs font-black text-gray-400/60 uppercase tracking-widest">
-                  {t('usage_realtime_telemetry')}
+                <p className="text-xxs font-black text-emerald-400 uppercase tracking-widest">
+                  {t('usage_realtime_telemetry') || 'Live Agronomy Quota'}
                 </p>
               </div>
             </div>
             <div className="flex flex-col items-end">
-              <span className="px-3 py-1.5 rounded-full bg-gray-900 dark:bg-white text-xxs font-black text-white dark:text-gray-900 uppercase tracking-widest shadow-xl">
+              <span className="px-3 py-1 rounded-full bg-slate-900 border border-slate-700 text-xxs font-black text-emerald-400 uppercase tracking-widest shadow-md">
                 {plan.name}
               </span>
             </div>
@@ -196,7 +183,7 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
         </>
       )}
 
-      <div className={`grid gap-10 ${compact ? 'space-y-4' : 'grid-cols-1'}`}>
+      <div className={`grid gap-6 ${compact ? 'space-y-3' : 'grid-cols-1'} relative z-10`}>
         {usageData.map((item: { type: string; label: string; current: number; limit: number }) => {
           const config = typeConfig[item.type] || typeConfig['sms'];
           return (
@@ -222,18 +209,17 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="mt-10 p-5 rounded-2xl bg-red-500/5 border border-red-500/20 flex items-start gap-4 backdrop-blur-md relative overflow-hidden"
+              className="mt-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-3 backdrop-blur-md relative overflow-hidden"
             >
-              <div className="absolute inset-0 bg-red-500/5 animate-pulse" />
-              <div className="relative z-10 shrink-0 p-2 bg-red-500/10 rounded-xl border border-red-500/20">
-                <AlertCircle className="w-5 h-5 text-red-500" />
+              <div className="relative z-10 shrink-0 p-1.5 bg-rose-500/20 rounded-lg text-rose-400">
+                <AlertCircle className="w-4 h-4" />
               </div>
               <div className="relative z-10">
-                <h5 className="text-xxs font-black text-red-500 uppercase tracking-[0.2em] mb-1">
-                  {t('usage_critical_threshold')}
+                <h5 className="text-xxs font-black text-rose-400 uppercase tracking-[0.2em] mb-0.5">
+                  {t('usage_critical_threshold') || 'Quota Warning'}
                 </h5>
-                <p className="text-xs text-red-600 dark:text-red-400/80 leading-relaxed font-bold">
-                  {t('billing_limit_warning')}
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  {t('billing_limit_warning') || 'You have utilized over 90% of your SMS broadcast pool. Upgrade tier to avoid disruption.'}
                 </p>
               </div>
             </motion.div>

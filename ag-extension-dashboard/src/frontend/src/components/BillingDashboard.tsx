@@ -1,5 +1,5 @@
-import React from 'react';
-import { CreditCard, AlertCircle, Settings, Shield, Ticket } from 'lucide-react';
+import React, { useState } from 'react';
+import { CreditCard, AlertCircle, Settings, Shield, Ticket, Sparkles, Droplets } from 'lucide-react';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { motion } from 'framer-motion';
 import { useBillingActions } from '@/hooks/useBillingActions';
@@ -16,11 +16,14 @@ import { PlanCard } from './billing/PlanCard';
 import { PaymentMethods } from './billing/PaymentMethods';
 import { Invoices } from './billing/Invoices';
 import { AccessAndCostMatrix } from './billing/AccessAndCostMatrix';
+import { LiquidToggleSwitch } from './canvasui/LiquidToggleSwitch';
+import { triggerHaptic } from '@/lib/haptics';
 
 export const BillingDashboard: React.FC = () => {
   const { headingClass, radiusClass } = useThemeClasses();
   const { t } = useLanguage();
   const billing = useBillingActions();
+  const [isAnnual, setIsAnnual] = useState(false);
 
   if (billing.loading) {
     return (
@@ -30,34 +33,34 @@ export const BillingDashboard: React.FC = () => {
         aria-label="Loading billing data"
       >
         <div className="relative w-20 h-20">
-          <div className="absolute inset-0 border-4 border-primary-500/20 rounded-full"></div>
-          <div className="absolute inset-0 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+          <div className="absolute inset-0 border-4 border-emerald-500/20 rounded-full"></div>
+          <div className="absolute inset-0 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <CreditCard className="w-8 h-8 text-primary-500 animate-pulse" />
+            <CreditCard className="w-8 h-8 text-emerald-400 animate-pulse" />
           </div>
         </div>
-        <p className="mt-6 text-gray-500 dark:text-gray-400 font-black uppercase tracking-widest text-xxs animate-pulse">
-          {t('billing_syncing')}
+        <p className="mt-6 text-slate-400 font-black uppercase tracking-widest text-xxs animate-pulse">
+          {t('billing_syncing') || 'Synchronizing Billing Rails...'}
         </p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-[1400px] mx-auto py-12 px-6">
+    <div className="max-w-[1400px] mx-auto py-10 px-4 sm:px-6 space-y-10">
       {/* Configuration Alert Banner */}
       {(billing.configErrors.stripe || billing.configErrors.paypal) && (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`mb-8 p-6 bg-amber-500/10 border-2 border-amber-500/50 ${radiusClass} flex items-start gap-4`}
+          className={`mb-8 p-6 bg-amber-500/10 border-2 border-amber-500/50 ${radiusClass} flex items-start gap-4 shadow-xl backdrop-blur-xl`}
         >
-          <AlertCircle className="w-6 h-6 text-amber-500 mt-1 flex-shrink-0" />
+          <AlertCircle className="w-6 h-6 text-amber-400 mt-1 flex-shrink-0" />
           <div className="flex-1">
-            <h3 className="text-amber-500 font-black uppercase tracking-widest text-[12px] mb-1">
+            <h3 className="text-amber-400 font-black uppercase tracking-widest text-[12px] mb-1">
               {t('billing_configuration_alert') || 'PAYMENT GATEWAY CONFIGURATION REQUIRED'}
             </h3>
-            <p className="text-amber-500/80 font-bold text-sm">
+            <p className="text-amber-300/80 font-bold text-sm">
               {billing.user?.role === 'admin'
                 ? 'Action Required: Stripe or PayPal API keys are missing. Please update your credentials in the Admin Vault section below to enable card and PayPal payments.'
                 : 'Note: We are currently updating our payment gateways. Some card and PayPal features may be temporarily unavailable. Please use Vouchers or Mobile Money in the meantime.'}
@@ -71,9 +74,9 @@ export const BillingDashboard: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className={`mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 ${radiusClass} flex items-center gap-3`}
+          className={`p-4 bg-emerald-500/10 border border-emerald-500/40 ${radiusClass} flex items-center gap-3 shadow-lg`}
         >
-          <span className="text-green-800 dark:text-green-200 font-medium">
+          <span className="text-emerald-300 font-medium text-sm">
             {t('subscription_success') || 'Subscription successful! Thank you for subscribing.'}
           </span>
         </motion.div>
@@ -82,15 +85,16 @@ export const BillingDashboard: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className={`mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 ${radiusClass} flex items-center gap-3`}
+          className={`p-4 bg-amber-500/10 border border-amber-500/40 ${radiusClass} flex items-center gap-3 shadow-lg`}
         >
-          <span className="text-yellow-800 dark:text-yellow-200 font-medium">
+          <span className="text-amber-300 font-medium text-sm">
             {t('subscription_canceled') || 'Subscription was canceled. You can try again anytime.'}
           </span>
         </motion.div>
       )}
 
-      <header className="mb-12 relative overflow-hidden p-8 rounded-3xl bg-slate-900/80 dark:bg-slate-950/80 border border-emerald-500/20 backdrop-blur-2xl shadow-2xl">
+      {/* Header Banner with KnockKnock Glass & Canvas Controls */}
+      <header className="relative overflow-hidden p-8 lg:p-10 rounded-3xl bg-slate-950/90 dark:bg-slate-950/95 border border-emerald-500/25 backdrop-blur-2xl shadow-2xl">
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-teal-500/10 rounded-full blur-[120px] pointer-events-none" />
         
@@ -114,30 +118,51 @@ export const BillingDashboard: React.FC = () => {
             </p>
           </div>
 
-          {/* KnockKnock-Style Billing Cycle Toggle */}
-          <div className="flex items-center gap-3 p-1.5 bg-slate-950/90 rounded-2xl border border-slate-800 backdrop-blur-md shadow-inner">
-            <button
-              type="button"
-              className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white shadow-md shadow-emerald-950"
-            >
-              Monthly Billing
-            </button>
-            <button
-              type="button"
-              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors"
-            >
-              <span>Annual</span>
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                SAVE 20%
-              </span>
-            </button>
+          <div className="flex flex-wrap items-center gap-4">
+            {/* CanvasUI Liquid Toggle Switch */}
+            <LiquidToggleSwitch compact={false} />
+
+            {/* KnockKnock-Style Billing Cycle Toggle */}
+            <div className="flex items-center gap-1.5 p-1.5 bg-slate-900/90 rounded-2xl border border-slate-800 backdrop-blur-md shadow-inner">
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('light');
+                  setIsAnnual(false);
+                }}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                  !isAnnual
+                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('light');
+                  setIsAnnual(true);
+                }}
+                className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                  isAnnual
+                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <span>Annual</span>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  SAVE 20%
+                </span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-12 items-start">
-        {/* Left Column: Current Plan & Controls */}
-        <div className="xl:col-span-4 space-y-12 h-full">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 lg:gap-10 items-start">
+        {/* Left Column: Current Plan & Quota Telemetry */}
+        <div className="xl:col-span-4 space-y-8 h-full">
           <SubscriptionStatus
             subscription={
               billing.subscription as unknown as {
@@ -156,8 +181,8 @@ export const BillingDashboard: React.FC = () => {
           </section>
         </div>
 
-        {/* Right Area: Plans & Invoices */}
-        <div className="xl:col-span-8 space-y-12">
+        {/* Right Area: Plans, Matrix & Payments */}
+        <div className="xl:col-span-8 space-y-10">
           {/* Plans Grid */}
           <section
             aria-label="Available subscription plans"
@@ -169,6 +194,7 @@ export const BillingDashboard: React.FC = () => {
                 plan={plan}
                 index={idx}
                 isCurrentPlan={billing.subscription?.plan.id === plan.id}
+                isAnnual={isAnnual}
                 onSelect={billing.handleSubscribe}
                 actionLoading={billing.actionLoading}
               />
