@@ -47,11 +47,11 @@ const DashboardHeader: React.FC<{
   t: (key: string) => string;
   headingClass: string;
 }> = ({ userName, t, headingClass }) => (
-  <div className="mb-12">
-    <h1 className={`text-4xl font-black tracking-tight font-headline mb-2 ${headingClass}`}>
+  <div className="mb-6 sm:mb-8">
+    <h1 className={`text-2xl sm:text-4xl font-black tracking-tight font-headline mb-1 sm:mb-2 ${headingClass}`}>
       Operations Dashboard
     </h1>
-    <p className="text-slate-400 font-headline font-medium text-lg">
+    <p className="text-slate-400 font-headline font-medium text-xs sm:text-base">
       {t('dashboard_welcome').replace('{name}', userName || 'Extension Officer')}
     </p>
   </div>
@@ -118,14 +118,14 @@ const DashboardStats: React.FC<{
 };
 
 const ActivePulseCard: React.FC<{ cardClass: string }> = ({ cardClass }) => (
-  <div className={cardClass}>
-    <div className="flex items-center gap-3 mb-6">
+  <div className={`${cardClass} p-4 sm:p-6`}>
+    <div className="flex items-center gap-3 mb-4 sm:mb-6">
       <div className="w-2 h-2 bg-primary-400 rounded-full animate-ping"></div>
-      <h3 className="text-sm font-headline font-bold text-gray-900 dark:text-white uppercase tracking-widest">
+      <h3 className="text-xs sm:text-sm font-headline font-bold text-gray-900 dark:text-white uppercase tracking-widest">
         Active Pulse
       </h3>
     </div>
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {[
         { label: 'Sensor Node 04', status: 'Optimal', time: '2m ago' },
         { label: 'Drone Survey', status: 'In Progress', time: 'Active' },
@@ -133,7 +133,7 @@ const ActivePulseCard: React.FC<{ cardClass: string }> = ({ cardClass }) => (
       ].map((item, i) => (
         <div
           key={i}
-          className="flex justify-between items-center border-b border-white/5 pb-3 last:border-0 last:pb-0"
+          className="flex justify-between items-center border-b border-white/5 pb-2.5 sm:pb-3 last:border-0 last:pb-0"
         >
           <div>
             <p className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-tight">
@@ -158,12 +158,12 @@ const SupportEfficiencyCard: React.FC<{
   const satisfactionProgress = satisfactionScore * 20;
 
   return (
-    <div className={`${cardClass} p-8`}>
-      <h3 className="text-lg font-headline font-bold text-gray-900 dark:text-white mb-6">
+    <div className={`${cardClass} p-4 sm:p-6 lg:p-8`}>
+      <h3 className="text-base sm:text-lg font-headline font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
         {t('analytics_support_efficiency')}
       </h3>
       {performanceData ? (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {[
             {
               name: t('analytics_resolution_rate'),
@@ -176,14 +176,14 @@ const SupportEfficiencyCard: React.FC<{
               color: 'bg-purple-500',
             },
           ].map((item, i) => (
-            <div key={i} className="space-y-2">
+            <div key={i} className="space-y-1.5 sm:space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-bold text-slate-300">{item.name}</span>
+                <span className="text-xs sm:text-sm font-bold text-slate-300">{item.name}</span>
                 <span className="text-xs font-black text-primary-400">
                   {Math.round(item.progress)}%
                 </span>
               </div>
-              <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+              <div className="w-full h-1.5 sm:h-1 bg-white/5 rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${item.progress}%` }}
@@ -287,11 +287,11 @@ const DashboardMapSection: React.FC<{
   }
 
   return (
-    <div className={`lg:col-span-2 ${cardClass} group`}>
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-lg font-headline font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <MapPin className="w-5 h-5 text-primary-400" />
-          {t('stat_regional_distribution')}
+    <div className={`lg:col-span-2 ${cardClass} group p-4 sm:p-6`}>
+      <div className="flex justify-between items-center mb-4 sm:mb-6">
+        <h3 className="text-base sm:text-lg font-headline font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-primary-400" />
+          <span>{t('stat_regional_distribution')}</span>
         </h3>
         <div className="flex gap-2">
           <span
@@ -303,11 +303,11 @@ const DashboardMapSection: React.FC<{
       </div>
 
       <div
-        className={`relative h-[400px] bg-slate-950/50 ${radiusClass} overflow-hidden border border-white/5 shadow-inner`}
+        className={`relative h-[300px] sm:h-[400px] bg-slate-950/50 ${radiusClass} overflow-hidden border border-white/5 shadow-inner`}
       >
         {!showFallback && !showSkeletonWithRetry && (
           <FarmerMap
-            height="400px"
+            height="100%"
             isExternalExpanded={isMapExpanded}
             onToggleExpand={setIsMapExpanded}
             farmers={effectiveFarmers.map(f => ({
@@ -346,16 +346,16 @@ const DashboardMapSection: React.FC<{
 
         {!isMapExpanded && !showFallback && (
           <div
-            className={`absolute bottom-4 left-4 right-4 flex justify-between items-center bg-slate-900/80 backdrop-blur-md p-3 ${radiusClass} border border-white/10`}
+            className={`absolute bottom-2 sm:bottom-4 left-2 sm:left-4 right-2 sm:right-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4 bg-slate-900/80 backdrop-blur-md p-2 sm:p-3 ${radiusClass} border border-white/10`}
           >
-            <div className="flex gap-4">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 <div className="w-2 h-2 bg-primary-400 rounded-full"></div>
                 <span className="text-xxs font-bold text-slate-300 uppercase tracking-widest">
                   {t('table_active')}
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
                 <span className="text-xxs font-bold text-slate-300 uppercase tracking-widest">
                   {t('analytics_disease_alerts')}
@@ -364,7 +364,7 @@ const DashboardMapSection: React.FC<{
             </div>
             <button
               onClick={() => setIsMapExpanded(true)}
-              className={`text-xxs font-black text-primary-400 uppercase bg-primary-400/10 px-3 py-1 ${radiusClass} border border-primary-400/20 hover:bg-primary-400/20 transition-colors`}
+              className={`text-xxs font-black text-primary-400 uppercase bg-primary-400/10 px-2.5 sm:px-3 py-1 ${radiusClass} border border-primary-400/20 hover:bg-primary-400/20 transition-colors active:scale-95`}
             >
               {t('viz_detail_view')}
             </button>
@@ -569,7 +569,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     <div className="animate-in fade-in duration-500">
       <DashboardHeader userName={user?.firstName} t={t} headingClass={headingClass} />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <DashboardStats
           isLoading={isLoading}
           dashboardData={dashboardData}
@@ -579,7 +579,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <DashboardMapSection
           effectiveFarmers={effectiveFarmers}
           isMapExpanded={isMapExpanded}
@@ -592,14 +592,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           radiusClass={radiusClass}
         />
 
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <SupportEfficiencyCard performanceData={performanceData} t={t} cardClass={cardClass} />
           <ActivePulseCard cardClass={cardClass} />
         </div>
       </div>
 
       {/* KnockKnock-style Real-Time Intelligence & Severity Stream */}
-      <div className="mb-8">
+      <div className="mb-6 sm:mb-8">
         <LiveActivityStream
           cardClass={cardClass}
           onOpenUSSDSimulator={onOpenUSSDSimulator}

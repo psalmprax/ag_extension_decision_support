@@ -231,16 +231,16 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
   };
 
   return (
-    <div className={`space-y-4 ${cardClass}`}>
+    <div className={`space-y-4 ${cardClass} p-4 sm:p-6`}>
       {/* Header with Live Status & Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+          <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
             <Activity className="w-4 h-4 animate-pulse" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-bold text-base text-gray-900 dark:text-white tracking-wide">
+              <h3 className="font-bold text-sm sm:text-base text-gray-900 dark:text-white tracking-wide">
                 Live Intelligence Stream
               </h3>
               <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
@@ -248,18 +248,18 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
                 REAL-TIME
               </span>
             </div>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-400 mt-0.5">
               Live farmer triage, journey breadcrumbs, and 1-click tele-agronomy handoff
             </p>
           </div>
         </div>
 
         {/* Action Buttons & Filters */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           {onOpenUSSDSimulator && (
             <button
               onClick={onOpenUSSDSimulator}
-              className="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm"
+              className="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
             >
               <Smartphone className="w-3.5 h-3.5" />
               <span>USSD Sandbox</span>
@@ -269,7 +269,7 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
           <button
             onClick={() => setSortByUrgency(prev => !prev)}
             title="Toggle Urgency Heat Ranking"
-            className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 transition-all ${
+            className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 transition-all active:scale-95 ${
               sortByUrgency
                 ? 'bg-rose-500/15 border-rose-500/40 text-rose-300 shadow-sm'
                 : 'bg-slate-900 text-slate-400 border-slate-800'
