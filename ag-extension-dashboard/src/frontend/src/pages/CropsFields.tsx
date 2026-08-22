@@ -673,16 +673,16 @@ export function CropsFields() {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* ── Top Bento Header: Fields & Geospatial Parcels ── */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40">
-              <Map className="w-6 h-6 text-emerald-400" />
+      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-4 sm:p-6 shadow-xl relative overflow-hidden">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40 shrink-0">
+              <Map className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
             </div>
             <div>
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl font-bold tracking-tight text-white">Fields & Geospatial Parcels</h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+              <div className="flex items-center gap-2 sm:gap-2.5">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Fields & Geospatial Parcels</h1>
+                <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                   <Sprout className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />
                   Growth Cycles Active
                 </span>
@@ -698,12 +698,12 @@ export function CropsFields() {
           <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
             {/* Farmer Select (Officer/Admin only) */}
             {!isFarmer && farmers.length > 0 && (
-              <div className="flex items-center gap-2 bg-white/[0.04] backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/10 shadow-sm">
-                <User className="w-4 h-4 text-emerald-400" />
+              <div className="flex items-center gap-2 bg-white/[0.04] backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/10 shadow-sm w-full sm:w-auto">
+                <User className="w-4 h-4 text-emerald-400 shrink-0" />
                 <select
                   value={selectedFarmerId}
                   onChange={e => setSelectedFarmerId(e.target.value)}
-                  className="bg-transparent border-0 text-xs font-semibold text-white focus:ring-0 focus:outline-none cursor-pointer pr-4"
+                  className="bg-transparent border-0 text-xs font-semibold text-white focus:ring-0 focus:outline-none cursor-pointer pr-4 w-full sm:w-auto"
                 >
                   {farmers.map(farmer => (
                     <option key={farmer.id} value={farmer.id} className="bg-slate-950 text-white">
@@ -717,7 +717,7 @@ export function CropsFields() {
             <button
               onClick={handleOpenAddField}
               disabled={!isFarmer && !selectedFarmerId}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-950/40 transition-all active:scale-95 disabled:opacity-50"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-950/40 transition-all active:scale-95 disabled:opacity-50"
             >
               <Plus className="w-4 h-4" />
               <span>Add Field Sector</span>

@@ -26,9 +26,10 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
     <div className="relative">
       <button
         onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-        className="flex items-center gap-3 pl-4 border-l border-white/10 hover:opacity-80 transition-opacity"
+        className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-white/10 hover:opacity-80 transition-opacity"
+        aria-label="Open user profile menu"
       >
-        <div className="w-8 h-8 rounded-full border border-primary-400/30 overflow-hidden ring-2 ring-primary-400/10 flex items-center justify-center bg-slate-800">
+        <div className="w-8 h-8 rounded-full border border-primary-400/30 overflow-hidden ring-2 ring-primary-400/10 flex items-center justify-center bg-slate-800 shrink-0">
           <span className="text-xxs text-primary-400 font-bold">
             {storeUser?.firstName?.[0]}
             {storeUser?.lastName?.[0]}
