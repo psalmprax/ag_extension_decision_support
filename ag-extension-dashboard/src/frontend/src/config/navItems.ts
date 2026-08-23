@@ -82,12 +82,14 @@ export const getNavItems = (): NavItem[] => [
     label: 'Visit Synthesis',
     icon: Sparkles,
     roles: ['extension_officer', 'admin'],
+    requiresPro: true,
   },
   {
     id: 'visits',
     label: 'Visits',
     icon: MapPin,
     roles: ['extension_officer', 'admin', 'farmer'],
+    requiresPro: true,
   },
   {
     id: 'reports',
@@ -107,6 +109,7 @@ export const getNavItems = (): NavItem[] => [
     label: 'Analytics',
     icon: BarChart3,
     roles: ['extension_officer', 'admin'],
+    requiresPro: true,
   },
   {
     id: 'billing',

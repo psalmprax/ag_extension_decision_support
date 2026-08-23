@@ -11,6 +11,8 @@ import {
   Bot,
   FileText,
   CheckCircle2,
+  MapPin,
+  BarChart3,
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
@@ -18,7 +20,15 @@ import { useThemeClasses } from '@/hooks/useThemeClasses';
 interface PlanUpgradeGuardProps {
   featureName: string;
   featureDescription?: string;
-  category?: 'sms' | 'chat' | 'whatsapp' | 'vision' | 'reports' | 'workflows';
+  category?:
+    | 'sms'
+    | 'chat'
+    | 'whatsapp'
+    | 'vision'
+    | 'reports'
+    | 'workflows'
+    | 'visits'
+    | 'analytics';
   children?: React.ReactNode;
 }
 
@@ -105,6 +115,28 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
         'Automated follow-up reminders',
         'Stakeholder briefing summaries',
         'High-deliverability email relay',
+      ],
+    },
+    visits: {
+      icon: MapPin,
+      headline: 'Field Visits & AI Synthesis Engine',
+      desc: 'GPS-geotagged field visit routing, automated audio-to-text visit synthesis, and longitudinal farmer observation histories require a Pro subscription.',
+      benefits: [
+        'Unlimited GPS-logged field visits & scheduling',
+        'Automated AI visit synthesis & diagnosis generator',
+        'Historical visit comparison & severity tracking',
+        'Officer route optimization & follow-up queues',
+      ],
+    },
+    analytics: {
+      icon: BarChart3,
+      headline: 'Advanced Operational Analytics & Telemetry',
+      desc: 'Comprehensive extension performance KPIs, resolution turnaround benchmarks, and predictive regional crop disease trends require a Pro subscription.',
+      benefits: [
+        'Officer speed-to-resolution benchmarking',
+        'Regional crop outbreak predictive heatmaps',
+        'Deep customer satisfaction & survey analytics',
+        'Executive data export & real-time telemetry feeds',
       ],
     },
   };

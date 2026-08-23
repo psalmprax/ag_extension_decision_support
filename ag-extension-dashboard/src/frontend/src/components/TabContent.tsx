@@ -180,14 +180,16 @@ export function TabContent(props: TabContentProps) {
       );
     case 'visits':
       return (
-        <VisitsPage
-          visits={props.visits as Visit[]}
-          setShowVisitModal={props.setShowVisitModal}
-          refetchVisits={props.refetchVisits}
-          handleOpenFarmerDetail={props.handleOpenFarmerDetail}
-          farmers={props.effectiveFarmers}
-          addNotification={addNotification}
-        />
+        <PlanUpgradeGuard category="visits" featureName="Field Visits & Tracking">
+          <VisitsPage
+            visits={props.visits as Visit[]}
+            setShowVisitModal={props.setShowVisitModal}
+            refetchVisits={props.refetchVisits}
+            handleOpenFarmerDetail={props.handleOpenFarmerDetail}
+            farmers={props.effectiveFarmers}
+            addNotification={addNotification}
+          />
+        </PlanUpgradeGuard>
       );
     case 'reports':
       return (
@@ -207,9 +209,11 @@ export function TabContent(props: TabContentProps) {
       );
     case 'analytics':
       return (
-        <AnalyticsPage
-          performanceData={props.performanceData as unknown as AnalyticsDataShape | undefined}
-        />
+        <PlanUpgradeGuard category="analytics" featureName="Operational Analytics & Telemetry">
+          <AnalyticsPage
+            performanceData={props.performanceData as unknown as AnalyticsDataShape | undefined}
+          />
+        </PlanUpgradeGuard>
       );
     case 'billing':
       return <BillingDashboard />;
@@ -248,9 +252,11 @@ export function TabContent(props: TabContentProps) {
       );
     case 'visit_synthesis':
       return (
-        <div className="mt-6">
-          <VisitSynthesisForm />
-        </div>
+        <PlanUpgradeGuard category="visits" featureName="AI Visit Synthesis & Diagnosis">
+          <div className="mt-6">
+            <VisitSynthesisForm />
+          </div>
+        </PlanUpgradeGuard>
       );
     case 'sms':
       return (
