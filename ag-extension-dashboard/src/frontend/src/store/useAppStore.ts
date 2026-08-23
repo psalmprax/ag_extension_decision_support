@@ -154,7 +154,7 @@ export const useAppStore = create<AppState>()(
       sidebarOpen: true,
       themeName: (localStorage.getItem('ag-theme-name') as ThemeName) || 'forest',
       darkMode: localStorage.getItem('theme') === 'dark',
-      liquidEffect: localStorage.getItem('ag-liquid-effect') !== 'false',
+      liquidEffect: localStorage.getItem('ag-liquid-effect') === 'true',
       activeTab: 'dashboard',
       farmers: [],
       visits: [],
