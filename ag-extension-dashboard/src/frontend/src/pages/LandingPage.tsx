@@ -43,6 +43,7 @@ import {
   Radio,
   CheckCircle2,
   MessageSquare,
+  Smartphone,
 } from 'lucide-react';
 import { LiquidToggleSwitch } from '@/components/canvasui/LiquidToggleSwitch';
 import { LiquidBackgroundCanvas } from '@/components/canvasui/LiquidBackgroundCanvas';
@@ -680,23 +681,23 @@ export function LandingPage() {
 
           <motion.div
             style={{ y: heroY, opacity: heroOpacity }}
-            className="max-w-7xl mx-auto px-6 grid lg:grid-cols-[1fr_1.1fr] gap-12 items-center relative z-10"
+            className="max-w-7xl mx-auto px-4 sm:px-6 grid lg:grid-cols-[1fr_1.1fr] gap-8 lg:gap-12 items-center relative z-10"
           >
             {/* Left copy */}
-            <motion.div initial="hidden" animate="visible" variants={stagger} className="space-y-8">
+            <motion.div initial="hidden" animate="visible" variants={stagger} className="space-y-6 sm:space-y-8">
               <motion.div
                 variants={fadeUp}
-                className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded bg-white/[0.04] border border-white/[0.08] backdrop-blur-md shadow-sm"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] backdrop-blur-md shadow-sm max-w-full"
               >
-                <div className="w-1.5 h-1.5 rounded-sm bg-emerald-400 animate-pulse" />
-                <span className="text-xs font-medium tracking-wide text-white/80 font-mono">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                <span className="text-[11px] sm:text-xs font-medium tracking-wide text-white/80 font-mono truncate">
                   Global Agricultural Decision Support Platform
                 </span>
               </motion.div>
 
               <motion.h1
                 variants={fadeUp}
-                className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold leading-[1.08] tracking-tight text-white"
+                className="text-3xl sm:text-5xl lg:text-[3.5rem] font-bold leading-[1.12] sm:leading-[1.08] tracking-tight text-white"
               >
                 Smarter Farming
                 <br />
@@ -711,37 +712,53 @@ export function LandingPage() {
 
               <motion.p
                 variants={fadeUp}
-                className="text-base sm:text-lg text-white/80 leading-relaxed max-w-lg font-normal"
+                className="text-sm sm:text-base lg:text-lg text-white/80 leading-relaxed max-w-lg font-normal"
               >
                 Empower extension officers with AI-driven insights, real-time farmer tracking, and
                 data-powered decisions across the Globe.
               </motion.p>
 
+              {/* What it is / Who it's for / What it solves */}
               <motion.div
                 variants={fadeUp}
-                className="text-sm text-white/70 leading-relaxed max-w-lg pt-1 space-y-1.5 font-normal"
+                className="space-y-2.5 max-w-lg pt-1"
               >
-                <p>
-                  <span className="text-emerald-400 font-semibold">What it is:</span> A field-ready
-                  decision-support platform for agricultural extension officers managing thousands
-                  of farmers across districts.
-                </p>
-                <p>
-                  <span className="text-emerald-400 font-semibold">Who it&apos;s for:</span>{' '}
-                  Government agencies, NGOs, and cooperatives running agricultural improvement
-                  programs.
-                </p>
-                <p>
-                  <span className="text-emerald-400 font-semibold">What it solves:</span>{' '}
-                  Paper-based field visits, guesswork recommendations, delayed disease response, and
-                  zero visibility into farmer outcomes.
-                </p>
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm flex items-start gap-2.5">
+                  <div className="w-5 h-5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0 mt-0.5">
+                    <Sparkles className="w-3 h-3 text-emerald-400" />
+                  </div>
+                  <div className="text-xs sm:text-sm text-white/80 leading-snug">
+                    <strong className="text-emerald-400 font-semibold uppercase tracking-wider text-[11px] block mb-0.5">What it is</strong>
+                    Field-ready decision-support platform for agricultural extension officers managing thousands of farmers across districts.
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm flex items-start gap-2.5">
+                  <div className="w-5 h-5 rounded-lg bg-sky-500/15 border border-sky-500/30 flex items-center justify-center shrink-0 mt-0.5">
+                    <Users className="w-3 h-3 text-sky-400" />
+                  </div>
+                  <div className="text-xs sm:text-sm text-white/80 leading-snug">
+                    <strong className="text-sky-400 font-semibold uppercase tracking-wider text-[11px] block mb-0.5">Who it&apos;s for</strong>
+                    Government agencies, NGOs, and cooperatives running agricultural improvement programs.
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm flex items-start gap-2.5">
+                  <div className="w-5 h-5 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0 mt-0.5">
+                    <CheckCircle2 className="w-3 h-3 text-amber-400" />
+                  </div>
+                  <div className="text-xs sm:text-sm text-white/80 leading-snug">
+                    <strong className="text-amber-400 font-semibold uppercase tracking-wider text-[11px] block mb-0.5">What it solves</strong>
+                    Paper-based field visits, guesswork recommendations, delayed disease response, and zero visibility into farmer outcomes.
+                  </div>
+                </div>
               </motion.div>
 
+              {/* CTAs */}
               <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={() => navigate('/register')}
-                  className="relative group overflow-hidden px-7 py-3.5 text-sm font-bold text-white rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 hover:from-emerald-500 hover:via-emerald-400 hover:to-emerald-500 border border-emerald-400/50 shadow-[0_0_24px_rgba(16,185,129,0.35)] hover:shadow-[0_0_36px_rgba(16,185,129,0.6)] hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto relative group overflow-hidden px-6 sm:px-7 py-3.5 text-sm font-bold text-white rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 hover:from-emerald-500 hover:via-emerald-400 hover:to-emerald-500 border border-emerald-400/50 shadow-[0_0_24px_rgba(16,185,129,0.35)] hover:shadow-[0_0_36px_rgba(16,185,129,0.6)] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out pointer-events-none" />
                   <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
@@ -752,15 +769,30 @@ export function LandingPage() {
                 </button>
                 <button
                   onClick={() => navigate('/demo')}
-                  className="group px-7 py-3.5 text-sm font-semibold bg-white/[0.05] border border-white/[0.08] text-white/80 rounded-xl hover:bg-white/[0.1] hover:text-white transition-all flex items-center justify-center gap-2 backdrop-blur-sm"
+                  className="w-full sm:w-auto group px-6 sm:px-7 py-3.5 text-sm font-semibold bg-white/[0.05] border border-white/[0.08] text-white/80 rounded-xl hover:bg-white/[0.1] hover:text-white active:scale-[0.98] transition-all flex items-center justify-center gap-2 backdrop-blur-sm"
                 >
                   <Play className="w-4 h-4 text-emerald-400" />
                   Try Live Demo
                 </button>
               </motion.div>
 
+              {/* Mobile / Store Readiness Badge Strip */}
+              <motion.div
+                variants={fadeUp}
+                className="flex flex-wrap items-center gap-2 pt-0.5"
+              >
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] text-white/70 text-xs font-medium">
+                  <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Field PWA (Android / iOS / Mobile Chrome)</span>
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-bold font-mono">
+                  <Radio className="w-3 h-3 animate-pulse" />
+                  <span>Apple Store &amp; Play Store Compatible</span>
+                </div>
+              </motion.div>
+
               {/* Feature highlights */}
-              <motion.div variants={fadeUp} className="grid grid-cols-3 gap-2.5 pt-2">
+              <motion.div variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5 pt-1">
                 {[
                   { title: 'Satellite Weather', sub: 'NASA POWER API', target: '#capabilities' },
                   { title: 'Soil Telemetry', sub: 'SoilGrids ISRIC', target: '#capabilities' },
@@ -769,11 +801,11 @@ export function LandingPage() {
                   <a
                     key={i}
                     href={item.target}
-                    className="p-3 rounded-xl bg-white/[0.025] border border-white/[0.05] hover:border-emerald-500/30 hover:bg-white/[0.06] transition-all group block text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                    className="p-3 rounded-xl bg-white/[0.025] border border-white/[0.05] hover:border-emerald-500/30 hover:bg-white/[0.06] active:scale-[0.98] transition-all group block text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
                   >
                     <div className="text-xs font-bold text-emerald-400 group-hover:text-emerald-300 transition-colors flex items-center justify-between">
                       <span>{item.title}</span>
-                      <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-emerald-400" />
+                      <ArrowRight className="w-3 h-3 opacity-0 sm:group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-emerald-400" />
                     </div>
                     <div className="text-[11px] text-white/50 mt-0.5 font-medium group-hover:text-white/70 transition-colors">{item.sub}</div>
                   </a>
@@ -782,11 +814,11 @@ export function LandingPage() {
             </motion.div>
 
             {/* Right — Detailed dashboard mockup */}
-            <motion.div initial="hidden" animate="visible" variants={scaleIn} className="relative">
+            <motion.div initial="hidden" animate="visible" variants={scaleIn} className="relative w-full max-w-full">
               {/* Glow behind mockup */}
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-transparent to-amber-500/10 blur-[60px] rounded-full scale-90" />
 
-              <div className="relative rounded-2xl overflow-hidden border border-white/[0.08] bg-slate-950 shadow-2xl shadow-black/60 transform perspective-[1200px] rotate-y-[2deg] -rotate-x-[1deg] hover:rotate-y-0 hover:rotate-x-0 transition-transform duration-700">
+              <div className="relative rounded-2xl overflow-hidden border border-white/[0.08] bg-slate-950 shadow-2xl shadow-black/60 w-full max-w-full lg:transform lg:perspective-[1200px] lg:rotate-y-[2deg] lg:-rotate-x-[1deg] lg:hover:rotate-y-0 lg:hover:rotate-x-0 transition-transform duration-700">
                 {/* Window chrome */}
                 <div className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.03] border-b border-white/[0.06]">
                   <div className="flex gap-1.5">
@@ -807,9 +839,9 @@ export function LandingPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-[170px_1fr] min-h-[380px]">
-                  {/* Sidebar */}
-                  <div className="bg-white/[0.015] border-r border-white/[0.05] p-2.5 text-xxs space-y-0.5">
+                <div className="flex flex-col md:grid md:grid-cols-[160px_1fr] min-h-[360px] sm:min-h-[380px]">
+                  {/* Sidebar (hidden on small mobile screens to prevent squishing) */}
+                  <div className="hidden md:block bg-white/[0.015] border-r border-white/[0.05] p-2.5 text-xxs space-y-0.5">
                     <div className="px-2.5 py-1.5 mb-2">
                       <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-emerald-500/[0.1] text-emerald-400 font-medium text-xxs">
                         <BarChart3 className="w-3 h-3" />
@@ -843,7 +875,7 @@ export function LandingPage() {
                   </div>
 
                   {/* Main content */}
-                  <div className="p-3 bg-white/[0.005] space-y-2.5">
+                  <div className="p-3 bg-white/[0.005] space-y-2.5 overflow-hidden">
                     {/* Welcome bar */}
                     <div className="flex items-center justify-between mb-1">
                       <div>
