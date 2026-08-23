@@ -1899,7 +1899,7 @@ export function LandingPage() {
             </motion.div>
             <motion.h2
               variants={fadeUp}
-              className="text-[clamp(1.8rem,3.5vw,2.8rem)] font-bold tracking-tight mb-6 leading-tight"
+              className="text-2xl sm:text-[clamp(1.8rem,3.5vw,2.8rem)] font-bold tracking-tight mb-4 sm:mb-6 leading-tight break-words px-2"
             >
               Closing the gap between{' '}
               <span className="bg-gradient-to-r from-emerald-300 to-amber-400 bg-clip-text text-transparent">
@@ -1909,7 +1909,7 @@ export function LandingPage() {
             </motion.h2>
             <motion.p
               variants={fadeUp}
-              className="text-lg text-white/75 leading-relaxed max-w-2xl mx-auto"
+              className="text-sm sm:text-lg text-white/75 leading-relaxed max-w-2xl mx-auto px-2 font-normal"
             >
               Across the Globe, extension officers manage thousands of farmers with clipboards and
               guesswork. GPExts replaces that with real-time soil data, satellite weather, and
@@ -1919,20 +1919,20 @@ export function LandingPage() {
         </section>
 
         {/* ── CTA ── */}
-        <section className="relative py-28 overflow-hidden">
+        <section className="relative py-16 sm:py-28 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-[#060b08] via-emerald-950/20 to-[#060b08] pointer-events-none" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-emerald-500/[0.05] blur-[100px] rounded-full pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] sm:w-[600px] h-[200px] sm:h-[300px] bg-emerald-500/[0.05] blur-[80px] sm:blur-[100px] rounded-full pointer-events-none" />
 
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={stagger}
-            className="max-w-2xl mx-auto px-6 text-center relative z-10"
+            className="max-w-2xl mx-auto px-4 sm:px-6 text-center relative z-10"
           >
             <motion.h2
               variants={fadeUp}
-              className="text-[clamp(2rem,4vw,3rem)] font-bold tracking-tight mb-5 leading-tight"
+              className="text-2xl sm:text-[clamp(2rem,4vw,3rem)] font-bold tracking-tight mb-4 sm:mb-5 leading-tight px-2"
             >
               Ready to transform your
               <br />
@@ -1940,7 +1940,7 @@ export function LandingPage() {
                 agricultural extension?
               </span>
             </motion.h2>
-            <motion.p variants={fadeUp} className="text-lg text-white/75 mb-8">
+            <motion.p variants={fadeUp} className="text-sm sm:text-lg text-white/75 mb-6 sm:mb-8 px-2 font-normal">
               Start with a free trial. No credit card required.
             </motion.p>
             <motion.div
@@ -1949,18 +1949,18 @@ export function LandingPage() {
             >
               <button
                 onClick={() => navigate('/register')}
-                className="relative group overflow-hidden px-8 py-4 text-base font-bold text-white rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 hover:from-emerald-500 hover:via-emerald-400 hover:to-emerald-500 border border-emerald-400/50 shadow-[0_0_30px_rgba(16,185,129,0.35)] hover:shadow-[0_0_45px_rgba(16,185,129,0.6)] hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
+                className="w-full sm:w-auto relative group overflow-hidden px-7 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base font-bold text-white rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 hover:from-emerald-500 hover:via-emerald-400 hover:to-emerald-500 border border-emerald-400/50 shadow-[0_0_30px_rgba(16,185,129,0.35)] hover:shadow-[0_0_45px_rgba(16,185,129,0.6)] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out pointer-events-none" />
                 <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
                 <span className="relative z-10 flex items-center gap-2">
                   Get Started Free
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform text-white/90" />
+                  <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform text-white/90" />
                 </span>
               </button>
               <button
                 onClick={() => navigate('/demo')}
-                className="px-8 py-4 text-base font-semibold bg-white/[0.04] border border-white/[0.06] text-white/70 rounded-xl hover:bg-white/[0.08] hover:text-white transition-all flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-7 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base font-semibold bg-white/[0.04] border border-white/[0.06] text-white/70 rounded-xl hover:bg-white/[0.08] hover:text-white active:scale-[0.98] transition-all flex items-center justify-center gap-2 backdrop-blur-sm"
               >
                 Try Live Demo
               </button>
@@ -1969,8 +1969,8 @@ export function LandingPage() {
         </section>
 
         {/* ── FOOTER ── */}
-        <footer id="contact" className="border-t border-white/[0.04] pt-16 pb-8">
-          <div className="max-w-[90rem] w-full mx-auto px-6 grid grid-cols-1 md:grid-cols-[1.5fr_1fr_1fr_1fr] gap-10 pb-10">
+        <footer id="contact" className="border-t border-white/[0.04] pt-12 sm:pt-16 pb-8">
+          <div className="max-w-[90rem] w-full mx-auto px-4 sm:px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr] gap-8 sm:gap-10 pb-8 sm:pb-10">
             <div>
               <button
                 type="button"
@@ -1984,23 +1984,23 @@ export function LandingPage() {
                 />
                 <span className="text-lg font-bold tracking-tight text-white group-hover:text-emerald-300 transition-colors">GPExts</span>
               </button>
-              <p className="text-sm text-white/50 leading-relaxed max-w-xs mb-4 font-normal">
+              <p className="text-xs sm:text-sm text-white/50 leading-relaxed max-w-xs mb-4 font-normal break-words">
                 Empowering agricultural extension officers with AI-driven decision support across
                 the Globe.
               </p>
               <a
                 href="mailto:info@gpfed.com"
-                className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-2 rounded-xl"
+                className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-400 hover:text-emerald-300 active:scale-[0.98] transition-colors bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-2 rounded-xl"
               >
                 <Mail className="w-4 h-4" />
                 info@gpfed.com
               </a>
             </div>
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-white/40 mb-5">
-                Product & Features
+              <h4 className="text-xs font-bold uppercase tracking-wider text-white/40 mb-4 sm:mb-5">
+                Product &amp; Features
               </h4>
-              <ul className="space-y-3 text-sm font-normal">
+              <ul className="space-y-2.5 sm:space-y-3 text-xs sm:text-sm font-normal">
                 <li>
                   <a
                     href="#features"
@@ -2030,7 +2030,7 @@ export function LandingPage() {
                     href="#capabilities"
                     className="text-white/60 hover:text-emerald-400 transition-colors"
                   >
-                    Ecosystem & Soil
+                    Ecosystem &amp; Soil
                   </a>
                 </li>
                 <li>
@@ -2046,7 +2046,7 @@ export function LandingPage() {
                     href="#roi"
                     className="text-white/60 hover:text-emerald-400 transition-colors"
                   >
-                    Impact & ROI
+                    Impact &amp; ROI
                   </a>
                 </li>
                 <li>
@@ -2057,10 +2057,10 @@ export function LandingPage() {
               </ul>
             </div>
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-white/40 mb-5">
-                Overview & Contact
+              <h4 className="text-xs font-bold uppercase tracking-wider text-white/40 mb-4 sm:mb-5">
+                Overview &amp; Contact
               </h4>
-              <ul className="space-y-3 text-sm font-normal">
+              <ul className="space-y-2.5 sm:space-y-3 text-xs sm:text-sm font-normal">
                 <li>
                   <a
                     href="#problem"
@@ -2097,10 +2097,10 @@ export function LandingPage() {
               </ul>
             </div>
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-white/40 mb-5">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-white/40 mb-4 sm:mb-5">
                 Get Started
               </h4>
-              <ul className="space-y-3 text-sm font-normal">
+              <ul className="space-y-2.5 sm:space-y-3 text-xs sm:text-sm font-normal">
                 <li>
                   <button
                     type="button"
@@ -2122,22 +2122,22 @@ export function LandingPage() {
               </ul>
             </div>
           </div>
-          <div className="max-w-[90rem] w-full mx-auto px-6 pt-8 border-t border-white/[0.04] flex flex-col md:flex-row justify-between items-center gap-4">
-            <span className="text-xs text-white/35">
+          <div className="max-w-[90rem] w-full mx-auto px-4 sm:px-6 pt-6 sm:pt-8 border-t border-white/[0.04] flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 text-center sm:text-left">
+            <span className="text-[11px] sm:text-xs text-white/40 font-normal">
               &copy; {new Date().getFullYear()} GPExts. All rights reserved.
             </span>
-            <div className="flex gap-5 text-xs">
+            <div className="flex flex-wrap justify-center sm:justify-end gap-4 sm:gap-5 text-xs">
               <button
                 type="button"
                 onClick={() => setLegalModal('privacy')}
-                className="text-white/35 hover:text-emerald-400 transition-colors cursor-pointer"
+                className="text-white/40 hover:text-emerald-400 transition-colors cursor-pointer"
               >
                 Privacy Policy
               </button>
               <button
                 type="button"
                 onClick={() => setLegalModal('terms')}
-                className="text-white/35 hover:text-emerald-400 transition-colors cursor-pointer"
+                className="text-white/40 hover:text-emerald-400 transition-colors cursor-pointer"
               >
                 Terms of Service
               </button>
@@ -2148,7 +2148,7 @@ export function LandingPage() {
         {/* ── Legal Policy Modal ── */}
         <AnimatePresence>
           {legalModal && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -2161,30 +2161,30 @@ export function LandingPage() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 16 }}
                 transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="relative w-full max-w-2xl max-h-[85vh] bg-slate-900 border border-white/10 rounded-2xl p-6 sm:p-8 shadow-2xl overflow-y-auto space-y-6 z-10"
+                className="relative w-full max-w-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] bg-slate-900 border border-white/10 rounded-2xl p-4 sm:p-8 shadow-2xl overflow-y-auto space-y-4 sm:space-y-6 z-10"
               >
-                <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                <div className="flex items-center justify-between border-b border-white/[0.08] pb-3 sm:pb-4 gap-2">
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
                       <Shield className="w-4 h-4" />
                     </div>
-                    <h3 className="text-lg font-bold text-white">
+                    <h3 className="text-sm sm:text-lg font-bold text-white truncate">
                       {legalModal === 'privacy' ? 'Privacy Policy & Data Sovereignty' : 'Terms of Service'}
                     </h3>
                   </div>
                   <button
                     type="button"
                     onClick={() => setLegalModal(null)}
-                    className="p-1.5 rounded-lg text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors"
+                    className="p-1.5 rounded-lg text-white/50 hover:text-white hover:bg-white/[0.06] active:scale-[0.98] transition-colors shrink-0"
                   >
                     <X className="w-5 h-5" />
                   </button>
                 </div>
 
                 {legalModal === 'privacy' ? (
-                  <div className="space-y-4 text-xs sm:text-sm text-white/70 leading-relaxed font-normal">
+                  <div className="space-y-3 sm:space-y-4 text-xs sm:text-sm text-white/70 leading-relaxed font-normal break-words">
                     <p>
-                      <strong className="text-white">1. Data Ownership & OCAP Compliance:</strong> Your organization retains 100% legal ownership and control of all farmer registries, field visit logs, geospatial coordinates, and diagnostic imagery. GPExts strictly adheres to the OCAP (Ownership, Control, Access, and Possession) principles.
+                      <strong className="text-white">1. Data Ownership &amp; OCAP Compliance:</strong> Your organization retains 100% legal ownership and control of all farmer registries, field visit logs, geospatial coordinates, and diagnostic imagery. GPExts strictly adheres to the OCAP (Ownership, Control, Access, and Possession) principles.
                     </p>
                     <p>
                       <strong className="text-white">2. Encryption Standards:</strong> All data is encrypted at rest using AES-256 and in transit via TLS 1.3. Tenant databases are strictly isolated to prevent cross-organizational data leakage.
@@ -2196,22 +2196,22 @@ export function LandingPage() {
                       <strong className="text-white">4. External Telemetry:</strong> Integrations with NASA POWER weather and SoilGrids ISRIC querying only submit bounding GPS coordinates to fetch environmental telemetry, and never transmit identifying personal farmer records.
                     </p>
                     <p>
-                      <strong className="text-white">5. Right to Erasure & Portability:</strong> Administrators can export full tenant datasets as encrypted JSON/CSV archives or trigger audited record erasure at any time via the User Management and System Settings panel.
+                      <strong className="text-white">5. Right to Erasure &amp; Portability:</strong> Administrators can export full tenant datasets as encrypted JSON/CSV archives or trigger audited record erasure at any time via the User Management and System Settings panel.
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-4 text-xs sm:text-sm text-white/70 leading-relaxed font-normal">
+                  <div className="space-y-3 sm:space-y-4 text-xs sm:text-sm text-white/70 leading-relaxed font-normal break-words">
                     <p>
-                      <strong className="text-white">1. Purpose & Agricultural Decision Support:</strong> GPExts provides agronomic insights, soil recommendations, and disease diagnostics for agricultural extension officers and institutions. Recommendations are designed to support, not replace, certified agronomic judgment.
+                      <strong className="text-white">1. Purpose &amp; Agricultural Decision Support:</strong> GPExts provides agronomic insights, soil recommendations, and disease diagnostics for agricultural extension officers and institutions. Recommendations are designed to support, not replace, certified agronomic judgment.
                     </p>
                     <p>
                       <strong className="text-white">2. Account Responsibility:</strong> Organizations are responsible for maintaining the confidentiality of officer authentication tokens and assigning appropriate Role-Based Access Control (RBAC) permissions.
                     </p>
                     <p>
-                      <strong className="text-white">3. Offline & PWA Usage:</strong> The Progressive Web App (PWA) operates in disconnected environments; officers are responsible for periodic syncing to ensure institutional records remain updated.
+                      <strong className="text-white">3. Offline &amp; PWA Usage:</strong> The Progressive Web App (PWA) operates in disconnected environments; officers are responsible for periodic syncing to ensure institutional records remain updated.
                     </p>
                     <p>
-                      <strong className="text-white">4. Service Availability & Telemetry SLAs:</strong> While core platform operations feature 99.9% uptime and offline continuity, third-party satellite telemetry availability (e.g. NASA POWER) depends on upstream agency feeds.
+                      <strong className="text-white">4. Service Availability &amp; Telemetry SLAs:</strong> While core platform operations feature 99.9% uptime and offline continuity, third-party satellite telemetry availability (e.g. NASA POWER) depends on upstream agency feeds.
                     </p>
                     <p>
                       <strong className="text-white">5. Institutional Inquiries:</strong> For multi-district deployment contracts or custom data hosting terms, please contact <a href="mailto:info@gpfed.com" className="text-emerald-400 hover:underline">info@gpfed.com</a>.
@@ -2219,11 +2219,11 @@ export function LandingPage() {
                   </div>
                 )}
 
-                <div className="pt-4 border-t border-white/[0.08] flex justify-end">
+                <div className="pt-3 sm:pt-4 border-t border-white/[0.08] flex justify-end">
                   <button
                     type="button"
                     onClick={() => setLegalModal(null)}
-                    className="px-5 py-2 text-xs font-semibold bg-emerald-500 text-white rounded-xl hover:bg-emerald-400 transition-colors"
+                    className="w-full sm:w-auto px-5 py-2.5 text-xs font-semibold bg-emerald-500 text-white rounded-xl hover:bg-emerald-400 active:scale-[0.98] transition-colors"
                   >
                     Close
                   </button>
