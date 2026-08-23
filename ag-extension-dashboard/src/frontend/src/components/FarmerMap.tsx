@@ -372,7 +372,7 @@ const createCurrentUserMarkerIcon = (): L.DivIcon => {
   });
 };
 
-// Component to handle map center updates
+// Component to handle map center updates and container resize invalidation
 function MapController({
   center,
   zoom,
@@ -383,6 +383,32 @@ function MapController({
   bounds?: L.LatLngBoundsExpression;
 }) {
   const map = useMap();
+
+  // Leaflet caches container dimensions at init. If the container was hidden,
+  // had zero height, or was inside a modal that just closed, tiles render blank.
+  // invalidateSize() forces Leaflet to re-read the container size and re-render.
+  useEffect(() => {
+    // Immediate call + delayed call to cover layout-shift and CSS transitions
+    map.invalidateSize();
+    const t1 = setTimeout(() => map.invalidateSize(), 100);
+    const t2 = setTimeout(() => map.invalidateSize(), 400);
+
+    // Also watch for container resizes (e.g. expand/collapse transitions)
+    const container = map.getContainer();
+    let ro: ResizeObserver | undefined;
+    if (typeof ResizeObserver !== 'undefined' && container) {
+      ro = new ResizeObserver(() => {
+        map.invalidateSize();
+      });
+      ro.observe(container);
+    }
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      ro?.disconnect();
+    };
+  }, [map]);
 
   useEffect(() => {
     if (bounds) {
