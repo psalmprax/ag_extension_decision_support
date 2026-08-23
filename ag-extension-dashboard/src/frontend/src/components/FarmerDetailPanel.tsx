@@ -633,7 +633,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
             />
 
             {/* Tabs */}
-            <div className="px-6 py-2 border-b bg-slate-900/60 border-slate-800 flex items-center gap-2 text-xs">
+            <div className="px-4 sm:px-6 py-2 border-b bg-slate-900/60 border-slate-800 flex items-center gap-2 text-xs overflow-x-auto scrollbar-hide">
               {[
                 { id: 'overview', label: t('nav_dashboard') || 'Overview', icon: FileText },
                 { id: 'history', label: t('nav_sms_history') || 'Communication', icon: History },
@@ -684,23 +684,23 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
             </div>
 
             {/* Footer Quick Action */}
-            <div className="p-4 border-t flex items-center justify-between bg-slate-900/80 border-slate-800">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-[4px] flex items-center justify-center bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+            <div className="p-4 border-t flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-900/80 border-slate-800">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-[4px] flex items-center justify-center bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 shrink-0">
                   <Clock className="w-4 h-4" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
                     {t('visit_next_scheduled') || 'Next Scheduled'}
                   </p>
-                  <p className="text-xs font-bold text-white">
+                  <p className="text-xs font-bold text-white truncate">
                     {nextScheduledVisit
                       ? new Date(nextScheduledVisit.scheduled_at).toLocaleDateString()
                       : t('no_visit_scheduled') || 'None scheduled'}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <Button
                   variant="secondary"
                   loading={isRefreshingPriority}

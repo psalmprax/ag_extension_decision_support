@@ -79,19 +79,19 @@ export const InlineVisitBookingCard: React.FC<InlineVisitBookingCardProps> = ({
           </div>
 
           {/* Location details & Action Button */}
-          <div className="flex items-center justify-between pt-1 border-t border-slate-800">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-2 border-t border-slate-800">
             <span className="text-[10px] text-slate-400 flex items-center gap-1">
-              <MapPin className="w-3 h-3 text-slate-500" />
-              {region}
+              <MapPin className="w-3 h-3 text-slate-500 shrink-0" />
+              <span className="truncate">{region}</span>
             </span>
 
             <button
               type="button"
               onClick={handleConfirm}
-              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-emerald-950 flex items-center gap-1.5"
+              className="w-full sm:w-auto justify-center px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-emerald-950 flex items-center gap-1.5"
             >
               <UserCheck className="w-3.5 h-3.5" />
-              Book & Dispatch Itinerary
+              Book &amp; Dispatch Itinerary
             </button>
           </div>
         </div>
