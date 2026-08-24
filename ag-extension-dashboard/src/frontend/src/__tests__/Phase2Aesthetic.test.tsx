@@ -4,9 +4,62 @@ import { describe, it, expect, vi } from 'vitest';
 import { JourneyBreadcrumbs, JourneyStep } from '../components/JourneyBreadcrumbs';
 import { InlineVisitBookingCard } from '../components/InlineVisitBookingCard';
 import { ProgressiveProfileChips, ProfileParameter } from '../components/ProgressiveProfileChips';
-import { LiveActivityStream } from '../components/LiveActivityStream';
+import { LiveActivityStream, ActivityItem } from '../components/LiveActivityStream';
 import { FloatingAIPill } from '../components/FloatingAIPill';
 import { LanguageProvider } from '@/lib/LanguageContext';
+
+const { MOCK_ACTIVITIES } = vi.hoisted(() => ({
+  MOCK_ACTIVITIES: [
+    {
+      id: 'act-1',
+      farmerName: 'Ezekiel Kiprono',
+      phone: '+254 712 998811',
+      channel: 'USSD' as const,
+      language: 'SW' as const,
+      severityScore: 88,
+      crop: 'Potatoes / Tomatoes',
+      region: 'Nakuru, Kenya',
+      issue: 'Late Blight (Phytophthora infestans)',
+      aiSummary: 'Water-soaked leaf lesions spreading rapidly after heavy rain. High spore germination risk.',
+      timestamp: '2m ago',
+      isClaimed: false,
+      journeySteps: [
+        { label: 'USSD Dialed', dwellTime: '2m ago' },
+        { label: 'Diagnosis Menu', dwellTime: '1m ago' },
+        { label: 'Leaf Blight Query', dwellTime: 'Now', status: 'active' as const },
+      ],
+    },
+    {
+      id: 'act-2',
+      farmerName: 'Grace Wambui',
+      phone: '+254 722 334455',
+      channel: 'SMS' as const,
+      language: 'EN' as const,
+      severityScore: 74,
+      crop: 'Maize',
+      region: 'Eldoret, Kenya',
+      issue: 'Fall Armyworm Infestation',
+      aiSummary: 'Windowpaning on whorl leaves. Larvae detected in upper canopy. Recommends Emamectin benzoate.',
+      timestamp: '7m ago',
+      isClaimed: false,
+      journeySteps: [
+        { label: 'SMS Received', dwellTime: '7m ago' },
+        { label: 'Pest AI Parser', dwellTime: '6m ago' },
+        { label: 'Triage Queue', dwellTime: 'Now', status: 'active' as const },
+      ],
+    },
+  ] as ActivityItem[],
+}));
+
+// Mock apiClient so LiveActivityStream fetches sample data
+vi.mock('@/api/client', () => ({
+  default: {
+    get: vi.fn().mockResolvedValue({
+      data: { success: true, data: MOCK_ACTIVITIES },
+    }),
+    post: vi.fn().mockResolvedValue({ data: { success: true } }),
+  },
+}));
 
 const renderWithLanguage = async (ui: React.ReactElement) => {
   const result = render(<LanguageProvider>{ui}</LanguageProvider>);
@@ -139,6 +192,11 @@ describe('Phase 2 KnockKnock Aesthetic Component Suite', () => {
     it('opens Tele-Agronomy consultation modal when Tele-Call button is clicked', async () => {
       await renderWithLanguage(<LiveActivityStream />);
 
+      // Wait for async data to load
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      });
+
       const teleCallBtns = screen.getAllByRole('button', { name: /Tele-Call/i });
       fireEvent.click(teleCallBtns[0]);
 
@@ -153,6 +211,11 @@ describe('Phase 2 KnockKnock Aesthetic Component Suite', () => {
 
     it('toggles Inline Visit Booking card for critical activities', async () => {
       await renderWithLanguage(<LiveActivityStream />);
+
+      // Wait for async data to load
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      });
 
       const dispatchBtns = screen.getAllByRole('button', { name: /Dispatch Visit/i });
       fireEvent.click(dispatchBtns[0]);

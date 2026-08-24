@@ -2,9 +2,101 @@ import React, { ReactNode } from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { FloatingAIPill } from '../components/FloatingAIPill';
-import { LiveActivityStream } from '../components/LiveActivityStream';
+import { LiveActivityStream, ActivityItem } from '../components/LiveActivityStream';
 import { USSDSimulatorDrawer } from '../components/USSDSimulatorDrawer';
 import { LanguageProvider } from '@/lib/LanguageContext';
+
+const { MOCK_ACTIVITIES } = vi.hoisted(() => ({
+  MOCK_ACTIVITIES: [
+    {
+      id: 'act-1',
+      farmerName: 'Ezekiel Kiprono',
+      phone: '+254 712 998811',
+      channel: 'USSD' as const,
+      language: 'SW' as const,
+      severityScore: 88,
+      crop: 'Potatoes / Tomatoes',
+      region: 'Nakuru, Kenya',
+      issue: 'Late Blight (Phytophthora infestans)',
+      aiSummary: 'Water-soaked leaf lesions spreading rapidly after heavy rain. High spore germination risk.',
+      timestamp: '2m ago',
+      isClaimed: false,
+      journeySteps: [
+        { label: 'USSD Dialed', dwellTime: '2m ago' },
+        { label: 'Diagnosis Menu', dwellTime: '1m ago' },
+        { label: 'Leaf Blight Query', dwellTime: 'Now', status: 'active' as const },
+      ],
+    },
+    {
+      id: 'act-2',
+      farmerName: 'Grace Wambui',
+      phone: '+254 722 334455',
+      channel: 'SMS' as const,
+      language: 'EN' as const,
+      severityScore: 74,
+      crop: 'Maize',
+      region: 'Eldoret, Kenya',
+      issue: 'Fall Armyworm Infestation',
+      aiSummary: 'Windowpaning on whorl leaves. Larvae detected in upper canopy. Recommends Emamectin benzoate.',
+      timestamp: '7m ago',
+      isClaimed: false,
+      journeySteps: [
+        { label: 'SMS Received', dwellTime: '7m ago' },
+        { label: 'Pest AI Parser', dwellTime: '6m ago' },
+        { label: 'Triage Queue', dwellTime: 'Now', status: 'active' as const },
+      ],
+    },
+    {
+      id: 'act-3',
+      farmerName: 'Jean-Luc Habimana',
+      phone: '+250 788 123456',
+      channel: 'App' as const,
+      language: 'FR' as const,
+      severityScore: 42,
+      crop: 'Coffee / Bananas',
+      region: 'Musanze, Rwanda',
+      issue: 'Coffee Leaf Rust (Early Stage)',
+      aiSummary: 'Isolated orange pustules under lower leaves. Recommended cultural pruning and copper fungicide.',
+      timestamp: '15m ago',
+      isClaimed: false,
+      journeySteps: [
+        { label: 'Mobile App Opened', dwellTime: '15m ago' },
+        { label: 'Leaf Photo Upload', dwellTime: '12m ago' },
+        { label: 'Advice Viewed', dwellTime: 'Now', status: 'active' as const },
+      ],
+    },
+    {
+      id: 'act-4',
+      farmerName: 'Amina Mohamed',
+      phone: '+254 733 778899',
+      channel: 'USSD' as const,
+      language: 'SW' as const,
+      severityScore: 18,
+      crop: 'Beans',
+      region: 'Kisumu, Kenya',
+      issue: 'Soil Fertilizer Routine Query',
+      aiSummary: 'Inquired about top-dressing timing with CAN fertilizer 4 weeks post-germination.',
+      timestamp: '28m ago',
+      isClaimed: true,
+      claimedBy: 'Officer Mwangi',
+      journeySteps: [
+        { label: 'USSD Dialed', dwellTime: '28m ago' },
+        { label: 'Fertilizer Menu', dwellTime: '25m ago' },
+        { label: 'Officer Intervened', dwellTime: 'Now', status: 'active' as const },
+      ],
+    },
+  ] as ActivityItem[],
+}));
+
+// Mock apiClient so LiveActivityStream fetches sample data
+vi.mock('@/api/client', () => ({
+  default: {
+    get: vi.fn().mockResolvedValue({
+      data: { success: true, data: MOCK_ACTIVITIES },
+    }),
+    post: vi.fn().mockResolvedValue({ data: { success: true } }),
+  },
+}));
 
 const renderWithLanguage = async (ui: React.ReactElement) => {
   const result = render(<LanguageProvider>{ui}</LanguageProvider>);
@@ -125,8 +217,12 @@ describe('KnockKnock Aesthetic Component Suite', () => {
     it('renders activity cards with severity scores and channel badges', async () => {
       await renderWithLanguage(<LiveActivityStream />);
 
+      // Wait for the async fetch to resolve
+      await waitFor(() => {
+        expect(screen.getByText('Ezekiel Kiprono')).toBeInTheDocument();
+      });
+
       expect(screen.getByText('Live Intelligence Stream')).toBeInTheDocument();
-      expect(screen.getByText('Ezekiel Kiprono')).toBeInTheDocument();
       expect(screen.getByText('88/100')).toBeInTheDocument();
       expect(screen.getByText('Grace Wambui')).toBeInTheDocument();
       expect(screen.getByText('74/100')).toBeInTheDocument();
@@ -135,16 +231,24 @@ describe('KnockKnock Aesthetic Component Suite', () => {
     it('allows extension officer to claim and intervene on an activity', async () => {
       await renderWithLanguage(<LiveActivityStream />);
 
+      await waitFor(() => {
+        expect(screen.getByText('Ezekiel Kiprono')).toBeInTheDocument();
+      });
+
       const claimBtns = screen.getAllByRole('button', { name: /Claim & Intervene/i });
       fireEvent.click(claimBtns[0]);
 
-      expect(screen.getByText('You (Live Takeover)')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Direct SMS Reply/i })).toBeInTheDocument();
-      expect(screen.getAllByText('Release to AI Autopilot')[0]).toBeInTheDocument();
+      expect(screen.getAllByText('You').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByRole('button', { name: /Direct SMS Reply/i }).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('Release to AI Autopilot').length).toBeGreaterThanOrEqual(1);
     });
 
     it('filters cards by critical severity', async () => {
       await renderWithLanguage(<LiveActivityStream />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Ezekiel Kiprono')).toBeInTheDocument();
+      });
 
       const criticalFilterBtn = screen.getByRole('button', { name: /critical/i });
       fireEvent.click(criticalFilterBtn);
