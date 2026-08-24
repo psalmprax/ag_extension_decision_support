@@ -65,7 +65,7 @@ export class AIProviderFactory {
     static async getWithFallback(
         operation: (provider: AICapability) => Promise<any>,
         preferredProvider?: AIProviderType,
-        telemetryContext?: { correlationId?: string; userId?: string; operation?: string }
+        telemetryContext?: { correlationId?: string; userId?: string; operation?: string; promptText?: string }
     ): Promise<any> {
         // Define all available providers for cascading fallback
         let allProviders: AIProviderType[] = Array.from(new Set([
@@ -120,7 +120,24 @@ export class AIProviderFactory {
             }
         }
 
-        logger.error('All AI providers failed');
+        // ── Final safety net: free LLM cascade via OmniRoute ──
+        const promptText = telemetryContext?.promptText;
+        if (promptText) {
+            try {
+                const { OmniRouteService } = await import('@/services/omniRouteService');
+                const fallback = await OmniRouteService.executeWithFailover([
+                    { role: 'user', content: promptText }
+                ]);
+                logger.info(
+                    `OmniRoute free-model fallback succeeded: ${fallback.providerUsed}/${fallback.modelUsed}`
+                );
+                return { text: fallback.text, providerUsed: fallback.providerUsed, modelUsed: fallback.modelUsed, isFreeModel: true };
+            } catch (omniError) {
+                logger.warn('OmniRoute free-model fallback also failed:', omniError);
+            }
+        }
+
+        logger.error('All AI providers failed (including OmniRoute free tier)');
         throw lastError || new Error('All AI providers failed — no provider is configured or healthy');
     }
 
@@ -204,7 +221,7 @@ export class AIRouter {
         requestType: 'generate' | 'embed' | 'speech' | 'classify' | 'reason' | 'weather' | 'disease_alerts' | 'vision' | 'video',
         params: any
     ): Promise<any> {
-        return AIProviderFactory.getWithFallback(async (provider) => {
+        const result = await AIProviderFactory.getWithFallback(async (provider) => {
             switch (requestType) {
                 case 'generate':
                     return provider.generateText(params.prompt, params.options);
@@ -234,6 +251,15 @@ export class AIRouter {
                 default:
                     throw new Error(`Unknown request type: ${requestType}`);
             }
-        }, params.options?.preferredProvider);
+        }, params.options?.preferredProvider, {
+            promptText: requestType === 'generate' ? params.prompt : undefined,
+        });
+
+        // Normalize OmniRoute free-model fallback result into the standard
+        // { text } shape that callers expect.
+        if (result?.providerUsed && result?.text !== undefined) {
+            return { text: result.text, providerUsed: result.providerUsed, modelUsed: result.modelUsed, isFreeModel: result.isFreeModel };
+        }
+        return result;
     }
 }
