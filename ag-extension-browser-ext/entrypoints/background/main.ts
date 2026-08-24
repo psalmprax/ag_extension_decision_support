@@ -1,32 +1,46 @@
 import CONFIG from '../../shared/config';
-
-// Types for offline queue
-type QueueState = 'pending' | 'failed' | 'conflict';
+import type { OfflineAttachment, OfflineStatus, QueuedRequest } from '../../shared/offlineTypes';
 
 // Encryption support for IndexedDB storage
-// Uses Web Crypto API with AES-GCM
-// Key is derived once and cached
+// AES-GCM with a random per-install key persisted in browser.storage.local.
+// The key never leaves the browser profile and is never hardcoded in source.
 let encryptionKey: CryptoKey | null = null;
+
+const ENCRYPTION_STORAGE_KEY = 'offlineAttachmentEncryptionKey';
+
+const bufferToBase64 = (buf: ArrayBuffer): string => {
+    const bytes = new Uint8Array(buf);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+    return btoa(binary);
+};
+
+const base64ToBuffer = (b64: string): ArrayBuffer => {
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes.buffer;
+};
+
+const importRawAesKey = async (raw: ArrayBuffer): Promise<CryptoKey> =>
+    crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['encrypt', 'decrypt']);
 
 const getEncryptionKey = async (): Promise<CryptoKey> => {
     if (encryptionKey) return encryptionKey;
 
-    const keyMaterial = await crypto.subtle.importKey(
-        'raw',
-        new TextEncoder().encode('ag-extension-indexeddb-key'),
-        'PBKDF2',
-        false,
-        ['deriveBits', 'deriveKey']
-    );
+    const stored = await browser.storage.local.get(ENCRYPTION_STORAGE_KEY);
+    const storedB64 = stored?.[ENCRYPTION_STORAGE_KEY] as string | undefined;
+    if (storedB64) {
+        encryptionKey = await importRawAesKey(base64ToBuffer(storedB64));
+        return encryptionKey;
+    }
 
-    encryptionKey = await crypto.subtle.deriveKey(
-        { name: 'PBKDF2', salt: new TextEncoder().encode('ag-extension-salt'), iterations: 100000, hash: 'SHA-256' },
-        keyMaterial,
-        'AES-GCM',
-        false,
-        ['encrypt', 'decrypt']
-    );
-
+    encryptionKey = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, [
+        'encrypt',
+        'decrypt',
+    ]);
+    const exported = await crypto.subtle.exportKey('raw', encryptionKey);
+    await browser.storage.local.set({ [ENCRYPTION_STORAGE_KEY]: bufferToBase64(exported) });
     return encryptionKey;
 };
 
@@ -57,36 +71,6 @@ const decryptString = async (encrypted: string): Promise<string> => {
     );
     return new TextDecoder().decode(decrypted);
 };
-
-// Types for offline queue
-interface QueuedRequest<T = any> {
-    id: string;
-    idempotencyKey: string;
-    url: string;
-    method: string;
-    headers: Record<string, string>;
-    body?: T;
-    attachmentRefs?: string[];
-    timestamp: number;
-    retries: number;
-    maxRetries: number;
-    state: QueueState;
-    lastError?: string;
-}
-
-interface OfflineStatus {
-    isOnline: boolean;
-    lastChecked: number;
-}
-
-interface OfflineAttachment {
-    id: string;
-    file: Blob;
-    farmerId: string;
-    sizeBytes: number;
-    createdAt: number;
-    uploadedId?: string;
-}
 
 export default defineBackground(() => {
     console.log('Ag-Extension Background Script Active');
@@ -241,21 +225,21 @@ export default defineBackground(() => {
 
     const getOfflineAttachment = async (id: string): Promise<OfflineAttachment | null> => {
         if (!db) await initDB();
-        return new Promise((resolve, reject) => {
+        const row = await new Promise<OfflineAttachment | undefined>((resolve, reject) => {
             const transaction = db!.transaction([ATTACHMENT_STORE], 'readonly');
             const request = transaction.objectStore(ATTACHMENT_STORE).get(id);
-            request.onsuccess = () => {
-                const result = request.result as OfflineAttachment | undefined;
-                if (result) {
-                    // Decrypt farmerId if encrypted
-                    const decryptedFarmerId = result.encryptedFarmerId ? await decryptString(result.encryptedFarmerId) : result.farmerId;
-                    resolve({ ...result, farmerId: decryptedFarmerId });
-                } else {
-                    resolve(null);
-                }
-            };
+            request.onsuccess = () => resolve(request.result as OfflineAttachment | undefined);
             request.onerror = () => reject(new Error(request.error?.message || 'Read attachment failed'));
         });
+        if (!row) return null;
+        // Decrypt farmerId when an encrypted copy exists; fall back to the stored value on failure.
+        const farmerId = row.encryptedFarmerId
+            ? await decryptString(row.encryptedFarmerId).catch((error) => {
+                  console.warn('Failed to decrypt offline attachment farmerId, using stored value:', error);
+                  return row.farmerId;
+              })
+            : row.farmerId;
+        return { ...row, farmerId };
     };
 
     const removeOfflineAttachment = async (id: string): Promise<void> => {
