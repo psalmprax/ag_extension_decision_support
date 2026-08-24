@@ -155,11 +155,10 @@ router.get('/insurance/weather-index', async (req: AuthedRequest, res: Response)
 });
 
 // ── MIS exports (admin/regional only) ────────────────────────────────────────
-
 router.get('/mis/export/:dataset', authorize(['admin', 'regional_manager']), async (req: AuthedRequest, res: Response) => {
     try {
         const dataset = req.params.dataset as MisDataset;
-        const { csv, rowCount } = await misExportService.exportDataset(dataset);
+        const { csv } = await misExportService.exportDataset(dataset);
         res.setHeader('Content-Type', 'text/csv; charset=utf-8');
         res.setHeader('Content-Disposition', `attachment; filename="gpexts_${dataset}_mis_v${misExportService.version.replace(/\./g, '_')}.csv"`);
         return res.send(csv);

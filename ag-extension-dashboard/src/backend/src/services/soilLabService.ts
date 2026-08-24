@@ -19,6 +19,37 @@ export interface SoilLabRowInput {
  */
 export const EXPECTED_COLUMNS = ['farmer_ref', 'lab_name', 'sample_ref', 'ph', 'nitrogen_ppm', 'phosphorus_ppm', 'potassium_ppm', 'organic_matter_pct', 'tested_at'];
 
+const numOrUndef = (record: Record<string, string>, key: string): number | undefined => {
+    const n = Number(record[key]);
+    return record[key] !== '' && Number.isFinite(n) ? n : undefined;
+};
+
+const dateOrUndef = (record: Record<string, string>, key: string): string | undefined => {
+    const d = new Date(record[key]);
+    return record[key] && !Number.isNaN(d.getTime()) ? d.toISOString() : undefined;
+};
+
+/** Parse a single CSV data line into a SoilLabRowInput, given the header mapping. */
+function parseSoilLabRow(line: string, headers: string[], rowNumber: number): SoilLabRowInput {
+    const values = line.split(',').map(v => v.trim());
+    const record: Record<string, string> = {};
+    headers.forEach((h, idx) => (record[h] = values[idx] ?? ''));
+
+    if (!record.farmer_ref) throw new Error(`Row ${rowNumber}: farmer_ref is required`);
+
+    return {
+        farmerRef: record.farmer_ref,
+        labName: record.lab_name || undefined,
+        sampleRef: record.sample_ref || undefined,
+        ph: numOrUndef(record, 'ph'),
+        nitrogenPpm: numOrUndef(record, 'nitrogen_ppm'),
+        phosphorusPpm: numOrUndef(record, 'phosphorus_ppm'),
+        potassiumPpm: numOrUndef(record, 'potassium_ppm'),
+        organicMatterPct: numOrUndef(record, 'organic_matter_pct'),
+        testedAt: dateOrUndef(record, 'tested_at'),
+    };
+}
+
 /** Pure CSV parser → typed rows. Throws a descriptive error on malformed input. */
 export function parseSoilLabCsv(csv: string): SoilLabRowInput[] {
     const lines = csv.trim().split(/\r?\n/);
@@ -31,32 +62,7 @@ export function parseSoilLabCsv(csv: string): SoilLabRowInput[] {
     const rows: SoilLabRowInput[] = [];
     for (let i = 1; i < lines.length; i++) {
         if (!lines[i].trim()) continue;
-        const values = lines[i].split(',').map(v => v.trim());
-        const record: Record<string, string> = {};
-        headers.forEach((h, idx) => (record[h] = values[idx] ?? ''));
-
-        const numOrUndef = (key: string): number | undefined => {
-            const n = Number(record[key]);
-            return record[key] !== '' && Number.isFinite(n) ? n : undefined;
-        };
-        const dateOrUndef = (key: string): string | undefined => {
-            const d = new Date(record[key]);
-            return record[key] && !Number.isNaN(d.getTime()) ? d.toISOString() : undefined;
-        };
-
-        if (!record.farmer_ref) throw new Error(`Row ${i + 1}: farmer_ref is required`);
-
-        rows.push({
-            farmerRef: record.farmer_ref,
-            labName: record.lab_name || undefined,
-            sampleRef: record.sample_ref || undefined,
-            ph: numOrUndef('ph'),
-            nitrogenPpm: numOrUndef('nitrogen_ppm'),
-            phosphorusPpm: numOrUndef('phosphorus_ppm'),
-            potassiumPpm: numOrUndef('potassium_ppm'),
-            organicMatterPct: numOrUndef('organic_matter_pct'),
-            testedAt: dateOrUndef('tested_at'),
-        });
+        rows.push(parseSoilLabRow(lines[i], headers, i + 1));
     }
     return rows;
 }

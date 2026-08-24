@@ -179,12 +179,6 @@ const MAP_STYLES = `
     color: var(--color-primary-400) !important;
   }
 
-    background: var(--color-outline) !important;
-    border: 1px solid var(--color-outline) !important;
-    border-top: none !important;
-    border-left: none !important;
-  }
-
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
   }
@@ -966,7 +960,7 @@ export function FarmerMap({
   const { t } = useLanguage();
 
   const farmers = useMemo(
-    () => (propFarmers && propFarmers.length > 0 ? propFarmers : (isDemo ? DEFAULT_DEMO_MAP_FARMERS : [])),
+    () => (propFarmers && propFarmers.length > 0 ? propFarmers : (isDemo || !propFarmers || propFarmers.length === 0 ? DEFAULT_DEMO_MAP_FARMERS : [])),
     [propFarmers, isDemo]
   );
 

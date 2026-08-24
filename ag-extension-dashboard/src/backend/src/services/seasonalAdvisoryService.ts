@@ -179,6 +179,68 @@ export const seasonalAdvisoryService = {
     },
 
     /**
+     * Dispatch a single channel message to a farmer safely.
+     */
+    async dispatchToFarmerChannel(
+        channel: string,
+        farmer: OptedInRow,
+        message: string,
+        context: { ruleKey: string; district: string }
+    ): Promise<boolean> {
+        if (!farmer.phone) return false;
+        try {
+            if (channel === 'whatsapp') {
+                await whatsappService.sendMessage({ to: farmer.phone, message, farmerId: farmer.farmer_id });
+                return true;
+            }
+            if (channel === 'sms') {
+                await smsService.sendSMS({ to: farmer.phone, message });
+                return true;
+            }
+        } catch (error) {
+            logger.warn(`Advisory ${context.ruleKey}/${context.district} failed via ${channel} for farmer ${farmer.farmer_id}:`, error);
+        }
+        return false;
+    },
+
+    /**
+     * Dispatch an advisory verdict to all eligible farmers.
+     */
+    async dispatchAdvisory(
+        ruleKey: string,
+        district: string,
+        verdict: RuleVerdict,
+        farmers: OptedInRow[],
+        today: string
+    ): Promise<boolean> {
+        const hash = dedupeHash(ruleKey, district, today);
+        const inserted = await query(
+            `INSERT INTO advisory_dispatches (rule_key, district, channel, audience_count, payload, dedupe_hash)
+             VALUES ($1, $2, 'multi', 0, $3, $4)
+             ON CONFLICT (dedupe_hash) DO NOTHING
+             RETURNING id`,
+            [ruleKey, district, JSON.stringify({ message: verdict.message, severity: verdict.severity, params: verdict.params }), hash]
+        );
+        if (inserted.rows.length === 0) return false;
+
+        let audience = 0;
+        for (const farmer of farmers) {
+            const channels = farmer.channels || ['whatsapp'];
+            const categories = farmer.categories || [];
+            if (!categories.includes(ruleKey)) continue;
+
+            for (const channel of channels) {
+                const sent = await this.dispatchToFarmerChannel(channel, farmer, verdict.message, { ruleKey, district });
+                if (sent) audience += 1;
+            }
+        }
+
+        await query('UPDATE advisory_dispatches SET audience_count = $1 WHERE dedupe_hash = $2', [audience, hash]);
+        logger.info(`Advisory dispatched: ${ruleKey} -> ${district} (${audience} farmers)`);
+        return true;
+    },
+
+    /**
      * Evaluate every rule for one district and dispatch deduped advisories.
      * Returns the rules that fired.
      */
@@ -206,39 +268,10 @@ export const seasonalAdvisoryService = {
             const verdict = advisoryRules[ruleKey]({ district, daily });
             if (!verdict.shouldDispatch) continue;
 
-            const hash = dedupeHash(ruleKey, district, today);
-            const inserted = await query(
-                `INSERT INTO advisory_dispatches (rule_key, district, channel, audience_count, payload, dedupe_hash)
-                 VALUES ($1, $2, 'multi', 0, $3, $4)
-                 ON CONFLICT (dedupe_hash) DO NOTHING
-                 RETURNING id`,
-                [ruleKey, district, JSON.stringify({ message: verdict.message, severity: verdict.severity, params: verdict.params }), hash]
-            );
-            if (inserted.rows.length === 0) continue; // already sent today
-
-            let audience = 0;
-            for (const farmer of withCoords) {
-                const channels = farmer.channels || ['whatsapp'];
-                const categories = farmer.categories || [];
-                if (!categories.includes(ruleKey)) continue;
-                for (const channel of channels) {
-                    try {
-                        if (channel === 'whatsapp' && farmer.phone) {
-                            await whatsappService.sendMessage({ to: farmer.phone, message: verdict.message, farmerId: farmer.farmer_id });
-                            audience += 1;
-                        } else if (channel === 'sms' && farmer.phone) {
-                            await smsService.sendSMS({ to: farmer.phone, message: verdict.message });
-                            audience += 1;
-                        }
-                    } catch (error) {
-                        logger.warn(`Advisory ${ruleKey}/${district} failed via ${channel} for farmer ${farmer.farmer_id}:`, error);
-                    }
-                }
+            const dispatched = await this.dispatchAdvisory(ruleKey, district, verdict, withCoords, today);
+            if (dispatched) {
+                fired.push(ruleKey);
             }
-
-            await query('UPDATE advisory_dispatches SET audience_count = $1 WHERE dedupe_hash = $2', [audience, hash]);
-            fired.push(ruleKey);
-            logger.info(`Advisory dispatched: ${ruleKey} -> ${district} (${audience} farmers)`);
         }
         return fired;
     },
