@@ -381,6 +381,64 @@ export async function createTables(): Promise<void> {
       CREATE INDEX IF NOT EXISTS telegram_messages_chat_id_idx ON telegram_messages(chat_id);
       CREATE INDEX IF NOT EXISTS telegram_messages_farmer_id_idx ON telegram_messages(farmer_id);
 
+      CREATE TABLE IF NOT EXISTS recommendation_outcomes (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        visit_id UUID REFERENCES visits(id) ON DELETE SET NULL,
+        farmer_id UUID REFERENCES farmers(id) ON DELETE SET NULL,
+        officer_id UUID,
+        crop VARCHAR(100) NOT NULL,
+        advice_category VARCHAR(100) NOT NULL,
+        advice_summary TEXT NOT NULL,
+        outcome VARCHAR(30) NOT NULL CHECK (outcome IN ('resolved','improved','unresolved','worsened','lost_to_followup')),
+        follow_up_photo_id UUID,
+        officer_notes TEXT,
+        measured_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS recommendation_outcomes_visit_id_idx ON recommendation_outcomes(visit_id);
+      CREATE INDEX IF NOT EXISTS recommendation_outcomes_farmer_id_idx ON recommendation_outcomes(farmer_id);
+      CREATE INDEX IF NOT EXISTS recommendation_outcomes_officer_measured_idx ON recommendation_outcomes(officer_id, measured_at);
+      CREATE INDEX IF NOT EXISTS recommendation_outcomes_crop_category_idx ON recommendation_outcomes(crop, advice_category);
+
+      CREATE TABLE IF NOT EXISTS advisory_preferences (
+        farmer_id UUID PRIMARY KEY REFERENCES farmers(id) ON DELETE CASCADE,
+        opt_in BOOLEAN NOT NULL DEFAULT true,
+        channels VARCHAR(20)[] DEFAULT '{whatsapp}',
+        categories VARCHAR(40)[] DEFAULT '{planting_window,dry_spell_warning,faw_degree_day,late_blight_risk}',
+        updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS advisory_dispatches (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        rule_key VARCHAR(60) NOT NULL,
+        district VARCHAR(100) NOT NULL,
+        channel VARCHAR(20) NOT NULL,
+        audience_count INTEGER NOT NULL DEFAULT 0,
+        payload JSONB NOT NULL,
+        dedupe_hash CHAR(64) NOT NULL UNIQUE,
+        dispatched_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS advisory_dispatches_rule_district_idx ON advisory_dispatches(rule_key, district, dispatched_at);
+
+      CREATE TABLE IF NOT EXISTS diagnosis_events (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        farmer_id UUID REFERENCES farmers(id) ON DELETE SET NULL,
+        district VARCHAR(100),
+        crop VARCHAR(100) NOT NULL,
+        disease_label VARCHAR(150) NOT NULL,
+        confidence DOUBLE PRECISION,
+        source VARCHAR(30) NOT NULL DEFAULT 'extension_tool',
+        created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS diagnosis_events_district_crop_idx ON diagnosis_events(district, crop, created_at);
+      CREATE INDEX IF NOT EXISTS diagnosis_events_created_at_idx ON diagnosis_events(created_at);
+
+      CREATE TABLE IF NOT EXISTS district_adjacency (
+        district VARCHAR(100) NOT NULL,
+        adjacent_district VARCHAR(100) NOT NULL,
+        PRIMARY KEY (district, adjacent_district)
+      );
+
       CREATE TABLE IF NOT EXISTS farmer_onboarding_sessions (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         tenant_id UUID REFERENCES tenants(id) ON DELETE SET NULL,

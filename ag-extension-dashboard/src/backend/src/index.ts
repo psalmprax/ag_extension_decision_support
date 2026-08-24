@@ -213,6 +213,16 @@ async function bootstrap() {
         selfHealingService.startMonitoring(60000);
     });
 
+    // Proactive seasonal advisory engine (env-gated)
+    void (async () => {
+        try {
+            const { startAdvisoryScheduler } = await import('./workers/advisoryWorker');
+            await startAdvisoryScheduler();
+        } catch (error) {
+            logger.error('Advisory scheduler startup failed:', error);
+        }
+    })();
+
     // Start server
     try {
         httpServer.listen(config.port, '0.0.0.0', () => {
@@ -245,6 +255,12 @@ process.on('unhandledRejection', (reason) => {
 
 // Graceful shutdown handling
 async function gracefulShutdown(signal: string) {
+    try {
+        const { stopAdvisoryScheduler } = await import('./workers/advisoryWorker');
+        await stopAdvisoryScheduler();
+    } catch {
+        // scheduler may not have started; nothing to stop
+    }
     logger.info(`Received ${signal}, starting graceful shutdown...`);
     
     try {

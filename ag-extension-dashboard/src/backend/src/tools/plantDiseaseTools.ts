@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { outbreakService } from '@/services/outbreakService';
+import { logger } from '@/utils/logger';
 import { Tool } from './types';
 import { plantDiseaseService } from '@/services/plantDiseaseService';
 
@@ -61,6 +63,19 @@ export const analyzePlantImageTool: Tool<typeof analyzePlantImageSchema> = {
   schema: analyzePlantImageSchema,
   execute: async ({ imageData, cropType }) => {
     const analysis = await plantDiseaseService.analyzeImage(imageData);
+
+    // Feed outbreak intelligence (fire-and-forget; failures must not break diagnosis)
+    const primary = analysis.diseases?.[0];
+    if (primary) {
+      void outbreakService
+        .recordDiagnosisEvent({
+          crop: cropType || 'unknown',
+          diseaseLabel: primary.disease,
+          confidence: typeof primary.confidence === 'string' ? parseFloat(primary.confidence) : null,
+          source: 'extension_tool',
+        })
+        .catch(error => logger.error('[outbreak] failed to record diagnosis event:', error));
+    }
 
     return JSON.stringify({
       cropType: cropType || null,

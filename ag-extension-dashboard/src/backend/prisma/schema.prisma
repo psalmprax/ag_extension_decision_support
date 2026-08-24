@@ -121,6 +121,9 @@ model Farmer {
    videoConsultations       VideoConsultation[]
    consents                 DataConsent[]
    recommendationReviews   RecommendationReview[]
+   recommendationOutcomes   RecommendationOutcome[]
+   advisoryPreference       AdvisoryPreference?
+   diagnosisEvents          DiagnosisEvent[]
 
   @@index([assignedOfficerId])
   @@index([region])
@@ -153,6 +156,7 @@ model Visit {
   officer              User?     @relation(fields: [officerId], references: [id])
   farmer               Farmer?   @relation(fields: [farmerId], references: [id])
   attachments          VisitAttachment[]
+  recommendationOutcomes RecommendationOutcome[]
 
   @@index([farmerId])
   @@index([officerId])
@@ -790,4 +794,79 @@ model VideoConsultation {
   extensionOfficer   User      @relation(fields: [extensionOfficerId], references: [id])
 
   @@map("video_consultations")
+}
+
+model RecommendationOutcome {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  visitId          String?  @map("visit_id") @db.Uuid
+  farmerId         String?  @map("farmer_id") @db.Uuid
+  officerId        String?  @map("officer_id") @db.Uuid
+  crop             String   @db.VarChar(100)
+  adviceCategory   String   @map("advice_category") @db.VarChar(100)
+  adviceSummary    String   @map("advice_summary")
+  outcome          String   @db.VarChar(30)
+  followUpPhotoId  String?  @map("follow_up_photo_id") @db.Uuid
+  officerNotes     String?  @map("officer_notes")
+  measuredAt       DateTime @default(now()) @map("measured_at") @db.Timestamp(6)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  visit  Visit?  @relation(fields: [visitId], references: [id])
+  farmer Farmer? @relation(fields: [farmerId], references: [id])
+
+  @@index([visitId])
+  @@index([farmerId])
+  @@index([officerId, measuredAt])
+  @@index([crop, adviceCategory])
+  @@map("recommendation_outcomes")
+}
+
+model AdvisoryPreference {
+  farmerId   String   @id @map("farmer_id") @db.Uuid
+  optIn      Boolean  @default(true) @map("opt_in")
+  channels   String[] @default(["whatsapp"])
+  categories String[] @default(["planting_window", "dry_spell_warning", "faw_degree_day", "late_blight_risk"])
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  farmer Farmer @relation(fields: [farmerId], references: [id])
+
+  @@map("advisory_preferences")
+}
+
+model AdvisoryDispatch {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ruleKey       String   @map("rule_key") @db.VarChar(60)
+  district      String   @db.VarChar(100)
+  channel       String   @db.VarChar(20)
+  audienceCount Int      @default(0) @map("audience_count")
+  payload       Json
+  dedupeHash    String   @unique @map("dedupe_hash") @db.Char(64)
+  dispatchedAt  DateTime @default(now()) @map("dispatched_at") @db.Timestamp(6)
+
+  @@index([ruleKey, district, dispatchedAt])
+  @@map("advisory_dispatches")
+}
+
+model DiagnosisEvent {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  farmerId     String?  @map("farmer_id") @db.Uuid
+  district     String?  @db.VarChar(100)
+  crop         String   @db.VarChar(100)
+  diseaseLabel String   @map("disease_label") @db.VarChar(150)
+  confidence   Float?
+  source       String   @default("extension_tool") @db.VarChar(30)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  farmer Farmer? @relation(fields: [farmerId], references: [id])
+
+  @@index([district, crop, createdAt])
+  @@index([createdAt])
+  @@map("diagnosis_events")
+}
+
+model DistrictAdjacency {
+  district         String @db.VarChar(100)
+  adjacentDistrict String @map("adjacent_district") @db.VarChar(100)
+
+  @@id([district, adjacentDistrict])
+  @@map("district_adjacency")
 }

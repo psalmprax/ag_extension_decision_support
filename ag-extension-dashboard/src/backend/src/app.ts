@@ -37,6 +37,9 @@ import usersRoutes from './routes/users';
 import farmersRoutes from './routes/farmers';
 import fieldsRoutes from './routes/fields';
 import visitsRoutes from './routes/visits';
+import efficacyRoutes from './routes/efficacy';
+import advisoriesRoutes from './routes/advisories';
+import outbreaksRoutes from './routes/outbreaks';
 import externalRoutes from './routes/external';
 import languageRoutes from './routes/language';
 import aiRoutes from './routes/ai';
@@ -366,6 +369,9 @@ const routeMounts: RouteMount[] = [
   { path: '/farmers', router: farmersRoutes },
   { path: '/fields', router: fieldsRoutes },
   { path: '/visits', router: visitsRoutes },
+  { path: '/efficacy', router: efficacyRoutes },
+  { path: '/advisories', router: advisoriesRoutes },
+  { path: '/outbreaks', router: outbreaksRoutes },
   { path: '/alerts', router: alertRoutes },
   { path: '/external', router: externalRoutes },
   { path: '/language', router: languageRoutes },
