@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { FarmPlanSection } from '@/components/fieldtools/FarmPlanSection';
 import {
   Sprout,
   Map,
@@ -158,6 +159,7 @@ function CropsOverviewTab({
                               "{currentCycle.notes}"
                             </p>
                           )}
+                  <FarmPlanSection cropCycleId={currentCycle.id} />
                         </div>
                       </div>
                     ) : (
@@ -323,6 +325,7 @@ function CropsCyclesTab({
                     />
                   ))
                 )}
+
               </tbody>
             </table>
           </div>

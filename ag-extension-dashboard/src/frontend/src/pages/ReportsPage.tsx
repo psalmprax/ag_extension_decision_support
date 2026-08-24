@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { MisExportButtons } from '@/components/fieldtools/FieldIntelCards';
 import {
   FileText,
   Clock,
@@ -207,6 +208,10 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
 
   return (
     <div className="space-y-8">
+      <section className="mb-6" aria-label="Government MIS exports">
+        <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Government MIS exports (CSV)</h3>
+        <MisExportButtons />
+      </section>
       {/* Header & Generate Button */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>

@@ -24,6 +24,8 @@ import { LiveActivityStream } from '@/components/LiveActivityStream';
 import { VegetationHealthCard } from '@/components/VegetationHealthCard';
 import { EfficacyCard } from '@/components/efficacy/EfficacyCard';
 import { AdvisoriesCard } from '@/components/advisories/AdvisoriesCard';
+import { FieldToolsCard } from '@/components/fieldtools/FieldToolsCard';
+import { LeaderboardCard } from '@/components/fieldtools/FieldIntelCards';
 import { OutbreakBanner } from '@/components/outbreaks/OutbreakBanner';
 
 const REGION_MAP_MAX_RETRIES = 3;
@@ -638,6 +640,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           <VegetationHealthCard cardClass={cardClass} />
           <EfficacyCard />
           <AdvisoriesCard />
+          <FieldToolsCard />
+          <LeaderboardCard />
         </div>
       </div>
 

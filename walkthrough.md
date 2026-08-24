@@ -44,3 +44,21 @@ Plan: `implementation_plan.md` (approved). Scope: P0/P1 defects from the indepen
 
 - A parallel session's commit `626f4dd0` absorbed part of the `app.ts` edits mid-flight; all functional changes are present and verified in the working tree.
 - Deferred (separate phases, per plan §6): zod coverage for 33 route files, god-component decomposition, i18n fallback masks, extension auth/token bootstrap + `<all_urls>` narrowing (needs product decisions).
+
+---
+
+# Walkthrough: 8 Feature Build (Route Optimizer → Soil Labs)
+
+## Changes
+1. **Route Optimizer** — priority-weighted nearest-neighbor + 2-opt over the follow-up queue; `GET /field-intel/route-plan`; RoutePlannerCard in dashboard.
+2. **Farm Plans** — rule-based milestone templates (maize/potato/soybean/groundnut) anchored to planting date; generate/track in CropsFields field cards.
+3. **Field Calculators** — tank mix, NPK blend, planting density, herbicide dose (pure lib, offline, 8 tests).
+4. **MIS Interop** — versioned CSV exports (farmers/visits/outcomes) with frozen column contract; buttons on ReportsPage.
+5. **Officer Gamification** — 30d leaderboard (visits, outcomes, efficacy) with badges; dashboard card.
+6. **SMS/USSD Symptom Triage** — 8 keyword playbooks via 'diagnose' trigger in onboardingEngine; logs to diagnosis_events (feeds outbreak intel).
+7. **Insurance Weather Index** — seasonal rainfall index vs prior season per district; API + partner gate documented.
+8. **Soil Lab Import** — strict CSV contract parser + import + farmer query; SoilLabImport in ReportsPage.
+
+## Verification
+- Backend: 53 suites, 456 tests passing (19 new); tsc clean
+- Frontend: 136 tests passing (8 new); tsc clean; eslint clean; locale audit clean
