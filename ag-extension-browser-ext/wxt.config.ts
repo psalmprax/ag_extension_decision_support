@@ -14,7 +14,7 @@ export default defineConfig({
   manifest: {
     name: 'Ag-Extension Decision Support',
     description: 'AI-powered agricultural decision support for field officers and farmers.',
-    permissions: ['storage', 'sidePanel', 'geolocation', 'tabs', 'activeTab', 'contextMenus'],
+    permissions: ['storage', 'sidePanel', 'geolocation', 'tabs', 'activeTab', 'contextMenus', 'alarms'],
     background: { service_worker: true },
     icons: {
       16: '/icon-16.png',

@@ -479,15 +479,21 @@ export default defineBackground(() => {
         // Initial status check
         await handleOnlineStatusChange();
 
-        // Periodic connectivity check
-        setInterval(async () => {
-            const currentStatus = await getOfflineStatus();
-            const isOnline = await checkOnlineStatus();
+        // MV3 service workers are terminated when idle; setInterval does not survive.
+        // chrome.alarms wakes the worker on schedule instead.
+        await chromeAPI.alarms.create('connectivity-check', { periodInMinutes: 1 });
+        chromeAPI.alarms.onAlarm.addListener((alarm: { name: string }) => {
+            if (alarm.name === 'connectivity-check') {
+                void (async () => {
+                    const currentStatus = await getOfflineStatus();
+                    const isOnline = await checkOnlineStatus();
 
-            if (currentStatus.isOnline !== isOnline) {
-                await handleOnlineStatusChange();
+                    if (currentStatus.isOnline !== isOnline) {
+                        await handleOnlineStatusChange();
+                    }
+                })();
             }
-        }, 30000); // Check every 30 seconds
+        });
     };
 
     // Context Menu Click Handler

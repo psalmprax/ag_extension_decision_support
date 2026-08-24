@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Settings, Shield, Zap, ChevronRight, BarChart3, Cloud, ArrowLeft, Globe, Server, Bot, Save } from 'lucide-react';
 import { usePersistence } from '@/shared/hooks/usePersistence';
+import CONFIG from '../../shared/config';
 
 function App() {
   const [activeAgent, setActiveAgent] = usePersistence('activeAgent', 'AGENT ALPHA');
   const [language, setLanguage] = usePersistence('language', 'en');
-  const [apiEndpoint, setApiEndpoint] = usePersistence('apiEndpoint', 'https://ag-decision-support.alpha/api');
+  const [apiEndpoint, setApiEndpoint] = usePersistence('apiEndpoint', CONFIG.API_BASE_URL);
   const [showSettings, setShowSettings] = useState(false);
 
   const handleOpenSidepanel = () => {

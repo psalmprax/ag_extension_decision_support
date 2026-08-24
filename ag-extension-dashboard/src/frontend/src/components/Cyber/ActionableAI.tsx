@@ -127,6 +127,34 @@ async function fetchActionablePerformance() {
   }
 }
 
+async function executeGenerateStrategy(
+  addNotification: (n: { type: 'success' | 'warning' | 'error' | 'info'; message: string }) => void,
+  setIsGenerating: (v: boolean) => void,
+) {
+  setIsGenerating(true);
+  try {
+    const { data } = await apiClient.post('/ai/strategy', {
+      type: 'full_strategy',
+      context: 'agricultural_optimization',
+    });
+    if (data.success) {
+      addNotification({
+        type: 'success',
+        message: 'Full strategy generated successfully. Check reports for details.',
+      });
+    } else {
+      toast.error('Strategy generation returned no data');
+    }
+  } catch {
+    addNotification({
+      type: 'warning',
+      message: 'Strategy generation queued. It will appear in reports when ready.',
+    });
+  } finally {
+    setIsGenerating(false);
+  }
+}
+
 const ActionableAI = () => {
   const { addNotification, user } = useAppStore();
   const [isGenerating, setIsGenerating] = React.useState(false);
@@ -178,30 +206,8 @@ const ActionableAI = () => {
   const prices: MarketPrice[] = pricesData || [];
   const alerts: AlertData[] = alertsData || [];
 
-  const handleGenerateStrategy = async () => {
-    setIsGenerating(true);
-    try {
-      const { data } = await apiClient.post('/ai/strategy', {
-        type: 'full_strategy',
-        context: 'agricultural_optimization',
-      });
-      if (data.success) {
-        addNotification({
-          type: 'success',
-          message: 'Full strategy generated successfully. Check reports for details.',
-        });
-      } else {
-        toast.error('Strategy generation returned no data');
-      }
-    } catch {
-      addNotification({
-        type: 'warning',
-        message: 'Strategy generation queued. It will appear in reports when ready.',
-      });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+  const handleGenerateStrategy = () =>
+    executeGenerateStrategy(addNotification, setIsGenerating);
 
   // Derive yield chart data from real stats or show empty
   const yieldBars = farmerStats?.yieldHistory?.length

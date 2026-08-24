@@ -113,12 +113,11 @@ export class OmniRouteService {
       }
     }
 
-    // Ultimate fallback baseline if all external providers unavailable
-    return {
-      text: 'Ag-Extension AI fallback diagnostic: Please ensure leaf photo has adequate lighting and inspect for fungal leaf spot symptoms.',
-      providerUsed: 'fallback_offline',
-      modelUsed: 'rule_engine_v1',
-      isFreeModel: true,
-    };
+    // Fail loudly: serving a canned diagnosis-shaped response in an agricultural
+    // decision-support system is dangerous. Callers surface the error instead.
+    logger.error(`[OmniRoute] All ${sorted.length} candidate model(s) exhausted — no provider available`);
+    throw new Error(
+      `OmniRoute exhausted all ${sorted.length} candidate model(s) — no free or paid fallback provider is configured and healthy`
+    );
   }
 }

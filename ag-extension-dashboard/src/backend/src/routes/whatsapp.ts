@@ -5,6 +5,7 @@ import { mapWhatsAppMessageRows, mapWhatsAppMessageRow, mapCountRows } from '@/t
 import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 import { authorize } from '@/middleware/authorize';
+import { verifyInboundWebhookSignature } from '@/middleware/webhookSignature';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { whatsappService } from '@/services/whatsappService';
 import { onboardingEngine } from '@/services/onboardingEngine';
@@ -39,8 +40,9 @@ router.get('/inbound', (req: Request, res: Response) => {
 
 /**
  * POST /api/whatsapp/inbound — webhook endpoint for inbound messages from Meta Cloud API or Twilio WhatsApp.
+ * Requests must carry a valid provider signature (see middleware/webhookSignature).
  */
-router.post('/inbound', async (req: Request, res: Response) => {
+router.post('/inbound', verifyInboundWebhookSignature, async (req: Request, res: Response) => {
     try {
         const payload = req.body as {
             from?: string;

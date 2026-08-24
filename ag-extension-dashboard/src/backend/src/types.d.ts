@@ -51,6 +51,7 @@ declare global {
                 [key: string]: any;
             };
             language?: string;
+            rawBody?: Buffer;
             i18n?: {
                 language: string;
                 isRTL: boolean;

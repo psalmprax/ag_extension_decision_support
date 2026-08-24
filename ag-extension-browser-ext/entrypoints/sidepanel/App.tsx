@@ -3,7 +3,21 @@ import { Send, Bot, User, Sparkles, Brain, Code, Terminal, Zap, Wifi, WifiOff, M
 import { apiQueue } from '../../shared/apiQueue';
 import { usePersistence } from '../../shared/hooks/usePersistence';
 import CONFIG from '../../shared/config';
+import type { QueuedRequest } from '../../shared/offlineTypes';
 import { VisitLogger } from './components/VisitLogger';
+
+interface SpeechRecognitionLike {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  start(): void;
+  stop(): void;
+  onstart: (() => void) | null;
+  onend: (() => void) | null;
+  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+}
+
+type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
 
 interface Message {
   id: string;
@@ -46,7 +60,7 @@ function App() {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [farmers, setFarmers] = useState<( { id: string; firstName: string; lastName: string } | null )[]>([]);
+  const [farmers, setFarmers] = useState<{ id: string; firstName: string; lastName: string }[]>([]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -210,7 +224,11 @@ function App() {
   };
 
   const handleVoiceInput = () => {
-    const SpeechRecognition = (window as { SpeechRecognition: new (...args: any[]) => any }).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const win = window as Window & {
+      SpeechRecognition?: SpeechRecognitionCtor;
+      webkitSpeechRecognition?: SpeechRecognitionCtor;
+    };
+    const SpeechRecognition = win.SpeechRecognition || win.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       alert('Speech recognition is not supported in this browser.');
       return;
@@ -228,7 +246,7 @@ function App() {
 
     recognition.onstart = () => setIsListening(true);
     recognition.onend = () => setIsListening(false);
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript;
       setInput(prev => prev + ' ' + transcript);
     };
@@ -357,7 +375,9 @@ function App() {
     if (browserAPI && browserAPI.runtime) {
       const handlePopupMessage = async (message: { action: string; actionType?: string; text?: string; tab?: any; imageData?: string }) => {
         if (message.action === 'trigger_quick_action') {
-          handleQuickAction(message.actionType);
+          if (message.actionType) {
+            handleQuickAction(message.actionType);
+          }
         } else if (message.action === 'analyze_selection' && message.text) {
           const selectionMessage: Message = {
             id: Date.now().toString(),

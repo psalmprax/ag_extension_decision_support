@@ -18,7 +18,7 @@ jest.mock('../services/cacheService', () => ({
 }));
 
 jest.mock('../utils/logger', () => ({
-    logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() },
+    logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn(), crit: jest.fn() },
 }));
 
 jest.mock('../middleware/authorize', () => ({
@@ -133,5 +133,155 @@ describe('WhatsApp Route — Mapper-before-response: mapWhatsAppMessageRows + ma
         expect(response.body.data.outbound).toBe(15);
         expect(typeof response.body.data.inbound).toBe('number');
         expect(typeof response.body.data.outbound).toBe('number');
+    });
+});
+
+// ─── Inbound Webhook Signature Verification ─────────────────────────────────
+
+jest.mock('../services/onboardingEngine', () => ({
+    onboardingEngine: {
+        processIncomingMessage: jest.fn().mockResolvedValue({ isHandled: false }),
+    },
+}));
+
+jest.mock('../services/whatsappService', () => ({
+    whatsappService: {
+        sendMessage: jest.fn().mockResolvedValue({ success: true }),
+        isConfigured: jest.fn(() => false),
+    },
+}));
+
+import crypto from 'crypto';
+import { verifyInboundWebhookSignature } from '../middleware/webhookSignature';
+
+describe('POST /inbound — provider signature verification', () => {
+    const ORIGINAL_ENV = { ...process.env };
+
+    afterAll(() => {
+        process.env = { ...ORIGINAL_ENV };
+    });
+
+    afterEach(() => {
+        delete process.env.META_APP_SECRET;
+        delete process.env.TWILIO_AUTH_TOKEN;
+        process.env.NODE_ENV = ORIGINAL_ENV.NODE_ENV;
+    });
+
+    const signedPayload = (secret: string, payload: string): string =>
+        `sha256=${crypto.createHmac('sha256', secret).update(Buffer.from(payload, 'utf8')).digest('hex')}`;
+
+    it('allows unsigned requests in dev when no provider secret is configured', async () => {
+        mockQuery.mockResolvedValueOnce({ rows: [{ id: 'wa-1' }], rowCount: 1 });
+
+        const response = await request(app)
+            .post('/api/v1/whatsapp/inbound')
+            .set('Content-Type', 'application/json')
+            .send(JSON.stringify({ from: '+265999000333', body: 'Hello', messageId: 'm-dev' }));
+
+        expect(response.status).toBe(202);
+        expect(response.body.success).toBe(true);
+    });
+
+    it('accepts a valid Meta X-Hub-Signature-256', async () => {
+        process.env.META_APP_SECRET = 'test-meta-app-secret';
+        const raw = JSON.stringify({ from: '+265999000444', body: 'Hi', messageId: 'm-ok' });
+        mockQuery.mockResolvedValueOnce({ rows: [{ id: 'wa-2' }], rowCount: 1 });
+
+        const response = await request(app)
+            .post('/api/v1/whatsapp/inbound')
+            .set('Content-Type', 'application/json')
+            .set('X-Hub-Signature-256', signedPayload(process.env.META_APP_SECRET, raw))
+            .send(raw);
+
+        expect(response.status).toBe(202);
+    });
+
+    it('rejects an invalid Meta signature with 403', async () => {
+        process.env.META_APP_SECRET = 'test-meta-app-secret';
+        const raw = JSON.stringify({ from: '+265999000555', body: 'Hi', messageId: 'm-bad' });
+        mockQuery.mockResolvedValueOnce({ rows: [{ id: 'wa-3' }], rowCount: 1 });
+
+        const response = await request(app)
+            .post('/api/v1/whatsapp/inbound')
+            .set('Content-Type', 'application/json')
+            .set('X-Hub-Signature-256', signedPayload('wrong-secret', raw))
+            .send(raw);
+
+        expect(response.status).toBe(403);
+    });
+
+    it('rejects a missing signature header when META_APP_SECRET is configured', async () => {
+        process.env.META_APP_SECRET = 'test-meta-app-secret';
+
+        const response = await request(app)
+            .post('/api/v1/whatsapp/inbound')
+            .set('Content-Type', 'application/json')
+            .send(JSON.stringify({ from: '+265999000666', body: 'Forged', messageId: 'm-none' }));
+
+        expect(response.status).toBe(403);
+    });
+
+    it('refuses traffic with 503 in production when no provider secret is configured', async () => {
+        process.env.NODE_ENV = 'production';
+        delete process.env.META_APP_SECRET;
+        delete process.env.TWILIO_AUTH_TOKEN;
+
+        const response = await request(app)
+            .post('/api/v1/whatsapp/inbound')
+            .set('Content-Type', 'application/json')
+            .send(JSON.stringify({ from: '+265999000777', body: 'Hi' }));
+
+        expect(response.status).toBe(503);
+    });
+});
+
+describe('verifyInboundWebhookSignature — Twilio provider path', () => {
+
+    const buildReq = (form: Record<string, string>, signature?: string) => ({
+        headers: signature ? { 'x-twilio-signature': signature } : {},
+        protocol: 'https',
+        originalUrl: '/api/v1/whatsapp/inbound',
+        get: (name: string) => (name.toLowerCase() === 'host' ? 'api.gpexts.com' : undefined),
+        body: { ...form },
+        rawBody: Buffer.from(JSON.stringify(form), 'utf8'),
+    });
+
+    const buildRes = () => {
+        const res: { status?: jest.Mock; json?: jest.Mock; statusCode?: number } = {};
+        res.status = jest.fn((code: number) => {
+            res.statusCode = code;
+            return res;
+        });
+        res.json = jest.fn();
+        return res;
+    };
+
+    afterEach(() => {
+        delete process.env.TWILIO_AUTH_TOKEN;
+        delete process.env.META_APP_SECRET;
+    });
+
+    it('accepts a correctly signed Twilio payload', () => {
+        process.env.TWILIO_AUTH_TOKEN = 'test-twilio-auth-token';
+        const form: Record<string, string> = { From: 'whatsapp:+265999000888', Body: 'Hello from Twilio', To: 'whatsapp:+14155238886' };
+        const url = 'https://api.gpexts.com/api/v1/whatsapp/inbound';
+        const sortedParams = Object.keys(form).sort().reduce((acc, key) => acc + key + form[key], '');
+        const sig = crypto.createHmac('sha1', 'test-twilio-auth-token').update(Buffer.from(url + sortedParams, 'utf8')).digest('base64');
+
+        const next = jest.fn();
+        verifyInboundWebhookSignature(buildReq(form, sig) as never, buildRes() as never, next);
+
+        expect(next).toHaveBeenCalledTimes(1);
+    });
+
+    it('rejects a forged Twilio payload with 403', () => {
+        process.env.TWILIO_AUTH_TOKEN = 'test-twilio-auth-token';
+        const form = { From: 'whatsapp:+265999000999', Body: 'Forged' };
+
+        const res = buildRes();
+        verifyInboundWebhookSignature(buildReq(form, 'forged-signature') as never, res as never, jest.fn());
+
+        expect(res.status).toHaveBeenCalledWith(403);
+        expect(res.json).toHaveBeenCalledWith({ success: false, error: 'Webhook signature verification failed' });
     });
 });

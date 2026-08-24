@@ -1,3 +1,7 @@
+import { defineContentScript } from 'wxt/utils/define-content-script';
+import { createShadowRootUi } from 'wxt/utils/content-script-ui/shadow-root';
+import { browser } from 'wxt/browser';
+
 /** Safely set HTML content — escapes any non-SVG text to prevent XSS */
 const safeSetHTML = (el: HTMLElement, html: string) => {
   // For static SVG/icon templates with no user input, use a sandboxed approach
@@ -8,7 +12,6 @@ const safeSetHTML = (el: HTMLElement, html: string) => {
 
 export default defineContentScript({
   matches: ['<all_urls>'],
-  cssInjectionMode: 'ui',
   async main(ctx: any) {
     console.log('Ag-Extension Content Script Active');
 
