@@ -150,6 +150,7 @@ export class FAOService {
   /**
    * Get available FAOSTAT domains (for UI reference).
    */
+  // fallow-ignore-next-line unused-class-member
   static async getDomains(): Promise<DomainInfo[]> {
     try {
       const response = await axios.get(`${FAOSTAT_BASE}/en/groupsanddomains`, {

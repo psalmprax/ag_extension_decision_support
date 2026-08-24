@@ -19,7 +19,7 @@ import type { MarketPrice, MarketDataStatus } from './marketPriceService';
 const HISTORY_KEY_PREFIX = 'ext:price_history:';
 const WINDOW_DAYS = 31;
 
-export interface PriceSnapshot {
+interface PriceSnapshot {
   date: string;      // YYYY-MM-DD
   crop: string;
   price: number;     // numeric local-currency price

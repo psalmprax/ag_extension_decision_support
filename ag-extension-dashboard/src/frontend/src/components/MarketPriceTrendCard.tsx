@@ -351,5 +351,3 @@ export const MarketPriceTrendCard: React.FC = () => {
     </div>
   );
 };
-
-export default MarketPriceTrendCard;

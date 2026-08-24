@@ -4,6 +4,7 @@ import { authorize } from '../middleware/authorize';
 import { safeError } from '../utils/safeResponse';
 import * as dns from 'dns/promises';
 import { connectTCP, checkHTTP, checkSSL } from '../services/diagnosticsHelpers';
+import { getExternalApiStatus } from '../services/externalApiGuard';
 
 const router = Router();
 
@@ -185,6 +186,7 @@ router.get('/', async (_req: Request, res: Response) => {
         results.container_network = await runContainerChecks();
         results.ssl = await runSslChecks(domain);
         results.deployment = getDeploymentDetails(results.ssl);
+        results.external_api_guard = getExternalApiStatus();
 
         const summary = getSummaryAndRecommendations(results, domain);
         results.issues = summary.issues;

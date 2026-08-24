@@ -105,6 +105,7 @@ export class NasaPowerService {
   /**
    * Get soil map labels for UI display
    */
+  // fallow-ignore-next-line unused-class-member
   static getParamLabels(): Record<string, string> {
     return { ...PARAM_LABELS };
   }

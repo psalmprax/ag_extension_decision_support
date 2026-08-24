@@ -160,22 +160,6 @@ export async function rateLimitedFetch<T>(
 }
 
 /**
- * Convenience: fetch JSON from an external URL with rate limiting + caching.
- */
-export async function rateLimitedJson<T>(
-  apiName: keyof typeof API_CONFIGS,
-  cacheKey: string,
-  url: string,
-  timeoutMs = 10000,
-): Promise<T> {
-  const { default: axios } = await import('axios');
-  return rateLimitedFetch<T>(apiName, cacheKey, async () => {
-    const response = await axios.get<T>(url, { timeout: timeoutMs });
-    return response.data;
-  });
-}
-
-/**
  * Returns a safe subset of API config for diagnostics / health checks.
  */
 export function getExternalApiStatus(): Record<string, { tokens: number; maxTokens: number }> {
