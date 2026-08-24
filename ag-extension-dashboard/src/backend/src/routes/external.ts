@@ -10,6 +10,7 @@ import { authorize, AuthRequest } from '@/middleware/authorize';
 import { validate } from '@/middleware/validate';
 import { soilDataQuerySchema } from '@/utils/schemas';
 import { SatelliteService } from '@/services/satelliteService';
+import { UsdaMarketService } from '@/services/usdaMarketService';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
@@ -58,6 +59,45 @@ router.get('/satellite', validate(soilDataQuerySchema), async (req: Request, res
     } catch (error) {
         logger.error('Satellite route error:', error);
         safeError(res, 500, 'Failed to fetch satellite telemetry');
+    }
+});
+
+// Get vegetation (NDVI proxy) time series — NASA POWER agroclimatology
+router.get('/ndvi-timeseries', validate(soilDataQuerySchema), async (req: Request, res: Response) => {
+    try {
+        const lat = parseFloat(req.query.lat as string);
+        const lng = parseFloat(req.query.lng as string);
+        const days = Math.min(Math.max(parseInt(req.query.days as string, 10) || 90, 7), 365);
+        const series = await SatelliteService.getNDVITimeSeries(lat, lng, days);
+        res.json({ success: true, data: series });
+    } catch (error) {
+        logger.error('NDVI time series route error:', error);
+        safeError(res, 500, 'Failed to fetch vegetation time series');
+    }
+});
+
+// Get USDA FAS PSD global commodity benchmarks
+router.get('/usda/:crop', async (req: Request, res: Response) => {
+    try {
+        const crop = (req.params.crop || '').substring(0, 60);
+        const country = (req.query.country as string || 'Kenya').substring(0, 60);
+        const [countryData, worldBenchmark] = await Promise.all([
+            UsdaMarketService.getCommodityData(country, crop),
+            UsdaMarketService.getWorldBenchmark(crop),
+        ]);
+        const countryMetrics = UsdaMarketService.extractMetrics(countryData);
+        const worldMetrics = UsdaMarketService.extractMetrics(worldBenchmark);
+        res.json({
+            success: true,
+            data: {
+                country: countryData.length > 0 ? { records: countryData, metrics: countryMetrics } : null,
+                world: worldBenchmark.length > 0 ? { records: worldBenchmark, metrics: worldMetrics } : null,
+                dataStatus: countryData.length > 0 || worldBenchmark.length > 0 ? 'live' : 'unavailable',
+            },
+        });
+    } catch (error) {
+        logger.error('USDA route error:', error);
+        safeError(res, 500, 'Failed to fetch USDA commodity benchmarks');
     }
 });
 

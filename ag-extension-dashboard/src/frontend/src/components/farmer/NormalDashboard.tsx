@@ -4,7 +4,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { MessageSquare, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { fetchMarketPrices, MarketPrice } from '@/api/priceService';
+import { fetchMarketPrices, MarketPrice, MarketDataStatus } from '@/api/priceService';
 import { MetricCardSkeleton, ChartSkeleton } from '../Skeleton';
 
 interface NormalDashboardProps {
@@ -17,6 +17,18 @@ interface NormalDashboardProps {
   }>;
   statsLoading: boolean;
 }
+
+const DATA_STATUS_LABELS: Record<MarketDataStatus, string> = {
+  live: 'LIVE',
+  estimated: 'ESTIMATED',
+  unavailable: 'UNAVAILABLE',
+};
+
+const DATA_STATUS_COLORS: Record<MarketDataStatus, string> = {
+  live: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+  estimated: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  unavailable: 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400',
+};
 
 export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLoading }) => {
   const { user, showContextMenu, setActiveTab } = useAppStore();
@@ -98,6 +110,11 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
         <div className="bg-theme-bg-card dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
           <h3 className="text-lg font-black text-gray-900 dark:text-white mb-6 uppercase tracking-tight">
             {t('farmer_market_prices')}
+            {prices && prices.length > 0 && (
+              <span className={`ml-2 px-2 py-0.5 rounded text-xs font-bold uppercase align-middle ${DATA_STATUS_COLORS[prices[0].dataStatus]}`}>
+                {DATA_STATUS_LABELS[prices[0].dataStatus]}
+              </span>
+            )}
           </h3>
           <div className="space-y-4">
             {pricesLoading ? (

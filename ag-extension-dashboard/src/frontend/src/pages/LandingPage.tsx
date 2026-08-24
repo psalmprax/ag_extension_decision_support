@@ -664,7 +664,7 @@ export function LandingPage() {
       <main id="main-content">
         {/* ── HERO ── */}
         <section
-          className="relative min-h-screen flex items-center pt-20 pb-16 overflow-hidden"
+          className="relative min-h-screen flex items-start sm:items-center pt-20 sm:pt-24 pb-10 sm:pb-16 overflow-hidden"
         >
           {/* Grid pattern */}
           <div
@@ -721,9 +721,9 @@ export function LandingPage() {
               {/* What it is / Who it's for / What it solves */}
               <motion.div
                 variants={fadeUp}
-                className="space-y-2.5 max-w-lg mx-auto sm:mx-0 pt-1"
+                className="space-y-2 sm:space-y-2.5 max-w-lg mx-auto sm:mx-0 pt-1"
               >
-                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm flex items-start gap-2.5">
+                <div className="p-2.5 sm:p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm flex items-start gap-2 sm:gap-2.5">
                   <div className="w-5 h-5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0 mt-0.5">
                     <Sparkles className="w-3 h-3 text-emerald-400" />
                   </div>
@@ -733,7 +733,7 @@ export function LandingPage() {
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm flex items-start gap-2.5">
+                <div className="p-2.5 sm:p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm flex items-start gap-2 sm:gap-2.5">
                   <div className="w-5 h-5 rounded-lg bg-sky-500/15 border border-sky-500/30 flex items-center justify-center shrink-0 mt-0.5">
                     <Users className="w-3 h-3 text-sky-400" />
                   </div>
@@ -743,7 +743,7 @@ export function LandingPage() {
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm flex items-start gap-2.5">
+                <div className="p-2.5 sm:p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm flex items-start gap-2 sm:gap-2.5">
                   <div className="w-5 h-5 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0 mt-0.5">
                     <CheckCircle2 className="w-3 h-3 text-amber-400" />
                   </div>
@@ -755,10 +755,10 @@ export function LandingPage() {
               </motion.div>
 
               {/* CTAs */}
-              <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3">
+              <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-2.5 sm:gap-3">
                 <button
                   onClick={() => navigate('/register')}
-                  className="w-full sm:w-auto relative group overflow-hidden px-6 sm:px-7 py-3.5 text-sm font-bold text-white rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 hover:from-emerald-500 hover:via-emerald-400 hover:to-emerald-500 border border-emerald-400/50 shadow-[0_0_24px_rgba(16,185,129,0.35)] hover:shadow-[0_0_36px_rgba(16,185,129,0.6)] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto relative group overflow-hidden px-6 sm:px-7 py-3 sm:py-3.5 text-sm font-bold text-white rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 hover:from-emerald-500 hover:via-emerald-400 hover:to-emerald-500 border border-emerald-400/50 shadow-[0_0_24px_rgba(16,185,129,0.35)] hover:shadow-[0_0_36px_rgba(16,185,129,0.6)] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out pointer-events-none" />
                   <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
@@ -769,7 +769,7 @@ export function LandingPage() {
                 </button>
                 <button
                   onClick={() => navigate('/demo')}
-                  className="w-full sm:w-auto group px-6 sm:px-7 py-3.5 text-sm font-semibold bg-white/[0.05] border border-white/[0.08] text-white/80 rounded-xl hover:bg-white/[0.1] hover:text-white active:scale-[0.98] transition-all flex items-center justify-center gap-2 backdrop-blur-sm"
+                  className="w-full sm:w-auto group px-6 sm:px-7 py-3 sm:py-3.5 text-sm font-semibold bg-white/[0.05] border border-white/[0.08] text-white/80 rounded-xl hover:bg-white/[0.1] hover:text-white active:scale-[0.98] transition-all flex items-center justify-center gap-2 backdrop-blur-sm"
                 >
                   <Play className="w-4 h-4 text-emerald-400" />
                   Try Live Demo
@@ -792,7 +792,7 @@ export function LandingPage() {
               </motion.div>
 
               {/* Feature highlights */}
-              <motion.div variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5 pt-1">
+              <motion.div variants={fadeUp} className="grid grid-cols-3 gap-1.5 sm:gap-2.5 pt-1">
                 {[
                   { title: 'Satellite Weather', sub: 'NASA POWER API', target: '#capabilities' },
                   { title: 'Soil Telemetry', sub: 'SoilGrids ISRIC', target: '#capabilities' },
@@ -801,13 +801,13 @@ export function LandingPage() {
                   <a
                     key={i}
                     href={item.target}
-                    className="p-3 rounded-xl bg-white/[0.025] border border-white/[0.05] hover:border-emerald-500/30 hover:bg-white/[0.06] active:scale-[0.98] transition-all group block text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                    className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/[0.025] border border-white/[0.05] hover:border-emerald-500/30 hover:bg-white/[0.06] active:scale-[0.98] transition-all group block text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
                   >
-                    <div className="text-xs font-bold text-emerald-400 group-hover:text-emerald-300 transition-colors flex items-center justify-between">
-                      <span>{item.title}</span>
-                      <ArrowRight className="w-3 h-3 opacity-0 sm:group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-emerald-400" />
+                    <div className="text-[10px] sm:text-xs font-bold text-emerald-400 group-hover:text-emerald-300 transition-colors flex items-center justify-between">
+                      <span className="truncate">{item.title}</span>
+                      <ArrowRight className="w-3 h-3 opacity-0 sm:group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-emerald-400 shrink-0 hidden sm:block" />
                     </div>
-                    <div className="text-[11px] text-white/50 mt-0.5 font-medium group-hover:text-white/70 transition-colors">{item.sub}</div>
+                    <div className="text-[9px] sm:text-[11px] text-white/50 mt-0.5 font-medium group-hover:text-white/70 transition-colors truncate">{item.sub}</div>
                   </a>
                 ))}
               </motion.div>

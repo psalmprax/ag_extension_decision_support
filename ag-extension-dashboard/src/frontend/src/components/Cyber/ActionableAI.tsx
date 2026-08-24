@@ -19,7 +19,7 @@ import { useAppStore } from '@/store/useAppStore';
 import apiClient from '@/api/client';
 import toast from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
-import { fetchMarketPrices, MarketPrice } from '@/api/priceService';
+import { fetchMarketPrices, MarketPrice, MarketDataStatus } from '@/api/priceService';
 import { fetchFarmerStats } from '@/api/farmerService';
 
 interface WeatherData {
@@ -35,6 +35,25 @@ interface AlertData {
   description: string;
   severity: string;
 }
+
+const DATA_STATUS_LABEL: Record<MarketDataStatus, string> = {
+  live: 'LIVE',
+  estimated: 'ESTIMATED',
+  unavailable: 'OFFLINE',
+};
+
+const DataStatusBadge: React.FC<{ status: MarketDataStatus }> = ({ status }) => {
+  const styles: Record<MarketDataStatus, string> = {
+    live: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+    estimated: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+    unavailable: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
+  };
+  return (
+    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${styles[status]}`}>
+      {DATA_STATUS_LABEL[status]}
+    </span>
+  );
+};
 
 const ActionableAI = () => {
   const { addNotification, user } = useAppStore();
@@ -193,7 +212,11 @@ const ActionableAI = () => {
                   <Truck className="w-4 h-4 text-primary-400" />
                   Market Prices
                 </h3>
-                <ArrowUpRight className="w-4 h-4 text-white/20" />
+                {prices.length > 0 ? (
+                  <DataStatusBadge status={prices[0].dataStatus} />
+                ) : (
+                  <ArrowUpRight className="w-4 h-4 text-white/20" />
+                )}
               </div>
               {prices.length > 0 ? (
                 <div className="space-y-3">
@@ -202,15 +225,15 @@ const ActionableAI = () => {
                       key={i}
                       className="p-3 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between"
                     >
-                      <div>
+                      <div className="min-w-0 pr-2">
                         <div className="text-xs font-black text-white/40 uppercase mb-1">
                           Commodity
                         </div>
-                        <div className="text-xs font-bold text-white uppercase tracking-wider">
+                        <div className="text-xs font-bold text-white uppercase tracking-wider truncate">
                           {item.crop}
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right shrink-0">
                         <div
                           className={`text-xs font-black uppercase mb-1 ${item.trend.startsWith('+') ? 'text-green-400' : item.trend.startsWith('-') ? 'text-red-400' : 'text-white/40'}`}
                         >
