@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { OutbreakLayer } from '@/components/outbreaks/OutbreakLayer';
 import { createPortal } from 'react-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl } from 'react-leaflet';
 import L from 'leaflet';
@@ -1233,6 +1234,11 @@ export function FarmerMap({
       ))}
 
       <LayerSwitcher currentLayer={currentLayer} onLayerChange={handleLayerChange} t={t} />
+      <div className="leaflet-top leaflet-right" style={{ marginTop: '10px', marginRight: '10px' }}>
+        <div className="leaflet-control leaflet-control-layers bg-slate-900/95 text-white backdrop-blur-xl rounded-2xl shadow-xl border border-white/10 p-2">
+          <OutbreakLayer />
+        </div>
+      </div>
       <MapLegend show={showLegend} t={t} />
 
       {/* Overlay Controls */}

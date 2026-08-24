@@ -39,7 +39,7 @@ describe('outbreakService', () => {
     });
 
     it('flags clusters at or above the alert threshold', async () => {
-        const cluster = { district: 'Lilongwe', crop: 'maize', diseaseLabel: 'fall_armyworm', caseCount: ALERT_THRESHOLD, distinctFarmers: 5, firstSeen: new Date(), lastSeen: new Date() };
+        const cluster = { district: 'Lilongwe', crop: 'maize', diseaseLabel: 'fall_armyworm', caseCount: ALERT_THRESHOLD, distinctFarmers: 5, firstSeen: new Date(), lastSeen: new Date(), centroid: { lat: -13.9, lng: 33.7 } };
         mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 });
         jest.spyOn(outbreakService, 'getClusters').mockResolvedValueOnce([
             cluster,
@@ -67,7 +67,7 @@ describe('outbreakService', () => {
     });
 
     it('emails officers in affected and adjacent districts during rollup', async () => {
-        const cluster = { district: 'Lilongwe', crop: 'maize', diseaseLabel: 'fall_armyworm', caseCount: 12, distinctFarmers: 7, firstSeen: new Date(), lastSeen: new Date() };
+        const cluster = { district: 'Lilongwe', crop: 'maize', diseaseLabel: 'fall_armyworm', caseCount: 12, distinctFarmers: 7, firstSeen: new Date(), lastSeen: new Date(), centroid: { lat: -13.9, lng: 33.7 } };
         jest.spyOn(outbreakService, 'getAlertedDistricts').mockResolvedValueOnce([cluster]);
         jest.spyOn(outbreakService, 'getOfficersToWarn').mockResolvedValueOnce(['a@e.com', 'b@e.com']);
 

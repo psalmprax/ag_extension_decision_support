@@ -9,6 +9,7 @@ export interface OutbreakCluster {
     distinctFarmers: number;
     firstSeen: Date;
     lastSeen: Date;
+    centroid: { lat: number; lng: number } | null;
 }
 
 interface ClusterRow {
@@ -19,6 +20,8 @@ interface ClusterRow {
     distinct_farmers: string;
     first_seen: Date;
     last_seen: Date;
+    centroid_lat: string | null;
+    centroid_lng: string | null;
 }
 
 /** k-anonymity floor: never surface a cluster smaller than this. */
@@ -61,8 +64,11 @@ export const outbreakService = {
                     COUNT(*)::text AS case_count,
                     COUNT(DISTINCT de.farmer_id)::text AS distinct_farmers,
                     MIN(de.created_at) AS first_seen,
-                    MAX(de.created_at) AS last_seen
+                    MAX(de.created_at) AS last_seen,
+                    AVG(f.location_lat)::text AS centroid_lat,
+                    AVG(f.location_lng)::text AS centroid_lng
              FROM diagnosis_events de
+             LEFT JOIN farmers f ON f.id = de.farmer_id
              WHERE de.created_at >= NOW() - ($1 || ' days')::interval
                AND de.district IS NOT NULL
                ${bboxClause}
@@ -81,6 +87,9 @@ export const outbreakService = {
             distinctFarmers: Number(row.distinct_farmers),
             firstSeen: row.first_seen,
             lastSeen: row.last_seen,
+            centroid: row.centroid_lat !== null && row.centroid_lng !== null
+                ? { lat: Number(row.centroid_lat), lng: Number(row.centroid_lng) }
+                : null,
         }));
     },
 

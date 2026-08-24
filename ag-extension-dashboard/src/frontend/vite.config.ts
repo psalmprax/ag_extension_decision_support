@@ -93,6 +93,19 @@ export default defineConfig({
               },
             },
           },
+          {
+            // Offline map tiles: cache-first so field areas render with no connectivity.
+            urlPattern: /^https:\/\/(?:[a-z]\.)?tile\.openstreetmap\.org\/|\/\/server\.arcgisonline\.com\//i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'map-tiles',
+              expiration: {
+                maxEntries: 8000,
+                maxAgeSeconds: 30 * 24 * 60 * 60,
+              },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
         ],
       },
     }),

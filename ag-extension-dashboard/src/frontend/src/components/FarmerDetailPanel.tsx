@@ -1,4 +1,5 @@
 import React from 'react';
+import { AdvisoryPreferencesSection } from '@/components/advisories/AdvisoryPreferencesSection';
 import { Farmer, Visit } from '@/types/dashboard';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
@@ -681,6 +682,10 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
               ) : (
                 <SatelliteInsights farmerId={farmer.id} isCyber={isCyber} />
               )}
+            </div>
+
+            <div className="px-4 pb-2">
+              <AdvisoryPreferencesSection farmerId={farmer.id} />
             </div>
 
             {/* Footer Quick Action */}

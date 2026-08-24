@@ -22,6 +22,9 @@ import { useRetryWithBackoff } from '@/hooks/useRetryWithBackoff';
 import { fetchFarmers } from '@/api/farmerService';
 import { LiveActivityStream } from '@/components/LiveActivityStream';
 import { VegetationHealthCard } from '@/components/VegetationHealthCard';
+import { EfficacyCard } from '@/components/efficacy/EfficacyCard';
+import { AdvisoriesCard } from '@/components/advisories/AdvisoriesCard';
+import { OutbreakBanner } from '@/components/outbreaks/OutbreakBanner';
 
 const REGION_MAP_MAX_RETRIES = 3;
 const REGION_MAP_RETRY_BASE_DELAY_MS = 800;
@@ -603,6 +606,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
   return (
     <div className="animate-in fade-in duration-500">
+      <OutbreakBanner />
       <DashboardHeader userName={user?.firstName} t={t} headingClass={headingClass} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
@@ -632,6 +636,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           <SupportEfficiencyCard performanceData={performanceData} t={t} cardClass={cardClass} />
           <ActivePulseCard cardClass={cardClass} isLoading={isLoading} />
           <VegetationHealthCard cardClass={cardClass} />
+          <EfficacyCard />
+          <AdvisoriesCard />
         </div>
       </div>
 
