@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { containsDemoId } from '@/demo/demoIds';
+import { RemoteWipeService } from '@/services/remoteWipeService';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -80,29 +81,40 @@ const getRetryDelay = (retryCount: number): number => {
   return RETRY_DELAY * Math.pow(RETRY_BACKOFF, retryCount);
 };
 
+/** Check for remote-wipe or account-revocation signals in 403 responses. */
+function handleAuthErrors(error: AxiosError): Promise<never> {
+  if (error.response?.status === 403) {
+    const data = error.response?.data as Record<string, unknown> | undefined;
+    RemoteWipeService.evaluateSignal(
+      (data as unknown as { error?: string; wipeSignal?: boolean }) || null,
+      403
+    );
+  }
+
+  if (error.response?.status === 401) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.dispatchEvent(new Event('auth-unauthorized'));
+    const publicRoutes = ['/login', '/register', '/forgot-password'];
+    if (!publicRoutes.includes(window.location.pathname)) {
+      window.location.href = '/login';
+    }
+    const nonRetryable = Object.assign(error, { __nonRetryable: true });
+    return Promise.reject(nonRetryable);
+  }
+  return Promise.reject(error);
+}
+
 // Global error handler for API calls with retry logic
 apiClient.interceptors.response.use(
   response => response,
   async (error: AxiosError) => {
-    const config = error.config;
-
-    // Handle 401 - redirect to login
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-
-      // Dispatch event for App component to clear Zustand state
-      window.dispatchEvent(new Event('auth-unauthorized'));
-
-      // Use window.location for redirect to ensure it works from anywhere
-      const publicRoutes = ['/login', '/register', '/forgot-password'];
-      if (!publicRoutes.includes(window.location.pathname)) {
-        window.location.href = '/login';
-      }
-      // Reject with a non-retryable flag so React Query won't retry
-      const nonRetryable = Object.assign(error, { __nonRetryable: true });
-      return Promise.reject(nonRetryable);
+    // Auth errors (401/403) — handle immediately without retry logic
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      return handleAuthErrors(error);
     }
+
+    const config = error.config;
 
     // Check if we should retry
     if (config && shouldRetry(error)) {

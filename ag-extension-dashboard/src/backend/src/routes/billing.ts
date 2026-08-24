@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import express, { Router } from 'express';
+import { idempotencyMiddleware } from '../middleware/idempotencyMiddleware';
 import { paymentService } from '../services/paymentService';
 import { systemConfigService } from '../services/systemConfigService';
 import { paymentAnalyticsService } from '../services/paymentAnalyticsService';
@@ -12,6 +13,11 @@ import { usageService } from '../services/usageService';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
+
+// Idempotency protection: prevent double charges from mobile retransmissions.
+// Applies to all POST/PUT/PATCH on billing (subscribe, checkout, paypal, etc.).
+router.use(idempotencyMiddleware);
+
 const prisma = getPrisma();
 
 const errorStatusMap: Record<string, number> = {

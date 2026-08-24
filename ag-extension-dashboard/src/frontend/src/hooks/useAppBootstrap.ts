@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { subscribeUserToPush } from '@/api/pushNotificationService';
 import { registerServiceWorker } from '@/lib/swRegistration';
+import { EncryptedStorageService } from '@/services/encryptedStorageService';
 
 export const useAppBootstrap = (storeUser: unknown, setActiveTab: (tab: string) => void) => {
   const [weatherLocation, setWeatherLocation] = useState<string>(
@@ -21,6 +22,19 @@ export const useAppBootstrap = (storeUser: unknown, setActiveTab: (tab: string) 
       );
     }
   }, []);
+
+  // Encrypted storage: derive AES-256-GCM key from user identity on login.
+  const keyInitAttempted = useRef(false);
+  useEffect(() => {
+    if (!storeUser || keyInitAttempted.current) return;
+    const user = storeUser as { id?: string; email?: string };
+    const secret = user.id || user.email || '';
+    if (!secret) return;
+    keyInitAttempted.current = true;
+    EncryptedStorageService.deriveKeyFromSecret(secret).catch(err => {
+      console.warn('[EncryptedStorage] Key derivation failed:', err instanceof Error ? err.message : err);
+    });
+  }, [storeUser]);
 
   // Push Notification Subscription
   useEffect(() => {
