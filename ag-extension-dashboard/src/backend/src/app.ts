@@ -7,6 +7,7 @@ import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import { config } from './config';
 import { logger } from './utils/logger';
+import { resolveCorsOrigin } from './utils/corsOrigin';
 import { errorHandler } from './middleware/errorHandler';
 import i18nUrlMiddleware, { i18nRouteHandler, restoreOriginalPath } from './middleware/i18nUrlMiddleware';
 import { securityGate } from './middleware/securityGate';
@@ -65,6 +66,7 @@ import canadianServicesRoutes from './routes/canadianServices';
 import channelsRoutes from './routes/channels';
 import campaignsRoutes from './routes/autonomousCampaigns';
 import verificationFraudRoutes from './routes/verificationFraud';
+import activityTriageRoutes from './routes/activityTriage';
 
 const app: Application = express();
 app.set('trust proxy', true); // Trust all proxy hops (Traefik/Docker) for X-Forwarded-For
@@ -83,32 +85,23 @@ app.use(helmet({
             "font-src": ["'self'", "data:", "https://unpkg.com", "https://fonts.gstatic.com"],
             "frame-ancestors": ["'self'"],
             "frame-src": ["'self'", "https://www.youtube.com", "https://www.youtube-nocookie.com"],
-            "connect-src": ["'self'", "http://localhost:*", "http://127.0.0.1:*", "ws://localhost:*", "ws://127.0.0.1:*", "https://api.openai.com", "https://*.azure.com", "https://*.google.com"],
+            "connect-src": config.nodeEnv === 'production'
+                ? ["'self'", "https://api.openai.com", "https://*.azure.com", "https://*.google.com"]
+                : ["'self'", "http://localhost:*", "http://127.0.0.1:*", "ws://localhost:*", "ws://127.0.0.1:*", "https://api.openai.com", "https://*.azure.com", "https://*.google.com"],
         },
     },
 }));
 app.use(correlationIdMiddleware);
 app.use(compression());
 const allowedOrigins = config.cors.origin.split(',').map(o => o.trim());
-app.use(cors({
-    origin: (origin, callback) => {
-        if (
-            !origin ||
-            config.nodeEnv !== 'production' ||
-            allowedOrigins.includes('*') ||
-            allowedOrigins.includes(origin) ||
-            /^https?:\/\/(?:[a-zA-Z0-9-]+\.)*gpexts\.com(?::\d+)?$/i.test(origin) ||
-            /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/i.test(origin)
-        ) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true
-}));
+app.use(cors({ origin: resolveCorsOrigin(allowedOrigins), credentials: true }));
 app.use(morgan('combined', { stream: { write: (message) => logger.info(message) } }));
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({
+    limit: '10mb',
+    verify: (req, _res, buf) => {
+        (req as Request).rawBody = buf;
+    },
+}));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(securityGate); // Security gate runs FIRST — before auth and rate limiting
@@ -403,6 +396,7 @@ const routeMounts: RouteMount[] = [
   { path: '/channels', router: channelsRoutes },
   { path: '/campaigns', router: campaignsRoutes },
   { path: '/verification', router: verificationFraudRoutes },
+  { path: '/activities', router: activityTriageRoutes },
 ];
 
 // Mount with i18n support (v1)

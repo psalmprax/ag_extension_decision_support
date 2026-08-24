@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Activity,
@@ -41,86 +41,6 @@ export interface ActivityItem {
   journeySteps: JourneyStep[];
 }
 
-const SAMPLE_ACTIVITIES: ActivityItem[] = [
-  {
-    id: 'act-1',
-    farmerName: 'Ezekiel Kiprono',
-    phone: '+254 712 998811',
-    channel: 'USSD',
-    language: 'SW',
-    severityScore: 88,
-    crop: 'Potatoes / Tomatoes',
-    region: 'Nakuru, Kenya',
-    issue: 'Late Blight (Phytophthora infestans)',
-    aiSummary: 'Water-soaked leaf lesions spreading rapidly after heavy rain. High spore germination risk.',
-    timestamp: '2m ago',
-    isClaimed: false,
-    journeySteps: [
-      { label: 'USSD Dialed', dwellTime: '2m ago' },
-      { label: 'Diagnosis Menu', dwellTime: '1m ago' },
-      { label: 'Leaf Blight Query', dwellTime: 'Now', status: 'active' },
-    ],
-  },
-  {
-    id: 'act-2',
-    farmerName: 'Grace Wambui',
-    phone: '+254 722 334455',
-    channel: 'SMS',
-    language: 'EN',
-    severityScore: 74,
-    crop: 'Maize',
-    region: 'Eldoret, Kenya',
-    issue: 'Fall Armyworm Infestation',
-    aiSummary: 'Windowpaning on whorl leaves. Larvae detected in upper canopy. Recommends Emamectin benzoate.',
-    timestamp: '7m ago',
-    isClaimed: false,
-    journeySteps: [
-      { label: 'SMS Received', dwellTime: '7m ago' },
-      { label: 'Pest AI Parser', dwellTime: '6m ago' },
-      { label: 'Triage Queue', dwellTime: 'Now', status: 'active' },
-    ],
-  },
-  {
-    id: 'act-3',
-    farmerName: 'Jean-Luc Habimana',
-    phone: '+250 788 123456',
-    channel: 'App',
-    language: 'FR',
-    severityScore: 42,
-    crop: 'Coffee / Bananas',
-    region: 'Musanze, Rwanda',
-    issue: 'Coffee Leaf Rust (Early Stage)',
-    aiSummary: 'Isolated orange pustules under lower leaves. Recommended cultural pruning and copper fungicide.',
-    timestamp: '15m ago',
-    isClaimed: false,
-    journeySteps: [
-      { label: 'Mobile App Opened', dwellTime: '15m ago' },
-      { label: 'Leaf Photo Upload', dwellTime: '12m ago' },
-      { label: 'Advice Viewed', dwellTime: 'Now', status: 'active' },
-    ],
-  },
-  {
-    id: 'act-4',
-    farmerName: 'Amina Mohamed',
-    phone: '+254 733 778899',
-    channel: 'USSD',
-    language: 'SW',
-    severityScore: 18,
-    crop: 'Beans',
-    region: 'Kisumu, Kenya',
-    issue: 'Soil Fertilizer Routine Query',
-    aiSummary: 'Inquired about top-dressing timing with CAN fertilizer 4 weeks post-germination.',
-    timestamp: '28m ago',
-    isClaimed: true,
-    claimedBy: 'Officer Mwangi',
-    journeySteps: [
-      { label: 'USSD Dialed', dwellTime: '28m ago' },
-      { label: 'Fertilizer Menu', dwellTime: '25m ago' },
-      { label: 'Officer Intervened', dwellTime: 'Now', status: 'active' },
-    ],
-  },
-];
-
 interface LiveActivityStreamProps {
   cardClass?: string;
   onOpenUSSDSimulator?: () => void;
@@ -133,7 +53,7 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
   onStartChat,
 }) => {
   useLanguage();
-  const [activities, setActivities] = useState<ActivityItem[]>(SAMPLE_ACTIVITIES);
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [filterSeverity, setFilterSeverity] = useState<'all' | 'critical' | 'moderate'>('all');
   const [sortByUrgency, setSortByUrgency] = useState<boolean>(true);
   const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
@@ -141,14 +61,31 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
   const [replyText, setReplyText] = useState('');
   const [sendingSms, setSendingSms] = useState(false);
   const [activeVideoCall, setActiveVideoCall] = useState<{ farmerName: string; phone: string; issue: string } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // ── TODO(F1): SAMPLE_ACTIVITIES are hardcoded placeholders.
-  // The live intelligence stream needs a backend triage endpoint (WebSocket
-  // or polling) that consumes real USSD/SMS/App events from Africa's Talking,
-  // Twilio, or in-app telemetry. Until that endpoint exists the stream renders
-  // pre-authored sample data so the UI / claim / reply flow is testable.
-  // See: routes/sms.ts + routes/channels.ts for the SMS infrastructure that
-  // already exists — the triage aggregation layer is the missing piece.
+  // ── Fetch real triage data from backend aggregation endpoint ──
+  const fetchActivities = useCallback(async () => {
+    try {
+      const { data } = await apiClient.get<{
+        success: boolean;
+        data: ActivityItem[];
+        meta: { total: number; isRealData: boolean; note?: string };
+      }>('/activities/triage');
+      if (data.success) {
+        setActivities(data.data);
+      }
+    } catch {
+      // Keep existing data on error — don't blank the stream
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchActivities();
+    const interval = setInterval(fetchActivities, 30000); // refresh every 30s
+    return () => clearInterval(interval);
+  }, [fetchActivities]);
 
   const handleSendSms = async (phone: string, message: string) => {
     if (!message.trim() || sendingSms) return;
@@ -198,13 +135,16 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
     if (activeReplyId === id) setActiveReplyId(null);
   };
 
-  const filtered = activities
-    .filter(act => {
-      if (filterSeverity === 'critical') return act.severityScore >= 70;
-      if (filterSeverity === 'moderate') return act.severityScore < 70 && act.severityScore >= 30;
-      return true;
-    })
-    .sort((a, b) => (sortByUrgency ? b.severityScore - a.severityScore : 0));
+  const filtered = useMemo(() =>
+    activities
+      .filter(act => {
+        if (filterSeverity === 'critical') return act.severityScore >= 70;
+        if (filterSeverity === 'moderate') return act.severityScore < 70 && act.severityScore >= 30;
+        return true;
+      })
+      .sort((a, b) => (sortByUrgency ? b.severityScore - a.severityScore : 0)),
+    [activities, filterSeverity, sortByUrgency]
+  );
 
   const getScoreBadge = (score: number) => {
     if (score >= 70) {
@@ -273,9 +213,9 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
               <h3 className="font-bold text-sm sm:text-base text-gray-900 dark:text-white tracking-wide">
                 Live Intelligence Stream
               </h3>
-              <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                <Radio className="w-2.5 h-2.5 animate-ping text-emerald-400" />
-                REAL-TIME
+              <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold border ${activities.length > 0 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
+                <Radio className={`w-2.5 h-2.5 ${activities.length > 0 ? 'animate-ping text-emerald-400' : 'text-amber-400'}`} />
+                {activities.length > 0 ? 'LIVE' : 'IDLE'}
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -329,7 +269,22 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
 
       {/* Cards List */}
       <div className="space-y-3">
-        {filtered.map(activity => (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="w-6 h-6 text-emerald-400 animate-spin" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Activity className="w-8 h-8 text-slate-500 mb-2" />
+            <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+              Awaiting events
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
+              Real farmer SMS, USSD, and app activity will appear here automatically as it arrives.
+            </p>
+          </div>
+        ) : (
+          filtered.map(activity => (
           <motion.div
             key={activity.id}
             layout
@@ -502,7 +457,8 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
               )}
             </AnimatePresence>
           </motion.div>
-        ))}
+        ))
+        )}
       </div>
 
       {/* ── Tele-Agronomy Floating Call Bridge Modal ── */}
