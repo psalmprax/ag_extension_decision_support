@@ -124,6 +124,7 @@ model Farmer {
    recommendationOutcomes   RecommendationOutcome[]
    advisoryPreference       AdvisoryPreference?
    diagnosisEvents          DiagnosisEvent[]
+   soilLabResults           SoilLabResult[]
 
   @@index([assignedOfficerId])
   @@index([region])
@@ -594,8 +595,11 @@ model CropCycle {
   yieldKg             Decimal?           @map("yield_kg") @db.Decimal(10, 2)
   notes               String?
   createdAt           DateTime?          @default(now()) @map("created_at") @db.Timestamp(6)
+  planJson            Json?              @map("plan_json")
+  planGeneratedAt     DateTime?          @map("plan_generated_at") @db.Timestamp(6)
   updatedAt           DateTime?          @default(now()) @map("updated_at") @db.Timestamp(6)
   field               Field              @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  milestones          CropCycleMilestone[]
 
   @@index([fieldId])
   @@map("crop_cycles")
@@ -869,4 +873,43 @@ model DistrictAdjacency {
 
   @@id([district, adjacentDistrict])
   @@map("district_adjacency")
+}
+
+model CropCycleMilestone {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cropCycleId String    @map("crop_cycle_id") @db.Uuid
+  title       String    @db.VarChar(150)
+  category    String    @default("input") @db.VarChar(50)
+  dueDate     DateTime? @map("due_date") @db.Date
+  status      String    @default("pending") @db.VarChar(20)
+  completedAt DateTime? @map("completed_at") @db.Timestamp(6)
+  notes       String?
+  sortOrder   Int       @default(0) @map("sort_order")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+
+  cropCycle CropCycle @relation(fields: [cropCycleId], references: [id], onDelete: Cascade)
+
+  @@index([cropCycleId, dueDate])
+  @@map("crop_cycle_milestones")
+}
+
+model SoilLabResult {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  farmerId        String?   @map("farmer_id") @db.Uuid
+  fieldId         String?   @map("field_id") @db.Uuid
+  labName         String?   @map("lab_name") @db.VarChar(150)
+  sampleRef       String?   @map("sample_ref") @db.VarChar(100)
+  ph              Decimal?  @db.Decimal(4, 2)
+  nitrogenPpm     Decimal?  @map("nitrogen_ppm") @db.Decimal(8, 2)
+  phosphorusPpm   Decimal?  @map("phosphorus_ppm") @db.Decimal(8, 2)
+  potassiumPpm    Decimal?  @map("potassium_ppm") @db.Decimal(8, 2)
+  organicMatterPct Decimal? @map("organic_matter_pct") @db.Decimal(5, 2)
+  raw             Json?
+  testedAt        DateTime? @map("tested_at") @db.Timestamp(6)
+  importedAt      DateTime  @default(now()) @map("imported_at") @db.Timestamp(6)
+
+  farmer Farmer? @relation(fields: [farmerId], references: [id])
+
+  @@index([farmerId, testedAt])
+  @@map("soil_lab_results")
 }

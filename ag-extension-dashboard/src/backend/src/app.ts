@@ -40,6 +40,7 @@ import visitsRoutes from './routes/visits';
 import efficacyRoutes from './routes/efficacy';
 import advisoriesRoutes from './routes/advisories';
 import outbreaksRoutes from './routes/outbreaks';
+import fieldIntelligenceRoutes from './routes/fieldIntelligence';
 import externalRoutes from './routes/external';
 import languageRoutes from './routes/language';
 import aiRoutes from './routes/ai';
@@ -372,6 +373,7 @@ const routeMounts: RouteMount[] = [
   { path: '/efficacy', router: efficacyRoutes },
   { path: '/advisories', router: advisoriesRoutes },
   { path: '/outbreaks', router: outbreaksRoutes },
+  { path: '/field-intel', router: fieldIntelligenceRoutes },
   { path: '/alerts', router: alertRoutes },
   { path: '/external', router: externalRoutes },
   { path: '/language', router: languageRoutes },

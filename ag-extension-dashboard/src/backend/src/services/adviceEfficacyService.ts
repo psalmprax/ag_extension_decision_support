@@ -150,11 +150,17 @@ export const adviceEfficacyService = {
             visit_date: Date | null;
             notes: string | null;
             days_overdue: string;
+            lat: number | null;
+            lng: number | null;
+            vital_score: number | null;
         }>(
             `SELECT v.id, v.farmer_id,
                     (f.first_name || ' ' || f.last_name) AS farmer_name,
                     COALESCE(v.completed_at, v.scheduled_at) AS visit_date,
                     v.notes,
+                    f.location_lat AS lat,
+                    f.location_lng AS lng,
+                    f.vital_score AS vital_score,
                     EXTRACT(day FROM NOW() - COALESCE(v.completed_at, v.scheduled_at))::text AS days_overdue
              FROM visits v
              LEFT JOIN farmers f ON f.id = v.farmer_id
@@ -175,6 +181,9 @@ export const adviceEfficacyService = {
             visitDate: row.visit_date,
             notes: row.notes,
             daysOverdue: Number(row.days_overdue),
+            lat: row.lat !== null ? Number(row.lat) : null,
+            lng: row.lng !== null ? Number(row.lng) : null,
+            vitalScore: row.vital_score !== null ? Number(row.vital_score) : null,
         }));
     },
 };

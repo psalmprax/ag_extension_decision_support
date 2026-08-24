@@ -218,6 +218,18 @@ class OnboardingEngine {
         const currentStep = session.step;
 
         const isTriggerKeyword = /^(start|habari|join|register|mambo|hello|hi|\/start|\/register)$/i.test(text);
+        const isDiagnoseTrigger = /^(diagnose|triage|gonjwa|udongo)\b/i.test(text);
+
+        if (isDiagnoseTrigger && currentStep !== 'awaiting_name') {
+            const symptomText = text.replace(/^(diagnose|triage|gonjwa|udongo)\b\s*/i, '').trim();
+            const { symptomTriageService } = await import('./symptomTriageService');
+            const reply = await symptomTriageService.handleDiagnoseMessage(
+                symptomText || text,
+                session.created_farmer_id,
+                session.external_identifier
+            );
+            return { isHandled: true, isRegistered: session.created_farmer_id !== null, responseMessage: reply, farmerId: session.created_farmer_id ?? undefined };
+        }
 
         if (isTriggerKeyword || (currentStep === 'awaiting_name' && !data.name)) {
             return this.handleInitialGreeting(session, text, senderName, isTriggerKeyword, data);
