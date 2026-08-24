@@ -168,7 +168,17 @@
     "**/mocks/**",
     "*.config.ts",
     "*.config.js",
-    "*.config.mjs"
+    "*.config.mjs",
+    "**/scripts/**",
+    "**/migrations/**",
+    "**/prisma/**",
+    "**/__tests__/helpers/**",
+    "**/tests/**",
+    "**/src/test/**",
+    "**/test_phase*.ts",
+    "**/sw.ts",
+    "**/mockServiceWorker.js",
+    "**/canvasui/**"
   ],
   "ignoreDependencies": [
     "@headlessui/react",

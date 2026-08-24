@@ -8,6 +8,8 @@ import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { usageService } from '@/services/usageService';
 import { SemanticCacheService } from '@/services/semanticCacheService';
 import { selfHealingService } from '@/services/selfHealing';
+import { safeError } from '@/utils/safeResponse';
+import { agronomicSafetyGuard } from '@/services/security/agronomicSafetyGuard';
 
 const router = Router();
 
@@ -115,6 +117,22 @@ router.post('/synthesize-visit', [checkUsageLimit('ai_chat'), validate({ body: a
         });
 
         const structuredData = normalizeVisitSynthesisResult(result.text || '', notes);
+
+        // Agronomic safety boundary: block/quarantine lethal chemical or
+        // quarantine-disease recommendations before they reach the farmer.
+        const adviceBlob = [structuredData.summary, ...structuredData.recommendedActions].join('\n');
+        const safety = agronomicSafetyGuard.scanGeneratedAdvice(adviceBlob);
+        if (!safety.safe) {
+            logger.warn(
+                `Visit synthesis blocked by AgronomicSafetyGuard (${safety.hazardLevel}) — user ${userId}: ${safety.violations.join('; ')}`
+            );
+            return res.status(422).json({
+                success: false,
+                error: 'Generated advice failed agronomic safety review and was withheld.',
+                safety,
+            });
+        }
+
         await SemanticCacheService.save(notes, JSON.stringify(structuredData), { userId, type: 'visit_synthesis' });
         await usageService.incrementUsage(userId, 'ai_chat');
 
@@ -260,10 +278,6 @@ router.post('/analyze-video', [checkUsageLimit('ai_vision')], async (req: AuthRe
         safeError(res, 500, 'Failed to analyze video');
     }
 });
-
-export default router;
-
-import { safeError } from '@/utils/safeResponse';
 
 // Agent registry — system-defined agent metadata
 const agentRegistry = [
@@ -460,3 +474,5 @@ router.post('/stop/:agentId', async (req: AuthRequest, res: Response) => {
         safeError(res, 500, 'Failed to stop agent');
     }
 });
+
+export default router;
