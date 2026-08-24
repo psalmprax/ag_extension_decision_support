@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Lightbulb, Lock, Zap, ArrowRight } from 'lucide-react';
+import { Sparkles, Lightbulb, Lock, Zap, ArrowRight, History } from 'lucide-react';
 import {
   askAI,
   fetchKnowledgeHistory,
@@ -151,7 +151,7 @@ export const KnowledgeBase: React.FC = () => {
   const [isAsking, setIsAsking] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [lastResult, setLastResult] = useState<Result | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 640);
   const [showStats, setShowStats] = useState(false);
   const [quota, setQuota] = useState<KnowledgeQuotaData | null>(null);
   const [history, setHistory] = useState<
@@ -203,6 +203,19 @@ export const KnowledgeBase: React.FC = () => {
     fetchHistory();
     fetchStats();
     fetchQuotaData();
+  }, []);
+
+  // Collapse the sidebar when the viewport crosses below sm — but only on the
+  // crossing itself, so mobile keyboard resizes don't slam it shut.
+  useEffect(() => {
+    let wasDesktop = window.innerWidth >= 640;
+    const handleViewportCross = () => {
+      const isDesktop = window.innerWidth >= 640;
+      if (wasDesktop && !isDesktop) setSidebarOpen(false);
+      wasDesktop = isDesktop;
+    };
+    window.addEventListener('resize', handleViewportCross);
+    return () => window.removeEventListener('resize', handleViewportCross);
   }, []);
 
   const performAISearch = async (queryText: string) => {
@@ -264,7 +277,7 @@ export const KnowledgeBase: React.FC = () => {
   };
 
   return (
-    <div className="flex h-full min-h-0 overflow-hidden bg-theme-bg/50 backdrop-blur-sm rounded-2xl">
+    <div className="relative flex h-full min-h-0 overflow-hidden bg-theme-bg/50 backdrop-blur-sm rounded-2xl">
       <KnowledgeSidebar
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
@@ -274,6 +287,16 @@ export const KnowledgeBase: React.FC = () => {
 
       <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-8 scrollbar-hide">
         <div className="max-w-4xl mx-auto">
+          {!sidebarOpen && (
+            <button
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Show recent queries"
+              className="inline-flex items-center gap-2 mb-3 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+            >
+              <History className="w-4 h-4" />
+              History
+            </button>
+          )}
           <KnowledgeHeader headingClass={headingClass} subtitle={t('knowledge_subtitle')} />
 
           {quota?.isFree && (

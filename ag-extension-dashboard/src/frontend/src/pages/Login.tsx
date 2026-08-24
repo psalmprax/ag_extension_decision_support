@@ -121,7 +121,7 @@ export function Login({ onDemo }: LoginProps) {
           <div className="flex-1 text-center">
             <img
               src="/logo.png"
-              alt="Ag-Extension Logo"
+              alt="GPExts Logo"
               className="w-16 h-16 mx-auto mb-3 rounded-2xl shadow-xl shadow-emerald-950/40 object-contain"
             />
             <h1 className="text-2xl font-bold tracking-tight text-white">{t('login_title')}</h1>

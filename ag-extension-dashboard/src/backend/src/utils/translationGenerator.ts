@@ -50,7 +50,7 @@ const englishTranslations = {
     farmer_active_since: "Active Since",
     farmer_est_yield: "Est. Yield",
     farmer_farm_size: "Farm Size",
-    app_title: "Ag-Extension",
+    app_title: "GPExts",
     app_subtitle: "Decision Support",
     dashboard_title: "Intelligence Dashboard",
     dashboard_overview: "Dashboard Overview",

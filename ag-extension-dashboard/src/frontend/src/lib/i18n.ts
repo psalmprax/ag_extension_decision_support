@@ -1,4 +1,4 @@
-// Ag Extension Decision Support - Internationalization Configuration
+// GPExts - Internationalization Configuration
 // AUTO-GENERATED FILE - Do not edit manually
 // Run: node scripts/generate-missing-translations.js
 

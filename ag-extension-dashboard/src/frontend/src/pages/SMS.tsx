@@ -704,7 +704,7 @@ export function SMSPage() {
     {
       id: '1',
       title: t('sms_template_greeting'),
-      content: 'Hello, this is your Ag Extension officer. How is your crop doing?',
+      content: 'Hello, this is your GPExts officer. How is your crop doing?',
       icon: Sparkles,
       color: 'bg-amber-100 text-amber-600',
     },

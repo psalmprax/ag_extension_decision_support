@@ -12,7 +12,7 @@ const translations: Record<string, Record<string, string>> = {
     en: sourceTexts,
     // Swahili - already has translations
     sw: {
-        app_title: "Ag-Extension",
+        app_title: "GPExts",
         app_subtitle: "Msaada wa Maamuzi",
         dashboard_title: "Dashibodi ya Akili",
         dashboard_overview: "Maelezo ya Dashibodi",
@@ -95,7 +95,7 @@ const translations: Record<string, Record<string, string>> = {
     },
     // French - already has translations
     fr: {
-        app_title: "Ag-Extension",
+        app_title: "GPExts",
         app_subtitle: "Soutien à la Décision",
         dashboard_title: "Tableau de Bord Intelligent",
         dashboard_overview: "Aperçu du Tableau de Bord",
@@ -178,7 +178,7 @@ const translations: Record<string, Record<string, string>> = {
     },
     // German - already has translations
     de: {
-        app_title: "Ag-Extension",
+        app_title: "GPExts",
         app_subtitle: "Entscheidungsunterstützung",
         dashboard_title: "Intelligentes Dashboard",
         dashboard_overview: "Dashboard-Übersicht",
@@ -261,7 +261,7 @@ const translations: Record<string, Record<string, string>> = {
     },
     // Spanish - already has translations
     es: {
-        app_title: "Ag-Extension",
+        app_title: "GPExts",
         app_subtitle: "Soporte de Decisiones",
         dashboard_title: "Panel de Inteligencia",
         dashboard_overview: "Resumen del Panel",

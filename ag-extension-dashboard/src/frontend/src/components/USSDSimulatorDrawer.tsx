@@ -49,11 +49,11 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
   const getMainMenuText = (lang: 'en' | 'sw' | 'fr') => {
     switch (lang) {
       case 'sw':
-        return 'CON Karibu Ag-Extension Huduma:\n1. Tambua Ugonjwa wa Mmea\n2. Hali ya Hewa & Tahadhari\n3. Omba Afisa wa Ugani\n4. Toa Maoni';
+        return 'CON Karibu GPExts Huduma:\n1. Tambua Ugonjwa wa Mmea\n2. Hali ya Hewa & Tahadhari\n3. Omba Afisa wa Ugani\n4. Toa Maoni';
       case 'fr':
-        return 'CON Bienvenue sur Ag-Extension:\n1. Diagnostiquer maladie des plantes\n2. Météo & Alertes\n3. Contacter un agronome\n4. Commentaires';
+        return 'CON Bienvenue sur GPExts:\n1. Diagnostiquer maladie des plantes\n2. Météo & Alertes\n3. Contacter un agronome\n4. Commentaires';
       default:
-        return 'CON Welcome to Ag-Extension Decision Support:\n1. Diagnose Crop Disease\n2. Weather & Pest Alerts\n3. Request Field Officer Call\n4. Provide Service Feedback';
+        return 'CON Welcome to GPExts:\n1. Diagnose Crop Disease\n2. Weather & Pest Alerts\n3. Request Field Officer Call\n4. Provide Service Feedback';
     }
   };
 
@@ -365,7 +365,7 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
                         setDialCode('*384*274#');
                         setUssdStep('main');
                         addLog('user', '*384*274#');
-                        addLog('ussd', 'CON Karibu Ag-Extension Huduma:\n1. Tambua Ugonjwa wa Mmea\n2. Hali ya Hewa\n3. Omba Afisa');
+                        addLog('ussd', 'CON Karibu GPExts Huduma:\n1. Tambua Ugonjwa wa Mmea\n2. Hali ya Hewa\n3. Omba Afisa');
                       }, 100);
                     }}
                     className="text-left p-2 rounded-lg bg-slate-800/60 hover:bg-slate-800 text-slate-300 text-[11px] transition-colors flex justify-between items-center"

@@ -13,7 +13,7 @@ const safeSetHTML = (el: HTMLElement, html: string) => {
 export default defineContentScript({
   matches: ['<all_urls>'],
   async main(ctx: any) {
-    console.log('Ag-Extension Content Script Active');
+    console.log('GPExts Content Script Active');
 
     // Create UI Container
     const ui = await createShadowRootUi(ctx, {

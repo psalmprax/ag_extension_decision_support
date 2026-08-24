@@ -57,7 +57,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
 
   return (
     <div
-      className={`relative h-full flex-shrink-0 transition-all duration-300 ease-in-out z-40 ${isOpen ? 'w-80' : 'w-0'}`}
+      className={`relative h-full flex-shrink-0 transition-all duration-300 ease-in-out z-40 max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-50 max-md:shadow-2xl ${isOpen ? 'w-80' : 'w-0'}`}
     >
       <aside
         className={`h-full w-full bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 overflow-hidden`}

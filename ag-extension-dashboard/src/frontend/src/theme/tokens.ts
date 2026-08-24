@@ -1,6 +1,6 @@
 /**
  * Canonical design tokens — the single source of truth for every color used by the
- * Ag-Extension dashboard.
+ * GPExts dashboard.
  *
  * Consumed by:
  *   - src/theme/index.ts         (runtime CSS variable emission, per-theme + dark mode)

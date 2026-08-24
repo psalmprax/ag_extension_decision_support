@@ -121,10 +121,10 @@ class EmailService {
     async sendWelcomeEmail(email: string, name: string): Promise<boolean> {
         return this.sendEmail({
             to: email,
-            subject: 'Welcome to Ag Extension',
+            subject: 'Welcome to GPExts',
             html: `
         <h1>Welcome, ${name}!</h1>
-        <p>Thank you for joining Ag Extension Decision Support.</p>
+        <p>Thank you for joining GPExts.</p>
         <p>Get started by exploring your dashboard.</p>
         <a href="${process.env.FRONTEND_URL || 'http://localhost:5174'}">Go to Dashboard</a>
       `,

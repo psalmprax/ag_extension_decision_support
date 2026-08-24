@@ -862,7 +862,7 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
       const res = await testChannelDispatch({
         channel,
         recipient: testRecipient,
-        message: '🌾 Verified test message from your AgExtension Decision Support Gateway!',
+        message: '🌾 Verified test message from your GPExts Decision Support Gateway!',
       });
 
       if (res.success) {

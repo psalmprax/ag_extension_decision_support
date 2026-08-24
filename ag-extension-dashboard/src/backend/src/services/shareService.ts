@@ -134,9 +134,9 @@ class ShareService {
         }
 
         const shareUrl = this.buildShareUrl(token);
-        const subject = `Shared ${share.entityType} from Ag Extension`;
+        const subject = `Shared ${share.entityType} from GPExts`;
         const html = `
-      <p>You have been shared a ${share.entityType} from Ag Extension.</p>
+      <p>You have been shared a ${share.entityType} from GPExts.</p>
       ${message ? `<p>${message}</p>` : ''}
       <p><a href="${shareUrl}">View ${share.entityType}</a></p>
       ${share.expiresAt ? `<p>This link expires on ${share.expiresAt.toDateString()}.</p>` : ''}
@@ -162,7 +162,7 @@ class ShareService {
         }
 
         const shareUrl = this.buildShareUrl(token);
-        const smsMessage = `Shared ${share.entityType} from Ag Extension: ${shareUrl}${message ? ` - ${message}` : ''}`;
+        const smsMessage = `Shared ${share.entityType} from GPExts: ${shareUrl}${message ? ` - ${message}` : ''}`;
 
         const promises = recipientPhones.map(phone =>
             smsService.sendSMS({

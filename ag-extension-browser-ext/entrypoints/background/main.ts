@@ -73,7 +73,7 @@ const decryptString = async (encrypted: string): Promise<string> => {
 };
 
 export default defineBackground(() => {
-    console.log('Ag-Extension Background Script Active');
+    console.log('GPExts Background Script Active');
 
     // IndexedDB setup for offline queue
     const DB_NAME = 'AgExtensionOffline';

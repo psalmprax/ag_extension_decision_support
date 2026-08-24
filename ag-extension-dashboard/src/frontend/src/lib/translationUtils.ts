@@ -39,7 +39,7 @@ const languageMap: Record<string, string> = {
 
 // English source translations
 const sourceTranslations: Record<string, string> = {
-  app_title: 'Ag-Extension',
+  app_title: 'GPExts',
   app_subtitle: 'Decision Support',
   dashboard_title: 'Intelligence Dashboard',
   dashboard_overview: 'Dashboard Overview',
