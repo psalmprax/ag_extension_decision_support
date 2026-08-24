@@ -681,10 +681,10 @@ export function LandingPage() {
 
           <motion.div
             style={{ y: heroY, opacity: heroOpacity }}
-            className="max-w-7xl mx-auto px-4 sm:px-6 grid lg:grid-cols-[1fr_1.1fr] gap-8 lg:gap-12 items-center relative z-10"
+            className="max-w-7xl w-full min-w-0 mx-auto px-4 sm:px-6 grid lg:grid-cols-[1fr_1.1fr] gap-8 lg:gap-12 items-center relative z-10"
           >
             {/* Left copy */}
-            <motion.div initial="hidden" animate="visible" variants={stagger} className="space-y-6 sm:space-y-8 text-center sm:text-left mx-auto sm:mx-0">
+            <motion.div initial="hidden" animate="visible" variants={stagger} className="space-y-6 sm:space-y-8 text-center sm:text-left mx-auto sm:mx-0 min-w-0 max-w-full">
               <motion.div
                 variants={fadeUp}
                 className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] backdrop-blur-md shadow-sm max-w-full mx-auto sm:mx-0"
@@ -814,24 +814,24 @@ export function LandingPage() {
             </motion.div>
 
             {/* Right — Detailed dashboard mockup */}
-            <motion.div initial="hidden" animate="visible" variants={scaleIn} className="relative w-full max-w-full">
+            <motion.div initial="hidden" animate="visible" variants={scaleIn} className="relative w-full max-w-full min-w-0">
               {/* Glow behind mockup */}
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-transparent to-amber-500/10 blur-[60px] rounded-full scale-90" />
 
               <div className="relative rounded-2xl overflow-hidden border border-white/[0.08] bg-slate-950 shadow-2xl shadow-black/60 w-full max-w-full lg:transform lg:perspective-[1200px] lg:rotate-y-[2deg] lg:-rotate-x-[1deg] lg:hover:rotate-y-0 lg:hover:rotate-x-0 transition-transform duration-700">
                 {/* Window chrome */}
                 <div className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.03] border-b border-white/[0.06]">
-                  <div className="flex gap-1.5">
+                  <div className="flex gap-1.5 shrink-0">
                     <div className="w-2.5 h-2.5 rounded-full bg-red-500/40" />
                     <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/40" />
                     <div className="w-2.5 h-2.5 rounded-full bg-green-500/40" />
                   </div>
-                  <div className="flex-1 flex justify-center">
-                    <div className="px-3 py-0.5 rounded-md bg-white/[0.04] text-xxs text-white/30 font-mono">
+                  <div className="flex-1 min-w-0 flex justify-center">
+                    <div className="px-3 py-0.5 rounded-md bg-white/[0.04] text-xxs text-white/30 font-mono truncate max-w-full">
                       app.gpexts.com/dashboard
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     <Bell className="w-3 h-3 text-white/30" />
                     <div className="w-5 h-5 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-[7px] font-bold">
                       A

@@ -335,7 +335,7 @@ const OverviewTabContent = ({
     </div>
     {/* Yield Performance */}
     <FarmerYieldChart farmer={farmer} radiusClass={radiusClass} />{' '}
-    <div className="grid grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
       <CropsSection
         farmer={farmer}
         isEditing={isEditing}

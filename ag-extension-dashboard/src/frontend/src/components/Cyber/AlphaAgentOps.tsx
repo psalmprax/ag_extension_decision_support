@@ -384,7 +384,7 @@ const AlphaAgentOps = () => {
             </div>
 
             {/* Capability Matrix */}
-            <div className="grid grid-cols-2 gap-6 mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
               <div className="space-y-4">
                 <h5 className="text-xxs font-black text-white/40 uppercase tracking-[0.2em]">
                   Active Capabilities
@@ -435,7 +435,7 @@ const AlphaAgentOps = () => {
           </div>
 
           {/* Quick Stats Banner — Real Data */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="p-4 bg-black/40 border border-white/10 rounded-2xl flex items-center gap-4">
               <div className="p-2 bg-secondary-500/20 rounded-lg">
                 <Database className="w-5 h-5 text-secondary-400" />

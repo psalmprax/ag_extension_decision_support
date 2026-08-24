@@ -186,7 +186,7 @@ const ActionableAI = () => {
           </div>
 
           {/* Supply Chain / Logistics Precision — Real market data */}
-          <div className="grid grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
             <div className="bg-black/40 border border-white/10 rounded-3xl p-6 backdrop-blur-md">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">

@@ -278,7 +278,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                 ) : (
                   <>
                     {/* Quick Links */}
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       {quickLinks.map(({ icon: Icon, label, color, action }, i) => (
                         <button
                           key={i}
