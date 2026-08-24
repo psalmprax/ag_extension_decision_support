@@ -1,6 +1,8 @@
 import { getPrisma } from './prismaService';
 import { logger } from '@/utils/logger';
 import axios from 'axios';
+import { rateLimitedFetch } from './externalApiGuard';
+import { recordPriceSnapshot } from './priceHistoryService';
 
 export type MarketDataStatus = 'live' | 'estimated' | 'unavailable';
 
@@ -8,6 +10,7 @@ export interface MarketPrice {
   id: string;
   crop: string;
   price: string;
+  priceValue?: number;
   trend: string;
   updatedAt: Date;
   source: 'faostat_producer_prices' | 'giews_fpma' | 'usda_fas_psd' | 'baseline_estimate';
@@ -82,6 +85,11 @@ async function getUserCountry(userId?: string): Promise<string> {
   return 'Kenya';
 }
 
+export async function resolveUserAreaCode(userId?: string): Promise<string> {
+  const country = await getUserCountry(userId);
+  return faostatAreaCode(country);
+}
+
 function getCurrencyForCountry(country: string): string {
   const countryLower = country.toLowerCase();
   const mappings = [
@@ -100,13 +108,17 @@ function getCurrencyForCountry(country: string): string {
 
 async function fetchExchangeRate(targetCurrency: string): Promise<ExchangeRateResult> {
   if (targetCurrency === 'USD') return { rate: 1, source: 'live' };
+  const cacheKey = `rate:${targetCurrency}`;
   try {
-    const response = await axios.get('https://open.er-api.com/v6/latest/USD', { timeout: 3000 });
-    const rate = response.data?.rates?.[targetCurrency];
-    if (typeof rate === 'number' && Number.isFinite(rate)) {
-      logger.info(`Live USD/${targetCurrency} exchange rate: ${rate}`);
-      return { rate, source: 'live' };
-    }
+    return await rateLimitedFetch<ExchangeRateResult>('openERate', cacheKey, async () => {
+      const response = await axios.get('https://open.er-api.com/v6/latest/USD', { timeout: 3000 });
+      const rate = response.data?.rates?.[targetCurrency];
+      if (typeof rate === 'number' && Number.isFinite(rate)) {
+        logger.info(`Live USD/${targetCurrency} exchange rate: ${rate}`);
+        return { rate, source: 'live' as const };
+      }
+      throw new Error('Invalid rate in response');
+    });
   } catch (err: unknown) {
     logger.warn(`Failed to fetch live USD/${targetCurrency} exchange rate: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
@@ -140,23 +152,26 @@ async function fetchFaostatProducerPrices(
   itemCodes: string[],
   year: string
 ): Promise<FaostatPriceRow[]> {
-  const baseUrl = 'https://fenixservices.fao.org/faostat/api/v1/en/data/PP';
+  const cacheKey = `pp:${areaCode}:${itemCodes.slice(0, 3).join(',')}:${year}`;
   try {
-    const response = await axios.get<{ data: FaostatPriceRow[] }>(baseUrl, {
-      params: {
-        area: areaCode,
-        item: itemCodes.join(','),
-        element: '5532', // Producer Price (USD/tonne)
-        year,
-        format: 'json',
-      },
-      timeout: 8000,
+    return await rateLimitedFetch<FaostatPriceRow[]>('faostat', cacheKey, async () => {
+      const baseUrl = 'https://fenixservices.fao.org/faostat/api/v1/en/data/PP';
+      const response = await axios.get<{ data: FaostatPriceRow[] }>(baseUrl, {
+        params: {
+          area: areaCode,
+          item: itemCodes.join(','),
+          element: '5532',
+          year,
+          format: 'json',
+        },
+        timeout: 8000,
+      });
+      if (response.data?.data && Array.isArray(response.data.data)) {
+        logger.info(`FAOSTAT: fetched ${response.data.data.length} producer price rows for area ${areaCode}`);
+        return response.data.data;
+      }
+      return [];
     });
-    if (response.data?.data && Array.isArray(response.data.data)) {
-      logger.info(`FAOSTAT: fetched ${response.data.data.length} producer price rows for area ${areaCode}`);
-      return response.data.data;
-    }
-    return [];
   } catch (err) {
     logger.warn(`FAOSTAT Producer Prices unavailable for area ${areaCode}: ${err instanceof Error ? err.message : 'Unknown error'}`);
     return [];
@@ -174,32 +189,50 @@ interface GiewsPricePoint {
 }
 
 async function fetchGiewsPrices(country: string, cropFilter: string[]): Promise<GiewsPricePoint[]> {
+  const areaCd = faostatAreaCode(country);
+  const cacheKey = `fp:${areaCd}:${cropFilter.slice(0, 3).join(',')}`;
   try {
-    // GIEWS FPMA data via FAOSTAT API — free, no key
-    const response = await axios.get('https://fenixservices.fao.org/faostat/api/v1/en/data/FP', {
-      params: {
-        area: faostatAreaCode(country),
-        item: cropFilter.join(','),
-        format: 'json',
-      },
-      timeout: 8000,
+    return await rateLimitedFetch<GiewsPricePoint[]>('giews', cacheKey, async () => {
+      const response = await axios.get('https://fenixservices.fao.org/faostat/api/v1/en/data/FP', {
+        params: { area: areaCd, item: cropFilter.join(','), format: 'json' },
+        timeout: 8000,
+      });
+      const rows = response.data?.data;
+      if (!Array.isArray(rows)) return [];
+      return rows
+        .filter((r: Record<string, unknown>) => r.value && Number(r.value) > 0)
+        .map((r: Record<string, unknown>) => ({
+          commodity: String(r.item || ''),
+          market: String(r.area || ''),
+          price: Number(r.value),
+          currency: 'USD',
+          usd_per_tonne: Number(r.value),
+          date: String(r.year || ''),
+        }));
     });
-    const rows = response.data?.data;
-    if (!Array.isArray(rows)) return [];
-    return rows
-      .filter((r: Record<string, unknown>) => r.value && Number(r.value) > 0)
-      .map((r: Record<string, unknown>) => ({
-        commodity: String(r.item || ''),
-        market: String(r.area || ''),
-        price: Number(r.value),
-        currency: 'USD',
-        usd_per_tonne: Number(r.value),
-        date: String(r.year || ''),
-      }));
   } catch (err) {
     logger.warn(`GIEWS FPMA unavailable for ${country}: ${err instanceof Error ? err.message : 'Unknown error'}`);
     return [];
   }
+}
+
+// ─── GIEWS → baseline fallback chain ──────────────────────────────
+async function resolveGiewsOrBaseline(
+  country: string,
+  exchangeRate: ExchangeRateResult,
+  targetCurrency: string,
+  fetchedAt: string,
+): Promise<MarketPrice[]> {
+  try {
+    const giewsData = await fetchGiewsPrices(country, PRIORITY_CROPS);
+    if (giewsData.length > 0) {
+      return mapGiewsPrices(giewsData, exchangeRate, targetCurrency, fetchedAt);
+    }
+  } catch (err) {
+    logger.warn(`GIEWS fallback failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+  }
+  logger.warn(`No live market data available for ${country}. Using baseline estimates.`);
+  return buildBaselinePrices(exchangeRate, targetCurrency, fetchedAt);
 }
 
 export const marketPriceService = {
@@ -219,24 +252,16 @@ export const marketPriceService = {
       : [];
 
     const prices = faoPrices.length > 0 ? faoPrices : previousYearPrices;
+    const result = prices.length > 0
+      ? mapFaostatPrices(prices, previousYearPrices, exchangeRate, targetCurrency, areaCode, fetchedAt)
+      : await resolveGiewsOrBaseline(country, exchangeRate, targetCurrency, fetchedAt);
 
-    if (prices.length > 0) {
-      return mapFaostatPrices(prices, previousYearPrices, exchangeRate, targetCurrency, areaCode, fetchedAt);
-    }
+    // Record a daily history snapshot (only live data — estimates are excluded).
+    recordPriceSnapshot(areaCode, result).catch(err => {
+      logger.warn(`Price history record failed for area ${areaCode}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    });
 
-    // FAOSTAT returned nothing — try GIEWS FPMA
-    try {
-      const giewsData = await fetchGiewsPrices(country, PRIORITY_CROPS);
-      if (giewsData.length > 0) {
-        return mapGiewsPrices(giewsData, exchangeRate, targetCurrency, fetchedAt);
-      }
-    } catch (err) {
-      logger.warn(`GIEWS fallback failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
-    }
-
-    // Last resort: baseline estimates with honest metadata
-    logger.warn(`No live market data available for ${country}. Using baseline estimates.`);
-    return buildBaselinePrices(exchangeRate, targetCurrency, fetchedAt);
+    return result;
   },
 };
 
@@ -257,6 +282,7 @@ function buildFaostatPriceRow(
     id: `faostat-${areaCode}-${code}-${index}`,
     crop: displayName,
     price: `${targetCurrency} ${localPrice.toLocaleString()}`,
+    priceValue: localPrice,
     trend,
     updatedAt: new Date(fetchedAt),
     source: 'faostat_producer_prices' as const,
@@ -306,18 +332,22 @@ function mapGiewsPrices(
   targetCurrency: string,
   fetchedAt: string,
 ): MarketPrice[] {
-  return giewsData.slice(0, 6).map((pt, i) => ({
-    id: `giews-${i}`,
-    crop: pt.commodity,
-    price: `${targetCurrency} ${roundPrice(pt.usd_per_tonne * exchangeRate.rate / 1000, targetCurrency).toLocaleString()}`,
-    trend: 'Updated',
-    updatedAt: new Date(fetchedAt),
-    source: 'giews_fpma' as const,
-    dataStatus: 'live' as const,
-    fetchedAt,
-    exchangeRateSource: exchangeRate.source,
-    currency: targetCurrency,
-  }));
+  return giewsData.slice(0, 6).map((pt, i) => {
+    const localPrice = roundPrice(pt.usd_per_tonne * exchangeRate.rate / 1000, targetCurrency);
+    return {
+      id: `giews-${i}`,
+      crop: pt.commodity,
+      price: `${targetCurrency} ${localPrice.toLocaleString()}`,
+      priceValue: localPrice,
+      trend: 'Updated',
+      updatedAt: new Date(fetchedAt),
+      source: 'giews_fpma' as const,
+      dataStatus: 'live' as const,
+      fetchedAt,
+      exchangeRateSource: exchangeRate.source,
+      currency: targetCurrency,
+    };
+  });
 }
 
 // ─── Baseline fallback prices (honest about being estimated) ────────
@@ -342,6 +372,7 @@ function buildBaselinePrices(
       id: `baseline-${targetCurrency.toLowerCase()}-${index + 1}`,
       crop: item.crop,
       price: `${targetCurrency} ${finalPrice.toLocaleString()}`,
+      priceValue: finalPrice,
       trend,
       updatedAt: new Date(fetchedAt),
       source: 'baseline_estimate' as const,

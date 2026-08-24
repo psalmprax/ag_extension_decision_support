@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { logger } from '@/utils/logger';
+import { rateLimitedFetch } from './externalApiGuard';
 
 export interface WeatherData {
     temperature: number;
@@ -45,61 +46,64 @@ const getCondition = (code: number): string => {
 
 export class WeatherService {
     /**
-     * Get current weather and forecast for a location using Open-Meteo (free, no API key)
+     * Geocode a city name to coordinates, with rate-limits and caching.
      */
-    static async getByLocation(location: string): Promise<WeatherData> {
-        try {
-            // Extract just the city name (before any comma or country part)
-            // The frontend passes "City, Country" but we only need "City" for geocoding
-            const cityName = location.split(',')[0].trim();
-
-            // First, geocode the location name to coordinates
-            const geocodeResponse = await axios.get(
-                `https://geocoding-api.open-meteo.com/v1/search`,
-                { params: { name: cityName, count: 5, language: 'en', format: 'json' } }
-            );
-
-            if (!geocodeResponse.data?.results?.[0]) {
-                logger.warn(`Location not found: ${location}`);
-                throw new Error(`Location not found: ${location}`);
+    private static async geocode(cityName: string, locationHint: string): Promise<{ latitude: number; longitude: number }> {
+        const cacheKey = `geo:${cityName}`;
+        const locationLower = locationHint;
+        return rateLimitedFetch<{ latitude: number; longitude: number }>('openMeteo', cacheKey, async () => {
+            const response = await axios.get('https://geocoding-api.open-meteo.com/v1/search', {
+                params: { name: cityName, count: 5, language: 'en', format: 'json' },
+            });
+            if (!response.data?.results?.[0]) {
+                throw new Error(`Location not found: ${locationHint}`);
             }
-
-            // Try to find a result matching the country if mentioned in the location string
-            let coords = geocodeResponse.data.results[0];
-            const locationLower = location.toLowerCase();
-            const countryHints: Record<string, string> = {
-                'germany': 'DE', 'deutschland': 'DE',
+            let coords = response.data.results[0];
+            const hints: Record<string, string> = {
                 'kenya': 'KE', 'nigeria': 'NG', 'ghana': 'GH',
                 'tanzania': 'TZ', 'uganda': 'UG', 'ethiopia': 'ET',
                 'india': 'IN', 'brazil': 'BR', 'usa': 'US', 'united states': 'US',
             };
-            for (const [hint, code] of Object.entries(countryHints)) {
+            for (const [hint, code] of Object.entries(hints)) {
                 if (locationLower.includes(hint)) {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const match = geocodeResponse.data.results.find((r: any) => r.country_code === code);
+                    const match = response.data.results.find((r: any) => r.country_code === code);
                     if (match) { coords = match; break; }
                 }
             }
+            return { latitude: coords.latitude, longitude: coords.longitude };
+        });
+    }
 
-            const { latitude, longitude } = coords;
+    /**
+     * Fetch forecast data from Open-Meteo, with rate-limits and caching.
+     */
+    private static async fetchForecast(lat: number, lng: number) {
+        const cacheKey = `forecast:${lat.toFixed(2)}:${lng.toFixed(2)}`;
+        return rateLimitedFetch<{
+            current: { temperature_2m: number; relative_humidity_2m: number; weather_code: number; wind_speed_10m: number };
+            daily: { time: string[]; temperature_2m_max: number[]; temperature_2m_min: number[]; precipitation_sum?: number[]; weather_code: number[] };
+        }>('openMeteo', cacheKey, async () => {
+            const resp = await axios.get('https://api.open-meteo.com/v1/forecast', {
+                params: { latitude: lat, longitude: lng,
+                    current: 'temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m',
+                    daily: 'temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code',
+                    timezone: 'auto', forecast_days: 3 },
+            });
+            return resp.data;
+        });
+    }
 
-            // Get weather data from Open-Meteo
-            const weatherResponse = await axios.get(
-                `https://api.open-meteo.com/v1/forecast`,
-                {
-                    params: {
-                        latitude,
-                        longitude,
-                        current: 'temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m',
-                        daily: 'temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code',
-                        timezone: 'auto',
-                        forecast_days: 3
-                    }
-                }
-            );
-
-            const current = weatherResponse.data.current;
-            const daily = weatherResponse.data.daily;
+    /**
+     * Get current weather and forecast for a location using Open-Meteo (free, no API key)
+     */
+    static async getByLocation(location: string): Promise<WeatherData> {
+        try {
+            const cityName = location.split(',')[0].trim();
+            const coords = await this.geocode(cityName, location.toLowerCase());
+            const weatherResponse = await this.fetchForecast(coords.latitude, coords.longitude);
+            const current = weatherResponse.current;
+            const daily = weatherResponse.daily;
 
             return {
                 temperature: Math.round(current.temperature_2m),
@@ -107,15 +111,16 @@ export class WeatherService {
                 condition: getCondition(current.weather_code),
                 humidity: Math.round(current.relative_humidity_2m),
                 windSpeed: Math.round(current.wind_speed_10m),
-                forecast: daily.time.map((date: string, i: number) => ({
-                    date,
-                    maxTemp: Math.round(daily.temperature_2m_max[i]),
-                    minTemp: Math.round(daily.temperature_2m_min[i]),
-                    precipitationMm: Number.isFinite(daily.precipitation_sum?.[i])
-                        ? Number(daily.precipitation_sum[i])
-                        : undefined,
-                    condition: getCondition(daily.weather_code[i])
-                }))
+                forecast: daily.time.map((date: string, i: number) => {
+                    const precip = daily.precipitation_sum;
+                    return {
+                        date,
+                        maxTemp: Math.round(daily.temperature_2m_max[i]),
+                        minTemp: Math.round(daily.temperature_2m_min[i]),
+                        precipitationMm: precip && Number.isFinite(precip[i]) ? Number(precip[i]) : undefined,
+                        condition: getCondition(daily.weather_code[i])
+                    };
+                })
             };
         } catch (error) {
             logger.error(`Weather API request failed for ${location}:`, error);

@@ -69,6 +69,49 @@ export async function cacheDelete(key: string): Promise<boolean> {
     }
 }
 
+export async function cacheHSet(key: string, field: string, value: string): Promise<boolean> {
+    if (!redisClient) return false;
+    try {
+        await redisClient.hSet(key, field, value);
+        return true;
+    } catch (error) {
+        logger.error('Cache hSet error:', error);
+        return false;
+    }
+}
+
+export async function cacheHGetAll(key: string): Promise<Record<string, string> | null> {
+    if (!redisClient) return null;
+    try {
+        return await redisClient.hGetAll(key);
+    } catch (error) {
+        logger.error('Cache hGetAll error:', error);
+        return null;
+    }
+}
+
+export async function cacheHDel(key: string, ...fields: string[]): Promise<boolean> {
+    if (!redisClient || fields.length === 0) return false;
+    try {
+        await redisClient.hDel(key, fields);
+        return true;
+    } catch (error) {
+        logger.error('Cache hDel error:', error);
+        return false;
+    }
+}
+
+export async function cacheExpire(key: string, seconds: number): Promise<boolean> {
+    if (!redisClient) return false;
+    try {
+        await redisClient.expire(key, seconds);
+        return true;
+    } catch (error) {
+        logger.error('Cache expire error:', error);
+        return false;
+    }
+}
+
 export async function closeCache(): Promise<void> {
     if (redisClient) {
         await redisClient.quit();

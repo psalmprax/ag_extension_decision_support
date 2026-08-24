@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { logger } from '@/utils/logger';
+import { rateLimitedFetch } from './externalApiGuard';
 
 // ─── FAOSTAT API — free, no key, JSON ──────────────────────────────
 // Base: https://fenixservices.fao.org/faostat/api/v1
@@ -79,6 +80,19 @@ function buildProductionAnomalyAlerts(
 }
 
 export class FAOService {
+  private static mapProductionRows(rows: Record<string, unknown>[]): CropProductionStat[] {
+    return rows.map(r => ({
+      area: String(r.area || ''),
+      item: String(r.item || ''),
+      itemCode: String(r.item_code || ''),
+      element: String(r.element || ''),
+      year: String(r.year || ''),
+      unit: String(r.unit || ''),
+      value: Number(r.value || 0),
+      flag: String(r.flag || ''),
+    }));
+  }
+
   /**
    * Get crop production statistics for a country from FAOSTAT QCL domain.
    * Domain QCL = "Production: Crops and livestock products"
@@ -91,34 +105,22 @@ export class FAOService {
   ): Promise<CropProductionStat[]> {
     const area = areaCode(country);
     const targetYear = year || String(new Date().getFullYear());
+    const cacheKey = `qcl:${area}:${targetYear}:${crop || 'all'}`;
     try {
-      const response = await axios.get(`${FAOSTAT_BASE}/en/data/QCL`, {
-        params: { area, year: targetYear, format: 'json' },
-        timeout: 10000,
+      return await rateLimitedFetch<CropProductionStat[]>('faostat', cacheKey, async () => {
+        const response = await axios.get(`${FAOSTAT_BASE}/en/data/QCL`, {
+          params: { area, year: targetYear, format: 'json' },
+          timeout: 10000,
+        });
+        if (!Array.isArray(response.data?.data)) {
+          logger.warn(`FAOSTAT QCL returned no data array for ${country} (area ${area})`);
+          return [];
+        }
+        let rows = response.data.data as Record<string, unknown>[];
+        if (crop) rows = rows.filter(r => String(r.item || '').toLowerCase().includes(crop.toLowerCase()));
+        logger.info(`FAOSTAT: ${rows.length} crop production rows fetched for ${country}`);
+        return this.mapProductionRows(rows);
       });
-
-      if (!Array.isArray(response.data?.data)) {
-        logger.warn(`FAOSTAT QCL returned no data array for ${country} (area ${area})`);
-        return [];
-      }
-
-      let rows = response.data.data as Record<string, unknown>[];
-      if (crop) {
-        const cropLower = crop.toLowerCase();
-        rows = rows.filter(r => String(r.item || '').toLowerCase().includes(cropLower));
-      }
-
-      logger.info(`FAOSTAT: ${rows.length} crop production rows fetched for ${country}`);
-      return rows.map(r => ({
-        area: String(r.area || ''),
-        item: String(r.item || ''),
-        itemCode: String(r.item_code || ''),
-        element: String(r.element || ''),
-        year: String(r.year || ''),
-        unit: String(r.unit || ''),
-        value: Number(r.value || 0),
-        flag: String(r.flag || ''),
-      }));
     } catch (error) {
       logger.error(`FAOSTAT crop production fetch failed for ${country}: ${error instanceof Error ? error.message : 'Unknown error'}`);
       return [];

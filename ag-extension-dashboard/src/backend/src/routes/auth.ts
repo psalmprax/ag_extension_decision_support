@@ -11,6 +11,33 @@ import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 
+/** Shared helper — create a Free subscription + usage row for a newly created user. */
+async function createFreeSubscription(userId: string): Promise<void> {
+    try {
+        const freePlan = await query("SELECT id FROM subscription_plans WHERE name = 'Free'");
+        if (freePlan.rows.length > 0) {
+            const planId = freePlan.rows[0].id;
+            const now = new Date();
+            const nextMonth = new Date();
+            nextMonth.setMonth(now.getMonth() + 1);
+
+            const subResult = await query(`
+                INSERT INTO subscriptions (user_id, plan_id, status, current_period_start, current_period_end, created_at, updated_at)
+                VALUES ($1, $2, 'active', $3, $4, NOW(), NOW())
+                RETURNING id
+            `, [userId, planId, now, nextMonth]);
+
+            await query(`
+                INSERT INTO usage (subscription_id, sms_count, ai_chat_count, report_count, last_reset_at, created_at, updated_at)
+                VALUES ($1, 0, 0, 0, NOW(), NOW(), NOW())
+            `, [subResult.rows[0].id]);
+        }
+    } catch (subError) {
+        logger.error('Failed to auto-subscribe user:', subError);
+        // Non-fatal — user account exists, subscription can be fixed later
+    }
+}
+
 interface JWTPayload {
     userId: string;
     email: string;
@@ -171,33 +198,7 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
         const newUser = result.rows[0];
 
         // Assign Free Subscription Plan
-        try {
-            const freePlan = await query("SELECT id FROM subscription_plans WHERE name = 'Free'");
-            if (freePlan.rows.length > 0) {
-                const planId = freePlan.rows[0].id;
-                const now = new Date();
-                const nextMonth = new Date();
-                nextMonth.setMonth(now.getMonth() + 1);
-
-                // Create subscription
-                const subResult = await query(`
-                    INSERT INTO subscriptions (user_id, plan_id, status, current_period_start, current_period_end, created_at, updated_at)
-                    VALUES ($1, $2, 'active', $3, $4, NOW(), NOW())
-                    RETURNING id
-                `, [newUser.id, planId, now, nextMonth]);
-
-                const subId = subResult.rows[0].id;
-
-                // Initialize usage
-                await query(`
-                    INSERT INTO usage (subscription_id, sms_count, ai_chat_count, report_count, last_reset_at, created_at, updated_at)
-                    VALUES ($1, 0, 0, 0, NOW(), NOW(), NOW())
-                `, [subId]);
-            }
-        } catch (subError) {
-            logger.error('Failed to auto-subscribe user:', subError);
-            // We continue as the user account is created, subscription can be fixed later
-        }
+        await createFreeSubscription(newUser.id);
 
         // Generate JWT token
         const token = jwt.sign(
@@ -281,28 +282,8 @@ router.post('/demo', async (req: Request, res: Response) => {
             user = insertResult.rows[0];
         }
 
-            try {
-                const freePlan = await query("SELECT id FROM subscription_plans WHERE name = 'Free'");
-                if (freePlan.rows.length > 0) {
-                    const planId = freePlan.rows[0].id;
-                    const now = new Date();
-                    const nextMonth = new Date();
-                    nextMonth.setMonth(now.getMonth() + 1);
+        await createFreeSubscription(user.id);
 
-                    const subResult = await query(`
-                        INSERT INTO subscriptions (user_id, plan_id, status, current_period_start, current_period_end, created_at, updated_at)
-                        VALUES ($1, $2, 'active', $3, $4, NOW(), NOW())
-                        RETURNING id
-                    `, [user.id, planId, now, nextMonth]);
-
-                    await query(`
-                        INSERT INTO usage (subscription_id, sms_count, ai_chat_count, report_count, last_reset_at, created_at, updated_at)
-                        VALUES ($1, 0, 0, 0, NOW(), NOW(), NOW())
-                    `, [subResult.rows[0].id]);
-                }
-            } catch (err) {
-                logger.error('Failed to skip demo subscription setup:', err);
-            }
         
 
         const token = jwt.sign(

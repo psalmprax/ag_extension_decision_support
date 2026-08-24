@@ -143,7 +143,7 @@ describe('Phase 2 KnockKnock Aesthetic Component Suite', () => {
       fireEvent.click(teleCallBtns[0]);
 
       expect(screen.getByText('Tele-Agronomy Video Consultation')).toBeInTheDocument();
-      expect(screen.getByText(/LIVE ENCRYPTED WebRTC/i)).toBeInTheDocument();
+      expect(screen.getByText(/DEMO.+WebRTC not connected/i)).toBeInTheDocument();
 
       const endCallBtn = screen.getByRole('button', { name: /End Tele-Consultation/i });
       fireEvent.click(endCallBtn);

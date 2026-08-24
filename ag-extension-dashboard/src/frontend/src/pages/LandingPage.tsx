@@ -684,13 +684,13 @@ export function LandingPage() {
             className="max-w-7xl w-full min-w-0 mx-auto px-4 sm:px-6 grid lg:grid-cols-[1fr_1.1fr] gap-8 lg:gap-12 items-center relative z-10"
           >
             {/* Left copy */}
-            <motion.div initial="hidden" animate="visible" variants={stagger} className="space-y-6 sm:space-y-8 text-center sm:text-left mx-auto sm:mx-0 min-w-0 max-w-full">
+            <motion.div initial="hidden" animate="visible" variants={stagger} className="space-y-5 sm:space-y-8 text-center sm:text-left mx-auto sm:mx-0 min-w-0 max-w-full overflow-hidden">
               <motion.div
                 variants={fadeUp}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] backdrop-blur-md shadow-sm max-w-full mx-auto sm:mx-0"
+                className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] backdrop-blur-md shadow-sm max-w-full mx-auto sm:mx-0 overflow-hidden"
               >
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                <span className="text-[11px] sm:text-xs font-medium tracking-wide text-white/80 font-mono truncate">
+                <span className="text-[10px] sm:text-xs font-medium tracking-wide text-white/80 font-mono truncate">
                   Global Agricultural Decision Support Platform
                 </span>
               </motion.div>
@@ -779,15 +779,15 @@ export function LandingPage() {
               {/* Mobile / Store Readiness Badge Strip */}
               <motion.div
                 variants={fadeUp}
-                className="flex flex-wrap items-center gap-2 pt-0.5"
+                className="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-0.5"
               >
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] text-white/70 text-xs font-medium">
-                  <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Field PWA (Android / iOS / Mobile Chrome)</span>
+                <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] text-white/70 text-[11px] sm:text-xs font-medium max-w-full overflow-hidden">
+                  <Smartphone className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span className="truncate">Field PWA (Android / iOS / Mobile Chrome)</span>
                 </div>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-bold font-mono">
-                  <Radio className="w-3 h-3 animate-pulse" />
-                  <span>Apple Store &amp; Play Store Compatible</span>
+                <div className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] sm:text-[11px] font-bold font-mono max-w-full overflow-hidden">
+                  <Radio className="w-3 h-3 animate-pulse shrink-0" />
+                  <span className="truncate">Apple Store &amp; Play Store Compatible</span>
                 </div>
               </motion.div>
 

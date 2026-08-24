@@ -21,6 +21,7 @@ import toast from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
 import { fetchMarketPrices, MarketPrice, MarketDataStatus } from '@/api/priceService';
 import { fetchFarmerStats } from '@/api/farmerService';
+import { fetchUsdaBenchmark, UsdaBenchmarkResult } from '@/api/agriDataService';
 
 interface WeatherData {
   temperature: number;
@@ -42,18 +43,89 @@ const DATA_STATUS_LABEL: Record<MarketDataStatus, string> = {
   unavailable: 'OFFLINE',
 };
 
-const DataStatusBadge: React.FC<{ status: MarketDataStatus }> = ({ status }) => {
-  const styles: Record<MarketDataStatus, string> = {
-    live: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-    estimated: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-    unavailable: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
-  };
+const STATUS_STYLES: Record<MarketDataStatus, string> = {
+  live: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+  estimated: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+  unavailable: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
+};
+
+const DataStatusBadge: React.FC<{ status: MarketDataStatus }> = ({ status }) => (
+  <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${STATUS_STYLES[status]}`}>
+    {DATA_STATUS_LABEL[status]}
+  </span>
+);
+
+const UsdaBenchmarkCard: React.FC<{ data: UsdaBenchmarkResult | null | undefined }> = ({ data }) => {
+  const metrics = data?.world?.metrics || data?.country?.metrics || null;
+  if (!metrics) return null;
   return (
-    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${styles[status]}`}>
-      {DATA_STATUS_LABEL[status]}
-    </span>
+    <div className="bg-black/40 border border-white/10 rounded-3xl p-6 backdrop-blur-md">
+      <h3 className="text-xs font-black text-white uppercase tracking-widest mb-4 flex items-center gap-2">
+        <Globe className="w-4 h-4 text-primary-400" />
+        Global Benchmarks
+        {data?.dataStatus === 'live' && (
+          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase">
+            USDA PSD
+          </span>
+        )}
+      </h3>
+      <div className="space-y-3">
+        {metrics.production != null && (
+          <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+            <div className="text-xxs text-white/40 uppercase mb-1">Global Production</div>
+            <div className="text-sm font-black text-white">
+              {(metrics.production / 1_000_000).toFixed(1)}M {metrics.unit}
+            </div>
+          </div>
+        )}
+        {metrics.yield != null && (
+          <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+            <div className="text-xxs text-white/40 uppercase mb-1">Average Yield</div>
+            <div className="text-sm font-black text-primary-400">
+              {metrics.yield.toFixed(1)} {metrics.unit.replace('tonnes', 't/ha')}
+            </div>
+          </div>
+        )}
+        {metrics.exports != null && (
+          <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+            <div className="text-xxs text-white/40 uppercase mb-1">Global Exports</div>
+            <div className="text-sm font-black text-emerald-400">
+              {(metrics.exports / 1_000_000).toFixed(1)}M tonnes
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
+
+async function fetchActionableWeather(region?: string): Promise<WeatherData | null> {
+  try {
+    const r = region || 'Kenya';
+    const { data } = await apiClient.get(`/external/weather/${encodeURIComponent(r)}`);
+    return data?.data || data || null;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchActionableAlerts(): Promise<AlertData[]> {
+  try {
+    const { data } = await apiClient.get('/alerts');
+    return data?.data || data || [];
+  } catch {
+    return [];
+  }
+}
+
+async function fetchActionablePerformance() {
+  try {
+    const { data } = await apiClient.get('/analytics/performance');
+    return data?.data || data || null;
+  } catch {
+    return null;
+  }
+}
 
 const ActionableAI = () => {
   const { addNotification, user } = useAppStore();
@@ -73,46 +145,32 @@ const ActionableAI = () => {
     enabled: !!user,
   });
 
+  // Fetch USDA global commodity benchmarks
+  const { data: usdaData } = useQuery<UsdaBenchmarkResult | null>({
+    queryKey: ['actionable-usda'],
+    queryFn: () => fetchUsdaBenchmark('Maize'),
+    enabled: !!localStorage.getItem('token'),
+    staleTime: 12 * 60 * 60 * 1000,
+  });
+
   // Fetch real weather data
   const { data: weatherData, isLoading: weatherLoading } = useQuery<WeatherData | null>({
-    queryKey: ['actionable-weather'],
-    queryFn: async () => {
-      try {
-        const region = user?.region || 'Kenya';
-        const { data } = await apiClient.get(`/external/weather/${encodeURIComponent(region)}`);
-        return data?.data || data || null;
-      } catch {
-        return null;
-      }
-    },
+    queryKey: ['actionable-weather', user?.region],
+    queryFn: () => fetchActionableWeather(user?.region),
     enabled: !!localStorage.getItem('token'),
   });
 
   // Fetch real alerts
   const { data: alertsData } = useQuery<AlertData[]>({
     queryKey: ['actionable-alerts'],
-    queryFn: async () => {
-      try {
-        const { data } = await apiClient.get('/alerts');
-        return data?.data || data || [];
-      } catch {
-        return [];
-      }
-    },
+    queryFn: fetchActionableAlerts,
     enabled: !!localStorage.getItem('token'),
   });
 
   // Fetch real performance data for economic index
   const { data: performanceData } = useQuery({
     queryKey: ['actionable-performance'],
-    queryFn: async () => {
-      try {
-        const { data } = await apiClient.get('/analytics/performance');
-        return data?.data || data || null;
-      } catch {
-        return null;
-      }
-    },
+    queryFn: fetchActionablePerformance,
     enabled: !!localStorage.getItem('token'),
   });
 
@@ -382,6 +440,9 @@ const ActionableAI = () => {
               </div>
             )}
           </div>
+
+          {/* USDA Global Benchmark */}
+          <UsdaBenchmarkCard data={usdaData} />
 
           {/* Real Economic Performance */}
           <div className="bg-gradient-to-br from-primary-600/20 to-secondary-600/20 border border-white/10 rounded-3xl p-8 backdrop-blur-md text-center">

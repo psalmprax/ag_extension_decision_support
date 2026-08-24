@@ -1,10 +1,12 @@
 import React from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
-import { MessageSquare, Loader2 } from 'lucide-react';
+import { MessageSquare, Loader2, Sprout, Globe, CloudOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { fetchMarketPrices, MarketPrice, MarketDataStatus } from '@/api/priceService';
+import { fetchUsdaBenchmark, fetchNDVITimeSeries } from '@/api/agriDataService';
+import type { UsdaBenchmarkResult, NDVIPoint } from '@/api/agriDataService';
 import { MetricCardSkeleton, ChartSkeleton } from '../Skeleton';
 
 interface NormalDashboardProps {
@@ -30,6 +32,159 @@ const DATA_STATUS_COLORS: Record<MarketDataStatus, string> = {
   unavailable: 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400',
 };
 
+function vegInterpret(ndvi: number): { label: string; color: string } {
+  if (ndvi >= 0.7) return { label: 'Lush', color: 'text-emerald-600 dark:text-emerald-400' };
+  if (ndvi >= 0.5) return { label: 'Healthy', color: 'text-emerald-600 dark:text-emerald-400' };
+  if (ndvi >= 0.35) return { label: 'Moderate', color: 'text-amber-600 dark:text-amber-400' };
+  if (ndvi >= 0.2) return { label: 'Stressed', color: 'text-rose-600 dark:text-rose-400' };
+  return { label: 'Bare', color: 'text-slate-500' };
+}
+
+function barColor(p: NDVIPoint): string {
+  return p.ndvi >= 0.5 ? '#10b981' : p.ndvi >= 0.35 ? '#f59e0b' : '#ef4444';
+}
+
+function renderVegetationCard(
+  data: { data: NDVIPoint[]; dataStatus: string; reason: string } | undefined,
+  loading: boolean,
+  isError: boolean,
+) {
+  const points = data?.data || [];
+  const latest = points[points.length - 1];
+  const ndvi = latest?.ndvi;
+  const veg = ndvi != null ? vegInterpret(ndvi) : null;
+  const maxBar = Math.max(0.05, ...points.map(p => p.ndvi), 1);
+
+  return (
+    <div className="bg-theme-bg-card dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+          <Sprout className="w-5 h-5" />
+        </div>
+        <div>
+          <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">
+            Vegetation Health
+          </h3>
+          <p className="text-xxs text-gray-400 dark:text-gray-500">14-day agroclimatology proxy</p>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-10">
+          <Loader2 className="w-6 h-6 text-emerald-500 animate-spin" />
+        </div>
+      ) : isError || !veg ? (
+        <div className="flex flex-col items-center justify-center py-8 text-center">
+          <CloudOff className="w-8 h-8 text-gray-300 dark:text-gray-600 mb-3" />
+          <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+            Vegetation data unavailable
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="flex items-baseline gap-2 mb-5">
+            <span className={`text-3xl font-black ${veg.color}`}>
+              {ndvi!.toFixed(2)}
+            </span>
+            <span className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{veg.label}</span>
+          </div>
+
+          <div className="flex items-end gap-0.5 h-14 mb-2">
+            {points.slice(-14).map((p, i) => (
+              <div
+                key={i}
+                className="flex-1 rounded-t-sm"
+                style={{ height: `${Math.max((p.ndvi / maxBar) * 100, 3)}%`, backgroundColor: barColor(p) }}
+              />
+            ))}
+          </div>
+
+          <div className="flex justify-between text-xxs text-gray-400 dark:text-gray-500 font-mono mt-1">
+            <span>{points[0]?.date.slice(5) || ''}</span>
+            <span>{points[points.length - 1]?.date.slice(5) || ''}</span>
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+            <span className="text-xxs text-gray-400 dark:text-gray-500 capitalize">{data?.reason || ''}</span>
+            <motion.span
+              className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+              animate={{ opacity: [0.6, 1, 0.6] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              {data?.dataStatus === 'live' ? 'NASA POWER' : data?.dataStatus?.toUpperCase()}
+            </motion.span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: boolean) {
+  const metrics = data?.world?.metrics || data?.country?.metrics || null;
+
+  return (
+    <div className="bg-theme-bg-card dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400 shrink-0">
+          <Globe className="w-5 h-5" />
+        </div>
+        <div>
+          <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">
+            Global Benchmarks
+          </h3>
+          <p className="text-xxs text-gray-400 dark:text-gray-500">Maize · USDA PSD data</p>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-10">
+          <Loader2 className="w-6 h-6 text-primary-500 animate-spin" />
+        </div>
+      ) : !metrics ? (
+        <div className="text-center py-10 text-gray-500 text-xs font-bold uppercase tracking-widest">
+          <Globe className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+          No benchmark data available
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {metrics.production != null && (
+            <div className="p-4 bg-theme-bg-secondary/50 dark:bg-gray-900/50 rounded-xl border border-gray-50 dark:border-gray-800">
+              <div className="text-xxs text-gray-400 dark:text-gray-500 uppercase font-bold mb-1 tracking-wider">Global Production</div>
+              <div className="text-xl font-black text-gray-900 dark:text-white">
+                {(metrics.production / 1_000_000).toFixed(1)}M {metrics.unit}
+              </div>
+            </div>
+          )}
+          {metrics.yield != null && (
+            <div className="p-4 bg-theme-bg-secondary/50 dark:bg-gray-900/50 rounded-xl border border-gray-50 dark:border-gray-800">
+              <div className="text-xxs text-gray-400 dark:text-gray-500 uppercase font-bold mb-1 tracking-wider">Average Yield</div>
+              <div className="text-xl font-black text-primary-600 dark:text-primary-400">
+                {metrics.yield.toFixed(1)} {metrics.unit.replace('tonnes', 't/ha')}
+              </div>
+            </div>
+          )}
+          {metrics.exports != null && (
+            <div className="p-4 bg-theme-bg-secondary/50 dark:bg-gray-900/50 rounded-xl border border-gray-50 dark:border-gray-800">
+              <div className="text-xxs text-gray-400 dark:text-gray-500 uppercase font-bold mb-1 tracking-wider">Global Exports</div>
+              <div className="text-xl font-black text-emerald-600 dark:text-emerald-400">
+                {(metrics.exports / 1_000_000).toFixed(1)}M tonnes
+              </div>
+            </div>
+          )}
+          {data?.dataStatus === 'live' && (
+            <div className="pt-2">
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                USDA PSD
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLoading }) => {
   const { user, showContextMenu, setActiveTab } = useAppStore();
   const { t } = useLanguage();
@@ -38,6 +193,20 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
     queryKey: ['market-prices'],
     queryFn: fetchMarketPrices,
     enabled: !!user,
+  });
+
+  const { data: usdaData, isLoading: usdaLoading } = useQuery<UsdaBenchmarkResult | null>({
+    queryKey: ['farmer-usda'],
+    queryFn: () => fetchUsdaBenchmark('Maize'),
+    enabled: !!user,
+    staleTime: 12 * 60 * 60 * 1000,
+  });
+
+  const { data: ndviData, isLoading: ndviLoading, isError: ndviError } = useQuery({
+    queryKey: ['farmer-vegetation'],
+    queryFn: () => fetchNDVITimeSeries(-1.2863, 36.8172, 14),
+    enabled: !!user,
+    staleTime: 6 * 60 * 60 * 1000,
   });
 
   if (statsLoading) {
@@ -162,6 +331,12 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
           </div>
           <MessageSquare className="absolute -bottom-8 -right-8 w-48 h-48 text-white/10 group-hover:rotate-12 transition-transform duration-700" />
         </div>
+      </div>
+
+      {/* Row 2 — Vegetation Health + USDA Benchmarks */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {renderVegetationCard(ndviData, ndviLoading, ndviError)}
+        {renderUsdaCard(usdaData, usdaLoading)}
       </div>
     </div>
   );

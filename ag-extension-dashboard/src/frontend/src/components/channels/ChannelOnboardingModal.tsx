@@ -363,7 +363,7 @@ const WhatsAppTab: React.FC<WhatsAppTabProps> = ({
         </div>
         <code className="text-xs text-emerald-400 font-mono block select-all break-all">{webhookUrl}</code>
         <div className="text-xxs text-slate-400 pt-1">
-          Verify Token: <span className="font-mono text-emerald-300 font-bold">{whatsappForm.webhookVerifyToken}</span>
+          Verify Token: <span className="font-mono text-emerald-300 font-bold">{whatsappForm.webhookVerifyToken || '(set in environment)'}</span>
         </div>
       </div>
 
@@ -659,7 +659,7 @@ function extractWhatsappForm(data: ChannelConfigsMap) {
     phoneNumber: wa.config.phoneNumber || '+14155238886',
     metaPhoneNumberId: wa.config.metaPhoneNumberId || '',
     metaAccessToken: wa.config.metaAccessToken || '',
-    webhookVerifyToken: wa.config.webhookVerifyToken || 'ag_extension_verify_2026',
+    webhookVerifyToken: wa.config.webhookVerifyToken || '',
   };
 }
 
@@ -706,7 +706,7 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
     phoneNumber: '+14155238886',
     metaPhoneNumberId: '',
     metaAccessToken: '',
-    webhookVerifyToken: 'ag_extension_verify_2026',
+    webhookVerifyToken: '',
   });
 
   const [telegramForm, setTelegramForm] = useState({

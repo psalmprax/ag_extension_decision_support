@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { logger } from '@/utils/logger';
+import { rateLimitedFetch } from './externalApiGuard';
 
 /**
  * NASA POWER API — Prediction of Worldwide Energy Resources
@@ -59,50 +60,46 @@ export class NasaPowerService {
     const startRaw = startDate.replace(/-/g, '');
     const endRaw = endDate.replace(/-/g, '');
     const params = parameters.join(',');
+    const cacheKey = `power:${lat.toFixed(2)}:${lng.toFixed(2)}:${startRaw}:${endRaw}:${params}`;
 
     try {
+      return await rateLimitedFetch<DailyPoint[]>('nasaPower', cacheKey, async () => {
       const url = `${POWER_BASE}?parameters=${params}&community=${COMMUNITY}&longitude=${lng}&latitude=${lat}&start=${startRaw}&end=${endRaw}&format=JSON`;
       const response = await axios.get<PowerResponse>(url, { timeout: 15000 });
-
-      const parameterData = response.data?.properties?.parameter;
-      if (!parameterData) {
-        logger.warn('NASA POWER returned no parameter data', { lat, lng });
-        return [];
-      }
-
-      // POWER returns { parameter: { T2M: { "20250101": 24.5, ... }, PRECTOTCORR: { ... } } }
-      // We need to pivot to { date, T2M, PRECTOTCORR, ... }
-      const dateSet = new Set<string>();
-      for (const paramData of Object.values(parameterData)) {
-        for (const dateStr of Object.keys(paramData)) {
-          dateSet.add(dateStr);
-        }
-      }
-
-      const sortedDates = Array.from(dateSet).sort();
-      const result: DailyPoint[] = [];
-
-      for (const dateStr of sortedDates) {
-        // Convert YYYYMMDD → YYYY-MM-DD
-        const readable = `${dateStr.slice(0, 4)}-${dateStr.slice(4, 6)}-${dateStr.slice(6, 8)}`;
-        const row: DailyPoint = { date: readable };
-
-        for (const param of parameters) {
-          const val = parameterData[param]?.[dateStr];
-          if (typeof val === 'number' && !isNaN(val)) {
-            row[param] = Math.round(val * 100) / 100;
-          }
-        }
-
-        result.push(row);
-      }
-
+      const result = this.parsePowerResponse(response.data, parameters);
       logger.info(`NASA POWER: ${result.length} days fetched for (${lat}, ${lng})`);
       return result;
+      });
     } catch (error) {
       logger.error(`NASA POWER fetch failed for (${lat}, ${lng}): ${error instanceof Error ? error.message : 'Unknown error'}`);
       return [];
     }
+  }
+
+  private static parsePowerResponse(response: PowerResponse, parameters: PowerParameter[]): DailyPoint[] {
+    const parameterData = response.properties?.parameter;
+    if (!parameterData) return [];
+
+    const dateSet = new Set<string>();
+    for (const paramData of Object.values(parameterData)) {
+      for (const dateStr of Object.keys(paramData)) {
+        dateSet.add(dateStr);
+      }
+    }
+
+    const sortedDates = Array.from(dateSet).sort();
+    const result: DailyPoint[] = [];
+
+    for (const dateStr of sortedDates) {
+      const readable = `${dateStr.slice(0, 4)}-${dateStr.slice(4, 6)}-${dateStr.slice(6, 8)}`;
+      const row: DailyPoint = { date: readable };
+      for (const param of parameters) {
+        const val = parameterData[param]?.[dateStr];
+        if (typeof val === 'number' && !isNaN(val)) row[param] = Math.round(val * 100) / 100;
+      }
+      result.push(row);
+    }
+    return result;
   }
 
   /**

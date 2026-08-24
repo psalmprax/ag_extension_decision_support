@@ -172,7 +172,7 @@ async function buildDefaultChannelConfigs(tenantId: string): Promise<Record<stri
                 phoneNumber: process.env.TWILIO_WHATSAPP_NUMBER || '+14155238886',
                 metaPhoneNumberId: maskSecret(process.env.META_PHONE_NUMBER_ID),
                 metaAccessToken: maskSecret(process.env.META_ACCESS_TOKEN),
-                webhookVerifyToken: 'ag_extension_verify_2026',
+                webhookVerifyToken: process.env.META_WEBHOOK_VERIFY_TOKEN ? '••••configured••••' : '(not set)',
             },
             webhookUrl: `${baseUrl}/api/whatsapp/inbound`,
         },

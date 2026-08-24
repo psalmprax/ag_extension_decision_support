@@ -21,6 +21,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useRetryWithBackoff } from '@/hooks/useRetryWithBackoff';
 import { fetchFarmers } from '@/api/farmerService';
 import { LiveActivityStream } from '@/components/LiveActivityStream';
+import { VegetationHealthCard } from '@/components/VegetationHealthCard';
 
 const REGION_MAP_MAX_RETRIES = 3;
 const REGION_MAP_RETRY_BASE_DELAY_MS = 800;
@@ -117,36 +118,71 @@ const DashboardStats: React.FC<{
   );
 };
 
-const ActivePulseCard: React.FC<{ cardClass: string }> = ({ cardClass }) => (
-  <div className={`${cardClass} p-4 sm:p-6`}>
-    <div className="flex items-center gap-3 mb-4 sm:mb-6">
-      <div className="w-2 h-2 bg-primary-400 rounded-full animate-ping"></div>
-      <h3 className="text-xs sm:text-sm font-headline font-bold text-gray-900 dark:text-white uppercase tracking-widest">
-        Active Pulse
-      </h3>
-    </div>
-    <div className="space-y-3 sm:space-y-4">
-      {[
-        { label: 'Sensor Node 04', status: 'Optimal', time: '2m ago' },
-        { label: 'Drone Survey', status: 'In Progress', time: 'Active' },
-        { label: 'Satellite Sync', status: 'Complete', time: '1h ago' },
-      ].map((item, i) => (
-        <div
-          key={i}
-          className="flex justify-between items-center border-b border-white/5 pb-2.5 sm:pb-3 last:border-0 last:pb-0"
-        >
-          <div>
-            <p className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-tight">
-              {item.label}
-            </p>
-            <p className="text-xxs text-slate-500">{item.time}</p>
+const ActivePulseCard: React.FC<{ cardClass: string; isLoading: boolean }> = ({ cardClass, isLoading }) => {
+  const { data: health, isLoading: hl } = useQuery({
+    queryKey: ['active-pulse-health'],
+    queryFn: async () => {
+      const { data } = await import('@/api/client').then(m => m.default.get('/health'));
+      return data;
+    },
+    enabled: !!localStorage.getItem('token'),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+
+  const showLoading = isLoading || hl;
+  const dbConnected = health?.services?.database === 'connected';
+  const cacheConnected = health?.services?.cache === 'connected';
+  const uptime = health?.uptime ? formatPulseUptime(health.uptime) : null;
+
+  return (
+    <div className={`${cardClass} p-4 sm:p-6`}>
+      <div className="flex items-center gap-3 mb-4 sm:mb-6">
+        <div className={`w-2 h-2 rounded-full animate-ping ${health?.status === 'healthy' ? 'bg-emerald-400' : 'bg-amber-400'}`}></div>
+        <h3 className="text-xs sm:text-sm font-headline font-bold text-gray-900 dark:text-white uppercase tracking-widest">
+          Active Pulse
+        </h3>
+      </div>
+      <div className="space-y-3 sm:space-y-4">
+        {showLoading ? (
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="w-5 h-5 animate-spin text-primary-400" />
           </div>
-          <span className="text-xxs font-black text-primary-400 uppercase">{item.status}</span>
-        </div>
-      ))}
+        ) : (
+          <>
+            {[
+              { label: 'Database', status: dbConnected ? 'Connected' : 'Disconnected', ok: dbConnected },
+              { label: 'Redis Cache', status: cacheConnected ? 'Connected' : 'Disconnected', ok: cacheConnected },
+              { label: 'Uptime', status: uptime || 'Unknown', ok: !!uptime },
+            ].map((item, i) => (
+              <div
+                key={i}
+                className="flex justify-between items-center border-b border-white/5 pb-2.5 sm:pb-3 last:border-0 last:pb-0"
+              >
+                <div>
+                  <p className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-tight">
+                    {item.label}
+                  </p>
+                  <p className="text-xxs text-slate-500">{health?.environment || ''}</p>
+                </div>
+                <span className={`text-xxs font-black uppercase ${item.ok ? 'text-emerald-400' : 'text-amber-400'}`}>{item.status}</span>
+              </div>
+            ))}
+          </>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
+
+function formatPulseUptime(seconds: number): string {
+  const d = Math.floor(seconds / 86400);
+  const h = Math.floor((seconds % 86400) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (d > 0) return `${d}d ${h}h ${m}m`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
 
 const SupportEfficiencyCard: React.FC<{
   performanceData?: { metrics?: { resolutionRate?: number; satisfactionScore?: number } };
@@ -594,7 +630,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
         <div className="space-y-4 sm:space-y-6">
           <SupportEfficiencyCard performanceData={performanceData} t={t} cardClass={cardClass} />
-          <ActivePulseCard cardClass={cardClass} />
+          <ActivePulseCard cardClass={cardClass} isLoading={isLoading} />
+          <VegetationHealthCard cardClass={cardClass} />
         </div>
       </div>
 

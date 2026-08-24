@@ -16,10 +16,13 @@ import {
   Calendar,
   Mic,
   Camera,
+  Loader2,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useLanguage } from '@/lib/LanguageContext';
 import { JourneyBreadcrumbs, JourneyStep } from './JourneyBreadcrumbs';
 import { InlineVisitBookingCard } from './InlineVisitBookingCard';
+import apiClient from '@/api/client';
 
 export interface ActivityItem {
   id: string;
@@ -136,7 +139,34 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
   const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
   const [showBookingId, setShowBookingId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
+  const [sendingSms, setSendingSms] = useState(false);
   const [activeVideoCall, setActiveVideoCall] = useState<{ farmerName: string; phone: string; issue: string } | null>(null);
+
+  // ── TODO(F1): SAMPLE_ACTIVITIES are hardcoded placeholders.
+  // The live intelligence stream needs a backend triage endpoint (WebSocket
+  // or polling) that consumes real USSD/SMS/App events from Africa's Talking,
+  // Twilio, or in-app telemetry. Until that endpoint exists the stream renders
+  // pre-authored sample data so the UI / claim / reply flow is testable.
+  // See: routes/sms.ts + routes/channels.ts for the SMS infrastructure that
+  // already exists — the triage aggregation layer is the missing piece.
+
+  const handleSendSms = async (phone: string, message: string) => {
+    if (!message.trim() || sendingSms) return;
+    setSendingSms(true);
+    try {
+      await apiClient.post('/sms/send', {
+        phoneNumbers: [phone],
+        message: message.trim(),
+      });
+      toast.success(`SMS sent to ${phone}`);
+      setReplyText('');
+      setActiveReplyId(null);
+    } catch {
+      toast.error('Failed to send SMS. Please try again.');
+    } finally {
+      setSendingSms(false);
+    }
+  };
 
   const handleClaim = (id: string) => {
     setActivities(prev =>
@@ -460,16 +490,12 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
                       className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400"
                     />
                     <button
-                      onClick={() => {
-                        if (replyText.trim()) {
-                          setReplyText('');
-                          setActiveReplyId(null);
-                        }
-                      }}
-                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1"
+                      disabled={sendingSms}
+                      onClick={() => handleSendSms(activity.phone, replyText)}
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-lg text-xs font-bold flex items-center gap-1"
                     >
-                      <Send className="w-3 h-3" />
-                      Send SMS
+                      {sendingSms ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                      {sendingSms ? 'Sending...' : 'Send SMS'}
                     </button>
                   </div>
                 </motion.div>
@@ -511,13 +537,13 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
 
               {/* Simulated Camera Video View */}
               <div className="relative h-56 bg-slate-900 rounded-xl overflow-hidden border border-slate-800 flex items-center justify-center">
-                <div className="absolute top-3 left-3 bg-rose-500/20 text-rose-300 border border-rose-500/40 px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1">
-                  <Radio className="w-2.5 h-2.5 animate-pulse text-rose-400" />
-                  LIVE ENCRYPTED WebRTC
+                <div className="absolute top-3 left-3 bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1">
+                  <Radio className="w-2.5 h-2.5 animate-pulse text-amber-400" />
+                  DEMO — WebRTC not connected
                 </div>
                 <div className="text-center space-y-2">
                   <Camera className="w-10 h-10 text-emerald-400 animate-pulse mx-auto opacity-80" />
-                  <p className="text-xs text-slate-300 font-medium">Farmer Camera Feed (Live Inspection)</p>
+                  <p className="text-xs text-slate-300 font-medium">Farmer Camera Feed (Tele-Agronomy Simulation)</p>
                   <span className="text-[10px] text-slate-500 font-mono">Case: {activeVideoCall.issue}</span>
                 </div>
               </div>

@@ -5,7 +5,8 @@ import { priorityService } from '@/services/priorityService';
 import { getPrisma } from '@/services/prismaService';
 import { logger } from '@/utils/logger';
 import { getMapData } from '@/services/mapService';
-import { marketPriceService } from '@/services/marketPriceService';
+import { marketPriceService, resolveUserAreaCode } from '@/services/marketPriceService';
+import { getPriceHistory } from '@/services/priceHistoryService';
 import { authorize, AuthRequest } from '@/middleware/authorize';
 import { validate } from '@/middleware/validate';
 import { soilDataQuerySchema } from '@/utils/schemas';
@@ -133,6 +134,19 @@ router.get('/map', async (_req: Request, res: Response) => {
         res.json({ success: true, data: mapData });
     } catch (error) {
         safeError(res, 500, 'Failed to fetch map data');
+    }
+});
+
+// Get 30-day local price history aggregated from Redis snapshots
+router.get('/prices/history', async (req: AuthRequest, res: Response) => {
+    try {
+        const areaCode = await resolveUserAreaCode(req.user?.userId);
+        const days = Math.min(Math.max(parseInt(req.query.days as string, 10) || 30, 7), 90);
+        const history = await getPriceHistory(areaCode, days);
+        res.json({ success: true, data: history, areaCode });
+    } catch (error) {
+        logger.error('Price history route error:', error);
+        safeError(res, 500, 'Failed to fetch price history');
     }
 });
 

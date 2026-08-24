@@ -13,6 +13,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'rec
 import { useLanguage } from '@/lib/LanguageContext';
 import { ChartTooltip } from '@/components/charts/ChartTooltip';
 import { chartTick } from '@/components/charts/chartConfig';
+import { MarketPriceTrendCard } from '@/components/MarketPriceTrendCard';
 
 interface AnalyticsPageProps {
   performanceData:
@@ -158,6 +159,9 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData })
               </div>
             </div>
           </div>
+
+          {/* ── Market Prices Full-Width Trend Card ── */}
+          <MarketPriceTrendCard />
 
           {/* ── Activity Timeline Chart Card ── */}
           <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-2xl space-y-6">

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { logger } from '@/utils/logger';
+import { rateLimitedFetch } from './externalApiGuard';
 
 /**
  * USDA Foreign Agricultural Service — Production, Supply and Distribution (PSD) API
@@ -82,20 +83,20 @@ export class UsdaMarketService {
       return [];
     }
 
+    const cacheKey = `country:${iso}:${cc}`;
     try {
-      // PSD endpoint: /commodities/{code}/country/{iso}
-      const response = await axios.get<CommodityRecord[]>(
-        `${USDA_PSD_BASE}/commodities/${cc}/country/${iso}`,
-        { timeout: 10000 },
-      );
-
-      if (!Array.isArray(response.data)) {
-        logger.warn(`USDA PSD returned non-array for ${crop}/${country}`);
-        return [];
-      }
-
-      logger.info(`USDA PSD: ${response.data.length} records for ${crop} in ${country}`);
-      return response.data.filter(r => r.value != null && !isNaN(Number(r.value)));
+      return await rateLimitedFetch<CommodityRecord[]>('usdaPsd', cacheKey, async () => {
+        const response = await axios.get<CommodityRecord[]>(
+          `${USDA_PSD_BASE}/commodities/${cc}/country/${iso}`,
+          { timeout: 10000 },
+        );
+        if (!Array.isArray(response.data)) {
+          logger.warn(`USDA PSD returned non-array for ${crop}/${country}`);
+          return [];
+        }
+        logger.info(`USDA PSD: ${response.data.length} records for ${crop} in ${country}`);
+        return response.data.filter(r => r.value != null && !isNaN(Number(r.value)));
+      });
     } catch (error) {
       logger.warn(`USDA PSD fetch failed for ${crop}/${country}: ${error instanceof Error ? error.message : 'Unknown error'}`);
       return [];
@@ -112,14 +113,16 @@ export class UsdaMarketService {
       return [];
     }
 
+    const cacheKey = `world:${cc}`;
     try {
-      const response = await axios.get<CommodityRecord[]>(
-        `${USDA_PSD_BASE}/commodities/${cc}/world`,
-        { timeout: 10000 },
-      );
-
-      if (!Array.isArray(response.data)) return [];
-      return response.data.filter(r => r.value != null && !isNaN(Number(r.value)));
+      return await rateLimitedFetch<CommodityRecord[]>('usdaPsd', cacheKey, async () => {
+        const response = await axios.get<CommodityRecord[]>(
+          `${USDA_PSD_BASE}/commodities/${cc}/world`,
+          { timeout: 10000 },
+        );
+        if (!Array.isArray(response.data)) return [];
+        return response.data.filter(r => r.value != null && !isNaN(Number(r.value)));
+      });
     } catch (error) {
       logger.warn(`USDA PSD world benchmark failed for ${crop}: ${error instanceof Error ? error.message : 'Unknown error'}`);
       return [];
