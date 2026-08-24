@@ -2,6 +2,47 @@ import { logger } from '@/utils/logger';
 import { cacheGet, cacheSet } from '@/services/cacheService';
 import { ASSET_LIBRARY } from '@/services/aiProvider/assetLibrary';
 
+/**
+ * Block list of hostnames, IPs, and patterns that must never be contacted
+ * from server-side fetches — cloud metadata endpoints, internal services,
+ * and loopback addresses.
+ */
+const SSRF_BLOCKED_HOSTS = [
+    '169.254.169.254',       // AWS / GCP / Azure cloud metadata
+    'metadata.google.internal',
+    'metadata',               // link-local
+    'localhost',
+    '127.0.0.1',
+    '::1',
+    '0.0.0.0',
+    '[::]',
+];
+
+const SSRF_BLOCKED_PREFIXES = ['10.', '172.16.', '172.17.', '172.18.', '172.19.', '172.20.',
+    '172.21.', '172.22.', '172.23.', '172.24.', '172.25.', '172.26.', '172.27.',
+    '172.28.', '172.29.', '172.30.', '172.31.', '192.168.'];
+
+function isSsrfTarget(hostname: string): boolean {
+    const lower = hostname.toLowerCase();
+    if (SSRF_BLOCKED_HOSTS.includes(lower)) return true;
+    for (const prefix of SSRF_BLOCKED_PREFIXES) {
+        if (lower.startsWith(prefix)) return true;
+    }
+    return false;
+}
+
+function ssrfSafeUrl(rawUrl: string): URL | null {
+    let parsed: URL;
+    try {
+        parsed = new URL(rawUrl);
+    } catch {
+        return null;
+    }
+    if (!['http:', 'https:'].includes(parsed.protocol)) return null;
+    if (isSsrfTarget(parsed.hostname)) return null;
+    return parsed;
+}
+
 export interface ValidationResult {
   isValid: boolean;
   statusCode?: number;
@@ -27,59 +68,54 @@ export class AssetValidationService {
   private static readonly CACHE_TTL = 3600; // 1 hour
   private static readonly MAX_RETRIES = 2;
 
-  /**
-   * Validates if a URL is accessible and returns proper HTTP status
-   */
+  /** Validates if a URL is accessible and returns proper HTTP status. */
   static async validateUrl(url: string): Promise<ValidationResult> {
-    const cacheKey = `url_validation:${url}`;
-
-    // Check cache first
-    const cached = await cacheGet(cacheKey);
-    if (cached) {
-      const result = JSON.parse(cached);
-      // If cached result is less than 30 minutes old, use it
-      if (result.lastChecked && Date.now() - new Date(result.lastChecked).getTime() < 30 * 60 * 1000) {
-        return result;
-      }
+    const safeUrl = ssrfSafeUrl(url);
+    if (!safeUrl) {
+      return { isValid: false, lastChecked: new Date().toISOString(), error: 'URL rejected by SSRF guard' };
     }
 
-    const result: ValidationResult = {
-      isValid: false,
-      lastChecked: new Date().toISOString()
-    };
+    const cached = await this.getCachedResult(url);
+    if (cached) return cached;
+
+    return this.fetchWithRetries(url, safeUrl);
+  }
+
+  private static async getCachedResult(url: string): Promise<ValidationResult | null> {
+    const cacheKey = `url_validation:${url}`;
+    const cached = await cacheGet(cacheKey);
+    if (!cached) return null;
+    const result = JSON.parse(cached);
+    if (result.lastChecked && Date.now() - new Date(result.lastChecked).getTime() < 30 * 60 * 1000) {
+      return result;
+    }
+    return null;
+  }
+
+  private static async fetchWithRetries(url: string, safeUrl: URL): Promise<ValidationResult> {
+    const cacheKey = `url_validation:${url}`;
+    const result: ValidationResult = { isValid: false, lastChecked: new Date().toISOString() };
 
     for (let attempt = 0; attempt <= this.MAX_RETRIES; attempt++) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-        const response = await fetch(url, {
-          method: 'HEAD', // Use HEAD to avoid downloading full content
-          signal: controller.signal,
-          headers: {
-            'User-Agent': 'ALFA-Agricultural-Assistant/1.0'
-          }
+        const response = await fetch(safeUrl, {
+          method: 'HEAD', signal: controller.signal,
+          headers: { 'User-Agent': 'ALFA-Agricultural-Assistant/1.0' },
         });
 
         clearTimeout(timeoutId);
-
         result.isValid = response.ok;
         result.statusCode = response.status;
         result.contentType = response.headers.get('content-type') || undefined;
-
-        // Cache successful results for longer
-        if (response.ok) {
-          await cacheSet(cacheKey, JSON.stringify(result), this.CACHE_TTL);
-        }
-
+        if (response.ok) await cacheSet(cacheKey, JSON.stringify(result), this.CACHE_TTL);
         break;
       } catch (error) {
         result.error = `Attempt ${attempt + 1}: ${(error as Error).message}`;
-
         if (attempt === this.MAX_RETRIES) {
-          result.isValid = false;
-          // Cache failed results for shorter time
-          await cacheSet(cacheKey, JSON.stringify(result), 300); // 5 minutes
+          await cacheSet(cacheKey, JSON.stringify(result), 300);
         }
       }
     }

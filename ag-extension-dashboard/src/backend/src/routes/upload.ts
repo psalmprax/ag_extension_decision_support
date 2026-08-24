@@ -7,13 +7,61 @@ import { query } from '@/services/databaseService';
 import { getFarmerForPrincipal } from '@/services/dataGovernanceService';
 import { saveUpload, readStoredUpload, MAX_UPLOAD_BYTES } from '@/services/uploadService';
 
+/**
+ * Verify file magic bytes against allowed MIME types.
+ *
+ * MIME alone is client-controlled — a file named .jpg could contain an executable.
+ * This checks the leading bytes of the buffer to confirm the real type before
+ * the file reaches storage or AI pipelines.
+ */
+function verifyMagicBytes(buffer: Buffer, declaredMime: string): boolean {
+    if (buffer.length < 4) return false;
+    const head = buffer.slice(0, 12);
+    return !isBinaryExecutable(head) && matchesDeclaredType(head, buffer, declaredMime);
+}
+
+const EXECUTABLE_SIGNATURES: readonly number[][] = [
+    [0x7f, 0x45, 0x4c, 0x46], // ELF
+    [0x4d, 0x5a],             // MZ (PE / DOS)
+    [0x23, 0x21],             // #! shebang
+    [0xfe, 0xed, 0xfa],       // Mach-O 32-bit
+    [0xce, 0xfa, 0xed],       // Mach-O 64-bit
+    [0xcf, 0xfa, 0xed],       // Mach-O 64-bit (reverse)
+];
+
+function isBinaryExecutable(head: Buffer): boolean {
+    for (const sig of EXECUTABLE_SIGNATURES) {
+        if (sig.every((b, i) => head[i] === b)) return true;
+    }
+    return false;
+}
+
+function matchesDeclaredType(head: Buffer, fullBuf: Buffer, mime: string): boolean {
+    if (mime === 'image/jpeg') return head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff;
+    if (mime === 'image/png')  return head[0] === 0x89 && head[1] === 0x50 && head[2] === 0x4e && head[3] === 0x47;
+    if (mime === 'image/gif')  return head[0] === 0x47 && head[1] === 0x49 && head[2] === 0x46 && head[3] === 0x38;
+    if (mime === 'image/webp') {
+        return head[0] === 0x52 && head[1] === 0x49 && head[2] === 0x46 && head[3] === 0x46
+            && fullBuf[8] === 0x57 && fullBuf[9] === 0x45 && fullBuf[10] === 0x42 && fullBuf[11] === 0x50;
+    }
+    if (mime === 'application/pdf') return head[0] === 0x25 && head[1] === 0x50 && head[2] === 0x44 && head[3] === 0x46;
+    return false;
+}
+
 const router = Router();
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: MAX_UPLOAD_BYTES, files: 5 },
   fileFilter: (_req, file, callback) => {
     const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
-    callback(null, allowed.includes(file.mimetype));
+    if (!allowed.includes(file.mimetype)) {
+      return callback(new Error('Unsupported file type'));
+    }
+    // Verify magic bytes match the declared MIME
+    if (!verifyMagicBytes(file.buffer, file.mimetype)) {
+      return callback(new Error('File content does not match declared type'));
+    }
+    callback(null, true);
   },
 });
 

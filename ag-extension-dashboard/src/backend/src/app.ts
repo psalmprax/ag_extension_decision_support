@@ -81,6 +81,7 @@ app.use(helmet({
             "img-src": ["'self'", "data:", "https://images.unsplash.com", "https://*.ytimg.com"],
             "style-src": ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://*.openstreetmap.org", "https://fonts.googleapis.com"],
             "font-src": ["'self'", "data:", "https://unpkg.com", "https://fonts.gstatic.com"],
+            "frame-ancestors": ["'self'"],
             "frame-src": ["'self'", "https://www.youtube.com", "https://www.youtube-nocookie.com"],
             "connect-src": ["'self'", "http://localhost:*", "http://127.0.0.1:*", "ws://localhost:*", "ws://127.0.0.1:*", "https://api.openai.com", "https://*.azure.com", "https://*.google.com"],
         },
