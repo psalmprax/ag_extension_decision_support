@@ -132,11 +132,12 @@ describe('SMS Route — Mapper-before-response: mapSmsHistoryRows', () => {
             .set('Authorization', `Bearer ${officerToken}`);
 
         expect(mockQuery).toHaveBeenCalledTimes(1);
-        // The SQL should include the farmer_id filter and the param should be passed
+        // The SQL should include the farmer_id filter. Role scoping param
+        // (officer userId) is injected first, then farmerId.
         const call = mockQuery.mock.calls[0];
         const sql = call[0] as string;
         const params = call[1] as unknown[];
         expect(sql).toContain('farmer_id');
-        expect(params[0]).toBe('farm-uuid-1');
+        expect(params[1]).toBe('farm-uuid-1');
     });
 });

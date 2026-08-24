@@ -16,8 +16,6 @@ import {
     ReasoningResult,
     ImageAnalysisOptions,
     ImageAnalysisResult,
-    VideoAnalysisOptions,
-    VideoAnalysisResult,
 } from '../types';
 import { logger } from '@/utils/logger';
 import { config } from '@/config';
@@ -216,11 +214,4 @@ export class FreebuffProvider extends BaseAIProvider {
         throw new Error('Freebuff does not support image analysis');
     }
 
-    async analyzeVideo(
-        _videoData: Buffer,
-        _prompt?: string,
-        _options?: VideoAnalysisOptions
-    ): Promise<VideoAnalysisResult> {
-        throw new Error('Freebuff does not support video analysis');
-    }
 }

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { z } from 'zod';
 import { Tool } from './types';
-import { WeatherService } from '@/services/weatherService';
+import { WeatherData, WeatherService } from '@/services/weatherService';
 
 const cropYieldForecastSchema = z.object({
   crop: z.string().describe('Crop type (e.g., maize, wheat, rice, coffee)'),
@@ -28,21 +28,27 @@ function getCropCoefficients(crop: string) {
   return cropCoefficients[crop.toLowerCase()] || { baseYield: 3.0, weatherFactor: 0.12, growthDays: 120 };
 }
 
-function calculateWeatherScore(weather: Record<string, any> | null, crop: string): number {
-  if (!weather) return 0.5;
+export function calculateWeatherScore(weather: WeatherData | null, crop: string): { score: number; dataStatus: 'complete' | 'partial' | 'unavailable' } {
+  if (!weather) return { score: 0.5, dataStatus: 'unavailable' };
 
-  const temp = weather.temperature || weather.temp;
+  const temp = weather.temperature;
   const humidity = weather.humidity;
-  const rain = weather.forecast?.reduce((sum: number, _d: Record<string, any>) => sum + 0, 0) || 0;
-  
+  const precipitationValues = weather.forecast
+    .map(day => day.precipitationMm)
+    .filter((value): value is number => Number.isFinite(value));
+  const hasPrecipitation = precipitationValues.length === weather.forecast.length && weather.forecast.length > 0;
+  const totalRain = precipitationValues.reduce((sum, value) => sum + value, 0);
+
   const tempOptimal = crop.toLowerCase() === 'rice' ? (temp >= 20 && temp <= 35) : (temp >= 15 && temp <= 30);
   const humidityOptimal = humidity >= 40 && humidity <= 80;
-  const rainAdequate = rain > 0;
+  const rainScore = !hasPrecipitation ? 0.15 : totalRain > 0 ? 0.3 : 0.1;
 
   const tempScore = tempOptimal ? 0.4 : 0.1;
   const humidityScore = humidityOptimal ? 0.3 : 0.1;
-  const rainScore = rainAdequate ? 0.3 : 0.1;
-  return tempScore + humidityScore + rainScore;
+  return {
+    score: tempScore + humidityScore + rainScore,
+    dataStatus: hasPrecipitation ? 'complete' : 'partial',
+  };
 }
 
 export const cropYieldForecastTool: Tool<typeof cropYieldForecastSchema> = {
@@ -54,7 +60,8 @@ export const cropYieldForecastTool: Tool<typeof cropYieldForecastSchema> = {
       const weather = await WeatherService.getByLocation(region);
       
       const cropData = getCropCoefficients(crop);
-      const weatherScore = calculateWeatherScore(weather, crop);
+      const weatherAssessment = calculateWeatherScore(weather, crop);
+      const weatherScore = weatherAssessment.score;
 
       const adjustedYieldPerHectare = cropData.baseYield * (0.5 + weatherScore * cropData.weatherFactor * 5);
       const totalYield = areaHectares ? adjustedYieldPerHectare * areaHectares : adjustedYieldPerHectare;
@@ -70,6 +77,7 @@ export const cropYieldForecastTool: Tool<typeof cropYieldForecastSchema> = {
         areaHectares: areaHectares || null,
         confidence: Math.round(weatherScore * 100),
         weatherScore: Math.round(weatherScore * 100) / 100,
+        weatherDataStatus: weatherAssessment.dataStatus,
         currentGrowthStage: growthStage,
         expectedHarvestDate: expectedHarvestDate || estimateHarvestDate(plantingDate, cropData.growthDays),
         riskFactors: generateRiskFactors(weatherScore, crop, region),

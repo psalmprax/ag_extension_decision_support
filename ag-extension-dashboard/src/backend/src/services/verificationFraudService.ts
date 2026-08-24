@@ -26,8 +26,9 @@ export interface CropLossAuditResult {
   anomalyDetected: boolean;
   anomalyScore: number; // 0 - 100
   reportedLossSeverity: string;
-  satelliteVigorLevel: string;
-  weatherConsistencyScore: number; // 0 - 100
+  evidenceVigorLevel: string;
+  evidenceConsistencyScore: number; // 0 - 100
+  evidenceSource: 'CALLER_OBSERVATION' | 'NO_CANOPY_OBSERVATION';
   flagReason: string | null;
   recommendedAction: 'AUTO_APPROVED' | 'REQUIRES_SUPERVISOR_AUDIT' | 'FLAGGED_HIGH_RISK';
 }
@@ -222,32 +223,48 @@ export async function checkFarmerSpatialConflict(params: {
 }
 
 /**
- * 3. Satellite Remote Sensing & Environmental Crop Loss Audit
- * Cross-references catastrophic crop loss or drought claims against NASA POWER & Sentinel-2 indices.
+ * 3. Crop Loss Evidence Audit
+ * Compares catastrophic crop loss or drought claims with caller-supplied canopy evidence.
  */
 export async function auditCropLossAnomaly(params: {
   farmerLat: number;
   farmerLng: number;
   reportedLossSeverity: 'LOW' | 'MODERATE' | 'SEVERE' | 'TOTAL_FAILURE';
   lossCause?: string;
-  observedCanopyScore?: number; // 0.0 - 1.0 (from drone or satellite NDVI)
+  observedCanopyScore?: number; // 0.0 - 1.0, supplied by an external field or sensor observation
 }): Promise<CropLossAuditResult> {
-  const { reportedLossSeverity, observedCanopyScore = 0.72 } = params;
+  const { reportedLossSeverity, observedCanopyScore } = params;
 
-  // Simulated Sentinel-2 NDVI + NASA moisture correlation model
-  let satelliteVigorLevel = 'High (Healthy)';
-  if (observedCanopyScore < 0.3) satelliteVigorLevel = 'Critical (Brownout)';
-  else if (observedCanopyScore < 0.55) satelliteVigorLevel = 'Moderate Stress';
+  if (observedCanopyScore !== undefined && (!Number.isFinite(observedCanopyScore) || observedCanopyScore < 0 || observedCanopyScore > 1)) {
+    throw new Error('observedCanopyScore must be between 0 and 1');
+  }
 
-  // Conflict detection: Total failure reported but satellite shows high canopy vigor
+  if (observedCanopyScore === undefined) {
+    return {
+      anomalyDetected: false,
+      anomalyScore: 50,
+      reportedLossSeverity,
+      evidenceVigorLevel: 'No canopy observation supplied',
+      evidenceConsistencyScore: 0,
+      evidenceSource: 'NO_CANOPY_OBSERVATION',
+      flagReason: 'No trusted canopy observation was supplied; claim requires manual evidence review.',
+      recommendedAction: 'REQUIRES_SUPERVISOR_AUDIT',
+    };
+  }
+
+  let evidenceVigorLevel = 'High (Observed)';
+  if (observedCanopyScore < 0.3) evidenceVigorLevel = 'Critical Stress (Observed)';
+  else if (observedCanopyScore < 0.55) evidenceVigorLevel = 'Moderate Stress (Observed)';
+
   if ((reportedLossSeverity === 'SEVERE' || reportedLossSeverity === 'TOTAL_FAILURE') && observedCanopyScore > 0.65) {
     return {
       anomalyDetected: true,
       anomalyScore: 88,
       reportedLossSeverity,
-      satelliteVigorLevel,
-      weatherConsistencyScore: 22,
-      flagReason: `Reported ${reportedLossSeverity} loss contradicts Sentinel-2 high canopy vigor (NDVI: ${observedCanopyScore.toFixed(2)}) and healthy moisture models.`,
+      evidenceVigorLevel,
+      evidenceConsistencyScore: 22,
+      evidenceSource: 'CALLER_OBSERVATION',
+      flagReason: `Reported ${reportedLossSeverity} loss conflicts with the supplied high canopy observation (score: ${observedCanopyScore.toFixed(2)}).`,
       recommendedAction: 'FLAGGED_HIGH_RISK',
     };
   }
@@ -257,9 +274,10 @@ export async function auditCropLossAnomaly(params: {
       anomalyDetected: true,
       anomalyScore: 65,
       reportedLossSeverity,
-      satelliteVigorLevel,
-      weatherConsistencyScore: 45,
-      flagReason: 'Reported total loss exceeds satellite stress levels; requires second officer inspection.',
+      evidenceVigorLevel,
+      evidenceConsistencyScore: 45,
+      evidenceSource: 'CALLER_OBSERVATION',
+      flagReason: 'Reported total loss exceeds the supplied canopy stress observation; requires second inspection.',
       recommendedAction: 'REQUIRES_SUPERVISOR_AUDIT',
     };
   }
@@ -268,8 +286,9 @@ export async function auditCropLossAnomaly(params: {
     anomalyDetected: false,
     anomalyScore: 12,
     reportedLossSeverity,
-    satelliteVigorLevel,
-    weatherConsistencyScore: 94,
+    evidenceVigorLevel,
+    evidenceConsistencyScore: 94,
+    evidenceSource: 'CALLER_OBSERVATION',
     flagReason: null,
     recommendedAction: 'AUTO_APPROVED',
   };

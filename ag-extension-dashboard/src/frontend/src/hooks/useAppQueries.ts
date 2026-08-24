@@ -27,12 +27,17 @@ function mapApiFarmerToStoreFarmer(farmer: ApiFarmer): Farmer {
 
 export function resolveEffectiveFarmers(
   queryFarmers: ApiFarmer[],
-  storeFarmers: Farmer[],
-  isDemo: boolean
+  _storeFarmers: Farmer[],
+  isDemo: boolean,
+  userRole?: string
 ): Farmer[] {
-  if (queryFarmers.length > 0) return queryFarmers.map(mapApiFarmerToStoreFarmer);
-  if (storeFarmers.length > 0) return storeFarmers;
-  return isDemo ? DEMO_FARMERS : [];
+  if (isDemo) return DEMO_FARMERS;
+  let result = queryFarmers.map(mapApiFarmerToStoreFarmer);
+  // Client-side role guard: a farmer should only see their own record
+  if (userRole === 'farmer' && result.length > 1) {
+    result = result.slice(0, 1);
+  }
+  return result;
 }
 
 function isDemoQueryEnabled(condition: boolean, hasUser: boolean, isDemo: boolean): boolean {
@@ -69,7 +74,8 @@ export function useAppQueries(activeTab: string, searchQuery: string) {
   const effectiveFarmers = resolveEffectiveFarmers(
     farmersResponse?.data?.farmers || [],
     storeFarmers,
-    isDemo
+    isDemo,
+    user?.role
   );
 
   const { data: visitsResponse, refetch: refetchVisits } = useQuery({

@@ -11,6 +11,7 @@ export interface WeatherData {
         date: string;
         maxTemp: number;
         minTemp: number;
+        precipitationMm?: number;
         condition: string;
     }[];
 }
@@ -90,7 +91,7 @@ export class WeatherService {
                         latitude,
                         longitude,
                         current: 'temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m',
-                        daily: 'temperature_2m_max,temperature_2m_min,weather_code',
+                        daily: 'temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code',
                         timezone: 'auto',
                         forecast_days: 3
                     }
@@ -110,6 +111,9 @@ export class WeatherService {
                     date,
                     maxTemp: Math.round(daily.temperature_2m_max[i]),
                     minTemp: Math.round(daily.temperature_2m_min[i]),
+                    precipitationMm: Number.isFinite(daily.precipitation_sum?.[i])
+                        ? Number(daily.precipitation_sum[i])
+                        : undefined,
                     condition: getCondition(daily.weather_code[i])
                 }))
             };

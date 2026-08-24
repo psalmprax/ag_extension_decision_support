@@ -139,6 +139,10 @@ export interface SatelliteIndex {
   color: string;
   health: string;
   timestamp: string;
+  source: 'sentinel-hub' | 'nasa-gibs';
+  dataStatus: 'live';
+  cloudCover: number | null;
+  resolution: string;
 }
 
 export const fetchSatelliteTelemetry = async (

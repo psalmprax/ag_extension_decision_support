@@ -217,13 +217,36 @@ router.post('/analyze-image', [checkUsageLimit('ai_vision')], async (req: AuthRe
  */
 router.post('/analyze-video', [checkUsageLimit('ai_vision')], async (req: AuthRequest, res: Response) => {
     try {
-        const { video, prompt } = req.body;
+        const { video, prompt, frameInterval, maxFrames } = req.body;
         const userId = req.user!.userId;
 
+        if (typeof video !== 'string' || video.trim().length === 0) {
+            return res.status(400).json({ success: false, error: 'Video data is required as a base64 string.' });
+        }
+
+        const base64Data = video.includes('base64,') ? video.split('base64,')[1] : video;
+        if (!/^[A-Za-z0-9+/]*={0,2}$/.test(base64Data) || base64Data.length % 4 === 1) {
+            return res.status(400).json({ success: false, error: 'Invalid video payload.' });
+        }
+
+        const maxBase64Length = Math.ceil((50 * 1024 * 1024 * 4) / 3);
+        if (base64Data.length > maxBase64Length) {
+            return res.status(413).json({ success: false, error: 'Video exceeds the 50 MB size limit.' });
+        }
+
+        const videoBuffer = Buffer.from(base64Data, 'base64');
+        if (videoBuffer.length === 0) {
+            return res.status(400).json({ success: false, error: 'Invalid video payload.' });
+        }
+
         const result = await AIRouter.routeRequest('video', {
-            videoData: Buffer.from(video, 'base64'),
+            videoData: videoBuffer,
             prompt,
-            options: { temperature: 0.3 }
+            options: {
+                temperature: 0.3,
+                frameInterval: frameInterval === undefined ? undefined : Number(frameInterval),
+                maxFrames: maxFrames === undefined ? undefined : Number(maxFrames),
+            }
         });
 
         await usageService.incrementUsage(userId, 'ai_vision');
@@ -376,11 +399,25 @@ router.get('/status', async (_req: AuthRequest, res: Response) => {
 router.post('/execute', async (req: AuthRequest, res: Response) => {
     try {
         const { agent } = req.body;
-        if (!agent || !agentRegistry.find(a => a.id === agent)) {
+        const config = agentRegistry.find(a => a.id === agent);
+        if (!agent || !config) {
             return res.status(400).json({ success: false, error: 'Unknown agent ID' });
         }
-        
-        // Return success directly, assuming the orchestration is now real-time
+
+        // Verify the agent is actually reachable
+        let reachable = false;
+        try {
+            const healthUrl = agent === 'openclaw' ? 'http://ag-openclaw:8002' : config.url;
+            const healthRes = await fetch(`${healthUrl}/health`, { signal: AbortSignal.timeout(2000) });
+            reachable = healthRes.ok;
+        } catch {
+            reachable = false;
+        }
+
+        if (!reachable) {
+            return res.status(503).json({ success: false, error: `${config.name} is not reachable. The agent service may be offline or not configured.` });
+        }
+
         res.json({ success: true, data: { agent, status: 'running' } });
     } catch (error) {
         logger.error('Failed to execute agent:', error);
@@ -398,10 +435,25 @@ router.post('/execute', async (req: AuthRequest, res: Response) => {
 router.post('/stop/:agentId', async (req: AuthRequest, res: Response) => {
     try {
         const { agentId } = req.params;
-        if (!agentRegistry.find(a => a.id === agentId)) {
+        const config = agentRegistry.find(a => a.id === agentId);
+        if (!config) {
             return res.status(400).json({ success: false, error: 'Unknown agent ID' });
         }
-        
+
+        // Verify the agent is actually reachable
+        let reachable = false;
+        try {
+            const healthUrl = agentId === 'openclaw' ? 'http://ag-openclaw:8002' : config.url;
+            const healthRes = await fetch(`${healthUrl}/health`, { signal: AbortSignal.timeout(2000) });
+            reachable = healthRes.ok;
+        } catch {
+            reachable = false;
+        }
+
+        if (!reachable) {
+            return res.status(503).json({ success: false, error: `${config.name} is not reachable. The agent service may be offline or not configured.` });
+        }
+
         res.json({ success: true, data: { agent: agentId, status: 'idle' } });
     } catch (error) {
         logger.error('Failed to stop agent:', error);

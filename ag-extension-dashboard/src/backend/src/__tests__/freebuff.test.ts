@@ -329,7 +329,7 @@ describe('FreebuffProvider', () => {
         ['classify', () => makeProvider().classify('test', { taxonomy: 'x' })],
         ['analyzeImage', () => makeProvider().analyzeImage('data:image/png;base64,xxx', 'desc')],
         ['analyzeVideo', () => makeProvider().analyzeVideo(Buffer.from('x'), 'desc')],
-    ])('%s throws "Freebuff does not support..."', async (_name, fn) => {
-        await expect((fn as () => Promise<unknown>)()).rejects.toThrow('Freebuff does not support');
+    ])('%s rejects unsupported capabilities explicitly', async (_name, fn) => {
+        await expect((fn as () => Promise<unknown>)()).rejects.toThrow(/does not support/);
     });
 });

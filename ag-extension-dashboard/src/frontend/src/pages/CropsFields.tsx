@@ -414,32 +414,22 @@ export function CropsFields() {
             setFarmers(res.data.farmers);
             setSelectedFarmerId(res.data.farmers[0].id);
           } else {
-            // Fallback demo farmers if backend list is empty
-            const fallbackFarmers: Farmer[] = [
-              {
-                id: 'demo-farmer-1',
-                firstName: 'Emmanuel',
-                lastName: 'Mwangi',
-                region: 'Machakos',
-              },
-              { id: 'demo-farmer-2', firstName: 'Grace', lastName: 'Wanjiku', region: 'Kiambu' },
-            ];
-            setFarmers(fallbackFarmers);
-            setSelectedFarmerId('demo-farmer-1');
+            setFarmers([]);
+            setSelectedFarmerId('');
           }
         } catch (error) {
           console.error('Failed to load farmers:', error);
-          const fallbackFarmers: Farmer[] = [
-            { id: 'demo-farmer-1', firstName: 'Emmanuel', lastName: 'Mwangi', region: 'Machakos' },
-            { id: 'demo-farmer-2', firstName: 'Grace', lastName: 'Wanjiku', region: 'Kiambu' },
-          ];
-          setFarmers(fallbackFarmers);
-          setSelectedFarmerId('demo-farmer-1');
+          setFarmers([]);
+          setSelectedFarmerId('');
+          addNotification({
+            type: 'error',
+            message: 'Farmer records are unavailable. Refresh to retry.',
+          });
         }
       };
       loadFarmersList();
     }
-  }, [isFarmer, isDemo]);
+  }, [addNotification, isFarmer, isDemo]);
 
   // Load fields when selected farmer changes (or on mount if farmer)
   const loadFieldsData = useCallback(async () => {
@@ -461,18 +451,26 @@ export function CropsFields() {
       }
 
       const res = await fetchFields(targetId);
-      if (res.success && res.data && res.data.length > 0) {
-        setFields(res.data);
+      if (res.success) {
+        setFields(res.data || []);
       } else {
-        setFields(buildDemoFields(selectedFarmerId || 'demo-farmer-1', true));
+        setFields([]);
+        addNotification({
+          type: 'error',
+          message: 'Field records are unavailable. Refresh to retry.',
+        });
       }
     } catch (error) {
       console.error('Failed to load fields:', error);
-      setFields(buildDemoFields(selectedFarmerId || 'demo-farmer-1', false));
+      setFields([]);
+      addNotification({
+        type: 'error',
+        message: 'Field records are unavailable. Refresh to retry.',
+      });
     } finally {
       setIsLoading(false);
     }
-  }, [isFarmer, selectedFarmerId]);
+  }, [addNotification, isFarmer, selectedFarmerId]);
 
   useEffect(() => {
     loadFieldsData();

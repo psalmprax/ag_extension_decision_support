@@ -13,6 +13,44 @@ const router = Router();
 
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
+interface FieldUser {
+    userId?: string;
+    role?: string;
+}
+
+async function buildFieldListWhere(
+    prisma: ReturnType<typeof getPrisma>,
+    user: FieldUser | undefined,
+    farmerIdQuery: unknown
+): Promise<Prisma.FieldWhereInput> {
+    const where: Prisma.FieldWhereInput = { isActive: true };
+    const farmerId = farmerIdQuery as string | undefined;
+
+    if (user?.role === 'farmer') {
+        const farmer = await prisma.farmer.findFirst({ where: { userId: user.userId } });
+        if (!farmer) return where; // 403 handled in caller
+        where.farmerId = farmer.id;
+        return where;
+    }
+
+    if (user?.role === 'extension_officer') {
+        const assignedIds = (await prisma.farmer.findMany({
+            where: { assignedOfficerId: user.userId },
+            select: { id: true },
+        })).map(f => f.id);
+        if (farmerId) {
+            where.farmerId = farmerId;
+        } else {
+            where.farmerId = { in: assignedIds };
+        }
+        return where;
+    }
+
+    // admin / regional_manager — no scope
+    if (farmerId) where.farmerId = farmerId;
+    return where;
+}
+
 /**
  * GET /api/fields — list fields. Officers and farmers are auto-filtered by
  * Prisma's `where` clause; admins/managers see everything.
@@ -23,30 +61,36 @@ router.get('/', async (req: Request, res: Response) => {
         const { farmerId } = req.query;
         const limit = Math.min(parseInt((req.query.limit as string) || '100', 10), 500);
         const offset = Math.max(parseInt((req.query.offset as string) || '0', 10), 0);
-        const user = req.user as { userId?: string; role?: string } | undefined;
+        const user = req.user as FieldUser | undefined;
 
-        const where: Prisma.FieldWhereInput = { isActive: true };
+        // Reject malformed farmerId early (validates both UUID shape and length)
+        if (farmerId && !UUID_REGEX.test(String(farmerId))) {
+            return res.json({ success: true, data: [], total: 0 });
+        }
+
+        // Farmer role: enforce auto-assignment to self
         if (user?.role === 'farmer') {
-            const farmer = await prisma.farmer.findFirst({
-                where: { userId: user.userId }
-            });
+            const farmer = await prisma.farmer.findFirst({ where: { userId: user.userId } });
             if (!farmer) {
                 return res.status(403).json({ success: false, error: 'Access denied' });
             }
             if (farmerId && farmerId !== farmer.id) {
                 return res.status(403).json({ success: false, error: 'Access denied' });
             }
-            where.farmerId = farmer.id;
-        } else {
-            if (farmerId) {
-                // Guard against malformed (non-UUID) farmerId — the column is a
-                // UUID FK, so an invalid value would otherwise throw and 500.
-                if (!UUID_REGEX.test(String(farmerId))) {
-                    return res.json({ success: true, data: [], total: 0 });
-                }
-                where.farmerId = farmerId as string;
+        }
+
+        // Officer: if a specific farmerId is requested, validate they own that assignment
+        if (user?.role === 'extension_officer' && farmerId) {
+            const assigned = await prisma.farmer.findFirst({
+                where: { id: farmerId as string, assignedOfficerId: user.userId },
+                select: { id: true },
+            });
+            if (!assigned) {
+                return res.status(403).json({ success: false, error: 'Access denied' });
             }
         }
+
+        const where = await buildFieldListWhere(prisma, user, farmerId);
 
         const [fields, total] = await Promise.all([
             prisma.field.findMany({
@@ -76,9 +120,20 @@ router.get('/:id', async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, error: 'Field id is required' });
         }
         const prisma = getPrisma();
-        const field = await prisma.field.findUnique({ where: { id } });
+        const user = req.user as { userId?: string; role?: string } | undefined;
+        const field = await prisma.field.findUnique({
+            where: { id },
+            include: { farmer: { select: { userId: true, assignedOfficerId: true } } },
+        });
         if (!field) {
             return res.status(404).json({ success: false, error: 'Field not found' });
+        }
+        // Access check: farmer sees own, officer sees assigned, admin/manager see all
+        if (user?.role === 'farmer' && field.farmer.userId !== user.userId) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+        if (user?.role === 'extension_officer' && field.farmer.assignedOfficerId !== user.userId) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
         }
         return res.json({ success: true, data: field });
     } catch (error) {
@@ -303,20 +358,35 @@ router.patch('/:fieldId/cycles/:id', async (req: Request, res: Response) => {
  * GET /api/fields/stats/summary — aggregated counts + area by farmer.
  * Uses raw SQL because pg's ARRAY_AGG / SUM are clearer than the Prisma API here.
  */
-router.get('/stats/summary', async (_req: Request, res: Response) => {
+router.get('/stats/summary', async (req: Request, res: Response) => {
     try {
+        const user = req.user as { userId?: string; role?: string } | undefined;
+        let scopeClause = '';
+        const scopeParams: unknown[] = [];
+
+        if (user?.role === 'farmer') {
+            scopeClause = ' AND farmer_id IN (SELECT id FROM farmers WHERE user_id = $1)';
+            scopeParams.push(user.userId);
+        } else if (user?.role === 'extension_officer') {
+            scopeClause = ' AND farmer_id IN (SELECT id FROM farmers WHERE assigned_officer_id = $1)';
+            scopeParams.push(user.userId);
+        }
+        // admin and regional_manager see all — no scope clause
+
         const { rows } = await query<FieldStatsRow>(
             `SELECT farmer_id,
                     COUNT(*)          AS total_fields,
                     SUM(area_hectares) AS total_size,
                     ARRAY_AGG(DISTINCT soil_type) FILTER (WHERE soil_type IS NOT NULL) AS crop_types
                FROM fields
-              WHERE is_active = true
-              GROUP BY farmer_id`
+              WHERE is_active = true${scopeClause}
+              GROUP BY farmer_id`,
+            scopeParams
         );
 
         const { rows: countRows } = await query<CountRow>(
-            'SELECT COUNT(*) AS count FROM fields WHERE is_active = true'
+            `SELECT COUNT(*) AS count FROM fields WHERE is_active = true${scopeClause}`,
+            scopeParams
         );
 
         const [totalCount] = countRows.map(mapCountRow);

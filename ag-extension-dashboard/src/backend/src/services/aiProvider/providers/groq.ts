@@ -10,8 +10,6 @@ import {
     ClassificationResult,
     ImageAnalysisOptions,
     ImageAnalysisResult,
-    VideoAnalysisOptions,
-    VideoAnalysisResult,
 } from '../types';
 import { REASONING_SYSTEM_PROMPT, extractVisuals } from '../assetLibrary';
 import { config } from '@/config';
@@ -24,7 +22,7 @@ import { Tool } from '../../../tools/types';
 
 export class GroqProvider extends BaseAIProvider {
     readonly provider: AIProviderType = 'groq';
-    readonly capabilities = ['text-generation', 'tool-use', 'embeddings'];
+    readonly capabilities = ['text-generation', 'tool-use', 'embeddings', 'vision'];
     private client: Groq;
 
     constructor() {
@@ -201,10 +199,6 @@ export class GroqProvider extends BaseAIProvider {
             logger.error('Groq classify error:', error);
             return { labels: [{ label: 'general', score: 1.0 }] };
         }
-    }
-
-    async analyzeVideo(_videoData: Buffer, _prompt?: string, _options?: VideoAnalysisOptions): Promise<VideoAnalysisResult> {
-        throw new Error('Video analysis not implemented for Groq provider');
     }
 
     async healthCheck(): Promise<boolean> {

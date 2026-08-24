@@ -26,7 +26,6 @@ import { useAppStore } from '../store/useAppStore';
 import { fetchSMSHistory, sendSMS, sendBulkSMS, translateMessage } from '../api/smsService';
 import { fetchFarmers } from '../api/farmerService';
 import { fetchUsage } from '../api/billingService';
-import { withRealFallback } from '../lib/realFirst';
 import { ChannelOnboardingModal } from '../components/channels/ChannelOnboardingModal';
 import { GoalModeCampaignModal } from '../components/campaigns/GoalModeCampaignModal';
 import toast from 'react-hot-toast';
@@ -751,67 +750,40 @@ export function SMSPage() {
   // Fetch History
   const loadHistory = async () => {
     try {
-      const fallbackHistory = [
-        {
-          id: 'hist-1',
-          phoneNumber: '+123456789',
-          message: 'Hello Farmer!',
-          status: 'sent',
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 'hist-2',
-          phoneNumber: '+987654321',
-          message: 'Heavy rain expected.',
-          status: 'failed',
-          createdAt: new Date().toISOString(),
-        },
-      ];
-
-      const data = await withRealFallback(fetchSMSHistory(), {
-        success: true,
-        data: fallbackHistory,
-      });
-      if (data.success) {
-        setHistory(
-          data.data.map((msg: Record<string, string>) => ({
-            id: msg.id,
-            to: msg.phoneNumber,
-            message: msg.message,
-            status:
-              msg.status === 'sent' ? 'success' : msg.status === 'failed' ? 'failed' : 'pending',
-            timestamp: new Date(msg.createdAt),
-          }))
-        );
-      }
+      const data = await fetchSMSHistory();
+      if (!data.success) throw new Error('SMS history request failed');
+      setHistory(
+        data.data.map(msg => ({
+          id: msg.id,
+          to: msg.recipient_phone,
+          message: msg.message,
+          status: msg.status === 'sent' ? 'success' : msg.status === 'failed' ? 'failed' : 'pending',
+          timestamp: new Date(msg.created_at),
+        }))
+      );
     } catch (err) {
       console.error('Failed to fetch SMS history:', err);
+      setHistory([]);
+      toast.error('SMS history is unavailable');
     }
   };
 
   const loadContacts = async () => {
     setIsLoadingContacts(true);
     try {
-      const fallbackFarmers = [
-        { id: 'f-1', firstName: 'John', lastName: 'Doe', phone: '+123456789' },
-        { id: 'f-2', firstName: 'Jane', lastName: 'Smith', phone: '+987654321' },
-      ];
-
-      const res = await withRealFallback(fetchFarmers(), {
-        success: true,
-        data: { farmers: fallbackFarmers },
-      });
-      if (res.success) {
-        setRecentContacts(
-          res.data.farmers.map((f: Record<string, string>) => ({
-            id: f.id,
-            name: `${f.firstName} ${f.lastName}`,
-            phone: f.phone || '',
-          }))
-        );
-      }
+      const res = await fetchFarmers();
+      if (!res.success) throw new Error('Farmer contacts request failed');
+      setRecentContacts(
+        res.data.farmers.map(f => ({
+          id: f.id,
+          name: `${f.firstName} ${f.lastName}`,
+          phone: f.phone || '',
+        }))
+      );
     } catch (err) {
       console.error('Failed to fetch farmers for SMS contacts:', err);
+      setRecentContacts([]);
+      toast.error('Farmer contacts are unavailable');
     } finally {
       setIsLoadingContacts(false);
     }
@@ -820,8 +792,7 @@ export function SMSPage() {
   const loadQuota = async () => {
     setIsLoadingQuota(true);
     try {
-      const fallbackUsage = { type: 'sms', current: 154, limit: 5000 };
-      const data = await withRealFallback(fetchUsage(), { success: true, data: fallbackUsage });
+      const data = await fetchUsage();
 
       if (data?.success && data?.data) {
         const usageData = data.data;
@@ -837,6 +808,10 @@ export function SMSPage() {
           }));
         }
       }
+    } catch (err) {
+      console.error('Failed to fetch SMS quota:', err);
+      setQuota({ current: 0, limit: 0, sent: 0, failed: 0 });
+      toast.error('SMS quota is unavailable');
     } finally {
       setIsLoadingQuota(false);
     }

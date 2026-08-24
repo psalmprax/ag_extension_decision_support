@@ -21,28 +21,16 @@ interface ExchangeRateResult {
     source: 'live' | 'fallback';
 }
 
-/**
- * Determine local country based on user session context.
- */
 async function getUserCountry(userId?: string): Promise<string> {
     if (!userId) return 'Kenya';
     try {
         const prisma = getPrisma();
-        const user = await prisma.user.findUnique({
-            where: { id: userId }
-        });
-        
-        if (user) {
-            if (user.role === 'farmer') {
-                const farmer = await prisma.farmer.findFirst({
-                    where: { userId: user.id }
-                });
-                if (farmer?.country) {
-                    return farmer.country;
-                }
-            } else if (user.region) {
-                return user.region;
-            }
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (user?.role === 'farmer') {
+            const farmer = await prisma.farmer.findFirst({ where: { userId: user.id } });
+            if (farmer?.country) return farmer.country;
+        } else if (user?.region) {
+            return user.region;
         }
     } catch (err) {
         logger.error(`Error looking up user country details for ${userId}:`, err);
@@ -60,123 +48,79 @@ function getCurrencyForCountry(country: string): string {
         { keys: ['ethiopia', 'et'], currency: 'ETB' },
         { keys: ['india', 'in'], currency: 'INR' },
         { keys: ['brazil', 'br'], currency: 'BRL' },
-        { keys: ['usa', 'united states', 'us'], currency: 'USD' }
+        { keys: ['usa', 'united states', 'us'], currency: 'USD' },
     ];
-
-    const match = mappings.find(m => m.keys.some(k => countryLower.includes(k)));
-    return match ? match.currency : 'KES';
+    const match = mappings.find(mapping => mapping.keys.some(key => countryLower.includes(key)));
+    return match?.currency || 'KES';
 }
 
-/**
- * Fetch live exchange rate from USD to target currency.
- */
 async function fetchExchangeRate(targetCurrency: string): Promise<ExchangeRateResult> {
-    if (targetCurrency === 'USD') return { rate: 1.0, source: 'live' };
+    if (targetCurrency === 'USD') return { rate: 1, source: 'live' };
     try {
-        const rateResponse = await axios.get('https://open.er-api.com/v6/latest/USD', { timeout: 3000 });
-        if (rateResponse.data && rateResponse.data.rates && rateResponse.data.rates[targetCurrency]) {
-            const rate = rateResponse.data.rates[targetCurrency];
+        const response = await axios.get('https://open.er-api.com/v6/latest/USD', { timeout: 3000 });
+        const rate = response.data?.rates?.[targetCurrency];
+        if (typeof rate === 'number' && Number.isFinite(rate)) {
             logger.info(`Live USD/${targetCurrency} exchange rate fetched successfully: ${rate}`);
             return { rate, source: 'live' };
         }
-    } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : 'Unknown error';
-        logger.warn(`Failed to fetch live USD/${targetCurrency} exchange rate (${msg})`);
+    } catch (err: unknown) {
+        logger.warn(`Failed to fetch live USD/${targetCurrency} exchange rate: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
 
-    // Fallback rates if API is offline
-    const fallbacks: Record<string, number> = {
-        NGN: 1500.0,
+    const fallbackRates: Record<string, number> = {
+        NGN: 1500,
         GHS: 14.5,
-        TZS: 2600.0,
-        UGX: 3750.0,
-        ETB: 57.0,
+        TZS: 2600,
+        UGX: 3750,
+        ETB: 57,
         INR: 83.5,
         BRL: 5.5,
-        KES: 129.50
+        KES: 129.5,
     };
-    return { rate: fallbacks[targetCurrency] || 129.50, source: 'fallback' };
+    return { rate: fallbackRates[targetCurrency] || 129.5, source: 'fallback' };
 }
 
-/**
- * Formulate rounding base depending on the scale of the currency.
- */
 function roundPrice(rawPrice: number, targetCurrency: string): number {
-    if (targetCurrency === 'KES' || targetCurrency === 'TZS' || targetCurrency === 'UGX' || targetCurrency === 'NGN') {
-        return Math.round(rawPrice / 50) * 50; // round to nearest 50
-    }
-    if (targetCurrency === 'USD' || targetCurrency === 'GHS' || targetCurrency === 'BRL') {
-        return Math.round(rawPrice * 100) / 100; // round to nearest cent/decimal
-    }
+    if (['KES', 'TZS', 'UGX', 'NGN'].includes(targetCurrency)) return Math.round(rawPrice / 50) * 50;
+    if (['USD', 'GHS', 'BRL'].includes(targetCurrency)) return Math.round(rawPrice * 100) / 100;
     return Math.round(rawPrice);
 }
 
 export const marketPriceService = {
-    /**
-     * Get explicitly labeled market price estimates.
-     * Uses a live USD exchange rate when available, but the commodity baseline remains an estimate
-     * until a verified market-data feed is configured.
-     */
     async getLatestPrices(userId?: string): Promise<MarketPrice[]> {
         try {
-            const prisma = getPrisma();
-
             const country = await getUserCountry(userId);
             const targetCurrency = getCurrencyForCountry(country);
             const exchangeRate = await fetchExchangeRate(targetCurrency);
             const fetchedAt = new Date().toISOString();
-
-            // Base USD prices for agricultural commodities
+            const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
             const basePrices = [
-                { crop: 'White Maize (90kg)', baseUSD: 32.40 },
-                { crop: 'Dry Beans (90kg)', baseUSD: 96.50 },
-                { crop: 'Sorghum (90kg)', baseUSD: 29.30 },
-                { crop: 'Finger Millet (90kg)', baseUSD: 71.00 }
+                { crop: 'White Maize (90kg)', baseUSD: 32.4 },
+                { crop: 'Dry Beans (90kg)', baseUSD: 96.5 },
+                { crop: 'Sorghum (90kg)', baseUSD: 29.3 },
+                { crop: 'Finger Millet (90kg)', baseUSD: 71 },
             ];
 
-            // Clear and dynamically re-seed database prices to match the currency of the active context
-            await prisma.$executeRaw`DELETE FROM market_prices`;
-
-            const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
-
-            for (const item of basePrices) {
-                // Add a small deterministic daily fluctuation based on the day of year (+/- 4%)
-                const fluctuation = 1.0 + Math.sin(dayOfYear + item.baseUSD) * 0.04;
-                const rawPrice = item.baseUSD * exchangeRate.rate * fluctuation;
-                const finalPrice = roundPrice(rawPrice, targetCurrency);
-
-                const pctChange = Math.round((fluctuation - 1.0) * 100);
-                const trend = pctChange > 0 ? `+${pctChange}%` : (pctChange < 0 ? `${pctChange}%` : 'Stable');
-
-                await prisma.$executeRaw`
-                    INSERT INTO market_prices (id, crop, price, trend, updated_at)
-                    VALUES (
-                        gen_random_uuid(), 
-                        ${item.crop}, 
-                        ${`${targetCurrency} ${finalPrice.toLocaleString()}`}, 
-                        ${trend}, 
-                        NOW()
-                    )
-                `;
-            }
-            
-            // Retrieve the newly seeded dynamic prices
-            const prices = await prisma.$queryRaw<MarketPrice[]>`
-                SELECT id, crop, price, trend, updated_at as "updatedAt"
-                FROM market_prices
-                ORDER BY crop ASC
-            `;
-
-            return prices.map(price => ({
-                ...price,
-                source: 'baseline_estimate',
-                dataStatus: 'estimated',
-                fetchedAt,
-                exchangeRateSource: exchangeRate.source,
-            }));
+            return basePrices.map((item, index) => {
+                const fluctuation = 1 + Math.sin(dayOfYear + item.baseUSD) * 0.04;
+                const finalPrice = roundPrice(item.baseUSD * exchangeRate.rate * fluctuation, targetCurrency);
+                const percentageChange = Math.round((fluctuation - 1) * 100);
+                const trend = percentageChange > 0 ? `+${percentageChange}%` : percentageChange < 0 ? `${percentageChange}%` : 'Stable';
+                return {
+                    id: `baseline-${targetCurrency.toLowerCase()}-${index + 1}`,
+                    crop: item.crop,
+                    price: `${targetCurrency} ${finalPrice.toLocaleString()}`,
+                    trend,
+                    updatedAt: new Date(fetchedAt),
+                    source: 'baseline_estimate' as const,
+                    dataStatus: 'estimated' as const,
+                    fetchedAt,
+                    exchangeRateSource: exchangeRate.source,
+                };
+            });
         } catch (error) {
-            logger.error('Failed to fetch/seed dynamic market prices:', error);
+            logger.error('Failed to calculate market price estimates:', error);
             return [];
         }
-    }
+    },
 };

@@ -58,7 +58,7 @@ jest.mock('../services/prismaService', () => {
                     }
                     return Promise.resolve(null);
                 }),
-                findFirst: jest.fn().mockImplementation((args: { where?: { userId?: string } }) => {
+                findFirst: jest.fn().mockImplementation((args: { where?: { userId?: string; id?: string; assignedOfficerId?: string } }) => {
                     if (args.where?.userId === 'farm-1') {
                         return Promise.resolve({
                             id: '11111111-1111-1111-1111-111111111111',
@@ -67,7 +67,24 @@ jest.mock('../services/prismaService', () => {
                             region: 'Central'
                         });
                     }
+                    // Officer ownership check: farmerId belongs to this officer
+                    if (args.where?.id === '11111111-1111-1111-1111-111111111111' && args.where?.assignedOfficerId === 'off-1') {
+                        return Promise.resolve({
+                            id: '11111111-1111-1111-1111-111111111111',
+                            userId: 'farm-1',
+                            assignedOfficerId: 'off-1',
+                            region: 'Central'
+                        });
+                    }
                     return Promise.resolve(null);
+                }),
+                findMany: jest.fn().mockImplementation((args: { where?: { assignedOfficerId?: string } }) => {
+                    if (args.where?.assignedOfficerId === 'off-1') {
+                        return Promise.resolve([{
+                            id: '11111111-1111-1111-1111-111111111111',
+                        }]);
+                    }
+                    return Promise.resolve([]);
                 })
             },
             field: {
@@ -93,7 +110,11 @@ jest.mock('../services/prismaService', () => {
                             soilType: 'clay-loam',
                             soilPh: 6.2,
                             isActive: true,
-                            cropCycles: []
+                            cropCycles: [],
+                            farmer: {
+                                userId: 'farm-1',
+                                assignedOfficerId: 'off-1',
+                            },
                         });
                     }
                     return Promise.resolve(null);

@@ -23,9 +23,11 @@ export const satelliteNDVITool: Tool<typeof satelliteNDVISchema> = {
       const result = {
         location: { latitude, longitude },
         current: current[0] || null,
-        timeSeries: timeSeries.slice(-12),
+        timeSeries: timeSeries.data.slice(-12),
+        timeSeriesStatus: timeSeries.dataStatus,
+        timeSeriesReason: timeSeries.reason,
         imagery,
-        interpretation: interpretNDVI(current[0]?.ndvi, timeSeries),
+        interpretation: interpretNDVI(current[0]?.ndvi, timeSeries.data),
         generatedAt: new Date().toISOString(),
       };
 

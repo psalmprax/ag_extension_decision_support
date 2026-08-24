@@ -6,6 +6,8 @@ export interface SoilProperties {
     sand: number | string;
     silt: number | string;
     organic_carbon_g_kg: number | string;
+    source: 'soilgrids';
+    dataStatus: 'live' | 'unavailable';
 }
 
 /**
@@ -32,13 +34,14 @@ export class SoilGridsService {
         const message = lastError instanceof Error ? lastError.message : String(lastError);
         logger.error(`Error fetching SoilGrids data after retries: ${message}`);
         
-        // Fallback to standard sandy loam soil defaults
         return {
-            ph: 6.2,
-            clay: 15.0,
-            sand: 65.0,
-            silt: 20.0,
-            organic_carbon_g_kg: 18.5
+            ph: 'N/A',
+            clay: 'N/A',
+            sand: 'N/A',
+            silt: 'N/A',
+            organic_carbon_g_kg: 'N/A',
+            source: 'soilgrids',
+            dataStatus: 'unavailable',
         };
     }
 
@@ -64,14 +67,18 @@ export class SoilGridsService {
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 12000); // 12 seconds timeout
 
-            const response = await fetch(url.toString(), {
-                headers: {
-                    'Accept': 'application/json',
-                    'User-Agent': 'ag-extension-dashboard/1.0'
-                },
-                signal: controller.signal
-            });
-            clearTimeout(timeout);
+            let response: Response;
+            try {
+                response = await fetch(url.toString(), {
+                    headers: {
+                        'Accept': 'application/json',
+                        'User-Agent': 'ag-extension-dashboard/1.0'
+                    },
+                    signal: controller.signal
+                });
+            } finally {
+                clearTimeout(timeout);
+            }
 
             if (!response.ok) {
                 throw new Error(`SoilGrids returned HTTP ${response.status}`);
@@ -114,11 +121,13 @@ export class SoilGridsService {
         const socRaw = getMeanValue('soc');
 
         return {
-            ph: phRaw ? Number((phRaw / 10).toFixed(1)) : 'N/A',
-            clay: clayRaw ? Number((clayRaw / 10).toFixed(1)) : 'N/A',
-            sand: sandRaw ? Number((sandRaw / 10).toFixed(1)) : 'N/A',
-            silt: siltRaw ? Number((siltRaw / 10).toFixed(1)) : 'N/A',
-            organic_carbon_g_kg: socRaw ? Number((socRaw / 10).toFixed(1)) : 'N/A'
+            ph: phRaw !== null ? Number((phRaw / 10).toFixed(1)) : 'N/A',
+            clay: clayRaw !== null ? Number((clayRaw / 10).toFixed(1)) : 'N/A',
+            sand: sandRaw !== null ? Number((sandRaw / 10).toFixed(1)) : 'N/A',
+            silt: siltRaw !== null ? Number((siltRaw / 10).toFixed(1)) : 'N/A',
+            organic_carbon_g_kg: socRaw !== null ? Number((socRaw / 10).toFixed(1)) : 'N/A',
+            source: 'soilgrids',
+            dataStatus: 'live',
         };
     }
 }

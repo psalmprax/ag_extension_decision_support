@@ -375,15 +375,12 @@ class AIProcessingService:
             time_period=time_period,
             summary={
                 "analysis": text[:500] + "..." if len(text) > 500 else text,
-                "total_farmers": 150,
-                "avg_yield": "3.2 tons/ha",
-                "weather_impact": "positive"
             },
             recommendations=recommendations[:5],
             risk_level=risk_level,
-            confidence=0.85,
+            confidence=None,
             generated_at=datetime.utcnow().isoformat(),
-            data_sources=["weather_stations", "satellite_data", "market_reports"]
+            data_sources=["ai_interpretation"]
         )
 
     @staticmethod
@@ -476,9 +473,12 @@ class ReportService:
             sections = ["Executive Summary", "Weather Overview", "Crop Status", "Market Prices", "Recommendations"]
 
         report_sections = []
+        fallback_used = False
 
         for section in sections:
-            section_content = await ReportService._generate_section(region, period, section)
+            section_content, is_fallback = await ReportService._generate_section(region, period, section)
+            if is_fallback:
+                fallback_used = True
             report_sections.append({
                 "title": section,
                 "content": section_content
@@ -491,7 +491,8 @@ class ReportService:
             "generated_at": datetime.utcnow().isoformat(),
             "generated_by": "agent-zero",
             "sections": report_sections,
-            "status": "completed"
+            "status": "generated_without_live_data" if fallback_used else "completed",
+            "data_status": "partial" if fallback_used else "live"
         }
 
         # Store in database if available
@@ -499,14 +500,14 @@ class ReportService:
             """INSERT INTO reports
                (type, title, content, status, created_at, updated_at)
                VALUES (%s, %s, %s, %s, NOW(), NOW())""",
-            ("automated", f"{period} Report - {region}", json.dumps(report), "completed")
+            ("automated", f"{period} Report - {region}", json.dumps(report), report["status"])
         )
 
         return report
 
     @staticmethod
-    async def _generate_section(region: str, period: str, section: str) -> str:
-        """Generate content for a specific report section"""
+    async def _generate_section(region: str, period: str, section: str):
+        """Generate content for a specific report section. Returns (content, is_fallback)."""
 
         if async_client:
             try:
@@ -519,25 +520,25 @@ class ReportService:
                     temperature=0.3,
                     max_tokens=1000
                 )
-                return clean_slop(response.choices[0].message.content)
+                return clean_slop(response.choices[0].message.content), False
             except Exception as e:
                 logger.error(f"AI section generation failed: {e}")
 
-        return ReportService._get_fallback_section_content(region, period, section)
+        return ReportService._get_fallback_section_content(region, period, section), True
 
     @staticmethod
     def _get_fallback_section_content(region: str, period: str, section: str) -> str:
-        """Fallback section content when AI is unavailable"""
+        """Fallback section content when AI is unavailable — clearly marked"""
 
         content_map = {
-            "Executive Summary": f"This {period} report covers agricultural activities and conditions in {region}. Key highlights include stable weather patterns and favorable market conditions.",
-            "Weather Overview": f"Weather conditions in {region} during this {period} were generally favorable with adequate rainfall and moderate temperatures.",
-            "Crop Status": f"Crops in {region} are progressing well with most fields showing healthy growth patterns appropriate for this time of year.",
-            "Market Prices": f"Market prices in {region} remain stable with slight increases in cereal crops due to seasonal demand.",
-            "Recommendations": f"Farmers in {region} should continue monitoring weather conditions and prepare for upcoming planting activities."
+            "Executive Summary": f"[UNAVAILABLE] Live data for {region} is currently unavailable. This is a placeholder summary based on regional norms.",
+            "Weather Overview": f"[UNAVAILABLE] Live weather data for {region} is currently unavailable. Seasonal norms suggest moderate conditions.",
+            "Crop Status": f"[UNAVAILABLE] Live crop status for {region} is currently unavailable. Crop progress may vary from seasonal norms.",
+            "Market Prices": f"[UNAVAILABLE] Live market data for {region} is currently unavailable. Check local markets for current prices.",
+            "Recommendations": f"[UNAVAILABLE] Without live data, specific recommendations for {region} cannot be generated. Consult your local extension officer."
         }
 
-        return content_map.get(section, f"Content for {section} in {region} during {period}.")
+        return content_map.get(section, f"[UNAVAILABLE] Content for {section} is unavailable. Please retry when live data is accessible.")
 
 
 # API Endpoints

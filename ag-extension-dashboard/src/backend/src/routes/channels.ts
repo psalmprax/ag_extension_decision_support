@@ -9,6 +9,8 @@ import { telegramService } from '@/services/telegramService';
 import { whatsappService } from '@/services/whatsappService';
 import { smsService } from '@/services/smsService';
 import { onboardingEngine } from '@/services/onboardingEngine';
+import { WeatherService } from '@/services/weatherService';
+import { marketPriceService } from '@/services/marketPriceService';
 import type { TenantChannelConfigRow } from '@/types/rowTypes';
 
 const router = Router();
@@ -32,6 +34,41 @@ function maskSecret(secret?: string): string {
 router.get('/telegram/webhook', (_req: Request, res: Response) => {
     res.json({ status: 'ok', channel: 'telegram', timestamp: new Date().toISOString() });
 });
+
+async function handleTelegramWeather(chatId: string) {
+    try {
+        const weather = await WeatherService.getByLocation('Kenya');
+        const forecastLines = weather.forecast.slice(0, 3).map(f =>
+            `  • ${f.date}: ${f.maxTemp}°C / ${f.minTemp}°C — ${f.condition}`
+        ).join('\n');
+        const temp = weather.temperature ?? weather.temp;
+        await telegramService.sendMessage({
+            chatId,
+            text: `🌤 *Live Weather — East Africa*\n• ${weather.condition}, ${temp}°C\n• Humidity: ${weather.humidity}%\n\n3-Day Forecast:\n${forecastLines}`,
+        });
+    } catch {
+        await telegramService.sendMessage({
+            chatId,
+            text: `🌤 *Weather Forecast*\nWeather data is temporarily unavailable. Please try again shortly.`,
+        });
+    }
+}
+
+async function handleTelegramPrices(chatId: string) {
+    try {
+        const prices = await marketPriceService.getLatestPrices();
+        const priceLines = prices.map(p => `• ${p.crop}: ${p.price} (${p.trend})`).join('\n');
+        await telegramService.sendMessage({
+            chatId,
+            text: `📈 *Market Bulletin*\n${priceLines || 'No current price data.'}\n\n_Source: baseline estimate_`,
+        });
+    } catch {
+        await telegramService.sendMessage({
+            chatId,
+            text: `📈 *Market Bulletin*\nMarket price data is temporarily unavailable. Please try again shortly.`,
+        });
+    }
+}
 
 router.post('/telegram/webhook', async (req: Request, res: Response) => {
     try {
@@ -81,18 +118,12 @@ router.post('/telegram/webhook', async (req: Request, res: Response) => {
         // If registered farmer sends a command/query
         const queryLower = text.toLowerCase().trim();
         if (queryLower.startsWith('/weather') || queryLower.includes('weather') || queryLower.includes('hali ya hewa')) {
-            await telegramService.sendMessage({
-                chatId,
-                text: `🌤 *Regional Weather Forecast (East Africa Hub)*\n• Condition: Sunny intervals with afternoon showers\n• Temp: 24°C | Humidity: 62%\n• Rain Probability: 35%\n\n🌱 Optimal for maize top-dressing and field scouting.`,
-            });
+            await handleTelegramWeather(String(chatId));
             return res.status(200).json({ ok: true });
         }
 
         if (queryLower.startsWith('/prices') || queryLower.includes('prices') || queryLower.includes('bei')) {
-            await telegramService.sendMessage({
-                chatId,
-                text: `📈 *Commodity Market Bulletin:*\n• Dry Maize: KES 3,400 / 90kg bag (Stable)\n• Beans (Rosecoco): KES 8,200 / 90kg bag (Rising)\n• Irish Potatoes: KES 2,800 / 50kg bag\n• Cassava: KES 1,600 / bag`,
-            });
+            await handleTelegramPrices(String(chatId));
             return res.status(200).json({ ok: true });
         }
 

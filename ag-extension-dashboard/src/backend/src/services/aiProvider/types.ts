@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { extractVideoFrames } from './videoFrameService';
+
 // ── Provider type identifier ──────────────────────────────────────────────
 
 export type AIProviderType = 'azure_openai' | 'google_vertex' | 'openai' | 'anthropic' | 'groq' | 'freebuff' | 'ollama';
@@ -171,6 +173,7 @@ export interface AICapability {
 
 // ── Abstract base class ───────────────────────────────────────────────────
 
+
 export abstract class BaseAIProvider implements AICapability {
     abstract readonly provider: AIProviderType;
     abstract readonly capabilities: string[];
@@ -216,8 +219,37 @@ export abstract class BaseAIProvider implements AICapability {
         throw new Error('Method not implemented');
     }
 
-    async analyzeVideo(_videoData: Buffer, _prompt?: string, _options?: VideoAnalysisOptions): Promise<VideoAnalysisResult> {
-        throw new Error('Method not implemented');
+    async analyzeVideo(videoData: Buffer, prompt?: string, options?: VideoAnalysisOptions): Promise<VideoAnalysisResult> {
+        if (!this.capabilities.includes('vision')) {
+            throw new Error(`${this.provider} does not support video analysis because it has no vision capability`);
+        }
+
+        const frames = await extractVideoFrames(videoData, options);
+        const frameAnalyses = await Promise.all(
+            frames.map((frame, index) => this.analyzeImage(
+                frame,
+                `${prompt || 'Analyze this agricultural video frame.'} This is frame ${index + 1} of ${frames.length}. Describe only visible evidence and distinguish observations from uncertainty.`,
+                options,
+            )),
+        );
+        const analysis = frameAnalyses
+            .map((result, index) => `Frame ${index + 1}: ${result.analysis}`)
+            .join('\n\n');
+        const usage = frameAnalyses.reduce(
+            (total, result) => ({
+                promptTokens: total.promptTokens + (result.usage?.promptTokens ?? 0),
+                completionTokens: total.completionTokens + (result.usage?.completionTokens ?? 0),
+                totalTokens: total.totalTokens + (result.usage?.totalTokens ?? 0),
+            }),
+            { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+        );
+
+        return {
+            analysis,
+            framesAnalyzed: frames.length,
+            model: options?.model || frameAnalyses[0]?.model || this.provider,
+            usage,
+        };
     }
 
     private lastHealthError: string | undefined;

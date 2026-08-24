@@ -167,7 +167,13 @@ export const useAppStore = create<AppState>()(
 
       // Actions
       setUser: user => set({ user }),
-      setIsDemo: isDemo => set({ isDemo }),
+      setIsDemo: isDemo => set(_state => {
+        // When exiting demo mode, clear all demo data from the store
+        if (!isDemo) {
+          return { isDemo: false, farmers: [], visits: [] };
+        }
+        return { isDemo };
+      }),
 
       setSidebarOpen: sidebarOpen => set({ sidebarOpen }),
       toggleSidebar: () => set(state => ({ sidebarOpen: !state.sidebarOpen })),

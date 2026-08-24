@@ -150,19 +150,31 @@ router.post('/bulk', checkUsageLimit('sms'), validate({ body: bulkSMSSchema }), 
     }
 });
 
-// Get SMS history
+// Get SMS history — scoped by role
 router.get('/history', async (req: AuthRequest, res: Response) => {
     try {
         const { farmerId } = req.query;
-        let sql = 'SELECT * FROM sms_history ';
+        const user = req.user;
+        let sql = 'SELECT * FROM sms_history WHERE 1=1';
         const params: unknown[] = [];
+        let paramIdx = 1;
+
+        // Role-based scoping: farmers see their own, officers see their assigned farmers
+        if (user?.role === 'farmer') {
+            sql += ` AND farmer_id IN (SELECT id FROM farmers WHERE user_id = $${paramIdx++})`;
+            params.push(user.userId);
+        } else if (user?.role === 'extension_officer') {
+            sql += ` AND farmer_id IN (SELECT id FROM farmers WHERE assigned_officer_id = $${paramIdx++})`;
+            params.push(user.userId);
+        }
+        // admin and regional_manager see everything (no additional clause)
 
         if (farmerId) {
-            sql += 'WHERE farmer_id = $1 ';
+            sql += ` AND farmer_id = $${paramIdx++}`;
             params.push(farmerId);
         }
 
-        sql += 'ORDER BY created_at DESC LIMIT 100';
+        sql += ' ORDER BY created_at DESC LIMIT 100';
 
         const result = await query<SmsHistoryRow>(sql, params);
 

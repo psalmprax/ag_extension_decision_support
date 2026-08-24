@@ -50,8 +50,8 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
   const [coSignOtp, setCoSignOtp] = useState<string | null>(null);
   const [enteredOtp, setEnteredOtp] = useState('');
   const [isCoSignVerified, setIsCoSignVerified] = useState(false);
-  const [satelliteAudit, setSatelliteAudit] = useState<CropLossAuditResult | null>(null);
-  const [activeTab, setActiveTab] = useState<'geofence' | 'cosign' | 'satellite'>('geofence');
+  const [canopyAudit, setCanopyAudit] = useState<CropLossAuditResult | null>(null);
+  const [activeTab, setActiveTab] = useState<'geofence' | 'cosign' | 'evidence'>('geofence');
 
   const onGpsSuccess = async (position: GeolocationPosition) => {
     try {
@@ -181,12 +181,12 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
         reportedLossSeverity: 'MODERATE',
         observedCanopyScore: 0.74,
       });
-      setSatelliteAudit(res);
-      toast.success('Sentinel-2 satellite canopy index synchronized.');
+      setCanopyAudit(res);
+      toast.success('Caller-supplied canopy observation audited.');
     } catch (err: unknown) {
-      const errorMsg = extractErrorMessage(err, 'Failed to retrieve satellite NDVI telemetry.');
+      const errorMsg = extractErrorMessage(err, 'Failed to audit canopy evidence.');
       toast.error(errorMsg);
-      setSatelliteAudit(null);
+      setCanopyAudit(null);
     }
   };
 
@@ -233,12 +233,12 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab('satellite')}
+            onClick={() => setActiveTab('evidence')}
             className={`px-3 py-1 rounded-md transition-all ${
-              activeTab === 'satellite' ? 'bg-emerald-500/20 text-emerald-400' : 'text-white/50 hover:text-white'
+              activeTab === 'evidence' ? 'bg-emerald-500/20 text-emerald-400' : 'text-white/50 hover:text-white'
             }`}
           >
-            Satellite Truth
+            Canopy Evidence
           </button>
         </div>
       </div>
@@ -354,16 +354,16 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
         </div>
       )}
 
-      {/* Tab 3: Satellite Truth Check */}
-      {activeTab === 'satellite' && (
+      {/* Tab 3: Canopy Evidence Check */}
+      {activeTab === 'evidence' && (
         <div className="space-y-3">
           <div className="p-3.5 rounded-xl bg-slate-950/70 border border-white/[0.06] flex items-center justify-between">
             <div className="space-y-0.5">
               <div className="text-xs font-bold text-white flex items-center gap-2">
-                Sentinel-2 & NASA POWER Cross-Audit
+                Canopy Evidence Cross-Audit
               </div>
               <div className="text-[11px] text-white/50">
-                Cross-references field diagnostic observations with satellite vegetation canopy vigor.
+                Cross-references field diagnostic observations with supplied canopy evidence.
               </div>
             </div>
 
@@ -372,28 +372,28 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
               onClick={handleRunSatelliteAudit}
               className="px-3 py-1.5 rounded-lg bg-white/[0.06] border border-white/[0.1] hover:bg-white/[0.1] text-xs font-semibold text-white transition-colors"
             >
-              Run Satellite Audit
+              Run Canopy Evidence Audit
             </button>
           </div>
 
-          {satelliteAudit && (
+          {canopyAudit && (
             <motion.div
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               className="p-3 rounded-xl bg-slate-950/80 border border-emerald-500/20 space-y-2 text-xs"
             >
               <div className="flex items-center justify-between">
-                <span className="text-white/60">Satellite Vigor Reading:</span>
-                <span className="font-bold text-emerald-400">{satelliteAudit.satelliteVigorLevel}</span>
+                <span className="text-white/60">Observed Canopy:</span>
+                <span className="font-bold text-emerald-400">{canopyAudit.evidenceVigorLevel}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-white/60">Weather Consistency:</span>
-                <span className="font-bold text-emerald-400">{satelliteAudit.weatherConsistencyScore}%</span>
+                <span className="text-white/60">Evidence Consistency:</span>
+                <span className="font-bold text-emerald-400">{canopyAudit.evidenceConsistencyScore}%</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-white/60">Audit Recommendation:</span>
                 <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
-                  {satelliteAudit.recommendedAction}
+                  {canopyAudit.recommendedAction}
                 </span>
               </div>
             </motion.div>

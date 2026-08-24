@@ -47,7 +47,6 @@ interface StripeSubscription {
 class PaymentService {
     private stripe: Stripe | null = null;
     private paypalConfigured: boolean = false;
-    public isSimulated: boolean = true;
 
     constructor() {
         this.initializeStripe();
@@ -73,18 +72,15 @@ class PaymentService {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     apiVersion: '2024-12-18.acacia' as any,
                 });
-                this.isSimulated = false;
                 logger.info('Stripe payment service initialized (Real Mode)');
             } catch (error: any) {
                 logger.warn('Failed to initialize Stripe with provided key - payments will be simulated (Demo Mode):', error);
                 this.stripe = null;
-                this.isSimulated = true;
             }
         } else {
             const reason = !stripeKey ? 'Key missing' : 'Key is placeholder/invalid';
             logger.warn(`Stripe not configured (${reason}) - payments will be simulated (Demo Mode)`);
             this.stripe = null;
-            this.isSimulated = true;
         }
     }
 
@@ -307,8 +303,8 @@ class PaymentService {
     // Cancel subscription
     async cancelSubscription(subscriptionId: string): Promise<boolean> {
         if (!this.stripe) {
-            logger.info(`[MOCK] Cancelled subscription: ${subscriptionId}`);
-            return true;
+            logger.warn(`Cannot cancel subscription ${subscriptionId} — Stripe is not configured.`);
+            return false;
         }
 
         try {
@@ -360,8 +356,8 @@ class PaymentService {
     // Switch subscription to a different plan
     async switchSubscription(subscriptionId: string, newPriceId: string, scheduleNextPeriod: boolean = false): Promise<{ success: boolean; errorCode?: string; message?: string }> {
         if (!this.stripe) {
-            logger.info(`[MOCK] Switched subscription ${subscriptionId} to price ${newPriceId} (scheduled: ${scheduleNextPeriod})`);
-            return { success: true, message: 'Mock subscription plan switched successfully' };
+            logger.warn(`Cannot switch subscription ${subscriptionId} — Stripe is not configured.`);
+            return { success: false, errorCode: 'PAYMENT_GATEWAY_NOT_CONFIGURED', message: 'Stripe is not configured. Subscription changes are unavailable.' };
         }
 
         try {
@@ -467,8 +463,8 @@ class PaymentService {
     // Delete payment method
     async deletePaymentMethod(paymentMethodId: string): Promise<{ success: boolean; errorCode?: string; message?: string }> {
         if (!this.stripe) {
-            logger.info(`[MOCK] Deleted payment method: ${paymentMethodId}`);
-            return { success: true, message: 'Mock payment method deleted' };
+            logger.warn(`Cannot delete payment method ${paymentMethodId} — Stripe is not configured.`);
+            return { success: false, errorCode: 'PAYMENT_GATEWAY_NOT_CONFIGURED', message: 'Stripe is not configured. Payment method deletion is unavailable.' };
         }
 
         try {
@@ -829,8 +825,8 @@ class PaymentService {
 
     async executePayPalPayment(paymentId: string, payerId: string): Promise<boolean> {
         if (!this.paypalConfigured) {
-            logger.info(`[MOCK] PayPal payment ${paymentId} executed for payer ${payerId}`);
-            return true;
+            logger.warn(`Cannot execute PayPal payment ${paymentId} — PayPal is not configured.`);
+            return false;
         }
 
         return new Promise((resolve) => {

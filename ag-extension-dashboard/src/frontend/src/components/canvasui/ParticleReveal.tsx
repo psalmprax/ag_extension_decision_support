@@ -253,7 +253,9 @@ export function createParticleReveal(
         sourceCtx!.drawElementImage!(content, 0, 0);
         contentDirty = true;
         wake();
-      } catch {}
+      } catch (error) {
+        console.error("Particle content paint failed:", error);
+      }
     };
   }
 

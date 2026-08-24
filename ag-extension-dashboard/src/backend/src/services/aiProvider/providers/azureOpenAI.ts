@@ -16,8 +16,6 @@ import {
     ReasoningResult,
     ImageAnalysisOptions,
     ImageAnalysisResult,
-    VideoAnalysisOptions,
-    VideoAnalysisResult,
 } from '../types';
 import { REASONING_SYSTEM_PROMPT, extractVisuals } from '../assetLibrary';
 import { config } from '@/config';
@@ -301,10 +299,6 @@ export class AzureOpenAIProvider extends BaseAIProvider {
                 usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
             };
         }
-    }
-
-    async analyzeVideo(_videoData: Buffer, _prompt?: string, _options?: VideoAnalysisOptions): Promise<VideoAnalysisResult> {
-        throw new Error('Video analysis not implemented for Azure OpenAI provider');
     }
 
     async healthCheck(): Promise<boolean> {

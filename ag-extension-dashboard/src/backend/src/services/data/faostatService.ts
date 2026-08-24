@@ -18,6 +18,16 @@ export interface FaostatCropRecord {
     value: number | null;
 }
 
+export interface FaostatCountryArticle {
+    title: string;
+    content: string;
+    category: string;
+    crops: string[];
+    regions: string[];
+    source: 'FAOSTAT API' | 'FAOSTAT 2022 static fallback';
+    sourceUrl: string;
+}
+
 /**
  * Service to fetch crop production data from FAOSTAT API.
  * Free, no authentication required.
@@ -107,14 +117,18 @@ export class FaostatService {
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 15000);
 
-            const response = await fetch(`${url}?${params}`, {
-                headers: {
-                    'Accept': 'application/json',
-                    'User-Agent': 'ag-extension-dashboard/1.0'
-                },
-                signal: controller.signal
-            });
-            clearTimeout(timeout);
+            let response: Response;
+            try {
+                response = await fetch(`${url}?${params}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'User-Agent': 'ag-extension-dashboard/1.0'
+                    },
+                    signal: controller.signal
+                });
+            } finally {
+                clearTimeout(timeout);
+            }
 
             if (!response.ok) {
                 throw new Error(`FAOSTAT returned HTTP ${response.status}`);
@@ -264,7 +278,7 @@ Coffee: 500,000 tonnes, 700,000 ha — top export, Oromia/SNNPR
 Chickpeas: 500,000 tonnes, 300,000 ha — key pulse
 Fava beans: 900,000 tonnes, 500,000 ha — highland pulse
 Oilseeds: 800,000 tonnes, 600,000 ha — sesame, noug
-Potatoes: 1,500,0000 ha, 900,000 ha — food security
+Potatoes: 1,500,000 tonnes, 900,000 ha — food security
 Vegetables: 1,500,000 tonnes, 200,000 ha — growing sector`,
         'Zambia': `Crop production statistics for Zambia (Source: FAOSTAT 2022):
 Maize: 3,500,000 tonnes, 1,800,000 ha — staple food
@@ -316,8 +330,8 @@ Oil palm fruit: 2,000,000 tonnes, 350,000 ha — Andhra Pradesh`,
      * Generate knowledge articles for key tropical countries.
      * Tries the FAOSTAT API first, falls back to static data.
      */
-    async generateCountryArticles(): Promise<Array<{ title: string; content: string; category: string; crops: string[]; regions: string[] }>> {
-        const articles: Array<{ title: string; content: string; category: string; crops: string[]; regions: string[] }> = [];
+    async generateCountryArticles(): Promise<FaostatCountryArticle[]> {
+        const articles: FaostatCountryArticle[] = [];
 
         const priorityCountries = {
             'Malawi': '109', 'Kenya': '114', 'Tanzania': '215',
@@ -331,8 +345,12 @@ Oil palm fruit: 2,000,000 tonnes, 350,000 ha — Andhra Pradesh`,
             const testUrl = `https://fenixservices.fao.org/faostat/api/v1/en/data/QCL?area=109&item=056&element=5510&year=2023&output_type=json`;
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 10000);
-            const testResponse = await fetch(testUrl, { headers: { 'Accept': 'application/json' }, signal: controller.signal });
-            clearTimeout(timeout);
+            let testResponse: Response;
+            try {
+                testResponse = await fetch(testUrl, { headers: { 'Accept': 'application/json' }, signal: controller.signal });
+            } finally {
+                clearTimeout(timeout);
+            }
             apiAvailable = testResponse.ok;
         } catch {
             apiAvailable = false;
@@ -348,7 +366,9 @@ Oil palm fruit: 2,000,000 tonnes, 350,000 ha — Andhra Pradesh`,
                         content,
                         category: 'Production Data',
                         crops: Object.keys(this.tropicalCrops).map(c => c.toLowerCase()),
-                        regions: [countryName, 'Africa', 'Asia', 'tropical']
+                        regions: [countryName, 'Africa', 'Asia', 'tropical'],
+                        source: 'FAOSTAT 2022 static fallback',
+                        sourceUrl: 'https://fenixservices.fao.org/faostat/api/v1/en/',
                     });
                 }
             }
@@ -366,7 +386,9 @@ Oil palm fruit: 2,000,000 tonnes, 350,000 ha — Andhra Pradesh`,
                     content,
                     category: 'Production Data',
                     crops: Object.keys(this.tropicalCrops).map(c => c.toLowerCase()),
-                    regions: [countryName, 'Africa', 'Asia', 'tropical']
+                    regions: [countryName, 'Africa', 'Asia', 'tropical'],
+                    source: 'FAOSTAT API',
+                    sourceUrl: 'https://fenixservices.fao.org/faostat/api/v1/en/',
                 });
             }
             await new Promise(r => setTimeout(r, 500));

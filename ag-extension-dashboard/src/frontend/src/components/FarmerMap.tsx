@@ -921,7 +921,6 @@ export function FarmerMap({
   isExternalExpanded,
   onToggleExpand,
 }: FarmerMapProps) {
-  const farmers = propFarmers && propFarmers.length > 0 ? propFarmers : DEFAULT_DEMO_MAP_FARMERS;
   const [currentLayer, setCurrentLayer] = useState<MapLayer>('street');
   const [selectedFarmer, setSelectedFarmer] = useState<FarmerData | null>(null);
   const [internalExpanded, setInternalExpanded] = useState(false);
@@ -962,9 +961,15 @@ export function FarmerMap({
 
   // Get theme from store
   const darkMode = useAppStore(state => state.darkMode);
+  const isDemo = useAppStore(state => state.isDemo);
   const themeName = useAppStore(state => state.themeName) as ThemeName;
   const theme = themes[themeName] || themes.forest;
   const { t } = useLanguage();
+
+  const farmers = useMemo(
+    () => (propFarmers && propFarmers.length > 0 ? propFarmers : (isDemo ? DEFAULT_DEMO_MAP_FARMERS : [])),
+    [propFarmers, isDemo]
+  );
 
   // Compute stats from farmer data
   const stats = useMemo(() => {
@@ -1001,11 +1006,6 @@ export function FarmerMap({
       );
     });
   }, [farmers, searchQuery]);
-
-  // Disable marker animation after initial render
-  useEffect(() => {
-    // We can keep the effect if we use it, otherwise remove it too if we removed state
-  }, []);
 
   const applyGpsLocation = (lat: number, lng: number, message: string) => {
     setCurrentUserLocation([lat, lng]);

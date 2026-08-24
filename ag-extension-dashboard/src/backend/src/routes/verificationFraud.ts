@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { authorize } from '@/middleware/authorize';
+import { query } from '@/services/databaseService';
 import {
   verifyVisitGeofence,
   checkFarmerSpatialConflict,
@@ -8,6 +9,7 @@ import {
   verifyFarmerCoSignToken,
   calculateInputQuota,
   generateAuditIntegrityHash,
+  calculateHaversineDistance,
 } from '@/services/verificationFraudService';
 import { logger } from '@/utils/logger';
 
@@ -70,22 +72,32 @@ router.post('/spatial-conflict', async (req: Request, res: Response) => {
 
 /**
  * POST /api/verification/audit-crop-loss
- * Cross-check crop loss claim against satellite telemetry and vegetation indices
+ * Cross-check crop loss claim against caller-supplied canopy evidence
  */
 router.post('/audit-crop-loss', async (req: Request, res: Response) => {
   try {
     const { farmerLat, farmerLng, reportedLossSeverity, lossCause, observedCanopyScore } = req.body;
 
-    if (!farmerLat || !farmerLng || !reportedLossSeverity) {
+    if (farmerLat === undefined || farmerLng === undefined || !reportedLossSeverity) {
       return res.status(400).json({ success: false, error: 'farmerLat, farmerLng, and reportedLossSeverity are required' });
     }
 
+    const parsedLat = parseFloat(farmerLat);
+    const parsedLng = parseFloat(farmerLng);
+    const parsedCanopyScore = observedCanopyScore === undefined ? undefined : parseFloat(observedCanopyScore);
+    if (!Number.isFinite(parsedLat) || !Number.isFinite(parsedLng)) {
+      return res.status(400).json({ success: false, error: 'farmerLat and farmerLng must be valid numbers' });
+    }
+    if (parsedCanopyScore !== undefined && !Number.isFinite(parsedCanopyScore)) {
+      return res.status(400).json({ success: false, error: 'observedCanopyScore must be a valid number' });
+    }
+
     const result = await auditCropLossAnomaly({
-      farmerLat: parseFloat(farmerLat),
-      farmerLng: parseFloat(farmerLng),
+      farmerLat: parsedLat,
+      farmerLng: parsedLng,
       reportedLossSeverity,
       lossCause,
-      observedCanopyScore: observedCanopyScore ? parseFloat(observedCanopyScore) : undefined,
+      observedCanopyScore: parsedCanopyScore,
     });
 
     return res.json({ success: true, data: result });
@@ -161,45 +173,104 @@ router.post('/input-quota', (req: Request, res: Response) => {
 
 /**
  * GET /api/verification/fraud-alerts
- * Supervisor audit queue of suspicious visits, geofence breaches, and satellite mismatches
+ * Supervisor audit queue of suspicious visits, geofence breaches, and crop evidence mismatches
  */
 router.get('/fraud-alerts', async (_req: Request, res: Response) => {
   try {
-    // Generate live synthetic supervisor anomaly alerts based on recent logs
+    const persistedAlerts = await query<{
+      id: string;
+      type: string;
+      severity: string | null;
+      title: string;
+      description: string | null;
+      triggered_at: Date | string | null;
+    }>(
+      `SELECT id, type, severity, title, description, triggered_at
+       FROM alerts
+       WHERE is_active = TRUE
+         AND type IN ('GEOFENCE_BREACH', 'CROP_EVIDENCE_MISMATCH', 'INPUT_QUOTA_OVERAGE')
+       ORDER BY triggered_at DESC NULLS LAST
+       LIMIT 100`,
+    );
+
+    const geofenceEvidence = await query<{
+      visit_id: string;
+      officer_first_name: string | null;
+      officer_last_name: string | null;
+      farmer_first_name: string | null;
+      farmer_last_name: string | null;
+      visit_created_at: Date | string | null;
+      visit_lat: string;
+      visit_lng: string;
+      farmer_lat: string;
+      farmer_lng: string;
+    }>(
+      `SELECT v.id AS visit_id,
+              u.first_name AS officer_first_name,
+              u.last_name AS officer_last_name,
+              f.first_name AS farmer_first_name,
+              f.last_name AS farmer_last_name,
+              v.created_at AS visit_created_at,
+              v.location_lat AS visit_lat,
+              v.location_lng AS visit_lng,
+              f.location_lat AS farmer_lat,
+              f.location_lng AS farmer_lng
+       FROM visits v
+       JOIN farmers f ON f.id = v.farmer_id
+       LEFT JOIN users u ON u.id = v.officer_id
+       WHERE v.location_lat IS NOT NULL
+         AND v.location_lng IS NOT NULL
+         AND f.location_lat IS NOT NULL
+         AND f.location_lng IS NOT NULL
+       ORDER BY v.created_at DESC
+       LIMIT 100`,
+    );
+
     const alerts = [
-      {
-        id: 'fraud-alert-1',
-        type: 'GEOFENCE_BREACH',
-        severity: 'HIGH',
-        officerName: 'David Ochieng',
-        farmerName: 'John Kamau',
-        timestamp: new Date(Date.now() - 3600000).toISOString(),
-        details: 'Officer submitted visit log from 4.2km away from registered parcel in Nakuru District.',
+      ...persistedAlerts.rows.map(alert => ({
+        id: alert.id,
+        type: alert.type,
+        severity: (alert.severity || 'MEDIUM').toUpperCase(),
+        officerName: 'Recorded alert',
+        farmerName: 'Recorded alert',
+        timestamp: new Date(alert.triggered_at || Date.now()).toISOString(),
+        details: alert.description || alert.title,
         status: 'PENDING_REVIEW',
-        integrityHash: generateAuditIntegrityHash({ type: 'GEOFENCE_BREACH', distanceMeters: 4200 }),
-      },
-      {
-        id: 'fraud-alert-2',
-        type: 'SATELLITE_CROP_MISMATCH',
-        severity: 'CRITICAL',
-        officerName: 'Sarah Mwangi',
-        farmerName: 'Ezekiel Ruto',
-        timestamp: new Date(Date.now() - 86400000).toISOString(),
-        details: '100% Drought Crop Failure claimed, but Sentinel-2 NDVI telemetry measured 0.78 healthy canopy vigor.',
-        status: 'FLAGGED_HIGH_RISK',
-        integrityHash: generateAuditIntegrityHash({ type: 'SATELLITE_MISMATCH', ndvi: 0.78 }),
-      },
-      {
-        id: 'fraud-alert-3',
-        type: 'INPUT_QUOTA_OVERAGE',
-        severity: 'MEDIUM',
-        officerName: 'Peter Kibet',
-        farmerName: 'Mary Wanjiku',
-        timestamp: new Date(Date.now() - 172800000).toISOString(),
-        details: 'Requested 12 bags of DAP fertilizer for a 0.8-hectare smallholder plot (max allowed cap: 2 bags).',
-        status: 'QUOTA_BLOCKED',
-        integrityHash: generateAuditIntegrityHash({ type: 'INPUT_OVERAGE', requested: 12, max: 2 }),
-      },
+        integrityHash: generateAuditIntegrityHash({
+          id: alert.id,
+          type: alert.type,
+          triggeredAt: alert.triggered_at,
+        }),
+      })),
+      ...geofenceEvidence.rows.flatMap(row => {
+        const distanceMeters = calculateHaversineDistance(
+          Number(row.visit_lat),
+          Number(row.visit_lng),
+          Number(row.farmer_lat),
+          Number(row.farmer_lng),
+        );
+        if (distanceMeters <= 200) return [];
+        const officerName = [row.officer_first_name, row.officer_last_name].filter(Boolean).join(' ') || 'Unknown officer';
+        const farmerName = [row.farmer_first_name, row.farmer_last_name].filter(Boolean).join(' ') || 'Unknown farmer';
+        return [{
+          id: `visit-geofence-${row.visit_id}`,
+          type: 'GEOFENCE_BREACH',
+          severity: distanceMeters >= 1000 ? 'CRITICAL' : 'HIGH',
+          officerName,
+          farmerName,
+          timestamp: new Date(row.visit_created_at || Date.now()).toISOString(),
+          details: `Visit GPS was recorded ${distanceMeters}m from the farmer's registered parcel.`,
+          status: 'PENDING_REVIEW',
+          integrityHash: generateAuditIntegrityHash({
+            visitId: row.visit_id,
+            distanceMeters,
+            visitLat: row.visit_lat,
+            visitLng: row.visit_lng,
+            farmerLat: row.farmer_lat,
+            farmerLng: row.farmer_lng,
+          }),
+        }];
+      }),
     ];
 
     return res.json({ success: true, data: alerts });

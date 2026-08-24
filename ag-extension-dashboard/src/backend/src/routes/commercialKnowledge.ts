@@ -85,6 +85,8 @@ router.get('/search', authenticateCommercialAccess, async (req: CommercialAuthRe
             crop: (req.query.crop as string) || null,
             generatedAt: new Date().toISOString(),
             sources: Array.from(new Set(results.map(r => r.source))),
+            corpusStatus: 'seed_only' as const,
+            corpusSize: SEED_ARTICLES.length,
         };
 
         return res.json({ success: true, data: { articles: results, context } });

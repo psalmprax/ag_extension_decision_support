@@ -52,20 +52,38 @@ export class AgriculturalReportService {
      * Generate report for a single farmer based on their location and crops,
      * then send it via their preferred channels.
      */
+    private static async fetchReportData(farmer: FarmerNotificationPrefs) {
+        const [weather, prices, ndvi] = await Promise.all([
+            WeatherService.getByLocation(farmer.location).catch(() => null),
+            marketPriceService.getLatestPrices().catch(() => []),
+            (farmer.lat && farmer.lng && (farmer.lat !== 0 || farmer.lng !== 0))
+                ? SatelliteService.getSpectralIndices(farmer.lat, farmer.lng).catch(() => [])
+                : Promise.resolve([])
+        ]);
+
+        const relevantPrices = prices.filter((p: unknown) => {
+            const cropName = (p as { crop?: string })?.crop;
+            if (!cropName) return false;
+            const cropLower = cropName.toLowerCase();
+            return farmer.crops.some(fc => cropLower.includes(fc.toLowerCase()) || fc.toLowerCase().includes(cropLower));
+        });
+
+        return {
+            weather,
+            relevantPrices,
+            ndvi,
+            metadata: {
+                weatherStatus: weather ? 'live' : 'unavailable',
+                priceStatus: prices.length > 0 ? 'estimated' : 'unavailable',
+                satelliteStatus: ndvi.length > 0 ? 'live' : 'unavailable',
+                coordinatesValid: !!(farmer.lat && farmer.lng && (farmer.lat !== 0 || farmer.lng !== 0)),
+            },
+        } as const;
+    }
+
     static async generateAndSendReport(farmer: FarmerNotificationPrefs) {
         try {
-            // 1. Fetch raw data
-            const [weather, prices, ndvi] = await Promise.all([
-                WeatherService.getByLocation(farmer.location).catch(() => null),
-                marketPriceService.getLatestPrices().catch(() => []),
-                SatelliteService.getSpectralIndices(farmer.lat, farmer.lng).catch(() => [])
-            ]);
-
-            // Filter prices for farmer's crops
-            const relevantPrices = prices.filter((p: unknown) => {
-                const commodity = (p as { commodity?: string })?.commodity;
-                return commodity && farmer.crops.includes(commodity);
-            });
+            const { weather, relevantPrices, ndvi, metadata: reportMetadata } = await this.fetchReportData(farmer);
 
             // 2. Synthesize with LLM
             const provider = await AIProviderFactory.getPrimaryProvider();
@@ -76,11 +94,12 @@ export class AgriculturalReportService {
                 Location: ${farmer.location}
                 Crops: ${farmer.crops.join(', ')}
                 
-                Data context:
-                - Weather: ${JSON.stringify(weather)}
-                - Market Prices: ${JSON.stringify(relevantPrices)}
-                - NDVI/Satellite Data: ${JSON.stringify(ndvi)}
+                Data Status: ${JSON.stringify(reportMetadata)}
+                Weather: ${JSON.stringify(weather)}
+                Market Prices: ${JSON.stringify(relevantPrices)}
+                NDVI/Satellite Data: ${JSON.stringify(ndvi)}
                 
+                Important: If data is marked unavailable, state that clearly in your advice rather than fabricating information.
                 Please format the response as a friendly text message (max 200 words) with key actionable advice for today.
             `;
 

@@ -56,8 +56,8 @@ export class KnowledgeSyncOrchestrator {
                         tags: ['faostat', 'production', 'statistics'],
                         crops: article.crops,
                         regions: article.regions,
-                        source: 'FAOSTAT API',
-                        sourceUrl: 'https://fenixservices.fao.org/faostat/api/v1/en/',
+                        source: article.source,
+                        sourceUrl: article.sourceUrl,
                         contentType: 'text'
                     }
                 );

@@ -25,7 +25,6 @@ import {
   AgentStatus,
   QueueStatus,
 } from '../api/agentService';
-import { withRealFallback } from '../lib/realFirst';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import toast from 'react-hot-toast';
 import { CH_COLORS } from '@/lib/colors';
@@ -54,65 +53,20 @@ export function Agents() {
         if (showRefresh) setIsRefreshing(true);
         else setIsLoading(true);
 
-        const fallbackAgents: AgentStatus[] = [
-          {
-            agentId: 'ag-001',
-            name: 'Alpha-Analytic',
-            capabilities: ['diagnosis', 'soil-analysis', 'vital-scoring'],
-            maxConcurrentTasks: 10,
-            currentLoad: 3,
-            health: 'healthy',
-            lastHeartbeat: new Date().toISOString(),
-          },
-          {
-            agentId: 'ag-002',
-            name: 'Beta-Synthesizer',
-            capabilities: ['synthesis', 'reporting', 'skill-synthesis'],
-            maxConcurrentTasks: 5,
-            currentLoad: 1,
-            health: 'healthy',
-            lastHeartbeat: new Date().toISOString(),
-          },
-          {
-            agentId: 'ag-003',
-            name: 'Gamma-Optimizer',
-            capabilities: ['irrigation', 'weather-pivoting', 'channel-dispatch'],
-            maxConcurrentTasks: 8,
-            currentLoad: 5,
-            health: 'degraded',
-            lastHeartbeat: new Date().toISOString(),
-          },
-        ];
-
-        const fallbackQueue: QueueStatus = { queued: 5, active: 9, completed: 1547, failed: 23 };
-        const fallbackHandoffs = [
-          {
-            from: 'Alpha-Analytic',
-            to: 'Beta-Synthesizer',
-            taskId: 'task-882',
-            reason: 'Regional skill synthesis required',
-            timestamp: new Date().toISOString(),
-          },
-          {
-            from: 'Beta-Synthesizer',
-            to: 'Gamma-Optimizer',
-            taskId: 'task-883',
-            reason: 'Multi-channel broadcast dispatch',
-            timestamp: new Date(Date.now() - 60000).toISOString(),
-          },
-        ];
-
-        const [agentsData, queueData, handoffData] = await Promise.all([
-          withRealFallback(fetchAgentStatus(), fallbackAgents),
-          withRealFallback(fetchQueueStatus(), fallbackQueue),
-          withRealFallback(fetchHandoffLog(), fallbackHandoffs),
+        const [agentsResponse, queueResponse, handoffResponse] = await Promise.all([
+          fetchAgentStatus(),
+          fetchQueueStatus(),
+          fetchHandoffLog(),
         ]);
 
-        setAgents(agentsData);
-        setQueueStatus(queueData);
-        setHandoffLog(handoffData);
+        setAgents(agentsResponse.data);
+        setQueueStatus(queueResponse.data);
+        setHandoffLog(handoffResponse.data);
       } catch (error) {
         console.error('Failed to load agent data:', error);
+        setAgents([]);
+        setQueueStatus(null);
+        setHandoffLog([]);
         addNotification({
           type: 'error',
           message: t('agents_failed_load') || 'Failed to load agent orchestration status',
@@ -197,10 +151,12 @@ export function Agents() {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="hidden lg:inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
-            <Radio className="w-3.5 h-3.5" />
-            <span>3 NODES ONLINE</span>
-          </div>
+          {agents.length > 0 && (
+            <div className="hidden lg:inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
+              <Radio className="w-3.5 h-3.5" />
+              <span>{agents.length} NODES ONLINE</span>
+            </div>
+          )}
 
           <button
             onClick={handleRefresh}
@@ -271,6 +227,11 @@ export function Agents() {
           </div>
           <span className="text-xxs font-mono text-white/40">CLUSTER: PROD-EAST-AFRICA</span>
         </div>
+        {agents.length === 0 && (
+          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 px-4 py-6 text-sm text-amber-200">
+            Agent status is unavailable. Refresh to retry the live orchestration service.
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {agents.map(agent => {

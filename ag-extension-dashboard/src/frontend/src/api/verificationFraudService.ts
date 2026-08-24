@@ -25,8 +25,9 @@ export interface CropLossAuditResult {
   anomalyDetected: boolean;
   anomalyScore: number;
   reportedLossSeverity: string;
-  satelliteVigorLevel: string;
-  weatherConsistencyScore: number;
+  evidenceVigorLevel: string;
+  evidenceConsistencyScore: number;
+  evidenceSource: 'CALLER_OBSERVATION' | 'NO_CANOPY_OBSERVATION';
   flagReason: string | null;
   recommendedAction: 'AUTO_APPROVED' | 'REQUIRES_SUPERVISOR_AUDIT' | 'FLAGGED_HIGH_RISK';
 }

@@ -2,6 +2,7 @@
 import { notificationService } from '../services/notificationService';
 import { logger } from '../utils/logger';
 import { query } from '../services/databaseService';
+import { WeatherService } from '../services/weatherService';
 
 /**
  * Alert Worker
@@ -40,7 +41,6 @@ export async function runAlertChecks(): Promise<void> {
             checkWeatherAlerts(),
             checkSubscriptionExpiry(),
             checkChatbotSatisfaction(),
-            checkPaymentDue(),
             checkFarmerAssignment()
         ]);
         logger.info('Alert checks completed successfully');
@@ -54,34 +54,44 @@ export async function runAlertChecks(): Promise<void> {
  */
 async function checkWeatherAlerts(): Promise<void> {
     try {
-        // Check for recent weather data that might have extreme conditions
-        // This would integrate with the weather service
-        // For now, check if there's weather data in the last 24h with extreme conditions
-
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const weatherResult = await query(`
-            SELECT DISTINCT 
-                f.region,
-                COUNT(*) as extreme_count
-            FROM farmers f
-            WHERE f.region IS NOT NULL
-            GROUP BY f.region
-            LIMIT 10
+        const regionsResult = await query<{ region: string }>(`
+            SELECT DISTINCT region
+            FROM farmers
+            WHERE region IS NOT NULL
+            LIMIT 25
         `);
-
-        // Notify regional managers about weather patterns in their region
-        const managersResult = await query(`
-            SELECT id, region FROM users 
+        const managersResult = await query<{ id: string; region: string | null }>(`
+            SELECT id, region FROM users
             WHERE role = 'regional_manager' AND is_active = TRUE
         `);
+        const severeConditions = new Set(['Heavy rain', 'Violent rain showers', 'Thunderstorm', 'Thunderstorm with hail', 'Heavy snow']);
+        let notificationsSent = 0;
 
-        for (const manager of managersResult.rows) {
-            // Could check specific weather conditions and notify
-            // For now, this is a placeholder for weather alert logic
-            logger.info(`Weather check for region: ${manager.region}`);
+        for (const { region } of regionsResult.rows) {
+            try {
+                const weather = await WeatherService.getByLocation(`${region}, Kenya`);
+                const severeForecast = weather.forecast.find(day => severeConditions.has(day.condition));
+                if (!severeConditions.has(weather.condition) && !severeForecast) continue;
+
+                const condition = severeConditions.has(weather.condition) ? weather.condition : severeForecast!.condition;
+                const managers = managersResult.rows.filter(manager => !manager.region || manager.region === region);
+                for (const manager of managers) {
+                    await notificationService.send({
+                        userId: manager.id,
+                        type: 'warning',
+                        title: `Severe weather warning: ${region}`,
+                        message: `${condition} detected for ${region}. Review affected farms and field schedules.`,
+                        channel: 'in_app',
+                        metadata: { region, condition },
+                    });
+                    notificationsSent++;
+                }
+            } catch (error) {
+                logger.warn(`Weather data unavailable for region ${region}:`, error instanceof Error ? error.message : error);
+            }
         }
 
-        logger.info(`Processed weather alerts check`);
+        logger.info(`Processed weather alerts check; sent ${notificationsSent} notifications`);
     } catch (error) {
         logger.error('Error checking weather alerts:', error);
     }
@@ -165,20 +175,6 @@ async function checkChatbotSatisfaction(): Promise<void> {
         logger.info(`Processed ${result.rows.length} low satisfaction alerts`);
     } catch (error) {
         logger.error('Error checking chatbot satisfaction:', error);
-    }
-}
-
-/**
- * Check for upcoming payment due dates
- */
-async function checkPaymentDue(): Promise<void> {
-    try {
-        // This would check for any payment/subscription billing dates
-        // Currently placeholder - would integrate with Stripe/webhooks
-
-        logger.info('Processed payment due check');
-    } catch (error) {
-        logger.error('Error checking payment due:', error);
     }
 }
 

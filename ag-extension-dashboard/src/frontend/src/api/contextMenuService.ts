@@ -33,69 +33,15 @@ export const fetchContextMenu = async (
 };
 
 export const getStaticFallbackMenu = (entityType: string): ContextMenuData => {
-  const fallbackMenus: Record<string, ContextMenuData> = {
-    farmer: {
-      entityType: 'farmer',
-      sections: [
-        {
-          id: 'primary',
-          title: 'Actions',
-          items: [
-            { id: 'view', label: 'View Details', icon: 'eye', action: 'view_farmer' },
-            { id: 'edit', label: 'Edit', icon: 'edit', action: 'edit_farmer' },
-            { id: 'share', label: 'Share', icon: 'share', action: 'share_farmer' },
-            { id: 'export', label: 'Export CSV', icon: 'download', action: 'export_farmer' },
-          ],
-        },
-        {
-          id: 'danger',
-          items: [{ id: 'delete', label: 'Delete', icon: 'trash', action: 'delete_farmer' }],
-        },
-      ],
-    },
-    visit: {
-      entityType: 'visit',
-      sections: [
-        {
-          id: 'primary',
-          title: 'Actions',
-          items: [
-            { id: 'view', label: 'View Details', icon: 'eye', action: 'view_visit' },
-            { id: 'reschedule', label: 'Reschedule', icon: 'calendar', action: 'reschedule_visit' },
-            {
-              id: 'complete',
-              label: 'Mark Complete',
-              icon: 'check-square',
-              action: 'complete_visit',
-            },
-          ],
-        },
-      ],
-    },
-    report: {
-      entityType: 'report',
-      sections: [
-        {
-          id: 'primary',
-          title: 'Actions',
-          items: [
-            { id: 'view', label: 'View Report', icon: 'eye', action: 'view_report' },
-            { id: 'download', label: 'Download', icon: 'download', action: 'download_report' },
-          ],
-        },
-      ],
-    },
+  return {
+    entityType,
+    sections: [
+      {
+        id: 'unavailable',
+        items: [
+          { id: 'unavailable', label: 'Menu unavailable — refresh to retry', icon: 'alert-circle', action: 'unavailable' },
+        ],
+      },
+    ],
   };
-
-  return (
-    fallbackMenus[entityType] || {
-      entityType,
-      sections: [
-        {
-          id: 'default',
-          items: [{ id: 'view', label: 'View', icon: 'eye', action: `view_${entityType}` }],
-        },
-      ],
-    }
-  );
 };

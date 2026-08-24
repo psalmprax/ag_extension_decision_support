@@ -62,6 +62,7 @@ export function useAppMenuActions() {
   };
 
   const handleMenuAction = (action: string, entityId?: string) => {
+    if (action === 'unavailable') return;
     if (action.startsWith('share_')) {
       handleShare(action, entityId);
     } else if (action === 'schedule_visit') {
@@ -70,6 +71,8 @@ export function useAppMenuActions() {
       handleExport(action, entityId);
     } else if (action.includes('delete')) {
       handleDelete(action, entityId);
+    } else {
+      addNotification({ type: 'info', message: `Action "${action}" is not yet available.` });
     }
   };
 

@@ -372,7 +372,9 @@ export function createLiquid(
         sourceCtx!.drawElementImage!(content, 0, 0);
         contentDirty = true;
         wake();
-      } catch {}
+      } catch (error) {
+        console.error("Liquid content paint failed:", error);
+      }
     };
   }
 

@@ -849,4 +849,77 @@ const role = String(_role);
     }
 });
 
+/**
+ * @openapi
+ * /api/farmers/my-officer:
+ *   get:
+ *     summary: Get the current farmer's assigned extension officer
+ *     tags: [Farmers]
+ *     responses:
+ *       200:
+ *         description: Officer profile
+ *       403:
+ *         description: Only farmers can access this endpoint
+ *       404:
+ *         description: No officer assigned
+ */
+router.get('/my-officer', async (req: Request, res: Response) => {
+    try {
+        const { userId: _userId, role: _role } = req.user as Record<string, unknown>;
+        const userId = String(_userId);
+        const role = String(_role);
+        const prisma = getPrisma();
+
+        if (role !== 'farmer') {
+            return res.status(403).json({ success: false, error: 'Only farmers can access this endpoint' });
+        }
+
+        const farmer = await prisma.farmer.findFirst({
+            where: { userId },
+            select: { id: true, assignedOfficerId: true },
+        });
+
+        if (!farmer) {
+            return res.status(404).json({ success: false, error: 'Farmer profile not found' });
+        }
+
+        if (!farmer.assignedOfficerId) {
+            return res.status(404).json({ success: false, error: 'No extension officer assigned' });
+        }
+
+        const officer = await prisma.user.findUnique({
+            where: { id: farmer.assignedOfficerId },
+            select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                phone: true,
+                region: true,
+                role: true,
+            },
+        });
+
+        if (!officer) {
+            return res.status(404).json({ success: false, error: 'Assigned officer not found' });
+        }
+
+        res.json({
+            success: true,
+            data: {
+                id: officer.id,
+                firstName: officer.firstName,
+                lastName: officer.lastName,
+                email: officer.email,
+                phone: officer.phone,
+                region: officer.region,
+                role: officer.role,
+            },
+        });
+    } catch (error) {
+        logger.error('Get my-officer error:', error);
+        safeError(res, 500, 'Failed to get assigned officer');
+    }
+});
+
 export default router;
