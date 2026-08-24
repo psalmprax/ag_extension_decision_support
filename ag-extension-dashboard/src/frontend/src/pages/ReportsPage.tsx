@@ -227,7 +227,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
         <button
           onClick={handleGenerateReport}
           disabled={isGeneratingReport}
-          className={`px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-bold text-sm shadow-xl shadow-emerald-950/40 ${btnClass} transition-all flex items-center gap-2 disabled:opacity-50`}
+          className={`w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-bold text-sm shadow-xl shadow-emerald-950/40 ${btnClass} transition-all flex items-center justify-center gap-2 disabled:opacity-50 whitespace-nowrap`}
         >
           {isGeneratingReport ? (
             <Loader2 className="w-4 h-4 animate-spin text-slate-950" />

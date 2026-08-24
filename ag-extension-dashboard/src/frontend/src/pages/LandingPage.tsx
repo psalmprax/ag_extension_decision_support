@@ -684,10 +684,10 @@ export function LandingPage() {
             className="max-w-7xl mx-auto px-4 sm:px-6 grid lg:grid-cols-[1fr_1.1fr] gap-8 lg:gap-12 items-center relative z-10"
           >
             {/* Left copy */}
-            <motion.div initial="hidden" animate="visible" variants={stagger} className="space-y-6 sm:space-y-8">
+            <motion.div initial="hidden" animate="visible" variants={stagger} className="space-y-6 sm:space-y-8 text-center sm:text-left mx-auto sm:mx-0">
               <motion.div
                 variants={fadeUp}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] backdrop-blur-md shadow-sm max-w-full"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] backdrop-blur-md shadow-sm max-w-full mx-auto sm:mx-0"
               >
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
                 <span className="text-[11px] sm:text-xs font-medium tracking-wide text-white/80 font-mono truncate">
@@ -712,7 +712,7 @@ export function LandingPage() {
 
               <motion.p
                 variants={fadeUp}
-                className="text-sm sm:text-base lg:text-lg text-white/80 leading-relaxed max-w-lg font-normal"
+                className="text-sm sm:text-base lg:text-lg text-white/80 leading-relaxed max-w-lg mx-auto sm:mx-0 font-normal"
               >
                 Empower extension officers with AI-driven insights, real-time farmer tracking, and
                 data-powered decisions across the Globe.
@@ -721,7 +721,7 @@ export function LandingPage() {
               {/* What it is / Who it's for / What it solves */}
               <motion.div
                 variants={fadeUp}
-                className="space-y-2.5 max-w-lg pt-1"
+                className="space-y-2.5 max-w-lg mx-auto sm:mx-0 pt-1"
               >
                 <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm flex items-start gap-2.5">
                   <div className="w-5 h-5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0 mt-0.5">

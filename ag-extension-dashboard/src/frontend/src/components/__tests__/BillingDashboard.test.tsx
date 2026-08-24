@@ -1,6 +1,6 @@
+import React, { type ReactNode } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import type { ReactNode } from 'react';
 import { BillingDashboard } from '../BillingDashboard';
 import { LanguageProvider } from '../../lib/LanguageContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -76,12 +76,18 @@ vi.mock('framer-motion', () => {
     'whileTap',
   ]);
 
-  const mockComponent = ({ children, ...props }: MotionMockProps) => {
-    const domProps = Object.fromEntries(
-      Object.entries(props).filter(([key]) => !motionOnlyProps.has(key))
-    );
-    return <div {...domProps}>{children}</div>;
-  };
+  const mockComponent = React.forwardRef<HTMLDivElement, MotionMockProps>(
+    ({ children, ...props }, ref) => {
+      const domProps = Object.fromEntries(
+        Object.entries(props).filter(([key]) => !motionOnlyProps.has(key))
+      );
+      return (
+        <div ref={ref} {...domProps}>
+          {children as ReactNode}
+        </div>
+      );
+    }
+  );
   return {
     motion: {
       div: mockComponent,

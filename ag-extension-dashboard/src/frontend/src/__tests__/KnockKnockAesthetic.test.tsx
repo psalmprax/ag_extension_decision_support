@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { FloatingAIPill } from '../components/FloatingAIPill';
 import { LiveActivityStream } from '../components/LiveActivityStream';
@@ -7,7 +7,13 @@ import { USSDSimulatorDrawer } from '../components/USSDSimulatorDrawer';
 import { LanguageProvider } from '@/lib/LanguageContext';
 
 const renderWithLanguage = async (ui: React.ReactElement) => {
-  return render(<LanguageProvider>{ui}</LanguageProvider>);
+  const result = render(<LanguageProvider>{ui}</LanguageProvider>);
+  // LanguageProvider loads translations asynchronously in useEffect; flush the
+  // pending microtasks inside act so the state updates don't leak outside it.
+  await act(async () => {
+    await new Promise(resolve => setTimeout(resolve, 0));
+  });
+  return result;
 };
 
 // Mock framer-motion to avoid animation timing issues in test environment
@@ -29,12 +35,18 @@ vi.mock('framer-motion', () => {
     'whileTap',
   ]);
 
-  const mockComponent = ({ children, ...props }: MotionMockProps) => {
-    const domProps = Object.fromEntries(
-      Object.entries(props).filter(([key]) => !motionOnlyProps.has(key))
-    );
-    return <div {...domProps}>{children}</div>;
-  };
+  const mockComponent = React.forwardRef<HTMLDivElement, MotionMockProps>(
+    ({ children, ...props }, ref) => {
+      const domProps = Object.fromEntries(
+        Object.entries(props).filter(([key]) => !motionOnlyProps.has(key))
+      );
+      return (
+        <div ref={ref} {...domProps}>
+          {children as ReactNode}
+        </div>
+      );
+    }
+  );
 
   return {
     motion: {

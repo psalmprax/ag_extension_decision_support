@@ -92,7 +92,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="fixed inset-0 z-[90] flex items-center justify-center p-4"
           >
-            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-lg max-h-[calc(100dvh-2rem)] sm:max-h-[80vh] overflow-hidden flex flex-col">
               {/* Header */}
               <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                 <div className="flex items-center gap-3">

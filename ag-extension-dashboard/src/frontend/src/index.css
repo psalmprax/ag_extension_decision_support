@@ -41,6 +41,18 @@
     font-family: 'Inter', system-ui, sans-serif;
     scroll-behavior: smooth;
     font-size: 100%;
+    touch-action: manipulation;
+  }
+
+  /* Eliminate 300ms tap delay: see https://webkit.org/blog/5610/more-responsive-tap-on-ios/ */
+  a,
+  button,
+  [role='button'],
+  input:not([type='range']),
+  textarea,
+  select,
+  summary {
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {

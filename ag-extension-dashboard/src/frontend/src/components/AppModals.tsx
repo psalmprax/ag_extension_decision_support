@@ -187,7 +187,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-hidden flex flex-col"
+            className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-3xl w-full max-h-[calc(100dvh-2rem)] sm:max-h-[80vh] overflow-hidden flex flex-col"
           >
             <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
               <div>

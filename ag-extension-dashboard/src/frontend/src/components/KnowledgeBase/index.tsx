@@ -264,7 +264,7 @@ export const KnowledgeBase: React.FC = () => {
   };
 
   return (
-    <div className="flex h-[calc(100dvh-130px)] md:h-[calc(100vh-64px)] overflow-hidden bg-theme-bg/50 backdrop-blur-sm rounded-2xl">
+    <div className="flex h-full min-h-0 overflow-hidden bg-theme-bg/50 backdrop-blur-sm rounded-2xl">
       <KnowledgeSidebar
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
