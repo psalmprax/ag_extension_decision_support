@@ -54,15 +54,6 @@ export async function verifyVisitGeofence(params: {
   return response.data.data;
 }
 
-export async function checkSpatialConflict(params: {
-  targetLat: number;
-  targetLng: number;
-  excludeFarmerId?: string;
-  thresholdMeters?: number;
-}): Promise<SpatialConflictResult> {
-  const response = await apiClient.post('/verification/spatial-conflict', params);
-  return response.data.data;
-}
 
 export async function auditCropLoss(params: {
   farmerLat: number;
@@ -82,10 +73,5 @@ export async function generateCoSignToken(visitId: string, farmerId: string): Pr
 
 export async function verifyCoSignToken(visitId: string, enteredOtp: string): Promise<{ verified: boolean; message: string }> {
   const response = await apiClient.post('/verification/cosign/verify', { visitId, enteredOtp });
-  return response.data.data;
-}
-
-export async function getFraudAlerts(): Promise<FraudAlert[]> {
-  const response = await apiClient.get('/verification/fraud-alerts');
   return response.data.data;
 }

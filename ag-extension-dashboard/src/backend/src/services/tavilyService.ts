@@ -15,6 +15,17 @@ export interface TavilySearchResponse {
     answer: string;
 }
 
+/** Raw result object returned by the Tavily API. */
+interface TavilyRawResult {
+    title?: unknown;
+    url?: unknown;
+    content?: unknown;
+    score?: unknown;
+}
+
+const toString = (value: unknown): string => (typeof value === 'string' ? value : '');
+const toNumber = (value: unknown): number => (typeof value === 'number' ? value : 0);
+
 class TavilyService {
     private apiKey: string;
     private baseUrl = 'https://api.tavily.com/search';
@@ -47,14 +58,15 @@ class TavilyService {
                 }
             );
 
+            const rawResults: TavilyRawResult[] = Array.isArray(response.data.results) ? response.data.results : [];
             return {
-                results: response.data.results?.map((r: any) => ({
-                    title: r.title,
-                    url: r.url,
-                    content: r.content,
-                    score: r.score,
-                })) || [],
-                answer: response.data.answer || '',
+                results: rawResults.map((r) => ({
+                    title: toString(r.title),
+                    url: toString(r.url),
+                    content: toString(r.content),
+                    score: toNumber(r.score),
+                })),
+                answer: typeof response.data.answer === 'string' ? response.data.answer : '',
             };
         } catch (error) {
             logger.error('Tavily search error:', error);

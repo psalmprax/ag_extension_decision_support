@@ -1,23 +1,62 @@
-# Implementation Plan: 8 New Features (Route Optimizer → Soil Labs)
+# Engineering Quality Plan: 9.5/10 Target
 
-Approved scope: implement all 8 features from the second gap analysis. Sequenced by value/effort. Business-gated items (insurance partner, gov registration) get the full code layer + documented gates.
+## Goal
+Raise the project from its current implementation-based rating of 7.5/10 toward a defensible 9.5/10 by improving verified production quality rather than adding surface-area features.
 
-## Backend (migration batch 2)
+## Baseline observed
+- Frontend: 136 tests passed; lint and production build passed.
+- Backend: 456 tests passed across 53 suites; lint and TypeScript build passed.
+- Browser extension: typecheck and Chrome production build passed.
+- Frontend bundle-budget check failed: total assets were 4,370.7 KB against a 4,096 KB budget.
+- Frontend coverage was 10.67% statements, 7.18% branches, 9.3% functions, and 10.94% lines.
+- Runtime and supporting code contain numerous explicit `any` types and `console.log` calls.
+- Locale validation passed structurally but reported 109 English fallback values, 17 high priority.
 
-- New tables: `crop_cycle_milestones`, `soil_lab_results`; new columns on `crop_cycles` (`plan_json`, `plan_generated_at`)
-- No tables needed: route optimization (computed), gamification (aggregated), MIS export (derived), insurance index (computed), SMS triage (reuses onboarding sessions)
+## Priorities
 
-## Features
+### P0 — Release gates and trustworthy verification
+1. Make the frontend bundle budget pass by reducing shipped assets through route/component lazy loading, vendor splitting, and removal of unnecessary eager imports. Preserve functionality and validate with the existing bundle checker.
+2. Add meaningful coverage thresholds or scoped coverage gates for critical services, hooks, state transitions, authentication, sync/offline behavior, and key user journeys. Avoid inflating metrics with shallow tests.
+3. Add/strengthen browser-extension tests for message routing, persistence, queue replay, permissions, and failure behavior.
+4. Add end-to-end smoke coverage for authentication, dashboard loading, farmer/field workflows, diagnosis, offline recovery, and error states.
 
-1. **Route Optimizer** — `routeOptimizationService` (pure nearest-neighbor + 2-opt over follow-up queue with priority weights: daysOverdue, vitalScore); `GET /efficacy/route-plan`; VisitsPage route panel
-2. **Farm Plans** — `farmPlanService`: rule-based milestone templates per crop from planting date; `POST /fields/cycles/:id/generate-plan`, `GET/PATCH milestones`; CropsFields milestone UI
-3. **In-Field Calculators** — pure `lib/agCalculators.ts` (tank mix, fertilizer blend NPK, planting density, herbicide dose) + FieldCalculators panel; fully offline
-4. **MIS Interop** — `misExportService`: standardized CSV/JSON exports (farmers, visits, outcomes) with documented column contract; `GET /mis/export/:dataset` (admin/regional)
-5. **Officer Gamification** — `officerGamificationService`: 30d leaderboard (visits, outcomes recorded, efficacy success rate) + badges; `GET /gamification/leaderboard`; dashboard LeaderboardCard
-6. **SMS/USSD Symptom Triage** — `symptomTriageService` (pure keyword matcher, 8 crop/pest playbooks) wired into onboardingEngine 'diagnose' flow; tests on matcher
-7. **Weather-Index Insurance API** — `weatherIndexService`: seasonal rainfall index vs historical mean per district from NASA POWER; `GET /insurance/weather-index` (partner integration = business gate, documented)
-8. **Soil Lab Import** — `soilLabService`: pure CSV parser + `POST /soil-lab/import` + `GET /soil-lab/farmer/:id`; SoilDiagnosticsTab import button
+### P1 — Type safety and runtime correctness
+1. Replace production-path `any` types in backend routes, workers, diagnostics, provider adapters, and browser-extension message handlers with explicit interfaces, `unknown` plus narrowing, or Zod schemas already used by the project.
+2. Remove unsafe schema internals and unchecked casts where practical, especially validation middleware and external API response handling.
+3. Standardize typed API contracts between frontend, backend, shared package, and extension messaging.
+4. Add negative-path tests for malformed requests, provider failures, stale/offline data, authorization boundaries, and partial external responses.
 
-## Verification
+### P1 — Operational quality and security
+1. Replace runtime `console.log` calls with the existing Winston/logger abstraction; keep console output only in intentionally standalone CLI scripts and migrations where appropriate.
+2. Ensure logs redact tokens, credentials, personal data, and raw external payloads.
+3. Run dependency/security checks and address high-severity findings without introducing unverified upgrades.
+4. Verify graceful startup/shutdown, health checks, timeouts, retries, idempotency, and queue failure handling through tests.
 
-Backend tsc + jest (new suites per service), frontend tsc + vitest + locale audit; atomic commits on stage; push.
+### P2 — Product polish and maintainability
+1. Translate the 17 high-priority English fallback values and reduce the remaining fallbacks where accurate translations are available.
+2. Split oversized UI modules and pages into focused components/hooks while preserving behavior.
+3. Improve accessibility coverage for keyboard navigation, focus management, labels, dialogs, loading/error states, and map fallbacks.
+4. Add performance checks for initial load, route transitions, large lists, maps, charts, and offline cache behavior.
+5. Run fallow/audit checks and remove only verified dead code, duplicate paths, and unused dependencies.
+
+## Proposed execution order
+1. Establish scoped quality gates and capture current metrics.
+2. Fix bundle budget and eager-loading boundaries.
+3. Add critical-path integration/E2E and extension coverage.
+4. Type hardening in highest-risk runtime boundaries.
+5. Logging/redaction and security hardening.
+6. Translation, accessibility, maintainability, and cleanup pass.
+7. Re-run all tests, builds, lint, typechecks, security checks, fallow, and bundle checks.
+
+## Success criteria
+- Frontend bundle check passes without raising the budget.
+- Frontend critical-path coverage is materially improved with meaningful assertions; thresholds are enforced for the selected scope.
+- Backend, frontend, shared package, and extension tests/typechecks/builds pass.
+- No new production-path explicit `any` or unstructured message payloads in touched boundaries.
+- No unreviewed runtime console logging or sensitive-data leakage.
+- High-priority translation fallbacks are eliminated or explicitly justified.
+- Accessibility and E2E smoke checks pass.
+- Fallow/security audits show no newly introduced regressions.
+
+## Open decision
+This is a multi-pass quality program. User approval is required before implementation begins, and the work should be executed in prioritized batches with verification after each batch.

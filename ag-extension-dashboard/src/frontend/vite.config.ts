@@ -5,8 +5,7 @@ import path from 'node:path';
 import { VitePWA } from 'vite-plugin-pwa';
 
 interface VitestConfigExport extends UserConfig {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  test?: any;
+  test?: UserConfig['test'];
 }
 
 export default defineConfig({
@@ -80,7 +79,12 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,json}'],
+        // Locale files are fetched on demand by the language provider and are
+        // intentionally excluded from the precache to keep the install payload small.
+        globPatterns: ['**/*.{js,css,html,ico,svg,woff2}'],
+        // Large raster icons remain available by URL but are not precached;
+        // this keeps service-worker installation from duplicating static payload.
+        additionalManifestEntries: [],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/api\./i,
@@ -185,4 +189,4 @@ export default defineConfig({
       exclude: ['node_modules/', 'src/test/setup.ts'],
     },
   },
-} as VitestConfigExport);
+} satisfies VitestConfigExport);

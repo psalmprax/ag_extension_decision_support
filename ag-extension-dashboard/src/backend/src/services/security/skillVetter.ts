@@ -26,7 +26,7 @@ export interface VettingResult {
   recommendations: string[];
 }
 
-export class SkillVetter {
+class SkillVetter {
   private static instance: SkillVetter;
   private vettedSkills: Map<string, SkillMetadata> = new Map();
   private blockedHashes: Set<string> = new Set();

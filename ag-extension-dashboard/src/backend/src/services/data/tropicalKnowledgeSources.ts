@@ -30,7 +30,7 @@ export interface TropicalKnowledgeArticleSeed {
     sourceUrl: string;
 }
 
-export const tropicalKnowledgeSources: TropicalKnowledgeSource[] = [
+const tropicalKnowledgeSources: TropicalKnowledgeSource[] = [
     {
         id: 'fao-crop-guides',
         name: 'FAO crop, soil, water and post-harvest guidance',
@@ -145,7 +145,7 @@ export const tropicalKnowledgeSources: TropicalKnowledgeSource[] = [
     }
 ];
 
-export const tropicalArticleSeeds: TropicalKnowledgeArticleSeed[] = [
+const tropicalArticleSeeds: TropicalKnowledgeArticleSeed[] = [
     {
         id: '11111111-1111-4111-8111-111111111101',
         title: 'Cassava Mosaic and Brown Streak Disease Field Guide',

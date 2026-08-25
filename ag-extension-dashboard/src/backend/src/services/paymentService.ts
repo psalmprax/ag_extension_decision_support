@@ -1,9 +1,17 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import Stripe from 'stripe';
 import paypal from 'paypal-rest-sdk';
 
 import { logger } from '../utils/logger';
 import { systemConfigService } from './systemConfigService';
+
+function errorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
+}
+
+function productFeatures(product: Stripe.Product | Stripe.DeletedProduct): string[] {
+    const raw = (product as Stripe.Product & { features?: unknown }).features;
+    return Array.isArray(raw) ? raw.filter((f): f is string => typeof f === 'string') : [];
+}
 
 export interface CreateCheckoutSessionParams {
     userId: string;
@@ -25,6 +33,15 @@ export interface CreatePaymentIntentParams {
     amount: number; // in cents
     currency: string;
     metadata?: Record<string, string>;
+}
+
+export interface InvoiceSummary {
+    id: string;
+    amount_paid: number;
+    currency: string;
+    status: string;
+    created: number;
+    invoice_pdf: string;
 }
 
 interface StripeSubscription {
@@ -70,10 +87,9 @@ class PaymentService {
             try {
                 this.stripe = new Stripe(stripeKey, {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    apiVersion: '2024-12-18.acacia' as any,
+                    apiVersion: '2024-12-18.acacia' as unknown as Stripe.LatestApiVersion,
                 });
-                logger.info('Stripe payment service initialized (Real Mode)');
-            } catch (error: any) {
+                logger.info('Stripe payment service initialized (Real Mode)');                } catch (error) {
                 logger.warn('Failed to initialize Stripe with provided key - payments will be simulated (Demo Mode):', error);
                 this.stripe = null;
             }
@@ -99,8 +115,7 @@ class PaymentService {
                     client_secret: paypalClientSecret
                 });
                 this.paypalConfigured = true;
-                logger.info('PayPal payment service initialized');
-            } catch (error: any) {
+                logger.info('PayPal payment service initialized');                } catch (error) {
                 logger.warn('Failed to initialize PayPal:', error);
                 this.paypalConfigured = false;
             }
@@ -171,12 +186,12 @@ class PaymentService {
                 sessionId: session.id,
                 url: session.url!,
             };
-        } catch (error: any) {
+        } catch (error) {
             logger.error('Failed to create Stripe checkout session:', error);
             return {
                 success: false,
                 errorCode: 'STRIPE_ERROR',
-                message: error.message || 'Failed to initiate Stripe checkout'
+                message: errorMessage(error) || 'Failed to initiate Stripe checkout'
             };
         }
     }
@@ -222,12 +237,12 @@ class PaymentService {
                 success: true,
                 url: session.url!,
             };
-        } catch (error: any) {
+        } catch (error) {
             logger.error('Failed to create Stripe setup session:', error);
             return {
                 success: false,
                 errorCode: 'STRIPE_ERROR',
-                message: error.message || 'Failed to initiate payment method setup'
+                message: errorMessage(error) || 'Failed to initiate payment method setup'
             };
         }
     }
@@ -263,12 +278,12 @@ class PaymentService {
                 clientSecret: paymentIntent.client_secret!,
                 paymentIntentId: paymentIntent.id,
             };
-        } catch (error: any) {
+        } catch (error) {
             logger.error('Failed to create payment intent:', error);
             return {
                 success: false,
                 errorCode: 'STRIPE_ERROR',
-                message: error.message || 'Failed to initiate payment intent'
+                message: errorMessage(error) || 'Failed to initiate payment intent'
             };
         }
     }
@@ -310,7 +325,7 @@ class PaymentService {
         try {
             await this.stripe.subscriptions.cancel(subscriptionId);
             return true;
-        } catch (error: any) {
+        } catch (error) {
             logger.error('Failed to cancel subscription:', error);
             return false;
         }
@@ -343,12 +358,12 @@ class PaymentService {
                 currentPeriodEnd: (subscription as unknown as StripeSubscription).current_period_end * 1000,
                 planName: price.nickname || 'Subscription',
             };
-        } catch (error: any) {
+        } catch (error) {
             logger.error('Failed to get subscription:', error);
             return {
                 success: false,
                 errorCode: 'STRIPE_ERROR',
-                message: error.message || 'Failed to retrieve subscription details'
+                message: errorMessage(error) || 'Failed to retrieve subscription details'
             };
         }
     }
@@ -398,12 +413,12 @@ class PaymentService {
             }
 
             return { success: true, message: 'Plan switched successfully' };
-        } catch (error: any) {
+        } catch (error) {
             logger.error('Failed to switch subscription:', error);
             return {
                 success: false,
                 errorCode: 'STRIPE_ERROR',
-                message: error.message || 'Failed to switch plan'
+                message: errorMessage(error) || 'Failed to switch plan'
             };
         }
     }
@@ -450,12 +465,12 @@ class PaymentService {
             }));
 
             return { success: true, data };
-        } catch (error: any) {
+        } catch (error) {
             logger.error('Failed to get payment methods:', error);
             return {
                 success: false,
                 errorCode: 'STRIPE_ERROR',
-                message: error.message || 'Failed to fetch payment methods'
+                message: errorMessage(error) || 'Failed to fetch payment methods'
             };
         }
     }
@@ -470,12 +485,12 @@ class PaymentService {
         try {
             await this.stripe.paymentMethods.detach(paymentMethodId);
             return { success: true, message: 'Payment method removed successfully' };
-        } catch (error: any) {
+        } catch (error) {
             logger.error('Failed to delete payment method:', error);
             return {
                 success: false,
                 errorCode: 'STRIPE_ERROR',
-                message: error.message || 'Failed to remove payment method'
+                message: errorMessage(error) || 'Failed to remove payment method'
             };
         }
     }
@@ -526,9 +541,8 @@ class PaymentService {
                 }
 
                 case 'invoice.paid': {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const invoice = event.data.object as any;
-                    const stripeSubscriptionId = invoice.subscription as string;
+                    const invoice = event.data.object as Stripe.Invoice;
+                    const stripeSubscriptionId = (invoice as Stripe.Invoice & { subscription?: string | null }).subscription ?? null;
 
                     if (stripeSubscriptionId) {
                         const subscription = await this.stripe!.subscriptions.retrieve(stripeSubscriptionId);
@@ -570,12 +584,12 @@ class PaymentService {
 
                 case 'customer.subscription.updated': {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const subscription = event.data.object as any;
+                    const subscription = event.data.object as Stripe.Subscription;
                     const stripeSubscriptionId = subscription.id;
                     const priceId = subscription.items.data[0].price.id;
 
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const plan = await (prisma.subscriptionPlan as any).findFirst({
+                    const plan = await prisma.subscriptionPlan.findFirst({
                         where: { stripePriceId: priceId }
                     });
 
@@ -595,7 +609,7 @@ class PaymentService {
                 }
             }
             return true;
-        } catch (error: any) {
+        } catch (error) {
             logger.error('Error handling Stripe webhook:', error);
             return false;
         }
@@ -618,12 +632,12 @@ class PaymentService {
             });
 
             return { success: true, url: session.url };
-        } catch (error: any) {
+        } catch (error) {
             logger.error('Failed to create portal session:', error);
             return {
                 success: false,
                 errorCode: 'STRIPE_ERROR',
-                message: error.message || 'Failed to initiate billing portal'
+                message: errorMessage(error) || 'Failed to initiate billing portal'
             };
         }
     }
@@ -640,7 +654,7 @@ class PaymentService {
                 signature,
                 process.env.STRIPE_WEBHOOK_SECRET
             );
-        } catch (error: any) {
+        } catch (error) {
             logger.error('Webhook signature verification failed:', error);
             return null;
         }
@@ -707,20 +721,18 @@ class PaymentService {
                 name: (price.product as Stripe.Product).name || 'Plan',
                 price: price.unit_amount || 0,
                 interval: price.recurring?.interval || 'month',
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                features: ((price.product as any).features) || [],
+                features: typeof price.product === 'object' ? productFeatures(price.product) : [],
             }));
-        } catch (error: any) {
+        } catch (error) {
             logger.error('Failed to get pricing plans:', error);
             return [];
         }
     }
 
     // Get invoices for a customer
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async getInvoices(customerId: string): Promise<{
         success: boolean;
-        data?: any[];
+        data?: InvoiceSummary[];
         errorCode?: string;
         message?: string;
     }> {
@@ -748,12 +760,12 @@ class PaymentService {
             }));
 
             return { success: true, data };
-        } catch (error: any) {
+        } catch (error) {
             logger.error('Failed to fetch invoices:', error);
             return {
                 success: false,
                 errorCode: 'STRIPE_ERROR',
-                message: error.message || 'Failed to retrieve invoice history'
+                message: errorMessage(error) || 'Failed to retrieve invoice history'
             };
         }
     }
@@ -803,7 +815,7 @@ class PaymentService {
                 }]
             };
 
-            paypal.payment.create(createPaymentJson, (error: any, payment: any) => {
+            paypal.payment.create(createPaymentJson, (error, payment) => {
                 if (error) {
                     logger.error('PayPal payment creation failed:', error);
                     resolve({
@@ -812,7 +824,7 @@ class PaymentService {
                         message: error.message || 'Failed to initiate PayPal payment'
                     });
                 } else {
-                    const approvalUrl = payment.links.find((link: any) => link.rel === 'approval_url').href;
+                    const approvalUrl = payment.links?.find(link => link.rel === 'approval_url')?.href ?? '';
                     resolve({
                         success: true,
                         paymentId: payment.id,
@@ -830,7 +842,7 @@ class PaymentService {
         }
 
         return new Promise((resolve) => {
-            paypal.payment.execute(paymentId, { payer_id: payerId }, (error: any, payment: any) => {
+            paypal.payment.execute(paymentId, { payer_id: payerId }, (error, payment) => {
                 if (error) {
                     logger.error('PayPal payment execution failed:', error);
                     resolve(false);

@@ -28,6 +28,34 @@ export interface TelemetrySummary {
   errorRate: number;
 }
 
+/** Raw `agent_telemetry` row shape as returned by `pg`. */
+interface TelemetryRow {
+  id: string;
+  event_type: TelemetryEvent['eventType'];
+  agent_id: string | null;
+  tool_name: string | null;
+  user_id: string | null;
+  duration_ms: number | null;
+  tokens_used: number | null;
+  cost_usd: number | null;
+  status: TelemetryEvent['status'];
+  metadata: Record<string, unknown> | null;
+  correlation_id: string | null;
+  timestamp: Date | string;
+}
+
+interface TelemetryCountRow {
+  count: string;
+  avg?: string | null;
+  coalesce?: string | null;
+}
+
+interface TelemetryGroupRow {
+  count: string;
+  tool_name?: string | null;
+  agent_id?: string | null;
+}
+
 export class AgentTelemetry {
   private static instance: AgentTelemetry;
   private initialized = false;
@@ -185,14 +213,14 @@ export class AgentTelemetry {
       const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
 
       const [totalReq, totalErr, avgTime, totalTokens, totalCost] = await Promise.all([
-        query(`SELECT COUNT(*) FROM agent_telemetry WHERE timestamp > $1`, [since]),
-        query(`SELECT COUNT(*) FROM agent_telemetry WHERE timestamp > $1 AND status = 'error'`, [since]),
-        query(`SELECT AVG(duration_ms) FROM agent_telemetry WHERE timestamp > $1 AND duration_ms IS NOT NULL`, [since]),
-        query(`SELECT COALESCE(SUM(tokens_used), 0) FROM agent_telemetry WHERE timestamp > $1`, [since]),
-        query(`SELECT COALESCE(SUM(cost_usd), 0) FROM agent_telemetry WHERE timestamp > $1`, [since]),
+        query<TelemetryCountRow>(`SELECT COUNT(*) FROM agent_telemetry WHERE timestamp > $1`, [since]),
+        query<TelemetryCountRow>(`SELECT COUNT(*) FROM agent_telemetry WHERE timestamp > $1 AND status = 'error'`, [since]),
+        query<TelemetryCountRow>(`SELECT AVG(duration_ms) FROM agent_telemetry WHERE timestamp > $1 AND duration_ms IS NOT NULL`, [since]),
+        query<TelemetryCountRow>(`SELECT COALESCE(SUM(tokens_used), 0) FROM agent_telemetry WHERE timestamp > $1`, [since]),
+        query<TelemetryCountRow>(`SELECT COALESCE(SUM(cost_usd), 0) FROM agent_telemetry WHERE timestamp > $1`, [since]),
       ]);
 
-      const toolResult = await query(`
+      const toolResult = await query<TelemetryGroupRow>(`
         SELECT tool_name, COUNT(*) as count 
         FROM agent_telemetry 
         WHERE timestamp > $1 AND tool_name IS NOT NULL 
@@ -200,7 +228,7 @@ export class AgentTelemetry {
         ORDER BY count DESC
       `, [since]);
 
-      const agentResult = await query(`
+      const agentResult = await query<TelemetryGroupRow>(`
         SELECT agent_id, COUNT(*) as count 
         FROM agent_telemetry 
         WHERE timestamp > $1 AND agent_id IS NOT NULL 
@@ -210,12 +238,12 @@ export class AgentTelemetry {
 
       const toolUsage: Record<string, number> = {};
       for (const row of toolResult.rows) {
-        toolUsage[row.tool_name] = parseInt(row.count);
+        if (row.tool_name) toolUsage[row.tool_name] = parseInt(row.count);
       }
 
       const agentUsage: Record<string, number> = {};
       for (const row of agentResult.rows) {
-        agentUsage[row.agent_id] = parseInt(row.count);
+        if (row.agent_id) agentUsage[row.agent_id] = parseInt(row.count);
       }
 
       const totalRequests = parseInt(totalReq.rows[0].count);
@@ -224,9 +252,9 @@ export class AgentTelemetry {
       return {
         totalRequests,
         totalErrors,
-        avgResponseTimeMs: Math.round(parseFloat(avgTime.rows[0].avg) || 0),
-        totalTokensUsed: parseInt(totalTokens.rows[0].coalesce),
-        totalCostUsd: parseFloat(totalCost.rows[0].coalesce),
+        avgResponseTimeMs: Math.round(parseFloat(avgTime.rows[0].avg ?? '0') || 0),
+        totalTokensUsed: parseInt(totalTokens.rows[0].coalesce ?? '0'),
+        totalCostUsd: parseFloat(totalCost.rows[0].coalesce ?? '0'),
         toolUsage,
         agentUsage,
         errorRate: totalRequests > 0 ? Math.round((totalErrors / totalRequests) * 10000) / 100 : 0,
@@ -244,25 +272,26 @@ export class AgentTelemetry {
     }
 
     try {
-      const result = await query(`
-        SELECT * FROM agent_telemetry 
-        ORDER BY timestamp DESC 
+      const result = await query<TelemetryRow>(`
+        SELECT id, event_type, agent_id, tool_name, user_id, duration_ms, tokens_used, cost_usd, status, metadata, correlation_id, timestamp
+        FROM agent_telemetry
+        ORDER BY timestamp DESC
         LIMIT $1
       `, [limit]);
 
-      return result.rows.map((row: any) => ({
+      return result.rows.map((row) => ({
         id: row.id,
         eventType: row.event_type,
-        agentId: row.agent_id,
-        toolName: row.tool_name,
-        userId: row.user_id,
-        durationMs: row.duration_ms,
-        tokensUsed: row.tokens_used,
-        costUsd: row.cost_usd,
+        agentId: row.agent_id ?? undefined,
+        toolName: row.tool_name ?? undefined,
+        userId: row.user_id ?? undefined,
+        durationMs: row.duration_ms ?? undefined,
+        tokensUsed: row.tokens_used ?? undefined,
+        costUsd: row.cost_usd ?? undefined,
         status: row.status,
-        metadata: row.metadata,
-        timestamp: row.timestamp,
-        correlationId: row.correlation_id,
+        metadata: row.metadata ?? undefined,
+        timestamp: row.timestamp instanceof Date ? row.timestamp.toISOString() : row.timestamp,
+        correlationId: row.correlation_id ?? undefined,
       }));
     } catch (error) {
       logger.error('Failed to get recent events:', error);

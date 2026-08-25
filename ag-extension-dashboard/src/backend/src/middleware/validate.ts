@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { z, ZodSchema, ZodError, ZodObject } from 'zod';
+import { z, ZodSchema, ZodError, ZodObject, type ZodRawShape } from 'zod';
 
 /**
  * Validation middleware factory
@@ -17,11 +17,10 @@ export const validate = (schema: ZodSchema | { body?: ZodSchema; query?: ZodSche
 
     if (schema instanceof ZodObject && '_def' in schema) {
         // Wrapped format: z.object({ body: ..., query: ..., params: ... })
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const shape = (schema as any)._def.shape();
-        bodySchema = shape.body;
-        querySchema = shape.query;
-        paramsSchema = shape.params;
+        const shape = schema.shape as ZodRawShape;
+        bodySchema = shape.body as ZodSchema | undefined;
+        querySchema = shape.query as ZodSchema | undefined;
+        paramsSchema = shape.params as ZodSchema | undefined;
     } else {
         // Flat format: { body?: ZodSchema, query?: ZodSchema, params?: ZodSchema }
         const s = schema as { body?: ZodSchema; query?: ZodSchema; params?: ZodSchema };

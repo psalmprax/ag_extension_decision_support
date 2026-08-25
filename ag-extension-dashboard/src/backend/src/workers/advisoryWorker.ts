@@ -4,7 +4,7 @@ import { config } from '@/config';
 import { logger } from '@/utils/logger';
 import { seasonalAdvisoryService } from '@/services/seasonalAdvisoryService';
 
-export const ADVISORY_CYCLE_QUEUE = 'advisory-cycle-queue';
+const ADVISORY_CYCLE_QUEUE = 'advisory-cycle-queue';
 const CRON_EXPRESSION = process.env.ADVISORY_CRON || '0 4 * * *'; // 04:00 server time daily
 
 let _worker: Worker | null = null;

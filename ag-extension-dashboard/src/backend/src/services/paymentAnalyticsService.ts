@@ -60,7 +60,7 @@ export interface CohortAnalysis {
     }>;
 }
 
-export class PaymentAnalyticsService {
+class PaymentAnalyticsService {
     private prisma = getPrisma();
 
     /**

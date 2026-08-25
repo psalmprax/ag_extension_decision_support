@@ -165,40 +165,12 @@ export const createPayPalSubscription = async (planId: string) => {
 };
 
 // Payment Analytics API functions (Admin only)
-export const getAnalyticsDashboard = async () => {
-  const { data } = await apiClient.get('/billing/analytics/dashboard');
-  return data;
-};
 
-export const getRevenueAnalytics = async (timeframe: 'month' | 'quarter' | 'year' = 'month') => {
-  const { data } = await apiClient.get('/billing/analytics/revenue', { params: { timeframe } });
-  return data;
-};
 
-export const getCustomerAnalytics = async () => {
-  const { data } = await apiClient.get('/billing/analytics/customers');
-  return data;
-};
 
-export const getSubscriptionAnalytics = async () => {
-  const { data } = await apiClient.get('/billing/analytics/subscriptions');
-  return data;
-};
 
-export const getPaymentMethodAnalytics = async () => {
-  const { data } = await apiClient.get('/billing/analytics/payment-methods');
-  return data;
-};
 
-export const getChurnAnalytics = async () => {
-  const { data } = await apiClient.get('/billing/analytics/churn');
-  return data;
-};
 
-export const getCohortAnalytics = async () => {
-  const { data } = await apiClient.get('/billing/analytics/cohorts');
-  return data;
-};
 
 // Voucher API functions
 export const redeemVoucher = async (code: string) => {

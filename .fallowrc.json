@@ -148,7 +148,8 @@
     "ag-extension-dashboard/src/backend/src/routes/users.ts",
     "ag-extension-browser-ext/shared/hooks/usePersistence.ts",
     "ag-extension-dashboard/src/backend/src/tools/registry.ts",
-    "ag-extension-dashboard/src/backend/src/routes/billing.ts"
+    "ag-extension-dashboard/src/backend/src/routes/billing.ts",
+    "ag-extension-dashboard/src/backend/src/scripts/dailyReportJob.ts"
   ],
   "ignorePatterns": [
     "node_modules",
@@ -185,6 +186,131 @@
     "@tailwindcss/typography",
     "class-variance-authority",
     "react-dom",
-    "@opengsd/gsd-pi"
+    "@opengsd/gsd-pi",
+    "autoprefixer"
+  ],
+  "ignoreExports": [
+    {
+      "file": "ag-extension-dashboard/src/backend/src/middleware/errorHandler.ts",
+      "exports": [
+        "ErrorTypes",
+        "createError",
+        "handlePrismaError"
+      ]
+    },
+    {
+      "file": "ag-extension-dashboard/src/backend/src/middleware/idempotencyMiddleware.ts",
+      "exports": [
+        "clearIdempotencyStore"
+      ]
+    },
+    {
+      "file": "ag-extension-dashboard/src/backend/src/services/agentTelemetry.ts",
+      "exports": [
+        "AgentTelemetry"
+      ]
+    },
+    {
+      "file": "ag-extension-dashboard/src/backend/src/services/data/soilGridsService.ts",
+      "exports": [
+        "SoilGridsService"
+      ]
+    },
+    {
+      "file": "ag-extension-dashboard/src/backend/src/services/data/faostatService.ts",
+      "exports": [
+        "FaostatService"
+      ]
+    },
+    {
+      "file": "ag-extension-dashboard/src/backend/src/services/farmPlanService.ts",
+      "exports": [
+        "PLAN_TEMPLATES",
+        "milestonesForCrop"
+      ]
+    },
+    {
+      "file": "ag-extension-dashboard/src/backend/src/services/misExportService.ts",
+      "exports": [
+        "MIS_VERSION"
+      ]
+    },
+    {
+      "file": "ag-extension-dashboard/src/backend/src/services/outbreakService.ts",
+      "exports": [
+        "K_ANONYMITY_MIN",
+        "ALERT_THRESHOLD"
+      ]
+    },
+    {
+      "file": "ag-extension-dashboard/src/backend/src/services/routeOptimizationService.ts",
+      "exports": [
+        "haversineKm",
+        "stopPriority"
+      ]
+    },
+    {
+      "file": "ag-extension-dashboard/src/backend/src/services/seasonalAdvisoryService.ts",
+      "exports": [
+        "toDailyClimate",
+        "advisoryRules"
+      ]
+    },
+    {
+      "file": "ag-extension-dashboard/src/backend/src/services/selfHealing.ts",
+      "exports": [
+        "SelfHealingService"
+      ]
+    },
+    {
+      "file": "ag-extension-dashboard/src/backend/src/services/soilLabService.ts",
+      "exports": [
+        "EXPECTED_COLUMNS",
+        "parseSoilLabCsv"
+      ]
+    },
+    {
+      "file": "ag-extension-dashboard/src/backend/src/services/symptomTriageService.ts",
+      "exports": [
+        "PLAYBOOKS",
+        "triageSymptoms"
+      ]
+    },
+    {
+      "file": "ag-extension-dashboard/src/backend/src/services/weatherIndexService.ts",
+      "exports": [
+        "classifyIndex"
+      ]
+    },
+    {
+      "file": "ag-extension-dashboard/src/backend/src/tools/cropYieldForecastTool.ts",
+      "exports": [
+        "calculateWeatherScore"
+      ]
+    },
+    {
+      "file": "ag-extension-dashboard/src/backend/src/utils/corsOrigin.ts",
+      "exports": [
+        "isOriginAllowed"
+      ]
+    },
+    {
+      "file": "ag-extension-dashboard/src/frontend/src/services/offlineDiseaseClassifier.ts",
+      "exports": [
+        "classifySoilOnDevice"
+      ]
+    },
+    {
+      "file": "ag-extension-dashboard/src/frontend/src/lib/offlineTiles.ts",
+      "exports": [
+        "tilesForBbox"
+      ]
+    },
+    {
+      "file": "ag-extension-dashboard/src/frontend/src/hooks/useDeviceThermalMemoryBudget.ts",
+      "exports": [
+        "calculateDeviceBudget"
+      ]
+    }
   ]
 }

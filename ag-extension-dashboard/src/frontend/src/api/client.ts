@@ -47,7 +47,7 @@ apiClient.interceptors.request.use(config => {
 });
 
 // Retry configuration for specific HTTP methods and status codes
-const shouldRetry = (error: AxiosError): boolean => {
+export const shouldRetry = (error: AxiosError): boolean => {
   const config = error.config;
   if (!config) return false;
 
@@ -77,7 +77,7 @@ const shouldRetry = (error: AxiosError): boolean => {
 };
 
 // Calculate retry delay with exponential backoff
-const getRetryDelay = (retryCount: number): number => {
+export const getRetryDelay = (retryCount: number): number => {
   return RETRY_DELAY * Math.pow(RETRY_BACKOFF, retryCount);
 };
 
@@ -122,12 +122,7 @@ apiClient.interceptors.response.use(
         ((config as unknown as Record<string, unknown>).__retryCount as number) || 0;
       (config as unknown as Record<string, unknown>).__retryCount = retryCount + 1;
 
-      const delay = getRetryDelay(retryCount);
-
-      // Log retry attempt in development
-      if (import.meta.env.DEV) {
-        console.log(`Retry attempt ${retryCount + 1}/${MAX_RETRIES} after ${delay}ms`);
-      }
+      const delay = getRetryDelay(retryCount);        // Retry details remain available through the browser's network tooling without emitting runtime logs.
 
       // Wait before retrying
       await new Promise(resolve => setTimeout(resolve, delay));
@@ -158,10 +153,7 @@ apiClient.interceptors.response.use(
       ) {
         // Silent - expected setup state
       }
-      // Log other errors
-      else if (error.response) {
-        console.warn(`API Error: ${error.response.status} - ${error.response.statusText}`);
-      }
+      // API errors are surfaced to the calling feature, which owns user-facing feedback.
     }
     return Promise.reject(error);
   }

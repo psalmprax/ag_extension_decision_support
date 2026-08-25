@@ -19,7 +19,7 @@ export interface PriorityScore {
     recommendedAction: string;
 }
 
-export class PriorityService {
+class PriorityService {
     private prisma: PrismaClient;
 
     constructor() {

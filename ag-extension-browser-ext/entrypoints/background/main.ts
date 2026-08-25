@@ -1,5 +1,44 @@
 import CONFIG from '../../shared/config';
 import type { OfflineAttachment, OfflineStatus, QueuedRequest } from '../../shared/offlineTypes';
+import type { Browser } from 'wxt/browser';
+
+/** Shape of a request the background queue accepts from the sidepanel/content script. */
+interface BackgroundQueueRequest {
+    url: string;
+    method: string;
+    headers: Record<string, string>;
+    body?: string | Record<string, unknown>;
+    maxRetries: number;
+    idempotencyKey?: string;
+    attachmentRefs?: string[];
+}
+
+/** Messages the background worker handles. All other actions are rejected. */
+type BackgroundRequestMessage =
+    | { action: 'queue_request'; request: BackgroundQueueRequest }
+    | { action: 'store_offline_attachment'; attachment: { file: Blob; farmerId: string } }
+    | { action: 'get_queued_requests' }
+    | { action: 'get_offline_status' }
+    | { action: 'sync_now' }
+    | { action: 'open_sidepanel'; tab?: string };
+
+const BACKGROUND_ACTIONS: ReadonlySet<string> = new Set([
+    'queue_request',
+    'store_offline_attachment',
+    'get_queued_requests',
+    'get_offline_status',
+    'sync_now',
+    'open_sidepanel',
+]);
+
+const isBackgroundRequestMessage = (message: unknown): message is BackgroundRequestMessage => {
+    if (!message || typeof message !== 'object') return false;
+    const action = (message as { action?: unknown }).action;
+    return typeof action === 'string' && BACKGROUND_ACTIONS.has(action);
+};
+
+const backgroundErrorMessage = (error: unknown): string =>
+    error instanceof Error ? error.message : String(error);
 
 // Encryption support for IndexedDB storage
 // AES-GCM with a random per-install key persisted in browser.storage.local.
@@ -497,8 +536,8 @@ export default defineBackground(() => {
     };
 
     // Context Menu Click Handler
-    chromeAPI.contextMenus.onClicked.addListener((info: any, tab: any) => {
-        if (info.menuItemId === 'alfa-analyze' && info.selectionText) {
+    chromeAPI.contextMenus.onClicked.addListener((info: Browser.contextMenus.OnClickData, tab?: Browser.tabs.Tab) => {
+        if (info.menuItemId === 'alfa-analyze' && info.selectionText && tab?.windowId) {
             chromeAPI.sidePanel.open({ windowId: tab.windowId }).then(() => {
                 // Short delay to ensure sidepanel is ready
                 setTimeout(() => {
@@ -508,7 +547,7 @@ export default defineBackground(() => {
                     });
                 }, 500);
             });
-        } else if (info.menuItemId === 'alfa-summarize') {
+        } else if (info.menuItemId === 'alfa-summarize' && tab?.windowId) {
             chromeAPI.sidePanel.open({ windowId: tab.windowId }).then(() => {
                 setTimeout(() => {
                     chromeAPI.runtime.sendMessage({
@@ -522,7 +561,8 @@ export default defineBackground(() => {
 
     // Commands Handler (Shortcuts)
     chromeAPI.commands.onCommand.addListener((command: string) => {
-        chromeAPI.tabs.query({ active: true, currentWindow: true }, ([tab]: any) => {
+        chromeAPI.tabs.query({ active: true, currentWindow: true }, (tabs: Browser.tabs.Tab[]) => {
+            const [tab] = tabs;
             if (!tab) return;
 
             if (command === 'open_sidepanel') {
@@ -538,44 +578,62 @@ export default defineBackground(() => {
     });
 
     // Message handler for queuing requests
-    const handleMessage = (message: any, sender: any, sendResponse: any) => {
+    const handleMessage = (message: unknown, sender: Browser.runtime.MessageSender, sendResponse: (response: unknown) => void) => {
         const run = async () => {
             try {
-                if (message.action === 'queue_request') {
-                    await queueRequest(message.request);
-                    sendResponse({ success: true });
-                } else if (message.action === 'store_offline_attachment') {
-                    const attachment = message.attachment as { file: Blob; farmerId: string };
-                    const id = await storeOfflineAttachment(attachment);
-                    sendResponse({ success: true, id });
-                } else if (message.action === 'get_queued_requests') {
-                    const requests = await getQueuedRequests();
-                    sendResponse({ success: true, requests });
-                } else if (message.action === 'get_offline_status') {
-                    const status = await getOfflineStatus();
-                    sendResponse({ success: true, status });
-                } else if (message.action === 'sync_now') {
-                    await processQueue();
-                    sendResponse({ success: true });
-                } else if (message.action === 'open_sidepanel') {
-                    if (chromeAPI?.sidePanel) {
-                        await chromeAPI.sidePanel.open({ windowId: sender.tab?.windowId });
-                        if (message.tab) {
-                            setTimeout(() => {
-                                chromeAPI.runtime.sendMessage({ 
-                                    action: 'switch_sidepanel_tab', 
-                                    tab: message.tab 
-                                });
-                            }, 500);
-                        }
-                    }
+                if (!isBackgroundRequestMessage(message)) {
+                    sendResponse({ success: false, error: 'Unknown message action' });
+                    return;
                 }
-            } catch (error: any) {
-                console.error(`Error handling ${message.action}:`, error);
-                sendResponse({ success: false, error: error?.message || String(error) });
+
+                switch (message.action) {
+                    case 'queue_request':
+                        await queueRequest(message.request);
+                        sendResponse({ success: true });
+                        break;
+                    case 'store_offline_attachment':
+                        {
+                            const id = await storeOfflineAttachment(message.attachment);
+                            sendResponse({ success: true, id });
+                        }
+                        break;
+                    case 'get_queued_requests':
+                        {
+                            const requests = await getQueuedRequests();
+                            sendResponse({ success: true, requests });
+                        }
+                        break;
+                    case 'get_offline_status':
+                        {
+                            const status = await getOfflineStatus();
+                            sendResponse({ success: true, status });
+                        }
+                        break;
+                    case 'sync_now':
+                        await processQueue();
+                        sendResponse({ success: true });
+                        break;
+                    case 'open_sidepanel':
+                        if (chromeAPI?.sidePanel && typeof sender.tab?.windowId === 'number') {
+                            await chromeAPI.sidePanel.open({ windowId: sender.tab.windowId });
+                            if (message.tab) {
+                                setTimeout(() => {
+                                    chromeAPI.runtime.sendMessage({
+                                        action: 'switch_sidepanel_tab',
+                                        tab: message.tab,
+                                    });
+                                }, 500);
+                            }
+                        }
+                        break;
+                }
+            } catch (error) {
+                const action = isBackgroundRequestMessage(message) ? message.action : 'unknown';
+                console.error(`Error handling ${action}:`, error);
+                sendResponse({ success: false, error: backgroundErrorMessage(error) });
             }
         };
-        run();
+        void run();
         return true;
     };
 

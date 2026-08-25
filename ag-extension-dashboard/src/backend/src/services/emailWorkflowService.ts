@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { query, getPool } from '@/services/databaseService';
+import { query, getPool, TypedQueryResult } from '@/services/databaseService';
 import { emailService } from '@/services/emailService';
 import { logger } from '@/utils/logger';
 import { t, loadTranslations } from '@/utils/translations';
@@ -31,7 +31,19 @@ export interface EmailApproval {
   createdAt: string;
 }
 
-export class EmailWorkflowService {
+/** Raw `email_templates` row shape as returned by `pg`. */
+interface EmailTemplateRow {
+  id: string;
+  name: string;
+  subject: string;
+  body: string;
+  category: string;
+  variables: string[];
+  created_by: string;
+  created_at: Date | string;
+}
+
+class EmailWorkflowService {
   private static instance: EmailWorkflowService;
   private templates: Map<string, EmailTemplate> = new Map();
 
@@ -161,20 +173,26 @@ export class EmailWorkflowService {
     const pool = getPool();
     if (!pool) return [];
 
-    let result;
+    let result: TypedQueryResult<EmailTemplateRow>;
     if (category) {
-      result = await query(`
+      result = await query<EmailTemplateRow>(`
         SELECT * FROM email_templates WHERE category = $1 ORDER BY name
       `, [category]);
     } else {
-      result = await query('SELECT * FROM email_templates ORDER BY category, name');
+      result = await query<EmailTemplateRow>('SELECT * FROM email_templates ORDER BY category, name');
     }
 
     // Translate subjects and add display names
-    return result.rows.map((template: any) => ({
-      ...template,
+    return result.rows.map((template) => ({
+      id: template.id,
+      name: template.name,
+      subject: this.translateTemplateField(template.subject),
+      body: template.body,
+      category: template.category,
+      variables: template.variables,
+      createdBy: template.created_by,
+      createdAt: template.created_at instanceof Date ? template.created_at.toISOString() : template.created_at,
       displayName: this.getTemplateDisplayName(template.name),
-      subject: this.translateTemplateField(template.subject)
     }));
   }
 

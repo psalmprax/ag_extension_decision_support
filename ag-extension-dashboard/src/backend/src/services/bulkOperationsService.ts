@@ -37,7 +37,7 @@ export interface ProgressUpdate {
     status: 'running' | 'completed' | 'failed';
 }
 
-export class BulkOperationsService {
+class BulkOperationsService {
     private prisma: PrismaClient;
 
     constructor() {

@@ -66,7 +66,6 @@ const mapOutcomeRow = (row: OutcomeRow): OutcomeRecord => ({
     measuredAt: row.measured_at,
 });
 
-export const SUCCESS_VERDICTS: OutcomeVerdict[] = ['resolved', 'improved'];
 
 export const adviceEfficacyService = {
     async recordOutcome(input: OutcomeInput): Promise<OutcomeRecord> {

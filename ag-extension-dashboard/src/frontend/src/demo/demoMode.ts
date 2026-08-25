@@ -27,9 +27,6 @@ import { isDemoId, isDemoFarmerId, containsDemoId } from './demoIds';
 export type { DemoFarmerExtended };
 
 /** Non-reactive demo-mode check — safe to call from non-React code. */
-export function isDemoModeActive(): boolean {
-  return useAppStore.getState().isDemo;
-}
 
 /** Enter demo mode: set the demo user + flip the mode flag. */
 export function enterDemoMode(user: User): void {
@@ -46,21 +43,9 @@ export function exitDemoMode(): void {
 
 // --- Dataset accessors -------------------------------------------------------
 
-export function getDemoFarmers() {
-  return DEMO_FARMERS;
-}
 
-export function getDemoFields(farmerId: string) {
-  return buildDemoFields(farmerId);
-}
 
-export function getDemoVisits() {
-  return DEMO_VISITS;
-}
 
-export function getDemoReports() {
-  return DEMO_REPORTS;
-}
 
 // --- Re-exports --------------------------------------------------------------
 

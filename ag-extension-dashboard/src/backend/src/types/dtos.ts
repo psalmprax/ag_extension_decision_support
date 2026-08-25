@@ -17,8 +17,6 @@ import type {
   RecommendedVisitRow,
   AlertSummaryRow,
   FarmerDetailRow,
-  PortfolioExportFarmerRow,
-  PortfolioExportVisitRow,
   KnowledgeArticleRow,
   KnowledgeCategoryRow,
   KnowledgeCropRow,
@@ -31,7 +29,6 @@ import type {
   SmsHistoryRow,
   UserRow,
   UserPublicRow,
-  FieldRow,
   FieldStatsRow,
   WhatsAppMessageRow,
   SupportTicketRow,
@@ -39,7 +36,6 @@ import type {
   ChatConversationRow,
   SatisfactionAvgRow,
   ApiClientRow,
-  DiagnosticRunRow,
 } from './rowTypes';
 
 // --- Helpers ---------------------------------------------------------------
@@ -87,7 +83,7 @@ export interface PriorityQueueDTO {
   severity: 'high' | 'medium' | 'low';
   crop: string | null;
 }
-export function mapPriorityQueueRow(row: PriorityQueueRow): PriorityQueueDTO {
+function mapPriorityQueueRow(row: PriorityQueueRow): PriorityQueueDTO {
   return {
     farmerId: row.farmer_id,
     name: row.name,
@@ -109,7 +105,7 @@ export interface RecommendedVisitDTO {
   priority: number;
   estimatedTime: number;
 }
-export function mapRecommendedVisitRow(row: RecommendedVisitRow): RecommendedVisitDTO {
+function mapRecommendedVisitRow(row: RecommendedVisitRow): RecommendedVisitDTO {
   return {
     farmerId: row.farmer_id,
     name: row.name,
@@ -130,7 +126,7 @@ export interface AlertSummaryDTO {
   description: string | null;
   location: string | null;
 }
-export function mapAlertSummaryRow(row: AlertSummaryRow): AlertSummaryDTO {
+function mapAlertSummaryRow(row: AlertSummaryRow): AlertSummaryDTO {
   return {
     type: row.type,
     severity: row.severity,
@@ -174,9 +170,6 @@ export function mapFarmerDetailRow(row: FarmerDetailRow): FarmerDetailDTO {
     lastVisit: toIso(row.last_visit) ?? null,
   };
 }
-export function mapFarmerDetailRows(rows: FarmerDetailRow[]): FarmerDetailDTO[] {
-  return rows.map(mapFarmerDetailRow);
-}
 
 export interface PortfolioExportFarmerDTO {
   id: string;
@@ -191,24 +184,6 @@ export interface PortfolioExportFarmerDTO {
   totalVisits: number;
   lastVisitDate: string | null;
 }
-export function mapPortfolioExportFarmerRow(row: PortfolioExportFarmerRow): PortfolioExportFarmerDTO {
-  return {
-    id: row.id,
-    firstName: row.first_name,
-    lastName: row.last_name,
-    phone: row.phone,
-    village: row.village,
-    district: row.district,
-    region: row.region,
-    farmSizeHectares: parseDecimal(row.farm_size_hectares),
-    crops: row.crops,
-    totalVisits: parseCount(row.total_visits),
-    lastVisitDate: toIso(row.last_visit_date) ?? null,
-  };
-}
-export function mapPortfolioExportFarmerRows(rows: PortfolioExportFarmerRow[]): PortfolioExportFarmerDTO[] {
-  return rows.map(mapPortfolioExportFarmerRow);
-}
 
 export interface PortfolioExportVisitDTO {
   id: string;
@@ -222,24 +197,6 @@ export interface PortfolioExportVisitDTO {
   lastName: string;
   village: string | null;
   type?: string;
-}
-export function mapPortfolioExportVisitRow(row: PortfolioExportVisitRow): PortfolioExportVisitDTO {
-  return {
-    id: row.id,
-    officerId: row.officer_id,
-    farmerId: row.farmer_id,
-    visitType: row.visit_type,
-    status: row.status,
-    scheduledAt: toIso(row.scheduled_at) ?? null,
-    notes: row.notes,
-    firstName: row.first_name,
-    lastName: row.last_name,
-    village: row.village,
-    ...(row.type !== undefined ? { type: row.type } : {}),
-  };
-}
-export function mapPortfolioExportVisitRows(rows: PortfolioExportVisitRow[]): PortfolioExportVisitDTO[] {
-  return rows.map(mapPortfolioExportVisitRow);
 }
 
 // --- Reporting DTOs --------------------------------------------------------
@@ -324,14 +281,11 @@ export function mapKnowledgeArticleRow(row: KnowledgeArticleRow): KnowledgeArtic
     sourceUrl: row.source_url,
   };
 }
-export function mapKnowledgeArticleRows(rows: KnowledgeArticleRow[]): KnowledgeArticleDTO[] {
-  return rows.map(mapKnowledgeArticleRow);
-}
 
 export interface KnowledgeCategoryDTO {
   category: string;
 }
-export function mapKnowledgeCategoryRow(row: KnowledgeCategoryRow): KnowledgeCategoryDTO {
+function mapKnowledgeCategoryRow(row: KnowledgeCategoryRow): KnowledgeCategoryDTO {
   return { category: row.category };
 }
 export function mapKnowledgeCategoryRows(rows: KnowledgeCategoryRow[]): KnowledgeCategoryDTO[] {
@@ -341,7 +295,7 @@ export function mapKnowledgeCategoryRows(rows: KnowledgeCategoryRow[]): Knowledg
 export interface KnowledgeCropDTO {
   crop: string;
 }
-export function mapKnowledgeCropRow(row: KnowledgeCropRow): KnowledgeCropDTO {
+function mapKnowledgeCropRow(row: KnowledgeCropRow): KnowledgeCropDTO {
   return { crop: row.crop };
 }
 export function mapKnowledgeCropRows(rows: KnowledgeCropRow[]): KnowledgeCropDTO[] {
@@ -448,18 +402,12 @@ export function mapVisitInsertRow(row: VisitInsertRow): VisitInsertDTO {
     updatedAt: toIso(row.updated_at) ?? null,
   };
 }
-export function mapVisitInsertRows(rows: VisitInsertRow[]): VisitInsertDTO[] {
-  return rows.map(mapVisitInsertRow);
-}
 
 export interface VisitIdDTO {
   id: string;
 }
 export function mapVisitIdRow(row: VisitIdRow): VisitIdDTO {
   return { id: row.id };
-}
-export function mapVisitIdRows(rows: VisitIdRow[]): VisitIdDTO[] {
-  return rows.map(mapVisitIdRow);
 }
 
 // --- SMS DTOs --------------------------------------------------------------
@@ -474,7 +422,7 @@ export interface SmsHistoryDTO {
   provider: string | null;
   createdAt: string | null;
 }
-export function mapSmsHistoryRow(row: SmsHistoryRow): SmsHistoryDTO {
+function mapSmsHistoryRow(row: SmsHistoryRow): SmsHistoryDTO {
   return {
     id: row.id,
     senderId: row.sender_id,
@@ -507,7 +455,7 @@ export interface UserDTO {
   createdAt: string | null;
   updatedAt: string | null;
 }
-export function mapUserRow(row: UserRow): UserDTO {
+function mapUserRow(row: UserRow): UserDTO {
   return {
     id: row.id,
     email: row.email,
@@ -575,24 +523,6 @@ export interface FieldDTO {
   createdAt: string | null;
   updatedAt: string | null;
 }
-export function mapFieldRow(row: FieldRow): FieldDTO {
-  return {
-    id: row.id,
-    farmerId: row.farmer_id,
-    name: row.name,
-    sizeHectares: parseDecimal(row.size_hectares),
-    cropType: row.crop_type,
-    soilType: row.soil_type,
-    lat: parseDecimal(row.lat),
-    lng: parseDecimal(row.lng),
-    notes: row.notes,
-    createdAt: toIso(row.created_at) ?? null,
-    updatedAt: toIso(row.updated_at) ?? null,
-  };
-}
-export function mapFieldRows(rows: FieldRow[]): FieldDTO[] {
-  return rows.map(mapFieldRow);
-}
 
 export interface FieldStatsDTO {
   farmerId: string;
@@ -600,7 +530,7 @@ export interface FieldStatsDTO {
   totalSize: number | null;
   soilTypes: string[] | null;
 }
-export function mapFieldStatsRow(row: FieldStatsRow): FieldStatsDTO {
+function mapFieldStatsRow(row: FieldStatsRow): FieldStatsDTO {
   return {
     farmerId: row.farmer_id,
     totalFields: parseCount(row.total_fields),
@@ -750,9 +680,6 @@ export function mapSatisfactionAvgRow(row: SatisfactionAvgRow): SatisfactionAvgD
     totalRatings: parseCount(row.total_ratings),
   };
 }
-export function mapSatisfactionAvgRows(rows: SatisfactionAvgRow[]): SatisfactionAvgDTO[] {
-  return rows.map(mapSatisfactionAvgRow);
-}
 
 // --- API clients (contextMenus.ts) -----------------------------------------
 
@@ -795,16 +722,4 @@ export interface DiagnosticRunDTO {
   status: string | null;
   results: Record<string, unknown> | null;
   createdAt: string | null;
-}
-export function mapDiagnosticRunRow(row: DiagnosticRunRow): DiagnosticRunDTO {
-  return {
-    id: row.id,
-    type: row.type,
-    status: row.status,
-    results: row.results,
-    createdAt: toIso(row.created_at) ?? null,
-  };
-}
-export function mapDiagnosticRunRows(rows: DiagnosticRunRow[]): DiagnosticRunDTO[] {
-  return rows.map(mapDiagnosticRunRow);
 }

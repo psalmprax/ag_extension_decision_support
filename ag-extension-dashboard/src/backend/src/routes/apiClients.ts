@@ -42,7 +42,7 @@ router.post('/clients/:clientId/keys', async (req: AuthRequest, res: Response) =
         const { clientId } = req.params;
         const { name = 'API key', expiresAt } = req.body;
         const clients = await apiClientService.listClients(req.user!.role === 'admin' ? undefined : req.user!.userId);
-        if (!clients.some((client: any) => client.id === clientId)) {
+        if (!clients.some((client) => client.id === clientId)) {
             return res.status(404).json({ success: false, error: 'API client not found' });
         }
 
@@ -62,7 +62,7 @@ router.get('/clients/:clientId/keys', async (req: AuthRequest, res: Response) =>
     try {
         const { clientId } = req.params;
         const clients = await apiClientService.listClients(req.user!.role === 'admin' ? undefined : req.user!.userId);
-        if (!clients.some((client: any) => client.id === clientId)) {
+        if (!clients.some((client) => client.id === clientId)) {
             return res.status(404).json({ success: false, error: 'API client not found' });
         }
 

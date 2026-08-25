@@ -104,21 +104,7 @@ async function seedInitialData(): Promise<void> {
       farmerId = existingFarmer.rows[0].id;
     }
 
-    // 3. Seed Market Prices if empty
-    const priceCount = await pool.query('SELECT COUNT(*) FROM market_prices');
-    if (parseInt(priceCount.rows[0].count) === 0) {
-      logger.info('Seeding initial market prices...');
-      await pool.query(`
-        INSERT INTO market_prices (crop, price, trend)
-        VALUES 
-        ('White Maize (90kg)', 'KES 4,200', '+5%'),
-        ('Dry Beans (90kg)', 'KES 12,500', '-2%'),
-        ('Sorghum (90kg)', 'KES 3,800', '+1%'),
-        ('Finger Millet (90kg)', 'KES 9,200', 'Stable')
-      `);
-    }
-
-    // 4. Seed Alerts if empty
+    // 3. Seed Alerts if empty
     const alertCount = await pool.query('SELECT COUNT(*) FROM alerts');
     if (parseInt(alertCount.rows[0].count) === 0) {
       logger.info('Seeding initial alerts...');

@@ -33,7 +33,3 @@ export const chartGrid = {
 } as const;
 
 /** Tooltip cursor highlight. */
-export const chartCursor = {
-  fill: 'var(--color-outline)',
-  fillOpacity: 0.1,
-} as const;

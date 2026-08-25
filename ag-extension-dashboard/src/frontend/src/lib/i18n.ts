@@ -55,10 +55,5 @@ export const languages: { code: Language; name: string; flag: string }[] = [
   { code: 'ug', name: 'Uyghur', flag: '🇨🇳' },
 ];
 
-// Translations are now lazy-loaded from /public/locales/{lang}.json
+// Translations are lazy-loaded from /public/locales/{lang}.json
 // This significantly reduces the bundle size and improves scalability.
-
-export const translations: Record<Language, Record<string, string>> = {} as Record<
-  Language,
-  Record<string, string>
->;

@@ -16,8 +16,7 @@ interface CachedDiagnosticSnapshot {
   payload: Record<string, unknown>;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let cachedResult: any = null;
+let cachedResult: Record<string, unknown> | null = null;
 let cacheTime = 0;
 // Disable caching in test mode so each test gets fresh results
 const CACHE_TTL = process.env.NODE_ENV === 'test' ? -1 : 60_000;
@@ -104,8 +103,7 @@ async function runSslChecks(sslDomain: string): Promise<Record<string, unknown>>
     }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function getDeploymentDetails(sslResult: any): any {
+function getDeploymentDetails(sslResult: Record<string, unknown>): Record<string, unknown> {
     const isProduction = process.env.NODE_ENV === 'production';
     const hasACMEEmail = !!process.env.ACME_EMAIL;
     return {
@@ -119,8 +117,14 @@ function getDeploymentDetails(sslResult: any): any {
     };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function getSummaryAndRecommendations(results: any, domain: string): { issues: string[]; recommendations: string[]; summary: string } {
+interface DiagnosticResults {
+    [key: string]: unknown;
+    dns?: Record<string, { resolved: boolean; ips?: string[]; error?: string }>;
+    ports?: Array<{ port: number; open: boolean }>;
+    traefik?: { backend_via_traefik?: string };
+}
+
+function getSummaryAndRecommendations(results: DiagnosticResults, domain: string): { issues: string[]; recommendations: string[]; summary: string } {
     const issues: string[] = [];
     const recommendations: string[] = [];
 
@@ -129,8 +133,8 @@ function getSummaryAndRecommendations(results: any, domain: string): { issues: s
         recommendations.push(`Check DNS A record for ${domain} — should point to ${process.env.SERVER_IP || '145.223.97.248'}`);
     }
 
-    const port80 = results.ports?.find((p: { port: number }) => p.port === 80);
-    const port443 = results.ports?.find((p: { port: number }) => p.port === 443);
+    const port80 = results.ports?.find(p => p.port === 80);
+    const port443 = results.ports?.find(p => p.port === 443);
 
     if (port80 && !port80.open) {
         issues.push('Port 80 (HTTP) is closed — Traefik may not be running');
@@ -171,8 +175,7 @@ router.get('/', async (_req: Request, res: Response) => {
 
         const domain = process.env.DOMAIN || 'www.gpexts.com';
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const results: any = {
+        const results: DiagnosticResults = {
             timestamp: new Date().toISOString(),
             hostname: process.env.HOSTNAME || '',
             node_env: process.env.NODE_ENV || 'development',
@@ -180,12 +183,13 @@ router.get('/', async (_req: Request, res: Response) => {
             server_ip: process.env.SERVER_IP || '145.223.97.248',
         };
 
-        results.dns = await runDnsChecks(domain);
+        results.dns = await runDnsChecks(domain) as DiagnosticResults['dns'];
         results.ports = await runPortChecks();
         results.traefik = await runTraefikChecks();
         results.container_network = await runContainerChecks();
-        results.ssl = await runSslChecks(domain);
-        results.deployment = getDeploymentDetails(results.ssl);
+        const ssl = await runSslChecks(domain);
+        results.ssl = ssl;
+        results.deployment = getDeploymentDetails(ssl);
         results.external_api_guard = getExternalApiStatus();
 
         const summary = getSummaryAndRecommendations(results, domain);

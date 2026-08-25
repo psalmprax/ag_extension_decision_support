@@ -26,26 +26,8 @@ export function sendError(res: Response, statusCode: number, message: string, er
     res.status(statusCode).json(response);
 }
 
-export function sendBadRequest(res: Response, message: string, errorCode?: string): void {
-    sendError(res, 400, message, errorCode);
-}
 
-export function sendUnauthorized(res: Response, message: string = 'Authentication required'): void {
-    sendError(res, 401, message);
-}
 
 export function sendForbidden(res: Response, message: string = 'Access denied'): void {
     sendError(res, 403, message);
-}
-
-export function sendNotFound(res: Response, message: string): void {
-    sendError(res, 404, message);
-}
-
-export function sendDatabaseError(res: Response): void {
-    sendError(res, 503, 'Database unavailable', 'DATABASE_ERROR');
-}
-
-export function sendServiceUnavailable(res: Response, message: string = 'Service unavailable'): void {
-    sendError(res, 503, message);
 }

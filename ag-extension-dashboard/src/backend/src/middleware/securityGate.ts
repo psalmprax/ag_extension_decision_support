@@ -42,12 +42,3 @@ export function securityGate(req: Request, res: Response, next: NextFunction) {
 
   next();
 }
-
-export function sanitizeToolResult(result: string): { clean: boolean; sanitized: string; threats: string[] } {
-  const check = aegisShield.sanitizeToolResult(result);
-  return {
-    clean: check.clean,
-    sanitized: check.sanitizedInput,
-    threats: check.threats,
-  };
-}

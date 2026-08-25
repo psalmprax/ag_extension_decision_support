@@ -6,7 +6,7 @@ import { logger } from '@/utils/logger';
 
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
-export const UPLOAD_TYPES = {
+const UPLOAD_TYPES = {
   'image/jpeg': '.jpg',
   'image/png': '.png',
   'image/gif': '.gif',
@@ -114,18 +114,4 @@ export async function purgeStoredUpload(storageKey: string): Promise<void> {
   if (!/^[a-f0-9-]+\\.(jpg|png|gif|webp|pdf)$/i.test(storageKey)) return;
   const uploadRoot = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads'));
   await fs.rm(path.join(uploadRoot, path.basename(storageKey)), { force: true });
-}
-
-export async function removeUpload(storageKey: string, userId: string): Promise<boolean> {
-  const result = await query<{ storage_key: string }>(
-    `UPDATE upload_records
-     SET status = 'deleted', deleted_at = NOW()
-     WHERE storage_key = $1 AND owner_user_id = $2 AND status = 'active'
-     RETURNING storage_key`,
-    [storageKey, userId]
-  );
-  if (!result.rows[0]) return false;
-
-  await purgeStoredUpload(storageKey);
-  return true;
 }

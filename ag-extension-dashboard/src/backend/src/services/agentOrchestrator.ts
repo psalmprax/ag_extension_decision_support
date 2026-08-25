@@ -68,7 +68,7 @@ function mapPersistedTask(row: PersistedAgentTaskRow): AgentTask {
   };
 }
 
-export class AgentOrchestrator {
+class AgentOrchestrator {
   private static instance: AgentOrchestrator;
   private taskQueue: AgentTask[] = [];
   private activeTasks: Map<string, AgentTask> = new Map();

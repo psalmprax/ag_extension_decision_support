@@ -1,6 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from 'axios';
 import { logger } from '../utils/logger';
+
+/** Extract a readable message from an unknown thrown value, preferring axios response bodies. */
+function axiosErrorMessage(error: unknown): unknown {
+    if (axios.isAxiosError(error)) {
+        return error.response?.data || error.message;
+    }
+    return error instanceof Error ? error.message : error;
+}
 import { query } from './databaseService';
 import { WeatherService } from './weatherService';
 import { marketPriceService, MarketPrice } from './marketPriceService';
@@ -100,8 +108,7 @@ class SMSService {
             logger.error(`SMS failed: ${result.status}`);
             return false;
         } catch (error) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            logger.error('Africa\'s Talking SMS error:', (error as any).response?.data || (error as any).message);
+            logger.error('Africa\'s Talking SMS error:', axiosErrorMessage(error));
             return false;
         }
     }
@@ -134,8 +141,7 @@ class SMSService {
             logger.error(`Twilio SMS failed: ${response.data.error_message}`);
             return false;
         } catch (error) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            logger.error('Twilio SMS error:', (error as any).response?.data || (error as any).message);
+            logger.error('Twilio SMS error:', axiosErrorMessage(error));
             return false;
         }
     }
@@ -193,8 +199,7 @@ class SMSService {
     }
 
     // USSD Session Management
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private ussdSessions: Map<string, { phoneNumber: string; step: number; data: any }> = new Map();
+    private ussdSessions: Map<string, { phoneNumber: string; step: number; data: Record<string, string> }> = new Map();
 
     async startUSSDSession(options: USSDOptions): Promise<string> {
         // Initialize session

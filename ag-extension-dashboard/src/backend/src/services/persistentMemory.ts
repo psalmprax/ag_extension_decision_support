@@ -23,7 +23,27 @@ export interface MemoryQuery {
   limit?: number;
 }
 
-export class PersistentMemory {
+/** Raw `agent_memories` row shape as returned by `pg`. */
+interface MemoryRow {
+  id: string;
+  user_id: string;
+  category: string;
+  key: string;
+  value: string;
+  embedding: string | null;
+  created_at: Date | string;
+  last_accessed_at: Date | string;
+  access_count: number;
+  importance: number;
+}
+
+interface MemorySummaryRow {
+  category: string;
+  count: string;
+  avg_importance: string | null;
+}
+
+class PersistentMemory {
   private static instance: PersistentMemory;
   private initialized = false;
 
@@ -118,7 +138,7 @@ export class PersistentMemory {
         const queryEmbedding = await this.generateEmbedding(queryData.query);
 
         if (queryEmbedding && queryData.category) {
-          const result = await query(`
+          const result = await query<MemoryRow>(`
             SELECT id, user_id, category, key, value, created_at, last_accessed_at, access_count, importance
             FROM agent_memories
             WHERE user_id = $2 AND category = $3
@@ -130,7 +150,7 @@ export class PersistentMemory {
         }
 
         if (queryEmbedding) {
-          const result = await query(`
+          const result = await query<MemoryRow>(`
             SELECT id, user_id, category, key, value, created_at, last_accessed_at, access_count, importance
             FROM agent_memories
             WHERE user_id = $1
@@ -143,7 +163,7 @@ export class PersistentMemory {
       }
 
       if (queryData.category) {
-        const result = await query(`
+        const result = await query<MemoryRow>(`
           SELECT id, user_id, category, key, value, created_at, last_accessed_at, access_count, importance
           FROM agent_memories
           WHERE user_id = $1 AND category = $2
@@ -154,7 +174,7 @@ export class PersistentMemory {
         return result.rows.map(this.mapRow);
       }
 
-      const result = await query(`
+      const result = await query<MemoryRow>(`
         SELECT id, user_id, category, key, value, created_at, last_accessed_at, access_count, importance
         FROM agent_memories
         WHERE user_id = $1
@@ -209,7 +229,7 @@ export class PersistentMemory {
       const pool = getPool();
       if (!pool) return [];
 
-      const result = await query(`
+      const result = await query<MemorySummaryRow>(`
         SELECT category, COUNT(*) as count, AVG(importance) as avg_importance
         FROM agent_memories
         WHERE user_id = $1
@@ -217,10 +237,10 @@ export class PersistentMemory {
         ORDER BY count DESC
       `, [userId]);
 
-      return result.rows.map((row: any) => ({
+      return result.rows.map((row) => ({
         category: row.category,
         count: parseInt(row.count),
-        avgImportance: parseFloat(row.avg_importance),
+        avgImportance: parseFloat(row.avg_importance ?? '0'),
       }));
     } catch (error) {
       logger.error('Failed to get memory summary:', error);
@@ -263,7 +283,12 @@ export class PersistentMemory {
     }
   }
 
-  private mapRow(row: any): MemoryEntry {
+  /** Normalize a pg timestamp to the ISO string the service exposes. */
+  private static toIsoString(value: Date | string): string {
+    return value instanceof Date ? value.toISOString() : value;
+  }
+
+  private mapRow(row: MemoryRow): MemoryEntry {
     return {
       id: row.id,
       userId: row.user_id,
@@ -271,8 +296,8 @@ export class PersistentMemory {
       key: row.key,
       value: row.value,
       embedding: row.embedding ? JSON.parse(row.embedding) : [],
-      createdAt: row.created_at,
-      lastAccessedAt: row.last_accessed_at,
+      createdAt: PersistentMemory.toIsoString(row.created_at),
+      lastAccessedAt: PersistentMemory.toIsoString(row.last_accessed_at),
       accessCount: row.access_count,
       importance: row.importance,
     };

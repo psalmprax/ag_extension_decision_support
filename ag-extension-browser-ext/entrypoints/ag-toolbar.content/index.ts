@@ -1,6 +1,26 @@
 import { defineContentScript } from 'wxt/utils/define-content-script';
 import { createShadowRootUi } from 'wxt/utils/content-script-ui/shadow-root';
 import { browser } from 'wxt/browser';
+import type { ContentScriptContext } from 'wxt/utils/content-script-context';
+
+type ContentRequestMessage =
+    | { action: 'get_page_context' }
+    | { action: 'extract_structured' }
+    | { action: 'extract_forms' }
+    | { action: 'extract_tables' }
+    | { action: 'extract_agricultural_data' };
+
+const isContentRequestMessage = (message: unknown): message is ContentRequestMessage => {
+    if (!message || typeof message !== 'object') return false;
+    const action = (message as { action?: unknown }).action;
+    return (
+        action === 'get_page_context' ||
+        action === 'extract_structured' ||
+        action === 'extract_forms' ||
+        action === 'extract_tables' ||
+        action === 'extract_agricultural_data'
+    );
+};
 
 /** Safely set HTML content — escapes any non-SVG text to prevent XSS */
 const safeSetHTML = (el: HTMLElement, html: string) => {
@@ -12,7 +32,7 @@ const safeSetHTML = (el: HTMLElement, html: string) => {
 
 export default defineContentScript({
   matches: ['<all_urls>'],
-  async main(ctx: any) {
+  async main(ctx: ContentScriptContext) {
     console.log('GPExts Content Script Active');
 
     // Create UI Container
@@ -21,7 +41,7 @@ export default defineContentScript({
       position: 'overlay',
       anchor: 'body',
       append: 'last',
-      onMount: (container: any) => {
+      onMount: (container: HTMLElement) => {
         const wrapper = document.createElement('div');
         wrapper.id = 'ag-toolbar-root';
         wrapper.className = 'fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 items-end';
@@ -256,15 +276,16 @@ export default defineContentScript({
 
             // Open sidepanel
             browser.runtime.sendMessage({ action: 'open_sidepanel' });
-          } catch (error: any) {
+          } catch (error: unknown) {
             console.error('Location access failed:', error);
 
+            const positionError = error as GeolocationPositionError | null;
             let errorMessage = 'Location access failed.';
-            if (error.code === 1) {
+            if (positionError?.code === 1) {
               errorMessage = 'Location permission denied. Please enable location access in your browser settings.';
-            } else if (error.code === 2) {
+            } else if (positionError?.code === 2) {
               errorMessage = 'Location unavailable. Please check your GPS/network connection.';
-            } else if (error.code === 3) {
+            } else if (positionError?.code === 3) {
               errorMessage = 'Location request timed out. Please try again.';
             }
 
@@ -314,7 +335,11 @@ export default defineContentScript({
     });
 
     // Add message listener for page context requests
-    browser.runtime.onMessage.addListener((message: any, sender: any, sendResponse: any) => {
+    browser.runtime.onMessage.addListener((message: unknown, _sender: unknown, sendResponse: (response: unknown) => void) => {
+        if (!isContentRequestMessage(message)) {
+          sendResponse(null);
+          return;
+        }
         if (message.action === 'get_page_context') {
           const context = {
             title: document.title,
@@ -329,23 +354,23 @@ export default defineContentScript({
             agriculturalData: extractAgriculturalData(),
           };
           sendResponse(context);
-          return true;
+          return;
         }
         if (message.action === 'extract_structured') {
           sendResponse(extractStructuredData());
-          return true;
+          return;
         }
         if (message.action === 'extract_forms') {
           sendResponse(extractForms());
-          return true;
+          return;
         }
         if (message.action === 'extract_tables') {
           sendResponse(extractTables());
-          return true;
+          return;
         }
         if (message.action === 'extract_agricultural_data') {
           sendResponse(extractAgriculturalData());
-          return true;
+          return;
         }
       });
 

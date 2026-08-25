@@ -347,7 +347,7 @@ function translateToCanonical(localizedPath: string, language: string): string {
  * 2. Translates localized paths to canonical paths
  * 3. Attaches language info to request object
  */
-export function i18nUrlMiddleware(req: Request, res: Response, next: NextFunction): void {
+function i18nUrlMiddleware(req: Request, res: Response, next: NextFunction): void {
     const path = req.path;
     // url variable removed as it was unused
 
@@ -417,60 +417,6 @@ export function i18nUrlMiddleware(req: Request, res: Response, next: NextFunctio
  * Create response transformer for localized URLs
  * Use this to transform outgoing response URLs to localized versions
  */
-export function createUrlLocalizer(language: string) {
-    return {
-        /**
-         * Transform a canonical path to localized path
-         */
-        localizePath(canonicalPath: string): string {
-            const translations = i18nConfig.pathTranslations[language];
-            if (!translations) return canonicalPath;
-
-            // Try exact match
-            for (const trans of translations) {
-                if (trans.canonical === canonicalPath) {
-                    return trans.localized;
-                }
-            }
-
-            // Try partial match (for nested paths)
-            const pathParts = canonicalPath.split('/').filter(Boolean);
-
-            for (const trans of translations) {
-                const canonicalParts = trans.canonical.split('/').filter(Boolean);
-
-                if (canonicalParts.length > 0 && pathParts.length >= canonicalParts.length) {
-                    const pathLastParts = pathParts.slice(-canonicalParts.length);
-
-                    if (JSON.stringify(pathLastParts) === JSON.stringify(canonicalParts)) {
-                        const prefixParts = pathParts.slice(0, pathParts.length - canonicalParts.length);
-                        return '/' + [...prefixParts, ...trans.localized.split('/').filter(Boolean)].join('/');
-                    }
-                }
-            }
-
-            return canonicalPath;
-        },
-
-        /**
-         * Transform API URL to include language prefix
-         */
-        localizeUrl(canonicalUrl: string): string {
-            // Add language to URL
-            if (canonicalUrl.startsWith('/api/')) {
-                return `/api/v1/${language}${canonicalUrl.replace('/api/v1', '')}`;
-            }
-            return canonicalUrl;
-        },
-
-        /**
-         * Get language-specific route
-         */
-        getLocalizedRoute(canonicalRoute: string): string {
-            return this.localizePath(canonicalRoute);
-        },
-    };
-}
 
 /**
  * Route handler that uses translated i18n path

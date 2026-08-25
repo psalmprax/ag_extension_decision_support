@@ -39,6 +39,40 @@ interface PageContext {
   mainContent: string;
 }
 
+interface ChatbotPayload {
+  message: string;
+  mode: string;
+  agent: string;
+  language: string;
+  farmerId: string;
+  pageContext?: { title: string; url: string; selectedText: string };
+  imageData?: string;
+  file?: Record<string, unknown>;
+}
+
+type StatusMessage =
+  | { action: 'online_status_changed'; isOnline: boolean }
+  | { action: 'queue_updated' };
+
+type PopupMessage =
+  | { action: 'trigger_quick_action'; actionType?: string }
+  | { action: 'analyze_selection'; text?: string }
+  | { action: 'trigger_capture' }
+  | { action: 'photo_captured'; imageData?: string }
+  | { action: 'switch_sidepanel_tab'; tab?: string };
+
+const isPopupMessage = (message: unknown): message is PopupMessage => {
+  if (!message || typeof message !== 'object') return false;
+  const action = (message as { action?: unknown }).action;
+  return (
+    action === 'trigger_quick_action' ||
+    action === 'analyze_selection' ||
+    action === 'trigger_capture' ||
+    action === 'photo_captured' ||
+    action === 'switch_sidepanel_tab'
+  );
+};
+
 function App() {
   const [messages, setMessages, isLoaded] = usePersistence<Message[]>('chatHistory', []);
   const [activeAgent] = usePersistence('activeAgent', 'AGENT ALPHA');
@@ -69,7 +103,7 @@ function App() {
 
   const sendMessageToAI = async (message: string, imageData?: string, pageCtx?: PageContext, fileData?: Record<string, unknown>): Promise<string> => {
     try {
-      const payload: any = {
+      const payload: ChatbotPayload = {
         message,
         mode: 'extension',
         agent: activeAgent,
@@ -351,10 +385,12 @@ function App() {
 
   // Listen for online status changes and queue updates
   useEffect(() => {
-    const handleStatusMessage = (message: any) => {
-      if (message.action === 'online_status_changed') {
-        setIsOnline(message.isOnline);
-      } else if (message.action === 'queue_updated') {
+    const handleStatusMessage = (message: unknown) => {
+      if (!message || typeof message !== 'object') return;
+      const statusMessage = message as Partial<StatusMessage>;
+      if (statusMessage.action === 'online_status_changed' && typeof statusMessage.isOnline === 'boolean') {
+        setIsOnline(statusMessage.isOnline);
+      } else if (statusMessage.action === 'queue_updated') {
         loadQueuedRequests();
       }
     };
@@ -373,7 +409,9 @@ function App() {
     const browserAPI = browser;
     
     if (browserAPI && browserAPI.runtime) {
-      const handlePopupMessage = async (message: { action: string; actionType?: string; text?: string; tab?: any; imageData?: string }) => {
+      const handlePopupMessage = async (message: unknown) => {
+        if (!isPopupMessage(message)) return;
+
         if (message.action === 'trigger_quick_action') {
           if (message.actionType) {
             handleQuickAction(message.actionType);

@@ -295,11 +295,27 @@ router.post('/:fieldId/cycles', async (req: Request, res: Response) => {
     }
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapCropCycleUpdate(body: any): Prisma.CropCycleUpdateInput {
+type CropCycleUpdateBody = Partial<{
+    cropName: string;
+    crop_name: string;
+    variety: string | null;
+    status: string;
+    plantingDate: string | null;
+    planting_date: string | null;
+    expectedHarvestDate: string | null;
+    expected_harvest_date: string | null;
+    actualHarvestDate: string | null;
+    actual_harvest_date: string | null;
+    yieldKg: number | null;
+    yield_kg: number | null;
+    notes: string | null;
+}>;
+
+function mapCropCycleUpdate(body: CropCycleUpdateBody): Prisma.CropCycleUpdateInput {
     const data: Prisma.CropCycleUpdateInput = {};
-    const getVal = (camel: string, snake: string) => body[camel] !== undefined ? body[camel] : body[snake];
-    const getDateVal = (camel: string, snake: string) => {
+    const getVal = <K extends keyof CropCycleUpdateBody>(camel: K, snake: K): CropCycleUpdateBody[K] =>
+        body[camel] !== undefined ? body[camel] : body[snake];
+    const getDateVal = (camel: keyof CropCycleUpdateBody, snake: keyof CropCycleUpdateBody) => {
         const val = getVal(camel, snake);
         return val ? new Date(val) : (val === null ? null : undefined);
     };
@@ -341,7 +357,7 @@ router.patch('/:fieldId/cycles/:id', async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, error: 'fieldId and cycle id are required' });
         }
         const prisma = getPrisma();
-        const data = mapCropCycleUpdate(req.body);
+        const data = mapCropCycleUpdate(req.body as CropCycleUpdateBody);
 
         const cycle = await prisma.cropCycle.update({
             where: { id },

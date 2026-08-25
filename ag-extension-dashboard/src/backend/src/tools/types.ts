@@ -1,8 +1,20 @@
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { z } from 'zod';
 
-export interface Tool<T extends z.ZodType<any, any>> {
+/**
+ * JSON Schema document shape (subset) used to describe tool parameters
+ * for LLM providers that require JSON Schema instead of a Zod schema.
+ */
+export interface JsonSchema {
+  type?: string;
+  description?: string;
+  properties?: Record<string, JsonSchema | { [key: string]: unknown }>;
+  required?: string[];
+  items?: JsonSchema | { [key: string]: unknown };
+  enum?: unknown[];
+  additionalProperties?: boolean | JsonSchema;
+}
+
+export interface Tool<T extends z.ZodTypeAny = z.ZodTypeAny> {
   name: string;
   description: string;
   schema: T;
@@ -12,11 +24,23 @@ export interface Tool<T extends z.ZodType<any, any>> {
    * @param args The arguments for the tool, parsed and validated against the schema.
    * @returns A promise that resolves to the tool's output, which will be sent back to the LLM.
    */
-  execute: (args: z.infer<T>) => Promise<string>;
+  execute(args: z.infer<T>): Promise<string>;
 
   /**
-   * An optional JSON schema representation of the tool's parameters, 
+   * An optional JSON schema representation of the tool's parameters,
    * used for compatibility with LLM providers that require it.
    */
-  jsonSchema?: Record<string, any>;
+  jsonSchema?: JsonSchema;
+}
+
+/**
+ * Registry-facing view of a tool where the concrete Zod schema is erased.
+ * Kept alongside `Tool` so heterogeneous tool arrays typecheck without casts.
+ */
+export interface AnyTool {
+  name: string;
+  description: string;
+  schema: z.ZodTypeAny;
+  execute(args: unknown): Promise<string>;
+  jsonSchema?: JsonSchema;
 }

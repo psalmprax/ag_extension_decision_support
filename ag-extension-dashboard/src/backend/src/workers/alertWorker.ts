@@ -29,7 +29,7 @@ if (process.env.NODE_ENV !== 'test') {
     }, 10000); // Wait 10 seconds for database to initialize
 }
 
-export async function runAlertChecks(): Promise<void> {
+async function runAlertChecks(): Promise<void> {
     logger.info('Running automated alert checks...');
 
     try {
@@ -413,14 +413,13 @@ async function checkDiseaseAlerts(): Promise<void> {
         `);
 
         // Get all extension officers
-        const officersResult = await query(`
+        const officersResult = await query<{ id: string; region: string | null }>(`
             SELECT id, region FROM users WHERE role = 'extension_officer' AND is_active = TRUE
         `);
 
         for (const alert of alertsResult.rows) {
             // Determine which officers to notify based on alert location
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const relevantOfficers = officersResult.rows.filter((officer: any) =>
+            const relevantOfficers = officersResult.rows.filter((officer) =>
                 !alert.location || alert.location === officer.region || alert.location === 'All'
             );
 
@@ -463,7 +462,7 @@ async function checkDiseaseAlerts(): Promise<void> {
 /**
  * Schedule alert checks to run every 15 minutes
  */
-export function startAlertWorker(intervalMs: number = 15 * 60 * 1000): void {
+function startAlertWorker(intervalMs: number = 15 * 60 * 1000): void {
     logger.info(`Starting alert worker with ${intervalMs / 60000} minute interval`);
 
     // Run immediately on start

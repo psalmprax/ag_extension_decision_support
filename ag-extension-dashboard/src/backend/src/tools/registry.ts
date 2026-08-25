@@ -1,6 +1,5 @@
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { Tool } from './types';
+import { AnyTool } from './types';
 
 // Import your tools here
 import { getDateTool } from './getDate';
@@ -24,29 +23,33 @@ import { nasaPowerTool } from './nasaPowerTool';
  * A registry of all available tools for the AI agent.
  * Add new tools to this array to make them available to the agent.
  */
-export const toolRegistry: Tool<any>[] = [
-  getDateTool as Tool<any>,
-  nasaPowerTool as Tool<any>,
-  weatherTool as Tool<any>,
-  scheduleVisitTool as Tool<any>,
-  marketPriceTool as Tool<any>,
-  diseaseAlertTool as Tool<any>,
-  researchTool as Tool<any>,
-  registerAlertTool as Tool<any>,
-  cropYieldForecastTool as Tool<any>,
-  deepResearchTool as Tool<any>,
-  satelliteNDVITool as Tool<any>,
-  memoryStoreTool as Tool<any>,
-  memoryRecallTool as Tool<any>,
-  memoryForgetTool as Tool<any>,
-  dispatchTaskTool as Tool<any>,
-  handoffTaskTool as Tool<any>,
-  taskStatusTool as Tool<any>,
-  apiBudgetTool as Tool<any>,
-  translationTool as Tool<any>,
-  diagnoseFromSymptomsTool as Tool<any>,
-  analyzePlantImageTool as Tool<any>,
-  getDiseaseInfoTool as Tool<any>,
+/**
+ * A registry of all available tools for the AI agent.
+ * Add new tools to this array to make them available to the agent.
+ */
+export const toolRegistry: AnyTool[] = [
+  getDateTool,
+  nasaPowerTool,
+  weatherTool,
+  scheduleVisitTool,
+  marketPriceTool,
+  diseaseAlertTool,
+  researchTool,
+  registerAlertTool,
+  cropYieldForecastTool,
+  deepResearchTool,
+  satelliteNDVITool,
+  memoryStoreTool,
+  memoryRecallTool,
+  memoryForgetTool,
+  dispatchTaskTool,
+  handoffTaskTool,
+  taskStatusTool,
+  apiBudgetTool,
+  translationTool,
+  diagnoseFromSymptomsTool,
+  analyzePlantImageTool,
+  getDiseaseInfoTool,
 ];
 
 /**

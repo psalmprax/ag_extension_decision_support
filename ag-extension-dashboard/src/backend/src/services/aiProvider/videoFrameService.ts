@@ -12,7 +12,7 @@ const DEFAULT_FRAME_INTERVAL_SECONDS = 2;
 const MAX_FRAME_INTERVAL_SECONDS = 60;
 const FFMPEG_TIMEOUT_MS = 45_000;
 
-export class VideoFrameExtractionError extends Error {
+class VideoFrameExtractionError extends Error {
     constructor(message: string) {
         super(message);
         this.name = 'VideoFrameExtractionError';

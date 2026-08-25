@@ -202,12 +202,6 @@ export const telemetryEventsSchema = z.object({
 });
 
 // Memory Schemas
-export const memoryListSchema = z.object({
-  query: z.object({
-    category: z.string().optional(),
-    limit: z.coerce.number().int().min(1).max(200).default(50),
-  }),
-});
 
 // Email Workflow Schemas
 export const emailWorkflowListSchema = z.object({
@@ -230,21 +224,7 @@ export const updateEmailTemplateSchema = z.object({
 });
 
 // External API Schemas
-export const weatherQuerySchema = z.object({
-  query: z.object({
-    location: z.string().min(1).max(200).optional(),
-  }),
-  params: z.object({
-    location: z.string().min(1).max(200).optional(),
-  }).optional(),
-});
 
-export const marketPriceQuerySchema = z.object({
-  query: z.object({
-    crop: z.string().min(1).max(100).optional(),
-    region: z.string().min(1).max(100).optional(),
-  }),
-});
 
 export const soilDataQuerySchema = z.object({
   query: z.object({
@@ -254,75 +234,18 @@ export const soilDataQuerySchema = z.object({
 });
 
 // Analytics Schemas
-export const analyticsOverviewSchema = z.object({
-  query: z.object({
-    startDate: z.string().optional(),
-    endDate: z.string().optional(),
-    region: z.string().optional(),
-  }),
-});
 
 // Alert Schemas
-export const alertListSchema = z.object({
-  query: z.object({
-    type: z.string().optional(),
-    severity: z.enum(['low', 'medium', 'high', 'critical']).optional(),
-    isActive: z.coerce.boolean().optional(),
-    limit: z.coerce.number().int().min(1).max(200).default(50),
-  }),
-});
 
 // Disease Schemas
-export const diseaseListSchema = z.object({
-  query: z.object({
-    crop: z.string().optional(),
-    severity: z.string().optional(),
-  }),
-});
 
 // Knowledge Schemas
-export const knowledgeSearchSchema = z.object({
-  query: z.object({
-    q: z.string().min(1).max(500),
-    category: z.string().optional(),
-    crop: z.string().optional(),
-    limit: z.coerce.number().int().min(1).max(100).default(20),
-  }),
-});
 
 // Report Schemas
-export const reportListSchema = z.object({
-  query: z.object({
-    type: z.string().optional(),
-    status: z.enum(['pending', 'generating', 'completed', 'failed']).optional(),
-    limit: z.coerce.number().int().min(1).max(100).default(20),
-  }),
-});
 
 // Notification Schemas
-export const notificationListSchema = z.object({
-  query: z.object({
-    type: z.string().optional(),
-    isRead: z.coerce.boolean().optional(),
-    limit: z.coerce.number().int().min(1).max(200).default(50),
-  }),
-});
 
 // Chatbot Schemas
-export const chatbotMessageSchema = z.object({
-  body: z.object({
-    message: z.string().min(1).max(5000),
-    conversationId: z.string().uuid().optional(),
-    language: z.string().max(10).optional(),
-  }),
-});
 
 // SMS Schemas
-export const smsSendSchema = z.object({
-  body: z.object({
-    phoneNumbers: z.array(z.string().min(10).max(20)).min(1).max(100),
-    message: z.string().min(1).max(1600),
-    language: z.string().max(10).optional(),
-  }),
-});
 

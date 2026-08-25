@@ -15,7 +15,7 @@ interface UseDemoModeResult {
 const FALLBACK_LABEL = 'Not available in demo version';
 const FALLBACK_HINT = 'Sign up for a free account to unlock this feature.';
 
-export const DemoBlocker: React.FC<{ children: React.ReactNode; label?: string }> = ({
+const DemoBlocker: React.FC<{ children: React.ReactNode; label?: string }> = ({
   children,
   label,
 }) => {

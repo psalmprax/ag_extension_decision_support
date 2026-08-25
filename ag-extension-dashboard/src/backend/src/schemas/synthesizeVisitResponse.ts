@@ -13,8 +13,8 @@ import { logger } from '@/utils/logger';
  *   documented in routes/knowledge.ts.
  */
 
-export const CROP_HEALTH_STATUSES = ['good', 'fair', 'poor'] as const;
-export const ACTION_PRIORITIES = ['high', 'medium', 'low'] as const;
+const CROP_HEALTH_STATUSES = ['good', 'fair', 'poor'] as const;
+const ACTION_PRIORITIES = ['high', 'medium', 'low'] as const;
 
 const MAX_SUMMARY_LEN = 2000;
 const MAX_NOTES_LEN = 1000;
@@ -46,7 +46,7 @@ const actionItemSchema = z
     })
     .catch({ priority: 'medium', description: 'Action description unavailable' });
 
-export const synthesizeVisitResponseSchema = z.object({
+const synthesizeVisitResponseSchema = z.object({
     summary: z.string().trim().max(MAX_SUMMARY_LEN).default(''),
     cropHealth: z
         .object({
@@ -67,7 +67,7 @@ export type SynthesizeVisitResponse = z.infer<typeof synthesizeVisitResponseSche
  * Used when the model returns nothing parseable. Callers may overwrite
  * `summary` with the raw model text for better UX.
  */
-export const SYNTHESIZE_VISIT_SAFE_DEFAULTS: SynthesizeVisitResponse = {
+const SYNTHESIZE_VISIT_SAFE_DEFAULTS: SynthesizeVisitResponse = {
     summary: '',
     cropHealth: { status: 'fair', notes: 'No structured assessment available.' },
     actions: [],

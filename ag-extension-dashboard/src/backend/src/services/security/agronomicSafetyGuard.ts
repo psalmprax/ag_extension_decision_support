@@ -20,7 +20,7 @@ export interface AgronomicMetricInput {
   identifiedPestsOrDiseases?: string[];
 }
 
-export class AgronomicSafetyGuard {
+class AgronomicSafetyGuard {
   private static instance: AgronomicSafetyGuard;
 
   // Maximum safe upper boundaries based on FAO & Ministry of Agriculture agronomic guidelines

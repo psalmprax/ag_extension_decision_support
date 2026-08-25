@@ -7,7 +7,7 @@ export interface InputSanitizationResult {
   severity: 'none' | 'low' | 'medium' | 'high' | 'critical';
 }
 
-export class AegisShield {
+class AegisShield {
   private static instance: AegisShield;
 
   private static readonly INJECTION_PATTERNS = [

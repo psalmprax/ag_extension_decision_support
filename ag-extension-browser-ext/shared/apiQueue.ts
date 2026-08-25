@@ -1,6 +1,10 @@
 // API Queue Service for offline synchronization
 
-export interface QueuedRequest {
+import type { OfflineStatus, QueuedRequest as PersistedQueuedRequest } from './offlineTypes';
+
+export type { OfflineStatus };
+
+export interface QueuedRequestInput {
     url: string;
     method: string;
     headers: Record<string, string>;
@@ -10,10 +14,19 @@ export interface QueuedRequest {
     attachmentRefs?: string[];
 }
 
-export interface OfflineStatus {
+type QueueEvent = 'statusChange';
+type QueueListener = (isOnline: boolean) => void;
+
+interface OnlineStatusMessage {
+    action: 'online_status_changed';
     isOnline: boolean;
-    lastChecked: number;
 }
+
+const isOnlineStatusMessage = (message: unknown): message is OnlineStatusMessage => {
+    if (!message || typeof message !== 'object') return false;
+    const candidate = message as Partial<OnlineStatusMessage>;
+    return candidate.action === 'online_status_changed' && typeof candidate.isOnline === 'boolean';
+};
 
 class APIQueueService {
     private isOnline: boolean = navigator.onLine;
@@ -33,8 +46,8 @@ class APIQueueService {
         // Listen for messages from background script
         const browserAPI = browser;
         if (browserAPI?.runtime) {
-            browserAPI.runtime.onMessage.addListener((message: any) => {
-                if (message.action === 'online_status_changed') {
+            browserAPI.runtime.onMessage.addListener((message: unknown) => {
+                if (isOnlineStatusMessage(message)) {
                     this.isOnline = message.isOnline;
                     this.emit('statusChange', this.isOnline);
                 }
@@ -42,22 +55,20 @@ class APIQueueService {
         }
     }
 
-    private listeners: { [event: string]: Function[] } = {};
+    private listeners: Partial<Record<QueueEvent, QueueListener[]>> = {};
 
-    private emit(event: string, data: any) {
-        if (this.listeners[event]) {
-            this.listeners[event].forEach(callback => callback(data));
-        }
+    private emit(event: QueueEvent, data: boolean) {
+        this.listeners[event]?.forEach(callback => callback(data));
     }
 
-    public on(event: string, callback: Function) {
+    public on(event: QueueEvent, callback: QueueListener) {
         if (!this.listeners[event]) {
             this.listeners[event] = [];
         }
         this.listeners[event].push(callback);
     }
 
-    public off(event: string, callback: Function) {
+    public off(event: QueueEvent, callback: QueueListener) {
         if (this.listeners[event]) {
             this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
         }
@@ -104,7 +115,7 @@ class APIQueueService {
         return response.id as string;
     }
 
-    public async queueRequest(request: QueuedRequest): Promise<void> {
+    public async queueRequest(request: QueuedRequestInput): Promise<void> {
         const browserAPI = browser;
         if (!browserAPI?.runtime) {
             throw new Error('Browser API not available');
@@ -203,7 +214,7 @@ class APIQueueService {
         }
     }
 
-    public async getQueuedRequests(): Promise<any[]> {
+    public async getQueuedRequests(): Promise<PersistedQueuedRequest[]> {
         const browserAPI = browser;
         if (!browserAPI?.runtime) {
             return [];
@@ -211,7 +222,9 @@ class APIQueueService {
 
         try {
             const response = await browserAPI.runtime.sendMessage({ action: 'get_queued_requests' });
-            return response.success ? response.requests : [];
+            return response.success && Array.isArray(response.requests)
+                ? response.requests as PersistedQueuedRequest[]
+                : [];
         } catch (error) {
             console.error('Failed to get queued requests:', error);
             return [];

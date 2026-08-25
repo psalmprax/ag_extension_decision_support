@@ -33,6 +33,31 @@ export interface CommercialAuthRequest extends Request {
     };
 }
 
+/** Row returned by `listClients` (api_clients joined with usage/key counts). */
+export interface ApiClientListRow {
+    id: string;
+    owner_user_id: string;
+    name: string;
+    status: string;
+    monthly_quota: number;
+    current_period_start: Date | string;
+    current_period_end: Date | string;
+    current_usage: number;
+    key_count: number;
+}
+
+/** Row returned by `listKeys`. */
+export interface ApiKeyRow {
+    id: string;
+    client_id: string;
+    name: string;
+    key_prefix: string;
+    status: string;
+    last_used_at: Date | string | null;
+    expires_at: Date | string | null;
+    created_at: Date | string;
+}
+
 function sha256(value: string): string {
     return crypto.createHash('sha256').update(value).digest('hex');
 }
@@ -122,16 +147,16 @@ class ApiClientService {
         return { ...result.rows[0], token };
     }
 
-    async listClients(ownerUserId?: string) {
+    async listClients(ownerUserId?: string): Promise<ApiClientListRow[]> {
         await this.ensureTables();
-        const params: any[] = [];
+        const params: string[] = [];
         let where = '';
         if (ownerUserId) {
             params.push(ownerUserId);
             where = 'WHERE owner_user_id = $1';
         }
 
-        const result = await query(`
+        const result = await query<ApiClientListRow>(`
             SELECT c.*, COALESCE(SUM(u.units), 0)::int AS current_usage,
                    COUNT(k.id)::int AS key_count
             FROM api_clients c
@@ -146,9 +171,9 @@ class ApiClientService {
         return result.rows;
     }
 
-    async listKeys(clientId: string) {
+    async listKeys(clientId: string): Promise<ApiKeyRow[]> {
         await this.ensureTables();
-        const result = await query(`
+        const result = await query<ApiKeyRow>(`
             SELECT id, client_id, name, key_prefix, status, last_used_at, expires_at, created_at
             FROM api_keys
             WHERE client_id = $1

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { logger } from '../utils/logger';
 import { sendPushNotification } from './pushNotificationService';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient({
     datasourceUrl: process.env.DATABASE_URL,
@@ -81,14 +81,15 @@ class NotificationService {
                     title: payload.title,
                     message: payload.message,
                     channel: payload.channel,
-                    metadata: payload.metadata as any,
+                    metadata: payload.metadata as Prisma.InputJsonValue,
                 }
             });
 
             logger.info(`In-app notification saved and sent to user ${payload.userId}: ${payload.title}`);
 
             // Also trigger Web Push for in-app notifications
-            await sendPushNotification(payload.userId, payload.title, payload.message, payload.metadata?.url as string || '/');
+            const metadataUrl = typeof payload.metadata?.url === 'string' ? payload.metadata.url : '/';
+            await sendPushNotification(payload.userId, payload.title, payload.message, metadataUrl);
 
             return true;
         } catch (error) {
@@ -219,7 +220,7 @@ class NotificationService {
                     type: payload.type,
                     title: payload.title,
                     message: `${payload.message} (Scheduled for ${scheduledAt.toISOString()})`,
-                    metadata: { ...payload.metadata, scheduledAt: scheduledAt.toISOString() } as any,
+                    metadata: { ...payload.metadata, scheduledAt: scheduledAt.toISOString() } as Prisma.InputJsonValue,
                 }
             });
 

@@ -13,7 +13,7 @@ export interface CredentialRecord {
   expiresAt: string;
 }
 
-export class CredentialVault {
+class CredentialVault {
   private static instance: CredentialVault;
   private credentials: Map<string, CredentialRecord> = new Map();
   private encryptionKey: string;

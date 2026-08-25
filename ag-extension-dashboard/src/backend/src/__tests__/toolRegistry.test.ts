@@ -140,40 +140,6 @@ describe('NASA POWER Tool', () => {
   });
 });
 
-describe('FAO Knowledge Service', () => {
-  it('should chunk text into segments on word boundaries', async () => {
-    const { faoKnowledgeService } = await import('../services/data/faoKnowledgeService');
-
-    // Short text should return single chunk
-    const shortText = 'This is a short text for testing.';
-    const shortChunks = faoKnowledgeService.chunkText(shortText);
-    expect(shortChunks.length).toBe(1);
-    expect(shortChunks[0]).toBe(shortText);
-
-    // Long text should be chunked
-    const longText = 'word '.repeat(100) + 'end';
-    const longChunks = faoKnowledgeService.chunkText(longText, 200, 20);
-    expect(longChunks.length).toBeGreaterThanOrEqual(2);
-  });
-
-  it('should handle empty text gracefully', async () => {
-    const { faoKnowledgeService } = await import('../services/data/faoKnowledgeService');
-    expect(faoKnowledgeService.chunkText('')).toEqual([]);
-    expect(faoKnowledgeService.chunkText('   ')).toEqual([]);
-  });
-
-  it('should not split mid-word (chunks contain complete words)', async () => {
-    const { faoKnowledgeService } = await import('../services/data/faoKnowledgeService');
-    const text = 'apple banana cherry date elderberry fig grape';
-
-    // Use chunk size large enough to include whole words but small enough to force splits
-    const chunks = faoKnowledgeService.chunkText(text, 35, 0);
-
-    // All chunks combined should contain the original text (minus extra whitespace)
-    const combined = chunks.join(' ').replace(/\s+/g, ' ').trim();
-    expect(combined).toBe(text);
-  });
-});
 
 describe('Health Check Endpoint', () => {
   it('should have health routes defined in app', async () => {

@@ -1,7 +1,7 @@
 import { getPrisma } from './prismaService';
 import { logger } from '../utils/logger';
 
-export class SystemConfigService {
+class SystemConfigService {
     async get(key: string): Promise<string | null> {
         try {
             const prisma = getPrisma();

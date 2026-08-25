@@ -1,56 +1,10 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Route, Navigation, Award, FileDown, Upload } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { useQuery } from '@tanstack/react-query';
+import { Award, FileDown } from 'lucide-react';
 import { fieldIntelService } from '@/api/fieldIntelService';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 
 // ── Route planner ────────────────────────────────────────────────────────────
 
-export function RoutePlannerCard() {
-    const { cardClass } = useThemeClasses();
-    const { data, isLoading, refetch, isFetching } = useQuery({
-        queryKey: ['route-plan'],
-        queryFn: () => fieldIntelService.getRoutePlan(10),
-    });
-
-    return (
-        <div className={`${cardClass} p-4 sm:p-5`}>
-            <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                    <Route className="w-4 h-4 text-primary-500" />
-                    <h3 className="text-sm font-black uppercase tracking-widest">Today's Route</h3>
-                </div>
-                <button onClick={() => refetch()} disabled={isFetching} className="text-xs font-bold text-primary-500 hover:text-primary-400 disabled:opacity-50" aria-label="Replan route">
-                    <Navigation className="w-4 h-4" />
-                </button>
-            </div>
-
-            {isLoading ? (
-                <div className="h-16 animate-pulse bg-gray-100 dark:bg-gray-800 rounded-xl" />
-            ) : !data || data.stops.length === 0 ? (
-                <p className="text-xs text-gray-400">No overdue follow-ups — route is clear.</p>
-            ) : (
-                <>
-                    <ol className="space-y-2 max-h-56 overflow-y-auto">
-                        {data.stops.map(stop => (
-                            <li key={stop.visitId} className="flex items-center gap-2.5 text-xs">
-                                <span className="w-6 h-6 shrink-0 rounded-full bg-primary-500/10 text-primary-600 dark:text-primary-400 font-black flex items-center justify-center">
-                                    {stop.order}
-                                </span>
-                                <span className="min-w-0 flex-1 truncate">
-                                    <span className="font-semibold">{stop.farmerName || 'Farmer'}</span>
-                                    <span className="text-gray-400"> · {stop.daysOverdue}d overdue · {stop.legKm}km</span>
-                                </span>
-                            </li>
-                        ))}
-                    </ol>
-                    <p className="text-xxs text-gray-400 mt-2 uppercase tracking-widest">Total: {data.totalKm} km · {data.stops.length} stops</p>
-                </>
-            )}
-        </div>
-    );
-}
 
 // ── Leaderboard ──────────────────────────────────────────────────────────────
 
@@ -119,43 +73,3 @@ export function MisExportButtons() {
 }
 
 // ── Soil lab import ──────────────────────────────────────────────────────────
-
-export function SoilLabImport() {
-    const queryClient = useQueryClient();
-    const [csv, setCsv] = useState('');
-    const mutation = useMutation({
-        mutationFn: () => fieldIntelService.importSoilLab(csv),
-        onSuccess: result => {
-            toast.success(`Imported ${result.imported} results${result.unmatchedFarmers.length ? ` (${result.unmatchedFarmers.length} unmatched farmer refs)` : ''}`);
-            setCsv('');
-            void queryClient.invalidateQueries({ queryKey: ['soil-lab'] });
-        },
-        onError: (error: unknown) => {
-            const message = (error as { response?: { data?: { error?: string } } }).response?.data?.error || 'Import failed';
-            toast.error(message);
-        },
-    });
-
-    return (
-        <div className="space-y-2">
-            <div className="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400">
-                <Upload className="w-3.5 h-3.5" />
-                Import lab results (CSV)
-            </div>
-            <textarea
-                value={csv}
-                onChange={e => setCsv(e.target.value)}
-                rows={4}
-                placeholder={'farmer_ref,lab_name,sample_ref,ph,nitrogen_ppm,phosphorus_ppm,potassium_ppm,organic_matter_pct,tested_at'}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs font-mono focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-            <button
-                onClick={() => mutation.mutate()}
-                disabled={!csv.trim() || mutation.isPending}
-                className="px-3 py-1.5 rounded-xl bg-primary-600 text-white text-xs font-bold disabled:opacity-50"
-            >
-                {mutation.isPending ? 'Importing…' : 'Import results'}
-            </button>
-        </div>
-    );
-}

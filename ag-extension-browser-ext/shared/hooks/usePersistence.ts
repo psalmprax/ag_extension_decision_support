@@ -13,14 +13,14 @@ export function usePersistence<T>(key: string, initialValue: T) {
   useEffect(() => {
     if (browser?.storage?.local) {
       browser.storage.local.get([key])
-        .then((result: Record<string, any>) => {
+        .then((result: Record<string, unknown>) => {
           if (result?.[key] !== undefined) {
             setStoredValue(result[key] as T);
           }
           setIsLoaded(true);
         })
-        .catch((error: any) => {
-          console.error(`Error getting browser.storage.local for key "${key}":`, error);
+        .catch((error: unknown) => {
+          console.error(`Error getting browser.storage.local for key "${key}":`, error instanceof Error ? error.message : error);
           setIsLoaded(true);
         });
     } else {
@@ -31,11 +31,13 @@ export function usePersistence<T>(key: string, initialValue: T) {
   // Update storage when value changes
   const setValue = (value: T | ((val: T) => T)) => {
     try {
-      const valueToStore = typeof value === 'function' ? (value as Function)(storedValue) : value;
+      const valueToStore = typeof value === 'function'
+        ? (value as (current: T) => T)(storedValue)
+        : value;
       setStoredValue(valueToStore);
       if (browser?.storage?.local) {
-        browser.storage.local.set({ [key]: valueToStore }).catch((error: any) => {
-          console.error(`Error setting browser.storage.local for key "${key}":`, error);
+        browser.storage.local.set({ [key]: valueToStore }).catch((error: unknown) => {
+          console.error(`Error setting browser.storage.local for key "${key}":`, error instanceof Error ? error.message : error);
         });
       }
     } catch (error) {

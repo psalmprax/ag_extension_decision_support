@@ -1,3 +1,6 @@
+// Used by the daily report CLI job (src/scripts/dailyReportJob.ts), which the
+// fallow dead-code scan excludes via `**/scripts/**` in .fallowrc.json.
+// fallow-ignore-file unused-file
 import { AIProviderFactory } from './aiProvider/aiProvider';
 import { marketPriceService } from './marketPriceService';
 import { WeatherService } from './weatherService';

@@ -46,9 +46,5 @@ function getEmailWorker(): Worker<EmailJobData> | null {
         });
     }
     return _emailWorker;
-}
-
-// Export the lazy getter — no Redis connection until first call
+}// Export the lazy getter — no Redis connection until first call
 export { getEmailWorker };
-
-

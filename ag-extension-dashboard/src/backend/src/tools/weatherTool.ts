@@ -27,13 +27,9 @@ export const weatherTool: Tool<typeof WeatherSchema> = {
     try {
       const response = await axios.get(`https://wttr.in/${encodeURIComponent(location)}?format=j1`);
       
-      if (response.data && response.data.weather) {
-        forecast = response.data.weather.slice(0, days).map((w: any) => ({
-          date: w.date,
-          temp: parseInt(w.avgtempC),
-          condition: w.hourly[4]?.weatherDesc[0]?.value || 'Variable',
-          advice: getAgriculturalAdvice(w.hourly[4]?.weatherDesc[0]?.value || '')
-        }));
+      const rawWeather = response.data?.weather;
+      if (Array.isArray(rawWeather)) {
+        forecast = rawWeather.slice(0, days).map(mapWeatherDay);
       }
     } catch (error) {
       logger.error(`Weather API failed for ${location}:`, error);
@@ -50,6 +46,30 @@ export const weatherTool: Tool<typeof WeatherSchema> = {
     return JSON.stringify(result);
   },
 };
+
+/** Raw day object from the wttr.in API. */
+interface RawWeatherDay {
+  date?: unknown;
+  avgtempC?: unknown;
+  hourly?: Array<{ weatherDesc?: Array<{ value?: unknown }> }>;
+}
+
+const asString = (value: unknown): string => (typeof value === 'string' ? value : '');
+const asNumber = (value: unknown): number => {
+  const parsed = typeof value === 'number' ? value : parseInt(asString(value), 10);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+function mapWeatherDay(day: RawWeatherDay): { date: string; temp: number; condition: string; advice: string } {
+  const condition = day.hourly?.[4]?.weatherDesc?.[0]?.value;
+  const conditionText = asString(condition) || 'Variable';
+  return {
+    date: asString(day.date),
+    temp: asNumber(day.avgtempC),
+    condition: conditionText,
+    advice: getAgriculturalAdvice(conditionText),
+  };
+}
 
 /**
  * Helper to provide agricultural advice based on weather condition
