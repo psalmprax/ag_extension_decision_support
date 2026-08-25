@@ -1,7 +1,20 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // The config module is a singleton loaded from env at import time, so we mock it
 // to test startup validation across provider configurations deterministically.
-const mockConfig: any = {
+const mockConfig: {
+    database: { url: string };
+    jwt: { secret: string; expiresIn: string };
+    redis: { url: string };
+    openAI: { apiKey: string };
+    azureOpenAI: { apiKey: string; endpoint: string; deploymentName: string };
+    anthropic: { apiKey: string };
+    groq: { apiKey: string };
+    googleVertex: { projectId: string };
+    freebuff: { authToken: string; apiBaseUrl: string };
+    ollama: { host: string; model: string };
+    stripeSecretKey: string;
+    externalApis: { weather: { apiKey: string }; fao: { url: string } };
+    ai: { primary: { provider: string; model: string; region: string }; fallback: { provider: string; model: string; region: string } };
+} = {
     database: { url: 'postgresql://test' },
     jwt: { secret: 'test-secret', expiresIn: '7d' },
     redis: { url: 'redis://test' },
@@ -94,7 +107,7 @@ describe('startup AI provider validation', () => {
         const warnings = validateStartupConfiguration();
         logStartupWarnings(warnings);
         expect(logger.error).toHaveBeenCalled();
-        const logged = (logger.error as jest.Mock).mock.calls.some((call: any[]) =>
+        const logged = (logger.error as jest.Mock).mock.calls.some((call: unknown[]) =>
             String(call[0]).includes('GROQ_API_KEY')
         );
         expect(logged).toBe(true);

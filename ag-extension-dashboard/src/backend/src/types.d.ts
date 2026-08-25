@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // Type declarations for modules without types
 
 declare module 'pg' {
@@ -15,15 +14,20 @@ declare module 'pg' {
         connectionString?: string;
     }
 
+    export interface PoolClient {
+        query(text: string, values?: unknown[]): Promise<QueryResult>;
+        release(): void;
+    }
+
     export class Pool {
         constructor(config?: PoolConfig | string);
-        query(text: string, values?: any[]): Promise<QueryResult>;
+        query(text: string, values?: unknown[]): Promise<QueryResult>;
         end(): Promise<void>;
-        connect(): Promise<any>;
+        connect(): Promise<PoolClient>;
     }
 
     export interface QueryResult {
-        rows: any[];
+        rows: unknown[];
         rowCount: number;
         fields: FieldDef[];
     }
@@ -35,7 +39,13 @@ declare module 'pg' {
 }
 
 declare module 'json-schema-faker' {
-    const jsonSchemaFaker: any;
+    interface JsonSchemaFaker {
+        generate(schema: unknown): unknown;
+        resolve(schema: unknown): Promise<unknown>;
+        option(key: string, value: unknown): void;
+        [key: string]: unknown;
+    }
+    const jsonSchemaFaker: JsonSchemaFaker;
     export default jsonSchemaFaker;
 }
 
@@ -48,7 +58,7 @@ declare global {
                 userId: string;
                 email: string;
                 role: UserRole;
-                [key: string]: any;
+                [key: string]: unknown;
             };
             language?: string;
             rawBody?: Buffer;
@@ -57,7 +67,7 @@ declare global {
                 isRTL: boolean;
                 originalPath: string;
                 canonicalPath: string;
-                [key: string]: any;
+                [key: string]: unknown;
             };
             _i18nTranslatedPath?: string;
             _originalPath?: string;
@@ -93,7 +103,7 @@ export interface ContextMenuAction {
     action: string;
     entityType: string;
     entityId: string;
-    data?: any;
+    data?: unknown;
 }
 
 // Breadcrumb Types

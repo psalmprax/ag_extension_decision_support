@@ -123,12 +123,12 @@ Guidelines:
                 response_format: { type: "json_object" }
             });
 
-            const translatedBatch = JSON.parse(completion.choices[0]?.message?.content || "{}");
+            const translatedBatch = JSON.parse(completion.choices[0]?.message?.content || "{}") as Record<string, string>;
             Object.assign(resultDict, translatedBatch);
             console.log(`    ✅ Batch ${Math.floor(i / batchSize) + 1} complete. (${batch.length} keys)`);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (_err: any) {
-            if (_err?.error?.code === 'rate_limit_exceeded') {
+        } catch (_err: unknown) {
+            const errWithCode = _err as { error?: { code?: string } };
+            if (errWithCode?.error?.code === 'rate_limit_exceeded') {
                 console.error(`    🔴 Rate limit exceeded. Stopping translations for ${langCode}. Save and resume later.`);
                 throw _err; // Propagate to stop the whole process
             }

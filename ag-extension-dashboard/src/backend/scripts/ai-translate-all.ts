@@ -14,7 +14,8 @@ const USE_OLLAMA = process.env.USE_OLLAMA === 'true';
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
 // Groq setup (if using Groq)
-let groq: any = null;
+type GroqClient = { chat: { completions: { create: (args: unknown) => Promise<{ choices: { message: { content: string | null } }[] }> } } };
+let groq: GroqClient | null = null;
 if (!USE_OLLAMA && (!GROQ_API_KEY || GROQ_API_KEY === 'your-groq-api-key')) {
     console.error('❌ Error: Valid GROQ_API_KEY not found and USE_OLLAMA is not enabled.');
     console.error('Please either:');
@@ -69,8 +70,8 @@ ${JSON.stringify(keys, null, 2)}
             throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
         }
 
-        const data = await response.json() as any;
-        const aiDict = JSON.parse(data.message?.content || '{}');
+        const data = await response.json() as { message?: { content?: string } };
+        const aiDict = JSON.parse(data.message?.content || '{}') as Record<string, unknown>;
 
         // Filter aiDict keys to only include those present in the original 'keys' batch
         const validKeys = new Set(Object.keys(keys));
@@ -106,6 +107,7 @@ ${JSON.stringify(keys, null, 2)}
 
     for (let attempt = 0; attempt <= retries; attempt++) {
         try {
+            if (!groq) throw new Error('Groq client not initialized');
             const completion = await groq.chat.completions.create({
                 model: model,
                 messages: [
@@ -118,7 +120,7 @@ ${JSON.stringify(keys, null, 2)}
             });
 
             const rawContent = completion.choices[0].message.content || '{}';
-            const aiDict = JSON.parse(rawContent);
+            const aiDict = JSON.parse(rawContent) as Record<string, unknown>;
             
             // Filter: Only accept keys present in the original batch
             const filteredResult: Record<string, string> = {};
@@ -128,9 +130,10 @@ ${JSON.stringify(keys, null, 2)}
                 }
             }
             return filteredResult;
-        } catch (error: any) {
-            if (error.status === 429 && attempt < retries) {
-                const retryAfter = parseInt(error.headers?.['retry-after'] || '5');
+        } catch (error: unknown) {
+            const err = error as { status?: number; headers?: Record<string, string> };
+            if (err.status === 429 && attempt < retries) {
+                const retryAfter = parseInt(err.headers?.['retry-after'] || '5');
                 const waitTime = (retryAfter + Math.pow(2, attempt)) * 1000;
                 console.warn(`  ⚠️ Rate limit hit. Retrying in ${waitTime/1000}s... (Attempt ${attempt + 1}/${retries})`);
                 await new Promise(r => setTimeout(r, waitTime));

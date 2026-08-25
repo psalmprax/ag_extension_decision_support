@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import express, { Application, Request, Response } from 'express';
+import express, { Application, Request, Response, Router } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -416,7 +415,7 @@ routeMounts.forEach(m => app.use(`/api/v1${m.path}`, m.router));
 app.use('/api/public/shares', publicShareRouter);
 
 // Create MCP router dynamically to support modern module standards and tree-shaking
-let mcpRouter: any = null;
+let mcpRouter: Router | null = null;
 import('./services/mcpAdapter')
   .then(({ createMCPRouter }) => {
     mcpRouter = createMCPRouter();

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { GroqProvider } from '../services/aiProvider/providers/groq';
 
 // The provider statically imports groq-sdk, so the mock factory must define

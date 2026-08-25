@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import request from 'supertest';
 import app from '../app';
 import jwt from 'jsonwebtoken';
@@ -21,10 +20,10 @@ jest.mock('../utils/logger', () => ({
 // DNS mock — control which domains resolve (preserve rest of the module)
 const mockDnsResolve4 = jest.fn();
 jest.mock('dns/promises', () => {
-    const actual = jest.requireActual('dns/promises');
+    const actual = jest.requireActual('dns/promises') as Record<string, unknown>;
     return {
         ...actual,
-        resolve4: (...args: any[]) => mockDnsResolve4(...args),
+        resolve4: (...args: unknown[]) => (mockDnsResolve4 as (...a: unknown[]) => unknown)(...args),
     };
 });
 
@@ -34,9 +33,9 @@ const mockConnectTCP = jest.fn();
 const mockCheckHTTP = jest.fn();
 const mockCheckSSL = jest.fn();
 jest.mock('../services/diagnosticsHelpers', () => ({
-    connectTCP: (...args: any[]) => mockConnectTCP(...args),
-    checkHTTP: (...args: any[]) => mockCheckHTTP(...args),
-    checkSSL: (...args: any[]) => mockCheckSSL(...args),
+    connectTCP: (...args: unknown[]) => (mockConnectTCP as (...a: unknown[]) => unknown)(...args),
+    checkHTTP: (...args: unknown[]) => (mockCheckHTTP as (...a: unknown[]) => unknown)(...args),
+    checkSSL: (...args: unknown[]) => (mockCheckSSL as (...a: unknown[]) => unknown)(...args),
 }));
 
 // ---------------------------------------------------------------
@@ -175,7 +174,7 @@ describe('Diagnostics API', () => {
             expect(response.body.ports.length).toBeGreaterThan(0);
 
             // All ports should be open by default
-            const openPorts = response.body.ports.filter((p: any) => p.open);
+            const openPorts = response.body.ports.filter((p: { open: boolean }) => p.open);
             expect(openPorts.length).toBe(6);
         });
 
@@ -192,9 +191,9 @@ describe('Diagnostics API', () => {
                 .get('/api/health/diagnostics')
                 .set('Authorization', `Bearer ${adminToken}`);
 
-            const port443 = response.body.ports.find((p: any) => p.port === 443);
-            const port80 = response.body.ports.find((p: any) => p.port === 80);
-            const port3001 = response.body.ports.find((p: any) => p.port === 3001);
+            const port443 = response.body.ports.find((p: { port: number; open: boolean }) => p.port === 443);
+            const port80 = response.body.ports.find((p: { port: number; open: boolean }) => p.port === 80);
+            const port3001 = response.body.ports.find((p: { port: number; open: boolean }) => p.port === 3001);
 
             expect(port443.open).toBe(false);
             expect(port80.open).toBe(false);
@@ -206,7 +205,7 @@ describe('Diagnostics API', () => {
                 .get('/api/health/diagnostics')
                 .set('Authorization', `Bearer ${adminToken}`);
 
-            const port80 = response.body.ports.find((p: any) => p.port === 80);
+            const port80 = response.body.ports.find((p: { port: number; name: string; host: string }) => p.port === 80);
             expect(port80.name).toBe('HTTP (Traefik)');
             expect(port80.host).toBe('localhost');
         });
@@ -260,7 +259,7 @@ describe('Diagnostics API', () => {
             expect(response.body.container_network).toBeInstanceOf(Array);
             expect(response.body.container_network.length).toBe(5);
 
-            const db = response.body.container_network.find((c: any) => c.name === 'app-db');
+            const db = response.body.container_network.find((c: { name: string; reachable: boolean }) => c.name === 'app-db');
             expect(db.reachable).toBe(true);
         });
 
@@ -276,7 +275,7 @@ describe('Diagnostics API', () => {
                 .get('/api/health/diagnostics')
                 .set('Authorization', `Bearer ${adminToken}`);
 
-            const db = response.body.container_network.find((c: any) => c.name === 'app-db');
+            const db = response.body.container_network.find((c: { name: string; reachable: boolean }) => c.name === 'app-db');
             expect(db.reachable).toBe(false);
         });
     });

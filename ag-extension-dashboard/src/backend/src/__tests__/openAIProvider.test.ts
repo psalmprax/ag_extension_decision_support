@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // Load provider config from env BEFORE importing the config singleton so
 // dotenv (which never overrides existing process.env) keeps these values.
 process.env.OPENAI_API_KEY = 'test-openai-key';
@@ -51,7 +50,7 @@ describe('OpenAIProvider healthCheck diagnostics', () => {
         const provider = makeProvider();
 
         // Simulate a prior failure so we can assert it is cleared on success.
-        (provider as any).recordHealthError('401 Invalid API key');
+        (provider as unknown as { recordHealthError: (msg: string) => void }).recordHealthError('401 Invalid API key');
 
         expect(await provider.healthCheck()).toBe(true);
         expect(provider.getLastHealthError()).toBeUndefined();

@@ -68,10 +68,25 @@ jest.mock('../services/usageService', () => ({
 // Mock pdfkit's PDFDocument constructor so we can assert which sections each
 // report type draws without depending on the real PDF binary output.
 // `pipe(res)` captures the response so `end()` can close it cleanly.
+type MockPdfDoc = {
+    page: { width: number; height: number };
+    y: number;
+    x: number;
+    text: jest.Mock;
+    fontSize: jest.Mock;
+    font: jest.Mock;
+    fillColor: jest.Mock;
+    rect: jest.Mock;
+    fill: jest.Mock;
+    stroke: jest.Mock;
+    moveDown: jest.Mock;
+    __pipeTarget: { end?: () => void } | null;
+    pipe: jest.Mock;
+    end: jest.Mock;
+};
 jest.mock('pdfkit', () => {
     const MockPDFDocument = jest.fn().mockImplementation(() => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const doc: any = {
+        const doc = {
             page: { width: 595, height: 842 },
             y: 0,
             x: 0,
@@ -84,16 +99,18 @@ jest.mock('pdfkit', () => {
             stroke: jest.fn().mockReturnThis(),
             moveDown: jest.fn().mockReturnThis(),
             __pipeTarget: null as { end?: () => void } | null,
-            pipe: jest.fn((target: { end?: () => void }) => {
-                doc.__pipeTarget = target;
-                return target;
-            }),
-            end: jest.fn(() => {
-                const t = doc.__pipeTarget;
-                if (t && typeof t.end === 'function') t.end();
-                return doc;
-            }),
-        };
+            pipe: jest.fn() as jest.Mock,
+            end: jest.fn() as jest.Mock,
+        } as unknown as MockPdfDoc;
+        doc.pipe = jest.fn((target: { end?: () => void }) => {
+            doc.__pipeTarget = target;
+            return target;
+        });
+        doc.end = jest.fn(() => {
+            const t = doc.__pipeTarget;
+            if (t && typeof t.end === 'function') t.end();
+            return doc;
+        });
         return doc;
     });
     return { __esModule: true, default: MockPDFDocument };

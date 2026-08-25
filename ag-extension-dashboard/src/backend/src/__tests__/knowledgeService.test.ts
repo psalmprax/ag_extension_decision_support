@@ -267,8 +267,7 @@ describe('KnowledgeService.askQuestion — reasoning timeout wrapper (60s)', () 
             visuals: null,
         });
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        mockRouteRequest.mockImplementation(async (type: string, opts?: any) => {
+        mockRouteRequest.mockImplementation(async (type: string, opts?: { attachments?: unknown[] }) => {
             if (type === 'classify') {
                 return { labels: [{ label: 'pest_and_disease', score: 0.95 }] };
             }

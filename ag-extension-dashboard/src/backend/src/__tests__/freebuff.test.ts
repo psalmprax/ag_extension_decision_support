@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FreebuffProvider } from '../services/aiProvider/providers/freebuff';
 
 // FreebuffProvider lazily constructs an OpenAI client pointing at FREEBUFF_API_BASE_URL.
@@ -32,7 +31,7 @@ function makeProvider() {
 
 function mockChatResponse(
     content: string,
-    opts: { usage?: any; finishReason?: string } = {}
+    opts: { usage?: unknown; finishReason?: string } = {}
 ) {
     return {
         choices: [

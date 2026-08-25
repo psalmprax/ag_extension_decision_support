@@ -1,43 +1,42 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeAll, jest } from '@jest/globals';
 
 jest.mock('../services/paymentService', () => ({
     paymentService: {
-        getPricingPlans: (jest.fn() as any).mockImplementation(() => Promise.resolve([])),
-        createCheckoutSession: (jest.fn() as any).mockImplementation(() => Promise.resolve({ url: '' })),
-        getSubscription: (jest.fn() as any).mockImplementation(() => Promise.resolve(null)),
-        cancelSubscription: (jest.fn() as any).mockImplementation(() => Promise.resolve({ success: true })),
-        switchSubscription: (jest.fn() as any).mockImplementation(() => Promise.resolve({ success: true })),
-        getPaymentMethods: (jest.fn() as any).mockImplementation(() => Promise.resolve({ success: true, data: [] })),
-        getOrCreateCustomer: (jest.fn() as any).mockImplementation(() => Promise.resolve('')),
-        getInvoices: (jest.fn() as any).mockImplementation(() => Promise.resolve([])),
-        createPortalSession: (jest.fn() as any).mockImplementation(() => Promise.resolve(''))
+        getPricingPlans: (jest.fn(() => Promise.resolve([])) as unknown as jest.Mock),
+        createCheckoutSession: (jest.fn(() => Promise.resolve({ url: '' })) as unknown as jest.Mock),
+        getSubscription: (jest.fn(() => Promise.resolve(null)) as unknown as jest.Mock),
+        cancelSubscription: (jest.fn(() => Promise.resolve({ success: true })) as unknown as jest.Mock),
+        switchSubscription: (jest.fn(() => Promise.resolve({ success: true })) as unknown as jest.Mock),
+        getPaymentMethods: (jest.fn(() => Promise.resolve({ success: true, data: [] })) as unknown as jest.Mock),
+        getOrCreateCustomer: (jest.fn(() => Promise.resolve('')) as unknown as jest.Mock),
+        getInvoices: (jest.fn(() => Promise.resolve([])) as unknown as jest.Mock),
+        createPortalSession: (jest.fn(() => Promise.resolve('')) as unknown as jest.Mock)
     }
 }));
 
 jest.mock('../services/prismaService', () => ({
-    getPrisma: (jest.fn() as any).mockImplementation(() => ({
+    getPrisma: (jest.fn(() => ({
         systemConfig: {
-            findUnique: (jest.fn() as any).mockResolvedValue(null),
-            upsert: (jest.fn() as any).mockResolvedValue({})
+            findUnique: jest.fn(() => Promise.resolve(null)),
+            upsert: jest.fn(() => Promise.resolve({}))
         },
         subscription: {
-            findUnique: (jest.fn() as any).mockResolvedValue(null),
-            create: (jest.fn() as any).mockResolvedValue({}),
-            update: (jest.fn() as any).mockResolvedValue({})
+            findUnique: jest.fn(() => Promise.resolve(null)),
+            create: jest.fn(() => Promise.resolve({})),
+            update: jest.fn(() => Promise.resolve({}))
         },
         subscriptionPlan: {
-            findMany: (jest.fn() as any).mockResolvedValue([]),
-            findFirst: (jest.fn() as any).mockResolvedValue(null)
+            findMany: jest.fn(() => Promise.resolve([])),
+            findFirst: jest.fn(() => Promise.resolve(null))
         },
         user: {
-            findUnique: (jest.fn() as any).mockResolvedValue({ id: '1', email: 'test@example.com' })
+            findUnique: jest.fn(() => Promise.resolve({ id: '1', email: 'test@example.com' }))
         }
-    }))
+    })) as unknown as jest.Mock)
 }));
 
 describe('Tool Registry', () => {
-  let toolRegistry: any[];
+  let toolRegistry: { name: string; description: string; schema: unknown; execute: (...args: unknown[]) => unknown }[];
 
   beforeAll(async () => {
     // Dynamic import to avoid side effects from registry
@@ -46,7 +45,7 @@ describe('Tool Registry', () => {
   });
 
   it('should have all expected tools registered', () => {
-    const toolNames = toolRegistry.map((t: any) => t.name);
+    const toolNames = toolRegistry.map((t: { name: string }) => t.name);
     expect(toolNames).toContain('get_current_date');
     expect(toolNames).toContain('get_geospatial_weather');
     expect(toolNames).toContain('get_weather_forecast');
@@ -72,7 +71,7 @@ describe('Tool Registry', () => {
   });
 
   it('should have unique tool names (no duplicates)', () => {
-    const toolNames = toolRegistry.map((t: any) => t.name);
+    const toolNames = toolRegistry.map((t: { name: string }) => t.name);
     const uniqueNames = new Set(toolNames);
     expect(uniqueNames.size).toBe(toolNames.length);
   });
@@ -134,7 +133,7 @@ describe('NASA POWER Tool', () => {
 
   it('should have NASA POWER registered in the tool registry', async () => {
     const { toolRegistry } = await import('../tools/registry');
-    const nasaTool = toolRegistry.find((t: any) => t.name === 'get_geospatial_weather');
+    const nasaTool = toolRegistry.find((t: { name: string }) => t.name === 'get_geospatial_weather');
     expect(nasaTool).toBeDefined();
     expect(nasaTool!.description).toContain('NASA POWER');
   });
@@ -160,9 +159,10 @@ describe('Tool Execution Validation', () => {
       // Try parsing empty input - tools with required fields should fail gracefully
       try {
         tool.schema.parse({});
-      } catch (e: any) {
+      } catch (e: unknown) {
         // Expected for tools with required fields
-        expect(e.issues || e.message).toBeDefined();
+        const err = e as { issues?: unknown; message?: string };
+        expect(err.issues || err.message).toBeDefined();
       }
     }
   });
