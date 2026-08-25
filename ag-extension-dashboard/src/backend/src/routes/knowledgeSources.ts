@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, Request, Response } from 'express';
 import { query } from '@/services/databaseService';
 import { TropicalKnowledgeSourceService } from '@/services/data/tropicalKnowledgeSources';

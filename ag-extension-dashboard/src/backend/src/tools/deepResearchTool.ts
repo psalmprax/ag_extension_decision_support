@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { z } from 'zod';
 import { Tool } from './types';
 import { tavilyService } from '@/services/tavilyService';
@@ -22,7 +21,7 @@ async function fetchTavilyResults(topic: string, depth: string, results: Array<{
   if (tavilyResults) {
     results.push({
       source: 'tavily_web_search',
-      data: JSON.stringify(tavilyResults.results?.slice(0, 5).map((r: Record<string, any>) => ({
+      data: JSON.stringify(tavilyResults.results?.slice(0, 5).map((r: { title?: string; url?: string; content?: string }) => ({
         title: r.title,
         url: r.url,
         snippet: r.content,

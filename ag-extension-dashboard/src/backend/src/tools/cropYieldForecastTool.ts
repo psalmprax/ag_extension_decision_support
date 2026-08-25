@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { z } from 'zod';
 import { Tool } from './types';
 import { WeatherData, WeatherService } from '@/services/weatherService';

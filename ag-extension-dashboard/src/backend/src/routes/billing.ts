@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import express, { Router } from 'express';
 import { idempotencyMiddleware } from '../middleware/idempotencyMiddleware';
 import { paymentService } from '../services/paymentService';

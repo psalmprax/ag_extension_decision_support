@@ -166,7 +166,7 @@ async function performInsertVisit(
             WHERE id = ANY($1::uuid[]) AND owner_user_id = $2 AND farmer_id = $3 AND status = 'active'`;
         const attachmentCheck = executor === query
             ? await query<{ id: string }>(attachmentCheckSql, [attachmentIds, userId, farmerId])
-            : await (executor as PoolClient).query<{ id: string }>(attachmentCheckSql, [attachmentIds, userId, farmerId]);
+            : await (executor as PoolClient).query(attachmentCheckSql, [attachmentIds, userId, farmerId]) as { rows: Array<{ id: string }> };
         if (attachmentCheck.rows.length !== attachmentIds.length) {
             throw new Error('One or more attachments are not owned by the current user or farmer');
         }
@@ -177,7 +177,7 @@ async function performInsertVisit(
 
     const result = executor === query
         ? await query<VisitInsertRow>(sql, values)
-        : await (executor as PoolClient).query<VisitInsertRow>(sql, values);
+        : await (executor as PoolClient).query(sql, values) as { rows: VisitInsertRow[] };
     const created = result.rows[0];
     if (created && attachmentIds.length > 0) {
         const attachmentSql = `INSERT INTO visit_attachments (visit_id, upload_id)

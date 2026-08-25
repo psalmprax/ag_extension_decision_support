@@ -33,22 +33,22 @@ export async function executeIdempotentMutation(
     const requestHash = hashPayload(options.payload);
 
     return withTransaction(async client => {
-        const reservation = await client.query<StoredMutationRow>(
+        const reservation = await client.query(
             `INSERT INTO offline_mutations
                 (user_id, mutation_key, operation, entity_type, request_hash, status, created_at, updated_at)
              VALUES ($1, $2, $3, $4, $5, 'processing', NOW(), NOW())
              ON CONFLICT (user_id, mutation_key) DO NOTHING
              RETURNING request_hash, status, response_status, response_body`,
             [options.userId, options.mutationKey, options.operation, options.entityType, requestHash]
-        );
+        ) as { rows: StoredMutationRow[] };
 
         if (reservation.rows.length === 0) {
-            const existing = await client.query<StoredMutationRow>(
+            const existing = await client.query(
                 `SELECT request_hash, status, response_status, response_body
                  FROM offline_mutations
                  WHERE user_id = $1 AND mutation_key = $2`,
                 [options.userId, options.mutationKey]
-            );
+            ) as { rows: StoredMutationRow[] };
             const stored = existing.rows[0];
 
             if (!stored || stored.request_hash !== requestHash) {

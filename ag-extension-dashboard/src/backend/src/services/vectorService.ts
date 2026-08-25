@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { getEmbedding } from '@/services/embeddingCache';
@@ -6,8 +5,7 @@ import { getEmbedding } from '@/services/embeddingCache';
 export interface VectorDocument {
     id: string;
     content: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    metadata: Record<string, any>;
+    metadata: Record<string, unknown>;
     embedding?: number[];
 }
 
@@ -19,8 +17,7 @@ export class VectorService {
     /**
      * Upsert a document into the vector store (PostgreSQL)
      */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    static async upsertDocument(id: string, content: string, metadata: Record<string, any>): Promise<void> {
+    static async upsertDocument(id: string, content: string, metadata: Record<string, unknown>): Promise<void> {
         logger.info(`Upserting document to persistent vector store: ${id}`);
 
         try {
@@ -81,7 +78,7 @@ export class VectorService {
             // Convert to pgvector format: [val1,val2,val3]
             const vector = `[${embedding.join(',')}]`;
 
-            const params: any[] = [vector];
+            const params: Array<string | number> = [vector];
             const where: string[] = ['embedding IS NOT NULL'];
 
             if (filters.category) {
@@ -109,20 +106,20 @@ export class VectorService {
                 WHERE score >= $${params.length - 1}
                 ORDER BY score DESC
                 LIMIT $${params.length}
-            `, params);
+            `, params as unknown as unknown[]);
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return result.rows.map((row: any) => ({
+            type VectorRow = { id: string; content: string; title: unknown; category: unknown; crops: unknown[] | null; source_url: unknown; content_type: unknown; score: unknown };
+            return (result.rows as unknown as VectorRow[]).map((row) => ({
                 id: row.id,
                 content: row.content,
                 metadata: {
                     title: row.title,
                     category: row.category,
-                    crop: row.crops?.[0],
+                    crop: Array.isArray(row.crops) ? row.crops[0] : undefined,
                     sourceUrl: row.source_url,
-                    contentType: row.content_type || 'text'
+                    contentType: (row.content_type as string) || 'text'
                 },
-                score: Number.parseFloat(row.score)
+                score: Number.parseFloat(String(row.score ?? 0))
             }));
         } catch (error) {
             logger.error('Database vector search failed:', error);
@@ -152,7 +149,7 @@ export class VectorService {
                 return [];
             }
 
-            const params: any[] = [cleanQuery];
+            const params: Array<string | number> = [cleanQuery];
             const where: string[] = ["to_tsvector('english', title || ' ' || content) @@ to_tsquery('english', $1)"];
 
             if (filters.category) {
@@ -174,19 +171,20 @@ export class VectorService {
                 WHERE ${where.join(' AND ')}
                 ORDER BY score DESC
                 LIMIT $${params.length}
-            `, params);
+            `, params as unknown as unknown[]);
 
-            return result.rows.map((row: any) => ({
+            type KeywordRow = { id: string; content: string; title: unknown; category: unknown; crops: unknown[] | null; source_url: unknown; content_type: unknown; score: unknown };
+            return (result.rows as unknown as KeywordRow[]).map((row) => ({
                 id: row.id,
                 content: row.content,
                 metadata: {
                     title: row.title,
                     category: row.category,
-                    crop: row.crops?.[0],
+                    crop: Array.isArray(row.crops) ? row.crops[0] : undefined,
                     sourceUrl: row.source_url,
-                    contentType: row.content_type || 'text'
+                    contentType: (row.content_type as string) || 'text'
                 },
-                score: Number.parseFloat(row.score)
+                score: Number.parseFloat(String(row.score ?? 0))
             }));
         } catch (error) {
             logger.error('Database keyword search failed:', error);
@@ -266,8 +264,7 @@ export class VectorService {
     /**
      * Seed initial knowledge into DB
      */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    static async seedKnowledge(articles: any[]): Promise<void> {
+    static async seedKnowledge(articles: Array<{ id: string; title: string; content: string; category: string; tags?: string[]; crop: string; regions?: string[]; source?: string; sourceUrl?: string | null }>): Promise<void> {
         try {
             const countResult = await query(`SELECT COUNT(*)::integer as count FROM knowledge_articles`);
             const count = countResult.rows[0]?.count || 0;

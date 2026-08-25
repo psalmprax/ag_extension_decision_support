@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, Request, Response } from 'express';
 import { authorize, AuthRequest } from '@/middleware/authorize';
 import { apiClientService } from '@/services/apiClientService';

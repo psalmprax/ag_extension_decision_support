@@ -539,7 +539,7 @@ export class KnowledgeService {
             const fallback = this.buildExtractiveAnswer(queryText, contextResults);
             this.logSearch(
                 userId, queryText,
-                contextResults[0]?.metadata?.category, contextResults[0]?.metadata?.crop,
+                contextResults[0]?.metadata?.category as string | undefined, contextResults[0]?.metadata?.crop as string | undefined,
                 fallback.answer, fallback.reasoning, fallback.visuals
             ).catch(logError => logger.error('Fallback search logging failed:', logError));
             return fallback;

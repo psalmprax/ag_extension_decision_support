@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, Request, Response } from 'express';
 import { query } from '@/services/databaseService';
 import { authorize, AuthRequest } from '@/middleware/authorize';
@@ -146,7 +145,7 @@ router.post('/telegram/webhook', async (req: Request, res: Response) => {
 
 router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
 
-async function buildDefaultChannelConfigs(tenantId: string): Promise<Record<string, any>> {
+async function buildDefaultChannelConfigs(tenantId: string): Promise<Record<string, unknown>> {
     const baseUrl = process.env.API_BASE_URL || 'https://api.gpexts.com';
     return {
         sms: {
@@ -191,18 +190,18 @@ async function buildDefaultChannelConfigs(tenantId: string): Promise<Record<stri
 }
 
 function applyChannelConfigOverrides(
-    configsMap: Record<string, any>,
+    configsMap: Record<string, unknown>,
     rows: TenantChannelConfigRow[]
 ): void {
     for (const row of rows) {
-        const target = configsMap[row.channel];
+        const target = configsMap[row.channel] as unknown as { isEnabled: boolean; provider: string; autoOnboarding: boolean; welcomeTemplate: string; config: Record<string, unknown> };
         if (!target) continue;
         target.isEnabled = row.is_enabled;
         target.provider = row.provider;
         target.autoOnboarding = row.auto_onboarding;
-        target.welcomeTemplate = row.welcome_template;
+        target.welcomeTemplate = row.welcome_template ?? '';
         if (row.config && typeof row.config === 'object') {
-            target.config = { ...target.config, ...row.config };
+            target.config = { ...target.config, ...(row.config as Record<string, unknown>) };
         }
     }
 }

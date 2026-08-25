@@ -1,525 +1,36 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { OutbreakLayer } from '@/components/outbreaks/OutbreakLayer';
-import { createPortal } from 'react-dom';
-import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, ZoomControl } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
-  X,
   Maximize2,
-  Layers,
-  Info,
-  MapPin,
-  Wheat,
   Phone,
   MessageSquare,
-  Navigation,
   Crosshair,
   Search,
-  Users,
-  TrendingUp,
-  Calendar,
-  ChevronRight,
-  ChevronLeft,
-  PanelLeftClose,
-  PanelLeftOpen,
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { themes, ThemeName } from '@/theme';
 import { useLanguage } from '@/lib/LanguageContext';
-import { DEMO_FARMERS } from '@/demo';
 import toast from 'react-hot-toast';
+import {
+  FarmerData,
+  MapLayer,
+  TILE_LAYERS,
+  DEFAULT_CENTER,
+  DEFAULT_ZOOM,
+  DEFAULT_DEMO_MAP_FARMERS,
+  createMarkerIcon,
+  createCurrentUserMarkerIcon,
+  MAP_STYLES,
+} from './map/mapConstants';
+import { MapController } from './map/MapController';
+import { LayerSwitcher } from './map/LayerSwitcher';
+import { MapLegend } from './map/MapLegend';
+import { ExpandedMapModal } from './map/ExpandedMapModal';
 
-// Fix for default marker icons in Leaflet with webpack/Vite
-const defaultIcon = L.icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
-
-L.Marker.prototype.options.icon = defaultIcon;
-
-// Custom styles for premium markers and popups
-const MAP_STYLES = `
-  .custom-marker {
-    background: none !important;
-    border: none !important;
-  }
-  
-  .marker-pin-wrapper {
-    position: relative;
-    width: 36px;
-    height: 48px;
-    filter: drop-shadow(0 4px 6px var(--color-outline));
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  
-  .marker-pin-wrapper:hover {
-    transform: translateY(-4px) scale(1.1);
-    filter: drop-shadow(0 8px 12px var(--color-outline));
-    z-index: 1000;
-  }
-  
-  .marker-pin-wrapper.selected {
-    transform: translateY(-6px) scale(1.2);
-    filter: drop-shadow(0 12px 20px var(--color-outline));
-    z-index: 1001;
-  }
-  
-  .marker-svg {
-    width: 100%;
-    height: 100%;
-  }
-  
-  .marker-icon {
-    position: absolute;
-    top: 18px;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 16px;
-    pointer-events: none;
-  }
-  
-  .marker-pulse {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 40px;
-    height: 40px;
-    background: var(--marker-color);
-    border-radius: 50%;
-    opacity: 0.4;
-    animation: marker-pulse 2s infinite;
-    z-index: -1;
-  }
-  
-  @keyframes marker-pulse {
-    0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0.6; }
-    100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
-  }
-
-  @keyframes marker-appear {
-    0% { transform: translateY(20px) scale(0.5); opacity: 0; }
-    60% { transform: translateY(-5px) scale(1.05); opacity: 1; }
-    100% { transform: translateY(0) scale(1); opacity: 1; }
-  }
-
-  .marker-appear {
-    animation: marker-appear 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-    opacity: 0;
-  }
-
-  .glass-popup .leaflet-popup-content-wrapper {
-    background: var(--color-outline) !important;
-    backdrop-filter: blur(20px) !important;
-    border-radius: 24px !important;
-    border: 1px solid var(--color-outline) !important;
-    box-shadow: 
-      0 20px 40px var(--color-outline),
-      0 0 0 1px var(--color-outline) inset !important;
-    padding: 0 !important;
-    overflow: hidden;
-  }
-  
-  .glass-popup .leaflet-popup-content {
-    margin: 0 !important;
-    width: 300px !important;
-  }
-  
-  .glass-popup .leaflet-popup-tip {
-    background: var(--color-outline) !important;
-    backdrop-filter: blur(20px) !important;
-  }
-
-  .glass-popup-dark .leaflet-popup-content-wrapper {
-    background: var(--color-outline) !important;
-    backdrop-filter: blur(20px) !important;
-    border: 1px solid var(--color-outline) !important;
-    box-shadow: 0 20px 40px var(--color-outline) !important;
-  }
-  
-  .glass-popup-dark .leaflet-popup-tip {
-    background: var(--color-outline) !important;
-  }
-
-  .leaflet-control-zoom {
-    border: none !important;
-    box-shadow: 0 4px 12px var(--color-outline) !important;
-    border-radius: 16px !important;
-    overflow: hidden;
-  }
-
-  .leaflet-control-zoom a {
-    border: none !important;
-    width: 36px !important;
-    height: 36px !important;
-    line-height: 36px !important;
-    color: var(--color-outline) !important;
-    background: white !important;
-    transition: all 0.2s !important;
-  }
-
-  .leaflet-control-zoom a:hover {
-    background: var(--color-bg-secondary) !important;
-    color: var(--color-primary-500) !important;
-  }
-
-  .dark .leaflet-control-zoom a {
-    color: var(--color-on-surface) !important;
-    background: var(--color-bg-secondary) !important;
-  }
-
-  .dark .leaflet-control-zoom a:hover {
-    background: var(--color-outline) !important;
-    color: var(--color-primary-400) !important;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--color-on-surface);
-    border-radius: 3px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--color-chart-gray);
-  }
-
-  .map-search-input {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .map-search-input:focus {
-    transform: scale(1.02);
-    box-shadow: 0 8px 20px var(--color-outline);
-  }
-
-  .stats-card {
-    background: linear-gradient(135deg, var(--color-outline) 0%, var(--color-outline) 100%);
-    backdrop-filter: blur(10px);
-  }
-
-  .stats-card-dark {
-    background: linear-gradient(135deg, var(--color-outline) 0%, var(--color-outline) 100%);
-    backdrop-filter: blur(10px);
-  }
-
-  .user-location-marker {
-    background: none !important;
-    border: none !important;
-  }
-  
-  .user-location-wrapper {
-    position: relative;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .user-location-dot {
-    width: 14px;
-    height: 14px;
-    background: var(--color-chart-blue);
-    border: 2.5px solid var(--color-primary-500);
-    border-radius: 50%;
-    box-shadow: 0 0 8px var(--color-outline), 0 2px 4px var(--color-outline);
-    z-index: 2;
-  }
-  
-  .user-location-pulse {
-    position: absolute;
-    width: 32px;
-    height: 32px;
-    background: var(--color-outline);
-    border-radius: 50%;
-    animation: user-pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
-    z-index: 1;
-  }
-  
-  @keyframes user-pulse {
-    0% { transform: scale(0.5); opacity: 0.85; }
-    100% { transform: scale(2.8); opacity: 0; }
-  }
-`;
-
-// Crop type colors for markers with icons
-const CROP_COLORS: Record<string, string> = {
-  maize: 'var(--color-primary-500)',
-  tobacco: 'var(--color-primary-500)',
-  groundnuts: 'var(--color-primary-500)',
-  soybeans: 'var(--color-primary-500)',
-  rice: 'var(--color-primary-500)',
-  cotton: 'var(--color-primary-500)',
-  wheat: 'var(--color-primary-500)',
-  sorghum: 'var(--color-primary-500)',
-  beans: 'var(--color-primary-500)',
-  potatoes: 'var(--color-primary-500)',
-  default: 'var(--color-primary-500)',
-};
-
-const CROP_ICONS: Record<string, string> = {
-  maize: '🌽',
-  tobacco: '🍂',
-  groundnuts: '🥜',
-  soybeans: '🫘',
-  rice: '🍚',
-  cotton: '☁️',
-  wheat: '🌾',
-  sorghum: '🌿',
-  beans: '🫘',
-  potatoes: '🥔',
-  default: '📍',
-};
-
-// Default starting coordinates for the map (Kenya)
-const DEFAULT_CENTER: [number, number] = [-1.2863, 36.8172];
-const DEFAULT_ZOOM = 6;
-
-const DEFAULT_DEMO_MAP_FARMERS: FarmerData[] = DEMO_FARMERS.map(f => ({
-  id: f.id,
-  name: `${f.firstName} ${f.lastName}`,
-  lat: f.latitude,
-  lng: f.longitude,
-  crop: f.crops[0] || 'Maize',
-  region: f.region || 'Unknown',
-  size: f.farmSize || 0,
-  phone: f.phone,
-  yield: f.yield || 0,
-}));
-
-// Map tile layer types
-type MapLayer = 'street' | 'satellite' | 'terrain';
-
-interface TileLayerConfig {
-  name: string;
-  url: string;
-  attribution: string;
-  maxZoom: number;
-}
-
-const TILE_LAYERS: Record<MapLayer, TileLayerConfig> = {
-  street: {
-    name: 'Street',
-    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution: '&copy; OpenStreetMap',
-    maxZoom: 19,
-  },
-  satellite: {
-    name: 'Satellite',
-    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    attribution: '&copy; Esri',
-    maxZoom: 19,
-  },
-  terrain: {
-    name: 'Terrain',
-    url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-    attribution: '&copy; OpenTopoMap',
-    maxZoom: 17,
-  },
-};
-
-// Custom marker icon creator with premium SVG pin
-const createMarkerIcon = (crop: string, isSelected: boolean = false): L.DivIcon => {
-  const color = CROP_COLORS[crop.toLowerCase()] || CROP_COLORS.default;
-  const icon = CROP_ICONS[crop.toLowerCase()] || CROP_ICONS.default;
-
-  return L.divIcon({
-    className: 'custom-marker',
-    html: `
-      <div class="marker-pin-wrapper ${isSelected ? 'selected' : ''}" style="--marker-color: ${color}">
-        <svg viewBox="0 0 36 48" class="marker-svg">
-          <path d="M18 0C8.1 0 0 8.1 0 18c0 13.5 18 30 18 30s18-16.5 18-30c0-9.9-8.1-18-18-18z" fill="var(--marker-color)"/>
-          <circle cx="18" cy="18" r="14" fill="white" fill-opacity="0.2"/>
-          <circle cx="18" cy="18" r="11" fill="white"/>
-        </svg>
-        <span class="marker-icon">${icon}</span>
-        ${isSelected ? '<div class="marker-pulse"></div>' : ''}
-      </div>
-    `,
-    iconSize: [36, 48],
-    iconAnchor: [18, 48],
-    popupAnchor: [0, -42],
-  });
-};
-
-// Custom current user location marker icon with pulse animation
-const createCurrentUserMarkerIcon = (): L.DivIcon => {
-  return L.divIcon({
-    className: 'user-location-marker',
-    html: `
-      <div class="user-location-wrapper">
-        <div class="user-location-pulse"></div>
-        <div class="user-location-dot"></div>
-      </div>
-    `,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-    popupAnchor: [0, -10],
-  });
-};
-
-// Component to handle map center updates and container resize invalidation
-function MapController({
-  center,
-  zoom,
-  bounds,
-}: {
-  center?: [number, number];
-  zoom?: number;
-  bounds?: L.LatLngBoundsExpression;
-}) {
-  const map = useMap();
-
-  // Leaflet caches container dimensions at init. If the container was hidden,
-  // had zero height, or was inside a modal that just closed, tiles render blank.
-  // invalidateSize() forces Leaflet to re-read the container size and re-render.
-  useEffect(() => {
-    map.invalidateSize();
-    const t1 = setTimeout(() => map.invalidateSize(), 100);
-    const t2 = setTimeout(() => map.invalidateSize(), 400);
-
-    const container = map.getContainer();
-    let ro: ResizeObserver | undefined;
-    if (typeof ResizeObserver !== 'undefined' && container) {
-      ro = new ResizeObserver(() => {
-        map.invalidateSize();
-      });
-      ro.observe(container);
-    }
-
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      ro?.disconnect();
-    };
-  }, [map]);
-
-  useEffect(() => {
-    if (bounds) {
-      map.fitBounds(bounds, { padding: [50, 50] });
-    } else if (center && zoom !== undefined) {
-      map.setView(center, zoom);
-    }
-  }, [map, center, zoom, bounds]);
-
-  return null;
-}
-
-// Map layer switcher component
-function LayerSwitcher({
-  currentLayer,
-  onLayerChange,
-  t,
-}: {
-  currentLayer: MapLayer;
-  onLayerChange: (layer: MapLayer) => void;
-  t: (key: string) => string;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className="leaflet-top leaflet-right" style={{ marginTop: '10px', marginRight: '10px' }}>
-      <div className="leaflet-control leaflet-control-layers bg-slate-900/95 text-white backdrop-blur-xl rounded-2xl shadow-xl border border-white/10 p-2 sm:p-3">
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="sm:hidden flex items-center gap-1.5 px-2 py-1 text-xxs font-bold uppercase tracking-wider text-emerald-400"
-          title="Switch Map Tile Layer"
-        >
-          <Layers className="w-3.5 h-3.5" />
-          <span>{TILE_LAYERS[currentLayer].name}</span>
-        </button>
-
-        <div className={`${isOpen ? 'flex' : 'hidden sm:flex'} flex-col gap-1.5 mt-2 sm:mt-0`}>
-          <div className="hidden sm:flex text-xxs font-black mb-2 text-white/50 uppercase tracking-wider items-center gap-1.5">
-            <Layers className="w-3.5 h-3.5 text-emerald-400" /> {t('map_type') || 'Map Type'}
-          </div>
-          {(Object.keys(TILE_LAYERS) as MapLayer[]).map(layer => (
-            <button
-              key={layer}
-              onClick={() => {
-                onLayerChange(layer);
-                setIsOpen(false);
-              }}
-              className={`px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-bold rounded-xl transition-all ${
-                currentLayer === layer
-                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
-                  : 'text-white/60 hover:text-white hover:bg-white/5'
-              }`}
-              aria-pressed={currentLayer === layer}
-            >
-              {TILE_LAYERS[layer].name}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Legend component
-function MapLegend({ show, t }: { show: boolean; t: (key: string) => string }) {
-  const [isOpen, setIsOpen] = useState(false);
-  if (!show) return null;
-
-  return (
-    <div
-      className="leaflet-bottom leaflet-left"
-      style={{ marginBottom: '30px', marginLeft: '10px' }}
-    >
-      <div className="leaflet-control bg-slate-900/95 text-white backdrop-blur-xl rounded-2xl shadow-xl border border-white/10 p-2.5 sm:p-3.5 min-w-[120px] sm:min-w-[170px]">
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center justify-between w-full text-xxs font-black text-white/60 uppercase tracking-wider gap-1.5"
-        >
-          <span className="flex items-center gap-1.5">
-            <Info className="w-3.5 h-3.5 text-emerald-400" /> {t('map_legend') || 'Crop Legend'}
-          </span>
-          <span className="sm:hidden text-emerald-400 text-xs font-mono">{isOpen ? '▲' : '▼'}</span>
-        </button>
-        <div className={`${isOpen ? 'flex' : 'hidden sm:flex'} flex-col gap-1.5 sm:gap-2 mt-2`}>
-          {Object.entries(CROP_COLORS)
-            .filter(([key]) => key !== 'default')
-            .slice(0, 6)
-            .map(([crop, color]) => (
-              <div key={crop} className="flex items-center gap-2 group cursor-pointer">
-                <div
-                  className="w-2.5 sm:w-3.5 h-2.5 sm:h-3.5 rounded-full border border-white/20 shadow-sm"
-                  style={{ backgroundColor: color }}
-                />
-                <span className="text-xxs sm:text-xs capitalize text-white/70 font-medium group-hover:text-white transition-colors">
-                  {crop}
-                </span>
-              </div>
-            ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export interface FarmerData {
-  id: number | string;
-  name?: string;
-  firstName?: string;
-  lastName?: string;
-  lat: number;
-  lng: number;
-  crop: string;
-  region: string;
-  size: number;
-  phone?: string;
-  yield?: number;
-  createdAt?: string;
-}
+export type { FarmerData };
 
 export interface FarmerMapProps {
   initialCenter?: [number, number];
@@ -532,376 +43,6 @@ export interface FarmerMapProps {
   isExternalExpanded?: boolean;
   onToggleExpand?: (isExpanded: boolean) => void;
 }
-
-function executeContextMenuAction(
-  action: string,
-  farmer: FarmerData,
-  onFarmerClick?: (farmer: FarmerData) => void,
-  setMapCenter?: (coords: [number, number]) => void
-) {
-  switch (action) {
-    case 'view':
-    case 'chat':
-      onFarmerClick?.(farmer);
-      break;
-    case 'call':
-      if (farmer.phone) {
-        window.location.href = `tel:${farmer.phone}`;
-      }
-      break;
-    case 'navigate':
-      setMapCenter?.([farmer.lat, farmer.lng]);
-      break;
-  }
-}
-
-interface FarmlistSidebarProps {
-  isFarmlistCollapsed: boolean;
-  setIsFarmlistCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
-  filteredFarmers: FarmerData[];
-  selectedFarmer: FarmerData | null;
-  setSelectedFarmer: (f: FarmerData) => void;
-  setMapCenter: (coords: [number, number]) => void;
-  setMapZoom: (z: number) => void;
-  setMapBounds: (b: L.LatLngBoundsExpression | undefined) => void;
-  searchQuery: string;
-  themeName: ThemeName;
-}
-
-const FarmlistSidebar: React.FC<FarmlistSidebarProps> = ({
-  isFarmlistCollapsed,
-  setIsFarmlistCollapsed,
-  filteredFarmers,
-  selectedFarmer,
-  setSelectedFarmer,
-  setMapCenter,
-  setMapZoom,
-  setMapBounds,
-  searchQuery,
-  themeName,
-}) => {
-  return (
-    <div
-      className={`transition-all duration-300 ease-in-out flex flex-col border-r shrink-0 z-20 ${
-        isFarmlistCollapsed
-          ? 'w-0 opacity-0 overflow-hidden border-r-0 pointer-events-none'
-          : 'w-full sm:w-80 opacity-100'
-      } ${
-        themeName === 'cyber'
-          ? 'border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/30'
-          : 'bg-white dark:bg-gray-900'
-      }`}
-    >
-      <div
-        className={`p-4 border-b flex items-center justify-between ${
-          themeName === 'cyber'
-            ? 'border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50'
-            : 'bg-gray-50 dark:bg-gray-800/50'
-        }`}
-      >
-        <div className="text-xs-plus uppercase tracking-wider font-bold text-gray-400">
-          Farmlist ({filteredFarmers.length})
-        </div>
-        <button
-          onClick={() => setIsFarmlistCollapsed(true)}
-          className="p-1 rounded-lg text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-          title="Collapse Farmlist"
-          aria-label="Collapse Farmlist"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-      </div>
-      <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
-        {filteredFarmers.length > 0 ? (
-          filteredFarmers.map(farmer => {
-            const isSelected = selectedFarmer?.id === farmer.id;
-            return (
-              <button
-                key={farmer.id}
-                onClick={() => {
-                  setMapCenter([farmer.lat, farmer.lng]);
-                  setMapZoom(16);
-                  setMapBounds(undefined);
-                  setSelectedFarmer(farmer);
-                  if (typeof window !== 'undefined' && window.innerWidth < 640) {
-                    setIsFarmlistCollapsed(true);
-                  }
-                }}
-                className={`w-full text-left p-3 rounded-2xl transition-all flex items-center gap-3 group ${
-                  isSelected
-                    ? 'bg-white dark:bg-gray-800 shadow-md border border-gray-100 dark:border-gray-700'
-                    : 'hover:bg-white/60 dark:hover:bg-gray-800/60 border border-transparent hover:border-gray-100 dark:border-gray-700'
-                }`}
-              >
-                <div className="text-2xl group-hover:scale-110 transition-transform">
-                  {CROP_ICONS[farmer.crop.toLowerCase()] || CROP_ICONS.default}
-                </div>
-                <div className="min-w-0">
-                  <div className="font-bold text-sm truncate text-gray-800 dark:text-white">
-                    {farmer.name || `${farmer.firstName} ${farmer.lastName}`}
-                  </div>
-                  <div className="text-xxs font-medium truncate text-gray-400">
-                    {farmer.region} • {farmer.size}ha
-                  </div>
-                </div>
-              </button>
-            );
-          })
-        ) : (
-          <div className="p-8 text-center">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3 bg-gray-100 dark:bg-gray-800">
-              <Search className="w-6 h-6 text-gray-300" />
-            </div>
-            <p className="text-sm text-gray-500">No farmers found for "{searchQuery}"</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-interface ModalFooterStatsProps {
-  stats: {
-    cropCounts: Record<string, number>;
-    totalSize: number;
-    avgYield: number;
-    topCrops: [string, number][];
-    totalFarms: number;
-  };
-  farmersCount: number;
-  theme: (typeof themes)[ThemeName];
-  themeName: ThemeName;
-  t: (key: string) => string;
-}
-
-const ModalFooterStats: React.FC<ModalFooterStatsProps> = ({
-  stats,
-  farmersCount,
-  theme,
-  themeName,
-  t,
-}) => {
-  const cropColors = ['500', '600', '700'] as const;
-  return (
-    <div className="px-4 sm:px-8 py-3 sm:py-4 border-t flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 backdrop-blur-sm bg-gray-50/80 dark:bg-gray-800/80 border-gray-100 dark:border-gray-800">
-      <div className="flex flex-wrap items-center gap-4 sm:gap-8">
-        <div className="flex flex-col">
-          <span className="text-xxs uppercase font-black tracking-widest text-gray-400">
-            {t('map_farms')}
-          </span>
-          <span className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">{farmersCount}</span>
-        </div>
-        <div className="h-8 w-px bg-gray-200 dark:bg-gray-700 hidden sm:block" />
-        <div className="flex flex-wrap items-center gap-3 sm:gap-6">
-          {stats.topCrops.map(([crop], idx) => (
-            <div key={crop} className="flex items-center gap-1.5 sm:gap-2">
-              <div
-                className="w-2.5 h-2.5 rounded-full"
-                style={{ backgroundColor: theme.primary[cropColors[idx]] }}
-              />
-              <span className="text-xs sm:text-sm font-bold capitalize text-gray-600 dark:text-gray-300">
-                {crop}: <span className="font-normal text-gray-400">{stats.cropCounts[crop]}</span>
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div
-        className="flex items-center gap-2 text-xs font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border"
-        style={{
-          color: theme.primary[600],
-          backgroundColor:
-            themeName === 'cyber' ? 'var(--color-outline)' : `${theme.primary[50]}`,
-          borderColor:
-            themeName === 'cyber' ? 'var(--color-outline)' : `${theme.primary[100]}`,
-        }}
-      >
-        <div
-          className="w-2 h-2 rounded-full animate-ping"
-          style={{ backgroundColor: theme.primary[500] }}
-        />
-        <span className={themeName === 'cyber' ? 'text-primary-300' : ''}>System Online</span>
-      </div>
-    </div>
-  );
-};
-
-interface ExpandedMapModalProps {
-  theme: (typeof themes)[ThemeName];
-  themeName: ThemeName;
-  farmers: FarmerData[];
-  filteredFarmers: FarmerData[];
-  searchQuery: string;
-  setSearchQuery: (q: string) => void;
-  isFarmlistCollapsed: boolean;
-  setIsFarmlistCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
-  selectedFarmer: FarmerData | null;
-  setSelectedFarmer: (f: FarmerData) => void;
-  setMapCenter: (coords: [number, number]) => void;
-  setMapZoom: (z: number) => void;
-  setMapBounds: (b: L.LatLngBoundsExpression | undefined) => void;
-  setIsExpanded: (exp: boolean) => void;
-  mapContent: React.ReactNode;
-  stats: {
-    cropCounts: Record<string, number>;
-    totalSize: number;
-    avgYield: number;
-    topCrops: [string, number][];
-    totalFarms: number;
-  };
-  t: (key: string) => string;
-}
-
-const ExpandedMapModal: React.FC<ExpandedMapModalProps> = ({
-  theme,
-  themeName,
-  farmers,
-  filteredFarmers,
-  searchQuery,
-  setSearchQuery,
-  isFarmlistCollapsed,
-  setIsFarmlistCollapsed,
-  selectedFarmer,
-  setSelectedFarmer,
-  setMapCenter,
-  setMapZoom,
-  setMapBounds,
-  setIsExpanded,
-  mapContent,
-  stats,
-  t,
-}) => {
-  return createPortal(
-    <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-0">
-      <div
-        className="bg-white dark:bg-gray-900 rounded-none shadow-2xl w-screen h-screen max-w-none flex flex-col overflow-hidden border-0"
-        style={{ width: '100vw', height: '100vh' }}
-      >
-        {/* Modal Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 sm:px-8 py-3 sm:py-5 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
-          <div className="flex items-center justify-between w-full sm:w-auto gap-4">
-            <div className="flex items-center gap-3">
-              <div
-                className="w-10 sm:w-12 h-10 sm:h-12 rounded-2xl flex items-center justify-center shadow-lg shrink-0"
-                style={{
-                  background: `linear-gradient(135deg, ${theme.primary[500]}, ${theme.primary[600]})`,
-                  boxShadow: `0 10px 25px -5px ${theme.primary[500]}40`,
-                }}
-              >
-                <MapPin className="w-5 sm:w-6 h-5 sm:h-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-lg sm:text-2xl font-black tracking-tight text-gray-800 dark:text-white">
-                  {t('map_overview')}
-                </h2>
-                <p className="text-xxs sm:text-sm font-medium flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
-                  <span
-                    className="flex h-2 w-2 rounded-full animate-pulse"
-                    style={{ backgroundColor: theme.primary[500] }}
-                  />
-                  {t('common_ai_powered')} • {farmers.length} {t('map_farms')}
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setIsExpanded(false)}
-              className="sm:hidden p-2 rounded-xl text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              aria-label="Close Map Modal"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between">
-            <button
-              onClick={() => setIsFarmlistCollapsed(prev => !prev)}
-              className={`px-3 py-2 rounded-xl transition-all border flex items-center gap-1.5 text-xs font-bold shrink-0 ${
-                isFarmlistCollapsed
-                  ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-emerald-950/40'
-                  : 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
-              title={isFarmlistCollapsed ? 'Show Farmlist' : 'Collapse Farmlist'}
-              aria-label={isFarmlistCollapsed ? 'Show Farmlist' : 'Collapse Farmlist'}
-            >
-              {isFarmlistCollapsed ? (
-                <PanelLeftOpen className="w-4 h-4 text-emerald-400" />
-              ) : (
-                <PanelLeftClose className="w-4 h-4" />
-              )}
-              <span>{isFarmlistCollapsed ? 'Farmlist' : 'Hide List'}</span>
-            </button>
-
-            <div className="relative group flex-1 sm:w-80">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:transition-colors"
-                style={{ color: theme.primary[500] }}
-              />
-              <input
-                type="text"
-                placeholder={t('map_search_placeholder') || 'Search farmers, regions, crops...'}
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 border rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 transition-all bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700 text-gray-800 dark:text-white placeholder-gray-400"
-                style={{ '--tw-ring-color': `${theme.primary[500]}33` } as React.CSSProperties}
-              />
-            </div>
-
-            <button
-              onClick={() => setIsExpanded(false)}
-              className="hidden sm:flex p-2.5 rounded-2xl transition-all border bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-900 dark:hover:text-white border-gray-100 dark:border-gray-700"
-              aria-label="Close Map Modal"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Modal Main Content */}
-        <div className="flex-1 flex overflow-hidden relative">
-          <FarmlistSidebar
-            isFarmlistCollapsed={isFarmlistCollapsed}
-            setIsFarmlistCollapsed={setIsFarmlistCollapsed}
-            filteredFarmers={filteredFarmers}
-            selectedFarmer={selectedFarmer}
-            setSelectedFarmer={setSelectedFarmer}
-            setMapCenter={setMapCenter}
-            setMapZoom={setMapZoom}
-            setMapBounds={setMapBounds}
-            searchQuery={searchQuery}
-            themeName={themeName}
-          />
-
-          {/* Map View */}
-          <div className="flex-1 relative">
-            {isFarmlistCollapsed && (
-              <button
-                onClick={() => setIsFarmlistCollapsed(false)}
-                className="absolute top-4 left-4 z-[1000] px-3.5 py-2 rounded-2xl bg-slate-950/90 text-emerald-400 border border-emerald-500/40 shadow-2xl backdrop-blur-xl flex items-center gap-2 text-xs font-bold hover:scale-105 active:scale-95 transition-all shadow-emerald-950/60"
-                title="Open Farmlist"
-                aria-label="Open Farmlist"
-              >
-                <PanelLeftOpen className="w-4 h-4" />
-                <span>Farmlist ({filteredFarmers.length})</span>
-              </button>
-            )}
-            {mapContent}
-          </div>
-        </div>
-
-        {/* Modal Footer Stats */}
-        <ModalFooterStats
-          stats={stats}
-          farmersCount={farmers.length}
-          theme={theme}
-          themeName={themeName}
-          t={t}
-        />
-      </div>
-    </div>,
-    document.body
-  );
-};
 
 export function FarmerMap({
   initialCenter = DEFAULT_CENTER,
@@ -917,26 +58,6 @@ export function FarmerMap({
   const [currentLayer, setCurrentLayer] = useState<MapLayer>('street');
   const [selectedFarmer, setSelectedFarmer] = useState<FarmerData | null>(null);
   const [internalExpanded, setInternalExpanded] = useState(false);
-  const [contextMenu, setContextMenu] = useState<{
-    x: number;
-    y: number;
-    farmer: FarmerData;
-  } | null>(null);
-
-  const handleContextMenu = (e: MouseEvent, farmer: FarmerData) => {
-    e.preventDefault();
-    setContextMenu({
-      x: e.clientX,
-      y: e.clientY,
-      farmer,
-    });
-  };
-
-  const handleContextMenuAction = (action: string) => {
-    if (!contextMenu) return;
-    executeContextMenuAction(action, contextMenu.farmer, onFarmerClick, setMapCenter);
-    setContextMenu(null);
-  };
 
   const isExpanded = isExternalExpanded !== undefined ? isExternalExpanded : internalExpanded;
   const setIsExpanded = (val: boolean) => {
@@ -949,7 +70,6 @@ export function FarmerMap({
   const [mapBounds, setMapBounds] = useState<L.LatLngBoundsExpression | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
   const [showMiniSearch, setShowMiniSearch] = useState(false);
-  const [visibleStats, setVisibleStats] = useState(true);
   const [isFarmlistCollapsed, setIsFarmlistCollapsed] = useState(false);
 
   // Get theme from store
@@ -990,7 +110,7 @@ export function FarmerMap({
 
   const filteredFarmers = useMemo(() => {
     return farmers.filter(f => {
-      const fullName = f.name || `${f.firstName || ''} ${f.lastName || ''}`;
+      const fullName = f.name;
       const searchStr = searchQuery.toLowerCase();
       return (
         fullName.toLowerCase().includes(searchStr) ||
@@ -1025,10 +145,6 @@ export function FarmerMap({
     );
   };
 
-  const handleResetView = () => {
-    setMapBounds(bounds);
-  };
-
   const handleFarmerClick = useCallback(
     (farmer: FarmerData) => {
       setSelectedFarmer(farmer);
@@ -1041,28 +157,11 @@ export function FarmerMap({
     window.location.href = `tel:${phone}`;
   };
 
-  const handleChat = (farmer: FarmerData) => {
-    // This will be handled in App.tsx by listening to onFarmerClick
-    onFarmerClick?.(farmer);
-  };
-
   const handleLayerChange = useCallback((layer: MapLayer) => {
     setCurrentLayer(layer);
-    // Don't deselect farmer on layer change for better UX
   }, []);
 
   const tileLayer = TILE_LAYERS[currentLayer];
-
-  // Compute bounds from farmers
-  const bounds = useMemo(() => {
-    if (farmers.length === 0) return undefined;
-    const lats = farmers.map(f => f.lat);
-    const lngs = farmers.map(f => f.lng);
-    return [
-      [Math.min(...lats), Math.min(...lngs)],
-      [Math.max(...lats), Math.max(...lngs)],
-    ] as L.LatLngBoundsExpression;
-  }, [farmers]);
 
   const mapContent = (
     <MapContainer
@@ -1104,369 +203,131 @@ export function FarmerMap({
         </Marker>
       )}
 
-      {farmers.map(farmer => (
-        <Marker
-          key={farmer.id}
-          position={[farmer.lat, farmer.lng]}
-          icon={createMarkerIcon(farmer.crop, selectedFarmer?.id === farmer.id)}
-          eventHandlers={{
-            click: () => handleFarmerClick(farmer),
-            contextmenu: e => handleContextMenu(e.originalEvent, farmer),
-          }}
-        >
-          <Popup
-            className={`glass-popup ${darkMode ? 'glass-popup-dark' : ''}`}
-            closeButton={false}
+      {filteredFarmers.map(farmer => {
+        const isSelected = selectedFarmer?.id === farmer.id;
+        return (
+          <Marker
+            key={farmer.id}
+            position={[farmer.lat, farmer.lng]}
+            icon={createMarkerIcon(farmer.crop, isSelected)}
+            eventHandlers={{
+              click: () => handleFarmerClick(farmer),
+            }}
           >
-            <div className="flex flex-col">
-              {/* Header with gradient */}
-              <div
-                className="h-28 p-4 flex flex-col justify-end relative overflow-hidden"
-                style={{
-                  background: `linear-gradient(135deg, ${CROP_COLORS[farmer.crop.toLowerCase()] || CROP_COLORS.default}, ${CROP_COLORS[farmer.crop.toLowerCase()] || CROP_COLORS.default}cc)`,
-                }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
-                <div className="absolute top-3 right-3 bg-white/30 backdrop-blur-md rounded-full p-2 border border-white/40 shadow-lg">
-                  <span className="text-2xl filter drop-shadow-md">
-                    {CROP_ICONS[farmer.crop.toLowerCase()] || CROP_ICONS.default}
-                  </span>
-                </div>
-                <div className="absolute top-3 left-3">
-                  <span className="px-2.5 py-1 bg-white/25 backdrop-blur-md rounded-full text-xxs font-bold text-white uppercase tracking-wider border border-white/30">
-                    {farmer.crop}
-                  </span>
-                </div>
-                <h3 className="text-white font-black text-xl leading-tight drop-shadow-lg relative z-10">
-                  {farmer.name || `${farmer.firstName} ${farmer.lastName}`}
-                </h3>
-                <div className="flex items-center gap-1.5 text-white/90 text-xs font-medium mt-1">
-                  <MapPin className="w-3.5 h-3.5" />
-                  {farmer.region}
-                </div>
-              </div>
-
-              {/* Info Area */}
-              <div className={`p-4 ${darkMode ? 'bg-gray-800/50' : 'bg-white/70'} space-y-4`}>
-                {/* Stats Grid */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="group bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-900/30 dark:to-emerald-800/20 rounded-2xl p-3 border border-emerald-200/50 dark:border-emerald-700/30">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <div className="w-7 h-7 rounded-xl bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/30">
-                        <Wheat className="w-4 h-4" />
-                      </div>
-                      <span className="text-xxs uppercase font-bold text-emerald-600 dark:text-emerald-400 tracking-wider">
-                        {t('farmer_farm_size') || 'Farm Size'}
-                      </span>
-                    </div>
-                    <div className="font-black text-xl text-emerald-700 dark:text-emerald-300">
-                      {farmer.size} <span className="text-xs font-medium text-emerald-500">ha</span>
-                    </div>
-                  </div>
-                  <div className="group bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-900/30 dark:to-amber-800/20 rounded-2xl p-3 border border-amber-200/50 dark:border-amber-700/30">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <div className="w-7 h-7 rounded-xl bg-amber-500 flex items-center justify-center text-white shadow-lg shadow-amber-500/30">
-                        <TrendingUp className="w-4 h-4" />
-                      </div>
-                      <span className="text-xxs uppercase font-bold text-amber-600 dark:text-amber-400 tracking-wider">
-                        {t('farmer_est_yield')}
-                      </span>
-                    </div>
-                    <div className="font-black text-xl text-amber-700 dark:text-amber-300">
-                      {farmer.yield}{' '}
-                      <span className="text-xs font-medium text-amber-500">t/ha</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Farm Details */}
-                <div
-                  className={`flex items-center justify-between px-3 py-2 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'} border ${darkMode ? 'border-gray-600' : 'border-gray-100'}`}
-                >
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-gray-400" />
-                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                      {t('farmer_active_since')}
+            <Popup
+              className={`glass-popup ${darkMode ? 'glass-popup-dark' : ''}`}
+              closeButton={false}
+            >
+              <div className="p-0 overflow-hidden">
+                <div className="p-4 bg-gradient-to-br from-emerald-500 to-teal-700 text-white relative">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xxs font-black uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full backdrop-blur-md">
+                      {farmer.crop}
                     </span>
+                    <span className="text-xxs font-mono opacity-80">ID: {farmer.id}</span>
                   </div>
-                  <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
-                    {farmer.createdAt ? new Date(farmer.createdAt).getFullYear() : '—'}
-                  </span>
+                  <h3 className="text-base font-black mt-1 tracking-tight">{farmer.name}</h3>
+                  <p className="text-xs opacity-90">{farmer.region}</p>
                 </div>
 
-                {/* Actions */}
-                <div className="flex gap-2.5">
-                  <button
-                    onClick={e => {
-                      e.stopPropagation();
-                      farmer.phone && handleCall(farmer.phone);
-                    }}
-                    className="flex-1 flex items-center justify-center gap-2 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 py-3 rounded-2xl text-xs font-bold border border-gray-200 dark:border-gray-600 shadow-sm hover:shadow-md transition-all"
-                  >
-                    <Phone className="w-4 h-4" />
-                    {t('action_call') || 'Call'}
-                  </button>
-                  <button
-                    onClick={e => {
-                      e.stopPropagation();
-                      handleChat(farmer);
-                    }}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-xs font-bold shadow-lg shadow-emerald-500/25 transition-all hover:shadow-xl hover:shadow-emerald-500/40"
-                    style={{
-                      background: `linear-gradient(135deg, ${theme.primary[500]}, ${theme.primary[600]})`,
-                      color: 'white',
-                    }}
-                  >
-                    <MessageSquare className="w-4 h-4" />
-                    {t('action_chat') || 'Chat'}
-                  </button>
+                <div className="p-4 space-y-3 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                  <div className="grid grid-cols-2 gap-2 text-xxs">
+                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                      <div className="text-slate-400 font-bold uppercase tracking-wider">Farm Area</div>
+                      <div className="text-sm font-black text-slate-800 dark:text-white mt-0.5">{farmer.size} ha</div>
+                    </div>
+                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                      <div className="text-slate-400 font-bold uppercase tracking-wider">Est. Yield</div>
+                      <div className="text-sm font-black text-slate-800 dark:text-white mt-0.5">{farmer.yield || 0} kg</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-1">
+                    {farmer.phone && (
+                      <button
+                        onClick={() => handleCall(farmer.phone!)}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-emerald-500/20"
+                      >
+                        <Phone className="w-3.5 h-3.5" />
+                        Call
+                      </button>
+                    )}
+                    <button
+                      onClick={() => onFarmerClick?.(farmer)}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      Chat
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          </Popup>
-        </Marker>
-      ))}
+            </Popup>
+          </Marker>
+        );
+      })}
 
+      <OutbreakLayer />
       <LayerSwitcher currentLayer={currentLayer} onLayerChange={handleLayerChange} t={t} />
-      <div className="leaflet-top leaflet-right" style={{ marginTop: '10px', marginRight: '10px' }}>
-        <div className="leaflet-control leaflet-control-layers bg-slate-900/95 text-white backdrop-blur-xl rounded-2xl shadow-xl border border-white/10 p-2">
-          <OutbreakLayer />
-        </div>
-      </div>
       <MapLegend show={showLegend} t={t} />
-
-      {/* Overlay Controls */}
-      <div className="leaflet-top leaflet-left" style={{ marginTop: '10px', marginLeft: '10px' }}>
-        <div className="flex flex-col gap-2">
-          <button
-            onClick={handleLocateMe}
-            className="leaflet-control bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl border border-gray-100/50 dark:border-gray-700/50 p-2.5 text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:shadow-emerald-500/20 transition-all"
-            title={t('map_locate_me') || 'Locate Me'}
-          >
-            <Crosshair className="w-5 h-5" />
-          </button>
-          <button
-            onClick={handleResetView}
-            className="leaflet-control bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl border border-gray-100/50 dark:border-gray-700/50 p-2.5 text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:shadow-emerald-500/20 transition-all"
-            title={t('map_reset_view') || 'Reset View'}
-          >
-            <Navigation className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => setVisibleStats(!visibleStats)}
-            className="leaflet-control bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl border border-gray-100/50 dark:border-gray-700/50 p-2.5 text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:shadow-emerald-500/20 transition-all"
-            title={t('map_toggle_stats') || 'Toggle Stats'}
-          >
-            <TrendingUp className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
     </MapContainer>
   );
 
   return (
     <div
-      className={`relative ${className}`}
-      role="application"
-      aria-label="Regional Farmer Distribution Map"
+      className={`relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border shadow-xl ${
+        themeName === 'cyber'
+          ? 'border-gray-800 bg-gray-900/40'
+          : 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900'
+      } ${className}`}
+      style={{ height }}
     >
-      {/* Top Controls Bar */}
-      {!isExpanded && (
-        <div className="absolute top-3 left-3 right-14 z-[1000] flex items-center gap-2">
-          {/* Mini Search Bar */}
-          <div
-            className={`flex-1 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-100 dark:border-gray-700/50 overflow-hidden transition-all ${showMiniSearch ? 'opacity-100' : 'opacity-70 hover:opacity-100'}`}
-          >
-            <div className="flex items-center px-3 py-2">
-              <Search className="w-4 h-4 text-gray-400 dark:text-gray-500 mr-2" />
-              <input
-                type="text"
-                placeholder={t('map_search_placeholder') || 'Search farmers...'}
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                onFocus={() => setShowMiniSearch(true)}
-                onBlur={() => setShowMiniSearch(false)}
-                className="flex-1 text-sm bg-transparent outline-none focus-visible:ring-1 focus-visible:ring-primary-400/50 text-gray-700 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 font-medium"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-            {/* Search Results Dropdown */}
-            {searchQuery && filteredFarmers.length > 0 && (
-              <div className="border-t border-gray-100 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 max-h-48 overflow-y-auto custom-scrollbar">
-                {filteredFarmers.slice(0, 5).map(farmer => (
-                  <button
-                    key={farmer.id}
-                    onClick={() => {
-                      setMapCenter([farmer.lat, farmer.lng]);
-                      setMapZoom(14);
-                      setMapBounds(undefined);
-                      setSelectedFarmer(farmer);
-                      setSearchQuery('');
-                    }}
-                    className="w-full text-left px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center gap-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
-                  >
-                    <span className="text-lg">
-                      {CROP_ICONS[farmer.crop.toLowerCase()] || CROP_ICONS.default}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-bold text-gray-700 dark:text-gray-200 truncate">
-                        {farmer.name || `${farmer.firstName} ${farmer.lastName}`}
-                      </div>
-                      <div className="text-xxs text-gray-400">{farmer.region}</div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-500" />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Expand button */}
-      {!isExpanded && (
+      <div className="absolute top-3 left-3 z-[400] flex items-center gap-1.5 sm:gap-2">
         <button
-          onClick={() => setIsExpanded(true)}
-          className="absolute top-3 right-3 z-[1500] bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-lg p-2.5 hover:bg-white dark:hover:bg-gray-700 transition-all group border border-gray-100 dark:border-gray-700/50"
-          title={t('map_expand') || 'Expand Map'}
+          onClick={handleLocateMe}
+          className="p-2 sm:p-2.5 rounded-xl bg-slate-900/90 text-white border border-white/10 shadow-lg backdrop-blur-md hover:bg-slate-800 active:scale-95 transition-all"
+          title="Locate Current Position"
+          aria-label="Locate Current Position"
         >
-          <Maximize2 className="w-4 h-4 text-gray-600 dark:text-gray-300 group-hover:text-emerald-600 dark:group-hover:text-primary-400" />
+          <Crosshair className="w-4 h-4 text-emerald-400" />
         </button>
-      )}
 
-      <div className="relative" style={{ height }}>
-        {mapContent}
-        {farmers.length === 0 && (
-          <div className="absolute inset-0 z-[1100] bg-black/40 backdrop-blur-[2px] flex items-center justify-center p-6 text-center">
-            <div className="bg-white/90 dark:bg-gray-800/90 rounded-3xl p-8 shadow-2xl border border-white/20 max-w-sm">
-              <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-primary-600 dark:text-primary-400" />
-              </div>
-              <h3 className="text-lg font-black text-gray-900 dark:text-white mb-2 uppercase tracking-wide">
-                {t('map_no_farmers') || 'Establish Connectivity'}
-              </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 font-medium leading-relaxed">
-                {t('map_no_farmers_desc') ||
-                  'No farmer records detected in current perimeter. Once synchronized with regional nodes, distribution will appear live.'}
-              </p>
-              <button
-                onClick={() => setIsExpanded(false)}
-                className="mt-6 px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xxs font-black uppercase tracking-widest transition-all"
-              >
-                {t('action_refresh_sync') || 'Refresh Sync'}
-              </button>
-            </div>
+        <button
+          onClick={() => setShowMiniSearch(!showMiniSearch)}
+          className="p-2 sm:p-2.5 rounded-xl bg-slate-900/90 text-white border border-white/10 shadow-lg backdrop-blur-md hover:bg-slate-800 active:scale-95 transition-all"
+          title="Search Farmers"
+          aria-label="Search Farmers"
+        >
+          <Search className="w-4 h-4 text-emerald-400" />
+        </button>
+
+        {showMiniSearch && (
+          <div className="animate-in fade-in slide-in-from-left duration-200">
+            <input
+              type="text"
+              placeholder="Filter crops, region..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="px-3 py-1.5 text-xs rounded-xl bg-slate-900/95 text-white border border-white/20 backdrop-blur-md shadow-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 w-40 sm:w-56"
+            />
           </div>
         )}
       </div>
 
-      {/* Stats Panel - Bottom Left */}
-      {visibleStats && !isExpanded && (
-        <div className="absolute bottom-4 left-4 z-[1000] hidden md:block">
-          <div
-            className={`stats-card dark:stats-card-dark rounded-2xl shadow-xl border border-gray-100/50 dark:border-gray-700/50 p-3 min-w-[180px]`}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xxs uppercase font-black text-gray-400 tracking-wider">
-                {t('map_overview') || 'Overview'}
-              </span>
-              <button
-                onClick={() => setVisibleStats(false)}
-                className="text-gray-300 hover:text-gray-500"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-900/30 dark:to-emerald-800/20 rounded-xl p-2 border border-emerald-200/50 dark:border-emerald-700/30">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Users className="w-3 h-3 text-emerald-500" />
-                  <span className="text-micro uppercase font-bold text-emerald-600 dark:text-emerald-400">
-                    {t('map_farms') || 'Farms'}
-                  </span>
-                </div>
-                <span className="text-lg font-black text-emerald-700 dark:text-emerald-300">
-                  {stats.totalFarms}
-                </span>
-              </div>
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/30 dark:to-blue-800/20 rounded-xl p-2 border border-blue-200/50 dark:border-blue-700/30">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Wheat className="w-3 h-3 text-blue-500" />
-                  <span className="text-micro uppercase font-bold text-blue-600 dark:text-blue-400">
-                    {t('map_hectares') || 'Hectares'}
-                  </span>
-                </div>
-                <span className="text-lg font-black text-blue-700 dark:text-blue-300">
-                  {(Number(stats.totalSize) || 0).toFixed(0)}
-                </span>
-              </div>
-            </div>
-            {/* Top Crops Mini Bar */}
-            <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
-              <div className="flex items-center gap-1 mb-1.5">
-                <TrendingUp className="w-3 h-3 text-gray-400" />
-                <span className="text-micro uppercase font-bold text-gray-400">
-                  {t('map_top_crops') || 'Top Crops'}
-                </span>
-              </div>
-              <div className="flex gap-1">
-                {stats.topCrops.map(([crop, count], idx) => {
-                  const colors = ['500', '600', '700'] as const;
-                  return (
-                    <div
-                      key={crop}
-                      className="flex-1 h-5 rounded-md flex items-center justify-center text-micro font-bold text-white"
-                      style={{ backgroundColor: theme.primary[colors[idx]] }}
-                      title={`${crop}: ${count}`}
-                    >
-                      {count}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Mobile layer selector */}
-      <div className="absolute bottom-4 left-4 z-[1000] md:hidden">
-        <div className="flex gap-2 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-xl p-2 border border-gray-100/50 dark:border-gray-700/50">
-          {(Object.keys(TILE_LAYERS) as MapLayer[]).map(layer => (
-            <button
-              key={layer}
-              onClick={() => handleLayerChange(layer)}
-              className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
-                currentLayer === layer
-                  ? 'shadow-lg shadow-emerald-500/25'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
-              style={
-                currentLayer === layer
-                  ? {
-                      background: `linear-gradient(135deg, var(--color-primary-500), var(--color-primary-500))`,
-                      color: 'white',
-                    }
-                  : {
-                      background: 'var(--color-bg-secondary)',
-                      color: 'var(--color-outline)',
-                    }
-              }
-            >
-              {TILE_LAYERS[layer].name}
-            </button>
-          ))}
-        </div>
+      <div className="absolute top-3 right-3 z-[400]">
+        <button
+          onClick={() => setIsExpanded(true)}
+          className="p-2 sm:p-2.5 rounded-xl bg-slate-900/90 text-white border border-white/10 shadow-lg backdrop-blur-md hover:bg-slate-800 active:scale-95 transition-all flex items-center gap-1.5 text-xs font-bold"
+          title="Expand Map Fullscreen"
+          aria-label="Expand Map Fullscreen"
+        >
+          <Maximize2 className="w-4 h-4 text-emerald-400" />
+          <span className="hidden sm:inline">Expand</span>
+        </button>
       </div>
 
-      {/* Fullscreen Modal */}
+      {mapContent}
+
       {isExpanded && (
         <ExpandedMapModal
           theme={theme}
@@ -1488,60 +349,8 @@ export function FarmerMap({
           t={t}
         />
       )}
-
-      {/* Context Menu */}
-      {contextMenu && (
-        <>
-          <div className="fixed inset-0 z-50" onClick={() => setContextMenu(null)} />
-          <div
-            className="fixed z-50 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-2 min-w-[160px]"
-            style={{
-              left: contextMenu.x,
-              top: contextMenu.y,
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="px-3 py-1 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b border-gray-100 dark:border-gray-700">
-              {contextMenu.farmer.firstName
-                ? `${contextMenu.farmer.firstName} ${contextMenu.farmer.lastName}`
-                : contextMenu.farmer.name}
-            </div>
-            <button
-              onClick={() => handleContextMenuAction('view')}
-              className="w-full px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 text-sm flex items-center gap-2"
-            >
-              <Users className="w-4 h-4" />
-              View Profile
-            </button>
-            <button
-              onClick={() => handleContextMenuAction('chat')}
-              className="w-full px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 text-sm flex items-center gap-2"
-            >
-              <MessageSquare className="w-4 h-4" />
-              Start Chat
-            </button>
-            {contextMenu.farmer.phone && (
-              <button
-                onClick={() => handleContextMenuAction('call')}
-                className="w-full px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 text-sm flex items-center gap-2"
-              >
-                <Phone className="w-4 h-4" />
-                Call Farmer
-              </button>
-            )}
-            <button
-              onClick={() => handleContextMenuAction('navigate')}
-              className="w-full px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 text-sm flex items-center gap-2"
-            >
-              <Navigation className="w-4 h-4" />
-              Navigate Here
-            </button>
-          </div>
-        </>
-      )}
     </div>
   );
 }
 
-export { CROP_COLORS };
 export default FarmerMap;

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { notificationService } from '../services/notificationService';
 import { logger } from '../utils/logger';
 import { query } from '../services/databaseService';

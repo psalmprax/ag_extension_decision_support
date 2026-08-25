@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { PrismaClient } from '@prisma/client';
 import { logger } from '../utils/logger';
 
@@ -257,7 +256,7 @@ class UsageService {
         try {
             const data = await this.getUsage(userId);
             const isFree = await this.isFreeUser(userId);
-            const features = (data?.plan?.features as any) || (isFree ? FREE_TIER_LIMITS : {});
+            const features = (data?.plan?.features as unknown as Record<string, unknown>) || (isFree ? FREE_TIER_LIMITS : {});
             const dailyKnowledge = await this.checkDailyKnowledgeLimit(userId);
 
             return {

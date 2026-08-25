@@ -1,5 +1,29 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { logger } from '../../utils/logger';
+
+export interface NasaPowerResponse {
+    properties?: { parameter?: Record<string, Record<string, number>> };
+    geometry?: { coordinates?: number[] };
+    [key: string]: unknown;
+}
+
+export interface NasaAgroclimateSummary {
+    source: string;
+    location: { latitude: number; longitude: number };
+    elevation: number | string;
+    period: string;
+    temperatureRange?: { min: number | string; max: number | string };
+    relativeHumidity?: number | string;
+    precipitationSum?: number | string;
+    solarRadiationAvg?: number | string;
+    metrics: {
+        avg_temp_C: number | string;
+        max_temp_C: number | string;
+        min_temp_C: number | string;
+        total_precipitation_mm: number | string;
+        avg_solar_irradiance: number | string;
+        avg_profile_soil_moisture: number | string;
+    };
+}
 
 export interface NasaPowerParams {
     latitude: number;
@@ -15,7 +39,7 @@ export interface NasaPowerParams {
 export class NasaPowerService {
     private readonly baseUrl = 'https://power.larc.nasa.gov/api/temporal/daily/point';
 
-    async fetchMeteorologicalData(params: NasaPowerParams): Promise<any> {
+    async fetchMeteorologicalData(params: NasaPowerParams): Promise<NasaPowerResponse> {
         let lastError: unknown;
 
         for (let attempt = 1; attempt <= 3; attempt++) {
@@ -35,7 +59,7 @@ export class NasaPowerService {
         throw new Error(`Failed to fetch NASA POWER data: ${message}`);
     }
 
-    private async fetchMeteorologicalDataOnce(params: NasaPowerParams): Promise<any> {
+    private async fetchMeteorologicalDataOnce(params: NasaPowerParams): Promise<NasaPowerResponse> {
         try {
             // Default to past 30 days if not provided
             const endDate = new Date();
@@ -80,14 +104,14 @@ export class NasaPowerService {
             }
 
             logger.info(`Successfully fetched NASA POWER data for lat/lng: ${params.latitude}, ${params.longitude}`);
-            return response.json();
+            return response.json() as Promise<NasaPowerResponse>;
         } catch (error) {
             logger.error(`Error fetching NASA POWER data: ${error instanceof Error ? error.message : "Unknown error"}`);
             throw new Error(`Failed to fetch NASA POWER data: ${error instanceof Error ? error.message : "Unknown error"}`);
         }
     }
 
-    async getAgroclimateSummary(latitude: number, longitude: number, days: number = 7): Promise<any> {
+    async getAgroclimateSummary(latitude: number, longitude: number, days: number = 7): Promise<NasaAgroclimateSummary> {
         const end = new Date();
         end.setDate(end.getDate() - 1);
         const start = new Date(end);
@@ -108,6 +132,10 @@ export class NasaPowerService {
             location: { latitude, longitude },
             elevation: data?.geometry?.coordinates?.[2] || 'Unknown',
             period: `${formatString(start)} to ${formatString(end)}`,
+            temperatureRange: { min: calculateMin(params.T2M_MIN), max: calculateMax(params.T2M_MAX) },
+            relativeHumidity: 'N/A',
+            precipitationSum: calculateSum(params.PRECTOTCORR),
+            solarRadiationAvg: calculateAverage(params.ALLSKY_SFC_SW_DWN),
             metrics: {
                 avg_temp_C: calculateAverage(params.T2M),
                 max_temp_C: calculateMax(params.T2M_MAX),

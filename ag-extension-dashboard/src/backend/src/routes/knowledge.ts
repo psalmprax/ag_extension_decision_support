@@ -380,7 +380,7 @@ router.get('/search', async (req: Request, res: Response) => {
         await cacheSet(cacheKey, JSON.stringify(response), 300);
 
         const user = (req as Request & { user?: Record<string, unknown> }).user;
-        const userId = user?.userId || user?.id;
+        const userId = (user?.userId || user?.id) as string | undefined;
         if (userId && q) {
             KnowledgeService.logSearch(userId, q as string, category as string | undefined, crop as string | undefined).catch(() => {});
         }
@@ -432,7 +432,7 @@ router.get('/offline-pack', async (req: Request, res: Response) => {
 router.get('/history', async (req: Request, res: Response) => {
     try {
         const user = (req as Request & { user?: Record<string, unknown> }).user;
-        const userId = user?.userId || user?.id;
+        const userId = (user?.userId || user?.id) as string | undefined;
         if (!userId) {
             return res.status(errorStatusMap['USER_NOT_AUTHENTICATED']).json({
                 success: false,
@@ -656,7 +656,7 @@ router.post('/synthesize-visit', async (req: Request, res: Response) => {
       visitType?: string;
     };
     const user = (req as Request & { user?: Record<string, unknown> }).user;
-    const userId = user?.userId || user?.id;
+    const userId = (user?.userId || user?.id) as string | undefined;
     if (!userId) {
       return res.status(401).json({ success: false, error: 'User not authenticated' });
     }

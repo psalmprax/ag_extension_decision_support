@@ -583,12 +583,10 @@ class PaymentService {
                 }
 
                 case 'customer.subscription.updated': {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const subscription = event.data.object as Stripe.Subscription;
                     const stripeSubscriptionId = subscription.id;
                     const priceId = subscription.items.data[0].price.id;
 
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const plan = await prisma.subscriptionPlan.findFirst({
                         where: { stripePriceId: priceId }
                     });

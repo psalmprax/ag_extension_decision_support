@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, Request, Response } from 'express';
 import { Farmer } from '@prisma/client';
 import { logger } from '@/utils/logger';

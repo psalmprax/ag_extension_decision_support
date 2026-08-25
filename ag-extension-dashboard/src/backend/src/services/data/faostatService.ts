@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { logger } from '../../utils/logger';
 
 export interface FaostatCountry {
@@ -134,8 +133,10 @@ export class FaostatService {
                 throw new Error(`FAOSTAT returned HTTP ${response.status}`);
             }
 
-            const data: any = await response.json();
-            const records: FaostatCropRecord[] = (data?.data || []).map((row: any) => ({
+            interface FaostatRawRow { area: string; area_code: string; item: string; item_code: string; element: string; element_code: string; year: string; unit: string; value: string | null }
+            interface FaostatApiResponse { data?: FaostatRawRow[] }
+            const data = await response.json() as FaostatApiResponse;
+            const records: FaostatCropRecord[] = (data?.data || []).map((row: FaostatRawRow) => ({
                 areaName: row.area,
                 areaCode: row.area_code,
                 itemName: row.item,
