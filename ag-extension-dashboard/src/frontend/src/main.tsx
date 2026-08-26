@@ -41,10 +41,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <ThemeProvider>
               <Toaster
                 position="top-right"
-                containerProps={{
-                  role: 'status',
-                  'aria-live': 'polite',
-                }}
                 toastOptions={{
                   duration: 4000,
                   style: {

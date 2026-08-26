@@ -251,7 +251,7 @@ const DashboardMapSection: React.FC<{
   setIsMapExpanded: (expanded: boolean) => void;
   handleStartConversation: (farmer: Farmer, type: 'ai' | 'farmer') => void;
   handleOpenFarmerDetail: (farmer: Farmer) => void;
-  user?: { role?: string; firstName?: string };
+  user?: { role?: string; firstName?: string; region?: string } | null;
   t: (key: string) => string;
   cardClass: string;
   radiusClass: string;
@@ -342,7 +342,7 @@ const DashboardMapSection: React.FC<{
           >
             {isDemo
               ? (t('stat_kenya_overview') || 'Kenya Overview')
-              : (user?.region ? `${user.region} Overview` : (t('stat_portfolio_overview') || 'Portfolio Overview'))}
+              : ((user?.region || userFromStore?.region) ? `${user?.region || userFromStore?.region} Overview` : (t('stat_portfolio_overview') || 'Portfolio Overview'))}
           </span>
         </div>
       </div>
