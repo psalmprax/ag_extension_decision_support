@@ -17,7 +17,6 @@ import {
   Loader2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useLanguage } from '@/lib/LanguageContext';
 import { JourneyBreadcrumbs, JourneyStep } from './JourneyBreadcrumbs';
 import { InlineVisitBookingCard } from './InlineVisitBookingCard';
 import apiClient from '@/api/client';

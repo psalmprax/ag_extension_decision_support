@@ -6,20 +6,20 @@ import { LanguageProvider } from '../../lib/LanguageContext';
 
 // Mock Leaflet and React-Leaflet for unit test environment
 vi.mock('react-leaflet', () => ({
-  MapContainer: ({ children, style, className }: any) => (
+  MapContainer: ({ children, style, className }: { children?: React.ReactNode; style?: React.CSSProperties; className?: string }) => (
     <div data-testid="map-container" style={style} className={`leaflet-container ${className || ''}`}>
       {children}
     </div>
   ),
-  TileLayer: ({ url, attribution }: any) => (
+  TileLayer: ({ url, attribution }: { url?: string; attribution?: string }) => (
     <div data-testid="tile-layer" data-url={url} data-attribution={attribution} />
   ),
-  Marker: ({ position, children }: any) => (
+  Marker: ({ position, children }: { position?: [number, number]; children?: React.ReactNode }) => (
     <div data-testid="map-marker" data-position={JSON.stringify(position)}>
       {children}
     </div>
   ),
-  Popup: ({ children }: any) => <div data-testid="map-popup">{children}</div>,
+  Popup: ({ children }: { children?: React.ReactNode }) => <div data-testid="map-popup">{children}</div>,
   ZoomControl: () => <div data-testid="zoom-control" />,
   useMap: () => ({
     invalidateSize: vi.fn(),
