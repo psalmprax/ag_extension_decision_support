@@ -48,6 +48,7 @@ import {
 } from 'lucide-react';
 import { LiquidToggleSwitch } from '@/components/canvasui/LiquidToggleSwitch';
 import { LiquidBackgroundCanvas } from '@/components/canvasui/LiquidBackgroundCanvas';
+import { AgroStorytellingSection } from '@/components/landing/AgroStorytellingSection';
 
 // ─── Animation variants ─────────────────────────────────────────
 const stagger = {
@@ -1506,6 +1507,9 @@ export function LandingPage() {
             </div>
           </div>
         </section>
+
+        {/* ── INTERACTIVE 3D SCROLL-DRIVEN AGRO-ECOSYSTEM STORYTELLING ── */}
+        <AgroStorytellingSection />
 
         {/* ── CORE CAPABILITIES & DATA ECOSYSTEM ── */}
         <section
