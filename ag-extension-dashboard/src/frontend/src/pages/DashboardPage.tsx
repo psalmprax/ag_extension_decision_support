@@ -125,13 +125,25 @@ const DashboardStats: React.FC<{
 };
 
 const ActivePulseCard: React.FC<{ cardClass: string; isLoading: boolean }> = ({ cardClass, isLoading }) => {
+  const isDemo = useAppStore(s => s.isDemo);
   const { data: health, isLoading: hl } = useQuery({
-    queryKey: ['active-pulse-health'],
+    queryKey: ['active-pulse-health', isDemo],
     queryFn: async () => {
+      if (isDemo) {
+        return {
+          status: 'healthy',
+          environment: 'demo-sandbox',
+          uptime: 1234567,
+          services: {
+            database: 'connected',
+            cache: 'connected',
+          },
+        };
+      }
       const { data } = await import('@/api/client').then(m => m.default.get('/health'));
       return data;
     },
-    enabled: !!localStorage.getItem('token'),
+    enabled: isDemo || !!localStorage.getItem('token'),
     refetchInterval: 60_000,
     staleTime: 30_000,
   });
@@ -640,7 +652,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
         <div className="space-y-4 sm:space-y-6">
           <SupportEfficiencyCard performanceData={performanceData} t={t} cardClass={cardClass} />
-          <ActivePulseCard cardClass={cardClass} isLoading={isLoading} />
+          {(user?.role === 'admin' || userFromStore?.role === 'admin' || user?.role === 'superadmin') && (
+            <ActivePulseCard cardClass={cardClass} isLoading={isLoading} />
+          )}
           <VegetationHealthCard cardClass={cardClass} />
           <EfficacyCard />
           <AdvisoriesCard />
