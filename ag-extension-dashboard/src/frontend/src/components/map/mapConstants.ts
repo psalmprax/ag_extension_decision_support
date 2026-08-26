@@ -127,6 +127,14 @@ export const createCurrentUserMarkerIcon = (): L.DivIcon => {
 };
 
 export const MAP_STYLES = `
+  .leaflet-container {
+    background: #0b1329 !important;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    font-family: inherit;
+  }
+
   .custom-marker {
     background: none !important;
     border: none !important;

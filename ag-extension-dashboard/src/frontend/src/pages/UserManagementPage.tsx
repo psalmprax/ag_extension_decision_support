@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import apiClient from '@/api/client';
 import { useLanguage } from '@/lib/LanguageContext';
+import { useDemoMode, DEMO_USERS } from '@/demo';
 
 interface User {
   id: string;
@@ -56,6 +57,7 @@ const getRoleBadge = (role: string) => ROLES.find(r => r.value === role) || ROLE
 
 export function UserManagementPage() {
   const { t: _t } = useLanguage();
+  const { isDemo } = useDemoMode();
   const queryClient = useQueryClient();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -75,8 +77,11 @@ export function UserManagementPage() {
 
   // Fetch users
   const { data: usersData, isLoading } = useQuery({
-    queryKey: ['users', roleFilter],
+    queryKey: ['users', roleFilter, isDemo],
     queryFn: async () => {
+      if (isDemo) {
+        return DEMO_USERS.filter(u => !roleFilter || u.role === roleFilter) as User[];
+      }
       const params = roleFilter ? `?role=${roleFilter}` : '';
       const res = await apiClient.get(`/users${params}`);
       return res.data.data.users as User[];

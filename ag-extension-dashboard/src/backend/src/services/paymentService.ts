@@ -667,7 +667,7 @@ class PaymentService {
         features: string[];
     }>> {
         if (!this.stripe) {
-            // Return mock plans with translation keys
+            // Stripe integration: return mock plans when no key, else use real Stripe
             return [
                 {
                     id: 'price_free',

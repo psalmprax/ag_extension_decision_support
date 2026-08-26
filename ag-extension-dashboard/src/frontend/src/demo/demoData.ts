@@ -351,3 +351,113 @@ export function buildDemoPerformanceData(farmers: Farmer[]) {
     })),
   };
 }
+
+export interface DemoUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+  region: string;
+  phone: string;
+}
+
+export const DEMO_USERS: DemoUser[] = [
+  {
+    id: 'demo-user-1',
+    firstName: 'Sarah',
+    lastName: 'Kiprono',
+    email: 'sarah.officer@agridemo.com',
+    role: 'extension_officer',
+    region: 'Nakuru',
+    phone: '+254712000001',
+  },
+  {
+    id: 'demo-user-2',
+    firstName: 'David',
+    lastName: 'Ochieng',
+    email: 'david.admin@agridemo.com',
+    role: 'admin',
+    region: 'Nairobi HQ',
+    phone: '+254712000002',
+  },
+  {
+    id: 'demo-user-3',
+    firstName: 'Amina',
+    lastName: 'Hassan',
+    email: 'amina.manager@agridemo.com',
+    role: 'regional_manager',
+    region: 'Eastern Zone',
+    phone: '+254712000003',
+  },
+  {
+    id: 'demo-user-4',
+    firstName: 'Emmanuel',
+    lastName: 'Mwangi',
+    email: 'emmanuel.farmer@agridemo.com',
+    role: 'farmer',
+    region: 'Machakos',
+    phone: '+254712345601',
+  },
+];
+
+export const DEMO_ACTIVITIES = [
+  {
+    id: 'demo-act-1',
+    farmerName: 'Emmanuel Mwangi',
+    phone: '+254 712 345601',
+    channel: 'USSD' as const,
+    language: 'SW' as const,
+    severityScore: 88,
+    crop: 'Potatoes / Tomatoes',
+    region: 'Machakos, Kenya',
+    issue: 'Late Blight (Phytophthora infestans)',
+    aiSummary: 'Water-soaked leaf lesions spreading rapidly after heavy rain. High spore germination risk.',
+    timestamp: '2m ago',
+    isClaimed: false,
+    journeySteps: [
+      { label: 'USSD Dialed', dwellTime: '2m ago' },
+      { label: 'Diagnosis Menu', dwellTime: '1m ago' },
+      { label: 'Leaf Blight Query', dwellTime: 'Now', status: 'active' as const },
+    ],
+  },
+  {
+    id: 'demo-act-2',
+    farmerName: 'Grace Wanjiku',
+    phone: '+254 712 345602',
+    channel: 'SMS' as const,
+    language: 'EN' as const,
+    severityScore: 74,
+    crop: 'Maize',
+    region: 'Kiambu Highlands, Kenya',
+    issue: 'Fall Armyworm Infestation',
+    aiSummary: 'Windowpaning on whorl leaves. Larvae detected in upper canopy. Recommends Emamectin benzoate.',
+    timestamp: '7m ago',
+    isClaimed: false,
+    journeySteps: [
+      { label: 'SMS Received', dwellTime: '7m ago' },
+      { label: 'Pest AI Parser', dwellTime: '6m ago' },
+      { label: 'Triage Queue', dwellTime: 'Now', status: 'active' as const },
+    ],
+  },
+  {
+    id: 'demo-act-3',
+    farmerName: 'Kiplagat Ruto',
+    phone: '+254 712 345603',
+    channel: 'App' as const,
+    language: 'EN' as const,
+    severityScore: 42,
+    crop: 'Wheat / Barley',
+    region: 'Uasin Gishu, Kenya',
+    issue: 'Stem Rust (Early Stage)',
+    aiSummary: 'Isolated orange pustules under lower leaves. Recommended cultural pruning and preventative fungicide.',
+    timestamp: '15m ago',
+    isClaimed: false,
+    journeySteps: [
+      { label: 'Mobile App Opened', dwellTime: '15m ago' },
+      { label: 'Field Sensor Sync', dwellTime: '12m ago' },
+      { label: 'Advice Viewed', dwellTime: 'Now', status: 'active' as const },
+    ],
+  },
+];
+

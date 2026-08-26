@@ -27,6 +27,7 @@ import { AdvisoriesCard } from '@/components/advisories/AdvisoriesCard';
 import { FieldToolsCard } from '@/components/fieldtools/FieldToolsCard';
 import { LeaderboardCard } from '@/components/fieldtools/FieldIntelCards';
 import { OutbreakBanner } from '@/components/outbreaks/OutbreakBanner';
+import { useDemoMode } from '@/demo';
 
 const REGION_MAP_MAX_RETRIES = 3;
 const REGION_MAP_RETRY_BASE_DELAY_MS = 800;
@@ -266,13 +267,14 @@ const DashboardMapSection: React.FC<{
   radiusClass,
 }) => {
   const userFromStore = useAppStore(s => s.user);
+  const { isDemo } = useDemoMode();
 
   // Share state with useAppQueries via the same query key; react-query dedupes.
   // We set retry:false so our own retry hook controls the retry behavior.
   const farmersQuery = useQuery({
     queryKey: ['farmers'],
     queryFn: fetchFarmers,
-    enabled: !!userFromStore,
+    enabled: !!userFromStore && !isDemo,
     retry: false,
   });
 

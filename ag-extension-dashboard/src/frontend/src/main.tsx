@@ -11,6 +11,7 @@ import { LanguageProvider } from './lib/LanguageContext';
 import { ThemeProvider } from './lib/ThemeProvider';
 import ErrorBoundary from '@ag-extension/shared';
 import { CH_COLORS } from '@/lib/colors';
+import { queryClient } from './lib/queryClient';
 // Global console silencing for production logging compliance
 if (!import.meta.env.DEV) {
   const noop = () => {};
@@ -18,24 +19,6 @@ if (!import.meta.env.DEV) {
   console.info = noop;
   console.debug = noop;
 }
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: (failureCount, error: unknown) => {
-        // Don't retry on 401 errors (authentication required)
-        const e = error as { response?: { status?: number } } | null | undefined;
-        if (e && typeof e === 'object' && e.response && e.response.status === 401) {
-          return false;
-        }
-        // Retry other errors once
-        return failureCount < 1;
-      },
-      staleTime: 5 * 60 * 1000,
-    },
-  },
-});
 
 // Register PWA Service Worker for offline field operations and caching
 if ('serviceWorker' in navigator && typeof window !== 'undefined') {

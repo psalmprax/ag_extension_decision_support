@@ -21,6 +21,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { JourneyBreadcrumbs, JourneyStep } from './JourneyBreadcrumbs';
 import { InlineVisitBookingCard } from './InlineVisitBookingCard';
 import apiClient from '@/api/client';
+import { useDemoMode, DEMO_ACTIVITIES } from '@/demo';
 
 export interface ActivityItem {
   id: string;
@@ -357,7 +358,7 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
   onOpenUSSDSimulator,
   onStartChat,
 }) => {
-  useLanguage();
+  const { isDemo } = useDemoMode();
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [filterSeverity, setFilterSeverity] = useState<FilterSeverity>('all');
   const [sortByUrgency, setSortByUrgency] = useState(true);
@@ -369,18 +370,24 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchActivities = useCallback(async () => {
+    if (isDemo) {
+      setActivities(DEMO_ACTIVITIES as ActivityItem[]);
+      setIsLoading(false);
+      return;
+    }
     try {
       const { data } = await apiClient.get<{ success: boolean; data: ActivityItem[] }>('/activities/triage');
       if (data.success) setActivities(data.data);
     } catch { /* keep existing data */ }
     finally { setIsLoading(false); }
-  }, []);
+  }, [isDemo]);
 
   useEffect(() => {
     fetchActivities();
+    if (isDemo) return;
     const interval = setInterval(fetchActivities, 30000);
     return () => clearInterval(interval);
-  }, [fetchActivities]);
+  }, [fetchActivities, isDemo]);
 
   const handleSendSms = useCallback(async (phone: string, message: string) => {
     if (!message.trim() || sendingSms) return;
