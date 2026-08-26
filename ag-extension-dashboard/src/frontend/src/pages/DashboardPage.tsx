@@ -340,7 +340,9 @@ const DashboardMapSection: React.FC<{
           <span
             className={`px-2 py-1 bg-primary-400/10 text-primary-400 ${radiusClass} text-xxs font-bold uppercase tracking-widest border border-primary-400/20`}
           >
-            {t('stat_kenya_overview') || 'Kenya Overview'}
+            {isDemo
+              ? (t('stat_kenya_overview') || 'Kenya Overview')
+              : (user?.region ? `${user.region} Overview` : (t('stat_portfolio_overview') || 'Portfolio Overview'))}
           </span>
         </div>
       </div>
