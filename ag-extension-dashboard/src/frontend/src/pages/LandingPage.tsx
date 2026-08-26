@@ -85,40 +85,6 @@ const painPoints = [
   },
 ];
 
-const features = [
-  {
-    icon: Users,
-    title: 'Farmer Portfolio',
-    desc: 'Manage your entire farmer network with real-time vital scores, crop data, and soil analytics in one unified view.',
-    highlight: true,
-  },
-  {
-    icon: Brain,
-    title: 'AI Assistant',
-    desc: 'Instant agronomic advice powered by RAG with citations, knowledge graphs, and re-ranked results.',
-  },
-  {
-    icon: MapPin,
-    title: 'Field Visits',
-    desc: 'Schedule, track, and synthesize field visits with AI-powered note analysis and follow-up automation.',
-  },
-  {
-    icon: TrendingUp,
-    title: 'Analytics & Reports',
-    desc: 'Track officer performance, farmer outcomes, and generate executive reports with one click.',
-  },
-  {
-    icon: Shield,
-    title: 'Disease Diagnosis',
-    desc: 'AI-powered crop disease identification with treatment recommendations from the knowledge base.',
-  },
-  {
-    icon: Database,
-    title: 'Knowledge Base',
-    desc: 'FAOSTAT data, NASA POWER weather, SoilGrids properties — all searchable with AI-powered RAG.',
-  },
-];
-
 const steps = [
   {
     num: '01',
@@ -524,6 +490,18 @@ export function LandingPage() {
         <section
           className="relative min-h-screen flex items-start sm:items-center pt-20 sm:pt-24 pb-10 sm:pb-16 overflow-hidden"
         >
+          {/* Subtle Aerial Agricultural Landscape Backdrop */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+            <img
+              src="/images/landing/hero-aerial.jpg"
+              alt="Lush green agricultural farmland and smallholder plots from above"
+              className="w-full h-full object-cover object-center opacity-25 mix-blend-luminosity scale-105 filter saturate-150"
+              loading="eager"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/90 to-slate-950" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-slate-950/50 to-slate-950" />
+          </div>
+
           {/* Grid pattern */}
           <div
             className="absolute inset-0 pointer-events-none opacity-[0.025]"
@@ -1031,91 +1009,205 @@ export function LandingPage() {
           </div>
         </section>
 
-        {/* ── FEATURES ── */}
-        <section id="features" className="relative py-28 border-t border-white/[0.04]">
+        {/* ── 3-PERSONA ECOSYSTEM & ROLE SHOWCASE ── */}
+        <section id="features" className="relative py-20 sm:py-28 border-t border-white/[0.04]">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-emerald-500/[0.03] blur-[120px] rounded-full pointer-events-none" />
 
-          <div className="max-w-[90rem] w-full mx-auto px-6 relative z-10">
+          <div className="max-w-[90rem] w-full mx-auto px-4 sm:px-6 relative z-10">
             <motion.div
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, margin: '-100px' }}
               variants={stagger}
-              className="mb-16"
+              className="text-center max-w-3xl mx-auto mb-14 sm:mb-20"
             >
               <motion.div
                 variants={fadeUp}
-                className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400/80 mb-4"
+                className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-[0.2em] mb-4"
               >
-                Features
+                <Users className="w-3.5 h-3.5" />
+                Who We Empower
               </motion.div>
               <motion.h2
                 variants={fadeUp}
-                className="text-[clamp(2rem,3.5vw,3rem)] font-bold tracking-tight leading-tight max-w-xl"
+                className="text-[clamp(2rem,3.5vw,3rem)] font-bold tracking-tight leading-tight text-white mb-4"
               >
-                Built for the realities of{' '}
-                <span className="text-white/45">Global & Tropical agriculture</span>
+                Built for the real field.{' '}
+                <span className="bg-gradient-to-r from-emerald-300 via-emerald-400 to-amber-300 bg-clip-text text-transparent">
+                  Grounded in rural realities.
+                </span>
               </motion.h2>
+              <motion.p
+                variants={fadeUp}
+                className="text-sm sm:text-base text-white/70 leading-relaxed font-normal"
+              >
+                Connecting smallholder farms, mobile extension officers, and enterprise leadership in one unified, offline-first ecosystem.
+              </motion.p>
             </motion.div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {features.map((feat, i) => (
-                <motion.div
-                  key={i}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true, margin: '-60px' }}
-                  variants={fadeUp}
-                  className={`group relative p-7 rounded-2xl backdrop-blur-md bg-slate-900/60 border border-white/[0.08] hover:border-emerald-500/30 hover:bg-slate-900/80 hover:shadow-2xl hover:shadow-emerald-950/25 transition-all duration-500 overflow-hidden ${
-                    feat.highlight ? 'lg:col-span-2 lg:row-span-2 lg:p-10' : ''
-                  }`}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/[0.04] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                  <div className="relative z-10">
-                    <div
-                      className={`rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-5 group-hover:bg-emerald-500/20 group-hover:border-emerald-500/40 transition-all duration-500 ${
-                        feat.highlight ? 'w-14 h-14 mb-7' : 'w-11 h-11'
-                      }`}
-                    >
-                      <feat.icon
-                        className={`text-emerald-400/70 group-hover:text-emerald-400 transition-colors duration-500 ${
-                          feat.highlight ? 'w-7 h-7' : 'w-5 h-5'
-                        }`}
-                      />
-                    </div>
-                    <h3
-                      className={`font-bold mb-2 text-white/90 ${feat.highlight ? 'text-xl mb-3' : 'text-base'}`}
-                    >
-                      {feat.title}
-                    </h3>
-                    <p
-                      className={`text-white/50 leading-relaxed group-hover:text-white/70 transition-colors duration-500 ${
-                        feat.highlight ? 'text-base max-w-md' : 'text-sm'
-                      }`}
-                    >
-                      {feat.desc}
-                    </p>
-
-                    {feat.highlight && (
-                      <div className="mt-8 pt-6 border-t border-white/[0.06] grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        {[
-                          { val: 'Real-time', label: 'Sync Engine' },
-                          { val: 'Offline-First', label: 'Local Encrypted DB' },
-                          { val: 'GPS Polygon', label: 'Field Boundary Mapping' },
-                        ].map((s, j) => (
-                          <div key={j}>
-                            <div className="text-sm font-bold text-emerald-400">{s.val}</div>
-                            <div className="text-xxs text-white/35 uppercase tracking-wider mt-0.5">
-                              {s.label}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+            {/* 3-Persona Visual Card Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+              {/* Persona 1: The Smallholder Farmer */}
+              <motion.div
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: '-60px' }}
+                variants={fadeUp}
+                className="group relative rounded-3xl backdrop-blur-xl bg-slate-900/80 border border-white/[0.08] hover:border-emerald-500/40 transition-all duration-500 overflow-hidden flex flex-col shadow-2xl hover:shadow-emerald-950/40"
+              >
+                <div className="relative aspect-[16/11] sm:aspect-[4/3] w-full overflow-hidden bg-slate-950">
+                  <img
+                    src="/images/landing/persona-farmer.jpg"
+                    alt="Smallholder farmer in maize field receiving mobile SMS advisory"
+                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 filter brightness-95 group-hover:brightness-100"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
+                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950/80 backdrop-blur-md border border-amber-500/30 text-amber-300 text-xxs font-bold uppercase tracking-wider">
+                    <MessageSquare className="w-3 h-3 text-amber-400" />
+                    Direct Farmer Advisory
                   </div>
-                </motion.div>
-              ))}
+                  <div className="absolute bottom-3 left-4 right-4">
+                    <span className="text-xxs font-mono text-emerald-400 bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                      Zero Smartphone Required
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-6 sm:p-7 flex-1 flex flex-col justify-between space-y-4">
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-bold text-white mb-2 group-hover:text-emerald-300 transition-colors">
+                      The Smallholder Farmer
+                    </h3>
+                    <p className="text-xs sm:text-sm text-white/70 leading-relaxed">
+                      Receives actionable planting advice, disease treatment steps, and NASA rain alerts via 2G SMS and USSD in local dialects.
+                    </p>
+                  </div>
+
+                  <div className="pt-4 border-t border-white/[0.06] space-y-2 text-xs text-white/80 font-medium">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>2G/3G SMS &amp; USSD Direct Dialing</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>Hyperlocal NASA Rain &amp; Storm Warnings</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>Swahili, Luganda, English &amp; Voice STT</span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Persona 2: The Agricultural Extension Officer */}
+              <motion.div
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: '-60px' }}
+                variants={fadeUp}
+                className="group relative rounded-3xl backdrop-blur-xl bg-slate-900/80 border border-emerald-500/30 hover:border-emerald-500/60 transition-all duration-500 overflow-hidden flex flex-col shadow-2xl shadow-emerald-950/30 hover:shadow-emerald-950/60 ring-1 ring-emerald-500/20"
+              >
+                <div className="relative aspect-[16/11] sm:aspect-[4/3] w-full overflow-hidden bg-slate-950">
+                  <img
+                    src="/images/landing/persona-officer.jpg"
+                    alt="Field extension officer diagnosing crop leaf health in the field with mobile AI app"
+                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 filter brightness-95 group-hover:brightness-100"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
+                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950/80 backdrop-blur-md border border-emerald-500/40 text-emerald-300 text-xxs font-bold uppercase tracking-wider">
+                    <Smartphone className="w-3 h-3 text-emerald-400" />
+                    Field-Ready Mobile PWA
+                  </div>
+                  <div className="absolute bottom-3 left-4 right-4">
+                    <span className="text-xxs font-mono text-emerald-300 bg-emerald-500/30 border border-emerald-400/40 px-2 py-0.5 rounded-full font-bold">
+                      100% Offline-First Sync
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-6 sm:p-7 flex-1 flex flex-col justify-between space-y-4">
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-bold text-white mb-2 group-hover:text-emerald-300 transition-colors">
+                      The Field Extension Officer
+                    </h3>
+                    <p className="text-xs sm:text-sm text-white/70 leading-relaxed">
+                      Conducts rapid digital farm visits, captures leaf photos for instant AI disease identification, and logs records offline in remote areas.
+                    </p>
+                  </div>
+
+                  <div className="pt-4 border-t border-white/[0.06] space-y-2 text-xs text-white/80 font-medium">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>Offline Encrypted IndexedDB Storage</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>Instant Multimodal Leaf &amp; Pest Diagnosis</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>GPS Parcel Mapping &amp; Yield Scoring</span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Persona 3: Regional & Cooperative Managers */}
+              <motion.div
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: '-60px' }}
+                variants={fadeUp}
+                className="group relative rounded-3xl backdrop-blur-xl bg-slate-900/80 border border-white/[0.08] hover:border-emerald-500/40 transition-all duration-500 overflow-hidden flex flex-col shadow-2xl hover:shadow-emerald-950/40 md:col-span-2 lg:col-span-1"
+              >
+                <div className="relative aspect-[16/11] sm:aspect-[4/3] w-full overflow-hidden bg-slate-950">
+                  <img
+                    src="/images/landing/persona-manager.jpg"
+                    alt="Regional agribusiness manager analyzing yield analytics and field operations on dashboard"
+                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 filter brightness-95 group-hover:brightness-100"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
+                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950/80 backdrop-blur-md border border-cyan-500/30 text-cyan-300 text-xxs font-bold uppercase tracking-wider">
+                    <BarChart3 className="w-3 h-3 text-cyan-400" />
+                    Macro Yield &amp; Supply Intelligence
+                  </div>
+                  <div className="absolute bottom-3 left-4 right-4">
+                    <span className="text-xxs font-mono text-cyan-300 bg-cyan-500/20 border border-cyan-500/30 px-2 py-0.5 rounded-full">
+                      Enterprise Oversight
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-6 sm:p-7 flex-1 flex flex-col justify-between space-y-4">
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-bold text-white mb-2 group-hover:text-emerald-300 transition-colors">
+                      Regional &amp; Cooperative Directors
+                    </h3>
+                    <p className="text-xs sm:text-sm text-white/70 leading-relaxed">
+                      Tracks district-wide disease vectors, monitors officer visit throughput, and exports auditable PDF/Excel compliance reports.
+                    </p>
+                  </div>
+
+                  <div className="pt-4 border-t border-white/[0.06] space-y-2 text-xs text-white/80 font-medium">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>District-Wide Outbreak &amp; Soil Heatmaps</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>Extension Officer Visit Efficacy Metrics</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>1-Click Auditable PDF &amp; Excel Exports</span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
             </div>
           </div>
         </section>
