@@ -5,7 +5,8 @@ build/
 __pycache__/
 *.py[cod]
 .env
-.env.local
+.env.*
+*.bak
 *.log
 *.tsbuildinfo
 server.log
