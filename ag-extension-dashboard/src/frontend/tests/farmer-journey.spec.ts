@@ -75,4 +75,25 @@ test.describe('@e2e Critical Operational User Journey', () => {
       timeout: 15000,
     });
   });
+
+  test('mobile viewport provides accessible bottom navigation bar for field officers', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await mockDemoBackend(page);
+    await page.goto('/login');
+
+    await page.getByRole('button', { name: 'Try the Demo' }).click({ timeout: 90000 });
+
+    // Assert Mobile Bottom Navigation Bar is visible on mobile screens
+    const bottomNav = page.locator('nav[aria-label="Mobile Navigation Bar"]');
+    await expect(bottomNav).toBeVisible({ timeout: 30000 });
+
+    // Verify key action items exist inside mobile bottom bar
+    await expect(bottomNav.getByRole('button', { name: 'Home' })).toBeVisible();
+    await expect(bottomNav.getByRole('button', { name: 'Farmers' })).toBeVisible();
+    await expect(bottomNav.getByRole('button', { name: 'AI Scan' })).toBeVisible();
+    await expect(bottomNav.getByRole('button', { name: 'Knowledge' })).toBeVisible();
+    await expect(bottomNav.getByRole('button', { name: 'Toggle Full Menu' })).toBeVisible();
+  });
 });
