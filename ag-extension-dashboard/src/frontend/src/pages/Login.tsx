@@ -99,7 +99,7 @@ export function Login({ onDemo }: LoginProps) {
 
   return (
     <div
-      className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4 relative overflow-hidden"
+      className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4 sm:p-6 relative overflow-hidden"
       role="main"
       aria-label="Login page"
     >
@@ -110,18 +110,18 @@ export function Login({ onDemo }: LoginProps) {
         <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-amber-500/[0.08] blur-[150px]" />
       </div>
 
-      <div className="w-full max-w-md lg:max-w-5xl grid lg:grid-cols-12 gap-8 items-center relative z-10 my-6">
+      <div className="w-full max-w-md lg:max-w-5xl grid lg:grid-cols-12 gap-6 lg:gap-8 items-stretch relative z-10 my-auto py-6">
         {/* Left Side: Interactive Agro Intelligence Preview HUD (Desktop) */}
         <motion.div
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="hidden lg:flex lg:col-span-6 flex-col justify-between h-[640px] p-8 rounded-3xl bg-slate-900/60 border border-white/10 backdrop-blur-2xl shadow-2xl relative overflow-hidden"
+          className="hidden lg:flex lg:col-span-6 flex-col justify-between p-7 rounded-3xl bg-slate-900/70 border border-white/10 backdrop-blur-2xl shadow-2xl relative overflow-hidden self-stretch"
         >
           {/* Top Brand & Status */}
-          <div className="flex items-center justify-between z-10">
+          <div className="flex items-center justify-between z-10 pb-2">
             <div className="flex items-center gap-3">
-              <img src="/logo.png" alt="GPExts Logo" className="w-9 h-9 object-contain rounded-xl" />
+              <img src="/logo.png" alt="GPExts Logo" className="w-9 h-9 object-contain rounded-xl shadow-md" />
               <div>
                 <span className="font-extrabold text-base tracking-tight text-white block leading-none">
                   GPExts
@@ -138,21 +138,21 @@ export function Login({ onDemo }: LoginProps) {
           </div>
 
           {/* Interactive Procedural Canvas in Center */}
-          <div className="h-[360px] w-full my-4 rounded-2xl overflow-hidden border border-white/5 relative z-10">
+          <div className="flex-1 min-h-[300px] w-full my-3 rounded-2xl overflow-hidden border border-white/5 relative z-10 bg-slate-950">
             <AgroEcosystemCanvasScrubber interactive={true} showControls={false} />
           </div>
 
           {/* Bottom Live Feature Badges */}
-          <div className="grid grid-cols-3 gap-2 text-center z-10 pt-2 border-t border-white/5">
-            <div className="p-2 rounded-xl bg-white/[0.03] border border-white/5">
+          <div className="grid grid-cols-3 gap-2 text-center z-10 pt-3 border-t border-white/5">
+            <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/5">
               <div className="text-[10px] font-mono text-sky-400 font-bold">NASA POWER</div>
               <div className="text-[11px] text-white/80 font-medium">Solar & Rain</div>
             </div>
-            <div className="p-2 rounded-xl bg-white/[0.03] border border-white/5">
+            <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/5">
               <div className="text-[10px] font-mono text-emerald-400 font-bold">SOILGRIDS</div>
               <div className="text-[11px] text-white/80 font-medium">Stratigraphy</div>
             </div>
-            <div className="p-2 rounded-xl bg-white/[0.03] border border-white/5">
+            <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/5">
               <div className="text-[10px] font-mono text-purple-400 font-bold">OFFLINE USSD</div>
               <div className="text-[11px] text-white/80 font-medium">Edge Sync</div>
             </div>
@@ -163,144 +163,150 @@ export function Login({ onDemo }: LoginProps) {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="lg:col-span-6 backdrop-blur-2xl bg-slate-900/80 border border-white/10 shadow-2xl rounded-3xl p-8 w-full relative z-10"
+          className="lg:col-span-6 backdrop-blur-2xl bg-slate-900/90 border border-white/10 shadow-2xl rounded-3xl p-7 sm:p-8 w-full relative z-10 self-stretch flex flex-col justify-between"
           role="form"
           aria-label="Login form"
         >
-          {/* Logo and Language Switcher */}
-          <div className="flex justify-between items-start mb-6">
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold tracking-tight text-white">{t('login_title')}</h1>
-              <p className="text-white/60 text-sm mt-1">{t('login_subtitle')}</p>
+          <div>
+            {/* Logo and Language Switcher */}
+            <div className="flex justify-between items-start mb-6">
+              <div className="flex-1">
+                <h1 className="text-2xl font-bold tracking-tight text-white">{t('login_title')}</h1>
+                <p className="text-white/60 text-sm mt-1">{t('login_subtitle')}</p>
+              </div>
+              <div className="pt-1 flex items-center gap-2">
+                <LiquidToggleSwitch compact />
+                <LanguageSwitcher compact />
+              </div>
             </div>
-            <div className="pt-1 flex items-center gap-2">
-              <LiquidToggleSwitch compact />
-              <LanguageSwitcher compact />
-            </div>
-          </div>
 
-          {/* Demo Banner */}
-          <div className="mb-6 p-3.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20 backdrop-blur-sm flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs text-emerald-300">
-              <Sparkles className="w-4 h-4 text-emerald-400 shrink-0 animate-pulse" />
-              <span>{t('login_want_explore')}</span>
-            </div>
-            <button
-              type="button"
-              onClick={handleDemo}
-              className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 transition-colors"
-            >
-              {t('login_try_demo')}
-            </button>
-          </div>
-
-          {/* Divider */}
-          <div className="flex items-center gap-4 mb-6">
-            <div className="flex-1 h-px bg-white/10"></div>
-            <span className="text-xs font-medium text-white/40 uppercase tracking-wider">{t('login_or')}</span>
-            <div className="flex-1 h-px bg-white/10"></div>
-          </div>
-
-          {/* Error Message */}
-          {error && (
-            <div
-              role="alert"
-              aria-live="polite"
-              className="mb-4 p-3 bg-rose-950/40 border border-rose-500/30 rounded-xl backdrop-blur-sm"
-            >
-              <p className="text-sm text-rose-300">{error}</p>
-            </div>
-          )}
-
-          {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label
-                htmlFor="login-email"
-                className="block text-xs font-medium text-white/70 mb-1.5 uppercase tracking-wide"
+            {/* Demo Banner */}
+            <div className="mb-6 p-3.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20 backdrop-blur-sm flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs text-emerald-300">
+                <Sparkles className="w-4 h-4 text-emerald-400 shrink-0 animate-pulse" />
+                <span>{t('login_want_explore')}</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleDemo}
+                className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 transition-colors"
               >
-                {t('login_email')}
-              </label>
-              <input
-                id="login-email"
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/[0.04] text-white placeholder-white/30 focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all outline-none"
-                placeholder="you@example.com"
-                required
-              />
+                {t('login_try_demo')}
+              </button>
             </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
+            {/* Divider */}
+            <div className="flex items-center gap-4 mb-6">
+              <div className="flex-1 h-px bg-white/10"></div>
+              <span className="text-xs font-medium text-white/40 uppercase tracking-wider">{t('login_or')}</span>
+              <div className="flex-1 h-px bg-white/10"></div>
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div
+                role="alert"
+                aria-live="polite"
+                className="mb-4 p-3 bg-rose-950/40 border border-rose-500/30 rounded-xl backdrop-blur-sm"
+              >
+                <p className="text-sm text-rose-300">{error}</p>
+              </div>
+            )}
+
+            {/* Login Form */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label
+                  htmlFor="login-email"
+                  className="block text-xs font-medium text-white/70 mb-1.5 uppercase tracking-wide"
+                >
+                  {t('login_email')}
+                </label>
+                <input
+                  id="login-email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                  placeholder={t('login_email_placeholder') || 'name@organization.org'}
+                  autoComplete="email"
+                />
+              </div>
+
+              <div>
                 <label
                   htmlFor="login-password"
-                  className="block text-xs font-medium text-white/70 uppercase tracking-wide"
+                  className="block text-xs font-medium text-white/70 mb-1.5 uppercase tracking-wide"
                 >
                   {t('login_password')}
                 </label>
+                <div className="relative">
+                  <input
+                    id="login-password"
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all pr-12"
+                    placeholder="••••••••"
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors p-1"
+                    aria-label={showPassword ? 'Hide secret' : 'Show secret'}
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-xs pt-1">
+                <label className="flex items-center gap-2 cursor-pointer text-white/70 hover:text-white">
+                  <input
+                    type="checkbox"
+                    className="rounded bg-white/10 border-white/20 text-emerald-500 focus:ring-emerald-500/30"
+                  />
+                  <span>{t('login_remember_me')}</span>
+                </label>
                 <Link
                   to="/forgot-password"
-                  className="text-xs text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
+                  className="text-emerald-400 hover:text-emerald-300 transition-colors"
                 >
-                  {t('login_forgot_password') || 'Forgot password?'}
+                  {t('login_forgot_password')}
                 </Link>
               </div>
-              <div className="relative">
-                <input
-                  id="login-password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 pr-12 rounded-xl border border-white/10 bg-white/[0.04] text-white placeholder-white/30 focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all outline-none"
-                  placeholder="••••••••"
-                  required
-                  autoComplete="current-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? 'Hide secret text' : 'Show secret text'}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-3.5 px-4 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 disabled:opacity-50 text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-2"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  {t('login_signing_in')}
-                </>
-              ) : (
-                t('login_sign_in')
-              )}
-            </button>
-          </form>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-lg shadow-emerald-900/30 hover:shadow-emerald-900/50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-slate-900 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>{t('login_signing_in')}</span>
+                  </>
+                ) : (
+                  <span>{t('login_sign_in')}</span>
+                )}
+              </button>
+            </form>
+          </div>
 
-          {/* Register Link */}
-          <p className="mt-6 text-center text-sm text-white/60">
-            {t('login_no_account')}{' '}
-            <Link
-              to="/register"
-              className="text-emerald-400 font-semibold hover:text-emerald-300 transition-colors"
-            >
-              {t('login_register_here')}
-            </Link>
-          </p>
-
-          {/* Version Badge */}
-          <div className="mt-6 pt-4 border-t border-white/10 flex justify-center">
-            <span className="px-2.5 py-0.5 text-xxs font-mono bg-white/[0.05] border border-white/10 text-white/40 rounded-full tracking-wider">
-              APP VERSION: v1.0.2 [HARDENED]
-            </span>
+          {/* Footer */}
+          <div className="mt-8 text-center border-t border-white/5 pt-4">
+            <p className="text-xs text-white/50">
+              {t('login_no_account')}{' '}
+              <Link
+                to="/register"
+                className="text-emerald-400 hover:text-emerald-300 font-semibold transition-colors"
+              >
+                {t('login_create_account')}
+              </Link>
+            </p>
           </div>
         </motion.div>
       </div>
@@ -309,3 +315,4 @@ export function Login({ onDemo }: LoginProps) {
 }
 
 export default Login;
+
