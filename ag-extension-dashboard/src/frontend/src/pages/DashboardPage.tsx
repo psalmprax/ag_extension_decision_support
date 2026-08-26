@@ -621,11 +621,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const { t } = useLanguage();
   const { cardClass, headingClass, dataClass, radiusClass } =
     useThemeClasses();
+  const storeUser = useAppStore(state => state.user);
+  const effectiveUser = user || storeUser;
+  const isAdmin = effectiveUser?.role === 'admin' || effectiveUser?.role === 'superadmin';
 
   return (
     <div className="animate-in fade-in duration-500">
       <OutbreakBanner />
-      <DashboardHeader userName={user?.firstName} t={t} headingClass={headingClass} />
+      <DashboardHeader userName={effectiveUser?.firstName} t={t} headingClass={headingClass} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <DashboardStats
@@ -644,7 +647,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           setIsMapExpanded={setIsMapExpanded}
           handleStartConversation={handleStartConversation}
           handleOpenFarmerDetail={handleOpenFarmerDetail}
-          user={user}
+          user={effectiveUser}
           t={t}
           cardClass={cardClass}
           radiusClass={radiusClass}
@@ -652,7 +655,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
         <div className="space-y-4 sm:space-y-6">
           <SupportEfficiencyCard performanceData={performanceData} t={t} cardClass={cardClass} />
-          {(user?.role === 'admin' || userFromStore?.role === 'admin' || user?.role === 'superadmin') && (
+          {isAdmin && (
             <ActivePulseCard cardClass={cardClass} isLoading={isLoading} />
           )}
           <VegetationHealthCard cardClass={cardClass} />
