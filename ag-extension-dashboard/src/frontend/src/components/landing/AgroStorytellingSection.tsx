@@ -1,7 +1,19 @@
-import React, { useRef, useState } from 'react';
-import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { AgroEcosystemCanvasScrubber } from '@/components/canvas-ui/AgroEcosystemCanvasScrubber';
-import { Satellite, MapPin, Layers, Radio, ArrowDown, Sparkles, CheckCircle2, ChevronRight, UserCheck, Briefcase, Landmark } from 'lucide-react';
+import {
+  Satellite,
+  MapPin,
+  Layers,
+  Radio,
+  Sparkles,
+  CheckCircle2,
+  ChevronRight,
+  ChevronLeft,
+  UserCheck,
+  Briefcase,
+  Landmark,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { playStageChime } from '@/lib/audioHaptics';
 
@@ -209,26 +221,18 @@ const STAGE_DATA_BY_PERSONA: Record<AudiencePersona, StageStoryItem[]> = {
 };
 
 export function AgroStorytellingSection() {
-  const containerRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
-  const [scrollProgress, setScrollProgress] = useState(0);
   const [activeStage, setActiveStage] = useState(0);
   const [persona, setPersona] = useState<AudiencePersona>('officers');
-
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ['start start', 'end end'],
-  });
-
-  useMotionValueEvent(scrollYProgress, 'change', (latest) => {
-    setScrollProgress(latest);
-    const stage = Math.min(3, Math.floor(latest * 4));
-    setActiveStage(stage);
-  });
 
   const handlePersonaChange = (newPersona: AudiencePersona) => {
     setPersona(newPersona);
     playStageChime(activeStage);
+  };
+
+  const handleStageSelect = (stageIndex: number) => {
+    setActiveStage(stageIndex);
+    playStageChime(stageIndex);
   };
 
   const personas = [
@@ -238,29 +242,34 @@ export function AgroStorytellingSection() {
   ];
 
   const currentStageData = STAGE_DATA_BY_PERSONA[persona];
+  const activeStoryItem = currentStageData[activeStage] || currentStageData[0];
+  const IconComp = activeStoryItem.icon;
 
   return (
     <section
-      ref={containerRef}
       id="interactive-story"
-      className="relative h-[300vh] bg-slate-950 border-t border-white/[0.04] scroll-mt-20"
+      className="relative py-16 sm:py-24 bg-slate-950 border-t border-white/[0.04] scroll-mt-20 overflow-hidden"
     >
-      {/* Sticky Fullscreen Pinned Viewport */}
-      <div className="sticky top-0 min-h-screen lg:h-screen w-full flex flex-col justify-between pt-20 sm:pt-24 pb-6 px-4 sm:px-8 overflow-hidden z-20 bg-slate-950/95">
+      {/* Background ambient lighting */}
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900/40 to-slate-950 pointer-events-none" />
+      <div className="absolute -top-40 left-1/4 w-[600px] h-[600px] rounded-full bg-emerald-500/[0.03] blur-[150px] pointer-events-none" />
+      <div className="absolute -bottom-40 right-1/4 w-[600px] h-[600px] rounded-full bg-sky-500/[0.03] blur-[150px] pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-8">
         {/* Section Header & Persona Switcher */}
-        <div className="max-w-7xl w-full mx-auto flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 sm:gap-4 z-30 pb-2 border-b border-white/[0.06]">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 pb-4 border-b border-white/[0.06]">
           <div>
-            <div className="flex items-center gap-2 text-xs font-mono font-bold tracking-widest text-emerald-400 uppercase mb-1">
+            <div className="flex items-center gap-2 text-xs font-mono font-bold tracking-widest text-emerald-400 uppercase mb-1.5">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Scroll-Driven Agronomic Intelligence Pipeline</span>
+              <span>Agronomic Intelligence Pipeline</span>
             </div>
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white tracking-tight">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
               From Satellite Orbit to Soil Root Zone
             </h2>
           </div>
 
           {/* Persona Switcher Buttons */}
-          <div className="flex items-center gap-1 bg-slate-900/90 backdrop-blur-md border border-white/10 p-1 rounded-xl shadow-lg">
+          <div className="flex items-center gap-1.5 bg-slate-900/90 backdrop-blur-md border border-white/10 p-1.5 rounded-2xl shadow-lg">
             {personas.map((p) => {
               const isSelected = persona === p.id;
               const Icon = p.icon;
@@ -270,13 +279,13 @@ export function AgroStorytellingSection() {
                   type="button"
                   aria-label={`View story as ${p.label}`}
                   onClick={() => handlePersonaChange(p.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                     isSelected
                       ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-950'
                       : 'text-white/60 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  <Icon className="w-3.5 h-3.5" />
+                  <Icon className="w-4 h-4" />
                   <span>{p.label}</span>
                 </button>
               );
@@ -284,104 +293,121 @@ export function AgroStorytellingSection() {
           </div>
         </div>
 
-        {/* Main Split Grid: Left Canvas Scrubber + Right Dynamic HUD Narrative */}
-        <div className="max-w-7xl w-full mx-auto grid lg:grid-cols-12 gap-6 lg:gap-8 items-center flex-1 my-auto py-3 z-30 min-h-0">
-          {/* Left Canvas Scrubber (7 cols) */}
-          <div className="lg:col-span-7 h-[280px] sm:h-[360px] lg:h-[460px] xl:h-[500px] w-full relative rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-slate-900/50 backdrop-blur-md">
+        {/* Main 2-Column Showcase */}
+        <div className="grid lg:grid-cols-12 gap-8 items-stretch">
+          {/* Left Canvas Scrubber Column (7 cols) */}
+          <div className="lg:col-span-7 flex flex-col min-h-[440px] sm:min-h-[500px] w-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-slate-900/60 backdrop-blur-md">
             <AgroEcosystemCanvasScrubber
-              progress={scrollProgress}
-              showControls={false}
+              progress={activeStage * 0.28 + 0.05}
+              interactive={true}
+              showControls={true}
               className="h-full w-full"
             />
           </div>
 
-          {/* Right Floating Milestone HUD Card (5 cols) */}
-          <div className="lg:col-span-5 flex flex-col justify-center">
-            {currentStageData.map((stage: StageStoryItem, idx: number) => {
-              if (activeStage !== idx) return null;
-              const IconComp = stage.icon;
-              return (
-                <motion.div
-                  key={`${persona}-${idx}`}
-                  initial={{ opacity: 0, x: 20, scale: 0.95 }}
-                  animate={{ opacity: 1, x: 0, scale: 1 }}
-                  exit={{ opacity: 0, x: -20, scale: 0.95 }}
-                  transition={{ duration: 0.35, ease: 'easeOut' }}
-                  className={`p-6 sm:p-7 rounded-2xl bg-gradient-to-br ${stage.bgGlow} bg-slate-900/95 backdrop-blur-xl border ${stage.border} shadow-2xl relative overflow-hidden`}
-                >
+          {/* Right Milestone HUD Card Column (5 cols) */}
+          <div className="lg:col-span-5 flex flex-col justify-between self-stretch space-y-6">
+            {/* Dynamic Card */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${persona}-${activeStage}`}
+                initial={{ opacity: 0, y: 15, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -15, scale: 0.98 }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
+                className={`p-7 sm:p-8 rounded-3xl bg-gradient-to-br ${activeStoryItem.bgGlow} bg-slate-900/95 backdrop-blur-xl border ${activeStoryItem.border} shadow-2xl flex flex-col justify-between flex-1 relative overflow-hidden`}
+              >
+                <div>
                   {/* Category & Badge */}
-                  <div className="flex items-center justify-between mb-3.5">
-                    <div className="flex items-center gap-2">
-                      <div className={`p-2 rounded-lg bg-white/5 ${stage.color}`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2.5">
+                      <div className={`p-2.5 rounded-xl bg-white/5 ${activeStoryItem.color}`}>
                         <IconComp className="w-5 h-5" />
                       </div>
-                      <span className="text-[11px] font-mono font-bold tracking-wider text-white/60">
-                        {stage.category}
+                      <span className="text-xs font-mono font-bold tracking-wider text-white/60">
+                        {activeStoryItem.category}
                       </span>
                     </div>
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-white/10 text-white/90 border border-white/10">
-                      STEP {stage.num} // 04
+                    <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-white/10 text-white/90 border border-white/10">
+                      STEP {activeStoryItem.num} // 04
                     </span>
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-white mb-3 leading-snug">
-                    {stage.title}
+                  <h3 className="text-xl sm:text-2xl font-bold text-white mb-4 leading-snug">
+                    {activeStoryItem.title}
                   </h3>
 
                   {/* Bullet Points */}
-                  <ul className="space-y-2 mb-4">
-                    {stage.bullets.map((bullet: string, bIdx: number) => (
-                      <li key={bIdx} className="flex items-start gap-2.5 text-xs sm:text-sm text-slate-300">
-                        <CheckCircle2 className={`w-4 h-4 mt-0.5 shrink-0 ${stage.color}`} />
-                        <span className="leading-snug">{bullet}</span>
+                  <ul className="space-y-3 mb-6">
+                    {activeStoryItem.bullets.map((bullet: string, bIdx: number) => (
+                      <li key={bIdx} className="flex items-start gap-3 text-sm text-slate-300">
+                        <CheckCircle2 className={`w-4 h-4 mt-0.5 shrink-0 ${activeStoryItem.color}`} />
+                        <span className="leading-relaxed">{bullet}</span>
                       </li>
                     ))}
                   </ul>
+                </div>
 
-                  {/* Tag & Action */}
-                  <div className="pt-3 border-t border-white/10 flex items-center justify-between">
-                    <span className="text-xs font-mono text-emerald-400/90 font-medium">
-                      ✓ {stage.tag}
-                    </span>
+                {/* Tag & Action */}
+                <div className="pt-4 border-t border-white/10 flex items-center justify-between mt-auto">
+                  <span className="text-xs font-mono text-emerald-400 font-semibold">
+                    ✓ {activeStoryItem.tag}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label="Open Interactive Demo Sandbox"
+                    onClick={() => navigate('/demo')}
+                    className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20"
+                  >
+                    <span>Try Demo</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Stage Quick Switcher Pills */}
+            <div className="bg-slate-900/70 border border-white/10 p-2.5 rounded-2xl flex items-center justify-between gap-2 shadow-lg">
+              <button
+                type="button"
+                aria-label="Previous step"
+                onClick={() => handleStageSelect((activeStage - 1 + 4) % 4)}
+                className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              <div className="grid grid-cols-4 gap-1.5 flex-1">
+                {currentStageData.map((s, idx) => {
+                  const isCurrent = activeStage === idx;
+                  return (
                     <button
+                      key={s.num}
                       type="button"
-                      aria-label="Open Interactive Demo"
-                      onClick={() => navigate('/demo')}
-                      className="flex items-center gap-1.5 text-xs font-semibold text-white/80 hover:text-white transition-colors px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10"
+                      aria-label={`Jump to stage ${s.num}`}
+                      onClick={() => handleStageSelect(idx)}
+                      className={`py-1.5 px-2 rounded-xl text-xxs font-mono font-bold transition-all text-center truncate cursor-pointer ${
+                        isCurrent
+                          ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-950'
+                          : 'bg-white/5 text-white/50 hover:text-white hover:bg-white/10 border border-white/5'
+                      }`}
                     >
-                      <span>Try Interactive Demo</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
+                      {s.num} {s.category.split(' ')[0]}
                     </button>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
+                  );
+                })}
+              </div>
 
-        {/* Bottom Scroll Prompt Bar & Stage Tracker */}
-        <div className="max-w-7xl w-full mx-auto flex items-center justify-between text-xs text-white/50 font-mono pt-3 border-t border-white/[0.06] z-30">
-          <div className="flex items-center gap-2">
-            <ArrowDown className="w-3.5 h-3.5 text-emerald-400 animate-bounce" />
-            <span className="hidden sm:inline">SCROLL TO EXPLORE AGRO-ECOSYSTEM PIPELINE</span>
-            <span className="sm:hidden">SCROLL PIPELINE</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 bg-slate-900/90 px-2 py-1 rounded-lg border border-white/10">
-              {currentStageData.map((_item: StageStoryItem, idx: number) => (
-                <span
-                  key={idx}
-                  className={`w-2 h-2 rounded-full transition-all ${
-                    activeStage === idx ? 'bg-emerald-400 scale-125' : 'bg-white/20'
-                  }`}
-                />
-              ))}
+              <button
+                type="button"
+                aria-label="Next step"
+                onClick={() => handleStageSelect((activeStage + 1) % 4)}
+                className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors cursor-pointer"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
-            <span>
-              {(scrollProgress * 100).toFixed(0)}% SYNCHRONIZED
-            </span>
           </div>
         </div>
       </div>
