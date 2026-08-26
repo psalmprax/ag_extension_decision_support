@@ -45,39 +45,6 @@ export function ScrollSequenceCanvas({
     containerRef ? { target: containerRef as React.RefObject<HTMLElement>, offset: ['start start', 'end end'] } : {}
   );
 
-  // Preload all frames into memory
-  useEffect(() => {
-    let loadedCount = 0;
-    const images: HTMLImageElement[] = [];
-    imagesRef.current = images;
-
-    for (let i = 0; i < frameCount; i++) {
-      const img = new Image();
-      img.src = getFrameUrl(i);
-      img.onload = () => {
-        loadedCount++;
-        const pct = Math.round((loadedCount / frameCount) * 100);
-        setLoadPercent(pct);
-        onLoadProgress?.(pct);
-        if (loadedCount === frameCount) {
-          setIsLoaded(true);
-          renderFrame(currentFrameRef.current);
-        } else if (loadedCount === 1) {
-          renderFrame(0);
-        }
-      };
-      img.onerror = () => {
-        loadedCount++;
-        if (loadedCount === frameCount) setIsLoaded(true);
-      };
-      images.push(img);
-    }
-
-    return () => {
-      imagesRef.current = [];
-    };
-  }, [frameCount, getFrameUrl, onLoadProgress]);
-
   // Render a specific frame index to canvas
   const renderFrame = useCallback(
     (index: number) => {
@@ -130,6 +97,39 @@ export function ScrollSequenceCanvas({
     },
     [fit, backgroundColor]
   );
+
+  // Preload all frames into memory
+  useEffect(() => {
+    let loadedCount = 0;
+    const images: HTMLImageElement[] = [];
+    imagesRef.current = images;
+
+    for (let i = 0; i < frameCount; i++) {
+      const img = new Image();
+      img.src = getFrameUrl(i);
+      img.onload = () => {
+        loadedCount++;
+        const pct = Math.round((loadedCount / frameCount) * 100);
+        setLoadPercent(pct);
+        onLoadProgress?.(pct);
+        if (loadedCount === frameCount) {
+          setIsLoaded(true);
+          renderFrame(currentFrameRef.current);
+        } else if (loadedCount === 1) {
+          renderFrame(0);
+        }
+      };
+      img.onerror = () => {
+        loadedCount++;
+        if (loadedCount === frameCount) setIsLoaded(true);
+      };
+      images.push(img);
+    }
+
+    return () => {
+      imagesRef.current = [];
+    };
+  }, [frameCount, getFrameUrl, onLoadProgress, renderFrame]);
 
   // Resize canvas for device pixel ratio
   const handleResize = useCallback(() => {

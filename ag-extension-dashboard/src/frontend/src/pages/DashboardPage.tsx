@@ -623,7 +623,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     useThemeClasses();
   const storeUser = useAppStore(state => state.user);
   const effectiveUser = user || storeUser;
-  const isAdmin = effectiveUser?.role === 'admin' || effectiveUser?.role === 'superadmin';
+  const _isAdmin = effectiveUser?.role === 'admin' || effectiveUser?.role === 'superadmin';
 
   return (
     <div className="animate-in fade-in duration-500">

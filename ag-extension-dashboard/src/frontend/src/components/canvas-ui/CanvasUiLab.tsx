@@ -67,6 +67,7 @@ export const CanvasUiLab: React.FC = () => {
             { id: 'rag_graph' as const, label: 'RAG Graph', icon: Network },
             { id: 'particle_reveal' as const, label: 'Particle Reveal', icon: Sparkles },
             { id: 'canvasui_liquid' as const, label: 'WebGL Liquid', icon: Droplets },
+            { id: 'sequence_scrubber' as const, label: 'Frame Scrubber', icon: Sliders },
           ].map(effect => (
             <button
               key={effect.id}
@@ -212,38 +213,37 @@ export const CanvasUiLab: React.FC = () => {
                       <span>{perk}</span>
                     </div>
                   ))}
-          <div className="relative w-full h-[320px] rounded-xl overflow-hidden border border-white/10 bg-stone-950">
-            <LuminousForceField className="w-full h-full" />
-            <div className="absolute top-4 left-4 p-4 rounded-xl bg-black/60 border border-white/10 backdrop-blur-md max-w-xs">
-              <span className="text-xxs font-mono text-emerald-400 uppercase tracking-wider block mb-1">
-                Luminous Force Field
-              </span>
-              <p className="text-xs text-stone-300">
-                Dynamic particle repulsion grid reacting to mouse movements and velocities in real
-                time.
-              </p>
-            </div>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Select Pro Subscription"
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-500/25 cursor-pointer"
+                >
+                  Select Pro Subscription
+                </button>
+              </div>
+            </LuminousForceField>
           </div>
         )}
 
         {/* Effect 5: Soil Nutrient Heatmap */}
         {selectedEffect === 'soil_heatmap' && (
-          <div className="w-full max-w-2xl">
-            <SoilNutrientHeatmapCanvas className="w-full h-[380px] rounded-xl border border-white/10" />
+          <div className="w-full max-w-2xl bg-black/50 p-6 rounded-2xl border border-white/10 backdrop-blur-md">
+            <SoilNutrientHeatmapCanvas initialLayer="ph" />
           </div>
         )}
 
-        {/* Effect 6: Disease Saliency Loupe */}
+        {/* Effect 6: Disease Saliency & Loupe Lens */}
         {selectedEffect === 'disease_saliency' && (
-          <div className="w-full max-w-2xl">
-            <DiseaseSaliencyCanvas className="w-full h-[380px] rounded-xl border border-white/10" />
+          <div className="w-full max-w-2xl bg-black/50 p-6 rounded-2xl border border-white/10 backdrop-blur-md">
+            <DiseaseSaliencyCanvas />
           </div>
         )}
 
         {/* Effect 7: RAG Knowledge Graph */}
         {selectedEffect === 'rag_graph' && (
-          <div className="w-full max-w-2xl">
-            <RagKnowledgeGraphCanvas className="w-full h-[380px] rounded-xl border border-white/10" />
+          <div className="w-full max-w-2xl bg-black/50 p-6 rounded-2xl border border-white/10 backdrop-blur-md">
+            <RagKnowledgeGraphCanvas />
           </div>
         )}
 
@@ -333,6 +333,7 @@ export const CanvasUiLab: React.FC = () => {
                 min="0"
                 max="1"
                 step="0.01"
+                aria-label="Frame scrubber progress"
                 value={scrubberProgress}
                 onChange={(e) => setScrubberProgress(parseFloat(e.target.value))}
                 className="w-full accent-emerald-500 bg-white/10 rounded-lg cursor-pointer"
