@@ -655,7 +655,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
         <div className="space-y-4 sm:space-y-6">
           <SupportEfficiencyCard performanceData={performanceData} t={t} cardClass={cardClass} />
-          {isAdmin && (
+          {(user?.role === 'admin' || user?.role === 'superadmin') && (
             <ActivePulseCard cardClass={cardClass} isLoading={isLoading} />
           )}
           <VegetationHealthCard cardClass={cardClass} />
