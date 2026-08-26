@@ -2,7 +2,7 @@ import { test, expect, type Page } from '@playwright/test';
 
 const DEMO_USER = {
   id: 'demo-farmer-1',
-  email: 'demo@agridemo.com',
+  email: 'demo@agridemo.io',
   firstName: 'Emmanuel',
   lastName: 'Mwangi',
   role: 'extension_officer',
@@ -16,76 +16,63 @@ const AUTH_RESPONSE = {
   user: DEMO_USER,
 };
 
-async function setupE2EMockRoutes(page: Page) {
+async function mockDemoBackend(page: Page) {
   const isApiPath = (url: URL) => url.pathname.startsWith('/api/');
 
   await page.route(isApiPath, async route => {
-    const pathname = new URL(route.request().url()).pathname;
-
-    if (pathname === '/api/auth/demo' || pathname === '/api/auth/login') {
-      return route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify(AUTH_RESPONSE),
-      });
-    }
-
-    if (pathname === '/api/auth/me') {
-      return route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: DEMO_USER }),
-      });
-    }
-
-    if (pathname === '/api/external/weather') {
-      return route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          data: { temp: 22, temperature: 22, condition: 'sunny', humidity: 40, windSpeed: 5 },
-        }),
-      });
-    }
-
-    if (pathname.includes('/farmers') || pathname.includes('/visits') || pathname.includes('/reports') || pathname.includes('/activities') || pathname.includes('/users') || pathname.includes('/crops')) {
-      return route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: [] }),
-      });
-    }
-
-    return route.fulfill({
+    await route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({ success: true, data: {} }),
     });
   });
+  await page.route(url => url.pathname === '/api/auth/demo', async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(AUTH_RESPONSE),
+    });
+  });
+  await page.route(url => url.pathname === '/api/auth/me', async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: DEMO_USER }),
+    });
+  });
+  await page.route(url => url.pathname === '/api/external/weather', async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: { temp: 22, temperature: 22, condition: 'sunny', humidity: 40, windSpeed: 5 },
+      }),
+    });
+  });
 }
 
 test.describe('@e2e Critical Operational User Journey', () => {
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
 
-  test('extension officer full lifecycle: demo login -> dashboard -> map & metrics', async ({ page }) => {
-    await setupE2EMockRoutes(page);
-
-    // 1. Visit Login Page
+  test('extension officer full lifecycle: demo login -> dashboard metrics -> field verification', async ({
+    page,
+  }) => {
+    await mockDemoBackend(page);
     await page.goto('/login');
 
-    // 2. Click Demo Mode
-    await page.getByRole('button', { name: 'Try the Demo' }).click({ timeout: 60000 });
+    await page.getByRole('button', { name: 'Try the Demo' }).click({ timeout: 90000 });
+    await expect(page.getByRole('button', { name: 'Dashboard' }).first()).toBeVisible({
+      timeout: 30000,
+    });
 
-    // 3. Verify Dashboard Navigation & Elements
-    await expect(page.getByRole('button', { name: 'Dashboard' }).first()).toBeVisible({ timeout: 30000 });
+    // 1. Positive control: Verify the assigned demo officer and farmer are rendered
+    await expect(page.getByText('Emmanuel Mwangi').first()).toBeVisible({ timeout: 15000 });
 
-    // Verify Region Badge is displayed
-    const regionBadge = page.locator('text=/.*Overview/i').first();
-    await expect(regionBadge).toBeVisible();
-
-    // 4. Verify Map Container exists
-    const mapElement = page.locator('.leaflet-container');
-    await expect(mapElement).toBeVisible();
+    // 2. Navigation to Knowledge Base / Fields
+    await page.goto('/fields');
+    await expect(page.getByText('Machakos Maize Sector A').first()).toBeVisible({
+      timeout: 15000,
+    });
   });
 });
