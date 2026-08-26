@@ -456,6 +456,14 @@ function App() {
           </div>
         )}
 
+        {/* Accessible Skip to Main Content link */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[9999] focus:px-4 focus:py-2.5 focus:bg-emerald-600 focus:text-white focus:font-semibold focus:text-sm focus:rounded-lg focus:shadow-2xl focus:ring-2 focus:ring-white focus:outline-none transition-all"
+        >
+          {t('skip_to_main_content') || 'Skip to main content'}
+        </a>
+
         <AppHeader
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
@@ -494,7 +502,9 @@ function App() {
           />
 
           <main
-            className={`flex-1 overflow-y-auto overflow-x-hidden transition-all duration-300 ${sidebarOpen ? 'md:ml-72' : ''} relative pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-6`}
+            id="main-content"
+            tabIndex={-1}
+            className={`flex-1 overflow-y-auto overflow-x-hidden outline-none transition-all duration-300 ${sidebarOpen ? 'md:ml-72' : ''} relative pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-6`}
           >
             <ErrorBoundary componentName="MainContent">
               <Suspense

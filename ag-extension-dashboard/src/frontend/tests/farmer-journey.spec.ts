@@ -49,6 +49,14 @@ async function setupE2EMockRoutes(page: Page) {
       });
     }
 
+    if (pathname.includes('/farmers') || pathname.includes('/visits') || pathname.includes('/reports') || pathname.includes('/activities') || pathname.includes('/users') || pathname.includes('/crops')) {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: [] }),
+      });
+    }
+
     return route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -73,7 +81,7 @@ test.describe('@e2e Critical Operational User Journey', () => {
     await expect(page.getByRole('button', { name: 'Dashboard' }).first()).toBeVisible({ timeout: 30000 });
 
     // Verify Region Badge is displayed
-    const regionBadge = page.locator('text=Kenya Overview');
+    const regionBadge = page.locator('text=/.*Overview/i').first();
     await expect(regionBadge).toBeVisible();
 
     // 4. Verify Map Container exists

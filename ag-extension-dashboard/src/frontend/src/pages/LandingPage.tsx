@@ -366,6 +366,14 @@ export function LandingPage() {
       {/* ── WebGL / CanvasUI Fluid Dynamics Background ── */}
       <LiquidBackgroundCanvas />
 
+      {/* Accessible Skip to Main Content */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[9999] focus:px-4 focus:py-2.5 focus:bg-emerald-600 focus:text-white focus:font-semibold focus:text-sm focus:rounded-lg focus:shadow-2xl focus:ring-2 focus:ring-white focus:outline-none transition-all"
+      >
+        Skip to main content
+      </a>
+
       {/* ── NAV ── */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-950/75 backdrop-blur-2xl border-b border-white/[0.06]">
         <div className="max-w-[90rem] w-full mx-auto px-6 h-16 flex items-center justify-between">

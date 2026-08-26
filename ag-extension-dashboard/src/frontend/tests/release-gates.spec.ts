@@ -37,4 +37,15 @@ test.describe('@release public accessibility gates', () => {
     }
     await expect(password).toBeFocused();
   });
+
+  test('app shell provides accessible skip-to-content link and keyboard access', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+
+    // Verify skip to main content link exists
+    const skipLink = page.getByRole('link', { name: /Skip to main content/i });
+    await expect(skipLink).toBeAttached();
+
+    // Verify accessible main element exists
+    await expect(page.locator('#main-content')).toBeAttached();
+  });
 });

@@ -44,6 +44,11 @@
     touch-action: manipulation;
   }
 
+  /* Universal Accessible Focus Rings for Keyboard Navigation (Desktop & Mobile Keypads) */
+  :focus-visible {
+    @apply outline-none ring-2 ring-emerald-500 ring-offset-2 ring-offset-white dark:ring-offset-slate-950;
+  }
+
   /* Eliminate 300ms tap delay: see https://webkit.org/blog/5610/more-responsive-tap-on-ios/ */
   a,
   button,
@@ -53,6 +58,18 @@
   select,
   summary {
     -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Respect User Reduced Motion Preferences */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 
   body {
