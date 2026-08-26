@@ -88,7 +88,10 @@ class UsageService {
             if (type === 'sms') updateData.smsCount = { increment: count };
             if (type === 'ai_chat') updateData.aiChatCount = { increment: count };
             if (type === 'report') updateData.reportCount = { increment: count };
-            if (type === 'ai_vision') updateData.aiVisionCount = { increment: count };
+
+            if (Object.keys(updateData).length === 0) {
+                return true;
+            }
 
             await getPrisma().usage.update({
                 where: { id: subscription.usage.id },
@@ -143,7 +146,7 @@ class UsageService {
     }
 
     private resolveProLimitAndCurrent(
-        data: { usage?: Record<string, number> | null; plan?: { features?: Record<string, number> | null } | null } | null,
+        data: Awaited<ReturnType<UsageService['getUsage']>>,
         type: UsageType
     ): { current: number; limit: number } {
         const features = (data?.plan?.features || {}) as Record<string, number>;
@@ -156,7 +159,7 @@ class UsageService {
             case 'report':
                 return { current: data?.usage?.reportCount || 0, limit: features.reportLimit ?? 50 };
             case 'ai_vision':
-                return { current: data?.usage?.aiVisionCount || 0, limit: features.aiVisionLimit ?? 100 };
+                return { current: 0, limit: features.aiVisionLimit ?? 100 };
             case 'speech':
                 return { current: 0, limit: features.speechLimit ?? 200 };
             case 'whatsapp':

@@ -71,7 +71,7 @@ export class SatelliteService {
         if (!response.ok) throw new Error(`Sentinel Hub API error: ${response.status}`);
         const data = (await response.json()) as { channels?: number[][] };
         const ndvi = data?.channels?.[0]?.[0];
-        if (!Number.isFinite(ndvi)) return [];
+        if (typeof ndvi !== 'number' || !Number.isFinite(ndvi)) return [];
         return [this.toSpectralData(ndvi, lat, lng, 'sentinel-hub', '10m')];
     }
 
@@ -82,7 +82,7 @@ export class SatelliteService {
         if (!response.ok) throw new Error(`NASA GIBS API error: ${response.status}`);
         const data = (await response.json()) as { features?: Array<{ properties?: { ndvi?: number } }> };
         const ndvi = data?.features?.[0]?.properties?.ndvi;
-        if (!Number.isFinite(ndvi)) return [];
+        if (typeof ndvi !== 'number' || !Number.isFinite(ndvi)) return [];
         return [this.toSpectralData(ndvi, lat, lng, 'nasa-gibs', '250m')];
     }
 
