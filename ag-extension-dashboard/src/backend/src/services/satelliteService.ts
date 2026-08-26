@@ -69,7 +69,7 @@ export class SatelliteService {
             }),
         });
         if (!response.ok) throw new Error(`Sentinel Hub API error: ${response.status}`);
-        const data: any = await response.json();
+        const data = (await response.json()) as { channels?: number[][] };
         const ndvi = data?.channels?.[0]?.[0];
         if (!Number.isFinite(ndvi)) return [];
         return [this.toSpectralData(ndvi, lat, lng, 'sentinel-hub', '10m')];
@@ -80,7 +80,7 @@ export class SatelliteService {
         const url = `https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=MODIS_Terra_Vegetation_Indices&STYLES=&SRS=EPSG:4326&BBOX=${lat - 0.1},${lng - 0.1},${lat + 0.1},${lng + 0.1}&WIDTH=256&HEIGHT=256&TIME=${date}&INFO_FORMAT=application/json`;
         const response = await fetch(url);
         if (!response.ok) throw new Error(`NASA GIBS API error: ${response.status}`);
-        const data: any = await response.json();
+        const data = (await response.json()) as { features?: Array<{ properties?: { ndvi?: number } }> };
         const ndvi = data?.features?.[0]?.properties?.ndvi;
         if (!Number.isFinite(ndvi)) return [];
         return [this.toSpectralData(ndvi, lat, lng, 'nasa-gibs', '250m')];
@@ -161,7 +161,7 @@ export class SatelliteService {
             body: new URLSearchParams({ grant_type: 'client_credentials', client_id: this.sentinelHubClientId!, client_secret: this.sentinelHubClientSecret! }),
         });
         if (!response.ok) throw new Error(`Sentinel Hub auth error: ${response.status}`);
-        const data: any = await response.json();
+        const data = (await response.json()) as { access_token?: string };
         if (typeof data?.access_token !== 'string' || data.access_token.length === 0) throw new Error('Sentinel Hub returned no access token');
         return data.access_token;
     }

@@ -84,7 +84,7 @@ class UsageService {
                 return false;
             }
 
-            const updateData: any = {};
+            const updateData: Record<string, { increment: number }> = {};
             if (type === 'sms') updateData.smsCount = { increment: count };
             if (type === 'ai_chat') updateData.aiChatCount = { increment: count };
             if (type === 'report') updateData.reportCount = { increment: count };
@@ -143,10 +143,10 @@ class UsageService {
     }
 
     private resolveProLimitAndCurrent(
-        data: any,
+        data: { usage?: Record<string, number> | null; plan?: { features?: Record<string, number> | null } | null } | null,
         type: UsageType
     ): { current: number; limit: number } {
-        const features = data?.plan?.features || {};
+        const features = (data?.plan?.features || {}) as Record<string, number>;
 
         switch (type) {
             case 'sms':
