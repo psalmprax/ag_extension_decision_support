@@ -232,9 +232,9 @@ export function AgroStorytellingSection() {
   };
 
   const personas = [
-    { id: 'officers' as const, label: 'Field Extension Officers', icon: UserCheck },
+    { id: 'officers' as const, label: 'Field Officers', icon: UserCheck },
     { id: 'agribusiness' as const, label: 'Agribusiness & Co-ops', icon: Briefcase },
-    { id: 'donors' as const, label: 'Gov & Impact Donors', icon: Landmark },
+    { id: 'donors' as const, label: 'Gov & Donors', icon: Landmark },
   ];
 
   const currentStageData = STAGE_DATA_BY_PERSONA[persona];
@@ -243,24 +243,24 @@ export function AgroStorytellingSection() {
     <section
       ref={containerRef}
       id="interactive-story"
-      className="relative h-[320vh] bg-slate-950 border-t border-white/[0.04]"
+      className="relative h-[300vh] bg-slate-950 border-t border-white/[0.04] scroll-mt-20"
     >
       {/* Sticky Fullscreen Pinned Viewport */}
-      <div className="sticky top-0 h-screen w-full flex flex-col justify-between p-4 sm:p-8 overflow-hidden z-20">
+      <div className="sticky top-0 min-h-screen lg:h-screen w-full flex flex-col justify-between pt-20 sm:pt-24 pb-6 px-4 sm:px-8 overflow-hidden z-20 bg-slate-950/95">
         {/* Section Header & Persona Switcher */}
-        <div className="max-w-7xl w-full mx-auto flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 z-30 pt-2">
+        <div className="max-w-7xl w-full mx-auto flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 sm:gap-4 z-30 pb-2 border-b border-white/[0.06]">
           <div>
             <div className="flex items-center gap-2 text-xs font-mono font-bold tracking-widest text-emerald-400 uppercase mb-1">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Scroll-Driven Agronomic Intelligence Pipeline</span>
             </div>
-            <h2 className="text-xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white tracking-tight">
               From Satellite Orbit to Soil Root Zone
             </h2>
           </div>
 
           {/* Persona Switcher Buttons */}
-          <div className="flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-md border border-white/10 p-1 rounded-xl">
+          <div className="flex items-center gap-1 bg-slate-900/90 backdrop-blur-md border border-white/10 p-1 rounded-xl shadow-lg">
             {personas.map((p) => {
               const isSelected = persona === p.id;
               const Icon = p.icon;
@@ -277,7 +277,7 @@ export function AgroStorytellingSection() {
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">{p.label}</span>
+                  <span>{p.label}</span>
                 </button>
               );
             })}
@@ -285,9 +285,9 @@ export function AgroStorytellingSection() {
         </div>
 
         {/* Main Split Grid: Left Canvas Scrubber + Right Dynamic HUD Narrative */}
-        <div className="max-w-7xl w-full mx-auto grid lg:grid-cols-12 gap-6 items-center flex-1 my-3 z-30 min-h-0">
+        <div className="max-w-7xl w-full mx-auto grid lg:grid-cols-12 gap-6 lg:gap-8 items-center flex-1 my-auto py-3 z-30 min-h-0">
           {/* Left Canvas Scrubber (7 cols) */}
-          <div className="lg:col-span-7 h-[40vh] lg:h-[56vh] w-full relative">
+          <div className="lg:col-span-7 h-[280px] sm:h-[360px] lg:h-[460px] xl:h-[500px] w-full relative rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-slate-900/50 backdrop-blur-md">
             <AgroEcosystemCanvasScrubber
               progress={scrollProgress}
               showControls={false}
@@ -307,40 +307,40 @@ export function AgroStorytellingSection() {
                   animate={{ opacity: 1, x: 0, scale: 1 }}
                   exit={{ opacity: 0, x: -20, scale: 0.95 }}
                   transition={{ duration: 0.35, ease: 'easeOut' }}
-                  className={`p-6 sm:p-7 rounded-2xl bg-gradient-to-br ${stage.bgGlow} bg-slate-900/90 backdrop-blur-xl border ${stage.border} shadow-2xl relative overflow-hidden`}
+                  className={`p-6 sm:p-7 rounded-2xl bg-gradient-to-br ${stage.bgGlow} bg-slate-900/95 backdrop-blur-xl border ${stage.border} shadow-2xl relative overflow-hidden`}
                 >
                   {/* Category & Badge */}
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-3.5">
                     <div className="flex items-center gap-2">
                       <div className={`p-2 rounded-lg bg-white/5 ${stage.color}`}>
                         <IconComp className="w-5 h-5" />
                       </div>
-                      <span className="text-[11px] font-mono font-bold tracking-wider text-white/50">
+                      <span className="text-[11px] font-mono font-bold tracking-wider text-white/60">
                         {stage.category}
                       </span>
                     </div>
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-white/10 text-white/80 border border-white/10">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-white/10 text-white/90 border border-white/10">
                       STEP {stage.num} // 04
                     </span>
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-lg sm:text-2xl font-bold text-white mb-3.5 leading-snug">
+                  <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-white mb-3 leading-snug">
                     {stage.title}
                   </h3>
 
                   {/* Bullet Points */}
-                  <ul className="space-y-2 mb-5">
+                  <ul className="space-y-2 mb-4">
                     {stage.bullets.map((bullet: string, bIdx: number) => (
-                      <li key={bIdx} className="flex items-start gap-2 text-xs sm:text-sm text-slate-300">
+                      <li key={bIdx} className="flex items-start gap-2.5 text-xs sm:text-sm text-slate-300">
                         <CheckCircle2 className={`w-4 h-4 mt-0.5 shrink-0 ${stage.color}`} />
-                        <span>{bullet}</span>
+                        <span className="leading-snug">{bullet}</span>
                       </li>
                     ))}
                   </ul>
 
                   {/* Tag & Action */}
-                  <div className="pt-3.5 border-t border-white/10 flex items-center justify-between">
+                  <div className="pt-3 border-t border-white/10 flex items-center justify-between">
                     <span className="text-xs font-mono text-emerald-400/90 font-medium">
                       ✓ {stage.tag}
                     </span>
@@ -348,9 +348,9 @@ export function AgroStorytellingSection() {
                       type="button"
                       aria-label="Open Interactive Demo"
                       onClick={() => navigate('/demo')}
-                      className="flex items-center gap-1.5 text-xs font-semibold text-white/80 hover:text-white transition-colors"
+                      className="flex items-center gap-1.5 text-xs font-semibold text-white/80 hover:text-white transition-colors px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10"
                     >
-                      <span>Interactive Demo</span>
+                      <span>Try Interactive Demo</span>
                       <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -361,14 +361,15 @@ export function AgroStorytellingSection() {
         </div>
 
         {/* Bottom Scroll Prompt Bar & Stage Tracker */}
-        <div className="max-w-7xl w-full mx-auto flex items-center justify-between text-xs text-white/40 font-mono pb-2 z-30">
+        <div className="max-w-7xl w-full mx-auto flex items-center justify-between text-xs text-white/50 font-mono pt-3 border-t border-white/[0.06] z-30">
           <div className="flex items-center gap-2">
             <ArrowDown className="w-3.5 h-3.5 text-emerald-400 animate-bounce" />
-            <span>SCROLL TO ADVANCE STRATIGRAPHY & UPLINK</span>
+            <span className="hidden sm:inline">SCROLL TO EXPLORE AGRO-ECOSYSTEM PIPELINE</span>
+            <span className="sm:hidden">SCROLL PIPELINE</span>
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 bg-slate-900/80 px-2 py-1 rounded-lg border border-white/10">
+            <div className="flex items-center gap-1 bg-slate-900/90 px-2 py-1 rounded-lg border border-white/10">
               {currentStageData.map((_item: StageStoryItem, idx: number) => (
                 <span
                   key={idx}
@@ -378,7 +379,7 @@ export function AgroStorytellingSection() {
                 />
               ))}
             </div>
-            <span className="hidden sm:inline">
+            <span>
               {(scrollProgress * 100).toFixed(0)}% SYNCHRONIZED
             </span>
           </div>
