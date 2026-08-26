@@ -374,6 +374,13 @@ export function LandingPage() {
               Agent OS
             </a>
             <a
+              href="#interactive-story"
+              className="text-sm font-medium text-sky-400 hover:text-sky-300 transition-colors flex items-center gap-1.5"
+            >
+              <Layers className="w-3.5 h-3.5" />
+              3D Pipeline
+            </a>
+            <a
               href="#how-it-works"
               className="text-sm font-medium text-white/60 hover:text-white transition-colors"
             >
@@ -440,6 +447,7 @@ export function LandingPage() {
                   { label: 'Why Us', href: '#problem' },
                   { label: 'Features', href: '#features' },
                   { label: 'Agent OS (Goal Mode)', href: '#agent-os' },
+                  { label: '3D Agro Pipeline', href: '#interactive-story' },
                   { label: 'How It Works', href: '#how-it-works' },
                   { label: 'Ecosystem & Soil Telemetry', href: '#capabilities' },
                   { label: 'Frequently Asked Questions', href: '#faq' },
