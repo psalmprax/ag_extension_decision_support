@@ -1,5 +1,5 @@
 # ============================================================
-# Stage 1: Dependencies — install ALL deps (dev + prod)
+# Stage 1: Dependencies — install production dependencies
 # ============================================================
 FROM node:20-slim AS deps
 WORKDIR /app
@@ -9,8 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-cert
 COPY package*.json ./
 COPY prisma/ ./prisma/
 
-RUN npm ci --only=production --no-audit --no-fund 2>/dev/null || npm install --include=prod --no-audit --no-fund && \
-    npm prune --production 2>/dev/null; exit 0
+RUN npm install --omit=dev --no-audit --no-fund && npx prisma generate
 
 # ============================================================
 # Stage 2: Build — install devDeps + compile TypeScript
@@ -23,7 +22,7 @@ COPY package*.json ./
 COPY prisma/ ./prisma/
 
 # Install ALL dependencies including devDeps
-RUN npm ci --no-audit --no-fund 2>/dev/null || npm install --no-audit --no-fund
+RUN npm install --no-audit --no-fund
 
 # Generate Prisma client
 RUN npx prisma generate
@@ -44,7 +43,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-cert
 # Install dependencies with devDeps for ts-node-dev
 COPY package*.json ./
 COPY prisma/ ./prisma/
-RUN npm ci --no-audit --no-fund 2>/dev/null || npm install --no-audit --no-fund
+RUN npm install --no-audit --no-fund
 RUN npx prisma generate
 
 # Copy all source for hot-reload
@@ -62,18 +61,15 @@ CMD ["npm", "run", "dev"]
 FROM node:20-slim AS production
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates tini curl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates tini curl ffmpeg && rm -rf /var/lib/apt/lists/*
 
-# Copy production node_modules only
+# Copy production node_modules
 COPY --from=deps /app/node_modules ./node_modules
 
 # Copy compiled output + prisma schema
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/package*.json ./
 COPY --from=build /app/prisma ./prisma
-
-# Copy prisma-generated client from build stage
-COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 
 RUN chown -R node:node /app
 USER node

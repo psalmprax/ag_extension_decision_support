@@ -125,13 +125,25 @@ const DashboardStats: React.FC<{
 };
 
 const ActivePulseCard: React.FC<{ cardClass: string; isLoading: boolean }> = ({ cardClass, isLoading }) => {
+  const isDemo = useAppStore(s => s.isDemo);
   const { data: health, isLoading: hl } = useQuery({
-    queryKey: ['active-pulse-health'],
+    queryKey: ['active-pulse-health', isDemo],
     queryFn: async () => {
+      if (isDemo) {
+        return {
+          status: 'healthy',
+          environment: 'demo-sandbox',
+          uptime: 1234567,
+          services: {
+            database: 'connected',
+            cache: 'connected',
+          },
+        };
+      }
       const { data } = await import('@/api/client').then(m => m.default.get('/health'));
       return data;
     },
-    enabled: !!localStorage.getItem('token'),
+    enabled: isDemo || !!localStorage.getItem('token'),
     refetchInterval: 60_000,
     staleTime: 30_000,
   });
@@ -609,11 +621,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const { t } = useLanguage();
   const { cardClass, headingClass, dataClass, radiusClass } =
     useThemeClasses();
+  const storeUser = useAppStore(state => state.user);
+  const effectiveUser = user || storeUser;
+  const _isAdmin = effectiveUser?.role === 'admin' || effectiveUser?.role === 'superadmin';
 
   return (
     <div className="animate-in fade-in duration-500">
       <OutbreakBanner />
-      <DashboardHeader userName={user?.firstName} t={t} headingClass={headingClass} />
+      <DashboardHeader userName={effectiveUser?.firstName} t={t} headingClass={headingClass} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <DashboardStats
@@ -632,7 +647,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           setIsMapExpanded={setIsMapExpanded}
           handleStartConversation={handleStartConversation}
           handleOpenFarmerDetail={handleOpenFarmerDetail}
-          user={user}
+          user={effectiveUser}
           t={t}
           cardClass={cardClass}
           radiusClass={radiusClass}
@@ -640,7 +655,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
         <div className="space-y-4 sm:space-y-6">
           <SupportEfficiencyCard performanceData={performanceData} t={t} cardClass={cardClass} />
-          <ActivePulseCard cardClass={cardClass} isLoading={isLoading} />
+          {(user?.role === 'admin' || user?.role === 'superadmin') && (
+            <ActivePulseCard cardClass={cardClass} isLoading={isLoading} />
+          )}
           <VegetationHealthCard cardClass={cardClass} />
           <EfficacyCard />
           <AdvisoriesCard />

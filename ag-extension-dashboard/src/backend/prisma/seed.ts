@@ -13,9 +13,29 @@ async function main() {
   const passwordHash = await bcrypt.hash('password123', 10);
 
   // Users
+  // 1. System Administrator
+  await prisma.user.upsert({
+    where: { email: 'admin@agridemo.com' },
+    update: {
+      passwordHash,
+      role: 'admin',
+    },
+    create: {
+      email: 'admin@agridemo.com',
+      passwordHash,
+      firstName: 'System',
+      lastName: 'Administrator',
+      role: 'admin',
+      region: 'Global',
+    },
+  });
+
+  // 2. Demo Extension Officer
   const user = await prisma.user.upsert({
     where: { email: 'demo@agridemo.com' },
-    update: {},
+    update: {
+      passwordHash,
+    },
     create: {
       email: 'demo@agridemo.com',
       passwordHash,
@@ -25,6 +45,29 @@ async function main() {
       region: 'Kenya',
     },
   });
+
+  // 3. Regional Managers
+  const regionalManagers = [
+    { email: 'rm.lilongwe@agridemo.com', firstName: 'Grace', lastName: 'Banda', region: 'Lilongwe' },
+    { email: 'rm.kumasi@agridemo.com', firstName: 'Kwame', lastName: 'Asante', region: 'Kumasi' },
+    { email: 'rm.lusaka@agridemo.com', firstName: 'Blessing', lastName: 'Zulu', region: 'Lusaka' },
+    { email: 'rm.dhaka@agridemo.com', firstName: 'Rahima', lastName: 'Begum', region: 'Dhaka' },
+  ];
+
+  for (const rm of regionalManagers) {
+    await prisma.user.upsert({
+      where: { email: rm.email },
+      update: { passwordHash, role: 'regional_manager' },
+      create: {
+        email: rm.email,
+        passwordHash,
+        firstName: rm.firstName,
+        lastName: rm.lastName,
+        role: 'regional_manager',
+        region: rm.region,
+      },
+    });
+  }
 
   // Subscription Plans
   const freePlan = await prisma.subscriptionPlan.upsert({

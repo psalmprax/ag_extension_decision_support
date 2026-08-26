@@ -18,12 +18,13 @@ import {
 } from 'lucide-react';
 import { CanvasUiLab } from '@/components/canvas-ui/CanvasUiLab';
 import { UssdGatewayTester } from '@/components/telecom/UssdGatewayTester';
+import { AgroEcosystemCanvasScrubber } from '@/components/canvas-ui/AgroEcosystemCanvasScrubber';
 
 export function DemoPage({
-  initialTab = 'rag',
-}: { initialTab?: 'rag' | 'synthesis' | 'telemetry' | 'canvas' | 'telecom' } = {}) {
+  initialTab = 'scrubber',
+}: { initialTab?: 'rag' | 'synthesis' | 'telemetry' | 'canvas' | 'telecom' | 'scrubber' } = {}) {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'rag' | 'synthesis' | 'telemetry' | 'canvas' | 'telecom'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'rag' | 'synthesis' | 'telemetry' | 'canvas' | 'telecom' | 'scrubber'>(initialTab);
 
   // RAG states
   const [isTyping, setIsTyping] = useState(false);
@@ -157,14 +158,20 @@ export function DemoPage({
         </div>
 
         {/* Tab bar */}
-        <div className="flex gap-2 mb-8 bg-white/5 p-1.5 rounded-xl border border-white/5 max-w-3xl mx-auto overflow-x-auto">
+        <div className="flex gap-2 mb-8 bg-white/5 p-1.5 rounded-xl border border-white/5 max-w-4xl mx-auto overflow-x-auto">
           {[
+            {
+              key: 'scrubber' as const,
+              icon: Sparkles,
+              label: '3D Agro Scrubber',
+              color: 'text-emerald-400',
+            },
             { key: 'rag' as const, icon: Brain, label: 'RAG Assistant', color: 'text-purple-400' },
             {
               key: 'synthesis' as const,
               icon: Smartphone,
               label: 'Voice Synthesis',
-              color: 'text-emerald-400',
+              color: 'text-sky-400',
             },
             {
               key: 'telemetry' as const,
@@ -422,6 +429,57 @@ export function DemoPage({
                   Data sourced from NASA POWER, SoilGrids v2, and FAOSTAT APIs. All metrics are
                   region-specific and updated in real time when connected.
                 </p>
+              </div>
+            </div>
+          )}
+
+          {/* 3D Agro Scrubber Tab */}
+          {activeTab === 'scrubber' && (
+            <div className="space-y-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/5">
+                <div>
+                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-emerald-400" />
+                    Interactive 3D Agro-Intelligence Scrubber
+                  </h2>
+                  <p className="text-xs text-stone-400 mt-1">
+                    Drag the slider or click stages to scrub through the 4-phase remote-sensing and agronomic decision pipeline.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 font-mono text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/20">
+                  <Activity className="w-3.5 h-3.5 animate-pulse" />
+                  <span>60 FPS PROCEDURAL CANVAS</span>
+                </div>
+              </div>
+
+              <div className="h-[480px] w-full">
+                <AgroEcosystemCanvasScrubber interactive={true} showControls={true} />
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-4 pt-2">
+                <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-1">
+                  <div className="text-xs font-mono text-sky-400">STAGE 01 // ORBITAL</div>
+                  <div className="text-sm font-bold text-white">Atmospheric Flux</div>
+                  <p className="text-xs text-stone-400">
+                    NASA POWER solar radiation and GPM rainfall ingested every 6 hours.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-1">
+                  <div className="text-xs font-mono text-emerald-400">STAGE 02 // CANOPY</div>
+                  <div className="text-sm font-bold text-white">Multi-Spectral NDVI</div>
+                  <p className="text-xs text-stone-400">
+                    Vegetation vigor index mapped across centimeter-accurate GPS smallholder plots.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-1">
+                  <div className="text-xs font-mono text-purple-400">STAGE 03-04 // SYNTHESIS</div>
+                  <div className="text-sm font-bold text-white">Edge USSD Uplink</div>
+                  <p className="text-xs text-stone-400">
+                    SoilGrids v2 calibrated with RAG rules, dispatched to SMS/USSD offline channels.
+                  </p>
+                </div>
               </div>
             </div>
           )}

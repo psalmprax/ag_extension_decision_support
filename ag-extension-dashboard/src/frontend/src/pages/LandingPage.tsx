@@ -48,6 +48,7 @@ import {
 } from 'lucide-react';
 import { LiquidToggleSwitch } from '@/components/canvasui/LiquidToggleSwitch';
 import { LiquidBackgroundCanvas } from '@/components/canvasui/LiquidBackgroundCanvas';
+import { AgroStorytellingSection } from '@/components/landing/AgroStorytellingSection';
 
 // ─── Animation variants ─────────────────────────────────────────
 const stagger = {
@@ -288,15 +289,15 @@ export function LandingPage() {
     >
       {/* ── Global Animated Mesh Background ── */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="mesh-orb-1 absolute top-[-10%] left-[-10%] w-[800px] h-[800px] rounded-full bg-emerald-600/[0.09] blur-[160px]" />
-        <div className="mesh-orb-2 absolute top-[30%] right-[-15%] w-[700px] h-[700px] rounded-full bg-amber-500/[0.07] blur-[140px]" />
-        <div className="mesh-orb-3 absolute top-[60%] left-[10%] w-[600px] h-[600px] rounded-full bg-emerald-400/[0.06] blur-[120px]" />
-        <div className="mesh-orb-2 absolute top-[85%] right-[5%] w-[500px] h-[500px] rounded-full bg-teal-500/[0.06] blur-[100px]" />
+        <div className="mesh-orb-1 absolute top-[-10%] left-[-10%] w-[800px] h-[800px] rounded-full bg-emerald-600/[0.05] blur-[180px]" />
+        <div className="mesh-orb-2 absolute top-[30%] right-[-15%] w-[700px] h-[700px] rounded-full bg-amber-500/[0.04] blur-[150px]" />
+        <div className="mesh-orb-3 absolute top-[60%] left-[10%] w-[600px] h-[600px] rounded-full bg-emerald-400/[0.035] blur-[130px]" />
+        <div className="mesh-orb-2 absolute top-[85%] right-[5%] w-[500px] h-[500px] rounded-full bg-teal-500/[0.035] blur-[110px]" />
       </div>
 
       {/* Global Cursor spotlight */}
       <motion.div
-        className="fixed w-[600px] h-[600px] rounded-full pointer-events-none z-0 opacity-40"
+        className="fixed w-[600px] h-[600px] rounded-full pointer-events-none z-0 opacity-25"
         style={{
           x: springX,
           y: springY,
@@ -373,6 +374,13 @@ export function LandingPage() {
               Agent OS
             </a>
             <a
+              href="#interactive-story"
+              className="text-sm font-medium text-sky-400 hover:text-sky-300 transition-colors flex items-center gap-1.5"
+            >
+              <Layers className="w-3.5 h-3.5" />
+              3D Pipeline
+            </a>
+            <a
               href="#how-it-works"
               className="text-sm font-medium text-white/60 hover:text-white transition-colors"
             >
@@ -439,6 +447,7 @@ export function LandingPage() {
                   { label: 'Why Us', href: '#problem' },
                   { label: 'Features', href: '#features' },
                   { label: 'Agent OS (Goal Mode)', href: '#agent-os' },
+                  { label: '3D Agro Pipeline', href: '#interactive-story' },
                   { label: 'How It Works', href: '#how-it-works' },
                   { label: 'Ecosystem & Soil Telemetry', href: '#capabilities' },
                   { label: 'Frequently Asked Questions', href: '#faq' },
@@ -495,11 +504,11 @@ export function LandingPage() {
             <img
               src="/images/landing/hero-aerial.jpg"
               alt="Lush green agricultural farmland and smallholder plots from above"
-              className="w-full h-full object-cover object-center opacity-25 mix-blend-luminosity scale-105 filter saturate-150"
+              className="w-full h-full object-cover object-center opacity-20 mix-blend-luminosity scale-105 filter saturate-125"
               loading="eager"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/90 to-slate-950" />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-slate-950/50 to-slate-950" />
+            <div className="absolute inset-0 bg-gradient-to-b from-slate-950/85 via-slate-950/92 to-slate-950" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-slate-950/60 to-slate-950" />
           </div>
 
           {/* Grid pattern */}
@@ -1506,6 +1515,9 @@ export function LandingPage() {
             </div>
           </div>
         </section>
+
+        {/* ── INTERACTIVE 3D SCROLL-DRIVEN AGRO-ECOSYSTEM STORYTELLING ── */}
+        <AgroStorytellingSection />
 
         {/* ── CORE CAPABILITIES & DATA ECOSYSTEM ── */}
         <section
