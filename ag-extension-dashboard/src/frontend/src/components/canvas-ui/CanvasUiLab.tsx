@@ -19,6 +19,7 @@ import { LuminousForceField } from './LuminousForceField';
 import { SoilNutrientHeatmapCanvas } from './SoilNutrientHeatmapCanvas';
 import { DiseaseSaliencyCanvas } from './DiseaseSaliencyCanvas';
 import { RagKnowledgeGraphCanvas } from './RagKnowledgeGraphCanvas';
+import { ScrollSequenceCanvas } from './ScrollSequenceCanvas';
 import { Liquid } from '@/components/canvasui/Liquid';
 import { ParticleReveal } from '@/components/canvasui/ParticleReveal';
 
@@ -33,7 +34,9 @@ export const CanvasUiLab: React.FC = () => {
     | 'rag_graph'
     | 'particle_reveal'
     | 'canvasui_liquid'
+    | 'sequence_scrubber'
   >('liquid');
+  const [scrubberProgress, setScrubberProgress] = useState(0.5);
   const [fluidColor, setFluidColor] = useState('#059669');
   const [tiltIntensity, setTiltIntensity] = useState(20);
 
@@ -209,33 +212,38 @@ export const CanvasUiLab: React.FC = () => {
                       <span>{perk}</span>
                     </div>
                   ))}
-                </div>
-                <button className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-500/25 cursor-pointer">
-                  Select Pro Subscription
-                </button>
-              </div>
-            </LuminousForceField>
+          <div className="relative w-full h-[320px] rounded-xl overflow-hidden border border-white/10 bg-stone-950">
+            <LuminousForceField className="w-full h-full" />
+            <div className="absolute top-4 left-4 p-4 rounded-xl bg-black/60 border border-white/10 backdrop-blur-md max-w-xs">
+              <span className="text-xxs font-mono text-emerald-400 uppercase tracking-wider block mb-1">
+                Luminous Force Field
+              </span>
+              <p className="text-xs text-stone-300">
+                Dynamic particle repulsion grid reacting to mouse movements and velocities in real
+                time.
+              </p>
+            </div>
           </div>
         )}
 
         {/* Effect 5: Soil Nutrient Heatmap */}
         {selectedEffect === 'soil_heatmap' && (
-          <div className="w-full max-w-2xl bg-black/50 p-6 rounded-2xl border border-white/10 backdrop-blur-md">
-            <SoilNutrientHeatmapCanvas initialLayer="ph" />
+          <div className="w-full max-w-2xl">
+            <SoilNutrientHeatmapCanvas className="w-full h-[380px] rounded-xl border border-white/10" />
           </div>
         )}
 
-        {/* Effect 6: Disease Saliency & Loupe Lens */}
+        {/* Effect 6: Disease Saliency Loupe */}
         {selectedEffect === 'disease_saliency' && (
-          <div className="w-full max-w-2xl bg-black/50 p-6 rounded-2xl border border-white/10 backdrop-blur-md">
-            <DiseaseSaliencyCanvas />
+          <div className="w-full max-w-2xl">
+            <DiseaseSaliencyCanvas className="w-full h-[380px] rounded-xl border border-white/10" />
           </div>
         )}
 
         {/* Effect 7: RAG Knowledge Graph */}
         {selectedEffect === 'rag_graph' && (
-          <div className="w-full max-w-2xl bg-black/50 p-6 rounded-2xl border border-white/10 backdrop-blur-md">
-            <RagKnowledgeGraphCanvas />
+          <div className="w-full max-w-2xl">
+            <RagKnowledgeGraphCanvas className="w-full h-[380px] rounded-xl border border-white/10" />
           </div>
         )}
 
@@ -289,6 +297,47 @@ export const CanvasUiLab: React.FC = () => {
                 </div>
               </div>
             </Liquid>
+          </div>
+        )}
+
+        {/* Effect 10: 24fps Image Sequence Canvas Scrubber */}
+        {selectedEffect === 'sequence_scrubber' && (
+          <div className="w-full max-w-lg p-6 rounded-2xl bg-stone-900/80 border border-white/10 backdrop-blur-md space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-bold text-white">60 FPS Sequence Scrubber</h4>
+                <p className="text-xs text-stone-400">
+                  DVxUI / Awwwards high-performance frame canvas scrubber
+                </p>
+              </div>
+              <span className="px-2 py-0.5 rounded text-xxs font-mono bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                {(scrubberProgress * 100).toFixed(0)}%
+              </span>
+            </div>
+            <div className="h-[220px] w-full rounded-xl overflow-hidden border border-white/10 relative">
+              <ScrollSequenceCanvas
+                frameCount={24}
+                getFrameUrl={(idx) => `/logo.png?f=${idx}`}
+                manualProgress={scrubberProgress}
+                fit="contain"
+                className="w-full h-full"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-xs text-stone-400">
+                <span>Manual Scrub Control</span>
+                <span className="font-mono text-emerald-400">Frame {Math.round(scrubberProgress * 24)} / 24</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={scrubberProgress}
+                onChange={(e) => setScrubberProgress(parseFloat(e.target.value))}
+                className="w-full accent-emerald-500 bg-white/10 rounded-lg cursor-pointer"
+              />
+            </div>
           </div>
         )}
       </div>
