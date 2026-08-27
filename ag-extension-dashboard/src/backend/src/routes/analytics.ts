@@ -44,7 +44,8 @@ async function getAnalyticsTenantId(req: Request): Promise<string | null> {
     return req.user?.userId ? getPrincipalTenantId(req.user.userId) : null;
 }
 
-async function getSafeAnalyticsTenantId(req: Request): Promise<string> {
+async function getSafeAnalyticsTenantId(req: Request): Promise<string | null> {
+    if (req.user?.role === 'admin') return null;
     const tenantId = await getAnalyticsTenantId(req);
     return tenantId || EMPTY_TENANT_ID;
 }
@@ -180,7 +181,7 @@ router.get('/dashboard', async (req: Request, res: Response) => {
     try {
         const { userId, role } = req.user as Record<string, unknown>;
         const tenantId = await getPrincipalTenantId(String(userId));
-        if (!tenantId && process.env.NODE_ENV !== 'test') {
+        if (!tenantId && role !== 'admin' && process.env.NODE_ENV !== 'test') {
             return res.status(403).json({ success: false, error: 'Tenant membership required' });
         }
         const user: UserScope = {

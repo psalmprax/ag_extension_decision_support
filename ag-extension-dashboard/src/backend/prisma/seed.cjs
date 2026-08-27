@@ -286,12 +286,28 @@ async function main() {
   console.log('🌱 Starting Prisma DB Seed (seed.cjs)...');
   const passwordHash = await bcrypt.hash('password123', 10);
 
+  // 0. Global Tenant
+  const globalTenant = await prisma.tenant.upsert({
+    where: { id: '00000000-0000-0000-0000-000000000001' },
+    update: { name: 'Global Agricultural Network' },
+    create: {
+      id: '00000000-0000-0000-0000-000000000001',
+      name: 'Global Agricultural Network',
+      region: 'Global',
+      defaultCurrency: 'USD',
+      defaultLanguage: 'en',
+      capabilities: {},
+    },
+  });
+  console.log('✅ Global Tenant seeded:', globalTenant.id);
+
   // 1. System Administrator
   const admin = await prisma.user.upsert({
     where: { email: 'admin@agridemo.com' },
     update: {
       passwordHash,
       role: 'admin',
+      tenantId: globalTenant.id,
     },
     create: {
       email: 'admin@agridemo.com',
@@ -300,15 +316,32 @@ async function main() {
       lastName: 'Administrator',
       role: 'admin',
       region: 'Global',
+      tenantId: globalTenant.id,
     },
   });
   console.log('✅ Admin user verified/seeded:', admin.email);
+
+  await prisma.tenantMembership.upsert({
+    where: {
+      tenantId_userId: {
+        tenantId: globalTenant.id,
+        userId: admin.id,
+      },
+    },
+    update: { role: 'admin' },
+    create: {
+      tenantId: globalTenant.id,
+      userId: admin.id,
+      role: 'admin',
+    },
+  });
 
   // 2. Demo Extension Officer
   const user = await prisma.user.upsert({
     where: { email: 'demo@agridemo.com' },
     update: {
       passwordHash,
+      tenantId: globalTenant.id,
     },
     create: {
       email: 'demo@agridemo.com',
@@ -317,9 +350,25 @@ async function main() {
       lastName: 'User',
       role: 'extension_officer',
       region: 'Kenya',
+      tenantId: globalTenant.id,
     },
   });
   console.log('✅ Demo user verified/seeded:', user.email);
+
+  await prisma.tenantMembership.upsert({
+    where: {
+      tenantId_userId: {
+        tenantId: globalTenant.id,
+        userId: user.id,
+      },
+    },
+    update: { role: 'extension_officer' },
+    create: {
+      tenantId: globalTenant.id,
+      userId: user.id,
+      role: 'extension_officer',
+    },
+  });
 
   // 3. Regional Managers
   const regionalManagers = [
@@ -330,9 +379,9 @@ async function main() {
   ];
 
   for (const rm of regionalManagers) {
-    await prisma.user.upsert({
+    const seededRm = await prisma.user.upsert({
       where: { email: rm.email },
-      update: { passwordHash, role: 'regional_manager' },
+      update: { passwordHash, role: 'regional_manager', tenantId: globalTenant.id },
       create: {
         email: rm.email,
         passwordHash,
@@ -340,6 +389,22 @@ async function main() {
         lastName: rm.lastName,
         role: 'regional_manager',
         region: rm.region,
+        tenantId: globalTenant.id,
+      },
+    });
+
+    await prisma.tenantMembership.upsert({
+      where: {
+        tenantId_userId: {
+          tenantId: globalTenant.id,
+          userId: seededRm.id,
+        },
+      },
+      update: { role: 'regional_manager' },
+      create: {
+        tenantId: globalTenant.id,
+        userId: seededRm.id,
+        role: 'regional_manager',
       },
     });
   }
@@ -491,6 +556,7 @@ async function main() {
         locationLng: seed.locationLng,
         languagePreference: seed.languagePreference,
         assignedOfficerId: user.id,
+        tenantId: globalTenant.id,
         isActive: true,
       },
       create: {
@@ -515,6 +581,7 @@ async function main() {
         locationLng: seed.locationLng,
         languagePreference: seed.languagePreference,
         assignedOfficerId: user.id,
+        tenantId: globalTenant.id,
         isActive: true,
       },
     });
