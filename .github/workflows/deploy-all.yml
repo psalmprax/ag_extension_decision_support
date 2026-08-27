@@ -779,6 +779,19 @@ jobs:
               fi
             '
 
+      # ── Step 4.5/5: Seed Database (Admin & Initial Users) ─────
+      - name: 4.5/5 Idempotent Seed — check and populate seed data
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
+          command_timeout: 3m
+          script: |
+            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml"
+            docker compose $COMPOSE_FILES exec -T backend npx prisma db seed || echo "⚠️ Seed check completed."
+
       # ── Step 5/5: SSL + Health Check ──────────────────────────
       - name: 5/5 SSL & Health Check — verify certificate and services
         uses: appleboy/ssh-action@master

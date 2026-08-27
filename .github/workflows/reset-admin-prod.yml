@@ -1,0 +1,75 @@
+name: Reset Admin / Seed Production Database
+
+on:
+  workflow_dispatch:
+    inputs:
+      admin_email:
+        description: 'Admin Email to reset/verify'
+        required: true
+        default: 'admin@agridemo.com'
+      admin_password:
+        description: 'New password for Admin'
+        required: true
+        default: 'password123'
+
+permissions:
+  contents: read
+
+jobs:
+  seed_and_reset:
+    name: Seed Database & Reset Admin Credentials
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH into Production Server and Seed / Reset Admin
+        uses: appleboy/ssh-action@master
+        env:
+          TARGET_EMAIL: ${{ github.event.inputs.admin_email }}
+          TARGET_PASSWORD: ${{ github.event.inputs.admin_password }}
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
+          envs: TARGET_EMAIL,TARGET_PASSWORD
+          command_timeout: 10m
+          script: |
+            set -e
+            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml"
+
+            echo "============================================="
+            echo "🌱 Running Prisma DB Seed on Production"
+            echo "============================================="
+            docker compose $COMPOSE_FILES exec -T backend npx prisma db seed
+
+            echo "============================================="
+            echo "🔐 Updating Admin Credentials directly"
+            echo "============================================="
+            docker compose $COMPOSE_FILES exec -T backend node -e "
+              const { PrismaClient } = require('@prisma/client');
+              const bcrypt = require('bcryptjs');
+              const prisma = new PrismaClient();
+              async function run() {
+                const email = process.env.TARGET_EMAIL || 'admin@agridemo.com';
+                const pass = process.env.TARGET_PASSWORD || 'password123';
+                const passwordHash = await bcrypt.hash(pass, 10);
+                const user = await prisma.user.upsert({
+                  where: { email },
+                  update: { passwordHash, role: 'admin' },
+                  create: {
+                    email,
+                    passwordHash,
+                    firstName: 'System',
+                    lastName: 'Administrator',
+                    role: 'admin',
+                    region: 'Global'
+                  }
+                });
+                console.log('✅ Admin user successfully verified/updated:', user.email, 'Role:', user.role);
+                await prisma.\$disconnect();
+              }
+              run().catch(err => { console.error('❌ Error updating admin:', err); process.exit(1); });
+            "
+
+            echo "============================================="
+            echo "✨ Verification Complete!"
+            echo "============================================="

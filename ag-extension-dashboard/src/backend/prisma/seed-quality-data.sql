@@ -10,45 +10,45 @@ INSERT INTO users (id, email, password_hash, first_name, last_name, role, region
 VALUES (
     'a0000000-0000-0000-0000-000000000001',
     'admin@agridemo.com',
-    '$2a$10$6DvN7Kv67Zvz2An/E27R5.5BZc1grMSZZwDbVtjJvN8Vcj8jqofHC',
+    '$2a$10$uU3LeGTW2gCSS6cPf7r1ZOCnOenK3SUXV4NgeLq42BwewrFJAdkDu',
     'System', 'Administrator', 'admin', 'Global', '+1000000001',
     NOW()
-) ON CONFLICT (email) DO NOTHING;
+) ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash;
 
 -- Regional Managers (1 per region)
 INSERT INTO users (id, email, password_hash, first_name, last_name, role, region, phone, created_at)
 VALUES
-    ('b1000000-0000-0000-0000-000000000001', 'rm.lilongwe@agridemo.com', '$2a$10$6DvN7Kv67Zvz2An/E27R5.5BZc1grMSZZwDbVtjJvN8Vcj8jqofHC', 'Grace', 'Banda', 'regional_manager', 'Lilongwe', '+265880000001', NOW()),
-    ('b1000000-0000-0000-0000-000000000002', 'rm.kumasi@agridemo.com', '$2a$10$6DvN7Kv67Zvz2An/E27R5.5BZc1grMSZZwDbVtjJvN8Vcj8jqofHC', 'Kwame', 'Asante', 'regional_manager', 'Kumasi', '+233200000002', NOW()),
-    ('b1000000-0000-0000-0000-000000000003', 'rm.lusaka@agridemo.com', '$2a$10$6DvN7Kv67Zvz2An/E27R5.5BZc1grMSZZwDbVtjJvN8Vcj8jqofHC', 'Blessing', 'Zulu', 'regional_manager', 'Lusaka', '+260950000003', NOW()),
-    ('b1000000-0000-0000-0000-000000000004', 'rm.dhaka@agridemo.com', '$2a$10$6DvN7Kv67Zvz2An/E27R5.5BZc1grMSZZwDbVtjJvN8Vcj8jqofHC', 'Rahima', 'Begum', 'regional_manager', 'Dhaka', '+880170000004', NOW())
-ON CONFLICT (email) DO NOTHING;
+    ('b1000000-0000-0000-0000-000000000001', 'rm.lilongwe@agridemo.com', '$2a$10$uU3LeGTW2gCSS6cPf7r1ZOCnOenK3SUXV4NgeLq42BwewrFJAdkDu', 'Grace', 'Banda', 'regional_manager', 'Lilongwe', '+265880000001', NOW()),
+    ('b1000000-0000-0000-0000-000000000002', 'rm.kumasi@agridemo.com', '$2a$10$uU3LeGTW2gCSS6cPf7r1ZOCnOenK3SUXV4NgeLq42BwewrFJAdkDu', 'Kwame', 'Asante', 'regional_manager', 'Kumasi', '+233200000002', NOW()),
+    ('b1000000-0000-0000-0000-000000000003', 'rm.lusaka@agridemo.com', '$2a$10$uU3LeGTW2gCSS6cPf7r1ZOCnOenK3SUXV4NgeLq42BwewrFJAdkDu', 'Blessing', 'Zulu', 'regional_manager', 'Lusaka', '+260950000003', NOW()),
+    ('b1000000-0000-0000-0000-000000000004', 'rm.dhaka@agridemo.com', '$2a$10$uU3LeGTW2gCSS6cPf7r1ZOCnOenK3SUXV4NgeLq42BwewrFJAdkDu', 'Rahima', 'Begum', 'regional_manager', 'Dhaka', '+880170000004', NOW())
+ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash;
 
 -- Extension Officers (2 per region = 8 total)
 INSERT INTO users (id, email, password_hash, first_name, last_name, role, region, phone, created_at)
 VALUES
     -- Lilongwe, Malawi
-    ('c2000000-0000-0000-0000-000000000001', 'officer.chimwaza@agridemo.com', '$2a$10$6DvN7Kv67Zvz2An/E27R5.5BZc1grMSZZwDbVtjJvN8Vcj8jqofHC', 'James', 'Chimwaza', 'extension_officer', 'Lilongwe', '+265881000001', NOW()),
-    ('c2000000-0000-0000-0000-000000000002', 'officer.phiri@agridemo.com', '$2a$10$6DvN7Kv67Zvz2An/E27R5.5BZc1grMSZZwDbVtjJvN8Vcj8jqofHC', 'Mary', 'Phiri', 'extension_officer', 'Lilongwe', '+265881000002', NOW()),
+    ('c2000000-0000-0000-0000-000000000001', 'officer.chimwaza@agridemo.com', '$2a$10$uU3LeGTW2gCSS6cPf7r1ZOCnOenK3SUXV4NgeLq42BwewrFJAdkDu', 'James', 'Chimwaza', 'extension_officer', 'Lilongwe', '+265881000001', NOW()),
+    ('c2000000-0000-0000-0000-000000000002', 'officer.phiri@agridemo.com', '$2a$10$uU3LeGTW2gCSS6cPf7r1ZOCnOenK3SUXV4NgeLq42BwewrFJAdkDu', 'Mary', 'Phiri', 'extension_officer', 'Lilongwe', '+265881000002', NOW()),
     -- Kumasi, Ghana
-    ('c2000000-0000-0000-0000-000000000003', 'officer.mensah@agridemo.com', '$2a$10$6DvN7Kv67Zvz2An/E27R5.5BZc1grMSZZwDbVtjJvN8Vcj8jqofHC', 'Kofi', 'Mensah', 'extension_officer', 'Kumasi', '+233201000003', NOW()),
-    ('c2000000-0000-0000-0000-000000000004', 'officer.osei@agridemo.com', '$2a$10$6DvN7Kv67Zvz2An/E27R5.5BZc1grMSZZwDbVtjJvN8Vcj8jqofHC', 'Ama', 'Osei', 'extension_officer', 'Kumasi', '+233201000004', NOW()),
+    ('c2000000-0000-0000-0000-000000000003', 'officer.mensah@agridemo.com', '$2a$10$uU3LeGTW2gCSS6cPf7r1ZOCnOenK3SUXV4NgeLq42BwewrFJAdkDu', 'Kofi', 'Mensah', 'extension_officer', 'Kumasi', '+233201000003', NOW()),
+    ('c2000000-0000-0000-0000-000000000004', 'officer.osei@agridemo.com', '$2a$10$uU3LeGTW2gCSS6cPf7r1ZOCnOenK3SUXV4NgeLq42BwewrFJAdkDu', 'Ama', 'Osei', 'extension_officer', 'Kumasi', '+233201000004', NOW()),
     -- Lusaka, Zambia
-    ('c2000000-0000-0000-0000-000000000005', 'officer.mwale@agridemo.com', '$2a$10$6DvN7Kv67Zvz2An/E27R5.5BZc1grMSZZwDbVtjJvN8Vcj8jqofHC', 'Chanda', 'Mwale', 'extension_officer', 'Lusaka', '+260951000005', NOW()),
-    ('c2000000-0000-0000-0000-000000000006', 'officer.banda@agridemo.com', '$2a$10$6DvN7Kv67Zvz2An/E27R5.5BZc1grMSZZwDbVtjJvN8Vcj8jqofHC', 'Thandiwe', 'Banda', 'extension_officer', 'Lusaka', '+260951000006', NOW()),
+    ('c2000000-0000-0000-0000-000000000005', 'officer.mwale@agridemo.com', '$2a$10$uU3LeGTW2gCSS6cPf7r1ZOCnOenK3SUXV4NgeLq42BwewrFJAdkDu', 'Chanda', 'Mwale', 'extension_officer', 'Lusaka', '+260951000005', NOW()),
+    ('c2000000-0000-0000-0000-000000000006', 'officer.banda@agridemo.com', '$2a$10$uU3LeGTW2gCSS6cPf7r1ZOCnOenK3SUXV4NgeLq42BwewrFJAdkDu', 'Thandiwe', 'Banda', 'extension_officer', 'Lusaka', '+260951000006', NOW()),
     -- Dhaka, Bangladesh
-    ('c2000000-0000-0000-0000-000000000007', 'officer.hossain@agridemo.com', '$2a$10$6DvN7Kv67Zvz2An/E27R5.5BZc1grMSZZwDbVtjJvN8Vcj8jqofHC', 'Karim', 'Hossain', 'extension_officer', 'Dhaka', '+880171000007', NOW()),
-    ('c2000000-0000-0000-0000-000000000008', 'officer.akter@agridemo.com', '$2a$10$6DvN7Kv67Zvz2An/E27R5.5BZc1grMSZZwDbVtjJvN8Vcj8jqofHC', 'Fatima', 'Akter', 'extension_officer', 'Dhaka', '+880171000008', NOW())
-ON CONFLICT (email) DO NOTHING;
+    ('c2000000-0000-0000-0000-000000000007', 'officer.hossain@agridemo.com', '$2a$10$uU3LeGTW2gCSS6cPf7r1ZOCnOenK3SUXV4NgeLq42BwewrFJAdkDu', 'Karim', 'Hossain', 'extension_officer', 'Dhaka', '+880171000007', NOW()),
+    ('c2000000-0000-0000-0000-000000000008', 'officer.akter@agridemo.com', '$2a$10$uU3LeGTW2gCSS6cPf7r1ZOCnOenK3SUXV4NgeLq42BwewrFJAdkDu', 'Fatima', 'Akter', 'extension_officer', 'Dhaka', '+880171000008', NOW())
+ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash;
 
 -- Farmer users (4 total, 1 per region)
 INSERT INTO users (id, email, password_hash, first_name, last_name, role, region, phone, created_at)
 VALUES
-    ('d3000000-0000-0000-0000-000000000001', 'farmer.mkandawire@agridemo.com', '$2a$10$6DvN7Kv67Zvz2An/E27R5.5BZc1grMSZZwDbVtjJvN8Vcj8jqofHC', 'Joseph', 'Mkandawire', 'farmer', 'Lilongwe', '+265882000001', NOW()),
-    ('d3000000-0000-0000-0000-000000000002', 'farmer.boateng@agridemo.com', '$2a$10$6DvN7Kv67Zvz2An/E27R5.5BZc1grMSZZwDbVtjJvN8Vcj8jqofHC', 'Akua', 'Boateng', 'farmer', 'Kumasi', '+233202000002', NOW()),
-    ('d3000000-0000-0000-0000-000000000003', 'farmer.tembo@agridemo.com', '$2a$10$6DvN7Kv67Zvz2An/E27R5.5BZc1grMSZZwDbVtjJvN8Vcj8jqofHC', 'Loveness', 'Tembo', 'farmer', 'Lusaka', '+260952000003', NOW()),
-    ('d3000000-0000-0000-0000-000000000004', 'farmer.rahman@agridemo.com', '$2a$10$6DvN7Kv67Zvz2An/E27R5.5BZc1grMSZZwDbVtjJvN8Vcj8jqofHC', 'Nasrin', 'Rahman', 'farmer', 'Dhaka', '+880172000004', NOW())
-ON CONFLICT (email) DO NOTHING;
+    ('d3000000-0000-0000-0000-000000000001', 'farmer.mkandawire@agridemo.com', '$2a$10$uU3LeGTW2gCSS6cPf7r1ZOCnOenK3SUXV4NgeLq42BwewrFJAdkDu', 'Joseph', 'Mkandawire', 'farmer', 'Lilongwe', '+265882000001', NOW()),
+    ('d3000000-0000-0000-0000-000000000002', 'farmer.boateng@agridemo.com', '$2a$10$uU3LeGTW2gCSS6cPf7r1ZOCnOenK3SUXV4NgeLq42BwewrFJAdkDu', 'Akua', 'Boateng', 'farmer', 'Kumasi', '+233202000002', NOW()),
+    ('d3000000-0000-0000-0000-000000000003', 'farmer.tembo@agridemo.com', '$2a$10$uU3LeGTW2gCSS6cPf7r1ZOCnOenK3SUXV4NgeLq42BwewrFJAdkDu', 'Loveness', 'Tembo', 'farmer', 'Lusaka', '+260952000003', NOW()),
+    ('d3000000-0000-0000-0000-000000000004', 'farmer.rahman@agridemo.com', '$2a$10$uU3LeGTW2gCSS6cPf7r1ZOCnOenK3SUXV4NgeLq42BwewrFJAdkDu', 'Nasrin', 'Rahman', 'farmer', 'Dhaka', '+880172000004', NOW())
+ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash;
 
 -- 2. FARMERS (5 per region = 20 total, assigned to officers)
 -- =============================================================
