@@ -482,13 +482,16 @@ jobs:
           command_timeout: 3m
           script: |
             set -e
-            if [ ! -d "/root/ag_extension_decision_support" ]; then
-              cd /root && git clone https://github.com/${{ github.repository }}.git
+            if [ ! -d "/root/ag_extension_decision_support/.git" ]; then
+              rm -rf /root/ag_extension_decision_support
+              cd /root && git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git ag_extension_decision_support
             fi
-            cd /root/ag_extension_decision_support/ag-extension-dashboard
+            cd /root/ag_extension_decision_support
+            git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
             git fetch origin master
             git checkout master
             git reset --hard origin/master
+            cd /root/ag_extension_decision_support/ag-extension-dashboard
 
             if [ ! -f ".env" ]; then
               cp .env.example .env
