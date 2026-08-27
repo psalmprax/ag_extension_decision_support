@@ -127,6 +127,6 @@
     "picomatch": "^4.0.4"
   },
   "prisma": {
-    "seed": "ts-node -r tsconfig-paths/register prisma/seed.ts"
+    "seed": "node prisma/seed.cjs"
   }
 }

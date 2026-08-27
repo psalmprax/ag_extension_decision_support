@@ -791,7 +791,7 @@ jobs:
           script: |
             cd /root/ag_extension_decision_support/ag-extension-dashboard
             COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml"
-            docker compose $COMPOSE_FILES exec -T backend npx prisma db seed || echo "⚠️ Seed check completed."
+            docker compose $COMPOSE_FILES exec -T backend node prisma/seed.cjs || docker compose $COMPOSE_FILES exec -T backend npx prisma db seed || echo "⚠️ Seed check completed."
 
       # ── Step 5/5: SSL + Health Check ──────────────────────────
       - name: 5/5 SSL & Health Check — verify certificate and services
