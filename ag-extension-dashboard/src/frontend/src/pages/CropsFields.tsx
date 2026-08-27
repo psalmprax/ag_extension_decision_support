@@ -350,7 +350,7 @@ export function CropsFields() {
 
   // Aggregate statistics
   const totalFieldsCount = fields.length;
-  const totalAreaHectares = fields.reduce((sum, f) => sum + f.areaHectares, 0);
+  const totalAreaHectares = fields.reduce((sum, f) => sum + (Number(f.areaHectares) || 0), 0);
   const activeCycles = fields.flatMap(f => f.cropCycles || []).filter(c => c.status === 'growing');
   const totalYieldKg = fields
     .flatMap(f => f.cropCycles || [])
@@ -431,7 +431,7 @@ export function CropsFields() {
               <Sliders className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-3xl font-black text-emerald-400 font-mono">{totalAreaHectares.toFixed(1)} ha</p>
+          <p className="text-3xl font-black text-emerald-400 font-mono">{(Number(totalAreaHectares) || 0).toFixed(1)} ha</p>
         </div>
 
         <div className="backdrop-blur-xl bg-slate-900/60 border border-teal-500/20 rounded-2xl p-5 shadow-lg space-y-3">
@@ -451,7 +451,7 @@ export function CropsFields() {
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-3xl font-black text-purple-300 font-mono">{(totalYieldKg / 1000).toFixed(1)} tons</p>
+          <p className="text-3xl font-black text-purple-300 font-mono">{((Number(totalYieldKg) || 0) / 1000).toFixed(1)} tons</p>
         </div>
       </div>
 

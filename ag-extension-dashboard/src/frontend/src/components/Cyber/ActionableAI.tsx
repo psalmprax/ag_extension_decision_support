@@ -74,7 +74,7 @@ const UsdaBenchmarkCard: React.FC<{ data: UsdaBenchmarkResult | null | undefined
           <div className="p-3 bg-white/5 rounded-xl border border-white/5">
             <div className="text-xxs text-white/40 uppercase mb-1">Global Production</div>
             <div className="text-sm font-black text-white">
-              {(metrics.production / 1_000_000).toFixed(1)}M {metrics.unit}
+              {(Number(metrics.production) / 1_000_000).toFixed(1)}M {metrics.unit}
             </div>
           </div>
         )}
@@ -82,7 +82,7 @@ const UsdaBenchmarkCard: React.FC<{ data: UsdaBenchmarkResult | null | undefined
           <div className="p-3 bg-white/5 rounded-xl border border-white/5">
             <div className="text-xxs text-white/40 uppercase mb-1">Average Yield</div>
             <div className="text-sm font-black text-primary-400">
-              {metrics.yield.toFixed(1)} {metrics.unit.replace('tonnes', 't/ha')}
+              {Number(metrics.yield).toFixed(1)} {metrics.unit.replace('tonnes', 't/ha')}
             </div>
           </div>
         )}
@@ -90,7 +90,7 @@ const UsdaBenchmarkCard: React.FC<{ data: UsdaBenchmarkResult | null | undefined
           <div className="p-3 bg-white/5 rounded-xl border border-white/5">
             <div className="text-xxs text-white/40 uppercase mb-1">Global Exports</div>
             <div className="text-sm font-black text-emerald-400">
-              {(metrics.exports / 1_000_000).toFixed(1)}M tonnes
+              {(Number(metrics.exports) / 1_000_000).toFixed(1)}M tonnes
             </div>
           </div>
         )}

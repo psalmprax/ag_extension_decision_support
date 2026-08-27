@@ -159,8 +159,10 @@ async function fetchSmsEvents(userId: string, role: string): Promise<ActivityIte
   const sql = `
     SELECT sh.id, sh.recipient_phone, sh.message, sh.status,
            COALESCE(sh.provider, 'sms') AS provider, sh.created_at,
-           f.name AS farmer_name, f.phone AS farmer_phone,
-           f.region AS farmer_region, f.preferred_language AS farmer_language
+           TRIM(CONCAT(f.first_name, ' ', f.last_name)) AS farmer_name,
+           f.phone AS farmer_phone,
+           f.region AS farmer_region,
+           f.language_preference AS farmer_language
     FROM sms_history sh
     LEFT JOIN farmers f ON f.id = sh.farmer_id
     WHERE sh.created_at >= NOW() - INTERVAL '24 hours'
@@ -211,7 +213,8 @@ async function fetchChatEvents(userId: string, role: string): Promise<ActivityIt
   const sql = `
     SELECT cm.id, cm.role, cm.content, COALESCE(cm.language, 'EN') AS language,
            COALESCE(cm.is_voice, false) AS is_voice, cm.created_at,
-           f.name AS farmer_name, f.phone AS farmer_phone,
+           TRIM(CONCAT(f.first_name, ' ', f.last_name)) AS farmer_name,
+           f.phone AS farmer_phone,
            f.region AS farmer_region
     FROM chat_messages cm
     JOIN chat_conversations cc ON cc.id = cm.conversation_id

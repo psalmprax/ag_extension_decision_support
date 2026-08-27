@@ -101,7 +101,7 @@ export const CropsOverviewTab: React.FC<CropsOverviewTabProps> = ({
                         Soil pH
                       </span>
                       <p className="text-sm font-bold text-slate-200 mt-0.5">
-                        {field.soilPh ? `${field.soilPh.toFixed(1)} pH` : 'Not Measured'}
+                        {field.soilPh ? `${Number(field.soilPh).toFixed(1)} pH` : 'Not Measured'}
                       </p>
                     </div>
                     <div>
@@ -110,7 +110,7 @@ export const CropsOverviewTab: React.FC<CropsOverviewTabProps> = ({
                       </span>
                       <p className="text-sm font-bold text-slate-200 mt-0.5 truncate">
                         {field.latitude && field.longitude
-                          ? `${field.latitude.toFixed(4)}, ${field.longitude.toFixed(4)}`
+                          ? `${Number(field.latitude).toFixed(4)}, ${Number(field.longitude).toFixed(4)}`
                           : 'No GPS Set'}
                       </p>
                     </div>

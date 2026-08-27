@@ -152,7 +152,7 @@ function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: b
             <div className="p-4 bg-theme-bg-secondary/50 dark:bg-gray-900/50 rounded-xl border border-gray-50 dark:border-gray-800">
               <div className="text-xxs text-gray-400 dark:text-gray-500 uppercase font-bold mb-1 tracking-wider">Global Production</div>
               <div className="text-xl font-black text-gray-900 dark:text-white">
-                {(metrics.production / 1_000_000).toFixed(1)}M {metrics.unit}
+                {(Number(metrics.production) / 1_000_000).toFixed(1)}M {metrics.unit}
               </div>
             </div>
           )}
@@ -160,7 +160,7 @@ function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: b
             <div className="p-4 bg-theme-bg-secondary/50 dark:bg-gray-900/50 rounded-xl border border-gray-50 dark:border-gray-800">
               <div className="text-xxs text-gray-400 dark:text-gray-500 uppercase font-bold mb-1 tracking-wider">Average Yield</div>
               <div className="text-xl font-black text-primary-600 dark:text-primary-400">
-                {metrics.yield.toFixed(1)} {metrics.unit.replace('tonnes', 't/ha')}
+                {Number(metrics.yield).toFixed(1)} {metrics.unit.replace('tonnes', 't/ha')}
               </div>
             </div>
           )}
@@ -168,7 +168,7 @@ function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: b
             <div className="p-4 bg-theme-bg-secondary/50 dark:bg-gray-900/50 rounded-xl border border-gray-50 dark:border-gray-800">
               <div className="text-xxs text-gray-400 dark:text-gray-500 uppercase font-bold mb-1 tracking-wider">Global Exports</div>
               <div className="text-xl font-black text-emerald-600 dark:text-emerald-400">
-                {(metrics.exports / 1_000_000).toFixed(1)}M tonnes
+                {(Number(metrics.exports) / 1_000_000).toFixed(1)}M tonnes
               </div>
             </div>
           )}

@@ -56,7 +56,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
     return fullName.includes(term) || loc.includes(term) || crops.includes(term);
   });
 
-  const totalLandHa = effectiveFarmers.reduce((acc, f) => acc + (f.farmSize || 0), 0);
+  const totalLandHa = effectiveFarmers.reduce((acc, f) => acc + (Number(f.farmSize) || 0), 0);
 
   const toggleSelectAll = () => {
     if (selectedFarmers.size === filteredFarmers.length) {
@@ -97,7 +97,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
             </div>
             <div className="px-3 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-center sm:text-left">
               <span className="text-xxs font-semibold text-white/40 uppercase block">Total Land</span>
-              <strong className="text-sm font-bold text-emerald-400 font-mono">{totalLandHa.toFixed(1)} ha</strong>
+              <strong className="text-sm font-bold text-emerald-400 font-mono">{(Number(totalLandHa) || 0).toFixed(1)} ha</strong>
             </div>
             <div className="px-3 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-center sm:text-left">
               <span className="text-xxs font-semibold text-white/40 uppercase block">Selected</span>
