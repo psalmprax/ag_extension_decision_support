@@ -182,6 +182,7 @@
     "**/canvasui/**"
   ],
   "ignoreDependencies": [
+    "@ag-extension/shared",
     "@headlessui/react",
     "@tailwindcss/typography",
     "class-variance-authority",
