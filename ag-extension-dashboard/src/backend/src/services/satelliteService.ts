@@ -98,10 +98,18 @@ export class SatelliteService {
             if (!Array.isArray(daily) || daily.length === 0) {
                 return { data: [], source: 'satellite-history', dataStatus: 'unavailable', reason: 'NASA POWER returned no data for the requested window.' };
             }
-            const ndviApprox = daily.map((d: Record<string, unknown>) => {
-                const temp = Number(d.T2M ?? 0);
+            const validDaily = daily.filter(d => typeof d.T2M === 'number' && Number(d.T2M) > -900);
+            if (validDaily.length === 0) {
+                return { data: [], source: 'satellite-history', dataStatus: 'unavailable', reason: 'NASA POWER returned no valid observations for the requested window.' };
+            }
+            const ndviApprox = validDaily.map(d => {
+                const temp = Number(d.T2M ?? 20);
                 const precip = Number(d.PRECTOTCORR ?? 0);
-                return { date: String(d.date || '').slice(0, 10), ndvi: temp > 5 ? Math.round(Math.min(0.9, 0.3 + (precip / 15) * 0.5 - 0.02 * Math.abs(temp - 25)) * 1000) / 1000 : 0.15 };
+                const score = 0.35 + Math.min(0.4, (precip / 10) * 0.3) - 0.015 * Math.abs(temp - 24);
+                return {
+                    date: String(d.date || '').slice(0, 10),
+                    ndvi: Math.round(Math.min(0.85, Math.max(0.15, score)) * 1000) / 1000,
+                };
             });
             return { data: ndviApprox, source: 'satellite-history', dataStatus: 'live', reason: 'Agroclimatology proxy from NASA POWER; NDVI derived from temp+precip model.' };
         } catch {

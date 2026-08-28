@@ -93,11 +93,17 @@ export class NasaPowerService {
     for (const dateStr of sortedDates) {
       const readable = `${dateStr.slice(0, 4)}-${dateStr.slice(4, 6)}-${dateStr.slice(6, 8)}`;
       const row: DailyPoint = { date: readable };
+      let hasValidParam = false;
       for (const param of parameters) {
         const val = parameterData[param]?.[dateStr];
-        if (typeof val === 'number' && !isNaN(val)) row[param] = Math.round(val * 100) / 100;
+        if (typeof val === 'number' && !isNaN(val) && val > -900) {
+          row[param] = Math.round(val * 100) / 100;
+          hasValidParam = true;
+        }
       }
-      result.push(row);
+      if (hasValidParam) {
+        result.push(row);
+      }
     }
     return result;
   }
