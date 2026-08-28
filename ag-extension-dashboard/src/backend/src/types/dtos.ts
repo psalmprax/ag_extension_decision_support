@@ -662,27 +662,38 @@ export interface ChatConversationDTO {
   createdAt: string | null;
   updatedAt: string | null;
 }
+const getParticipantId = (primary?: string | null, fallback?: string | null) => primary ?? fallback ?? null;
+const getNullableString = (val?: string | null) => val ?? null;
+const getLastMsgIso = (row: ChatConversationRow) => toIso(row.last_message_at) ?? toIso(row.started_at) ?? null;
+const getSatisfactionRating = (row: ChatConversationRow) => row.satisfaction_rating ?? row.satisfaction_score ?? null;
+const getMsgCount = (row: ChatConversationRow): number => {
+  if (typeof row.message_count === 'number') return row.message_count;
+  return parseCount(row.message_count != null ? String(row.message_count) : null);
+};
+
 export function mapChatConversationRow(row: ChatConversationRow): ChatConversationDTO {
+  const displayName = row.farmer_name ?? row.title ?? null;
+
   return {
     id: row.id,
-    userId: row.user_id || row.officer_id || null,
-    officerId: row.officer_id || row.user_id || null,
+    userId: getParticipantId(row.user_id, row.officer_id),
+    officerId: getParticipantId(row.officer_id, row.user_id),
     farmerId: row.farmer_id,
-    farmerName: row.farmer_name || row.title || null,
-    farmerRegion: row.farmer_region || null,
-    farmerPhone: row.farmer_phone || null,
-    officerName: row.officer_name || null,
-    officerRegion: row.officer_region || null,
-    officerEmail: row.officer_email || null,
-    title: row.title || row.farmer_name || null,
+    farmerName: displayName,
+    farmerRegion: getNullableString(row.farmer_region),
+    farmerPhone: getNullableString(row.farmer_phone),
+    officerName: getNullableString(row.officer_name),
+    officerRegion: getNullableString(row.officer_region),
+    officerEmail: getNullableString(row.officer_email),
+    title: displayName,
     status: row.status,
-    language: row.language || 'en',
-    lastMessage: row.last_message || null,
-    lastMessageAt: toIso(row.last_message_at) ?? toIso(row.started_at) ?? null,
-    messageCount: typeof row.message_count === 'number' ? row.message_count : parseInt(String(row.message_count || '0'), 10),
+    language: row.language ?? 'en',
+    lastMessage: getNullableString(row.last_message),
+    lastMessageAt: getLastMsgIso(row),
+    messageCount: getMsgCount(row),
     startedAt: toIso(row.started_at) ?? null,
     endedAt: toIso(row.ended_at) ?? null,
-    satisfactionRating: row.satisfaction_rating ?? row.satisfaction_score ?? null,
+    satisfactionRating: getSatisfactionRating(row),
     metadata: row.metadata ?? null,
     createdAt: toIso(row.created_at) ?? null,
     updatedAt: toIso(row.updated_at) ?? null,

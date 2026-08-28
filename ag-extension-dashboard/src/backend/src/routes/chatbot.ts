@@ -158,6 +158,68 @@ router.get('/conversations/:id/messages', authorize(['admin', 'regional_manager'
   }
 });
 
+interface ConversationBody {
+  farmer_id?: string;
+  farmerId?: string;
+  officer_id?: string;
+  officerId?: string;
+  language?: string;
+}
+
+const resolveParticipants = async (user: AuthenticatedRequestUser, body: ConversationBody) => {
+  let targetFarmerId = body.farmer_id ?? body.farmerId ?? null;
+  let targetOfficerId = body.officer_id ?? body.officerId ?? null;
+
+  if (user.role === 'farmer') {
+    targetFarmerId = (await resolveFarmerId(user.userId)) ?? user.userId;
+    if (!targetOfficerId) {
+      const { rows: fRows } = await query<{ assigned_officer_id: string }>(
+        `SELECT assigned_officer_id FROM farmers WHERE id = $1 LIMIT 1`,
+        [targetFarmerId]
+      );
+      targetOfficerId = fRows[0]?.assigned_officer_id ?? null;
+    }
+  } else if (user.role === 'extension_officer') {
+    targetOfficerId = user.userId;
+  } else {
+    targetOfficerId = targetOfficerId ?? user.userId;
+  }
+
+  return { targetFarmerId, targetOfficerId };
+};
+
+const findExistingConversation = async (farmerId: string, officerId: string) => {
+  const { rows } = await query<ChatConversationRow>(
+    `SELECT cv.*,
+            TRIM(CONCAT(f.first_name, ' ', f.last_name)) AS farmer_name,
+            f.region AS farmer_region,
+            u.name AS officer_name
+       FROM chat_conversations cv
+       LEFT JOIN farmers f ON f.id = cv.farmer_id
+       LEFT JOIN users u ON u.id = cv.officer_id
+      WHERE cv.farmer_id = $1 AND cv.officer_id = $2
+      ORDER BY cv.started_at DESC NULLS LAST
+      LIMIT 1`,
+    [farmerId, officerId]
+  );
+  return rows[0] ?? null;
+};
+
+const fetchRichConversation = async (conversationId: string) => {
+  const { rows } = await query<ChatConversationRow>(
+    `SELECT cv.*,
+            TRIM(CONCAT(f.first_name, ' ', f.last_name)) AS farmer_name,
+            f.region AS farmer_region,
+            u.name AS officer_name
+       FROM chat_conversations cv
+       LEFT JOIN farmers f ON f.id = cv.farmer_id
+       LEFT JOIN users u ON u.id = cv.officer_id
+      WHERE cv.id = $1`,
+    [conversationId]
+  );
+  return rows[0] ?? null;
+};
+
 /**
  * POST /api/chatbot/conversations — Create or retrieve existing 1-to-1 conversation between Officer & Farmer.
  */
@@ -167,79 +229,33 @@ router.post('/conversations', authorize(['admin', 'regional_manager', 'extension
     if (!user) {
       return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
-    const body = req.body as {
-      farmer_id?: string;
-      farmerId?: string;
-      officer_id?: string;
-      officerId?: string;
-      language?: string;
-    };
 
-    let targetFarmerId: string | null = body.farmer_id || body.farmerId || null;
-    let targetOfficerId: string | null = body.officer_id || body.officerId || null;
+    const { targetFarmerId, targetOfficerId } = await resolveParticipants(user, req.body as ConversationBody);
 
-    if (user.role === 'farmer') {
-      targetFarmerId = await resolveFarmerId(user.userId) || user.userId;
-      if (!targetOfficerId) {
-        const { rows: fRows } = await query<{ assigned_officer_id: string }>(
-          `SELECT assigned_officer_id FROM farmers WHERE id = $1 LIMIT 1`,
-          [targetFarmerId]
-        );
-        targetOfficerId = fRows[0]?.assigned_officer_id || null;
-      }
-    } else if (user.role === 'extension_officer') {
-      targetOfficerId = user.userId;
-    } else {
-      if (!targetOfficerId) targetOfficerId = user.userId;
-    }
-
-    // Check if conversation already exists between targetFarmerId and targetOfficerId
     if (targetFarmerId && targetOfficerId) {
-      const { rows: existingRows } = await query<ChatConversationRow>(
-        `SELECT cv.*,
-                TRIM(CONCAT(f.first_name, ' ', f.last_name)) AS farmer_name,
-                f.region AS farmer_region,
-                u.name AS officer_name
-           FROM chat_conversations cv
-           LEFT JOIN farmers f ON f.id = cv.farmer_id
-           LEFT JOIN users u ON u.id = cv.officer_id
-          WHERE cv.farmer_id = $1 AND cv.officer_id = $2
-          ORDER BY cv.started_at DESC NULLS LAST
-          LIMIT 1`,
-        [targetFarmerId, targetOfficerId]
-      );
-      if (existingRows.length > 0) {
+      const existing = await findExistingConversation(targetFarmerId, targetOfficerId);
+      if (existing) {
         return res.status(200).json({
           success: true,
-          data: mapChatConversationRow(existingRows[0]),
+          data: mapChatConversationRow(existing),
           isExisting: true,
         });
       }
     }
 
+    const language = (req.body as ConversationBody).language ?? 'en';
     const { rows } = await query<ChatConversationRow>(
       `INSERT INTO chat_conversations (farmer_id, officer_id, language, status)
        VALUES ($1, $2, $3, 'active')
        RETURNING *`,
-      [targetFarmerId, targetOfficerId, body.language ?? 'en']
+      [targetFarmerId, targetOfficerId, language]
     );
     const created = rows[0];
 
-    // Fetch rich mapped metadata
     if (created && targetFarmerId) {
-      const { rows: richRows } = await query<ChatConversationRow>(
-        `SELECT cv.*,
-                TRIM(CONCAT(f.first_name, ' ', f.last_name)) AS farmer_name,
-                f.region AS farmer_region,
-                u.name AS officer_name
-           FROM chat_conversations cv
-           LEFT JOIN farmers f ON f.id = cv.farmer_id
-           LEFT JOIN users u ON u.id = cv.officer_id
-          WHERE cv.id = $1`,
-        [created.id]
-      );
-      if (richRows.length > 0) {
-        return res.status(201).json({ success: true, data: mapChatConversationRow(richRows[0]) });
+      const rich = await fetchRichConversation(created.id);
+      if (rich) {
+        return res.status(201).json({ success: true, data: mapChatConversationRow(rich) });
       }
     }
 
@@ -288,6 +304,24 @@ router.delete('/conversations/:id', authorize(['admin', 'regional_manager', 'ext
   }
 });
 
+const resolveOrCreateConversation = async (user: AuthenticatedRequestUser, targetFarmerId: string, language?: string) => {
+  const officerId = user.role === 'farmer' ? null : user.userId;
+  const { rows: existing } = await query<{ id: string }>(
+    `SELECT id FROM chat_conversations WHERE farmer_id = $1 AND (officer_id = $2 OR officer_id IS NULL) LIMIT 1`,
+    [targetFarmerId, officerId]
+  );
+  if (existing.length > 0) {
+    return existing[0].id;
+  }
+  const { rows: created } = await query<{ id: string }>(
+    `INSERT INTO chat_conversations (farmer_id, officer_id, language, status)
+     VALUES ($1, $2, $3, 'active')
+     RETURNING id`,
+    [targetFarmerId, officerId, language || 'en']
+  );
+  return created[0]?.id ?? null;
+};
+
 /**
  * POST /api/chatbot/message (and /api/chatbot/messages) — Persist message turn from officer or farmer.
  */
@@ -310,30 +344,14 @@ const handleMessagePost = async (req: AuthedRequest, res: Response) => {
       return res.status(400).json({ success: false, error: 'content is required' });
     }
 
-    let convId = body.conversation_id || body.conversationId;
-    const targetFarmerId = body.farmerId || body.farmer_id;
+    let convId = body.conversation_id ?? body.conversationId;
+    const targetFarmerId = body.farmerId ?? body.farmer_id;
 
-    // If no conversationId provided but farmerId is given, resolve or create the conversation
     if (!convId && targetFarmerId && user) {
-      const officerId = user.role === 'farmer' ? null : user.userId;
-      const { rows: existing } = await query<{ id: string }>(
-        `SELECT id FROM chat_conversations WHERE farmer_id = $1 AND (officer_id = $2 OR officer_id IS NULL) LIMIT 1`,
-        [targetFarmerId, officerId]
-      );
-      if (existing.length > 0) {
-        convId = existing[0].id;
-      } else {
-        const { rows: created } = await query<{ id: string }>(
-          `INSERT INTO chat_conversations (farmer_id, officer_id, language, status)
-           VALUES ($1, $2, $3, 'active')
-           RETURNING id`,
-          [targetFarmerId, officerId, body.language || 'en']
-        );
-        convId = created[0]?.id;
-      }
+      convId = (await resolveOrCreateConversation(user, targetFarmerId, body.language)) ?? undefined;
     }
 
-    const senderRole = body.role || (user?.role === 'farmer' ? 'user' : 'officer');
+    const senderRole = body.role ?? (user?.role === 'farmer' ? 'user' : 'officer');
 
     const { rows } = await query<ChatMessageRow>(
       `INSERT INTO chat_messages (conversation_id, role, content, language)
@@ -342,7 +360,6 @@ const handleMessagePost = async (req: AuthedRequest, res: Response) => {
       [convId ?? null, senderRole, content, body.language ?? null]
     );
 
-    // Bump conversation timestamp
     if (convId) {
       await query(
         `UPDATE chat_conversations SET started_at = NOW() WHERE id = $1`,
