@@ -10,6 +10,9 @@ import {
   Sprout,
   CheckCircle2,
   ArrowLeft,
+  Trash2,
+  Phone,
+  MapPin,
 } from 'lucide-react';
 import { Conversation, ChatMessage } from '../types/dashboard';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -29,6 +32,7 @@ interface FarmerChatPageProps {
   handleFarmerChatSend: (e: React.FormEvent) => void;
   loadFarmers: () => void;
   setShowFarmerModal: (show: boolean) => void;
+  onDeleteConversation?: (id: string) => void;
 }
 
 export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
@@ -42,6 +46,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   handleFarmerChatSend,
   loadFarmers,
   setShowFarmerModal,
+  onDeleteConversation,
 }) => {
   const { t } = useLanguage();
   const { headingClass, btnClass } = useThemeClasses();
@@ -152,37 +157,64 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
             }
             renderItem={conv => {
               const isSelected = activeFarmerConvId === conv.id;
+              const displayName = conv.farmerName || conv.title || (conv.farmerId ? `Farmer #${conv.farmerId.slice(0, 8)}` : 'Smallholder Client');
+              const initial = displayName.trim().charAt(0).toUpperCase() || 'F';
+              const regionText = (conv as unknown as { farmerRegion?: string }).farmerRegion;
               return (
-                <button
-                  onClick={() => {
-                    setActiveFarmerConvId(conv.id);
-                    loadFarmerMessages(conv.id);
-                  }}
-                  className={`w-full p-3 rounded-2xl text-left transition-all border ${
+                <div
+                  key={conv.id}
+                  className={`group relative flex items-center w-full rounded-2xl transition-all border ${
                     isSelected
                       ? 'bg-emerald-500/15 border-emerald-500/40 text-white shadow-lg'
                       : 'bg-slate-950/40 border-white/[0.04] hover:border-white/[0.1] hover:bg-slate-950/80 text-white/70'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => {
+                      setActiveFarmerConvId(conv.id);
+                      loadFarmerMessages(conv.id);
+                    }}
+                    className="flex-1 p-3 text-left flex items-center gap-3 min-w-0"
+                  >
                     <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold shrink-0">
-                      {conv.farmerName?.[0] || 'F'}
+                      {initial}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-center">
                         <span className="font-bold text-xs text-white truncate">
-                          {conv.farmerName}
+                          {displayName}
                         </span>
                         <span className="text-[9px] font-mono text-white/40">
-                          {new Date(conv.startedAt).toLocaleDateString()}
+                          {new Date(conv.startedAt || conv.updatedAt || Date.now()).toLocaleDateString()}
                         </span>
                       </div>
+                      {regionText && (
+                        <div className="text-[9px] text-emerald-400/80 font-mono truncate">
+                          {regionText}
+                        </div>
+                      )}
                       <p className="text-[11px] text-white/50 truncate mt-0.5 font-sans">
                         {conv.lastMessage || 'Advisory session active'}
                       </p>
                     </div>
-                  </div>
-                </button>
+                  </button>
+
+                  {/* Delete Conversation Action */}
+                  {onDeleteConversation && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (window.confirm(`Delete conversation with ${displayName}?`)) {
+                          onDeleteConversation(conv.id);
+                        }
+                      }}
+                      className="opacity-0 group-hover:opacity-100 p-2 mr-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 transition-all border border-rose-500/20"
+                      title="Delete Conversation"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               );
             }}
           />
@@ -207,24 +239,39 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                     <ArrowLeft className="w-4 h-4" />
                   </button>
                   <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-300 font-bold shadow-md shadow-emerald-950/30 shrink-0">
-                    {activeConv.farmerName?.[0] || 'F'}
+                    {(activeConv.farmerName || activeConv.title || 'F').trim().charAt(0).toUpperCase() || 'F'}
                   </div>
                   <div className="min-w-0">
                     <h4 className="font-bold text-xs sm:text-sm text-white flex items-center gap-2 truncate">
-                      <span className="truncate">{activeConv.farmerName}</span>
+                      <span className="truncate">{activeConv.farmerName || activeConv.title || 'Smallholder Client'}</span>
                       <span className="hidden sm:inline text-[9px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 shrink-0">
                         SMS & WhatsApp Synced
                       </span>
                     </h4>
                     <div className="flex items-center gap-2 text-xxs text-white/40 font-mono">
-                      <span>VITAL SCORE: 84/100</span>
+                      <span>1-TO-1 ADVISORY</span>
                       <span>•</span>
-                      <span className="truncate">NAKURU RURAL</span>
+                      <span className="truncate">{(activeConv as unknown as { farmerRegion?: string }).farmerRegion || 'ACTIVE REGION'}</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
+                  {onDeleteConversation && (
+                    <button
+                      onClick={() => {
+                        const name = activeConv.farmerName || activeConv.title || 'this conversation';
+                        if (window.confirm(`Delete conversation with ${name}?`)) {
+                          onDeleteConversation(activeConv.id);
+                        }
+                      }}
+                      className="px-2.5 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 transition-all border border-rose-500/20 flex items-center gap-1.5 text-xs font-mono"
+                      title="Delete Conversation"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Delete</span>
+                    </button>
+                  )}
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
                   <span className="text-xxs font-mono text-emerald-400 font-bold uppercase hidden sm:inline">
                     Live Channel

@@ -641,9 +641,20 @@ export function mapChatMessageRows(rows: ChatMessageRow[]): ChatMessageDTO[] {
 export interface ChatConversationDTO {
   id: string;
   userId: string | null;
+  officerId?: string | null;
   farmerId: string | null;
+  farmerName?: string | null;
+  farmerRegion?: string | null;
+  farmerPhone?: string | null;
+  officerName?: string | null;
+  officerRegion?: string | null;
+  officerEmail?: string | null;
   title: string | null;
   status: string | null;
+  language?: string | null;
+  lastMessage?: string | null;
+  lastMessageAt?: string | null;
+  messageCount?: number;
   startedAt: string | null;
   endedAt: string | null;
   satisfactionRating: number | null;
@@ -654,14 +665,25 @@ export interface ChatConversationDTO {
 export function mapChatConversationRow(row: ChatConversationRow): ChatConversationDTO {
   return {
     id: row.id,
-    userId: row.user_id,
+    userId: row.user_id || row.officer_id || null,
+    officerId: row.officer_id || row.user_id || null,
     farmerId: row.farmer_id,
-    title: row.title,
+    farmerName: row.farmer_name || row.title || null,
+    farmerRegion: row.farmer_region || null,
+    farmerPhone: row.farmer_phone || null,
+    officerName: row.officer_name || null,
+    officerRegion: row.officer_region || null,
+    officerEmail: row.officer_email || null,
+    title: row.title || row.farmer_name || null,
     status: row.status,
+    language: row.language || 'en',
+    lastMessage: row.last_message || null,
+    lastMessageAt: toIso(row.last_message_at) ?? toIso(row.started_at) ?? null,
+    messageCount: typeof row.message_count === 'number' ? row.message_count : parseInt(String(row.message_count || '0'), 10),
     startedAt: toIso(row.started_at) ?? null,
     endedAt: toIso(row.ended_at) ?? null,
-    satisfactionRating: row.satisfaction_rating,
-    metadata: row.metadata,
+    satisfactionRating: row.satisfaction_rating ?? row.satisfaction_score ?? null,
+    metadata: row.metadata ?? null,
     createdAt: toIso(row.created_at) ?? null,
     updatedAt: toIso(row.updated_at) ?? null,
   };

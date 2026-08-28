@@ -118,6 +118,7 @@ interface TabContentProps {
   handleFarmerChatSend: (...args: unknown[]) => void;
   loadFarmers: () => void;
   setShowFarmerModal: (v: boolean) => void;
+  handleDeleteConversation?: (id: string) => void;
   onOpenUSSDSimulator?: () => void;
 }
 
@@ -239,6 +240,7 @@ export function TabContent(props: TabContentProps) {
             handleFarmerChatSend={props.handleFarmerChatSend}
             loadFarmers={props.loadFarmers}
             setShowFarmerModal={props.setShowFarmerModal}
+            onDeleteConversation={props.handleDeleteConversation}
           />
         </PlanUpgradeGuard>
       );

@@ -246,6 +246,7 @@ function App() {
     setFarmerChatInput,
     handleFarmerChatSend,
     handleStartConversation,
+    handleDeleteConversation,
   } = useAppChat(language);
   const {
     isSendingBulkSms,
@@ -563,6 +564,7 @@ function App() {
                     handleFarmerChatSend={handleFarmerChatSend as (...args: unknown[]) => void}
                     loadFarmers={loadFarmers}
                     setShowFarmerModal={setShowFarmerModal}
+                    handleDeleteConversation={handleDeleteConversation}
                     onOpenUSSDSimulator={() => setIsUSSDSimulatorOpen(true)}
                   />
                 </div>

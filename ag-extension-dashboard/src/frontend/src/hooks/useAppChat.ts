@@ -64,9 +64,14 @@ export const useAppChat = (language: string) => {
       const res = await deleteConversation(id);
       if (res.success) {
         setConversations(prev => prev.filter(c => c.id !== id));
+        setFarmerConversations(prev => prev.filter(c => c.id !== id));
         if (activeConvId === id) {
           setActiveConvId(null);
           setChatMessages([]);
+        }
+        if (activeFarmerConvId === id) {
+          setActiveFarmerConvId(null);
+          setFarmerChatMessages([]);
         }
         setDeletingConvId(null);
       }
@@ -79,9 +84,10 @@ export const useAppChat = (language: string) => {
   const loadFarmerConversations = useCallback(async () => {
     try {
       const res = await fetchConversations();
-      setFarmerConversations(res.data);
-      if (res.data.length > 0 && !activeFarmerConvId) {
-        setActiveFarmerConvId(res.data[0].id);
+      const list = res.data || [];
+      setFarmerConversations(list);
+      if (list.length > 0 && !activeFarmerConvId) {
+        setActiveFarmerConvId(list[0].id);
       }
     } catch (error) {
       console.error('Failed to load farmer conversations:', error);
@@ -91,7 +97,7 @@ export const useAppChat = (language: string) => {
   const loadFarmerMessages = useCallback(async (id: string) => {
     try {
       const res = await fetchMessages(id);
-      setFarmerChatMessages(res.data);
+      setFarmerChatMessages(res.data || []);
     } catch (error) {
       console.error('Failed to load farmer messages:', error);
     }
@@ -119,13 +125,14 @@ export const useAppChat = (language: string) => {
       });
       if (res.success && activeFarmerConvId) {
         loadFarmerMessages(activeFarmerConvId);
+        loadFarmerConversations();
       }
     } catch (error) {
       console.error('Failed to send farmer message:', error);
     }
   };
 
-  const handleStartConversation = async (farmer: Farmer, chatType: 'ai' | 'farmer' = 'ai') => {
+  const handleStartConversation = async (farmer: Farmer, chatType: 'ai' | 'farmer' = 'farmer') => {
     try {
       const existingConversations = chatType === 'farmer' ? farmerConversations : conversations;
       const existingConv = existingConversations.find(
@@ -150,13 +157,18 @@ export const useAppChat = (language: string) => {
       });
 
       if (res.success && res.data) {
+        const newConv = res.data;
         if (chatType === 'farmer') {
-          setFarmerConversations(prev => [res.data, ...prev]);
-          setActiveFarmerConvId(res.data.id);
-          setFarmerChatMessages([]);
+          setFarmerConversations(prev => {
+            const exists = prev.some(c => c.id === newConv.id);
+            if (exists) return prev;
+            return [newConv, ...prev];
+          });
+          setActiveFarmerConvId(newConv.id);
+          loadFarmerMessages(newConv.id);
         } else {
-          setConversations(prev => [res.data, ...prev]);
-          setActiveConvId(res.data.id);
+          setConversations(prev => [newConv, ...prev]);
+          setActiveConvId(newConv.id);
           setChatMessages([]);
         }
         return true;

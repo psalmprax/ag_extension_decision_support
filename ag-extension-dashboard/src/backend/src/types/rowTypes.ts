@@ -367,16 +367,28 @@ export interface ChatMessageRow {
 
 export interface ChatConversationRow {
   id: string;
-  user_id: string | null;
+  user_id?: string | null;
+  officer_id?: string | null;
   farmer_id: string | null;
-  title: string | null;
+  title?: string | null;
   status: string | null;
+  language?: string | null;
   started_at: Date | string | null;
-  ended_at: Date | string | null;
-  satisfaction_rating: number | null;
-  metadata: Record<string, unknown> | null;
-  created_at: Date | string | null;
-  updated_at: Date | string | null;
+  ended_at?: Date | string | null;
+  satisfaction_rating?: number | null;
+  satisfaction_score?: number | null;
+  metadata?: Record<string, unknown> | null;
+  farmer_name?: string | null;
+  farmer_region?: string | null;
+  farmer_phone?: string | null;
+  officer_name?: string | null;
+  officer_region?: string | null;
+  officer_email?: string | null;
+  last_message?: string | null;
+  last_message_at?: Date | string | null;
+  message_count?: number | string | null;
+  created_at?: Date | string | null;
+  updated_at?: Date | string | null;
 }
 
 export interface SatisfactionAvgRow {
