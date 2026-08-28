@@ -1,8 +1,6 @@
 import React, { useRef } from 'react';
 import { Search, Paperclip, Mic, BarChart3, ArrowRight, X, File as FileIcon } from 'lucide-react';
-import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
-import { Button } from '../ui/Button';
 import { Attachment } from '@/api/knowledgeService';
 import toast from 'react-hot-toast';
 
@@ -31,7 +29,6 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   setShowStats,
   onSearch,
 }) => {
-  const { radiusClass } = useThemeClasses();
   const originalQueryRef = useRef('');
 
   const {

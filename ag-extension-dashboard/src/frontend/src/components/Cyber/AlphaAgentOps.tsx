@@ -1,34 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Cpu,
-  Layers,
-  Activity,
   Play,
   Square,
   RefreshCcw,
-  ChevronRight,
-  Search,
-  Database,
-  CloudLightning,
   Terminal,
-  AlertCircle,
   Loader2,
   Sparkles,
-  ShieldCheck,
-  Send,
-  Radio,
   Zap,
-  CheckCircle2,
-  Share2,
-  Sliders,
-  Maximize2,
   Bot,
-  Brain,
   Workflow,
-  Clock,
-  Compass,
+  ChevronRight,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
 import apiClient from '@/api/client';
@@ -139,6 +122,96 @@ const TOPOLOGY_LINKS = [
   { from: 'nasa-weather-agent', to: 'omni-dispatch-agent' },
 ];
 
+const drawGrid = (ctx: CanvasRenderingContext2D, w: number, h: number) => {
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+  ctx.lineWidth = 1;
+  const gridSize = 24;
+  for (let x = 0; x < w; x += gridSize) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, h);
+    ctx.stroke();
+  }
+  for (let y = 0; y < h; y += gridSize) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+    ctx.stroke();
+  }
+};
+
+const drawLinks = (ctx: CanvasRenderingContext2D, w: number, h: number, packetT: number) => {
+  TOPOLOGY_LINKS.forEach(link => {
+    const fromNode = TOPOLOGY_NODES.find(n => n.id === link.from);
+    const toNode = TOPOLOGY_NODES.find(n => n.id === link.to);
+    if (!fromNode || !toNode) return;
+
+    const x1 = fromNode.x * w;
+    const y1 = fromNode.y * h;
+    const x2 = toNode.x * w;
+    const y2 = toNode.y * h;
+
+    ctx.strokeStyle = 'rgba(16, 185, 129, 0.2)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Animated data packet
+    const px = x1 + (x2 - x1) * ((packetT + fromNode.x * 3) % 1);
+    const py = y1 + (y2 - y1) * ((packetT + fromNode.x * 3) % 1);
+
+    ctx.fillStyle = '#10b981';
+    ctx.shadowColor = '#10b981';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.arc(px, py, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  });
+};
+
+const drawNodes = (ctx: CanvasRenderingContext2D, w: number, h: number, activeAgent: string) => {
+  TOPOLOGY_NODES.forEach(node => {
+    const nx = node.x * w;
+    const ny = node.y * h;
+    const isSelected = activeAgent === node.id;
+
+    if (isSelected) {
+      ctx.strokeStyle = node.color;
+      ctx.lineWidth = 3;
+      ctx.shadowColor = node.color;
+      ctx.shadowBlur = 15;
+      ctx.beginPath();
+      ctx.arc(nx, ny, 20, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.arc(nx, ny, 16, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = isSelected ? node.color : 'rgba(255, 255, 255, 0.2)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = node.color;
+    ctx.beginPath();
+    ctx.arc(nx, ny, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.font = 'bold 10px monospace';
+    ctx.fillStyle = isSelected ? '#ffffff' : 'rgba(255, 255, 255, 0.7)';
+    ctx.textAlign = 'center';
+    ctx.fillText(node.name, nx, ny + 28);
+  });
+};
+
 const MultiAgentTopologyCanvas: React.FC<{
   activeAgent: string;
   onSelectAgent: (id: string) => void;
@@ -159,97 +232,9 @@ const MultiAgentTopologyCanvas: React.FC<{
       const h = (canvas.height = canvas.parentElement?.clientHeight || 280);
 
       ctx.clearRect(0, 0, w, h);
-
-      // Background grid
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
-      ctx.lineWidth = 1;
-      const gridSize = 24;
-      for (let x = 0; x < w; x += gridSize) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, h);
-        ctx.stroke();
-      }
-      for (let y = 0; y < h; y += gridSize) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(w, y);
-        ctx.stroke();
-      }
-
-      // Draw links between agents
-      TOPOLOGY_LINKS.forEach(link => {
-        const fromNode = TOPOLOGY_NODES.find(n => n.id === link.from);
-        const toNode = TOPOLOGY_NODES.find(n => n.id === link.to);
-        if (!fromNode || !toNode) return;
-
-        const x1 = fromNode.x * w;
-        const y1 = fromNode.y * h;
-        const x2 = toNode.x * w;
-        const y2 = toNode.y * h;
-
-        ctx.strokeStyle = 'rgba(16, 185, 129, 0.2)';
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        // Animated data packet along the link
-        const px = x1 + (x2 - x1) * ((packetT + (fromNode.x * 3)) % 1);
-        const py = y1 + (y2 - y1) * ((packetT + (fromNode.x * 3)) % 1);
-
-        ctx.fillStyle = '#10b981';
-        ctx.shadowColor = '#10b981';
-        ctx.shadowBlur = 8;
-        ctx.beginPath();
-        ctx.arc(px, py, 3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
-      });
-
-      // Draw agent nodes
-      TOPOLOGY_NODES.forEach(node => {
-        const nx = node.x * w;
-        const ny = node.y * h;
-        const isSelected = activeAgent === node.id;
-
-        // Outer glow
-        if (isSelected) {
-          ctx.strokeStyle = node.color;
-          ctx.lineWidth = 3;
-          ctx.shadowColor = node.color;
-          ctx.shadowBlur = 15;
-          ctx.beginPath();
-          ctx.arc(nx, ny, 20, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.shadowBlur = 0;
-        }
-
-        // Inner node body
-        ctx.fillStyle = '#0f172a';
-        ctx.beginPath();
-        ctx.arc(nx, ny, 16, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.strokeStyle = isSelected ? node.color : 'rgba(255, 255, 255, 0.2)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-
-        // Node center status pip
-        ctx.fillStyle = node.color;
-        ctx.beginPath();
-        ctx.arc(nx, ny, 5, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Label
-        ctx.font = 'bold 10px monospace';
-        ctx.fillStyle = isSelected ? '#ffffff' : 'rgba(255, 255, 255, 0.7)';
-        ctx.textAlign = 'center';
-        ctx.fillText(node.name, nx, ny + 28);
-      });
+      drawGrid(ctx, w, h);
+      drawLinks(ctx, w, h, packetT);
+      drawNodes(ctx, w, h, activeAgent);
 
       packetT = (packetT + 0.008) % 1;
       animFrame = requestAnimationFrame(render);
@@ -260,28 +245,30 @@ const MultiAgentTopologyCanvas: React.FC<{
     return () => cancelAnimationFrame(animFrame);
   }, [activeAgent]);
 
+  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = (e.clientX - rect.left) / rect.width;
+    const clickY = (e.clientY - rect.top) / rect.height;
+
+    let nearest = TOPOLOGY_NODES[0];
+    let minDist = 999;
+    TOPOLOGY_NODES.forEach(n => {
+      const d = Math.hypot(n.x - clickX, n.y - clickY);
+      if (d < minDist) {
+        minDist = d;
+        nearest = n;
+      }
+    });
+    if (minDist < 0.15) {
+      onSelectAgent(nearest.id);
+    }
+  };
+
   return (
     <div className="w-full h-64 rounded-2xl bg-slate-950/80 border border-white/10 relative overflow-hidden">
       <canvas
         ref={canvasRef}
-        onClick={e => {
-          const rect = e.currentTarget.getBoundingClientRect();
-          const clickX = (e.clientX - rect.left) / rect.width;
-          const clickY = (e.clientY - rect.top) / rect.height;
-
-          let nearest = TOPOLOGY_NODES[0];
-          let minDist = 999;
-          TOPOLOGY_NODES.forEach(n => {
-            const d = Math.hypot(n.x - clickX, n.y - clickY);
-            if (d < minDist) {
-              minDist = d;
-              nearest = n;
-            }
-          });
-          if (minDist < 0.15) {
-            onSelectAgent(nearest.id);
-          }
-        }}
+        onClick={handleCanvasClick}
         className="w-full h-full cursor-pointer"
       />
       <div className="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-black/60 border border-white/10 text-[10px] font-mono text-emerald-400 flex items-center gap-1.5">
@@ -331,7 +318,6 @@ const AlphaAgentOps: React.FC = () => {
   const { t: _t } = useLanguage();
   const { addNotification } = useAppStore();
   const [activeAgent, setActiveAgent] = useState<string>('agent-zero');
-  const [isRunning, setIsRunning] = useState(true);
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionMode, setExecutionMode] = useState<'supervised' | 'autonomous' | 'edge'>('supervised');
   const [consoleOutput, setConsoleOutput] = useState<string[]>([
@@ -449,7 +435,6 @@ const AlphaAgentOps: React.FC = () => {
     } catch {
       // Ignore
     } finally {
-      setIsRunning(false);
       setConsoleOutput(prev => [...prev, `${now()} [OK] Agent ${activeAgent} paused`]);
       setIsExecuting(false);
     }

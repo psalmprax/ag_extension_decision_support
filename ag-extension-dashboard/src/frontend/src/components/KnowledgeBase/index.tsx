@@ -2,13 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles,
-  Lightbulb,
-  Lock,
   Zap,
-  ArrowRight,
-  History,
   Brain,
-  Database,
   Layers,
   Activity,
   ShieldCheck,
@@ -16,15 +11,12 @@ import {
   Send,
   RefreshCw,
   Compass,
-  FileText,
-  CheckCircle2,
   ChevronRight,
   BookOpen,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
   askAI,
-  fetchKnowledgeHistory,
   fetchKnowledgeStats,
   fetchKnowledgeQuota,
   KnowledgeQuotaData,
@@ -32,11 +24,8 @@ import {
   Citation,
   KnowledgeEvidenceStatus,
 } from '@/api/knowledgeService';
-import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
-import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { KnowledgeStats } from './KnowledgeStats';
-import { KnowledgeSidebar } from './KnowledgeSidebar';
 import { SearchBar } from './SearchBar';
 import { AIResult } from './AIResult';
 import type { VisualsData } from './types';
@@ -144,11 +133,11 @@ const RESEARCH_SCENARIOS: ResearchScenario[] = [
 
 **1. Diagnostic Soil Matrix:**
 * **Soil pH:** $4.8$ (Strongly Acidic, volcanic/ferralsol profile).
-* **Exchangeable Aluminum:** $>35\%$ saturation, causing acute root tip necrosis and phosphorus fixation.
+* **Exchangeable Aluminum:** >35% saturation, causing acute root tip necrosis and phosphorus fixation.
 
 **2. Liming Prescription Calculation:**
-* **Dosage:** Broadcast **2.5 to 3.0 tonnes/ha** of finely ground agricultural lime ($\text{CaCO}_3$, Effective Neutralizing Value $>80\%$).
-* **Incorporation Depth:** Evenly disc into top $0\text{–}15\text{ cm}$ root zone at least **21 to 30 days prior to sowing**.
+* **Dosage:** Broadcast **2.5 to 3.0 tonnes/ha** of finely ground agricultural lime (CaCO3, Effective Neutralizing Value >80%).
+* **Incorporation Depth:** Evenly disc into top 0–15 cm root zone at least **21 to 30 days prior to sowing**.
 
 **3. Phosphorus Availability Restoration:**
 * Apply single superphosphate (SSP) or DAP alongside well-decomposed manure ($5\text{ tonnes/ha}$) to shield phosphate ions from aluminum chelation.`,
@@ -185,7 +174,7 @@ const RESEARCH_SCENARIOS: ResearchScenario[] = [
 
 **2. Stem Cutting & Planting Depth:**
 * Select disease-free stem cuttings ($20\text{–}25\text{ cm}$ length, 4–6 nodes).
-* Plant at a $45^\circ$ angle with buds facing upward, leaving $2/3$ of the cutting buried to prevent desiccation.
+* Plant at a 45° angle with buds facing upward, leaving $2/3$ of the cutting buried to prevent desiccation.
 
 **3. Disease Precaution:**
 * Monitor for Cassava Mosaic Disease (CMD) and Whitefly vectors during early establishment.`,
@@ -217,8 +206,8 @@ const RESEARCH_SCENARIOS: ResearchScenario[] = [
     sampleAnswer: `### Verified Agro-RAG Synthesis: Maize Foliar Rust Differential Diagnosis
 
 **1. Diagnostic Saliency Characteristics:**
-* **Common Rust (*Puccinia sorghi*):** Golden-brown, oval pustules on both upper and lower leaf surfaces. Thrives in cool, humid conditions ($16\text{–}23^\circ\text{C}$).
-* **Southern Rust (*Puccinia polysora*):** Denser, smaller, orange-to-light brown pustules primarily restricted to upper leaf surface. Thrives in warmer conditions ($25\text{–}32^\circ\text{C}$).
+* **Common Rust (*Puccinia sorghi*):** Golden-brown, oval pustules on both upper and lower leaf surfaces. Thrives in cool, humid conditions (16–23°C).
+* **Southern Rust (*Puccinia polysora*):** Denser, smaller, orange-to-light brown pustules primarily restricted to upper leaf surface. Thrives in warmer conditions (25–32°C).
 
 **2. Remediation Strategy:**
 * **Preventive Fungicide:** Apply *Azoxystrobin + Difenoconazole* ($200\text{ ml/ha}$) at first onset of pustules before tasseling.
@@ -243,33 +232,18 @@ const RESEARCH_SCENARIOS: ResearchScenario[] = [
 ];
 
 export const KnowledgeBase: React.FC = () => {
-  const { t } = useLanguage();
   const { addNotification, setActiveTab } = useAppStore();
-  const { headingClass } = useThemeClasses();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isAsking, setIsAsking] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [lastResult, setLastResult] = useState<Result | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [quota, setQuota] = useState<KnowledgeQuotaData | null>(null);
   const [activeCanvasMode, setActiveCanvasMode] = useState<SpatialCanvasMode>('rag_graph');
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [retrievalStep, setRetrievalStep] = useState<number>(0);
-
-  const [history, setHistory] = useState<
-    {
-      id: string;
-      query?: string;
-      queryText?: string;
-      crop?: string;
-      category?: string;
-      timestamp?: string;
-      createdAt?: string;
-    }[]
-  >([]);
 
   const [stats, setStats] = useState<{
     crops?: { name: string; count: number }[];
@@ -287,15 +261,6 @@ export const KnowledgeBase: React.FC = () => {
     }
   };
 
-  const fetchHistory = async () => {
-    try {
-      const data = await fetchKnowledgeHistory();
-      if (data.success) setHistory(data.data);
-    } catch {
-      // ignore
-    }
-  };
-
   const fetchStats = async () => {
     try {
       const data = await fetchKnowledgeStats();
@@ -306,7 +271,6 @@ export const KnowledgeBase: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchHistory();
     fetchStats();
     fetchQuotaData();
   }, []);
@@ -332,7 +296,6 @@ export const KnowledgeBase: React.FC = () => {
         timestamp: new Date().toISOString(),
       });
       setAttachments([]);
-      fetchHistory();
       fetchQuotaData();
 
       if (res.data.cached) {

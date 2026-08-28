@@ -11,8 +11,6 @@ import {
   CheckCircle2,
   ArrowLeft,
   Trash2,
-  Phone,
-  MapPin,
 } from 'lucide-react';
 import { Conversation, ChatMessage } from '../types/dashboard';
 import { useLanguage } from '@/lib/LanguageContext';
