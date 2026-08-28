@@ -96,37 +96,28 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   };
 
   return (
-    <div className="relative group mb-12">
-      <div
-        className="absolute -inset-1 bg-gradient-to-r from-primary-600 to-indigo-600 blur opacity-20 group-hover:opacity-40 transition-opacity"
-        style={{ borderRadius: 'calc(var(--radius-card) + 4px)' }}
-      ></div>
-      <div
-        className="relative w-full max-w-full bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/50 p-1 sm:p-1.5 shadow-2xl focus-within:ring-2 focus-within:ring-primary-500/30 focus-within:border-primary-500/50 overflow-hidden"
-        style={{
-          borderRadius: 'var(--radius-card)',
-          boxShadow: 'var(--shadow-premium)',
-        }}
-      >
+    <div className="relative group">
+      <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/20 via-cyan-500/20 to-teal-500/20 blur opacity-60 group-hover:opacity-100 transition-opacity rounded-2xl"></div>
+      <div className="relative w-full max-w-full bg-slate-950/80 border border-white/10 p-1.5 sm:p-2 shadow-2xl focus-within:ring-2 focus-within:ring-emerald-500/40 focus-within:border-emerald-500/60 rounded-2xl overflow-hidden backdrop-blur-xl">
         {/* Attachment Previews */}
         {attachments.length > 0 && (
-          <div className="flex flex-wrap gap-2 px-3 py-2 sm:px-4 sm:py-3 border-b border-gray-100 dark:border-gray-700/50">
+          <div className="flex flex-wrap gap-2 px-3 py-2 sm:px-4 sm:py-2.5 border-b border-white/10">
             {attachments.map((att, i) => (
               <div
                 key={i}
-                className={`flex items-center gap-2 bg-primary-50 dark:bg-primary-900/40 px-2.5 py-1 sm:px-3 sm:py-1.5 ${radiusClass} border border-primary-100 dark:border-primary-800 group/att`}
+                className="flex items-center gap-2 bg-emerald-500/10 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border border-emerald-500/20 group/att"
               >
                 {att.type === 'image' ? (
-                  <img src={att.data} className="w-4 h-4 sm:w-5 sm:h-5 object-cover rounded-md" />
+                  <img src={att.data} className="w-4 h-4 sm:w-5 sm:h-5 object-cover rounded-lg" />
                 ) : (
-                  <FileIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-500" />
+                  <FileIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />
                 )}
-                <span className="text-xxs font-bold text-primary-700 dark:text-primary-300 max-w-[80px] sm:max-w-[100px] truncate">
+                <span className="text-xxs font-bold text-emerald-300 max-w-[100px] truncate">
                   {att.name}
                 </span>
                 <button
                   onClick={() => removeAttachment(i)}
-                  className="text-primary-400 hover:text-rose-500 transition-colors"
+                  className="text-emerald-400/60 hover:text-rose-400 transition-colors"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -135,54 +126,80 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           </div>
         )}
 
+        {isRecording && (
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-950/40 border-b border-rose-500/20 text-rose-300 text-xs font-mono">
+            <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+            <span>Listening for agronomic inquiry... Speak now</span>
+            <div className="flex items-center gap-0.5 ml-auto">
+              {[4, 12, 8, 16, 10, 14, 6].map((h, i) => (
+                <span
+                  key={i}
+                  className="w-1 bg-rose-400 rounded-full animate-pulse"
+                  style={{ height: `${h}px`, animationDelay: `${i * 100}ms` }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center min-w-0 w-full overflow-hidden">
-          <div className="pl-2.5 sm:pl-4 text-primary-500 shrink-0 flex items-center justify-center">
-            <Search className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+          <div className="pl-3 sm:pl-4 text-emerald-400 shrink-0 flex items-center justify-center">
+            <Search className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <input
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && onSearch()}
-            placeholder="Ask ALFA anything..."
-            className="flex-1 min-w-0 bg-transparent border-none focus:ring-0 py-2 sm:py-3.5 md:py-4 px-2 sm:px-3 md:px-4 text-xs sm:text-base md:text-xl font-medium text-gray-900 dark:text-white placeholder-gray-400 truncate"
+            placeholder="Ask ALFA Agro-RAG (e.g., Maize Fall Armyworm IPM, Soil Acidity pH 4.8)..."
+            className="flex-1 min-w-0 bg-transparent border-none focus:ring-0 py-2.5 sm:py-3.5 px-3 sm:px-4 text-xs sm:text-sm font-medium text-white placeholder-white/40 truncate"
           />
-          <div className="flex items-center gap-0.5 sm:gap-1.5 pr-1 sm:pr-2 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 pr-1 sm:pr-2 shrink-0">
             <label
-              className={`w-7 h-7 sm:w-9 sm:h-9 md:w-10 md:h-10 flex items-center justify-center ${radiusClass} hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-400 cursor-pointer transition-all shrink-0`}
-              title="Attach photo or document"
+              className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl hover:bg-white/10 text-white/60 hover:text-white cursor-pointer transition-all shrink-0 border border-transparent hover:border-white/10"
+              title="Attach leaf photo or soil test report"
             >
-              <Paperclip className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+              <Paperclip className="w-4 h-4" />
               <input type="file" multiple className="hidden" onChange={handleFileUpload} />
             </label>
             <button
               type="button"
               onClick={handleMicClick}
               disabled={!isSpeechSupported}
-              className={`w-7 h-7 sm:w-9 sm:h-9 md:w-10 md:h-10 flex items-center justify-center ${radiusClass} transition-all shrink-0 ${!isSpeechSupported ? 'opacity-30 cursor-not-allowed' : isRecording ? 'bg-rose-100 text-rose-600 animate-pulse' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-400'}`}
+              className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl transition-all shrink-0 border ${
+                !isSpeechSupported
+                  ? 'opacity-30 cursor-not-allowed border-transparent text-white/30'
+                  : isRecording
+                  ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 animate-pulse'
+                  : 'hover:bg-white/10 text-white/60 hover:text-white border-transparent hover:border-white/10'
+              }`}
               title={
-                isSpeechSupported ? 'Voice Input' : 'Voice input not supported in this browser'
+                isSpeechSupported ? 'Voice STT Input' : 'Voice input not supported in this browser'
               }
             >
-              <Mic className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+              <Mic className="w-4 h-4" />
             </button>
             <button
               type="button"
               onClick={() => setShowStats(!showStats)}
-              className={`hidden sm:flex w-7 h-7 sm:w-9 sm:h-9 md:w-10 md:h-10 items-center justify-center ${radiusClass} transition-all shrink-0 ${showStats ? 'bg-indigo-100 text-indigo-600' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-400'}`}
-              title="Insights"
+              className={`hidden sm:flex w-8 h-8 sm:w-9 sm:h-9 items-center justify-center rounded-xl transition-all shrink-0 border ${
+                showStats
+                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
+                  : 'hover:bg-white/10 text-white/60 hover:text-white border-transparent hover:border-white/10'
+              }`}
+              title="Vector Index Telemetry"
             >
-              <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+              <BarChart3 className="w-4 h-4" />
             </button>
-            <Button
-              loading={isAsking}
-              disabled={!searchQuery.trim() && attachments.length === 0}
+            <button
+              type="button"
+              disabled={isAsking || (!searchQuery.trim() && attachments.length === 0)}
               onClick={onSearch}
-              className="h-7 sm:h-9 md:h-10 px-2 sm:px-4 md:px-6 font-bold shadow-lg shadow-primary-500/20 text-xs sm:text-sm shrink-0 flex items-center justify-center gap-1"
+              className="h-8 sm:h-9 px-3 sm:px-4 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-bold rounded-xl shadow-lg shadow-emerald-950/40 text-xs shrink-0 flex items-center justify-center gap-1.5 transition-all"
             >
-              <span className="hidden md:inline">Generate</span>
-              <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </Button>
+              <span className="hidden sm:inline">Search RAG</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
       </div>
