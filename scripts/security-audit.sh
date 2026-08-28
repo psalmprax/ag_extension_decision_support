@@ -149,8 +149,10 @@ echo -e "\n${BLUE}${BOLD}[5/5] Running AI Agents FastAPI Security Test Suite...$
     PYTHONPATH=. pytest tests/test_security.py -q
   elif [ -x "$HOME/.local/bin/pytest" ]; then
     PYTHONPATH=. "$HOME/.local/bin/pytest" tests/test_security.py -q
-  else
+  elif python3 -c "import pytest" >/dev/null 2>&1; then
     PYTHONPATH=. python3 -m pytest tests/test_security.py -q
+  else
+    PYTHONPATH=. python3 tests/test_security.py
   fi
 )
 echo -e "${GREEN}✅ AI Agents Security Tests Passed (5/5 tests).${NC}"

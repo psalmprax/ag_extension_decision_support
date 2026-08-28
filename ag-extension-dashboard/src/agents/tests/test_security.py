@@ -82,3 +82,20 @@ class TestAgentSecurity:
         assert response.status_code == 422
         data = response.json()
         assert "detail" in data
+
+
+if __name__ == "__main__":
+    test_suite = TestAgentSecurity()
+    test_client = TestClient(app)
+    token = jwt.encode(
+        {"user_id": "test-admin", "role": "admin"},
+        JWT_SECRET,
+        algorithm="HS256"
+    )
+    headers = {"Authorization": f"Bearer {token}"}
+    test_suite.test_cors_policy_not_wildcard_with_credentials()
+    test_suite.test_health_endpoint_masks_credentials(test_client)
+    test_suite.test_unauthenticated_request_rejected(test_client)
+    test_suite.test_invalid_token_rejected(test_client)
+    test_suite.test_invalid_task_payload_rejection_with_auth(test_client, headers)
+    print("5 passed in standalone runner")
