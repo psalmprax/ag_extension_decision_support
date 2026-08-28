@@ -174,7 +174,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: ag-extension-browser-ext/package.json
 
@@ -278,7 +278,7 @@ jobs:
       - name: Run Python Agent Security Tests
         run: |
           cd ag-extension-dashboard/src/agents
-          pip install -r requirements.txt pytest httpx
+          python -m pip install -r requirements.txt pytest httpx
           python -m pytest tests/test_security.py
         env:
           NODE_ENV: test
