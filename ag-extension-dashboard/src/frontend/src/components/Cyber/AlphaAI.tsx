@@ -360,11 +360,11 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-20">
       {/* ── Top HUD Navigation Banner (knockknockapp.ai standard) ── */}
-      <div className="backdrop-blur-2xl bg-slate-900/70 border border-white/10 rounded-2xl p-5 shadow-2xl relative overflow-hidden">
+      <div className="backdrop-blur-2xl bg-slate-900/70 border border-white/10 rounded-xl p-5 shadow-2xl relative overflow-hidden">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
           {/* Left: Branding & Model Badge */}
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 via-teal-500/20 to-cyan-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-950/40">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 via-teal-500/20 to-cyan-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-950/40">
               <Brain className="w-6 h-6 animate-pulse" />
             </div>
             <div>
@@ -435,7 +435,7 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
              ══════════════════════════════════════════════════════════════ */}
           <div className="lg:col-span-5 flex flex-col space-y-4">
             {/* Quick Agronomic Scenario Pills */}
-            <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-4 space-y-2.5">
+            <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-4 space-y-2.5">
               <div className="flex items-center justify-between text-xxs font-bold text-white/50 uppercase tracking-wider">
                 <span>Illustrative Diagnostic Scenarios</span>
                 <span className="text-amber-300 font-mono">DEMO CONTENT</span>
@@ -466,7 +466,7 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
             </div>
 
             {/* Conversational Stream Card */}
-            <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-4 flex-1 flex flex-col justify-between shadow-xl min-h-[480px] max-h-[620px]">
+            <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-4 flex-1 flex flex-col justify-between shadow-xl min-h-[480px] max-h-[620px]">
               {/* Message List */}
               <div className="overflow-y-auto space-y-4 pr-1 custom-scrollbar flex-1 mb-4">
                 <AnimatePresence initial={false}>
@@ -484,7 +484,7 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
                       </div>
 
                       <div
-                        className={`max-w-[92%] rounded-2xl p-4 text-xs leading-relaxed ${
+                        className={`max-w-[92%] rounded-xl p-4 text-xs leading-relaxed ${
                           msg.sender === 'user'
                             ? 'bg-emerald-600 text-white rounded-tr-none shadow-md shadow-emerald-950/40'
                             : 'bg-white/[0.04] border border-white/10 text-white/90 rounded-tl-none space-y-3'
@@ -622,7 +622,7 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
              ══════════════════════════════════════════════════════════════ */}
           <div className="lg:col-span-7 flex flex-col space-y-4">
             {/* Workbench Navigation Header */}
-            <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-lg">
+            <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-lg">
               {/* Canvas Tabs */}
               <div className="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/5 overflow-x-auto max-w-full">
                 {[
@@ -661,7 +661,7 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
             </div>
 
             {/* Generative Interactive Canvas Container (canvasui.dev glassmorphic standard) */}
-            <div className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-2xl p-5 shadow-2xl relative overflow-hidden min-h-[500px] flex flex-col justify-between">
+            <div className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-xl p-5 shadow-2xl relative overflow-hidden min-h-[500px] flex flex-col justify-between">
               {/* Dynamic Mounted Canvas */}
               <div className="flex-1 flex flex-col justify-center">
                 {activeCanvasView === 'soil_heatmap' && (

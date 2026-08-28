@@ -55,7 +55,7 @@ export const SimulatorTab: React.FC<SimulatorTabProps> = ({
           {simulatorMessages.map((m, idx) => (
             <div key={idx} className={`flex ${m.sender === 'farmer' ? 'justify-end' : 'justify-start'}`}>
               <div
-                className={`max-w-[80%] rounded-2xl px-3.5 py-2 whitespace-pre-wrap ${
+                className={`max-w-[80%] rounded-xl px-3.5 py-2 whitespace-pre-wrap ${
                   m.sender === 'farmer'
                     ? 'bg-emerald-600 text-white rounded-br-none'
                     : 'bg-slate-800 text-slate-200 border border-slate-700 rounded-bl-none'

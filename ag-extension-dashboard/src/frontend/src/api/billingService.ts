@@ -153,7 +153,9 @@ export const deletePaymentMethod = async (id: string) => {
 
 export const updateAdminConfig = async (config: {
   stripeSecretKey?: string;
+  stripeWebhookSecret?: string;
   paypalClientId?: string;
+  paypalSecret?: string;
 }) => {
   const { data } = await apiClient.patch('/billing/admin/config', config);
   return data;

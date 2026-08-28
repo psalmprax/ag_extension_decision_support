@@ -336,7 +336,7 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           onClick={e => e.stopPropagation()}
-          className="bg-slate-900 border border-slate-700/60 shadow-2xl rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden text-slate-100"
+          className="bg-slate-900 border border-slate-700/60 shadow-2xl rounded-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden text-slate-100"
         >
           {/* Header */}
           <div className="p-6 border-b border-slate-800 bg-slate-950/80 flex items-center justify-between">

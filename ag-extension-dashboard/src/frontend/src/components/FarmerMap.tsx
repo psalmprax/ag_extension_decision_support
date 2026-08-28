@@ -275,7 +275,7 @@ export function FarmerMap({
 
   return (
     <div
-      className={`relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border shadow-xl ${
+      className={`relative w-full rounded-xl overflow-hidden border shadow-xl ${
         themeName === 'cyber'
           ? 'border-gray-800 bg-gray-900/40'
           : 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900'

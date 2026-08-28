@@ -104,7 +104,7 @@ const SystemOverview: React.FC<SystemOverviewProps> = ({
   );
 
   return (
-    <div className="glass-premium p-8 rounded-[2.5rem] border-white/5 h-full flex flex-col justify-between">
+    <div className="glass-premium p-8 rounded-xl border-white/5 h-full flex flex-col justify-between">
       <div>
         <h3 className="text-xs font-black text-primary-300/40 uppercase tracking-[0.3em] mb-8">
           SYSTEM HEALTH
@@ -129,7 +129,7 @@ const SystemOverview: React.FC<SystemOverviewProps> = ({
             </p>
             {uptime && <p className="text-xxs font-bold text-white/30 mt-1">Uptime: {uptime}</p>}
           </div>
-          <div className="w-16 h-16 rounded-2xl bg-primary-500/10 flex items-center justify-center border border-primary-500/20">
+          <div className="w-16 h-16 rounded-xl bg-primary-500/10 flex items-center justify-center border border-primary-500/20">
             <span className="text-primary-400 font-black text-xl">
               {getHealthGrade(healthScore)}
             </span>

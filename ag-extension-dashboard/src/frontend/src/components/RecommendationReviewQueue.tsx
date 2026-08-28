@@ -46,7 +46,7 @@ export function RecommendationReviewQueue({ addNotification }: RecommendationRev
   if (isLoading || reviews.length === 0) return null;
 
   return (
-    <section aria-labelledby="recommendation-review-heading" className="mb-8 rounded-2xl border border-amber-200 bg-amber-50/70 p-5 dark:border-amber-900/60 dark:bg-amber-950/20">
+    <section aria-labelledby="recommendation-review-heading" className="mb-8 rounded-xl border border-amber-200 bg-amber-50/70 p-5 dark:border-amber-900/60 dark:bg-amber-950/20">
       <div className="mb-4 flex items-center gap-3">
         <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
         <div>

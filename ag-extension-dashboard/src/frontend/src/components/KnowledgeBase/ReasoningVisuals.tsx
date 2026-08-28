@@ -150,17 +150,17 @@ const MediaAssetsSection = ({
           key={`img-${idx}`}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/50 dark:bg-gray-900/40 p-4 rounded-3xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-xl group overflow-hidden cursor-pointer"
+          className="bg-white/50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-xl group overflow-hidden cursor-pointer"
           onClick={() => setSelectedImage(img.url)}
         >
-          <div className="relative aspect-video rounded-2xl overflow-hidden mb-3">
+          <div className="relative aspect-video rounded-xl overflow-hidden mb-3">
             <img
               src={img.url}
               alt={img.caption ?? 'Agricultural insight'}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <div className="p-3 bg-white/20 backdrop-blur-md rounded-2xl text-white">
+              <div className="p-3 bg-white/20 backdrop-blur-md rounded-xl text-white">
                 <Maximize2 className="w-6 h-6" />
               </div>
             </div>
@@ -188,9 +188,9 @@ const MediaAssetsSection = ({
           key={`vid-${idx}`}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/50 dark:bg-gray-900/40 p-4 rounded-3xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-xl group overflow-hidden"
+          className="bg-white/50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-xl group overflow-hidden"
         >
-          <div className="relative aspect-video rounded-2xl overflow-hidden mb-3 bg-black flex items-center justify-center shadow-inner">
+          <div className="relative aspect-video rounded-xl overflow-hidden mb-3 bg-black flex items-center justify-center shadow-inner">
             {' '}
             {vid.url && (vid.url.includes('youtube.com') || vid.url.includes('youtu.be')) ? (
               <iframe
@@ -213,7 +213,7 @@ const MediaAssetsSection = ({
                   href={vid.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="absolute bottom-3 right-3 p-3 bg-primary-600 rounded-2xl text-white shadow-xl transform active:scale-95 transition-all"
+                  className="absolute bottom-3 right-3 p-3 bg-primary-600 rounded-xl text-white shadow-xl transform active:scale-95 transition-all"
                 >
                   <ExternalLink className="w-5 h-5" />
                 </a>
@@ -248,14 +248,14 @@ const AudioSynthesisSection = ({
 }) => {
   if (!audio) return null;
   return (
-    <div className="p-8 bg-gradient-to-r from-primary-600 to-indigo-600 rounded-[2.5rem] text-white overflow-hidden relative group shadow-2xl shadow-primary-500/20">
+    <div className="p-8 bg-gradient-to-r from-primary-600 to-indigo-600 rounded-xl text-white overflow-hidden relative group shadow-2xl shadow-primary-500/20">
       <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32 group-hover:scale-110 transition-transform"></div>
       <div className="relative flex flex-col md:flex-row items-center gap-8">
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={togglePlayback}
-          className="p-6 bg-white/20 backdrop-blur-md rounded-3xl text-white hover:bg-white/30 transition-all shadow-xl"
+          className="p-6 bg-white/20 backdrop-blur-md rounded-xl text-white hover:bg-white/30 transition-all shadow-xl"
         >
           <Zap className={`w-12 h-12 ${isPlaying ? 'animate-pulse fill-current' : 'fill-none'}`} />
         </motion.button>
@@ -333,7 +333,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
     return (
       <motion.div
         whileHover={{ y: -5 }}
-        className="bg-white/40 dark:bg-gray-900/30 p-8 rounded-[2.5rem] border border-white/20 dark:border-white/5 shadow-[0_20px_50px_var(--color-outline)] backdrop-blur-3xl h-[350px] flex flex-col group transition-all"
+        className="bg-white/40 dark:bg-gray-900/30 p-8 rounded-xl border border-white/20 dark:border-white/5 shadow-[0_20px_50px_var(--color-outline)] backdrop-blur-3xl h-[350px] flex flex-col group transition-all"
       >
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
@@ -384,7 +384,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: idx * 0.1 }}
-              className="p-5 bg-white shadow-lg shadow-gray-200/50 dark:bg-gray-800 dark:shadow-none border border-gray-100 dark:border-gray-700/50 rounded-3xl flex flex-col items-center text-center gap-2 group hover:border-primary-500/50 transition-all cursor-default"
+              className="p-5 bg-white shadow-lg shadow-gray-200/50 dark:bg-gray-800 dark:shadow-none border border-gray-100 dark:border-gray-700/50 rounded-xl flex flex-col items-center text-center gap-2 group hover:border-primary-500/50 transition-all cursor-default"
             >
               <div
                 className={`p-2 rounded-xl mb-1 ${
@@ -457,7 +457,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="relative max-w-7xl max-h-full rounded-[2.5rem] overflow-hidden shadow-[0_0_100px_var(--color-outline)] border border-white/10"
+              className="relative max-w-7xl max-h-full rounded-xl overflow-hidden shadow-[0_0_100px_var(--color-outline)] border border-white/10"
               onClick={e => e.stopPropagation()}
             >
               <img
@@ -475,10 +475,10 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
         (safeVisuals.charts && safeVisuals.charts.length > 0) ||
         (safeVisuals.images && safeVisuals.images.length > 0) ||
         (safeVisuals.videos && safeVisuals.videos.length > 0)) && (
-        <div className="p-8 bg-primary-600 rounded-3xl text-white overflow-hidden relative group shadow-2xl shadow-primary-500/20">
+        <div className="p-8 bg-primary-600 rounded-xl text-white overflow-hidden relative group shadow-2xl shadow-primary-500/20">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32 group-hover:scale-110 transition-transform"></div>
           <div className="relative flex items-center gap-6">
-            <div className="p-4 bg-white/20 backdrop-blur-md rounded-2xl">
+            <div className="p-4 bg-white/20 backdrop-blur-md rounded-xl">
               <Zap className="w-10 h-10 fill-current" />
             </div>
             <div className="flex-1">
@@ -492,7 +492,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
               </p>
             </div>
             <div className="hidden md:block">
-              <div className="px-6 py-2 bg-white text-primary-600 rounded-2xl font-black shadow-xl shadow-black/10">
+              <div className="px-6 py-2 bg-white text-primary-600 rounded-xl font-black shadow-xl shadow-black/10">
                 ALFA v2.2
               </div>
             </div>

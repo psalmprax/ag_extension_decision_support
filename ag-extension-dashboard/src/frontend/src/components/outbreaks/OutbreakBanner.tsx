@@ -21,7 +21,7 @@ export function OutbreakBanner() {
     return (
         <div
             role="alert"
-            className="flex items-start gap-3 p-3 sm:p-4 rounded-2xl border border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300"
+            className="flex items-start gap-3 p-3 sm:p-4 rounded-xl border border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300"
         >
             <AlertOctagon className="w-5 h-5 shrink-0 mt-0.5" />
             <div className="min-w-0 flex-1">

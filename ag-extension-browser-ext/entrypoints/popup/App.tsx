@@ -35,7 +35,7 @@ function App() {
 
   if (showSettings) {
     return (
-      <div className="w-full min-w-[320px] max-w-[380px] bg-slate-950 text-white shadow-2xl overflow-hidden font-sans min-h-[400px] border border-white/10 rounded-2xl">
+      <div className="w-full min-w-[320px] max-w-[380px] bg-slate-950 text-white shadow-2xl overflow-hidden font-sans min-h-[400px] border border-white/10 rounded-xl">
         <header className="p-3.5 sm:p-4 bg-slate-900 border-b border-white/10 flex items-center gap-3">
           <button 
             onClick={() => setShowSettings(false)}
@@ -107,7 +107,7 @@ function App() {
   }
 
   return (
-    <div className="w-full min-w-[320px] max-w-[380px] bg-slate-950 text-white shadow-2xl overflow-hidden font-sans border border-white/10 rounded-2xl">
+    <div className="w-full min-w-[320px] max-w-[380px] bg-slate-950 text-white shadow-2xl overflow-hidden font-sans border border-white/10 rounded-xl">
       {/* Header */}
       <header className="p-3.5 sm:p-4 bg-gradient-to-r from-emerald-600 to-teal-700 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
@@ -136,7 +136,7 @@ function App() {
           <button 
             type="button"
             onClick={handleOpenSidepanel}
-            className="w-full text-left p-3.5 bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-white/10 hover:border-emerald-500/30 transition-all cursor-pointer group active:scale-[0.99]"
+            className="w-full text-left p-3.5 bg-slate-900/60 backdrop-blur-xl rounded-xl border border-white/10 hover:border-emerald-500/30 transition-all cursor-pointer group active:scale-[0.99]"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -157,14 +157,14 @@ function App() {
         <section className="grid grid-cols-2 gap-3">
           <button 
             onClick={() => handleQuickAction('Summarize')}
-            className="p-3.5 bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-white/10 hover:border-emerald-500/30 flex flex-col items-center gap-2 transition-all active:scale-95"
+            className="p-3.5 bg-slate-900/60 backdrop-blur-xl rounded-xl border border-white/10 hover:border-emerald-500/30 flex flex-col items-center gap-2 transition-all active:scale-95"
           >
             <BarChart3 className="w-5 h-5 text-emerald-400" />
             <span className="text-xxs font-bold tracking-wider uppercase text-white">INSIGHTS</span>
           </button>
           <button 
             onClick={() => handleQuickAction('Weather')}
-            className="p-3.5 bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-white/10 hover:border-emerald-500/30 flex flex-col items-center gap-2 transition-all active:scale-95"
+            className="p-3.5 bg-slate-900/60 backdrop-blur-xl rounded-xl border border-white/10 hover:border-emerald-500/30 flex flex-col items-center gap-2 transition-all active:scale-95"
           >
             <Cloud className="w-5 h-5 text-sky-400" />
             <span className="text-xxs font-bold tracking-wider uppercase text-white">WEATHER</span>
@@ -172,7 +172,7 @@ function App() {
         </section>
 
         {/* Page Context */}
-        <section className="p-3.5 bg-emerald-500/10 backdrop-blur-xl rounded-2xl border border-emerald-500/20">
+        <section className="p-3.5 bg-emerald-500/10 backdrop-blur-xl rounded-xl border border-emerald-500/20">
           <div className="flex items-center justify-between mb-1.5">
              <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Page Analysis</span>
              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />

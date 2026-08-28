@@ -91,7 +91,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
       <div className="flex flex-1 gap-4 md:gap-6 overflow-hidden relative">
         {/* Left Column: Farmer Conversations Roster */}
         <div
-          className={`w-full md:w-80 flex flex-col backdrop-blur-xl bg-slate-900/70 border border-white/[0.08] rounded-3xl shadow-xl shadow-emerald-950/20 overflow-hidden ${
+          className={`w-full md:w-80 flex flex-col backdrop-blur-xl bg-slate-900/70 border border-white/[0.08] rounded-xl shadow-xl shadow-emerald-950/20 overflow-hidden ${
             activeFarmerConvId ? 'hidden md:flex' : 'flex'
           }`}
         >
@@ -161,7 +161,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
               return (
                 <div
                   key={conv.id}
-                  className={`group relative flex items-center w-full rounded-2xl transition-all border ${
+                  className={`group relative flex items-center w-full rounded-xl transition-all border ${
                     isSelected
                       ? 'bg-emerald-500/15 border-emerald-500/40 text-white shadow-lg'
                       : 'bg-slate-950/40 border-white/[0.04] hover:border-white/[0.1] hover:bg-slate-950/80 text-white/70'
@@ -220,7 +220,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
 
         {/* Center Column: Active Chat Thread */}
         <div
-          className={`flex-1 flex flex-col backdrop-blur-xl bg-slate-900/70 border border-white/[0.08] rounded-3xl shadow-xl shadow-emerald-950/20 overflow-hidden ${
+          className={`flex-1 flex flex-col backdrop-blur-xl bg-slate-900/70 border border-white/[0.08] rounded-xl shadow-xl shadow-emerald-950/20 overflow-hidden ${
             activeFarmerConvId ? 'flex' : 'hidden md:flex'
           }`}
         >
@@ -287,7 +287,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                       className={`flex ${isOfficer ? 'justify-end' : 'justify-start'}`}
                     >
                       <div
-                        className={`max-w-[75%] p-4 rounded-2xl shadow-md space-y-1.5 ${
+                        className={`max-w-[75%] p-4 rounded-xl shadow-md space-y-1.5 ${
                           isOfficer
                             ? 'bg-gradient-to-br from-emerald-600 to-emerald-700 text-white rounded-tr-none border border-emerald-500/40'
                             : 'backdrop-blur-md bg-slate-950/80 text-white/90 rounded-tl-none border border-white/[0.08]'
@@ -354,7 +354,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
             </>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-3">
-              <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-2">
+              <div className="w-16 h-16 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-2">
                 <MessageSquare className="w-8 h-8" />
               </div>
               <h3 className="text-base font-bold text-white">
@@ -369,31 +369,31 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
 
         {/* Right Column: Farmer Mini Telemetry Drawer (Bento Style) */}
         {activeConv && (
-          <div className="hidden xl:flex w-72 flex-col backdrop-blur-xl bg-slate-900/70 border border-white/[0.08] rounded-3xl p-5 shadow-xl shadow-emerald-950/20 space-y-4 overflow-y-auto">
+          <div className="hidden xl:flex w-72 flex-col backdrop-blur-xl bg-slate-900/70 border border-white/[0.08] rounded-xl p-5 shadow-xl shadow-emerald-950/20 space-y-4 overflow-y-auto">
             <div className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
               <Sprout className="w-4 h-4" />
               <span>Plot Telemetry</span>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-white/[0.06] space-y-1">
+            <div className="p-3.5 rounded-xl bg-slate-950/80 border border-white/[0.06] space-y-1">
               <div className="text-[10px] font-mono text-white/40">NDVI CANOPY VIGOR</div>
               <div className="text-base font-bold text-emerald-400">0.78 (Optimal)</div>
               <div className="text-[9px] text-white/40">Sentinel-2 Multispectral</div>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-white/[0.06] space-y-1">
+            <div className="p-3.5 rounded-xl bg-slate-950/80 border border-white/[0.06] space-y-1">
               <div className="text-[10px] font-mono text-white/40">SOIL pH & CARBON</div>
               <div className="text-base font-bold text-amber-400">6.4 pH / 2.1% C</div>
               <div className="text-[9px] text-white/40">ISRIC SoilGrids 0-30cm</div>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-white/[0.06] space-y-1">
+            <div className="p-3.5 rounded-xl bg-slate-950/80 border border-white/[0.06] space-y-1">
               <div className="text-[10px] font-mono text-white/40">NASA POWER WEATHER</div>
               <div className="text-base font-bold text-sky-400">22°C • 74% Humidity</div>
               <div className="text-[9px] text-white/40">3-Day Forecast: Mild Rain</div>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-white/[0.06] space-y-1">
+            <div className="p-3.5 rounded-xl bg-slate-950/80 border border-white/[0.06] space-y-1">
               <div className="text-[10px] font-mono text-white/40">OUTBREAK RISK</div>
               <div className="text-base font-bold text-emerald-400 flex items-center gap-1">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />

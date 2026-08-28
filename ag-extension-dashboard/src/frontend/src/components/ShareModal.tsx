@@ -100,13 +100,13 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="relative w-full max-w-md bg-slate-900 border border-white/10 text-white rounded-3xl shadow-2xl overflow-hidden max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] overflow-y-auto"
+        className="relative w-full max-w-md bg-slate-900 border border-white/10 text-white rounded-xl shadow-2xl overflow-hidden max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] overflow-y-auto"
       >
         {/* Header */}
         <div className="p-4 sm:p-6 border-b border-white/10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 sm:gap-4">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-500/20 border border-emerald-500/30 rounded-2xl flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-500/20 border border-emerald-500/30 rounded-xl flex items-center justify-center shrink-0">
                 <Share2 className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
               </div>
               <div className="min-w-0">
@@ -160,7 +160,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                     <button
                       key={option.id}
                       onClick={() => setSettings({ ...settings, accessType: option.id })}
-                      className={`flex items-start gap-4 p-4 rounded-2xl border transition-all text-left ${
+                      className={`flex items-start gap-4 p-4 rounded-xl border transition-all text-left ${
                         settings.accessType === option.id
                           ? 'bg-primary-50 dark:bg-primary-900/10 border-primary-200 dark:border-primary-800 ring-2 ring-primary-500/20'
                           : 'bg-gray-50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700'
@@ -219,7 +219,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               <button
                 onClick={handleCreateShare}
                 disabled={loading}
-                className="w-full py-4 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 text-white font-black rounded-2xl shadow-xl shadow-primary-500/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                className="w-full py-4 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 text-white font-black rounded-xl shadow-xl shadow-primary-500/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <RefreshCcw className="w-5 h-5 animate-spin" />
@@ -233,7 +233,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
             </div>
           ) : (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="p-6 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800 rounded-3xl text-center">
+              <div className="p-6 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800 rounded-xl text-center">
                 <div className="w-12 h-12 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
                   <Check className="w-6 h-6" />
                 </div>
@@ -253,7 +253,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                   <input
                     readOnly
                     value={shareData.shareUrl}
-                    className="w-full px-4 py-4 rounded-2xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-800 text-sm font-mono pr-12 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400/50"
+                    className="w-full px-4 py-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-800 text-sm font-mono pr-12 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400/50"
                   />
                   <button
                     onClick={copyToClipboard}
@@ -268,7 +268,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 </div>
               </div>
 
-              <div className="p-4 bg-amber-50 dark:bg-amber-900/10 rounded-2xl border border-amber-100 dark:border-amber-800 flex items-start gap-3">
+              <div className="p-4 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-100 dark:border-amber-800 flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
                 <p className="text-xs text-amber-700 dark:text-amber-500 leading-relaxed font-medium">
                   This link will expire on{' '}
@@ -280,13 +280,13 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               <div className="flex gap-3">
                 <button
                   onClick={() => setShareData(null)}
-                  className="flex-1 py-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-2xl transition-all"
+                  className="flex-1 py-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-xl transition-all"
                 >
                   Regenerate
                 </button>
                 <button
                   onClick={onClose}
-                  className="flex-1 py-4 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-2xl shadow-lg shadow-primary-500/10 transition-all"
+                  className="flex-1 py-4 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl shadow-lg shadow-primary-500/10 transition-all"
                 >
                   Done
                 </button>

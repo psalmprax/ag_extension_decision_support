@@ -150,7 +150,7 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-        className="max-w-2xl w-full rounded-3xl bg-white/70 dark:bg-slate-900/80 backdrop-blur-2xl border border-gray-200 dark:border-white/10 p-8 md:p-12 shadow-2xl relative overflow-hidden"
+        className="max-w-2xl w-full rounded-xl bg-white/70 dark:bg-slate-900/80 backdrop-blur-2xl border border-gray-200 dark:border-white/10 p-8 md:p-12 shadow-2xl relative overflow-hidden"
       >
         {/* Glow effect */}
         <div className="absolute -top-24 -right-24 w-64 h-64 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
@@ -159,7 +159,7 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
         <div className="relative z-10 text-center">
           {/* Lock & Feature Icon */}
           <div className="inline-flex items-center justify-center mb-6 relative">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-500/20 to-primary-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg">
+            <div className="w-16 h-16 rounded-xl bg-gradient-to-tr from-emerald-500/20 to-primary-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg">
               <CategoryIcon className="w-8 h-8 text-emerald-500 dark:text-emerald-400" />
             </div>
             <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-slate-900 border-2 border-emerald-500 flex items-center justify-center text-emerald-400 shadow">
@@ -181,7 +181,7 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
           </p>
 
           {/* Benefits Grid */}
-          <div className="bg-gray-50/80 dark:bg-white/[0.03] border border-gray-200/80 dark:border-white/5 rounded-2xl p-5 mb-8 text-left">
+          <div className="bg-gray-50/80 dark:bg-white/[0.03] border border-gray-200/80 dark:border-white/5 rounded-xl p-5 mb-8 text-left">
             <div className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
               Included in Pro & Enterprise Plans:
             </div>

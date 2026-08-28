@@ -265,7 +265,7 @@ const MultiAgentTopologyCanvas: React.FC<{
   };
 
   return (
-    <div className="w-full h-64 rounded-2xl bg-slate-950/80 border border-white/10 relative overflow-hidden">
+    <div className="w-full h-64 rounded-xl bg-slate-950/80 border border-white/10 relative overflow-hidden">
       <canvas
         ref={canvasRef}
         onClick={handleCanvasClick}
@@ -456,12 +456,12 @@ const AlphaAgentOps: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-20">
       {/* ── Top Command HUD Banner (knockknockapp.ai standard) ── */}
-      <div className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-3xl p-5 sm:p-6 shadow-2xl relative overflow-hidden">
+      <div className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-xl p-5 sm:p-6 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 relative z-10">
           {/* Left: Branding */}
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500/20 via-cyan-500/20 to-emerald-500/20 border border-purple-500/40 flex items-center justify-center text-purple-400 shadow-lg shadow-purple-950/40">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 via-cyan-500/20 to-emerald-500/20 border border-purple-500/40 flex items-center justify-center text-purple-400 shadow-lg shadow-purple-950/40">
               <Bot className="w-6 h-6 animate-pulse" />
             </div>
             <div>
@@ -526,7 +526,7 @@ const AlphaAgentOps: React.FC = () => {
       </div>
 
       {/* ── 1-Click Autonomous Scenario Dispatches ── */}
-      <div className="backdrop-blur-xl bg-slate-900/70 border border-white/10 rounded-3xl p-5 shadow-xl space-y-3">
+      <div className="backdrop-blur-xl bg-slate-900/70 border border-white/10 rounded-xl p-5 shadow-xl space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-xxs font-mono font-bold tracking-widest text-purple-400 uppercase">
             Instant Autonomous Dispatches (1-Click Pipeline Triggers)
@@ -540,7 +540,7 @@ const AlphaAgentOps: React.FC = () => {
               key={sc.id}
               onClick={() => handleRunScenario(sc)}
               disabled={isExecuting}
-              className="p-3.5 rounded-2xl bg-slate-950/60 hover:bg-purple-500/10 border border-white/5 hover:border-purple-500/30 text-left transition-all group flex flex-col justify-between space-y-2 disabled:opacity-50"
+              className="p-3.5 rounded-xl bg-slate-950/60 hover:bg-purple-500/10 border border-white/5 hover:border-purple-500/30 text-left transition-all group flex flex-col justify-between space-y-2 disabled:opacity-50"
             >
               <div>
                 <div className="flex items-center justify-between mb-1.5">
@@ -585,7 +585,7 @@ const AlphaAgentOps: React.FC = () => {
                 <button
                   key={agent.id}
                   onClick={() => setActiveAgent(agent.id)}
-                  className={`w-full p-4 rounded-2xl border transition-all text-left relative group overflow-hidden ${
+                  className={`w-full p-4 rounded-xl border transition-all text-left relative group overflow-hidden ${
                     isSelected
                       ? 'bg-slate-900/90 border-purple-500/50 shadow-xl shadow-purple-950/30 ring-1 ring-purple-500/30'
                       : 'bg-slate-950/50 border-white/5 hover:bg-slate-900/60 hover:border-white/10'
@@ -664,7 +664,7 @@ const AlphaAgentOps: React.FC = () => {
            ══════════════════════════════════════════════════════════════ */}
         <div className="lg:col-span-8 flex flex-col space-y-4">
           {/* Spatial Multi-Agent Topology Canvas (canvasui.dev standard) */}
-          <div className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-3xl p-5 shadow-2xl space-y-3">
+          <div className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-xl p-5 shadow-2xl space-y-3">
             <div className="flex items-center justify-between text-xs font-mono text-white/70">
               <span className="flex items-center gap-2">
                 <Workflow className="w-4 h-4 text-purple-400" />
@@ -683,7 +683,7 @@ const AlphaAgentOps: React.FC = () => {
           </div>
 
           {/* Active Unit Control & Terminal Console */}
-          <div className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4">
+          <div className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-xl p-5 sm:p-6 shadow-2xl space-y-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-purple-500/20 border border-purple-500/30 text-purple-300">
@@ -732,7 +732,7 @@ const AlphaAgentOps: React.FC = () => {
 
             {/* Capability & MCP Tool Tags */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="p-3 rounded-2xl bg-slate-950/60 border border-white/5 space-y-1.5">
+              <div className="p-3 rounded-xl bg-slate-950/60 border border-white/5 space-y-1.5">
                 <span className="text-[10px] font-mono font-bold text-white/40 uppercase tracking-widest">
                   Autonomous Capabilities
                 </span>
@@ -748,7 +748,7 @@ const AlphaAgentOps: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-3 rounded-2xl bg-slate-950/60 border border-white/5 space-y-1.5">
+              <div className="p-3 rounded-xl bg-slate-950/60 border border-white/5 space-y-1.5">
                 <span className="text-[10px] font-mono font-bold text-white/40 uppercase tracking-widest">
                   Registered MCP Tools
                 </span>
@@ -766,7 +766,7 @@ const AlphaAgentOps: React.FC = () => {
             </div>
 
             {/* High-Contrast Live Terminal Log */}
-            <div className="rounded-2xl bg-slate-950 border border-white/10 overflow-hidden font-mono text-xs shadow-inner">
+            <div className="rounded-xl bg-slate-950 border border-white/10 overflow-hidden font-mono text-xs shadow-inner">
               <div className="px-4 py-2 bg-white/[0.03] border-b border-white/5 flex items-center justify-between text-[10px] text-white/40">
                 <span>RUNTIME TRACE STREAM</span>
                 <span className="text-emerald-400 font-bold">ONLINE (100 Hz)</span>

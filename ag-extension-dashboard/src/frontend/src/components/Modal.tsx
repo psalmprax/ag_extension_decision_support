@@ -21,7 +21,7 @@ export function Modal({ title, onClose, size = 'md', children }: ModalProps) {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className={`bg-slate-900 border border-white/10 text-white rounded-2xl w-full ${SIZE_CLASS[size]} max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] overflow-y-auto shadow-2xl`}
+        className={`bg-slate-900 border border-white/10 text-white rounded-xl w-full ${SIZE_CLASS[size]} max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] overflow-y-auto shadow-2xl`}
       >
         <div className="p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3">

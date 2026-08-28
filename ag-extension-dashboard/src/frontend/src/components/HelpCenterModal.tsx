@@ -234,7 +234,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="fixed inset-0 z-[90] flex items-center justify-center p-3 sm:p-4"
           >
-            <div className="bg-slate-900 border border-white/10 text-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] overflow-hidden flex flex-col">
+            <div className="bg-slate-900 border border-white/10 text-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] overflow-hidden flex flex-col">
               {/* Header */}
               <div className="p-4 sm:p-6 bg-gradient-to-br from-emerald-600 to-teal-700 text-white">
                 <div className="flex items-center justify-between">
@@ -283,7 +283,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
                         <button
                           key={i}
                           onClick={action}
-                          className={`p-4 rounded-2xl ${color} flex flex-col items-center gap-2 hover:scale-105 transition-transform`}
+                          className={`p-4 rounded-xl ${color} flex flex-col items-center gap-2 hover:scale-105 transition-transform`}
                         >
                           <Icon className="w-6 h-6" />
                           <span className="text-xs font-bold">{label}</span>

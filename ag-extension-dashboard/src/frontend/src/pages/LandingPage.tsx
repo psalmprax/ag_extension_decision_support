@@ -663,7 +663,7 @@ export function LandingPage() {
               {/* Glow behind mockup */}
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-transparent to-amber-500/10 blur-[60px] rounded-full scale-90" />
 
-              <div className="relative rounded-2xl overflow-hidden border border-white/[0.08] bg-slate-950 shadow-2xl shadow-black/60 w-full max-w-full lg:transform lg:perspective-[1200px] lg:rotate-y-[2deg] lg:-rotate-x-[1deg] lg:hover:rotate-y-0 lg:hover:rotate-x-0 transition-transform duration-700">
+              <div className="relative rounded-xl overflow-hidden border border-white/[0.08] bg-slate-950 shadow-2xl shadow-black/60 w-full max-w-full lg:transform lg:perspective-[1200px] lg:rotate-y-[2deg] lg:-rotate-x-[1deg] lg:hover:rotate-y-0 lg:hover:rotate-x-0 transition-transform duration-700">
                 {/* Window chrome */}
                 <div className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.03] border-b border-white/[0.06]">
                   <div className="flex gap-1.5 shrink-0">
@@ -1062,7 +1062,7 @@ export function LandingPage() {
                 whileInView="visible"
                 viewport={{ once: true, margin: '-60px' }}
                 variants={fadeUp}
-                className="group relative rounded-3xl backdrop-blur-xl bg-slate-900/80 border border-white/[0.08] hover:border-emerald-500/40 transition-all duration-500 overflow-hidden flex flex-col shadow-2xl hover:shadow-emerald-950/40"
+                className="group relative rounded-xl backdrop-blur-xl bg-slate-900/80 border border-white/[0.08] hover:border-emerald-500/40 transition-all duration-500 overflow-hidden flex flex-col shadow-2xl hover:shadow-emerald-950/40"
               >
                 <div className="relative aspect-[16/11] sm:aspect-[4/3] w-full overflow-hidden bg-slate-950">
                   <img
@@ -1116,7 +1116,7 @@ export function LandingPage() {
                 whileInView="visible"
                 viewport={{ once: true, margin: '-60px' }}
                 variants={fadeUp}
-                className="group relative rounded-3xl backdrop-blur-xl bg-slate-900/80 border border-emerald-500/30 hover:border-emerald-500/60 transition-all duration-500 overflow-hidden flex flex-col shadow-2xl shadow-emerald-950/30 hover:shadow-emerald-950/60 ring-1 ring-emerald-500/20"
+                className="group relative rounded-xl backdrop-blur-xl bg-slate-900/80 border border-emerald-500/30 hover:border-emerald-500/60 transition-all duration-500 overflow-hidden flex flex-col shadow-2xl shadow-emerald-950/30 hover:shadow-emerald-950/60 ring-1 ring-emerald-500/20"
               >
                 <div className="relative aspect-[16/11] sm:aspect-[4/3] w-full overflow-hidden bg-slate-950">
                   <img
@@ -1170,7 +1170,7 @@ export function LandingPage() {
                 whileInView="visible"
                 viewport={{ once: true, margin: '-60px' }}
                 variants={fadeUp}
-                className="group relative rounded-3xl backdrop-blur-xl bg-slate-900/80 border border-white/[0.08] hover:border-emerald-500/40 transition-all duration-500 overflow-hidden flex flex-col shadow-2xl hover:shadow-emerald-950/40 md:col-span-2 lg:col-span-1"
+                className="group relative rounded-xl backdrop-blur-xl bg-slate-900/80 border border-white/[0.08] hover:border-emerald-500/40 transition-all duration-500 overflow-hidden flex flex-col shadow-2xl hover:shadow-emerald-950/40 md:col-span-2 lg:col-span-1"
               >
                 <div className="relative aspect-[16/11] sm:aspect-[4/3] w-full overflow-hidden bg-slate-950">
                   <img
@@ -1274,7 +1274,7 @@ export function LandingPage() {
             {/* Interactive Bento Sandbox */}
             <div className="grid lg:grid-cols-[1.2fr_1fr] gap-4 sm:gap-6 items-start">
               {/* Left Column: Interactive Simulation Sandbox */}
-              <div className="backdrop-blur-xl bg-slate-900/70 border border-white/[0.1] rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-2xl shadow-emerald-950/30 space-y-4 sm:space-y-6">
+              <div className="backdrop-blur-xl bg-slate-900/70 border border-white/[0.1] rounded-xl p-4 sm:p-6 lg:p-8 shadow-2xl shadow-emerald-950/30 space-y-4 sm:space-y-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-white/[0.08] pb-3 sm:pb-4 gap-3 sm:gap-4">
                   <div className="flex items-center gap-2.5">
                     <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 shrink-0">
@@ -1332,7 +1332,7 @@ export function LandingPage() {
                 </div>
 
                 {/* Goal Prompt Display */}
-                <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-950/80 border border-white/[0.08] space-y-1.5 sm:space-y-2">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-slate-950/80 border border-white/[0.08] space-y-1.5 sm:space-y-2">
                   <div className="flex flex-wrap items-center justify-between text-xxs text-emerald-400 font-mono gap-1">
                     <span>OBJECTIVE PROMPT</span>
                     <span>REGION: {activePreset.targetRegion}</span>
@@ -1383,7 +1383,7 @@ export function LandingPage() {
               {/* Right Column: Multi-Channel Advisory & Skill Cards */}
               <div className="space-y-4 sm:space-y-6">
                 {/* Closed-Loop Knowledge Card */}
-                <div className="backdrop-blur-xl bg-slate-900/70 border border-white/[0.1] rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl shadow-emerald-950/20 space-y-3 sm:space-y-4">
+                <div className="backdrop-blur-xl bg-slate-900/70 border border-white/[0.1] rounded-xl p-4 sm:p-6 shadow-2xl shadow-emerald-950/20 space-y-3 sm:space-y-4">
                   <div className="flex flex-wrap items-center justify-between border-b border-white/[0.08] pb-3 gap-2">
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
@@ -1394,7 +1394,7 @@ export function LandingPage() {
                     </span>
                   </div>
 
-                  <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-950/80 border border-white/[0.06] space-y-2">
+                  <div className="p-3.5 sm:p-4 rounded-xl bg-slate-950/80 border border-white/[0.06] space-y-2">
                     <div className="font-bold text-xs sm:text-sm text-emerald-300">{activePreset.skillTitle}</div>
                     <p className="text-[11px] sm:text-xxs text-white/70 leading-relaxed font-mono break-words">
                       {activePreset.skillBody}
@@ -1407,7 +1407,7 @@ export function LandingPage() {
                 </div>
 
                 {/* Multi-Channel Message Simulator Card */}
-                <div className="backdrop-blur-xl bg-slate-900/70 border border-white/[0.1] rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl shadow-emerald-950/20 space-y-3 sm:space-y-4">
+                <div className="backdrop-blur-xl bg-slate-900/70 border border-white/[0.1] rounded-xl p-4 sm:p-6 shadow-2xl shadow-emerald-950/20 space-y-3 sm:space-y-4">
                   <div className="flex flex-wrap items-center justify-between border-b border-white/[0.08] pb-3 gap-2">
                     <div className="flex items-center gap-2">
                       <MessageSquare className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -1431,7 +1431,7 @@ export function LandingPage() {
                     </div>
                   </div>
 
-                  <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-950/90 border border-white/[0.08] space-y-3">
+                  <div className="p-3.5 sm:p-4 rounded-xl bg-slate-950/90 border border-white/[0.08] space-y-3">
                     <div className="flex items-center justify-between text-xxs font-mono text-white/40">
                       <span>CHANNEL: {activeChannelTab.toUpperCase()}</span>
                       <span className="text-emerald-400">DISPATCHED (45/45)</span>
@@ -1501,9 +1501,9 @@ export function LandingPage() {
                   whileInView="visible"
                   viewport={{ once: true }}
                   variants={fadeUp}
-                  className="p-6 rounded-2xl backdrop-blur-md bg-slate-900/50 border border-white/[0.08] hover:border-emerald-500/30 transition-all duration-300 text-center relative"
+                  className="p-6 rounded-xl backdrop-blur-md bg-slate-900/50 border border-white/[0.08] hover:border-emerald-500/30 transition-all duration-300 text-center relative"
                 >
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-amber-500/10 border border-emerald-500/30 flex items-center justify-center text-lg font-bold text-emerald-400 mx-auto mb-6 relative z-10 shadow-lg shadow-emerald-950/30">
+                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-emerald-500/20 to-amber-500/10 border border-emerald-500/30 flex items-center justify-center text-lg font-bold text-emerald-400 mx-auto mb-6 relative z-10 shadow-lg shadow-emerald-950/30">
                     {step.num}
                   </div>
                   <h3 className="text-lg font-bold mb-3 text-white/90">{step.title}</h3>
@@ -1588,7 +1588,7 @@ export function LandingPage() {
                   whileInView="visible"
                   viewport={{ once: true }}
                   variants={fadeUp}
-                  className="p-6 rounded-2xl backdrop-blur-md bg-slate-900/60 border border-white/[0.08] hover:border-emerald-500/30 hover:bg-slate-900/80 hover:shadow-xl hover:shadow-emerald-950/20 transition-all duration-300 flex flex-col justify-between"
+                  className="p-6 rounded-xl backdrop-blur-md bg-slate-900/60 border border-white/[0.08] hover:border-emerald-500/30 hover:bg-slate-900/80 hover:shadow-xl hover:shadow-emerald-950/20 transition-all duration-300 flex flex-col justify-between"
                 >
                   <div>
                     <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4">
@@ -1612,7 +1612,7 @@ export function LandingPage() {
               whileInView="visible"
               viewport={{ once: true }}
               variants={fadeUp}
-              className="mt-10 p-6 sm:p-8 rounded-2xl backdrop-blur-md bg-slate-900/70 border border-emerald-500/25 shadow-2xl shadow-emerald-950/30"
+              className="mt-10 p-6 sm:p-8 rounded-xl backdrop-blur-md bg-slate-900/70 border border-emerald-500/25 shadow-2xl shadow-emerald-950/30"
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/[0.08]">
                 <div className="flex items-center gap-3">
@@ -1743,7 +1743,7 @@ export function LandingPage() {
                   whileInView="visible"
                   viewport={{ once: true }}
                   variants={fadeUp}
-                  className="group p-7 rounded-2xl backdrop-blur-md bg-slate-900/60 border border-white/[0.08] hover:border-emerald-500/30 hover:bg-slate-900/80 hover:shadow-2xl hover:shadow-emerald-950/20 transition-all duration-500"
+                  className="group p-7 rounded-xl backdrop-blur-md bg-slate-900/60 border border-white/[0.08] hover:border-emerald-500/30 hover:bg-slate-900/80 hover:shadow-2xl hover:shadow-emerald-950/20 transition-all duration-500"
                 >
                   <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-5 group-hover:bg-emerald-500/20 transition-all duration-500">
                     <aud.icon className="w-6 h-6 text-emerald-400/80 group-hover:text-emerald-400 transition-colors" />
@@ -1800,7 +1800,7 @@ export function LandingPage() {
                     whileInView="visible"
                     viewport={{ once: true, margin: '-40px' }}
                     variants={fadeUp}
-                    className="rounded-2xl border border-white/[0.08] backdrop-blur-md bg-slate-900/60 hover:border-emerald-500/30 transition-all duration-300 overflow-hidden"
+                    className="rounded-xl border border-white/[0.08] backdrop-blur-md bg-slate-900/60 hover:border-emerald-500/30 transition-all duration-300 overflow-hidden"
                   >
                     <button
                       type="button"
@@ -2123,7 +2123,7 @@ export function LandingPage() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 16 }}
                 transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="relative w-full max-w-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] bg-slate-900 border border-white/10 rounded-2xl p-4 sm:p-8 shadow-2xl overflow-y-auto space-y-4 sm:space-y-6 z-10"
+                className="relative w-full max-w-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] bg-slate-900 border border-white/10 rounded-xl p-4 sm:p-8 shadow-2xl overflow-y-auto space-y-4 sm:space-y-6 z-10"
               >
                 <div className="flex items-center justify-between border-b border-white/[0.08] pb-3 sm:pb-4 gap-2">
                   <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">

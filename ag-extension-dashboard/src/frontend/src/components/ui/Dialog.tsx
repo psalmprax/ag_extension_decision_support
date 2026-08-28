@@ -47,7 +47,7 @@ export function Dialog({ open, onClose, children, size = 'md' }: DialogProps) {
                 className={cn(
                   'w-full transform overflow-hidden text-left align-middle',
                   'bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10',
-                  'rounded-2xl shadow-2xl',
+                  'rounded-xl shadow-2xl',
                   sizeClasses[size]
                 )}
               >

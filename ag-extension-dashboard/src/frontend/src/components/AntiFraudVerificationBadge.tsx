@@ -191,7 +191,7 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
   };
 
   return (
-    <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/80 border border-emerald-500/25 backdrop-blur-xl shadow-xl space-y-4">
+    <div className="p-4 sm:p-5 rounded-xl bg-slate-900/80 border border-emerald-500/25 backdrop-blur-xl shadow-xl space-y-4">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/[0.08] pb-3">
         <div className="flex items-center gap-2.5">

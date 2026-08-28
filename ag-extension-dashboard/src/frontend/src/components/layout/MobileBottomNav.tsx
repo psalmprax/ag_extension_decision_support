@@ -69,7 +69,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                 aria-label={item.label}
               >
                 <div
-                  className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg transition-all duration-200 ${
+                  className={`w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg transition-all duration-200 ${
                     isActive
                       ? 'bg-gradient-to-tr from-emerald-500 to-teal-400 shadow-emerald-500/40 scale-105 ring-2 ring-emerald-400/50'
                       : 'bg-gradient-to-tr from-emerald-600 to-emerald-500 shadow-emerald-900/30 hover:scale-105 active:scale-95'

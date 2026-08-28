@@ -483,7 +483,7 @@ function App() {
       {/* Header */}
       <header className="p-3.5 sm:p-4 border-b border-white/10 bg-slate-900/60 backdrop-blur-xl flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-emerald-500/15 flex items-center justify-center border border-emerald-500/30 shadow-lg shadow-emerald-950/40 shrink-0">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center border border-emerald-500/30 shadow-lg shadow-emerald-950/40 shrink-0">
             <img src="/logo.png" alt="GPExts Logo" className="w-6 h-6 object-contain" />
           </div>
           <div>
@@ -561,14 +561,14 @@ function App() {
           <>
             {messages.map((msg) => (
           <div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${msg.role === 'assistant'
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${msg.role === 'assistant'
               ? 'bg-primary-500/10 border-primary-500/20 shadow-lg shadow-primary-500/5'
               : 'bg-secondary-500/10 border-secondary-500/20 shadow-lg shadow-secondary-500/5'
               }`}>
               {msg.role === 'assistant' ? <Bot className="w-4 h-4 text-primary-400" /> : <User className="w-4 h-4 text-secondary-400" />}
             </div>
             <div className="flex flex-col gap-1 max-w-[85%]">
-              <div className={`p-3 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.role === 'assistant'
+              <div className={`p-3 rounded-xl text-sm leading-relaxed shadow-sm ${msg.role === 'assistant'
                 ? 'bg-slate-900 border border-slate-800 text-slate-200 rounded-tl-none'
                 : 'bg-primary-600 border border-primary-500 text-white rounded-tr-none'
                 }`}>
@@ -588,10 +588,10 @@ function App() {
             ))}
             {isLoading && (
               <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-lg bg-primary-500/10 border border-primary-500/20 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-primary-500/10 border border-primary-500/20 flex items-center justify-center">
                   <Bot className="w-4 h-4 text-primary-400 animate-pulse" />
                 </div>
-                <div className="bg-slate-900 border border-slate-800 p-3 rounded-2xl rounded-tl-none flex gap-1 items-center">
+                <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl rounded-tl-none flex gap-1 items-center">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-bounce [animation-delay:-0.3s]" />
                   <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-bounce [animation-delay:-0.15s]" />
                   <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-bounce" />
@@ -604,13 +604,13 @@ function App() {
 
         {/* Offline Queue Manager */}
         {showOfflineManager && (
-          <div className="mb-4 p-4 bg-slate-800/50 border border-slate-700 rounded-lg animate-in slide-in-from-top duration-300">
+          <div className="mb-4 p-4 bg-slate-800/50 border border-slate-700 rounded-xl animate-in slide-in-from-top duration-300">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-bold text-white">Offline Queue</h3>
               <button
                 onClick={handleSync}
                 disabled={!isOnline || queuedRequests.length === 0 || isSyncing}
-                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 text-white text-xs font-bold rounded transition-colors disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 text-white text-xs font-bold rounded-xl transition-colors disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {isSyncing && <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                 {isSyncing ? 'Syncing...' : 'Sync Now'}
@@ -675,7 +675,7 @@ function App() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
               placeholder={isListening ? "Listening..." : "Ask ALFA Core..."}
-              className={`w-full bg-slate-950 border focus:border-primary-500 rounded-2xl py-3 pl-4 pr-12 text-sm outline-none transition-all placeholder:text-slate-600 shadow-inner ${isListening ? 'border-primary-500 ring-2 ring-primary-500/20 animate-pulse' : 'border-slate-700'}`}
+              className={`w-full bg-slate-950 border focus:border-primary-500 rounded-xl py-3 pl-4 pr-12 text-sm outline-none transition-all placeholder:text-slate-600 shadow-inner ${isListening ? 'border-primary-500 ring-2 ring-primary-500/20 animate-pulse' : 'border-slate-700'}`}
             />
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
               <button

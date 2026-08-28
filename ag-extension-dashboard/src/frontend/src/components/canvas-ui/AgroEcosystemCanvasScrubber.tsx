@@ -628,7 +628,7 @@ export function AgroEcosystemCanvasScrubber({
       ref={containerRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className={`relative w-full h-full min-h-[240px] rounded-2xl overflow-hidden border border-white/[0.08] shadow-2xl bg-slate-950 ${className}`}
+      className={`relative w-full h-full min-h-[240px] rounded-xl overflow-hidden border border-white/[0.08] shadow-2xl bg-slate-950 ${className}`}
     >
       <canvas ref={canvasRef} className="w-full h-full block" />
 

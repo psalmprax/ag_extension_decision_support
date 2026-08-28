@@ -71,7 +71,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="fixed inset-0 z-[90] flex items-center justify-center p-3 sm:p-4"
           >
-            <div className="bg-slate-900 border border-white/10 text-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] overflow-y-auto">
+            <div className="bg-slate-900 border border-white/10 text-white rounded-xl shadow-2xl w-full max-w-lg max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] overflow-y-auto">
               {/* Header */}
               <div className="relative p-4 sm:p-6 bg-gradient-to-br from-emerald-600 to-teal-700 text-white">
                 <button
@@ -82,7 +82,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   <X className="w-5 h-5" />
                 </button>
                 <div className="flex items-center gap-3 sm:gap-4">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-2xl flex items-center justify-center text-xl sm:text-2xl font-bold backdrop-blur-sm shrink-0">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-xl flex items-center justify-center text-xl sm:text-2xl font-bold backdrop-blur-sm shrink-0">
                     {user.firstName?.[0]}
                     {user.lastName?.[0]}
                   </div>

@@ -56,7 +56,7 @@ function renderVegetationCard(
   const maxBar = Math.max(0.05, ...points.map(p => p.ndvi), 1);
 
   return (
-    <div className="bg-theme-bg-card dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+    <div className="bg-theme-bg-card dark:bg-gray-800 p-8 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
           <Sprout className="w-5 h-5" />
@@ -124,7 +124,7 @@ function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: b
   const metrics = data?.world?.metrics || data?.country?.metrics || null;
 
   return (
-    <div className="bg-theme-bg-card dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+    <div className="bg-theme-bg-card dark:bg-gray-800 p-8 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400 shrink-0">
           <Globe className="w-5 h-5" />
@@ -223,7 +223,7 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <ChartSkeleton />
-          <div className="bg-gray-200 dark:bg-gray-700 h-[300px] rounded-[2.5rem] animate-pulse" />
+          <div className="bg-gray-200 dark:bg-gray-700 h-[300px] rounded-xl animate-pulse" />
         </div>
       </div>
     );
@@ -245,7 +245,7 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
-            className="p-6 bg-theme-bg-card dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 hover:shadow-xl transition-all group cursor-context-menu"
+            className="p-6 bg-theme-bg-card dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 hover:shadow-xl transition-all group cursor-context-menu"
             onContextMenu={e => {
               e.preventDefault();
               showContextMenu({
@@ -276,7 +276,7 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-theme-bg-card dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-theme-bg-card dark:bg-gray-800 p-8 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
           <h3 className="text-lg font-black text-gray-900 dark:text-white mb-6 uppercase tracking-tight">
             {t('farmer_market_prices')}
             {prices && prices.length > 0 && (
@@ -315,7 +315,7 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-primary-600 to-primary-800 p-10 rounded-[2.5rem] shadow-2xl shadow-primary-500/20 text-white relative overflow-hidden group">
+        <div className="bg-gradient-to-br from-primary-600 to-primary-800 p-10 rounded-xl shadow-2xl shadow-primary-500/20 text-white relative overflow-hidden group">
           <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-3xl -translate-y-1/2 translate-x-1/2" />
           <div className="relative z-10">
             <h3 className="text-2xl font-black mb-3 tracking-tight">{t('farmer_ask_ai')}</h3>
@@ -324,7 +324,7 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
             </p>
             <button
               onClick={() => setActiveTab('aiassistant')}
-              className="px-8 py-3 bg-white text-primary-700 font-bold rounded-2xl hover:bg-primary-50 transition-all shadow-xl active:scale-95"
+              className="px-8 py-3 bg-white text-primary-700 font-bold rounded-xl hover:bg-primary-50 transition-all shadow-xl active:scale-95"
             >
               {t('farmer_start_chat')}
             </button>

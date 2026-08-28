@@ -114,9 +114,9 @@ const SynthesisView: React.FC<{ result: Result; onSwitchToEvidence: () => void }
     exit={{ opacity: 0, y: -10 }}
     className="space-y-6"
   >
-    <div className="p-6 sm:p-10 rounded-3xl bg-slate-900/90 border border-white/10 shadow-2xl backdrop-blur-2xl space-y-6">
+    <div className="p-6 sm:p-10 rounded-xl bg-slate-900/90 border border-white/10 shadow-2xl backdrop-blur-2xl space-y-6">
       {result.evidenceStatus && result.evidenceStatus !== 'verified_sources' && (
-        <div className="flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-200">
+        <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-200">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
           <div>
             <p className="text-xs font-bold uppercase tracking-wider">Evidence Status Notice</p>
@@ -178,7 +178,7 @@ const KnowledgeGraphView: React.FC<{
     exit={{ opacity: 0, y: -10 }}
     className="space-y-4"
   >
-    <div className="p-4 sm:p-6 rounded-3xl bg-slate-900/90 border border-white/10 shadow-2xl backdrop-blur-2xl">
+    <div className="p-4 sm:p-6 rounded-xl bg-slate-900/90 border border-white/10 shadow-2xl backdrop-blur-2xl">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-sm font-bold text-white flex items-center gap-2">
@@ -194,7 +194,7 @@ const KnowledgeGraphView: React.FC<{
         </span>
       </div>
 
-      <div className="h-[420px] rounded-2xl overflow-hidden border border-white/10 bg-slate-950 relative">
+      <div className="h-[420px] rounded-xl overflow-hidden border border-white/10 bg-slate-950 relative">
         <RagKnowledgeGraphCanvas
           className="w-full h-full"
           customNodes={customGraphNodes}
@@ -203,7 +203,7 @@ const KnowledgeGraphView: React.FC<{
       </div>
 
       {selectedGraphNode && (
-        <div className="mt-4 p-4 rounded-2xl bg-slate-950/80 border border-emerald-500/30 flex items-start justify-between gap-4 animate-in fade-in">
+        <div className="mt-4 p-4 rounded-xl bg-slate-950/80 border border-emerald-500/30 flex items-start justify-between gap-4 animate-in fade-in">
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-white">{selectedGraphNode.label}</span>
@@ -238,7 +238,7 @@ const EvidenceSourcesView: React.FC<{ result: Result }> = ({ result }) => (
     exit={{ opacity: 0, y: -10 }}
     className="space-y-4"
   >
-    <div className="p-6 sm:p-8 rounded-3xl bg-slate-900/90 border border-white/10 shadow-2xl backdrop-blur-2xl space-y-6">
+    <div className="p-6 sm:p-8 rounded-xl bg-slate-900/90 border border-white/10 shadow-2xl backdrop-blur-2xl space-y-6">
       <div>
         <h3 className="text-sm font-bold text-white flex items-center gap-2">
           <ShieldCheck className="w-4 h-4 text-emerald-400" />
@@ -258,7 +258,7 @@ const EvidenceSourcesView: React.FC<{ result: Result }> = ({ result }) => (
             {result.citations.map((cite, i) => (
               <div
                 key={i}
-                className="p-4 rounded-2xl bg-slate-950/60 border border-amber-500/20 hover:border-amber-500/40 transition-all space-y-2"
+                className="p-4 rounded-xl bg-slate-950/60 border border-amber-500/20 hover:border-amber-500/40 transition-all space-y-2"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-white truncate max-w-[200px]">
@@ -302,7 +302,7 @@ const EvidenceSourcesView: React.FC<{ result: Result }> = ({ result }) => (
                 <Component
                   key={i}
                   {...linkProps}
-                  className="p-3.5 rounded-2xl bg-slate-950/60 border border-white/5 hover:border-emerald-500/40 transition-all text-left flex flex-col justify-between gap-2 group"
+                  className="p-3.5 rounded-xl bg-slate-950/60 border border-white/5 hover:border-emerald-500/40 transition-all text-left flex flex-col justify-between gap-2 group"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-1">
@@ -349,7 +349,7 @@ const AIResultHeader: React.FC<{
 }) => (
   <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-6 border-b border-white/10">
     <div className="flex items-center gap-4 min-w-0">
-      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-950/40 shrink-0">
+      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-950/40 shrink-0">
         <Brain className="w-6 h-6" />
       </div>
       <div className="min-w-0">
@@ -423,7 +423,7 @@ const AIResultNav: React.FC<{
   sourceCount: number;
 }> = ({ viewMode, setViewMode, graphNodeCount, hasVisuals, sourceCount }) => (
   <div className="flex items-center justify-between gap-2 pt-4 overflow-x-auto custom-scrollbar">
-    <div className="flex items-center gap-1.5 p-1 bg-slate-950/60 rounded-2xl border border-white/10">
+    <div className="flex items-center gap-1.5 p-1 bg-slate-950/60 rounded-xl border border-white/10">
       <button
         onClick={() => setViewMode('synthesis')}
         className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
@@ -580,7 +580,7 @@ export const AIResult: React.FC<AIResultProps> = ({ result }) => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="p-6 sm:p-8 rounded-3xl bg-slate-900/90 border border-white/10 shadow-2xl backdrop-blur-2xl"
+            className="p-6 sm:p-8 rounded-xl bg-slate-900/90 border border-white/10 shadow-2xl backdrop-blur-2xl"
           >
             <ReasoningVisuals
               visuals={(result.visuals ?? {}) as VisualsData}

@@ -57,7 +57,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
 
           // Style tables (Important for agricultural data)
           table: ({ children }) => (
-            <div className="overflow-x-auto my-6 border-2 border-gray-200 dark:border-gray-800 rounded-2xl">
+            <div className="overflow-x-auto my-6 border-2 border-gray-200 dark:border-gray-800 rounded-xl">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
                 {children}
               </table>
@@ -122,7 +122,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
                 {children}
               </code>
             ) : (
-              <pre className="bg-gray-900 text-gray-100 p-6 rounded-2xl overflow-x-auto font-mono text-sm border-2 border-primary-500/20 shadow-2xl my-6">
+              <pre className="bg-gray-900 text-gray-100 p-6 rounded-xl overflow-x-auto font-mono text-sm border-2 border-primary-500/20 shadow-2xl my-6">
                 <code {...rest}>{children}</code>
               </pre>
             );

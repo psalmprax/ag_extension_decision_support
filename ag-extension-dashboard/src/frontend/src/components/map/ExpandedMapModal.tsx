@@ -71,7 +71,7 @@ export const ExpandedMapModal: React.FC<ExpandedMapModalProps> = ({
       />
 
       <div
-        className={`relative w-full max-w-7xl h-full max-h-[92vh] sm:max-h-[90vh] rounded-2xl sm:rounded-[32px] overflow-hidden flex flex-col shadow-2xl border ${
+        className={`relative w-full max-w-7xl h-full max-h-[92vh] sm:max-h-[90vh] rounded-xl overflow-hidden flex flex-col shadow-2xl border ${
           themeName === 'cyber'
             ? 'bg-gray-900 border-gray-800'
             : 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800'
@@ -87,7 +87,7 @@ export const ExpandedMapModal: React.FC<ExpandedMapModalProps> = ({
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             <button
               onClick={() => setIsFarmlistCollapsed(!isFarmlistCollapsed)}
-              className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl border text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all shrink-0"
+              className="p-2 sm:p-2.5 rounded-xl border text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all shrink-0"
               title={isFarmlistCollapsed ? 'Show Farmlist' : 'Hide Farmlist'}
             >
               {isFarmlistCollapsed ? (
@@ -119,7 +119,7 @@ export const ExpandedMapModal: React.FC<ExpandedMapModalProps> = ({
             </div>
             <button
               onClick={() => setIsExpanded(false)}
-              className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="p-2 sm:p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               <X className="w-4 sm:w-5 h-4 sm:h-5" />
             </button>

@@ -269,7 +269,7 @@ export function AgroStorytellingSection() {
           </div>
 
           {/* Persona Switcher Buttons */}
-          <div className="flex items-center gap-1.5 bg-slate-900/90 backdrop-blur-md border border-white/10 p-1.5 rounded-2xl shadow-lg">
+          <div className="flex items-center gap-1.5 bg-slate-900/90 backdrop-blur-md border border-white/10 p-1.5 rounded-xl shadow-lg">
             {personas.map((p) => {
               const isSelected = persona === p.id;
               const Icon = p.icon;
@@ -296,7 +296,7 @@ export function AgroStorytellingSection() {
         {/* Main 2-Column Showcase */}
         <div className="grid lg:grid-cols-12 gap-8 items-stretch">
           {/* Left Canvas Scrubber Column (7 cols) */}
-          <div className="lg:col-span-7 flex flex-col min-h-[440px] sm:min-h-[500px] w-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-slate-900/60 backdrop-blur-md">
+          <div className="lg:col-span-7 flex flex-col min-h-[440px] sm:min-h-[500px] w-full rounded-xl overflow-hidden shadow-2xl border border-white/10 bg-slate-900/60 backdrop-blur-md">
             <AgroEcosystemCanvasScrubber
               progress={activeStage * 0.28 + 0.05}
               interactive={true}
@@ -315,7 +315,7 @@ export function AgroStorytellingSection() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -15, scale: 0.98 }}
                 transition={{ duration: 0.3, ease: 'easeOut' }}
-                className={`p-7 sm:p-8 rounded-3xl bg-gradient-to-br ${activeStoryItem.bgGlow} bg-slate-900/95 backdrop-blur-xl border ${activeStoryItem.border} shadow-2xl flex flex-col justify-between flex-1 relative overflow-hidden`}
+                className={`p-7 sm:p-8 rounded-xl bg-gradient-to-br ${activeStoryItem.bgGlow} bg-slate-900/95 backdrop-blur-xl border ${activeStoryItem.border} shadow-2xl flex flex-col justify-between flex-1 relative overflow-hidden`}
               >
                 <div>
                   {/* Category & Badge */}
@@ -368,7 +368,7 @@ export function AgroStorytellingSection() {
             </AnimatePresence>
 
             {/* Stage Quick Switcher Pills */}
-            <div className="bg-slate-900/70 border border-white/10 p-2.5 rounded-2xl flex items-center justify-between gap-2 shadow-lg">
+            <div className="bg-slate-900/70 border border-white/10 p-2.5 rounded-xl flex items-center justify-between gap-2 shadow-lg">
               <button
                 type="button"
                 aria-label="Previous step"

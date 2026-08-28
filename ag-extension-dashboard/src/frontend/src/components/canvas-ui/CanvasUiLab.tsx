@@ -43,7 +43,7 @@ export const CanvasUiLab: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl bg-white/[0.03] border border-white/10">
+      <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-white/[0.03] border border-white/10">
         <div>
           <h3 className="text-sm font-bold text-white flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-emerald-400" />
@@ -86,12 +86,11 @@ export const CanvasUiLab: React.FC = () => {
       </div>
 
       {/* Interactive Playground Area */}
-      <div className="relative min-h-[380px] rounded-2xl border border-white/10 bg-black/40 overflow-hidden flex items-center justify-center p-6">
-        {/* Effect 1: Liquid Fluid Shader */}
+      <div className="relative min-h-[380px] rounded-xl border border-white/10 bg-black/40 overflow-hidden flex items-center justify-center p-6">
         {selectedEffect === 'liquid' && (
           <div className="relative w-full h-full min-h-[320px] flex flex-col items-center justify-center text-center">
             <LiquidCanvas color={fluidColor} secondaryColor="#0d9488" opacity={0.7} />
-            <div className="relative z-10 max-w-md p-6 rounded-2xl bg-black/50 border border-white/10 backdrop-blur-md">
+            <div className="relative z-10 max-w-md p-6 rounded-xl bg-black/50 border border-white/10 backdrop-blur-md">
               <span className="px-2.5 py-1 rounded-full text-xxs font-mono uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 mb-2 inline-block">
                 Move Cursor / Touch Screen
               </span>
@@ -170,7 +169,7 @@ export const CanvasUiLab: React.FC = () => {
         {selectedEffect === 'radar' && (
           <div className="relative w-full h-full min-h-[320px] flex items-center justify-center">
             <TelemetryRadarCanvas particleCount={40} sweepSpeed={0.02} />
-            <div className="relative z-10 p-6 rounded-2xl bg-black/60 border border-cyan-500/30 backdrop-blur-md max-w-sm text-center">
+            <div className="relative z-10 p-6 rounded-xl bg-black/60 border border-cyan-500/30 backdrop-blur-md max-w-sm text-center">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xxs font-mono uppercase mb-3">
                 <Cpu className="w-3.5 h-3.5 animate-spin" />
                 NASA POWER & SoilGrids Stream
@@ -228,21 +227,21 @@ export const CanvasUiLab: React.FC = () => {
 
         {/* Effect 5: Soil Nutrient Heatmap */}
         {selectedEffect === 'soil_heatmap' && (
-          <div className="w-full max-w-2xl bg-black/50 p-6 rounded-2xl border border-white/10 backdrop-blur-md">
+          <div className="w-full max-w-2xl bg-black/50 p-6 rounded-xl border border-white/10 backdrop-blur-md">
             <SoilNutrientHeatmapCanvas initialLayer="ph" />
           </div>
         )}
 
         {/* Effect 6: Disease Saliency & Loupe Lens */}
         {selectedEffect === 'disease_saliency' && (
-          <div className="w-full max-w-2xl bg-black/50 p-6 rounded-2xl border border-white/10 backdrop-blur-md">
+          <div className="w-full max-w-2xl bg-black/50 p-6 rounded-xl border border-white/10 backdrop-blur-md">
             <DiseaseSaliencyCanvas />
           </div>
         )}
 
         {/* Effect 7: RAG Knowledge Graph */}
         {selectedEffect === 'rag_graph' && (
-          <div className="w-full max-w-2xl bg-black/50 p-6 rounded-2xl border border-white/10 backdrop-blur-md">
+          <div className="w-full max-w-2xl bg-black/50 p-6 rounded-xl border border-white/10 backdrop-blur-md">
             <RagKnowledgeGraphCanvas />
           </div>
         )}
@@ -250,8 +249,8 @@ export const CanvasUiLab: React.FC = () => {
         {/* Effect 8: canvasui.dev Particle Reveal */}
         {selectedEffect === 'particle_reveal' && (
           <div className="w-full max-w-xl">
-            <ParticleReveal background="#0c0a09" className="rounded-2xl">
-              <div className="p-8 rounded-2xl bg-stone-900/80 border border-white/10">
+            <ParticleReveal background="#0c0a09" className="rounded-xl">
+              <div className="p-8 rounded-xl bg-stone-900/80 border border-white/10">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xxs font-mono uppercase mb-3">
                   <Sparkles className="w-3.5 h-3.5" />
                   canvasui.dev · Particle Reveal
@@ -284,7 +283,7 @@ export const CanvasUiLab: React.FC = () => {
           <div className="w-full h-[380px] relative">
             <Liquid className="w-full h-full" color={[0.02, 0.59, 0.41]}>
               <div className="w-full h-full flex items-center justify-center p-6">
-                <div className="max-w-md p-6 rounded-2xl bg-black/50 border border-white/10 backdrop-blur-md text-center">
+                <div className="max-w-md p-6 rounded-xl bg-black/50 border border-white/10 backdrop-blur-md text-center">
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xxs font-mono uppercase mb-3">
                     <Droplets className="w-3.5 h-3.5" />
                     canvasui.dev · Liquid
@@ -302,7 +301,7 @@ export const CanvasUiLab: React.FC = () => {
 
         {/* Effect 10: 24fps Image Sequence Canvas Scrubber */}
         {selectedEffect === 'sequence_scrubber' && (
-          <div className="w-full max-w-lg p-6 rounded-2xl bg-stone-900/80 border border-white/10 backdrop-blur-md space-y-4">
+          <div className="w-full max-w-lg p-6 rounded-xl bg-stone-900/80 border border-white/10 backdrop-blur-md space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="text-sm font-bold text-white">60 FPS Sequence Scrubber</h4>

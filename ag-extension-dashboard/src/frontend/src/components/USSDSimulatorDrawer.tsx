@@ -257,7 +257,7 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
             {/* Phone Screen Area */}
             <div className="flex-1 p-4 overflow-y-auto space-y-4">
               {/* Virtual Device Frame */}
-              <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-4 shadow-inner relative flex flex-col min-h-[280px]">
+              <div className="bg-slate-900/90 rounded-xl border border-slate-800 p-4 shadow-inner relative flex flex-col min-h-[280px]">
                 {/* Device Status Bar */}
                 <div className="flex justify-between items-center text-[10px] text-slate-400 pb-2 border-b border-slate-800/60 mb-3">
                   <span className="flex items-center gap-1">
@@ -338,7 +338,7 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
               </div>
 
               {/* Keypad */}
-              <div className="grid grid-cols-3 gap-2 bg-slate-900/60 p-3 rounded-2xl border border-slate-800/80">
+              <div className="grid grid-cols-3 gap-2 bg-slate-900/60 p-3 rounded-xl border border-slate-800/80">
                 {['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'].map(btn => (
                   <button
                     key={btn}

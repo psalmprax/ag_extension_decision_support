@@ -135,7 +135,7 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center gap-2 mb-2">
         <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
           <Clipboard className="w-4 h-4 text-emerald-400" />

@@ -168,7 +168,12 @@ export function useBillingActions() {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [adminKeys, setAdminKeys] = useState({ stripeSecretKey: '', paypalClientId: '' });
+  const [adminKeys, setAdminKeys] = useState({
+    stripeSecretKey: '',
+    stripeWebhookSecret: '',
+    paypalClientId: '',
+    paypalSecret: '',
+  });
   const [showMobilePayForm, setShowMobilePayForm] = useState(false);
   const [showVoucherForm, setShowVoucherForm] = useState(false);
   const [mobilePayData, setMobilePayData] = useState({
@@ -495,7 +500,12 @@ export function useBillingActions() {
   };
 
   const handleAdminUpdate = async () => {
-    if (!adminKeys.stripeSecretKey && !adminKeys.paypalClientId) {
+    if (
+      !adminKeys.stripeSecretKey &&
+      !adminKeys.stripeWebhookSecret &&
+      !adminKeys.paypalClientId &&
+      !adminKeys.paypalSecret
+    ) {
       toast.error('Please enter at least one credential to update.');
       return;
     }
@@ -504,7 +514,12 @@ export function useBillingActions() {
       const response = await updateAdminConfig(adminKeys);
       if (response.success) {
         toast.success(response.message || 'Credentials updated successfully');
-        setAdminKeys({ stripeSecretKey: '', paypalClientId: '' });
+        setAdminKeys({
+          stripeSecretKey: '',
+          stripeWebhookSecret: '',
+          paypalClientId: '',
+          paypalSecret: '',
+        });
       }
     } catch (error) {
       console.error('Failed to update credentials:', error);

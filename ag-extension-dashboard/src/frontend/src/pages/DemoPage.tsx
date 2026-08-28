@@ -206,7 +206,7 @@ export function DemoPage({
         </div>
 
         {/* Content */}
-        <div className="bg-stone-900/60 border border-white/5 rounded-2xl p-6 md:p-8">
+        <div className="bg-stone-900/60 border border-white/5 rounded-xl p-6 md:p-8">
           {/* Window chrome */}
           <div className="flex items-center gap-2 pb-4 border-b border-white/5 mb-6">
             <div className="h-3 w-3 rounded-full bg-red-500" />

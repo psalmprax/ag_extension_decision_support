@@ -91,7 +91,7 @@ function ReportCard({
     <motion.div
       whileHover={{ y: -3 }}
       transition={{ duration: 0.2 }}
-      className="group relative p-6 rounded-2xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] hover:border-emerald-500/30 hover:bg-slate-900/80 hover:shadow-2xl hover:shadow-emerald-950/20 transition-all cursor-pointer flex flex-col justify-between"
+      className="group relative p-6 rounded-xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] hover:border-emerald-500/30 hover:bg-slate-900/80 hover:shadow-2xl hover:shadow-emerald-950/20 transition-all cursor-pointer flex flex-col justify-between"
       onClick={handleOpenReport}
     >
       <div className="space-y-4">
@@ -255,7 +255,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
 
       {/* AI Executive Summary Highlight Strip (KnockKnock Bento Style) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 rounded-2xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-1">
+        <div className="p-4 rounded-xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-1">
           <div className="flex items-center gap-2 text-white/40 text-xxs uppercase tracking-wider font-mono">
             <Layers className="w-3.5 h-3.5 text-emerald-400" />
             <span>Reports Generated</span>
@@ -266,7 +266,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-1">
+        <div className="p-4 rounded-xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-1">
           <div className="flex items-center gap-2 text-white/40 text-xxs uppercase tracking-wider font-mono">
             <Users className="w-3.5 h-3.5 text-sky-400" />
             <span>Farmers Covered</span>
@@ -277,7 +277,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-1">
+        <div className="p-4 rounded-xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-1">
           <div className="flex items-center gap-2 text-white/40 text-xxs uppercase tracking-wider font-mono">
             <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
             <span>Adoption Rate</span>
@@ -288,7 +288,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-1">
+        <div className="p-4 rounded-xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-1">
           <div className="flex items-center gap-2 text-white/40 text-xxs uppercase tracking-wider font-mono">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
             <span>Security Hash</span>
@@ -321,7 +321,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
 
       {/* Reports Grid */}
       {filteredReports.length === 0 ? (
-        <div className="text-center py-16 backdrop-blur-xl bg-slate-900/30 border border-white/[0.06] rounded-2xl space-y-3">
+        <div className="text-center py-16 backdrop-blur-xl bg-slate-900/30 border border-white/[0.06] rounded-xl space-y-3">
           <FileText className="w-10 h-10 text-white/20 mx-auto" />
           <div className="text-sm font-bold text-white/60">No reports found</div>
           <p className="text-xs text-white/40 max-w-sm mx-auto">
@@ -362,7 +362,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-5xl max-h-[90vh] backdrop-blur-2xl bg-slate-900/95 border border-white/[0.12] rounded-3xl shadow-2xl shadow-emerald-950/50 overflow-hidden flex flex-col z-10"
+              className="relative w-full max-w-5xl max-h-[90vh] backdrop-blur-2xl bg-slate-900/95 border border-white/[0.12] rounded-xl shadow-2xl shadow-emerald-950/50 overflow-hidden flex flex-col z-10"
             >
               {/* Modal Header */}
               <div className="p-6 border-b border-white/[0.08] flex items-center justify-between">
@@ -414,11 +414,11 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                   ) : (
                     <div className="prose prose-invert max-w-none text-xs sm:text-sm text-white/80 leading-relaxed space-y-3 font-sans">
                       {reportContent ? (
-                        <div className="whitespace-pre-line bg-slate-950/60 p-5 rounded-2xl border border-white/[0.06]">
+                        <div className="whitespace-pre-line bg-slate-950/60 p-5 rounded-xl border border-white/[0.06]">
                           {reportContent}
                         </div>
                       ) : (
-                              <div className="p-5 rounded-2xl bg-slate-950/60 border border-white/[0.06]">
+                        <div className="p-5 rounded-xl bg-slate-950/60 border border-white/[0.06]">
                           <p className="font-semibold text-white">Report content unavailable.</p>
                         </div>
                       )}

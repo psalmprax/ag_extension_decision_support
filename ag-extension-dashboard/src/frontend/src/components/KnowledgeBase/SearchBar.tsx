@@ -94,8 +94,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
   return (
     <div className="relative group">
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/20 via-cyan-500/20 to-teal-500/20 blur opacity-60 group-hover:opacity-100 transition-opacity rounded-2xl"></div>
-      <div className="relative w-full max-w-full bg-slate-950/80 border border-white/10 p-1.5 sm:p-2 shadow-2xl focus-within:ring-2 focus-within:ring-emerald-500/40 focus-within:border-emerald-500/60 rounded-2xl overflow-hidden backdrop-blur-xl">
+      <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/20 via-cyan-500/20 to-teal-500/20 blur opacity-60 group-hover:opacity-100 transition-opacity rounded-xl"></div>
+      <div className="relative w-full max-w-full bg-slate-950/80 border border-white/10 p-1.5 sm:p-2 shadow-2xl focus-within:ring-2 focus-within:ring-emerald-500/40 focus-within:border-emerald-500/60 rounded-xl overflow-hidden backdrop-blur-xl">
         {/* Attachment Previews */}
         {attachments.length > 0 && (
           <div className="flex flex-wrap gap-2 px-3 py-2 sm:px-4 sm:py-2.5 border-b border-white/10">
