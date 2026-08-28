@@ -6,8 +6,16 @@ export default defineConfig({
   modules: ['@wxt-dev/module-react'],
   vite: () => ({
     resolve: {
+      preserveSymlinks: true,
+      dedupe: ['react', 'react-dom'],
       alias: {
         '@ag-extension/shared': path.resolve(__dirname, '../ag-extension-shared/src'),
+        'react': path.resolve(__dirname, 'node_modules/react'),
+        'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
+        'react/jsx-runtime': path.resolve(__dirname, 'node_modules/react/jsx-runtime.js'),
+        'react/jsx-dev-runtime': path.resolve(__dirname, 'node_modules/react/jsx-dev-runtime.js'),
+        'lucide-react': path.resolve(__dirname, 'node_modules/lucide-react'),
+        'zod': path.resolve(__dirname, 'node_modules/zod'),
       },
     },
   }),
