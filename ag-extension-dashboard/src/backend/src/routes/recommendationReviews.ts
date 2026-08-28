@@ -16,18 +16,34 @@ router.get('/', async (req: Request, res: Response) => {
   try {
     const user = principal(req);
     if (!user) return res.status(401).json({ success: false, error: 'Authentication required' });
-    const tenantId = user.role === 'admin' ? (typeof req.query.tenantId === 'string' ? req.query.tenantId : null) : await getPrincipalTenantId(user.userId);
-    if (!tenantId) return res.status(403).json({ success: false, error: 'Tenant membership required' });
-    const status = typeof req.query.status === 'string' ? req.query.status : 'pending';
-    if (!['pending', 'approved', 'dismissed', 'escalated'].includes(status)) return res.status(400).json({ success: false, error: 'Invalid review status' });
+    const tenantId = user.role === 'admin'
+      ? (typeof req.query.tenantId === 'string' ? req.query.tenantId : null)
+      : await getPrincipalTenantId(user.userId);
 
-    const result = await query(
-      `SELECT id, farmer_id, report_id, recommendation, confidence, evidence_status, status,
-              disposition, created_by, reviewed_by, created_at, reviewed_at
-       FROM recommendation_reviews WHERE tenant_id = $1 AND status = $2 ORDER BY created_at ASC`,
-      [tenantId, status]
-    );
-    return res.json({ success: true, data: result.rows });
+    const status = typeof req.query.status === 'string' ? req.query.status : 'pending';
+    if (!['pending', 'approved', 'dismissed', 'escalated'].includes(status)) {
+      return res.status(400).json({ success: false, error: 'Invalid review status' });
+    }
+
+    if (tenantId) {
+      const result = await query(
+        `SELECT id, farmer_id, report_id, recommendation, confidence, evidence_status, status,
+                disposition, created_by, reviewed_by, created_at, reviewed_at
+         FROM recommendation_reviews WHERE tenant_id = $1 AND status = $2 ORDER BY created_at ASC`,
+        [tenantId, status]
+      );
+      return res.json({ success: true, data: result.rows });
+    } else if (user.role === 'admin') {
+      const result = await query(
+        `SELECT id, farmer_id, report_id, recommendation, confidence, evidence_status, status,
+                disposition, created_by, reviewed_by, created_at, reviewed_at
+         FROM recommendation_reviews WHERE status = $1 ORDER BY created_at ASC`,
+        [status]
+      );
+      return res.json({ success: true, data: result.rows });
+    }
+
+    return res.json({ success: true, data: [] });
   } catch (error) {
     logger.error('List recommendation reviews error:', error);
     return safeError(res, 500, 'Failed to load recommendation reviews');

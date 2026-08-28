@@ -662,7 +662,7 @@ export interface ChatConversationDTO {
   createdAt: string | null;
   updatedAt: string | null;
 }
-const getParticipantId = (primary?: string | null, fallback?: string | null) => primary ?? fallback ?? null;
+
 const getNullableString = (val?: string | null) => val ?? null;
 const getLastMsgIso = (row: ChatConversationRow) => toIso(row.last_message_at) ?? toIso(row.started_at) ?? null;
 const getSatisfactionRating = (row: ChatConversationRow) => row.satisfaction_rating ?? row.satisfaction_score ?? null;

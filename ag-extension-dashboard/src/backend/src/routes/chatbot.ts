@@ -92,7 +92,7 @@ router.get('/conversations', authorize(['admin', 'regional_manager', 'extension_
         TRIM(CONCAT(f.first_name, ' ', f.last_name)) AS farmer_name,
         f.region AS farmer_region,
         f.phone AS farmer_phone,
-        u.name AS officer_name,
+        TRIM(CONCAT(u.first_name, ' ', u.last_name)) AS officer_name,
         u.email AS officer_email,
         u.region AS officer_region,
         COALESCE(
@@ -193,7 +193,7 @@ const findExistingConversation = async (farmerId: string, officerId: string) => 
     `SELECT cv.*,
             TRIM(CONCAT(f.first_name, ' ', f.last_name)) AS farmer_name,
             f.region AS farmer_region,
-            u.name AS officer_name
+            TRIM(CONCAT(u.first_name, ' ', u.last_name)) AS officer_name
        FROM chat_conversations cv
        LEFT JOIN farmers f ON f.id = cv.farmer_id
        LEFT JOIN users u ON u.id = cv.officer_id
@@ -210,7 +210,7 @@ const fetchRichConversation = async (conversationId: string) => {
     `SELECT cv.*,
             TRIM(CONCAT(f.first_name, ' ', f.last_name)) AS farmer_name,
             f.region AS farmer_region,
-            u.name AS officer_name
+            TRIM(CONCAT(u.first_name, ' ', u.last_name)) AS officer_name
        FROM chat_conversations cv
        LEFT JOIN farmers f ON f.id = cv.farmer_id
        LEFT JOIN users u ON u.id = cv.officer_id

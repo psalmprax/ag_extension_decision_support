@@ -289,13 +289,27 @@ class PersistentMemory {
   }
 
   private mapRow(row: MemoryRow): MemoryEntry {
+    let emb: number[] = [];
+    if (row.embedding) {
+      try {
+        if (typeof row.embedding === 'string') {
+          emb = row.embedding.startsWith('[')
+            ? JSON.parse(row.embedding)
+            : row.embedding.replace(/[{}]/g, '').split(',').map(Number).filter(n => !isNaN(n));
+        } else if (Array.isArray(row.embedding)) {
+          emb = row.embedding;
+        }
+      } catch {
+        emb = [];
+      }
+    }
     return {
       id: row.id,
       userId: row.user_id,
       category: row.category,
       key: row.key,
       value: row.value,
-      embedding: row.embedding ? JSON.parse(row.embedding) : [],
+      embedding: emb,
       createdAt: PersistentMemory.toIsoString(row.created_at),
       lastAccessedAt: PersistentMemory.toIsoString(row.last_accessed_at),
       accessCount: row.access_count,
