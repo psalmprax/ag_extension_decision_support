@@ -502,7 +502,7 @@ export function LandingPage() {
           {/* Subtle Aerial Agricultural Landscape Backdrop */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
             <img
-              src="/images/landing/hero-aerial.jpg"
+              src="/images/landing/hero-aerial.webp"
               alt="Lush green agricultural farmland and smallholder plots from above"
               className="w-full h-full object-cover object-center opacity-20 mix-blend-luminosity scale-105 filter saturate-125"
               loading="eager"
@@ -1066,7 +1066,7 @@ export function LandingPage() {
               >
                 <div className="relative aspect-[16/11] sm:aspect-[4/3] w-full overflow-hidden bg-slate-950">
                   <img
-                    src="/images/landing/persona-farmer.jpg"
+                    src="/images/landing/persona-farmer.webp"
                     alt="Smallholder farmer in maize field receiving mobile SMS advisory"
                     className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 filter brightness-95 group-hover:brightness-100"
                     loading="lazy"
@@ -1120,7 +1120,7 @@ export function LandingPage() {
               >
                 <div className="relative aspect-[16/11] sm:aspect-[4/3] w-full overflow-hidden bg-slate-950">
                   <img
-                    src="/images/landing/persona-officer.jpg"
+                    src="/images/landing/persona-officer.webp"
                     alt="Field extension officer diagnosing crop leaf health in the field with mobile AI app"
                     className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 filter brightness-95 group-hover:brightness-100"
                     loading="lazy"
@@ -1174,7 +1174,7 @@ export function LandingPage() {
               >
                 <div className="relative aspect-[16/11] sm:aspect-[4/3] w-full overflow-hidden bg-slate-950">
                   <img
-                    src="/images/landing/persona-manager.jpg"
+                    src="/images/landing/persona-manager.webp"
                     alt="Regional agribusiness manager analyzing yield analytics and field operations on dashboard"
                     className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 filter brightness-95 group-hover:brightness-100"
                     loading="lazy"
