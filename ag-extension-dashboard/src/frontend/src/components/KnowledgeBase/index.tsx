@@ -68,8 +68,8 @@ interface Result {
   dailyRemaining?: number;
 }
 
-type SpatialCanvasMode = 'rag_graph' | 'phenology' | 'soil_heatmap' | 'pathology';
-type KnowledgeTabMode = 'workbench' | 'library' | 'telemetry';
+type SpatialCanvasMode = 'phenology' | 'soil_heatmap' | 'pathology';
+type KnowledgeTabMode = 'search' | 'graph' | 'workbench' | 'library' | 'telemetry';
 
 interface ResearchScenario {
   id: string;
@@ -78,7 +78,7 @@ interface ResearchScenario {
   category: string;
   badge: string;
   query: string;
-  canvasMode: SpatialCanvasMode;
+  canvasMode: SpatialCanvasMode | 'rag_graph';
   sampleAnswer: string;
   citations: Citation[];
 }
@@ -395,14 +395,14 @@ const matchesArticle = (art: DocumentArticle, category: string, query: string): 
 
 export const KnowledgeBase: React.FC = () => {
   const { addNotification, setActiveTab } = useAppStore();
-  const [activeTabMode, setActiveTabMode] = useState<KnowledgeTabMode>('workbench');
+  const [activeTabMode, setActiveTabMode] = useState<KnowledgeTabMode>('search');
   const [searchQuery, setSearchQuery] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isAsking, setIsAsking] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [lastResult, setLastResult] = useState<Result | null>(null);
   const [quota, setQuota] = useState<KnowledgeQuotaData | null>(null);
-  const [activeCanvasMode, setActiveCanvasMode] = useState<SpatialCanvasMode>('rag_graph');
+  const [activeCanvasMode, setActiveCanvasMode] = useState<SpatialCanvasMode>('phenology');
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [retrievalStep, setRetrievalStep] = useState<number>(0);
 
@@ -493,7 +493,10 @@ export const KnowledgeBase: React.FC = () => {
 
   const handleTriggerScenario = (sc: ResearchScenario) => {
     setSearchQuery(sc.query);
-    setActiveCanvasMode(sc.canvasMode);
+    if ((sc.canvasMode as string) !== 'rag_graph') {
+      setActiveCanvasMode(sc.canvasMode as SpatialCanvasMode);
+    }
+    setActiveTabMode('search');
     setLastResult({
       answer: sc.sampleAnswer,
       contextUsed: sc.citations.map(c => ({
@@ -566,23 +569,47 @@ export const KnowledgeBase: React.FC = () => {
               </div>
             )}
 
-            {/* 3-Segmented Mode Switcher */}
-            <div className="flex items-center bg-white/[0.04] p-1 rounded-2xl border border-white/10 shadow-inner">
+            {/* 5-Segmented Mode Switcher */}
+            <div className="flex items-center bg-white/[0.04] p-1 rounded-2xl border border-white/10 shadow-inner overflow-x-auto">
               <button
-                onClick={() => setActiveTabMode('workbench')}
-                className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  activeTabMode === 'workbench'
+                onClick={() => setActiveTabMode('search')}
+                className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                  activeTabMode === 'search'
                     ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-950/40 font-extrabold'
                     : 'text-white/60 hover:text-white'
                 }`}
               >
+                <Search className="w-3.5 h-3.5" />
+                <span>Search & Discovery</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTabMode('graph')}
+                className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                  activeTabMode === 'graph'
+                    ? 'bg-teal-500 text-slate-950 shadow-md shadow-teal-950/40 font-extrabold'
+                    : 'text-white/60 hover:text-white'
+                }`}
+              >
+                <Brain className="w-3.5 h-3.5" />
+                <span>Knowledge Graph</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTabMode('workbench')}
+                className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                  activeTabMode === 'workbench'
+                    ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-950/40 font-extrabold'
+                    : 'text-white/60 hover:text-white'
+                }`}
+              >
                 <Layers className="w-3.5 h-3.5" />
-                <span>Spatial Workbench</span>
+                <span>Spatial Simulators</span>
               </button>
 
               <button
                 onClick={() => setActiveTabMode('library')}
-                className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
                   activeTabMode === 'library'
                     ? 'bg-purple-600 text-white shadow-md shadow-purple-950/40 font-extrabold'
                     : 'text-white/60 hover:text-white'
@@ -594,9 +621,9 @@ export const KnowledgeBase: React.FC = () => {
 
               <button
                 onClick={() => setActiveTabMode('telemetry')}
-                className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
                   activeTabMode === 'telemetry'
-                    ? 'bg-cyan-600 text-white shadow-md shadow-cyan-950/40 font-extrabold'
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-950/40 font-extrabold'
                     : 'text-white/60 hover:text-white'
                 }`}
               >
@@ -608,306 +635,375 @@ export const KnowledgeBase: React.FC = () => {
         </div>
       </div>
 
-      {/* ── TAB 1: Spatial Workbench ── */}
-      {activeTabMode === 'workbench' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* LEFT PANE (5 Cols): Inquiry, Scenarios & Evidence Stream */}
-          <div className="lg:col-span-5 flex flex-col space-y-4">
-            {/* Quick Agronomic Research Scenarios */}
-            <div className="backdrop-blur-xl bg-slate-900/70 border border-white/10 rounded-3xl p-4 sm:p-5 space-y-3 shadow-xl">
-              <div className="flex items-center justify-between">
+      {/* ── TAB 1: Search & AI Discovery ── */}
+      {activeTabMode === 'search' && (
+        <div className="space-y-6">
+          {/* Quick Agronomic Research Scenarios */}
+          <div className="backdrop-blur-xl bg-slate-900/70 border border-white/10 rounded-3xl p-5 space-y-4 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
                 <span className="text-xxs font-mono font-bold tracking-widest text-emerald-400 uppercase">
                   Verified Research Scenarios
                 </span>
-                <span className="text-[10px] font-mono text-white/40">1-Click Traversal</span>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 text-xxs font-mono border border-emerald-500/20">
+                  1-Click Traversal
+                </span>
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {RESEARCH_SCENARIOS.map(sc => (
-                  <button
-                    key={sc.id}
-                    onClick={() => handleTriggerScenario(sc)}
-                    className="p-3 rounded-2xl bg-slate-950/50 hover:bg-emerald-500/10 border border-white/5 hover:border-emerald-500/30 text-left transition-all group flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                          {sc.crop}
-                        </span>
-                        <span className="text-[9px] text-white/40 font-mono">{sc.category}</span>
-                      </div>
-                      <h4 className="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors line-clamp-1">
-                        {sc.title}
-                      </h4>
-                    </div>
-                    <div className="mt-2 text-[10px] text-white/40 group-hover:text-emerald-400 flex items-center gap-1 font-mono">
-                      <span>Explore Canvas</span>
-                      <ChevronRight className="w-3 h-3" />
-                    </div>
-                  </button>
-                ))}
-              </div>
+              <span className="text-xs font-mono text-white/40">Select a verified benchmark to run semantic inquiry</span>
             </div>
 
-            {/* Live Multi-Step Retrieval Tracer */}
-            {isAsking && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="backdrop-blur-xl bg-slate-900/90 border border-emerald-500/30 rounded-2xl p-4 shadow-xl space-y-2"
-              >
-                <div className="flex items-center gap-2">
-                  <RefreshCw className="w-4 h-4 text-emerald-400 animate-spin" />
-                  <span className="text-xs font-bold text-white font-mono uppercase">
-                    Neural RAG Pipeline Active
-                  </span>
-                </div>
-                <div className="grid grid-cols-4 gap-1.5 pt-1">
-                  {[
-                    '1. Vector Ingestion',
-                    '2. Graph Traversal',
-                    '3. Re-Ranking',
-                    '4. Grounded Synthesis',
-                  ].map((step, idx) => {
-                    const isDone = retrievalStep > idx + 1;
-                    const isCurrent = retrievalStep === idx + 1;
-                    return (
-                      <div
-                        key={idx}
-                        className={`p-1.5 rounded-lg text-center text-[9px] font-mono transition-all ${
-                          isDone
-                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                            : isCurrent
-                            ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 animate-pulse'
-                            : 'bg-white/5 text-white/30 border border-white/5'
-                        }`}
-                      >
-                        {step}
-                      </div>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            )}
-
-            {/* Multi-Modal Research Search Bar */}
-            <div className="backdrop-blur-xl bg-slate-900/70 border border-white/10 rounded-3xl p-4 shadow-xl">
-              <SearchBar
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                attachments={attachments}
-                setAttachments={setAttachments}
-                isAsking={isAsking}
-                isRecording={isRecording}
-                setIsRecording={setIsRecording}
-                showStats={false}
-                setShowStats={() => setActiveTabMode('telemetry')}
-                onSearch={() => handleSearch()}
-              />
-            </div>
-
-            {/* Answer & Grounded Evidence Card */}
-            <AnimatePresence mode="wait">
-              {lastResult ? (
-                <motion.div
-                  key="result"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-3xl p-5 shadow-2xl overflow-hidden"
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {RESEARCH_SCENARIOS.map(sc => (
+                <button
+                  key={sc.id}
+                  onClick={() => handleTriggerScenario(sc)}
+                  className="p-4 rounded-2xl bg-slate-950/50 hover:bg-emerald-500/10 border border-white/5 hover:border-emerald-500/30 text-left transition-all group flex flex-col justify-between"
                 >
-                  <AIResult
-                    result={
-                      lastResult as {
-                        answer: string;
-                        contextUsed: ContextItem[];
-                        cached?: boolean;
-                        query?: string;
-                        timestamp?: string;
-                        visuals?: VisualsData;
-                        audio?: string;
-                        citations?: Citation[];
-                        evidenceStatus?: KnowledgeEvidenceStatus;
-                      }
-                    }
-                  />
-                </motion.div>
-              ) : (
-                <div className="backdrop-blur-xl bg-slate-900/40 border border-white/5 rounded-3xl p-8 text-center space-y-3">
-                  <Compass className="w-8 h-8 text-emerald-400/40 mx-auto" />
-                  <h4 className="text-sm font-bold text-white">Spatial Knowledge Engine Ready</h4>
-                  <p className="text-xs text-white/50 max-w-sm mx-auto">
-                    Select a research scenario above or enter a multi-modal query to explore interactive biophysical and foliar models.
-                  </p>
-                </div>
-              )}
-            </AnimatePresence>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        {sc.crop}
+                      </span>
+                      <span className="text-[9px] text-white/40 font-mono">{sc.category}</span>
+                    </div>
+                    <h4 className="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors line-clamp-2">
+                      {sc.title}
+                    </h4>
+                  </div>
+                  <div className="mt-3 pt-2 border-t border-white/5 text-[10px] text-white/40 group-hover:text-emerald-400 flex items-center justify-between font-mono">
+                    <span>Load Grounded Protocol</span>
+                    <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* RIGHT PANE (7 Cols): Generative Spatial Canvas Workbench */}
-          <div className="lg:col-span-7 flex flex-col space-y-4">
-            {/* Spatial Canvas Mode Switcher Bar */}
-            <div className="backdrop-blur-xl bg-slate-900/80 border border-white/10 rounded-2xl p-2.5 flex items-center justify-between overflow-x-auto gap-2 shadow-xl">
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => setActiveCanvasMode('rag_graph')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                    activeCanvasMode === 'rag_graph'
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-lg'
-                      : 'text-white/60 hover:text-white bg-slate-950/40 border border-transparent'
-                  }`}
-                >
-                  <Brain className="w-3.5 h-3.5" />
-                  <span>RAG Knowledge Graph</span>
-                </button>
+          {/* Multi-Modal Research Search Bar */}
+          <div className="backdrop-blur-xl bg-slate-900/70 border border-white/10 rounded-3xl p-5 shadow-xl">
+            <SearchBar
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              attachments={attachments}
+              setAttachments={setAttachments}
+              isAsking={isAsking}
+              isRecording={isRecording}
+              setIsRecording={setIsRecording}
+              showStats={false}
+              setShowStats={() => setActiveTabMode('telemetry')}
+              onSearch={() => handleSearch()}
+            />
+          </div>
 
-                <button
-                  onClick={() => setActiveCanvasMode('phenology')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                    activeCanvasMode === 'phenology'
-                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-lg'
-                      : 'text-white/60 hover:text-white bg-slate-950/40 border border-transparent'
-                  }`}
-                >
-                  <Compass className="w-3.5 h-3.5" />
-                  <span>Phenology Scrubber</span>
-                </button>
+          {/* Live Multi-Step Retrieval Tracer */}
+          {isAsking && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="backdrop-blur-xl bg-slate-900/90 border border-emerald-500/30 rounded-2xl p-4 shadow-xl space-y-2"
+            >
+              <div className="flex items-center gap-2">
+                <RefreshCw className="w-4 h-4 text-emerald-400 animate-spin" />
+                <span className="text-xs font-bold text-white font-mono uppercase">
+                  Neural RAG Pipeline Active
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                {[
+                  '1. Vector Ingestion',
+                  '2. Graph Traversal',
+                  '3. Re-Ranking',
+                  '4. Grounded Synthesis',
+                ].map((step, idx) => {
+                  const isDone = retrievalStep > idx + 1;
+                  const isCurrent = retrievalStep === idx + 1;
+                  return (
+                    <div
+                      key={idx}
+                      className={`p-2 rounded-xl text-center text-xs font-mono transition-all ${
+                        isDone
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                          : isCurrent
+                          ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 animate-pulse'
+                          : 'bg-white/5 text-white/30 border border-white/5'
+                      }`}
+                    >
+                      {step}
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
 
-                <button
-                  onClick={() => setActiveCanvasMode('soil_heatmap')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                    activeCanvasMode === 'soil_heatmap'
-                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-lg'
-                      : 'text-white/60 hover:text-white bg-slate-950/40 border border-transparent'
-                  }`}
-                >
-                  <Layers className="w-3.5 h-3.5" />
-                  <span>Soil Heatmap Grid</span>
-                </button>
+          {/* Answer & Grounded Evidence Card */}
+          <AnimatePresence mode="wait">
+            {lastResult ? (
+              <motion.div
+                key="result"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-3xl p-6 shadow-2xl space-y-6"
+              >
+                {/* Result Top Action Bar */}
+                <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/10">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-xs font-bold text-white font-mono uppercase tracking-wide">
+                      Grounded Synthesis Completed
+                    </span>
+                  </div>
 
-                <button
-                  onClick={() => setActiveCanvasMode('pathology')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                    activeCanvasMode === 'pathology'
-                      ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-lg'
-                      : 'text-white/60 hover:text-white bg-slate-950/40 border border-transparent'
-                  }`}
-                >
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Pathology Scanner</span>
-                </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setActiveTabMode('graph')}
+                      className="px-3.5 py-2 rounded-xl bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/30 text-teal-300 text-xs font-bold transition-all flex items-center gap-1.5"
+                    >
+                      <Brain className="w-3.5 h-3.5" />
+                      <span>Inspect in Citation Graph</span>
+                    </button>
+
+                    <button
+                      onClick={() => setActiveTabMode('workbench')}
+                      className="px-3.5 py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 text-xs font-bold transition-all flex items-center gap-1.5"
+                    >
+                      <Layers className="w-3.5 h-3.5" />
+                      <span>Launch Spatial Simulator</span>
+                    </button>
+                  </div>
+                </div>
+
+                <AIResult
+                  result={
+                    lastResult as {
+                      answer: string;
+                      contextUsed: ContextItem[];
+                      cached?: boolean;
+                      query?: string;
+                      timestamp?: string;
+                      visuals?: VisualsData;
+                      audio?: string;
+                      citations?: Citation[];
+                      evidenceStatus?: KnowledgeEvidenceStatus;
+                    }
+                  }
+                />
+              </motion.div>
+            ) : (
+              <div className="backdrop-blur-xl bg-slate-900/40 border border-white/5 rounded-3xl p-12 text-center space-y-3">
+                <Compass className="w-10 h-10 text-emerald-400/40 mx-auto" />
+                <h4 className="text-base font-bold text-white">Spatial Knowledge Engine Ready</h4>
+                <p className="text-xs text-white/50 max-w-md mx-auto">
+                  Select a research scenario above or enter a multi-modal query to explore full-width agronomic recommendations, citations, and interactive models.
+                </p>
+              </div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+
+      {/* ── TAB 2: RAG Knowledge Graph ── */}
+      {activeTabMode === 'graph' && (
+        <div className="space-y-6">
+          <div className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                    <Brain className="w-5 h-5 text-teal-400" />
+                    <span>Topological Citation & Concept Mesh</span>
+                  </h3>
+                  <span className="px-2.5 py-0.5 rounded-full text-xxs font-mono font-bold uppercase bg-teal-500/10 text-teal-300 border border-teal-500/20">
+                    Force-Directed WebGL
+                  </span>
+                </div>
+                <p className="text-xs text-white/60 mt-1">
+                  Interactive multi-hop citation graph connecting verified research articles, farmer inquiry roots, and FAO agronomic rules. Click any node to inspect abstracts.
+                </p>
               </div>
 
-              <div className="flex items-center gap-1.5 px-2 text-xxs font-mono text-emerald-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>60 FPS WEBGL</span>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/40 border border-white/5 text-xxs font-mono text-emerald-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>60 FPS GRAPH RENDERER</span>
+                </div>
               </div>
             </div>
 
-            {/* Active Canvas Display Shell */}
-            <div className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-3xl p-5 shadow-2xl relative min-h-[460px] flex flex-col justify-between overflow-hidden">
-              <div className="w-full flex-1">
-                {activeCanvasMode === 'rag_graph' && (
-                  <div>
-                    <div className="flex items-center justify-between mb-3 text-xs font-mono text-white/70">
-                      <span>FORCE-DIRECTED CITATION GRAPH (Topological Mesh)</span>
-                      <span className="text-emerald-400">Click node to inspect abstract</span>
-                    </div>
-                    <RagKnowledgeGraphCanvas
-                      customNodes={graphNodes}
-                      onNodeSelect={node => {
-                        setSelectedNode(node);
-                        toast(`Selected Citation: ${node.label}`);
-                      }}
-                      className="w-full h-80 rounded-2xl border border-white/10"
-                    />
-                    {selectedNode && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mt-3 p-3.5 rounded-2xl bg-slate-950/80 border border-emerald-500/30 text-xs space-y-1.5"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-emerald-300">{selectedNode.label}</span>
-                          <span className="font-mono text-xxs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 uppercase">
-                            Score: {(((selectedNode.score ?? 0.9)) * 100).toFixed(0)}%
-                          </span>
-                        </div>
-                        <p className="text-white/70 text-[11px] leading-relaxed">{selectedNode.snippet}</p>
-                      </motion.div>
-                    )}
-                  </div>
-                )}
+            <div className="pt-4">
+              <RagKnowledgeGraphCanvas
+                customNodes={graphNodes}
+                onNodeSelect={node => {
+                  setSelectedNode(node);
+                  toast(`Selected Citation: ${node.label}`);
+                }}
+                className="w-full h-[520px] rounded-2xl border border-white/10"
+              />
 
-                {activeCanvasMode === 'phenology' && (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-xs font-mono text-white/70">
-                      <span>AGRO-ECOSYSTEM 4-STAGE PHENOLOGY SCRUBBER</span>
-                      <span className="text-cyan-400">NASA POWER Synchronized</span>
+              {selectedNode && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-4 p-4 rounded-2xl bg-slate-950/90 border border-teal-500/40 text-xs space-y-2 shadow-xl"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-teal-300 text-sm">{selectedNode.label}</span>
+                      <span className="text-xxs font-mono uppercase px-2 py-0.5 rounded-full bg-white/5 text-white/60">
+                        Type: {selectedNode.category}
+                      </span>
                     </div>
-                    <AgroEcosystemCanvasScrubber className="w-full h-96 rounded-2xl border border-white/10" />
+                    <span className="font-mono text-xxs px-2.5 py-1 rounded-full bg-teal-500/10 text-teal-300 font-bold uppercase">
+                      Relevance Score: {(((selectedNode.score ?? 0.9)) * 100).toFixed(0)}%
+                    </span>
                   </div>
-                )}
+                  <p className="text-white/80 text-xs leading-relaxed">{selectedNode.snippet}</p>
+                </motion.div>
+              )}
+            </div>
 
-                {activeCanvasMode === 'soil_heatmap' && (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-xs font-mono text-white/70">
-                      <span>SPATIAL SOIL CHEMISTRY & PH HEATMAP (ISRIC SoilGrids v2)</span>
-                      <span className="text-amber-400">Click cells to probe micro-nutrients</span>
-                    </div>
-                    <SoilNutrientHeatmapCanvas
-                      onProbeSelect={(probe: SoilProbeResult) => {
-                        toast(`Soil ${probe.label}: ${probe.value.toFixed(1)} ${probe.unit} (${probe.status})`);
-                      }}
-                      className="w-full h-96 rounded-2xl border border-white/10"
-                    />
-                  </div>
-                )}
-
-                {activeCanvasMode === 'pathology' && (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-xs font-mono text-white/70">
-                      <span>NEURAL FOLIAR SALIENCY & PATHOLOGY SCANNER</span>
-                      <span className="text-rose-400">Edge AI Detection Active</span>
-                    </div>
-                    <DiseaseSaliencyCanvas
-                      onSelectZone={(zone: LesionDetectionZone) => {
-                        toast(`Detected: ${zone.label} (${(zone.confidence * 100).toFixed(0)}% Confidence)`);
-                      }}
-                      className="w-full h-96 rounded-2xl border border-white/10"
-                    />
-                  </div>
-                )}
+            {/* Action Footer Dock */}
+            <div className="mt-6 pt-4 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-xxs font-mono text-white/50">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Grounding Guard Active (Zero Hallucination Tolerance)</span>
               </div>
 
-              {/* Action Footer Dock */}
-              <div className="mt-5 pt-4 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-xxs font-mono text-white/50">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Grounding Guard Active (Zero Hallucination Tolerance)</span>
-                </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setActiveTabMode('search')}
+                  className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 text-xs font-bold transition-all flex items-center gap-1.5"
+                >
+                  <Search className="w-3.5 h-3.5" />
+                  <span>Back to Search & Synthesis</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <button
-                    onClick={() => {
-                      toast.success('Generating Factsheet PDF report...');
-                    }}
-                    className="flex-1 sm:flex-none px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 text-xs font-bold transition-all flex items-center justify-center gap-1.5"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>Export Factsheet PDF</span>
-                  </button>
+      {/* ── TAB 3: Spatial Simulators ── */}
+      {activeTabMode === 'workbench' && (
+        <div className="space-y-6">
+          {/* Spatial Canvas Mode Switcher Bar */}
+          <div className="backdrop-blur-xl bg-slate-900/80 border border-white/10 rounded-2xl p-2.5 flex items-center justify-between overflow-x-auto gap-2 shadow-xl">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setActiveCanvasMode('phenology')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                  activeCanvasMode === 'phenology'
+                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-lg'
+                    : 'text-white/60 hover:text-white bg-slate-950/40 border border-transparent'
+                }`}
+              >
+                <Compass className="w-3.5 h-3.5" />
+                <span>Phenology Scrubber</span>
+              </button>
 
-                  <button
-                    onClick={() => {
-                      toast.success('Advisory broadcast queued for registered farmers!');
-                    }}
-                    className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-all shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-1.5"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>Broadcast Advisory SMS</span>
-                  </button>
+              <button
+                onClick={() => setActiveCanvasMode('soil_heatmap')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                  activeCanvasMode === 'soil_heatmap'
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-lg'
+                    : 'text-white/60 hover:text-white bg-slate-950/40 border border-transparent'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>Soil Heatmap Grid</span>
+              </button>
+
+              <button
+                onClick={() => setActiveCanvasMode('pathology')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                  activeCanvasMode === 'pathology'
+                    ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-lg'
+                    : 'text-white/60 hover:text-white bg-slate-950/40 border border-transparent'
+                }`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Pathology Scanner</span>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/40 border border-white/5 text-xxs font-mono text-emerald-400 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>60 FPS WEBGL SIMULATORS</span>
+            </div>
+          </div>
+
+          {/* Active Canvas Display Shell */}
+          <div className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-3xl p-6 shadow-2xl relative min-h-[520px] flex flex-col justify-between overflow-hidden">
+            <div className="w-full flex-1">
+              {activeCanvasMode === 'phenology' && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-xs font-mono text-white/70">
+                    <span>AGRO-ECOSYSTEM 4-STAGE PHENOLOGY SCRUBBER</span>
+                    <span className="text-cyan-400">NASA POWER Synchronized</span>
+                  </div>
+                  <AgroEcosystemCanvasScrubber className="w-full h-[460px] rounded-2xl border border-white/10" />
                 </div>
+              )}
+
+              {activeCanvasMode === 'soil_heatmap' && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-xs font-mono text-white/70">
+                    <span>SPATIAL SOIL CHEMISTRY & PH HEATMAP (ISRIC SoilGrids v2)</span>
+                    <span className="text-amber-400">Click cells to probe micro-nutrients</span>
+                  </div>
+                  <SoilNutrientHeatmapCanvas
+                    onProbeSelect={(probe: SoilProbeResult) => {
+                      toast(`Soil ${probe.label}: ${probe.value.toFixed(1)} ${probe.unit} (${probe.status})`);
+                    }}
+                    className="w-full h-[460px] rounded-2xl border border-white/10"
+                  />
+                </div>
+              )}
+
+              {activeCanvasMode === 'pathology' && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-xs font-mono text-white/70">
+                    <span>NEURAL FOLIAR SALIENCY & PATHOLOGY SCANNER</span>
+                    <span className="text-rose-400">Edge AI Detection Active</span>
+                  </div>
+                  <DiseaseSaliencyCanvas
+                    onSelectZone={(zone: LesionDetectionZone) => {
+                      toast(`Detected: ${zone.label} (${(zone.confidence * 100).toFixed(0)}% Confidence)`);
+                    }}
+                    className="w-full h-[460px] rounded-2xl border border-white/10"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Action Footer Dock */}
+            <div className="mt-6 pt-4 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-xxs font-mono text-white/50">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Grounding Guard Active (Zero Hallucination Tolerance)</span>
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <button
+                  onClick={() => {
+                    toast.success('Generating Factsheet PDF report...');
+                  }}
+                  className="flex-1 sm:flex-none px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Export Factsheet PDF</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    toast.success('Advisory broadcast queued for registered farmers!');
+                  }}
+                  className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-all shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-1.5"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Broadcast Advisory SMS</span>
+                </button>
               </div>
             </div>
           </div>
@@ -1082,7 +1178,7 @@ export const KnowledgeBase: React.FC = () => {
                           category: selectedArticle.category,
                           badge: 'Catalog Verified',
                           query: `How to apply ${selectedArticle.title} in smallholder farms?`,
-                          canvasMode: selectedArticle.category === 'Soil Chemistry' ? 'soil_heatmap' : selectedArticle.category === 'Climatology' ? 'phenology' : 'rag_graph',
+                          canvasMode: selectedArticle.category === 'Soil Chemistry' ? 'soil_heatmap' : selectedArticle.category === 'Climatology' ? 'phenology' : 'pathology',
                           sampleAnswer: selectedArticle.excerpt,
                           citations: [
                             {
@@ -1095,12 +1191,12 @@ export const KnowledgeBase: React.FC = () => {
                           ],
                         });
                         setSelectedArticle(null);
-                        setActiveTabMode('workbench');
+                        setActiveTabMode('search');
                       }}
                       className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-all flex items-center gap-2"
                     >
-                      <Layers className="w-3.5 h-3.5" />
-                      <span>Open in Spatial Workbench</span>
+                      <Search className="w-3.5 h-3.5" />
+                      <span>Run Inquiry in Search & Synthesis</span>
                     </button>
 
                     <button
