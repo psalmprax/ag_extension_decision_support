@@ -56,6 +56,15 @@ export interface Visit {
   status: string;
   reason?: string;
   notes?: string;
+  outcomes?: string;
+  farmerId?: string;
+  farmerName?: string;
+  visitType?: string;
+  scheduledAt?: string;
+  started_at?: string;
+  startedAt?: string;
+  completed_at?: string;
+  completedAt?: string;
 }
 
 export interface DashboardData {

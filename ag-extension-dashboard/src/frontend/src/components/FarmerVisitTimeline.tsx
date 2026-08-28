@@ -53,11 +53,14 @@ export const FarmerVisitTimeline: React.FC<FarmerVisitTimelineProps> = ({
                     {visit.visit_type}
                   </span>
                   <span className="text-xxs font-bold text-gray-400">
-                    {new Date(visit.scheduled_at).toLocaleDateString()}
+                    {(() => {
+                      const raw = visit.scheduledAt || visit.scheduled_at || visit.startedAt || visit.started_at;
+                      return raw && !isNaN(new Date(raw).getTime()) ? new Date(raw).toLocaleDateString() : '—';
+                    })()}
                   </span>
                 </div>
                 <p className="text-xs-plus text-gray-500 dark:text-gray-400 leading-relaxed italic">
-                  &ldquo;{visit.reason || t('visit_routine_inspection')}&rdquo;
+                  &ldquo;{visit.reason || visit.notes || t('visit_routine_inspection')}&rdquo;
                 </p>
                 {visit.status === 'scheduled' && (
                   <div className="flex gap-2 mt-3">

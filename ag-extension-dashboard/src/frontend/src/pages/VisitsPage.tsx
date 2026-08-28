@@ -153,12 +153,35 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <AnimatePresence>
             {filteredVisits.map((visit: Visit, idx: number) => {
+              const farmerId = visit.farmerId || visit.farmer_id;
               const farmerData = farmers.find(
                 f =>
-                  f.id === visit.farmer_id ||
-                  `${f.firstName} ${f.lastName}` === visit.farmer_name
+                  f.id === farmerId ||
+                  `${f.firstName} ${f.lastName}` === (visit.farmerName || visit.farmer_name)
               );
-              const isUrgent = visit.status !== 'completed' && visit.status !== 'cancelled' && (visit.visit_type?.includes('urgent') || visit.visit_type?.includes('ai'));
+              const farmerDisplayName =
+                typeof visit.farmerName === 'string'
+                  ? visit.farmerName
+                  : typeof visit.farmer_name === 'string'
+                  ? visit.farmer_name
+                  : farmerData
+                  ? `${farmerData.firstName} ${farmerData.lastName}`
+                  : 'Assigned Farmer';
+              const visitTypeDisplay = visit.visitType || visit.visit_type || 'Routine Visit';
+              const rawDate =
+                visit.scheduledAt ||
+                visit.scheduled_at ||
+                visit.startedAt ||
+                visit.started_at ||
+                visit.completedAt ||
+                visit.completed_at;
+              const parsedDate =
+                rawDate && !isNaN(new Date(rawDate).getTime()) ? new Date(rawDate) : null;
+              const isUrgent =
+                visit.status !== 'completed' &&
+                visit.status !== 'cancelled' &&
+                (visitTypeDisplay.toLowerCase().includes('urgent') ||
+                  visitTypeDisplay.toLowerCase().includes('ai'));
 
               return (
                 <motion.div
@@ -182,10 +205,10 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
                         </div>
                         <div>
                           <h4 className="font-bold text-white text-base tracking-tight truncate max-w-[170px]">
-                            {visit.farmer_name}
+                            {farmerDisplayName}
                           </h4>
                           <p className="text-xxs text-white/50 font-bold uppercase tracking-wider mt-0.5">
-                            {visit.visit_type || 'Routine Visit'}
+                            {visitTypeDisplay}
                           </p>
                         </div>
                       </div>
@@ -204,16 +227,22 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
                     <div className="flex items-center gap-2 p-2.5 rounded-xl bg-white/[0.02] border border-white/5">
                       <Clock className="w-3.5 h-3.5 text-purple-400 shrink-0" />
                       <p className="text-xs font-mono text-white/80">
-                        {new Date(visit.scheduled_at).toLocaleDateString(undefined, {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}{' '}
-                        <span className="text-white/40">@</span>{' '}
-                        {new Date(visit.scheduled_at).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                        {parsedDate ? (
+                          <>
+                            {parsedDate.toLocaleDateString(undefined, {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })}{' '}
+                            <span className="text-white/40">@</span>{' '}
+                            {parsedDate.toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </>
+                        ) : (
+                          <span className="text-white/40">Flexible / As Needed</span>
+                        )}
                       </p>
                     </div>
 

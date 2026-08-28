@@ -591,7 +591,11 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
 
   const nextScheduledVisit = localVisits
     .filter(v => v.status === 'scheduled')
-    .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime())[0];
+    .sort((a, b) => {
+      const aDate = a.scheduledAt || a.scheduled_at || '9999-12-31';
+      const bDate = b.scheduledAt || b.scheduled_at || '9999-12-31';
+      return new Date(aDate).getTime() - new Date(bDate).getTime();
+    })[0];
 
   return (
     <AnimatePresence>
@@ -699,9 +703,13 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                     {t('visit_next_scheduled') || 'Next Scheduled'}
                   </p>
                   <p className="text-xs font-bold text-white truncate">
-                    {nextScheduledVisit
-                      ? new Date(nextScheduledVisit.scheduled_at).toLocaleDateString()
-                      : t('no_visit_scheduled') || 'None scheduled'}
+                    {(() => {
+                      if (!nextScheduledVisit) return t('no_visit_scheduled') || 'None scheduled';
+                      const raw = nextScheduledVisit.scheduledAt || nextScheduledVisit.scheduled_at;
+                      return raw && !isNaN(new Date(raw).getTime())
+                        ? new Date(raw).toLocaleDateString()
+                        : t('no_visit_scheduled') || 'None scheduled';
+                    })()}
                   </p>
                 </div>
               </div>

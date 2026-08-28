@@ -10,6 +10,17 @@ export interface Visit {
   scheduled_at: string;
   notes?: string;
   outcomes?: string;
+  reason?: string;
+  farmerId?: string;
+  farmerName?: string;
+  visitType?: string;
+  scheduledAt?: string;
+  started_at?: string;
+  startedAt?: string;
+  completed_at?: string;
+  completedAt?: string;
+  duration_minutes?: number;
+  durationMinutes?: number;
 }
 
 export interface VisitsResponse {
