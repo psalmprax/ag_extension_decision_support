@@ -135,6 +135,16 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python Agent dependencies
+        run: |
+          cd ag-extension-dashboard/src/agents
+          pip install -r requirements.txt pytest httpx
+
       - name: Run repository security audit
         run: npm run security:audit
 

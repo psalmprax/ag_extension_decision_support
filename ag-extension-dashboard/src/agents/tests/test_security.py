@@ -3,7 +3,15 @@ Cybersecurity Test Suite for AI Agents Microservice
 Validates CORS restrictions, authentication enforcement, sensitive data masking, and input validation.
 """
 
-import pytest
+try:
+    import pytest
+except ImportError:
+    class _DummyPytest:
+        @staticmethod
+        def fixture(func):
+            return func
+    pytest = _DummyPytest()
+
 import os
 import sys
 from pathlib import Path

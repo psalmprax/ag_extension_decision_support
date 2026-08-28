@@ -145,6 +145,10 @@ echo -e "\n${BLUE}${BOLD}[5/5] Running AI Agents FastAPI Security Test Suite...$
 (
   cd "$ROOT_DIR/ag-extension-dashboard/src/agents"
   export PATH="$HOME/.local/bin:$PATH"
+  if ! python3 -c "import fastapi, jwt, httpx" >/dev/null 2>&1; then
+    echo "Installing agent test dependencies (fastapi, PyJWT, httpx, pytest)..."
+    pip install -q -r requirements.txt pytest httpx 2>/dev/null || python3 -m pip install -q -r requirements.txt pytest httpx 2>/dev/null || true
+  fi
   if command -v pytest >/dev/null 2>&1; then
     PYTHONPATH=. pytest tests/test_security.py -q
   elif [ -x "$HOME/.local/bin/pytest" ]; then
