@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Award, FileDown } from 'lucide-react';
 import { fieldIntelService } from '@/api/fieldIntelService';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
-import { useAppStore } from '@/store/useAppStore';
+import { useDemoMode } from '@/demo';
 import { DEMO_LEADERBOARD } from '@/demo/demoMode';
 
 // ── Route planner ────────────────────────────────────────────────────────────
@@ -12,7 +12,7 @@ import { DEMO_LEADERBOARD } from '@/demo/demoMode';
 
 export function LeaderboardCard() {
     const { cardClass } = useThemeClasses();
-    const isDemo = useAppStore(s => s.isDemo);
+    const { isDemo } = useDemoMode();
     const { data } = useQuery({
         queryKey: ['leaderboard', isDemo],
         queryFn: async () => {

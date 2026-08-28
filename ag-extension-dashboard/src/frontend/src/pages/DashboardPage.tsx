@@ -20,6 +20,7 @@ import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '@/store/useAppStore';
 import { useRetryWithBackoff } from '@/hooks/useRetryWithBackoff';
 import { fetchFarmers } from '@/api/farmerService';
+import apiClient from '@/api/client';
 import { LiveActivityStream } from '@/components/LiveActivityStream';
 import { VegetationHealthCard } from '@/components/VegetationHealthCard';
 import { EfficacyCard } from '@/components/efficacy/EfficacyCard';
@@ -125,7 +126,7 @@ const DashboardStats: React.FC<{
 };
 
 const ActivePulseCard: React.FC<{ cardClass: string; isLoading: boolean }> = ({ cardClass, isLoading }) => {
-  const isDemo = useAppStore(s => s.isDemo);
+  const { isDemo } = useDemoMode();
   const { data: health, isLoading: hl } = useQuery({
     queryKey: ['active-pulse-health', isDemo],
     queryFn: async () => {
@@ -140,15 +141,15 @@ const ActivePulseCard: React.FC<{ cardClass: string; isLoading: boolean }> = ({ 
           },
         };
       }
-      const { data } = await import('@/api/client').then(m => m.default.get('/health'));
-      return data;
+      const res = await apiClient.get('/health');
+      return res.data;
     },
     enabled: isDemo || !!localStorage.getItem('token'),
-    refetchInterval: 60_000,
-    staleTime: 30_000,
+    refetchInterval: 30_000,
+    staleTime: 15_000,
   });
 
-  const showLoading = isLoading || hl;
+  const showLoading = isLoading || hl || !health;
   const dbConnected = health?.services?.database === 'connected';
   const cacheConnected = health?.services?.cache === 'connected';
   const uptime = health?.uptime ? formatPulseUptime(health.uptime) : null;
