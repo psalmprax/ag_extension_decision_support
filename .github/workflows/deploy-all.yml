@@ -405,7 +405,7 @@ jobs:
           script: |
             echo "Waiting for backend to become healthy..."
             for i in $(seq 1 15); do
-              if node -e "fetch('http://localhost:7500/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"; then
+              if curl -fsSL --max-time 10 http://localhost:7500/health 2>/dev/null || curl -fsSL --max-time 10 http://localhost:7500/api/health 2>/dev/null || docker compose exec -T backend wget -qO- http://localhost:7500/health 2>/dev/null; then
                 echo "Backend is healthy!"
                 exit 0
               fi
@@ -826,7 +826,7 @@ jobs:
             echo ""
             echo "Checking backend health..."
             for i in $(seq 1 10); do
-              if node -e "Promise.any(['https://localhost/health','http://localhost:7500/health'].map(url => fetch(url, { signal: AbortSignal.timeout(10000) })).map ? Promise.any(['https://localhost/health','http://localhost:7500/health'].map(url => fetch(url, { signal: AbortSignal.timeout(10000) }))).then(() => process.exit(0)).catch(() => process.exit(1)) : process.exit(1)"; then
+              if curl -kfsSL --max-time 10 https://localhost/health 2>/dev/null || curl -fsSL --max-time 10 http://localhost:7500/health 2>/dev/null || curl -fsSL --max-time 10 http://localhost:7500/api/health 2>/dev/null || docker compose $COMPOSE_FILES exec -T backend wget -qO- http://localhost:7500/health 2>/dev/null; then
                 echo "Backend is healthy!"
                 exit 0
               fi

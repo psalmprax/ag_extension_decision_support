@@ -5,9 +5,14 @@ Validates CORS restrictions, authentication enforcement, sensitive data masking,
 
 import pytest
 import os
+import sys
+from pathlib import Path
 import jwt
 from fastapi.testclient import TestClient
 from fastapi.middleware.cors import CORSMiddleware
+
+# Ensure agents package is in sys.path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 # Set test environment
 os.environ["NODE_ENV"] = "test"

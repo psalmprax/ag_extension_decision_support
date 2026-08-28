@@ -15,16 +15,20 @@ langchain-openai>=0.2.0
 langchain-community>=0.3.0
 
 # Crew AI (multi-agent workflows)
-crewai==1.14.6
-crewai-tools==1.14.6
+crewai>=1.0.0
+crewai-tools>=1.0.0
 
-# JWT authentication
+# JWT authentication (using modern PyJWT, avoids unmaintained python-jose/ecdsa)
 PyJWT>=2.13.0
-python-jose[cryptography]>=3.3.0
 
 # HTTP client
 httpx>=0.28.0
 aiohttp>=3.14.0
+
+# Security overrides for patched sub-dependencies
+click>=8.3.3
+json-repair>=0.60.1
+mcp>=1.28.1
 
 # Logging and monitoring
 python-json-logger>=3.0.0

@@ -144,7 +144,14 @@ echo -e "${GREEN}✅ Browser Extension Manifest V3 & Permission Scope Verified.$
 echo -e "\n${BLUE}${BOLD}[5/5] Running AI Agents FastAPI Security Test Suite...${NC}"
 (
   cd "$ROOT_DIR/ag-extension-dashboard/src/agents"
-  python3 -m pytest tests/test_security.py -q
+  export PATH="$HOME/.local/bin:$PATH"
+  if command -v pytest >/dev/null 2>&1; then
+    PYTHONPATH=. pytest tests/test_security.py -q
+  elif [ -x "$HOME/.local/bin/pytest" ]; then
+    PYTHONPATH=. "$HOME/.local/bin/pytest" tests/test_security.py -q
+  else
+    PYTHONPATH=. python3 -m pytest tests/test_security.py -q
+  fi
 )
 echo -e "${GREEN}✅ AI Agents Security Tests Passed (5/5 tests).${NC}"
 
