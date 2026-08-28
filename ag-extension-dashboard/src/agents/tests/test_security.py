@@ -3,11 +3,24 @@ Cybersecurity Test Suite for AI Agents Microservice
 Validates CORS restrictions, authentication enforcement, sensitive data masking, and input validation.
 """
 
-import pytest
+try:
+    import pytest
+except ImportError:
+    class _DummyPytest:
+        @staticmethod
+        def fixture(func):
+            return func
+    pytest = _DummyPytest()
+
 import os
+import sys
+from pathlib import Path
 import jwt
 from fastapi.testclient import TestClient
 from fastapi.middleware.cors import CORSMiddleware
+
+# Ensure agents package is in sys.path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 # Set test environment
 os.environ["NODE_ENV"] = "test"
@@ -77,3 +90,20 @@ class TestAgentSecurity:
         assert response.status_code == 422
         data = response.json()
         assert "detail" in data
+
+
+if __name__ == "__main__":
+    test_suite = TestAgentSecurity()
+    test_client = TestClient(app)
+    token = jwt.encode(
+        {"user_id": "test-admin", "role": "admin"},
+        JWT_SECRET,
+        algorithm="HS256"
+    )
+    headers = {"Authorization": f"Bearer {token}"}
+    test_suite.test_cors_policy_not_wildcard_with_credentials()
+    test_suite.test_health_endpoint_masks_credentials(test_client)
+    test_suite.test_unauthenticated_request_rejected(test_client)
+    test_suite.test_invalid_token_rejected(test_client)
+    test_suite.test_invalid_task_payload_rejection_with_auth(test_client, headers)
+    print("5 passed in standalone runner")

@@ -1,6 +1,6 @@
 import apiClient from './client';
 
-export type AgriDataStatus = 'live' | 'unavailable';
+export type AgriDataStatus = 'live' | 'estimated' | 'unavailable';
 
 export interface NDVIPoint {
   date: string;
@@ -9,7 +9,7 @@ export interface NDVIPoint {
 
 export interface NDVITimeSeriesResult {
   data: NDVIPoint[];
-  source: 'satellite-history';
+  source: 'nasa-power-agroclimate-proxy' | 'satellite-history';
   dataStatus: AgriDataStatus;
   reason: string;
 }

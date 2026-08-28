@@ -255,16 +255,15 @@ class SMSService {
 
                 switch (choice) {
                     case '1': {
+                        return `CON AI disease diagnosis is unavailable over USSD. Please contact an extension officer.\n1. Back to menu`;
+                    }
+                    case '2': {
                         const summary = await getWeatherSummary();
                         return `CON Current weather:\n${summary}\n1. Back to menu`;
                     }
-                    case '2': {
-                        const summary = await getMarketSummary();
-                        return `CON Current prices:\n${summary}\n1. Back to menu`;
-                    }
                     case '3': {
-                        // AI Disease Diagnosis
-                        return `CON Enter symptoms (comma-separated):\nExample: white spots, leaf yellowing\n*11# for AI analysis`;
+                        const summary = await getMarketSummary();
+                        return `CON Current prices:\n${summary || 'Market prices unavailable.'}\n1. Back to menu`;
                     }
                     case '4': {
                         return `CON Knowledge Base Topics:\n1. Pest Control\n2. Fertilizer Guidelines\n3. Planting Calendar\n4. Irrigation Tips\n5. Back to main menu`;
@@ -281,10 +280,8 @@ class SMSService {
             }
 
             case 3:
-                if (session.data.choice === '3') {
-                    // In a "Real-First" architecture, we would call an AI synthesis service here
-                    // For USSD simplicity, we provide a structured real-time advice template
-                    return `CON Advice for ${text}:\n- Check soil moisture\n- Monitor for pests\n- Follow regional cycle\n1. Back to menu`;
+                if (session.data.choice === '1') {
+                    return 'CON AI disease diagnosis is unavailable over USSD. Please contact an extension officer.\n1. Back to menu';
                 }
                 return 'CON Invalid option. Try again.\n1. Back to menu';
 

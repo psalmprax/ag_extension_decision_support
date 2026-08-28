@@ -320,7 +320,7 @@ const SoilResultsHUD: React.FC<{ soilAnalysis: SoilAnalysisResult | null }> = ({
       {/* PDF Export Button */}
       <div className="pt-2 border-t border-slate-800">
         <button
-          onClick={() => toast.success('Exported Soil Diagnostics Telemetry Report (PDF)')}
+          onClick={() => toast.error('Soil report export is unavailable from this view.')}
           className="w-full py-2.5 bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:border-emerald-500/40 text-slate-300 text-xs font-bold rounded-[3px] transition-all flex items-center justify-center gap-2 uppercase tracking-wider"
         >
           <Download className="w-3.5 h-3.5" />

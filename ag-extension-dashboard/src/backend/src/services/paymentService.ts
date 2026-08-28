@@ -13,7 +13,7 @@ function productFeatures(product: Stripe.Product | Stripe.DeletedProduct): strin
     return Array.isArray(raw) ? raw.filter((f): f is string => typeof f === 'string') : [];
 }
 
-export interface CreateCheckoutSessionParams {
+interface CreateCheckoutSessionParams {
     userId: string;
     priceId: string;
     successUrl: string;
@@ -21,21 +21,14 @@ export interface CreateCheckoutSessionParams {
     trialEnd?: number; // timestamp in seconds
 }
 
-export interface CreateSubscriptionParams {
-    userId: string;
-    email: string;
-    priceId: string;
-    paymentMethodId: string;
-}
-
-export interface CreatePaymentIntentParams {
+interface CreatePaymentIntentParams {
     userId: string;
     amount: number; // in cents
     currency: string;
     metadata?: Record<string, string>;
 }
 
-export interface InvoiceSummary {
+interface InvoiceSummary {
     id: string;
     amount_paid: number;
     currency: string;
@@ -667,8 +660,8 @@ class PaymentService {
         features: string[];
     }>> {
         if (!this.stripe) {
-            // Stripe integration: return mock plans when no key, else use real Stripe
-            return [
+            logger.warn('Pricing plans unavailable because Stripe is not configured.');
+            return []; /*
                 {
                     id: 'price_free',
                     name: 'Free',
@@ -704,7 +697,7 @@ class PaymentService {
                         'plan_feature_sla'
                     ],
                 },
-            ];
+            ]; */
         }
 
         try {

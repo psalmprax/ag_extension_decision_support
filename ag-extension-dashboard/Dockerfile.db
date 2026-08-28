@@ -2,8 +2,16 @@
 # pgvector pre-compiled via apt (minutes instead of compiling from source)
 FROM postgis/postgis:15-3.4
 
-# Install pre-built pgvector package — avoids 7+ minute from-source compile
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        postgresql-15-pgvector \
-    && rm -rf /var/lib/apt/lists/*
+# Install pre-built pgvector package — avoids 7+ minute from-source compile.
+# Retry transient Debian/PGDG mirror resets without hiding permanent failures.
+RUN set -eux; \
+    printf 'Acquire::Retries "5";\nAcquire::http::Pipeline-Depth "0";\n' > /etc/apt/apt.conf.d/80-retries; \
+    for attempt in 1 2 3; do \
+      apt-get update && \
+      apt-get install -y --no-install-recommends postgresql-15-pgvector && \
+      break; \
+      if [ "$attempt" -eq 3 ]; then exit 1; fi; \
+      rm -rf /var/lib/apt/lists/*; \
+      sleep $((attempt * 5)); \
+    done; \
+    rm -rf /var/lib/apt/lists/*

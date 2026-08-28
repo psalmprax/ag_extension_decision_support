@@ -32,7 +32,7 @@ export const fetchContextMenu = async (
   return data;
 };
 
-export const getStaticFallbackMenu = (entityType: string): ContextMenuData => {
+export const getUnavailableMenu = (entityType: string): ContextMenuData => {
   return {
     entityType,
     sections: [

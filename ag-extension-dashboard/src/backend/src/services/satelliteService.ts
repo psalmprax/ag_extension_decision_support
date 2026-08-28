@@ -13,10 +13,10 @@ export interface SpectralData {
     resolution: string;
 }
 
-export interface NDVITimeSeriesResult {
-    data: Array<{ date: string; ndvi: number }>;
-    source: 'satellite-history';
-    dataStatus: 'live' | 'unavailable';
+export interface VegetationVigorEstimateResult {
+    data: Array<{ date: string; vigor: number }>;
+    source: 'nasa-power-agroclimate-proxy';
+    dataStatus: 'estimated' | 'unavailable';
     reason: string;
 }
 
@@ -86,7 +86,7 @@ export class SatelliteService {
         return [this.toSpectralData(ndvi, lat, lng, 'nasa-gibs', '250m')];
     }
 
-    static async getNDVITimeSeries(lat: number, lng: number, days = 90): Promise<NDVITimeSeriesResult> {
+    static async getNDVITimeSeries(lat: number, lng: number, days = 90): Promise<VegetationVigorEstimateResult> {
         try {
             // NASA POWER provides agroclimatology data that drives vegetation models.
             // While not NDVI, temperature and precipitation trends are the actual
@@ -96,11 +96,11 @@ export class SatelliteService {
             const startDate = new Date(Date.now() - days * 86400000).toISOString().split('T')[0];
             const daily = await NasaPowerService.getDaily(lat, lng, startDate, endDate, ['T2M', 'PRECTOTCORR']);
             if (!Array.isArray(daily) || daily.length === 0) {
-                return { data: [], source: 'satellite-history', dataStatus: 'unavailable', reason: 'NASA POWER returned no data for the requested window.' };
+                return { data: [], source: 'nasa-power-agroclimate-proxy', dataStatus: 'unavailable', reason: 'NASA POWER returned no data for the requested window.' };
             }
             const validDaily = daily.filter(d => typeof d.T2M === 'number' && Number(d.T2M) > -900);
             if (validDaily.length === 0) {
-                return { data: [], source: 'satellite-history', dataStatus: 'unavailable', reason: 'NASA POWER returned no valid observations for the requested window.' };
+                return { data: [], source: 'nasa-power-agroclimate-proxy', dataStatus: 'unavailable', reason: 'NASA POWER returned no valid observations for the requested window.' };
             }
             const ndviApprox = validDaily.map(d => {
                 const temp = Number(d.T2M ?? 20);
@@ -108,12 +108,12 @@ export class SatelliteService {
                 const score = 0.35 + Math.min(0.4, (precip / 10) * 0.3) - 0.015 * Math.abs(temp - 24);
                 return {
                     date: String(d.date || '').slice(0, 10),
-                    ndvi: Math.round(Math.min(0.85, Math.max(0.15, score)) * 1000) / 1000,
+                    vigor: Math.round(Math.min(0.85, Math.max(0.15, score)) * 1000) / 1000,
                 };
             });
-            return { data: ndviApprox, source: 'satellite-history', dataStatus: 'live', reason: 'Agroclimatology proxy from NASA POWER; NDVI derived from temp+precip model.' };
+            return { data: ndviApprox, source: 'nasa-power-agroclimate-proxy', dataStatus: 'estimated', reason: 'Estimated vegetation vigor proxy from NASA POWER temperature and precipitation; this is not satellite NDVI.' };
         } catch {
-            return { data: [], source: 'satellite-history', dataStatus: 'unavailable', reason: 'NASA POWER agroclimatology service unreachable.' };
+            return { data: [], source: 'nasa-power-agroclimate-proxy', dataStatus: 'unavailable', reason: 'NASA POWER agroclimatology service unreachable.' };
         }
     }
 

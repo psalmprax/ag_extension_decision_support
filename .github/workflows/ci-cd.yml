@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main, develop]
+    branches: [stage, master, develop]
   pull_request:
-    branches: [main, develop]
+    branches: [stage, master, develop]
 
 jobs:
   # Frontend checks
@@ -174,14 +174,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
-          cache-dependency-path: ag-extension-browser-ext/package-lock.json
+          cache-dependency-path: ag-extension-browser-ext/package.json
 
       - name: Install extension dependencies
         run: |
           cd ag-extension-browser-ext
-          npm ci
+          npm install --no-audit --no-fund
 
       - name: Type check extension
         run: |
@@ -261,21 +261,24 @@ jobs:
           JWT_SECRET: ci_test_jwt_secret_32_characters_minimum!!
           CREDENTIAL_ENCRYPTION_KEY: ci_test_encryption_key_32_chars_minimum!
 
+      - name: Install frontend dependencies for security tests
+        working-directory: ag-extension-dashboard/src/frontend
+        run: npm ci
+
       - name: Run Frontend Security & Resilience Tests
-        run: |
-          cd ag-extension-dashboard/src/frontend
-          npm run test -- src/__tests__/securityPolicy.test.ts src/__tests__/virtualizationAndThermal.test.ts src/__tests__/offlineConflictResolver.test.ts src/__tests__/remoteWipeAndEncryptedStorage.test.ts src/__tests__/chaosNetworkSimulation.test.ts
+        working-directory: ag-extension-dashboard/src/frontend
+        run: npm run test -- src/__tests__/securityPolicy.test.ts src/__tests__/virtualizationAndThermal.test.ts src/__tests__/offlineConflictResolver.test.ts src/__tests__/remoteWipeAndEncryptedStorage.test.ts src/__tests__/chaosNetworkSimulation.test.ts
 
       - name: Run Browser Extension Security Check
         run: |
           cd ag-extension-browser-ext
-          npm ci
+          npm install --no-audit --no-fund
           npm run test:security
 
       - name: Run Python Agent Security Tests
         run: |
           cd ag-extension-dashboard/src/agents
-          pip install -r requirements.txt pytest httpx
+          python -m pip install -r requirements.txt pytest httpx
           python -m pytest tests/test_security.py
         env:
           NODE_ENV: test

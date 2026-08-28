@@ -62,3 +62,6 @@ ag-extension-dashboard/src/frontend/180
 ag-extension-dashboard/src/frontend/240
 ag-extension-dashboard/src/frontend/300
 ag-extension-dashboard/src/frontend/400
+
+# AutoClaw KDream data
+.autoclaw/

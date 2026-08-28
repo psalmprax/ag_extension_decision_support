@@ -157,6 +157,7 @@ The platform exposes 22 specialized agricultural tools, including:
 
 - [Architecture](docs/ag-extension-dashboard-architecture.md)
 - [Deployment workflow](docs/DEPLOY_WORKFLOW.md)
+- [CI/CD Q&A playlist](docs/CICD_QA_PLAYLIST.md)
 - [Production deployment guide](docs/PRODUCTION_DEPLOYMENT_GUIDE.md)
 - [Cybersecurity checklist](docs/CYBERSECURITY_CHECKLIST.md)
 - [Observability](docs/OBSERVABILITY.md)

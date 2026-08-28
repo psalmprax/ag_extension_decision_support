@@ -25,6 +25,7 @@ export const satelliteNDVITool: Tool<typeof satelliteNDVISchema> = {
         current: current[0] || null,
         timeSeries: timeSeries.data.slice(-12),
         timeSeriesStatus: timeSeries.dataStatus,
+        timeSeriesType: 'estimated_vegetation_vigor_proxy',
         timeSeriesReason: timeSeries.reason,
         imagery,
         interpretation: interpretNDVI(current[0]?.ndvi, timeSeries.data),
@@ -41,7 +42,7 @@ export const satelliteNDVITool: Tool<typeof satelliteNDVISchema> = {
   },
 };
 
-function interpretNDVI(current: number | undefined, series: Array<{ date: string; ndvi: number }>): string {
+function interpretNDVI(current: number | undefined, series: Array<{ date: string; vigor: number }>): string {
   if (current === undefined || current === null) return 'No NDVI data available';
 
   let interpretation = `Current NDVI: ${current.toFixed(3)} — `;
@@ -52,7 +53,7 @@ function interpretNDVI(current: number | undefined, series: Array<{ date: string
 
   if (series.length >= 2) {
     const recent = series.slice(-3);
-    const trend = recent[recent.length - 1].ndvi - recent[0].ndvi;
+    const trend = recent[recent.length - 1].vigor - recent[0].vigor;
     if (trend > 0.05) interpretation += '. Trend: improving vegetation.';
     else if (trend < -0.05) interpretation += '. Trend: declining vegetation — investigate stress factors.';
     else interpretation += '. Trend: stable.';

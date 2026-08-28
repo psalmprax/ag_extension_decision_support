@@ -30,8 +30,10 @@ router.get('/inbound', (req: Request, res: Response) => {
         }
         logger.warn('META_WEBHOOK_VERIFY_TOKEN not set — using dev fallback (NOT for production)');
     }
-    const expectedToken = verifyToken || 'ag_extension_dev_fallback_2026';
-    if (mode === 'subscribe' && token === expectedToken) {
+    if (!verifyToken) {
+        return res.status(503).json({ error: 'Webhook verification is not configured' });
+    }
+    if (mode === 'subscribe' && token === verifyToken) {
         logger.info('Meta WhatsApp webhook verified successfully');
         return res.status(200).send(challenge);
     }

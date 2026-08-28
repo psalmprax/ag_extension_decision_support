@@ -29,7 +29,6 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Copy PWA icons
 COPY public/pwa-192x192.png /usr/share/nginx/html/pwa-192x192.png
-COPY public/pwa-512x512.png /usr/share/nginx/html/pwa-512x512.png
 
 # Expose port
 EXPOSE 80

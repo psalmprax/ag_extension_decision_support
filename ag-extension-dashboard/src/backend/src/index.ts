@@ -111,13 +111,13 @@ async function bootstrap() {
 
     // Seed Knowledge Articles (async)
     await initializeStep('knowledge articles', async () => {
-        const { seedKnowledgeArticles, mockKnowledgeArticles } = await import('./routes/knowledge');
+        const { seedKnowledgeArticles, seedKnowledgeArticlesData } = await import('./routes/knowledge');
         seedKnowledgeArticles().catch((err: unknown) =>
             logger.error('Failed to seed knowledge articles:', err)
         );
 
         // Seed Vector Knowledge Base (async)
-        VectorService.seedKnowledge(mockKnowledgeArticles).catch(err =>
+        VectorService.seedKnowledge(seedKnowledgeArticlesData).catch(err =>
             logger.error('Failed to seed vector knowledge:', err)
         );
     });

@@ -125,7 +125,11 @@ router.delete('/clients/:id', authorize(['admin']), async (req: Request, res: Re
  */
 router.get('/templates', authorize(['admin', 'regional_manager', 'extension_officer']), async (_req: Request, res: Response) => {
     try {
-        return res.json({ success: true, data: [] });
+        return res.json({
+            success: false,
+            errorCode: 'CONTEXT_MENU_TEMPLATES_NOT_CONFIGURED',
+            error: 'Context-menu templates are not configured.',
+        });
     } catch (error) {
         logger.error('Failed to list context-menu templates:', error);
         return safeError(res, 500, 'Failed to list context-menu templates');

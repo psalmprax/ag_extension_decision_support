@@ -17,10 +17,10 @@
     "security:audit": "bash scripts/security-audit.sh",
     "security:test:backend": "cd ag-extension-dashboard/src/backend && npm test -- security",
     "security:test:frontend": "cd ag-extension-dashboard/src/frontend && npm run test -- src/__tests__/securityPolicy.test.ts src/__tests__/virtualizationAndThermal.test.ts src/__tests__/remoteWipeAndEncryptedStorage.test.ts src/__tests__/chaosNetworkSimulation.test.ts",
-    "security:test:agents": "cd ag-extension-dashboard/src/agents && python3 -m pytest tests/test_security.py",
+    "security:test:agents": "cd ag-extension-dashboard/src/agents && PATH=\"$HOME/.local/bin:$PATH\" PYTHONPATH=. pytest tests/test_security.py",
     "security:test:extension": "cd ag-extension-browser-ext && npm run test:security",
     "security:test": "npm run security:test:backend && npm run security:test:frontend && npm run security:test:agents && npm run security:test:extension",
-    "fallow:check": "fallow dead-code --fail-on-regression --regression-baseline .fallow/regression-baseline.json --tolerance 0",
+    "fallow:check": "node scripts/fallow-regression-check.cjs",
     "fallow:baseline": "fallow dead-code --save-regression-baseline .fallow/regression-baseline.json",
     "fallow:audit": "fallow audit --base HEAD"
   },
