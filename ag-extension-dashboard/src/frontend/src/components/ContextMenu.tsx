@@ -20,7 +20,7 @@ import {
   MoreVertical,
 } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
-import { fetchContextMenu, getStaticFallbackMenu } from '@/api/contextMenuService';
+import { fetchContextMenu, getUnavailableMenu } from '@/api/contextMenuService';
 
 interface ContextMenuItem {
   id: string;
@@ -92,11 +92,11 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
         if (result.success) {
           setMenuData(result.data);
         } else {
-          setMenuData(getStaticFallbackMenu(entityType));
+          setMenuData(getUnavailableMenu(entityType));
         }
       } catch (error) {
         console.error('Failed to fetch context menu:', error);
-        setMenuData(getStaticFallbackMenu(entityType));
+        setMenuData(getUnavailableMenu(entityType));
       } finally {
         setIsLoading(false);
       }

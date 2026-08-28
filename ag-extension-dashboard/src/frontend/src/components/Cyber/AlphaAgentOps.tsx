@@ -384,7 +384,7 @@ const AlphaAgentOps: React.FC = () => {
       ...prev,
       `${ts} [DISPATCH] Triggering Autonomous Scenario: "${sc.title}"`,
       `${ts} [HANDOFF] Routing task to ${sc.agent.toUpperCase()}...`,
-      `${ts} [EXEC] ${sc.initialLog}`,
+      `${ts} [DEMO] ${sc.initialLog}`,
     ]);
 
     setTimeout(() => {
@@ -392,11 +392,11 @@ const AlphaAgentOps: React.FC = () => {
       setConsoleOutput(prev => [
         ...prev,
         `${ts2} [REASONING] Evaluating biophysical constraints and FAO/CIMMYT guidelines...`,
-        `${ts2} [MCP_TOOL] Invoking tool: ${sc.agent === 'crew-ai' ? 'calc_liming_dosage' : sc.agent === 'pathology-agent' ? 'get_fao_ipm_thresholds' : 'compute_moisture_deficit'}`,
-        `${ts2} [OK] Scenario execution complete. Grounded telemetry updated.`,
+        `${ts2} [DEMO] Illustrative tool sequence: ${sc.agent === 'crew-ai' ? 'calc_liming_dosage' : sc.agent === 'pathology-agent' ? 'get_fao_ipm_thresholds' : 'compute_moisture_deficit'}`,
+        `${ts2} [DEMO] Scenario preview complete. No live task or telemetry was changed.`,
       ]);
       setIsExecuting(false);
-      toast.success(`Executed scenario: ${sc.title}`);
+      toast.success(`Demo scenario previewed: ${sc.title}`);
     }, 1200);
   };
 
@@ -413,14 +413,10 @@ const AlphaAgentOps: React.FC = () => {
         ]);
         addNotification({ type: 'success', message: `Agent ${activeAgent} started successfully` });
       }
-    } catch {
-      // Local simulated execution for seamless UX
-      setTimeout(() => {
-        setConsoleOutput(prev => [
-          ...prev,
-          `${now()} [OK] Agent ${activeAgent} executed autonomous reasoning loop successfully.`,
-        ]);
-      }, 500);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Agent execution unavailable';
+      setConsoleOutput(prev => [...prev, `${now()} [ERROR] ${message}`]);
+      addNotification({ type: 'error', message: 'Agent execution is unavailable' });
     } finally {
       setIsExecuting(false);
     }
@@ -432,23 +428,29 @@ const AlphaAgentOps: React.FC = () => {
     setConsoleOutput(prev => [...prev, `${ts} [EXEC] Pausing ${activeAgent} agent...`]);
     try {
       await apiClient.post(`/ai/stop/${activeAgent}`);
-    } catch {
-      // Ignore
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Agent stop unavailable';
+      setConsoleOutput(prev => [...prev, `${now()} [ERROR] ${message}`]);
+      addNotification({ type: 'error', message: 'Agent stop control is unavailable' });
     } finally {
-      setConsoleOutput(prev => [...prev, `${now()} [OK] Agent ${activeAgent} paused`]);
       setIsExecuting(false);
     }
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsExecuting(true);
     const ts = now();
     setConsoleOutput(prev => [...prev, `${ts} [REFRESH] Re-syncing agent topology and MCP tools...`]);
-    setTimeout(() => {
-      setConsoleOutput(prev => [...prev, `${now()} [OK] Agent fleet state 100% synchronized.`]);
+    try {
+      await apiClient.get('/ai/agents');
+      setConsoleOutput(prev => [...prev, `${now()} [OK] Agent fleet state synchronized.`]);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Agent refresh unavailable';
+      setConsoleOutput(prev => [...prev, `${now()} [ERROR] ${message}`]);
+      addNotification({ type: 'error', message: 'Agent fleet refresh is unavailable' });
+    } finally {
       setIsExecuting(false);
-      toast.success('Agent fleet synchronized');
-    }, 600);
+    }
   };
 
   return (
@@ -467,7 +469,7 @@ const AlphaAgentOps: React.FC = () => {
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Agent Fleet Command</h1>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xxs font-black tracking-wider uppercase bg-purple-500/10 text-purple-300 border border-purple-500/20">
                   <Sparkles className="w-2.5 h-2.5 text-purple-400" />
-                  5 UNITS ACTIVE
+                  DEMO FLEET VIEW
                 </span>
               </div>
               <p className="text-xs text-white/60 mt-0.5">
@@ -481,13 +483,13 @@ const AlphaAgentOps: React.FC = () => {
             <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 text-xxs font-mono">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
               <span className="text-white/70">FLEET LOAD:</span>
-              <span className="text-emerald-400 font-bold">24% CPU</span>
+              <span className="text-amber-300 font-bold">STATUS UNKNOWN</span>
             </div>
 
             <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 text-xxs font-mono">
               <span className="w-2 h-2 rounded-full bg-cyan-400" />
               <span className="text-white/70">THROUGHPUT:</span>
-              <span className="text-cyan-300 font-bold">18.4 tasks/min</span>
+              <span className="text-amber-300 font-bold">STATUS UNKNOWN</span>
             </div>
 
             {/* Execution Mode Switcher */}

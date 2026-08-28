@@ -37,6 +37,20 @@ export type CanvasViewType =
   | 'rag_graph'
   | 'telemetry_radar';
 
+function selectCanvasForQuery(query: string): { view: CanvasViewType; label: string } {
+  const q = query.toLowerCase();
+  if (['pest', 'rust', 'leaf', 'disease', 'spot'].some(term => q.includes(term))) {
+    return { view: 'disease_saliency', label: 'Disease Saliency Scanner' };
+  }
+  if (['rain', 'weather', 'season', 'yield', 'water'].some(term => q.includes(term))) {
+    return { view: 'agro_scrubber', label: 'Agro-Ecosystem Scrubber' };
+  }
+  if (['fao', 'research', 'manual', 'guide'].some(term => q.includes(term))) {
+    return { view: 'rag_graph', label: 'RAG Knowledge Graph' };
+  }
+  return { view: 'soil_heatmap', label: 'Soil Diagnostic Grid' };
+}
+
 interface ChatMessageItem {
   id: string;
   sender: 'user' | 'assistant';
@@ -276,28 +290,12 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
         message: query,
       });
 
-      const responseText =
-        res.data?.data?.messages?.[1]?.content ||
-        `Based on regional field data and agro-ecological parameters:
-
-• **Field Diagnostic:** Query analyzed against registered crop profiles and climatology indices.
-• **Agronomic Recommendation:** Ensure balanced N-P-K nutrient application and inspect moisture retention levels in the top 15cm soil profile.
-• **Follow-up Protocol:** Monitor crop response within 7 days and record field visit observations.`;
-
-      // Smart canvas routing based on query keywords
-      let matchedCanvas: CanvasViewType = 'soil_heatmap';
-      let label = 'Soil Diagnostic Grid';
-      const qLower = query.toLowerCase();
-      if (qLower.includes('pest') || qLower.includes('rust') || qLower.includes('leaf') || qLower.includes('disease') || qLower.includes('spot')) {
-        matchedCanvas = 'disease_saliency';
-        label = 'Disease Saliency Scanner';
-      } else if (qLower.includes('rain') || qLower.includes('weather') || qLower.includes('season') || qLower.includes('yield') || qLower.includes('water')) {
-        matchedCanvas = 'agro_scrubber';
-        label = 'Agro-Ecosystem Scrubber';
-      } else if (qLower.includes('fao') || qLower.includes('research') || qLower.includes('manual') || qLower.includes('guide')) {
-        matchedCanvas = 'rag_graph';
-        label = 'RAG Knowledge Graph';
+      const responseText = res.data?.data?.messages?.[1]?.content;
+      if (typeof responseText !== 'string' || responseText.trim().length === 0) {
+        throw new Error('AI service returned no advisory content');
       }
+
+      const { view: matchedCanvas, label } = selectCanvasForQuery(query);
 
       setActiveCanvasView(matchedCanvas);
       setActiveReasoningStep(null);
@@ -332,7 +330,7 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         canvasTrigger: 'soil_heatmap',
         canvasLabel: 'Soil Nutrient Grid',
-        citations: ['FAO Technical Note 28B', 'NASA POWER Climatology'],
+        citations: [],
       };
       setMessages(prev => [...prev, fallbackMsg]);
     } finally {
@@ -341,37 +339,22 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
   };
 
   const handleVoiceToggle = () => {
+    setIsRecordingVoice(previous => !previous);
     if (!isRecordingVoice) {
-      setIsRecordingVoice(true);
-      toast('🎙️ Voice recording active. Listening for agronomic query...', {
-        icon: '🎙️',
-        style: { background: '#022c22', color: '#6ee7b7', border: '1px solid #059669' },
-      });
-      setTimeout(() => {
-        setIsRecordingVoice(false);
-        setInputPrompt('How do I optimize phosphorus uptake in acidic red clay soils with high aluminum fixation?');
-        toast.success('Voice audio transcribed accurately!');
-      }, 3500);
-    } else {
-      setIsRecordingVoice(false);
+      toast('Voice recording started. Stop recording to submit the captured audio.');
     }
   };
 
   const handleImageUploadSim = () => {
-    toast('📷 Leaf image uploaded. Analyzing foliar lesion saliency...', {
-      icon: '🌿',
-      style: { background: '#0f172a', color: '#38bdf8', border: '1px solid #0284c7' },
-    });
-    setActiveCanvasView('disease_saliency');
-    setInputPrompt('Attached: Maize_Leaf_Sample_04.jpg. Detect disease zones and suggest curative fungicide dosage.');
+    toast.error('Image diagnosis is unavailable from the Co-Pilot preview. Use Disease Diagnosis to submit a real image.');
   };
 
   const handleDispatchSms = () => {
-    toast.success('Advisory SMS broadcast dispatched to 13 registered cohort farmers!');
+    toast.error('SMS dispatch requires a selected live farmer cohort.');
   };
 
   const handleExportPdf = () => {
-    toast.success('Generated and downloaded Agronomic Prescription Report (PDF)');
+    toast.error('Prescription PDF export is unavailable from this view.');
   };
 
   return (
@@ -454,8 +437,8 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
             {/* Quick Agronomic Scenario Pills */}
             <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-4 space-y-2.5">
               <div className="flex items-center justify-between text-xxs font-bold text-white/50 uppercase tracking-wider">
-                <span>Instant Diagnostic Scenarios</span>
-                <span className="text-emerald-400 font-mono">1-Click Analysis</span>
+                <span>Illustrative Diagnostic Scenarios</span>
+                <span className="text-amber-300 font-mono">DEMO CONTENT</span>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 {PRESET_SCENARIOS.map(s => {
@@ -470,7 +453,7 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
                       <div className="flex items-center justify-between w-full">
                         <Icon className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
                         <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-white/5 text-white/50">
-                          {s.category}
+                          DEMO • {s.category}
                         </span>
                       </div>
                       <p className="text-xs font-bold text-white/90 group-hover:text-emerald-300 transition-colors line-clamp-2 leading-tight">

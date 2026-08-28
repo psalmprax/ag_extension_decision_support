@@ -2,9 +2,9 @@ name: Comprehensive Cybersecurity Audit & Security Gate
 
 on:
   push:
-    branches: [main, stage, develop]
+    branches: [master, stage, develop]
   pull_request:
-    branches: [main, stage, develop]
+    branches: [master, stage, develop]
   schedule:
     # Run every Monday at 04:00 UTC
     - cron: '0 4 * * 1'
@@ -92,13 +92,13 @@ jobs:
       - name: Audit Browser Extension Dependencies
         run: |
           cd ag-extension-browser-ext
-          npm audit --audit-level=high || true
+          npm audit --audit-level=high
 
       - name: Audit Python Agent Dependencies
         run: |
           pip install pip-audit
           cd ag-extension-dashboard/src/agents
-          pip-audit -r requirements.txt || true
+          pip-audit -r requirements.txt
 
   # ----------------------------------------------------------------------------
   # Job 3: Backend Security Test Suites

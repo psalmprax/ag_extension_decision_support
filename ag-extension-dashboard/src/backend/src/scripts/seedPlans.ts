@@ -33,7 +33,7 @@ async function main() {
       price: 29.0,
       currency: 'USD',
       interval: 'month',
-      stripePriceId: 'price_pro_placeholder', // To be updated with real Stripe ID
+      stripePriceId: process.env.STRIPE_PRO_PRICE_ID || undefined,
       features: {
         smsLimit: 100,
         aiChatLimit: 500,
@@ -50,7 +50,7 @@ async function main() {
       price: 99.0,
       currency: 'USD',
       interval: 'month',
-      stripePriceId: 'price_ent_placeholder',
+      stripePriceId: process.env.STRIPE_ENTERPRISE_PRICE_ID || undefined,
       features: {
         smsLimit: -1, // Unlimited
         aiChatLimit: -1,

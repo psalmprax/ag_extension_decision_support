@@ -10,7 +10,7 @@ import { safeError } from '@/utils/safeResponse';
 const router = Router();
 
 /**
- * Local in-memory knowledge corpus (placeholder until authorised feeds land).
+ * Local seed knowledge corpus. Responses must expose seed-only provenance until authorised feeds are configured.
  */
 interface KnowledgeArticle {
     id: string;

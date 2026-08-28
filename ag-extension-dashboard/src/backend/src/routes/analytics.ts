@@ -15,18 +15,12 @@ router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer'
 
 // Helper to safely execute database queries with fallback
 async function getFromDB(sql: string, params: unknown[] = []): Promise<Record<string, unknown>[]> {
-    try {
-        const pool = getPool();
-        if (!pool) {
-            logger.warn('Database not available, using fallback');
-            return [];
-        }
-        const result = await query(sql, params);
-        return result.rows || [];
-    } catch (error) {
-        logger.error('Database query error:', error);
-        return [];
+    const pool = getPool();
+    if (!pool) {
+        throw new Error('Analytics database connection unavailable');
     }
+    const result = await query(sql, params);
+    return result.rows || [];
 }
 
 function parseIntCount(rows: Record<string, unknown>[]): number {

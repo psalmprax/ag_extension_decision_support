@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Report } from '@/api/reportService';
-import { downloadReport, getReportContent } from '@/api/reportService';
+import { downloadReportPdf, getReportContent } from '@/api/reportService';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { RecommendationReviewQueue } from '@/components/RecommendationReviewQueue';
@@ -33,6 +33,18 @@ interface ReportsPageProps {
   setIsLoadingReport: (loading: boolean) => void;
   addNotification: (n: { type: 'info' | 'warning' | 'error' | 'success'; message: string }) => void;
   user: { firstName?: string; lastName?: string; avatarUrl?: string } | undefined;
+}
+
+async function saveBlobAsFile(blob: Blob, filename: string): Promise<void> {
+  const url = window.URL.createObjectURL(blob);
+  try {
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+  } finally {
+    window.URL.revokeObjectURL(url);
+  }
 }
 
 function ReportCard({
@@ -144,13 +156,9 @@ function ReportCard({
           <button
             onClick={e => {
               e.stopPropagation();
-              downloadReport(report.id).then(blob => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${report.title}.pdf`;
-                a.click();
-              });
+              downloadReportPdf(report.id)
+              .then(blob => saveBlobAsFile(blob, `${report.title}.pdf`))
+              .catch(() => addNotification({ type: 'error', message: 'Failed to download report PDF' }));
             }}
             className="p-1.5 px-3 rounded-lg text-xs font-bold text-emerald-400 hover:bg-emerald-500/10 border border-emerald-500/20 transition-all flex items-center gap-1.5"
             title="Download PDF Export"
@@ -374,13 +382,9 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => {
-                      downloadReport(viewingReport.id).then(blob => {
-                        const url = window.URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `${viewingReport.title}.pdf`;
-                        a.click();
-                      });
+                      downloadReportPdf(viewingReport.id)
+                        .then(blob => saveBlobAsFile(blob, `${viewingReport.title}.pdf`))
+                        .catch(() => addNotification({ type: 'error', message: 'Failed to download report PDF' }));
                     }}
                     className="px-3.5 py-1.5 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 hover:bg-emerald-400 transition-colors"
                   >
@@ -414,18 +418,8 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                           {reportContent}
                         </div>
                       ) : (
-                        <div className="p-5 rounded-2xl bg-slate-950/60 border border-white/[0.06] space-y-3">
-                          <p className="font-semibold text-white">
-                            Executive Agronomic Intelligence Summary:
-                          </p>
-                          <p>
-                            During this reporting cycle, extension officers recorded multi-district field telemetry indicating stabilized soil nitrogen levels following scheduled split CAN fertilizer applications.
-                          </p>
-                          <ul className="list-disc pl-5 space-y-1 text-white/70 text-xs">
-                            <li>45 smallholder plots inspected in Nakuru County.</li>
-                            <li>Late blight fungal spores suppressed via prophylactic copper applications.</li>
-                            <li>0 urgent escalations pending for this cohort.</li>
-                          </ul>
+                              <div className="p-5 rounded-2xl bg-slate-950/60 border border-white/[0.06]">
+                          <p className="font-semibold text-white">Report content unavailable.</p>
                         </div>
                       )}
                     </div>

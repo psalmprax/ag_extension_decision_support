@@ -2,9 +2,23 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, Loader2, X } from 'lucide-react';
 import { Farmer, Visit } from '../types/dashboard';
-import { Report, downloadReport } from '@/api/reportService';
+import { Report, downloadReportPdf } from '@/api/reportService';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
+
+function triggerDownload(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+async function downloadPdf(report: Report): Promise<void> {
+  const blob = await downloadReportPdf(report.id);
+  triggerDownload(blob, `${report.title}.pdf`);
+}
 
 const VisitModal = React.lazy(() =>
   import('@/components/forms/VisitModal').then(module => ({ default: module.VisitModal }))
@@ -227,13 +241,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
                   <button
                     onClick={async () => {
                       try {
-                        const blob = await downloadReport(props.viewingReport!.id);
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `${props.viewingReport!.title}.pdf`;
-                        a.click();
-                        URL.revokeObjectURL(url);
+                        await downloadPdf(props.viewingReport!);
                       } catch {
                         props.addNotification({ type: 'error', message: 'Download failed' });
                       }
@@ -249,13 +257,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
               <button
                 onClick={async () => {
                   try {
-                    const blob = await downloadReport(props.viewingReport!.id);
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `${props.viewingReport!.title}.pdf`;
-                    a.click();
-                    URL.revokeObjectURL(url);
+                    await downloadPdf(props.viewingReport!);
                   } catch {
                     props.addNotification({ type: 'error', message: 'Download failed' });
                   }

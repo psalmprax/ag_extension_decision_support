@@ -350,6 +350,14 @@ const TeleCallModal: React.FC<{
   </div>
 );
 
+async function sendActivitySms(phone: string, message: string): Promise<void> {
+  const { data } = await apiClient.post<{ success: boolean; error?: string }>('/sms/send', {
+    phoneNumbers: [phone],
+    message,
+  });
+  if (!data.success) throw new Error(data.error || 'SMS provider rejected the message');
+}
+
 // ── Main Component ───────────────────────────────────────────────────
 
 export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
@@ -389,10 +397,11 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
   }, [fetchActivities, isDemo]);
 
   const handleSendSms = useCallback(async (phone: string, message: string) => {
-    if (!message.trim() || sendingSms) return;
+    const trimmedMessage = message.trim();
+    if (!trimmedMessage || sendingSms) return;
     setSendingSms(true);
     try {
-      await apiClient.post('/sms/send', { phoneNumbers: [phone], message: message.trim() });
+      await sendActivitySms(phone, trimmedMessage);
       toast.success(`SMS sent to ${phone}`);
       setReplyText('');
       setActiveReplyId(null);
@@ -503,5 +512,7 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
     </div>
   );
 };
+
+LiveActivityStream.displayName = 'LiveActivityStream';
 
 export default LiveActivityStream;

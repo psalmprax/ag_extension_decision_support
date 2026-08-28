@@ -389,7 +389,7 @@ export function SMSComposerPanel({
           </div>
         )}
 
-        <div className="flex items-center gap-2 ml-auto">
+        <div className="flex items-center gap-2 mx-auto">
           <button
             type="button"
             onClick={onOpenGoalMode}
@@ -557,6 +557,39 @@ export function SMSContactsPanel({
   );
 }
 
+function getQuotaPercent(current: number, limit: number): number {
+  if (limit <= 0) return 0;
+  return Math.min((current / limit) * 100, 100);
+}
+
+function QuotaSummary({ quota, isLoadingQuota, radiusClass }: { quota: { current: number; limit: number }; isLoadingQuota: boolean; radiusClass: string }) {
+  const usedPercent = getQuotaPercent(quota.current, quota.limit);
+  return <div className={`p-4 bg-slate-100/50 dark:bg-slate-800/50 ${radiusClass}`}>
+    <div className="flex items-end justify-between">
+      <span className="text-4xl font-extrabold text-slate-900 dark:text-white">
+        {isLoadingQuota ? <Loader2 className="w-8 h-8 animate-spin inline" /> : quota.limit > 0 ? quota.current.toLocaleString() : '—'}
+      </span>
+      <span className="text-sm font-bold text-slate-500">{quota.limit > 0 ? `/ ${quota.limit.toLocaleString()}` : 'Quota unavailable'}</span>
+    </div>
+    <div className="h-3 w-full mt-4 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+      <motion.div initial={{ width: 0 }} animate={{ width: `${usedPercent}%` }} className="h-full bg-gradient-to-r from-primary-600 to-indigo-600 rounded-full" />
+    </div>
+  </div>;
+}
+
+function MessageStats({ history, t, radiusClass }: { history: SMSMessage[]; t: (key: string) => string; radiusClass: string }) {
+  const sent = history.filter(message => message.status === 'success').length;
+  const failed = history.filter(message => message.status === 'failed').length;
+  return <div className={`p-4 bg-slate-100/50 dark:bg-slate-800/50 ${radiusClass}`}>
+    <div className="flex items-center justify-between mb-2"><span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{t('sms_stats_title')}</span><BarChart3 className="w-4 h-4 text-indigo-500" /></div>
+    <div className="grid grid-cols-2 gap-4"><div><p className="text-xl font-bold text-emerald-600">{sent}</p><p className="text-xxs font-bold text-slate-400 uppercase">{t('sms_stats_sent')}</p></div><div><p className="text-xl font-bold text-rose-500 font-mono">{failed}</p><p className="text-xxs font-bold text-slate-400 uppercase">{t('sms_stats_failed')}</p></div></div>
+  </div>;
+}
+
+function TemplateList({ templates, applyTemplate, radiusClass }: { templates: { id: string; title: string; content: string; icon: React.ElementType; color: string }[]; applyTemplate: (content: string) => void; radiusClass: string }) {
+  return <div className="space-y-3">{templates.map(tpl => <button key={tpl.id} onClick={() => applyTemplate(tpl.content)} className={`w-full group p-3 text-left border border-slate-100 dark:border-slate-800 hover:border-primary-200 dark:hover:border-primary-900 ${radiusClass} hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all active:scale-[0.98]`}><div className="flex items-center gap-3 mb-1.5"><div className={`p-1.5 rounded-lg ${tpl.color}`}><tpl.icon className="w-4 h-4" /></div><span className="text-sm font-bold text-slate-800 dark:text-slate-200">{tpl.title}</span></div><p className="text-xs text-slate-500 line-clamp-2 leading-relaxed italic">"{tpl.content}"</p></button>)}</div>;
+}
+
 export function SMSRightPanel({
   quota,
   isLoadingQuota,
@@ -604,53 +637,8 @@ export function SMSRightPanel({
         </div>
 
         <div className="space-y-4">
-          <div className="flex items-end justify-between">
-            <span className="text-4xl font-extrabold text-slate-900 dark:text-white">
-              {isLoadingQuota ? (
-                <Loader2 className="w-8 h-8 animate-spin inline" />
-              ) : (
-                quota.current.toLocaleString()
-              )}
-            </span>
-            <span className="text-sm font-bold text-slate-500 flex items-center gap-1 mb-1">
-              / {quota.limit.toLocaleString()}
-              <span
-                title={`SMS quota resets monthly. You've used ${quota.current} of ${quota.limit} messages.`}
-              >
-                <Info className="w-3 h-3 cursor-help" />
-              </span>
-            </span>
-          </div>
-          <div className="h-3 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${Math.min((quota.current / quota.limit) * 100, 100)}%` }}
-              className="h-full bg-gradient-to-r from-primary-600 to-indigo-600 rounded-full"
-            />
-          </div>
-        </div>
-
-        <div className={`p-4 bg-slate-100/50 dark:bg-slate-800/50 ${radiusClass}`}>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-              {t('sms_stats_title')}
-            </span>
-            <BarChart3 className="w-4 h-4 text-indigo-500" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-xl font-bold text-emerald-600">
-                {history.filter(m => m.status === 'success').length}
-              </p>
-              <p className="text-xxs font-bold text-slate-400 uppercase">{t('sms_stats_sent')}</p>
-            </div>
-            <div>
-              <p className="text-xl font-bold text-rose-500 font-mono">
-                {history.filter(m => m.status === 'failed').length}
-              </p>
-              <p className="text-xxs font-bold text-slate-400 uppercase">{t('sms_stats_failed')}</p>
-            </div>
-          </div>
+          <QuotaSummary quota={quota} isLoadingQuota={isLoadingQuota} radiusClass={radiusClass} />
+          <MessageStats history={history} t={t} radiusClass={radiusClass} />
         </div>
       </div>
 
@@ -662,27 +650,7 @@ export function SMSRightPanel({
           <Plus className="w-4 h-4" />
           {t('sms_template_title')}
         </h3>
-        <div className="space-y-3">
-          {templates.map(tpl => (
-            <button
-              key={tpl.id}
-              onClick={() => applyTemplate(tpl.content)}
-              className={`w-full group p-3 text-left border border-slate-100 dark:border-slate-800 hover:border-primary-200 dark:hover:border-primary-900 ${radiusClass} hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all active:scale-[0.98]`}
-            >
-              <div className="flex items-center gap-3 mb-1.5">
-                <div className={`p-1.5 rounded-lg ${tpl.color}`}>
-                  <tpl.icon className="w-4 h-4" />
-                </div>
-                <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                  {tpl.title}
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed italic">
-                "{tpl.content}"
-              </p>
-            </button>
-          ))}
-        </div>
+        <TemplateList templates={templates} applyTemplate={applyTemplate} radiusClass={radiusClass} />
       </div>
     </div>
   );
@@ -744,7 +712,7 @@ export function SMSPage() {
   const [history, setHistory] = useState<SMSMessage[]>([]);
 
   // Quota State - fetched from billing API
-  const [quota, setQuota] = useState({ current: 0, limit: 10000, sent: 0, failed: 0 });
+  const [quota, setQuota] = useState<{ current: number; limit: number; sent: number; failed: number } | null>(null);
   const [isLoadingQuota, setIsLoadingQuota] = useState(false);
 
   // Fetch History
@@ -793,24 +761,23 @@ export function SMSPage() {
     setIsLoadingQuota(true);
     try {
       const data = await fetchUsage();
-
-      if (data?.success && data?.data) {
-        const usageData = data.data;
-        const smsUsage = Array.isArray(usageData)
-          ? usageData.find((u: { type: string }) => u.type === 'sms' || u.type === 'SMS')
-          : usageData;
-
-        if (smsUsage) {
-          setQuota(prev => ({
-            ...prev,
-            current: smsUsage.current || 0,
-            limit: smsUsage.limit || 10000,
-          }));
-        }
+      const usageData = data?.success ? data.data : null;
+      const smsUsage = Array.isArray(usageData)
+        ? usageData.find((u: { type: string }) => u.type === 'sms' || u.type === 'SMS')
+        : usageData;
+      if (!smsUsage) {
+        setQuota(null);
+        return;
       }
+      setQuota({
+        current: typeof smsUsage.current === 'number' ? smsUsage.current : 0,
+        limit: typeof smsUsage.limit === 'number' ? smsUsage.limit : 0,
+        sent: typeof smsUsage.sent === 'number' ? smsUsage.sent : 0,
+        failed: typeof smsUsage.failed === 'number' ? smsUsage.failed : 0,
+      });
     } catch (err) {
       console.error('Failed to fetch SMS quota:', err);
-      setQuota({ current: 0, limit: 0, sent: 0, failed: 0 });
+      setQuota(null);
       toast.error('SMS quota is unavailable');
     } finally {
       setIsLoadingQuota(false);
@@ -965,7 +932,7 @@ export function SMSPage() {
       {/* RIGHT PANEL: Analytics & Utilities */}
       {showRightPanel && (
         <SMSRightPanel
-          quota={quota}
+          quota={quota || { current: 0, limit: 0, sent: 0, failed: 0 }}
           isLoadingQuota={isLoadingQuota}
           history={history}
           templates={templates}

@@ -17,14 +17,30 @@ interface VegetationHealthCardProps {
   cardClass: string;
 }
 
+function isCoordinate(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function requireCoordinate(value: unknown, label: string): number {
+  if (isCoordinate(value)) return value;
+  throw new Error(`${label} coordinates are unavailable`);
+}
+
+function getCoordinates(user: unknown): { lat: number; lng: number } {
+  const coordinates = user as { latitude?: unknown; longitude?: unknown } | null;
+  return {
+    lat: requireCoordinate(coordinates?.latitude, 'Farmer'),
+    lng: requireCoordinate(coordinates?.longitude, 'Farmer'),
+  };
+}
+
 export const VegetationHealthCard: React.FC<VegetationHealthCardProps> = ({ cardClass }) => {
   const user = useAppStore(s => s.user);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['vegetation-health'],
     queryFn: async () => {
-      const lat = user?.region ? -1.2863 : -1.2863; // fallback: Kenya center
-      const lng = 36.8172;
+      const { lat, lng } = getCoordinates(user);
       return fetchNDVITimeSeries(lat, lng, 14);
     },
     enabled: !!user,
@@ -94,7 +110,7 @@ export const VegetationHealthCard: React.FC<VegetationHealthCardProps> = ({ card
               animate={{ opacity: [0.6, 1, 0.6] }}
               transition={{ duration: 2, repeat: Infinity }}
             >
-              {data?.dataStatus === 'live' ? 'NASA POWER' : data?.dataStatus?.toUpperCase()}
+              {data?.dataStatus === 'estimated' ? 'ESTIMATED PROXY' : data?.dataStatus?.toUpperCase()}
             </motion.span>
           </div>
         </>

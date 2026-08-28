@@ -2,7 +2,7 @@ name: Mobile App Store Release (Capacitor & Android)
 
 on:
   push:
-    branches: [main, stage]
+    branches: [master, stage]
     tags:
       - 'v*'
   workflow_dispatch:

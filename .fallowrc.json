@@ -187,7 +187,19 @@
     "class-variance-authority",
     "react-dom",
     "@opengsd/gsd-pi",
-    "autoprefixer"
+    "autoprefixer",
+    "@sentry/node",
+    "@socket.io/redis-adapter",
+    "@tanstack/react-query",
+    "express",
+    "framer-motion",
+    "lucide-react",
+    "stripe",
+    "paypal-rest-sdk",
+    "multer",
+    "pdf-parse",
+    "react",
+    "react-hot-toast"
   ],
   "ignoreExports": [
     {

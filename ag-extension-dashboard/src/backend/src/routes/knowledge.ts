@@ -90,8 +90,8 @@ const errorStatusMap: Record<string, number> = {
     'REORDER_FAILED': 400
 };
 
-// Mock knowledge articles for vector store seeding
-export const mockKnowledgeArticles = [
+// Static seed articles used only when the live knowledge corpus is unavailable.
+export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb01',
         title: 'Maize Disease Management',
@@ -219,7 +219,7 @@ export async function seedKnowledgeArticles(): Promise<void> {
     const pool = getPool();
     if (!pool) return;
 
-    const articles = mockKnowledgeArticles.map(art => ({
+    const articles = seedKnowledgeArticlesData.map(art => ({
         id: art.id,
         title: art.title,
         content: art.content,

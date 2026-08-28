@@ -310,46 +310,51 @@ const agentRegistry = [
 /**
  * Helper to get live agent status from actual AI Providers
  */
-async function getLiveStatus(agentId: string) {
-    const healthMap = selfHealingService.getHealthStatus();
-    const componentHealth = healthMap.get(agentId);
+type AgentLiveStatus = {
+    status: 'online' | 'unhealthy' | 'offline';
+    load: number;
+    lastActive?: string;
+};
 
+function statusFromHealth(status: string): AgentLiveStatus['status'] {
+    if (status === 'healthy') return 'online';
+    if (status === 'degraded' || status === 'unhealthy') return 'unhealthy';
+    return 'offline';
+}
+
+async function pingAgent(config: (typeof agentRegistry)[number]): Promise<AgentLiveStatus> {
+    const url = config.id === 'openclaw' ? 'http://ag-openclaw:8002' : config.url;
+    try {
+        const response = await fetch(`${url}/health`, { signal: AbortSignal.timeout(1000) });
+        return { status: response.ok ? 'online' : 'unhealthy', load: 0, lastActive: new Date().toISOString() };
+    } catch (error) {
+        logger.warn(`Agent health check failed for ${config.id}:`, error);
+        return { status: 'offline', load: 0 };
+    }
+}
+
+function unreachableAgentResponse(config: (typeof agentRegistry)[number]): { status: 503; body: { success: false; error: string } } {
+    return {
+        status: 503,
+        body: {
+            success: false,
+            error: `${config.name} is not reachable. The agent service may be offline or not configured.`,
+        },
+    };
+}
+
+async function getLiveStatus(agentId: string): Promise<AgentLiveStatus> {
+    const componentHealth = selfHealingService.getHealthStatus().get(agentId);
     if (componentHealth) {
-        let status: 'online' | 'unhealthy' | 'offline' = 'offline';
-        if (componentHealth.status === 'healthy') {
-            status = 'online';
-        } else if (componentHealth.status === 'degraded' || componentHealth.status === 'unhealthy') {
-            status = 'unhealthy';
-        }
-
         return {
-            status,
-            load: Math.floor(Math.random() * 15),
-            lastActive: componentHealth.lastSuccess || componentHealth.lastCheck
+            status: statusFromHealth(componentHealth.status),
+            load: 0,
+            lastActive: componentHealth.lastSuccess || componentHealth.lastCheck,
         };
     }
 
-    const config = agentRegistry.find(a => a.id === agentId);
-    if (!config) return { status: 'offline', load: 0 };
-
-    try {
-        if (config.url) {
-            const url = agentId === 'openclaw' ? 'http://ag-openclaw:8002' : config.url;
-            const res = await fetch(`${url}/health`, { signal: AbortSignal.timeout(1000) });
-            return {
-                status: res.ok ? 'online' : 'unhealthy',
-                load: 0,
-                lastActive: new Date().toISOString()
-            };
-        }
-    } catch (error) {
-        logger.warn(`Fallback ping failed for agent ${agentId}:`, error);
-        if (agentId === 'openclaw') {
-            return { status: 'online', load: 0, lastActive: new Date().toISOString() };
-        }
-    }
-
-    return { status: 'offline', load: 0 };
+    const config = agentRegistry.find(agent => agent.id === agentId);
+    return config ? pingAgent(config) : { status: 'offline', load: 0 };
 }
 
 /**
@@ -403,6 +408,38 @@ router.get('/status', async (_req: AuthRequest, res: Response) => {
     }
 });
 
+type AgentControl = 'execute' | 'stop';
+
+async function handleAgentControl(
+    agentId: string | undefined,
+    control: AgentControl,
+    res: Response,
+): Promise<void> {
+    const config = agentRegistry.find(agent => agent.id === agentId);
+    if (!config) {
+        res.status(400).json({ success: false, error: 'Unknown agent ID' });
+        return;
+    }
+
+    const live = await pingAgent(config);
+    if (live.status !== 'online') {
+        const unavailable = unreachableAgentResponse(config);
+        res.status(unavailable.status).json(unavailable.body);
+        return;
+    }
+
+    const unavailableCode = {
+        execute: 'AGENT_EXECUTION_NOT_WIRED',
+        stop: 'AGENT_STOP_NOT_WIRED',
+    } as const;
+    const controlName = { execute: 'task dispatch', stop: 'stop control' }[control];
+    res.status(501).json({
+        success: false,
+        errorCode: unavailableCode[control],
+        error: `${config.name} is reachable, but ${controlName} is not configured for this control plane.`,
+    });
+}
+
 /**
  * @swagger
  * /api/ai/execute:
@@ -412,27 +449,7 @@ router.get('/status', async (_req: AuthRequest, res: Response) => {
  */
 router.post('/execute', async (req: AuthRequest, res: Response) => {
     try {
-        const { agent } = req.body;
-        const config = agentRegistry.find(a => a.id === agent);
-        if (!agent || !config) {
-            return res.status(400).json({ success: false, error: 'Unknown agent ID' });
-        }
-
-        // Verify the agent is actually reachable
-        let reachable = false;
-        try {
-            const healthUrl = agent === 'openclaw' ? 'http://ag-openclaw:8002' : config.url;
-            const healthRes = await fetch(`${healthUrl}/health`, { signal: AbortSignal.timeout(2000) });
-            reachable = healthRes.ok;
-        } catch {
-            reachable = false;
-        }
-
-        if (!reachable) {
-            return res.status(503).json({ success: false, error: `${config.name} is not reachable. The agent service may be offline or not configured.` });
-        }
-
-        res.json({ success: true, data: { agent, status: 'running' } });
+        await handleAgentControl(req.body?.agent, 'execute', res);
     } catch (error) {
         logger.error('Failed to execute agent:', error);
         safeError(res, 500, 'Failed to start agent execution');
@@ -448,27 +465,7 @@ router.post('/execute', async (req: AuthRequest, res: Response) => {
  */
 router.post('/stop/:agentId', async (req: AuthRequest, res: Response) => {
     try {
-        const { agentId } = req.params;
-        const config = agentRegistry.find(a => a.id === agentId);
-        if (!config) {
-            return res.status(400).json({ success: false, error: 'Unknown agent ID' });
-        }
-
-        // Verify the agent is actually reachable
-        let reachable = false;
-        try {
-            const healthUrl = agentId === 'openclaw' ? 'http://ag-openclaw:8002' : config.url;
-            const healthRes = await fetch(`${healthUrl}/health`, { signal: AbortSignal.timeout(2000) });
-            reachable = healthRes.ok;
-        } catch {
-            reachable = false;
-        }
-
-        if (!reachable) {
-            return res.status(503).json({ success: false, error: `${config.name} is not reachable. The agent service may be offline or not configured.` });
-        }
-
-        res.json({ success: true, data: { agent: agentId, status: 'idle' } });
+        await handleAgentControl(req.params.agentId, 'stop', res);
     } catch (error) {
         logger.error('Failed to stop agent:', error);
         safeError(res, 500, 'Failed to stop agent');

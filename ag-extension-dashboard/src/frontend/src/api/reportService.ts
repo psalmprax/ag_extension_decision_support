@@ -19,8 +19,8 @@ export const generateReport = async (type: string, title?: string, farmerId?: st
   return response.data;
 };
 
-export const downloadReport = async (reportId: string): Promise<Blob> => {
-  const response = await apiClient.get(`/reporting/${reportId}/download`, {
+export const downloadReportPdf = async (reportId: string): Promise<Blob> => {
+  const response = await apiClient.get(`/reporting/${reportId}/download/pdf`, {
     responseType: 'blob',
   });
   return response.data;

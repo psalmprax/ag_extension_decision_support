@@ -28,6 +28,16 @@ export interface FarmerNotificationPrefs {
     };
 }
 
+function escapeHtml(value: string): string {
+    return value.replace(/[&<>"']/g, character => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+    })[character] || character);
+}
+
 export class AgriculturalReportService {
     /**
      * Generate and distribute daily agricultural reports to all registered farmers.
@@ -37,7 +47,6 @@ export class AgriculturalReportService {
             logger.info('Starting daily agricultural report generation...');
 
             // Fetch farmers with active notification preferences
-            // This is a mocked fetch, assuming Prisma usage.
             const farmers: FarmerNotificationPrefs[] = await this.getFarmersWithPreferences();
 
             for (const farmer of farmers) {
@@ -134,7 +143,7 @@ export class AgriculturalReportService {
                 await emailService.sendEmail({
                     to: farmer.email,
                     subject: 'Your Daily Agricultural Advisory Report',
-                    html: `<p>Hello ${farmer.name},</p><p>${reportContent.replace(/\\n/g, '<br/>')}</p>`
+                    html: `<p>Hello ${escapeHtml(farmer.name)},</p><p>${escapeHtml(reportContent).replace(/\\n/g, '<br/>')}</p>`
                 }).catch(e => logger.warn(`Failed to send Email to ${farmer.farmerId}:`, e));
             }
 
@@ -168,7 +177,7 @@ export class AgriculturalReportService {
             name: `${farmer.firstName} ${farmer.lastName}`,
             phone: farmer.phone || '',
             email: farmer.user?.email || '',
-            whatsapp: farmer.phone || '', // Assuming whatsapp uses the same phone number
+            whatsapp: '',
             location: farmer.location || 'Unknown Location',
             lat: farmer.locationLat ? Number(farmer.locationLat) : 0,
             lng: farmer.locationLng ? Number(farmer.locationLng) : 0,
@@ -176,7 +185,7 @@ export class AgriculturalReportService {
             channels: { 
                 sms: !!farmer.phone, 
                 email: !!farmer.user?.email, 
-                whatsapp: !!farmer.phone 
+                whatsapp: false
             }
         }));
     }

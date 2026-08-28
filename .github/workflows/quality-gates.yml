@@ -1,0 +1,165 @@
+name: Quality Gates
+
+on:
+  pull_request:
+    branches: [stage, master, develop]
+  push:
+    branches: [stage]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-gates-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  application:
+    name: Application lint, build, and tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: psalmprax
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: ag_extension
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U psalmprax -d ag_extension"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: |
+            ag-extension-dashboard/src/backend/package-lock.json
+            ag-extension-dashboard/src/frontend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: ag-extension-dashboard/src/backend
+        run: npm ci
+
+      - name: Install frontend dependencies
+        working-directory: ag-extension-dashboard/src/frontend
+        run: npm ci
+
+      - name: Generate Prisma client
+        working-directory: ag-extension-dashboard/src/backend
+        run: npx prisma generate
+
+      - name: Prepare CI database schema
+        working-directory: ag-extension-dashboard/src/backend
+        run: npx prisma db push --skip-generate
+        env:
+          DATABASE_URL: postgres://psalmprax:password@localhost:5432/ag_extension
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build backend
+        run: npm run build:backend
+
+      - name: Build frontend
+        run: npm run build:frontend
+
+      - name: Test backend
+        run: npm run test:backend
+        env:
+          DATABASE_URL: postgres://psalmprax:password@localhost:5432/ag_extension
+          REDIS_URL: redis://localhost:6379
+          NODE_ENV: test
+
+      - name: Test frontend
+        run: npm run test:frontend
+
+      - name: Validate patch formatting
+        run: git diff --check
+
+  fallow:
+    name: Fallow regression and health audit
+    runs-on: ubuntu-latest
+    needs: application
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install root tooling
+        run: npm install --no-audit --no-fund
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+
+      - name: Fallow dead-code regression gate
+        run: npm run fallow:check
+
+      - name: Fallow changed-code audit
+        run: npm run fallow:audit
+
+  security:
+    name: Security checks
+    runs-on: ubuntu-latest
+    needs: application
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run repository security audit
+        run: npm run security:audit
+
+      - name: Scan for private keys and common tokens
+        shell: bash
+        run: |
+          set -euo pipefail
+          patterns=(
+            '-----BEGIN (RSA|EC|OPENSSH|DSA|PRIVATE) KEY-----'
+            'AIza[0-9A-Za-z_-]{35}'
+            'sk-[a-zA-Z0-9]{20,48}'
+            'ghp_[a-zA-Z0-9]{36}'
+          )
+          for pattern in "${patterns[@]}"; do
+            if grep -rnEI "$pattern" \
+              --exclude-dir=.git \
+              --exclude-dir=node_modules \
+              --exclude-dir=dist \
+              --exclude-dir=.output \
+              --exclude-dir=coverage \
+              --exclude='*.lock' \
+              --exclude='*.min.js' \
+              --exclude='.env.example' \
+              .; then
+              echo "Potential secret pattern detected: $pattern" >&2
+              exit 1
+            fi
+          done

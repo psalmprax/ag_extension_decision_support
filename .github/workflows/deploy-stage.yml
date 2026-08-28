@@ -153,7 +153,7 @@ jobs:
             # `docker compose --profile ai up -d ettametta-ollama`.
             # Budget: 18 retries × 10s = ~350s worst case per script's
             # MAX_WALL_SECONDS formula; applies via the 10m step budget.
-            if ! bash /root/ag_extension_decision_support/scripts/smoke-ollama.sh --retries 18 --interval 10 --expected-model llama3.2:1b --if-running; then
+            if ! bash /root/ag_extension_decision_support/scripts/smoke-ollama.sh --retries 18 --interval 10 --expected-model llama3.2:1b; then
               echo "FATAL: ettametta-ollama smoke gate failed (service missing or unreachable)." >&2
               echo "----- ettametta-ollama container logs (last 50 lines, if present) -----"
               docker compose logs --tail 50 ettametta-ollama 2>&1 || echo "(no logs: container not present in this compose project)"
@@ -242,7 +242,8 @@ jobs:
                 KEYS=$(npx -y web-push generate-vapid-keys 2>/dev/null | grep -E '(Public|Private) Key:' | awk '{print $NF}' | tr '\n' ' ')
               fi
               if [ -z "$KEYS" ] || [ "$KEYS" = " " ]; then
-                KEYS="BMGWTV-2nCZOhnQhuk4nRAzbpiMtjJnVdyPDXmxZuDzRVdQKV1P4rfYQ6QkxHl_uhGNZBfO8WqSeLSD1cNZJ5y0 f6DXhedi6HCcV9WafsBx0IIGnHqUmZG4a1I436Y_xaQ"
+                echo "FATAL: Unable to generate VAPID keys; refusing deployment with synthetic credentials." >&2
+                exit 1
               fi
               PUB_KEY=$(echo "$KEYS" | awk '{print $1}')
               PRIV_KEY=$(echo "$KEYS" | awk '{print $2}')
@@ -354,7 +355,7 @@ jobs:
             echo "=== backend health check (4 attempts + visible failure text) ==="
             HEALTH_PASS=0
             for i in 1 2 3 4; do
-              if RESP=$(curl -sSf --max-time 10 http://127.0.0.1:7500/api/health 2>&1); then
+              if RESP=$(node -e "fetch('http://127.0.0.1:7500/api/health').then(async r => { const body = await r.text(); process.stdout.write(body); process.exit(r.ok ? 0 : 1); }).catch(err => { console.error(err.message); process.exit(1); })" 2>&1); then
                 echo "✅ Backend is healthy! (attempt $i)"
                 echo "$RESP" | head -3
                 HEALTH_PASS=1
@@ -375,6 +376,6 @@ jobs:
             fi
             echo
             echo "=== frontend TCP probe (informational) ==="
-            curl -sSI --max-time 10 http://127.0.0.1:7503/ | head -3 || echo "(frontend probe did not return headers — non-fatal)"
+            node -e "fetch('http://127.0.0.1:7503/').then(r => { console.log(r.status, r.statusText); process.exit(r.ok ? 0 : 1); }).catch(err => { console.error(err.message); process.exit(1); })" || echo "(frontend probe did not return headers — non-fatal)"
             echo
             echo "✅ Deploy complete"
