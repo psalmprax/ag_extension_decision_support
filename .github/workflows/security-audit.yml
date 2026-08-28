@@ -169,7 +169,7 @@ jobs:
       - name: Install and Verify Browser Extension Security
         run: |
           cd ag-extension-browser-ext
-          npm ci
+          npm install --no-audit --no-fund
           npm run test:security
 
   # ----------------------------------------------------------------------------

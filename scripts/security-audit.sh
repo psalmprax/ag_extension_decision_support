@@ -106,6 +106,10 @@ fi
 echo -e "\n${BLUE}${BOLD}[3/5] Running Backend Security Test Suites (AegisShield, Vault, Vetter, RBAC)...${NC}"
 (
   cd "$ROOT_DIR/ag-extension-dashboard/src/backend"
+  if [ ! -x node_modules/.bin/jest ]; then
+    echo "Installing backend dependencies for security tests..."
+    npm ci --no-audit --no-fund
+  fi
   npm test -- security --silent
 )
 echo -e "${GREEN}✅ Backend Security Test Suites Passed (40/40 tests).${NC}"
@@ -116,12 +120,20 @@ echo -e "${GREEN}✅ Backend Security Test Suites Passed (40/40 tests).${NC}"
 echo -e "\n${BLUE}${BOLD}[4/5] Running Frontend & Browser Extension Security Verifications...${NC}"
 (
   cd "$ROOT_DIR/ag-extension-dashboard/src/frontend"
+  if [ ! -x node_modules/.bin/vitest ]; then
+    echo "Installing frontend dependencies for security tests..."
+    npm ci --no-audit --no-fund
+  fi
   npm run test -- src/__tests__/securityPolicy.test.ts src/__tests__/virtualizationAndThermal.test.ts src/__tests__/offlineConflictResolver.test.ts src/__tests__/remoteWipeAndEncryptedStorage.test.ts src/__tests__/chaosNetworkSimulation.test.ts
 )
 echo -e "${GREEN}✅ Frontend Security Policy & Deep-Tier Resilience Tests Passed (18/18 tests).${NC}"
 
 (
   cd "$ROOT_DIR/ag-extension-browser-ext"
+  if [ ! -d node_modules ]; then
+    echo "Installing browser extension dependencies for security checks..."
+    npm install --no-audit --no-fund
+  fi
   npm run test:security
 )
 echo -e "${GREEN}✅ Browser Extension Manifest V3 & Permission Scope Verified.${NC}"
