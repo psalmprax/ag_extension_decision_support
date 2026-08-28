@@ -676,8 +676,8 @@ export function mapChatConversationRow(row: ChatConversationRow): ChatConversati
 
   return {
     id: row.id,
-    userId: getParticipantId(row.user_id, row.officer_id),
-    officerId: getParticipantId(row.officer_id, row.user_id),
+    userId: getNullableString(row.user_id),
+    officerId: getNullableString(row.officer_id),
     farmerId: row.farmer_id,
     farmerName: displayName,
     farmerRegion: getNullableString(row.farmer_region),
