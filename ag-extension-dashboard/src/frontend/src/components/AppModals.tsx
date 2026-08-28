@@ -167,7 +167,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className={`bg-white dark:bg-gray-800 p-10 rounded-3xl shadow-2xl max-w-md w-full text-center space-y-6`}
+              className={`bg-white dark:bg-gray-800 p-8 sm:p-10 rounded-xl shadow-2xl max-w-md w-full text-center space-y-6`}
             >
               <div className="relative w-24 h-24 mx-auto">
                 <div className="absolute inset-0 border-4 border-primary-500/20 rounded-full"></div>
@@ -201,7 +201,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-3xl w-full max-h-[calc(100dvh-2rem)] sm:max-h-[80vh] overflow-hidden flex flex-col"
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-3xl w-full max-h-[calc(100dvh-2rem)] sm:max-h-[80vh] overflow-hidden flex flex-col"
           >
             <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
               <div>

@@ -146,10 +146,10 @@ export function UserManagementPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-24">
       {/* ── Top Bento Banner: Staff Directory & Access Control ── */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40">
               <Users className="w-6 h-6 text-emerald-400" />
             </div>
             <div>
@@ -231,8 +231,8 @@ export function UserManagementPage() {
         </div>
       ) : filteredUsers.length === 0 ? (
         /* Empty State with Seed Action */
-        <div className="backdrop-blur-xl bg-slate-900/40 border border-white/10 rounded-2xl p-12 text-center space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-950/40">
+        <div className="backdrop-blur-xl bg-slate-900/40 border border-white/10 rounded-xl p-12 text-center space-y-4">
+          <div className="w-16 h-16 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-950/40">
             <Users className="w-8 h-8 opacity-70" />
           </div>
           <div className="space-y-1">
@@ -260,11 +260,11 @@ export function UserManagementPage() {
                 key={user.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="backdrop-blur-xl bg-slate-900/60 border border-white/10 hover:border-emerald-500/30 rounded-2xl p-5 shadow-lg space-y-4 transition-all duration-300 group"
+                className="backdrop-blur-xl bg-slate-900/60 border border-white/10 hover:border-emerald-500/30 rounded-xl p-5 shadow-lg space-y-4 transition-all duration-300 group"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500/30 to-teal-500/30 border border-emerald-500/30 flex items-center justify-center text-emerald-300 font-bold text-sm shadow-md">
+                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500/30 to-teal-500/30 border border-emerald-500/30 flex items-center justify-center text-emerald-300 font-bold text-sm shadow-md">
                       {(user.firstName?.[0] || '?').toUpperCase()}
                       {(user.lastName?.[0] || '').toUpperCase()}
                     </div>
@@ -319,7 +319,7 @@ export function UserManagementPage() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="backdrop-blur-2xl bg-slate-900/95 border border-white/10 rounded-3xl shadow-2xl w-full max-w-lg p-6 sm:p-8 space-y-6 text-white"
+              className="backdrop-blur-2xl bg-slate-900/95 border border-white/10 rounded-xl shadow-2xl w-full max-w-lg p-6 sm:p-8 space-y-6 text-white"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between border-b border-white/10 pb-4">

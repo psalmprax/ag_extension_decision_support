@@ -56,7 +56,7 @@ const IsometricFarmOverview: React.FC<IsometricFarmOverviewProps> = ({
     : 'text-primary-400/40';
 
   return (
-    <div className="w-full h-96 relative bg-primary-900/10 rounded-[3rem] border border-white/5 overflow-hidden group">
+    <div className="w-full h-96 relative bg-primary-900/10 rounded-xl border border-white/5 overflow-hidden group">
       <div className="absolute inset-0 cyber-grid-premium opacity-20 group-hover:opacity-40 transition-opacity duration-1000" />
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="text-center">

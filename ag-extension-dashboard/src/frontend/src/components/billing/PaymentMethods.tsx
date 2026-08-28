@@ -64,11 +64,11 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
   return (
     <section
       aria-labelledby="payment-methods-title"
-      className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl overflow-hidden relative"
+      className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl overflow-hidden relative"
     >
       <div className="flex flex-wrap justify-between items-center gap-4 mb-6 relative z-10">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40 text-emerald-400">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40 text-emerald-400">
             <CardIcon className="w-6 h-6" />
           </div>
           <div>

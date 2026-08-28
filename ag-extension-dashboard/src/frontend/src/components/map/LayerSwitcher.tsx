@@ -13,7 +13,7 @@ export function LayerSwitcher({ currentLayer, onLayerChange, t }: LayerSwitcherP
 
   return (
     <div className="leaflet-top leaflet-right" style={{ marginTop: '10px', marginRight: '10px' }}>
-      <div className="leaflet-control leaflet-control-layers bg-slate-900/95 text-white backdrop-blur-xl rounded-2xl shadow-xl border border-white/10 p-2 sm:p-3">
+      <div className="leaflet-control leaflet-control-layers bg-slate-900/95 text-white backdrop-blur-xl rounded-xl shadow-xl border border-white/10 p-2 sm:p-3">
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="sm:hidden flex items-center gap-1.5 px-2 py-1 text-xxs font-bold uppercase tracking-wider text-emerald-400"

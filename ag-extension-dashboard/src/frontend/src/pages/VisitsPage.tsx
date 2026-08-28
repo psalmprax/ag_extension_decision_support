@@ -84,7 +84,7 @@ const VisitCard: React.FC<VisitCardProps> = ({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
       transition={{ duration: 0.3, delay: Math.min(idx * 0.04, 0.3) }}
-      className={`backdrop-blur-xl bg-slate-900/60 border rounded-2xl p-5 flex flex-col justify-between hover:shadow-2xl transition-all relative group min-h-[220px] ${
+      className={`backdrop-blur-xl bg-slate-900/60 border rounded-xl p-5 flex flex-col justify-between hover:shadow-2xl transition-all relative group min-h-[220px] ${
         isUrgent
           ? 'border-amber-500/40 shadow-lg shadow-amber-950/20'
           : 'border-white/10 hover:border-emerald-500/30'
@@ -246,10 +246,10 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
   return (
     <main id="visits-main" className="max-w-7xl mx-auto space-y-6">
       {/* ── Top Bento Banner & Quick Actions ── */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-4 sm:p-6 shadow-xl relative overflow-hidden">
+      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-4 sm:p-6 shadow-xl relative overflow-hidden">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6">
           <div className="flex items-center gap-3 sm:gap-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40 shrink-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40 shrink-0">
               <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
             </div>
             <div>
@@ -318,8 +318,8 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
 
       {/* Visits Cards Grid */}
       {filteredVisits.length === 0 ? (
-        <div className="p-12 text-center backdrop-blur-xl bg-slate-900/40 border border-white/10 rounded-2xl space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-950/40">
+        <div className="p-12 text-center backdrop-blur-xl bg-slate-900/40 border border-white/10 rounded-xl space-y-4">
+          <div className="w-16 h-16 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-950/40">
             <Calendar className="w-8 h-8 opacity-70" />
           </div>
           <div className="space-y-1">

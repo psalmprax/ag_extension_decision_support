@@ -241,7 +241,7 @@ export const MarketPriceTrendCard: React.FC = () => {
   const maxPrice = Math.max(1, ...chartData.map(d => d.price));
 
   return (
-    <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-2xl space-y-6">
+    <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-2xl space-y-6">
       {/* ── Header with metadata ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/5">
         <div className="space-y-1">

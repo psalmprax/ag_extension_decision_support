@@ -336,7 +336,7 @@ export function SMSComposerPanel({
 
   return (
     <div
-      className="flex-1 backdrop-blur-xl bg-slate-900/60 rounded-2xl border border-white/10 flex flex-col shadow-xl"
+      className="flex-1 backdrop-blur-xl bg-slate-900/60 rounded-xl border border-white/10 flex flex-col shadow-xl"
     >
       <div className="flex flex-wrap items-center justify-between p-4 border-b border-white/5 gap-3">
         <div className="flex bg-white/[0.03] border border-white/5 p-1 rounded-xl">
@@ -475,7 +475,7 @@ export function SMSContactsPanel({
 
   return (
     <div
-      className="w-full lg:w-1/4 backdrop-blur-xl bg-slate-900/60 rounded-2xl border border-white/10 flex flex-col shadow-xl"
+      className="w-full lg:w-1/4 backdrop-blur-xl bg-slate-900/60 rounded-xl border border-white/10 flex flex-col shadow-xl"
     >
       <div className="p-4 border-b border-white/5">
         <h2 className="text-base font-bold text-white mb-3 flex items-center gap-2">
@@ -619,7 +619,7 @@ export function SMSRightPanel({
     <div className="w-full lg:w-1/4 space-y-4 overflow-y-auto pr-1">
       {/* GLASS DASHBOARD CARD */}
       <div
-        className="relative overflow-hidden backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-5 shadow-xl space-y-5"
+        className="relative overflow-hidden backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-5 shadow-xl space-y-5"
       >
         <div className="absolute -top-12 -right-12 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl"></div>
 

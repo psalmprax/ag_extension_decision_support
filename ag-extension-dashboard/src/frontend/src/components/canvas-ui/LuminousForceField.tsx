@@ -33,11 +33,11 @@ export const LuminousForceField: React.FC<LuminousForceFieldProps> = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseMove={handleMouseMove}
       onMouseLeave={() => setIsHovered(false)}
-      className={`relative p-[1px] rounded-2xl overflow-hidden group ${className}`}
+      className={`relative p-[1px] rounded-xl overflow-hidden group ${className}`}
     >
       {/* Reactive Luminous Force Field Glow Layer */}
       <motion.div
-        className="pointer-events-none absolute -inset-px transition-opacity duration-300 rounded-2xl"
+        className="pointer-events-none absolute -inset-px transition-opacity duration-300 rounded-xl"
         style={{
           opacity: isHovered ? 1 : 0,
           background: `radial-gradient(350px circle at ${mousePos.x}px ${mousePos.y}px, ${glowColor}60, transparent 70%)`,
@@ -46,7 +46,7 @@ export const LuminousForceField: React.FC<LuminousForceFieldProps> = ({
 
       {/* Reactive Border Edge */}
       <div
-        className="pointer-events-none absolute inset-0 rounded-2xl"
+        className="pointer-events-none absolute inset-0 rounded-xl"
         style={{
           padding: borderWidth,
           background: isHovered

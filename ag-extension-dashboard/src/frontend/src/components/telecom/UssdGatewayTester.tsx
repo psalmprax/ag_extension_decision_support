@@ -108,7 +108,7 @@ export const UssdGatewayTester: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Selector */}
-      <div className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.03] border border-white/10">
+      <div className="flex items-center justify-between p-4 rounded-xl bg-white/[0.03] border border-white/10">
         <div>
           <h3 className="text-sm font-bold text-white flex items-center gap-2">
             <Radio className="w-4 h-4 text-emerald-400" />
@@ -151,7 +151,7 @@ export const UssdGatewayTester: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Virtual Phone Mockup */}
           <div className="flex flex-col items-center">
-            <div className="w-[280px] bg-slate-900 border-4 border-slate-700 rounded-[2.5rem] p-4 shadow-2xl relative">
+            <div className="w-[280px] bg-slate-900 border-4 border-slate-700 rounded-xl p-4 shadow-2xl relative">
               {/* Earpiece */}
               <div className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto mb-3" />
 
@@ -219,7 +219,7 @@ export const UssdGatewayTester: React.FC = () => {
           </div>
 
           {/* Session Logs & Explanation */}
-          <div className="p-6 rounded-2xl bg-black/40 border border-white/10 flex flex-col justify-between">
+          <div className="p-6 rounded-xl bg-black/40 border border-white/10 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xxs font-mono uppercase text-emerald-400 font-bold">
@@ -258,7 +258,7 @@ export const UssdGatewayTester: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <form
             onSubmit={handleSendSms}
-            className="p-6 rounded-2xl bg-black/40 border border-white/10 space-y-4"
+            className="p-6 rounded-xl bg-black/40 border border-white/10 space-y-4"
           >
             <div>
               <label className="text-xs font-bold text-stone-300 block mb-1.5">
@@ -296,7 +296,7 @@ export const UssdGatewayTester: React.FC = () => {
           </form>
 
           {/* SMS Logs */}
-          <div className="p-6 rounded-2xl bg-black/40 border border-white/10 space-y-3">
+          <div className="p-6 rounded-xl bg-black/40 border border-white/10 space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-stone-400">
               Dispatched SMS Outbox
             </h4>

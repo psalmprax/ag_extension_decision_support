@@ -173,7 +173,7 @@ export const CropsOverviewTab: React.FC<CropsOverviewTabProps> = ({
           })}
         </div>
       ) : (
-        <div className="text-center py-20 bg-slate-900/10 border border-dashed border-white/5 rounded-3xl">
+        <div className="text-center py-20 bg-slate-900/10 border border-dashed border-white/5 rounded-xl">
           <Map className="w-16 h-16 text-slate-600 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-slate-300">No Farm Sectors Found</h3>
           <p className="text-slate-500 text-sm mt-1 mb-6">

@@ -98,7 +98,7 @@ export function Register() {
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="hidden lg:flex lg:col-span-5 flex-col justify-between p-7 rounded-3xl bg-slate-900/70 border border-white/10 backdrop-blur-2xl shadow-2xl relative overflow-hidden self-stretch"
+          className="hidden lg:flex lg:col-span-5 flex-col justify-between p-7 rounded-xl bg-slate-900/70 border border-white/10 backdrop-blur-2xl shadow-2xl relative overflow-hidden self-stretch"
         >
           {/* Top Brand & Status */}
           <div className="flex items-center justify-between z-10 pb-2">
@@ -120,7 +120,7 @@ export function Register() {
           </div>
 
           {/* Interactive Procedural Canvas in Center */}
-          <div className="flex-1 min-h-[300px] w-full my-3 rounded-2xl overflow-hidden border border-white/5 relative z-10 bg-slate-950">
+          <div className="flex-1 min-h-[300px] w-full my-3 rounded-xl overflow-hidden border border-white/5 relative z-10 bg-slate-950">
             <AgroEcosystemCanvasScrubber interactive={true} showControls={false} />
           </div>
 
@@ -141,7 +141,7 @@ export function Register() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="lg:col-span-7 backdrop-blur-2xl bg-slate-900/90 border border-white/10 shadow-2xl rounded-3xl p-7 sm:p-8 w-full relative z-10 self-stretch flex flex-col justify-between"
+          className="lg:col-span-7 backdrop-blur-2xl bg-slate-900/90 border border-white/10 shadow-2xl rounded-xl p-7 sm:p-8 w-full relative z-10 self-stretch flex flex-col justify-between"
           style={{ pointerEvents: 'auto', touchAction: 'auto' }}
         >
           <div>

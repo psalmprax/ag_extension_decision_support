@@ -34,7 +34,7 @@ const DemoBlocker: React.FC<{ children: React.ReactNode; label?: string }> = ({
       <div
         role="status"
         aria-live="polite"
-        className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm rounded-2xl"
+        className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm rounded-xl"
       >
         <div className="flex flex-col items-center gap-2 text-center px-6 py-4 max-w-sm">
           <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">

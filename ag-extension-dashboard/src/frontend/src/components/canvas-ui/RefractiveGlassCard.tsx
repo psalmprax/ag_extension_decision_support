@@ -62,13 +62,13 @@ export const RefractiveGlassCard: React.FC<RefractiveGlassCardProps> = ({
         transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
         transition: isHovered ? 'transform 0.1s ease-out' : 'transform 0.5s ease-out',
       }}
-      className={`relative overflow-hidden rounded-2xl bg-white/[0.04] dark:bg-black/30 border border-white/10 backdrop-blur-xl shadow-xl transition-shadow duration-300 ${
+      className={`relative overflow-hidden rounded-xl bg-white/[0.04] dark:bg-black/30 border border-white/10 backdrop-blur-xl shadow-xl transition-shadow duration-300 ${
         isHovered ? 'shadow-emerald-950/40 border-emerald-500/30' : ''
       } ${className}`}
     >
       {/* Specular Glare / Refractive Light Layer */}
       <div
-        className="pointer-events-none absolute -inset-px opacity-0 transition-opacity duration-300 rounded-2xl"
+        className="pointer-events-none absolute -inset-px opacity-0 transition-opacity duration-300 rounded-xl"
         style={{
           opacity: isHovered ? 1 : 0,
           background: `radial-gradient(600px circle at ${glarePosition.x}% ${glarePosition.y}%, ${highlightColor}, transparent 40%)`,
@@ -77,7 +77,7 @@ export const RefractiveGlassCard: React.FC<RefractiveGlassCardProps> = ({
 
       {/* Edge highlight reflection */}
       <div
-        className="pointer-events-none absolute inset-0 rounded-2xl border border-white/10"
+        className="pointer-events-none absolute inset-0 rounded-xl border border-white/10"
         style={{
           background: `linear-gradient(135deg, rgba(255,255,255,${
             isHovered ? '0.12' : '0.04'

@@ -31,7 +31,7 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
         className="relative card p-8 lg:p-10 group bg-slate-950/90 dark:bg-slate-950/95 backdrop-blur-2xl border border-emerald-500/30 shadow-2xl overflow-hidden min-h-[440px] flex flex-col justify-between"
-        style={{ borderRadius: 'var(--radius-card, 1.25rem)' }}
+        style={{ borderRadius: 'var(--radius-card, 0.75rem)' }}
       >
         {/* KnockKnock Ambient Mesh Gradient Orb */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -45,7 +45,7 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
 
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-6">
-            <div className="p-3.5 bg-emerald-500/15 rounded-2xl backdrop-blur-xl border border-emerald-500/30 shadow-lg shadow-emerald-950/40 text-emerald-400">
+            <div className="p-3.5 bg-emerald-500/15 rounded-xl backdrop-blur-xl border border-emerald-500/30 shadow-lg shadow-emerald-950/40 text-emerald-400">
               <ShieldCheck className="w-7 h-7" />
             </div>
             <div className="flex flex-col items-end">
@@ -108,7 +108,7 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
     >
       <div className="absolute top-0 right-0 w-72 h-72 bg-emerald-500/10 rounded-full blur-[90px]" />
       <div className="relative z-10">
-        <div className="p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/30 w-fit mb-6 text-emerald-400">
+        <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/30 w-fit mb-6 text-emerald-400">
           <TrendingUp className="w-8 h-8" />
         </div>
         <h3 className="text-3xl font-black text-white leading-tight tracking-tighter mb-4">

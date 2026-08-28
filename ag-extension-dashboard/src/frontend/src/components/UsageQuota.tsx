@@ -93,7 +93,7 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
 
   if (isLoading) {
     return (
-      <div className="p-8 space-y-6 animate-pulse bg-slate-950/80 rounded-2xl border border-slate-800">
+      <div className="p-8 space-y-6 animate-pulse bg-slate-950/80 rounded-xl border border-slate-800">
         <div className="h-4 bg-slate-800 rounded-full w-1/3"></div>
         <div className="space-y-4">
           <div className="h-3 bg-slate-800/60 rounded-full"></div>
@@ -107,10 +107,10 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
   if (!plan || usageData.length === 0) {
     return (
       <div
-        className={`relative overflow-hidden ${compact ? '' : 'p-6 bg-slate-900/60 border border-white/10 rounded-2xl shadow-xl backdrop-blur-xl'}`}
+        className={`relative overflow-hidden ${compact ? '' : 'p-6 bg-slate-900/60 border border-white/10 rounded-xl shadow-xl backdrop-blur-xl'}`}
       >
         <div className="relative z-10 flex flex-col items-center text-center py-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center mb-3 shadow-lg shadow-emerald-950/40 text-emerald-400">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center mb-3 shadow-lg shadow-emerald-950/40 text-emerald-400">
             <Activity className="w-6 h-6 animate-pulse" />
           </div>
           <h4 className="text-sm font-bold text-white mb-1">
@@ -150,7 +150,7 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
 
   return (
     <div
-      className={`relative overflow-hidden transition-all duration-500 ${compact ? '' : 'p-6 bg-slate-900/60 border border-white/10 rounded-2xl shadow-xl backdrop-blur-xl group'}`}
+      className={`relative overflow-hidden transition-all duration-500 ${compact ? '' : 'p-6 bg-slate-900/60 border border-white/10 rounded-xl shadow-xl backdrop-blur-xl group'}`}
     >
       {!compact && (
         <div className="flex items-center justify-between mb-6 relative z-10">

@@ -209,8 +209,8 @@ export const FarmerRegistrationForm: React.FC = () => {
 
   if (isDemo) {
     return (
-      <div className="max-w-3xl mx-auto p-8 backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl shadow-2xl text-center relative overflow-hidden">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+      <div className="max-w-3xl mx-auto p-8 backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl shadow-2xl text-center relative overflow-hidden">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
           <Lock className="w-8 h-8 text-amber-400" />
         </div>
         <h2 className="text-2xl font-bold tracking-tight text-white mb-2">Register Client</h2>
@@ -240,10 +240,10 @@ export const FarmerRegistrationForm: React.FC = () => {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* ── Top Bento Banner: Fast-Fill Presets & Node Telemetry ── */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40">
               <UserPlus className="w-6 h-6 text-emerald-400" />
             </div>
             <div>
@@ -282,7 +282,7 @@ export const FarmerRegistrationForm: React.FC = () => {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Card 1: Identity & Multi-Channel Contact Profile */}
-          <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 space-y-5 shadow-lg">
+          <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 space-y-5 shadow-lg">
             <div className="flex items-center gap-2.5 pb-2 border-b border-white/5">
               <UserPlus className="w-4 h-4 text-emerald-400" />
               <h2 className="text-sm font-bold uppercase tracking-wider text-white">Identity & Communication Profile</h2>
@@ -392,7 +392,7 @@ export const FarmerRegistrationForm: React.FC = () => {
           </div>
 
           {/* Card 2: Agronomic Portfolio & Land Parcel */}
-          <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 space-y-5 shadow-lg">
+          <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 space-y-5 shadow-lg">
             <div className="flex items-center gap-2.5 pb-2 border-b border-white/5">
               <Layers className="w-4 h-4 text-emerald-400" />
               <h2 className="text-sm font-bold uppercase tracking-wider text-white">Agronomic Portfolio & Parcel</h2>
@@ -495,7 +495,7 @@ export const FarmerRegistrationForm: React.FC = () => {
           </div>
 
           {/* Card 3: Geolocation Coordinates & NASA POWER Radar */}
-          <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 space-y-5 shadow-lg">
+          <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 space-y-5 shadow-lg">
             <div className="flex items-center justify-between pb-2 border-b border-white/5">
               <div className="flex items-center gap-2.5">
                 <Compass className="w-4 h-4 text-emerald-400" />
@@ -573,7 +573,7 @@ export const FarmerRegistrationForm: React.FC = () => {
           </div>
 
           {/* Card 4: Initial Vital Score & Agronomic Health Tier */}
-          <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 space-y-5 shadow-lg">
+          <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 space-y-5 shadow-lg">
             <div className="flex items-center justify-between pb-2 border-b border-white/5">
               <div className="flex items-center gap-2.5">
                 <Activity className="w-4 h-4 text-emerald-400" />
@@ -610,7 +610,7 @@ export const FarmerRegistrationForm: React.FC = () => {
         </div>
 
         {/* ── Floating Submit Action Bar ── */}
-        <div className="backdrop-blur-xl bg-slate-900/80 border border-white/10 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl">
+        <div className="backdrop-blur-xl bg-slate-900/80 border border-white/10 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl">
           <div className="flex items-center gap-2 text-xs text-white/60">
             <Sparkles className="w-4 h-4 text-emerald-400" />
             <span>Ready to activate real-time advisory profile & automated onboarding sync.</span>

@@ -36,10 +36,10 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData })
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* ── Top Bento Banner: Analytics & Velocity Hub ── */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-sky-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-sky-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40">
               <BarChart3 className="w-6 h-6 text-emerald-400" />
             </div>
             <div>
@@ -70,7 +70,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData })
           {/* ── KPI Stat Bento Grid ── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* 1. Resolution Rate */}
-            <div className="backdrop-blur-xl bg-slate-900/60 border border-emerald-500/20 rounded-2xl p-5 shadow-lg space-y-3">
+            <div className="backdrop-blur-xl bg-slate-900/60 border border-emerald-500/20 rounded-xl p-5 shadow-lg space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xxs font-bold text-emerald-400 uppercase tracking-wider">
                   {t('analytics_resolution_rate') || 'Resolution Rate'}
@@ -88,7 +88,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData })
             </div>
 
             {/* 2. Avg Response Time */}
-            <div className="backdrop-blur-xl bg-slate-900/60 border border-sky-500/20 rounded-2xl p-5 shadow-lg space-y-3">
+            <div className="backdrop-blur-xl bg-slate-900/60 border border-sky-500/20 rounded-xl p-5 shadow-lg space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xxs font-bold text-sky-400 uppercase tracking-wider">
                   {t('analytics_avg_response_time') || 'Avg Response Time'}
@@ -106,7 +106,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData })
             </div>
 
             {/* 3. Satisfaction Score */}
-            <div className="backdrop-blur-xl bg-slate-900/60 border border-teal-500/20 rounded-2xl p-5 shadow-lg space-y-3">
+            <div className="backdrop-blur-xl bg-slate-900/60 border border-teal-500/20 rounded-xl p-5 shadow-lg space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xxs font-bold text-teal-400 uppercase tracking-wider">
                   {t('analytics_satisfaction_score') || 'Satisfaction Score'}
@@ -124,7 +124,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData })
             </div>
 
             {/* 4. Follow-Up Rate */}
-            <div className="backdrop-blur-xl bg-slate-900/60 border border-amber-500/20 rounded-2xl p-5 shadow-lg space-y-3">
+            <div className="backdrop-blur-xl bg-slate-900/60 border border-amber-500/20 rounded-xl p-5 shadow-lg space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xxs font-bold text-amber-400 uppercase tracking-wider">
                   {t('analytics_follow_up_rate') || 'Follow-Up Rate'}
@@ -142,7 +142,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData })
             </div>
 
             {/* 5. First Contact Resolution */}
-            <div className="backdrop-blur-xl bg-slate-900/60 border border-purple-500/20 rounded-2xl p-5 shadow-lg space-y-3">
+            <div className="backdrop-blur-xl bg-slate-900/60 border border-purple-500/20 rounded-xl p-5 shadow-lg space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xxs font-bold text-purple-400 uppercase tracking-wider">
                   {t('analytics_first_contact_res') || 'First Contact Res'}
@@ -164,7 +164,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData })
           <MarketPriceTrendCard />
 
           {/* ── Activity Timeline Chart Card ── */}
-          <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-2xl space-y-6">
+          <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-2xl space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/5">
               <div className="space-y-1">
                 <h3 className="text-base font-bold text-white uppercase tracking-wider">
@@ -225,7 +225,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData })
           </div>
         </>
       ) : (
-        <div className="flex flex-col items-center justify-center py-20 text-center backdrop-blur-xl bg-slate-900/40 border border-white/10 rounded-2xl p-8">
+        <div className="flex flex-col items-center justify-center py-20 text-center backdrop-blur-xl bg-slate-900/40 border border-white/10 rounded-xl p-8">
           <BarChart3 className="w-14 h-14 text-white/20 mb-4" />
           <h3 className="text-base font-bold text-white mb-2">
             {t('analytics_no_data') || 'No Analytics Data Available'}

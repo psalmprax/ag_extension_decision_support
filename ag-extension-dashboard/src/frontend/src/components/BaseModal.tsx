@@ -50,8 +50,8 @@ export const BaseModal: React.FC<BaseModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 15 }}
             transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-            className={`relative w-full ${maxWidth} max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] bg-slate-950/95 dark:bg-slate-950/95 border border-emerald-500/30 ${radiusClass} shadow-2xl overflow-hidden flex flex-col backdrop-blur-2xl`}
-            style={{ borderRadius: 'var(--radius-card, 1.25rem)' }}
+            className={`relative w-full ${maxWidth} max-h-[calc(100dvh-2rem)] sm:max-h-[85vh] bg-slate-950/95 dark:bg-slate-950/95 border border-emerald-500/30 rounded-xl shadow-2xl overflow-hidden flex flex-col backdrop-blur-2xl`}
+            style={{ borderRadius: 'var(--radius-card, 0.75rem)' }}
           >
             {/* KnockKnock Ambient Mesh Gradient Orb */}
             <div className="absolute -top-24 -right-24 w-72 h-72 bg-emerald-500/15 rounded-full blur-[90px] pointer-events-none" />
@@ -63,7 +63,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
                 <div className="flex items-center gap-3 sm:gap-3.5">
                   {icon && (
                     <div
-                      className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl ${iconBg} flex items-center justify-center shadow-inner shrink-0`}
+                      className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl ${iconBg} flex items-center justify-center shadow-inner shrink-0`}
                     >
                       {icon}
                     </div>

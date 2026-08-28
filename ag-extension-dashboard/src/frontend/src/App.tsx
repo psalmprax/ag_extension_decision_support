@@ -448,7 +448,7 @@ function App() {
         {/* Drag overlay */}
         {isDragOver && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-            <div className="bg-white dark:bg-gray-800 rounded-3xl p-12 shadow-2xl text-center">
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-12 shadow-2xl text-center">
               <Loader2 className="w-16 h-16 text-primary-500 mx-auto mb-4 animate-spin" />
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                 {t('upload_processing')}

@@ -50,13 +50,13 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
       {/* Admin Vault Settings */}
       <section
         aria-labelledby="admin-billing-title"
-        className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden"
+        className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden"
       >
         <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
           <Settings className="w-32 h-32 text-indigo-400" />
         </div>
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 flex items-center justify-center shadow-lg shadow-indigo-950/40">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 flex items-center justify-center shadow-lg shadow-indigo-950/40">
             <Shield className="w-6 h-6 text-indigo-400" />
           </div>
           <div>
@@ -73,11 +73,16 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div className="space-y-2">
-            <p className="text-xxs font-bold text-white/60 uppercase tracking-widest ml-1">
-              {t('billing_stripe_secret') || 'Stripe Secret Key (sk_live / sk_test)'}
-            </p>
+            <label
+              htmlFor="stripe-secret"
+              className="text-xxs font-bold text-white/60 uppercase tracking-widest block ml-1"
+            >
+              Stripe Secret Key (sk_live_...)
+            </label>
             <Input
+              id="stripe-secret"
               type="password"
+              placeholder="sk_live_••••••••••••••••••••••••"
               value={billing.adminKeys.stripeSecretKey}
               onChange={e =>
                 billing.setAdminKeys({
@@ -85,16 +90,40 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
                   stripeSecretKey: e.target.value,
                 })
               }
-              placeholder="sk_live_••••••••••••••••••••••••"
-              className="font-mono bg-white/[0.03] border-white/10 text-white rounded-xl"
+              className="font-mono text-xs"
             />
           </div>
           <div className="space-y-2">
-            <p className="text-xxs font-bold text-white/60 uppercase tracking-widest ml-1">
-              {t('billing_paypal_id') || 'PayPal Client ID'}
-            </p>
+            <label
+              htmlFor="stripe-webhook"
+              className="text-xxs font-bold text-white/60 uppercase tracking-widest block ml-1"
+            >
+              Stripe Webhook Secret (whsec_...)
+            </label>
             <Input
-              type="text"
+              id="stripe-webhook"
+              type="password"
+              placeholder="whsec_••••••••••••••••••••••••"
+              value={billing.adminKeys.stripeWebhookSecret}
+              onChange={e =>
+                billing.setAdminKeys({
+                  ...billing.adminKeys,
+                  stripeWebhookSecret: e.target.value,
+                })
+              }
+              className="font-mono text-xs"
+            />
+          </div>
+          <div className="space-y-2">
+            <label
+              htmlFor="paypal-client"
+              className="text-xxs font-bold text-white/60 uppercase tracking-widest block ml-1"
+            >
+              PayPal Client ID
+            </label>
+            <Input
+              id="paypal-client"
+              placeholder="PayPal REST Client ID"
               value={billing.adminKeys.paypalClientId}
               onChange={e =>
                 billing.setAdminKeys({
@@ -102,33 +131,51 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
                   paypalClientId: e.target.value,
                 })
               }
-              placeholder="PayPal Production Client ID"
-              className="font-mono bg-white/[0.03] border-white/10 text-white rounded-xl"
+              className="font-mono text-xs"
+            />
+          </div>
+          <div className="space-y-2">
+            <label
+              htmlFor="paypal-secret"
+              className="text-xxs font-bold text-white/60 uppercase tracking-widest block ml-1"
+            >
+              PayPal Secret Key
+            </label>
+            <Input
+              id="paypal-secret"
+              type="password"
+              placeholder="PayPal REST Secret"
+              value={billing.adminKeys.paypalSecret}
+              onChange={e =>
+                billing.setAdminKeys({
+                  ...billing.adminKeys,
+                  paypalSecret: e.target.value,
+                })
+              }
+              className="font-mono text-xs"
             />
           </div>
         </div>
-        <div className="flex items-center justify-between pt-6 border-t border-white/10 text-xxs font-bold text-white/50 uppercase tracking-widest">
-          <span className="flex items-center gap-2 text-indigo-400">
-            <ShieldCheck className="w-4 h-4" />
-            {t('billing_secure_storage') || 'Zero-Trust Secure Credential Vault'}
-          </span>
-          <button
+        <div className="flex justify-end">
+          <Button
             onClick={() => {
               triggerHaptic('medium');
               billing.handleAdminUpdate();
             }}
             disabled={billing.actionLoading === 'admin-update'}
-            className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-950/40 transition-all flex items-center gap-2"
+            className="w-full md:w-auto font-bold px-8 shadow-lg shadow-indigo-950/40"
           >
-            {t('billing_update_credentials') || 'Save Credentials'}
-          </button>
+            {billing.actionLoading === 'admin-update'
+              ? 'Saving Credentials...'
+              : t('billing_admin_save_vault') || 'Encrypt & Save Credentials'}
+          </Button>
         </div>
       </section>
 
       {/* Admin Mobile Money Verification Queue */}
-      <section className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl overflow-hidden">
+      <section className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl overflow-hidden">
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 flex items-center justify-center shadow-lg shadow-amber-950/40">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 flex items-center justify-center shadow-lg shadow-amber-950/40">
             <AlertCircle className="w-6 h-6 text-amber-400" />
           </div>
           <div>
@@ -213,9 +260,9 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
       </section>
 
       {/* Admin Voucher Generator */}
-      <section className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl overflow-hidden">
+      <section className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl overflow-hidden">
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center justify-center shadow-lg shadow-purple-950/40">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center justify-center shadow-lg shadow-purple-950/40">
             <Ticket className="w-6 h-6 text-purple-400" />
           </div>
           <div>
@@ -319,10 +366,10 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
   const { t } = useLanguage();
 
   return (
-    <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-4 sm:p-6 shadow-xl relative overflow-hidden">
+    <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-4 sm:p-6 shadow-xl relative overflow-hidden">
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6">
         <div className="flex items-center gap-3 sm:gap-4">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40 shrink-0">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40 shrink-0">
             <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
           </div>
           <div>
@@ -475,7 +522,7 @@ export const BillingDashboard: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: -15 }}
           animate={{ opacity: 1, y: 0 }}
-          className="p-5 bg-amber-500/10 border-2 border-amber-500/40 rounded-2xl flex items-start gap-4 shadow-xl backdrop-blur-xl"
+          className="p-5 bg-amber-500/10 border-2 border-amber-500/40 rounded-xl flex items-start gap-4 shadow-xl backdrop-blur-xl"
         >
           <AlertCircle className="w-6 h-6 text-amber-400 mt-0.5 flex-shrink-0" />
           <div className="flex-1">
@@ -496,7 +543,7 @@ export const BillingDashboard: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="p-4 bg-emerald-500/10 border border-emerald-500/40 rounded-2xl flex items-center gap-3 shadow-lg"
+          className="p-4 bg-emerald-500/10 border border-emerald-500/40 rounded-xl flex items-center gap-3 shadow-lg"
         >
           <CheckCircle2 className="w-5 h-5 text-emerald-400" />
           <span className="text-emerald-300 font-bold text-xs">
@@ -508,7 +555,7 @@ export const BillingDashboard: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="p-4 bg-amber-500/10 border border-amber-500/40 rounded-2xl flex items-center gap-3 shadow-lg"
+          className="p-4 bg-amber-500/10 border border-amber-500/40 rounded-xl flex items-center gap-3 shadow-lg"
         >
           <AlertCircle className="w-5 h-5 text-amber-400" />
           <span className="text-amber-300 font-bold text-xs">
@@ -535,7 +582,7 @@ export const BillingDashboard: React.FC = () => {
       {/* ── Active Membership Pod Ribbon (Unit Test Target) ── */}
       <section
         aria-label="Subscription Overview"
-        className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden"
+        className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden"
       >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Card 1: Current Plan */}

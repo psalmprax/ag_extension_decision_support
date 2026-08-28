@@ -584,8 +584,8 @@ const MapFallbackEmptyState: React.FC<{
   t: (key: string) => string;
 }> = ({ onRetry, t }) => (
   <div className="absolute inset-0 z-[1100] bg-black/40 backdrop-blur-[2px] flex items-center justify-center p-6 text-center">
-    <div className="bg-white/95 dark:bg-gray-800/95 rounded-3xl p-8 shadow-2xl border border-white/20 max-w-sm">
-      <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+    <div className="bg-white/95 dark:bg-gray-800/95 rounded-xl p-8 shadow-2xl border border-white/20 max-w-sm">
+      <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-xl flex items-center justify-center mx-auto mb-4">
         <AlertCircle className="w-8 h-8 text-amber-600 dark:text-amber-400" />
       </div>
       <h3 className="text-lg font-black text-gray-900 dark:text-white mb-2 uppercase tracking-wide">

@@ -34,14 +34,14 @@ import { RATE_LIMIT_STATUS, CERT_EXPIRY_WARN_DAYS, ERROR_COOLDOWN_MS } from '@/l
 function IssuesSummary({ issues, summary }: { issues?: string[]; summary?: string }) {
   if (!issues || issues.length === 0) {
     return (
-      <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center gap-3">
+      <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center gap-3">
         <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
         <p className="text-xs font-bold text-emerald-300">{summary || 'All edge subsystems and container clusters operating at optimal SLO latency.'}</p>
       </div>
     );
   }
   return (
-    <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl">
+    <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/30 rounded-xl">
       <div className="flex items-center gap-2 mb-2">
         <AlertTriangle className="w-5 h-5 text-rose-400" />
         <p className="text-xs font-bold text-rose-300">
@@ -271,7 +271,7 @@ function DeploymentSection({ deployment }: { deployment?: Record<string, unknown
 function RecommendationsSection({ recommendations }: { recommendations?: string[] }) {
   if (!recommendations || recommendations.length === 0) return null;
   return (
-    <div className="mt-4 p-4 bg-sky-500/10 border border-sky-500/30 rounded-2xl">
+    <div className="mt-4 p-4 bg-sky-500/10 border border-sky-500/30 rounded-xl">
       <p className="text-xs font-bold text-sky-300 mb-2">Automated SRE Recommendations</p>
       <ul className="list-disc list-inside space-y-1">
         {recommendations.map((rec, i) => (
@@ -286,7 +286,7 @@ function RecommendationsSection({ recommendations }: { recommendations?: string[
 
 function DiagnosticsPanel({ diagnostics }: { diagnostics: DiagnosticResult }) {
   return (
-    <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl space-y-6">
+    <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl space-y-6">
       <div className="flex items-center justify-between border-b border-white/10 pb-4">
         <h3 className="text-sm font-bold text-white flex items-center gap-2">
           <Activity className="w-4 h-4 text-emerald-400" />
@@ -368,7 +368,7 @@ function ComponentHealthCard({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`backdrop-blur-xl bg-slate-900/60 border ${style.border} rounded-2xl p-5 shadow-lg space-y-4 hover:border-white/20 transition-all duration-300 group`}
+      className={`backdrop-blur-xl bg-slate-900/60 border ${style.border} rounded-xl p-5 shadow-lg space-y-4 hover:border-white/20 transition-all duration-300 group`}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -457,7 +457,7 @@ function RecoveryLogList({
   t: (key: string) => string;
 }) {
   return (
-    <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
+    <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl space-y-4">
       <div className="flex items-center justify-between border-b border-white/10 pb-4">
         <h3 className="text-sm font-bold text-white flex items-center gap-2">
           <Shield className="w-4 h-4 text-emerald-400" />
@@ -625,10 +625,10 @@ export function SystemHealth() {
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-24">
       {/* ── Top Bento Banner: SRE & Telemetry Health Hub ── */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40">
               <Activity className="w-6 h-6 text-emerald-400" />
             </div>
             <div>
@@ -699,7 +699,7 @@ export function SystemHealth() {
       </div>
 
       {/* ── Component Health Radar Grid ── */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl space-y-6">
+      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl space-y-6">
         <div className="flex items-center justify-between border-b border-white/10 pb-4">
           <h3 className="text-sm font-bold text-white flex items-center gap-2">
             <Server className="w-4 h-4 text-emerald-400" />

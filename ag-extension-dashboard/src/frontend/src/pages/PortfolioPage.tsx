@@ -69,10 +69,10 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-24">
       {/* ── Top Bento Banner: Portfolio Intelligence & Telemetry ── */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40">
               <Users className="w-6 h-6 text-emerald-400" />
             </div>
             <div>
@@ -140,7 +140,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
       </div>
 
       {isDemo && (
-        <div className="p-4 backdrop-blur-xl bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center gap-3">
+        <div className="p-4 backdrop-blur-xl bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center gap-3">
           <Lock className="w-5 h-5 text-amber-400 shrink-0" />
           <p className="text-xs text-amber-200/90">
             <strong>Sandbox Mode:</strong> Sample farmer cohort records shown. Connect tenant account to sync live SMS registries and satellite NDVI boundaries.
@@ -153,7 +153,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="p-5 backdrop-blur-xl bg-slate-900/80 border border-purple-500/30 rounded-2xl shadow-2xl space-y-3"
+          className="p-5 backdrop-blur-xl bg-slate-900/80 border border-purple-500/30 rounded-xl shadow-2xl space-y-3"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -191,8 +191,8 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
 
       {/* ── Farmer Bento Grid ── */}
       {filteredFarmers.length === 0 ? (
-        <div className="p-12 text-center backdrop-blur-xl bg-slate-900/40 border border-white/10 rounded-2xl space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-950/40">
+        <div className="p-12 text-center backdrop-blur-xl bg-slate-900/40 border border-white/10 rounded-xl space-y-4">
+          <div className="w-16 h-16 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-950/40">
             <Users className="w-8 h-8 opacity-70" />
           </div>
           <div className="space-y-1">
@@ -219,7 +219,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
                   transition={{ duration: 0.3, delay: Math.min(idx * 0.03, 0.3) }}
                   key={farmer.id}
                   onClick={() => handleOpenFarmerDetail(farmer)}
-                  className={`backdrop-blur-xl bg-slate-900/60 border rounded-2xl p-5 hover:shadow-2xl transition-all duration-300 relative group flex flex-col justify-between cursor-pointer ${
+                  className={`backdrop-blur-xl bg-slate-900/60 border rounded-xl p-5 hover:shadow-2xl transition-all duration-300 relative group flex flex-col justify-between cursor-pointer ${
                     isSelected
                       ? 'border-emerald-500/60 ring-1 ring-emerald-500/40 shadow-emerald-950/30'
                       : 'border-white/10 hover:border-emerald-500/40 hover:-translate-y-1'
@@ -322,7 +322,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 30 }}
-            className="fixed bottom-20 md:bottom-8 left-1/2 -translate-x-1/2 z-50 backdrop-blur-2xl bg-slate-900/95 border border-emerald-500/40 shadow-2xl shadow-emerald-950/60 rounded-2xl px-4 sm:px-6 py-3 flex items-center justify-between sm:justify-start gap-3 sm:gap-4 flex-wrap w-[calc(100%-1.5rem)] max-w-xl md:w-auto"
+            className="fixed bottom-20 md:bottom-8 left-1/2 -translate-x-1/2 z-50 backdrop-blur-2xl bg-slate-900/95 border border-emerald-500/40 shadow-2xl shadow-emerald-950/60 rounded-xl px-4 sm:px-6 py-3 flex items-center justify-between sm:justify-start gap-3 sm:gap-4 flex-wrap w-[calc(100%-1.5rem)] max-w-xl md:w-auto"
           >
             <div className="flex items-center gap-2 pr-2 border-r border-white/10 text-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />

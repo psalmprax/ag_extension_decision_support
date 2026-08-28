@@ -38,7 +38,7 @@ export const CropCyclesTable: React.FC<CropCyclesTableProps> = ({
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -15 }}
-      className="bg-slate-900/60 border border-white/5 rounded-3xl overflow-hidden shadow-2xl backdrop-blur-xl"
+      className="bg-slate-900/60 border border-white/5 rounded-xl overflow-hidden shadow-2xl backdrop-blur-xl"
     >
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse text-sm">

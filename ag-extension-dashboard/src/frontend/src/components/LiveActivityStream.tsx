@@ -310,7 +310,7 @@ const TeleCallModal: React.FC<{
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="w-full max-w-lg bg-slate-950 border border-emerald-500/40 rounded-2xl shadow-2xl p-5 space-y-4 text-white"
+      className="w-full max-w-lg bg-slate-950 border border-emerald-500/40 rounded-xl shadow-2xl p-5 space-y-4 text-white"
     >
       <div className="flex justify-between items-center pb-3 border-b border-slate-800">
         <div className="flex items-center gap-2.5">

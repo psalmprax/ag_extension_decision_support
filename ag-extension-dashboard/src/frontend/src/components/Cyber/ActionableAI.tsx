@@ -59,7 +59,7 @@ const UsdaBenchmarkCard: React.FC<{ data: UsdaBenchmarkResult | null | undefined
   const metrics = data?.world?.metrics || data?.country?.metrics || null;
   if (!metrics) return null;
   return (
-    <div className="bg-black/40 border border-white/10 rounded-3xl p-6 backdrop-blur-md">
+    <div className="bg-black/40 border border-white/10 rounded-xl p-6 backdrop-blur-md">
       <h3 className="text-xs font-black text-white uppercase tracking-widest mb-4 flex items-center gap-2">
         <Globe className="w-4 h-4 text-primary-400" />
         Global Benchmarks
@@ -219,7 +219,7 @@ const ActionableAI = () => {
   return (
     <div className="w-full space-y-8 pb-12">
       {/* Header / Title Section */}
-      <div className="relative p-8 rounded-[2rem] bg-gradient-to-br from-primary-900/40 to-black/60 border border-white/10 overflow-hidden">
+      <div className="relative p-8 rounded-xl bg-gradient-to-br from-primary-900/40 to-black/60 border border-white/10 overflow-hidden">
         <div className="absolute top-0 right-0 p-8 opacity-10">
           <Zap className="w-32 h-32 text-primary-400" />
         </div>
@@ -249,7 +249,7 @@ const ActionableAI = () => {
       <div className="grid grid-cols-12 gap-8">
         {/* Left Column: Spatial Intelligence */}
         <div className="col-span-8 space-y-8">
-          <div className="bg-black/20 border border-white/5 rounded-[2.5rem] p-4 relative">
+          <div className="bg-black/20 border border-white/5 rounded-xl p-4 relative">
             <div className="absolute top-8 left-8 z-20 flex items-center gap-4">
               <div className="flex -space-x-2">
                 {[1, 2, 3].map(i => (
@@ -270,7 +270,7 @@ const ActionableAI = () => {
 
           {/* Supply Chain / Logistics Precision — Real market data */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-            <div className="bg-black/40 border border-white/10 rounded-3xl p-6 backdrop-blur-md">
+            <div className="bg-black/40 border border-white/10 rounded-xl p-6 backdrop-blur-md">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
                   <Truck className="w-4 h-4 text-primary-400" />
@@ -287,7 +287,7 @@ const ActionableAI = () => {
                   {prices.slice(0, 3).map((item, i) => (
                     <div
                       key={i}
-                      className="p-3 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between"
+                      className="p-3 bg-white/5 rounded-xl border border-white/5 flex items-center justify-between"
                     >
                       <div className="min-w-0 pr-2">
                         <div className="text-xs font-black text-white/40 uppercase mb-1">
@@ -318,7 +318,7 @@ const ActionableAI = () => {
               )}
             </div>
 
-            <div className="bg-black/40 border border-white/10 rounded-3xl p-6 backdrop-blur-md">
+            <div className="bg-black/40 border border-white/10 rounded-xl p-6 backdrop-blur-md">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-secondary-400" />
@@ -365,7 +365,7 @@ const ActionableAI = () => {
         {/* Right Column: Risk & Economic Matrix */}
         <div className="col-span-4 space-y-8">
           {/* Real Alerts or Data Unavailable */}
-          <div className="bg-error-500/10 border border-error-500/20 rounded-3xl p-6 relative overflow-hidden">
+          <div className="bg-error-500/10 border border-error-500/20 rounded-xl p-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-10">
               <ShieldAlert className="w-16 h-16 text-error-400" />
             </div>
@@ -400,7 +400,7 @@ const ActionableAI = () => {
           </div>
 
           {/* Real Weather Data */}
-          <div className="bg-black/40 border border-white/10 rounded-3xl p-6 backdrop-blur-md">
+          <div className="bg-black/40 border border-white/10 rounded-xl p-6 backdrop-blur-md">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 bg-primary-500/20 rounded-lg">
                 <Globe className="w-5 h-5 text-primary-400" />
@@ -411,21 +411,21 @@ const ActionableAI = () => {
             </div>
             {weatherData ? (
               <div className="grid grid-cols-3 gap-2">
-                <div className="text-center p-3 bg-white/5 rounded-2xl border border-white/5">
+                <div className="text-center p-3 bg-white/5 rounded-xl border border-white/5">
                   <ThermometerSun className="w-4 h-4 text-orange-400 mx-auto mb-2" />
                   <div className="text-xs font-black text-white/40 uppercase mb-1">Temp</div>
                   <div className="text-xs-plus font-black text-white">
                     {weatherData.temperature ?? '—'}°C
                   </div>
                 </div>
-                <div className="text-center p-3 bg-white/5 rounded-2xl border border-white/5">
+                <div className="text-center p-3 bg-white/5 rounded-xl border border-white/5">
                   <Droplets className="w-4 h-4 text-blue-400 mx-auto mb-2" />
                   <div className="text-xs font-black text-white/40 uppercase mb-1">Humid</div>
                   <div className="text-xs-plus font-black text-white">
                     {weatherData.humidity ?? '—'}%
                   </div>
                 </div>
-                <div className="text-center p-3 bg-white/5 rounded-2xl border border-white/5">
+                <div className="text-center p-3 bg-white/5 rounded-xl border border-white/5">
                   <Wind className="w-4 h-4 text-primary-400 mx-auto mb-2" />
                   <div className="text-xs font-black text-white/40 uppercase mb-1">Wind</div>
                   <div className="text-xs-plus font-black text-white">
@@ -451,7 +451,7 @@ const ActionableAI = () => {
           <UsdaBenchmarkCard data={usdaData} />
 
           {/* Real Economic Performance */}
-          <div className="bg-gradient-to-br from-primary-600/20 to-secondary-600/20 border border-white/10 rounded-3xl p-8 backdrop-blur-md text-center">
+          <div className="bg-gradient-to-br from-primary-600/20 to-secondary-600/20 border border-white/10 rounded-xl p-8 backdrop-blur-md text-center">
             <BarChart3 className="w-12 h-12 text-primary-400 mx-auto mb-4 opacity-40" />
             <h4 className="text-xxs font-black text-primary-400 uppercase tracking-[0.3em] mb-4">
               Performance Index
@@ -479,7 +479,7 @@ const ActionableAI = () => {
             <button
               onClick={handleGenerateStrategy}
               disabled={isGenerating}
-              className="w-full mt-8 py-4 bg-primary-500 rounded-2xl font-black text-xxs text-white uppercase tracking-[0.2em] shadow-lg shadow-primary-500/20 hover:bg-primary-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full mt-8 py-4 bg-primary-500 rounded-xl font-black text-xxs text-white uppercase tracking-[0.2em] shadow-lg shadow-primary-500/20 hover:bg-primary-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               {isGenerating ? 'Generating...' : 'Generate Full Strategy'}

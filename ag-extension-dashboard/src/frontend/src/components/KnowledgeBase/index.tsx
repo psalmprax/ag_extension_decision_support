@@ -528,11 +528,11 @@ export const KnowledgeBase: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-20">
       {/* ── Top Bento Banner Header ── */}
-      <div className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-3xl p-5 sm:p-6 shadow-2xl relative overflow-hidden">
+      <div className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-xl p-5 sm:p-6 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 relative z-10">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 via-teal-500/20 to-cyan-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-950/40">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 via-teal-500/20 to-cyan-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-950/40">
               <Brain className="w-6 h-6 animate-pulse" />
             </div>
             <div>
@@ -570,7 +570,7 @@ export const KnowledgeBase: React.FC = () => {
             )}
 
             {/* 5-Segmented Mode Switcher */}
-            <div className="flex items-center bg-white/[0.04] p-1 rounded-2xl border border-white/10 shadow-inner overflow-x-auto">
+            <div className="flex items-center bg-white/[0.04] p-1 rounded-xl border border-white/10 shadow-inner overflow-x-auto">
               <button
                 onClick={() => setActiveTabMode('search')}
                 className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
@@ -639,7 +639,7 @@ export const KnowledgeBase: React.FC = () => {
       {activeTabMode === 'search' && (
         <div className="space-y-6">
           {/* Quick Agronomic Research Scenarios */}
-          <div className="backdrop-blur-xl bg-slate-900/70 border border-white/10 rounded-3xl p-5 space-y-4 shadow-xl">
+          <div className="backdrop-blur-xl bg-slate-900/70 border border-white/10 rounded-xl p-5 space-y-4 shadow-xl">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <span className="text-xxs font-mono font-bold tracking-widest text-emerald-400 uppercase">
@@ -657,7 +657,7 @@ export const KnowledgeBase: React.FC = () => {
                 <button
                   key={sc.id}
                   onClick={() => handleTriggerScenario(sc)}
-                  className="p-4 rounded-2xl bg-slate-950/50 hover:bg-emerald-500/10 border border-white/5 hover:border-emerald-500/30 text-left transition-all group flex flex-col justify-between"
+                  className="p-4 rounded-xl bg-slate-950/50 hover:bg-emerald-500/10 border border-white/5 hover:border-emerald-500/30 text-left transition-all group flex flex-col justify-between"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-2">
@@ -680,7 +680,7 @@ export const KnowledgeBase: React.FC = () => {
           </div>
 
           {/* Multi-Modal Research Search Bar */}
-          <div className="backdrop-blur-xl bg-slate-900/70 border border-white/10 rounded-3xl p-5 shadow-xl">
+          <div className="backdrop-blur-xl bg-slate-900/70 border border-white/10 rounded-xl p-5 shadow-xl">
             <SearchBar
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
@@ -700,7 +700,7 @@ export const KnowledgeBase: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="backdrop-blur-xl bg-slate-900/90 border border-emerald-500/30 rounded-2xl p-4 shadow-xl space-y-2"
+              className="backdrop-blur-xl bg-slate-900/90 border border-emerald-500/30 rounded-xl p-4 shadow-xl space-y-2"
             >
               <div className="flex items-center gap-2">
                 <RefreshCw className="w-4 h-4 text-emerald-400 animate-spin" />
@@ -744,7 +744,7 @@ export const KnowledgeBase: React.FC = () => {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
-                className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-3xl p-6 shadow-2xl space-y-6"
+                className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-xl p-6 shadow-2xl space-y-6"
               >
                 {/* Result Top Action Bar */}
                 <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/10">
@@ -791,7 +791,7 @@ export const KnowledgeBase: React.FC = () => {
                 />
               </motion.div>
             ) : (
-              <div className="backdrop-blur-xl bg-slate-900/40 border border-white/5 rounded-3xl p-12 text-center space-y-3">
+              <div className="backdrop-blur-xl bg-slate-900/40 border border-white/5 rounded-xl p-12 text-center space-y-3">
                 <Compass className="w-10 h-10 text-emerald-400/40 mx-auto" />
                 <h4 className="text-base font-bold text-white">Spatial Knowledge Engine Ready</h4>
                 <p className="text-xs text-white/50 max-w-md mx-auto">
@@ -806,7 +806,7 @@ export const KnowledgeBase: React.FC = () => {
       {/* ── TAB 2: RAG Knowledge Graph ── */}
       {activeTabMode === 'graph' && (
         <div className="space-y-6">
-          <div className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+          <div className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-xl p-6 shadow-2xl relative overflow-hidden">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
               <div>
                 <div className="flex items-center gap-2">
@@ -838,14 +838,14 @@ export const KnowledgeBase: React.FC = () => {
                   setSelectedNode(node);
                   toast(`Selected Citation: ${node.label}`);
                 }}
-                className="w-full h-[520px] rounded-2xl border border-white/10"
+                className="w-full h-[520px] rounded-xl border border-white/10"
               />
 
               {selectedNode && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-4 p-4 rounded-2xl bg-slate-950/90 border border-teal-500/40 text-xs space-y-2 shadow-xl"
+                  className="mt-4 p-4 rounded-xl bg-slate-950/90 border border-teal-500/40 text-xs space-y-2 shadow-xl"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -888,7 +888,7 @@ export const KnowledgeBase: React.FC = () => {
       {activeTabMode === 'workbench' && (
         <div className="space-y-6">
           {/* Spatial Canvas Mode Switcher Bar */}
-          <div className="backdrop-blur-xl bg-slate-900/80 border border-white/10 rounded-2xl p-2.5 flex items-center justify-between overflow-x-auto gap-2 shadow-xl">
+          <div className="backdrop-blur-xl bg-slate-900/80 border border-white/10 rounded-xl p-2.5 flex items-center justify-between overflow-x-auto gap-2 shadow-xl">
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setActiveCanvasMode('phenology')}
@@ -934,7 +934,7 @@ export const KnowledgeBase: React.FC = () => {
           </div>
 
           {/* Active Canvas Display Shell */}
-          <div className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-3xl p-6 shadow-2xl relative min-h-[520px] flex flex-col justify-between overflow-hidden">
+          <div className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-xl p-6 shadow-2xl relative min-h-[520px] flex flex-col justify-between overflow-hidden">
             <div className="w-full flex-1">
               {activeCanvasMode === 'phenology' && (
                 <div className="space-y-3">
@@ -942,7 +942,7 @@ export const KnowledgeBase: React.FC = () => {
                     <span>AGRO-ECOSYSTEM 4-STAGE PHENOLOGY SCRUBBER</span>
                     <span className="text-cyan-400">NASA POWER Synchronized</span>
                   </div>
-                  <AgroEcosystemCanvasScrubber className="w-full h-[460px] rounded-2xl border border-white/10" />
+                  <AgroEcosystemCanvasScrubber className="w-full h-[460px] rounded-xl border border-white/10" />
                 </div>
               )}
 
@@ -956,7 +956,7 @@ export const KnowledgeBase: React.FC = () => {
                     onProbeSelect={(probe: SoilProbeResult) => {
                       toast(`Soil ${probe.label}: ${probe.value.toFixed(1)} ${probe.unit} (${probe.status})`);
                     }}
-                    className="w-full h-[460px] rounded-2xl border border-white/10"
+                    className="w-full h-[460px] rounded-xl border border-white/10"
                   />
                 </div>
               )}
@@ -971,7 +971,7 @@ export const KnowledgeBase: React.FC = () => {
                     onSelectZone={(zone: LesionDetectionZone) => {
                       toast(`Detected: ${zone.label} (${(zone.confidence * 100).toFixed(0)}% Confidence)`);
                     }}
-                    className="w-full h-[460px] rounded-2xl border border-white/10"
+                    className="w-full h-[460px] rounded-xl border border-white/10"
                   />
                 </div>
               )}
@@ -1014,7 +1014,7 @@ export const KnowledgeBase: React.FC = () => {
       {activeTabMode === 'library' && (
         <div className="space-y-6">
           {/* Library Control Bar */}
-          <div className="backdrop-blur-xl bg-slate-900/80 border border-white/10 rounded-3xl p-5 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="backdrop-blur-xl bg-slate-900/80 border border-white/10 rounded-xl p-5 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             {/* Search within documents */}
             <div className="relative flex-1 w-full max-w-md">
               <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
@@ -1023,7 +1023,7 @@ export const KnowledgeBase: React.FC = () => {
                 value={librarySearchQuery}
                 onChange={e => setLibrarySearchQuery(e.target.value)}
                 placeholder="Search articles, crop guides, scientific bulletins..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-black/40 border border-white/10 text-white placeholder-white/40 text-xs font-medium focus:outline-none focus:border-purple-500/50"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-black/40 border border-white/10 text-white placeholder-white/40 text-xs font-medium focus:outline-none focus:border-purple-500/50"
               />
               {librarySearchQuery && (
                 <button
@@ -1064,7 +1064,7 @@ export const KnowledgeBase: React.FC = () => {
                     toast.error('Failed to export offline knowledge pack');
                   }
                 }}
-                className="flex-1 md:flex-none px-3.5 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 text-white border border-white/10 text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                className="flex-1 md:flex-none px-3.5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 text-xs font-bold transition-all flex items-center justify-center gap-1.5"
               >
                 <Download className="w-3.5 h-3.5 text-purple-400" />
                 <span>Export Offline Pack</span>
@@ -1072,7 +1072,7 @@ export const KnowledgeBase: React.FC = () => {
 
               <button
                 onClick={() => toast('Document ingestion pipeline active. Upload custom agronomic PDF / Markdown.')}
-                className="flex-1 md:flex-none px-4 py-2.5 rounded-2xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-lg shadow-purple-950/40 flex items-center justify-center gap-1.5"
+                className="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-lg shadow-purple-950/40 flex items-center justify-center gap-1.5"
               >
                 <Upload className="w-3.5 h-3.5" />
                 <span>Upload Technical Doc</span>
@@ -1088,7 +1088,7 @@ export const KnowledgeBase: React.FC = () => {
                 layout
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="backdrop-blur-xl bg-slate-900/70 border border-white/10 hover:border-purple-500/40 rounded-3xl p-5 flex flex-col justify-between shadow-xl transition-all group"
+                className="backdrop-blur-xl bg-slate-900/70 border border-white/10 hover:border-purple-500/40 rounded-xl p-5 flex flex-col justify-between shadow-xl transition-all group"
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -1136,7 +1136,7 @@ export const KnowledgeBase: React.FC = () => {
                   initial={{ opacity: 0, scale: 0.95, y: 20 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                  className="bg-slate-900 border border-white/15 rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl"
+                  className="bg-slate-900 border border-white/15 rounded-xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl"
                 >
                   <div className="p-6 border-b border-white/10 flex items-start justify-between gap-4 bg-slate-950/60">
                     <div>
@@ -1160,7 +1160,7 @@ export const KnowledgeBase: React.FC = () => {
                   </div>
 
                   <div className="p-6 overflow-y-auto space-y-4 prose prose-invert max-w-none text-xs text-white/80 leading-relaxed font-sans">
-                    <div className="p-4 rounded-2xl bg-black/40 border border-white/5 font-mono text-[11px] text-emerald-300">
+                    <div className="p-4 rounded-xl bg-black/40 border border-white/5 font-mono text-[11px] text-emerald-300">
                       <strong>RAG Vector Metadata:</strong> {selectedArticle.chunks} high-dimensional embedding chunks indexed in pgvector.
                     </div>
                     <div className="whitespace-pre-line leading-relaxed">
@@ -1215,7 +1215,7 @@ export const KnowledgeBase: React.FC = () => {
 
       {/* ── TAB 3: Index Telemetry ── */}
       {activeTabMode === 'telemetry' && (
-        <div className="backdrop-blur-2xl bg-slate-900/70 border border-white/10 rounded-3xl p-6 shadow-2xl">
+        <div className="backdrop-blur-2xl bg-slate-900/70 border border-white/10 rounded-xl p-6 shadow-2xl">
           {stats && <KnowledgeStats data={stats} />}
         </div>
       )}

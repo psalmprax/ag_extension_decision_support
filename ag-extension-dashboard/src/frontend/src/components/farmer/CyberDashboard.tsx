@@ -140,7 +140,7 @@ export const CyberDashboard: React.FC<CyberDashboardProps> = ({ farmerStats }) =
         {dashboardMetrics.map((stat, i) => (
           <div
             key={i}
-            className="glass-premium p-6 rounded-2xl border-white/5 group hover:border-primary-500/30 transition-all cursor-context-menu"
+            className="glass-premium p-6 rounded-xl border-white/5 group hover:border-primary-500/30 transition-all cursor-context-menu"
             onContextMenu={e => {
               e.preventDefault();
               showContextMenu({

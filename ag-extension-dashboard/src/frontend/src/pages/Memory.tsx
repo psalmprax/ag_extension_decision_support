@@ -145,10 +145,10 @@ export function Memory() {
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-24">
       {/* ── Top Bento Banner: Agent Memory Engine ── */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500/20 to-indigo-500/20 border border-purple-500/30 flex items-center justify-center shadow-lg shadow-purple-950/40">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-indigo-500/20 border border-purple-500/30 flex items-center justify-center shadow-lg shadow-purple-950/40">
               <Brain className="w-6 h-6 text-purple-400" />
             </div>
             <div>
@@ -237,7 +237,7 @@ export function Memory() {
       </div>
 
       {/* ── Real-Time Impulse Knowledge Graph ── */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
+      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl space-y-4">
         <div className="flex items-center justify-between border-b border-white/10 pb-4">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-purple-400" />
@@ -269,7 +269,7 @@ export function Memory() {
       </div>
 
       {/* ── Memory Vector Entry Grid ── */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl space-y-6">
+      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl space-y-6">
         <div className="flex items-center justify-between border-b border-white/10 pb-4">
           <h3 className="text-sm font-bold text-white flex items-center gap-2">
             <Layers className="w-4 h-4 text-purple-400" />
@@ -280,7 +280,7 @@ export function Memory() {
 
         {filteredMemories.length === 0 ? (
           <div className="text-center py-16 space-y-4">
-            <div className="w-16 h-16 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center mx-auto shadow-lg shadow-purple-950/40">
+            <div className="w-16 h-16 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center mx-auto shadow-lg shadow-purple-950/40">
               <Brain className="w-8 h-8 opacity-70" />
             </div>
             <div className="space-y-1">
@@ -310,7 +310,7 @@ export function Memory() {
                 key={`${memory.category}-${memory.key}`}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="backdrop-blur-xl bg-white/[0.02] border border-white/5 hover:border-purple-500/30 rounded-2xl p-5 space-y-3 transition-all duration-300 group"
+                className="backdrop-blur-xl bg-white/[0.02] border border-white/5 hover:border-purple-500/30 rounded-xl p-5 space-y-3 transition-all duration-300 group"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-1.5">
@@ -367,7 +367,7 @@ export function Memory() {
 
       {/* ── Category Cluster Summary ── */}
       {memorySummary.length > 0 && (
-        <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
+        <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl space-y-4">
           <h3 className="text-sm font-bold text-white flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-emerald-400" />
             Category Vector Distribution & Cluster Strength
@@ -408,7 +408,7 @@ export function Memory() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="backdrop-blur-2xl bg-slate-900/95 border border-white/10 rounded-3xl shadow-2xl w-full max-w-lg p-6 sm:p-8 space-y-6 text-white"
+              className="backdrop-blur-2xl bg-slate-900/95 border border-white/10 rounded-xl shadow-2xl w-full max-w-lg p-6 sm:p-8 space-y-6 text-white"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between border-b border-white/10 pb-4">

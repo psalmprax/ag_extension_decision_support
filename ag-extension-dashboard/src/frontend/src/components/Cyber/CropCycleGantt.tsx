@@ -72,7 +72,7 @@ const CropCycleGantt: React.FC<CropCycleGanttProps> = ({ items, visits = [], far
   }, [items, visits, farmers]);
 
   return (
-    <div className="glass-premium p-8 rounded-[2.5rem] border-white/5 h-full">
+    <div className="glass-premium p-8 rounded-xl border-white/5 h-full">
       <div className="flex justify-between items-center mb-8">
         <h3 className="text-xs font-black text-primary-300/40 uppercase tracking-[0.3em]">
           CROP CYCLE TIMELINE

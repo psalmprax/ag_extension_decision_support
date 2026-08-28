@@ -41,7 +41,7 @@ interface FarmerDetailPanelProps {
   farmer: Farmer | null;
   visits?: Visit[];
 }
-const radiusClass = 'rounded-2xl';
+const radiusClass = 'rounded-xl';
 
 const getLogTypeColor = (type: string) => {
   if (type === 'SMS') return 'bg-blue-100 text-blue-600';

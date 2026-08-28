@@ -288,7 +288,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Header & Mode Switcher */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-1.5">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
@@ -358,7 +358,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"
         >
-          <div className="overflow-x-auto rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur-xl shadow-xl">
+          <div className="overflow-x-auto rounded-xl border border-white/10 bg-slate-900/60 backdrop-blur-xl shadow-xl">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-white/10 bg-white/[0.03]">
@@ -443,7 +443,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
             </table>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-4 p-5 rounded-2xl bg-slate-900/60 border border-white/10 shadow-xl backdrop-blur-xl">
+          <div className="flex flex-wrap items-center justify-between gap-4 p-5 rounded-xl bg-slate-900/60 border border-white/10 shadow-xl backdrop-blur-xl">
             <div className="flex items-center gap-3">
               <Info className="w-5 h-5 text-emerald-400 shrink-0" />
               <p className="text-xs text-white/70">
@@ -481,7 +481,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
               return (
                 <div
                   key={svc.id}
-                  className="p-5 rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur-xl shadow-xl hover:border-emerald-500/30 transition-all flex flex-col justify-between group"
+                  className="p-5 rounded-xl border border-white/10 bg-slate-900/60 backdrop-blur-xl shadow-xl hover:border-emerald-500/30 transition-all flex flex-col justify-between group"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-4">
@@ -527,7 +527,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
             })}
           </div>
 
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-white/10 backdrop-blur-xl shadow-xl">
+          <div className="p-6 rounded-xl bg-slate-900/60 border border-white/10 backdrop-blur-xl shadow-xl">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div>
                 <h4 className="text-sm font-bold text-white flex items-center gap-2">
@@ -559,7 +559,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
           className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start"
         >
           {/* Sliders Area */}
-          <div className="lg:col-span-7 p-6 rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur-xl shadow-xl space-y-6">
+          <div className="lg:col-span-7 p-6 rounded-xl border border-white/10 bg-slate-900/60 backdrop-blur-xl shadow-xl space-y-6">
             <div className="flex items-center gap-2 pb-4 border-b border-white/10">
               <Sliders className="w-5 h-5 text-emerald-400" />
               <h3 className="text-sm font-bold text-white">
@@ -687,7 +687,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
 
           {/* Estimation Breakdown Card */}
           <div className="lg:col-span-5 space-y-6">
-            <div className="p-6 rounded-2xl border border-emerald-500/30 bg-slate-900/60 backdrop-blur-xl shadow-xl space-y-6 relative overflow-hidden">
+            <div className="p-6 rounded-xl border border-emerald-500/30 bg-slate-900/60 backdrop-blur-xl shadow-xl space-y-6 relative overflow-hidden">
               <div className="relative z-10">
                 <span className="text-xxs font-bold uppercase tracking-widest text-emerald-400">
                   Estimated Monthly Total (Pro Tier)

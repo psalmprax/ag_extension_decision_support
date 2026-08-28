@@ -145,7 +145,7 @@ const FarmerSelectorCard: React.FC<FarmerSelectorCardProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-5 shadow-xl space-y-3 relative transition-all duration-200 ${
+      className={`backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-5 shadow-xl space-y-3 relative transition-all duration-200 ${
         isDropdownOpen ? 'z-40' : 'z-10'
       }`}
     >
@@ -261,7 +261,7 @@ const SynthesisResultsBento: React.FC<SynthesisResultsBentoProps> = ({
       className="grid grid-cols-1 md:grid-cols-2 gap-6"
     >
       {/* Bento Card 1: Diagnostic Summary & Pathology */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl space-y-5 flex flex-col justify-between">
+      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl space-y-5 flex flex-col justify-between">
         <div className="space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-white/5">
             <div className="flex items-center gap-2">
@@ -312,7 +312,7 @@ const SynthesisResultsBento: React.FC<SynthesisResultsBentoProps> = ({
       </div>
 
       {/* Bento Card 2: Key Observations & Action Itinerary */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl space-y-5 flex flex-col justify-between">
+      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl space-y-5 flex flex-col justify-between">
         <div className="space-y-4">
           <div className="flex items-center gap-2 pb-2 border-b border-white/5">
             <Layers className="w-4 h-4 text-emerald-400" />
@@ -506,10 +506,10 @@ export const VisitSynthesisForm: React.FC = () => {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* ── Header Telemetry & Preset Hub ── */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500/20 to-indigo-500/20 border border-purple-500/30 flex items-center justify-center shadow-lg shadow-purple-950/40">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-indigo-500/20 border border-purple-500/30 flex items-center justify-center shadow-lg shadow-purple-950/40">
               <Sparkles className="w-6 h-6 text-purple-400" />
             </div>
             <div>
@@ -565,7 +565,7 @@ export const VisitSynthesisForm: React.FC = () => {
       />
 
       {/* ── Input Terminal Card ── */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
+      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-white/5">
           <div className="flex items-center gap-2">
             <FileText className="w-4 h-4 text-purple-400" />
@@ -668,7 +668,7 @@ export const VisitSynthesisForm: React.FC = () => {
           onVerificationComplete={verified => setIsFraudVerified(verified)}
         />
       ) : (
-        <div className="p-4 rounded-2xl bg-slate-900/60 border border-white/10 text-center text-xs text-white/50 flex items-center justify-center gap-2">
+        <div className="p-4 rounded-xl bg-slate-900/60 border border-white/10 text-center text-xs text-white/50 flex items-center justify-center gap-2">
           <AlertCircle className="w-4 h-4 text-purple-400" />
           <span>Select a registered farmer above to activate zero-trust GPS and biometric parcel verification.</span>
         </div>

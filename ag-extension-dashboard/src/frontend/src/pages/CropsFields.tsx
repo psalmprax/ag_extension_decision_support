@@ -360,10 +360,10 @@ export function CropsFields() {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* ── Top Bento Header: Fields & Geospatial Parcels ── */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-2xl p-4 sm:p-6 shadow-xl relative overflow-hidden">
+      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-4 sm:p-6 shadow-xl relative overflow-hidden">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6">
           <div className="flex items-center gap-3 sm:gap-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40 shrink-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40 shrink-0">
               <Map className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
             </div>
             <div>
@@ -414,7 +414,7 @@ export function CropsFields() {
 
       {/* ── Statistics Bento Row ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="backdrop-blur-xl bg-slate-900/60 border border-blue-500/20 rounded-2xl p-5 shadow-lg space-y-3">
+        <div className="backdrop-blur-xl bg-slate-900/60 border border-blue-500/20 rounded-xl p-5 shadow-lg space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xxs font-bold text-blue-400 uppercase tracking-wider">Total Sectors</span>
             <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
@@ -424,7 +424,7 @@ export function CropsFields() {
           <p className="text-3xl font-black text-white font-mono">{totalFieldsCount}</p>
         </div>
 
-        <div className="backdrop-blur-xl bg-slate-900/60 border border-emerald-500/20 rounded-2xl p-5 shadow-lg space-y-3">
+        <div className="backdrop-blur-xl bg-slate-900/60 border border-emerald-500/20 rounded-xl p-5 shadow-lg space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xxs font-bold text-emerald-400 uppercase tracking-wider">Total Cultivated Area</span>
             <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -434,7 +434,7 @@ export function CropsFields() {
           <p className="text-3xl font-black text-emerald-400 font-mono">{(Number(totalAreaHectares) || 0).toFixed(1)} ha</p>
         </div>
 
-        <div className="backdrop-blur-xl bg-slate-900/60 border border-teal-500/20 rounded-2xl p-5 shadow-lg space-y-3">
+        <div className="backdrop-blur-xl bg-slate-900/60 border border-teal-500/20 rounded-xl p-5 shadow-lg space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xxs font-bold text-teal-400 uppercase tracking-wider">Active Timelines</span>
             <div className="p-2 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/20">
@@ -444,7 +444,7 @@ export function CropsFields() {
           <p className="text-3xl font-black text-teal-300 font-mono">{activeCycles.length}</p>
         </div>
 
-        <div className="backdrop-blur-xl bg-slate-900/60 border border-purple-500/20 rounded-2xl p-5 shadow-lg space-y-3">
+        <div className="backdrop-blur-xl bg-slate-900/60 border border-purple-500/20 rounded-xl p-5 shadow-lg space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xxs font-bold text-purple-400 uppercase tracking-wider">Harvested Yield</span>
             <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">

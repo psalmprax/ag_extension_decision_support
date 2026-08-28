@@ -76,7 +76,7 @@ export const FarmlistSidebar: React.FC<FarmlistSidebarProps> = ({
                     setIsFarmlistCollapsed(true);
                   }
                 }}
-                className={`w-full text-left p-3 rounded-2xl transition-all flex items-center gap-3 group ${
+                className={`w-full text-left p-3 rounded-xl transition-all flex items-center gap-3 group ${
                   isSelected
                     ? 'bg-white dark:bg-gray-800 shadow-md border border-gray-100 dark:border-gray-700'
                     : 'hover:bg-white/60 dark:hover:bg-gray-800/60 border border-transparent hover:border-gray-100 dark:border-gray-700'
@@ -98,7 +98,7 @@ export const FarmlistSidebar: React.FC<FarmlistSidebarProps> = ({
           })
         ) : (
           <div className="p-8 text-center">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3 bg-gray-100 dark:bg-gray-800">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 bg-gray-100 dark:bg-gray-800">
               <Search className="w-6 h-6 text-gray-300" />
             </div>
             <p className="text-sm text-gray-500">No farmers found for "{searchQuery}"</p>

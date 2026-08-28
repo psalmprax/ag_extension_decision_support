@@ -35,7 +35,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
 };
 
 export const CardSkeleton = () => (
-  <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+  <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
     <Skeleton width="40%" height="1.25rem" className="mb-4" />
     <Skeleton width="80%" height="2.5rem" className="mb-2" />
     <Skeleton width="30%" height="1rem" />
@@ -75,14 +75,14 @@ export const ListSkeleton = ({ items = 5 }) => (
 );
 
 export const ChartSkeleton = () => (
-  <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+  <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
     <Skeleton width="30%" height="1.25rem" className="mb-4" />
     <Skeleton width="100%" height="300px" />
   </div>
 );
 
 export const MetricCardSkeleton = () => (
-  <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+  <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
     <div className="flex items-center justify-between mb-4">
       <Skeleton width="40%" height="1rem" />
       <Skeleton width="40px" height="40px" borderRadius="0.75rem" />
