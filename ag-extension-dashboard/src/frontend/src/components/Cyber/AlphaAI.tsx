@@ -56,136 +56,9 @@ interface ChatMessageItem {
   sender: 'user' | 'assistant';
   text: string;
   timestamp: string;
-  reasoningSteps?: string[];
   canvasTrigger?: CanvasViewType;
   canvasLabel?: string;
-  citations?: string[];
-  prescriptionSummary?: {
-    crop: string;
-    condition: string;
-    dosageOrAction: string;
-    urgency: 'Immediate' | 'Within 48h' | 'Routine';
-  };
-}
-
-const PRESET_SCENARIOS = [
-  {
-    id: 'maize_rust',
-    title: 'Maize Foliar Rust & Fungicide Protocol',
-    category: 'Pathology Scanner',
-    icon: Eye,
-    canvasView: 'disease_saliency' as CanvasViewType,
-    prompt: 'Diagnose foliar symptoms on Maize cohort and compute chemical vs organic treatment protocol.',
-    reasoning: [
-      'Querying IITA Pathology Database & Leaf Saliency Model...',
-      'Cross-referencing high-humidity conditions from NASA POWER...',
-      'Synthesizing Triazole fungicide dosage & cultural bio-controls...',
-    ],
-    response: `**Diagnostic Assessment: Common Maize Rust (*Puccinia sorghi*) & Early Foliar Chlorosis**
-
-• **Severity Index:** High (0.94 Confidence in Saliency Zone A).
-• **Pathology Mechanism:** Golden-brown powdery urediniospores detected across upper foliar lamina, accelerated by relative humidity > 82%.
-
-**Actionable Prescription Plan:**
-1. **Targeted Fungicide Spray:** Apply *Azoxystrobin + Difenoconazole* (200 ml/ha) at morning dew dissipation.
-2. **Cultural Field Remediation:** Avoid overhead sprinkler irrigation. Space rows by +10cm in subsequent plantings.
-3. **Soil Fortification:** Micro-dose potassium (K₂O at 30 kg/ha) to thicken cell wall lignification against spore penetrations.`,
-    citations: ['CIMMYT Maize Pathology Manual (v4.1)', 'NASA POWER Relative Humidity Index', 'FAO Tropical Crop Protection Note 118'],
-    prescription: {
-      crop: 'Hybrid Maize (SC 627)',
-      condition: 'Puccinia sorghi Rust (Severe)',
-      dosageOrAction: 'Azoxystrobin 200 ml/ha + K₂O Top-dress',
-      urgency: 'Immediate' as const,
-    },
-  },
-  {
-    id: 'soil_acidity',
-    title: 'Severe Soil Acidity (pH 4.8) & Liming Calculator',
-    category: 'Nutrient Heatmap',
-    icon: Droplets,
-    canvasView: 'soil_heatmap' as CanvasViewType,
-    prompt: 'Calculate agricultural lime amendment and N-P-K micro-dosing plan for soil acidity pH 4.8.',
-    reasoning: [
-      'Searching Sub-Saharan SoilGrids v2 (Fine Earth Cation Exchange)...',
-      'Computing Calcitic vs Dolomitic Lime neutralising requirement...',
-      'Generating Spatial Nutrient Heatmap & Field Micro-Dosing Grid...',
-    ],
-    response: `**Soil Diagnostic Assessment: Aluminum Toxicity & Low Base Saturation (pH 4.8)**
-
-• **Zone Deficit:** Highly acidic volcanic loam with exchangeable Aluminum saturation exceeding 35%. Phosphorus fixation is active.
-
-**Prescription & Field Amendment:**
-1. **Liming Application:** Broadcast **2.4 tonnes/ha of Calcitic Agricultural Lime (CaCO₃)**. Incorporate into top 15cm at least 21 days prior to seasonal rains.
-2. **Phosphorus Shielding:** Apply Granular DAP or MAP with organic compost to prevent Al-P precipitation.
-3. **Recommended Micro-dosing:** 5g N-P-K (17:17:17) per planting pocket alongside green manure mulch (*Mucuna pruriens*).`,
-    citations: ['Sub-Saharan SoilGrids v2 (ISRIC)', 'IFDC Smallholder Liming Guidelines', 'KALRO Soil Fertility Strategy'],
-    prescription: {
-      crop: 'Soil Rehabilitation Mesh',
-      condition: 'pH 4.8 (Severe Al-Toxicity)',
-      dosageOrAction: '2.4 t/ha Lime + P-Shield Micro-dosing',
-      urgency: 'Within 48h' as const,
-    },
-  },
-  {
-    id: 'weather_cassava',
-    title: 'NASA POWER Precipitation & Cassava Window',
-    category: 'Phenology Scrubber',
-    icon: Sliders,
-    canvasView: 'agro_scrubber' as CanvasViewType,
-    prompt: 'Evaluate precipitation coefficients and delayed wet-season impact on cassava stem cutting survival.',
-    reasoning: [
-      'Pulling GPM & NASA POWER 14-day rainfall and solar radiation...',
-      'Simulating soil moisture saturation curves (Current: 21.8%)...',
-      'Calculating stem cutting germination delay window...',
-    ],
-    response: `**Agro-Climatology Simulation: Delayed Onset Season (Eastern Region)**
-
-• **Moisture Deficit:** Surface topsoil moisture is 21.8% (optimal threshold > 35% for root tuberization).
-• **Radiation:** 21.2 MJ/m²/day (high thermal stress on exposed stem cuttings).
-
-**Adaptive Agronomic Recommendation:**
-1. **Stagger Planting Date:** Delay primary planting window by **10–14 days** until GPM cumulative rain surpasses 35mm.
-2. **Stem Treatment:** Dip cutting nodes in wood ash slurry or bio-fungicide to prevent dry-soil vascular decay.
-3. **Tillage Tactic:** Implement tied-ridge water harvesting furrows to retain erratic precipitation surges.`,
-    citations: ['NASA POWER AG Climatology Feed', 'FAO Water-Crop Saturation Indices', 'IITA Root & Tuber Program'],
-    prescription: {
-      crop: 'Cassava (TMS 98/0505)',
-      condition: 'Early Moisture Deficit Window',
-      dosageOrAction: 'Delay Planting 12 Days + Tied Ridge Prep',
-      urgency: 'Within 48h' as const,
-    },
-  },
-  {
-    id: 'fall_armyworm',
-    title: 'Fall Armyworm Integrated Pest Protocol',
-    category: 'RAG Knowledge Graph',
-    icon: Network,
-    canvasView: 'rag_graph' as CanvasViewType,
-    prompt: 'Provide IPM strategy for Spodoptera frugiperda in vegetative maize whorls with biological controls.',
-    reasoning: [
-      'Traversing FAO Fall Armyworm Technical Network Knowledge Graph...',
-      'Mapping biological parasitoids (*Telenomus remus*) and botanical extracts...',
-      'Formulating economic injury threshold intervention rules...',
-    ],
-    response: `**Integrated Pest Management (IPM): Fall Armyworm (*Spodoptera frugiperda*)**
-
-• **Field Threshold:** Detected in > 15% of sampled vegetative whorls (V4–V6 stage).
-
-**Tiered Intervention Protocol:**
-1. **Bio-Botanical (Tier 1):** Apply 5% Neem Seed Kernel Extract (NSKE) or fine wood ash mixed with chili powder into central funnel whorls.
-2. **Biopesticide (Tier 2):** Introduce *Bacillus thuringiensis* (Bt kurstaki) or *Beauveria bassiana* biopesticide at dusk to maximize larval contact.
-3. **Push-Pull Companion:** Intercrop with Desmodium (*Desmodium uncinatum*) and plant Napier grass along perimeter borders to disrupt oviposition flights.`,
-    citations: ['FAO Global FAW Action Platform', 'icipe Push-Pull Agronomic Manual', 'CABI Crop Protection Compendium'],
-    prescription: {
-      crop: 'Maize (V5 Vegetative Stage)',
-      condition: 'Spodoptera frugiperda (Whorl Infestation)',
-      dosageOrAction: 'Bt Kurstaki / Neem Extract Whorl Application',
-      urgency: 'Immediate' as const,
-    },
-  },
-];
-
-export const AlphaAI: React.FC = () => {
+}export const AlphaAI: React.FC = () => {
   const [activeStudioTab, setActiveStudioTab] = useState<'copilot' | 'agent_ops'>('copilot');
   const [activeCanvasView, setActiveCanvasView] = useState<CanvasViewType>('soil_heatmap');
   const [inputPrompt, setInputPrompt] = useState('');
@@ -227,43 +100,6 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isProcessing]);
-
-  const triggerScenario = async (scenario: typeof PRESET_SCENARIOS[0]) => {
-    if (isProcessing) return;
-
-    const userMsg: ChatMessageItem = {
-      id: `user-${Date.now()}`,
-      sender: 'user',
-      text: scenario.prompt,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
-
-    setMessages(prev => [...prev, userMsg]);
-    setIsProcessing(true);
-    setActiveCanvasView(scenario.canvasView);
-
-    // Multi-step reasoning playback
-    for (let i = 0; i < scenario.reasoning.length; i++) {
-      setActiveReasoningStep(scenario.reasoning[i]);
-      await new Promise(r => setTimeout(r, 650));
-    }
-    setActiveReasoningStep(null);
-
-    const assistantMsg: ChatMessageItem = {
-      id: `asst-${Date.now()}`,
-      sender: 'assistant',
-      text: scenario.response,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      reasoningSteps: scenario.reasoning,
-      canvasTrigger: scenario.canvasView,
-      canvasLabel: scenario.category,
-      citations: scenario.citations,
-      prescriptionSummary: scenario.prescription,
-    };
-
-    setMessages(prev => [...prev, assistantMsg]);
-    setIsProcessing(false);
-  };
 
   const handleSendMessage = async () => {
     const query = inputPrompt.trim();
@@ -307,32 +143,20 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         canvasTrigger: matchedCanvas,
         canvasLabel: label,
-        citations: ['FAO Technical Series', 'NASA POWER Global Climatology', 'Regional Soil Survey v2'],
-        prescriptionSummary: {
-          crop: 'General Agronomic Advisory',
-          condition: 'Field Diagnostic Active',
-          dosageOrAction: 'Execute calibrated agronomic protocol',
-          urgency: 'Within 48h',
-        },
       };
 
       setMessages(prev => [...prev, assistantMsg]);
     } catch {
       setActiveReasoningStep(null);
-      const fallbackMsg: ChatMessageItem = {
-        id: `asst-${Date.now()}`,
-        sender: 'assistant',
-        text: `**Agronomic Synthesis for:** *"${query}"*
-
-• **Assessment:** Identified potential nutrient-moisture interaction in current cropping phase.
-• **Immediate Guidance:** Apply micro-dosed foliar nutrients during cool morning hours. Clear irrigation channels to prevent waterlogging.
-• **Knowledge Sources:** Integrated from FAO Soil Manual & NASA POWER Regional Weather Mesh.`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        canvasTrigger: 'soil_heatmap',
-        canvasLabel: 'Soil Nutrient Grid',
-        citations: [],
-      };
-      setMessages(prev => [...prev, fallbackMsg]);
+      setMessages(prev => [
+        ...prev,
+        {
+          id: `asst-${Date.now()}`,
+          sender: 'assistant',
+          text: 'The advisory service is currently unavailable. No agronomic guidance was generated for this query — please retry shortly or consult your local extension officer.',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        },
+      ]);
     } finally {
       setIsProcessing(false);
     }
@@ -434,37 +258,6 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
               LEFT PANE (5 / 12 Cols): Conversational Co-Pilot Stream
              ══════════════════════════════════════════════════════════════ */}
           <div className="lg:col-span-5 flex flex-col space-y-4">
-            {/* Quick Agronomic Scenario Pills */}
-            <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-4 space-y-2.5">
-              <div className="flex items-center justify-between text-xxs font-bold text-white/50 uppercase tracking-wider">
-                <span>Illustrative Diagnostic Scenarios</span>
-                <span className="text-amber-300 font-mono">DEMO CONTENT</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {PRESET_SCENARIOS.map(s => {
-                  const Icon = s.icon;
-                  return (
-                    <button
-                      key={s.id}
-                      onClick={() => triggerScenario(s)}
-                      disabled={isProcessing}
-                      className="p-3 text-left rounded-xl bg-white/[0.02] hover:bg-emerald-500/10 border border-white/5 hover:border-emerald-500/30 transition-all group flex flex-col justify-between space-y-2 disabled:opacity-50"
-                    >
-                      <div className="flex items-center justify-between w-full">
-                        <Icon className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
-                        <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-white/5 text-white/50">
-                          DEMO • {s.category}
-                        </span>
-                      </div>
-                      <p className="text-xs font-bold text-white/90 group-hover:text-emerald-300 transition-colors line-clamp-2 leading-tight">
-                        {s.title}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
             {/* Conversational Stream Card */}
             <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-4 flex-1 flex flex-col justify-between shadow-xl min-h-[480px] max-h-[620px]">
               {/* Message List */}
@@ -504,26 +297,6 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
                               <Sparkles className="w-3 h-3 text-emerald-400" />
                               <span>View {msg.canvasLabel || 'Interactive Canvas'} →</span>
                             </button>
-
-                            {msg.prescriptionSummary && (
-                              <span className="text-[10px] font-mono text-white/40">
-                                Urgency: <strong className="text-amber-400">{msg.prescriptionSummary.urgency}</strong>
-                              </span>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Citations Badges */}
-                        {msg.citations && msg.citations.length > 0 && (
-                          <div className="pt-2 flex flex-wrap gap-1">
-                            {msg.citations.map((cite, ci) => (
-                              <span
-                                key={ci}
-                                className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-white/5 border border-white/5 text-white/50"
-                              >
-                                📚 {cite}
-                              </span>
-                            ))}
                           </div>
                         )}
                       </div>
@@ -711,7 +484,7 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
                         <Eye className="w-4 h-4 text-rose-400" />
                         Neural Foliar Saliency & Pathology Scanner
                       </span>
-                      <span className="text-xxs font-mono text-rose-400">Puccinia Sorghi Detected</span>
+                      <span className="text-xxs font-mono text-slate-500">Wait for a real image analysis</span>
                     </div>
                     <DiseaseSaliencyCanvas onSelectZone={z => setSelectedLesionZone(z)} />
                     {selectedLesionZone && (

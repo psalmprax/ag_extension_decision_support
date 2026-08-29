@@ -21,13 +21,18 @@ jest.mock('../utils/logger', () => ({
     logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn(), crit: jest.fn() },
 }));
 
+// The authorize mock reads the current test role from this variable so tests
+// can exercise role-specific scoping without re-mocking.
+let testUserRole: 'admin' | 'regional_manager' | 'extension_officer' | 'farmer' = 'extension_officer';
+let testUserId = 'off-1';
+
 jest.mock('../middleware/authorize', () => ({
     authorize: () => (req: { user?: unknown; headers?: { authorization?: string } }, res: { status: (code: number) => { json: (body: unknown) => void } }, next: () => void) => {
         if (!req.headers?.authorization) {
             res.status(401).json({ success: false, error: 'Authentication required' });
             return;
         }
-        req.user = { userId: 'off-1', role: 'extension_officer', email: 'officer@example.com' };
+        req.user = { userId: testUserId, role: testUserRole, email: 'user@example.com' };
         next();
     },
     optionalAuth: (_req: unknown, _res: unknown, next: () => void) => next(),
@@ -49,6 +54,8 @@ describe('WhatsApp Route — Mapper-before-response: mapWhatsAppMessageRows + ma
 
     beforeEach(() => {
         mockQuery.mockReset();
+        testUserRole = 'extension_officer';
+        testUserId = 'off-1';
     });
 
     it('GET /messages returns camelCase WhatsAppMessageDTO from snake_case row', async () => {
@@ -86,6 +93,12 @@ describe('WhatsApp Route — Mapper-before-response: mapWhatsAppMessageRows + ma
     });
 
     it('POST /send invokes mapWhatsAppMessageRow on the INSERT ... RETURNING row', async () => {
+        // Resolve the recipient farmer through the write-scope guard: the phone
+        // must match a farmer assigned to the caller officer (off-1).
+        mockQuery.mockResolvedValueOnce({
+            rows: [{ farmer_id: 'farm-uuid-1', assigned_officer_id: 'off-1', user_id: null, region: null, tenant_id: null, is_active: true }],
+            rowCount: 1,
+        });
         const insertedRow = {
             id: 'wa-new',
             sender_id: 'off-1',
@@ -133,6 +146,102 @@ describe('WhatsApp Route — Mapper-before-response: mapWhatsAppMessageRows + ma
         expect(response.body.data.outbound).toBe(15);
         expect(typeof response.body.data.inbound).toBe('number');
         expect(typeof response.body.data.outbound).toBe('number');
+    });
+
+    it('GET /stats scopes officers to their assigned farmers with valid SQL', async () => {
+        mockQuery.mockResolvedValueOnce({ rows: [{ count: '7' }], rowCount: 1 });
+        mockQuery.mockResolvedValueOnce({ rows: [{ count: '3' }], rowCount: 1 });
+
+        const response = await request(app)
+            .get('/api/v1/whatsapp/stats')
+            .set('Authorization', `Bearer ${officerToken}`);
+
+        expect(response.status).toBe(200);
+        expect(mockQuery).toHaveBeenCalledTimes(2);
+
+        // Both COUNT queries must chain the officer scope with AND (not a
+        // second WHERE) and bind a single officer param shared by both $1 refs.
+        expect(mockQuery.mock.calls).toHaveLength(2);
+        const directions = mockQuery.mock.calls.map(([sql]) =>
+            /WHERE direction = '(inbound|outbound)'/.exec(sql)?.[1]
+        );
+        expect(directions.sort()).toEqual(['inbound', 'outbound']);
+        for (const [sql, params] of mockQuery.mock.calls) {
+            expect(sql).toMatch(/WHERE direction = '(inbound|outbound)' AND \(\(/);
+            expect(sql).not.toMatch(/WHERE direction = '(inbound|outbound)' WHERE/);
+            expect(sql).toContain('assigned_officer_id = $1');
+            expect(params).toEqual(['off-1']);
+        }
+    });
+
+    it('GET /messages scopes officers to their assigned farmers with valid SQL', async () => {
+        mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 });
+
+        const response = await request(app)
+            .get('/api/v1/whatsapp/messages')
+            .set('Authorization', `Bearer ${officerToken}`)
+            .query({ limit: '10', offset: '0' });
+
+        expect(response.status).toBe(200);
+        const [sql, params] = mockQuery.mock.calls[0];
+        expect(sql).toContain('assigned_officer_id = $1');
+        // officer id, then LIMIT $2 and OFFSET $3
+        expect(params).toEqual(['off-1', 10, 0]);
+    });
+
+    it('GET /messages scopes regional managers to farmers in their region', async () => {
+        testUserRole = 'regional_manager';
+        testUserId = 'mgr-1';
+        // First query: region lookup for the manager; second: the scoped list.
+        mockQuery.mockResolvedValueOnce({ rows: [{ region: 'Central' }], rowCount: 1 });
+        mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 });
+
+        const response = await request(app)
+            .get('/api/v1/whatsapp/messages')
+            .set('Authorization', `Bearer ${officerToken}`)
+            .query({ limit: '10', offset: '0' });
+
+        expect(response.status).toBe(200);
+        const [sql, params] = mockQuery.mock.calls[1];
+        expect(sql).toContain('farmers WHERE region = $1');
+        expect(sql).not.toContain('assigned_officer_id');
+        // manager region, then LIMIT $2 and OFFSET $3
+        expect(params).toEqual(['Central', 10, 0]);
+    });
+
+    it('GET /stats scopes regional managers to farmers in their region', async () => {
+        testUserRole = 'regional_manager';
+        testUserId = 'mgr-1';
+        mockQuery.mockResolvedValueOnce({ rows: [{ region: 'Central' }], rowCount: 1 });
+        mockQuery.mockResolvedValueOnce({ rows: [{ count: '5' }], rowCount: 1 });
+        mockQuery.mockResolvedValueOnce({ rows: [{ count: '2' }], rowCount: 1 });
+
+        const response = await request(app)
+            .get('/api/v1/whatsapp/stats')
+            .set('Authorization', `Bearer ${officerToken}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.inbound).toBe(5);
+        expect(response.body.data.outbound).toBe(2);
+        const [, statsParams] = mockQuery.mock.calls[1];
+        expect(statsParams).toEqual(['Central']);
+        expect(mockQuery.mock.calls[1][0]).toContain('farmers WHERE region = $1');
+        expect(mockQuery.mock.calls[2][0]).toContain('farmers WHERE region = $1');
+    });
+
+    it('GET /messages returns empty for a manager with no region set', async () => {
+        testUserRole = 'regional_manager';
+        testUserId = 'mgr-2';
+        mockQuery.mockResolvedValueOnce({ rows: [{ region: null }], rowCount: 1 });
+        mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 });
+
+        const response = await request(app)
+            .get('/api/v1/whatsapp/messages')
+            .set('Authorization', `Bearer ${officerToken}`);
+
+        expect(response.status).toBe(200);
+        // The scoped query is `WHERE 1=0` — nothing can leak.
+        expect(mockQuery.mock.calls[1][0]).toContain('WHERE 1=0');
     });
 });
 

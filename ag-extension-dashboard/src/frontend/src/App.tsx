@@ -43,6 +43,9 @@ const LandingPage = lazy(() =>
   import('./pages/LandingPage').then(m => ({ default: m.LandingPage }))
 );
 const DemoPage = lazy(() => import('./pages/DemoPage').then(m => ({ default: m.DemoPage })));
+const TeleCallJoinPage = lazy(() =>
+  import('./pages/TeleCallJoinPage').then(m => ({ default: m.TeleCallJoinPage }))
+);
 const KnowledgeBase = lazy(() =>
   import('./components/KnowledgeBase').then(m => ({ default: m.KnowledgeBase }))
 );
@@ -396,6 +399,14 @@ function App() {
               element={
                 <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
                   <ForgotPassword />
+                </div>
+              }
+            />
+            <Route
+              path="/tele-call/:roomId"
+              element={
+                <div className="min-h-screen bg-slate-950">
+                  <TeleCallJoinPage />
                 </div>
               }
             />

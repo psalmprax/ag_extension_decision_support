@@ -212,10 +212,12 @@ export function useWebRTC(): UseWebRTCReturn {
 
         socketRef.current?.emit(
           'create-room',
-          { userId, userName },
-          (response: { roomId: string; success: boolean }) => {
+          { userId, userName, roomId },
+          (response: { roomId: string; success: boolean; error?: string }) => {
             if (response.success) {
               setIsInCall(true);
+            } else {
+              setError(response.error || 'Could not start the call. Please try again.');
             }
           }
         );
@@ -254,10 +256,16 @@ export function useWebRTC(): UseWebRTCReturn {
       socketRef.current?.emit(
         'join-room',
         { roomId, userId, userName },
-        (response: { success: boolean; participants: Participant[] }) => {
+        (response: { success: boolean; participants?: Participant[]; error?: string }) => {
           if (response.success) {
-            setParticipants(response.participants);
+            setParticipants(response.participants || []);
             setIsInCall(true);
+          } else {
+            setError(
+              response.error === 'Room not found or inactive'
+                ? 'This call is not active yet. Ask your extension officer to start the call, then tap Join again.'
+                : response.error || 'Could not join the call. Please try again.'
+            );
           }
         }
       );

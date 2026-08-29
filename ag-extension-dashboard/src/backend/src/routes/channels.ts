@@ -8,6 +8,7 @@ import { telegramService } from '@/services/telegramService';
 import { whatsappService } from '@/services/whatsappService';
 import { smsService } from '@/services/smsService';
 import { onboardingEngine } from '@/services/onboardingEngine';
+import { checkMessageAccess, MessageAccessError } from '@/services/messageAccessService';
 import { WeatherService } from '@/services/weatherService';
 import { marketPriceService } from '@/services/marketPriceService';
 import type { TenantChannelConfigRow } from '@/types/rowTypes';
@@ -311,6 +312,9 @@ router.post('/test', async (req: AuthRequest, res: Response) => {
                 return res.status(400).json({ success: false, error: 'Telegram Chat ID is required for dispatch test' });
             }
 
+            // Write-scope enforcement for Telegram test dispatches.
+            await checkMessageAccess(req.user!, { telegramChatId: String(recipient) });
+
             const sendResult = await telegramService.sendMessage({
                 chatId: recipient,
                 text: message,
@@ -324,6 +328,8 @@ router.post('/test', async (req: AuthRequest, res: Response) => {
             if (!recipient) {
                 return res.status(400).json({ success: false, error: 'Recipient phone number is required' });
             }
+            // Write-scope enforcement for SMS test dispatches.
+            await checkMessageAccess(req.user!, { phone: String(recipient) });
             const sent = await smsService.sendSMS({
                 to: recipient,
                 message,
@@ -336,6 +342,8 @@ router.post('/test', async (req: AuthRequest, res: Response) => {
             if (!recipient) {
                 return res.status(400).json({ success: false, error: 'Recipient phone number is required' });
             }
+            // Write-scope enforcement for WhatsApp test dispatches.
+            await checkMessageAccess(req.user!, { phone: String(recipient) });
             const sent = await whatsappService.sendMessage({
                 to: recipient,
                 message,
@@ -346,6 +354,9 @@ router.post('/test', async (req: AuthRequest, res: Response) => {
 
         return res.status(400).json({ success: false, error: 'Unsupported test channel' });
     } catch (error) {
+        if (error instanceof MessageAccessError) {
+            return safeError(res, error.statusCode, error.message);
+        }
         logger.error('Channel test dispatch failed:', error);
         return safeError(res, 500, 'Channel test dispatch failed');
     }

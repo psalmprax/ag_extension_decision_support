@@ -274,12 +274,15 @@ router.post('/demo', async (req: Request, res: Response) => {
         if (!user) {
             const passwordHash = await bcrypt.hash(config.demo.password, 10);
             const insertResult = await query(`
-                INSERT INTO users (email, password_hash, first_name, last_name, role, region, phone, created_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+                INSERT INTO users (email, password_hash, first_name, last_name, role, region, phone, created_at, is_demo)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), true)
                 RETURNING id, email, first_name, last_name, role, region, phone
             `, [email, passwordHash, 'Demo', 'User', 'extension_officer', 'Kenya', '+254700000000']);
             
             user = insertResult.rows[0];
+        } else {
+            // Re-assert the demo origin flag in case it drifted/missing on legacy rows.
+            await query('UPDATE users SET is_demo = true, updated_at = NOW() WHERE id = $1', [user.id]);
         }
 
         await createFreeSubscription(user.id);

@@ -191,6 +191,11 @@ describe('Visits Route — Mapper-before-response: mapVisitWithFarmerRows + mapV
             created_at: '2024-12-15T10:00:00Z',
             updated_at: '2024-12-15T10:00:00Z',
         };
+        // performInsertVisit looks up the farmer's tenant/assigned-officer context first.
+        mockQuery.mockResolvedValueOnce({
+            rows: [{ tenant_id: null, assigned_officer_id: null }],
+            rowCount: 1,
+        });
         mockQuery.mockResolvedValueOnce({ rows: [insertedRow], rowCount: 1 });
 
         const response = await request(app)

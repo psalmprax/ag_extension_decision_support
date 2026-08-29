@@ -16,6 +16,11 @@ model User {
   role          String             @default("extension_officer") @db.VarChar(50)
   region        String?            @db.VarChar(100)
   phone         String?            @db.VarChar(20)
+  isDemo        Boolean            @default(false) @map("is_demo")
+  managerId     String?            @map("manager_id") @db.Uuid
+  manager       User?              @relation("ManagerOfficers", fields: [managerId], references: [id], onDelete: SetNull)
+  managedOfficers User[]           @relation("ManagerOfficers")
+
   avatarUrl     String?            @map("avatar_url")
   isActive      Boolean?           @default(true) @map("is_active")
   resetToken    String?            @map("reset_token") @db.VarChar(255)
@@ -32,7 +37,11 @@ model User {
   pushSubscriptions PushSubscription[]
   notifications     Notification[]
   transactionSubmissions TransactionSubmission[]
+  verifiedTransactions TransactionSubmission[] @relation("TransactionVerifier")
   redeemedVouchers Voucher[] @relation("RedeemedVouchers")
+  createdShares Share[] @relation("ShareCreator")
+  smsHistory SmsHistory[] @relation("SmsSender")
+  hostedRooms WebRTCRoom[] @relation("RoomHost")
   scheduledSMS  ScheduledSMS[]
   knowledgeSearches KnowledgeSearch[] @relation("UserKnowledgeSearches")
   apiClients    ApiClient[]
@@ -40,6 +49,12 @@ model User {
   offlineMutations OfflineMutation[]
   createdRecommendationReviews RecommendationReview[] @relation("ReviewCreator")
   completedRecommendationReviews RecommendationReview[] @relation("ReviewAssignee")
+  recommendationOutcomes RecommendationOutcome[]
+  assignmentRecords   FarmerAssignmentHistory[] @relation("AssignmentOfficer")
+  reassignmentRecords FarmerAssignmentHistory[] @relation("AssignmentReassigner")
+  uploads         UploadRecord[]
+  recordedConsents DataConsent[] @relation("ConsentRecorder")
+  requestedExports DataExportRequest[]
   tenantId       String?            @map("tenant_id") @db.Uuid
   tenant         Tenant?            @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   tenantMemberships TenantMembership[]
@@ -66,6 +81,26 @@ model OfflineMutation {
   @@index([userId])
   @@index([status])
   @@map("offline_mutations")
+}
+
+model OutreachMessage {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  farmerId  String?   @map("farmer_id") @db.Uuid
+  recipient String?   @db.VarChar(64)
+  message   String
+  channel   String    @default("sms") @db.VarChar(32)
+  status    String    @default("queued") @db.VarChar(20)
+  priority  String    @default("normal") @db.VarChar(20)
+  attempts  Int       @default(0)
+  lastError String?   @map("last_error")
+  sentAt    DateTime? @map("sent_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  farmer    Farmer?   @relation(fields: [farmerId], references: [id], onDelete: SetNull)
+
+  @@index([farmerId])
+  @@index([status, createdAt], map: "idx_outreach_messages_status")
+  @@map("outreach_messages")
 }
 
 model ScheduledSMS {
@@ -106,6 +141,7 @@ model Farmer {
    locationLng              Decimal?           @map("location_lng") @db.Decimal(11, 8)
    languagePreference       String?            @default("en") @map("language_preference") @db.VarChar(20)
    isActive                 Boolean?           @default(true) @map("is_active")
+   isDemo                   Boolean            @default(false) @map("is_demo")
    assignmentNotificationSent Boolean           @default(false) @map("assignment_notification_sent")
    order                    Int?               @default(0) @db.Integer
    createdAt                DateTime?          @default(now()) @map("created_at") @db.Timestamp(6)
@@ -125,6 +161,12 @@ model Farmer {
    advisoryPreference       AdvisoryPreference?
    diagnosisEvents          DiagnosisEvent[]
    soilLabResults           SoilLabResult[]
+   notifications            Notification[]
+   farmerAssignmentHistory  FarmerAssignmentHistory[]
+   outreachMessages         OutreachMessage[]
+   smsHistory               SmsHistory[] @relation("SmsFarmer")
+   exportRequests           DataExportRequest[]
+   uploads                  UploadRecord[]
 
   @@index([assignedOfficerId])
   @@index([region])
@@ -135,6 +177,7 @@ model Farmer {
 
 model Visit {
   id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId             String?   @map("tenant_id") @db.Uuid
   officerId            String?   @map("officer_id") @db.Uuid
   farmerId             String?   @map("farmer_id") @db.Uuid
   visitType            String?   @default("routine") @map("visit_type") @db.VarChar(50)
@@ -154,6 +197,7 @@ model Visit {
   followUpReminderSent Boolean?  @default(false) @map("follow_up_reminder_sent")
   createdAt            DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt            DateTime? @default(now()) @map("updated_at") @db.Timestamp(6)
+  tenant               Tenant?     @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   officer              User?     @relation(fields: [officerId], references: [id])
   farmer               Farmer?   @relation(fields: [farmerId], references: [id])
   attachments          VisitAttachment[]
@@ -162,6 +206,7 @@ model Visit {
   @@index([farmerId])
   @@index([officerId])
   @@index([status])
+  @@index([tenantId])
   @@map("visits")
 }
 
@@ -192,6 +237,7 @@ model KnowledgeArticle {
 
 model ChatConversation {
   id                    String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId              String?       @map("tenant_id") @db.Uuid
   farmerId              String?       @map("farmer_id") @db.Uuid
   officerId             String?       @map("officer_id") @db.Uuid
   language              String?       @default("en") @db.VarChar(20)
@@ -201,10 +247,12 @@ model ChatConversation {
   satisfactionScore     Int?          @map("satisfaction_score")
   lowSatisfactionAlertSent Boolean    @default(false) @map("low_satisfaction_alert_sent")
   createdAt             DateTime?     @default(now()) @map("created_at") @db.Timestamp(6)
+  tenant                Tenant?       @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   farmer                Farmer?       @relation(fields: [farmerId], references: [id])
   officer               User?         @relation(fields: [officerId], references: [id])
   messages              ChatMessage[]
 
+  @@index([tenantId])
   @@map("chat_conversations")
 }
 
@@ -228,6 +276,7 @@ model ChatMessage {
 
 model Report {
   id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String?   @map("tenant_id") @db.Uuid
   type        String    @db.VarChar(50)
   title       String    @db.VarChar(255)
   content     Json
@@ -235,11 +284,13 @@ model Report {
   status      String?   @default("draft") @db.VarChar(50)
   createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt   DateTime? @default(now()) @map("updated_at") @db.Timestamp(6)
+  tenant      Tenant?       @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   user        User?         @relation(fields: [generatedBy], references: [id])
   recommendationReviews RecommendationReview[]
 
   @@index([generatedBy])
   @@index([type])
+  @@index([tenantId])
   @@map("reports")
 }
 
@@ -261,6 +312,7 @@ model AnalyticsEvent {
 
 model Alert {
   id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId        String?   @map("tenant_id") @db.Uuid
   type            String    @db.VarChar(50)
   severity        String?   @default("medium") @db.VarChar(20)
   title           String    @db.VarChar(255)
@@ -273,10 +325,12 @@ model Alert {
   triggeredAt     DateTime? @default(now()) @map("triggered_at") @db.Timestamp(6)
   resolvedAt      DateTime? @map("resolved_at") @db.Timestamp(6)
   createdAt       DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+  tenant          Tenant?  @relation(fields: [tenantId], references: [id], onDelete: SetNull)
 
   @@index([isActive])
   @@index([type])
   @@index([severity])
+  @@index([tenantId])
   @@map("alerts")
 }
 
@@ -362,7 +416,9 @@ model PushSubscription {
 
 model Notification {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String?   @map("tenant_id") @db.Uuid
   userId    String    @map("user_id") @db.Uuid
+  farmerId  String?   @map("farmer_id") @db.Uuid
   type      String    @db.VarChar(50)
   title     String    @db.VarChar(255)
   message   String
@@ -371,9 +427,13 @@ model Notification {
   metadata  Json?
   createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
   readAt    DateTime? @map("read_at") @db.Timestamp(6)
+  tenant    Tenant?   @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   user      User      @relation(fields: [userId], references: [id])
+  farmer    Farmer?   @relation(fields: [farmerId], references: [id], onDelete: SetNull)
 
   @@index([userId, isRead])
+  @@index([farmerId])
+  @@index([tenantId])
   @@map("notifications")
 }
 
@@ -404,8 +464,10 @@ model Share {
   updatedAt   DateTime? @default(now()) @map("updated_at") @db.Timestamp(6)
   accesses    ShareAccess[]
   tenant      Tenant?   @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  creator     User?     @relation("ShareCreator", fields: [createdBy], references: [id], onDelete: SetNull)
 
   @@index([entityType, entityId])
+  @@index([createdBy])
   @@index([tenantId])
   @@map("shares")
 }
@@ -452,7 +514,9 @@ model TransactionSubmission {
 
   user           User     @relation(fields: [userId], references: [id])
   plan           SubscriptionPlan @relation(fields: [planId], references: [id])
+  verifier       User?    @relation("TransactionVerifier", fields: [verifiedBy], references: [id], onDelete: SetNull)
 
+  @@index([verifiedBy])
   @@map("transaction_submissions")
 }
 
@@ -541,7 +605,11 @@ model SmsHistory {
   status         String?   @default("pending") @db.VarChar(50)
   provider       String?   @db.VarChar(50)
   createdAt      DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+  sender         User?     @relation("SmsSender", fields: [senderId], references: [id], onDelete: SetNull)
+  farmer         Farmer?   @relation("SmsFarmer", fields: [farmerId], references: [id], onDelete: SetNull)
 
+  @@index([senderId])
+  @@index([farmerId])
   @@map("sms_history")
 }
 
@@ -578,6 +646,7 @@ model Field {
   updatedAt           DateTime?          @default(now()) @map("updated_at") @db.Timestamp(6)
   farmer              Farmer             @relation(fields: [farmerId], references: [id], onDelete: Cascade)
   cropCycles          CropCycle[]
+  soilLabResults      SoilLabResult[]
 
   @@index([farmerId])
   @@map("fields")
@@ -661,10 +730,16 @@ model Tenant {
   updatedAt        DateTime           @default(now()) @map("updated_at") @db.Timestamp(6)
   users            User[]
   farmers          Farmer[]
+  visits           Visit[]
+  conversations    ChatConversation[]
+  reports          Report[]
+  alerts           Alert[]
+  notifications    Notification[]
   memberships      TenantMembership[]
   consents         DataConsent[]
   recommendationReviews RecommendationReview[]
   shares           Share[]
+  exportRequests   DataExportRequest[]
 
   @@map("tenants")
 }
@@ -696,8 +771,10 @@ model DataConsent {
   withdrawnAt DateTime? @map("withdrawn_at") @db.Timestamp(6)
   tenant      Tenant?   @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   farmer      Farmer    @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  recorder    User      @relation("ConsentRecorder", fields: [recordedBy], references: [id], onDelete: Restrict)
 
   @@index([farmerId, purpose, status])
+  @@index([recordedBy])
   @@index([tenantId])
   @@map("data_consents")
 }
@@ -710,8 +787,12 @@ model DataExportRequest {
   status      String    @default("completed") @db.VarChar(20)
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
   completedAt DateTime? @map("completed_at") @db.Timestamp(6)
+  tenant      Tenant?   @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  farmer      Farmer    @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  requester   User      @relation(fields: [requestedBy], references: [id], onDelete: Restrict)
 
   @@index([farmerId])
+  @@index([requestedBy])
   @@index([tenantId])
   @@map("data_export_requests")
 }
@@ -729,6 +810,8 @@ model UploadRecord {
   status       String    @default("active") @db.VarChar(20)
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
   deletedAt    DateTime? @map("deleted_at") @db.Timestamp(6)
+  owner        User      @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  farmer       Farmer?   @relation(fields: [farmerId], references: [id], onDelete: SetNull)
 
   @@index([ownerUserId])
   @@index([farmerId])
@@ -781,7 +864,10 @@ model WebRTCRoom {
   participants Json      @default("[]") // Stores array of participants { id, socketId, name }
   isActive     Boolean   @default(true) @map("is_active")
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  consult      VideoConsultation?
+  host         User      @relation("RoomHost", fields: [hostId], references: [id], onDelete: Restrict)
 
+  @@index([hostId])
   @@map("webrtc_rooms")
 }
 
@@ -791,13 +877,32 @@ model VideoConsultation {
   extensionOfficerId String    @map("extension_officer_id") @db.Uuid
   scheduledTime      DateTime  @map("scheduled_time") @db.Timestamp(6)
   status             String    @default("pending") @db.VarChar(50) // 'pending', 'active', 'completed', 'cancelled'
-  roomId             String    @map("room_id") @db.Uuid
+  roomId             String    @unique @map("room_id") @db.Uuid
   createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
 
   farmer             Farmer    @relation(fields: [farmerId], references: [id])
   extensionOfficer   User      @relation(fields: [extensionOfficerId], references: [id])
+  room               WebRTCRoom?   @relation(fields: [roomId], references: [id], onDelete: Restrict)
 
+  @@index([roomId])
   @@map("video_consultations")
+}
+
+model FarmerAssignmentHistory {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  farmerId     String    @map("farmer_id") @db.Uuid
+  officerId    String?   @map("officer_id") @db.Uuid
+  reassignedBy String    @map("reassigned_by") @db.Uuid
+  reason       String?
+  assignedAt   DateTime  @default(now()) @map("assigned_at") @db.Timestamp(6)
+
+  farmer       Farmer    @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  officer      User?     @relation("AssignmentOfficer", fields: [officerId], references: [id])
+  reassignedByUser User  @relation("AssignmentReassigner", fields: [reassignedBy], references: [id])
+
+  @@index([farmerId])
+  @@index([officerId])
+  @@map("farmer_assignment_history")
 }
 
 model RecommendationOutcome {
@@ -816,6 +921,7 @@ model RecommendationOutcome {
 
   visit  Visit?  @relation(fields: [visitId], references: [id])
   farmer Farmer? @relation(fields: [farmerId], references: [id])
+  officer User?  @relation(fields: [officerId], references: [id])
 
   @@index([visitId])
   @@index([farmerId])
@@ -909,7 +1015,9 @@ model SoilLabResult {
   importedAt      DateTime  @default(now()) @map("imported_at") @db.Timestamp(6)
 
   farmer Farmer? @relation(fields: [farmerId], references: [id])
+  field  Field?  @relation(fields: [fieldId], references: [id], onDelete: SetNull)
 
   @@index([farmerId, testedAt])
+  @@index([fieldId])
   @@map("soil_lab_results")
 }

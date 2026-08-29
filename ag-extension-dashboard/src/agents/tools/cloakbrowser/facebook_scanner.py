@@ -101,9 +101,9 @@ class FacebookScanner:
                                     videos = self._extract_videos_from_json(data)
                                     candidates.extend(videos)
                                 except Exception:
-                                    pass
+                                    logger.debug("[FacebookScanner] Skipping malformed video JSON block")
                         except Exception:
-                            pass
+                            logger.debug("[FacebookScanner] Failed to parse video JSON from script block")
                 
                 # Alternative: Look for structured data
                 sd_matches = re.findall(
@@ -118,7 +118,7 @@ class FacebookScanner:
                         videos = self._extract_videos_from_schema(data)
                         candidates.extend(videos)
                     except Exception:
-                        pass
+                        logger.debug("[FacebookScanner] Failed to parse video JSON from script block")
                 
         except Exception as e:
             logger.warning(f"[FacebookScanner] Watch page error: {e}")
@@ -165,9 +165,9 @@ class FacebookScanner:
                                     videos = self._extract_videos_from_json(data)
                                     candidates.extend(videos)
                                 except Exception:
-                                    pass
+                                    logger.debug("[FacebookScanner] Skipping malformed video JSON block")
                         except Exception:
-                            pass
+                            logger.debug("[FacebookScanner] Failed to parse video JSON from script block")
                 
         except Exception as e:
             logger.warning(f"[FacebookScanner] Search error: {e}")

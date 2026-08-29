@@ -42,9 +42,7 @@ export const officerGamificationService = {
              LEFT JOIN recommendation_outcomes ro ON ro.officer_id = u.id
                    AND ro.measured_at >= NOW() - ($1 || ' days')::interval
              WHERE u.role IN ('extension_officer', 'regional_manager')
-               AND (u.email IS NULL OR u.email NOT ILIKE '%demo%')
-               AND (u.first_name IS NULL OR u.first_name NOT ILIKE '%demo%')
-               AND (u.last_name IS NULL OR u.last_name NOT ILIKE '%demo%')
+               AND COALESCE(u.is_demo, false) = false
              GROUP BY u.id, name, region
              HAVING COUNT(DISTINCT v.id) > 0 OR COUNT(DISTINCT ro.id) > 0
              ORDER BY COUNT(DISTINCT v.id) DESC

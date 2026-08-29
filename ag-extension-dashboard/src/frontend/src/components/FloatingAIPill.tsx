@@ -14,17 +14,16 @@ import {
   Leaf,
   ArrowRight,
   Video,
-  Radio,
   Loader2,
   Square,
-  Copy,
-  Check,
-  ExternalLink,
+  Link2,
 } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { getChatCompletion, analyzeImage } from '@/api/aiService';
 import { useFieldVoiceRecorder } from '@/hooks/useFieldVoiceRecorder';
 import { ProgressiveProfileChips, ProfileParameter } from './ProgressiveProfileChips';
+import { VideoCall } from './VideoCall';
+import { useAppStore } from '@/store/useAppStore';
 import toast from 'react-hot-toast';
 
 interface FloatingAIPillProps {
@@ -35,10 +34,10 @@ interface FloatingAIPillProps {
 type TabType = 'chat' | 'scan' | 'voice' | 'telecall';
 
 const INITIAL_PROFILE: ProfileParameter[] = [
-  { key: 'name', label: 'Farmer', value: 'Samuel Kiprop' },
-  { key: 'crop', label: 'Crop', value: 'Potatoes / Maize' },
-  { key: 'acreage', label: 'Acreage', value: '4.5 Ha' },
-  { key: 'location', label: 'Ward', value: 'Njoro, Nakuru' },
+  { key: 'name', label: 'Farmer', value: null },
+  { key: 'crop', label: 'Crop', value: null },
+  { key: 'acreage', label: 'Acreage', value: null },
+  { key: 'location', label: 'Ward', value: null },
   { key: 'soil', label: 'Soil pH', value: null },
 ];
 
@@ -120,12 +119,6 @@ const AIAgronomistChatTab: React.FC<ChatTabProps> = ({
 interface ScanTabProps {
   previewImage: string | null;
   isScanning: boolean;
-  scanResult: {
-    disease: string;
-    confidence: number;
-    severity: string;
-    treatment: string;
-  } | null;
   scanAnalysis: string | null;
   onOpenPicker: () => void;
   onNavigateToDiagnosis?: () => void;
@@ -134,7 +127,6 @@ interface ScanTabProps {
 const AIAgronomistScanTab: React.FC<ScanTabProps> = ({
   previewImage,
   isScanning,
-  scanResult,
   scanAnalysis,
   onOpenPicker,
   onNavigateToDiagnosis,
@@ -183,39 +175,6 @@ const AIAgronomistScanTab: React.FC<ScanTabProps> = ({
         )}
       </button>
     </div>
-
-    {scanResult && (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="p-4 rounded bg-slate-900 border border-emerald-500/40 shadow-lg space-y-2.5"
-      >
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-            <Leaf className="w-3.5 h-3.5" />
-            {scanResult.disease}
-          </span>
-          <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 font-bold text-[10px] rounded-full">
-            {scanResult.confidence}% Match
-          </span>
-        </div>
-        <div className="text-[11px] text-rose-400 font-bold">
-          Severity: {scanResult.severity}
-        </div>
-        <div className="text-xs text-slate-300 bg-slate-950 p-2.5 rounded border border-slate-800 leading-relaxed">
-          <span className="font-bold text-white">Recommended Action:</span> {scanResult.treatment}
-        </div>
-        {onNavigateToDiagnosis && (
-          <button
-            onClick={onNavigateToDiagnosis}
-            className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs font-bold transition-colors flex items-center justify-center gap-1"
-          >
-            <span>Open Comprehensive Crop Diagnostics</span>
-            <ArrowRight className="w-3 h-3" />
-          </button>
-        )}
-      </motion.div>
-    )}
 
     {scanAnalysis && (
       <motion.div
@@ -322,16 +281,10 @@ const AIAgronomistVoiceTab: React.FC<VoiceTabProps> = ({
 );
 
 interface TelecallTabProps {
-  callSessionId: string;
-  copiedLink: boolean;
-  onCopyCallLink: () => void;
+  onStartCall: () => void;
 }
 
-const AIAgronomistTelecallTab: React.FC<TelecallTabProps> = ({
-  callSessionId,
-  copiedLink,
-  onCopyCallLink,
-}) => (
+const AIAgronomistTelecallTab: React.FC<TelecallTabProps> = ({ onStartCall }) => (
   <div className="space-y-4 text-center p-2">
     <div className="p-5 rounded bg-slate-900 border border-emerald-500/30 space-y-3">
       <div className="w-12 h-12 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mx-auto">
@@ -339,32 +292,15 @@ const AIAgronomistTelecallTab: React.FC<TelecallTabProps> = ({
       </div>
       <h4 className="text-xs font-bold text-white">Instant Tele-Agronomy Call</h4>
       <p className="text-[11px] text-slate-400">
-        Establish a low-bandwidth video & audio link with farmers for live crop examination.
+        Start a secure WebRTC video call, then copy the invite link and share it with the farmer to join from their phone.
       </p>
-      <div className="flex items-center justify-center gap-1.5 text-[10px] text-emerald-400 font-mono">
-        <Radio className="w-3 h-3 animate-pulse" />
-        WebRTC Ready • Room: {callSessionId}
-      </div>
-
-      <div className="flex gap-2 pt-2">
-        <button
-          onClick={onCopyCallLink}
-          className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded transition-all flex items-center justify-center gap-1.5"
-        >
-          {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-          <span>{copiedLink ? 'Copied Link!' : 'Generate Live Call Link'}</span>
-        </button>
-        <button
-          onClick={() => {
-            const link = `${window.location.origin}/tele-call/${callSessionId}`;
-            window.open(link, '_blank');
-          }}
-          className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded transition-all shadow-md shadow-emerald-950 flex items-center justify-center gap-1.5"
-        >
-          <ExternalLink className="w-3.5 h-3.5" />
-          <span>Launch Call</span>
-        </button>
-      </div>
+      <button
+        onClick={onStartCall}
+        className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded transition-all shadow-md shadow-emerald-950 flex items-center justify-center gap-1.5"
+      >
+        <Video className="w-3.5 h-3.5" />
+        <span>Start Tele-Agronomy Call</span>
+      </button>
     </div>
   </div>
 );
@@ -374,10 +310,11 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
   onNavigateToDiagnosis,
 }) => {
   const { language } = useLanguage();
+  const storeUser = useAppStore(s => s.user);
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('chat');
   const [chatInput, setChatInput] = useState('');
-  const [profileParams, setProfileParams] = useState<ProfileParameter[]>(INITIAL_PROFILE);
+  const [profileParams] = useState<ProfileParameter[]>(INITIAL_PROFILE);
   const [isLoadingAi, setIsLoadingAi] = useState(false);
   const [messages, setMessages] = useState<Array<{ sender: 'ai' | 'user'; text: string; time: string }>>([
     {
@@ -392,20 +329,13 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [scanAnalysis, setScanAnalysis] = useState<string | null>(null);
-  const [scanResult, setScanResult] = useState<{
-    disease: string;
-    confidence: number;
-    severity: string;
-    treatment: string;
-  } | null>(null);
 
   // Tele-Call state
-  const [copiedLink, setCopiedLink] = useState(false);
+  const [showVideoCall, setShowVideoCall] = useState(false);
   const [callSessionId] = useState(() => `tele-${Date.now().toString(36)}`);
 
   // Real Voice dictation integration with offline/test fallback
   const [capturedVoiceNote, setCapturedVoiceNote] = useState('');
-  const [isSimulatingVoice, setIsSimulatingVoice] = useState(false);
   const {
     isRecording,
     isTranscribing,
@@ -420,21 +350,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
   });
 
   const handleOpenPicker = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-    // Simulation fallback for automated test runs or sample analysis
-    setIsScanning(true);
-    setScanResult(null);
-    setTimeout(() => {
-      setIsScanning(false);
-      setScanResult({
-        disease: 'Late Blight (Phytophthora infestans)',
-        confidence: 94,
-        severity: 'Critical (Spread Risk: 80%)',
-        treatment: 'Apply Mancozeb / Ridomil Gold immediately at 2.5kg/ha. Prune infected stems.',
-      });
-    }, 150);
+    fileInputRef.current?.click();
   };
 
   const handleToggleVoice = () => {
@@ -447,17 +363,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
     if (hasBrowserVoice) {
       toggleRecording();
     } else {
-      if (!isSimulatingVoice) {
-        setIsSimulatingVoice(true);
-        setTimeout(() => {
-          setIsSimulatingVoice(false);
-          setCapturedVoiceNote(
-            '"Farmer Otieno reports yellowing potato leaves in Ward 4 after continuous overnight rainfall. Soil pH tested at 6.2."'
-          );
-        }, 200);
-      } else {
-        setIsSimulatingVoice(false);
-      }
+      toast.error('Voice dictation is not supported in this browser. Please type your observation instead.');
     }
   };
 
@@ -470,12 +376,6 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
     setMessages(prev => [...prev, { sender: 'user', text: userText, time: now }]);
     setChatInput('');
     setIsLoadingAi(true);
-
-    if (userText.toLowerCase().includes('ph') || userText.toLowerCase().includes('soil')) {
-      setProfileParams(prev =>
-        prev.map(p => (p.key === 'soil' ? { ...p, value: '6.4 (Tested)' } : p))
-      );
-    }
 
     try {
       const res = await getChatCompletion(userText, undefined, language);
@@ -496,7 +396,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
         ...prev,
         {
           sender: 'ai',
-          text: 'Notice: Could not connect to the remote AI inference model. If you are inspecting symptoms like leaf spot or wilting, ensure adequate plant spacing, isolate diseased rows, and avoid overhead sprinkler splash.',
+          text: 'Notice: Could not connect to the remote AI inference model. Please try again in a moment.',
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
       ]);
@@ -533,13 +433,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
     }
   };
 
-  const handleCopyCallLink = () => {
-    const link = `${window.location.origin}/tele-call/${callSessionId}`;
-    navigator.clipboard.writeText(link);
-    setCopiedLink(true);
-    toast.success('Tele-Agronomy link copied to clipboard!');
-    setTimeout(() => setCopiedLink(false), 2000);
-  };
+  const handleStartCall = () => setShowVideoCall(true);
 
   const handleInsertVoiceToChat = () => {
     if (!capturedVoiceNote.trim()) return;
@@ -710,7 +604,6 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
                 <AIAgronomistScanTab
                   previewImage={previewImage}
                   isScanning={isScanning}
-                  scanResult={scanResult}
                   scanAnalysis={scanAnalysis}
                   onOpenPicker={handleOpenPicker}
                   onNavigateToDiagnosis={onNavigateToDiagnosis}
@@ -719,7 +612,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
 
               {activeTab === 'voice' && (
                 <AIAgronomistVoiceTab
-                  isRecording={isRecording || isSimulatingVoice}
+                  isRecording={isRecording}
                   isTranscribing={isTranscribing}
                   recordingDuration={recordingDuration}
                   interimText={interimText}
@@ -730,11 +623,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
               )}
 
               {activeTab === 'telecall' && (
-                <AIAgronomistTelecallTab
-                  callSessionId={callSessionId}
-                  copiedLink={copiedLink}
-                  onCopyCallLink={handleCopyCallLink}
-                />
+                <AIAgronomistTelecallTab onStartCall={handleStartCall} />
               )}
             </div>
 
@@ -763,6 +652,49 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {showVideoCall && (
+        <div className="fixed inset-0 z-[1400] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden bg-slate-950 border border-emerald-500/40 rounded-xl shadow-2xl">
+            <div className="flex justify-between items-center px-5 py-3 border-b border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+                  <Video className="w-4 h-4" />
+                </div>
+                <h4 className="font-bold text-sm text-white">Tele-Agronomy Video Consultation</h4>
+              </div>
+              <button
+                onClick={() => {
+                  const inviteLink = `${window.location.origin}/tele-call/${callSessionId}`;
+                  navigator.clipboard.writeText(inviteLink);
+                  toast.success('Invite link copied — share it with the farmer to join this call.');
+                }}
+                aria-label="Copy invite link"
+                title="Copy invite link to share with the farmer"
+                className="p-1 rounded-lg hover:bg-slate-800 text-emerald-400 hover:text-emerald-300 transition-colors"
+              >
+                <Link2 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setShowVideoCall(false)}
+                aria-label="Close tele-call"
+                className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="overflow-y-auto max-h-[80vh]">
+              <VideoCall
+                roomId={callSessionId}
+                userId={(storeUser as { userId?: string } | null | undefined)?.userId || 'unknown'}
+                userName={`${storeUser?.firstName} ${storeUser?.lastName}` || 'Extension Officer'}
+                isHost={true}
+                onEnd={() => setShowVideoCall(false)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

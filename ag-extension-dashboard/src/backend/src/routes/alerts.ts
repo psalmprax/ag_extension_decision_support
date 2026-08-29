@@ -3,18 +3,62 @@ import { query } from '../services/databaseService';
 import { logger } from '../utils/logger';
 import { authorize } from '../middleware/authorize';
 import { sendSuccess, sendCreated, sendForbidden, sendError } from '@/utils/response';
+import { getPrincipalTenantId } from '@/services/dataGovernanceService';
 
 const router = Router();
 
+interface AlertPrincipal {
+    userId: string;
+    role: string;
+}
+
+// Alerts are tenant-scoped: non-admins see alerts in their own tenant, plus
+// (for officers/farmers) legacy alerts that affect farmers they serve. Admins
+// see everything.
+async function buildAlertScope(user: AlertPrincipal | undefined): Promise<{ clause: string; params: unknown[] } | null> {
+    if (!user?.userId || !user.role) return null;
+    if (user.role === 'admin') return { clause: '', params: [] };
+
+    const tenantId = await getPrincipalTenantId(user.userId);
+    const params: unknown[] = [];
+    let clause = '';
+
+    if (tenantId) {
+        params.push(tenantId);
+        clause = `(tenant_id = $1`;
+    }
+
+    if (user.role === 'extension_officer' || user.role === 'farmer') {
+        const ownerColumn = user.role === 'extension_officer' ? 'assigned_officer_id' : 'user_id';
+        params.push(user.userId);
+        const ownerRef = `$${params.length}`;
+        const farmerOverlap = `affected_farmers && ARRAY(SELECT id FROM farmers WHERE ${ownerColumn} = ${ownerRef})`;
+        clause += clause ? ` OR ${farmerOverlap})` : `(${farmerOverlap})`;
+    } else if (clause) {
+        clause += ')';
+    }
+
+    if (!clause) return null;
+    return { clause: ` AND ${clause}`, params };
+}
+
+// Apply authentication to all alert routes
+router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
+
 // Get all active alerts
-router.get('/', async (_req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
     try {
-        const result = await query(`
-            SELECT id, type, severity, title, description, location, affected_farmers, triggered_at, is_active
+        const scope = await buildAlertScope(req.user as AlertPrincipal | undefined);
+        if (!scope) {
+            return res.status(403).json({ success: false, error: 'Tenant membership required' });
+        }
+        const result = await query(
+            `SELECT id, type, severity, title, description, location, affected_farmers, triggered_at, is_active
             FROM alerts
-            WHERE is_active = true
-            ORDER BY triggered_at DESC
-        `);
+            WHERE is_active = true${scope.clause}
+            ORDER BY triggered_at DESC`,
+            scope.params
+        );
         sendSuccess(res, result.rows);
     } catch (error) {
         logger.error('Error fetching alerts:', error);
@@ -31,11 +75,36 @@ router.post('/', authorize(['extension_officer', 'admin']), async (req: Request,
     }
 
     try {
+        const farmerIds = Array.isArray(affectedFarmers) && affectedFarmers.length > 0 ? affectedFarmers : [];
+
+        // An officer may only raise alerts for farmers assigned to them,
+        // mirroring the write-access rule enforced on SMS/WhatsApp/Telegram.
+        if (req.user?.role === 'extension_officer' && farmerIds.length > 0) {
+            const ownership = await query<{ id: string }>(
+                `SELECT id FROM farmers
+                 WHERE id = ANY($1::uuid[]) AND assigned_officer_id = $2`,
+                [farmerIds, req.user.userId]
+            );
+            if (ownership.rows.length !== farmerIds.length) {
+                return sendForbidden(res, 'Alerts can only target farmers assigned to you');
+            }
+        }
+
+        // Resolve tenant from the first affected farmer (or the caller's tenant).
+        let tenantId: string | null = null;
+        if (farmerIds.length > 0) {
+            const fRes = await query('SELECT tenant_id FROM farmers WHERE id = $1 LIMIT 1', [farmerIds[0]]);
+            tenantId = fRes.rows[0]?.tenant_id ?? null;
+        }
+        if (!tenantId) {
+            const tRes = await query('SELECT tenant_id FROM users WHERE id = $1 LIMIT 1', [req.user?.userId]);
+            tenantId = tRes.rows[0]?.tenant_id ?? null;
+        }
         const result = await query(`
-            INSERT INTO alerts (type, severity, title, description, location, affected_farmers, is_active, triggered_at)
-            VALUES ($1, $2, $3, $4, $5, $6, true, NOW())
+            INSERT INTO alerts (type, severity, title, description, location, affected_farmers, tenant_id, is_active, triggered_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, true, NOW())
             RETURNING id, title, triggered_at
-        `, [type, severity || 'medium', title, description, location, affectedFarmers || []]);
+        `, [type, severity || 'medium', title, description, location, farmerIds, tenantId]);
         sendCreated(res, result.rows[0]);
     } catch (error) {
         logger.error('Error creating alert:', error);
@@ -52,11 +121,19 @@ router.patch('/:id/resolve', authorize(['extension_officer', 'admin']), async (r
     }
 
     try {
-        await query(`
-            UPDATE alerts 
+        const scope = await buildAlertScope(req.user as AlertPrincipal | undefined);
+        if (!scope) {
+            return res.status(403).json({ success: false, error: 'Tenant membership required' });
+        }
+        const params = [id, ...scope.params];
+        const result = await query(`
+            UPDATE alerts
             SET is_active = false, resolved_at = NOW()
-            WHERE id = $1
-        `, [id]);
+            WHERE id = $1${scope.clause.replace(/\$(\d+)/g, (_, n) => `$${Number(n) + 1}`)}
+        `, params);
+        if ((result.rowCount ?? 0) === 0) {
+            return sendForbidden(res, 'Alert not found in your scope');
+        }
         sendSuccess(res, { message: 'Alert marked as resolved' });
     } catch (error) {
         logger.error('Error resolving alert:', error);

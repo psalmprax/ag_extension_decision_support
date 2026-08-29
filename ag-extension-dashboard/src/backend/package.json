@@ -10,6 +10,7 @@
     "lint": "eslint src/**/*.ts",
     "test": "jest",
     "test:coverage": "jest --coverage",
+    "check:drift": "node ../../../scripts/prisma-drift-check.cjs",
     "lint-staged": "lint-staged",
     "prepare": "husky || true"
   },

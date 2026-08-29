@@ -81,8 +81,8 @@ async function seedInitialData(): Promise<void> {
       logger.info('Seeding default officer...');
       const passwordHash = await bcrypt.hash(config.demo.password, 10);
       await pool.query(`
-        INSERT INTO users (id, email, password_hash, first_name, last_name, role, region, phone, is_active)
-        VALUES ($1, 'demo@agridemo.com', $2, 'Demo', 'User', 'extension_officer', 'Kenya', '+254700000000', true)
+        INSERT INTO users (id, email, password_hash, first_name, last_name, role, region, phone, is_active, is_demo)
+        VALUES ($1, 'demo@agridemo.com', $2, 'Demo', 'User', 'extension_officer', 'Kenya', '+254700000000', true, true)
       `, [officerId, passwordHash]);
     } else {
       // Get existing user ID if it's the demo one or just pick first one
@@ -96,8 +96,8 @@ async function seedInitialData(): Promise<void> {
     if (parseInt(farmerCount.rows[0].count) === 0) {
       logger.info('Seeding initial farmers...');
       await pool.query(`
-        INSERT INTO farmers (id, user_id, assigned_officer_id, first_name, last_name, location, village, region, crops, farm_size_hectares, temperature, soil_moisture, ph_level, ai_confidence)
-        VALUES ($1, $2, $2, 'Emmanuel', 'Mwangi', 'Machakos Rural, Eastern Zone', 'Kathiani', 'Machakos', ARRAY['Maize', 'Beans'], 3.5, 23.5, 42.0, 6.1, 74.0)
+        INSERT INTO farmers (id, user_id, assigned_officer_id, first_name, last_name, location, village, region, crops, farm_size_hectares, temperature, soil_moisture, ph_level, ai_confidence, is_demo)
+        VALUES ($1, $2, $2, 'Emmanuel', 'Mwangi', 'Machakos Rural, Eastern Zone', 'Kathiani', 'Machakos', ARRAY['Maize', 'Beans'], 3.5, 23.5, 42.0, 6.1, 74.0, true)
       `, [farmerId, officerId]);
     } else {
       const existingFarmer = await pool.query('SELECT id FROM farmers LIMIT 1');
@@ -203,6 +203,39 @@ export async function createTables(): Promise<void> {
   // path instead of Prisma migrations. All statements are idempotent.
   try {
     await pool.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS is_demo BOOLEAN NOT NULL DEFAULT false;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS manager_id UUID;
+      ALTER TABLE farmers ADD COLUMN IF NOT EXISTS is_demo BOOLEAN NOT NULL DEFAULT false;
+      UPDATE users SET is_demo = true WHERE id = '00000000-0000-0000-0000-000000000001';
+      UPDATE users SET is_demo = true WHERE lower(COALESCE(email,'')) = 'demo@agridemo.com';
+      UPDATE users SET is_demo = true WHERE lower(COALESCE(first_name,'')) = 'demo' OR lower(COALESCE(last_name,'')) = 'demo';
+      UPDATE farmers SET is_demo = true WHERE id = '00000000-0000-0000-0000-000000000002';
+
+      -- Tenant-scoping + relationship-gap columns (legacy bootstrap parity).
+      ALTER TABLE visits ADD COLUMN IF NOT EXISTS tenant_id UUID;
+      ALTER TABLE chat_conversations ADD COLUMN IF NOT EXISTS tenant_id UUID;
+      ALTER TABLE alerts ADD COLUMN IF NOT EXISTS tenant_id UUID;
+      ALTER TABLE notifications ADD COLUMN IF NOT EXISTS tenant_id UUID;
+      ALTER TABLE reports ADD COLUMN IF NOT EXISTS tenant_id UUID;
+      ALTER TABLE notifications ADD COLUMN IF NOT EXISTS farmer_id UUID;
+      CREATE INDEX IF NOT EXISTS visits_tenant_id_idx ON visits(tenant_id);
+      CREATE INDEX IF NOT EXISTS chat_conversations_tenant_id_idx ON chat_conversations(tenant_id);
+      CREATE INDEX IF NOT EXISTS alerts_tenant_id_idx ON alerts(tenant_id);
+      CREATE INDEX IF NOT EXISTS notifications_tenant_id_idx ON notifications(tenant_id);
+      CREATE INDEX IF NOT EXISTS notifications_farmer_id_idx ON notifications(farmer_id);
+      CREATE INDEX IF NOT EXISTS reports_tenant_id_idx ON reports(tenant_id);
+
+      CREATE TABLE IF NOT EXISTS farmer_assignment_history (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        farmer_id UUID NOT NULL REFERENCES farmers(id) ON DELETE CASCADE,
+        officer_id UUID REFERENCES users(id) ON DELETE SET NULL,
+        reassigned_by UUID NOT NULL REFERENCES users(id) ON DELETE SET NULL,
+        reason TEXT,
+        assigned_at TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS farmer_assignment_history_farmer_idx ON farmer_assignment_history(farmer_id);
+      CREATE INDEX IF NOT EXISTS farmer_assignment_history_officer_idx ON farmer_assignment_history(officer_id);
+
       CREATE TABLE IF NOT EXISTS tenants (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         name VARCHAR(160) NOT NULL,

@@ -3,6 +3,7 @@ import { authorize, AuthRequest } from '@/middleware/authorize';
 import { getPrincipalTenantId } from '@/services/dataGovernanceService';
 import { autonomousCampaignService } from '@/services/autonomousCampaignService';
 import { regionalSkillService } from '@/services/regionalSkillService';
+import { getOutreachDeliveryStats, retryOutreachMessages } from '@/workers/outreachWorker';
 import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 
@@ -42,6 +43,36 @@ router.post('/goal', async (req: AuthRequest, res: Response) => {
     } catch (error) {
         logger.error('Goal campaign execution failed:', error);
         return safeError(res, 500, 'Goal campaign execution failed');
+    }
+});
+
+/**
+ * GET /api/campaigns/outreach-stats — Delivery status of the outreach queue
+ */
+router.get('/outreach-stats', async (_req: Request, res: Response) => {
+    try {
+        const stats = await getOutreachDeliveryStats();
+        return res.json({ success: true, data: stats });
+    } catch (error) {
+        logger.error('Failed to fetch outreach delivery stats:', error);
+        return safeError(res, 500, 'Failed to fetch outreach delivery stats');
+    }
+});
+
+/**
+ * POST /api/campaigns/outreach-stats/retry — Requeue failed outreach messages
+ */
+router.post('/outreach-stats/retry', async (req: AuthRequest, res: Response) => {
+    try {
+        const { ids } = req.body ?? {};
+        if (!Array.isArray(ids) || ids.length === 0 || ids.some((id: unknown) => typeof id !== 'string')) {
+            return res.status(400).json({ success: false, error: 'ids must be a non-empty array of strings' });
+        }
+        const requeued = await retryOutreachMessages(ids as string[]);
+        return res.json({ success: true, data: { requeued } });
+    } catch (error) {
+        logger.error('Failed to retry outreach messages:', error);
+        return safeError(res, 500, 'Failed to retry outreach messages');
     }
 });
 

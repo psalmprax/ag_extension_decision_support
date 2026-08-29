@@ -12,13 +12,14 @@ import {
   Video,
   X,
   Calendar,
-  Mic,
-  Camera,
   Loader2,
+  Link2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { JourneyBreadcrumbs, JourneyStep } from './JourneyBreadcrumbs';
 import { InlineVisitBookingCard } from './InlineVisitBookingCard';
+import { VideoCall } from './VideoCall';
+import { useAppStore } from '@/store/useAppStore';
 import apiClient from '@/api/client';
 import { useDemoMode, DEMO_ACTIVITIES } from '@/demo';
 
@@ -304,51 +305,65 @@ const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
 const TeleCallModal: React.FC<{
   call: { farmerName: string; phone: string; issue: string };
   onClose: () => void;
-}> = ({ call, onClose }) => (
-  <div className="fixed inset-0 z-[1300] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      className="w-full max-w-lg bg-slate-950 border border-emerald-500/40 rounded-xl shadow-2xl p-5 space-y-4 text-white"
-    >
-      <div className="flex justify-between items-center pb-3 border-b border-slate-800">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
-            <Video className="w-4 h-4" />
+}> = ({ call, onClose }) => {
+  const storeUser = useAppStore(s => s.user);
+  const roomId = `tele-${call.phone.replace(/\D/g, '')}`;
+
+  const copyInviteLink = () => {
+    const inviteLink = `${window.location.origin}/tele-call/${roomId}`;
+    navigator.clipboard.writeText(inviteLink);
+    toast.success('Invite link copied — share it with the farmer to join this call.');
+  };
+
+  return (
+    <div className="fixed inset-0 z-[1300] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="w-full max-w-4xl max-h-[90vh] overflow-hidden bg-slate-950 border border-emerald-500/40 rounded-xl shadow-2xl"
+      >
+        <div className="flex justify-between items-center px-5 py-3 border-b border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+              <Video className="w-4 h-4" />
+            </div>
+            <div>
+              <h4 className="font-bold text-sm text-white">Tele-Agronomy Video Consultation</h4>
+              <p className="text-xs text-slate-400">Live with {call.farmerName} ({call.phone})</p>
+            </div>
           </div>
-          <div>
-            <h4 className="font-bold text-sm text-white">Tele-Agronomy Video Consultation</h4>
-            <p className="text-xs text-slate-400">Live with {call.farmerName} ({call.phone})</p>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={copyInviteLink}
+              aria-label="Copy invite link"
+              title="Copy invite link to share with the farmer"
+              className="p-1 rounded-lg hover:bg-slate-800 text-emerald-400 hover:text-emerald-300 transition-colors"
+            >
+              <Link2 className="w-4 h-4" />
+            </button>
+            <button
+              onClick={onClose}
+              aria-label="Close tele-call"
+              className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
         </div>
-        <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-      <div className="relative h-56 bg-slate-900 rounded-xl overflow-hidden border border-slate-800 flex items-center justify-center">
-        <div className="absolute top-3 left-3 bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1">
-          <Radio className="w-2.5 h-2.5 animate-pulse text-amber-400" />
-          DEMO — WebRTC not connected
+        <div className="overflow-y-auto max-h-[80vh]">
+          <VideoCall
+            roomId={roomId}
+            userId={(storeUser as { userId?: string } | null | undefined)?.userId || 'unknown'}
+            userName={`${storeUser?.firstName} ${storeUser?.lastName}` || 'Extension Officer'}
+            isHost={true}
+            onEnd={onClose}
+          />
         </div>
-        <div className="text-center space-y-2">
-          <Camera className="w-10 h-10 text-emerald-400 animate-pulse mx-auto opacity-80" />
-          <p className="text-xs text-slate-300 font-medium">Farmer Camera Feed (Tele-Agronomy Simulation)</p>
-          <span className="text-[10px] text-slate-500 font-mono">Case: {call.issue}</span>
-        </div>
-      </div>
-      <div className="flex justify-between items-center pt-2">
-        <div className="flex gap-2">
-          <button className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300"><Mic className="w-4 h-4" /></button>
-          <button className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300"><Camera className="w-4 h-4" /></button>
-        </div>
-        <button onClick={onClose} className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl transition-all shadow-md shadow-rose-950">
-          End Tele-Consultation
-        </button>
-      </div>
-    </motion.div>
-  </div>
-);
+      </motion.div>
+    </div>
+  );
+};
 
 async function sendActivitySms(phone: string, message: string): Promise<void> {
   const { data } = await apiClient.post<{ success: boolean; error?: string }>('/sms/send', {

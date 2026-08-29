@@ -189,7 +189,7 @@ describe('Phase 2 KnockKnock Aesthetic Component Suite', () => {
   });
 
   describe('LiveActivityStream Phase 2 Enhancements', () => {
-    it('opens Tele-Agronomy consultation modal when Tele-Call button is clicked', async () => {
+    it('opens the real WebRTC Tele-Agronomy call UI when Tele-Call button is clicked', async () => {
       await renderWithLanguage(<LiveActivityStream />);
 
       // Wait for async data to load
@@ -201,10 +201,11 @@ describe('Phase 2 KnockKnock Aesthetic Component Suite', () => {
       fireEvent.click(teleCallBtns[0]);
 
       expect(screen.getByText('Tele-Agronomy Video Consultation')).toBeInTheDocument();
-      expect(screen.getByText(/DEMO.+WebRTC not connected/i)).toBeInTheDocument();
+      // Real WebRTC host start screen, not a simulation placeholder
+      expect(screen.getByRole('button', { name: /Start Video Consultation/i })).toBeInTheDocument();
+      expect(screen.queryByText(/DEMO.+WebRTC not connected/i)).not.toBeInTheDocument();
 
-      const endCallBtn = screen.getByRole('button', { name: /End Tele-Consultation/i });
-      fireEvent.click(endCallBtn);
+      fireEvent.click(screen.getByRole('button', { name: /Close tele-call/i }));
 
       expect(screen.queryByText('Tele-Agronomy Video Consultation')).not.toBeInTheDocument();
     });
@@ -237,7 +238,7 @@ describe('Phase 2 KnockKnock Aesthetic Component Suite', () => {
       // Switch to tele-call tab
       fireEvent.click(screen.getByRole('button', { name: /Tele-Call/i }));
       expect(screen.getByText('Instant Tele-Agronomy Call')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Generate Live Call Link/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Start Tele-Agronomy Call/i })).toBeInTheDocument();
     });
   });
 });

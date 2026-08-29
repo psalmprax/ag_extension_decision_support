@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
 import datetime
+import logging
 from .models import ContentCandidate
+
+logger = logging.getLogger(__name__)
 
 
 class DiscoveryScannerBase(ABC):
@@ -32,7 +35,7 @@ class DiscoveryScannerBase(ABC):
                         pub_date_str.replace("Z", "+00:00")
                     )
                 except (ValueError, AttributeError):
-                    pass
+                    logger.debug("Unparseable published_at metadata; falling back to next source")
 
         # 2. Fall back to published_at field
         if not pub_date and candidate.published_at:
@@ -54,7 +57,7 @@ class DiscoveryScannerBase(ABC):
                 )  # At least 30 min to avoid division by zero
                 return candidate.view_count / hours_since
             except (AttributeError, TypeError, ValueError):
-                pass
+                logger.debug("Could not compute hours since publication; falling back to engagement estimate")
 
         # 4. Ultimate fallback: estimate based on engagement
         # newer content with high engagement = higher velocity

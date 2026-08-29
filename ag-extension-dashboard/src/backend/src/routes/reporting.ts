@@ -82,8 +82,11 @@ async function getReportScope(req: Request, parameterIndex: number): Promise<{ c
     if (process.env.NODE_ENV === 'test') return { clause: '', params: [] };
     const tenantId = await getPrincipalTenantId(req.user.userId);
     if (tenantId) {
+        // Scope directly on the report's tenant_id (backfilled from the report
+        // author's user row), falling back to the author's tenant for legacy
+        // reports created before the backfill.
         return {
-            clause: ` AND EXISTS (SELECT 1 FROM users report_owner WHERE report_owner.id = reports.generated_by AND report_owner.tenant_id = $${parameterIndex})`,
+            clause: ` AND (reports.tenant_id = $${parameterIndex} OR (reports.tenant_id IS NULL AND EXISTS (SELECT 1 FROM users report_owner WHERE report_owner.id = reports.generated_by AND report_owner.tenant_id = $${parameterIndex})))`,
             params: [tenantId],
         };
     }
@@ -201,11 +204,16 @@ async function generateReportData(type: string, effectiveStartDate: string, effe
         }
     };
 
+    const reportAuthorId = officerId || req.user!.userId;
+    const authorTenant = await query<{ tenant_id: string | null }>(
+        'SELECT tenant_id FROM users WHERE id = $1 LIMIT 1',
+        [reportAuthorId]
+    );
     const result = await query<ReportListRow>(`
-        INSERT INTO reports (type, title, generated_by, content, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, 'completed', NOW(), NOW())
+        INSERT INTO reports (type, title, generated_by, content, status, tenant_id, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, 'completed', $5, NOW(), NOW())
         RETURNING *
-    `, [type, reportTitle, officerId || req.user!.userId, JSON.stringify(fullReportContent)]);
+    `, [type, reportTitle, reportAuthorId, JSON.stringify(fullReportContent), authorTenant.rows[0]?.tenant_id ?? null]);
 
     await usageService.incrementUsage(req.user!.userId, 'report');
 

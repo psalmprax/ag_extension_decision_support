@@ -18,36 +18,6 @@ export interface DiseaseSaliencyCanvasProps {
   onSelectZone?: (zone: LesionDetectionZone) => void;
 }
 
-const DEFAULT_DETECTIONS: LesionDetectionZone[] = [
-  {
-    id: 'zone-1',
-    x: 0.38,
-    y: 0.42,
-    radius: 0.14,
-    label: 'Maize Foliar Chlorosis & Rust Pustules',
-    confidence: 0.94,
-    severity: 'severe',
-  },
-  {
-    id: 'zone-2',
-    x: 0.62,
-    y: 0.58,
-    radius: 0.11,
-    label: 'Cercospora Leaf Spotting',
-    confidence: 0.88,
-    severity: 'moderate',
-  },
-  {
-    id: 'zone-3',
-    x: 0.28,
-    y: 0.72,
-    radius: 0.08,
-    label: 'Nitrogen Starvation Margin Discoloration',
-    confidence: 0.82,
-    severity: 'mild',
-  },
-];
-
 function drawProceduralLeaf(ctx: CanvasRenderingContext2D, width: number, height: number) {
   const bgGrad = ctx.createLinearGradient(0, 0, width, height);
   bgGrad.addColorStop(0, '#064e3b');
@@ -184,7 +154,7 @@ function drawLoupeLens(
 
 export const DiseaseSaliencyCanvas: React.FC<DiseaseSaliencyCanvasProps> = ({
   imageSrc,
-  detections = DEFAULT_DETECTIONS,
+  detections = [],
   className = '',
   onSelectZone,
 }) => {
@@ -275,8 +245,19 @@ export const DiseaseSaliencyCanvas: React.FC<DiseaseSaliencyCanvasProps> = ({
     setMousePos(null);
   };
 
+  const hasLiveDetections = detections.length > 0;
+
   return (
     <div className={`space-y-4 ${className}`}>
+      {!hasLiveDetections && (
+        <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          <span>
+            No live leaf-inference detections are available yet. Upload or select an
+            analyzed sample to see lesion highlighting here — this canvas does not manufacture scan results.
+          </span>
+        </div>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-3">
           <button

@@ -57,8 +57,46 @@ export const executeGoalCampaign = async (payload: {
   return response.data;
 };
 
+export interface OutreachDeliveryStats {
+  totals: {
+    total: number;
+    sent: number;
+    failed: number;
+    queued: number;
+    processing: number;
+    sentRate: number;
+  };
+  byChannel: Array<{
+    channel: string;
+    total: number;
+    sent: number;
+    failed: number;
+  }>;
+  recentFailures: Array<{
+    id: string;
+    channel: string;
+    recipient: string | null;
+    lastError: string | null;
+    attempts: number;
+    updatedAt: string;
+  }>;
+}
+
 export const fetchCampaignHistory = async (): Promise<{ success: boolean; data: CampaignHistoryItem[] }> => {
   const response = await apiClient.get<{ success: boolean; data: CampaignHistoryItem[] }>('/campaigns/history');
+  return response.data;
+};
+
+export const fetchOutreachStats = async (): Promise<{ success: boolean; data: OutreachDeliveryStats }> => {
+  const response = await apiClient.get<{ success: boolean; data: OutreachDeliveryStats }>('/campaigns/outreach-stats');
+  return response.data;
+};
+
+export const retryOutreachMessages = async (ids: string[]): Promise<{ success: boolean; data: { requeued: number } }> => {
+  const response = await apiClient.post<{ success: boolean; data: { requeued: number } }>(
+    '/campaigns/outreach-stats/retry',
+    { ids }
+  );
   return response.data;
 };
 

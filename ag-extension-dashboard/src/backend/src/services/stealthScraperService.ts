@@ -17,6 +17,12 @@ export class StealthScraperService {
      * Executes a stealth scrape via the Python Agent Zero.
      */
     static async scrapeKnowledge(niche: string, platform: string, region: string): Promise<ScrapedTrend[]> {
+        const agentToken = process.env.AGENT_ZERO_TOKEN;
+        if (!agentToken) {
+            logger.warn('Stealth scrape aborted: AGENT_ZERO_TOKEN is not configured');
+            return [];
+        }
+
         try {
             logger.info(`Triggering stealth scrape for niche: "${niche}" on platform: "${platform}" in region: "${region}"`);
             
@@ -32,7 +38,7 @@ export class StealthScraperService {
                 },
                 {
                     headers: {
-                        'Authorization': `Bearer ${process.env.AGENT_ZERO_TOKEN || 'dev-token'}`,
+                        'Authorization': `Bearer ${agentToken}`,
                         'Content-Type': 'application/json'
                     },
                     timeout: 30000 // Stealth scrapes might take a little time

@@ -176,7 +176,7 @@ describe('KnockKnock Aesthetic Component Suite', () => {
       expect(screen.getByRole('button', { name: /Voice/i })).toBeInTheDocument();
     });
 
-    it('switches to Leaf Scan tab and simulates analysis', async () => {
+    it('opens the file picker from the Leaf Scan tab without fabricating a result', async () => {
       await renderWithLanguage(<FloatingAIPill />);
 
       // Open drawer
@@ -186,17 +186,18 @@ describe('KnockKnock Aesthetic Component Suite', () => {
       fireEvent.click(screen.getByRole('button', { name: /Leaf Scan/i }));
       expect(screen.getByText('Upload or Capture Leaf Photo')).toBeInTheDocument();
 
-      // Trigger scan
+      // Trigger scan — no diagnosis may appear without a real analysis response
       const scanBtn = screen.getByRole('button', { name: /Select Leaf Sample/i });
       fireEvent.click(scanBtn);
 
       await waitFor(() => {
-        expect(screen.getByText(/Late Blight/i)).toBeInTheDocument();
-        expect(screen.getByText(/94% Match/i)).toBeInTheDocument();
-      }, { timeout: 3000 });
+        expect(screen.queryByText(/Late Blight/i)).not.toBeInTheDocument();
+        expect(screen.queryByText(/% Match/i)).not.toBeInTheDocument();
+      });
+      expect(screen.getByText('Upload or Capture Leaf Photo')).toBeInTheDocument();
     });
 
-    it('switches to Voice tab and provides transcription', async () => {
+    it('switches to Voice tab and never fabricates a transcription', async () => {
       await renderWithLanguage(<FloatingAIPill />);
 
       fireEvent.click(screen.getByRole('button', { name: /AI Agronomist/i }));
@@ -207,9 +208,12 @@ describe('KnockKnock Aesthetic Component Suite', () => {
       const recordBtn = recordPrompt.parentElement?.querySelector('button');
       if (recordBtn) fireEvent.click(recordBtn);
 
+      // jsdom has no SpeechRecognition/getUserMedia, so no transcript may be invented
       await waitFor(() => {
-        expect(screen.getByText(/AI Voice Transcription/i)).toBeInTheDocument();
-      }, { timeout: 4000 });
+        expect(screen.queryByText(/AI Voice Transcription/i)).not.toBeInTheDocument();
+        expect(screen.queryByText(/Farmer Otieno reports/i)).not.toBeInTheDocument();
+      });
+      expect(screen.getByText(/Tap to Record Agronomic Note/i)).toBeInTheDocument();
     });
   });
 

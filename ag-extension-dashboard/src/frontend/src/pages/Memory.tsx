@@ -261,7 +261,7 @@ export function Memory() {
                     ? m.category
                     : 'rule') as 'fao' | 'soil' | 'nasa' | 'farmer' | 'rule',
                   snippet: typeof m.value === 'string' ? m.value : JSON.stringify(m.value),
-                  score: m.importance || 0.85,
+                  score: m.importance ?? 0,
                 }))
               : undefined
           }

@@ -95,22 +95,35 @@ class WebRTCService {
     }
 
     private setupRoomHandlers(socket: Socket) {
-        socket.on('create-room', async (data: { userId: string; userName: string }, callback: (response: Record<string, unknown>) => void) => {
-            const roomId = uuidv4();
+        socket.on('create-room', async (data: { userId: string; userName: string; roomId?: string }, callback: (response: Record<string, unknown>) => void) => {
+            // Honor a client-supplied roomId (so the host UI and the join link the
+            // farmer receives reference the SAME room). Anything that is not a
+            // safe opaque id falls back to a server-generated uuid.
+            const requestedId = typeof data.roomId === 'string' ? data.roomId.trim() : '';
+            const roomId = /^[a-zA-Z0-9-]{6,64}$/.test(requestedId) ? requestedId : uuidv4();
             const prisma = getPrisma();
-            
+            const participants = [{ id: data.userId, socketId: socket.id, name: data.userName }];
+
             try {
-                await prisma.webRTCRoom.create({
-                    data: {
+                // Upsert: re-clicking "Start Call" on an existing room re-activates
+                // it instead of failing on the unique constraint.
+                await prisma.webRTCRoom.upsert({
+                    where: { id: roomId },
+                    create: {
                         id: roomId,
                         hostId: data.userId,
-                        participants: [{ id: data.userId, socketId: socket.id, name: data.userName }] as any,
+                        participants: participants as any,
                         isActive: true,
-                    }
+                    },
+                    update: {
+                        hostId: data.userId,
+                        participants: participants as any,
+                        isActive: true,
+                    },
                 });
 
                 socket.join(roomId);
-                logger.info(`Room ${roomId} created in DB by ${data.userId}`);
+                logger.info(`Room ${roomId} ready in DB (host ${data.userId})`);
                 callback({ roomId, success: true });
             } catch (error) {
                 logger.error('Failed to create room:', error);
