@@ -16,47 +16,6 @@ router.use(authorize(['admin', 'regional_manager']));
  */
 router.get('/', async (req: Request, res: Response) => {
     try {
-        if (req.user?.email === 'demo@agridemo.com') {
-            return res.json({
-                success: true,
-                data: [
-                    {
-                        id: 'demo-user-1',
-                        email: 'sarah.officer@agridemo.com',
-                        firstName: 'Sarah',
-                        lastName: 'Kiprono',
-                        role: 'extension_officer',
-                        region: 'Nakuru',
-                        phone: '+254712000001',
-                        isActive: true,
-                        preferredLanguage: 'en',
-                    },
-                    {
-                        id: 'demo-user-2',
-                        email: 'david.admin@agridemo.com',
-                        firstName: 'David',
-                        lastName: 'Ochieng',
-                        role: 'admin',
-                        region: 'Nairobi HQ',
-                        phone: '+254712000002',
-                        isActive: true,
-                        preferredLanguage: 'en',
-                    },
-                    {
-                        id: 'demo-user-3',
-                        email: 'amina.manager@agridemo.com',
-                        firstName: 'Amina',
-                        lastName: 'Hassan',
-                        role: 'regional_manager',
-                        region: 'Eastern Zone',
-                        phone: '+254712000003',
-                        isActive: true,
-                        preferredLanguage: 'en',
-                    },
-                ],
-            });
-        }
-
         const pool = getPool();
         if (!pool) {
             return res.status(503).json({ success: false, error: 'Database unavailable' });

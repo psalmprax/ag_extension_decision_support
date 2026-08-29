@@ -28,6 +28,7 @@ import { AdvisoriesCard } from '@/components/advisories/AdvisoriesCard';
 import { FieldToolsCard } from '@/components/fieldtools/FieldToolsCard';
 import { LeaderboardCard } from '@/components/fieldtools/FieldIntelCards';
 import { OutbreakBanner } from '@/components/outbreaks/OutbreakBanner';
+import { OutreachDeliveryWidget } from '@/components/campaigns/OutreachDeliveryWidget';
 import { useDemoMode } from '@/demo';
 
 const REGION_MAP_MAX_RETRIES = 3;
@@ -656,6 +657,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
         <div className="space-y-4 sm:space-y-6">
           <SupportEfficiencyCard performanceData={performanceData} t={t} cardClass={cardClass} />
+          <OutreachDeliveryWidget />
           {(user?.role === 'admin' || user?.role === 'superadmin') && (
             <ActivePulseCard cardClass={cardClass} isLoading={isLoading} />
           )}

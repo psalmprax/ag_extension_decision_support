@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Network } from 'lucide-react';
 
 export interface GraphNode {
   id: string;
@@ -35,66 +35,12 @@ const CATEGORY_COLORS: Record<GraphNode['category'], string> = {
   rule: '#ec4899',
 };
 
-const DEFAULT_NODES: GraphNode[] = [
-  {
-    id: 'fao-maize',
-    label: 'FAO Maize Pathology Vol. 4',
-    category: 'fao',
-    snippet: 'Puccinia sorghi fungal pustule identification and triazole-based chemical control guidelines.',
-    score: 0.96,
-  },
-  {
-    id: 'soil-nitrogen',
-    label: 'SoilGrids Sub-Saharan N Index',
-    category: 'soil',
-    snippet: 'Regional topsoil total nitrogen (0-30cm) median baseline in Machakos and Eastern regions.',
-    score: 0.89,
-  },
-  {
-    id: 'nasa-precip',
-    label: 'NASA POWER Wet-Season Forecast',
-    category: 'nasa',
-    snippet: '7-day satellite precipitation coefficient and soil moisture anomaly tracking.',
-    score: 0.92,
-  },
-  {
-    id: 'farmer-mwangi',
-    label: 'Farmer: Emmanuel Mwangi (Machakos)',
-    category: 'farmer',
-    snippet: 'Plot #12: Intercropped Maize & Beans. Prior visit flagged moderate nitrogen deficiency.',
-    score: 0.85,
-  },
-  {
-    id: 'fao-cassava',
-    label: 'IITA Cassava Mosaic Guide',
-    category: 'fao',
-    snippet: 'Whitefly vector transmission cycles and virus-resistant clone selection recommendations.',
-    score: 0.78,
-  },
-  {
-    id: 'rule-lime',
-    label: 'Agricultural Lime Dosing Matrix',
-    category: 'rule',
-    snippet: 'Standard application protocol for acidic clay soils below pH 5.2 (2.5 tonnes/ha).',
-    score: 0.88,
-  },
-  {
-    id: 'farmer-njeri',
-    label: 'Farmer: Mary Njeri (Kirinyaga)',
-    category: 'farmer',
-    snippet: 'Plot #04: Coffee & Avocado grove. Soil test shows high potassium but low soil organic matter.',
-    score: 0.81,
-  },
-];
-
-const DEFAULT_LINKS: GraphLink[] = [
-  { source: 'farmer-mwangi', target: 'soil-nitrogen', weight: 0.9 },
-  { source: 'farmer-mwangi', target: 'fao-maize', weight: 0.85 },
-  { source: 'soil-nitrogen', target: 'rule-lime', weight: 0.75 },
-  { source: 'fao-maize', target: 'nasa-precip', weight: 0.7 },
-  { source: 'farmer-njeri', target: 'soil-nitrogen', weight: 0.65 },
-  { source: 'fao-cassava', target: 'nasa-precip', weight: 0.6 },
-];
+// IMPORTANT: fallback nodes must stay empty. Rendering fabricated knowledge
+// entries (fake FAO/SoilGrids sources, invented farmer plots) as if they were
+// real graph data would misrepresent the RAG store. The canvas only draws
+// nodes supplied by its caller; callers show an honest empty state otherwise.
+const DEFAULT_NODES: GraphNode[] = [];
+const DEFAULT_LINKS: GraphLink[] = [];
 
 function applyRepulsionBetween(n1: GraphNode, n2: GraphNode, draggingNode: GraphNode | null) {
   const dx = (n2.x || 0) - (n1.x || 0);
@@ -439,6 +385,19 @@ export const RagKnowledgeGraphCanvas: React.FC<RagKnowledgeGraphCanvasProps> = (
           onMouseLeave={handleMouseUp}
           className="w-full h-[340px] block cursor-grab active:cursor-grabbing"
         />
+
+        {nodes.length === 0 && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="text-center px-6 space-y-2">
+              <Network className="w-8 h-8 mx-auto text-slate-500" />
+              <p className="text-sm font-semibold text-slate-300">No indexed knowledge yet</p>
+              <p className="text-xs text-slate-500 max-w-md">
+                The knowledge graph visualizes real RAG-memory entries. When indexed articles,
+                soils, or farmer records exist, they'll appear here — fabricated sample data is never shown.
+              </p>
+            </div>
+          </div>
+        )}
 
         {(selectedNode || hoveredNode) && (
           <div className="absolute top-3 left-3 bg-gray-900/90 border border-white/10 backdrop-blur-md p-3.5 rounded-xl shadow-xl text-xs text-white max-w-sm pointer-events-none animate-in fade-in">

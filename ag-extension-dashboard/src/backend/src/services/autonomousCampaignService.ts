@@ -120,40 +120,70 @@ Generate a concise, actionable, and warm advisory SMS/WhatsApp message (max 150 
         personalizedMsg: string,
         channel: string,
         userId?: string | null
-    ): Promise<number> {
-        let count = 0;
+    ): Promise<{ sms: number; whatsapp: number; telegram: number }> {
+        const dispatched = { sms: 0, whatsapp: 0, telegram: 0 };
         const farmerPhone = farmer.phone;
-        if ((channel === 'all' || channel === 'sms') && farmerPhone) {
-            await smsService.sendSMS({
-                to: farmerPhone,
-                message: personalizedMsg,
+        const wantsSms = channel === 'all' || channel === 'sms';
+        const wantsWhatsapp = channel === 'all' || channel === 'whatsapp';
+        const wantsTelegram = channel === 'all' || channel === 'telegram';
+
+        if (wantsSms && farmerPhone) {
+            dispatched.sms = await this.dispatchSms(farmer, personalizedMsg, userId);
+        }
+        if (wantsWhatsapp && farmerPhone) {
+            dispatched.whatsapp = await this.dispatchWhatsApp(farmer, personalizedMsg, userId);
+        }
+        if (wantsTelegram && farmer.notes?.includes('tg:')) {
+            dispatched.telegram = await this.dispatchTelegram(farmer, personalizedMsg, userId);
+        }
+        return dispatched;
+    }
+
+    private async dispatchSms(farmer: any, message: string, userId?: string | null): Promise<number> {
+        try {
+            const sent = await smsService.sendSMS({
+                to: farmer.phone,
+                message,
                 farmerId: farmer.id,
                 senderId: userId || undefined,
             });
-            count++;
+            return sent ? 1 : 0;
+        } catch (dispatchErr) {
+            logger.warn(`Failed to dispatch SMS to farmer ${farmer.id}:`, dispatchErr);
+            return 0;
         }
-        if (channel === 'whatsapp' && farmerPhone) {
-            await whatsappService.sendMessage({
-                to: farmerPhone,
-                message: personalizedMsg,
+    }
+
+    private async dispatchWhatsApp(farmer: any, message: string, userId?: string | null): Promise<number> {
+        try {
+            const result = await whatsappService.sendMessage({
+                to: farmer.phone,
+                message,
                 farmerId: farmer.id,
                 senderId: userId || undefined,
             });
-            count++;
+            return result.success ? 1 : 0;
+        } catch (dispatchErr) {
+            logger.warn(`Failed to dispatch WhatsApp message to farmer ${farmer.id}:`, dispatchErr);
+            return 0;
         }
-        if (channel === 'telegram' && farmer.notes?.includes('tg:')) {
-            const tgChatId = farmer.notes.match(/tg:(\d+)/)?.[1];
-            if (tgChatId) {
-                await telegramService.sendMessage({
-                    chatId: tgChatId,
-                    text: personalizedMsg,
-                    farmerId: farmer.id,
-                    senderId: userId || undefined,
-                });
-                count++;
-            }
+    }
+
+    private async dispatchTelegram(farmer: any, message: string, userId?: string | null): Promise<number> {
+        const tgChatId = farmer.notes?.match(/tg:(\d+)/)?.[1];
+        if (!tgChatId) return 0;
+        try {
+            const result = await telegramService.sendMessage({
+                chatId: tgChatId,
+                text: message,
+                farmerId: farmer.id,
+                senderId: userId || undefined,
+            });
+            return result.success ? 1 : 0;
+        } catch (dispatchErr) {
+            logger.warn(`Failed to dispatch Telegram message to farmer ${farmer.id}:`, dispatchErr);
+            return 0;
         }
-        return count;
     }
 
     private async dispatchToFarmerCohort(
@@ -161,19 +191,22 @@ Generate a concise, actionable, and warm advisory SMS/WhatsApp message (max 150 
         advisoryText: string,
         channel: string,
         userId?: string | null
-    ): Promise<number> {
-        let dispatchedCount = 0;
+    ): Promise<{ total: number; byChannel: { sms: number; whatsapp: number; telegram: number } }> {
+        const totals = { sms: 0, whatsapp: 0, telegram: 0 };
         for (const farmer of farmers) {
             const farmerName = `${farmer.first_name || 'Farmer'} ${farmer.last_name || ''}`.trim();
             const personalizedMsg = `Hello ${farmerName},\n${advisoryText}`;
             try {
-                const sent = await this.dispatchToFarmer(farmer, personalizedMsg, channel, userId);
-                dispatchedCount += sent;
+                const dispatched = await this.dispatchToFarmer(farmer, personalizedMsg, channel, userId);
+                totals.sms += dispatched.sms;
+                totals.whatsapp += dispatched.whatsapp;
+                totals.telegram += dispatched.telegram;
             } catch (dispatchErr) {
                 logger.warn(`Failed to dispatch campaign message to farmer ${farmer.id}:`, dispatchErr);
             }
         }
-        return dispatchedCount;
+        const total = totals.sms + totals.whatsapp + totals.telegram;
+        return { total, byChannel: totals };
     }
 
     private async scheduleAtRiskVisits(
@@ -305,8 +338,16 @@ Generate a concise, actionable, and warm advisory SMS/WhatsApp message (max 150 
         addTrace('Advisory Synthesis', 'Generated contextualized advisory message.');
 
         // 5. Multi-Channel Dispatch
-        const dispatchedMessagesCount = await this.dispatchToFarmerCohort(farmers, advisoryText, channel, userId);
-        addTrace('Multi-Channel Dispatch', `Dispatched ${dispatchedMessagesCount} broadcast messages across SMS, WhatsApp, and Telegram.`);
+        const { total: dispatchedMessagesCount, byChannel } = await this.dispatchToFarmerCohort(farmers, advisoryText, channel, userId);
+        const channelBreakdown = [
+            byChannel.sms > 0 ? `SMS: ${byChannel.sms}` : '',
+            byChannel.whatsapp > 0 ? `WhatsApp: ${byChannel.whatsapp}` : '',
+            byChannel.telegram > 0 ? `Telegram: ${byChannel.telegram}` : '',
+        ].filter(Boolean).join(', ');
+        addTrace(
+            'Multi-Channel Dispatch',
+            `Dispatched ${dispatchedMessagesCount} broadcast messages${channelBreakdown ? ` (${channelBreakdown})` : ''}.`
+        );
 
         // 6. Schedule Field Visits
         let scheduledVisitsCount = 0;

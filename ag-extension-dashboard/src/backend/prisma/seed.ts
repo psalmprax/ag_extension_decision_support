@@ -19,6 +19,7 @@ async function main() {
     update: {
       passwordHash,
       role: 'admin',
+      isDemo: true,
     },
     create: {
       email: 'admin@agridemo.com',
@@ -27,6 +28,7 @@ async function main() {
       lastName: 'Administrator',
       role: 'admin',
       region: 'Global',
+      isDemo: true,
     },
   });
 
@@ -35,6 +37,7 @@ async function main() {
     where: { email: 'demo@agridemo.com' },
     update: {
       passwordHash,
+      isDemo: true,
     },
     create: {
       email: 'demo@agridemo.com',
@@ -43,6 +46,7 @@ async function main() {
       lastName: 'User',
       role: 'extension_officer',
       region: 'Kenya',
+      isDemo: true,
     },
   });
 
@@ -57,7 +61,7 @@ async function main() {
   for (const rm of regionalManagers) {
     await prisma.user.upsert({
       where: { email: rm.email },
-      update: { passwordHash, role: 'regional_manager' },
+      update: { passwordHash, role: 'regional_manager', isDemo: true },
       create: {
         email: rm.email,
         passwordHash,
@@ -65,6 +69,7 @@ async function main() {
         lastName: rm.lastName,
         role: 'regional_manager',
         region: rm.region,
+        isDemo: true,
       },
     });
   }
@@ -221,6 +226,7 @@ async function main() {
         languagePreference: seed.languagePreference,
         assignedOfficerId: user.id,
         isActive: true,
+        isDemo: true,
       },
       create: {
         id: seed.id,
@@ -245,6 +251,7 @@ async function main() {
         languagePreference: seed.languagePreference,
         assignedOfficerId: user.id,
         isActive: true,
+        isDemo: true,
       },
     });
   }

@@ -47,7 +47,7 @@ const LAYER_CONFIG: Record<
     max: 8.5,
     optimalRange: [6.0, 7.2],
     icon: Activity,
-    description: 'Sub-surface acidity and alkaline index from SoilGrids v2 data',
+    description: 'Procedural preview — not live SoilGrids data; connect a real soil test to populate',
     samplePoints: [
       { x: 0.15, y: 0.2, val: 5.1 },
       { x: 0.35, y: 0.7, val: 6.4 },
@@ -159,7 +159,7 @@ const LAYER_CONFIG: Record<
     max: 45,
     optimalRange: [22, 35],
     icon: Droplets,
-    description: 'Real-time root-zone moisture from NASA POWER satellite assimilation',
+    description: 'Preview estimate — not live NASA POWER assimilation',
     samplePoints: [
       { x: 0.2, y: 0.2, val: 14 },
       { x: 0.42, y: 0.5, val: 28 },

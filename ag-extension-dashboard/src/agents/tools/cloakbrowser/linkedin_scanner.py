@@ -91,7 +91,7 @@ class LinkedInScanner:
                         posts = self._extract_posts_from_json(data)
                         candidates.extend(posts)
                     except Exception:
-                        pass
+                        logger.debug("[LinkedInScanner] Skipping malformed JSON script block")
                         
         except Exception as e:
             logger.warning(f"[LinkedInScanner] Feed error: {e}")
@@ -130,7 +130,7 @@ class LinkedInScanner:
                         posts = self._extract_posts_from_json(data)
                         candidates.extend(posts)
                     except Exception:
-                        pass
+                        logger.debug("[LinkedInScanner] Skipping malformed JSON script block")
                         
         except Exception as e:
             logger.warning(f"[LinkedInScanner] Search error: {e}")

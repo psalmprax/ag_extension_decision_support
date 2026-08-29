@@ -33,7 +33,9 @@ async function buildVisitScope(user: VisitPrincipal | undefined): Promise<{ clau
     if (!tenantId) throw new Error('TENANT_MEMBERSHIP_REQUIRED');
 
     const params: unknown[] = [tenantId];
-    let clause = ' AND f.tenant_id = $1';
+    // Scope on the visit's own tenant_id (backfilled from the farmer), falling
+    // back to the farmer's tenant for legacy rows created before the backfill.
+    let clause = ' AND (v.tenant_id = $1 OR (v.tenant_id IS NULL AND f.tenant_id = $1))';
     if (user.role === 'extension_officer') {
         params.push(user.userId);
         clause += ' AND f.assigned_officer_id = $2';
@@ -154,40 +156,77 @@ interface InsertVisitParams {
     attachmentIds?: string[];
 }
 
+async function resolveVisitFarmerContext(farmerId: string, officerId?: string): Promise<{ tenantId: string | null; resolvedOfficerId: string }> {
+    const farmerLookup = await query<{ tenant_id: string | null; assigned_officer_id: string | null }>(
+        `SELECT tenant_id, assigned_officer_id FROM farmers WHERE id = $1 LIMIT 1`,
+        [farmerId]
+    );
+    const assignedOfficerId = farmerLookup.rows[0]?.assigned_officer_id ?? null;
+    if (officerId && assignedOfficerId && officerId !== assignedOfficerId) {
+        throw new Error('Visit officer must be the farmer\'s assigned extension officer');
+    }
+    return {
+        tenantId: farmerLookup.rows[0]?.tenant_id ?? null,
+        resolvedOfficerId: officerId || (assignedOfficerId ?? 'unassigned'),
+    };
+}
+
+async function validateAttachments(
+    attachmentIds: string[],
+    ownerUserId: string,
+    farmerId: string,
+    executor: typeof query | PoolClient
+): Promise<void> {
+    if (attachmentIds.length === 0) return;
+    const attachmentCheckSql = `SELECT id FROM upload_records
+        WHERE id = ANY($1::uuid[]) AND owner_user_id = $2 AND farmer_id = $3 AND status = 'active'`;
+    const attachmentCheck = executor === query
+        ? await query<{ id: string }>(attachmentCheckSql, [attachmentIds, ownerUserId, farmerId])
+        : await (executor as PoolClient).query(attachmentCheckSql, [attachmentIds, ownerUserId, farmerId]) as { rows: Array<{ id: string }> };
+    if (attachmentCheck.rows.length !== attachmentIds.length) {
+        throw new Error('One or more attachments are not owned by the current user or farmer');
+    }
+}
+
+async function linkAttachments(
+    visitId: string,
+    attachmentIds: string[],
+    executor: typeof query | PoolClient
+): Promise<void> {
+    if (attachmentIds.length === 0) return;
+    const attachmentSql = `INSERT INTO visit_attachments (visit_id, upload_id)
+        SELECT $1::uuid, unnest($2::uuid[]) ON CONFLICT DO NOTHING`;
+    if (executor === query) {
+        await query(attachmentSql, [visitId, attachmentIds]);
+    } else {
+        await (executor as PoolClient).query(attachmentSql, [visitId, attachmentIds]);
+    }
+}
+
 async function performInsertVisit(
     params: InsertVisitParams,
     executor: typeof query | PoolClient
 ) {
     const { farmerId, officerId, visitType, scheduledAt, notes, userId, attachmentIds = [] } = params;
-    const values = [farmerId, officerId || userId || 'u1', visitType, scheduledAt, notes];
-    if (attachmentIds.length > 0) {
-        if (!userId) throw new Error('Attachment owner is required');
-        const attachmentCheckSql = `SELECT id FROM upload_records
-            WHERE id = ANY($1::uuid[]) AND owner_user_id = $2 AND farmer_id = $3 AND status = 'active'`;
-        const attachmentCheck = executor === query
-            ? await query<{ id: string }>(attachmentCheckSql, [attachmentIds, userId, farmerId])
-            : await (executor as PoolClient).query(attachmentCheckSql, [attachmentIds, userId, farmerId]) as { rows: Array<{ id: string }> };
-        if (attachmentCheck.rows.length !== attachmentIds.length) {
-            throw new Error('One or more attachments are not owned by the current user or farmer');
-        }
-    }
-    const sql = `INSERT INTO visits (farmer_id, officer_id, visit_type, status, scheduled_at, notes, created_at)
-                 VALUES ($1, $2, $3, 'scheduled', $4, $5, NOW())
+    const farmerContext = await resolveVisitFarmerContext(farmerId, officerId);
+    const farmerTenantId = farmerContext.tenantId;
+    // A visit's officer defaults to the farmer's assigned officer when not supplied
+    // by the caller, preserving the assigned-officer consistency invariant. For
+    // farmer-created visits (no assignment), fall back to the submitting user.
+    const explicitOrAssigned = farmerContext.resolvedOfficerId !== 'unassigned' ? farmerContext.resolvedOfficerId : (userId || 'u1');
+    const effectiveOfficerId = officerId || explicitOrAssigned;
+    if (attachmentIds.length > 0 && !userId) throw new Error('Attachment owner is required');
+    if (attachmentIds.length > 0) await validateAttachments(attachmentIds, userId as string, farmerId, executor);
+
+    const sql = `INSERT INTO visits (farmer_id, officer_id, visit_type, status, scheduled_at, notes, tenant_id, created_at)
+                 VALUES ($1, $2, $3, 'scheduled', $4, $5, $6, NOW())
                  RETURNING *`;
 
     const result = executor === query
-        ? await query<VisitInsertRow>(sql, values)
-        : await (executor as PoolClient).query(sql, values) as { rows: VisitInsertRow[] };
+        ? await query<VisitInsertRow>(sql, [farmerId, effectiveOfficerId, visitType, scheduledAt, notes, farmerTenantId])
+        : await (executor as PoolClient).query(sql, [farmerId, effectiveOfficerId, visitType, scheduledAt, notes, farmerTenantId]) as { rows: VisitInsertRow[] };
     const created = result.rows[0];
-    if (created && attachmentIds.length > 0) {
-        const attachmentSql = `INSERT INTO visit_attachments (visit_id, upload_id)
-            SELECT $1::uuid, unnest($2::uuid[]) ON CONFLICT DO NOTHING`;
-        if (executor === query) {
-            await query(attachmentSql, [created.id, attachmentIds]);
-        } else {
-            await (executor as PoolClient).query(attachmentSql, [created.id, attachmentIds]);
-        }
-    }
+    if (created) await linkAttachments(created.id, attachmentIds, executor);
     return { success: true, data: created ? mapVisitInsertRow(created) : null };
 }
 

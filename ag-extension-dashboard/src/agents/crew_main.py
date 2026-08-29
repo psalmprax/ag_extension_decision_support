@@ -498,28 +498,24 @@ Consider:
     
     @staticmethod
     def _get_fallback_analysis(request: AnalysisRequest, start_time: datetime) -> MultiAgentResult:
-        """Fallback analysis when AI is unavailable"""
+        """Fallback analysis when AI is unavailable — clearly marked, no invented data"""
         processing_time = (datetime.utcnow() - start_time).total_seconds() * 1000
-        
+
         return MultiAgentResult(
             status="fallback",
             region=request.region,
             analysis_type=request.analysis_type.value,
             findings=[
-                f"Basic analysis for {request.region} focusing on {request.analysis_type.value}",
-                "Historical data and regional averages were used",
-                "Consider consulting local agricultural experts for detailed analysis"
+                f"[UNAVAILABLE] Live multi-agent analysis for {request.region} ({request.analysis_type.value}) could not be generated because the AI provider is unavailable.",
+                "No live data was consulted; no findings can be reported."
             ],
             recommendations=[
-                "Monitor weather forecasts regularly",
-                "Check soil conditions before planting",
-                "Review current market prices",
-                "Implement integrated pest management",
-                "Maintain records of farming activities"
+                "Retry when the AI provider is available",
+                "Consult your local extension officer for region-specific guidance"
             ],
-            risk_assessment={"weather": "medium", "market": "medium", "disease": "low"},
-            confidence=0.5,
-            data_sources=["historical_data", "regional_averages"],
+            risk_assessment={},
+            confidence=0.0,
+            data_sources=["fallback_stub"],
             generated_at=datetime.utcnow().isoformat(),
             processing_time_ms=int(processing_time)
         )

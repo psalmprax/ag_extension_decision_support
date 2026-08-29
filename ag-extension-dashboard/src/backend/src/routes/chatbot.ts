@@ -20,6 +20,7 @@ import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 import { authorize } from '@/middleware/authorize';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
+import { MessageAccessError } from '@/services/messageAccessService';
 
 const router = Router();
 
@@ -171,16 +172,26 @@ const resolveParticipants = async (user: AuthenticatedRequestUser, body: Convers
   let targetOfficerId = body.officer_id ?? body.officerId ?? null;
 
   if (user.role === 'farmer') {
+    // A farmer may only converse with their OWN extension officer — never pick
+    // an arbitrary officer or farmer (both are forced to the farmer's record).
     targetFarmerId = (await resolveFarmerId(user.userId)) ?? user.userId;
-    if (!targetOfficerId) {
-      const { rows: fRows } = await query<{ assigned_officer_id: string }>(
+    const { rows: fRows } = await query<{ assigned_officer_id: string }>(
+      `SELECT assigned_officer_id FROM farmers WHERE id = $1 LIMIT 1`,
+      [targetFarmerId]
+    );
+    targetOfficerId = fRows[0]?.assigned_officer_id ?? null;
+  } else if (user.role === 'extension_officer') {
+    targetOfficerId = user.userId;
+    if (targetFarmerId) {
+      // Officers may only open conversations with farmers assigned to them.
+      const { rows: fRows } = await query<{ assigned_officer_id: string | null }>(
         `SELECT assigned_officer_id FROM farmers WHERE id = $1 LIMIT 1`,
         [targetFarmerId]
       );
-      targetOfficerId = fRows[0]?.assigned_officer_id ?? null;
+      if (!fRows[0] || fRows[0].assigned_officer_id !== user.userId) {
+        throw new MessageAccessError('You can only message farmers assigned to you.');
+      }
     }
-  } else if (user.role === 'extension_officer') {
-    targetOfficerId = user.userId;
   } else {
     targetOfficerId = targetOfficerId ?? user.userId;
   }
@@ -261,6 +272,9 @@ router.post('/conversations', authorize(['admin', 'regional_manager', 'extension
 
     return res.status(201).json({ success: true, data: created ? mapChatConversationRow(created) : null });
   } catch (error) {
+    if (error instanceof MessageAccessError) {
+      return safeError(res, error.statusCode, error.message);
+    }
     logger.error('Failed to create conversation:', error);
     return safeError(res, 500, 'Failed to create conversation');
   }
@@ -304,6 +318,55 @@ router.delete('/conversations/:id', authorize(['admin', 'regional_manager', 'ext
   }
 });
 
+/**
+ * Enforce message write-scope for chat turns:
+ *  - An extension officer posting to a new farmer must have that farmer assigned.
+ *  - A farmer posting to an explicit conversation must own it.
+ */
+async function assertChatWriteAllowed(
+  user: AuthenticatedRequestUser,
+  targetFarmerId: string | undefined,
+  conversationId: string | undefined
+): Promise<void> {
+  if (user.role === 'extension_officer' && targetFarmerId) {
+    const { rows: fRows } = await query<{ assigned_officer_id: string | null }>(
+      `SELECT assigned_officer_id FROM farmers WHERE id = $1 LIMIT 1`,
+      [targetFarmerId]
+    );
+    if (!fRows[0] || fRows[0].assigned_officer_id !== user.userId) {
+      throw new MessageAccessError('You can only message farmers assigned to you.');
+    }
+  }
+  if (user.role === 'farmer' && conversationId) {
+    const ownFarmerId = (await resolveFarmerId(user.userId)) ?? user.userId;
+    const { rows: cRows } = await query<{ farmer_id: string | null }>(
+      `SELECT farmer_id FROM chat_conversations WHERE id = $1 LIMIT 1`,
+      [conversationId]
+    );
+    if (!cRows[0] || cRows[0].farmer_id !== ownFarmerId) {
+      throw new MessageAccessError('You can only message your extension officer.');
+    }
+  }
+}
+
+/**
+ * Determine the target conversation for a posted message after enforcing the
+ * write-scope rule for the caller's role.
+ */
+async function resolveConversationIdForPost(
+  user: AuthenticatedRequestUser | undefined,
+  targetFarmerId: string | undefined,
+  requestedConversationId: string | undefined,
+  language: string | undefined
+): Promise<string | undefined> {
+  if (!user) return requestedConversationId;
+  await assertChatWriteAllowed(user, targetFarmerId, requestedConversationId);
+  if (!requestedConversationId && targetFarmerId) {
+    return (await resolveOrCreateConversation(user, targetFarmerId, language)) ?? undefined;
+  }
+  return requestedConversationId;
+}
+
 const resolveOrCreateConversation = async (user: AuthenticatedRequestUser, targetFarmerId: string, language?: string) => {
   const officerId = user.role === 'farmer' ? null : user.userId;
   const { rows: existing } = await query<{ id: string }>(
@@ -344,12 +407,8 @@ const handleMessagePost = async (req: AuthedRequest, res: Response) => {
       return res.status(400).json({ success: false, error: 'content is required' });
     }
 
-    let convId = body.conversation_id ?? body.conversationId;
     const targetFarmerId = body.farmerId ?? body.farmer_id;
-
-    if (!convId && targetFarmerId && user) {
-      convId = (await resolveOrCreateConversation(user, targetFarmerId, body.language)) ?? undefined;
-    }
+    const conversationId = await resolveConversationIdForPost(user, targetFarmerId, body.conversation_id ?? body.conversationId, body.language);
 
     const senderRole = body.role ?? (user?.role === 'farmer' ? 'user' : 'officer');
 
@@ -357,19 +416,22 @@ const handleMessagePost = async (req: AuthedRequest, res: Response) => {
       `INSERT INTO chat_messages (conversation_id, role, content, language)
        VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [convId ?? null, senderRole, content, body.language ?? null]
+      [conversationId ?? null, senderRole, content, body.language ?? null]
     );
 
-    if (convId) {
+    if (conversationId) {
       await query(
         `UPDATE chat_conversations SET started_at = NOW() WHERE id = $1`,
-        [convId]
+        [conversationId]
       );
     }
 
     const created = rows[0];
     return res.status(201).json({ success: true, data: created ? mapChatMessageRow(created) : null });
   } catch (error) {
+    if (error instanceof MessageAccessError) {
+      return safeError(res, error.statusCode, error.message);
+    }
     logger.error('Failed to persist chat message:', error);
     return safeError(res, 500, 'Failed to persist chat message');
   }

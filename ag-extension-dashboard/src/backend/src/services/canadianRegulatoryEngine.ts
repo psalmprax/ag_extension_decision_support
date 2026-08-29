@@ -7,6 +7,8 @@ export interface RegulatoryCheckResult {
   maximumDosagePerHectare?: number;
   bufferZoneMeters?: number;
   warnings: string[];
+  /** Honest scope note: this is a bounded rule set, not a full PMRA/CFIA registry lookup. */
+  sourceNote: string;
 }
 
 export class CanadianRegulatoryEngine {
@@ -54,6 +56,8 @@ export class CanadianRegulatoryEngine {
       maximumDosagePerHectare: 250,
       bufferZoneMeters,
       warnings,
+      sourceNote:
+        'Bounded offline rule set (limited ingredient list + fixed thresholds). Not a substitute for a current PMRA/CFIA label or product-registry lookup.',
     };
   }
 }

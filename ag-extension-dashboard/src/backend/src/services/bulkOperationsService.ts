@@ -182,20 +182,45 @@ class BulkOperationsService {
         return result;
     }
 
+    private async assertFarmerUpdateAllowed(prev: { assignedOfficerId: string | null; userId: string | null; region: string | null }, userId: string, userRole: string, tx: Record<string, any>): Promise<void> {
+        if (userRole === 'admin') return;
+        if (userRole === 'extension_officer') {
+            if (prev.assignedOfficerId !== userId && prev.userId !== userId) throw new Error('Access denied');
+            return;
+        }
+        if (userRole === 'farmer') {
+            if (prev.userId !== userId) throw new Error('Access denied');
+            return;
+        }
+        const manager = await tx.user.findUnique({ where: { id: userId }, select: { region: true } });
+        if (manager?.region !== prev.region) throw new Error('Access denied');
+    }
+
+    private async updateFarmerItem(farmerId: string, updates: Record<string, unknown>, userId: string, userRole: string, tx: Record<string, any>): Promise<void> {
+        const prev = await tx.farmer.findUnique({ where: { id: farmerId }, select: { assignedOfficerId: true, userId: true, region: true, tenantId: true } });
+        if (!prev) throw new Error('Not found');
+        await this.assertFarmerUpdateAllowed(prev, userId, userRole, tx);
+        const nextOfficerId = updates.assignedOfficerId as string | null | undefined;
+        // Record assignment history whenever the officer assignment changes.
+        if (nextOfficerId !== undefined && nextOfficerId !== prev.assignedOfficerId) {
+            await tx.farmerAssignmentHistory.create({
+                data: {
+                    farmerId,
+                    officerId: nextOfficerId,
+                    reassignedBy: userId,
+                    reason: `bulk reassignment from ${prev.assignedOfficerId ?? 'none'} to ${nextOfficerId ?? 'none'}`,
+                },
+            });
+        }
+        // Preserve tenant on the farmer when updates don't touch it.
+        const merged = { tenantId: prev.tenantId, ...updates };
+        await tx.farmer.update({ where: { id: farmerId }, data: { ...merged as object, updatedAt: new Date() } });
+    }
+
     async bulkUpdateFarmers(request: BulkUpdateRequest, userId: string, userRole: string): Promise<BulkOperationResult> {
-        return this.executeBulkDelete('farmer', request.ids, userId, userRole, async (farmerId, tx) => {
-            if (userRole !== 'admin') {
-                const farmer = await tx.farmer.findUnique({ where: { id: farmerId }, select: { assignedOfficerId: true, userId: true, region: true } });
-                if (!farmer) throw new Error('Not found');
-                if (userRole === 'extension_officer' && farmer.assignedOfficerId !== userId && farmer.userId !== userId) throw new Error('Access denied');
-                if (userRole === 'farmer' && farmer.userId !== userId) throw new Error('Access denied');
-                if (userRole === 'regional_manager') {
-                    const manager = await tx.user.findUnique({ where: { id: userId }, select: { region: true } });
-                    if (manager?.region !== farmer.region) throw new Error('Access denied');
-                }
-            }
-            await tx.farmer.update({ where: { id: farmerId }, data: { ...request.updates, updatedAt: new Date() } });
-        });
+        return this.executeBulkDelete('farmer', request.ids, userId, userRole, (farmerId, tx) =>
+            this.updateFarmerItem(farmerId, request.updates as Record<string, unknown>, userId, userRole, tx)
+        );
     }
 
     private async buildFarmerExportFilters(filters: Record<string, any>, userId: string, userRole: string): Promise<Record<string, any>> {

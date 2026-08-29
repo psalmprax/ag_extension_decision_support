@@ -37,6 +37,7 @@ if (process.env.SENTRY_DSN) {
 import './workers/emailWorker';
 import './workers/alertWorker';
 import './workers/ingestionWorker';
+import './workers/outreachWorker';
 
 const httpServer = createServer(app);
 

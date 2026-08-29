@@ -282,6 +282,15 @@ jobs:
             docker buildx rm remote-builder 2>/dev/null || true
             docker buildx create --use --driver docker-container --driver-opt "network=host" --name remote-builder --bootstrap
 
+            # The `type=local` cache exporter writes a transient `ingest/` tree
+            # under each target's cache dir and renames startedat.tmp -> startedat
+            # on completion. An interrupted build (e.g. the daemon restart above)
+            # can leave that tree half-written, so the next export fails with
+            # "rename .../startedat.tmp ...: no such file or directory". Removing
+            # stale ingest dirs before baking lets the exporter start clean.
+            find /root/docker-cache -type d -name ingest -prune -exec rm -rf {} + 2>/dev/null || true
+            echo "  Stale local-cache ingest state cleared."
+
             CLEAN_REBUILD="${{ github.event.inputs.force_clean_rebuild == 'true' && '--no-cache' || '' }}"
 
             if [ -n "$CLEAN_REBUILD" ]; then
@@ -290,8 +299,30 @@ jobs:
             else
               echo "Authenticating to GHCR for remote Docker layer cache..."
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_REPOSITORY_OWNER" --password-stdin 2>/dev/null
+
+              # The `type=local` cache exporter can fail mid-export if an
+              # interrupted build left a stale ingest/ tree (rename startedat.tmp
+              # -> startedat: no such file). Retry once after clearing it — the
+              # build itself already succeeded, so this only re-runs the export.
+              run_bake() {
+                docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend agent-zero crew-ai
+              }
+
               echo "Building with remote cache (GHCR)..."
-              docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend agent-zero crew-ai
+              if ! BAKE_OUTPUT=$(run_bake 2>&1); then
+                echo "Bake failed — checking for stale cache export state..."
+                echo "$BAKE_OUTPUT" | tail -40
+                if echo "$BAKE_OUTPUT" | grep -qE "startedat\.tmp|error writing layer blob|ingest/"; then
+                  echo "Cache-export failure detected. Clearing stale ingest state and retrying..."
+                  find /root/docker-cache -type d -name ingest -prune -exec rm -rf {} + 2>/dev/null || true
+                  BAKE_OUTPUT=$(run_bake 2>&1) || { echo "$BAKE_OUTPUT" | tail -40; echo "FATAL: Bake failed after cache cleanup retry." >&2; exit 1; }
+                else
+                  echo "$BAKE_OUTPUT" >&2
+                  echo "FATAL: Bake failed for a non-cache reason." >&2
+                  exit 1
+                fi
+              fi
+              echo "$BAKE_OUTPUT" | tail -5
             fi
 
             # Pre-create external networks referenced by compose
@@ -670,6 +701,15 @@ jobs:
             docker buildx rm remote-builder 2>/dev/null || true
             docker buildx create --use --driver docker-container --driver-opt "network=host" --name remote-builder --bootstrap
 
+            # The `type=local` cache exporter writes a transient `ingest/` tree
+            # under each target's cache dir and renames startedat.tmp -> startedat
+            # on completion. An interrupted build (e.g. the daemon restart above)
+            # can leave that tree half-written, so the next export fails with
+            # "rename .../startedat.tmp ...: no such file or directory". Removing
+            # stale ingest dirs before baking lets the exporter start clean.
+            find /root/docker-cache -type d -name ingest -prune -exec rm -rf {} + 2>/dev/null || true
+            echo "  Stale local-cache ingest state cleared."
+
             CLEAN_REBUILD="${{ github.event.inputs.force_clean_rebuild == 'true' && '--no-cache' || '' }}"
 
             if [ -n "$CLEAN_REBUILD" ]; then
@@ -678,8 +718,30 @@ jobs:
             else
               echo "Authenticating to GHCR for remote Docker layer cache..."
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_REPOSITORY_OWNER" --password-stdin 2>/dev/null
+
+              # The `type=local` cache exporter can fail mid-export if an
+              # interrupted build left a stale ingest/ tree (rename startedat.tmp
+              # -> startedat: no such file). Retry once after clearing it — the
+              # build itself already succeeded, so this only re-runs the export.
+              run_bake() {
+                docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend agent-zero crew-ai
+              }
+
               echo "Building with remote cache (GHCR)..."
-              docker buildx bake --allow=fs=/root --load -f docker-bake.hcl backend frontend agent-zero crew-ai
+              if ! BAKE_OUTPUT=$(run_bake 2>&1); then
+                echo "Bake failed — checking for stale cache export state..."
+                echo "$BAKE_OUTPUT" | tail -40
+                if echo "$BAKE_OUTPUT" | grep -qE "startedat\.tmp|error writing layer blob|ingest/"; then
+                  echo "Cache-export failure detected. Clearing stale ingest state and retrying..."
+                  find /root/docker-cache -type d -name ingest -prune -exec rm -rf {} + 2>/dev/null || true
+                  BAKE_OUTPUT=$(run_bake 2>&1) || { echo "$BAKE_OUTPUT" | tail -40; echo "FATAL: Bake failed after cache cleanup retry." >&2; exit 1; }
+                else
+                  echo "$BAKE_OUTPUT" >&2
+                  echo "FATAL: Bake failed for a non-cache reason." >&2
+                  exit 1
+                fi
+              fi
+              echo "$BAKE_OUTPUT" | tail -5
             fi
 
             # Pre-create external networks referenced by compose

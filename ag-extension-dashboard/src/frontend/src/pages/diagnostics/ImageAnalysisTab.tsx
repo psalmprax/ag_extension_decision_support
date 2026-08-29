@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Camera, FileImage, Loader2, CheckCircle, Zap, ShieldAlert, Sparkles } from 'lucide-react';
+import { Camera, FileImage, Loader2, CheckCircle, CloudOff, ShieldAlert, Sparkles } from 'lucide-react';
 import {
   analyzePlantImage,
   type DiagnosticProvenance,
   type DiseaseDiagnosis,
   type DiagnosticReviewStatus,
 } from '../../api/diseaseService';
-import { classifyPlantImageOnDevice } from '@/services/offlineDiseaseClassifier';
+import { queueSpecimenForAnalysis } from '@/services/offlineDiagnosisQueue';
 import { DiseaseSaliencyCanvas } from '@/components/canvas-ui/DiseaseSaliencyCanvas';
 import toast from 'react-hot-toast';
 
@@ -154,9 +154,28 @@ const ImageUploadViewfinder: React.FC<{
 const AnalysisResultsHUD: React.FC<{
   imageAnalysis: ImageAnalysisData | null;
   imagePreview: string | null;
-  isOfflineMode: boolean;
+  offlineQueued: boolean;
   getSeverityColor: (s: string) => string;
-}> = ({ imageAnalysis, imagePreview, isOfflineMode, getSeverityColor }) => {
+}> = ({ imageAnalysis, imagePreview, offlineQueued, getSeverityColor }) => {
+  if (offlineQueued) {
+    return (
+      <div className="p-5 rounded-[4px] bg-slate-900/80 border border-amber-500/40 flex flex-col justify-center space-y-4">
+        <div className="flex items-center gap-2 p-2.5 rounded-[3px] bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono">
+          <CloudOff className="w-4 h-4 text-amber-400 shrink-0" />
+          <span>OFFLINE • DIAGNOSIS PENDING CONNECTIVITY</span>
+        </div>
+        <p className="text-xs font-mono text-slate-300 leading-relaxed">
+          There is no on-device AI model, so no diagnosis was generated for this specimen.
+        </p>
+        <p className="text-[11px] font-mono text-slate-400 leading-relaxed">
+          The photo has been queued and will be analyzed by the live pathology service automatically
+          when the device reconnects. Until then, do not treat this specimen based on a guess — if
+          the situation is urgent, consult your local extension officer.
+        </p>
+      </div>
+    );
+  }
+
   if (!imageAnalysis) {
     return (
       <div className="p-5 rounded-[4px] bg-slate-900/80 border border-slate-800 flex flex-col justify-center space-y-4">
@@ -178,36 +197,14 @@ const AnalysisResultsHUD: React.FC<{
 
   return (
     <div className="p-5 rounded-[4px] bg-slate-900/80 border border-slate-800 space-y-4">
-      {/* Offline Alert */}
-      {isOfflineMode && (
-        <div className="flex items-center gap-2 p-2.5 rounded-[3px] bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-mono">
-          <Zap className="w-4 h-4 text-emerald-400 shrink-0 animate-pulse" />
-          <span>ON-DEVICE EDGE CLASSIFIER (OFFLINE) • SYNCS ON CLOUD RECONNECT</span>
-        </div>
-      )}
-
-      {/* Saliency Heatmap */}
+      {/* Specimen Photo Review */}
       <div className="rounded-[4px] p-2 bg-slate-950 border border-slate-800">
-        <div className="px-2 py-1 mb-2 border-b border-slate-800 flex items-center justify-between">
+        <div className="px-2 py-1 mb-2 border-b border-slate-800">
           <span className="text-[11px] font-mono font-bold text-slate-300 uppercase">
-            Pathological Lesion Heatmap
-          </span>
-          <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20">
-            2.5X LOUPE ACTIVE
+            Specimen Photo Review
           </span>
         </div>
-        <DiseaseSaliencyCanvas
-          imageSrc={imagePreview || undefined}
-          detections={imageAnalysis.diseases.map((d, idx) => ({
-            id: `det-${idx}`,
-            x: 0.35 + ((idx * 0.2) % 0.4),
-            y: 0.4 + ((idx * 0.25) % 0.4),
-            radius: 0.12,
-            label: d.disease,
-            confidence: d.confidence,
-            severity: (d.severity.toLowerCase() as 'mild' | 'moderate' | 'severe') || 'moderate',
-          }))}
-        />
+        <DiseaseSaliencyCanvas imageSrc={imagePreview || undefined} detections={[]} />
       </div>
 
       {/* Health Metric Banner */}
@@ -304,7 +301,7 @@ export function ImageAnalysisTab({
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
-  const [isOfflineMode, setIsOfflineMode] = useState(false);
+  const [offlineQueued, setOfflineQueued] = useState(false);
   const [imageAnalysis, setImageAnalysis] = useState<ImageAnalysisData | null>(null);
 
   const handleImageSelect = (file: File) => {
@@ -321,7 +318,7 @@ export function ImageAnalysisTab({
 
     setIsAnalyzingImage(true);
     setImageAnalysis(null);
-    setIsOfflineMode(false);
+    setOfflineQueued(false);
 
     try {
       const base64Promise = new Promise<string>((resolve, reject) => {
@@ -334,35 +331,29 @@ export function ImageAnalysisTab({
       const imageData = base64.split(',')[1];
 
       if (!navigator.onLine) {
-        const offlineResult = await classifyPlantImageOnDevice(imageData, cropType || undefined);
-        setImageAnalysis({ ...offlineResult, reviewStatus: 'ready' });
-        setIsOfflineMode(true);
-        toast.success('⚡ On-Device Edge AI Diagnosis Completed (Offline Mode)');
+        queueSpecimenForAnalysis(imageData, cropType || undefined);
+        setOfflineQueued(true);
+        toast('No connection — specimen queued for analysis when you are back online.');
         return;
       }
 
-      try {
-        const res = await analyzePlantImage(imageData, cropType || undefined);
-        if (res.success) {
-          setImageAnalysis(res.data);
-          toast.success('Plant disease analysis completed!');
-        } else {
-          const offlineResult = await classifyPlantImageOnDevice(imageData, cropType || undefined);
-          setImageAnalysis({ ...offlineResult, reviewStatus: 'ready' });
-          setIsOfflineMode(true);
-          toast.success('⚡ Used On-Device Edge Classifier fallback');
-        }
-      } catch {
-        const offlineResult = await classifyPlantImageOnDevice(imageData, cropType || undefined);
-        setImageAnalysis({ ...offlineResult, reviewStatus: 'ready' });
-        setIsOfflineMode(true);
-        toast.success('⚡ Used On-Device Edge Classifier (Offline)');
+      const res = await analyzePlantImage(imageData, cropType || undefined);
+      if (res.success) {
+        setImageAnalysis(res.data);
+        toast.success('Plant disease analysis completed!');
+      } else {
+        toast.error('The analysis service could not process this image. No diagnosis was generated — please try again.');
+        addNotification({
+          type: 'error',
+          message: 'Plant image analysis failed — no diagnosis was generated.',
+        });
       }
     } catch (error) {
       console.error('Image analysis error:', error);
+      toast.error('Could not reach the analysis service. No diagnosis was generated.');
       addNotification({
         type: 'error',
-        message: 'Failed to analyze image',
+        message: 'Failed to analyze image — no diagnosis was generated.',
       });
     } finally {
       setIsAnalyzingImage(false);
@@ -388,7 +379,7 @@ export function ImageAnalysisTab({
       <AnalysisResultsHUD
         imageAnalysis={imageAnalysis}
         imagePreview={imagePreview}
-        isOfflineMode={isOfflineMode}
+        offlineQueued={offlineQueued}
         getSeverityColor={getSeverityColor}
       />
     </div>

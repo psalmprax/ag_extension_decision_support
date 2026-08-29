@@ -617,10 +617,12 @@ describe('Reporting Route — POST /generate invokes mappers before storage', ()
             updated_at: '2024-12-15T10:00:00Z',
         };
 
-        // Query order in generateReportData: visit aggregation → conversation aggregation → INSERT
+        // Query order in generateReportData: visit aggregation → conversation
+        // aggregation → author tenant lookup → INSERT
         mockQuery
             .mockResolvedValueOnce({ rows: [visitRawRow], rowCount: 1 })
             .mockResolvedValueOnce({ rows: [convRawRow], rowCount: 1 })
+            .mockResolvedValueOnce({ rows: [{ tenant_id: null }], rowCount: 1 })
             .mockResolvedValueOnce({ rows: [insertedRow], rowCount: 1 });
 
         const response = await request(app)
@@ -630,10 +632,10 @@ describe('Reporting Route — POST /generate invokes mappers before storage', ()
 
         expect(response.status).toBe(201);
         expect(response.body.success).toBe(true);
-        expect(mockQuery).toHaveBeenCalledTimes(3);
+        expect(mockQuery).toHaveBeenCalledTimes(4);
 
-        // 3rd call is the INSERT — capture params to inspect the stored JSONB
-        const insertCall = mockQuery.mock.calls[2];
+        // 4th call is the INSERT — capture params to inspect the stored JSONB
+        const insertCall = mockQuery.mock.calls[3];
         const insertParams = insertCall[1] as unknown[];
         const contentJson = insertParams[3] as string;
         const content = JSON.parse(contentJson);
@@ -743,6 +745,7 @@ describe('Reporting Route — POST /generate invokes mappers before storage', ()
 
         mockQuery
             .mockResolvedValueOnce({ rows: [visitRawRow], rowCount: 1 })
+            .mockResolvedValueOnce({ rows: [{ tenant_id: null }], rowCount: 1 })
             .mockResolvedValueOnce({ rows: [insertedRow], rowCount: 1 });
 
         const response = await request(app)
@@ -751,10 +754,10 @@ describe('Reporting Route — POST /generate invokes mappers before storage', ()
             .send({ type: 'visit_summary' });
 
         expect(response.status).toBe(201);
-        // Only 2 queries: visit aggregation + INSERT (no conversation query)
-        expect(mockQuery).toHaveBeenCalledTimes(2);
+        // 3 queries: visit aggregation + author tenant lookup + INSERT (no conversation query)
+        expect(mockQuery).toHaveBeenCalledTimes(3);
 
-        const insertCall = mockQuery.mock.calls[1];
+        const insertCall = mockQuery.mock.calls[2];
         const insertParams = insertCall[1] as unknown[];
         const content = JSON.parse(insertParams[3] as string);
 
@@ -798,6 +801,7 @@ describe('Reporting Route — POST /generate invokes mappers before storage', ()
 
         mockQuery
             .mockResolvedValueOnce({ rows: [convRawRow], rowCount: 1 })
+            .mockResolvedValueOnce({ rows: [{ tenant_id: null }], rowCount: 1 })
             .mockResolvedValueOnce({ rows: [insertedRow], rowCount: 1 });
 
         const response = await request(app)
@@ -806,10 +810,10 @@ describe('Reporting Route — POST /generate invokes mappers before storage', ()
             .send({ type: 'impact_metrics' });
 
         expect(response.status).toBe(201);
-        // Only 2 queries: conversation aggregation + INSERT (no visit query)
-        expect(mockQuery).toHaveBeenCalledTimes(2);
+        // 3 queries: conversation aggregation + author tenant lookup + INSERT (no visit query)
+        expect(mockQuery).toHaveBeenCalledTimes(3);
 
-        const insertCall = mockQuery.mock.calls[1];
+        const insertCall = mockQuery.mock.calls[2];
         const insertParams = insertCall[1] as unknown[];
         const content = JSON.parse(insertParams[3] as string);
 

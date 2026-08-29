@@ -5,6 +5,7 @@ import { logger } from '../utils/logger';
 import { authorize } from '../middleware/authorize';
 import { subscribeUser, unsubscribeUser, sendPushNotification } from '../services/pushNotificationService';
 import { safeError } from '@/utils/safeResponse';
+import { getPrincipalTenantId } from '@/services/dataGovernanceService';
 
 const router = Router();
 
@@ -19,6 +20,15 @@ router.get('/vapid-public-key', (req: Request, res: Response) => {
 // Apply authentication to all routes
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
+// Notifications are per-user; the tenant predicate is defense-in-depth so a
+// user only sees rows stamped with their own tenant (or legacy unstamped rows
+// that belong to them via user_id).
+async function buildNotificationTenantPredicate(userId: string): Promise<{ clause: string; params: unknown[] }> {
+    const tenantId = await getPrincipalTenantId(userId);
+    if (!tenantId) return { clause: '', params: [] };
+    return { clause: ' AND (tenant_id = $2 OR tenant_id IS NULL)', params: [tenantId] };
+}
+
 // Get all notifications for current user
 router.get('/', async (req: AuthRequest, res: Response) => {
     try {
@@ -29,13 +39,14 @@ router.get('/', async (req: AuthRequest, res: Response) => {
             return res.status(503).json({ success: false, error: 'Database unavailable' });
         }
 
+        const tenant = await buildNotificationTenantPredicate(userId as string);
         const result = await query(`
             SELECT id, type, title, message, metadata, is_read, channel, created_at, read_at
             FROM notifications
-            WHERE user_id = $1
+            WHERE user_id = $1${tenant.clause}
             ORDER BY created_at DESC
             LIMIT 50
-        `, [userId]);
+        `, [userId, ...tenant.params]);
 
         res.json({
             success: true,
@@ -67,11 +78,12 @@ router.get('/unread-count', async (req: AuthRequest, res: Response) => {
             return res.status(503).json({ success: false, error: 'Database unavailable' });
         }
 
+        const tenant = await buildNotificationTenantPredicate(userId as string);
         const result = await query(`
             SELECT COUNT(*) as count
             FROM notifications
-            WHERE user_id = $1 AND is_read = FALSE
-        `, [userId]);
+            WHERE user_id = $1 AND is_read = FALSE${tenant.clause}
+        `, [userId, ...tenant.params]);
 
         res.json({
             success: true,
@@ -179,11 +191,20 @@ router.post('/send', authorize(['admin', 'regional_manager']), async (req: AuthR
             return res.status(503).json({ success: false, error: 'Database unavailable' });
         }
 
+        // Resolve tenant + optional farmer record for phone-only targetability.
+        const targetRes = await query<{ tenant_id: string | null; farmer_id: string | null }>(
+            `SELECT u.tenant_id, f.id AS farmer_id
+               FROM users u
+               LEFT JOIN farmers f ON f.user_id = u.id
+              WHERE u.id = $1 LIMIT 1`,
+            [userId]
+        );
+        const target = targetRes.rows[0];
         const result = await query(`
-            INSERT INTO notifications (user_id, type, title, message, metadata, channel)
-            VALUES ($1, $2, $3, $4, $5, 'in_app')
+            INSERT INTO notifications (user_id, type, title, message, metadata, channel, tenant_id, farmer_id)
+            VALUES ($1, $2, $3, $4, $5, 'in_app', $6, $7)
             RETURNING id
-        `, [userId, type || 'info', title, message, JSON.stringify(metadata || {})]);
+        `, [userId, type || 'info', title, message, JSON.stringify(metadata || {}), target?.tenant_id ?? null, target?.farmer_id ?? null]);
 
         res.status(201).json({
             success: true,
@@ -205,8 +226,8 @@ router.post('/broadcast', authorize(['admin', 'regional_manager']), async (req: 
             return res.status(503).json({ success: false, error: 'Database unavailable' });
         }
 
-        // Get user IDs based on role filter
-        let userQuery = 'SELECT id FROM users';
+        // Get user IDs (and their tenant for tenant stamping) based on role filter
+        let userQuery = 'SELECT id, tenant_id FROM users';
         const params: unknown[] = [];
 
         if (role) {
@@ -214,18 +235,18 @@ router.post('/broadcast', authorize(['admin', 'regional_manager']), async (req: 
             params.push(role);
         }
 
-        const usersResult = await query(userQuery, params);
+        const usersResult = await query<{ id: string; tenant_id: string | null }>(userQuery, params);
 
         if (usersResult.rows.length === 0) {
             return res.json({ success: true, data: { sent: 0 } });
         }
 
-        // Insert notifications for all users
+        // Insert notifications for all users, stamped with each recipient's tenant.
         for (const user of usersResult.rows) {
             await query(`
-                INSERT INTO notifications (user_id, type, title, message, metadata, channel)
-                VALUES ($1, $2, $3, $4, $5, 'in_app')
-            `, [user.id, type || 'info', title, message, JSON.stringify(metadata || {})]);
+                INSERT INTO notifications (user_id, type, title, message, metadata, channel, tenant_id)
+                VALUES ($1, $2, $3, $4, $5, 'in_app', $6)
+            `, [user.id, type || 'info', title, message, JSON.stringify(metadata || {}), user.tenant_id]);
         }
 
         res.json({

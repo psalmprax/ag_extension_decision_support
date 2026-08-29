@@ -123,6 +123,12 @@ jobs:
         env:
           DATABASE_URL: postgres://psalmprax:password@localhost:5432/ag_extension
 
+      - name: Drift check — schema.prisma vs live DB
+        run: |
+          node scripts/prisma-drift-check.cjs
+        env:
+          DATABASE_URL: postgres://psalmprax:password@localhost:5432/ag_extension
+
       - name: Lint backend
         run: |
           cd ag-extension-dashboard/src/backend

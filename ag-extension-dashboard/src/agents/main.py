@@ -434,12 +434,17 @@ class OutreachService:
                     "timestamp": datetime.utcnow().isoformat()
                 }
 
+                # Persist the channel-appropriate contact so the consumer
+                # worker can deliver without re-resolving producer-only fields
+                # (e.g. email, which the farmers table does not store).
+                recipient = farmer.get("email") if channel == "email" else farmer.get("phone")
+
                 # Log to database if available
                 db.execute_query(
                     """INSERT INTO outreach_messages
-                       (farmer_id, message, channel, status, priority, created_at)
-                       VALUES (%s, %s, %s, %s, %s, NOW())""",
-                    (farmer.get("id"), message, channel, "queued", priority)
+                       (farmer_id, message, channel, status, priority, recipient, created_at)
+                       VALUES (%s, %s, %s, %s, %s, %s, NOW())""",
+                    (farmer.get("id"), message, channel, "queued", priority, recipient)
                 )
 
                 results.append(result)

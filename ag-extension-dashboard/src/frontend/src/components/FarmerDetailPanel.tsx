@@ -23,7 +23,9 @@ import {
   History,
   FileText,
   Loader2,
+  Link2,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { VideoCall } from './VideoCall';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
@@ -764,7 +766,19 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
             className={`w-full max-w-4xl max-h-[90vh] overflow-hidden relative ${radiusClass} border border-white/20 shadow-2xl`}
           >
             <button
+              onClick={() => {
+                const inviteLink = `${window.location.origin}/tele-call/farmer-${farmer.id}`;
+                navigator.clipboard.writeText(inviteLink);
+                toast.success('Invite link copied — share it with the farmer to join this call.');
+              }}
+              className="absolute top-4 right-16 z-[110] px-3 py-2 bg-black/50 hover:bg-black/70 text-white text-xs font-bold rounded-full backdrop-blur-md transition-all flex items-center gap-1.5"
+            >
+              <Link2 className="w-4 h-4" />
+              Invite
+            </button>
+            <button
               onClick={() => setShowVideoCall(false)}
+              aria-label="Close video call"
               className="absolute top-4 right-4 z-[110] p-2 bg-black/50 hover:bg-black/70 text-white rounded-full backdrop-blur-md transition-all"
             >
               <X className="w-6 h-6" />

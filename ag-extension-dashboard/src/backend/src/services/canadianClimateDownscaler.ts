@@ -10,7 +10,8 @@ export interface AgroClimateAssessment {
   zone: CanadianAgroZone;
   frostRiskLevel: 'low' | 'moderate' | 'severe';
   droughtIndexScore: number; // 0 (wet) to 100 (extreme drought)
-  growingDegreeDaysAccumulated: number;
+  /** Null when the caller provides no temperature series to compute GDD from. */
+  growingDegreeDaysAccumulated: number | null;
   recommendedAdaptations: string[];
 }
 
@@ -49,11 +50,14 @@ export class CanadianClimateDownscaler {
       }
     }
 
+    // Growing-degree-days requires a daily-temperature series the caller does not
+    // provide. Rather than fabricate a plausible number, report null so consumers
+    // know GDD was not computed.
     return {
       zone,
       frostRiskLevel,
       droughtIndexScore,
-      growingDegreeDaysAccumulated: 1450,
+      growingDegreeDaysAccumulated: null,
       recommendedAdaptations: adaptations,
     };
   }

@@ -99,13 +99,13 @@ class XScanner:
                 
                 # Alternative: Look for other data patterns
                 if not candidates:
-                    re.findall(
+                    tweet_scripts = re.findall(
                         r'<script[^>]*data-testid="tweet"[^>]*>(.*?)</script>',
                         response.text,
                         re.DOTALL
                     )
-                    # This is less reliable, but as a fallback
-                    pass
+                    if tweet_scripts:
+                        logger.debug(f"[XScanner] Found {len(tweet_scripts)} raw tweet script blocks; structured extraction not available")
                 
         except Exception as e:
             logger.warning(f"[XScanner] Search error: {e}")
@@ -272,8 +272,10 @@ class XScanner:
                     return []
                 
                 # Parse trends from the response
-                # This is less reliable as X heavily personalizes
-                pass
+                # This is less reliable as X heavily personalizes; no reliable
+                # trend markers exist on the public page, so report none rather
+                # than inventing trends.
+                logger.debug("[XScanner] Trend parsing unavailable for personalized X pages; returning empty result")
                 
         except Exception as e:
             logger.warning(f"[XScanner] Trending fetch error: {e}")

@@ -231,7 +231,11 @@ async function fetchChatEvents(userId: string, role: string): Promise<ActivityIt
 }
 
 function mapChatToActivity(row: ChatRow): ActivityItem {
-  const channel: ActivityItem['channel'] = row.is_voice ? 'Voice' : 'App';
+  // There is currently no producer that ingests voice messages (no webhook or
+  // route writes is_voice = true), so a chat record is always app text. Keep
+  // the mapping honest instead of surfacing a phantom 'Voice' channel that can
+  // never be populated.
+  const channel: ActivityItem['channel'] = 'App';
   const lang = normalizeLanguage(row.language);
   return {
     id: `chat-${row.id}`,

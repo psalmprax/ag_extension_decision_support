@@ -16,11 +16,14 @@ import {
   executeGoalCampaign,
   fetchCampaignHistory,
   fetchRegionalSkills,
+  fetchOutreachStats,
   synthesizeSkillFromVisit,
   CampaignHistoryItem,
   RegionalSkillCard,
+  OutreachDeliveryStats,
   type CampaignStepTrace,
 } from '@/api/campaignService';
+import { OutreachDeliveryStatusCard } from './OutreachDeliveryStatusCard';
 
 interface GoalModeCampaignModalProps {
   isOpen: boolean;
@@ -84,6 +87,11 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
   const [history, setHistory] = useState<CampaignHistoryItem[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
+  // Outreach Delivery State
+  const [outreachStats, setOutreachStats] = useState<OutreachDeliveryStats | null>(null);
+  const [isLoadingStats, setIsLoadingStats] = useState(false);
+  const [statsError, setStatsError] = useState(false);
+
   const loadSkills = async () => {
     setIsLoadingSkills(true);
     try {
@@ -112,10 +120,29 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
     }
   };
 
+  const loadOutreachStats = async () => {
+    setIsLoadingStats(true);
+    setStatsError(false);
+    try {
+      const res = await fetchOutreachStats();
+      if (res.success && res.data) {
+        setOutreachStats(res.data);
+      } else {
+        setStatsError(true);
+      }
+    } catch {
+      setOutreachStats(null);
+      setStatsError(true);
+    } finally {
+      setIsLoadingStats(false);
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       loadSkills();
       loadHistory();
+      loadOutreachStats();
     }
   }, [isOpen]);
 
@@ -573,6 +600,13 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
             {/* TAB 3: CAMPAIGN HISTORY */}
             {activeTab === 'history' && (
               <div className="space-y-4">
+                <OutreachDeliveryStatusCard
+                  stats={outreachStats}
+                  isLoading={isLoadingStats}
+                  onRefresh={loadOutreachStats}
+                  error={statsError}
+                />
+
                 {isLoadingHistory ? (
                   <div className="flex items-center justify-center py-16 gap-3 text-slate-400 text-sm">
                     <RefreshCw className="w-5 h-5 animate-spin text-amber-400" />

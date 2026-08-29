@@ -120,7 +120,7 @@ class InstagramScanner:
                             posts = self._extract_posts_from_json(data)
                             candidates.extend(posts)
                         except json.JSONDecodeError:
-                            pass
+                            logger.debug("[InstagramScanner] Skipping malformed shared_data JSON block")
                 
         except Exception as e:
             logger.warning(f"[InstagramScanner] Hashtag search error: {e}")
@@ -253,8 +253,9 @@ class InstagramScanner:
                 
                 # Try to extract trending posts from explore page
                 # This is highly variable as Instagram personalizes heavily
-                # For now, return empty - hashtag search is more reliable
-                pass
+                # Hashtag search is more reliable, so report none here rather
+                # than inventing explore-page trends.
+                logger.debug("[InstagramScanner] Explore-page trend extraction unavailable; returning empty result")
                 
         except Exception as e:
             logger.warning(f"[InstagramScanner] Explore scrape error: {e}")

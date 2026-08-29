@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Loader2, Sparkles } from 'lucide-react';
 import { useAppStore, type User } from '@/store/useAppStore';
@@ -18,6 +18,7 @@ interface LoginProps {
 
 export function Login({ onDemo }: LoginProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { setUser, setIsDemo } = useAppStore();
   const { t } = useLanguage();
 
@@ -54,7 +55,10 @@ export function Login({ onDemo }: LoginProps) {
         throw new Error(t('login_failed_no_token'));
       }
 
-      navigate('/dashboard');
+      // Return the user to where they were headed (e.g. a /tele-call/<roomId>
+      // invite link that required sign-in first).
+      const from = (location.state as { from?: string } | null)?.from;
+      navigate(from && from.startsWith('/') ? from : '/dashboard');
     } catch (err: unknown) {
       const error = err as { response?: { data?: { error?: string } }; message?: string };
       const errorMsg =

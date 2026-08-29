@@ -151,8 +151,8 @@ function renderStage1Orbit(rc: RenderContext) {
 
   ctx.fillStyle = '#38bdf8';
   ctx.font = '11px monospace';
-  ctx.fillText(`NASA POWER // RAD: ${(18.4 + Math.sin(time) * 1.2).toFixed(1)} MJ/m²`, targetX + 25, targetY - 10);
-  ctx.fillText(`GPM PRECIP // ${(4.2 + Math.cos(time) * 0.8).toFixed(1)} mm/day`, targetX + 25, targetY + 8);
+  ctx.fillText(`SIM // RAD: ${(18.4 + Math.sin(time) * 1.2).toFixed(1)} MJ/m² (animated preview)`, targetX + 25, targetY - 10);
+  ctx.fillText(`SIM // PRECIP: ${(4.2 + Math.cos(time) * 0.8).toFixed(1)} mm/day (animated preview)`, targetX + 25, targetY + 8);
 
   ctx.restore();
 }

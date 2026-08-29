@@ -13,6 +13,7 @@ import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
 import { safeError } from '@/utils/safeResponse';
 import { detectLanguage } from '@/utils/languageDetector';
 import { onboardingEngine } from '@/services/onboardingEngine';
+import { checkMessageAccess, MessageAccessError, resolvePrincipalRegion } from '@/services/messageAccessService';
 import { logger } from '@/utils/logger';
 
 const router = Router();
@@ -104,10 +105,16 @@ router.post('/send', checkUsageLimit('sms'), validate({ body: sendSMSSchema }), 
         const { to, message, farmerId } = req.body;
         const senderId = req.user!.userId;
 
+        // Write-scope enforcement: an extension officer may only SMS their assigned farmers.
+        const resolvedFarmerId = await checkMessageAccess(
+            req.user!,
+            { farmerId, phone: to }
+        );
+
         const success = await smsService.sendSMS({
             to,
             message,
-            farmerId,
+            farmerId: resolvedFarmerId ?? undefined,
             senderId
         });
 
@@ -118,6 +125,9 @@ router.post('/send', checkUsageLimit('sms'), validate({ body: sendSMSSchema }), 
             safeError(res, 500, 'Failed to send SMS');
         }
     } catch (error) {
+        if (error instanceof MessageAccessError) {
+            return safeError(res, error.statusCode, error.message);
+        }
         safeError(res, 500, error instanceof Error ? error.message : 'Internal server error');
     }
 });
@@ -127,6 +137,11 @@ router.post('/bulk', checkUsageLimit('sms'), validate({ body: bulkSMSSchema }), 
     try {
         const { recipients, message, farmerId } = req.body;
         const senderId = req.user!.userId;
+
+        // Write-scope enforcement: every bulk recipient must resolve to an assigned farmer.
+        for (const to of recipients) {
+            await checkMessageAccess(req.user!, { farmerId, phone: to });
+        }
 
         const result = await smsService.sendBulkSMS({
             recipients,
@@ -146,6 +161,9 @@ router.post('/bulk', checkUsageLimit('sms'), validate({ body: bulkSMSSchema }), 
             results: result.results,
         });
     } catch (error) {
+        if (error instanceof MessageAccessError) {
+            return safeError(res, error.statusCode, error.message);
+        }
         safeError(res, 500, error instanceof Error ? error.message : 'Internal server error');
     }
 });
@@ -159,15 +177,22 @@ router.get('/history', async (req: AuthRequest, res: Response) => {
         const params: unknown[] = [];
         let paramIdx = 1;
 
-        // Role-based scoping: farmers see their own, officers see their assigned farmers
+        // Role-based scoping: farmers see their own, officers see their assigned
+        // farmers, regional managers see farmers in their region.
         if (user?.role === 'farmer') {
             sql += ` AND farmer_id IN (SELECT id FROM farmers WHERE user_id = $${paramIdx++})`;
             params.push(user.userId);
         } else if (user?.role === 'extension_officer') {
             sql += ` AND farmer_id IN (SELECT id FROM farmers WHERE assigned_officer_id = $${paramIdx++})`;
             params.push(user.userId);
+        } else if (user?.role === 'regional_manager') {
+            const region = await resolvePrincipalRegion(user.userId);
+            if (region) {
+                sql += ` AND farmer_id IN (SELECT id FROM farmers WHERE region = $${paramIdx++})`;
+                params.push(region);
+            }
         }
-        // admin and regional_manager see everything (no additional clause)
+        // admin sees everything (no additional clause)
 
         if (farmerId) {
             sql += ` AND farmer_id = $${paramIdx++}`;
@@ -306,8 +331,11 @@ router.post('/ussd/handle', validate({ body: ussdSchema }), async (req: Request,
 // Schedule SMS
 router.post('/schedule', validate({ body: scheduleSMSSchema }), async (req: AuthRequest, res: Response) => {
     try {
-        const { to, message, scheduledTime } = req.body;
+        const { to, message, scheduledTime, farmerId } = req.body;
         const userId = req.user!.userId;
+
+        // Write-scope enforcement for scheduled deliveries.
+        await checkMessageAccess(req.user!, { farmerId, phone: to });
 
         const success = await smsService.scheduleSMS(
             to,
@@ -322,6 +350,9 @@ router.post('/schedule', validate({ body: scheduleSMSSchema }), async (req: Auth
             safeError(res, 500, 'Failed to schedule SMS');
         }
     } catch (error) {
+        if (error instanceof MessageAccessError) {
+            return safeError(res, error.statusCode, error.message);
+        }
         safeError(res, 500, error instanceof Error ? error.message : 'Internal server error');
     }
 });

@@ -33,11 +33,22 @@ export const registerAlertTool: Tool<typeof RegisterAlertSchema> = {
     }
 
     try {
+      // Resolve tenant from the first affected farmer so the alert is visible
+      // to tenant-scoped readers; falls back to NULL (admin-visible) otherwise.
+      let tenantId: string | null = null;
+      const farmerIds = Array.isArray(affectedFarmers) && affectedFarmers.length > 0 ? affectedFarmers : [];
+      if (farmerIds.length > 0) {
+        const fRes = await query<{ tenant_id: string | null }>(
+          'SELECT tenant_id FROM farmers WHERE id = $1 LIMIT 1',
+          [farmerIds[0]]
+        );
+        tenantId = fRes.rows[0]?.tenant_id ?? null;
+      }
       const result = await query(`
-        INSERT INTO alerts (type, severity, title, description, location, affected_farmers, is_active, triggered_at)
-        VALUES ($1, $2, $3, $4, $5, $6, true, NOW())
+        INSERT INTO alerts (type, severity, title, description, location, affected_farmers, tenant_id, is_active, triggered_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, true, NOW())
         RETURNING id, title, triggered_at
-      `, [type, severity, title, description, location, affectedFarmers || []]);
+      `, [type, severity, title, description, location, farmerIds, tenantId]);
 
       return JSON.stringify({
         success: true,

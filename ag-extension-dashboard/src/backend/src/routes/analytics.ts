@@ -93,7 +93,7 @@ async function fetchOverviewCounts(user: UserScope) {
     const conversationScope = buildScopeFilter(user, 'officer_id', 'c');
     const [farmersCount, officersCount, activeConversations, recentVisits, avgSatisfactionResult, resolvedQueries, totalHectaresResult, avgYieldResult] = await Promise.all([
         getFromDB(`SELECT COUNT(*) as count FROM farmers f WHERE f.is_active = true ${farmerScope.whereClause}`, farmerScope.params),
-        getFromDB(`SELECT COUNT(*) as count FROM users u WHERE u.role = 'extension_officer' AND u.is_active = true${user.tenantId ? ` AND u.tenant_id = '${user.tenantId}'` : ''}`),
+        getFromDB(`SELECT COUNT(*) as count FROM users u WHERE u.role = 'extension_officer' AND u.is_active = true AND COALESCE(u.is_demo, false) = false${user.tenantId ? ` AND u.tenant_id = '${user.tenantId}'` : ''}`),
         getFromDB(`SELECT COUNT(*) as count FROM chat_conversations c WHERE c.status = 'active' ${conversationScope.whereClause}`, conversationScope.params),
         getFromDB(`SELECT COUNT(*) as count FROM visits v WHERE v.created_at > NOW() - INTERVAL '30 days' ${visitScope.whereClause}`, visitScope.params),
         getFromDB(`SELECT AVG(c.satisfaction_score) as avg FROM chat_conversations c WHERE c.satisfaction_score IS NOT NULL ${conversationScope.whereClause}`, conversationScope.params),
@@ -107,10 +107,9 @@ async function fetchOverviewCounts(user: UserScope) {
 async function fetchGeography(user: UserScope) {
     const sf = buildScopeFilter(user, 'assigned_officer_id', 'f');
     return getFromDB(`
-        SELECT f.region, COUNT(DISTINCT f.id) as farmers, COUNT(DISTINCT u.id) as officers 
-        FROM farmers f 
-        LEFT JOIN users u ON u.region = f.region AND u.role = 'extension_officer' 
-        WHERE 1=1 ${sf.whereClause}
+        SELECT f.region, COUNT(DISTINCT f.id) as farmers, COUNT(DISTINCT f.assigned_officer_id) as officers
+        FROM farmers f
+        WHERE f.is_active = true ${sf.whereClause}
         GROUP BY f.region ORDER BY farmers DESC LIMIT 10
     `, sf.params);
 }
@@ -439,7 +438,7 @@ router.get('/performance', async (req: Request, res: Response) => {
                 FROM users u
                 LEFT JOIN visits v ON v.officer_id = u.id AND v.status = 'completed' AND v.created_at > NOW() - INTERVAL '${days} days'
                 LEFT JOIN chat_conversations c ON c.officer_id = u.id AND c.created_at > NOW() - INTERVAL '${days} days'
-                WHERE u.role = 'extension_officer' AND u.is_active = true${tenantPredicate(tenantId, 'u')}
+                WHERE u.role = 'extension_officer' AND u.is_active = true AND COALESCE(u.is_demo, false) = false${tenantPredicate(tenantId, 'u')}
                 GROUP BY u.id, u.first_name, u.last_name
                 ORDER BY visits DESC
                 LIMIT 10
@@ -550,8 +549,10 @@ function formatChatbotConversations(conversations: Record<string, unknown>[]) {
 function formatChatbotEngagement(engagement: Record<string, unknown>) {
     return {
         avgMessagesPerConversation: Math.round(parseFloat(engagement.avg_messages as string || '0') * 10) / 10,
-        voiceUsage: parseInt(engagement.voice_usage as string || '0'),
-        textUsage: parseInt(engagement.text_usage as string || '0'),
+        // No voice channel is ingested yet, so conversations are text; report a single
+        // honest total instead of a fabricated voice/text split.
+        totalConversations: parseInt(engagement.total_conversations as string || '0'),
+        textUsage: parseInt(engagement.total_conversations as string || '0'),
     };
 }
 
@@ -605,12 +606,10 @@ router.get('/chatbot', async (req: Request, res: Response) => {
             getFromDB(`
                 SELECT 
                     AVG(msg_count) as avg_messages,
-                    COUNT(CASE WHEN is_voice = true THEN 1 END) as voice_usage,
-                    COUNT(CASE WHEN is_voice = false THEN 1 END) as text_usage
+                    COUNT(*) as total_conversations
                 FROM (
                     SELECT c.id, 
-                           COUNT(m.id) as msg_count,
-                           bool_or(m.is_voice) as is_voice
+                           COUNT(m.id) as msg_count
                     FROM chat_conversations c
                     LEFT JOIN chat_messages m ON m.conversation_id = c.id
                     WHERE c.started_at > NOW() - INTERVAL '${days} days'${conversationTenant}
