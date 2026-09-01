@@ -36,6 +36,7 @@ import { KnowledgeStats } from './KnowledgeStats';
 import { SearchBar } from './SearchBar';
 import { AIResult } from './AIResult';
 import type { VisualsData } from './types';
+import { AgronomicIntakeCard, isAgronomicQueryAmbiguous } from '../AgronomicIntakeCard';
 
 // Interactive Canvas UI Components (canvasui.dev standard)
 import { RagKnowledgeGraphCanvas, GraphNode } from '../canvas-ui/RagKnowledgeGraphCanvas';
@@ -405,6 +406,7 @@ export const KnowledgeBase: React.FC = () => {
   const [activeCanvasMode, setActiveCanvasMode] = useState<SpatialCanvasMode>('phenology');
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [retrievalStep, setRetrievalStep] = useState<number>(0);
+  const [intakeDismissed, setIntakeDismissed] = useState<boolean>(false);
 
   // Document Library state
   const [libraryFilterCategory, setLibraryFilterCategory] = useState<string>('All');
@@ -680,10 +682,13 @@ export const KnowledgeBase: React.FC = () => {
           </div>
 
           {/* Multi-Modal Research Search Bar */}
-          <div className="backdrop-blur-xl bg-slate-900/70 border border-white/10 rounded-xl p-5 shadow-xl">
+          <div className="backdrop-blur-xl bg-slate-900/70 border border-white/10 rounded-xl p-5 shadow-xl space-y-4">
             <SearchBar
               searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
+              setSearchQuery={q => {
+                setSearchQuery(q);
+                setIntakeDismissed(false);
+              }}
               attachments={attachments}
               setAttachments={setAttachments}
               isAsking={isAsking}
@@ -693,6 +698,21 @@ export const KnowledgeBase: React.FC = () => {
               setShowStats={() => setActiveTabMode('telemetry')}
               onSearch={() => handleSearch()}
             />
+
+            {/* Dynamic Agronomic Intake Clarification Card */}
+            {isAgronomicQueryAmbiguous(searchQuery) && !intakeDismissed && !isAsking && (
+              <AgronomicIntakeCard
+                initialQuery={searchQuery}
+                onApplyIntake={enrichedQuery => {
+                  setSearchQuery(enrichedQuery);
+                  performAISearch(enrichedQuery);
+                }}
+                onBypass={() => {
+                  setIntakeDismissed(true);
+                  performAISearch(searchQuery);
+                }}
+              />
+            )}
           </div>
 
           {/* Live Multi-Step Retrieval Tracer */}
