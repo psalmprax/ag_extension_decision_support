@@ -121,7 +121,7 @@ export function Register() {
 
           {/* Interactive Procedural Canvas in Center */}
           <div className="flex-1 min-h-[300px] w-full my-3 rounded-xl overflow-hidden border border-white/5 relative z-10 bg-slate-950">
-            <AgroEcosystemCanvasScrubber interactive={true} showControls={false} />
+            <AgroEcosystemCanvasScrubber interactive={true} showControls={false} autoPlay={true} />
           </div>
 
           {/* Bottom Live Feature Badges */}

@@ -962,7 +962,12 @@ export const KnowledgeBase: React.FC = () => {
                     <span>AGRO-ECOSYSTEM 4-STAGE PHENOLOGY SCRUBBER</span>
                     <span className="text-cyan-400">NASA POWER Synchronized</span>
                   </div>
-                  <AgroEcosystemCanvasScrubber className="w-full h-[460px] rounded-xl border border-white/10" />
+                  <AgroEcosystemCanvasScrubber
+                    interactive={true}
+                    showControls={true}
+                    autoPlay={true}
+                    className="w-full h-[460px] rounded-xl border border-white/10"
+                  />
                 </div>
               )}
 

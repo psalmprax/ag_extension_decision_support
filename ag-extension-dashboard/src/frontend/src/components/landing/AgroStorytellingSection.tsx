@@ -299,8 +299,12 @@ export function AgroStorytellingSection() {
           <div className="lg:col-span-7 flex flex-col min-h-[440px] sm:min-h-[500px] w-full rounded-xl overflow-hidden shadow-2xl border border-white/10 bg-slate-900/60 backdrop-blur-md">
             <AgroEcosystemCanvasScrubber
               progress={activeStage * 0.28 + 0.05}
+              onStageChange={(stage) => {
+                if (stage !== activeStage) setActiveStage(stage);
+              }}
               interactive={true}
               showControls={true}
+              autoPlay={true}
               className="h-full w-full"
             />
           </div>
