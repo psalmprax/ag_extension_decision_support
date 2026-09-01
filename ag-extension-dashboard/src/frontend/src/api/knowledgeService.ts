@@ -135,3 +135,23 @@ export const fetchKnowledgeQuota = async (): Promise<{ success: boolean; data: K
   const { data } = await apiClient.get('/knowledge/quota');
   return data;
 };
+
+export interface TranslationResponse {
+  translatedText: string;
+  targetLanguage: string;
+  sourceLanguage?: string;
+  cached?: boolean;
+}
+
+export const translateContent = async (
+  text: string,
+  targetLanguage: string,
+  sourceLanguage = 'en'
+): Promise<{ success: boolean; data: TranslationResponse }> => {
+  const { data } = await apiClient.post('/language/translate', {
+    text,
+    targetLanguage,
+    sourceLanguage,
+  });
+  return data;
+};

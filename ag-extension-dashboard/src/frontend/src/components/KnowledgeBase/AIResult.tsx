@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Brain,
@@ -15,14 +15,72 @@ import {
   AlertTriangle,
   Bookmark,
   Layers,
+  Globe,
+  RefreshCw,
+  Columns,
+  ChevronDown,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ReasoningVisuals } from './ReasoningVisuals';
 import { MarkdownRenderer } from '../MarkdownRenderer';
-import { Citation, KnowledgeEvidenceStatus } from '@/api/knowledgeService';
+import { Citation, KnowledgeEvidenceStatus, translateContent } from '@/api/knowledgeService';
 import { RagKnowledgeGraphCanvas, GraphNode } from '../canvas-ui/RagKnowledgeGraphCanvas';
 import { RefractiveGlassCard } from '../canvas-ui/RefractiveGlassCard';
 import type { VisualsData } from './types';
+
+export const MULTILINGUAL_LANGUAGES = [
+  // Primary Global & African Languages
+  { code: 'en', label: 'English', flag: '🇺🇸', native: 'English', bcp47: 'en-US', group: 'Global' },
+  { code: 'sw', label: 'Swahili', flag: '🇰🇪', native: 'Kiswahili', bcp47: 'sw-KE', group: 'African' },
+  { code: 'fr', label: 'French', flag: '🇫🇷', native: 'Français', bcp47: 'fr-FR', group: 'Global' },
+  { code: 'es', label: 'Spanish', flag: '🇪🇸', native: 'Español', bcp47: 'es-ES', group: 'Global' },
+  { code: 'pt', label: 'Portuguese', flag: '🇧🇷', native: 'Português', bcp47: 'pt-BR', group: 'Global' },
+  { code: 'ha', label: 'Hausa', flag: '🇳🇬', native: 'Hausa', bcp47: 'ha-NG', group: 'African' },
+  { code: 'yo', label: 'Yoruba', flag: '🇳🇬', native: 'Yorùbá', bcp47: 'yo-NG', group: 'African' },
+  { code: 'ig', label: 'Igbo', flag: '🇳🇬', native: 'Igbo', bcp47: 'ig-NG', group: 'African' },
+  { code: 'am', label: 'Amharic', flag: '🇪🇹', native: 'አማርኛ', bcp47: 'am-ET', group: 'African' },
+  { code: 'om', label: 'Oromo', flag: '🇪🇹', native: 'Afaan Oromoo', bcp47: 'om-ET', group: 'African' },
+  { code: 'ti', label: 'Tigrinya', flag: '🇪🇷', native: 'ትግርኛ', bcp47: 'ti-ET', group: 'African' },
+  { code: 'so', label: 'Somali', flag: '🇸🇴', native: 'Af-Soomaali', bcp47: 'so-SO', group: 'African' },
+  { code: 'lg', label: 'Luganda', flag: '🇺🇬', native: 'Oluganda', bcp47: 'lg-UG', group: 'African' },
+  { code: 'rw', label: 'Kinyarwanda', flag: '🇷🇼', native: 'Ikinyarwanda', bcp47: 'rw-RW', group: 'African' },
+  { code: 'rn', label: 'Kirundi', flag: '🇧🇮', native: 'Ikirundi', bcp47: 'rn-BI', group: 'African' },
+  { code: 'zu', label: 'Zulu', flag: '🇿🇦', native: 'isiZulu', bcp47: 'zu-ZA', group: 'African' },
+  { code: 'xh', label: 'Xhosa', flag: '🇿🇦', native: 'isiXhosa', bcp47: 'xh-ZA', group: 'African' },
+  { code: 'af', label: 'Afrikaans', flag: '🇿🇦', native: 'Afrikaans', bcp47: 'af-ZA', group: 'African' },
+  { code: 'sn', label: 'Shona', flag: '🇿🇼', native: 'chiShona', bcp47: 'sn-ZW', group: 'African' },
+  { code: 'ny', label: 'Chichewa', flag: '🇲🇼', native: 'Chichewa', bcp47: 'ny-MW', group: 'African' },
+  { code: 'wo', label: 'Wolof', flag: '🇸🇳', native: 'Wolof', bcp47: 'wo-SN', group: 'African' },
+  { code: 'bm', label: 'Bambara', flag: '🇲🇱', native: 'Bamanankan', bcp47: 'bm-ML', group: 'African' },
+  { code: 'ff', label: 'Fula', flag: '🇬🇳', native: 'Fulfulde', bcp47: 'ff-SN', group: 'African' },
+  { code: 'ln', label: 'Lingala', flag: '🇨🇩', native: 'Lingála', bcp47: 'ln-CD', group: 'African' },
+  { code: 'mg', label: 'Malagasy', flag: '🇲🇬', native: 'Malagasy', bcp47: 'mg-MG', group: 'African' },
+
+  // Major Global & Asian Agricultural Languages
+  { code: 'ar', label: 'Arabic', flag: '🇸🇦', native: 'العربية', bcp47: 'ar-SA', group: 'Global' },
+  { code: 'hi', label: 'Hindi', flag: '🇮🇳', native: 'हिन्दी', bcp47: 'hi-IN', group: 'Global' },
+  { code: 'zh', label: 'Chinese (Simplified)', flag: '🇨🇳', native: '中文 (简体)', bcp47: 'zh-CN', group: 'Global' },
+  { code: 'de', label: 'German', flag: '🇩🇪', native: 'Deutsch', bcp47: 'de-DE', group: 'Global' },
+  { code: 'ru', label: 'Russian', flag: '🇷🇺', native: 'Русский', bcp47: 'ru-RU', group: 'Global' },
+  { code: 'ja', label: 'Japanese', flag: '🇯🇵', native: '日本語', bcp47: 'ja-JP', group: 'Global' },
+  { code: 'ko', label: 'Korean', flag: '🇰🇷', native: '한국어', bcp47: 'ko-KR', group: 'Global' },
+  { code: 'it', label: 'Italian', flag: '🇮🇹', native: 'Italiano', bcp47: 'it-IT', group: 'Global' },
+  { code: 'nl', label: 'Dutch', flag: '🇳🇱', native: 'Nederlands', bcp47: 'nl-NL', group: 'Global' },
+  { code: 'tr', label: 'Turkish', flag: '🇹🇷', native: 'Türkçe', bcp47: 'tr-TR', group: 'Global' },
+  { code: 'pl', label: 'Polish', flag: '🇵🇱', native: 'Polski', bcp47: 'pl-PL', group: 'Global' },
+  { code: 'uk', label: 'Ukrainian', flag: '🇺🇦', native: 'Українська', bcp47: 'uk-UA', group: 'Global' },
+  { code: 'id', label: 'Indonesian', flag: '🇮🇩', native: 'Bahasa Indonesia', bcp47: 'id-ID', group: 'Global' },
+  { code: 'vi', label: 'Vietnamese', flag: '🇻🇳', native: 'Tiếng Việt', bcp47: 'vi-VN', group: 'Global' },
+  { code: 'th', label: 'Thai', flag: '🇹🇭', native: 'ไทย', bcp47: 'th-TH', group: 'Global' },
+  { code: 'fil', label: 'Filipino', flag: '🇵🇭', native: 'Wikang Filipino', bcp47: 'fil-PH', group: 'Global' },
+  { code: 'fa', label: 'Persian', flag: '🇮🇷', native: 'فارسی', bcp47: 'fa-IR', group: 'Global' },
+  { code: 'ur', label: 'Urdu', flag: '🇵🇰', native: 'اردو', bcp47: 'ur-PK', group: 'Global' },
+  { code: 'bn', label: 'Bengali', flag: '🇧🇩', native: 'বাংলা', bcp47: 'bn-BD', group: 'Global' },
+  { code: 'pa', label: 'Punjabi', flag: '🇮🇳', native: 'ਪੰਜਾਬੀ', bcp47: 'pa-IN', group: 'Global' },
+  { code: 'ta', label: 'Tamil', flag: '🇮🇳', native: 'தமிழ்', bcp47: 'ta-IN', group: 'Global' },
+  { code: 'te', label: 'Telugu', flag: '🇮🇳', native: 'తెలుగు', bcp47: 'te-IN', group: 'Global' },
+  { code: 'mr', label: 'Marathi', flag: '🇮🇳', native: 'मराठी', bcp47: 'mr-IN', group: 'Global' },
+];
 
 interface ContextItem {
   content: string;
@@ -106,65 +164,200 @@ function buildGraphNodes(result: Result): GraphNode[] {
   ];
 }
 
-const SynthesisView: React.FC<{ result: Result; onSwitchToEvidence: () => void }> = ({ result, onSwitchToEvidence }) => (
-  <motion.div
-    key="synthesis-view"
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -10 }}
-    className="space-y-6"
-  >
-    <div className="p-6 sm:p-10 rounded-xl bg-slate-900/90 border border-white/10 shadow-2xl backdrop-blur-2xl space-y-6">
-      {result.evidenceStatus && result.evidenceStatus !== 'verified_sources' && (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-200">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider">Evidence Status Notice</p>
-            <p className="mt-1 text-xs text-amber-100/90">
-              {result.evidenceStatus === 'context_only'
-                ? 'Synthesized using retrieved knowledge chunks without definitive rule citations. Recommended for verification.'
-                : 'Retrieved context is sparse. Treat as an estimate and cross-reference with localized field testing.'}
-            </p>
+interface SynthesisViewProps {
+  result: Result;
+  activeLang: string;
+  onSelectLanguage: (code: string) => void;
+  isTranslating: boolean;
+  translations: Record<string, string>;
+  dualView: boolean;
+  setDualView: (v: boolean) => void;
+  onSwitchToEvidence: () => void;
+}
+
+const SynthesisView: React.FC<SynthesisViewProps> = ({
+  result,
+  activeLang,
+  onSelectLanguage,
+  isTranslating,
+  translations,
+  dualView,
+  setDualView,
+  onSwitchToEvidence,
+}) => {
+  const activeContent = translations[activeLang] || result.answer;
+  const originalContent = translations['en'] || result.answer;
+  const currentLangObj = MULTILINGUAL_LANGUAGES.find(l => l.code === activeLang) || MULTILINGUAL_LANGUAGES[0];
+
+  const featuredCodes = ['en', 'sw', 'fr', 'es', 'pt', 'ha', 'yo', 'ig', 'am', 'ar', 'hi', 'zh'];
+  const featuredLanguages = MULTILINGUAL_LANGUAGES.filter(l => featuredCodes.includes(l.code));
+  const africanLanguages = MULTILINGUAL_LANGUAGES.filter(l => l.group === 'African');
+  const globalLanguages = MULTILINGUAL_LANGUAGES.filter(l => l.group === 'Global');
+
+  return (
+    <motion.div
+      key="synthesis-view"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      className="space-y-6"
+    >
+      {/* ── Multilingual Translation & Dual-View Bar ── */}
+      <div className="p-4 rounded-xl bg-slate-900/90 border border-white/10 shadow-xl backdrop-blur-2xl flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider pr-2 border-r border-white/10">
+            <Globe className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Localize ({MULTILINGUAL_LANGUAGES.length} Languages):</span>
+          </div>
+
+          {/* Quick-Access Featured Language Badges */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {featuredLanguages.map(lang => {
+              const isSelected = activeLang === lang.code;
+              return (
+                <button
+                  key={lang.code}
+                  disabled={isTranslating}
+                  onClick={() => onSelectLanguage(lang.code)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-all flex items-center gap-1 ${
+                    isSelected
+                      ? 'bg-emerald-500 text-slate-950 font-black shadow-md shadow-emerald-950/40 scale-105'
+                      : 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/5'
+                  }`}
+                  title={`Translate to ${lang.native} (${lang.label})`}
+                >
+                  <span>{lang.flag}</span>
+                  <span className="font-bold">{lang.native}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* All 48+ Languages Grouped Dropdown */}
+          <div className="relative flex items-center">
+            <select
+              value={activeLang}
+              disabled={isTranslating}
+              onChange={e => onSelectLanguage(e.target.value)}
+              className="appearance-none bg-slate-950/90 hover:bg-slate-950 text-white text-xs font-mono font-bold py-1.5 pl-3 pr-8 rounded-xl border border-white/10 hover:border-emerald-500/40 transition-all cursor-pointer focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            >
+              <option value="" disabled>All Languages ({MULTILINGUAL_LANGUAGES.length}) ▾</option>
+              <optgroup label="── African Agricultural & Regional ──">
+                {africanLanguages.map(l => (
+                  <option key={l.code} value={l.code}>
+                    {l.flag} {l.native} ({l.label})
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="── Global Agricultural & Regional ──">
+                {globalLanguages.map(l => (
+                  <option key={l.code} value={l.code}>
+                    {l.flag} {l.native} ({l.label})
+                  </option>
+                ))}
+              </optgroup>
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-white/50 absolute right-2.5 pointer-events-none" />
           </div>
         </div>
-      )}
 
-      <div className="prose prose-invert max-w-none text-slate-200 leading-relaxed font-sans">
-        <MarkdownRenderer content={result.answer} />
+        {activeLang !== 'en' && (
+          <button
+            onClick={() => setDualView(!dualView)}
+            className={`px-3 py-1.5 rounded-xl border text-xs font-mono font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+              dualView
+                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-sm shadow-cyan-950/40'
+                : 'bg-white/5 text-white/60 hover:text-white border-white/10'
+            }`}
+          >
+            <Columns className="w-3.5 h-3.5" />
+            <span>{dualView ? 'Single View' : 'Split Dual View'}</span>
+          </button>
+        )}
       </div>
 
-      {result.contextUsed && result.contextUsed.length > 0 && (
-        <div className="pt-6 border-t border-white/5 flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xxs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              Retrieved Verification Context
-            </span>
-            <button
-              onClick={onSwitchToEvidence}
-              className="text-xxs font-bold text-emerald-400 hover:text-emerald-300"
-            >
-              View all ({result.contextUsed.length}) sources &rarr;
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {result.contextUsed.slice(0, 4).map((ctx, idx) => (
-              <div
-                key={idx}
-                className="px-3 py-1.5 rounded-xl bg-slate-950/60 border border-white/5 text-xxs font-semibold text-slate-300 flex items-center gap-2"
-              >
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                <span className="truncate max-w-[200px]">
-                  {ctx.metadata?.title || `${ctx.metadata?.crop || 'Crop'} / ${ctx.metadata?.category || 'Guidance'}`}
-                </span>
-              </div>
-            ))}
-          </div>
+      {isTranslating && (
+        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-3 text-emerald-300 text-xs font-mono animate-pulse">
+          <RefreshCw className="w-4 h-4 animate-spin text-emerald-400" />
+          <span>Generating precision agricultural translation in {currentLangObj.native}...</span>
         </div>
       )}
-    </div>
-  </motion.div>
-);
+
+      <div className="p-6 sm:p-10 rounded-xl bg-slate-900/90 border border-white/10 shadow-2xl backdrop-blur-2xl space-y-6">
+        {result.evidenceStatus && result.evidenceStatus !== 'verified_sources' && (
+          <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-200">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider">Evidence Status Notice</p>
+              <p className="mt-1 text-xs text-amber-100/90">
+                {result.evidenceStatus === 'context_only'
+                  ? 'Synthesized using retrieved knowledge chunks without definitive rule citations. Recommended for verification.'
+                  : 'Retrieved context is sparse. Treat as an estimate and cross-reference with localized field testing.'}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ── Content View (Dual vs Single) ── */}
+        {dualView && activeLang !== 'en' ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="p-5 rounded-xl bg-slate-950/60 border border-white/10 space-y-3">
+              <div className="flex items-center gap-2 pb-2 border-b border-white/10 text-xs font-mono font-bold text-slate-400 uppercase">
+                <span>🇺🇸 English (Primary Grounded Context)</span>
+              </div>
+              <div className="prose prose-invert max-w-none text-slate-200 leading-relaxed font-sans text-xs">
+                <MarkdownRenderer content={originalContent} />
+              </div>
+            </div>
+
+            <div className="p-5 rounded-xl bg-slate-950/60 border border-emerald-500/30 space-y-3">
+              <div className="flex items-center gap-2 pb-2 border-b border-emerald-500/20 text-xs font-mono font-bold text-emerald-400 uppercase">
+                <span>{currentLangObj.flag} {currentLangObj.native} (Localized Farmer Advisory)</span>
+              </div>
+              <div className="prose prose-invert max-w-none text-slate-200 leading-relaxed font-sans text-xs">
+                <MarkdownRenderer content={activeContent} />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="prose prose-invert max-w-none text-slate-200 leading-relaxed font-sans">
+            <MarkdownRenderer content={activeContent} />
+          </div>
+        )}
+
+        {result.contextUsed && result.contextUsed.length > 0 && (
+          <div className="pt-6 border-t border-white/5 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xxs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                Retrieved Verification Context
+              </span>
+              <button
+                onClick={onSwitchToEvidence}
+                className="text-xxs font-bold text-emerald-400 hover:text-emerald-300"
+              >
+                View all ({result.contextUsed.length}) sources &rarr;
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {result.contextUsed.slice(0, 4).map((ctx, idx) => (
+                <div
+                  key={idx}
+                  className="px-3 py-1.5 rounded-xl bg-slate-950/60 border border-white/5 text-xxs font-semibold text-slate-300 flex items-center gap-2"
+                >
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  <span className="truncate max-w-[200px]">
+                    {ctx.metadata?.title || `${ctx.metadata?.crop || 'Crop'} / ${ctx.metadata?.category || 'Guidance'}`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+};
 
 const KnowledgeGraphView: React.FC<{
   customGraphNodes: GraphNode[];
@@ -490,10 +683,51 @@ export const AIResult: React.FC<AIResultProps> = ({ result }) => {
   const [selectedGraphNode, setSelectedGraphNode] = useState<GraphNode | null>(null);
   const [savedBookmark, setSavedBookmark] = useState(false);
 
+  // Multilingual localization state
+  const [activeLang, setActiveLang] = useState<string>('en');
+  const [translations, setTranslations] = useState<Record<string, string>>({ en: result.answer });
+  const [isTranslating, setIsTranslating] = useState<boolean>(false);
+  const [dualView, setDualView] = useState<boolean>(false);
+
+  useEffect(() => {
+    setTranslations({ en: result.answer });
+    setActiveLang('en');
+    setDualView(false);
+  }, [result.answer]);
+
   const customGraphNodes = useMemo<GraphNode[]>(() => buildGraphNodes(result), [result]);
 
+  const handleSelectLanguage = async (code: string) => {
+    if (code === activeLang) return;
+    if (translations[code]) {
+      setActiveLang(code);
+      return;
+    }
+
+    const targetLangObj = MULTILINGUAL_LANGUAGES.find(l => l.code === code);
+    setIsTranslating(true);
+    try {
+      const res = await translateContent(result.answer, code);
+      if (res.success && res.data?.translatedText) {
+        setTranslations(prev => ({
+          ...prev,
+          [code]: res.data.translatedText,
+        }));
+        setActiveLang(code);
+        toast.success(`Advisory translated to ${targetLangObj?.native || code}!`);
+      } else {
+        toast.error('Translation failed. Please retry shortly.');
+      }
+    } catch (err) {
+      toast.error('Translation service currently unavailable.');
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
   const handleCopyAnswer = () => {
-    navigator.clipboard.writeText(result.answer);
+    const textToCopy = translations[activeLang] || result.answer;
+    navigator.clipboard.writeText(textToCopy);
     setCopied(true);
     toast.success('Executive synthesis copied to clipboard!');
     setTimeout(() => setCopied(false), 2500);
@@ -510,15 +744,18 @@ export const AIResult: React.FC<AIResultProps> = ({ result }) => {
       setIsSpeaking(false);
     } else {
       window.speechSynthesis.cancel();
-      const plainText = result.answer.replace(/[*#`_()[\]]/g, '');
+      const currentText = translations[activeLang] || result.answer;
+      const plainText = currentText.replace(/[*#`_()[\]]/g, '');
       const utterance = new SpeechSynthesisUtterance(plainText);
+      const currentLangObj = MULTILINGUAL_LANGUAGES.find(l => l.code === activeLang) || MULTILINGUAL_LANGUAGES[0];
+      utterance.lang = currentLangObj.bcp47 || 'en-US';
       utterance.rate = 1.0;
       utterance.pitch = 1.0;
       utterance.onend = () => setIsSpeaking(false);
       utterance.onerror = () => setIsSpeaking(false);
       window.speechSynthesis.speak(utterance);
       setIsSpeaking(true);
-      toast.success('Playing voice briefing...');
+      toast.success(`Playing voice briefing (${currentLangObj.native})...`);
     }
   };
 
@@ -565,7 +802,16 @@ export const AIResult: React.FC<AIResultProps> = ({ result }) => {
 
       <AnimatePresence mode="wait">
         {viewMode === 'synthesis' && (
-          <SynthesisView result={result} onSwitchToEvidence={() => setViewMode('evidence')} />
+          <SynthesisView
+            result={result}
+            activeLang={activeLang}
+            onSelectLanguage={handleSelectLanguage}
+            isTranslating={isTranslating}
+            translations={translations}
+            dualView={dualView}
+            setDualView={setDualView}
+            onSwitchToEvidence={() => setViewMode('evidence')}
+          />
         )}
         {viewMode === 'graph' && (
           <KnowledgeGraphView

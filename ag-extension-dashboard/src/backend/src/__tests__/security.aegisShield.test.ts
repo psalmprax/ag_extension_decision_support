@@ -82,6 +82,20 @@ describe('Cybersecurity Suite — AegisShield Threat Neutralization & AI Guardra
         expect(result.threats.some((t) => t.includes('xss_attempt'))).toBe(true);
       }
     });
+
+    it('should NOT flag legitimate agronomic queries containing words ending in on= (e.g. Zone=, Season=, Region=)', () => {
+      const validQueries = [
+        'what crops to plant in spring [Agronomic Context: Location/Zone=Zone 5–6, Soil=Loam, Water=Drip, Goal=Commercial]',
+        'query with Season=Spring and Region=East and Condition=Good and Option=A',
+        'Decision=Optimal and Extension=Advisory',
+      ];
+
+      for (const q of validQueries) {
+        const result = aegisShield.sanitizeInput(q);
+        expect(result.clean).toBe(true);
+        expect(result.threats).toHaveLength(0);
+      }
+    });
   });
 
   describe('3. Unicode Obfuscation & Character Sanitation', () => {

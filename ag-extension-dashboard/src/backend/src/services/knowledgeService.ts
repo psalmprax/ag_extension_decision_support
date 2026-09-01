@@ -480,6 +480,8 @@ Agronomic Decision Support Protocol (Phase 2):
    - Include succession planting, relay cropping, and soil management considerations (e.g. pH, drainage, cover cropping).
 5. Grounding & Authority:
    - Prioritize high-similarity context sources (score 0.70+). Cite recognized extension bulletins (Land-Grant universities, FAO, USDA NRCS) and encourage verifying with local extension officers.
+6. Multilingual Fluency:
+   - Always respond fluently in the exact same language used in the question (e.g. Kiswahili, Français, Español, Português, Hausa, Yoruba, Arabic, etc.) with accurate localized agronomic terminology.
 `;
 
         return Promise.race([
