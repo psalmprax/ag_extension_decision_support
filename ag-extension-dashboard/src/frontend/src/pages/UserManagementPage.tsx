@@ -155,7 +155,7 @@ export function UserManagementPage() {
             <div>
               <div className="flex items-center gap-2.5">
                 <h1 className="text-2xl font-bold tracking-tight text-white">Staff & Officer Directory</h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                   <Radio className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />
                   RBAC Active
                 </span>
@@ -273,7 +273,7 @@ export function UserManagementPage() {
                         {user.firstName} {user.lastName}
                       </h3>
                       <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xxs font-bold uppercase tracking-wider border mt-1 ${roleBadge.color}`}
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xxs font-bold uppercase tracking-wider border mt-1 ${roleBadge.color}`}
                       >
                         <Shield className="w-2.5 h-2.5" />
                         {roleBadge.label}

@@ -270,7 +270,7 @@ const SynthesisResultsBento: React.FC<SynthesisResultsBentoProps> = ({
                 Diagnostic Executive Summary
               </h3>
             </div>
-            <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase border ${getStatusBadgeClass(result.cropHealthStatus)}`}>
+            <span className={`px-2.5 py-0.5 rounded-md text-xs font-bold uppercase border ${getStatusBadgeClass(result.cropHealthStatus)}`}>
               {result.cropHealthStatus}
             </span>
           </div>
@@ -515,7 +515,7 @@ export const VisitSynthesisForm: React.FC = () => {
             <div>
               <div className="flex items-center gap-2.5">
                 <h1 className="text-2xl font-bold tracking-tight text-white">Visit Synthesis</h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xxs font-medium bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-medium bg-purple-500/10 text-purple-300 border border-purple-500/20">
                   <Radio className="w-2.5 h-2.5 text-purple-400 animate-pulse" />
                   AI Field Copilot Active
                 </span>

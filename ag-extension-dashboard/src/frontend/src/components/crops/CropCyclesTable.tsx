@@ -62,7 +62,7 @@ export const CropCyclesTable: React.FC<CropCyclesTableProps> = ({
                   <td className="p-4 font-semibold text-slate-100">{cycle.cropName}</td>
                   <td className="p-4 text-slate-400 font-mono text-xs">{cycle.variety || 'N/A'}</td>
                   <td className="p-4">
-                    <span className={`px-2.5 py-1 rounded-full text-xxs font-black uppercase tracking-widest ${getStatusClass(cycle.status)}`}>
+                    <span className={`px-2.5 py-1 rounded-md text-xxs font-black uppercase tracking-widest ${getStatusClass(cycle.status)}`}>
                       {cycle.status}
                     </span>
                   </td>

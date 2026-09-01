@@ -260,7 +260,7 @@ export function Agents() {
                     </div>
 
                     <span
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold font-mono uppercase tracking-wider ${
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold font-mono uppercase tracking-wider ${
                         isHealthy
                           ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
                           : isDegraded
