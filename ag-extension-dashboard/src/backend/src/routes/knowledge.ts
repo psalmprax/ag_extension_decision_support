@@ -733,20 +733,21 @@ router.post('/ask', async (req: Request, res: Response) => {
         }
 
         // Daily knowledge quota check (3 per day for Free tier; admin is completely exempt)
-        if (userRole !== 'admin') {
-            const dailyQuota = await usageService.checkDailyKnowledgeLimit(userId, userRole);
-            if (!dailyQuota.allowed) {
-                return res.status(403).json({
-                    success: false,
-                    limitReached: true,
-                    error: 'Daily free knowledge base limit reached (3/3 queries). Please upgrade to Pro for unlimited queries.',
-                    data: {
-                        dailyRemaining: 0,
-                        limit: dailyQuota.limit,
-                        upgradeRequired: true,
-                    }
-                });
-            }
+        const dailyQuota = userRole === 'admin'
+            ? { allowed: true, current: 0, limit: -1, remaining: 999999 }
+            : await usageService.checkDailyKnowledgeLimit(userId, userRole);
+
+        if (!dailyQuota.allowed) {
+            return res.status(403).json({
+                success: false,
+                limitReached: true,
+                error: 'Daily free knowledge base limit reached (3/3 queries). Please upgrade to Pro for unlimited queries.',
+                data: {
+                    dailyRemaining: 0,
+                    limit: dailyQuota.limit,
+                    upgradeRequired: true,
+                }
+            });
         }
 
         // Free-tier users (farmers) route to the freebuff best-effort provider;
@@ -773,7 +774,7 @@ router.post('/ask', async (req: Request, res: Response) => {
             // Non-fatal
         }
 
-        const remainingAfter = Math.max(0, dailyQuota.remaining - 1);
+        const remainingAfter = userRole === 'admin' ? 999999 : Math.max(0, dailyQuota.remaining - 1);
         const evidenceStatus = getKnowledgeEvidenceStatus(citations.length, result.contextUsed.length);
 
         res.json({
