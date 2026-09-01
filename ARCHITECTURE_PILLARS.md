@@ -280,7 +280,66 @@ Enables field officers to record farm visits, soil tests, and parcel boundaries 
 
 ---
 
-## 13. Test Suites & Verification Matrix
+---
+
+## 13. On-Farm IoT & LoRaWAN Sensor Mesh Telemetry
+
+### Purpose
+Ingests continuous physical soil probe data (volumetric water content, electrical conductivity salinity, soil temperature) and calculates atmospheric evaporative stress to automate precision solar irrigation.
+
+### Key Components ([`iotTelemetryService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/iotTelemetryService.ts))
+- **Vapor Pressure Deficit (VPD)**:
+  $$\text{SVP (kPa)} = 0.61078 \times \exp\left(\frac{17.27 \times T}{T + 237.3}\right)$$
+  $$\text{VPD (kPa)} = \text{SVP} \times \left(1 - \frac{\text{RH}}{100}\right)$$
+- **Smart Irrigation Decision Tree**: Triggers automated irrigation pulses when soil reaches critical permanent wilting points ($\text{VWC} < 18\%$) or during high transpirational demand ($\text{VPD} > 1.2\,\text{kPa}$).
+
+---
+
+## 14. EUDR Zero-Deforestation & GS1 Farm-to-Fork Traceability Passport
+
+### Purpose
+Certifies regulatory export compliance with the EU Deforestation Regulation (EUDR) and generates cryptographically signed GS1 Digital Link batch passports for harvested agricultural commodities.
+
+### Key Components ([`traceabilityPassportService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/traceabilityPassportService.ts))
+- **EUDR Deforestation Verifier**: Cross-checks field parcel polygon vertices against the December 31, 2020 forest cutoff baseline, producing Due Diligence Statement (DDS) compliance certificates.
+- **GS1 Digital Link Passport**: Generates verifiable QR endpoints (`https://id.agriextension.org/01/{gtin}/10/{batchId}`) certifying GPS origin, fair trade verification, pesticide MRL compliance, and low-carbon footprint metrics.
+
+---
+
+## 15. Shared Mechanization & Agricultural Drone Fleet Dispatcher
+
+### Purpose
+Aggregates equipment leasing (tractors, solar pumps) and coordinates certified drone operator spraying missions across contiguous smallholder farming blocks.
+
+### Key Components ([`mechanizationFleetService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/mechanizationFleetService.ts))
+- **Tractor & Solar Pump Sharing Registry**: Searches local equipment owners by county/sub-county with standardized per-acre/per-day leasing rates.
+- **Drone Spray Mission Planner**: Calculates Ultra-Low-Volume (ULV) spray volume, required drone flight sorties, battery swaps, and safety wind speed buffers ($\le 18\,\text{km/h}$).
+
+---
+
+## 16. Crowd-Sourced Epidemiological Pest Swarm Radar (DBSCAN)
+
+### Purpose
+Aggregates participatory field sightings to identify active pest swarms and models wind-driven flight trajectories to alert downwind farming communities 24–48 hours in advance.
+
+### Key Components ([`pestSwarmRadarService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/pestSwarmRadarService.ts))
+- **Spatial DBSCAN Clustering**: Groups geotagged sighting reports within distance $\epsilon = 30\,\text{km}$ into active swarm clusters.
+- **Wind Vector Trajectory Model**: Uses prevailing wind direction and velocity to forecast 24h and 48h swarm displacement centroids $(\Delta \text{Lat}, \Delta \text{Lng})$, auto-identifying vulnerable downwind counties.
+
+---
+
+## 17. Cross-Border Regional Commodity Trade & Arbitrage Engine
+
+### Purpose
+Monitors regional wholesale grain and produce markets across East Africa (Kenya, Uganda, Tanzania, Rwanda, Ethiopia) to identify profitable cross-border trade corridors.
+
+### Key Components ([`crossBorderTradeService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/crossBorderTradeService.ts))
+- **Multi-Currency Normalization**: Normalizes local commodity prices (KES, UGX, TZS, RWF, ETB) into USD.
+- **Net Arbitrage Margin Calculator**: Computes net profitability after factoring road freight rates ($\$0.075/\text{ton-km}$), border customs, transit bonds, and Sanitary & Phytosanitary (SPS) fees.
+
+---
+
+## 18. Test Suites & Verification Matrix
 
 | Test Suite | File | Tests | Coverage Scope |
 |---|---|---|---|
@@ -288,9 +347,10 @@ Enables field officers to record farm visits, soil tests, and parcel boundaries 
 | **Login History** | [`loginHistory.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/__tests__/loginHistory.test.ts) | 12 / 12 | Audit logs, GeoIP headers, user-agent parsing, 24h failure rates, timeline queries |
 | **Strategic Pillars** | [`advancedPillars.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/__tests__/advancedPillars.test.ts) | 16 / 16 | Voice audio, IVR XML, DTMF, agro-dealers, batch verification, offtake, ROI, Soil Carbon, Hazard scans |
 | **Expanded Capabilities** | [`advancedPillarsExpanded.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/__tests__/advancedPillarsExpanded.test.ts) | 9 / 9 | Sentinel-2 NDVI/EVI/NDWI, 0-1000 credit score, parametric insurance claim, multi-tenancy |
+| **Frontier Capabilities** | [`frontierCapabilities.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/__tests__/frontierCapabilities.test.ts) | 9 / 9 | IoT soil telemetry, VPD irrigation, EUDR compliance, GS1 passports, drone missions, swarm radar, arbitrage |
 | **Edge Field Services** | [`edgeFieldServices.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/__tests__/edgeFieldServices.test.ts) | 3 / 3 | Haversine distance, WGS-84 metric Shoelace polygon acreage, RFC 7946 GeoJSON export |
 | **CRDT Offline Sync** | [`crdtSync.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/__tests__/crdtSync.test.ts) | 3 / 3 | Vector clocks, Last-Write-Wins conflict resolution, bidirectional delta sync between officers |
-| **Backend Full Suite** | 59 test files | 534 / 534 | 100% passing across all backend routes, services, queues, and security gates |
+| **Backend Full Suite** | 60 test files | 543 / 543 | 100% passing across all backend routes, services, queues, and security gates |
 | **Frontend Full Suite** | 33 test files | 150 / 150 | 100% passing across UI components, state stores, and services |
 | **Linter & Dead-Code** | `fallow:check` | 0 regressions | Clean ESLint, strict TypeScript, and Fallow dead-code gate passing |
 
