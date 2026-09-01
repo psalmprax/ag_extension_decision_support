@@ -214,14 +214,83 @@ Transforms the platform from reactive query-handling into an autonomous hazard p
 
 ---
 
-## 8. Test Suites & Verification Matrix
+---
+
+## 8. Satellite Earth Observation & Sentinel-2 NDVI Indexing
+
+### Purpose
+Automates continuous orbital crop vigor monitoring and stress anomaly detection across registered farmer field parcel boundaries.
+
+### Key Components ([`satelliteNdviService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/satelliteNdviService.ts))
+- **Multispectral Indices**:
+  - **NDVI** (Normalized Difference Vegetation Index): $\frac{\text{NIR} - \text{Red}}{\text{NIR} + \text{Red}}$
+  - **EVI** (Enhanced Vegetation Index): $2.5 \times \frac{\text{NIR} - \text{Red}}{\text{NIR} + 6\,\text{Red} - 7.5\,\text{Blue} + 1}$
+  - **NDWI** (Normalized Difference Water Index): $\frac{\text{NIR} - \text{SWIR}}{\text{NIR} + \text{SWIR}}$
+- **Vegetative Health Tiers**: `optimal` ($\ge 0.65$), `normal` ($0.45\text{--}0.65$), `moderate_stress` ($0.25\text{--}0.45$), `severe_stress` ($< 0.25$).
+- **Temporal Anomaly Trigger**: Flags rapid vegetative degradation ($\Delta \text{NDVI} \le -15\%$) relative to 30-day baseline, automatically generating priority field scouting actions.
+
+---
+
+## 9. Smallholder Agronomic Credit Scoring & Parametric Insurance Engine
+
+### Purpose
+Unlocks microfinance lending and automated drought/flood insurance for smallholders using verified agronomic compliance telemetry.
+
+### Key Components ([`agriCreditInsuranceService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/agriCreditInsuranceService.ts))
+- **0–1000 Agronomic Credit Score**:
+  - Advisory Compliance Score (Max 300 pts)
+  - Historical Yield Attainment (Max 250 pts)
+  - Soil Health & Land Quality (Max 200 pts)
+  - Market Offtake Fulfillment (Max 150 pts)
+  - Climate Resilience & Diversification (Max 100 pts)
+  - **Risk Tiers**: `AAA_Prime` ($\ge 800$), `AA_Low_Risk` ($700\text{--}799$), `A_Moderate_Risk` ($600\text{--}699$), `B_High_Risk` ($500\text{--}599$), `C_Unqualified` ($< 500$).
+- **Parametric Weather-Index Insurance Underwriter**: Evaluates consecutive dry day and excess rainfall thresholds against satellite and meteorological feeds, computing automated payout percentages and claim approvals.
+
+---
+
+## 10. Multi-Tenant Agribusiness Federation & Cooperative Hierarchy
+
+### Purpose
+Enables large agribusiness unions, commodity exporters, and government agencies to administer hierarchical multi-tenant structures with custom branding and localized agronomic rulesets.
+
+### Key Components ([`multiTenantFederationService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/services/multiTenantFederationService.ts))
+- **Hierarchy Model**: `Organization -> Region -> Cooperative Hub -> Field Officer -> Farmer`.
+- **Tenant Scoped Isolation**: Automated SQL filter clauses (`organization_id = $1`).
+- **Custom Advisory Compliance**: Intercepts chemical and fertilizer recommendations to enforce tenant-specific restrictions (e.g. banned export pesticides or organic certification standards).
+
+---
+
+## 11. Conflict-Free Bi-Directional Offline Sync (CRDT Protocol)
+
+### Purpose
+Enables field officers to record farm visits, soil tests, and parcel boundaries completely offline across multiple devices with guaranteed deterministic conflict resolution upon reconnection.
+
+### Key Components ([`crdtSyncService.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/services/crdtSyncService.ts))
+- **Vector Clocks**: Tracks distributed causality ordering across multiple mobile nodes (`nodeId -> sequence`).
+- **Last-Write-Wins (LWW) Register**: Deterministic tie-breaking using `(timestamp, nodeId)` so all nodes converge to identical states.
+- **Delta Generation**: Computes minimal change payloads since the remote replica's last observed clock.
+
+---
+
+## 12. Interactive Frontend UI Modules
+
+- **[`SecuritySettingsModal.tsx`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/SecuritySettingsModal.tsx)**: Interactive TOTP QR setup, backup codes, and active session manager with one-click remote revocation.
+- **[`ParcelPolygonDrawer.tsx`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/crops/ParcelPolygonDrawer.tsx)**: Live GPS boundary vertex recorder with geodesic area display (Hectares/Acres) and GeoJSON export.
+- **[`EdgeVisionScannerModal.tsx`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/components/EdgeVisionScannerModal.tsx)**: Zero-connectivity leaf camera diagnostic scanner with RGB chromaticity visual metrics and immediate cultural/chemical intervention drawer.
+
+---
+
+## 13. Test Suites & Verification Matrix
 
 | Test Suite | File | Tests | Coverage Scope |
 |---|---|---|---|
-| **Security Hardening** | [`securityHardening.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/__tests__/securityHardening.test.ts) | 16 / 16 | Base32 encoding, TOTP validation, backup codes, token hashing, session revocation, brute-force lockout |
-| **Login History** | [`loginHistory.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/__tests__/loginHistory.test.ts) | 12 / 12 | Audit log insertions, header location parsing, user-agent parsing, 24h failure rates, timeline queries |
-| **Strategic Pillars** | [`advancedPillars.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/__tests__/advancedPillars.test.ts) | 16 / 16 | Voice notes, IVR XML, DTMF menus, agro-dealers, batch verification, offtake matching, ROI, Soil Carbon, Hazard scans |
+| **Security Hardening** | [`securityHardening.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/__tests__/securityHardening.test.ts) | 16 / 16 | Base32, TOTP validation, backup codes, token hashing, session revocation, account lockout |
+| **Login History** | [`loginHistory.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/__tests__/loginHistory.test.ts) | 12 / 12 | Audit logs, GeoIP headers, user-agent parsing, 24h failure rates, timeline queries |
+| **Strategic Pillars** | [`advancedPillars.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/__tests__/advancedPillars.test.ts) | 16 / 16 | Voice audio, IVR XML, DTMF, agro-dealers, batch verification, offtake, ROI, Soil Carbon, Hazard scans |
+| **Expanded Capabilities** | [`advancedPillarsExpanded.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/backend/src/__tests__/advancedPillarsExpanded.test.ts) | 9 / 9 | Sentinel-2 NDVI/EVI/NDWI, 0-1000 credit score, parametric insurance claim, multi-tenancy |
 | **Edge Field Services** | [`edgeFieldServices.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/__tests__/edgeFieldServices.test.ts) | 3 / 3 | Haversine distance, WGS-84 metric Shoelace polygon acreage, RFC 7946 GeoJSON export |
-| **Backend Full Suite** | 58 test files | 525 / 525 | 100% passing across all backend routes, services, queues, and security gates |
-| **Frontend Full Suite** | 32 test files | 147 / 147 | 100% passing across UI components, state stores, and services |
+| **CRDT Offline Sync** | [`crdtSync.test.ts`](file:///home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/__tests__/crdtSync.test.ts) | 3 / 3 | Vector clocks, Last-Write-Wins conflict resolution, bidirectional delta sync between officers |
+| **Backend Full Suite** | 59 test files | 534 / 534 | 100% passing across all backend routes, services, queues, and security gates |
+| **Frontend Full Suite** | 33 test files | 150 / 150 | 100% passing across UI components, state stores, and services |
 | **Linter & Dead-Code** | `fallow:check` | 0 regressions | Clean ESLint, strict TypeScript, and Fallow dead-code gate passing |
+
