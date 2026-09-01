@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Brain,
@@ -15,14 +15,30 @@ import {
   AlertTriangle,
   Bookmark,
   Layers,
+  Globe,
+  RefreshCw,
+  Columns,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ReasoningVisuals } from './ReasoningVisuals';
 import { MarkdownRenderer } from '../MarkdownRenderer';
-import { Citation, KnowledgeEvidenceStatus } from '@/api/knowledgeService';
+import { Citation, KnowledgeEvidenceStatus, translateContent } from '@/api/knowledgeService';
 import { RagKnowledgeGraphCanvas, GraphNode } from '../canvas-ui/RagKnowledgeGraphCanvas';
 import { RefractiveGlassCard } from '../canvas-ui/RefractiveGlassCard';
 import type { VisualsData } from './types';
+
+export const MULTILINGUAL_LANGUAGES = [
+  { code: 'en', label: 'English', flag: '🇺🇸', native: 'English', bcp47: 'en-US' },
+  { code: 'sw', label: 'Swahili', flag: '🇰🇪', native: 'Kiswahili', bcp47: 'sw-KE' },
+  { code: 'fr', label: 'French', flag: '🇫🇷', native: 'Français', bcp47: 'fr-FR' },
+  { code: 'es', label: 'Spanish', flag: '🇪🇸', native: 'Español', bcp47: 'es-ES' },
+  { code: 'pt', label: 'Portuguese', flag: '🇧🇷', native: 'Português', bcp47: 'pt-BR' },
+  { code: 'ha', label: 'Hausa', flag: '🇳🇬', native: 'Hausa', bcp47: 'ha-NG' },
+  { code: 'yo', label: 'Yoruba', flag: '🇳🇬', native: 'Yorùbá', bcp47: 'yo-NG' },
+  { code: 'ar', label: 'Arabic', flag: '🇸🇦', native: 'العربية', bcp47: 'ar-SA' },
+  { code: 'hi', label: 'Hindi', flag: '🇮🇳', native: 'हिन्दी', bcp47: 'hi-IN' },
+  { code: 'de', label: 'German', flag: '🇩🇪', native: 'Deutsch', bcp47: 'de-DE' },
+];
 
 interface ContextItem {
   content: string;
@@ -106,65 +122,166 @@ function buildGraphNodes(result: Result): GraphNode[] {
   ];
 }
 
-const SynthesisView: React.FC<{ result: Result; onSwitchToEvidence: () => void }> = ({ result, onSwitchToEvidence }) => (
-  <motion.div
-    key="synthesis-view"
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -10 }}
-    className="space-y-6"
-  >
-    <div className="p-6 sm:p-10 rounded-xl bg-slate-900/90 border border-white/10 shadow-2xl backdrop-blur-2xl space-y-6">
-      {result.evidenceStatus && result.evidenceStatus !== 'verified_sources' && (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-200">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider">Evidence Status Notice</p>
-            <p className="mt-1 text-xs text-amber-100/90">
-              {result.evidenceStatus === 'context_only'
-                ? 'Synthesized using retrieved knowledge chunks without definitive rule citations. Recommended for verification.'
-                : 'Retrieved context is sparse. Treat as an estimate and cross-reference with localized field testing.'}
-            </p>
+interface SynthesisViewProps {
+  result: Result;
+  activeLang: string;
+  onSelectLanguage: (code: string) => void;
+  isTranslating: boolean;
+  translations: Record<string, string>;
+  dualView: boolean;
+  setDualView: (v: boolean) => void;
+  onSwitchToEvidence: () => void;
+}
+
+const SynthesisView: React.FC<SynthesisViewProps> = ({
+  result,
+  activeLang,
+  onSelectLanguage,
+  isTranslating,
+  translations,
+  dualView,
+  setDualView,
+  onSwitchToEvidence,
+}) => {
+  const activeContent = translations[activeLang] || result.answer;
+  const originalContent = translations['en'] || result.answer;
+  const currentLangObj = MULTILINGUAL_LANGUAGES.find(l => l.code === activeLang) || MULTILINGUAL_LANGUAGES[0];
+
+  return (
+    <motion.div
+      key="synthesis-view"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      className="space-y-6"
+    >
+      {/* ── Multilingual Translation & Dual-View Bar ── */}
+      <div className="p-4 rounded-xl bg-slate-900/90 border border-white/10 shadow-xl backdrop-blur-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider pr-2 border-r border-white/10">
+            <Globe className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Localize Result:</span>
+          </div>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {MULTILINGUAL_LANGUAGES.map(lang => {
+              const isSelected = activeLang === lang.code;
+              return (
+                <button
+                  key={lang.code}
+                  disabled={isTranslating}
+                  onClick={() => onSelectLanguage(lang.code)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-all flex items-center gap-1 ${
+                    isSelected
+                      ? 'bg-emerald-500 text-slate-950 font-black shadow-md shadow-emerald-950/40 scale-105'
+                      : 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/5'
+                  }`}
+                  title={`Translate to ${lang.native}`}
+                >
+                  <span>{lang.flag}</span>
+                  <span className="font-bold">{lang.native}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
-      )}
 
-      <div className="prose prose-invert max-w-none text-slate-200 leading-relaxed font-sans">
-        <MarkdownRenderer content={result.answer} />
+        {activeLang !== 'en' && (
+          <button
+            onClick={() => setDualView(!dualView)}
+            className={`px-3 py-1.5 rounded-xl border text-xs font-mono font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+              dualView
+                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-sm shadow-cyan-950/40'
+                : 'bg-white/5 text-white/60 hover:text-white border-white/10'
+            }`}
+          >
+            <Columns className="w-3.5 h-3.5" />
+            <span>{dualView ? 'Single View' : 'Split Dual View'}</span>
+          </button>
+        )}
       </div>
 
-      {result.contextUsed && result.contextUsed.length > 0 && (
-        <div className="pt-6 border-t border-white/5 flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xxs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              Retrieved Verification Context
-            </span>
-            <button
-              onClick={onSwitchToEvidence}
-              className="text-xxs font-bold text-emerald-400 hover:text-emerald-300"
-            >
-              View all ({result.contextUsed.length}) sources &rarr;
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {result.contextUsed.slice(0, 4).map((ctx, idx) => (
-              <div
-                key={idx}
-                className="px-3 py-1.5 rounded-xl bg-slate-950/60 border border-white/5 text-xxs font-semibold text-slate-300 flex items-center gap-2"
-              >
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                <span className="truncate max-w-[200px]">
-                  {ctx.metadata?.title || `${ctx.metadata?.crop || 'Crop'} / ${ctx.metadata?.category || 'Guidance'}`}
-                </span>
-              </div>
-            ))}
-          </div>
+      {isTranslating && (
+        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-3 text-emerald-300 text-xs font-mono animate-pulse">
+          <RefreshCw className="w-4 h-4 animate-spin text-emerald-400" />
+          <span>Generating precision agricultural translation in {currentLangObj.native}...</span>
         </div>
       )}
-    </div>
-  </motion.div>
-);
+
+      <div className="p-6 sm:p-10 rounded-xl bg-slate-900/90 border border-white/10 shadow-2xl backdrop-blur-2xl space-y-6">
+        {result.evidenceStatus && result.evidenceStatus !== 'verified_sources' && (
+          <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-200">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider">Evidence Status Notice</p>
+              <p className="mt-1 text-xs text-amber-100/90">
+                {result.evidenceStatus === 'context_only'
+                  ? 'Synthesized using retrieved knowledge chunks without definitive rule citations. Recommended for verification.'
+                  : 'Retrieved context is sparse. Treat as an estimate and cross-reference with localized field testing.'}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ── Content View (Dual vs Single) ── */}
+        {dualView && activeLang !== 'en' ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="p-5 rounded-xl bg-slate-950/60 border border-white/10 space-y-3">
+              <div className="flex items-center gap-2 pb-2 border-b border-white/10 text-xs font-mono font-bold text-slate-400 uppercase">
+                <span>🇺🇸 English (Primary Grounded Context)</span>
+              </div>
+              <div className="prose prose-invert max-w-none text-slate-200 leading-relaxed font-sans text-xs">
+                <MarkdownRenderer content={originalContent} />
+              </div>
+            </div>
+
+            <div className="p-5 rounded-xl bg-slate-950/60 border border-emerald-500/30 space-y-3">
+              <div className="flex items-center gap-2 pb-2 border-b border-emerald-500/20 text-xs font-mono font-bold text-emerald-400 uppercase">
+                <span>{currentLangObj.flag} {currentLangObj.native} (Localized Farmer Advisory)</span>
+              </div>
+              <div className="prose prose-invert max-w-none text-slate-200 leading-relaxed font-sans text-xs">
+                <MarkdownRenderer content={activeContent} />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="prose prose-invert max-w-none text-slate-200 leading-relaxed font-sans">
+            <MarkdownRenderer content={activeContent} />
+          </div>
+        )}
+
+        {result.contextUsed && result.contextUsed.length > 0 && (
+          <div className="pt-6 border-t border-white/5 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xxs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                Retrieved Verification Context
+              </span>
+              <button
+                onClick={onSwitchToEvidence}
+                className="text-xxs font-bold text-emerald-400 hover:text-emerald-300"
+              >
+                View all ({result.contextUsed.length}) sources &rarr;
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {result.contextUsed.slice(0, 4).map((ctx, idx) => (
+                <div
+                  key={idx}
+                  className="px-3 py-1.5 rounded-xl bg-slate-950/60 border border-white/5 text-xxs font-semibold text-slate-300 flex items-center gap-2"
+                >
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  <span className="truncate max-w-[200px]">
+                    {ctx.metadata?.title || `${ctx.metadata?.crop || 'Crop'} / ${ctx.metadata?.category || 'Guidance'}`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+};
 
 const KnowledgeGraphView: React.FC<{
   customGraphNodes: GraphNode[];
@@ -490,10 +607,51 @@ export const AIResult: React.FC<AIResultProps> = ({ result }) => {
   const [selectedGraphNode, setSelectedGraphNode] = useState<GraphNode | null>(null);
   const [savedBookmark, setSavedBookmark] = useState(false);
 
+  // Multilingual localization state
+  const [activeLang, setActiveLang] = useState<string>('en');
+  const [translations, setTranslations] = useState<Record<string, string>>({ en: result.answer });
+  const [isTranslating, setIsTranslating] = useState<boolean>(false);
+  const [dualView, setDualView] = useState<boolean>(false);
+
+  useEffect(() => {
+    setTranslations({ en: result.answer });
+    setActiveLang('en');
+    setDualView(false);
+  }, [result.answer]);
+
   const customGraphNodes = useMemo<GraphNode[]>(() => buildGraphNodes(result), [result]);
 
+  const handleSelectLanguage = async (code: string) => {
+    if (code === activeLang) return;
+    if (translations[code]) {
+      setActiveLang(code);
+      return;
+    }
+
+    const targetLangObj = MULTILINGUAL_LANGUAGES.find(l => l.code === code);
+    setIsTranslating(true);
+    try {
+      const res = await translateContent(result.answer, code);
+      if (res.success && res.data?.translatedText) {
+        setTranslations(prev => ({
+          ...prev,
+          [code]: res.data.translatedText,
+        }));
+        setActiveLang(code);
+        toast.success(`Advisory translated to ${targetLangObj?.native || code}!`);
+      } else {
+        toast.error('Translation failed. Please retry shortly.');
+      }
+    } catch (err) {
+      toast.error('Translation service currently unavailable.');
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
   const handleCopyAnswer = () => {
-    navigator.clipboard.writeText(result.answer);
+    const textToCopy = translations[activeLang] || result.answer;
+    navigator.clipboard.writeText(textToCopy);
     setCopied(true);
     toast.success('Executive synthesis copied to clipboard!');
     setTimeout(() => setCopied(false), 2500);
@@ -510,15 +668,18 @@ export const AIResult: React.FC<AIResultProps> = ({ result }) => {
       setIsSpeaking(false);
     } else {
       window.speechSynthesis.cancel();
-      const plainText = result.answer.replace(/[*#`_()[\]]/g, '');
+      const currentText = translations[activeLang] || result.answer;
+      const plainText = currentText.replace(/[*#`_()[\]]/g, '');
       const utterance = new SpeechSynthesisUtterance(plainText);
+      const currentLangObj = MULTILINGUAL_LANGUAGES.find(l => l.code === activeLang) || MULTILINGUAL_LANGUAGES[0];
+      utterance.lang = currentLangObj.bcp47 || 'en-US';
       utterance.rate = 1.0;
       utterance.pitch = 1.0;
       utterance.onend = () => setIsSpeaking(false);
       utterance.onerror = () => setIsSpeaking(false);
       window.speechSynthesis.speak(utterance);
       setIsSpeaking(true);
-      toast.success('Playing voice briefing...');
+      toast.success(`Playing voice briefing (${currentLangObj.native})...`);
     }
   };
 
@@ -565,7 +726,16 @@ export const AIResult: React.FC<AIResultProps> = ({ result }) => {
 
       <AnimatePresence mode="wait">
         {viewMode === 'synthesis' && (
-          <SynthesisView result={result} onSwitchToEvidence={() => setViewMode('evidence')} />
+          <SynthesisView
+            result={result}
+            activeLang={activeLang}
+            onSelectLanguage={handleSelectLanguage}
+            isTranslating={isTranslating}
+            translations={translations}
+            dualView={dualView}
+            setDualView={setDualView}
+            onSwitchToEvidence={() => setViewMode('evidence')}
+          />
         )}
         {viewMode === 'graph' && (
           <KnowledgeGraphView
