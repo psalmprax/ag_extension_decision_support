@@ -12,7 +12,7 @@ import {
   ClassificationOptions,
   ClassificationResult,
 } from '../types';
-import { REASONING_SYSTEM_PROMPT, extractVisuals } from '../assetLibrary';
+import { REASONING_SYSTEM_PROMPT, extractVisuals, buildGroundedReasoningPrompt } from '../assetLibrary';
 
 export interface AIHubMixRequest {
   model?: string;
@@ -404,7 +404,7 @@ export class AIHubMixProvider extends BaseAIProvider {
     query: string,
     options?: ReasoningOptions
   ): Promise<ReasoningResult> {
-    const groundedPrompt = `Use the context below as the authoritative source for this answer. If the context is incomplete, say what is missing before adding general agricultural guidance. Cite source titles or URLs when available.\n\nContext:\n${context || 'No specific context found in knowledge base.'}\n\nQuestion: ${query}`;
+    const groundedPrompt = buildGroundedReasoningPrompt(context, query);
     const messages = [
       { role: 'system', content: REASONING_SYSTEM_PROMPT },
       { role: 'user', content: groundedPrompt },

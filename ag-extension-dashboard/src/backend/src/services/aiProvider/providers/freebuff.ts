@@ -18,6 +18,7 @@ import {
     ImageAnalysisResult,
 } from '../types';
 import { logger } from '@/utils/logger';
+import { buildGroundedReasoningPrompt } from '../assetLibrary';
 import { config } from '@/config';
 
 /**
@@ -189,7 +190,7 @@ export class FreebuffProvider extends BaseAIProvider {
         query: string,
         options?: ReasoningOptions
     ): Promise<ReasoningResult> {
-        const groundedPrompt = `Use the context below as the authoritative source for this answer. If the context is incomplete, say what is missing before adding general agricultural guidance. Cite source titles or URLs when available.\n\nContext:\n${context || 'No specific context found in knowledge base.'}\n\nQuestion: ${query}`;
+        const groundedPrompt = buildGroundedReasoningPrompt(context, query);
         const result = await this.generateText(groundedPrompt, {
             temperature: options?.temperature ?? 0.3,
             maxTokens: options?.maxTokens ?? 2000,

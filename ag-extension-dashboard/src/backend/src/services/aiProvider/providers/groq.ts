@@ -11,7 +11,7 @@ import {
     ImageAnalysisOptions,
     ImageAnalysisResult,
 } from '../types';
-import { REASONING_SYSTEM_PROMPT, extractVisuals } from '../assetLibrary';
+import { REASONING_SYSTEM_PROMPT, extractVisuals, buildGroundedReasoningPrompt } from '../assetLibrary';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
 import Groq from 'groq-sdk';
@@ -154,7 +154,7 @@ export class GroqProvider extends BaseAIProvider {
     }
 
     async analyzeWithReasoning(context: string, query: string, options?: ReasoningOptions): Promise<ReasoningResult> {
-        const groundedPrompt = `Use the context below as the authoritative source for this answer. If the context is incomplete, say what is missing before adding general agricultural guidance. Cite source titles or URLs when available.\n\nContext:\n${context || 'No specific context found in knowledge base.'}\n\nQuestion: ${query}`;
+        const groundedPrompt = buildGroundedReasoningPrompt(context, query);
         const messages = [
             { role: 'system', content: REASONING_SYSTEM_PROMPT },
             { role: 'user', content: groundedPrompt },
