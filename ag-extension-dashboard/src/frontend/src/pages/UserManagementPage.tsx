@@ -588,6 +588,12 @@ export function UserManagementPage() {
 
                       <div className="text-right font-mono text-xxs text-white/50 space-y-0.5">
                         <div className="text-white/80">{new Date(entry.createdAt).toLocaleString()}</div>
+                        {entry.location && (
+                          <div className="flex items-center justify-end gap-1 text-white/70">
+                            <MapPin className="w-2.5 h-2.5 text-emerald-400/80 shrink-0" />
+                            <span className="truncate max-w-[160px]">{entry.location}</span>
+                          </div>
+                        )}
                         <div>IP: {entry.ipAddress || '—'}</div>
                       </div>
                     </div>

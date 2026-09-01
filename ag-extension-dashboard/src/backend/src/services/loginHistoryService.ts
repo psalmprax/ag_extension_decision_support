@@ -64,6 +64,42 @@ export function parseDeviceFromUserAgent(userAgent?: string | null): string {
   return `${browser} on ${os}`;
 }
 
+// fallow-ignore-next-line unused-export
+export function resolveLocationFromHeaders(
+  headers: Record<string, string | string[] | undefined> = {},
+  ipAddress?: string | null,
+  userRegion?: string | null
+): string {
+  // Check Cloudflare / CDN geo headers
+  const cfCity = headers['cf-ipcity'] as string | undefined;
+  const cfCountry = headers['cf-ipcountry'] as string | undefined;
+  if (cfCity && cfCountry) return `${cfCity}, ${cfCountry}`;
+  if (cfCountry) return cfCountry;
+
+  const geoCity = (headers['x-geo-city'] || headers['x-client-city']) as string | undefined;
+  const geoCountry = (headers['x-geo-country'] || headers['x-client-country'] || headers['x-country-code']) as string | undefined;
+  if (geoCity && geoCountry) return `${geoCity}, ${geoCountry}`;
+  if (geoCountry) return geoCountry;
+
+  // Check if loopback or private IP
+  if (ipAddress) {
+    const cleanIp = ipAddress.replace(/^::ffff:/, '');
+    if (
+      cleanIp === '127.0.0.1' ||
+      cleanIp === '::1' ||
+      cleanIp === 'localhost' ||
+      cleanIp.startsWith('10.') ||
+      cleanIp.startsWith('192.168.') ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(cleanIp)
+    ) {
+      return userRegion ? `${userRegion} (Local Node)` : 'Local Node / Development';
+    }
+  }
+
+  // Fallback to user registered region or default
+  return userRegion ? `${userRegion}, Kenya` : 'Nairobi, Kenya';
+}
+
 export async function recordLoginAttempt(params: RecordLoginParams): Promise<void> {
   const {
     userId = null,

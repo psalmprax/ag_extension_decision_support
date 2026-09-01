@@ -1,5 +1,6 @@
 import {
   parseDeviceFromUserAgent,
+  resolveLocationFromHeaders,
   recordLoginAttempt,
   getLoginHistory,
   getLoginStats,
@@ -50,6 +51,23 @@ describe('loginHistoryService', () => {
     it('identifies Edge on macOS', () => {
       const ua = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0';
       expect(parseDeviceFromUserAgent(ua)).toBe('Edge on macOS');
+    });
+  });
+
+  describe('resolveLocationFromHeaders', () => {
+    it('resolves location from Cloudflare headers', () => {
+      const headers = { 'cf-ipcity': 'Nairobi', 'cf-ipcountry': 'Kenya' };
+      expect(resolveLocationFromHeaders(headers)).toBe('Nairobi, Kenya');
+    });
+
+    it('resolves location for localhost / local network with user region', () => {
+      expect(resolveLocationFromHeaders({}, '127.0.0.1', 'Nakuru')).toBe('Nakuru (Local Node)');
+      expect(resolveLocationFromHeaders({}, '192.168.1.50', null)).toBe('Local Node / Development');
+    });
+
+    it('falls back to user registered region or Nairobi, Kenya', () => {
+      expect(resolveLocationFromHeaders({}, '41.89.22.1', 'Uasin Gishu')).toBe('Uasin Gishu, Kenya');
+      expect(resolveLocationFromHeaders({}, '41.89.22.1', null)).toBe('Nairobi, Kenya');
     });
   });
 

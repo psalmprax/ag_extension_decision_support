@@ -8,7 +8,7 @@ import { auditMiddleware } from '@/middleware/auditMiddleware';
 import { validate } from '@/middleware/validationMiddleware';
 import { loginSchema, registerSchema } from '@/utils/schemas';
 import { safeError } from '@/utils/safeResponse';
-import { recordLoginAttempt, getLoginHistory, getLoginStats } from '@/services/loginHistoryService';
+import { recordLoginAttempt, getLoginHistory, getLoginStats, resolveLocationFromHeaders } from '@/services/loginHistoryService';
 
 const router = Router();
 
@@ -70,14 +70,16 @@ interface JWTPayload {
 router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], async (req: Request, res: Response) => {
     try {
         const { email, password } = req.body;
+        const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() || req.ip || null;
 
         if (!email || !password) {
             await recordLoginAttempt({
                 email: email || 'unknown',
                 status: 'failed',
                 failureReason: 'missing_credentials',
-                ipAddress: req.ip,
+                ipAddress: clientIp,
                 userAgent: req.get('user-agent'),
+                location: resolveLocationFromHeaders(req.headers, clientIp),
             });
             return res.status(400).json({
                 success: false,
@@ -94,8 +96,9 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
                 email,
                 status: 'failed',
                 failureReason: 'user_not_found',
-                ipAddress: req.ip,
+                ipAddress: clientIp,
                 userAgent: req.get('user-agent'),
+                location: resolveLocationFromHeaders(req.headers, clientIp),
             });
             return res.status(401).json({
                 success: false,
@@ -111,8 +114,9 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
                 email,
                 status: 'failed',
                 failureReason: 'invalid_password',
-                ipAddress: req.ip,
+                ipAddress: clientIp,
                 userAgent: req.get('user-agent'),
+                location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
             });
             return res.status(401).json({
                 success: false,
@@ -125,8 +129,9 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
             userId: user.id,
             email: user.email,
             status: 'success',
-            ipAddress: req.ip,
+            ipAddress: clientIp,
             userAgent: req.get('user-agent'),
+            location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
         });
 
         // Generate JWT token
