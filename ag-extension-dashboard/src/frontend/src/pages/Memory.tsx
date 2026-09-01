@@ -154,7 +154,7 @@ export function Memory() {
             <div>
               <div className="flex items-center gap-2.5">
                 <h1 className="text-2xl font-bold tracking-tight text-white">Agent Memory & Knowledge Engine</h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xxs font-medium bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-medium bg-purple-500/10 text-purple-300 border border-purple-500/20">
                   <Radio className="w-2.5 h-2.5 text-purple-400 animate-pulse" />
                   RAG Vector Store Synced
                 </span>
@@ -243,7 +243,7 @@ export function Memory() {
             <Sparkles className="w-4 h-4 text-purple-400" />
             <h3 className="text-sm font-bold text-white">Dynamic RAG Semantic Mesh</h3>
           </div>
-          <span className="px-2.5 py-1 rounded-full text-xxs font-mono uppercase bg-purple-500/10 text-purple-400 border border-purple-500/20">
+          <span className="px-2.5 py-1 rounded-md text-xxs font-mono uppercase bg-purple-500/10 text-purple-400 border border-purple-500/20">
             Real-Time Impulse Graph
           </span>
         </div>
@@ -314,7 +314,7 @@ export function Memory() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-1.5">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xxs font-bold uppercase tracking-wider bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-bold uppercase tracking-wider bg-purple-500/15 text-purple-300 border border-purple-500/30">
                       <Tag className="w-2.5 h-2.5" />
                       {memory.category}
                     </span>
