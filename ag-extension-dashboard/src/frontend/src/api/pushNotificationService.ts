@@ -2,24 +2,38 @@ import apiClient from './client';
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
+async function resolveVapidKey(): Promise<string> {
+  let vapidKey = VAPID_PUBLIC_KEY || '';
+  try {
+    const res = await apiClient.get<{ success: boolean; publicKey: string }>(
+      '/v1/notifications/vapid-public-key'
+    );
+    if (res.data?.success && res.data.publicKey) {
+      vapidKey = res.data.publicKey;
+    }
+  } catch (err) {
+    console.warn('Failed to fetch VAPID key from backend, using env fallback:', err);
+  }
+  return vapidKey;
+}
+
+function isPushPermissionDenied(error: unknown): boolean {
+  if (error instanceof DOMException && (error.name === 'NotAllowedError' || error.code === 20)) {
+    return true;
+  }
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    return String((error as { message: string }).message).toLowerCase().includes('denied');
+  }
+  return false;
+}
+
 export const subscribeUserToPush = async () => {
   try {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      return null;
-    }
+    if (typeof window === 'undefined') return null;
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
+    if ('Notification' in window && Notification.permission === 'denied') return null;
 
-    let vapidKey = VAPID_PUBLIC_KEY || '';
-    try {
-      const res = await apiClient.get<{ success: boolean; publicKey: string }>(
-        '/v1/notifications/vapid-public-key'
-      );
-      if (res.data?.success && res.data.publicKey) {
-        vapidKey = res.data.publicKey;
-      }
-    } catch (err) {
-      console.warn('Failed to fetch VAPID key from backend, using env fallback:', err);
-    }
-
+    const vapidKey = await resolveVapidKey();
     if (!vapidKey) {
       console.warn('VAPID_PUBLIC_KEY not configured. Push notifications will not work.');
       return null;
@@ -37,8 +51,13 @@ export const subscribeUserToPush = async () => {
 
     await apiClient.post('/v1/notifications/subscribe', subscription);
     return subscription;
-  } catch (error) {
-    console.error('Error subscribing to push notifications:', error);
+  } catch (error: unknown) {
+    if (isPushPermissionDenied(error)) {
+      console.info('[Push] Push notification permission was not granted by the user.');
+      return null;
+    }
+
+    console.warn('[Push] Could not complete push notification subscription:', error);
     return null;
   }
 };

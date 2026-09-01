@@ -170,30 +170,37 @@ jobs:
           # (declared in ag-extension-dashboard/docker-compose.yml with
           # `profiles: ["ai"]`; see docs/COMPOSE_PROFILES.md).
           COMPOSE_PROFILES: ai
+          # Core & Security
+          JWT_SECRET: ${{ secrets.JWT_SECRET || vars.JWT_SECRET }}
+          CREDENTIAL_ENCRYPTION_KEY: ${{ secrets.CREDENTIAL_ENCRYPTION_KEY || vars.CREDENTIAL_ENCRYPTION_KEY }}
+          DEMO_ENABLED: ${{ secrets.DEMO_ENABLED || vars.DEMO_ENABLED || 'true' }}
+          DEMO_PASSWORD: ${{ secrets.DEMO_PASSWORD || vars.DEMO_PASSWORD || 'demo-trial-2024' }}
           # LLM provider keys + selection config (mirrors deploy-all production)
-          # Keys come from repo secrets; non-secret choices from repo vars.
+          # Keys come from repo secrets or repo vars.
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
           GOOGLE_VERTEX_PROJECT_ID: ${{ secrets.GOOGLE_VERTEX_PROJECT_ID }}
           AIHUBMIX_API_KEY: ${{ secrets.AIHUBMIX_API_KEY }}
+          AIHUBMIX_ACCESS_KEY: ${{ secrets.AIHUBMIX_ACCESS_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           HUGGINGFACE_API_KEY: ${{ secrets.HUGGINGFACE_API_KEY }}
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
           FREEBUFF_AUTH_TOKEN: ${{ secrets.FREEBUFF_AUTH_TOKEN }}
           WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
+          WEATHER_API_URL: ${{ secrets.WEATHER_API_URL || vars.WEATHER_API_URL || 'https://api.weatherapi.com/v1' }}
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
-          AI_PRIMARY_PROVIDER: ${{ vars.AI_PRIMARY_PROVIDER || 'groq' }}
-          AI_PRIMARY_MODEL: ${{ vars.AI_PRIMARY_MODEL || 'llama-3.3-70b-versatile' }}
-          AI_FALLBACK_PROVIDER: ${{ vars.AI_FALLBACK_PROVIDER || 'ollama' }}
-          AI_FALLBACK_MODEL: ${{ vars.AI_FALLBACK_MODEL || 'llama3.2:3b' }}
-          AI_EMBEDDINGS_PROVIDER: ${{ vars.AI_EMBEDDINGS_PROVIDER || 'openai' }}
-          AI_EMBEDDINGS_MODEL: ${{ vars.AI_EMBEDDINGS_MODEL || 'text-embedding-3-large' }}
-          AZURE_OPENAI_ENDPOINT: ${{ vars.AZURE_OPENAI_ENDPOINT }}
-          AZURE_OPENAI_DEPLOYMENT_NAME: ${{ vars.AZURE_OPENAI_DEPLOYMENT_NAME || 'gpt-4' }}
-          OLLAMA_HOST: ${{ vars.OLLAMA_HOST || 'http://ettametta-ollama:11434' }}
-          OLLAMA_MODEL: ${{ vars.OLLAMA_MODEL || 'llama3.2:3b' }}
+          AI_PRIMARY_PROVIDER: ${{ secrets.AI_PRIMARY_PROVIDER || vars.AI_PRIMARY_PROVIDER || 'aihubmix' }}
+          AI_PRIMARY_MODEL: ${{ secrets.AI_PRIMARY_MODEL || vars.AI_PRIMARY_MODEL || 'claude-3-5-sonnet-20241022' }}
+          AI_FALLBACK_PROVIDER: ${{ secrets.AI_FALLBACK_PROVIDER || vars.AI_FALLBACK_PROVIDER || 'openrouter' }}
+          AI_FALLBACK_MODEL: ${{ secrets.AI_FALLBACK_MODEL || vars.AI_FALLBACK_MODEL || 'meta-llama/llama-3.3-70b-instruct:free' }}
+          AI_EMBEDDINGS_PROVIDER: ${{ secrets.AI_EMBEDDINGS_PROVIDER || vars.AI_EMBEDDINGS_PROVIDER || 'aihubmix' }}
+          AI_EMBEDDINGS_MODEL: ${{ secrets.AI_EMBEDDINGS_MODEL || vars.AI_EMBEDDINGS_MODEL || 'text-embedding-3-large' }}
+          AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT || vars.AZURE_OPENAI_ENDPOINT }}
+          AZURE_OPENAI_DEPLOYMENT_NAME: ${{ secrets.AZURE_OPENAI_DEPLOYMENT_NAME || vars.AZURE_OPENAI_DEPLOYMENT_NAME || 'gpt-4' }}
+          OLLAMA_HOST: ${{ secrets.OLLAMA_HOST || vars.OLLAMA_HOST || 'http://ettametta-ollama:11434' }}
+          OLLAMA_MODEL: ${{ secrets.OLLAMA_MODEL || vars.OLLAMA_MODEL || 'llama3.2:3b' }}
         with:
           host: ${{ secrets.TEST_SERVER_IP }}
           port: ${{ secrets.TEST_SERVER_PORT || 22 }}
@@ -201,7 +208,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY_TESTING }}
           timeout: 60s
           command_timeout: 15m
-          envs: COMPOSE_PROFILES,OPENAI_API_KEY,GROQ_API_KEY,ANTHROPIC_API_KEY,AZURE_OPENAI_API_KEY,GOOGLE_VERTEX_PROJECT_ID,AIHUBMIX_API_KEY,OPENROUTER_API_KEY,HUGGINGFACE_API_KEY,NVIDIA_API_KEY,FREEBUFF_AUTH_TOKEN,WEATHER_API_KEY,TAVILY_API_KEY,AI_PRIMARY_PROVIDER,AI_PRIMARY_MODEL,AI_FALLBACK_PROVIDER,AI_FALLBACK_MODEL,AI_EMBEDDINGS_PROVIDER,AI_EMBEDDINGS_MODEL,AZURE_OPENAI_ENDPOINT,AZURE_OPENAI_DEPLOYMENT_NAME,OLLAMA_HOST,OLLAMA_MODEL
+          envs: COMPOSE_PROFILES,JWT_SECRET,CREDENTIAL_ENCRYPTION_KEY,DEMO_ENABLED,DEMO_PASSWORD,OPENAI_API_KEY,GROQ_API_KEY,ANTHROPIC_API_KEY,AZURE_OPENAI_API_KEY,GOOGLE_VERTEX_PROJECT_ID,AIHUBMIX_API_KEY,AIHUBMIX_ACCESS_KEY,OPENROUTER_API_KEY,HUGGINGFACE_API_KEY,NVIDIA_API_KEY,FREEBUFF_AUTH_TOKEN,WEATHER_API_KEY,WEATHER_API_URL,TAVILY_API_KEY,AI_PRIMARY_PROVIDER,AI_PRIMARY_MODEL,AI_FALLBACK_PROVIDER,AI_FALLBACK_MODEL,AI_EMBEDDINGS_PROVIDER,AI_EMBEDDINGS_MODEL,AZURE_OPENAI_ENDPOINT,AZURE_OPENAI_DEPLOYMENT_NAME,OLLAMA_HOST,OLLAMA_MODEL
           script: |
             set -euo pipefail
             cd /root/ag_extension_decision_support
@@ -222,7 +229,7 @@ jobs:
             if [ ! -f "ag-extension-dashboard/.env" ]; then
               cp ag-extension-dashboard/.env.example ag-extension-dashboard/.env 2>/dev/null || true
             fi
-            for var in OPENAI_API_KEY GROQ_API_KEY ANTHROPIC_API_KEY AZURE_OPENAI_API_KEY GOOGLE_VERTEX_PROJECT_ID AIHUBMIX_API_KEY OPENROUTER_API_KEY HUGGINGFACE_API_KEY NVIDIA_API_KEY FREEBUFF_AUTH_TOKEN WEATHER_API_KEY TAVILY_API_KEY AI_PRIMARY_PROVIDER AI_PRIMARY_MODEL AI_FALLBACK_PROVIDER AI_FALLBACK_MODEL AI_EMBEDDINGS_PROVIDER AI_EMBEDDINGS_MODEL AZURE_OPENAI_ENDPOINT AZURE_OPENAI_DEPLOYMENT_NAME OLLAMA_HOST OLLAMA_MODEL; do
+            for var in JWT_SECRET CREDENTIAL_ENCRYPTION_KEY DEMO_ENABLED DEMO_PASSWORD OPENAI_API_KEY GROQ_API_KEY ANTHROPIC_API_KEY AZURE_OPENAI_API_KEY GOOGLE_VERTEX_PROJECT_ID AIHUBMIX_API_KEY AIHUBMIX_ACCESS_KEY OPENROUTER_API_KEY HUGGINGFACE_API_KEY NVIDIA_API_KEY FREEBUFF_AUTH_TOKEN WEATHER_API_KEY WEATHER_API_URL TAVILY_API_KEY AI_PRIMARY_PROVIDER AI_PRIMARY_MODEL AI_FALLBACK_PROVIDER AI_FALLBACK_MODEL AI_EMBEDDINGS_PROVIDER AI_EMBEDDINGS_MODEL AZURE_OPENAI_ENDPOINT AZURE_OPENAI_DEPLOYMENT_NAME OLLAMA_HOST OLLAMA_MODEL; do
               val="${!var}"
               if [ -n "$val" ]; then
                 sed -i "/^$var=/d" ag-extension-dashboard/.env
@@ -231,8 +238,8 @@ jobs:
               fi
             done
 
-            # Ensure VAPID keys are configured in .env
-            if [ -f .env ] && ! grep -q "VAPID_PUBLIC_KEY" .env 2>/dev/null; then
+            # Ensure VAPID keys are configured in ag-extension-dashboard/.env
+            if ! grep -q "VAPID_PUBLIC_KEY" ag-extension-dashboard/.env 2>/dev/null; then
               echo "🔑 Generating VAPID keys..."
               KEYS=""
               if python3 -c "import cryptography" 2>/dev/null; then
@@ -248,12 +255,12 @@ jobs:
               PUB_KEY=$(echo "$KEYS" | awk '{print $1}')
               PRIV_KEY=$(echo "$KEYS" | awk '{print $2}')
               if [ -n "$PUB_KEY" ] && [ -n "$PRIV_KEY" ]; then
-                echo "" >> .env
-                echo "# ── VAPID Keys for Push Notifications ──" >> .env
-                echo "VAPID_PUBLIC_KEY=$PUB_KEY" >> .env
-                echo "VAPID_PRIVATE_KEY=$PRIV_KEY" >> .env
-                echo "VAPID_EMAIL=mailto:admin@gpexts.com" >> .env
-                echo "✅ Added VAPID keys to .env"
+                echo "" >> ag-extension-dashboard/.env
+                echo "# ── VAPID Keys for Push Notifications ──" >> ag-extension-dashboard/.env
+                echo "VAPID_PUBLIC_KEY=$PUB_KEY" >> ag-extension-dashboard/.env
+                echo "VAPID_PRIVATE_KEY=$PRIV_KEY" >> ag-extension-dashboard/.env
+                echo "VAPID_EMAIL=mailto:admin@gpexts.com" >> ag-extension-dashboard/.env
+                echo "✅ Added VAPID keys to ag-extension-dashboard/.env"
               fi
             fi
 
