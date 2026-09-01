@@ -2,6 +2,8 @@ import crypto from 'crypto';
 import { query } from './databaseService';
 import { logger } from '../utils/logger';
 
+const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+
 // fallow-ignore-next-line unused-export
 export function base32Encode(buffer: Buffer): string {
   let bits = 0;
