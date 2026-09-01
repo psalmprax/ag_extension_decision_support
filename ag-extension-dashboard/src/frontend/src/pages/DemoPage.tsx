@@ -146,7 +146,7 @@ export function DemoPage({
       <div className="max-w-5xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 mb-4">
             <Sparkles className="w-4 h-4 text-emerald-400" />
             <span className="text-xs font-semibold text-emerald-400">Interactive Sandbox</span>
           </div>
@@ -305,7 +305,7 @@ export function DemoPage({
               <div className="p-5 rounded-xl bg-black/30 border border-white/5 text-center space-y-5">
                 <div className="flex justify-between items-center text-xs">
                   <span className="font-mono text-stone-400">Audio Note Transcript Preview:</span>
-                  <span className="text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full font-mono text-xxs">
+                  <span className="text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md font-mono text-xxs">
                     Offline Recorded
                   </span>
                 </div>

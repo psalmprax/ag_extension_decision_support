@@ -201,7 +201,7 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
           <div>
             <div className="text-xs font-bold text-white flex items-center gap-2">
               Zero-Trust Visit Verification Engine
-              <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 uppercase">
+              <span className="text-[9px] font-mono px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 uppercase">
                 Anti-Fraud
               </span>
             </div>
@@ -307,7 +307,7 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
                 Physical Handshake Confirmation for <strong className="text-white">{farmerName}</strong>
               </div>
               {isCoSignVerified ? (
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
                   <Check className="w-3 h-3" /> Co-Signed
                 </span>
               ) : (

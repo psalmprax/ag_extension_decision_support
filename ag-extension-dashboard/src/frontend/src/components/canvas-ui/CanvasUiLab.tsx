@@ -91,7 +91,7 @@ export const CanvasUiLab: React.FC = () => {
           <div className="relative w-full h-full min-h-[320px] flex flex-col items-center justify-center text-center">
             <LiquidCanvas color={fluidColor} secondaryColor="#0d9488" opacity={0.7} />
             <div className="relative z-10 max-w-md p-6 rounded-xl bg-black/50 border border-white/10 backdrop-blur-md">
-              <span className="px-2.5 py-1 rounded-full text-xxs font-mono uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 mb-2 inline-block">
+              <span className="px-2.5 py-1 rounded-md text-xxs font-mono uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 mb-2 inline-block">
                 Move Cursor / Touch Screen
               </span>
               <h4 className="text-xl font-bold text-white mb-2">Organic Liquid Canopy</h4>
@@ -170,7 +170,7 @@ export const CanvasUiLab: React.FC = () => {
           <div className="relative w-full h-full min-h-[320px] flex items-center justify-center">
             <TelemetryRadarCanvas particleCount={40} sweepSpeed={0.02} />
             <div className="relative z-10 p-6 rounded-xl bg-black/60 border border-cyan-500/30 backdrop-blur-md max-w-sm text-center">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xxs font-mono uppercase mb-3">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xxs font-mono uppercase mb-3">
                 <Cpu className="w-3.5 h-3.5 animate-spin" />
                 NASA POWER & SoilGrids Stream
               </div>
@@ -189,7 +189,7 @@ export const CanvasUiLab: React.FC = () => {
             <LuminousForceField glowColor="#10b981">
               <div className="p-8">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="px-2.5 py-1 rounded-full text-xxs font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  <span className="px-2.5 py-1 rounded-md text-xxs font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                     Pro Plan Highlight
                   </span>
                   <span className="text-2xl font-black text-white">
@@ -251,7 +251,7 @@ export const CanvasUiLab: React.FC = () => {
           <div className="w-full max-w-xl">
             <ParticleReveal background="#0c0a09" className="rounded-xl">
               <div className="p-8 rounded-xl bg-stone-900/80 border border-white/10">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xxs font-mono uppercase mb-3">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xxs font-mono uppercase mb-3">
                   <Sparkles className="w-3.5 h-3.5" />
                   canvasui.dev · Particle Reveal
                 </div>
@@ -267,7 +267,7 @@ export const CanvasUiLab: React.FC = () => {
                   {['Satellite', 'Soil Grids', 'Disease AI', 'Yield Models'].map(tag => (
                     <span
                       key={tag}
-                      className="px-3 py-1 rounded-full text-xxs font-bold bg-white/5 border border-white/10 text-stone-300"
+                      className="px-3 py-1 rounded-md text-xxs font-bold bg-white/5 border border-white/10 text-stone-300"
                     >
                       {tag}
                     </span>
@@ -284,7 +284,7 @@ export const CanvasUiLab: React.FC = () => {
             <Liquid className="w-full h-full" color={[0.02, 0.59, 0.41]}>
               <div className="w-full h-full flex items-center justify-center p-6">
                 <div className="max-w-md p-6 rounded-xl bg-black/50 border border-white/10 backdrop-blur-md text-center">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xxs font-mono uppercase mb-3">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xxs font-mono uppercase mb-3">
                     <Droplets className="w-3.5 h-3.5" />
                     canvasui.dev · Liquid
                   </div>

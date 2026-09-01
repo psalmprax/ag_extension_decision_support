@@ -78,13 +78,13 @@ export const PlanCard: React.FC<PlanCardProps> = ({
       />
 
       {isPro && (
-        <div className="mb-4 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 w-fit">
+        <div className="mb-4 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 w-fit">
           <Sparkles className="w-3 h-3 text-emerald-400 animate-pulse" />
           <span>{t('plan_badge_officer') || 'Recommended for Extension Officers & Cooperatives'}</span>
         </div>
       )}
       {plan.id === 'price_free' && (
-        <div className="mb-4 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xxs font-medium bg-white/[0.03] text-white/70 border border-white/10 w-fit">
+        <div className="mb-4 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-medium bg-white/[0.03] text-white/70 border border-white/10 w-fit">
           <Zap className="w-3 h-3 text-amber-400" />
           <span>{t('plan_badge_farmer') || 'Ideal for Individual Smallholder Farmers'}</span>
         </div>

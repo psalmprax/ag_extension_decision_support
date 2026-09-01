@@ -328,7 +328,7 @@ export function AgroStorytellingSection() {
                         {activeStoryItem.category}
                       </span>
                     </div>
-                    <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-white/10 text-white/90 border border-white/10">
+                    <span className="px-3 py-1 rounded-md text-xs font-mono font-bold bg-white/10 text-white/90 border border-white/10">
                       STEP {activeStoryItem.num} // 04
                     </span>
                   </div>

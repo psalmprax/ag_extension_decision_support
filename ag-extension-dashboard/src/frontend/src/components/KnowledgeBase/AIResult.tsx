@@ -189,7 +189,7 @@ const KnowledgeGraphView: React.FC<{
             Live semantic node network connecting query concepts, soil indices, FAO literature, and regional farmer records.
           </p>
         </div>
-        <span className="text-xxs font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+        <span className="text-xxs font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20">
           Physics: Active
         </span>
       </div>
@@ -207,7 +207,7 @@ const KnowledgeGraphView: React.FC<{
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-white">{selectedGraphNode.label}</span>
-              <span className="text-xxs uppercase px-2 py-0.5 rounded-full font-black bg-emerald-500/20 text-emerald-400">
+              <span className="text-xxs uppercase px-2 py-0.5 rounded-md font-black bg-emerald-500/20 text-emerald-400">
                 {selectedGraphNode.category}
               </span>
               {selectedGraphNode.score && (
@@ -264,7 +264,7 @@ const EvidenceSourcesView: React.FC<{ result: Result }> = ({ result }) => (
                   <span className="text-xs font-bold text-white truncate max-w-[200px]">
                     {cite.title}
                   </span>
-                  <span className="text-xxs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 font-bold">
+                  <span className="text-xxs px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-300 font-bold">
                     {cite.category}
                   </span>
                 </div>
@@ -354,17 +354,17 @@ const AIResultHeader: React.FC<{
       </div>
       <div className="min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xxs font-black tracking-widest uppercase px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+          <span className="text-xxs font-black tracking-widest uppercase px-2.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
             ALFA Spatial Reasoning
           </span>
           {result.cached && (
-            <span className="text-xxs font-black tracking-widest uppercase px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 flex items-center gap-1">
+            <span className="text-xxs font-black tracking-widest uppercase px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 flex items-center gap-1">
               <Zap className="w-2.5 h-2.5 fill-current" />
               Semantic Cache (0.04s)
             </span>
           )}
           {result.evidenceStatus === 'verified_sources' && (
-            <span className="text-xxs font-black tracking-widest uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+            <span className="text-xxs font-black tracking-widest uppercase px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
               <ShieldCheck className="w-3 h-3 text-emerald-400" />
               Verified Evidence
             </span>
@@ -446,7 +446,7 @@ const AIResultNav: React.FC<{
       >
         <Network className="w-3.5 h-3.5" />
         <span>Knowledge Graph</span>
-        <span className="text-xxs px-1.5 py-0.2 rounded-full bg-slate-900/60 text-slate-300">
+        <span className="text-xxs px-1.5 py-0.2 rounded-md bg-slate-900/60 text-slate-300">
           {graphNodeCount}
         </span>
       </button>
@@ -475,7 +475,7 @@ const AIResultNav: React.FC<{
       >
         <Layers className="w-3.5 h-3.5" />
         <span>Evidence & Sources</span>
-        <span className="text-xxs px-1.5 py-0.2 rounded-full bg-slate-900/60 text-slate-300">
+        <span className="text-xxs px-1.5 py-0.2 rounded-md bg-slate-900/60 text-slate-300">
           {sourceCount}
         </span>
       </button>

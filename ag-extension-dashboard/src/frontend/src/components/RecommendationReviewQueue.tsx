@@ -53,7 +53,7 @@ export function RecommendationReviewQueue({ addNotification }: RecommendationRev
           <h2 id="recommendation-review-heading" className="font-bold text-amber-950 dark:text-amber-100">Recommendations needing review</h2>
           <p className="text-xs text-amber-800/80 dark:text-amber-200/70">Verify AI guidance before it is treated as an operational recommendation.</p>
         </div>
-        <span className="ml-auto rounded-full bg-amber-200 px-2 py-1 text-xs font-bold text-amber-900 dark:bg-amber-900/60 dark:text-amber-100">{reviews.length}</span>
+        <span className="ml-auto rounded-md bg-amber-200 px-2 py-1 text-xs font-bold text-amber-900 dark:bg-amber-900/60 dark:text-amber-100">{reviews.length}</span>
       </div>
       <div className="space-y-3">
         {reviews.map(item => (

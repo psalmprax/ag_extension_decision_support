@@ -251,7 +251,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
               <div>
                 <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
                   Autonomous Agronomy Campaigns (Goal Mode)
-                  <span className="text-xxs uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                  <span className="text-xxs uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/30">
                     Agent OS
                   </span>
                 </h2>
@@ -327,7 +327,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                       >
                         <div className="font-bold text-xs text-white group-hover:text-amber-400 flex items-center justify-between">
                           <span>{preset.title}</span>
-                          <span className="text-xxs px-2 py-0.5 rounded-full bg-slate-900 text-slate-400">
+                          <span className="text-xxs px-2 py-0.5 rounded-md bg-slate-900 text-slate-400">
                             {preset.region}
                           </span>
                         </div>
@@ -437,7 +437,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                         <span className="text-xs font-bold text-slate-200">Autonomous Agent Execution Trace</span>
                       </div>
                       {campaignResultSummary && (
-                        <span className="text-xxs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                        <span className="text-xxs px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                           Complete
                         </span>
                       )}
@@ -576,7 +576,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                       <div key={skill.id} className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="font-bold text-xs text-white">{skill.title}</span>
-                          <span className="text-xxs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-mono">
+                          <span className="text-xxs px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 font-mono">
                             {Math.round(skill.confidence_score * 100)}% Conf
                           </span>
                         </div>

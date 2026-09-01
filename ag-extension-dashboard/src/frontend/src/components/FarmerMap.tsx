@@ -195,7 +195,7 @@ export function FarmerMap({
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Extension Officer / Active GPS Node
               </p>
-              <span className="text-xxs text-blue-500 font-semibold mt-2 px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/40">
+              <span className="text-xxs text-blue-500 font-semibold mt-2 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40">
                 Lat: {currentUserLocation[0].toFixed(4)}, Lng: {currentUserLocation[1].toFixed(4)}
               </span>
             </div>
@@ -221,7 +221,7 @@ export function FarmerMap({
               <div className="p-0 overflow-hidden">
                 <div className="p-4 bg-gradient-to-br from-emerald-500 to-teal-700 text-white relative">
                   <div className="flex items-center justify-between">
-                    <span className="text-xxs font-black uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full backdrop-blur-md">
+                    <span className="text-xxs font-black uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-md backdrop-blur-md">
                       {farmer.crop}
                     </span>
                     <span className="text-xxs font-mono opacity-80">ID: {farmer.id}</span>

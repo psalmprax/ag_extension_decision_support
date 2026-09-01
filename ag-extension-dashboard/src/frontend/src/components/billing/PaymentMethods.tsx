@@ -112,7 +112,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                 <p className="text-sm font-bold text-white tracking-tight">
                   M-Pesa / Airtel Money
                 </p>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 mt-0.5">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 mt-0.5">
                   Direct USSD / Till
                 </span>
               </div>
@@ -212,7 +212,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                 <p className="text-sm font-bold text-white tracking-tight">
                   {t('billing_voucher') || 'AgriVoucher Token'}
                 </p>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xxs font-medium bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 mt-0.5">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xxs font-medium bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 mt-0.5">
                   {t('billing_voucher_desc') || 'Prepaid NGO / Grant Code'}
                 </span>
               </div>
