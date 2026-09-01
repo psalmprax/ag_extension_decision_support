@@ -29,6 +29,7 @@ import { AgroEcosystemCanvasScrubber } from '../canvas-ui/AgroEcosystemCanvasScr
 import { RagKnowledgeGraphCanvas, GraphNode } from '../canvas-ui/RagKnowledgeGraphCanvas';
 import { TelemetryRadarCanvas } from '../canvas-ui/TelemetryRadarCanvas';
 import AlphaAgentOps from './AlphaAgentOps';
+import { AgronomicIntakeCard, isAgronomicQueryAmbiguous } from '../AgronomicIntakeCard';
 
 export type CanvasViewType =
   | 'soil_heatmap'
@@ -68,6 +69,7 @@ interface ChatMessageItem {
   const [selectedProbeResult, setSelectedProbeResult] = useState<SoilProbeResult | null>(null);
   const [selectedLesionZone, setSelectedLesionZone] = useState<LesionDetectionZone | null>(null);
   const [selectedGraphNode, setSelectedGraphNode] = useState<GraphNode | null>(null);
+  const [intakeDismissed, setIntakeDismissed] = useState<boolean>(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -101,8 +103,8 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isProcessing]);
 
-  const handleSendMessage = async () => {
-    const query = inputPrompt.trim();
+  const handleSendMessage = async (overrideQuery?: string) => {
+    const query = (overrideQuery || inputPrompt).trim();
     if (!query || isProcessing) return;
 
     setInputPrompt('');
@@ -126,7 +128,13 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
         message: query,
       });
 
-      const responseText = res.data?.data?.messages?.[1]?.content;
+      const data = res.data?.data || res.data;
+      const responseText =
+        data?.messages?.[1]?.content ||
+        data?.response ||
+        data?.text ||
+        (typeof data === 'string' ? data : null);
+
       if (typeof responseText !== 'string' || responseText.trim().length === 0) {
         throw new Error('AI service returned no advisory content');
       }
@@ -146,7 +154,8 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
       };
 
       setMessages(prev => [...prev, assistantMsg]);
-    } catch {
+    } catch (err) {
+      console.error('[AlphaAI] Chatbot request error:', err);
       setActiveReasoningStep(null);
       setMessages(prev => [
         ...prev,
@@ -321,6 +330,22 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
 
               {/* Input Bar & Multi-Modal Controls (knockknockapp.ai voice/leaf standard) */}
               <div className="pt-3 border-t border-white/5 space-y-2">
+                {/* Dynamic Agronomic Intake Clarification */}
+                {isAgronomicQueryAmbiguous(inputPrompt) && !intakeDismissed && !isProcessing && (
+                  <AgronomicIntakeCard
+                    initialQuery={inputPrompt}
+                    compact={true}
+                    onApplyIntake={enrichedQuery => {
+                      setInputPrompt('');
+                      handleSendMessage(enrichedQuery);
+                    }}
+                    onBypass={() => {
+                      setIntakeDismissed(true);
+                      handleSendMessage();
+                    }}
+                  />
+                )}
+
                 {isRecordingVoice && (
                   <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between text-xs text-emerald-400">
                     <div className="flex items-center gap-2">
@@ -379,7 +404,7 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
                   />
 
                   <button
-                    onClick={handleSendMessage}
+                    onClick={() => handleSendMessage()}
                     disabled={!inputPrompt.trim() || isProcessing}
                     className="p-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-white rounded-lg shadow-md transition-all active:scale-95 shrink-0"
                   >

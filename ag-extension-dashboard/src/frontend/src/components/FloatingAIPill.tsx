@@ -25,6 +25,7 @@ import { ProgressiveProfileChips, ProfileParameter } from './ProgressiveProfileC
 import { VideoCall } from './VideoCall';
 import { useAppStore } from '@/store/useAppStore';
 import toast from 'react-hot-toast';
+import { AgronomicIntakeCard, isAgronomicQueryAmbiguous } from './AgronomicIntakeCard';
 
 interface FloatingAIPillProps {
   onOpenUSSDSandbox?: () => void;
@@ -316,6 +317,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
   const [chatInput, setChatInput] = useState('');
   const [profileParams] = useState<ProfileParameter[]>(INITIAL_PROFILE);
   const [isLoadingAi, setIsLoadingAi] = useState(false);
+  const [intakeDismissed, setIntakeDismissed] = useState(false);
   const [messages, setMessages] = useState<Array<{ sender: 'ai' | 'user'; text: string; time: string }>>([
     {
       sender: 'ai',
@@ -629,16 +631,48 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
 
             {/* Input Composer (for Chat Tab) */}
             {activeTab === 'chat' && (
-              <form onSubmit={handleSendMessage} className="p-3 border-t border-slate-800 bg-slate-900/80">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={chatInput}
-                    onChange={e => setChatInput(e.target.value)}
-                    placeholder="Ask agronomist or describe crop symptoms..."
-                    disabled={isLoadingAi}
-                    className="flex-1 bg-slate-950 border border-slate-700 rounded px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400 transition-colors disabled:opacity-50"
+              <div className="border-t border-slate-800 bg-slate-900/80 p-3 space-y-2">
+                {isAgronomicQueryAmbiguous(chatInput) && !intakeDismissed && !isLoadingAi && (
+                  <AgronomicIntakeCard
+                    initialQuery={chatInput}
+                    compact={true}
+                    onApplyIntake={enrichedQuery => {
+                      setChatInput(enrichedQuery);
+                      const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                      setMessages(prev => [...prev, { sender: 'user', text: enrichedQuery, time: now }]);
+                      setChatInput('');
+                      setIsLoadingAi(true);
+                      getChatCompletion(enrichedQuery, undefined, language)
+                        .then(res => {
+                          const reply = res.data?.messages?.find(m => m.role === 'assistant')?.content ||
+                            'I evaluated your field observation against current agricultural agronomy standards.';
+                          setMessages(prev => [...prev, { sender: 'ai', text: reply, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+                        })
+                        .catch(err => {
+                          console.error('AI chat query failed:', err);
+                          setMessages(prev => [...prev, { sender: 'ai', text: 'Notice: Could not connect to the remote AI inference model.', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+                        })
+                        .finally(() => setIsLoadingAi(false));
+                    }}
+                    onBypass={() => {
+                      setIntakeDismissed(true);
+                      handleSendMessage();
+                    }}
                   />
+                )}
+                <form onSubmit={handleSendMessage}>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={chatInput}
+                      onChange={e => {
+                        setChatInput(e.target.value);
+                        setIntakeDismissed(false);
+                      }}
+                      placeholder="Ask agronomist or describe crop symptoms..."
+                      disabled={isLoadingAi}
+                      className="flex-1 bg-slate-950 border border-slate-700 rounded px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400 transition-colors disabled:opacity-50"
+                    />
                   <button
                     type="submit"
                     disabled={isLoadingAi || !chatInput.trim()}
@@ -648,7 +682,8 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
                   </button>
                 </div>
               </form>
-            )}
+            </div>
+          )}
           </motion.div>
         )}
       </AnimatePresence>

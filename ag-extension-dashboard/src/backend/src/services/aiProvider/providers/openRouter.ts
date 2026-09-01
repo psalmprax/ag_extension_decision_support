@@ -1,5 +1,16 @@
 import axios from 'axios';
 import { logger } from '../../../utils/logger';
+import {
+  BaseAIProvider,
+  AIProviderType,
+  TextGenerationOptions,
+  TextGenerationResult,
+  ReasoningOptions,
+  ReasoningResult,
+  ClassificationOptions,
+  ClassificationResult,
+} from '../types';
+import { REASONING_SYSTEM_PROMPT, extractVisuals } from '../assetLibrary';
 
 export interface OpenRouterRequest {
   model?: string;
@@ -21,14 +32,18 @@ export interface OpenRouterResponse {
 }
 
 /**
- * OpenRouter Provider — Native integration for OpenRouter free LLM models.
+ * OpenRouter Provider — Native integration for OpenRouter free and paid LLM models.
  * Connects to https://openrouter.ai/api/v1 with auto quota error detection.
  */
-export class OpenRouterProvider {
+export class OpenRouterProvider extends BaseAIProvider {
+  readonly provider: AIProviderType = 'openrouter';
+  readonly capabilities: string[] = ['text', 'chat', 'reasoning'];
+
   private apiKey: string;
   private baseUrl: string;
 
   constructor(apiKey?: string, baseUrl = 'https://openrouter.ai/api/v1') {
+    super();
     this.apiKey = apiKey || process.env.OPENROUTER_API_KEY || '';
     this.baseUrl = baseUrl;
   }
@@ -37,8 +52,12 @@ export class OpenRouterProvider {
     return this.apiKey || process.env.OPENROUTER_API_KEY || '';
   }
 
-  public isConfigured(): boolean {
+  public override isConfigured(): boolean {
     return Boolean(this.getApiKey());
+  }
+
+  public override async healthCheck(): Promise<boolean> {
+    return this.isConfigured();
   }
 
   public async chat(req: OpenRouterRequest): Promise<string> {
@@ -47,7 +66,7 @@ export class OpenRouterProvider {
       throw new Error('OpenRouter API key not configured (OPENROUTER_API_KEY missing).');
     }
 
-    const model = req.model || 'google/gemini-2.0-flash-exp:free';
+    const model = req.model || process.env.AI_FALLBACK_MODEL || 'meta-llama/llama-3.3-70b-instruct:free';
 
     try {
       logger.info(`Routing request to OpenRouter provider (model: ${model})`);
@@ -63,7 +82,7 @@ export class OpenRouterProvider {
         {
           headers: {
             Authorization: `Bearer ${key}`,
-            'HTTP-Referer': 'https://ag-extension.ca',
+            'HTTP-Referer': 'https://gpexts.com',
             'X-Title': 'Ag-Extension Decision Support',
             'Content-Type': 'application/json',
           },
@@ -89,6 +108,75 @@ export class OpenRouterProvider {
 
       logger.error(`OpenRouter API error (${status || 'Network'}):`, axiosError.message);
       throw err;
+    }
+  }
+
+  public override async generateText(
+    prompt: string | Array<{ role: string; content: string }>,
+    options?: TextGenerationOptions
+  ): Promise<TextGenerationResult> {
+    const messages = typeof prompt === 'string' ? [{ role: 'user', content: prompt }] : prompt;
+    const model = options?.model || process.env.AI_FALLBACK_MODEL || 'meta-llama/llama-3.3-70b-instruct:free';
+    const text = await this.chat({
+      model,
+      messages,
+      temperature: options?.temperature,
+      max_tokens: options?.maxTokens,
+    });
+
+    return {
+      text,
+      model,
+    };
+  }
+
+  public override async analyzeWithReasoning(
+    context: string,
+    query: string,
+    options?: ReasoningOptions
+  ): Promise<ReasoningResult> {
+    const groundedPrompt = `Use the context below as the authoritative source for this answer. If the context is incomplete, say what is missing before adding general agricultural guidance. Cite source titles or URLs when available.\n\nContext:\n${context || 'No specific context found in knowledge base.'}\n\nQuestion: ${query}`;
+    const messages = [
+      { role: 'system', content: REASONING_SYSTEM_PROMPT },
+      { role: 'user', content: groundedPrompt },
+    ];
+
+    const result = await this.generateText(messages, {
+      temperature: options?.temperature ?? 0.2,
+      maxTokens: options?.maxTokens ?? 2000,
+    });
+
+    const text = result.text ?? '';
+    const visuals = extractVisuals(text);
+
+    const cleanAnswer = text
+      .replace(/<visuals>[\s\S]*?<\/visuals>/gi, '')
+      .replace(/```json[\s\S]*?```/gi, '')
+      .trim();
+
+    return {
+      reasoning: 'Detailed Intelligence Analysis completed via OpenRouter.',
+      answer: cleanAnswer,
+      confidence: 0.9,
+      visuals,
+    };
+  }
+
+  public override async classify(
+    input: string,
+    options: ClassificationOptions
+  ): Promise<ClassificationResult> {
+    const prompt = `Classify the following text into the provided taxonomy labels: ${options.taxonomy}\n\nText: "${input}"\n\nReturn JSON: { "labels": [{ "label": string, "score": number }] }`;
+    const messages = [
+      { role: 'system', content: 'You are an agricultural classifier. Output only valid JSON.' },
+      { role: 'user', content: prompt },
+    ];
+    const res = await this.generateText(messages, { temperature: 0.1 });
+    try {
+      const parsed = JSON.parse(res.text || '{}');
+      return { labels: parsed.labels || [{ label: 'general_inquiry', score: 1.0 }] };
+    } catch {
+      return { labels: [{ label: 'general_inquiry', score: 1.0 }] };
     }
   }
 }

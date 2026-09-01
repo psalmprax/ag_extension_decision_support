@@ -71,11 +71,15 @@ export class AIProviderFactory {
         let allProviders: AIProviderType[] = Array.from(new Set([
             this.primaryProvider,
             this.fallbackProvider,
+            'aihubmix',
+            'openrouter',
+            'groq',
             'openai',
             'anthropic',
-            'groq',
             'freebuff',
-            'ollama'
+            'ollama',
+            'nvidia',
+            'huggingface'
         ]));
 
         // If a caller (e.g. free-tier routing) prefers a specific provider,
@@ -175,6 +179,14 @@ export class AIProviderFactory {
 
     private static async createProvider(type: AIProviderType): Promise<AICapability> {
         switch (type) {
+            case 'aihubmix': {
+                const { AIHubMixProvider } = await import('./providers/aihubmix');
+                return new AIHubMixProvider();
+            }
+            case 'openrouter': {
+                const { OpenRouterProvider } = await import('./providers/openRouter');
+                return new OpenRouterProvider();
+            }
             case 'azure_openai': {
                 const { AzureOpenAIProvider } = await import('./providers/azureOpenAI');
                 return new AzureOpenAIProvider();

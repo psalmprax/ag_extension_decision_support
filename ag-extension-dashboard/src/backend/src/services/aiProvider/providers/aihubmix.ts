@@ -1,5 +1,18 @@
 import axios from 'axios';
 import { logger } from '../../../utils/logger';
+import {
+  BaseAIProvider,
+  AIProviderType,
+  TextGenerationOptions,
+  TextGenerationResult,
+  EmbeddingOptions,
+  EmbeddingResult,
+  ReasoningOptions,
+  ReasoningResult,
+  ClassificationOptions,
+  ClassificationResult,
+} from '../types';
+import { REASONING_SYSTEM_PROMPT, extractVisuals } from '../assetLibrary';
 
 export interface AIHubMixRequest {
   model?: string;
@@ -241,15 +254,19 @@ export class AIHubMixAccountService {
 }
 
 /**
- * AIHubMix Provider — Universal multi-model LLM API integration.
+ * AIHubMix Provider — Native client for AIHubMix OpenAI-compatible proxy.
  * Connects to AIHubMix model endpoints (https://aihubmix.com/v1) with quota-aware error handling.
  */
-export class AIHubMixProvider {
+export class AIHubMixProvider extends BaseAIProvider {
+  readonly provider: AIProviderType = 'aihubmix';
+  readonly capabilities: string[] = ['text', 'chat', 'reasoning', 'embedding'];
+
   private apiKey: string;
   private baseUrl: string;
   private accountService: AIHubMixAccountService;
 
   constructor(apiKey?: string, baseUrl = 'https://aihubmix.com/v1') {
+    super();
     this.apiKey = apiKey || process.env.AIHUBMIX_API_KEY || '';
     this.baseUrl = baseUrl;
     this.accountService = new AIHubMixAccountService();
@@ -286,8 +303,12 @@ export class AIHubMixProvider {
     return '';
   }
 
-  public isConfigured(): boolean {
+  public override isConfigured(): boolean {
     return Boolean(this.apiKey || process.env.AIHUBMIX_API_KEY || process.env.AIHUBMIX_ACCESS_KEY);
+  }
+
+  public override async healthCheck(): Promise<boolean> {
+    return this.isConfigured();
   }
 
   public async chat(req: AIHubMixRequest): Promise<string> {
@@ -296,7 +317,7 @@ export class AIHubMixProvider {
       throw new Error('AIHubMix API key not configured (AIHUBMIX_API_KEY or AIHUBMIX_ACCESS_KEY missing).');
     }
 
-    const model = req.model || 'google/gemini-2.0-flash-exp:free';
+    const model = req.model || process.env.AI_PRIMARY_MODEL || 'claude-3-5-sonnet-20241022';
 
     try {
       logger.info(`Routing request to AIHubMix provider (model: ${model})`);
@@ -336,6 +357,95 @@ export class AIHubMixProvider {
 
       logger.error(`AIHubMix API error (${status || 'Network'}):`, axiosError.message);
       throw err;
+    }
+  }
+
+  public override async generateText(
+    prompt: string | Array<{ role: string; content: string }>,
+    options?: TextGenerationOptions
+  ): Promise<TextGenerationResult> {
+    const messages = typeof prompt === 'string' ? [{ role: 'user', content: prompt }] : prompt;
+    const model = options?.model || process.env.AI_PRIMARY_MODEL || 'claude-3-5-sonnet-20241022';
+    const text = await this.chat({
+      model,
+      messages,
+      temperature: options?.temperature,
+      max_tokens: options?.maxTokens,
+    });
+
+    return {
+      text,
+      model,
+    };
+  }
+
+  public override async createEmbedding(text: string, options?: EmbeddingOptions): Promise<EmbeddingResult> {
+    const key = await this.resolveApiKey();
+    if (!key) throw new Error('AIHubMix API key missing for embeddings');
+
+    const model = options?.model || process.env.AI_EMBEDDINGS_MODEL || 'text-embedding-3-large';
+    const response = await axios.post(
+      `${this.baseUrl}/embeddings`,
+      { model, input: text },
+      {
+        headers: { Authorization: `Bearer ${key}` },
+        timeout: 15000,
+      }
+    );
+
+    return {
+      embedding: response.data.data[0].embedding,
+      model,
+    };
+  }
+
+  public override async analyzeWithReasoning(
+    context: string,
+    query: string,
+    options?: ReasoningOptions
+  ): Promise<ReasoningResult> {
+    const groundedPrompt = `Use the context below as the authoritative source for this answer. If the context is incomplete, say what is missing before adding general agricultural guidance. Cite source titles or URLs when available.\n\nContext:\n${context || 'No specific context found in knowledge base.'}\n\nQuestion: ${query}`;
+    const messages = [
+      { role: 'system', content: REASONING_SYSTEM_PROMPT },
+      { role: 'user', content: groundedPrompt },
+    ];
+
+    const result = await this.generateText(messages, {
+      temperature: options?.temperature ?? 0.2,
+      maxTokens: options?.maxTokens ?? 2000,
+    });
+
+    const text = result.text ?? '';
+    const visuals = extractVisuals(text);
+
+    const cleanAnswer = text
+      .replace(/<visuals>[\s\S]*?<\/visuals>/gi, '')
+      .replace(/```json[\s\S]*?```/gi, '')
+      .trim();
+
+    return {
+      reasoning: 'Detailed Intelligence Analysis completed via AIHubMix.',
+      answer: cleanAnswer,
+      confidence: 0.95,
+      visuals,
+    };
+  }
+
+  public override async classify(
+    input: string,
+    options: ClassificationOptions
+  ): Promise<ClassificationResult> {
+    const prompt = `Classify the following text into the provided taxonomy labels: ${options.taxonomy}\n\nText: "${input}"\n\nReturn JSON: { "labels": [{ "label": string, "score": number }] }`;
+    const messages = [
+      { role: 'system', content: 'You are an agricultural classifier. Output only valid JSON.' },
+      { role: 'user', content: prompt },
+    ];
+    const res = await this.generateText(messages, { temperature: 0.1 });
+    try {
+      const parsed = JSON.parse(res.text || '{}');
+      return { labels: parsed.labels || [{ label: 'general_inquiry', score: 1.0 }] };
+    } catch {
+      return { labels: [{ label: 'general_inquiry', score: 1.0 }] };
     }
   }
 }

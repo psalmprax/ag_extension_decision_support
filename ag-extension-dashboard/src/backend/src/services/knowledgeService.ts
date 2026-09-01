@@ -314,13 +314,13 @@ export class KnowledgeService {
     private static async resolveUserContext(
         userId: string,
         queryText: string
-    ): Promise<{ crop: string | undefined; location: string; region: string; lat?: number; lng?: number }> {
-        const cropKeywords = ['maize', 'cassava', 'beans', 'rice', 'banana', 'plantain', 'cocoa', 'coffee', 'yam', 'cowpea', 'soybean', 'groundnut', 'sorghum', 'millet', 'vegetables'];
+    ): Promise<{ crop: string | undefined; location?: string; region?: string; lat?: number; lng?: number }> {
+        const cropKeywords = ['maize', 'cassava', 'beans', 'rice', 'banana', 'plantain', 'cocoa', 'coffee', 'yam', 'cowpea', 'soybean', 'groundnut', 'sorghum', 'millet', 'vegetables', 'tomato', 'potato', 'wheat', 'barley', 'oats', 'apples', 'cherries', 'blueberries'];
         
         const finalData: Record<string, any> = {
             finalCrop: cropKeywords.find(c => queryText.toLowerCase().includes(c)),
-            finalLocation: 'Kenya',
-            finalRegion: 'Kenya',
+            finalLocation: undefined,
+            finalRegion: undefined,
             finalLat: undefined,
             finalLng: undefined
         };
@@ -331,7 +331,8 @@ export class KnowledgeService {
         return { crop: finalData.finalCrop, location: finalData.finalLocation, region: finalData.finalRegion, lat: finalData.finalLat, lng: finalData.finalLng };
     }
 
-    private static async fetchWeatherContext(queryCategories: string[], location: string, crop: string | undefined): Promise<SearchResult | null> {
+    private static async fetchWeatherContext(queryCategories: string[], location?: string, crop?: string): Promise<SearchResult | null> {
+        if (!location) return null;
         if (queryCategories.length > 0 && !queryCategories.includes('climate_and_weather')) return null;
         try {
             const { WeatherService } = await import('@/services/weatherService');
@@ -357,7 +358,8 @@ export class KnowledgeService {
         return null;
     }
 
-    private static async fetchFAOAlertsContext(queryCategories: string[], region: string, crop: string | undefined): Promise<SearchResult | null> {
+    private static async fetchFAOAlertsContext(queryCategories: string[], region?: string, crop?: string): Promise<SearchResult | null> {
+        if (!region) return null;
         if (queryCategories.length > 0 && !queryCategories.includes('pest_and_disease')) return null;
         try {
             const { FAOService } = await import('@/services/faoService');
@@ -440,7 +442,7 @@ export class KnowledgeService {
 
     private static async fetchLiveAgriContext(
         queryCategories: string[],
-        location: { crop: string | undefined; location: string; region: string; lat?: number; lng?: number }
+        location: { crop?: string; location?: string; region?: string; lat?: number; lng?: number }
     ): Promise<SearchResult[]> {
         const tasks: Array<Promise<SearchResult | null>> = [
             this.fetchWeatherContext(queryCategories, location.location, location.crop),
@@ -463,12 +465,29 @@ export class KnowledgeService {
         const REASONING_TIMEOUT_MS = 240000;
         let reasoningTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
+        const groundingDirective = `
+Agronomic Decision Support Protocol (Phase 2):
+1. Location-First & Climate Precision:
+   - If this query is an agronomic recommendation (e.g., planting dates, crop selection, pest treatment) and NO explicit location/growing zone is given by the user or context, DO NOT hallucinate or assume an arbitrary state/country.
+   - Prompt the user to provide their county/region or USDA / Plant Hardiness Zone for personalized precision.
+   - Present a structured climate-band comparison (Cool Zones 3–4, Temperate Zones 5–7, Warm/Subtropical Zones 8–10, or Tropical Wet/Dry) so the answer is immediately usable without false assumptions.
+2. Temporal & Soil Temperature Triggers:
+   - Avoid vague seasonal terms like "Spring" without qualification.
+   - Always state timing relative to the last expected frost date, indoor seed starting lead times (weeks before frost), and minimum 4-inch soil temperature (°F / °C) required for germination.
+3. Cultivars & Performance:
+   - Recommend tested crop cultivars with Days to Maturity (DTM) and known disease resistance packages.
+4. Economic Optimization:
+   - Include succession planting, relay cropping, and soil management considerations (e.g. pH, drainage, cover cropping).
+5. Grounding & Authority:
+   - Prioritize high-similarity context sources (score 0.70+). Cite recognized extension bulletins (Land-Grant universities, FAO, USDA NRCS) and encourage verifying with local extension officers.
+`;
+
         return Promise.race([
             AIRouter.routeRequest('reason', {
-                context: `${contextText || 'No specific context found in knowledge base.'}\n\nGrounding Guidelines:\n- Prioritize context sources with high similarity scores (e.g. 0.70+).\n- Treat context with lower scores (< 0.50) as supplementary or less relevant context.\n- Explicitly base your answer on the provided context. If the context does not contain enough information to answer the question, state that.`,
+                context: `${contextText || 'No specific context found in knowledge base.'}\n\n${groundingDirective}`,
                 query: queryText,
                 attachments,
-                options: { temperature: 0.2, maxTokens: 900, preferredProvider: options?.preferredProvider }
+                options: { temperature: 0.2, maxTokens: 1200, preferredProvider: options?.preferredProvider }
             }),
             new Promise<ReasoningResult>((_, reject) => {
                 reasoningTimeoutId = setTimeout(
