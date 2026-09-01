@@ -13,39 +13,61 @@ router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer'
 
 // Supported languages configuration
 const supportedLanguages = [
+    // Major Global Languages
     { code: 'en', name: 'English', flag: '🇺🇸', nativeName: 'English' },
     { code: 'sw', name: 'Swahili', flag: '🇰🇪', nativeName: 'Kiswahili' },
     { code: 'fr', name: 'French', flag: '🇫🇷', nativeName: 'Français' },
-    { code: 'pt', name: 'Portuguese', flag: '🇧🇷', nativeName: 'Português' },
     { code: 'es', name: 'Spanish', flag: '🇪🇸', nativeName: 'Español' },
-    { code: 'ha', name: 'Hausa', flag: '🇳🇬', nativeName: 'Harshen Hausa' },
-    { code: 'yo', name: 'Yoruba', flag: '🇳🇬', nativeName: 'Èdè Yorùbá' },
-    { code: 'de', name: 'German', flag: '🇩🇪', nativeName: 'Deutsch' },
-    { code: 'it', name: 'Italian', flag: '🇮🇹', nativeName: 'Italiano' },
-    { code: 'nl', name: 'Dutch', flag: '🇳🇱', nativeName: 'Nederlands' },
-    { code: 'oro', name: 'Oromo', flag: '🇪🇹', nativeName: 'Oromoo' },
-    { code: 'lug', name: 'Luganda', flag: '🇺🇬', nativeName: 'Luganda' },
-    { code: 'zu', name: 'Zulu', flag: '🇿🇦', nativeName: 'isiZulu' },
+    { code: 'pt', name: 'Portuguese', flag: '🇧🇷', nativeName: 'Português' },
     { code: 'ar', name: 'Arabic', flag: '🇸🇦', nativeName: 'العربية' },
-    { code: 'zh', name: 'Chinese', flag: '🇨🇳', nativeName: '中文' },
     { code: 'hi', name: 'Hindi', flag: '🇮🇳', nativeName: 'हिन्दी' },
+    { code: 'zh', name: 'Chinese (Simplified)', flag: '🇨🇳', nativeName: '中文 (简体)' },
+    { code: 'de', name: 'German', flag: '🇩🇪', nativeName: 'Deutsch' },
     { code: 'ru', name: 'Russian', flag: '🇷🇺', nativeName: 'Русский' },
     { code: 'ja', name: 'Japanese', flag: '🇯🇵', nativeName: '日本語' },
+    { code: 'ko', name: 'Korean', flag: '🇰🇷', nativeName: '한국어' },
+    { code: 'it', name: 'Italian', flag: '🇮🇹', nativeName: 'Italiano' },
+    { code: 'nl', name: 'Dutch', flag: '🇳🇱', nativeName: 'Nederlands' },
+    { code: 'tr', name: 'Turkish', flag: '🇹🇷', nativeName: 'Türkçe' },
+    { code: 'pl', name: 'Polish', flag: '🇵🇱', nativeName: 'Polski' },
+    { code: 'uk', name: 'Ukrainian', flag: '🇺🇦', nativeName: 'Українська' },
+    { code: 'id', name: 'Indonesian', flag: '🇮🇩', nativeName: 'Bahasa Indonesia' },
+    { code: 'vi', name: 'Vietnamese', flag: '🇻🇳', nativeName: 'Tiếng Việt' },
+    { code: 'th', name: 'Thai', flag: '🇹🇭', nativeName: 'ไทย' },
+    { code: 'fil', name: 'Filipino', flag: '🇵🇭', nativeName: 'Wikang Filipino' },
+    { code: 'fa', name: 'Persian', flag: '🇮🇷', nativeName: 'فارسی' },
+    { code: 'ur', name: 'Urdu', flag: '🇵🇰', nativeName: 'اردو' },
+    { code: 'bn', name: 'Bengali', flag: '🇧🇩', nativeName: 'বাংলা' },
+    { code: 'pa', name: 'Punjabi', flag: '🇮🇳', nativeName: 'ਪੰਜਾਬੀ' },
+    { code: 'ta', name: 'Tamil', flag: '🇮🇳', nativeName: 'தமிழ்' },
+    { code: 'te', name: 'Telugu', flag: '🇮🇳', nativeName: 'తెలుగు' },
+    { code: 'mr', name: 'Marathi', flag: '🇮🇳', nativeName: 'मराठी' },
+
+    // African Regional & Indigenous Languages
+    { code: 'ha', name: 'Hausa', flag: '🇳🇬', nativeName: 'Harshen Hausa' },
+    { code: 'yo', name: 'Yoruba', flag: '🇳🇬', nativeName: 'Èdè Yorùbá' },
+    { code: 'ig', name: 'Igbo', flag: '🇳🇬', nativeName: 'Asụsụ Igbo' },
+    { code: 'am', name: 'Amharic', flag: '🇪🇹', nativeName: 'አማርኛ' },
+    { code: 'om', name: 'Oromo', flag: '🇪🇹', nativeName: 'Afaan Oromoo' },
+    { code: 'ti', name: 'Tigrinya', flag: '🇪🇷', nativeName: 'ትግርኛ' },
+    { code: 'so', name: 'Somali', flag: '🇸🇴', nativeName: 'Af-Soomaali' },
+    { code: 'lg', name: 'Luganda', flag: '🇺🇬', nativeName: 'Oluganda' },
+    { code: 'rw', name: 'Kinyarwanda', flag: '🇷🇼', nativeName: 'Ikinyarwanda' },
+    { code: 'rn', name: 'Kirundi', flag: '🇧🇮', nativeName: 'Ikirundi' },
+    { code: 'zu', name: 'Zulu', flag: '🇿🇦', nativeName: 'isiZulu' },
+    { code: 'xh', name: 'Xhosa', flag: '🇿🇦', nativeName: 'isiXhosa' },
+    { code: 'af', name: 'Afrikaans', flag: '🇿🇦', nativeName: 'Afrikaans' },
+    { code: 'sn', name: 'Shona', flag: '🇿🇼', nativeName: 'chiShona' },
+    { code: 'ny', name: 'Chichewa', flag: '🇲🇼', nativeName: 'Chichewa' },
+    { code: 'wo', name: 'Wolof', flag: '🇸🇳', nativeName: 'Wolof' },
+    { code: 'bm', name: 'Bambara', flag: '🇲🇱', nativeName: 'Bamanankan' },
+    { code: 'ff', name: 'Fula', flag: '🇬🇳', nativeName: 'Fulfulde' },
+    { code: 'ln', name: 'Lingala', flag: '🇨🇩', nativeName: 'Lingála' },
+    { code: 'mg', name: 'Malagasy', flag: '🇲🇬', nativeName: 'Fiteny Malagasy' },
 ];
 
 // Languages supported by AI chatbot and translation engine
-const aiSupportedLanguages = [
-    { code: 'en', name: 'English' },
-    { code: 'sw', name: 'Swahili' },
-    { code: 'fr', name: 'French' },
-    { code: 'pt', name: 'Portuguese' },
-    { code: 'es', name: 'Spanish' },
-    { code: 'ha', name: 'Hausa' },
-    { code: 'yo', name: 'Yoruba' },
-    { code: 'ar', name: 'Arabic' },
-    { code: 'hi', name: 'Hindi' },
-    { code: 'de', name: 'German' },
-];
+const aiSupportedLanguages = supportedLanguages.map(l => ({ code: l.code, name: l.name }));
 
 // Get all supported languages
 router.get('/', (req: Request, res: Response) => {

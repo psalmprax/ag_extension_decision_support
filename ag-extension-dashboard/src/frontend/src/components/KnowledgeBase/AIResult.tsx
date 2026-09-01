@@ -18,6 +18,7 @@ import {
   Globe,
   RefreshCw,
   Columns,
+  ChevronDown,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ReasoningVisuals } from './ReasoningVisuals';
@@ -28,16 +29,57 @@ import { RefractiveGlassCard } from '../canvas-ui/RefractiveGlassCard';
 import type { VisualsData } from './types';
 
 export const MULTILINGUAL_LANGUAGES = [
-  { code: 'en', label: 'English', flag: '🇺🇸', native: 'English', bcp47: 'en-US' },
-  { code: 'sw', label: 'Swahili', flag: '🇰🇪', native: 'Kiswahili', bcp47: 'sw-KE' },
-  { code: 'fr', label: 'French', flag: '🇫🇷', native: 'Français', bcp47: 'fr-FR' },
-  { code: 'es', label: 'Spanish', flag: '🇪🇸', native: 'Español', bcp47: 'es-ES' },
-  { code: 'pt', label: 'Portuguese', flag: '🇧🇷', native: 'Português', bcp47: 'pt-BR' },
-  { code: 'ha', label: 'Hausa', flag: '🇳🇬', native: 'Hausa', bcp47: 'ha-NG' },
-  { code: 'yo', label: 'Yoruba', flag: '🇳🇬', native: 'Yorùbá', bcp47: 'yo-NG' },
-  { code: 'ar', label: 'Arabic', flag: '🇸🇦', native: 'العربية', bcp47: 'ar-SA' },
-  { code: 'hi', label: 'Hindi', flag: '🇮🇳', native: 'हिन्दी', bcp47: 'hi-IN' },
-  { code: 'de', label: 'German', flag: '🇩🇪', native: 'Deutsch', bcp47: 'de-DE' },
+  // Primary Global & African Languages
+  { code: 'en', label: 'English', flag: '🇺🇸', native: 'English', bcp47: 'en-US', group: 'Global' },
+  { code: 'sw', label: 'Swahili', flag: '🇰🇪', native: 'Kiswahili', bcp47: 'sw-KE', group: 'African' },
+  { code: 'fr', label: 'French', flag: '🇫🇷', native: 'Français', bcp47: 'fr-FR', group: 'Global' },
+  { code: 'es', label: 'Spanish', flag: '🇪🇸', native: 'Español', bcp47: 'es-ES', group: 'Global' },
+  { code: 'pt', label: 'Portuguese', flag: '🇧🇷', native: 'Português', bcp47: 'pt-BR', group: 'Global' },
+  { code: 'ha', label: 'Hausa', flag: '🇳🇬', native: 'Hausa', bcp47: 'ha-NG', group: 'African' },
+  { code: 'yo', label: 'Yoruba', flag: '🇳🇬', native: 'Yorùbá', bcp47: 'yo-NG', group: 'African' },
+  { code: 'ig', label: 'Igbo', flag: '🇳🇬', native: 'Igbo', bcp47: 'ig-NG', group: 'African' },
+  { code: 'am', label: 'Amharic', flag: '🇪🇹', native: 'አማርኛ', bcp47: 'am-ET', group: 'African' },
+  { code: 'om', label: 'Oromo', flag: '🇪🇹', native: 'Afaan Oromoo', bcp47: 'om-ET', group: 'African' },
+  { code: 'ti', label: 'Tigrinya', flag: '🇪🇷', native: 'ትግርኛ', bcp47: 'ti-ET', group: 'African' },
+  { code: 'so', label: 'Somali', flag: '🇸🇴', native: 'Af-Soomaali', bcp47: 'so-SO', group: 'African' },
+  { code: 'lg', label: 'Luganda', flag: '🇺🇬', native: 'Oluganda', bcp47: 'lg-UG', group: 'African' },
+  { code: 'rw', label: 'Kinyarwanda', flag: '🇷🇼', native: 'Ikinyarwanda', bcp47: 'rw-RW', group: 'African' },
+  { code: 'rn', label: 'Kirundi', flag: '🇧🇮', native: 'Ikirundi', bcp47: 'rn-BI', group: 'African' },
+  { code: 'zu', label: 'Zulu', flag: '🇿🇦', native: 'isiZulu', bcp47: 'zu-ZA', group: 'African' },
+  { code: 'xh', label: 'Xhosa', flag: '🇿🇦', native: 'isiXhosa', bcp47: 'xh-ZA', group: 'African' },
+  { code: 'af', label: 'Afrikaans', flag: '🇿🇦', native: 'Afrikaans', bcp47: 'af-ZA', group: 'African' },
+  { code: 'sn', label: 'Shona', flag: '🇿🇼', native: 'chiShona', bcp47: 'sn-ZW', group: 'African' },
+  { code: 'ny', label: 'Chichewa', flag: '🇲🇼', native: 'Chichewa', bcp47: 'ny-MW', group: 'African' },
+  { code: 'wo', label: 'Wolof', flag: '🇸🇳', native: 'Wolof', bcp47: 'wo-SN', group: 'African' },
+  { code: 'bm', label: 'Bambara', flag: '🇲🇱', native: 'Bamanankan', bcp47: 'bm-ML', group: 'African' },
+  { code: 'ff', label: 'Fula', flag: '🇬🇳', native: 'Fulfulde', bcp47: 'ff-SN', group: 'African' },
+  { code: 'ln', label: 'Lingala', flag: '🇨🇩', native: 'Lingála', bcp47: 'ln-CD', group: 'African' },
+  { code: 'mg', label: 'Malagasy', flag: '🇲🇬', native: 'Malagasy', bcp47: 'mg-MG', group: 'African' },
+
+  // Major Global & Asian Agricultural Languages
+  { code: 'ar', label: 'Arabic', flag: '🇸🇦', native: 'العربية', bcp47: 'ar-SA', group: 'Global' },
+  { code: 'hi', label: 'Hindi', flag: '🇮🇳', native: 'हिन्दी', bcp47: 'hi-IN', group: 'Global' },
+  { code: 'zh', label: 'Chinese (Simplified)', flag: '🇨🇳', native: '中文 (简体)', bcp47: 'zh-CN', group: 'Global' },
+  { code: 'de', label: 'German', flag: '🇩🇪', native: 'Deutsch', bcp47: 'de-DE', group: 'Global' },
+  { code: 'ru', label: 'Russian', flag: '🇷🇺', native: 'Русский', bcp47: 'ru-RU', group: 'Global' },
+  { code: 'ja', label: 'Japanese', flag: '🇯🇵', native: '日本語', bcp47: 'ja-JP', group: 'Global' },
+  { code: 'ko', label: 'Korean', flag: '🇰🇷', native: '한국어', bcp47: 'ko-KR', group: 'Global' },
+  { code: 'it', label: 'Italian', flag: '🇮🇹', native: 'Italiano', bcp47: 'it-IT', group: 'Global' },
+  { code: 'nl', label: 'Dutch', flag: '🇳🇱', native: 'Nederlands', bcp47: 'nl-NL', group: 'Global' },
+  { code: 'tr', label: 'Turkish', flag: '🇹🇷', native: 'Türkçe', bcp47: 'tr-TR', group: 'Global' },
+  { code: 'pl', label: 'Polish', flag: '🇵🇱', native: 'Polski', bcp47: 'pl-PL', group: 'Global' },
+  { code: 'uk', label: 'Ukrainian', flag: '🇺🇦', native: 'Українська', bcp47: 'uk-UA', group: 'Global' },
+  { code: 'id', label: 'Indonesian', flag: '🇮🇩', native: 'Bahasa Indonesia', bcp47: 'id-ID', group: 'Global' },
+  { code: 'vi', label: 'Vietnamese', flag: '🇻🇳', native: 'Tiếng Việt', bcp47: 'vi-VN', group: 'Global' },
+  { code: 'th', label: 'Thai', flag: '🇹🇭', native: 'ไทย', bcp47: 'th-TH', group: 'Global' },
+  { code: 'fil', label: 'Filipino', flag: '🇵🇭', native: 'Wikang Filipino', bcp47: 'fil-PH', group: 'Global' },
+  { code: 'fa', label: 'Persian', flag: '🇮🇷', native: 'فارسی', bcp47: 'fa-IR', group: 'Global' },
+  { code: 'ur', label: 'Urdu', flag: '🇵🇰', native: 'اردو', bcp47: 'ur-PK', group: 'Global' },
+  { code: 'bn', label: 'Bengali', flag: '🇧🇩', native: 'বাংলা', bcp47: 'bn-BD', group: 'Global' },
+  { code: 'pa', label: 'Punjabi', flag: '🇮🇳', native: 'ਪੰਜਾਬੀ', bcp47: 'pa-IN', group: 'Global' },
+  { code: 'ta', label: 'Tamil', flag: '🇮🇳', native: 'தமிழ்', bcp47: 'ta-IN', group: 'Global' },
+  { code: 'te', label: 'Telugu', flag: '🇮🇳', native: 'తెలుగు', bcp47: 'te-IN', group: 'Global' },
+  { code: 'mr', label: 'Marathi', flag: '🇮🇳', native: 'मराठी', bcp47: 'mr-IN', group: 'Global' },
 ];
 
 interface ContextItem {
@@ -147,6 +189,11 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
   const originalContent = translations['en'] || result.answer;
   const currentLangObj = MULTILINGUAL_LANGUAGES.find(l => l.code === activeLang) || MULTILINGUAL_LANGUAGES[0];
 
+  const featuredCodes = ['en', 'sw', 'fr', 'es', 'pt', 'ha', 'yo', 'ig', 'am', 'ar', 'hi', 'zh'];
+  const featuredLanguages = MULTILINGUAL_LANGUAGES.filter(l => featuredCodes.includes(l.code));
+  const africanLanguages = MULTILINGUAL_LANGUAGES.filter(l => l.group === 'African');
+  const globalLanguages = MULTILINGUAL_LANGUAGES.filter(l => l.group === 'Global');
+
   return (
     <motion.div
       key="synthesis-view"
@@ -156,14 +203,16 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
       className="space-y-6"
     >
       {/* ── Multilingual Translation & Dual-View Bar ── */}
-      <div className="p-4 rounded-xl bg-slate-900/90 border border-white/10 shadow-xl backdrop-blur-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div className="p-4 rounded-xl bg-slate-900/90 border border-white/10 shadow-xl backdrop-blur-2xl flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider pr-2 border-r border-white/10">
             <Globe className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Localize Result:</span>
+            <span>Localize ({MULTILINGUAL_LANGUAGES.length} Languages):</span>
           </div>
+
+          {/* Quick-Access Featured Language Badges */}
           <div className="flex items-center gap-1.5 flex-wrap">
-            {MULTILINGUAL_LANGUAGES.map(lang => {
+            {featuredLanguages.map(lang => {
               const isSelected = activeLang === lang.code;
               return (
                 <button
@@ -175,13 +224,40 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
                       ? 'bg-emerald-500 text-slate-950 font-black shadow-md shadow-emerald-950/40 scale-105'
                       : 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/5'
                   }`}
-                  title={`Translate to ${lang.native}`}
+                  title={`Translate to ${lang.native} (${lang.label})`}
                 >
                   <span>{lang.flag}</span>
                   <span className="font-bold">{lang.native}</span>
                 </button>
               );
             })}
+          </div>
+
+          {/* All 48+ Languages Grouped Dropdown */}
+          <div className="relative flex items-center">
+            <select
+              value={activeLang}
+              disabled={isTranslating}
+              onChange={e => onSelectLanguage(e.target.value)}
+              className="appearance-none bg-slate-950/90 hover:bg-slate-950 text-white text-xs font-mono font-bold py-1.5 pl-3 pr-8 rounded-xl border border-white/10 hover:border-emerald-500/40 transition-all cursor-pointer focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            >
+              <option value="" disabled>All Languages ({MULTILINGUAL_LANGUAGES.length}) ▾</option>
+              <optgroup label="── African Agricultural & Regional ──">
+                {africanLanguages.map(l => (
+                  <option key={l.code} value={l.code}>
+                    {l.flag} {l.native} ({l.label})
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="── Global Agricultural & Regional ──">
+                {globalLanguages.map(l => (
+                  <option key={l.code} value={l.code}>
+                    {l.flag} {l.native} ({l.label})
+                  </option>
+                ))}
+              </optgroup>
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-white/50 absolute right-2.5 pointer-events-none" />
           </div>
         </div>
 
