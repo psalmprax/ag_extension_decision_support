@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
+import { isSessionValid } from '@/services/sessionService';
 
 export type UserRole = 'admin' | 'regional_manager' | 'extension_officer' | 'farmer';
 
@@ -33,6 +34,16 @@ export const authorize = (allowedRoles: UserRole[]) => {
                 email: string;
                 role: UserRole;
             };
+
+            // Check if session has been revoked
+            const sessionActive = isSessionValid(token);
+            if (!sessionActive) {
+                res.status(401).json({
+                    success: false,
+                    error: 'Session has been revoked or expired',
+                });
+                return;
+            }
 
             // Attach user to request
             req.user = {

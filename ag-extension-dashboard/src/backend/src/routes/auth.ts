@@ -7,6 +7,10 @@ import { logger } from '@/utils/logger';
 import { auditMiddleware } from '@/middleware/auditMiddleware';
 import { validate } from '@/middleware/validationMiddleware';
 import { loginSchema, registerSchema } from '@/utils/schemas';
+import { recordLoginAttempt, getLoginHistory, getLoginStats, resolveLocationFromHeaders } from '@/services/loginHistoryService';
+import { generateMfaSecret, verifyTotp, verifyAndConsumeBackupCode } from '@/services/mfaService';
+import { isAccountLocked, recordFailedLogin, resetFailedAttempts } from '@/services/lockoutService';
+import { createSession, revokeSession, revokeAllOtherSessions, getUserSessions } from '@/services/sessionService';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
@@ -69,8 +73,17 @@ interface JWTPayload {
 router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], async (req: Request, res: Response) => {
     try {
         const { email, password } = req.body;
+        const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() || req.ip || null;
 
         if (!email || !password) {
+            await recordLoginAttempt({
+                email: email || 'unknown',
+                status: 'failed',
+                failureReason: 'missing_credentials',
+                ipAddress: clientIp,
+                userAgent: req.get('user-agent'),
+                location: resolveLocationFromHeaders(req.headers, clientIp),
+            });
             return res.status(400).json({
                 success: false,
                 error: 'Email and password are required',
@@ -82,20 +95,91 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
         const user = result.rows[0];
 
         if (!user) {
+            await recordLoginAttempt({
+                email,
+                status: 'failed',
+                failureReason: 'user_not_found',
+                ipAddress: clientIp,
+                userAgent: req.get('user-agent'),
+                location: resolveLocationFromHeaders(req.headers, clientIp),
+            });
             return res.status(401).json({
                 success: false,
                 error: 'Invalid email or password',
             });
         }
 
+        // Check for temporary account lockout
+        const lockoutStatus = isAccountLocked(user.lockout_until);
+        if (lockoutStatus.locked) {
+            await recordLoginAttempt({
+                userId: user.id,
+                email,
+                status: 'failed',
+                failureReason: 'account_locked',
+                ipAddress: clientIp,
+                userAgent: req.get('user-agent'),
+                location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
+            });
+            return res.status(423).json({
+                success: false,
+                error: `Account is temporarily locked due to multiple failed login attempts. Please try again in ${lockoutStatus.remainingSeconds} seconds.`,
+                lockoutRemainingSeconds: lockoutStatus.remainingSeconds,
+            });
+        }
+
         // Check password
         const isPasswordValid = await bcrypt.compare(password, user.password_hash);
         if (!isPasswordValid) {
+            const failedInfo = await recordFailedLogin(user.id);
+            await recordLoginAttempt({
+                userId: user.id,
+                email,
+                status: 'failed',
+                failureReason: 'invalid_password',
+                ipAddress: clientIp,
+                userAgent: req.get('user-agent'),
+                location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
+            });
             return res.status(401).json({
                 success: false,
-                error: 'Invalid email or password',
+                error: failedInfo.locked
+                    ? 'Account has been temporarily locked for 15 minutes due to 5 consecutive failed login attempts.'
+                    : `Invalid email or password. ${failedInfo.remainingAttempts} attempt(s) remaining before temporary lockout.`,
+                remainingAttempts: failedInfo.remainingAttempts,
+                isLocked: failedInfo.locked,
             });
         }
+
+        // Reset failed login attempts on valid password
+        await resetFailedAttempts(user.id);
+
+        // Check if MFA is required
+        if (user.mfa_enabled) {
+            const tempToken = jwt.sign(
+                { userId: user.id, email: user.email, mfaPending: true },
+                config.jwt.secret as jwt.Secret,
+                { expiresIn: '5m' }
+            );
+            return res.json({
+                success: true,
+                data: {
+                    mfaRequired: true,
+                    tempToken,
+                    message: 'Two-factor authentication required. Please enter your 6-digit TOTP code or a backup code.',
+                },
+            });
+        }
+
+        // Record successful login
+        await recordLoginAttempt({
+            userId: user.id,
+            email: user.email,
+            status: 'success',
+            ipAddress: clientIp,
+            userAgent: req.get('user-agent'),
+            location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
+        });
 
         // Generate JWT token
         const token = jwt.sign(
@@ -103,6 +187,15 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
             config.jwt.secret as jwt.Secret,
             { expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
         );
+
+        // Create active user session
+        await createSession({
+            userId: user.id,
+            token,
+            ipAddress: clientIp,
+            userAgent: req.get('user-agent'),
+            location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
+        });
 
         let planName = 'Free';
         try {
@@ -130,6 +223,7 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
                     lastName: user.last_name,
                     role: user.role,
                     region: user.region,
+                    mfaEnabled: !!user.mfa_enabled,
                     planName,
                     isFree: planName.toLowerCase() === 'free',
                 },
@@ -396,6 +490,387 @@ router.get('/me', async (req: Request, res: Response) => {
         });
     } catch {
         res.status(401).json({ success: false, error: 'Invalid token' });
+    }
+});
+
+/**
+ * GET /api/v1/auth/login-history
+ * Query login history entries for security audit.
+ */
+router.get('/login-history', async (req: Request, res: Response) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+
+    try {
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, config.jwt.secret as string) as JWTPayload;
+
+        const { email, status, limit, offset, userId } = req.query;
+        const isManager = decoded.role === 'admin' || decoded.role === 'regional_manager';
+
+        // Non-managers can only query their own history
+        const targetUserId = isManager ? ((userId as string) || (email ? undefined : decoded.userId)) : decoded.userId;
+
+        const history = await getLoginHistory({
+            userId: targetUserId,
+            email: isManager ? (email as string) : undefined,
+            status: status as string,
+            limit: limit ? Math.min(100, Math.max(1, parseInt(limit as string, 10))) : 20,
+            offset: offset ? Math.max(0, parseInt(offset as string, 10)) : 0,
+        });
+
+        res.json({
+            success: true,
+            data: history,
+        });
+    } catch (error) {
+        logger.error('Failed to get login history:', error);
+        res.status(401).json({ success: false, error: 'Invalid token or request failed' });
+    }
+});
+
+/**
+ * GET /api/v1/auth/login-stats
+ * Query high-level login metrics for the current user or tenant.
+ */
+router.get('/login-stats', async (req: Request, res: Response) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+
+    try {
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, config.jwt.secret as string) as JWTPayload;
+
+        const { userId } = req.query;
+        const isManager = decoded.role === 'admin' || decoded.role === 'regional_manager';
+        const targetUserId = isManager && userId ? (userId as string) : decoded.userId;
+
+        const stats = await getLoginStats({ userId: targetUserId });
+
+        res.json({
+            success: true,
+            data: stats,
+        });
+    } catch (error) {
+        logger.error('Failed to get login stats:', error);
+        res.status(401).json({ success: false, error: 'Invalid token or request failed' });
+    }
+});
+
+/**
+ * POST /api/v1/auth/mfa/verify
+ * Complete 2FA login challenge with TOTP code or backup code.
+ */
+router.post('/mfa/verify', async (req: Request, res: Response) => {
+    try {
+        const { tempToken, code, isBackupCode } = req.body;
+        const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() || req.ip || null;
+
+        if (!tempToken || !code) {
+            return res.status(400).json({ success: false, error: 'tempToken and code are required' });
+        }
+
+        let decoded: { userId: string; email: string; mfaPending?: boolean };
+        try {
+            decoded = jwt.verify(tempToken, config.jwt.secret as jwt.Secret) as typeof decoded;
+        } catch {
+            return res.status(401).json({ success: false, error: 'Invalid or expired MFA token' });
+        }
+
+        if (!decoded.mfaPending) {
+            return res.status(400).json({ success: false, error: 'Invalid token type for MFA challenge' });
+        }
+
+        const userRes = await query('SELECT * FROM users WHERE id = $1', [decoded.userId]);
+        const user = userRes.rows[0];
+        if (!user) {
+            return res.status(404).json({ success: false, error: 'User not found' });
+        }
+
+        let isValid = false;
+        if (isBackupCode) {
+            const backupRes = await verifyAndConsumeBackupCode(user.id, code, user.mfa_backup_codes || []);
+            isValid = backupRes.valid;
+        } else {
+            isValid = verifyTotp(code, user.mfa_secret);
+        }
+
+        if (!isValid) {
+            await recordLoginAttempt({
+                userId: user.id,
+                email: user.email,
+                status: 'failed',
+                failureReason: isBackupCode ? 'invalid_backup_code' : 'invalid_totp_code',
+                ipAddress: clientIp,
+                userAgent: req.get('user-agent'),
+                location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
+            });
+            return res.status(401).json({ success: false, error: 'Invalid verification code' });
+        }
+
+        // Record successful login
+        await recordLoginAttempt({
+            userId: user.id,
+            email: user.email,
+            status: 'success',
+            ipAddress: clientIp,
+            userAgent: req.get('user-agent'),
+            location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
+        });
+
+        // Generate full JWT token
+        const token = jwt.sign(
+            { userId: user.id, email: user.email, role: user.role },
+            config.jwt.secret as jwt.Secret,
+            { expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
+        );
+
+        // Create active user session
+        await createSession({
+            userId: user.id,
+            token,
+            ipAddress: clientIp,
+            userAgent: req.get('user-agent'),
+            location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
+        });
+
+        let planName = 'Free';
+        try {
+            const subResult = await query(`
+                SELECT COALESCE(sp.name, 'Free') as plan_name
+                FROM subscriptions s
+                JOIN subscription_plans sp ON sp.id = s.plan_id
+                WHERE s.user_id = $1
+            `, [user.id]);
+            if (subResult.rows.length > 0) {
+                planName = subResult.rows[0].plan_name;
+            }
+        } catch {
+            // fallback
+        }
+
+        res.json({
+            success: true,
+            data: {
+                token,
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    firstName: user.first_name,
+                    lastName: user.last_name,
+                    role: user.role,
+                    region: user.region,
+                    mfaEnabled: true,
+                    planName,
+                    isFree: planName.toLowerCase() === 'free',
+                },
+            },
+        });
+    } catch (error) {
+        logger.error('MFA verify error:', error);
+        safeError(res, 500, 'MFA verification failed');
+    }
+});
+
+/**
+ * POST /api/v1/auth/mfa/setup
+ * Generate a new TOTP secret, backup codes, and QR auth URL.
+ */
+router.post('/mfa/setup', async (req: Request, res: Response) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+
+    try {
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, config.jwt.secret as string) as JWTPayload;
+
+        const setup = generateMfaSecret(decoded.email, 'AgriExtension');
+        res.json({
+            success: true,
+            data: setup,
+        });
+    } catch (error) {
+        logger.error('MFA setup error:', error);
+        res.status(401).json({ success: false, error: 'Invalid token' });
+    }
+});
+
+/**
+ * POST /api/v1/auth/mfa/enable
+ * Confirm verification code and activate 2FA for the account.
+ */
+router.post('/mfa/enable', async (req: Request, res: Response) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+
+    try {
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, config.jwt.secret as string) as JWTPayload;
+        const { secret, code, backupCodes } = req.body;
+
+        if (!secret || !code || !Array.isArray(backupCodes)) {
+            return res.status(400).json({ success: false, error: 'secret, code, and backupCodes are required' });
+        }
+
+        const isValid = verifyTotp(code, secret);
+        if (!isValid) {
+            return res.status(400).json({ success: false, error: 'Invalid verification code' });
+        }
+
+        await query(
+            `
+            UPDATE users
+            SET mfa_enabled = true,
+                mfa_secret = $1,
+                mfa_backup_codes = $2
+            WHERE id = $3
+        `,
+            [secret, backupCodes, decoded.userId]
+        );
+
+        res.json({
+            success: true,
+            message: 'Two-factor authentication successfully enabled',
+        });
+    } catch (error) {
+        logger.error('MFA enable error:', error);
+        res.status(500).json({ success: false, error: 'Failed to enable 2FA' });
+    }
+});
+
+/**
+ * POST /api/v1/auth/mfa/disable
+ * Disable 2FA after password confirmation.
+ */
+router.post('/mfa/disable', async (req: Request, res: Response) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+
+    try {
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, config.jwt.secret as string) as JWTPayload;
+        const { password } = req.body;
+
+        if (!password) {
+            return res.status(400).json({ success: false, error: 'Password is required to disable 2FA' });
+        }
+
+        const userRes = await query('SELECT password_hash FROM users WHERE id = $1', [decoded.userId]);
+        const user = userRes.rows[0];
+        if (!user) {
+            return res.status(404).json({ success: false, error: 'User not found' });
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+        if (!isPasswordValid) {
+            return res.status(401).json({ success: false, error: 'Invalid password' });
+        }
+
+        await query(
+            `
+            UPDATE users
+            SET mfa_enabled = false,
+                mfa_secret = NULL,
+                mfa_backup_codes = '{}'
+            WHERE id = $1
+        `,
+            [decoded.userId]
+        );
+
+        res.json({
+            success: true,
+            message: 'Two-factor authentication disabled',
+        });
+    } catch (error) {
+        logger.error('MFA disable error:', error);
+        res.status(500).json({ success: false, error: 'Failed to disable 2FA' });
+    }
+});
+
+/**
+ * GET /api/v1/auth/sessions
+ * List active sessions for the current user.
+ */
+router.get('/sessions', async (req: Request, res: Response) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+
+    try {
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, config.jwt.secret as string) as JWTPayload;
+
+        const sessions = await getUserSessions(decoded.userId, token);
+        res.json({
+            success: true,
+            data: sessions,
+        });
+    } catch (error) {
+        logger.error('Failed to fetch sessions:', error);
+        res.status(401).json({ success: false, error: 'Invalid token' });
+    }
+});
+
+/**
+ * DELETE /api/v1/auth/sessions/:id
+ * Revoke a specific active session.
+ */
+router.delete('/sessions/:id', async (req: Request, res: Response) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+
+    try {
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, config.jwt.secret as string) as JWTPayload;
+
+        const revoked = await revokeSession(req.params.id, decoded.userId);
+        res.json({
+            success: true,
+            revoked,
+            message: revoked ? 'Session revoked successfully' : 'Session not found or already revoked',
+        });
+    } catch (error) {
+        logger.error('Failed to revoke session:', error);
+        res.status(500).json({ success: false, error: 'Failed to revoke session' });
+    }
+});
+
+/**
+ * POST /api/v1/auth/sessions/revoke-others
+ * Revoke all other active sessions except the current one.
+ */
+router.post('/sessions/revoke-others', async (req: Request, res: Response) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+
+    try {
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, config.jwt.secret as string) as JWTPayload;
+
+        const count = await revokeAllOtherSessions(decoded.userId, token);
+        res.json({
+            success: true,
+            count,
+            message: `Revoked ${count} other active session(s)`,
+        });
+    } catch (error) {
+        logger.error('Failed to revoke other sessions:', error);
+        res.status(500).json({ success: false, error: 'Failed to revoke other sessions' });
     }
 });
 

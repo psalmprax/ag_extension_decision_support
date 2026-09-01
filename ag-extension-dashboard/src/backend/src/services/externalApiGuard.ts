@@ -94,6 +94,13 @@ const API_CONFIGS: Record<string, ExternalApiConfig> = {
     cacheTtlSeconds: 6 * 3600,
     cacheKeyPrefix: 'ext:giews:',
   },
+  weatherApi: {
+    domain: 'api.weatherapi.com',
+    maxTokens: 50,
+    refillRate: 1,         // 60 req/min
+    cacheTtlSeconds: 15 * 60,     // 15m
+    cacheKeyPrefix: 'ext:weatherapi:',
+  },
 };
 
 // ─── Public API ────────────────────────────────────────────────────────

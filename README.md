@@ -35,6 +35,23 @@ ag-extension-shared/           # Shared zod schemas — frontend/backend API con
 - **Field/mobile support** — PWA + Capacitor mobile builds, offline-first with CRDT conflict resolution, low-end-device thermal/memory budgets
 - **Browser extension** — MV3 extension with sidepanel, offline queue, and content scripts
 - **Payments & comms** — Stripe/PayPal billing, SMS/USSD, WhatsApp, email workflows, web push
+- **Enterprise Security & Identity Hardening** — RFC 6238 TOTP Authenticator (2FA), brute-force account lockout, SHA-256 session invalidation, and GeoIP login auditing
+- **Zero-Connectivity Field Edge** — On-device visual disease classification via HTML5 canvas, WGS-84 geodesic parcel boundary tracing & acreage calculation
+- **Smallholder Voice & IVR Channels** — WhatsApp voice note Whisper transcription in Swahili/vernacular and automated TwiML/AT IVR voice broadcasts
+- **Economic Loop Closure** — Certified agro-dealer geo-inventory, anti-counterfeit batch verification, and institutional harvest offtaker matchmaking
+- **Agronomic ROI & Soil Carbon MRV** — Quantifiable yield differential & BCR financial modeling, IPCC Tier 2 Soil Organic Carbon (SOC) carbon credit auditing
+- **Automated Proactive Hazard Warning** — Weather anomaly scanning daemon & 48-hour preventive early warning alert dispatch
+- **Satellite Earth Observation & Sentinel-2 NDVI Indexing** — 10m multispectral NDVI/EVI/NDWI calculation & crop stress anomaly detection
+- **Agronomic Credit Scoring & Parametric Insurance** — 0–1000 creditworthiness scoring (AAA–C tiers) and automated weather-index insurance underwriting
+- **Multi-Tenant Agribusiness Federation** — Organization-Region-Cooperative hierarchical tenancy, custom chemical restrictions, and white-label branding
+- **Conflict-Free Bi-Directional Offline Sync (CRDT)** — Vector clocks and Last-Write-Wins (LWW) deterministic multi-master sync
+- **On-Farm IoT & LoRaWAN Sensor Mesh Telemetry** — Soil moisture/salinity probe ingestion and VPD-driven smart solar irrigation
+- **EUDR Zero-Deforestation & GS1 Digital Passports** — EUDR 2020 forest baseline verification and cryptographically signed farm-to-fork batch passports
+- **Shared Mechanization & Drone Fleet Dispatcher** — Tractor sharing marketplace and ULV drone spray mission planning with wind speed safety buffers
+- **Crowd-Sourced Pest Swarm Radar (DBSCAN)** — Spatial sighting clustering and wind-vector epidemiological trajectory forecasting
+- **Cross-Border Regional Commodity Trade & Arbitrage** — East African multi-currency price monitoring (KES, UGX, TZS, RWF, ETB) and net trade spread calculation
+
+> 📖 **Complete Architecture Documentation**: See [`ARCHITECTURE_PILLARS.md`](./ARCHITECTURE_PILLARS.md) for full data models, algorithmic formulas, and API contracts.
 
 ## Tech stack
 

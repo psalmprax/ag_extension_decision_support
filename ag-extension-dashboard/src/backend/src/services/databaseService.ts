@@ -541,10 +541,50 @@ export async function createTables(): Promise<void> {
         updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
       CREATE INDEX IF NOT EXISTS regional_agronomy_skills_region_crop_idx ON regional_agronomy_skills(region, crop);
+
+      -- Login history and last login tracking
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP(6);
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_enabled BOOLEAN NOT NULL DEFAULT false;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_secret VARCHAR(255);
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_backup_codes TEXT[] NOT NULL DEFAULT '{}';
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS lockout_until TIMESTAMP(6);
+
+      CREATE TABLE IF NOT EXISTS login_history (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        email VARCHAR(255) NOT NULL,
+        status VARCHAR(20) NOT NULL,
+        failure_reason VARCHAR(100),
+        ip_address VARCHAR(64),
+        user_agent VARCHAR(512),
+        device VARCHAR(100),
+        location VARCHAR(150),
+        created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS login_history_user_id_created_at_idx ON login_history(user_id, created_at);
+      CREATE INDEX IF NOT EXISTS login_history_email_created_at_idx ON login_history(email, created_at);
+      CREATE INDEX IF NOT EXISTS login_history_status_idx ON login_history(status);
+
+      CREATE TABLE IF NOT EXISTS user_sessions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        token_hash VARCHAR(64) UNIQUE NOT NULL,
+        ip_address VARCHAR(64),
+        user_agent VARCHAR(512),
+        device VARCHAR(100),
+        location VARCHAR(150),
+        last_active_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        expires_at TIMESTAMP(6) NOT NULL,
+        is_revoked BOOLEAN NOT NULL DEFAULT false,
+        created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS user_sessions_user_id_revoked_idx ON user_sessions(user_id, is_revoked);
+      CREATE INDEX IF NOT EXISTS user_sessions_token_hash_idx ON user_sessions(token_hash);
     `);
-    logger.info('Tenant and data-governance tables provisioned');
+    logger.info('Tenant, login-history, sessions, and data-governance tables provisioned');
   } catch (error) {
-    logger.warn('Tenant and data-governance provisioning failed:', error);
+    logger.warn('Tenant, login-history, sessions, and data-governance provisioning failed:', error);
   }
 
   // Enable vector extension if available in database
