@@ -11,6 +11,7 @@ import { recordLoginAttempt, getLoginHistory, getLoginStats, resolveLocationFrom
 import { generateMfaSecret, verifyTotp, verifyAndConsumeBackupCode } from '@/services/mfaService';
 import { isAccountLocked, recordFailedLogin, resetFailedAttempts } from '@/services/lockoutService';
 import { createSession, revokeSession, revokeAllOtherSessions, getUserSessions } from '@/services/sessionService';
+import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
 

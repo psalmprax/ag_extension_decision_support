@@ -3,7 +3,7 @@ import { logger } from '../utils/logger';
 export interface IvrCallOptions {
   alertTitle: string;
   advisorySwahili: string;
-  advisoryEnglish: string;
+  advisoryEnglish?: string;
   officerContact?: string;
   repeatAllowed?: boolean;
 }

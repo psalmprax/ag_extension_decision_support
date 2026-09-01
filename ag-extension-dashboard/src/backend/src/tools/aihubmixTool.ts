@@ -17,13 +17,15 @@ export const aihubmixAccountTool: Tool<typeof AIHubMixAccountSchema> = {
   description:
     'Query AIHubMix account details, check remaining quota/balance, list available models, or search/manage API keys.',
   schema: AIHubMixAccountSchema,
-  execute: async ({ action, keyword, keyName, quota, models }) => {
+  execute: async ({ action, keyword, keyName, quota, models }): Promise<string> => {
     const service = new AIHubMixAccountService();
+
+    let result: Record<string, unknown>;
 
     switch (action) {
       case 'get_profile': {
         const profile = await service.getUserSelf();
-        return {
+        result = {
           success: true,
           profile: {
             username: profile.username,
@@ -33,20 +35,22 @@ export const aihubmixAccountTool: Tool<typeof AIHubMixAccountSchema> = {
             group: profile.group,
           },
         };
+        break;
       }
 
       case 'get_available_models': {
         const availableModels = await service.getAvailableModels();
-        return {
+        result = {
           success: true,
           count: availableModels.length,
           models: availableModels,
         };
+        break;
       }
 
       case 'list_keys': {
         const tokens = await service.listTokens(0, 20);
-        return {
+        result = {
           success: true,
           count: tokens.length,
           keys: tokens.map(t => ({
@@ -58,11 +62,12 @@ export const aihubmixAccountTool: Tool<typeof AIHubMixAccountSchema> = {
             models: t.models || 'all',
           })),
         };
+        break;
       }
 
       case 'search_keys': {
         const tokens = await service.searchTokens(keyword || '');
-        return {
+        result = {
           success: true,
           count: tokens.length,
           keys: tokens.map(t => ({
@@ -72,6 +77,7 @@ export const aihubmixAccountTool: Tool<typeof AIHubMixAccountSchema> = {
             remainQuota: t.remain_quota,
           })),
         };
+        break;
       }
 
       case 'create_key': {
@@ -81,17 +87,20 @@ export const aihubmixAccountTool: Tool<typeof AIHubMixAccountSchema> = {
           unlimited_quota: !quota,
           models: models,
         });
-        return {
+        result = {
           success: true,
           message: 'API Key issued successfully',
           key: token.key,
           id: token.id,
           name: token.name,
         };
+        break;
       }
 
       default:
         throw new Error(`Unsupported action: ${action}`);
     }
+
+    return JSON.stringify(result);
   },
 };

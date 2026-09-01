@@ -54,6 +54,7 @@ model User {
   reassignmentRecords FarmerAssignmentHistory[] @relation("AssignmentReassigner")
   uploads         UploadRecord[]
   recordedConsents DataConsent[] @relation("ConsentRecorder")
+  dataExportRequests DataExportRequest[]
   lastLoginAt   DateTime?          @map("last_login_at") @db.Timestamp(6)
   loginHistories LoginHistory[]
   mfaEnabled    Boolean            @default(false) @map("mfa_enabled")

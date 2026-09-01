@@ -27,7 +27,7 @@ export interface WeatherData {
     windSpeedKmh?: number;
     condition: string;
   }[];
-  source: string;
+  source?: string;
 }
 
 // Map Open-Meteo weather codes to conditions

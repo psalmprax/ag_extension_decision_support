@@ -63,6 +63,18 @@ export function parseDeviceFromUserAgent(userAgent?: string | null): string {
   return `${browser} on ${os}`;
 }
 
+function isPrivateOrLoopbackIp(ip: string): boolean {
+  const cleanIp = ip.replace(/^::ffff:/, '');
+  return (
+    cleanIp === '127.0.0.1' ||
+    cleanIp === '::1' ||
+    cleanIp === 'localhost' ||
+    cleanIp.startsWith('10.') ||
+    cleanIp.startsWith('192.168.') ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(cleanIp)
+  );
+}
+
 export function resolveLocationFromHeaders(
   headers: Record<string, string | string[] | undefined> = {},
   ipAddress?: string | null,
@@ -80,18 +92,8 @@ export function resolveLocationFromHeaders(
   if (geoCountry) return geoCountry;
 
   // Check if loopback or private IP
-  if (ipAddress) {
-    const cleanIp = ipAddress.replace(/^::ffff:/, '');
-    if (
-      cleanIp === '127.0.0.1' ||
-      cleanIp === '::1' ||
-      cleanIp === 'localhost' ||
-      cleanIp.startsWith('10.') ||
-      cleanIp.startsWith('192.168.') ||
-      /^172\.(1[6-9]|2\d|3[01])\./.test(cleanIp)
-    ) {
-      return userRegion ? `${userRegion} (Local Node)` : 'Local Node / Development';
-    }
+  if (ipAddress && isPrivateOrLoopbackIp(ipAddress)) {
+    return userRegion ? `${userRegion} (Local Node)` : 'Local Node / Development';
   }
 
   // Fallback to user registered region or default

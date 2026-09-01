@@ -52,7 +52,7 @@ export function verifyEudrDeforestationCompliance(params: {
     currentForestCanopyPct = 12.0, // Current canopy
   } = params;
 
-  logger.info(`Running EUDR Deforestation audit for parcel ${parcelId} (${commodity} in ${country})`);
+  logger.info(`Running EUDR Deforestation audit for parcel ${parcelId} (${commodity} in ${country}) against cutoff ${EUDR_CUTOFF_DATE}`);
 
   // Deforestation detected if canopy loss > 10% after 2020 cutoff
   const canopyLoss = forestCanopyBaseline2020Pct - currentForestCanopyPct;

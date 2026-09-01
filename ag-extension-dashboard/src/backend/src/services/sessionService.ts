@@ -162,9 +162,18 @@ export async function getUserSessions(userId: string, currentToken?: string): Pr
       [userId]
     );
 
-    return res.rows.map(row => ({
-      ...row,
-      tokenHash: undefined, // Redact token hash from response
+    return res.rows.map((row: Record<string, unknown>) => ({
+      id: String(row.id),
+      userId: String(row.userId),
+      tokenHash: undefined,
+      ipAddress: (row.ipAddress as string) || null,
+      userAgent: (row.userAgent as string) || null,
+      device: (row.device as string) || null,
+      location: (row.location as string) || null,
+      lastActiveAt: String(row.lastActiveAt),
+      expiresAt: String(row.expiresAt),
+      isRevoked: Boolean(row.isRevoked),
+      createdAt: String(row.createdAt),
       isCurrent: currentTokenHash ? row.tokenHash === currentTokenHash : false,
     }));
   } catch (error) {

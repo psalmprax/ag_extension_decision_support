@@ -115,7 +115,8 @@ describe('AIHubMix Integration (REST Account API, MCP Tool & Model Provider)', (
         },
       });
 
-      const result = await aihubmixAccountTool.execute({ action: 'get_profile' });
+      const raw = await aihubmixAccountTool.execute({ action: 'get_profile' });
+      const result = JSON.parse(raw);
       expect(result.success).toBe(true);
       expect(result.profile.username).toBe('officer-1');
     });
@@ -130,7 +131,8 @@ describe('AIHubMix Integration (REST Account API, MCP Tool & Model Provider)', (
         },
       });
 
-      const result = await aihubmixAccountTool.execute({ action: 'list_keys' });
+      const raw = await aihubmixAccountTool.execute({ action: 'list_keys' });
+      const result = JSON.parse(raw);
       expect(result.success).toBe(true);
       expect(result.keys).toHaveLength(1);
       expect(result.keys[0].name).toBe('primary-key');

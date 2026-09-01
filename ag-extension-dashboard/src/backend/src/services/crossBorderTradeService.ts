@@ -65,6 +65,49 @@ const REGIONAL_MARKETS: RegionalMarketHub[] = [
   },
 ];
 
+function evaluateMarketPair(
+  commodity: string,
+  origin: RegionalMarketHub,
+  destination: RegionalMarketHub,
+  minNetMarginPct: number
+): ArbitrageOpportunity | null {
+  const originPriceLocal = origin.commodityPricesPerTon[commodity];
+  const destPriceLocal = destination.commodityPricesPerTon[commodity];
+  if (!originPriceLocal || !destPriceLocal) return null;
+
+  const originPriceUsd = +(originPriceLocal / origin.fxRateToUsd).toFixed(2);
+  const destPriceUsd = +(destPriceLocal / destination.fxRateToUsd).toFixed(2);
+  const grossSpread = +(destPriceUsd - originPriceUsd).toFixed(2);
+  if (grossSpread <= 0) return null;
+
+  // Approximate road freight in East Africa: ~$0.075 per ton-km
+  const distanceKm = 650;
+  const freightCost = +(distanceKm * 0.075).toFixed(2);
+  const borderFees = 18.5; // SPS certificate + transit bond per ton
+
+  const netProfit = +(grossSpread - (freightCost + borderFees)).toFixed(2);
+  const netMarginPct = +((netProfit / originPriceUsd) * 100).toFixed(1);
+
+  if (netMarginPct < minNetMarginPct) return null;
+
+  return {
+    commodity,
+    originMarket: origin.name,
+    originCountry: origin.country,
+    destinationMarket: destination.name,
+    destinationCountry: destination.country,
+    distanceKm,
+    originPriceUsdPerTon: originPriceUsd,
+    destinationPriceUsdPerTon: destPriceUsd,
+    grossSpreadUsdPerTon: grossSpread,
+    freightCostUsdPerTon: freightCost,
+    borderTariffAndSpsFeeUsdPerTon: borderFees,
+    netArbitrageProfitUsdPerTon: netProfit,
+    netMarginPct,
+    recommendedTrade: true,
+  };
+}
+
 export function findCrossBorderArbitrage(params: {
   commodity: string;
   minNetMarginPct?: number;
@@ -74,52 +117,14 @@ export function findCrossBorderArbitrage(params: {
 
   const opportunities: ArbitrageOpportunity[] = [];
 
-  for (let i = 0; i < REGIONAL_MARKETS.length; i++) {
-    for (let j = 0; j < REGIONAL_MARKETS.length; j++) {
-      if (i === j) continue;
-
-      const origin = REGIONAL_MARKETS[i];
-      const destination = REGIONAL_MARKETS[j];
-
-      const originPriceLocal = origin.commodityPricesPerTon[commodity];
-      const destPriceLocal = destination.commodityPricesPerTon[commodity];
-
-      if (!originPriceLocal || !destPriceLocal) continue;
-
-      const originPriceUsd = +(originPriceLocal / origin.fxRateToUsd).toFixed(2);
-      const destPriceUsd = +(destPriceLocal / destination.fxRateToUsd).toFixed(2);
-
-      const grossSpread = +(destPriceUsd - originPriceUsd).toFixed(2);
-      if (grossSpread <= 0) continue;
-
-      // Approximate road freight in East Africa: ~$0.075 per ton-km
-      const distanceKm = 650; // Kampala to Nairobi average corridor
-      const freightCost = +(distanceKm * 0.075).toFixed(2); // ~$48.75/ton
-      const borderFees = 18.5; // SPS certificate + transit bond per ton
-
-      const netProfit = +(grossSpread - (freightCost + borderFees)).toFixed(2);
-      const netMarginPct = +((netProfit / originPriceUsd) * 100).toFixed(1);
-
-      if (netMarginPct >= minNetMarginPct) {
-        opportunities.push({
-          commodity,
-          originMarket: origin.name,
-          originCountry: origin.country,
-          destinationMarket: destination.name,
-          destinationCountry: destination.country,
-          distanceKm,
-          originPriceUsdPerTon: originPriceUsd,
-          destinationPriceUsdPerTon: destPriceUsd,
-          grossSpreadUsdPerTon: grossSpread,
-          freightCostUsdPerTon: freightCost,
-          borderTariffAndSpsFeeUsdPerTon: borderFees,
-          netArbitrageProfitUsdPerTon: netProfit,
-          netMarginPct,
-          recommendedTrade: true,
-        });
-      }
+  for (const origin of REGIONAL_MARKETS) {
+    for (const destination of REGIONAL_MARKETS) {
+      if (origin.marketId === destination.marketId) continue;
+      const opp = evaluateMarketPair(commodity, origin, destination, minNetMarginPct);
+      if (opp) opportunities.push(opp);
     }
   }
 
   return opportunities.sort((a, b) => b.netArbitrageProfitUsdPerTon - a.netArbitrageProfitUsdPerTon);
 }
+
