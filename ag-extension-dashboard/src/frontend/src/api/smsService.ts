@@ -41,3 +41,8 @@ export const translateMessage = async (params: { text: string; targetLanguage: s
   const response = await apiClient.post('/sms/translate', params);
   return response.data;
 };
+
+export const scheduleSMS = async (params: { to: string; message: string; scheduledTime: string; farmerId?: string }) => {
+  const response = await apiClient.post('/sms/schedule', params);
+  return response.data;
+};

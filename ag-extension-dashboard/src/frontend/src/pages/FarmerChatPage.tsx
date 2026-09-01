@@ -53,6 +53,11 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   const { isDemo } = useDemoMode();
   const [selectedChannel, setSelectedChannel] = useState<'all' | 'sms' | 'whatsapp' | 'telegram'>('all');
 
+  const filteredConversations = selectedChannel === 'all' ? farmerConversations : farmerConversations.filter(c => {
+    const ch = (c as unknown as { channel?: string; lastChannel?: string }).channel || (c as unknown as { lastChannel?: string }).lastChannel || '';
+    return !ch || ch.toLowerCase() === selectedChannel;
+  });
+
   const activeConv = farmerConversations.find(c => c.id === activeFarmerConvId);
   const activeFarmer = activeConv as unknown as { ndvi?: number; ph?: number; temperature?: number; outbreakRisk?: number } | undefined;
 
@@ -159,7 +164,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
           </div>
 
           <VirtualizedList
-            items={farmerConversations}
+            items={filteredConversations}
             itemHeight={76}
             overscan={isLowEndDevice ? 2 : 5}
             keyExtractor={conv => conv.id}

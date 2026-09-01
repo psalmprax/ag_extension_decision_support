@@ -41,14 +41,15 @@ export function useWebRTC(): UseWebRTCReturn {
     const turnUrl = import.meta.env.VITE_TURN_URL as string | undefined;
     const turnUser = import.meta.env.VITE_TURN_USERNAME as string | undefined;
     const turnCred = import.meta.env.VITE_TURN_CREDENTIAL as string | undefined;
+    const allowPublicFallback = import.meta.env.VITE_ALLOW_PUBLIC_TURN === 'true';
     const servers: RTCIceServer[] = [
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'stun:stun1.l.google.com:19302' },
     ];
     if (turnUrl && turnUser && turnCred) {
       servers.push({ urls: turnUrl, username: turnUser, credential: turnCred });
-    } else {
-      // Public fallback TURN for NAT traversal (replace with self-hosted coturn in production)
+    } else if (allowPublicFallback) {
+      // Explicit opt-in only: public TURN for dev/preview NAT traversal
       servers.push({
         urls: 'turn:openrelay.metered.ca:80',
         username: 'openrelayproject',
@@ -104,28 +105,40 @@ export function useWebRTC(): UseWebRTCReturn {
     });
 
     socket.on('offer', async (data: { offer: RTCSessionDescriptionInit; from: string }) => {
-      const pc = await createPeerConnection(data.from, false);
-      await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      socket.emit('answer', {
-        roomId: currentRoomRef.current,
-        answer,
-        from: currentUserRef.current?.id,
-      });
+      try {
+        const pc = await createPeerConnection(data.from, false);
+        await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit('answer', {
+          roomId: currentRoomRef.current,
+          answer,
+          from: currentUserRef.current?.id,
+        });
+      } catch (e) {
+        console.warn('Failed to handle offer:', e);
+      }
     });
 
     socket.on('answer', async (data: { answer: RTCSessionDescriptionInit; from: string }) => {
-      const pc = peerConnectionsRef.current.get(data.from);
-      if (pc) {
-        await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+      try {
+        const pc = peerConnectionsRef.current.get(data.from);
+        if (pc) {
+          await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+        }
+      } catch (e) {
+        console.warn('Failed to handle answer:', e);
       }
     });
 
     socket.on('ice-candidate', async (data: { candidate: RTCIceCandidateInit; from: string }) => {
-      const pc = peerConnectionsRef.current.get(data.from);
-      if (pc) {
-        await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+      try {
+        const pc = peerConnectionsRef.current.get(data.from);
+        if (pc) {
+          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+        }
+      } catch (e) {
+        console.warn('Failed to add ICE candidate:', e);
       }
     });
 

@@ -298,7 +298,7 @@ export function VideoCall({ roomId, userId, userName, isHost = false, onEnd }: V
 }
 
 // Remote Video Component
-function RemoteVideo({ stream }: { stream: MediaStream; peerId: string }) {
+function RemoteVideo({ stream, peerId }: { stream: MediaStream; peerId: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -311,7 +311,7 @@ function RemoteVideo({ stream }: { stream: MediaStream; peerId: string }) {
     <div className="relative bg-gray-800 rounded-lg overflow-hidden">
       <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
       <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
-        Participant
+        {peerId.slice(0, 8)}
       </div>
     </div>
   );

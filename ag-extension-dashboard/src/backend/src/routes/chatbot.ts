@@ -61,8 +61,15 @@ router.get('/conversations', authorize(['admin', 'regional_manager', 'extension_
       whereClause = '1=1';
     } else if (user.role === 'regional_manager') {
       // Regional manager sees officers and farmers in their region
-      params.push(user.region || '');
-      whereClause = `(u.region = $1 OR f.region = $1 OR cv.officer_id = '${user.userId}')`;
+      const region = user.region || (await (async () => {
+        try {
+          const { resolvePrincipalRegion } = await import('@/services/messageAccessService');
+          return await resolvePrincipalRegion(user.userId);
+        } catch { return ''; }
+      })()) || '';
+      params.push(region);
+      params.push(user.userId);
+      whereClause = `(u.region = $1 OR f.region = $1 OR cv.officer_id = $2)`;
     } else if (user.role === 'farmer') {
       // Farmer sees their conversation with their officer (1-to-1)
       const farmerId = await resolveFarmerId(user.userId);
@@ -427,6 +434,16 @@ const handleMessagePost = async (req: AuthedRequest, res: Response) => {
     }
 
     const created = rows[0];
+    // Realtime fanout for low-latency chat without polling
+    if (created && conversationId) {
+      try {
+        const mod = await import('@/index').catch(() => ({ io: null as unknown as { to: (room: string) => { emit: (ev: string, data: unknown) => void } } }));
+        const ioHandle = (mod as { io?: { to: (room: string) => { emit: (ev: string, data: unknown) => void } } }).io;
+        if (ioHandle) {
+          ioHandle.to(`conversation:${conversationId}`).emit('new_message', mapChatMessageRow(created));
+        }
+      } catch { /* socket fanout is best-effort */ }
+    }
     return res.status(201).json({ success: true, data: created ? mapChatMessageRow(created) : null });
   } catch (error) {
     if (error instanceof MessageAccessError) {

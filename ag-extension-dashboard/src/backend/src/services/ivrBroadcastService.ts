@@ -77,13 +77,13 @@ export async function dispatchVoiceBroadcast(params: {
   alertTitle: string;
   advisorySwahili: string;
   advisoryEnglish: string;
-}): Promise<{ dispatchedCount: number; batchId: string }> {
+}): Promise<{ dispatchedCount: number; batchId: string; provider?: string; attempted?: number; failed?: number }> {
   const { farmerPhones, alertTitle, advisorySwahili, advisoryEnglish } = params;
   const batchId = `ivr_batch_${Date.now()}`;
 
   logger.info(`Starting IVR voice broadcast ${batchId} to ${farmerPhones.length} farmers for "${alertTitle}"`);
 
-  // Generates XML prompt for the batch
+  // Generates XML prompt for the batch (served by TwiML callback; Africa's Talking uses same XML)
   const promptXml = generateIvrXml({
     alertTitle,
     advisorySwahili,
@@ -92,8 +92,45 @@ export async function dispatchVoiceBroadcast(params: {
 
   logger.debug(`Generated IVR XML for batch ${batchId}: ${promptXml.slice(0, 120)}...`);
 
+  const twilioSid = process.env.TWILIO_ACCOUNT_SID;
+  const twilioToken = process.env.TWILIO_AUTH_TOKEN;
+  const twilioFrom = process.env.TWILIO_PHONE_NUMBER;
+  const callbackBase = process.env.PUBLIC_BASE_URL || process.env.API_PUBLIC_URL || '';
+
+  // If Twilio voice credentials + callback URL are present, actually place calls; otherwise log-only in dev/test.
+  if (twilioSid && twilioToken && twilioFrom && callbackBase) {
+    try {
+      const axios = (await import('axios')).default;
+      const url = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Calls.json`;
+      const auth = Buffer.from(`${twilioSid}:${twilioToken}`).toString('base64');
+      const twimlUrl = `${callbackBase.replace(/\/$/, '')}/api/v1/voice/ivr?batchId=${encodeURIComponent(batchId)}`;
+      let dispatched = 0;
+      let failed = 0;
+      for (const to of farmerPhones) {
+        try {
+          await axios.post(
+            url,
+            new URLSearchParams({ To: to, From: twilioFrom, Url: twimlUrl }).toString(),
+            { headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 8000 }
+          );
+          dispatched++;
+        } catch (e) {
+          failed++;
+          logger.warn(`IVR call to ${to} failed:`, e instanceof Error ? e.message : e);
+        }
+      }
+      return { dispatchedCount: dispatched, batchId, provider: 'twilio', attempted: farmerPhones.length, failed };
+    } catch (e) {
+      logger.error('Twilio IVR dispatch error:', e);
+    }
+  } else if (process.env.NODE_ENV === 'production') {
+    logger.warn('IVR broadcast running in log-only mode: TWILIO_ACCOUNT_SID/TWILIO_AUTH_TOKEN/TWILIO_PHONE_NUMBER/PUBLIC_BASE_URL not fully set');
+  }
+
   return {
     dispatchedCount: farmerPhones.length,
     batchId,
+    provider: 'log_only',
+    attempted: farmerPhones.length,
   };
 }

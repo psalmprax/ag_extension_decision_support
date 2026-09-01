@@ -357,6 +357,28 @@ router.post('/schedule', validate({ body: scheduleSMSSchema }), async (req: Auth
     }
 });
 
+// Delivery receipt callback (Africa's Talking / Twilio) — provider posts messageId+status
+router.post('/delivery', async (req: Request, res: Response) => {
+    try {
+        const status = (req.body.status || req.body.MessageStatus || req.body.messageStatus || '').toString().toLowerCase();
+        const phone = (req.body.phoneNumber || req.body.recipient || req.body.to || req.body.To || '').toString();
+        const messageId = (req.body.messageId || req.body.MessageSid || req.body.id || '').toString();
+        if (status) {
+            const normalized = status === 'success' ? 'delivered' : status === 'sent' ? 'sent' : status === 'failed' || status === 'undelivered' ? 'failed' : status;
+            if (messageId) {
+                await query(`UPDATE sms_history SET status = $1 WHERE id = $2`, [normalized, messageId]);
+            } else if (phone) {
+                const digits = phone.replace(/\D/g, '');
+                await query(`UPDATE sms_history SET status = $1 WHERE regexp_replace(recipient_phone, '\\D', '', 'g') = $2 AND status IN ('sent','queued','pending')`, [normalized, digits]);
+            }
+        }
+        return res.json({ success: true });
+    } catch (error) {
+        logger.error('SMS delivery callback failed:', error);
+        return res.json({ success: false });
+    }
+});
+
 // SMS Feedback endpoint
 router.post('/feedback', validate({
     body: z.object({

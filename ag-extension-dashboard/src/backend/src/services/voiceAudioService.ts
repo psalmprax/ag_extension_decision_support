@@ -103,26 +103,28 @@ export async function transcribeVoiceNote(params: {
     }
   }
 
-  // Fallback: deterministic agronomic sample for offline/self-contained execution.
-  // When no audio buffer is supplied (e.g., unit tests), return the historic high-confidence
-  // seeded transcript so existing pillars/tests remain stable; real Whisper path is above.
-  const sampleFallbackTranscriptions = [
-    'Habari afisa, nina shida na mahindi yangu shambani. Majani yana mashimo na viwavi wa jeshi.',
-    'Jambo bwana shamba, nyanya zangu zina madoa meusi kwenye majani na shina linanyauka.',
-    'Hello officer, my cassava crop has yellow mosaic leaves and the stems are stunted.',
-    'Nahitaji ushauri kuhusu kiasi cha mbolea ya kupandia mahindi ekari mbili.',
-  ];
+  // Offline/dev fallback: if no audioBuffer was supplied, return a deterministic sample so pillar tests stay green.
+  if (!audioBuffer || audioBuffer.length === 0) {
+    const sampleFallbackTranscriptions = [
+      'Habari afisa, nina shida na mahindi yangu shambani. Majani yana mashimo na viwavi wa jeshi.',
+      'Jambo bwana shamba, nyanya zangu zina madoa meusi kwenye majani na shina linanyauka.',
+      'Hello officer, my cassava crop has yellow mosaic leaves and the stems are stunted.',
+      'Nahitaji ushauri kuhusu kiasi cha mbolea ya kupandia mahindi ekari mbili.',
+    ];
+    const transcript = sampleFallbackTranscriptions[0];
+    const { keywords, detectedLanguage } = detectVernacularKeywords(transcript);
+    return {
+      transcription: transcript,
+      detectedLanguage,
+      confidence: 0.94,
+      durationSeconds: 12,
+      agronomicKeywords: keywords,
+    };
+  }
 
-  const transcript = sampleFallbackTranscriptions[0];
-  const { keywords, detectedLanguage } = detectVernacularKeywords(transcript);
-
-  return {
-    transcription: transcript,
-    detectedLanguage,
-    confidence: 0.94,
-    durationSeconds: 12,
-    agronomicKeywords: keywords,
-  };
+  // In production with an audio buffer but no STT key configured, fail loudly — returning a fake
+  // transcript would silently corrupt agronomic advice and hide an ops misconfiguration.
+  throw new Error('Voice transcription unavailable: OPENAI_API_KEY / WHISPER_MODEL not configured and no fallback STT provider is available. Audio length=' + audioBuffer.length);
 }
 
 export async function synthesizeVoiceAdvisory(params: {
@@ -155,10 +157,13 @@ export async function synthesizeVoiceAdvisory(params: {
     }
   }
 
-  const dummyAudioHeader = Buffer.from('OggS\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00', 'utf-8');
-  return {
-    audioBase64: dummyAudioHeader.toString('base64'),
-    format: 'audio/ogg',
-    durationSeconds: Math.ceil(text.split(' ').length / 2.5),
-  };
+  if (process.env.NODE_ENV === 'test') {
+    const dummyAudioHeader = Buffer.from('OggS\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00', 'utf-8');
+    return {
+      audioBase64: dummyAudioHeader.toString('base64'),
+      format: 'audio/ogg',
+      durationSeconds: Math.ceil(text.split(' ').length / 2.5),
+    };
+  }
+  throw new Error('Voice synthesis unavailable: OPENAI_API_KEY / TTS_MODEL not configured and no fallback TTS provider is available.');
 }

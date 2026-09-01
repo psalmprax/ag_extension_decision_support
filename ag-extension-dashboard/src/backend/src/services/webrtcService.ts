@@ -12,6 +12,10 @@ export interface Room {
     isActive: boolean;
 }
 
+const ROOM_TTL_MS = 2 * 60 * 60 * 1000; // 2h
+const MAX_ACTIVE_ROOMS = 2000;
+const MAX_PARTICIPANTS_PER_ROOM = 4;
+
 export interface CallOffer {
     roomId: string;
     offer: Record<string, unknown>;
@@ -67,6 +71,22 @@ class WebRTCService {
     initialize(io: Server) {
         this.io = io;
         this.setupSocketHandlers();
+        // Periodic reap of stale in-memory rooms (prevents leak on multi-instance without Redis)
+        setInterval(() => {
+            const now = Date.now();
+            for (const [id, r] of this.activeRooms.entries()) {
+                if (!r.isActive && now - r.createdAt.getTime() > 10_000) this.activeRooms.delete(id);
+                else if (now - r.createdAt.getTime() > ROOM_TTL_MS) {
+                    r.isActive = false;
+                    if (r.participants.size === 0) this.activeRooms.delete(id);
+                }
+            }
+            if (this.activeRooms.size > MAX_ACTIVE_ROOMS) {
+                const sorted = [...this.activeRooms.entries()].sort((a, b) => a[1].createdAt.getTime() - b[1].createdAt.getTime());
+                const drop = this.activeRooms.size - MAX_ACTIVE_ROOMS;
+                for (let i = 0; i < drop; i++) this.activeRooms.delete(sorted[i][0]);
+            }
+        }, 60_000).unref?.();
         logger.info('WebRTC service initialized with In-Memory Signaling & DB Persistence');
     }
 
@@ -103,6 +123,10 @@ class WebRTCService {
             const participant = { id: participantId, socketId: socket.id, name: participantName };
 
             // In-Memory Room Registration (Always Works)
+            if (this.activeRooms.size >= MAX_ACTIVE_ROOMS && !this.activeRooms.has(roomId)) {
+                if (typeof callback === 'function') callback({ success: false, error: 'Server at capacity, try again shortly.' });
+                return;
+            }
             let room = this.activeRooms.get(roomId);
             if (!room) {
                 const participantsMap = new Map<string, { id: string; socketId: string; name: string }>();
@@ -116,6 +140,10 @@ class WebRTCService {
                 };
                 this.activeRooms.set(roomId, room);
             } else {
+                if (room.participants.size >= MAX_PARTICIPANTS_PER_ROOM && !room.participants.has(participantId)) {
+                    if (typeof callback === 'function') callback({ success: false, error: 'Room is full (max 4 participants).' });
+                    return;
+                }
                 room.isActive = true;
                 room.participants.set(participantId, participant);
             }
@@ -175,6 +203,10 @@ class WebRTCService {
                 }
             }
 
+            if (this.activeRooms.size >= MAX_ACTIVE_ROOMS && !this.activeRooms.has(roomId)) {
+                if (typeof callback === 'function') callback({ success: false, error: 'Server at capacity, try again shortly.' });
+                return;
+            }
             // Create on-demand if not already existing so join link always succeeds
             if (!room) {
                 const participantsMap = new Map<string, { id: string; socketId: string; name: string }>();
@@ -188,6 +220,10 @@ class WebRTCService {
                 this.activeRooms.set(roomId, room);
             }
 
+            if (room.participants.size >= MAX_PARTICIPANTS_PER_ROOM && !room.participants.has(participantId)) {
+                if (typeof callback === 'function') callback({ success: false, error: 'Room is full (max 4 participants).' });
+                return;
+            }
             room.isActive = true;
             room.participants.set(participantId, participant);
 
@@ -227,14 +263,17 @@ class WebRTCService {
 
     private setupSignalingHandlers(socket: Socket) {
         socket.on('offer', (data: CallOffer) => {
+            if (!data?.roomId || !data?.offer) return;
             socket.to(data.roomId).emit('offer', { offer: data.offer, from: data.from });
         });
 
         socket.on('answer', (data: CallAnswer) => {
+            if (!data?.roomId || !data?.answer) return;
             socket.to(data.roomId).emit('answer', { answer: data.answer, from: data.from });
         });
 
         socket.on('ice-candidate', (data: IceCandidate) => {
+            if (!data?.roomId || !data?.candidate) return;
             socket.to(data.roomId).emit('ice-candidate', { candidate: data.candidate, from: data.from });
         });
     }

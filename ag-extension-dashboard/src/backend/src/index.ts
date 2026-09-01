@@ -224,6 +224,25 @@ async function bootstrap() {
         }
     })();
 
+    // Scheduled SMS dispatcher — drains `scheduled_sms` every 60s
+    void (async () => {
+        try {
+            const { smsService } = await import('./services/smsService');
+            const intervalMs = Number(process.env.SCHEDULED_SMS_POLL_MS || 60_000);
+            setInterval(async () => {
+                try {
+                    const n = await smsService.processScheduledSMS();
+                    if (n > 0) logger.info(`Scheduled SMS worker dispatched ${n} messages`);
+                } catch (e) {
+                    logger.warn('Scheduled SMS worker tick failed:', e);
+                }
+            }, intervalMs).unref?.();
+            logger.info(`Scheduled SMS worker armed (poll=${intervalMs}ms)`);
+        } catch (error) {
+            logger.error('Scheduled SMS worker startup failed:', error);
+        }
+    })();
+
     // Start server
     try {
         httpServer.listen(config.port, '0.0.0.0', () => {

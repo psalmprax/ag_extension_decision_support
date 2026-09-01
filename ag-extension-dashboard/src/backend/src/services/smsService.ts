@@ -87,11 +87,11 @@ class SMSService {
         try {
             const response = await axios.post(
                 'https://api.africastalking.com/version1/messaging',
-                {
+                new URLSearchParams({
                     username: this.africaTalkingUsername!,
                     to,
                     message,
-                },
+                }).toString(),
                 {
                     headers: {
                         'ApiKey': this.africaTalkingApiKey!,
@@ -183,30 +183,60 @@ class SMSService {
         const results: Array<{ to: string; success: boolean }> = [];
         let sent = 0;
         let failed = 0;
+        const concurrency = Math.min(5, options.recipients.length);
+        let idx = 0;
 
-        for (const recipient of options.recipients) {
-            const success = await this.sendSMS({
-                to: recipient,
-                message: options.message,
-            });
+        const worker = async () => {
+            while (idx < options.recipients.length) {
+                const i = idx++;
+                const recipient = options.recipients[i];
+                const success = await this.sendSMS({
+                    to: recipient,
+                    message: options.message,
+                    farmerId: options.farmerId,
+                    senderId: options.senderId,
+                });
+                results[i] = { to: recipient, success };
+                if (success) sent++;
+                else failed++;
+            }
+        };
 
-            results.push({ to: recipient, success });
-            if (success) sent++;
-            else failed++;
-        }
+        await Promise.all(Array.from({ length: concurrency }, () => worker()));
 
         return { sent, failed, results };
     }
 
     // USSD Session Management
-    private ussdSessions: Map<string, { phoneNumber: string; step: number; data: Record<string, string> }> = new Map();
+    private ussdSessions: Map<string, { phoneNumber: string; step: number; data: Record<string, string>; lastActiveAt: number }> = new Map();
+    private static readonly USSD_TTL_MS = 3 * 60 * 1000; // 3 min per Africa's Talking spec
+    private static readonly USSD_MAX_SESSIONS = 5000;
+
+    private touchUssdSession(sessionId: string): void {
+        const s = this.ussdSessions.get(sessionId);
+        if (s) s.lastActiveAt = Date.now();
+    }
+
+    private reapExpiredUssdSessions(): void {
+        const now = Date.now();
+        for (const [k, v] of this.ussdSessions.entries()) {
+            if (now - v.lastActiveAt > SMSService.USSD_TTL_MS) this.ussdSessions.delete(k);
+        }
+        if (this.ussdSessions.size > SMSService.USSD_MAX_SESSIONS) {
+            const sorted = [...this.ussdSessions.entries()].sort((a, b) => a[1].lastActiveAt - b[1].lastActiveAt);
+            const toDrop = this.ussdSessions.size - SMSService.USSD_MAX_SESSIONS;
+            for (let i = 0; i < toDrop; i++) this.ussdSessions.delete(sorted[i][0]);
+        }
+    }
 
     async startUSSDSession(options: USSDOptions): Promise<string> {
+        this.reapExpiredUssdSessions();
         // Initialize session
         this.ussdSessions.set(options.sessionId, {
             phoneNumber: options.phoneNumber,
             step: 0,
             data: {},
+            lastActiveAt: Date.now(),
         });
 
         // Return welcome message
@@ -214,11 +244,13 @@ class SMSService {
     }
 
     async handleUSSDInput(sessionId: string, text: string): Promise<string> {
+        this.reapExpiredUssdSessions();
         const session = this.ussdSessions.get(sessionId);
         if (!session) {
             return 'END Session expired. Please try again.';
         }
 
+        this.touchUssdSession(sessionId);
         session.step++;
 
         // Helper to get dynamic weather

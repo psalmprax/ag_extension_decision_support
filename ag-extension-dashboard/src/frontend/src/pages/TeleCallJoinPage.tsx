@@ -4,7 +4,7 @@ import { Video, AlertCircle } from 'lucide-react';
 import { VideoCall } from '@/components/VideoCall';
 import { useAppStore } from '@/store/useAppStore';
 
-const ROOM_ID_PATTERN = /^[a-zA-Z0-9-]{6,64}$/;
+const ROOM_ID_PATTERN = /^[a-zA-Z0-9_-]{3,64}$/;
 
 /**
  * Farmer-facing entry point for tele-agronomy calls. The extension officer
