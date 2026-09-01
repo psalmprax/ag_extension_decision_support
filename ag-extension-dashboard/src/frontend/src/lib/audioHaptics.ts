@@ -12,7 +12,9 @@ function getAudioContext(): AudioContext | null {
     }
   }
   if (audioCtx && audioCtx.state === 'suspended') {
-    audioCtx.resume().catch(() => {});
+    audioCtx.resume().catch(err => {
+      console.warn('AudioContext resume failed:', err);
+    });
   }
   return audioCtx;
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Users,
   Plus,
@@ -45,6 +45,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   loadFarmers,
   setShowFarmerModal,
   onDeleteConversation,
+  // eslint-disable-next-line sonarjs/cognitive-complexity
 }) => {
   const { t } = useLanguage();
   const { headingClass, btnClass } = useThemeClasses();
@@ -53,13 +54,30 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   const [selectedChannel, setSelectedChannel] = useState<'all' | 'sms' | 'whatsapp' | 'telegram'>('all');
 
   const activeConv = farmerConversations.find(c => c.id === activeFarmerConvId);
+  const activeFarmer = activeConv as unknown as { ndvi?: number; ph?: number; temperature?: number; outbreakRisk?: number } | undefined;
 
-  // AI Copilot quick suggestions
-  const copilotSuggestions = [
+  // AI Copilot suggestions — fetched live when conversation has context, otherwise fallback to curated defaults
+  const [liveSuggestions, setLiveSuggestions] = useState<string[] | null>(null);
+  const copilotSuggestions = liveSuggestions || [
     '🌾 Inspect maize leaf whorls today at sunset for early instar caterpillars.',
     '🥔 Damp overcast forecast. Apply preventive copper spray before Thursday.',
     '🌧️ 45mm rainfall recorded. Apply second split CAN top-dressing once topsoil drains.',
   ];
+  useEffect(() => {
+    if (!activeFarmerConvId) { setLiveSuggestions(null); return; }
+    const lastUserMsg = [...farmerChatMessages].reverse().find(m => m.role === 'user' || m.role === 'officer')?.content;
+    if (!lastUserMsg) return;
+    import('@/api/aiService').then(async mod => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const res = await (mod as any).getChatCompletion?.([{ role: 'user', content: `Given farmer said: "${lastUserMsg.slice(0,300)}", suggest 3 short advisory follow-ups (<=15 words each), one per line, no numbering.` }], { model: 'gpt-4o-mini', maxTokens: 120 });
+        const text = (res as unknown as { text?: string })?.text || (res as unknown as string) || '';
+        // eslint-disable-next-line no-useless-escape
+        const lines = String(text).split('\n').map(s => s.replace(/^[\d\-*\.\s]+/, '').trim()).filter(Boolean).slice(0,3);
+        if (lines.length >= 2) setLiveSuggestions(lines);
+      } catch { /* fallback to static */ }
+    }).catch(()=>{});
+  }, [activeFarmerConvId, farmerChatMessages.length]);
 
   return (
     <div className="flex flex-col h-[calc(100dvh-150px)] md:h-[calc(100vh-140px)] gap-4 md:gap-6">
@@ -377,27 +395,27 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
 
             <div className="p-3.5 rounded-xl bg-slate-950/80 border border-white/[0.06] space-y-1">
               <div className="text-[10px] font-mono text-white/40">NDVI CANOPY VIGOR</div>
-              <div className="text-base font-bold text-emerald-400">0.78 (Optimal)</div>
+              <div className="text-base font-bold text-emerald-400">{activeFarmer?.ndvi ? `${activeFarmer.ndvi.toFixed(2)}` : '—'} {activeFarmer?.ndvi ? (activeFarmer.ndvi > 0.6 ? '(Optimal)' : activeFarmer.ndvi > 0.3 ? '(Moderate)' : '(Low)') : ''}</div>
               <div className="text-[9px] text-white/40">Sentinel-2 Multispectral</div>
             </div>
 
             <div className="p-3.5 rounded-xl bg-slate-950/80 border border-white/[0.06] space-y-1">
               <div className="text-[10px] font-mono text-white/40">SOIL pH & CARBON</div>
-              <div className="text-base font-bold text-amber-400">6.4 pH / 2.1% C</div>
+              <div className="text-base font-bold text-amber-400">{activeFarmer?.ph ? `${activeFarmer.ph.toFixed(1)} pH` : '—'}</div>
               <div className="text-[9px] text-white/40">ISRIC SoilGrids 0-30cm</div>
             </div>
 
             <div className="p-3.5 rounded-xl bg-slate-950/80 border border-white/[0.06] space-y-1">
               <div className="text-[10px] font-mono text-white/40">NASA POWER WEATHER</div>
-              <div className="text-base font-bold text-sky-400">22°C • 74% Humidity</div>
-              <div className="text-[9px] text-white/40">3-Day Forecast: Mild Rain</div>
+              <div className="text-base font-bold text-sky-400">{activeFarmer?.temperature ? `${activeFarmer.temperature}°C` : '—'}</div>
+              <div className="text-[9px] text-white/40">Per-farmer telemetry</div>
             </div>
 
             <div className="p-3.5 rounded-xl bg-slate-950/80 border border-white/[0.06] space-y-1">
               <div className="text-[10px] font-mono text-white/40">OUTBREAK RISK</div>
               <div className="text-base font-bold text-emerald-400 flex items-center gap-1">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>Low (8%)</span>
+                <span>{activeFarmer?.outbreakRisk !== undefined ? `${activeFarmer.outbreakRisk}%` : '—'}</span>
               </div>
               <div className="text-[9px] text-white/40">FAO Fall Armyworm Model</div>
             </div>

@@ -65,10 +65,12 @@ async def verify_token(authorization: Optional[str] = Header(None)):
     """Verify JWT token from Authorization header"""
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
-    
+
     token = authorization.split(" ")[1]
-    
+
     if not token or token == "dev-token":
+        if NODE_ENV == "production":
+            raise HTTPException(status_code=401, detail="Invalid or expired token")
         return {"user_id": "dev-user", "role": "admin"}
     
     try:
@@ -80,53 +82,76 @@ async def verify_token(authorization: Optional[str] = Header(None)):
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
 
-# Database connection
+# Database connection — pooled (mirrors main.py) + Redis session persistence
+try:
+    import redis.asyncio as redis_asyncio
+    REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    _redis_client = None
+except ImportError:
+    redis_asyncio = None
+    REDIS_URL = ""
+    _redis_client = None
+
 class DatabaseManager:
-    """Simple database manager for PostgreSQL"""
-    
+    """Pooled database manager for PostgreSQL (ThreadedConnectionPool)"""
+
     def __init__(self):
+        self.pool = None
         self.connection = None
-        
+
     def connect(self):
-        """Establish database connection"""
+        """Establish database connection pool"""
         if not DATABASE_URL:
             logger.warning("DATABASE_URL not configured")
             return None
-            
         try:
             import psycopg2
-            self.connection = psycopg2.connect(DATABASE_URL)
-            logger.info("Database connection established")
-            return self.connection
+            from psycopg2.pool import ThreadedConnectionPool
+            self.pool = ThreadedConnectionPool(1, 10, DATABASE_URL)
+            self.connection = self.pool.getconn()
+            # Return immediately so pool remains usable
+            self.pool.putconn(self.connection)
+            self.connection = None
+            logger.info("Database pool established (1-10)")
+            return self.pool
         except ImportError:
             logger.warning("psycopg2 not installed - database features unavailable")
             return None
         except Exception as e:
-            logger.error(f"Database connection failed: {e}")
+            logger.error(f"Database pool failed: {e}")
             return None
     
     def execute_query(self, query: str, params: tuple = None):
-        """Execute a database query"""
-        if not self.connection:
+        """Execute a database query via pool"""
+        if not self.pool:
             self.connect()
-            
-        if not self.connection:
+        if not self.pool:
             return None
-            
+        conn = None
         try:
-            cursor = self.connection.cursor()
+            conn = self.pool.getconn()
+            cursor = conn.cursor()
             cursor.execute(query, params)
-            self.connection.commit()
-            return cursor.fetchall()
+            conn.commit()
+            try:
+                return cursor.fetchall()
+            except Exception:
+                return []
         except Exception as e:
             logger.error(f"Query execution failed: {e}")
             return None
-    
+        finally:
+            if conn and self.pool:
+                self.pool.putconn(conn)
+
     def close(self):
-        """Close database connection"""
-        if self.connection:
-            self.connection.close()
-            self.connection = None
+        """Close database pool"""
+        if self.pool:
+            try:
+                self.pool.closeall()
+            except Exception:
+                pass
+            self.pool = None
 
 db = DatabaseManager()
 
@@ -152,6 +177,7 @@ class AnalysisRequest(BaseModel):
     analysis_type: AnalysisType = AnalysisType.GENERAL
     include_recommendations: bool = True
     priority: str = "normal"
+    callback: Optional[str] = None
 
 
 class ResearchRequest(BaseModel):
@@ -635,9 +661,9 @@ class ReportGenerationService:
             "status": "completed",
             "processing_time_ms": int(processing_time)
         }
-        
+
         # Store in database if available
-        if db.connection:
+        if db.pool:
             try:
                 db.execute_query(
                     """INSERT INTO reports 
@@ -674,23 +700,30 @@ class ReportGenerationService:
     
     @staticmethod
     def _get_fallback_section_content(region: str, period: str, section: str) -> str:
-        """Fallback section content when AI is unavailable"""
-        
+        """Fallback section content when AI is unavailable — clearly marked"""
+        prefix = "[UNAVAILABLE] Live AI generation failed — no live data was consulted."
         content_map = {
-            "Executive Summary": f"This {period} report provides a comprehensive overview of agricultural activities and conditions in {region}. Key highlights include weather patterns, crop development stages, market conditions, and actionable recommendations for farmers and extension officers.",
-            "Weather Analysis": f"Weather conditions in {region} during this {period} showed typical seasonal patterns. Temperature ranges were within normal bounds, rainfall was adequate for crop development, and no extreme weather events were recorded. Farmers should continue monitoring local forecasts.",
-            "Crop Status": f"Crops across {region} are progressing according to seasonal expectations. Most fields show healthy growth patterns with appropriate development stages for this time of year. Some areas may require attention to pest management and nutrient application.",
-            "Market Analysis": f"Market conditions in {region} remain relatively stable with slight variations in cereal crop prices. Current prices are favorable for sellers, and demand is steady. Farmers should consider timing their sales to maximize returns.",
-            "Recommendations": f"Based on current conditions in {region}, farmers should: 1) Continue regular field monitoring, 2) Implement integrated pest management practices, 3) Plan for upcoming seasonal activities, 4) Review market opportunities, 5) Maintain proper records of farming operations."
+            "Executive Summary": f"{prefix} {period} overview for {region} could not be generated.",
+            "Weather Analysis": f"{prefix} Weather for {region} during {period} is unavailable.",
+            "Crop Status": f"{prefix} Crop status for {region} is unavailable.",
+            "Market Analysis": f"{prefix} Market analysis for {region} is unavailable.",
+            "Recommendations": f"{prefix} Recommendations for {region}: retry when AI is available and consult your extension officer.",
         }
-        
-        return content_map.get(section, f"Content for {section} in {region} during {period}. Detailed analysis requires AI services.")
+        return content_map.get(section, f"{prefix} {section} for {region} during {period} is unavailable.")
 
 
 # API Endpoints
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
+    redis_ok = False
+    if redis_asyncio and REDIS_URL:
+        try:
+            import redis as _r
+            _r.Redis.from_url(REDIS_URL).ping()
+            redis_ok = True
+        except Exception:
+            redis_ok = False
     return {
         "status": "healthy",
         "service": "crew-ai",
@@ -699,7 +732,8 @@ async def health_check():
         "dependencies": {
             "crewai": "available" if CREW_AI_AVAILABLE else "not_available",
             "openai": "configured" if openai_client else "not_configured",
-            "database": "connected" if db.connection else "not_connected"
+            "database": "connected" if db.pool else "not_connected",
+            "redis": "connected" if redis_ok else "not_configured",
         }
     }
 
@@ -711,7 +745,15 @@ async def run_analysis(request: AnalysisRequest, current_user: dict = Depends(ve
     
     try:
         result = await MultiAgentService.run_analysis_workflow(request)
-        return result.dict()
+        data = result.dict()
+        if request.callback:
+            try:
+                import httpx
+                async with httpx.AsyncClient(timeout=5) as client:
+                    await client.post(request.callback, json={"region": request.region, "status": data.get("status"), "result": data})
+            except Exception as cb_err:
+                logger.warning(f"Callback POST to {request.callback} failed: {cb_err}")
+        return data
     except Exception as e:
         logger.error(f"Analysis failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))

@@ -37,12 +37,27 @@ export function useWebRTC(): UseWebRTCReturn {
   const currentRoomRef = useRef<string | null>(null);
   const currentUserRef = useRef<{ id: string; name: string } | null>(null);
 
-  const ICE_SERVERS = {
-    iceServers: [
+  const buildIceServers = () => {
+    const turnUrl = import.meta.env.VITE_TURN_URL as string | undefined;
+    const turnUser = import.meta.env.VITE_TURN_USERNAME as string | undefined;
+    const turnCred = import.meta.env.VITE_TURN_CREDENTIAL as string | undefined;
+    const servers: RTCIceServer[] = [
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'stun:stun1.l.google.com:19302' },
-    ],
+    ];
+    if (turnUrl && turnUser && turnCred) {
+      servers.push({ urls: turnUrl, username: turnUser, credential: turnCred });
+    } else {
+      // Public fallback TURN for NAT traversal (replace with self-hosted coturn in production)
+      servers.push({
+        urls: 'turn:openrelay.metered.ca:80',
+        username: 'openrelayproject',
+        credential: 'openrelayproject',
+      });
+    }
+    return { iceServers: servers };
   };
+  const ICE_SERVERS = buildIceServers();
 
   useEffect(() => {
     let isMounted = true;

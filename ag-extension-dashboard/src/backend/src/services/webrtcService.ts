@@ -54,40 +54,40 @@ function dbToRoom(dbRoom: any): Room {
     };
 }
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+function isValidUuid(id?: string | null): boolean {
+    return typeof id === 'string' && UUID_REGEX.test(id);
+}
+
 class WebRTCService {
     private io: Server | null = null;
     private userSockets: Map<string, string> = new Map(); // userId -> socketId
+    private activeRooms: Map<string, Room> = new Map(); // roomId -> Room
 
     initialize(io: Server) {
         this.io = io;
         this.setupSocketHandlers();
-        logger.info('WebRTC service initialized with Database Persistence');
+        logger.info('WebRTC service initialized with In-Memory Signaling & DB Persistence');
     }
 
     private setupConnectionHandlers(socket: Socket) {
         socket.on('register', (userId: string) => {
-            this.userSockets.set(userId, socket.id);
-            socket.data.userId = userId;
-            logger.info(`User ${userId} registered with socket ${socket.id}`);
+            if (userId) {
+                this.userSockets.set(userId, socket.id);
+                socket.data.userId = userId;
+                logger.info(`User ${userId} registered with socket ${socket.id}`);
+            }
         });
 
         socket.on('disconnect', async () => {
             const userId = socket.data.userId;
             if (userId) {
                 this.userSockets.delete(userId);
-                try {
-                    const prisma = getPrisma();
-                    const activeRooms = await prisma.webRTCRoom.findMany({
-                        where: { isActive: true }
-                    });
-                    for (const dbRoom of activeRooms) {
-                        const participants = dbRoom.participants as any[];
-                        if (participants.some(p => p.id === userId)) {
-                            await this.handleLeaveRoom(dbRoom.id, userId, socket);
-                        }
+                // Clean up active in-memory rooms
+                for (const [roomId, room] of this.activeRooms.entries()) {
+                    if (room.participants.has(userId)) {
+                        await this.handleLeaveRoom(roomId, userId, socket);
                     }
-                } catch (error) {
-                    logger.error('Failed to handle WebRTC disconnect:', error);
                 }
             }
             logger.info(`Client disconnected: ${socket.id}`);
@@ -96,74 +96,127 @@ class WebRTCService {
 
     private setupRoomHandlers(socket: Socket) {
         socket.on('create-room', async (data: { userId: string; userName: string; roomId?: string }, callback: (response: Record<string, unknown>) => void) => {
-            // Honor a client-supplied roomId (so the host UI and the join link the
-            // farmer receives reference the SAME room). Anything that is not a
-            // safe opaque id falls back to a server-generated uuid.
             const requestedId = typeof data.roomId === 'string' ? data.roomId.trim() : '';
-            const roomId = /^[a-zA-Z0-9-]{6,64}$/.test(requestedId) ? requestedId : uuidv4();
-            const prisma = getPrisma();
-            const participants = [{ id: data.userId, socketId: socket.id, name: data.userName }];
+            const roomId = requestedId && /^[a-zA-Z0-9_-]{3,64}$/.test(requestedId) ? requestedId : uuidv4();
+            const participantId = data.userId || uuidv4();
+            const participantName = data.userName || 'Extension Officer';
+            const participant = { id: participantId, socketId: socket.id, name: participantName };
 
-            try {
-                // Upsert: re-clicking "Start Call" on an existing room re-activates
-                // it instead of failing on the unique constraint.
-                await prisma.webRTCRoom.upsert({
-                    where: { id: roomId },
-                    create: {
-                        id: roomId,
-                        hostId: data.userId,
-                        participants: participants as any,
-                        isActive: true,
-                    },
-                    update: {
-                        hostId: data.userId,
-                        participants: participants as any,
-                        isActive: true,
-                    },
-                });
+            // In-Memory Room Registration (Always Works)
+            let room = this.activeRooms.get(roomId);
+            if (!room) {
+                const participantsMap = new Map<string, { id: string; socketId: string; name: string }>();
+                participantsMap.set(participantId, participant);
+                room = {
+                    id: roomId,
+                    hostId: participantId,
+                    participants: participantsMap,
+                    createdAt: new Date(),
+                    isActive: true,
+                };
+                this.activeRooms.set(roomId, room);
+            } else {
+                room.isActive = true;
+                room.participants.set(participantId, participant);
+            }
 
-                socket.join(roomId);
-                logger.info(`Room ${roomId} ready in DB (host ${data.userId})`);
+            socket.join(roomId);
+            logger.info(`WebRTC room ${roomId} ready in memory (host: ${participantId})`);
+
+            // Safe DB persistence (if valid UUID and user exists in DB)
+            if (isValidUuid(roomId) && isValidUuid(participantId)) {
+                try {
+                    const prisma = getPrisma();
+                    const hostUser = await prisma.user.findUnique({ where: { id: participantId } });
+                    if (hostUser) {
+                        await prisma.webRTCRoom.upsert({
+                            where: { id: roomId },
+                            create: {
+                                id: roomId,
+                                hostId: participantId,
+                                participants: [participant] as any,
+                                isActive: true,
+                            },
+                            update: {
+                                hostId: participantId,
+                                participants: [participant] as any,
+                                isActive: true,
+                            },
+                        });
+                    }
+                } catch (dbError) {
+                    logger.warn(`WebRTC room ${roomId} DB sync skipped:`, dbError);
+                }
+            }
+
+            if (typeof callback === 'function') {
                 callback({ roomId, success: true });
-            } catch (error) {
-                logger.error('Failed to create room:', error);
-                callback({ success: false, error: 'Database error' });
             }
         });
 
         socket.on('join-room', async (data: { roomId: string; userId: string; userName: string }, callback: (response: Record<string, unknown>) => void) => {
-            const prisma = getPrisma();
-            try {
-                const dbRoom = await prisma.webRTCRoom.findUnique({
-                    where: { id: data.roomId }
-                });
+            const roomId = data.roomId;
+            const participantId = data.userId || uuidv4();
+            const participantName = data.userName || 'Farmer / Guest';
+            const participant = { id: participantId, socketId: socket.id, name: participantName };
 
-                if (!dbRoom || !dbRoom.isActive) {
-                    callback({ success: false, error: 'Room not found or inactive' });
-                    return;
+            let room = this.activeRooms.get(roomId);
+
+            if (!room && isValidUuid(roomId)) {
+                try {
+                    const prisma = getPrisma();
+                    const dbRoom = await prisma.webRTCRoom.findUnique({ where: { id: roomId } });
+                    if (dbRoom && dbRoom.isActive) {
+                        room = dbToRoom(dbRoom);
+                        this.activeRooms.set(roomId, room);
+                    }
+                } catch (err) {
+                    logger.warn(`WebRTC DB room lookup error:`, err);
                 }
+            }
 
-                let participants = dbRoom.participants as any[];
-                participants = participants.filter(p => p.id !== data.userId);
-                participants.push({ id: data.userId, socketId: socket.id, name: data.userName });
+            // Create on-demand if not already existing so join link always succeeds
+            if (!room) {
+                const participantsMap = new Map<string, { id: string; socketId: string; name: string }>();
+                room = {
+                    id: roomId,
+                    hostId: participantId,
+                    participants: participantsMap,
+                    createdAt: new Date(),
+                    isActive: true,
+                };
+                this.activeRooms.set(roomId, room);
+            }
 
-                await prisma.webRTCRoom.update({
-                    where: { id: data.roomId },
-                    data: { participants }
-                });
+            room.isActive = true;
+            room.participants.set(participantId, participant);
 
-                socket.join(data.roomId);
+            socket.join(roomId);
 
-                socket.to(data.roomId).emit('user-joined', {
-                    userId: data.userId,
-                    userName: data.userName,
-                });
+            // Notify existing room members of new joiner
+            socket.to(roomId).emit('user-joined', {
+                userId: participantId,
+                userName: participantName,
+            });
 
-                callback({ success: true, participants });
-                logger.info(`User ${data.userId} joined room ${data.roomId} (DB updated)`);
-            } catch (error) {
-                logger.error('Failed to join room:', error);
-                callback({ success: false, error: 'Database error' });
+            const participantsList = Array.from(room.participants.values());
+            logger.info(`User ${participantName} (${participantId}) joined WebRTC room ${roomId}`);
+
+            // Safe DB update if room is in DB
+            if (isValidUuid(roomId)) {
+                try {
+                    const prisma = getPrisma();
+                    await prisma.webRTCRoom.update({
+                        where: { id: roomId },
+                        data: { participants: participantsList as any }
+                    });
+                } catch (dbErr) {
+                    logger.warn(`WebRTC join room ${roomId} DB sync skipped:`, dbErr);
+                }
+            }
+
+            if (typeof callback === 'function') {
+                callback({ success: true, participants: participantsList });
             }
         });
 
@@ -196,17 +249,26 @@ class WebRTCService {
         });
 
         socket.on('end-call', async (data: { roomId: string; userId: string }) => {
-            const prisma = getPrisma();
-            try {
-                await prisma.webRTCRoom.update({
-                    where: { id: data.roomId },
-                    data: { isActive: false }
-                });
-                this.io?.to(data.roomId).emit('call-ended', { userId: data.userId });
-                logger.info(`Call ended and room ${data.roomId} marked inactive in DB by ${data.userId}`);
-            } catch (error) {
-                logger.error('Failed to end call:', error);
+            const room = this.activeRooms.get(data.roomId);
+            if (room) {
+                room.isActive = false;
+                room.participants.clear();
             }
+
+            if (isValidUuid(data.roomId)) {
+                try {
+                    const prisma = getPrisma();
+                    await prisma.webRTCRoom.update({
+                        where: { id: data.roomId },
+                        data: { isActive: false }
+                    });
+                } catch (err) {
+                    // ignore
+                }
+            }
+
+            this.io?.to(data.roomId).emit('call-ended', { userId: data.userId });
+            logger.info(`Call ended in room ${data.roomId} by ${data.userId}`);
         });
     }
 
@@ -224,38 +286,37 @@ class WebRTCService {
     }
 
     private async handleLeaveRoom(roomId: string, userId: string, socket: Socket) {
-        const prisma = getPrisma();
-        try {
-            const dbRoom = await prisma.webRTCRoom.findUnique({
-                where: { id: roomId }
-            });
-            if (!dbRoom) return;
-
-            let participants = dbRoom.participants as any[];
-            participants = participants.filter(p => p.id !== userId);
-            const isActive = participants.length > 0;
-
-            await prisma.webRTCRoom.update({
-                where: { id: roomId },
-                data: {
-                    participants,
-                    isActive
-                }
-            });
-
-            socket.leave(roomId);
-
-            // Notify others in the room
-            socket.to(roomId).emit('user-left', { userId });
-
-            if (!isActive) {
-                logger.info(`Room ${roomId} deleted from active list (empty)`);
+        const room = this.activeRooms.get(roomId);
+        if (room) {
+            room.participants.delete(userId);
+            if (room.participants.size === 0) {
+                room.isActive = false;
             }
-
-            logger.info(`User ${userId} left room ${roomId} (DB updated)`);
-        } catch (error) {
-            logger.error('Failed to handle leave room:', error);
         }
+
+        socket.leave(roomId);
+        socket.to(roomId).emit('user-left', { userId });
+
+        if (isValidUuid(roomId)) {
+            try {
+                const prisma = getPrisma();
+                const dbRoom = await prisma.webRTCRoom.findUnique({ where: { id: roomId } });
+                if (dbRoom) {
+                    const participants = (dbRoom.participants as any[]).filter(p => p.id !== userId);
+                    await prisma.webRTCRoom.update({
+                        where: { id: roomId },
+                        data: {
+                            participants,
+                            isActive: participants.length > 0
+                        }
+                    });
+                }
+            } catch (error) {
+                logger.warn('Failed to update DB on leave room:', error);
+            }
+        }
+
+        logger.info(`User ${userId} left room ${roomId}`);
     }
 
     // Create a scheduled video consultation

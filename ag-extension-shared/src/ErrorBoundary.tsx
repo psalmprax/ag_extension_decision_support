@@ -5,10 +5,10 @@ import { AlertTriangle, Check, Copy, Home, RefreshCw, RotateCcw } from 'lucide-r
 const sanitizeErrorMessage = (message: string | null | undefined): string => {
   if (!message) return '';
   return message
-    .replace(/&/g, '&')
-    .replace(/</g, '<')
-    .replace(/>/g, '>')
-    .replace(/"/g, '"')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 };
 

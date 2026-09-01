@@ -604,6 +604,14 @@ async def execute_task(request: TaskRequest, current_user: dict = Depends(verify
             "created_at": datetime.utcnow().isoformat(),
         }
         await redis_sessions.save_session(task_id, session)
+        # Webhook callback when caller supplied callback URL
+        if request.callback:
+            try:
+                import httpx
+                async with httpx.AsyncClient(timeout=5) as client:
+                    await client.post(request.callback, json={"task_id": task_id, "status": "completed", "result": serialized})
+            except Exception as cb_err:
+                logger.warn(f"Callback POST to {request.callback} failed: {cb_err}")
 
         return result
 

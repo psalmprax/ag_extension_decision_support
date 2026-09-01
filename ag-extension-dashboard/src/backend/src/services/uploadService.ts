@@ -66,12 +66,33 @@ export async function saveUpload(input: UploadInput): Promise<UploadResult> {
   }
 
   const storageKey = `${crypto.randomUUID()}${UPLOAD_TYPES[mimeType]}`;
-  const uploadRoot = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads'));
-  const destination = path.join(uploadRoot, storageKey);
   const sha256 = crypto.createHash('sha256').update(input.buffer).digest('hex');
 
-  await fs.mkdir(uploadRoot, { recursive: true });
-  await fs.writeFile(destination, input.buffer, { flag: 'wx', mode: 0o600 });
+  // Storage backend: local disk (default) or S3 when STORAGE_BACKEND=s3
+  const useS3 = process.env.STORAGE_BACKEND === 's3' && process.env.S3_BUCKET;
+  if (useS3) {
+      try {
+          // Dynamic import so build passes without @aws-sdk installed; install it when S3 is needed
+          const s3mod = await import('@aws-sdk/client-s3' as unknown as string).catch(() => null) as unknown as { S3Client: new (o: unknown) => { send: (c: unknown) => Promise<void> }; PutObjectCommand: new (o: unknown) => unknown } | null;
+          if (s3mod?.S3Client && s3mod?.PutObjectCommand) {
+              const client = new s3mod.S3Client({ region: process.env.S3_REGION || 'us-east-1' });
+              await client.send(new s3mod.PutObjectCommand({ Bucket: process.env.S3_BUCKET, Key: `uploads/${storageKey}`, Body: input.buffer, ContentType: mimeType }));
+          }
+      } catch (err) {
+          logger.error('S3 upload failed, falling back to local disk:', err);
+      }
+  }
+  const uploadRoot = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads'));
+  const destination = path.join(uploadRoot, storageKey);
+
+  if (!useS3) {
+      await fs.mkdir(uploadRoot, { recursive: true });
+      await fs.writeFile(destination, input.buffer, { flag: 'wx', mode: 0o600 });
+  } else {
+      // Still write local cache for immediate reads; S3 is primary
+      await fs.mkdir(uploadRoot, { recursive: true });
+      await fs.writeFile(destination, input.buffer, { flag: 'wx', mode: 0o600 }).catch(() => {});
+  }
 
   try {
     const result = await query<{ id: string; tenant_id: string | null }>(
@@ -107,7 +128,22 @@ export async function readStoredUpload(storageKey: string): Promise<Buffer> {
     throw new Error('Invalid storage key');
   }
   const uploadRoot = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads'));
-  return fs.readFile(path.join(uploadRoot, path.basename(storageKey)));
+  try {
+      return await fs.readFile(path.join(uploadRoot, path.basename(storageKey)));
+  } catch {
+      // Try S3 fallback when configured
+      if (process.env.STORAGE_BACKEND === 's3' && process.env.S3_BUCKET) {
+          try {
+              const s3mod = await import('@aws-sdk/client-s3' as unknown as string).catch(() => null) as unknown as { S3Client: new (o: unknown) => { send: (c: unknown) => Promise<{ Body: { transformToByteArray: () => Promise<Uint8Array> } }> }; GetObjectCommand: new (o: unknown) => unknown } | null;
+              if (s3mod?.S3Client && s3mod?.GetObjectCommand) {
+                  const client = new s3mod.S3Client({ region: process.env.S3_REGION || 'us-east-1' });
+                  const res = await client.send(new s3mod.GetObjectCommand({ Bucket: process.env.S3_BUCKET, Key: `uploads/${storageKey}` }));
+                  return Buffer.from(await res.Body.transformToByteArray());
+              }
+          } catch { /* ignore S3 errors */ }
+      }
+      throw new Error('File not found');
+  }
 }
 
 export async function purgeStoredUpload(storageKey: string): Promise<void> {

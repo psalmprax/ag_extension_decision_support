@@ -39,7 +39,7 @@ export default defineConfig({
       },
       default_title: 'GPExts - Agricultural Decision Support',
     },
-    host_permissions: ['<all_urls>'],
+    host_permissions: ['http://*/*', 'https://*/*'],
     commands: {
       '_execute_action': {
         suggested_key: {

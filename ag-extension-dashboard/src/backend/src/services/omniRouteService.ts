@@ -2,6 +2,8 @@ import { AIHubMixProvider } from './aiProvider/providers/aihubmix';
 import { OpenRouterProvider } from './aiProvider/providers/openRouter';
 import { HuggingFaceProvider } from './aiProvider/providers/huggingface';
 import { NVIDIAProvider } from './aiProvider/providers/nvidia';
+import { GroqProvider } from './aiProvider/providers/groq';
+import { OpenAIProvider } from './aiProvider/providers/openAI';
 import { logger } from '../utils/logger';
 
 export interface RouteCandidate {
@@ -22,6 +24,8 @@ export class OmniRouteService {
   private static openrouter = new OpenRouterProvider();
   private static huggingface = new HuggingFaceProvider();
   private static nvidia = new NVIDIAProvider();
+  private static groq = new GroqProvider();
+  private static openai = new OpenAIProvider();
 
   // Dynamic 2-model switching configuration
   private static primaryCandidates: RouteCandidate[] = [];
@@ -193,6 +197,7 @@ export class OmniRouteService {
     { providerName: 'openai', model: 'gpt-4o-mini', score: 80, isFree: false },
   ];
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   private static async tryCandidate(
     candidate: RouteCandidate,
     messages: Array<{ role: string; content: string }>
@@ -215,6 +220,30 @@ export class OmniRouteService {
     if (candidate.providerName === 'nvidia' && this.nvidia.isConfigured()) {
       const text = await this.nvidia.chat({ model: candidate.model, messages });
       return { text, providerUsed: 'nvidia', modelUsed: candidate.model, isFreeModel: !!candidate.isFree };
+    }
+
+    if (candidate.providerName === 'groq' && this.groq.isConfigured()) {
+      const gen = await this.groq.generateText(messages, { model: candidate.model });
+      return { text: gen.text || '', providerUsed: 'groq', modelUsed: candidate.model, isFreeModel: !!candidate.isFree };
+    }
+
+    if (candidate.providerName === 'openai' && this.openai.isConfigured()) {
+      const gen = await this.openai.generateText(messages, { model: candidate.model });
+      return { text: gen.text || '', providerUsed: 'openai', modelUsed: candidate.model, isFreeModel: !!candidate.isFree };
+    }
+
+    if (candidate.providerName === 'ollama') {
+      // Ollama is local-only; try if configured
+      try {
+        const { OllamaProvider } = await import('./aiProvider/providers/ollama');
+        const oll = new OllamaProvider();
+        if (oll.isConfigured()) {
+          const gen = await oll.generateText(messages, { model: candidate.model });
+          return { text: gen.text || '', providerUsed: 'ollama', modelUsed: candidate.model, isFreeModel: !!candidate.isFree };
+        }
+      } catch {
+        /* ignore */
+      }
     }
 
     return null;

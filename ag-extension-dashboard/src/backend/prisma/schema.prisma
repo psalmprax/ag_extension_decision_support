@@ -55,6 +55,8 @@ model User {
   uploads         UploadRecord[]
   recordedConsents DataConsent[] @relation("ConsentRecorder")
   dataExportRequests DataExportRequest[]
+  createdSupportTickets SupportTicket[] @relation("SupportTicketCreator")
+  assignedSupportTickets SupportTicket[] @relation("SupportTicketAssignee")
   lastLoginAt   DateTime?          @map("last_login_at") @db.Timestamp(6)
   loginHistories LoginHistory[]
   mfaEnabled    Boolean            @default(false) @map("mfa_enabled")
@@ -175,6 +177,8 @@ model Farmer {
    smsHistory               SmsHistory[] @relation("SmsFarmer")
    exportRequests           DataExportRequest[]
    uploads                  UploadRecord[]
+   whatsappMessages         WhatsappMessage[]
+   smsFeedbacks             SmsFeedback[]
 
   @@index([assignedOfficerId])
   @@index([region])
@@ -748,6 +752,9 @@ model Tenant {
   recommendationReviews RecommendationReview[]
   shares           Share[]
   exportRequests   DataExportRequest[]
+  supportTickets   SupportTicket[]
+  whatsappMessages WhatsappMessage[]
+  smsFeedbacks     SmsFeedback[]
 
   @@map("tenants")
 }
@@ -1068,6 +1075,69 @@ model UserSession {
   @@index([userId, isRevoked])
   @@index([tokenHash])
   @@map("user_sessions")
+}
+
+model SupportTicket {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String?   @map("tenant_id") @db.Uuid
+  createdBy   String    @map("created_by") @db.Uuid
+  subject     String    @db.VarChar(255)
+  description String
+  category    String    @default("general") @db.VarChar(50)
+  priority    String    @default("medium") @db.VarChar(20)
+  status      String    @default("open") @db.VarChar(20)
+  assignedTo  String?   @map("assigned_to") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  creator     User      @relation("SupportTicketCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  assignee    User?     @relation("SupportTicketAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
+  tenant      Tenant?   @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@index([createdBy])
+  @@index([tenantId])
+  @@index([status])
+  @@map("support_tickets")
+}
+
+model WhatsappMessage {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String?   @map("tenant_id") @db.Uuid
+  fromPhone      String?   @map("from_phone") @db.VarChar(20)
+  toPhone        String    @map("to_phone") @db.VarChar(20)
+  body           String
+  direction      String    @default("outbound") @db.VarChar(20)
+  status         String    @default("queued") @db.VarChar(20)
+  providerId     String?   @map("provider_id") @db.VarChar(255)
+  farmerId       String?   @map("farmer_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  farmer         Farmer?   @relation(fields: [farmerId], references: [id], onDelete: SetNull)
+  tenant         Tenant?   @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@index([toPhone])
+  @@index([farmerId])
+  @@index([tenantId])
+  @@index([status])
+  @@map("whatsapp_messages")
+}
+
+model SmsFeedback {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String?   @map("tenant_id") @db.Uuid
+  smsHistoryId String?  @map("sms_history_id") @db.Uuid
+  farmerId    String?   @map("farmer_id") @db.Uuid
+  rating      Int?
+  comment     String?
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+
+  farmer      Farmer?   @relation(fields: [farmerId], references: [id], onDelete: SetNull)
+  tenant      Tenant?   @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@index([farmerId])
+  @@index([tenantId])
+  @@map("sms_feedback")
 }
 
 

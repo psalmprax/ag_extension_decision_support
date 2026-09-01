@@ -131,7 +131,7 @@ export default defineConfig({
     // Keep the warning threshold aligned with the largest intentionally shared
     // application chunk (602 kB minified, approximately 121 kB gzip).
     chunkSizeWarningLimit: 650,
-    // CDN configuration for production
+    // CDN: when VITE_CDN_URL is set (e.g. https://cdn.gpexts.com), Vite rewrites asset URLs to the CDN origin
     assetsDir: 'assets',
     sourcemap: process.env.NODE_ENV !== 'production',
     minify: 'esbuild',

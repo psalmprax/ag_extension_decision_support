@@ -383,7 +383,9 @@ router.get('/search', async (req: Request, res: Response) => {
         const user = (req as Request & { user?: Record<string, unknown> }).user;
         const userId = (user?.userId || user?.id) as string | undefined;
         if (userId && q) {
-            KnowledgeService.logSearch(userId, q as string, category as string | undefined, crop as string | undefined).catch(() => {});
+            KnowledgeService.logSearch(userId, q as string, category as string | undefined, crop as string | undefined).catch(err => {
+                logger.warn('Knowledge logSearch fire-and-forget failed:', err);
+            });
         }
 
         res.json(response);

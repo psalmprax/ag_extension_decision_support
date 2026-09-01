@@ -131,14 +131,14 @@ function ReportCard({
           </p>
         </div>
 
-        {/* Embedded Mini Sparkline Visualizer */}
+        {/* Live cohort metric — derived from report metadata when available */}
         <div className="p-3 rounded-xl bg-slate-950/60 border border-white/[0.04] space-y-1.5">
           <div className="flex items-center justify-between text-[10px] font-mono text-white/40">
-            <span>COHORT NDVI VIGOR</span>
-            <span className="text-emerald-400 font-bold">0.82 (+14%)</span>
+            <span>REPORT STATUS</span>
+            <span className="text-emerald-400 font-bold uppercase">{report.status || 'ready'}</span>
           </div>
-          <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-emerald-500 to-amber-400 rounded-full w-[82%]" />
+          <div className="text-[10px] font-mono text-white/50 truncate">
+            {report.generatedAt ? new Date(report.generatedAt).toLocaleDateString() : '—'}
           </div>
         </div>
       </div>
@@ -171,7 +171,7 @@ function ReportCard({
             {report.createdBy === `${user?.firstName} ${user?.lastName}` && user?.avatarUrl ? (
               <img
                 src={user.avatarUrl}
-                alt=""
+                alt={`${user?.firstName || 'User'} avatar`}
                 className="w-6 h-6 rounded-full border border-white/20 object-cover"
               />
             ) : (
@@ -269,32 +269,31 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
         <div className="p-4 rounded-xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-1">
           <div className="flex items-center gap-2 text-white/40 text-xxs uppercase tracking-wider font-mono">
             <Users className="w-3.5 h-3.5 text-sky-400" />
-            <span>Farmers Covered</span>
+            <span>Reports Archive</span>
           </div>
           <div className="text-xl font-bold text-white flex items-baseline gap-2">
-            450+
-            <span className="text-xxs font-normal text-white/40">4 Districts</span>
+            {reports.length}
+            <span className="text-xxs font-normal text-white/40">Total</span>
           </div>
         </div>
 
         <div className="p-4 rounded-xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-1">
           <div className="flex items-center gap-2 text-white/40 text-xxs uppercase tracking-wider font-mono">
             <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
-            <span>Adoption Rate</span>
+            <span>Latest Report</span>
           </div>
-          <div className="text-xl font-bold text-emerald-400 flex items-baseline gap-2">
-            94.2%
-            <span className="text-xxs font-normal text-white/40">Bio-Control</span>
+          <div className="text-sm font-bold text-white truncate">
+            {reports[0]?.title || '—'}
           </div>
         </div>
 
         <div className="p-4 rounded-xl backdrop-blur-xl bg-slate-900/60 border border-white/[0.08] space-y-1">
           <div className="flex items-center gap-2 text-white/40 text-xxs uppercase tracking-wider font-mono">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Security Hash</span>
+            <span>Data Source</span>
           </div>
           <div className="text-xs font-mono font-bold text-white/80 truncate">
-            SHA256: 0x8F3C...9B12
+            System Generated
           </div>
         </div>
       </div>

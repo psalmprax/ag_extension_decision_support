@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { logger } from '../../../utils/logger';
+import { BaseAIProvider, AIProviderType, TextGenerationOptions, TextGenerationResult } from '../types';
 
 export interface HuggingFaceRequest {
   model?: string;
@@ -25,11 +26,14 @@ export interface HuggingFaceResponse {
  * Inference Providers router (https://router.huggingface.co/v1).
  * Reads HUGGINGFACE_API_KEY (hf_...) from the environment.
  */
-export class HuggingFaceProvider {
+export class HuggingFaceProvider extends BaseAIProvider {
+  readonly provider: AIProviderType = 'huggingface';
+  readonly capabilities: string[] = ['text', 'chat'];
   private apiKey: string;
   private baseUrl: string;
 
   constructor(apiKey?: string, baseUrl = 'https://router.huggingface.co/v1') {
+    super();
     this.apiKey = apiKey || process.env.HUGGINGFACE_API_KEY || '';
     this.baseUrl = baseUrl;
   }
@@ -38,8 +42,22 @@ export class HuggingFaceProvider {
     return this.apiKey || process.env.HUGGINGFACE_API_KEY || '';
   }
 
-  public isConfigured(): boolean {
+  public override isConfigured(): boolean {
     return Boolean(this.getApiKey());
+  }
+
+  public override async healthCheck(): Promise<boolean> {
+    if (!this.isConfigured()) return false;
+    try {
+      await axios.post(`${this.baseUrl}/chat/completions`, { model: 'meta-llama/Llama-3.1-8B-Instruct', messages: [{ role: 'user', content: 'ping' }], max_tokens: 2 }, { headers: { Authorization: `Bearer ${this.getApiKey()}` }, timeout: 3000 });
+      return true;
+    } catch { return this.isConfigured(); }
+  }
+
+  public override async generateText(prompt: string | Array<{ role: string; content: string }>, options?: TextGenerationOptions): Promise<TextGenerationResult> {
+    const messages = typeof prompt === 'string' ? [{ role: 'user', content: prompt }] : prompt;
+    const text = await this.chat({ model: options?.model, messages, temperature: options?.temperature, max_tokens: options?.maxTokens });
+    return { text, model: options?.model || 'meta-llama/Llama-3.1-8B-Instruct' };
   }
 
   public async chat(req: HuggingFaceRequest): Promise<string> {

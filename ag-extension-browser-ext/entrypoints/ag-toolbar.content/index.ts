@@ -8,7 +8,9 @@ type ContentRequestMessage =
     | { action: 'extract_structured' }
     | { action: 'extract_forms' }
     | { action: 'extract_tables' }
-    | { action: 'extract_agricultural_data' };
+    | { action: 'extract_agricultural_data' }
+    | { action: 'trigger_photo_capture' }
+    | { action: 'highlight_terms'; terms: string[] };
 
 const isContentRequestMessage = (message: unknown): message is ContentRequestMessage => {
     if (!message || typeof message !== 'object') return false;
@@ -18,7 +20,9 @@ const isContentRequestMessage = (message: unknown): message is ContentRequestMes
         action === 'extract_structured' ||
         action === 'extract_forms' ||
         action === 'extract_tables' ||
-        action === 'extract_agricultural_data'
+        action === 'extract_agricultural_data' ||
+        action === 'trigger_photo_capture' ||
+        action === 'highlight_terms'
     );
 };
 
@@ -340,6 +344,20 @@ export default defineContentScript({
           sendResponse(null);
           return;
         }
+        if (message.action === 'trigger_photo_capture') {
+          // Trigger photo capture via toolbar button click
+          const btn = document.querySelector('#ag-toolbar-root button') as HTMLElement | null;
+          // Try to trigger the photo button specifically (first button is sync, third is photo)
+          const photoBtnCandidate = document.querySelectorAll('#ag-toolbar-root button')[2] as HTMLElement | undefined;
+          (photoBtnCandidate || btn)?.click();
+          sendResponse({ success: true });
+          return;
+        }
+        if (message.action === 'highlight_terms') {
+          highlightTermsOnPage(message.terms);
+          sendResponse({ success: true });
+          return;
+        }
         if (message.action === 'get_page_context') {
           const context = {
             title: document.title,
@@ -611,4 +629,39 @@ function getFieldLabel(field: Element): string {
   if (placeholder) return placeholder;
   const name = field.getAttribute('name');
   return name ? name.replace(/[_-]/g, ' ') : '';
+}
+
+function highlightTermsOnPage(terms: string[]): void {
+  if (!terms.length) return;
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  const textNodes: Text[] = [];
+  let node: Text | null;
+  while ((node = walker.nextNode() as Text | null)) {
+    if (node.parentElement?.closest('#ag-toolbar-root, #ag-selection-bubble, script, style')) continue;
+    textNodes.push(node);
+  }
+  const escaped = terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+  const regex = new RegExp(`(${escaped})`, 'gi');
+  textNodes.forEach(textNode => {
+    const text = textNode.textContent || '';
+    if (!regex.test(text)) return;
+    regex.lastIndex = 0;
+    const frag = document.createDocumentFragment();
+    let lastIdx = 0;
+    let m: RegExpExecArray | null;
+    while ((m = regex.exec(text)) !== null) {
+      if (m.index > lastIdx) frag.appendChild(document.createTextNode(text.slice(lastIdx, m.index)));
+      const mark = document.createElement('mark');
+      mark.textContent = m[1];
+      mark.style.background = 'rgba(16,185,129,0.35)';
+      mark.style.borderBottom = '2px solid #10b981';
+      mark.style.padding = '0 2px';
+      mark.style.borderRadius = '2px';
+      mark.dataset.agHighlight = 'true';
+      frag.appendChild(mark);
+      lastIdx = m.index + m[1].length;
+    }
+    if (lastIdx < text.length) frag.appendChild(document.createTextNode(text.slice(lastIdx)));
+    textNode.parentNode?.replaceChild(frag, textNode);
+  });
 }

@@ -59,6 +59,7 @@ type PopupMessage =
   | { action: 'analyze_selection'; text?: string }
   | { action: 'trigger_capture' }
   | { action: 'photo_captured'; imageData?: string }
+  | { action: 'location_captured'; location: { latitude: number; longitude: number; accuracy: number; accuracyStatus: string; timestamp: string } }
   | { action: 'switch_sidepanel_tab'; tab?: string };
 
 const isPopupMessage = (message: unknown): message is PopupMessage => {
@@ -69,6 +70,7 @@ const isPopupMessage = (message: unknown): message is PopupMessage => {
     action === 'analyze_selection' ||
     action === 'trigger_capture' ||
     action === 'photo_captured' ||
+    action === 'location_captured' ||
     action === 'switch_sidepanel_tab'
   );
 };
@@ -95,6 +97,7 @@ function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [farmers, setFarmers] = useState<{ id: string; firstName: string; lastName: string }[]>([]);
+  const [capturedLocation, setCapturedLocation] = useState<{ latitude: number; longitude: number; accuracy: number; accuracyStatus: string; timestamp: string } | null>(null);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -179,7 +182,7 @@ function App() {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await apiQueue.makeRequest(`${CONFIG.API_BASE_URL}/upload`, {
+      const response = await apiQueue.makeRequest(`${CONFIG.API_BASE_URL}/upload/upload`, {
         method: 'POST',
         body: formData,
         // Remove content-type to let browser generate boundary
@@ -440,8 +443,31 @@ function App() {
             setIsLoading(false);
           }
         } else if (message.action === 'trigger_capture') {
-          // Trigger the 'Analyze Page' quick action as a capture proxy for now
-          handleQuickAction('Analyze Page');
+          // Capture photo: delegate to content-script camera (requires user gesture on page)
+          // Fall back to page analysis if content script not available
+          try {
+            const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+            if (tab?.id) {
+              await browser.tabs.sendMessage(tab.id, { action: 'trigger_photo_capture' }).catch(() => {
+                handleQuickAction('Analyze Page');
+              });
+            } else {
+              handleQuickAction('Analyze Page');
+            }
+          } catch {
+            handleQuickAction('Analyze Page');
+          }
+        } else if (message.action === 'location_captured' && message.location) {
+          setCapturedLocation(message.location);
+          // Persist so VisitLogger can pick it up even after tab switch
+          browser.storage.local.set({ lastCapturedLocation: message.location }).catch(() => {});
+          const locMsg: Message = {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: `📍 Location captured: ${message.location.latitude.toFixed(5)}, ${message.location.longitude.toFixed(5)} (±${Math.round(message.location.accuracy)}m, ${message.location.accuracyStatus}). This will be attached to your next visit log.`,
+            timestamp: new Date().toISOString(),
+          };
+          setMessages((prev: Message[]) => [...prev, locMsg]);
         } else if (message.action === 'photo_captured' && message.imageData) {
           const photoMessage: Message = {
             id: Date.now().toString(),
@@ -552,11 +578,19 @@ function App() {
           </div>
         )}
       </div>
+      {capturedLocation && (
+        <div className="mx-4 mt-2 p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center justify-between">
+          <span className="text-[10px] font-mono text-emerald-300">
+            📍 {capturedLocation.latitude.toFixed(4)}, {capturedLocation.longitude.toFixed(4)} (±{Math.round(capturedLocation.accuracy)}m)
+          </span>
+          <button onClick={() => { setCapturedLocation(null); browser.storage.local.remove('lastCapturedLocation').catch(()=>{}); }} className="text-[10px] text-slate-400 hover:text-white">Clear</button>
+        </div>
+      )}
 
       {/* Messages / Logger */}
       <main className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
         {activeTab === 'log' ? (
-          <VisitLogger farmerId={activeFarmerId} />
+          <VisitLogger farmerId={activeFarmerId} location={capturedLocation} onLocationUsed={() => { setCapturedLocation(null); browser.storage.local.remove('lastCapturedLocation').catch(()=>{}); }} />
         ) : (
           <>
             {messages.map((msg) => (

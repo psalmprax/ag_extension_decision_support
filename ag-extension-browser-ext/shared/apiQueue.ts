@@ -150,6 +150,16 @@ class APIQueueService {
             : undefined;
         const requestHeaders = new Headers(options.headers);
         if (idempotencyKey) requestHeaders.set('Idempotency-Key', idempotencyKey);
+        // Inject JWT if stored by extension login (graceful fallback when not logged in)
+        try {
+          const stored = await browser.storage.local.get('authToken');
+          const token = (stored as Record<string, unknown>)?.authToken as string | undefined;
+          if (token && !requestHeaders.has('Authorization')) {
+            requestHeaders.set('Authorization', `Bearer ${token}`);
+          }
+        } catch {
+          /* storage unavailable */
+        }
         const requestOptions: RequestInit = { ...options, method, headers: requestHeaders };
 
         const attachmentRefs = this.getAttachmentRefs(options.body);

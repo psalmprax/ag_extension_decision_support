@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, Shield, Zap, ChevronRight, BarChart3, Cloud, ArrowLeft, Globe, Server, Bot, Save } from 'lucide-react';
+import { Settings, Shield, Zap, ChevronRight, BarChart3, Cloud, ArrowLeft, Globe, Server, Bot, Save, LogIn, LogOut, User as UserIcon } from 'lucide-react';
 import { usePersistence } from '@/shared/hooks/usePersistence';
 import CONFIG from '../../shared/config';
 
@@ -7,7 +7,33 @@ function App() {
   const [activeAgent, setActiveAgent] = usePersistence('activeAgent', 'AGENT ALPHA');
   const [language, setLanguage] = usePersistence('language', 'en');
   const [apiEndpoint, setApiEndpoint] = usePersistence('apiEndpoint', CONFIG.API_BASE_URL);
+  const [authToken, setAuthToken] = usePersistence<string | null>('authToken', null);
   const [showSettings, setShowSettings] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  const handleLogin = async () => {
+    setLoginError(null);
+    setIsLoggingIn(true);
+    try {
+      const res = await fetch(`${apiEndpoint}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+      const data = await res.json() as { success?: boolean; token?: string; data?: { token?: string }; error?: string };
+      const token = data.token || data.data?.token;
+      if (res.ok && token) {
+        setAuthToken(token);
+        await browser.storage.local.set({ authToken: token });
+        setPassword('');
+        setLoginError(null);
+      } else {
+        setLoginError(data.error || 'Login failed');
+      }
+    } catch (err) {
+      setLoginError(err instanceof Error ? err.message : 'Network error');
+    } finally { setIsLoggingIn(false); }
+  };
+  const handleLogout = async () => { setAuthToken(null); await browser.storage.local.remove('authToken'); };
 
   const handleOpenSidepanel = () => {
     if (browser?.runtime) {
@@ -92,6 +118,27 @@ function App() {
               placeholder="https://your-api.com/api"
               className="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-mono text-white focus:ring-1 focus:ring-emerald-400 outline-none transition-all"
             />
+          </div>
+
+          {/* Auth */}
+          <div className="space-y-2 p-3 bg-slate-900/60 rounded-xl border border-white/10">
+            <label className="flex items-center gap-2 text-[10px] font-bold text-emerald-400 uppercase tracking-widest">
+              <UserIcon className="w-3 h-3" /> Extension Auth {authToken ? <span className="ml-auto text-emerald-400">● Logged in</span> : <span className="ml-auto text-amber-400">○ Not logged in</span>}
+            </label>
+            {!authToken ? (
+              <div className="space-y-2">
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="w-full bg-slate-950 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-white/40 focus:ring-1 focus:ring-emerald-400 outline-none" />
+                <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" className="w-full bg-slate-950 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-white/40 focus:ring-1 focus:ring-emerald-400 outline-none" />
+                {loginError && <p className="text-[10px] text-rose-400">{loginError}</p>}
+                <button onClick={handleLogin} disabled={isLoggingIn || !email || !password} className="w-full flex items-center justify-center gap-2 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase rounded-xl disabled:opacity-50">
+                  <LogIn className="w-3.5 h-3.5" /> {isLoggingIn ? 'Logging in...' : 'Log In'}
+                </button>
+              </div>
+            ) : (
+              <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 py-2.5 bg-slate-800 hover:bg-rose-500/20 border border-white/10 hover:border-rose-500/30 text-white font-bold text-xs uppercase rounded-xl">
+                <LogOut className="w-3.5 h-3.5" /> Log Out
+              </button>
+            )}
           </div>
 
           <button 

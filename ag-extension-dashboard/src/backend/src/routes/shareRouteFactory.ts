@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { authorize } from '@/middleware/authorize';
 import { shareService } from '@/services/shareService';
 import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
@@ -11,6 +12,10 @@ type EntityType = 'farmer' | 'visit' | 'report' | 'knowledge';
  */
 export function createShareRoute(entityType: EntityType): Router {
     const router = Router();
+
+    // Guard share creation — factory is mounted under authed parents today, but
+    // defensively require auth so standalone mounting can never create orphan shares.
+    router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
     router.post('/:id/share', async (req: Request, res: Response) => {
         try {

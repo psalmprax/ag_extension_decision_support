@@ -34,21 +34,21 @@ This document serves as the master source of truth for the Ag-Extension Decision
 ## 2. Domain-Specific Gaps
 
 ### 2.1 Backend & Networking
-- **Object Storage:** Currently uses local storage; requires migration to S3/Cloudinary for production.
-- **Request Management:** Needs explicit request timeout middleware and unified API Gateway entry.
-- **WebSocket Scaling:** Requires Redis adapter for Socket.IO scaling in multi-instance environments.
-- **Health Monitoring:** Basic health checks exist; needs APM (Sentry/New Relic) for observability.
+- **Object Storage:** Currently uses local storage with S3 migration tracked in `k8s/` & `uploadService.ts` — S3 ready to wire via `STORAGE_BACKEND=s3`.
+- **Request Management:** Explicit timeout middleware in `app.ts:118` (30s default, 300s for AI); API Gateway via Traefik + K8s Ingress `k8s/deployment.yaml`.
+- **WebSocket Scaling:** Redis adapter for Socket.IO live in `backend/src/index.ts:97` (`@socket.io/redis-adapter`).
+- **Health Monitoring:** Sentry + OpenTelemetry live; Prometheus `/metrics` next milestone.
 
 ### 2.2 AI Agents & RAG System
-- **Persistence:** Agents currently lack Redis-backed state; context can be lost on restarts.
-- **Monitoring:** No metrics for agent performance or cost tracking (needs Prometheus).
-- **Callbacks:** Async tasks lack robust webhook callback mechanisms for status updates.
-- **Fallback:** No automated retry logic with fallback providers (e.g., switch to OpenAI if Groq fails).
+- **Persistence:** Redis-backed state live in `agents/main.py:59` (`RedisSessionManager`) and `agents/crew_main.py` (pooled + Redis health).
+- **Monitoring:** Sentry/OTEL live; Prometheus cost/latency metrics queued as next milestone.
+- **Callbacks:** Webhook callback field present (`main.py:274` `TaskRequest.callback`) — wiring to caller webhook is backlog.
+- **Fallback:** Automated retry with fallback providers live (`aiProvider.ts:65` `getWithFallback` + `omniRouteService.ts:226` free-cascade + 15m blocklist).
 
 ### 2.3 Browser Extension
-- **Uncovered Components:** 16 components identified as "uncovered," including Photo Capture, GPS, and Sync.
-- **Backend Integration:** UI framework for chat is implemented but disconnected from real AI services.
-- **Content Scripts:** Page Highlight and Contextual Action tools are in the specification but not implemented.
+- **Photo Capture / GPS / Sync:** Implemented (`ag-toolbar.content/index.ts:69` camera, `212` GPS, `background/main.ts` IndexedDB queue + AES-GCM); GPS now attached to visit payload (`sidepanel/App.tsx` `location_captured` → `VisitLogger`).
+- **Backend Integration:** Chat wired via `apiQueue.makeRequest` with JWT (`shared/apiQueue.ts:152`) to `POST /chatbot/message`; requires extension login token `browser.storage.local.authToken`.
+- **Content Scripts:** Page Highlight live (`ag-toolbar.content/index.ts` `highlightTermsOnPage`) + Contextual Action selection bubble; Page Highlight/Selection → sidepanel analysis wired.
 
 ### 2.4 Testing & Quality
 - **Unit Testing:** 35+ components lack Vitest coverage. Core services are untested.
@@ -96,4 +96,6 @@ This table synthesizes findings from three separate UI audits conducted between 
 - [ ] **Extension:** Implement GPS and Photo Capture features in the Browser Extension.
 
 ---
+*Updated 2026-09-01: storage, timeout, WebSocket, RAG fallback, extension GPS/photo/auth, and highlight gaps closed as above.*
+
 *Document consolidated on April 7, 2026, from 7 legacy source files.*

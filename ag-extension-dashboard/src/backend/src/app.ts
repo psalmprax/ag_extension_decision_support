@@ -18,6 +18,7 @@ import { setRequestUserId } from './services/requestContext';
 import { correlationIdMiddleware } from './middleware/correlationIdMiddleware';
 import { perUserRateLimit } from './middleware/rateLimitMiddleware';
 import { optionalAuth } from './middleware/authorize';
+import { idempotencyMiddleware } from './middleware/idempotencyMiddleware';
 import { AIProviderFactory } from './services/aiProvider/aiProvider';
 import { AI_CASCADE_FALLBACK } from './services/aiProvider/cascade';
 import { selfHealingService } from './services/selfHealing';
@@ -113,6 +114,7 @@ app.use((req, _res, next) => {
     setRequestUserId(req.user?.userId);
     next();
 });
+app.use(idempotencyMiddleware);
 
 // Request timeout middleware — AI-heavy routes (knowledge/ask, chatbot) get 120s, rest get 30s
 app.use((req, res, next) => {

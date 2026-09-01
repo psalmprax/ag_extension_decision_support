@@ -10,6 +10,7 @@ import {
   FlaskConical,
 } from 'lucide-react';
 import { analyzeSoilImage, type SoilAnalysisResult } from '../../api/diseaseService';
+import { downloadReportPdf } from '../../api/reportService';
 import toast from 'react-hot-toast';
 
 interface Props {
@@ -211,9 +212,11 @@ const SoilNpkGrid: React.FC<{ npk: SoilAnalysisResult['npkDeficiencies'] }> = ({
   );
 };
 
-const SoilResultsHUD: React.FC<{ soilAnalysis: SoilAnalysisResult | null }> = ({
-  soilAnalysis,
-}) => {
+const SoilResultsHUD: React.FC<{
+  soilAnalysis: SoilAnalysisResult | null;
+  onExport: () => void;
+  isExporting: boolean;
+}> = ({ soilAnalysis, onExport, isExporting }) => {
   if (!soilAnalysis) {
     return (
       <div className="p-5 rounded-[4px] bg-slate-900/80 border border-slate-800 flex flex-col justify-center space-y-4 text-center">
@@ -320,11 +323,12 @@ const SoilResultsHUD: React.FC<{ soilAnalysis: SoilAnalysisResult | null }> = ({
       {/* PDF Export Button */}
       <div className="pt-2 border-t border-slate-800">
         <button
-          onClick={() => toast.error('Soil report export is unavailable from this view.')}
-          className="w-full py-2.5 bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:border-emerald-500/40 text-slate-300 text-xs font-bold rounded-[3px] transition-all flex items-center justify-center gap-2 uppercase tracking-wider"
+          onClick={onExport}
+          disabled={!soilAnalysis || isExporting}
+          className="w-full py-2.5 bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:border-emerald-500/40 text-slate-300 text-xs font-bold rounded-[3px] transition-all flex items-center justify-center gap-2 uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          <Download className="w-3.5 h-3.5" />
-          <span>Export Soil Report (PDF)</span>
+          {isExporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+          <span>{isExporting ? 'Generating PDF...' : 'Export Soil Report (PDF)'}</span>
         </button>
       </div>
     </div>
@@ -341,6 +345,7 @@ export function SoilDiagnosticsTab({
   const [selectedSoilImage, setSelectedSoilImage] = useState<File | null>(null);
   const [soilImagePreview, setSoilImagePreview] = useState<string | null>(null);
   const [isAnalyzingSoil, setIsAnalyzingSoil] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [soilAnalysis, setSoilAnalysis] = useState<SoilAnalysisResult | null>(null);
   const [farmNotes, setFarmNotes] = useState('');
 
@@ -351,6 +356,31 @@ export function SoilDiagnosticsTab({
       setSoilImagePreview(e.target?.result as string);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleExportSoilReport = async () => {
+    if (!soilAnalysis) return;
+    setIsExporting(true);
+    try {
+      // Generate a soil diagnostic report first, then download its PDF
+      const { generateReport } = await import('../../api/reportService');
+      const gen = await generateReport('soil_diagnostic', `Soil Diagnostic - ${cropType || 'General'}`, undefined);
+      const reportId = (gen as { data?: { id?: string } })?.data?.id || (gen as { id?: string })?.id;
+      if (!reportId) throw new Error('Report generation did not return an id');
+      const blob = await downloadReportPdf(reportId);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `soil-report-${Date.now()}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Soil report downloaded');
+    } catch (err) {
+      console.error('Soil report export failed:', err);
+      toast.error('Failed to export soil report');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleAnalyzeSoil = async () => {
@@ -407,7 +437,7 @@ export function SoilDiagnosticsTab({
         isAnalyzing={isAnalyzingSoil}
       />
 
-      <SoilResultsHUD soilAnalysis={soilAnalysis} />
+      <SoilResultsHUD soilAnalysis={soilAnalysis} onExport={handleExportSoilReport} isExporting={isExporting} />
     </div>
   );
 }

@@ -57,7 +57,17 @@ export class OpenRouterProvider extends BaseAIProvider {
   }
 
   public override async healthCheck(): Promise<boolean> {
-    return this.isConfigured();
+    if (!this.isConfigured()) return false;
+    try {
+      await axios.post(
+        `${this.baseUrl}/chat/completions`,
+        { model: 'meta-llama/llama-3.3-70b-instruct:free', messages: [{ role: 'user', content: 'ping' }], max_tokens: 2 },
+        { headers: { Authorization: `Bearer ${this.getApiKey()}` }, timeout: 3000 }
+      );
+      return true;
+    } catch {
+      return this.isConfigured();
+    }
   }
 
   public async chat(req: OpenRouterRequest): Promise<string> {

@@ -76,10 +76,51 @@ export class CrdtSyncEngine {
   private nodeId: string;
   private clock: VectorClock = {};
   private storage: Map<string, CrdtFieldRecord> = new Map();
+  private readonly persistKey: string;
 
   constructor(nodeId: string) {
     this.nodeId = nodeId;
+    this.persistKey = `crdt:${nodeId}`;
     this.clock[nodeId] = 0;
+    this.loadPersisted();
+  }
+
+  private loadPersisted(): void {
+    try {
+      const raw = localStorage.getItem(this.persistKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as { clock?: VectorClock; records?: [string, CrdtFieldRecord][] };
+      if (parsed.clock) this.clock = parsed.clock;
+      if (parsed.records) this.storage = new Map(parsed.records);
+    } catch { /* ignore */ }
+    // Best-effort IndexedDB persistence for larger payloads
+    try {
+      const req = indexedDB.open('ag-crdt', 1);
+      req.onupgradeneeded = () => { const db = req.result; if (!db.objectStoreNames.contains('state')) db.createObjectStore('state'); };
+      req.onsuccess = () => {
+        const db = req.result;
+        const tx = db.transaction('state', 'readonly');
+        const get = tx.objectStore('state').get(this.persistKey);
+        get.onsuccess = () => {
+          const v = get.result as { clock?: VectorClock; records?: [string, CrdtFieldRecord][] } | undefined;
+          if (v?.clock) this.clock = v.clock;
+          if (v?.records) this.storage = new Map(v.records);
+        };
+      };
+    } catch { /* ignore */ }
+  }
+
+  private persist(): void {
+    try { localStorage.setItem(this.persistKey, JSON.stringify({ clock: this.clock, records: Array.from(this.storage.entries()) })); } catch { /* quota */ }
+    try {
+      const req = indexedDB.open('ag-crdt', 1);
+      req.onupgradeneeded = () => { const db = req.result; if (!db.objectStoreNames.contains('state')) db.createObjectStore('state'); };
+      req.onsuccess = () => {
+        const db = req.result;
+        const tx = db.transaction('state', 'readwrite');
+        tx.objectStore('state').put({ clock: this.clock, records: Array.from(this.storage.entries()) }, this.persistKey);
+      };
+    } catch { /* ignore */ }
   }
 
   public getNodeId(): string {
@@ -103,6 +144,7 @@ export class CrdtSyncEngine {
     };
 
     this.storage.set(entityId, record as CrdtFieldRecord);
+    this.persist();
     return record;
   }
 
@@ -119,6 +161,7 @@ export class CrdtSyncEngine {
     };
 
     this.storage.set(entityId, record);
+    this.persist();
     return record;
   }
 
@@ -164,6 +207,7 @@ export class CrdtSyncEngine {
       this.clock[node] = Math.max(this.clock[node] || 0, counter);
     }
 
+    if (appliedCount > 0) this.persist();
     return { appliedCount };
   }
 }

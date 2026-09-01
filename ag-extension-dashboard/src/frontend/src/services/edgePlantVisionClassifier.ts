@@ -1,7 +1,10 @@
 /**
- * Edge Plant Vision Classifier — 100% Offline On-Device Agronomic Diagnosis Engine.
- * Extracts color-space chromaticity ratios, chlorosis/necrosis distributions,
- * mottling variance, and defoliation signatures directly in the browser/PWA canvas.
+ * Edge Plant Vision Classifier — 100% Offline On-Device Heuristic Diagnosis Engine.
+ * NOTE: This is a rule-based RGB/chromaticity heuristic (not a trained ML model).
+ * It provides early triage in offline field conditions and must be confirmed by
+ * lab diagnosis or extension officer when confidence <0.8. Do not use as sole
+ * phytosanitary authority. Extracts chromaticity ratios, chlorosis/necrosis
+ * distributions, mottling variance, and defoliation signatures in the browser canvas.
  */
 
 export interface EdgeVisualMetrics {
@@ -27,6 +30,7 @@ export interface EdgeDiagnosisCandidate {
 
 export interface OfflineDiagnosisResult {
   isOfflineInference: true;
+  heuristicDisclaimer: string;
   primaryDiagnosis: EdgeDiagnosisCandidate;
   alternatives: EdgeDiagnosisCandidate[];
   metrics: EdgeVisualMetrics;
@@ -299,6 +303,7 @@ export async function diagnosePlantOffline(
 
   return {
     isOfflineInference: true,
+    heuristicDisclaimer: 'HEURISTIC ONLY — RGB chromaticity triage, not ML. Confirm with lab/extension officer if confidence <0.8.',
     primaryDiagnosis,
     alternatives,
     metrics,

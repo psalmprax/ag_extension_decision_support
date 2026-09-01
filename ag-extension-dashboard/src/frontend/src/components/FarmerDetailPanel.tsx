@@ -788,8 +788,8 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
             <div className="overflow-y-auto max-h-[85vh]">
               <VideoCall
                 roomId={`farmer-${farmer.id}`}
-                userId={(storeUser as { userId?: string } | null | undefined)?.userId || 'unknown'}
-                userName={`${storeUser?.firstName} ${storeUser?.lastName}` || 'Extension Officer'}
+                userId={storeUser?.id || 'host-user'}
+                userName={`${storeUser?.firstName || ''} ${storeUser?.lastName || ''}`.trim() || 'Extension Officer'}
                 isHost={true}
                 onEnd={() => setShowVideoCall(false)}
               />

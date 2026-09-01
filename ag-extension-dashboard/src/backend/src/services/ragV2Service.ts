@@ -565,7 +565,7 @@ JSON scores:`;
             try {
                 await query(`CREATE INDEX IF NOT EXISTS idx_chunks_embedding ON knowledge_chunks USING ivfflat (embedding vector_cosine_ops) WITH (lists = 10)`);
             } catch (err: unknown) {
-                // Index may already exist
+                logger.warn('[RAGv2] IVFFlat index creation failed (check embedding dimension / pgvector):', err);
             }
         }
 

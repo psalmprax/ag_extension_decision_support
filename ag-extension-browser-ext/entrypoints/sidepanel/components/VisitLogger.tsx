@@ -9,7 +9,7 @@ interface Farmer {
   lastName: string;
 }
 
-export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }) {
+export function VisitLogger({ farmerId: initialFarmerId, location, onLocationUsed }: { farmerId?: string; location?: { latitude: number; longitude: number; accuracy: number; accuracyStatus?: string; timestamp?: string } | null; onLocationUsed?: () => void }) {
   const [farmers, setFarmers] = useState<Farmer[]>([]);
   const [selectedFarmerId, setSelectedFarmerId] = useState(initialFarmerId || '');
   const [observationType, setObservationType] = useState('Routine Inspection');
@@ -91,7 +91,8 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
         visit_type: observationType,
         notes,
         scheduled_at: new Date().toISOString(),
-        status: 'completed'
+        status: 'completed',
+        ...(location ? { locationLat: location.latitude, locationLng: location.longitude, locationAccuracy: location.accuracy } : {}),
       };
 
       if (attachmentIds.length > 0) {
@@ -113,6 +114,7 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
         if (attachedPhoto) URL.revokeObjectURL(attachedPhoto);
         setAttachedPhoto(null);
         setAttachedFile(null);
+        onLocationUsed?.();
         setTimeout(() => setIsSuccess(false), 3000);
       } else {
         const result = await response.json();
@@ -123,6 +125,7 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
           if (attachedPhoto) URL.revokeObjectURL(attachedPhoto);
           setAttachedPhoto(null);
           setAttachedFile(null);
+          onLocationUsed?.();
         } else {
           throw new Error('Failed to save visit');
         }
@@ -197,6 +200,15 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
             className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm min-h-[80px] outline-none focus:border-emerald-500 transition-all text-slate-200"
           />
         </div>
+        {location && (
+          <div className="flex items-center gap-2 p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+            <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="text-[10px] font-mono text-emerald-300">
+              {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)} (±{Math.round(location.accuracy)}m)
+            </span>
+            <span className="ml-auto text-[10px] font-bold text-emerald-400 uppercase">{location.accuracyStatus || 'good'}</span>
+          </div>
+        )}
 
         {/* Photo Preview */}
         {attachedPhoto && (

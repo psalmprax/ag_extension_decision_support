@@ -721,8 +721,8 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
             <div className="overflow-y-auto max-h-[80vh]">
               <VideoCall
                 roomId={callSessionId}
-                userId={(storeUser as { userId?: string } | null | undefined)?.userId || 'unknown'}
-                userName={`${storeUser?.firstName} ${storeUser?.lastName}` || 'Extension Officer'}
+                userId={storeUser?.id || 'host-user'}
+                userName={`${storeUser?.firstName || ''} ${storeUser?.lastName || ''}`.trim() || 'Extension Officer'}
                 isHost={true}
                 onEnd={() => setShowVideoCall(false)}
               />
