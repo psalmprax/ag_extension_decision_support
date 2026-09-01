@@ -20,7 +20,7 @@ import {
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
 
-import { REASONING_SYSTEM_PROMPT, extractVisuals } from '../assetLibrary';
+import { REASONING_SYSTEM_PROMPT, extractVisuals, buildGroundedReasoningPrompt } from '../assetLibrary';
 
 export class OpenAIProvider extends BaseAIProvider {
     readonly provider: AIProviderType = 'openai';
@@ -154,7 +154,7 @@ export class OpenAIProvider extends BaseAIProvider {
     }
 
     private buildUserContent(context: string, query: string, attachments?: ReasoningOptions['attachments']): any[] {
-        const groundedPrompt = `Use the context below as the authoritative source for this answer. If the context is incomplete, say what is missing before adding general agricultural guidance. Cite source titles or URLs when available.\n\nContext:\n${context || 'No specific context found in knowledge base.'}\n\nQuestion: ${query}`;
+        const groundedPrompt = buildGroundedReasoningPrompt(context, query);
         const userContent: any[] = [{ type: 'text', text: groundedPrompt }];
 
         if (attachments && attachments.length > 0) {

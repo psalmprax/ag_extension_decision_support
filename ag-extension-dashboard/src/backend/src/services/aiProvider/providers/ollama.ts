@@ -13,7 +13,7 @@ import {
 } from '../types';
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
-import { REASONING_SYSTEM_PROMPT, extractVisuals } from '../assetLibrary';
+import { REASONING_SYSTEM_PROMPT, extractVisuals, buildGroundedReasoningPrompt } from '../assetLibrary';
 import axios from 'axios';
 
 export class OllamaProvider extends BaseAIProvider {
@@ -126,7 +126,7 @@ export class OllamaProvider extends BaseAIProvider {
 
     async analyzeWithReasoning(context: string, query: string, options?: ReasoningOptions): Promise<ReasoningResult> {
         const systemPrompt = REASONING_SYSTEM_PROMPT;
-        const promptText = `Use the context below as the authoritative source for this answer. If the context is incomplete, say what is missing before adding general agricultural guidance. Cite source titles or URLs when available.\n\nContext:\n${context || 'No specific context found in knowledge base.'}\n\nQuestion: ${query}`;
+        const promptText = buildGroundedReasoningPrompt(context, query);
         
         const messages = [
             { role: 'system', content: systemPrompt },
