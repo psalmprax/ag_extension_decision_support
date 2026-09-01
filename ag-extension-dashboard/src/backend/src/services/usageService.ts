@@ -114,6 +114,16 @@ class UsageService {
 
     async isFreeUser(userId: string): Promise<boolean> {
         try {
+            if (process.env.DEMO_ENABLED === 'true') {
+                return false;
+            }
+            const user = await getPrisma().user.findUnique({
+                where: { id: userId },
+                select: { role: true, isDemo: true }
+            });
+            if (user?.isDemo || user?.role === 'admin' || user?.role === 'regional_manager' || user?.role === 'extension_officer') {
+                return false;
+            }
             const data = await this.getUsage(userId);
             if (!data || !data.plan) {
                 return process.env.NODE_ENV !== 'test';
