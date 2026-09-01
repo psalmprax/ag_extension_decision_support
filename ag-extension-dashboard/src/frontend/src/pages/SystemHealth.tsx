@@ -378,7 +378,7 @@ function ComponentHealthCard({
           <div>
             <h4 className="font-bold text-sm text-white group-hover:text-emerald-300 transition-colors">{check.component}</h4>
             <div
-              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xxs font-bold uppercase tracking-wider border mt-1 ${style.pill}`}
+              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xxs font-bold uppercase tracking-wider border mt-1 ${style.pill}`}
             >
               <span className={`w-1.5 h-1.5 rounded-full ${style.dot} animate-pulse`} />
               {check.status}
@@ -634,7 +634,7 @@ export function SystemHealth() {
             <div>
               <div className="flex items-center gap-2.5">
                 <h1 className="text-2xl font-bold tracking-tight text-white">SRE & Self-Healing Telemetry</h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                   <Radio className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />
                   Cluster Online
                 </span>

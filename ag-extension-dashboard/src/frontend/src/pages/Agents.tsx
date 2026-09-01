@@ -152,7 +152,7 @@ export function Agents() {
 
         <div className="flex items-center gap-3">
           {agents.length > 0 && (
-            <div className="hidden lg:inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
+            <div className="hidden lg:inline-flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
               <Radio className="w-3.5 h-3.5" />
               <span>{agents.length} NODES ONLINE</span>
             </div>
@@ -260,7 +260,7 @@ export function Agents() {
                     </div>
 
                     <span
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold font-mono uppercase tracking-wider ${
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold font-mono uppercase tracking-wider ${
                         isHealthy
                           ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
                           : isDegraded

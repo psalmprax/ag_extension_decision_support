@@ -8,6 +8,8 @@ export { AGRO_STAGES, type AgroStageMeta };
 export interface AgroEcosystemCanvasScrubberProps {
   /** Scroll or manual progress value (0.0 to 1.0) */
   progress?: number;
+  /** Callback when progress value changes (0.0 to 1.0) */
+  onProgressChange?: (progress: number) => void;
   /** Callback when stage changes (0: Satellite, 1: Topo/NDVI, 2: SoilGrids, 3: AI Uplink) */
   onStageChange?: (stage: number) => void;
   /** Whether to show interactive scrubbing HUD overlay controls */
@@ -507,8 +509,57 @@ function renderStage4EdgeUplink(rc: RenderContext) {
   ctx.restore();
 }
 
+function syncCanvasDimensions(
+  canvas: HTMLCanvasElement,
+  container: HTMLDivElement | null
+): { cssWidth: number; cssHeight: number; dpr: number } | null {
+  const rect = container ? container.getBoundingClientRect() : canvas.getBoundingClientRect();
+  const cssWidth = Math.floor(rect.width || 600);
+  const cssHeight = Math.floor(rect.height || 400);
+  if (!cssWidth || !cssHeight) return null;
+
+  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+  const targetW = cssWidth * dpr;
+  const targetH = cssHeight * dpr;
+
+  if (canvas.width !== targetW || canvas.height !== targetH) {
+    canvas.width = targetW;
+    canvas.height = targetH;
+    canvas.style.width = `${cssWidth}px`;
+    canvas.style.height = `${cssHeight}px`;
+  }
+
+  return { cssWidth, cssHeight, dpr };
+}
+
+function executeRenderStages(
+  ctx: CanvasRenderingContext2D,
+  cssWidth: number,
+  cssHeight: number,
+  dpr: number,
+  activeProgress: number,
+  mousePos: { x: number; y: number; rawX: number; rawY: number }
+) {
+  const p = Math.max(0, Math.min(1, activeProgress));
+  const time = performance.now() * 0.001;
+
+  if (typeof ctx.save === 'function') ctx.save();
+  if (typeof ctx.scale === 'function') ctx.scale(dpr, dpr);
+  if (typeof ctx.clearRect === 'function') ctx.clearRect(0, 0, cssWidth, cssHeight);
+
+  const rc: RenderContext = { ctx, width: cssWidth, height: cssHeight, p, time, mousePos };
+  renderBackground(rc);
+  renderStage1Orbit(rc);
+  renderStage2Topo(rc);
+  renderStage3Soil(rc);
+  renderStage4EdgeUplink(rc);
+
+  if (typeof ctx.restore === 'function') ctx.restore();
+}
+
 export function AgroEcosystemCanvasScrubber({
   progress: externalProgress,
+  onProgressChange,
   onStageChange,
   showControls = true,
   interactive = false,
@@ -516,14 +567,30 @@ export function AgroEcosystemCanvasScrubber({
 }: AgroEcosystemCanvasScrubberProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [internalProgress, setInternalProgress] = useState(0);
+  const [internalProgress, setInternalProgress] = useState(externalProgress ?? 0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioMuted, setLocalAudioMuted] = useState(!isAudioEnabled());
   const [mousePos, setMousePos] = useState({ x: 0, y: 0, rawX: 0, rawY: 0 });
   const prevStageRef = useRef<number>(-1);
 
-  const activeProgress = externalProgress !== undefined ? externalProgress : internalProgress;
+  // Synchronize external progress if controlled by parent
+  useEffect(() => {
+    if (externalProgress !== undefined) {
+      setInternalProgress(externalProgress);
+    }
+  }, [externalProgress]);
+
+  const activeProgress = internalProgress;
   const currentStage = Math.min(3, Math.floor(activeProgress * 4));
+
+  const updateProgress = useCallback(
+    (nextProgress: number) => {
+      const clamped = Math.max(0, Math.min(1, nextProgress));
+      setInternalProgress(clamped);
+      onProgressChange?.(clamped);
+    },
+    [onProgressChange]
+  );
 
   useEffect(() => {
     onStageChange?.(currentStage);
@@ -538,11 +605,13 @@ export function AgroEcosystemCanvasScrubber({
     const interval = setInterval(() => {
       setInternalProgress((prev) => {
         const next = prev + 0.003;
-        return next > 1 ? 0 : next;
+        const clamped = next > 1 ? 0 : next;
+        onProgressChange?.(clamped);
+        return clamped;
       });
     }, 16);
     return () => clearInterval(interval);
-  }, [isPlaying]);
+  }, [isPlaying, onProgressChange]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current) return;
@@ -572,36 +641,14 @@ export function AgroEcosystemCanvasScrubber({
     const ctx = canvas.getContext('2d');
     if (!ctx || typeof ctx.clearRect !== 'function') return;
 
-    const width = canvas.width;
-    const height = canvas.height;
-    if (!width || !height) return;
-    const p = Math.max(0, Math.min(1, activeProgress));
-    const time = performance.now() * 0.001;
+    const dims = syncCanvasDimensions(canvas, containerRef.current);
+    if (!dims) return;
 
-    ctx.clearRect(0, 0, width, height);
-
-    const rc: RenderContext = { ctx, width, height, p, time, mousePos };
-    renderBackground(rc);
-    renderStage1Orbit(rc);
-    renderStage2Topo(rc);
-    renderStage3Soil(rc);
-    renderStage4EdgeUplink(rc);
+    executeRenderStages(ctx, dims.cssWidth, dims.cssHeight, dims.dpr, activeProgress, mousePos);
   }, [activeProgress, mousePos]);
 
   useEffect(() => {
     const handleResize = () => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const rect = canvas.getBoundingClientRect();
-      const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-      const targetW = (rect.width || 600) * dpr;
-      const targetH = (rect.height || 400) * dpr;
-      canvas.width = targetW;
-      canvas.height = targetH;
-      const ctx = canvas.getContext('2d');
-      if (ctx && typeof ctx.scale === 'function') {
-        ctx.scale(dpr, dpr);
-      }
       render();
     };
 
@@ -628,7 +675,7 @@ export function AgroEcosystemCanvasScrubber({
       ref={containerRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className={`relative w-full h-full min-h-[240px] rounded-xl overflow-hidden border border-white/[0.08] shadow-2xl bg-slate-950 ${className}`}
+      className={`relative w-full h-full min-h-[360px] rounded-xl overflow-hidden border border-white/[0.08] shadow-2xl bg-slate-950 ${className}`}
     >
       <canvas ref={canvasRef} className="w-full h-full block" />
 
@@ -677,7 +724,7 @@ export function AgroEcosystemCanvasScrubber({
                   type="button"
                   aria-label="Reset simulation to start"
                   onClick={() => {
-                    setInternalProgress(0);
+                    updateProgress(0);
                     playScrubTick();
                   }}
                   className="p-1 rounded-md bg-slate-800 hover:bg-slate-700 text-white/60 hover:text-white transition-colors"
@@ -711,7 +758,7 @@ export function AgroEcosystemCanvasScrubber({
             value={activeProgress}
             onChange={(e) => {
               const val = parseFloat(e.target.value);
-              setInternalProgress(val);
+              updateProgress(val);
               playScrubTick();
             }}
             className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-400"
@@ -726,7 +773,8 @@ export function AgroEcosystemCanvasScrubber({
                   type="button"
                   aria-label={`Jump to ${s.badge}`}
                   onClick={() => {
-                    setInternalProgress(s.id * 0.28 + 0.05);
+                    const nextVal = s.id * 0.28 + 0.05;
+                    updateProgress(nextVal);
                     playStageChime(s.id);
                   }}
                   className={`text-[10px] font-mono py-1 px-1.5 rounded-lg border transition-all text-center truncate ${

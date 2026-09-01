@@ -167,7 +167,7 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
             </div>
           </div>
 
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold uppercase tracking-widest mb-3">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold uppercase tracking-widest mb-3">
             <ShieldCheck className="w-3.5 h-3.5" />
             Pro Feature Locked
           </div>

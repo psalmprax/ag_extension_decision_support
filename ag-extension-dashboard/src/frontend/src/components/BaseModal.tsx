@@ -29,7 +29,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
   footer,
   showCloseButton = true,
 }) => {
-  const { radiusClass, btnClass } = useThemeClasses();
+  const { btnClass } = useThemeClasses();
 
   return (
     <AnimatePresence>

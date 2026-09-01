@@ -347,7 +347,7 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
               <div>
                 <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
                   Client & Farmer Channel Onboarding
-                  <span className="text-xxs uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  <span className="text-xxs uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                     Live Hub
                   </span>
                 </h2>
@@ -376,7 +376,7 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
             >
               <Smartphone className="w-4 h-4" />
               <span>SMS & USSD Gateway</span>
-              <span className="text-xxs px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-300">
+              <span className="text-xxs px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-300">
                 {stats.sms}
               </span>
             </button>
@@ -391,7 +391,7 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
             >
               <MessageSquare className="w-4 h-4" />
               <span>WhatsApp Business</span>
-              <span className="text-xxs px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-300">
+              <span className="text-xxs px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-300">
                 {stats.whatsapp}
               </span>
             </button>
@@ -406,7 +406,7 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
             >
               <Bot className="w-4 h-4" />
               <span>Telegram Bot</span>
-              <span className="text-xxs px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-300">
+              <span className="text-xxs px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-300">
                 {stats.telegram}
               </span>
             </button>

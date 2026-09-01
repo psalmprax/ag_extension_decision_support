@@ -225,7 +225,7 @@ const ActionableAI = () => {
         </div>
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-4">
-            <div className="px-3 py-1 bg-primary-500/20 rounded-full border border-primary-500/30">
+            <div className="px-3 py-1 bg-primary-500/20 rounded-md border border-primary-500/30">
               <span className="text-xxs font-black text-primary-400 uppercase tracking-widest">
                 Priority Alpha
               </span>

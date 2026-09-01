@@ -103,7 +103,7 @@ function ReportCard({
 
           <div className="flex items-center gap-2">
             <span
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
                 isReady
                   ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
                   : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
@@ -306,7 +306,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
       <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
         <div className="text-sm font-bold text-white flex items-center gap-2">
           <span>Audit Log Archive</span>
-          <span className="text-xxs font-mono px-2 py-0.5 rounded-full bg-slate-800 text-white/60">
+          <span className="text-xxs font-mono px-2 py-0.5 rounded-md bg-slate-800 text-white/60">
             {filteredReports.length} Available
           </span>
         </div>

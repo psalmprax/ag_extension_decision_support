@@ -109,7 +109,7 @@ const VisitCard: React.FC<VisitCardProps> = ({
           <span
             role="status"
             aria-label={`Visit status: ${visit.status}`}
-            className={`px-2.5 py-0.5 rounded-full text-xxs font-black uppercase tracking-wider border shadow-sm flex items-center gap-1.5 ${getStatusBadge(visit.status)}`}
+            className={`px-2.5 py-0.5 rounded-md text-xxs font-black uppercase tracking-wider border shadow-sm flex items-center gap-1.5 ${getStatusBadge(visit.status)}`}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-current" aria-hidden="true" />
             {visit.status}
@@ -255,7 +255,7 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
             <div>
               <div className="flex items-center gap-2 sm:gap-2.5">
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Field Visits & Itineraries</h1>
-                <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                   <Radio className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />
                   Dispatch Radar
                 </span>

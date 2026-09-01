@@ -194,7 +194,7 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
             <div>
               <div className="flex items-center gap-2.5">
                 <h1 className="text-xl font-bold tracking-tight text-white">AI Agronomic Co-Pilot</h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xxs font-black tracking-wider uppercase bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-black tracking-wider uppercase bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                   <Sparkles className="w-2.5 h-2.5 text-emerald-400" />
                   AG-AGRONOMIST 4.5 PRO
                 </span>
@@ -426,7 +426,7 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
 
               {/* Status Pill */}
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded-full text-xxs font-mono uppercase bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 flex items-center gap-1.5">
+                <span className="px-2.5 py-1 rounded-md text-xxs font-mono uppercase bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   GPU Interactive
                 </span>
@@ -519,7 +519,9 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
                       </span>
                       <span className="text-xxs font-mono text-cyan-400">Drag scrubber to simulate growth phases</span>
                     </div>
-                    <AgroEcosystemCanvasScrubber showControls interactive />
+                    <div className="w-full h-[460px]">
+                      <AgroEcosystemCanvasScrubber showControls interactive className="w-full h-full" />
+                    </div>
                   </div>
                 )}
 

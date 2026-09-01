@@ -168,7 +168,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
       {/* Toggle Tab */}
       <button
         onClick={onToggle}
-        className={`absolute top-1/2 -right-4 translate-y-[-50%] p-1 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-full shadow-lg text-gray-400 hover:text-primary-500 transition-all z-50 group flex items-center justify-center ${!isOpen && 'translate-x-4'}`}
+        className={`absolute top-1/2 -right-4 translate-y-[-50%] p-1 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-lg text-gray-400 hover:text-primary-500 transition-all z-50 group flex items-center justify-center ${!isOpen && 'translate-x-4'}`}
       >
         {isOpen ? (
           <ChevronLeft className="w-6 h-6 group-hover:scale-110 transition-transform" />

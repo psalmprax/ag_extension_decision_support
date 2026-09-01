@@ -369,7 +369,7 @@ export function CropsFields() {
             <div>
               <div className="flex items-center gap-2 sm:gap-2.5">
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Fields & Geospatial Parcels</h1>
-                <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                   <Sprout className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />
                   Growth Cycles Active
                 </span>

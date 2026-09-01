@@ -159,7 +159,7 @@
 
   /* Badge styles */
   .badge {
-    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-widest;
+    @apply inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-widest;
   }
 
   .badge-success {

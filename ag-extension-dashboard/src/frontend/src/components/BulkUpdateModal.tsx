@@ -169,7 +169,7 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
                   {updates.crops.map(crop => (
                     <div
                       key={crop}
-                      className="flex items-center gap-2 px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 rounded-full text-xs font-bold"
+                      className="flex items-center gap-2 px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 rounded-md text-xs font-bold"
                     >
                       {crop}
                       <button

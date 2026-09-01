@@ -540,7 +540,7 @@ export const KnowledgeBase: React.FC = () => {
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
                   Agro-Spatial Knowledge Mesh
                 </h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xxs font-black tracking-wider uppercase bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-black tracking-wider uppercase bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                   <Sparkles className="w-2.5 h-2.5 text-emerald-400" />
                   RAG 2.0
                 </span>
@@ -645,7 +645,7 @@ export const KnowledgeBase: React.FC = () => {
                 <span className="text-xxs font-mono font-bold tracking-widest text-emerald-400 uppercase">
                   Verified Research Scenarios
                 </span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 text-xxs font-mono border border-emerald-500/20">
+                <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-300 text-xxs font-mono border border-emerald-500/20">
                   1-Click Traversal
                 </span>
               </div>
@@ -661,7 +661,7 @@ export const KnowledgeBase: React.FC = () => {
                 >
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                         {sc.crop}
                       </span>
                       <span className="text-[9px] text-white/40 font-mono">{sc.category}</span>
@@ -814,7 +814,7 @@ export const KnowledgeBase: React.FC = () => {
                     <Brain className="w-5 h-5 text-teal-400" />
                     <span>Topological Citation & Concept Mesh</span>
                   </h3>
-                  <span className="px-2.5 py-0.5 rounded-full text-xxs font-mono font-bold uppercase bg-teal-500/10 text-teal-300 border border-teal-500/20">
+                  <span className="px-2.5 py-0.5 rounded-md text-xxs font-mono font-bold uppercase bg-teal-500/10 text-teal-300 border border-teal-500/20">
                     Force-Directed WebGL
                   </span>
                 </div>
@@ -850,11 +850,11 @@ export const KnowledgeBase: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-teal-300 text-sm">{selectedNode.label}</span>
-                      <span className="text-xxs font-mono uppercase px-2 py-0.5 rounded-full bg-white/5 text-white/60">
+                      <span className="text-xxs font-mono uppercase px-2 py-0.5 rounded-md bg-white/5 text-white/60">
                         Type: {selectedNode.category}
                       </span>
                     </div>
-                    <span className="font-mono text-xxs px-2.5 py-1 rounded-full bg-teal-500/10 text-teal-300 font-bold uppercase">
+                    <span className="font-mono text-xxs px-2.5 py-1 rounded-md bg-teal-500/10 text-teal-300 font-bold uppercase">
                       Relevance Score: {(((selectedNode.score ?? 0.9)) * 100).toFixed(0)}%
                     </span>
                   </div>
@@ -1092,7 +1092,7 @@ export const KnowledgeBase: React.FC = () => {
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="px-2.5 py-1 rounded-full text-xxs font-mono font-bold uppercase bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                    <span className="px-2.5 py-1 rounded-md text-xxs font-mono font-bold uppercase bg-purple-500/10 text-purple-300 border border-purple-500/20">
                       {art.category}
                     </span>
                     <span className="text-[10px] font-mono text-white/40">{art.readingTime}</span>
@@ -1141,7 +1141,7 @@ export const KnowledgeBase: React.FC = () => {
                   <div className="p-6 border-b border-white/10 flex items-start justify-between gap-4 bg-slate-950/60">
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="px-2.5 py-0.5 rounded-full text-xxs font-mono font-bold uppercase bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                        <span className="px-2.5 py-0.5 rounded-md text-xxs font-mono font-bold uppercase bg-purple-500/10 text-purple-300 border border-purple-500/20">
                           {selectedArticle.category}
                         </span>
                         <span className="text-xxs font-mono text-emerald-400 flex items-center gap-1">

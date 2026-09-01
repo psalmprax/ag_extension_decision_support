@@ -16,7 +16,7 @@ export function MCPToolsHealthCard({
           {t('mcp_tools_server_status')}
         </h3>
         <div
-          className={`px-3 py-1 rounded-full text-sm font-medium ${
+          className={`px-3 py-1 rounded-md text-sm font-medium ${
             health.status === 'healthy'
               ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300'
               : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300'

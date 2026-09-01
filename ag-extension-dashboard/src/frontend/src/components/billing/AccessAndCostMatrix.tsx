@@ -291,7 +291,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
       <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
               <Radio className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />
               Transparent Unit Rates
             </span>
@@ -368,7 +368,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                   <th className="p-4 md:p-5 text-xxs font-bold text-center uppercase tracking-wider w-[20%] text-white/60">
                     <div className="flex flex-col items-center gap-1">
                       <span>Free Starter</span>
-                      <span className="text-xxs px-2.5 py-0.5 rounded-full bg-white/[0.05] text-white/80 font-mono">
+                      <span className="text-xxs px-2.5 py-0.5 rounded-md bg-white/[0.05] text-white/80 font-mono">
                         $0 / month
                       </span>
                     </div>
@@ -379,7 +379,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                         <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
                         <span>Pro Officer</span>
                       </div>
-                      <span className="text-xxs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold font-mono">
+                      <span className="text-xxs px-2.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold font-mono">
                         $29 / month
                       </span>
                     </div>
@@ -390,7 +390,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                         <Building2 className="w-3.5 h-3.5 text-purple-400" />
                         <span>Enterprise Org</span>
                       </div>
-                      <span className="text-xxs px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-bold">
+                      <span className="text-xxs px-2.5 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30 font-bold">
                         Custom Tier
                       </span>
                     </div>

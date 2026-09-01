@@ -249,7 +249,7 @@ export const FarmerRegistrationForm: React.FC = () => {
             <div>
               <div className="flex items-center gap-2.5">
                 <h1 className="text-2xl font-bold tracking-tight text-white">Register Client</h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                   <Radio className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />
                   Edge Intake Node
                 </span>
@@ -579,7 +579,7 @@ export const FarmerRegistrationForm: React.FC = () => {
                 <Activity className="w-4 h-4 text-emerald-400" />
                 <h2 className="text-sm font-bold uppercase tracking-wider text-white">Vital Score Baseline</h2>
               </div>
-              <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${getVitalScoreColor(currentVitalScore)}`}>
+              <span className={`px-2.5 py-0.5 rounded-md text-xs font-bold border ${getVitalScoreColor(currentVitalScore)}`}>
                 {currentVitalScore}/100 • {getVitalScoreLabel(currentVitalScore)}
               </span>
             </div>

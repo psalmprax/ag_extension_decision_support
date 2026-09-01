@@ -78,7 +78,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
             <div>
               <div className="flex items-center gap-2.5">
                 <h1 className="text-2xl font-bold tracking-tight text-white">Client Portfolio</h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                   <Radio className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />
                   Telemetry Mesh Active
                 </span>

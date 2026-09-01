@@ -81,7 +81,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md backdrop-blur-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
             <Radio className="w-3.5 h-3.5" />
             <span>CHANNELS ONLINE (4/4)</span>
           </span>
@@ -242,7 +242,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                   <div className="min-w-0">
                     <h4 className="font-bold text-xs sm:text-sm text-white flex items-center gap-2 truncate">
                       <span className="truncate">{activeConv.farmerName || activeConv.title || 'Smallholder Client'}</span>
-                      <span className="hidden sm:inline text-[9px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 shrink-0">
+                      <span className="hidden sm:inline text-[9px] font-mono uppercase px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 shrink-0">
                         SMS & WhatsApp Synced
                       </span>
                     </h4>

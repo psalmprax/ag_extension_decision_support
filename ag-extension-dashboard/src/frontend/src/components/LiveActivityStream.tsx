@@ -51,14 +51,14 @@ interface LiveActivityStreamProps {
 function getScoreBadge(score: number) {
   if (score >= 70) {
     return (
-      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-black bg-rose-500/10 text-rose-400 border border-rose-500/30 animate-pulse">
+      <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-black bg-rose-500/10 text-rose-400 border border-rose-500/30 animate-pulse">
         <Flame className="w-3 h-3 text-rose-400" />
         {score}/100
       </span>
     );
   }
   return (
-    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+    <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
       <Flame className="w-3 h-3 text-amber-400" />
       {score}/100
     </span>

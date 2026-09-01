@@ -164,11 +164,11 @@ const MediaAssetsSection = ({
                 <Maximize2 className="w-6 h-6" />
               </div>
             </div>
-            <div className="absolute top-3 left-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-xxs font-black uppercase tracking-widest">
+            <div className="absolute top-3 left-3 px-3 py-1 bg-black/50 backdrop-blur-md rounded-md flex items-center gap-1.5 text-white text-xxs font-black uppercase tracking-widest">
               <ImageIcon className="w-3 h-3" />
               Image
             </div>
-            <div className="absolute bottom-3 left-3 px-3 py-1 bg-primary-600/90 backdrop-blur-md rounded-full flex items-center gap-1.5 text-white text-xs font-black uppercase tracking-widest">
+            <div className="absolute bottom-3 left-3 px-3 py-1 bg-primary-600/90 backdrop-blur-md rounded-md flex items-center gap-1.5 text-white text-xs font-black uppercase tracking-widest">
               <CheckCircle2 className="w-2.5 h-2.5" />
               Verified ALFA Asset
             </div>

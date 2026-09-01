@@ -532,7 +532,7 @@ export function LandingPage() {
             <motion.div initial="hidden" animate="visible" variants={stagger} className="space-y-5 sm:space-y-8 text-center sm:text-left mx-auto sm:mx-0 min-w-0 max-w-full overflow-hidden">
               <motion.div
                 variants={fadeUp}
-                className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] backdrop-blur-md shadow-sm max-w-full mx-auto sm:mx-0 overflow-hidden"
+                className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-md bg-white/[0.04] border border-white/[0.08] backdrop-blur-md shadow-sm max-w-full mx-auto sm:mx-0 overflow-hidden"
               >
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
                 <span className="text-[10px] sm:text-xs font-medium tracking-wide text-white/80 font-mono truncate">
@@ -711,7 +711,7 @@ export function LandingPage() {
                           {item.label}
                         </div>
                         {item.count && (
-                          <span className="text-[8px] text-white/25 bg-white/[0.04] px-1.5 py-0.5 rounded-full">
+                          <span className="text-[8px] text-white/25 bg-white/[0.04] px-1.5 py-0.5 rounded-md">
                             {item.count}
                           </span>
                         )}
@@ -778,7 +778,7 @@ export function LandingPage() {
                               {stat.value}
                             </span>
                             <span
-                              className="text-[8px] font-semibold px-1.5 py-0.5 rounded-full"
+                              className="text-[8px] font-semibold px-1.5 py-0.5 rounded-md"
                               style={{ color: stat.color, background: `${stat.color}15` }}
                             >
                               {stat.change}
@@ -938,7 +938,7 @@ export function LandingPage() {
                               />
                             </div>
                             <span
-                              className={`px-1.5 py-0.5 rounded-full text-[8px] font-semibold ${f.statusBg}`}
+                              className={`px-1.5 py-0.5 rounded-md text-[8px] font-semibold ${f.statusBg}`}
                             >
                               {f.status}
                             </span>
@@ -1032,7 +1032,7 @@ export function LandingPage() {
             >
               <motion.div
                 variants={fadeUp}
-                className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-[0.2em] mb-4"
+                className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-[0.2em] mb-4"
               >
                 <Users className="w-3.5 h-3.5" />
                 Who We Empower
@@ -1072,12 +1072,12 @@ export function LandingPage() {
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
-                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950/80 backdrop-blur-md border border-amber-500/30 text-amber-300 text-xxs font-bold uppercase tracking-wider">
+                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-950/80 backdrop-blur-md border border-amber-500/30 text-amber-300 text-xxs font-bold uppercase tracking-wider">
                     <MessageSquare className="w-3 h-3 text-amber-400" />
                     Direct Farmer Advisory
                   </div>
                   <div className="absolute bottom-3 left-4 right-4">
-                    <span className="text-xxs font-mono text-emerald-400 bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                    <span className="text-xxs font-mono text-emerald-400 bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded-md">
                       Zero Smartphone Required
                     </span>
                   </div>
@@ -1126,12 +1126,12 @@ export function LandingPage() {
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
-                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950/80 backdrop-blur-md border border-emerald-500/40 text-emerald-300 text-xxs font-bold uppercase tracking-wider">
+                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-950/80 backdrop-blur-md border border-emerald-500/40 text-emerald-300 text-xxs font-bold uppercase tracking-wider">
                     <Smartphone className="w-3 h-3 text-emerald-400" />
                     Field-Ready Mobile PWA
                   </div>
                   <div className="absolute bottom-3 left-4 right-4">
-                    <span className="text-xxs font-mono text-emerald-300 bg-emerald-500/30 border border-emerald-400/40 px-2 py-0.5 rounded-full font-bold">
+                    <span className="text-xxs font-mono text-emerald-300 bg-emerald-500/30 border border-emerald-400/40 px-2 py-0.5 rounded-md font-bold">
                       100% Offline-First Sync
                     </span>
                   </div>
@@ -1180,12 +1180,12 @@ export function LandingPage() {
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
-                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950/80 backdrop-blur-md border border-cyan-500/30 text-cyan-300 text-xxs font-bold uppercase tracking-wider">
+                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-950/80 backdrop-blur-md border border-cyan-500/30 text-cyan-300 text-xxs font-bold uppercase tracking-wider">
                     <BarChart3 className="w-3 h-3 text-cyan-400" />
                     Macro Yield &amp; Supply Intelligence
                   </div>
                   <div className="absolute bottom-3 left-4 right-4">
-                    <span className="text-xxs font-mono text-cyan-300 bg-cyan-500/20 border border-cyan-500/30 px-2 py-0.5 rounded-full">
+                    <span className="text-xxs font-mono text-cyan-300 bg-cyan-500/20 border border-cyan-500/30 px-2 py-0.5 rounded-md">
                       Enterprise Oversight
                     </span>
                   </div>
@@ -1226,16 +1226,16 @@ export function LandingPage() {
           <div className="max-w-[90rem] w-full mx-auto px-4 sm:px-6 relative z-10">
             {/* Live Telemetry Ribbons */}
             <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-8 sm:mb-10">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
                 <span className="w-2 h-2 rounded-full bg-emerald-400 -ml-4 shrink-0" />
                 <span>Autonomous Agent Fleet: 24/7 Monitoring</span>
               </div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold">
                 <Radio className="w-3.5 h-3.5 shrink-0" />
                 <span>NASA POWER Satellite Stream Synced</span>
               </div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-semibold">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-semibold">
                 <Sparkles className="w-3.5 h-3.5 shrink-0" />
                 <span>Closed-Loop Regional Skill Synthesis</span>
               </div>
@@ -1283,7 +1283,7 @@ export function LandingPage() {
                     <div>
                       <div className="font-bold text-sm text-white flex items-center gap-2">
                         Live Goal Mode Sandbox
-                        <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
+                        <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
                           Interactive
                         </span>
                       </div>
@@ -1389,7 +1389,7 @@ export function LandingPage() {
                       <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
                       <span className="font-bold text-xs text-white">Closed-Loop Regional Skill Card</span>
                     </div>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 shrink-0">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 shrink-0">
                       {activePreset.confidence} Verified
                     </span>
                   </div>
@@ -1622,7 +1622,7 @@ export function LandingPage() {
                   <div>
                     <div className="text-sm font-bold text-white/90 flex items-center gap-2">
                       Real-World Agronomic Intelligence Trail
-                      <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+                      <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
                         Verified
                       </span>
                     </div>

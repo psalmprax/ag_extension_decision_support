@@ -467,7 +467,7 @@ const AlphaAgentOps: React.FC = () => {
             <div>
               <div className="flex items-center gap-2.5">
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Agent Fleet Command</h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xxs font-black tracking-wider uppercase bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-black tracking-wider uppercase bg-purple-500/10 text-purple-300 border border-purple-500/20">
                   <Sparkles className="w-2.5 h-2.5 text-purple-400" />
                   DEMO FLEET VIEW
                 </span>
@@ -544,7 +544,7 @@ const AlphaAgentOps: React.FC = () => {
             >
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                  <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-300 border border-purple-500/20">
                     {sc.tag}
                   </span>
                   <Zap className="w-3 h-3 text-purple-400 group-hover:animate-bounce" />
@@ -610,7 +610,7 @@ const AlphaAgentOps: React.FC = () => {
                       </div>
                     </div>
 
-                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase ${
+                    <span className={`px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase ${
                       agent.status === 'running'
                         ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 animate-pulse'
                         : agent.status === 'online'
