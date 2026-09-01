@@ -18,11 +18,8 @@ import { apiBudgetTool } from './apiBudgetTool';
 import { translationTool } from './translationTool';
 import { diagnoseFromSymptomsTool, analyzePlantImageTool, getDiseaseInfoTool } from './plantDiseaseTools';
 import { nasaPowerTool } from './nasaPowerTool';
+import { aihubmixAccountTool } from './aihubmixTool';
 
-/**
- * A registry of all available tools for the AI agent.
- * Add new tools to this array to make them available to the agent.
- */
 /**
  * A registry of all available tools for the AI agent.
  * Add new tools to this array to make them available to the agent.
@@ -50,6 +47,7 @@ export const toolRegistry: AnyTool[] = [
   diagnoseFromSymptomsTool,
   analyzePlantImageTool,
   getDiseaseInfoTool,
+  aihubmixAccountTool,
 ];
 
 /**
