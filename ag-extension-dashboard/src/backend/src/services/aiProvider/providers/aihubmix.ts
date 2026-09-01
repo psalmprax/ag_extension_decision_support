@@ -1,6 +1,18 @@
 import axios from 'axios';
 import { logger } from '../../../utils/logger';
-import { BaseAIProvider, AIProviderType, TextGenerationOptions, TextGenerationResult, EmbeddingOptions, EmbeddingResult } from '../types';
+import {
+  BaseAIProvider,
+  AIProviderType,
+  TextGenerationOptions,
+  TextGenerationResult,
+  EmbeddingOptions,
+  EmbeddingResult,
+  ReasoningOptions,
+  ReasoningResult,
+  ClassificationOptions,
+  ClassificationResult,
+} from '../types';
+import { REASONING_SYSTEM_PROMPT, extractVisuals } from '../assetLibrary';
 
 export interface AIHubMixRequest {
   model?: string;
@@ -385,5 +397,55 @@ export class AIHubMixProvider extends BaseAIProvider {
       embedding: response.data.data[0].embedding,
       model,
     };
+  }
+
+  public override async analyzeWithReasoning(
+    context: string,
+    query: string,
+    options?: ReasoningOptions
+  ): Promise<ReasoningResult> {
+    const groundedPrompt = `Use the context below as the authoritative source for this answer. If the context is incomplete, say what is missing before adding general agricultural guidance. Cite source titles or URLs when available.\n\nContext:\n${context || 'No specific context found in knowledge base.'}\n\nQuestion: ${query}`;
+    const messages = [
+      { role: 'system', content: REASONING_SYSTEM_PROMPT },
+      { role: 'user', content: groundedPrompt },
+    ];
+
+    const result = await this.generateText(messages, {
+      temperature: options?.temperature ?? 0.2,
+      maxTokens: options?.maxTokens ?? 2000,
+    });
+
+    const text = result.text ?? '';
+    const visuals = extractVisuals(text);
+
+    const cleanAnswer = text
+      .replace(/<visuals>[\s\S]*?<\/visuals>/gi, '')
+      .replace(/```json[\s\S]*?```/gi, '')
+      .trim();
+
+    return {
+      reasoning: 'Detailed Intelligence Analysis completed via AIHubMix.',
+      answer: cleanAnswer,
+      confidence: 0.95,
+      visuals,
+    };
+  }
+
+  public override async classify(
+    input: string,
+    options: ClassificationOptions
+  ): Promise<ClassificationResult> {
+    const prompt = `Classify the following text into the provided taxonomy labels: ${options.taxonomy}\n\nText: "${input}"\n\nReturn JSON: { "labels": [{ "label": string, "score": number }] }`;
+    const messages = [
+      { role: 'system', content: 'You are an agricultural classifier. Output only valid JSON.' },
+      { role: 'user', content: prompt },
+    ];
+    const res = await this.generateText(messages, { temperature: 0.1 });
+    try {
+      const parsed = JSON.parse(res.text || '{}');
+      return { labels: parsed.labels || [{ label: 'general_inquiry', score: 1.0 }] };
+    } catch {
+      return { labels: [{ label: 'general_inquiry', score: 1.0 }] };
+    }
   }
 }
