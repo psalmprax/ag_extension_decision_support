@@ -509,6 +509,54 @@ function renderStage4EdgeUplink(rc: RenderContext) {
   ctx.restore();
 }
 
+function syncCanvasDimensions(
+  canvas: HTMLCanvasElement,
+  container: HTMLDivElement | null
+): { cssWidth: number; cssHeight: number; dpr: number } | null {
+  const rect = container ? container.getBoundingClientRect() : canvas.getBoundingClientRect();
+  const cssWidth = Math.floor(rect.width || 600);
+  const cssHeight = Math.floor(rect.height || 400);
+  if (!cssWidth || !cssHeight) return null;
+
+  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+  const targetW = cssWidth * dpr;
+  const targetH = cssHeight * dpr;
+
+  if (canvas.width !== targetW || canvas.height !== targetH) {
+    canvas.width = targetW;
+    canvas.height = targetH;
+    canvas.style.width = `${cssWidth}px`;
+    canvas.style.height = `${cssHeight}px`;
+  }
+
+  return { cssWidth, cssHeight, dpr };
+}
+
+function executeRenderStages(
+  ctx: CanvasRenderingContext2D,
+  cssWidth: number,
+  cssHeight: number,
+  dpr: number,
+  activeProgress: number,
+  mousePos: { x: number; y: number; rawX: number; rawY: number }
+) {
+  const p = Math.max(0, Math.min(1, activeProgress));
+  const time = performance.now() * 0.001;
+
+  if (typeof ctx.save === 'function') ctx.save();
+  if (typeof ctx.scale === 'function') ctx.scale(dpr, dpr);
+  if (typeof ctx.clearRect === 'function') ctx.clearRect(0, 0, cssWidth, cssHeight);
+
+  const rc: RenderContext = { ctx, width: cssWidth, height: cssHeight, p, time, mousePos };
+  renderBackground(rc);
+  renderStage1Orbit(rc);
+  renderStage2Topo(rc);
+  renderStage3Soil(rc);
+  renderStage4EdgeUplink(rc);
+
+  if (typeof ctx.restore === 'function') ctx.restore();
+}
+
 export function AgroEcosystemCanvasScrubber({
   progress: externalProgress,
   onProgressChange,
@@ -593,46 +641,10 @@ export function AgroEcosystemCanvasScrubber({
     const ctx = canvas.getContext('2d');
     if (!ctx || typeof ctx.clearRect !== 'function') return;
 
-    const container = containerRef.current;
-    const rect = container ? container.getBoundingClientRect() : canvas.getBoundingClientRect();
-    const cssWidth = Math.floor(rect.width || 600);
-    const cssHeight = Math.floor(rect.height || 400);
-    if (!cssWidth || !cssHeight) return;
+    const dims = syncCanvasDimensions(canvas, containerRef.current);
+    if (!dims) return;
 
-    const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-    const targetW = cssWidth * dpr;
-    const targetH = cssHeight * dpr;
-
-    if (canvas.width !== targetW || canvas.height !== targetH) {
-      canvas.width = targetW;
-      canvas.height = targetH;
-      canvas.style.width = `${cssWidth}px`;
-      canvas.style.height = `${cssHeight}px`;
-    }
-
-    const p = Math.max(0, Math.min(1, activeProgress));
-    const time = performance.now() * 0.001;
-
-    if (typeof ctx.save === 'function') {
-      ctx.save();
-    }
-    if (typeof ctx.scale === 'function') {
-      ctx.scale(dpr, dpr);
-    }
-    if (typeof ctx.clearRect === 'function') {
-      ctx.clearRect(0, 0, cssWidth, cssHeight);
-    }
-
-    const rc: RenderContext = { ctx, width: cssWidth, height: cssHeight, p, time, mousePos };
-    renderBackground(rc);
-    renderStage1Orbit(rc);
-    renderStage2Topo(rc);
-    renderStage3Soil(rc);
-    renderStage4EdgeUplink(rc);
-
-    if (typeof ctx.restore === 'function') {
-      ctx.restore();
-    }
+    executeRenderStages(ctx, dims.cssWidth, dims.cssHeight, dims.dpr, activeProgress, mousePos);
   }, [activeProgress, mousePos]);
 
   useEffect(() => {
