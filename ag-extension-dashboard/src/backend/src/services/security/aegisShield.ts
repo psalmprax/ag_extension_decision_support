@@ -58,7 +58,7 @@ class AegisShield {
     },
     {
       name: 'xss_attempt',
-      pattern: /<script[\s>]|javascript:|on\w+\s*=/gi,
+      pattern: /<script[\s>]|javascript:|\bon(?:load|error|click|dblclick|mouse\w+|key\w+|focus|blur|change|submit|input|contextmenu|drag\w+|drop|pointer\w+|animation\w+|transition\w+)\s*=/gi,
       severity: 'high' as const,
     },
   ];
