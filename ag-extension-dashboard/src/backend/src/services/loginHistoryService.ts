@@ -64,7 +64,6 @@ export function parseDeviceFromUserAgent(userAgent?: string | null): string {
   return `${browser} on ${os}`;
 }
 
-// fallow-ignore-next-line unused-export
 export function resolveLocationFromHeaders(
   headers: Record<string, string | string[] | undefined> = {},
   ipAddress?: string | null,
