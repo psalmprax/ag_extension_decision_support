@@ -106,48 +106,91 @@ export class OmniRouteService {
 
   /** Get the full catalog (for fallback) */
   public static getFullCatalog(): RouteCandidate[] {
-    // Reconstruct from the original - in production, store reference
-    return [
-      // AIHubMix Free Tier
-      { providerName: 'aihubmix', model: 'gpt-5.5-free', score: 100, isFree: true },
-      { providerName: 'aihubmix', model: 'google/gemini-2.0-flash-exp:free', score: 98, isFree: true },
-      { providerName: 'aihubmix', model: 'deepseek-ai/DeepSeek-V3', score: 95, isFree: true },
-      // ... rest of catalog would be loaded from original source
-    ];
+    return [...this.FREE_LLM_CATALOG];
   }
 
   public static readonly FREE_LLM_CATALOG: RouteCandidate[] = [
-    // --- AIHubMix Free LLM Tier ---
+    // ═════════════════════════════════════════════════════════════════════
+    // --- AIHubMix Free Tier (Tier 1 Frontier & Reasoning Models) ---
+    // ═════════════════════════════════════════════════════════════════════
     { providerName: 'aihubmix', model: 'gpt-5.5-free', score: 100, isFree: true },
-    { providerName: 'aihubmix', model: 'google/gemini-2.0-flash-exp:free', score: 98, isFree: true },
-    { providerName: 'aihubmix', model: 'deepseek-ai/DeepSeek-V3', score: 95, isFree: true },
-    { providerName: 'aihubmix', model: 'meta-llama/Llama-3.3-70b-instruct:free', score: 92, isFree: true },
-    { providerName: 'aihubmix', model: 'qwen/qwen-2.5-coder-32b-instruct:free', score: 88, isFree: true },
+    { providerName: 'aihubmix', model: 'gpt-4o-free', score: 99, isFree: true },
+    { providerName: 'aihubmix', model: 'gpt-4.1-free', score: 98, isFree: true },
+    { providerName: 'aihubmix', model: 'gemini-3.7-flash-free', score: 98, isFree: true },
+    { providerName: 'aihubmix', model: 'gemini-3.6-flash-free', score: 97, isFree: true },
+    { providerName: 'aihubmix', model: 'nemotron-3-ultra-550b-a55b-free', score: 97, isFree: true },
+    { providerName: 'aihubmix', model: 'coding-glm-5.3-free', score: 96, isFree: true },
+    { providerName: 'aihubmix', model: 'mimo-v2-flash-free', score: 96, isFree: true },
+    { providerName: 'aihubmix', model: 'gemini-3.5-flash-lite-free', score: 95, isFree: true },
+    { providerName: 'aihubmix', model: 'gemma-4-31b-it-free', score: 95, isFree: true },
+    { providerName: 'aihubmix', model: 'minimax-m3-free', score: 95, isFree: true },
+    { providerName: 'aihubmix', model: 'nemotron-3-super-120b-a12b-free', score: 95, isFree: true },
+    { providerName: 'aihubmix', model: 'xiaomi-mimo-v2.5-pro-free', score: 95, isFree: true },
+    { providerName: 'aihubmix', model: 'coding-kimi-k3-free', score: 94, isFree: true },
+    { providerName: 'aihubmix', model: 'gpt-4.1-mini-free', score: 94, isFree: true },
+    { providerName: 'aihubmix', model: 'gemini-3-flash-preview-free', score: 94, isFree: true },
+    { providerName: 'aihubmix', model: 'gemma-4-26b-a4b-it-free', score: 94, isFree: true },
+    { providerName: 'aihubmix', model: 'hy3-free', score: 94, isFree: true },
+    { providerName: 'aihubmix', model: 'coding-glm-5.1-free', score: 94, isFree: true },
+    { providerName: 'aihubmix', model: 'coding-glm-5-free', score: 93, isFree: true },
+    { providerName: 'aihubmix', model: 'coding-glm-5-turbo-free', score: 93, isFree: true },
+    { providerName: 'aihubmix', model: 'xiaomi-mimo-v2.5-free', score: 93, isFree: true },
+    { providerName: 'aihubmix', model: 'xiaomi-mimo-v2-pro-free', score: 93, isFree: true },
+    { providerName: 'aihubmix', model: 'xiaomi-mimo-v2-omni-free', score: 93, isFree: true },
+    { providerName: 'aihubmix', model: 'nemotron-3.5-lightning-free', score: 93, isFree: true },
+    { providerName: 'aihubmix', model: 'nemotron-3-nano-omni-30b-a3b-free', score: 93, isFree: true },
+    { providerName: 'aihubmix', model: 'minimax-m2.7-free', score: 93, isFree: true },
+    { providerName: 'aihubmix', model: 'coding-minimax-m3-free', score: 93, isFree: true },
+    { providerName: 'aihubmix', model: 'coding-minimax-m2.7-free', score: 93, isFree: true },
+    { providerName: 'aihubmix', model: 'kimi-for-coding-free', score: 93, isFree: true },
+    { providerName: 'aihubmix', model: 'gpt-4.1-nano-free', score: 93, isFree: true },
+    { providerName: 'aihubmix', model: 'coding-glm-4.7-free', score: 92, isFree: true },
+    { providerName: 'aihubmix', model: 'glm-4.7-flash-free', score: 92, isFree: true },
+    { providerName: 'aihubmix', model: 'coding-glm-4.6-free', score: 92, isFree: true },
+    { providerName: 'aihubmix', model: 'nemotron-nano-12b-v2-vl-free', score: 92, isFree: true },
+    { providerName: 'aihubmix', model: 'nemotron-nano-9b-v2-free', score: 92, isFree: true },
+    { providerName: 'aihubmix', model: 'nemotron-3-nano-30b-a3b-free', score: 92, isFree: true },
+    { providerName: 'aihubmix', model: 'north-mini-code-free', score: 92, isFree: true },
+    { providerName: 'aihubmix', model: 'laguna-s-2.1-free', score: 92, isFree: true },
+    { providerName: 'aihubmix', model: 'laguna-xs-2.1-free', score: 92, isFree: true },
+    { providerName: 'aihubmix', model: 'dots3-note-preview-free', score: 92, isFree: true },
+    { providerName: 'aihubmix', model: 'coding-minimax-m2.5-free', score: 92, isFree: true },
+    { providerName: 'aihubmix', model: 'coding-minimax-m2-free', score: 91, isFree: true },
+    { providerName: 'aihubmix', model: 'coding-minimax-m2.1-free', score: 91, isFree: true },
+    { providerName: 'aihubmix', model: 'ling-3.0-flash-free', score: 91, isFree: true },
+    { providerName: 'aihubmix', model: 'ling-3.0-tiny-free', score: 90, isFree: true },
+    { providerName: 'aihubmix', model: 'gpt-oss-20b-free', score: 90, isFree: true },
+    { providerName: 'aihubmix', model: 'nemotron-3.5-content-safety-free', score: 89, isFree: true },
+    { providerName: 'aihubmix', model: 'lfm-2.5-2.6b-free', score: 88, isFree: true },
 
+    // ═════════════════════════════════════════════════════════════════════
     // --- OpenRouter Free LLM Tier ---
-    { providerName: 'openrouter', model: 'google/gemini-2.0-flash-exp:free', score: 97, isFree: true },
-    { providerName: 'openrouter', model: 'google/gemini-2.0-flash-lite-preview-02-05:free', score: 94, isFree: true },
-    { providerName: 'openrouter', model: 'meta-llama/Llama-3.3-70b-instruct:free', score: 91, isFree: true },
+    // ═════════════════════════════════════════════════════════════════════
+    { providerName: 'openrouter', model: 'meta-llama/llama-3.3-70b-instruct:free', score: 92, isFree: true },
+    { providerName: 'openrouter', model: 'google/gemini-2.0-flash-exp:free', score: 91, isFree: true },
     { providerName: 'openrouter', model: 'deepseek/deepseek-r1:free', score: 90, isFree: true },
+    { providerName: 'openrouter', model: 'google/gemini-2.0-flash-lite-preview-02-05:free', score: 89, isFree: true },
     { providerName: 'openrouter', model: 'mistralai/mistral-7b-instruct:free', score: 85, isFree: true },
     { providerName: 'openrouter', model: 'qwen/qwen-2-7b-instruct:free', score: 82, isFree: true },
 
-    // --- Groq High-Speed Free Tier ---
-    { providerName: 'groq', model: 'compound', score: 88, isFree: true },
-    { providerName: 'groq', model: 'compound-mini', score: 87, isFree: true },
+    // ═════════════════════════════════════════════════════════════════════
+    // --- Groq High-Speed Tier ---
+    // ═════════════════════════════════════════════════════════════════════
     { providerName: 'groq', model: 'llama-3.3-70b-versatile', score: 89, isFree: true },
     { providerName: 'groq', model: 'mixtral-8x7b-32768', score: 86, isFree: true },
 
-    // --- Hugging Face Inference Router ---
+    // ═════════════════════════════════════════════════════════════════════
+    // --- NVIDIA NIM Free Credits & Hugging Face ---
+    // ═════════════════════════════════════════════════════════════════════
+    { providerName: 'nvidia', model: 'nvidia/llama-3.1-nemotron-70b-instruct', score: 85, isFree: true },
+    { providerName: 'nvidia', model: 'meta/llama-3.1-8b-instruct', score: 82, isFree: true },
     { providerName: 'huggingface', model: 'mistralai/Mistral-7B-Instruct-v0.3', score: 83, isFree: true },
     { providerName: 'huggingface', model: 'google/gemma-2-9b-it', score: 80, isFree: true },
 
-    // --- NVIDIA NIM Free Credits ---
-    { providerName: 'nvidia', model: 'meta/llama-3.1-8b-instruct', score: 82, isFree: true },
-    { providerName: 'nvidia', model: 'nvidia/llama-3.1-nemotron-70b-instruct', score: 85, isFree: true },
-
-    // --- OpenAI Fallback Paid ---
-    { providerName: 'openai', model: 'gpt-4o-mini', score: 80, isFree: false }
+    // ═════════════════════════════════════════════════════════════════════
+    // --- Paid Fallback Tier ---
+    // ═════════════════════════════════════════════════════════════════════
+    { providerName: 'openai', model: 'gpt-4o-mini', score: 80, isFree: false },
   ];
 
   private static async tryCandidate(
