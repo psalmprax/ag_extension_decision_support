@@ -57,6 +57,8 @@ services:
     build:
       context: ./src/backend
       target: production
+    env_file:
+      - .env
     environment:
       NODE_ENV: staging
       LOG_LEVEL: ${LOG_LEVEL:-info}
