@@ -54,7 +54,8 @@ model User {
   reassignmentRecords FarmerAssignmentHistory[] @relation("AssignmentReassigner")
   uploads         UploadRecord[]
   recordedConsents DataConsent[] @relation("ConsentRecorder")
-  requestedExports DataExportRequest[]
+  lastLoginAt   DateTime?          @map("last_login_at") @db.Timestamp(6)
+  loginHistories LoginHistory[]
   tenantId       String?            @map("tenant_id") @db.Uuid
   tenant         Tenant?            @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   tenantMemberships TenantMembership[]
@@ -1021,3 +1022,24 @@ model SoilLabResult {
   @@index([fieldId])
   @@map("soil_lab_results")
 }
+
+model LoginHistory {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String?   @map("user_id") @db.Uuid
+  email         String    @db.VarChar(255)
+  status        String    @db.VarChar(20) // 'success' | 'failed'
+  failureReason String?   @map("failure_reason") @db.VarChar(100)
+  ipAddress     String?   @map("ip_address") @db.VarChar(64)
+  userAgent     String?   @map("user_agent") @db.VarChar(512)
+  device        String?   @db.VarChar(100)
+  location      String?   @db.VarChar(150)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+
+  user          User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([email, createdAt])
+  @@index([status])
+  @@map("login_history")
+}
+

@@ -15,10 +15,14 @@ import {
   Radio,
   CheckCircle2,
   AlertCircle,
+  History,
+  Laptop,
+  KeyRound,
 } from 'lucide-react';
 import apiClient from '@/api/client';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useDemoMode, DEMO_USERS } from '@/demo';
+import { fetchLoginHistory, fetchLoginStats } from '@/api/authService';
 
 interface User {
   id: string;
@@ -28,6 +32,7 @@ interface User {
   role: string;
   region: string;
   phone: string;
+  lastLoginAt?: string | null;
 }
 
 const ROLES = [
@@ -61,6 +66,7 @@ export function UserManagementPage() {
   const queryClient = useQueryClient();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedUserForHistory, setSelectedUserForHistory] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [formData, setFormData] = useState({
@@ -74,6 +80,18 @@ export function UserManagementPage() {
   });
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
+
+  const { data: loginHistoryData, isLoading: isLoadingHistory } = useQuery({
+    queryKey: ['login-history', selectedUserForHistory?.id],
+    queryFn: () => fetchLoginHistory({ userId: selectedUserForHistory?.id, limit: 25 }),
+    enabled: !!selectedUserForHistory,
+  });
+
+  const { data: loginStatsData } = useQuery({
+    queryKey: ['login-stats', selectedUserForHistory?.id],
+    queryFn: () => fetchLoginStats(selectedUserForHistory?.id),
+    enabled: !!selectedUserForHistory,
+  });
 
   // Fetch users
   const { data: usersData, isLoading } = useQuery({
@@ -298,6 +316,19 @@ export function UserManagementPage() {
                       <span className="font-mono">{user.phone}</span>
                     </div>
                   )}
+
+                  <div className="pt-2 mt-2 border-t border-white/5 flex items-center justify-between">
+                    <span className="text-[10px] text-white/40 font-mono truncate max-w-[150px]">
+                      {user.lastLoginAt ? `Last: ${new Date(user.lastLoginAt).toLocaleDateString()}` : 'No recent login'}
+                    </span>
+                    <button
+                      onClick={() => setSelectedUserForHistory(user)}
+                      className="text-[11px] font-bold text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1 shrink-0"
+                    >
+                      <History className="w-3 h-3" />
+                      <span>History</span>
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             );
@@ -460,6 +491,118 @@ export function UserManagementPage() {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Login History Modal ── */}
+      <AnimatePresence>
+        {selectedUserForHistory && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4"
+            onClick={() => setSelectedUserForHistory(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="backdrop-blur-2xl bg-slate-900/95 border border-white/10 rounded-xl shadow-2xl w-full max-w-2xl p-6 sm:p-8 space-y-6 text-white"
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                    <History className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold">Login & Access History</h2>
+                    <p className="text-xs text-white/50">
+                      {selectedUserForHistory.firstName} {selectedUserForHistory.lastName} ({selectedUserForHistory.email})
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedUserForHistory(null)}
+                  className="p-1.5 text-white/40 hover:text-white rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Telemetry Stats */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
+                  <span className="text-xxs font-bold text-white/40 uppercase tracking-wider block">Total Logins</span>
+                  <strong className="text-base font-bold text-white font-mono">{loginStatsData?.totalLogins ?? 0}</strong>
+                </div>
+                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
+                  <span className="text-xxs font-bold text-white/40 uppercase tracking-wider block">Failed (24h)</span>
+                  <strong className="text-base font-bold text-rose-400 font-mono">{loginStatsData?.failedAttempts24h ?? 0}</strong>
+                </div>
+                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
+                  <span className="text-xxs font-bold text-white/40 uppercase tracking-wider block">Last IP</span>
+                  <strong className="text-xs font-bold text-emerald-400 font-mono truncate block">{loginStatsData?.lastLoginIp || '—'}</strong>
+                </div>
+              </div>
+
+              {/* Table of Attempts */}
+              <div className="max-h-[300px] overflow-y-auto rounded-xl border border-white/10 bg-slate-950/60 divide-y divide-white/5">
+                {isLoadingHistory ? (
+                  <div className="p-12 text-center text-white/50 text-xs flex items-center justify-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
+                    <span>Loading access history...</span>
+                  </div>
+                ) : !loginHistoryData?.items || loginHistoryData.items.length === 0 ? (
+                  <div className="p-12 text-center text-white/50 text-xs space-y-2">
+                    <KeyRound className="w-6 h-6 text-white/20 mx-auto" />
+                    <p>No login audit records found for this account.</p>
+                  </div>
+                ) : (
+                  loginHistoryData.items.map(entry => (
+                    <div key={entry.id} className="p-3.5 flex items-center justify-between gap-4 text-xs hover:bg-white/[0.02] transition-colors">
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`px-2 py-0.5 rounded-md text-xxs font-bold uppercase tracking-wider border ${
+                            entry.status === 'success'
+                              ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                              : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+                          }`}
+                        >
+                          {entry.status}
+                        </span>
+                        <div>
+                          <div className="font-medium text-white flex items-center gap-2">
+                            <Laptop className="w-3 h-3 text-white/40" />
+                            <span>{entry.device || 'Unknown Device'}</span>
+                          </div>
+                          {entry.failureReason && (
+                            <p className="text-xxs text-rose-400 font-mono mt-0.5">Reason: {entry.failureReason}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="text-right font-mono text-xxs text-white/50 space-y-0.5">
+                        <div className="text-white/80">{new Date(entry.createdAt).toLocaleString()}</div>
+                        <div>IP: {entry.ipAddress || '—'}</div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <button
+                  onClick={() => setSelectedUserForHistory(null)}
+                  className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold transition-all text-white"
+                >
+                  Close
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}

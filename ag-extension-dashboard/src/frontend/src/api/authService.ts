@@ -39,6 +39,48 @@ export const requestPasswordReset = async (
   return response.data;
 };
 
+export interface LoginHistoryItem {
+  id: string;
+  userId: string | null;
+  email: string;
+  status: 'success' | 'failed';
+  failureReason: string | null;
+  ipAddress: string | null;
+  userAgent: string | null;
+  device: string | null;
+  location: string | null;
+  createdAt: string;
+}
+
+export interface LoginStats {
+  totalLogins: number;
+  successfulLogins: number;
+  failedAttempts24h: number;
+  lastLoginAt: string | null;
+  lastLoginIp: string | null;
+}
+
+export const fetchLoginHistory = async (params?: {
+  userId?: string;
+  email?: string;
+  status?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<{ items: LoginHistoryItem[]; total: number }> => {
+  const response = await apiClient.get<{ success: boolean; data: { items: LoginHistoryItem[]; total: number } }>(
+    '/auth/login-history',
+    { params }
+  );
+  return response.data.data;
+};
+
+export const fetchLoginStats = async (userId?: string): Promise<LoginStats> => {
+  const response = await apiClient.get<{ success: boolean; data: LoginStats }>('/auth/login-stats', {
+    params: userId ? { userId } : undefined,
+  });
+  return response.data.data;
+};
+
 export const logout = async (): Promise<void> => {
   try {
     await apiClient.post('/auth/logout');
@@ -46,3 +88,4 @@ export const logout = async (): Promise<void> => {
     // Logout best-effort
   }
 };
+

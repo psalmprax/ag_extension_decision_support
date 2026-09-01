@@ -541,10 +541,29 @@ export async function createTables(): Promise<void> {
         updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
       CREATE INDEX IF NOT EXISTS regional_agronomy_skills_region_crop_idx ON regional_agronomy_skills(region, crop);
+
+      -- Login history and last login tracking
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP(6);
+
+      CREATE TABLE IF NOT EXISTS login_history (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        email VARCHAR(255) NOT NULL,
+        status VARCHAR(20) NOT NULL,
+        failure_reason VARCHAR(100),
+        ip_address VARCHAR(64),
+        user_agent VARCHAR(512),
+        device VARCHAR(100),
+        location VARCHAR(150),
+        created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS login_history_user_id_created_at_idx ON login_history(user_id, created_at);
+      CREATE INDEX IF NOT EXISTS login_history_email_created_at_idx ON login_history(email, created_at);
+      CREATE INDEX IF NOT EXISTS login_history_status_idx ON login_history(status);
     `);
-    logger.info('Tenant and data-governance tables provisioned');
+    logger.info('Tenant, login-history, and data-governance tables provisioned');
   } catch (error) {
-    logger.warn('Tenant and data-governance provisioning failed:', error);
+    logger.warn('Tenant, login-history, and data-governance provisioning failed:', error);
   }
 
   // Enable vector extension if available in database
