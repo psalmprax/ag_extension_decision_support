@@ -126,7 +126,13 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
         message: query,
       });
 
-      const responseText = res.data?.data?.messages?.[1]?.content;
+      const data = res.data?.data || res.data;
+      const responseText =
+        data?.messages?.[1]?.content ||
+        data?.response ||
+        data?.text ||
+        (typeof data === 'string' ? data : null);
+
       if (typeof responseText !== 'string' || responseText.trim().length === 0) {
         throw new Error('AI service returned no advisory content');
       }
@@ -146,7 +152,8 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
       };
 
       setMessages(prev => [...prev, assistantMsg]);
-    } catch {
+    } catch (err) {
+      console.error('[AlphaAI] Chatbot request error:', err);
       setActiveReasoningStep(null);
       setMessages(prev => [
         ...prev,

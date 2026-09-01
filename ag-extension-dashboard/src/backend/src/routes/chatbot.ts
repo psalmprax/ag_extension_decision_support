@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
+import { AIRouter } from '@/services/aiProvider/aiProvider';
 import { query, getPool } from '@/services/databaseService';
 import type {
   ChatConversationRow,
@@ -502,11 +502,9 @@ router.post('/completions', authorize(['admin', 'regional_manager', 'extension_o
       [body.conversation_id ?? null, sanitizedMessage, body.language ?? null]
     );
 
-    const provider = await AIProviderFactory.getProvider();
-    const response = await provider.generateText([
-      { role: 'system', content: 'You are an agricultural extension assistant.' },
-      { role: 'user', content: sanitizedMessage },
-    ]);
+    const response = await AIRouter.routeRequest('generate', {
+      prompt: sanitizedMessage,
+    });
     const assistantText = (response?.text ?? '').toString().trim() || 'I am sorry, I could not generate a response.';
 
     await query(

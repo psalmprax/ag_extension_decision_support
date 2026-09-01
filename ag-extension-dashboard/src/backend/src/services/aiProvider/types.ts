@@ -4,7 +4,18 @@ import { extractVideoFrames } from './videoFrameService';
 
 // ── Provider type identifier ──────────────────────────────────────────────
 
-export type AIProviderType = 'azure_openai' | 'google_vertex' | 'openai' | 'anthropic' | 'groq' | 'freebuff' | 'ollama';
+export type AIProviderType =
+  | 'azure_openai'
+  | 'google_vertex'
+  | 'openai'
+  | 'anthropic'
+  | 'groq'
+  | 'freebuff'
+  | 'ollama'
+  | 'aihubmix'
+  | 'openrouter'
+  | 'nvidia'
+  | 'huggingface';
 
 // ── Capability interfaces ─────────────────────────────────────────────────
 
