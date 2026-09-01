@@ -112,8 +112,11 @@ class UsageService {
         return this.incrementUsageBy(userId, type, 1);
     }
 
-    async isFreeUser(userId: string): Promise<boolean> {
+    async isFreeUser(userId: string, role?: string): Promise<boolean> {
         try {
+            if (role === 'admin') {
+                return false;
+            }
             const user = await getPrisma().user.findUnique({
                 where: { id: userId },
                 select: { role: true }
@@ -215,9 +218,9 @@ class UsageService {
         }
     }
 
-    async checkDailyKnowledgeLimit(userId: string): Promise<{ allowed: boolean; current: number; limit: number; remaining: number }> {
+    async checkDailyKnowledgeLimit(userId: string, role?: string): Promise<{ allowed: boolean; current: number; limit: number; remaining: number }> {
         try {
-            const isFree = await this.isFreeUser(userId);
+            const isFree = await this.isFreeUser(userId, role);
             if (!isFree) {
                 return { allowed: true, current: 0, limit: -1, remaining: 999999 };
             }

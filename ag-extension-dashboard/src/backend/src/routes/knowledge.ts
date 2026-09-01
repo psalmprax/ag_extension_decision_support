@@ -38,11 +38,12 @@ router.get('/quota', async (req: Request, res: Response) => {
     try {
         const user = (req as Request & { user?: Record<string, unknown> }).user;
         const userId = (user?.userId || user?.id) as string;
+        const userRole = (user?.role) as string | undefined;
         if (!userId) {
             return res.status(401).json({ success: false, error: 'Unauthorized' });
         }
-        const quota = await usageService.checkDailyKnowledgeLimit(userId);
-        const isFree = await usageService.isFreeUser(userId);
+        const quota = await usageService.checkDailyKnowledgeLimit(userId, userRole);
+        const isFree = await usageService.isFreeUser(userId, userRole);
         return res.json({
             success: true,
             data: {
@@ -722,6 +723,7 @@ router.post('/ask', async (req: Request, res: Response) => {
         const { question } = req.body;
         const user = (req as Request & { user?: Record<string, unknown> }).user;
         const userId = (user?.userId || user?.id) as string;
+        const userRole = (user?.role) as string | undefined;
 
         if (!question) {
             return res.status(400).json({ success: false, error: 'Question is required' });
@@ -730,19 +732,21 @@ router.post('/ask', async (req: Request, res: Response) => {
             return res.status(401).json({ success: false, error: 'User not authenticated' });
         }
 
-        // Daily knowledge quota check (3 per day for Free tier)
-        const dailyQuota = await usageService.checkDailyKnowledgeLimit(userId);
-        if (!dailyQuota.allowed) {
-            return res.status(403).json({
-                success: false,
-                limitReached: true,
-                error: 'Daily free knowledge base limit reached (3/3 queries). Please upgrade to Pro for unlimited queries.',
-                data: {
-                    dailyRemaining: 0,
-                    limit: dailyQuota.limit,
-                    upgradeRequired: true,
-                }
-            });
+        // Daily knowledge quota check (3 per day for Free tier; admin is completely exempt)
+        if (userRole !== 'admin') {
+            const dailyQuota = await usageService.checkDailyKnowledgeLimit(userId, userRole);
+            if (!dailyQuota.allowed) {
+                return res.status(403).json({
+                    success: false,
+                    limitReached: true,
+                    error: 'Daily free knowledge base limit reached (3/3 queries). Please upgrade to Pro for unlimited queries.',
+                    data: {
+                        dailyRemaining: 0,
+                        limit: dailyQuota.limit,
+                        upgradeRequired: true,
+                    }
+                });
+            }
         }
 
         // Free-tier users (farmers) route to the freebuff best-effort provider;
