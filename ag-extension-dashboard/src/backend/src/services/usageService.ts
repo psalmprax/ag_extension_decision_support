@@ -114,6 +114,14 @@ class UsageService {
 
     async isFreeUser(userId: string): Promise<boolean> {
         try {
+            const user = await getPrisma().user.findUnique({
+                where: { id: userId },
+                select: { role: true }
+            });
+            // Only admin is exempted; all other roles use their subscription or the 3 queries/day free limit
+            if (user?.role === 'admin') {
+                return false;
+            }
             const data = await this.getUsage(userId);
             if (!data || !data.plan) {
                 return process.env.NODE_ENV !== 'test';
