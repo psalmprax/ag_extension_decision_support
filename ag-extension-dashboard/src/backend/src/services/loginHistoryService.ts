@@ -41,7 +41,6 @@ export interface LoginStats {
   lastLoginIp: string | null;
 }
 
-// fallow-ignore-next-line unused-export
 export function parseDeviceFromUserAgent(userAgent?: string | null): string {
   if (!userAgent) return 'Unknown Device';
   const ua = userAgent.toLowerCase();
