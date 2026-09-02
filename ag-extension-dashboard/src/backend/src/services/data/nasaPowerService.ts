@@ -1,7 +1,4 @@
 import { logger } from '../../utils/logger';
-// Canonical re-export — single source of truth is services/nasaPowerService.ts (rateLimitedFetch + caching)
-// Deprecated wrapper: prefer importing from '@/services/nasaPowerService' directly
-export { NasaPowerService as CanonicalNasaPowerService } from '../nasaPowerService';
 
 export interface NasaPowerResponse {
     properties?: { parameter?: Record<string, Record<string, number>> };

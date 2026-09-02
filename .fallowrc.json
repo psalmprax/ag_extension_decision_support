@@ -170,7 +170,8 @@
     "ag-extension-browser-ext/shared/hooks/usePersistence.ts",
     "ag-extension-dashboard/src/backend/src/tools/registry.ts",
     "ag-extension-dashboard/src/backend/src/routes/billing.ts",
-    "ag-extension-dashboard/src/backend/src/scripts/dailyReportJob.ts"
+    "ag-extension-dashboard/src/backend/src/scripts/dailyReportJob.ts",
+    "ag-extension-dashboard/src/agents/tools/cloakbrowser/server.js"
   ],
   "ignorePatterns": [
     "node_modules",
