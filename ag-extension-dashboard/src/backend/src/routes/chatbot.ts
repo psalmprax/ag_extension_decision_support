@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { AIRouter } from '@/services/aiProvider/aiProvider';
 import { query, getPool } from '@/services/databaseService';
+import { VectorService } from '@/services/vectorService';
 import type {
   ChatConversationRow,
   ChatMessageRow,
@@ -392,6 +393,16 @@ const resolveOrCreateConversation = async (user: AuthenticatedRequestUser, targe
   return created[0]?.id ?? null;
 };
 
+/** Best-effort realtime fanout of a persisted chat turn to its conversation room. */
+async function fanoutNewMessage(conversationId: string, message: ChatMessageRow): Promise<void> {
+  try {
+    type IoHandle = { io?: { to: (room: string) => { emit: (ev: string, data: unknown) => void } } };
+    const mod = await import('@/index').catch(() => ({}) as IoHandle);
+    const ioHandle = (mod as IoHandle).io;
+    ioHandle?.to(`conversation:${conversationId}`).emit('new_message', mapChatMessageRow(message));
+  } catch { /* socket fanout is best-effort */ }
+}
+
 /**
  * POST /api/chatbot/message (and /api/chatbot/messages) — Persist message turn from officer or farmer.
  */
@@ -434,15 +445,8 @@ const handleMessagePost = async (req: AuthedRequest, res: Response) => {
     }
 
     const created = rows[0];
-    // Realtime fanout for low-latency chat without polling
     if (created && conversationId) {
-      try {
-        const mod = await import('@/index').catch(() => ({ io: null as unknown as { to: (room: string) => { emit: (ev: string, data: unknown) => void } } }));
-        const ioHandle = (mod as { io?: { to: (room: string) => { emit: (ev: string, data: unknown) => void } } }).io;
-        if (ioHandle) {
-          ioHandle.to(`conversation:${conversationId}`).emit('new_message', mapChatMessageRow(created));
-        }
-      } catch { /* socket fanout is best-effort */ }
+      await fanoutNewMessage(conversationId, created);
     }
     return res.status(201).json({ success: true, data: created ? mapChatMessageRow(created) : null });
   } catch (error) {
@@ -491,6 +495,42 @@ router.post('/conversations/:id/rate', authorize(['admin', 'regional_manager', '
   }
 });
 
+/** Load the last turns of a conversation as a context block (empty when none/unavailable). */
+async function loadHistoryBlock(conversationId?: string): Promise<string> {
+  if (!conversationId) return '';
+  try {
+    const { rows } = await query<ChatMessageRow>(
+      `SELECT role, content FROM chat_messages
+        WHERE conversation_id = $1
+        ORDER BY created_at DESC LIMIT 10`,
+      [conversationId]
+    );
+    const history = rows.reverse().map(m => `${m.role}: ${String(m.content).slice(0, 300)}`).join('\n');
+    return history ? `\n\nRECENT CONVERSATION:\n${history}` : '';
+  } catch (err) {
+    logger.warn('Failed to load chat history for completions:', err);
+    return '';
+  }
+}
+
+/** Retrieve grounded knowledge-base context via hybrid RRF search (empty on failure). */
+async function loadRagBlock(message: string): Promise<string> {
+  try {
+    const results = await VectorService.hybridSearch(message, 3, undefined, 0.0);
+    if (results.length === 0) return '';
+    const snippets = results
+      .map((doc, i) => {
+        const title = typeof doc.metadata?.title === 'string' ? doc.metadata.title : 'Knowledge article';
+        return `[${i + 1}] ${title}: ${String(doc.content).slice(0, 400)}`;
+      })
+      .join('\n');
+    return `\n\nKNOWLEDGE BASE CONTEXT (cite sources when used):\n${snippets}`;
+  } catch (err) {
+    logger.warn('RAG retrieval failed for chat completions, continuing without context:', err);
+    return '';
+  }
+}
+
 /**
  * POST /api/chatbot/completions — AI Assistant inference proxy.
  */
@@ -513,6 +553,11 @@ router.post('/completions', authorize(['admin', 'regional_manager', 'extension_o
     // eslint-disable-next-line no-control-regex
     const sanitizedMessage = rawMessage.slice(0, 2000).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
 
+    const [historyBlock, ragBlock] = await Promise.all([
+      loadHistoryBlock(body.conversation_id),
+      loadRagBlock(sanitizedMessage),
+    ]);
+
     await query(
       `INSERT INTO chat_messages (conversation_id, role, content, language)
        VALUES ($1, 'user', $2, $3)`,
@@ -520,7 +565,7 @@ router.post('/completions', authorize(['admin', 'regional_manager', 'extension_o
     );
 
     const response = await AIRouter.routeRequest('generate', {
-      prompt: sanitizedMessage,
+      prompt: `You are an agricultural extension advisory assistant. Answer the farmer's or officer's message using the knowledge base context when relevant. Be concise and actionable.${historyBlock}${ragBlock}\n\nMESSAGE: ${sanitizedMessage}`,
     });
     const assistantText = (response?.text ?? '').toString().trim() || 'I am sorry, I could not generate a response.';
 

@@ -226,10 +226,11 @@ class AgentFactory:
         llm = AgentFactory.get_llm()
         return Agent(
             role="Agricultural Research Specialist",
-            goal="Collect and synthesize comprehensive data about farming practices, weather patterns, market conditions, and crop health",
+            goal="Synthesize general agronomic knowledge about farming practices, seasonal patterns, and crop health for the requested region",
             backstory="""You are an expert agricultural researcher with deep knowledge of farming practices across Africa.
-            You have access to multiple data sources including weather stations, satellite imagery, market reports, and scientific literature.
-            You excel at gathering relevant information and identifying key patterns and trends.""",
+            You reason from established agronomic knowledge and the task inputs provided to you.
+            You do NOT have live access to weather stations, satellite imagery, or market feeds — when specific
+            current data would change your answer, you state that clearly and recommend verifying with live sources.""",
             verbose=True,
             llm=llm,
             allow_delegation=False
@@ -244,10 +245,11 @@ class AgentFactory:
         llm = AgentFactory.get_llm()
         return Agent(
             role="Agricultural Data Analyst",
-            goal="Analyze collected data and provide actionable insights with risk assessments for farmers and extension officers",
+            goal="Analyze the provided research summary and produce risk assessments with stated confidence",
             backstory="""You are a data scientist specializing in agricultural analytics.
-            You excel at identifying patterns and trends in farming data, assessing risks, and providing clear, data-driven recommendations.
-            You consider multiple factors including weather, soil health, market prices, and crop conditions.""",
+            You identify plausible risks and trends from the research notes given to you.
+            You do not receive live telemetry — when the input lacks data for a factor, you mark that
+            risk as unknown instead of guessing.""",
             verbose=True,
             llm=llm,
             allow_delegation=False
@@ -377,19 +379,21 @@ class MultiAgentService:
             # Build analysis prompt
             prompt = f"""Perform a comprehensive {request.analysis_type.value} analysis for {request.region}.
 
+IMPORTANT: You have NO live data feeds (no weather API, no satellite, no market feed).
+Base your analysis on general agronomic knowledge for the region and mark uncertainty explicitly.
+
 Provide your analysis in the following format:
 1. KEY FINDINGS: List 3-5 key findings
-2. RISK ASSESSMENT: Assess risks (low/medium/high) for weather, market, disease
+2. RISK ASSESSMENT: State each as "weather: low|medium|high", "market: low|medium|high", "disease: low|medium|high" — use unknown when data is insufficient
 3. RECOMMENDATIONS: Provide 5 actionable recommendations
-4. CONFIDENCE: Overall confidence level (0-1)
-5. DATA SOURCES: List data sources used
+4. CONFIDENCE: State a single number between 0 and 1
+5. DATA SOURCES: State which knowledge you relied on
 
 Consider:
-- Current weather patterns and forecasts
-- Soil conditions and health
-- Market prices and trends
-- Crop health and growth stages
-- Pest and disease pressures
+- Typical seasonal weather patterns for the region
+- Common soil constraints
+- Regional market dynamics
+- Prevalent crop health and pest pressures
 - Seasonal factors"""
 
             response = openai_client.chat.completions.create(
@@ -414,15 +418,32 @@ Consider:
             return MultiAgentService._get_fallback_analysis(request, start_time)
     
     @staticmethod
+    def _extract_risk_and_confidence(result_text: str) -> tuple:
+        """Extract risk levels and confidence from model output; unknown when not stated."""
+        import re
+        text = result_text.lower()
+        risks = {}
+        for factor in ("weather", "market", "disease"):
+            m = re.search(rf"{factor}[^a-z]{{0,20}}(low|medium|high)", text)
+            risks[factor] = m.group(1) if m else "unknown"
+        conf_m = re.search(r"confidence[^0-9]{0,20}(0?\.\d{1,2}|1\.0|100|\d{1,2})\s*%?", text)
+        confidence = float(conf_m.group(1)) if conf_m else None
+        if confidence is not None and confidence > 1.0:
+            confidence = confidence / 100.0
+        return risks, confidence
+
+    @staticmethod
     def _parse_crew_result(region: str, analysis_type: str, result_text: str, processing_time: float) -> MultiAgentResult:
         """Parse Crew AI result into structured format"""
         result_text = clean_slop(result_text)
         # Extract sections from the result text
         findings = []
         recommendations = []
-        risk_assessment = {"weather": "medium", "market": "medium", "disease": "medium"}
-        confidence = 0.75
+        risks, confidence = MultiAgentService._extract_risk_and_confidence(result_text)
         data_sources = ["multi_agent_analysis", "research_data"]
+        if confidence is None:
+            confidence = 0.0
+            data_sources.append("confidence_not_stated")
         
         # Parse findings
         for line in result_text.split('\n'):
@@ -457,7 +478,7 @@ Consider:
             analysis_type=analysis_type,
             findings=findings[:5],
             recommendations=recommendations[:5],
-            risk_assessment=risk_assessment,
+            risk_assessment=risks,
             confidence=confidence,
             data_sources=data_sources,
             generated_at=datetime.utcnow().isoformat(),
@@ -470,6 +491,11 @@ Consider:
         text = clean_slop(text)
         findings = []
         recommendations = []
+        risks, confidence = MultiAgentService._extract_risk_and_confidence(text)
+        data_sources = ["openai_analysis"]
+        if confidence is None:
+            confidence = 0.0
+            data_sources.append("confidence_not_stated")
         
         # Simple parsing logic
         in_findings = False
@@ -515,9 +541,9 @@ Consider:
             analysis_type=analysis_type,
             findings=findings[:5],
             recommendations=recommendations[:5],
-            risk_assessment={"weather": "medium", "market": "medium", "disease": "medium"},
-            confidence=0.7,
-            data_sources=["openai_analysis", "agricultural_data"],
+            risk_assessment=risks,
+            confidence=confidence,
+            data_sources=data_sources,
             generated_at=datetime.utcnow().isoformat(),
             processing_time_ms=int(processing_time)
         )

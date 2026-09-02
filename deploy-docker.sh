@@ -33,14 +33,14 @@ docker network create ag-network || true
 echo "🛡️ Cleaning up any conflicting container names..."
 docker rm -f ag-dashboard-db ag-dashboard-redis ag-dashboard-backend ag-dashboard-frontend ag-crew-ai ag-agent-zero ag-traefik || true
 
-# 3. Deep Clean (Clear volumes and stop containers)
-echo "🧹 Performing Deep Clean (Removing volumes to purge stale cache)..."
+# 3. Clean containers (NEVER delete volumes — that wipes the production database)
+echo "🧹 Stopping and removing containers (volumes preserved)..."
 docker compose -p ${COMPOSE_PROJECT_NAME} \
     --env-file .env \
     -f ${PROJECT_DIR}/docker-compose.yml \
     -f ${PROJECT_DIR}/docker-compose.prod.yml \
     -f ${PROJECT_DIR}/docker-compose.agents.yml \
-    down -v --remove-orphans || true
+    down --remove-orphans || true
 
 # 4. Deploy with build
 echo "🏗️ Building and Starting Containers..."

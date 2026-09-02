@@ -369,16 +369,21 @@ class AIProcessingService:
                 "Review market prices before selling"
             ]
 
+        # Confidence reflects how much structure was extracted from the model output.
+        # This is an AI interpretation over a general context — no farm-level data is ingested.
+        confidence = 0.85 if recommendations and len(recommendations) > 2 else 0.6
+
         return AnalysisResult(
             region=region,
             data_type=data_type,
             time_period=time_period,
             summary={
                 "analysis": text[:500] + "..." if len(text) > 500 else text,
+                "note": "General agronomic interpretation only — no farm-level telemetry ingested for this request.",
             },
             recommendations=recommendations[:5],
             risk_level=risk_level,
-            confidence=None,
+            confidence=confidence,
             generated_at=datetime.utcnow().isoformat(),
             data_sources=["ai_interpretation"]
         )

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { io, Socket } from 'socket.io-client';
 import {
   Users,
   Plus,
@@ -84,6 +85,48 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
     }).catch(()=>{});
   }, [activeFarmerConvId, farmerChatMessages.length]);
 
+  // Realtime: join the active conversation room and reload messages on new_message events.
+  const socketRef = useRef<Socket | null>(null);
+  const [socketConnected, setSocketConnected] = useState(false);
+  useEffect(() => {
+    if (isDemo) return;
+    const socket = io(window.location.origin, {
+      path: '/socket.io',
+      transports: ['websocket', 'polling'],
+      auth: cb => cb({ token: localStorage.getItem('token') || undefined }),
+    });
+    socketRef.current = socket;
+
+    socket.on('connect', () => setSocketConnected(true));
+    socket.on('disconnect', () => setSocketConnected(false));
+    socket.on('connect_error', () => setSocketConnected(false));
+
+    return () => {
+      socket.removeAllListeners();
+      if (socket.connected) socket.close();
+      socketRef.current = null;
+      setSocketConnected(false);
+    };
+  }, [isDemo]);
+
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket) return;
+    if (activeFarmerConvId) {
+      socket.emit('join_conversation', activeFarmerConvId);
+    }
+    const onNewMessage = (msg: unknown) => {
+      const convId = (msg as { conversationId?: string } | null)?.conversationId;
+      if (!convId || convId === activeFarmerConvId) {
+        loadFarmerMessages(convId || activeFarmerConvId!);
+      }
+    };
+    socket.on('new_message', onNewMessage);
+    return () => {
+      socket.off('new_message', onNewMessage);
+    };
+  }, [activeFarmerConvId, loadFarmerMessages]);
+
   return (
     <div className="flex flex-col h-[calc(100dvh-150px)] md:h-[calc(100vh-140px)] gap-4 md:gap-6">
       {/* Header & Status Ribbon */}
@@ -104,9 +147,16 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md backdrop-blur-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
-            <Radio className="w-3.5 h-3.5" />
-            <span>CHANNELS ONLINE (4/4)</span>
+          <span
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md backdrop-blur-md border text-xs font-mono ${
+              socketConnected
+                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                : 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+            }`}
+            title={socketConnected ? 'Realtime updates connected' : 'Realtime updates unavailable — messages refresh on open'}
+          >
+            <Radio className={`w-3.5 h-3.5 ${socketConnected ? '' : 'opacity-60'}`} />
+            <span>{socketConnected ? 'REALTIME CONNECTED' : 'REALTIME OFFLINE'}</span>
           </span>
         </div>
       </div>

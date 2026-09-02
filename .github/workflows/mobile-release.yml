@@ -103,16 +103,21 @@ jobs:
       - name: Create Release Summary
         run: |
           mkdir -p build/outputs
-          ls -lh ag-extension-dashboard/src/frontend/android/app/build/outputs/bundle/release/*.aab 2>/dev/null || true
-          ls -lh ag-extension-dashboard/src/frontend/android/app/build/outputs/apk/release/*.apk 2>/dev/null || true
-          ls -lh ag-extension-dashboard/src/frontend/android/app/build/outputs/apk/debug/*.apk 2>/dev/null || true
-          echo "GPExts Native App Store Build for com.gpexts.app ready." > build/outputs/BUILD_MANIFEST.txt
-          echo "Package ID: com.gpexts.app" >> build/outputs/BUILD_MANIFEST.txt
-          echo "Version: 1.0.0" >> build/outputs/BUILD_MANIFEST.txt
-          echo "Build Timestamp: $(date -u)" >> build/outputs/BUILD_MANIFEST.txt
           cp ag-extension-dashboard/src/frontend/android/app/build/outputs/bundle/release/*.aab build/outputs/ 2>/dev/null || true
           cp ag-extension-dashboard/src/frontend/android/app/build/outputs/apk/release/*.apk build/outputs/ 2>/dev/null || true
           cp ag-extension-dashboard/src/frontend/android/app/build/outputs/apk/debug/*.apk build/outputs/ 2>/dev/null || true
+          ARTIFACT_COUNT=$(ls build/outputs/*.aab build/outputs/*.apk 2>/dev/null | wc -l)
+          if [ "$ARTIFACT_COUNT" -eq 0 ]; then
+            echo "::error::No APK/AAB produced by gradle — refusing to upload a manifest-only artifact claiming the build is ready."
+            exit 1
+          fi
+          ls -lh build/outputs/
+          {
+            echo "GPExts Native App Store Build for com.gpexts.app"
+            echo "Package ID: com.gpexts.app"
+            echo "Artifacts: ${ARTIFACT_COUNT} file(s)"
+            echo "Build Timestamp: $(date -u)"
+          } > build/outputs/BUILD_MANIFEST.txt
 
       - name: Upload Native Release Artifacts
         uses: actions/upload-artifact@v4
