@@ -117,7 +117,7 @@
     "body-parser": "^1.20.6",
     "brace-expansion": "^2.1.4",
     "deepmerge-ts": "^8.0.0",
-    "fast-uri": "^3.1.5",
+    "fast-uri": "^3.1.6",
     "ip-address": "^10.3.1",
     "js-yaml": "^4.3.1",
     "minimatch": "^9.0.7",
