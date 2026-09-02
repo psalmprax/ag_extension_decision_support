@@ -204,6 +204,49 @@ jobs:
           cd ag-extension-browser-ext
           test -n "$(find .output -name manifest.json -print -quit)"
 
+  # Migration replay gate: every migration must apply cleanly to a fresh
+  # database AND the replayed schema must match prisma/schema.prisma.
+  # Catches migration SQL bugs and schema/migration drift that dev-side
+  # `prisma db push` hides until a fresh deploy fails.
+  migration-replay:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: migration_gate
+          POSTGRES_PASSWORD: gate
+          POSTGRES_DB: migration_gate
+        options: >-
+          --health-cmd "pg_isready -U migration_gate -d migration_gate"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ag-extension-dashboard/src/backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: |
+          cd ag-extension-dashboard/src/backend
+          npm ci
+
+      - name: Replay migrations on fresh DB and diff against schema
+        run: node scripts/prisma-migration-replay-check.cjs
+        env:
+          MIGRATION_CHECK_DATABASE_URL: postgres://migration_gate:gate@localhost:5432/migration_gate
+
   # Full-Spectrum Security & Compliance Audit
   security:
     name: Multi-Service Security & Vulnerability Audit

@@ -74,6 +74,7 @@ import activityTriageRoutes from './routes/activityTriage';
 import soilRoutes from './routes/soil';
 import pillarsRoutes from './routes/pillars';
 import callRoutes from './routes/call';
+import worldmonitorRoutes from './routes/worldmonitor';
 import offlineRoutes from './routes/offline';
 
 const app: Application = express();
@@ -413,6 +414,7 @@ const routeMounts: RouteMount[] = [
   { path: '/soil', router: soilRoutes },
   { path: '/pillars', router: pillarsRoutes },
   { path: '/call', router: callRoutes },
+  { path: '/worldmonitor', router: worldmonitorRoutes },
   { path: '/offline', router: offlineRoutes },
 ];
 

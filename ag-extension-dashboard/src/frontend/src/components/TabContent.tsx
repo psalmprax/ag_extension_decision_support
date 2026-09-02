@@ -66,6 +66,7 @@ const UserManagementPage = React.lazy(() =>
 const CropsFields = React.lazy(() =>
   import('@/pages/CropsFields').then(m => ({ default: m.CropsFields }))
 );
+const WorldMonitor = React.lazy(() => import('@/pages/WorldMonitor'));
 
 interface TabContentProps {
   activeTab: string;
@@ -300,6 +301,8 @@ export function TabContent(props: TabContentProps) {
       return <MCPTools />;
     case 'user_management':
       return <UserManagementPage />;
+    case 'worldmonitor':
+      return <WorldMonitor />;
     default:
       return null;
   }

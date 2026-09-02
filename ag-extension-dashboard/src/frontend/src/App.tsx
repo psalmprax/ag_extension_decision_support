@@ -60,6 +60,7 @@ const TAB_TO_PATH: Record<string, string> = {
   knowledge: '/knowledge',
   aiassistant: '/ai-assistant',
   farmerchat: '/farmer-chat',
+  worldmonitor: '/world-monitor',
   sms: '/sms',
   telemetry: '/telemetry',
   agents: '/agents',

@@ -70,10 +70,22 @@ export default defineConfig({
         // Locale files are fetched on demand by the language provider and are
         // intentionally excluded from the precache to keep the install payload small.
         globPatterns: ['**/*.{js,css,html,ico,svg,woff2}'],
+        // Officer-only heavy chunks (Deck.gl globe + WorldMonitor) are excluded from precache
+        // and served via runtime cache so the farmer PWA stays ~2.8MB on 512MB Android.
+        globIgnores: ['**/WorldMonitor-*.js', '**/deck-gl-*.js'],
         // Large raster icons remain available by URL but are not precached;
         // this keeps service-worker installation from duplicating static payload.
         additionalManifestEntries: [],
         runtimeCaching: [
+          {
+            urlPattern: /WorldMonitor|deck\.gl/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'officer-globe',
+              expiration: { maxEntries: 10, maxAgeSeconds: 30 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
           {
             urlPattern: /^https:\/\/api\./i,
             handler: 'NetworkFirst',
@@ -167,6 +179,9 @@ export default defineConfig({
           if (id.includes('/node_modules/recharts/')) return 'charts-vendor';
           if (id.includes('/node_modules/leaflet/') || id.includes('/node_modules/react-leaflet/')) {
             return 'maps-vendor';
+          }
+          if (id.includes('/node_modules/deck.gl/') || id.includes('/node_modules/@deck.gl/')) {
+            return 'deck-gl';
           }
           return undefined;
         },

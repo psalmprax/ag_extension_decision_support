@@ -39,7 +39,7 @@ UPDATE "reports" r
 UPDATE "alerts" a
    SET "tenant_id" = sub."tenant_id"
   FROM (
-    SELECT unm.alert_id, f."tenant_id"
+    SELECT unm.id AS alert_id, f."tenant_id"
       FROM "alerts" unm
      CROSS JOIN LATERAL unnest(unm."affected_farmers") AS uf(fid)
      JOIN "farmers" f ON f."id" = uf.fid

@@ -49,8 +49,7 @@ CREATE TABLE IF NOT EXISTS "offline_queue_items" (
     "moved_to_dead_letter_at" TIMESTAMPTZ,
     "original_retries" INTEGER,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
-    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
-    CONSTRAINT "offline_queue_items_user_client_request_id_key" UNIQUE ("user_id", "client_request_id")
+    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now(),        CONSTRAINT "offline_queue_items_user_id_client_request_id_key" UNIQUE ("user_id", "client_request_id")
 );
 CREATE INDEX IF NOT EXISTS "offline_queue_items_user_id_state_idx" ON "offline_queue_items"("user_id", "state");
 CREATE INDEX IF NOT EXISTS "offline_queue_items_state_idx" ON "offline_queue_items"("state");

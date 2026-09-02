@@ -18,6 +18,7 @@ import {
   Wrench,
   Search,
   UserCog,
+  Globe,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -172,5 +173,12 @@ export const getNavItems = (): NavItem[] => [
     label: 'User Management',
     icon: UserCog,
     roles: ['admin'],
+  },
+  {
+    id: 'worldmonitor',
+    label: 'WorldMonitor',
+    icon: Globe,
+    roles: ['extension_officer', 'admin', 'regional_manager'],
+    requiresPro: true,
   },
 ];
