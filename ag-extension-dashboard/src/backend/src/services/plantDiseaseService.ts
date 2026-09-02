@@ -419,9 +419,9 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
 
         const confidence = normalizeConfidence(similarity);
         const provenance = createProvenance(
-          'Internal Plant Disease Knowledge Base',
+          'Internal heuristic knowledge base (TF-IDF symptom keyword matcher) — not a laboratory or field-verified source',
           new Date().toISOString(),
-          { evidenceStatus: 'verified_source', model: 'tfidf-symptom-matcher' }
+          { evidenceStatus: 'no_verified_source', model: 'tfidf-symptom-matcher' }
         );
         diagnoses.push({
           disease: diseaseId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),

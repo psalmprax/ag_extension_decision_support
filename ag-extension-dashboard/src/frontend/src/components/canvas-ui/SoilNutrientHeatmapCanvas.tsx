@@ -418,6 +418,11 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
         </span>
       </div>
 
+      {/* Data provenance for the active layer — surfaces preview/estimated status to the user */}
+      <p className="text-[10px] leading-relaxed text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg px-2.5 py-1.5">
+        ⚠️ {config.description} Values are IDW interpolation over sample points — not a substitute for a laboratory soil test.
+      </p>
+
       {/* Main Canvas Frame */}
       <div className="relative rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-950 shadow-inner">
         <canvas
