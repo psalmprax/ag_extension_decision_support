@@ -129,9 +129,10 @@ class UsageService {
             if (!data || !data.plan) {
                 return process.env.NODE_ENV !== 'test';
             }
-            const planName = data.plan.name?.toLowerCase() || '';
-            const price = Number(data.plan.price);
-            return planName === 'free' || price === 0;
+            const planName = (data.plan.name?.toLowerCase() || '').trim();
+            const price = data.plan.price != null ? Number(data.plan.price) : NaN;
+            const isFreeName = planName === 'free' || planName.startsWith('free ') || planName.includes(' free');
+            return isFreeName || price === 0;
         } catch (error) {
             logger.error(`Failed to check if user ${userId} is free:`, error);
             return process.env.NODE_ENV !== 'test';
