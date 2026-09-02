@@ -17,6 +17,7 @@ import { downloadReportPdf } from '../../api/reportService';
 import { fetchFarmerSoilProfile, type FarmerSoilProfile } from '../../api/soilService';
 import { fetchFarmers } from '../../api/farmerService';
 import { SoilNutrientHeatmapCanvas, type SoilHeatmapRealPoints } from '../../components/canvas-ui/SoilNutrientHeatmapCanvas';
+import { useDemoMode } from '@/demo';
 import toast from 'react-hot-toast';
 
 interface Props {
@@ -349,6 +350,7 @@ export function SoilDiagnosticsTab({
   btnClass: _btnClass,
   addNotification,
 }: Props) {
+  const { isDemo } = useDemoMode();
   const [selectedSoilImage, setSelectedSoilImage] = useState<File | null>(null);
   const [soilImagePreview, setSoilImagePreview] = useState<string | null>(null);
   const [isAnalyzingSoil, setIsAnalyzingSoil] = useState(false);
@@ -626,26 +628,38 @@ export function SoilDiagnosticsTab({
         ) : null}
       </div>
 
-      {selectedFarmerId && soilProfile && (
-        <div className="p-4 rounded-[4px] bg-slate-900/80 border border-slate-800">
-          <h4 className="text-xs font-black text-white uppercase tracking-wider mb-3 flex items-center gap-2">
-            <Layers className="w-3.5 h-3.5 text-emerald-400" />
-            Field Interpolation — Live SoilGrids Anchors
-            <span className="ml-auto text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
-              {soilProfile.baseline ? 'SoilGrids 250m' : 'Lab points'}
-            </span>
-          </h4>
-          <SoilNutrientHeatmapCanvas
-            initialLayer="ph"
-            realPointsByLayer={buildRealPoints(soilProfile)}
-            provenanceOverride={
-              soilProfile.baseline
-                ? (soilProfile.baseline as { disclaimer?: string }).disclaimer ?? undefined
-                : 'Live interpolation over the farmer’s lab points — add lat/lng for regional baseline.'
-            }
-          />
-        </div>
-      )}
+      {selectedFarmerId && soilProfile && (() => {
+        const realPoints = buildRealPoints(soilProfile);
+        const hasLive = Boolean(realPoints && Object.keys(realPoints).length);
+        if (!hasLive && !isDemo) {
+          return (
+            <div className="p-4 rounded-[4px] bg-slate-900/80 border border-slate-800 text-center">
+              <p className="text-xs font-bold text-white">Live Soil Tile — Per-Farmer</p>
+              <p className="text-xs text-white/50 mt-1 max-w-md mx-auto">No live baseline available — add lat/lng to this farmer or import lab results, then return for a 250m SoilGrids tile. Demo mesh is visible only in the demo account.</p>
+            </div>
+          );
+        }
+        return (
+          <div className="p-4 rounded-[4px] bg-slate-900/80 border border-slate-800">
+            <h4 className="text-xs font-black text-white uppercase tracking-wider mb-3 flex items-center gap-2">
+              <Layers className="w-3.5 h-3.5 text-emerald-400" />
+              Field Interpolation — {hasLive ? 'Live SoilGrids Anchors' : 'Demo Preview'}
+              <span className={`ml-auto text-[9px] font-mono px-1.5 py-0.5 rounded border ${hasLive ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-amber-300 bg-amber-500/10 border-amber-500/20'}`}>
+                {hasLive ? 'SoilGrids 250m' : 'Demo'}
+              </span>
+            </h4>
+            <SoilNutrientHeatmapCanvas
+              initialLayer="ph"
+              realPointsByLayer={realPoints}
+              provenanceOverride={
+                hasLive
+                  ? (soilProfile.baseline as { disclaimer?: string })?.disclaimer ?? undefined
+                  : 'Demo preview mesh — not a field measurement.'
+              }
+            />
+          </div>
+        );
+      })()}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <SoilUploadSection

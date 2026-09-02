@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Layers, Droplets, Activity, Gauge, Flame } from 'lucide-react';
+import { useDemoMode } from '@/demo';
 
 export type SoilLayerType = 'ph' | 'nitrogen' | 'phosphorus' | 'potassium' | 'moisture' | 'carbon';
 
@@ -215,14 +216,16 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
   realPointsByLayer,
   provenanceOverride,
 }) => {
+  const { isDemo } = useDemoMode();
   const [activeLayer, setActiveLayer] = useState<SoilLayerType>(initialLayer);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [probe, setProbe] = useState<SoilProbeResult | null>(null);
   const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(null);
 
   const config = LAYER_CONFIG[activeLayer];
-  const activeSamplePoints = realPointsByLayer?.[activeLayer] ?? config.samplePoints;
+  const activeSamplePoints = realPointsByLayer?.[activeLayer] ?? (isDemo ? config.samplePoints : []);
   const isLiveLayer = Boolean(realPointsByLayer?.[activeLayer]);
+  const hasNoData = !isLiveLayer && !isDemo && activeSamplePoints.length === 0;
 
   // Inverse Distance Weighting (IDW) interpolation
   const interpolate = useCallback(
@@ -429,19 +432,27 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
       </div>
 
       {/* Data provenance for the active layer — surfaces preview/estimated status to the user */}
-      <p className={`text-[10px] leading-relaxed rounded-lg px-2.5 py-1.5 border ${isLiveLayer ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800' : 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800'}`}>
-        {isLiveLayer ? '✅ ' : '⚠️ '}{provenanceOverride ?? config.description}{' '}
-        {isLiveLayer ? 'Regional 250m baseline (single SoilGrids pixel) + lab anchors — uniform field until multiple field polygons are registered.' : 'Values are IDW interpolation over sample points — not a substitute for a laboratory soil test.'}
+      <p className={`text-[10px] leading-relaxed rounded-lg px-2.5 py-1.5 border ${isLiveLayer ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800' : hasNoData ? 'text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700' : 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800'}`}>
+        {isLiveLayer ? '✅ ' : hasNoData ? 'ℹ️ ' : '⚠️ '}{hasNoData ? 'No live data for this layer — add field polygon or lab test, or switch to demo account for preview mesh.' : provenanceOverride ?? config.description}{' '}
+        {isLiveLayer ? 'Regional 250m baseline (single SoilGrids pixel) + lab anchors — uniform field until multiple field polygons are registered.' : hasNoData ? '' : 'Values are IDW interpolation over sample points — not a substitute for a laboratory soil test.'}
       </p>
 
       {/* Main Canvas Frame */}
       <div className="relative rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-950 shadow-inner">
-        <canvas
-          ref={canvasRef}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-          className="w-full h-[280px] block cursor-crosshair"
-        />
+        {hasNoData ? (
+          <div className="w-full h-[280px] flex flex-col items-center justify-center p-6 text-center bg-slate-900">
+            <Layers className="w-10 h-10 text-white/20 mb-2" />
+            <p className="text-sm font-bold text-white">No live soil mesh</p>
+            <p className="text-xs text-white/50 mt-1 max-w-sm">This layer requires a field polygon or lab result. Demo mesh is visible only in the demo account.</p>
+          </div>
+        ) : (
+          <canvas
+            ref={canvasRef}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            className="w-full h-[280px] block cursor-crosshair"
+          />
+        )}
 
         {/* Live probe card tooltip overlay */}
         {probe && (

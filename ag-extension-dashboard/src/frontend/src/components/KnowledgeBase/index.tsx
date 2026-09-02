@@ -37,6 +37,7 @@ import { SearchBar } from './SearchBar';
 import { AIResult } from './AIResult';
 import type { VisualsData } from './types';
 import { AgronomicIntakeCard, isAgronomicQueryAmbiguous } from '../AgronomicIntakeCard';
+import { useDemoMode } from '@/demo';
 
 // Interactive Canvas UI Components (canvasui.dev standard)
 import { RagKnowledgeGraphCanvas, GraphNode } from '../canvas-ui/RagKnowledgeGraphCanvas';
@@ -396,6 +397,7 @@ const matchesArticle = (art: DocumentArticle, category: string, query: string): 
 
 export const KnowledgeBase: React.FC = () => {
   const { addNotification, setActiveTab } = useAppStore();
+  const { isDemo } = useDemoMode();
   const [activeTabMode, setActiveTabMode] = useState<KnowledgeTabMode>('search');
   const [searchQuery, setSearchQuery] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -627,46 +629,52 @@ export const KnowledgeBase: React.FC = () => {
       {/* ── TAB 1: Search & AI Discovery ── */}
       {activeTabMode === 'search' && (
         <div className="space-y-6">
-          {/* Quick Agronomic Research Scenarios */}
-          <div className="backdrop-blur-xl bg-slate-900/70 border border-white/10 rounded-xl p-5 space-y-4 shadow-xl">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xxs font-mono font-bold tracking-widest text-emerald-400 uppercase">
-                  Verified Research Scenarios
-                </span>
-                <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-300 text-xxs font-mono border border-emerald-500/20">
-                  1-Click Traversal
-                </span>
+          {/* Quick Agronomic Research Scenarios — demo curated, live search for real users */}
+          {isDemo ? (
+            <div className="backdrop-blur-xl bg-slate-900/70 border border-white/10 rounded-xl p-5 space-y-4 shadow-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xxs font-mono font-bold tracking-widest text-emerald-400 uppercase">
+                    Verified Research Scenarios
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 text-xxs font-mono border border-amber-500/20">
+                    Demo
+                  </span>
+                </div>
+                <span className="text-xs font-mono text-white/40">Select a verified benchmark to run semantic inquiry</span>
               </div>
-              <span className="text-xs font-mono text-white/40">Select a verified benchmark to run semantic inquiry</span>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {RESEARCH_SCENARIOS.map(sc => (
-                <button
-                  key={sc.id}
-                  onClick={() => handleTriggerScenario(sc)}
-                  className="p-4 rounded-xl bg-slate-950/50 hover:bg-emerald-500/10 border border-white/5 hover:border-emerald-500/30 text-left transition-all group flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                        {sc.crop}
-                      </span>
-                      <span className="text-[9px] text-white/40 font-mono">{sc.category}</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {RESEARCH_SCENARIOS.map(sc => (
+                  <button
+                    key={sc.id}
+                    onClick={() => handleTriggerScenario(sc)}
+                    className="p-4 rounded-xl bg-slate-950/50 hover:bg-emerald-500/10 border border-white/5 hover:border-emerald-500/30 text-left transition-all group flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          {sc.crop}
+                        </span>
+                        <span className="text-[9px] text-white/40 font-mono">{sc.category}</span>
+                      </div>
+                      <h4 className="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors line-clamp-2">
+                        {sc.title}
+                      </h4>
                     </div>
-                    <h4 className="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors line-clamp-2">
-                      {sc.title}
-                    </h4>
-                  </div>
-                  <div className="mt-3 pt-2 border-t border-white/5 text-[10px] text-white/40 group-hover:text-emerald-400 flex items-center justify-between font-mono">
-                    <span>Load Grounded Protocol</span>
-                    <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                  </div>
-                </button>
-              ))}
+                    <div className="mt-3 pt-2 border-t border-white/5 text-[10px] text-white/40 group-hover:text-emerald-400 flex items-center justify-between font-mono">
+                      <span>Load Grounded Protocol</span>
+                      <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="backdrop-blur-xl bg-slate-900/40 border border-white/5 rounded-xl p-4 text-center">
+              <p className="text-xs text-white/60">Demo scenarios are available in the demo account — use Search & Discovery above for live RAG over your ingested knowledge base.</p>
+            </div>
+          )}
 
           {/* Multi-Modal Research Search Bar */}
           <div className="backdrop-blur-xl bg-slate-900/70 border border-white/10 rounded-xl p-5 shadow-xl space-y-4">
@@ -961,16 +969,23 @@ export const KnowledgeBase: React.FC = () => {
               {activeCanvasMode === 'soil_heatmap' && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-xs font-mono text-white/70">
-                    <span className="flex items-center gap-2">SPATIAL SOIL CHEMISTRY & PH HEATMAP (ISRIC SoilGrids v2) <span className="px-1.5 py-0.5 rounded text-[9px] bg-amber-500/15 text-amber-300 border border-amber-500/20">[Preview]</span></span>
-                    <span className="text-amber-400">Preview • open Soil Diagnostics per farmer for live 250m tile</span>
+                    <span className="flex items-center gap-2">SPATIAL SOIL CHEMISTRY & PH HEATMAP (ISRIC SoilGrids v2) {!isDemo && <span className="px-1.5 py-0.5 rounded text-[9px] bg-slate-700 text-white/60 border border-white/10">Live requires farmer</span>}</span>
+                    <span className="text-amber-400">{isDemo ? 'Demo preview — click cells' : 'Select farmer in Soil Diagnostics for live tile'}</span>
                   </div>
-                  <SoilNutrientHeatmapCanvas
-                    onProbeSelect={(probe: SoilProbeResult) => {
-                      toast(`Soil ${probe.label}: ${probe.value.toFixed(1)} ${probe.unit} (${probe.status})`);
-                    }}
-                    className="w-full h-[460px] rounded-xl border border-white/10"
-                  />
-                  <p className="text-[10px] text-white/40 text-center">Preview uses 6-point IDW demo mesh — select a farmer in Soil Diagnostics for live SoilGrids + lab-anchored interpolation.</p>
+                  {isDemo ? (
+                    <SoilNutrientHeatmapCanvas
+                      onProbeSelect={(probe: SoilProbeResult) => {
+                        toast(`Soil ${probe.label}: ${probe.value.toFixed(1)} ${probe.unit} (${probe.status})`);
+                      }}
+                      className="w-full h-[460px] rounded-xl border border-white/10"
+                    />
+                  ) : (
+                    <div className="w-full h-[460px] rounded-xl border border-white/10 bg-slate-950/40 flex flex-col items-center justify-center p-8 text-center">
+                      <Layers className="w-10 h-10 text-white/20 mb-2" />
+                      <p className="text-sm font-bold text-white">Live Soil Tile — Per-Farmer</p>
+                      <p className="text-xs text-white/50 mt-1 max-w-md">This demo mesh is visible only in the demo account. For your farmers, open <span className="text-emerald-300">Disease Diagnosis → Soil Diagnostics</span>, select a farmer, and the heatmap will render live ISRIC 250m + lab-anchored interpolation.</p>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1164,53 +1179,61 @@ export const KnowledgeBase: React.FC = () => {
             </div>
           </div>
 
-          {/* Articles Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredArticles.map(art => (
-              <motion.div
-                key={art.id}
-                layout
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="backdrop-blur-xl bg-slate-900/70 border border-white/10 hover:border-purple-500/40 rounded-xl p-5 flex flex-col justify-between shadow-xl transition-all group"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="px-2.5 py-1 rounded-md text-xxs font-mono font-bold uppercase bg-purple-500/10 text-purple-300 border border-purple-500/20">
-                      {art.category}
-                    </span>
-                    <span className="text-[10px] font-mono text-white/40">{art.readingTime}</span>
+          {/* Articles Grid — demo catalog only in demo account; real users see ingested docs via Search */}
+          {isDemo ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filteredArticles.map(art => (
+                <motion.div
+                  key={art.id}
+                  layout
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="backdrop-blur-xl bg-slate-900/70 border border-white/10 hover:border-purple-500/40 rounded-xl p-5 flex flex-col justify-between shadow-xl transition-all group"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="px-2.5 py-1 rounded-md text-xxs font-mono font-bold uppercase bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                        {art.category}
+                      </span>
+                      <span className="text-[10px] font-mono text-white/40">{art.readingTime}</span>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-bold text-white group-hover:text-purple-300 transition-colors line-clamp-2">
+                        {art.title}
+                      </h3>
+                      <p className="text-xxs text-white/50 font-mono mt-1">{art.author}</p>
+                    </div>
+
+                    <p className="text-xs text-white/70 leading-relaxed line-clamp-3">
+                      {art.excerpt}
+                    </p>
                   </div>
 
-                  <div>
-                    <h3 className="text-sm font-bold text-white group-hover:text-purple-300 transition-colors line-clamp-2">
-                      {art.title}
-                    </h3>
-                    <p className="text-xxs text-white/50 font-mono mt-1">{art.author}</p>
+                  <div className="mt-5 pt-3.5 border-t border-white/5 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xxs font-mono text-emerald-400">
+                      <CheckCircle2 className="w-3 h-3" />
+                      <span>{art.chunks} Embed Chunks</span>
+                    </div>
+
+                    <button
+                      onClick={() => setSelectedArticle(art)}
+                      className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-purple-500/20 border border-white/10 hover:border-purple-500/30 text-white/80 hover:text-white text-xxs font-bold uppercase transition-all flex items-center gap-1.5"
+                    >
+                      <span>Read Article</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </button>
                   </div>
-
-                  <p className="text-xs text-white/70 leading-relaxed line-clamp-3">
-                    {art.excerpt}
-                  </p>
-                </div>
-
-                <div className="mt-5 pt-3.5 border-t border-white/5 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xxs font-mono text-emerald-400">
-                    <CheckCircle2 className="w-3 h-3" />
-                    <span>{art.chunks} Embed Chunks</span>
-                  </div>
-
-                  <button
-                    onClick={() => setSelectedArticle(art)}
-                    className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-purple-500/20 border border-white/10 hover:border-purple-500/30 text-white/80 hover:text-white text-xxs font-bold uppercase transition-all flex items-center gap-1.5"
-                  >
-                    <span>Read Article</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <div className="backdrop-blur-xl bg-slate-900/40 border border-white/5 rounded-xl p-8 text-center">
+              <BookOpen className="w-8 h-8 text-white/20 mx-auto mb-2" />
+              <p className="text-sm font-bold text-white">Document Library — Demo Preview</p>
+              <p className="text-xs text-white/50 mt-1 max-w-md mx-auto">The 4 curated FAO/ISRIC/KALRO demo docs are visible only in the demo account. Your ingested technical docs (Upload Technical Doc above) will appear here and in Search after indexing.</p>
+            </div>
+          )}
 
           {/* Detailed Document Reader Modal */}
           <AnimatePresence>
