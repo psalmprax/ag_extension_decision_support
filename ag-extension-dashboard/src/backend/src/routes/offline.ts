@@ -18,6 +18,54 @@ function normalizeState(raw: unknown): QueueState {
     return QUEUE_STATES.includes(raw as QueueState) ? (raw as QueueState) : 'pending';
 }
 
+interface MirrorQueueBody {
+    id?: string;
+    idempotencyKey?: string;
+    url?: string;
+    method?: string;
+    headers?: Record<string, string>;
+    body?: string | Record<string, unknown>;
+    attachmentRefs?: string[];
+    retries?: number;
+    maxRetries?: number;
+    state?: string;
+    lastError?: string;
+}
+
+/** Authorization headers are never persisted — the server injects the
+ *  caller's own token when replaying. */
+function sanitizeHeaders(headers: Record<string, string> | undefined): Record<string, string> {
+    const clean: Record<string, string> = {};
+    for (const [key, value] of Object.entries(headers || {})) {
+        if (key.toLowerCase() !== 'authorization') clean[key] = String(value);
+    }
+    return clean;
+}
+
+function buildMirrorUpsert(userId: string, body: MirrorQueueBody & { id: string; url: string; method: string }) {
+    const shared = {
+        url: body.url,
+        method: body.method,
+        headers: sanitizeHeaders(body.headers),
+        body: (body.body ?? undefined) as never,
+        attachmentRefs: body.attachmentRefs || [],
+        retries: body.retries ?? 0,
+        maxRetries: body.maxRetries ?? 3,
+        state: normalizeState(body.state),
+        lastError: body.lastError,
+    };
+    return {
+        where: { userId_clientRequestId: { userId, clientRequestId: body.id } },
+        update: shared,
+        create: {
+            userId,
+            clientRequestId: body.id,
+            idempotencyKey: body.idempotencyKey || body.id,
+            ...shared,
+        },
+    };
+}
+
 /**
  * POST /api/v1/offline/queue
  * Upsert a queued request from the browser extension into the durable queue.
@@ -27,60 +75,16 @@ function normalizeState(raw: unknown): QueueState {
  */
 router.post('/queue', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), async (req: AuthRequest, res: Response) => {
     try {
-        const userId = req.user!.userId;
-        const body = req.body as {
-            id?: string;
-            idempotencyKey?: string;
-            url?: string;
-            method?: string;
-            headers?: Record<string, string>;
-            body?: string | Record<string, unknown>;
-            attachmentRefs?: string[];
-            retries?: number;
-            maxRetries?: number;
-            state?: string;
-            lastError?: string;
-        };
+        const body = req.body as MirrorQueueBody;
+        const { id, url, method } = body;
 
-        if (!body.id || !body.url || !body.method) {
+        if (!id || !url || !method) {
             return safeError(res, 400, 'id, url and method are required');
         }
 
-        // Authorization header is never persisted — the server injects the
-        // caller's own token when replaying.
-        const headers: Record<string, string> = {};
-        for (const [key, value] of Object.entries(body.headers || {})) {
-            if (key.toLowerCase() !== 'authorization') headers[key] = String(value);
-        }
-
-        const item = await getPrisma().offlineQueueItem.upsert({
-            where: { userId_clientRequestId: { userId, clientRequestId: body.id } },
-            update: {
-                url: body.url,
-                method: body.method,
-                headers,
-                body: (body.body ?? undefined) as never,
-                attachmentRefs: body.attachmentRefs || [],
-                retries: body.retries ?? 0,
-                maxRetries: body.maxRetries ?? 3,
-                state: normalizeState(body.state),
-                lastError: body.lastError,
-            },
-            create: {
-                userId,
-                clientRequestId: body.id,
-                idempotencyKey: body.idempotencyKey || body.id,
-                url: body.url,
-                method: body.method,
-                headers,
-                body: (body.body ?? undefined) as never,
-                attachmentRefs: body.attachmentRefs || [],
-                retries: body.retries ?? 0,
-                maxRetries: body.maxRetries ?? 3,
-                state: normalizeState(body.state),
-                lastError: body.lastError,
-            },
-        });
+        const item = await getPrisma().offlineQueueItem.upsert(
+            buildMirrorUpsert(req.user!.userId, { ...body, id, url, method }),
+        );
 
         res.json({ success: true, data: { id: item.clientRequestId, state: item.state } });
     } catch (error) {

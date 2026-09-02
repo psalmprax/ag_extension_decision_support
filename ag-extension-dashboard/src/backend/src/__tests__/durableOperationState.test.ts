@@ -112,9 +112,7 @@ jest.mock('../services/knowledgeService', () => ({
     },
 }));
 
-// eslint-disable-next-line import/first
 import app from '../app';
-// eslint-disable-next-line import/first
 const { __mockClient } = jest.requireMock('../services/prismaService') as { __mockClient: MockPrisma };
 
 const USER_ID = '00000000-0000-0000-0000-000000000001';
@@ -337,7 +335,6 @@ describe('Durable operation-state routes (DB-backed)', () => {
 
             expect(response.status).toBe(404);
         });
-    });
 
         it('mirror lifecycle: delete clears a mirrored dead_letter item', async () => {
             prisma.offlineQueueItem.deleteMany.mockResolvedValue({ count: 1 });
@@ -352,12 +349,29 @@ describe('Durable operation-state routes (DB-backed)', () => {
                 where: { userId: USER_ID, clientRequestId: 'req-1' },
             });
         });
+    });
 
+    describe('GET /api/v1/offline/status', () => {
         it('mirror lifecycle: status counts reflect transitions after upserts', async () => {
             prisma.offlineQueueItem.groupBy.mockResolvedValue([
                 { state: 'pending', _count: { _all: 2 } },
                 { state: 'dead_letter', _count: { _all: 1 } },
             ]);
+
+            const response = await request(app)
+                .get('/api/v1/offline/status')
+                .set('Authorization', `Bearer ${token}`);
+
+            expect(response.status).toBe(200);
+            expect(response.body.data).toEqual({
+                pending: 2,
+                failed: 0,
+                conflict: 0,
+                deadLetter: 1,
+                total: 3,
+            });
+        });
+
         it('aggregates counts by state for the caller', async () => {
             prisma.offlineQueueItem.groupBy.mockResolvedValue([
                 { state: 'pending', _count: { _all: 3 } },
