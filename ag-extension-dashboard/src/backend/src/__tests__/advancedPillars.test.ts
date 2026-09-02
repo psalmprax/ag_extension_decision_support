@@ -27,7 +27,9 @@ describe('Strategic Architecture Pillars (Voice, Economics, Carbon, Hazards)', (
     it('transcribes voice notes and extracts agronomic payload', async () => {
       const result = await transcribeVoiceNote({ languageHint: 'sw' });
       expect(result.detectedLanguage).toBe('sw');
-      expect(result.confidence).toBeGreaterThan(0.9);
+      // No audioBuffer supplied → stub path: marked [STUB] with 0 confidence (honest, not a real STT result)
+      expect(result.confidence).toBe(0);
+      expect(result.transcription).toContain('[STUB');
       expect(result.transcription.length).toBeGreaterThan(10);
     });
 

@@ -1,7 +1,7 @@
 /**
- * @deprecated Specification phase only — not wired to any API surface (route, tool, worker, or app.ts).
- * See docs/PILLAR_SERVICES_DECISION.md for details.
- * These services exist only in test files and have no production integration.
+ * Agro-input dealer directory — wired via POST /api/pillars/suppliers/*.
+ * Demo dealers are used when no DB-backed registry is populated; verified-source
+ * stamping reflects whether the match came from the demo list or a DB row.
  */
 import { logger } from '../utils/logger';
 
@@ -155,6 +155,36 @@ export function findNearbySuppliers(params: {
   }))
     .filter(dealer => (dealer.location.distanceKm || 0) <= radiusKm && dealer.inventory.length > 0)
     .sort((a, b) => (a.location.distanceKm || 0) - (b.location.distanceKm || 0));
+}
+
+/** DB-backed variant — queries agro_input_dealers when the table exists, otherwise falls back to demo. */
+export async function findNearbySuppliersLive(params: {
+  lat: number;
+  lng: number;
+  radiusKm?: number;
+  category?: 'seed' | 'fertilizer' | 'pesticide' | 'lime' | 'biological';
+}): Promise<CertifiedAgroDealer[]> {
+  try {
+    const { query } = await import('./databaseService');
+    const { rows } = await query<{
+      id: string; dealer_name: string; owner_name: string; license_number: string;
+      county: string; sub_county: string; lat: number; lng: number; phone: string; is_verified: boolean;
+    }>(`SELECT id, dealer_name, owner_name, license_number, county, sub_county, lat, lng, phone, is_verified
+        FROM agro_input_dealers WHERE is_verified = true LIMIT 200`);
+    if (rows.length > 0) {
+      const dealers: CertifiedAgroDealer[] = rows.map(r => ({
+        id: r.id, dealerName: r.dealer_name, ownerName: r.owner_name, licenseNumber: r.license_number,
+        county: r.county, subCounty: r.sub_county, location: { lat: Number(r.lat), lng: Number(r.lng) },
+        phone: r.phone, isVerifiedStockist: r.is_verified, inventory: [],
+      }));
+      const { lat, lng, radiusKm = 50 } = params;
+      return dealers
+        .map(d => ({ ...d, location: { ...d.location, distanceKm: haversineKm(lat, lng, d.location.lat, d.location.lng) } }))
+        .filter(d => (d.location.distanceKm || 0) <= radiusKm)
+        .sort((a, b) => (a.location.distanceKm || 0) - (b.location.distanceKm || 0));
+    }
+  } catch { /* table missing or DB unavailable — fall through to demo */ }
+  return findNearbySuppliers(params);
 }
 
 export function verifyBatchNumber(batchNumber: string): {

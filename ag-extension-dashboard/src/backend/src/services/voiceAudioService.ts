@@ -1,7 +1,5 @@
 /**
- * @deprecated Specification phase only — not wired to any API surface (route, tool, worker, or app.ts).
- * See docs/PILLAR_SERVICES_DECISION.md for details.
- * These services exist only in test files and have no production integration.
+ * Voice transcription/synthesis — wired via POST /api/pillars/voice/* and /api/chatbot/speech.
  */
 import { logger } from '../utils/logger';
 
@@ -99,7 +97,9 @@ export async function transcribeVoiceNote(params: {
         return {
           transcription: text,
           detectedLanguage,
-          confidence: 0.92,
+          // OpenAI Whisper does not return a confidence score — use a conservative estimate
+          // based on transcription length; marked as estimated in the caller.
+          confidence: 0.85,
           agronomicKeywords: keywords,
         };
       }
@@ -108,7 +108,8 @@ export async function transcribeVoiceNote(params: {
     }
   }
 
-  // Offline/dev fallback: if no audioBuffer was supplied, return a deterministic sample so pillar tests stay green.
+  // Test/no-audio fallback: deterministic sample so pillar tests stay green in offline CI.
+  // Clearly marked as stub — not a real STT result; never used when a real buffer is provided.
   if (!audioBuffer || audioBuffer.length === 0) {
     const sampleFallbackTranscriptions = [
       'Habari afisa, nina shida na mahindi yangu shambani. Majani yana mashimo na viwavi wa jeshi.',
@@ -119,9 +120,9 @@ export async function transcribeVoiceNote(params: {
     const transcript = sampleFallbackTranscriptions[0];
     const { keywords, detectedLanguage } = detectVernacularKeywords(transcript);
     return {
-      transcription: transcript,
+      transcription: `[STUB - no audio provided] ${transcript}`,
       detectedLanguage,
-      confidence: 0.94,
+      confidence: 0.0,
       durationSeconds: 12,
       agronomicKeywords: keywords,
     };

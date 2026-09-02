@@ -11,7 +11,7 @@ import { computeAgronomicCreditScore, evaluateParametricInsuranceClaim } from '@
 import { clusterPestSightings, forecastSwarmTrajectory } from '@/services/pestSwarmRadarService';
 import { findCrossBorderArbitrage } from '@/services/crossBorderTradeService';
 import { findAvailableEquipment, planDroneSprayMission } from '@/services/mechanizationFleetService';
-import { findNearbySuppliers, verifyBatchNumber } from '@/services/inputSupplierService';
+import { findNearbySuppliers, findNearbySuppliersLive, verifyBatchNumber } from '@/services/inputSupplierService';
 import { aggregateHarvestProjections, matchOfftakerContracts } from '@/services/harvestOfftakeService';
 import { calculateVpdKPa, evaluateSmartIrrigation } from '@/services/iotTelemetryService';
 import { analyzeParcelMultispectral } from '@/services/satelliteNdviService';
@@ -87,7 +87,7 @@ router.post('/offtake/match', checkUsageLimit('ai_chat'), validate({ body: z.obj
 
 // ── Inputs & Mechanization ─────────────────────────────────────────────────
 router.post('/suppliers/nearby', checkUsageLimit('ai_chat'), validate({ body: z.object({ lat: z.number(), lng: z.number(), radiusKm: z.number().optional() }) }), async (req: AuthRequest, res: Response) => {
-    try { return res.json({ success: true, data: findNearbySuppliers(req.body) }); } catch (e) { return safeError(res, 500, (e as Error).message); }
+    try { return res.json({ success: true, data: await findNearbySuppliersLive(req.body) }); } catch (e) { return safeError(res, 500, (e as Error).message); }
 });
 router.post('/suppliers/verify-batch', checkUsageLimit('ai_chat'), validate({ body: z.object({ batchNumber: z.string().min(1) }) }), async (req: AuthRequest, res: Response) => {
     try { return res.json({ success: true, data: verifyBatchNumber(req.body.batchNumber) }); } catch (e) { return safeError(res, 500, (e as Error).message); }
