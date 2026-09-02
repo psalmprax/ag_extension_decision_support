@@ -139,20 +139,28 @@ function parseRefRules(s) {
   const onDelete = (s.match(/ON DELETE (SET NULL|SET DEFAULT|NO ACTION|CASCADE|RESTRICT)/i) || [])[1];
   const onUpdate = (s.match(/ON UPDATE (SET NULL|SET DEFAULT|NO ACTION|CASCADE|RESTRICT)/i) || [])[1];
   return {
-    onDelete: onDelete ? onDelete.toUpperCase() : 'NO ACTION',
-    onUpdate: onUpdate ? onUpdate.toUpperCase() : 'NO ACTION',
+    onDelete: normalizeRefRule(onDelete),
+    onUpdate: normalizeRefRule(onUpdate),
   };
 }
 
+/** NO ACTION and RESTRICT differ only in deferred-check timing, which this
+ *  schema never uses — treat them as equivalent for drift comparison. */
+function normalizeRefRule(rule) {
+  const r = rule ? rule.toUpperCase() : 'NO ACTION';
+  return r === 'RESTRICT' ? 'NO ACTION' : r;
+}
+
 function parseAddFkStatement(sql) {
-  const m = sql.match(new RegExp(`ADD\\s+CONSTRAINT\\s+"([a-zA-Z_][a-zA-Z0-9_]*)"\\s+FOREIGN KEY\\s*\\(([^)]*)\\)\\s+REFERENCES\\s+${QUALIFIED_NAME_RE}\\s*\\(([^)]*)\\)(.*)$`));
+  const m = sql.match(new RegExp(`^ALTER TABLE\\s+${QUALIFIED_NAME_RE}\\s+ADD\\s+CONSTRAINT\\s+"([a-zA-Z_][a-zA-Z0-9_]*)"\\s+FOREIGN KEY\\s*\\(([^)]*)\\)\\s+REFERENCES\\s+${QUALIFIED_NAME_RE}\\s*\\(([^)]*)\\)(.*)$`));
   if (!m) return null;
   return {
-    name: m[1],
-    columns: normCols(m[2]),
-    refTable: m[3],
-    refColumns: normCols(m[4]),
-    ...parseRefRules(m[5]),
+    table: m[1],
+    name: m[2],
+    columns: normCols(m[3]),
+    refTable: m[4],
+    refColumns: normCols(m[5]),
+    ...parseRefRules(m[6]),
   };
 }
 
