@@ -1,6 +1,6 @@
 import { logger } from '../utils/logger';
 
-export interface WhisperTranscriptionResult {
+interface WhisperTranscriptionResult {
   transcription: string;
   detectedLanguage: string;
   confidence: number;
@@ -13,7 +13,7 @@ export interface WhisperTranscriptionResult {
   }>;
 }
 
-export interface WhisperTranscriptionOptions {
+interface WhisperTranscriptionOptions {
   language?: 'sw' | 'en' | 'auto';
   model?: 'tiny' | 'base' | 'small' | 'medium' | 'large-v3';
   computeType?: 'int8' | 'int8_float16' | 'float16' | 'float32';
@@ -32,7 +32,7 @@ export interface WhisperTranscriptionOptions {
  * Provides local, free, offline-capable speech-to-text with support for 99+ languages
  * including Swahili (sw) and English (en).
  */
-export class WhisperTranscriptionService {
+class WhisperTranscriptionService {
   private static instance: WhisperTranscriptionService | null = null;
   private model: any = null;
   private modelName: string = 'small';
