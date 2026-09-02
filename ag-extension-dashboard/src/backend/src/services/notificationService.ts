@@ -2,6 +2,7 @@
 import { logger } from '../utils/logger';
 import { sendPushNotification } from './pushNotificationService';
 import { PrismaClient, Prisma } from '@prisma/client';
+import { addNotificationJob } from '../queues/notificationQueue';
 
 const prisma = new PrismaClient({
     datasourceUrl: process.env.DATABASE_URL,
@@ -205,8 +206,8 @@ class NotificationService {
     }
 
     /**
-     * Schedule notification for later — persists as pending and enqueues delayed delivery.
-     * If the scheduled time is in the past/near, it sends immediately.
+     * Schedule notification for later — persists as pending and enqueues delayed delivery via BullMQ.
+     * If the scheduled time is in the past/near (<= 60s), it sends immediately.
      */
     async schedule(
         payload: NotificationPayload,
@@ -227,14 +228,13 @@ class NotificationService {
                     metadata: { ...payload.metadata, scheduledAt: scheduledAt.toISOString(), scheduled: true } as Prisma.InputJsonValue,
                 }
             });
-            // Best-effort delayed dispatch via setTimeout (bounded); for production replace with BullMQ delayed job
+            // Use BullMQ delayed job for reliable scheduled delivery (max 24h delay)
             const cappedDelay = Math.min(delayMs, 24 * 60 * 60 * 1000);
-            setTimeout(() => {
-                this.send({ ...payload, metadata: { ...payload.metadata, sourceNotificationId: created.id } }).catch(err =>
-                    logger.error('Scheduled notification dispatch failed:', err)
-                );
-            }, cappedDelay).unref?.();
-            logger.info(`Notification ${created.id} scheduled for ${scheduledAt.toISOString()} (in ${Math.round(delayMs / 1000)}s)`);
+            await addNotificationJob(
+                { ...payload, metadata: { ...payload.metadata, sourceNotificationId: created.id } },
+                { delay: cappedDelay }
+            );
+            logger.info(`Notification ${created.id} scheduled for ${scheduledAt.toISOString()} (in ${Math.round(delayMs / 1000)}s) via BullMQ`);
             return true;
         } catch (error) {
             logger.error('Failed to schedule notification:', error);

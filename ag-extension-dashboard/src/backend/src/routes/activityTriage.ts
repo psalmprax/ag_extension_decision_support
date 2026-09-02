@@ -4,6 +4,9 @@ import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 import { authorize, AuthRequest } from '@/middleware/authorize';
 
+// In-memory claim store (replace with DB table in production)
+const activityClaims = new Map<string, { claimedBy: string; userId: string; claimedAt: string }>();
+
 const router = Router();
 
 // ── Types (mirrors the frontend ActivityItem shape) ──────────────────
@@ -307,6 +310,88 @@ router.get(
     } catch (error) {
       logger.error('Activity triage aggregation failed:', error);
       safeError(res, 500, 'Failed to aggregate activity triage data');
+    }
+  }
+);
+
+// POST /api/v1/activities/triage/:id/claim — Claim an activity for intervention
+router.post(
+  '/triage/:id/claim',
+  authorize(['admin', 'regional_manager', 'extension_officer']),
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user!.userId;
+      const userName = `${req.user!.firstName || ''} ${req.user!.lastName || ''}`.trim() || 'Officer';
+
+      // Check if already claimed by someone else
+      const existing = activityClaims.get(id);
+      if (existing && existing.userId !== userId) {
+        return res.status(409).json({
+          success: false,
+          error: `Already claimed by ${existing.claimedBy}`,
+        });
+      }
+
+      activityClaims.set(id, {
+        claimedBy: userName,
+        userId,
+        claimedAt: new Date().toISOString(),
+      });
+
+      logger.info(`Activity ${id} claimed by ${userName} (${userId})`);
+      res.json({ success: true, data: { id, claimedBy: userName, claimedAt: activityClaims.get(id)!.claimedAt } });
+    } catch (error) {
+      logger.error('Claim activity failed:', error);
+      safeError(res, 500, 'Failed to claim activity');
+    }
+  }
+);
+
+// POST /api/v1/activities/triage/:id/release — Release a claimed activity
+router.post(
+  '/triage/:id/release',
+  authorize(['admin', 'regional_manager', 'extension_officer']),
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user!.userId;
+
+      const existing = activityClaims.get(id);
+      if (!existing) {
+        return res.status(404).json({ success: false, error: 'Activity not claimed' });
+      }
+
+      // Only allow release by the claimer or admin
+      if (existing.userId !== userId && req.user!.role !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Cannot release activity claimed by another officer' });
+      }
+
+      activityClaims.delete(id);
+      logger.info(`Activity ${id} released by ${userId}`);
+      res.json({ success: true, data: { id, released: true } });
+    } catch (error) {
+      logger.error('Release activity failed:', error);
+      safeError(res, 500, 'Failed to release activity');
+    }
+  }
+);
+
+// GET /api/v1/activities/triage/:id/claim-status — Get claim status for an activity
+router.get(
+  '/triage/:id/claim-status',
+  authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']),
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const claim = activityClaims.get(id);
+      res.json({
+        success: true,
+        data: claim ? { claimed: true, claimedBy: claim.claimedBy, claimedAt: claim.claimedAt } : { claimed: false },
+      });
+    } catch (error) {
+      logger.error('Get claim status failed:', error);
+      safeError(res, 500, 'Failed to get claim status');
     }
   }
 );

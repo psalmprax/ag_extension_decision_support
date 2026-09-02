@@ -2,6 +2,12 @@
 import { logger } from '@/utils/logger';
 import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
 
+// NOTE: A backend ONNX inference path was removed during the truthfulness remediation:
+// it fed a uniform tensor derived from the first byte of the JPEG header into an
+// untrained surrogate model and stamped healthy outputs as `verified_source`.
+// Image diagnosis goes through the LLM vision provider below until a trained
+// on-device model is wired with real pixel decoding (see the frontend classifier).
+
 export type DiagnosticEvidenceStatus = 'verified_source' | 'no_verified_source';
 export type DiagnosticReviewStatus = 'ready' | 'needs_expert_review';
 

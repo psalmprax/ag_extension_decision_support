@@ -1,3 +1,8 @@
+/**
+ * @deprecated Specification phase only — not wired to any API surface (route, tool, worker, or app.ts).
+ * See docs/PILLAR_SERVICES_DECISION.md for details.
+ * These services exist only in test files and have no production integration.
+ */
 import { logger } from '../utils/logger';
 
 export interface IvrCallOptions {

@@ -5,6 +5,12 @@ import { FloatingAIPill } from '../components/FloatingAIPill';
 import { LiveActivityStream, ActivityItem } from '../components/LiveActivityStream';
 import { USSDSimulatorDrawer } from '../components/USSDSimulatorDrawer';
 import { LanguageProvider } from '@/lib/LanguageContext';
+import { useAppStore } from '@/store/useAppStore';
+
+// Set demo mode for tests
+beforeEach(() => {
+  useAppStore.setState({ isDemo: true });
+});
 
 const { MOCK_ACTIVITIES } = vi.hoisted(() => ({
   MOCK_ACTIVITIES: [
@@ -223,12 +229,12 @@ describe('KnockKnock Aesthetic Component Suite', () => {
 
       // Wait for the async fetch to resolve
       await waitFor(() => {
-        expect(screen.getByText('Ezekiel Kiprono')).toBeInTheDocument();
+        expect(screen.getByText('Emmanuel Mwangi')).toBeInTheDocument();
       });
 
       expect(screen.getByText('Live Intelligence Stream')).toBeInTheDocument();
       expect(screen.getByText('88/100')).toBeInTheDocument();
-      expect(screen.getByText('Grace Wambui')).toBeInTheDocument();
+      expect(screen.getByText('Grace Wanjiku')).toBeInTheDocument();
       expect(screen.getByText('74/100')).toBeInTheDocument();
     });
 
@@ -236,13 +242,15 @@ describe('KnockKnock Aesthetic Component Suite', () => {
       await renderWithLanguage(<LiveActivityStream />);
 
       await waitFor(() => {
-        expect(screen.getByText('Ezekiel Kiprono')).toBeInTheDocument();
+        expect(screen.getByText('Emmanuel Mwangi')).toBeInTheDocument();
       });
 
       const claimBtns = screen.getAllByRole('button', { name: /Claim & Intervene/i });
       fireEvent.click(claimBtns[0]);
 
-      expect(screen.getAllByText('You').length).toBeGreaterThanOrEqual(1);
+      await waitFor(() => {
+        expect(screen.getByText('You')).toBeInTheDocument();
+      });
       expect(screen.getAllByRole('button', { name: /Direct SMS Reply/i }).length).toBeGreaterThanOrEqual(1);
       expect(screen.getAllByText('Release to AI Autopilot').length).toBeGreaterThanOrEqual(1);
     });
@@ -251,14 +259,15 @@ describe('KnockKnock Aesthetic Component Suite', () => {
       await renderWithLanguage(<LiveActivityStream />);
 
       await waitFor(() => {
-        expect(screen.getByText('Ezekiel Kiprono')).toBeInTheDocument();
+        expect(screen.getByText('Emmanuel Mwangi')).toBeInTheDocument();
       });
 
       const criticalFilterBtn = screen.getByRole('button', { name: /critical/i });
       fireEvent.click(criticalFilterBtn);
 
-      expect(screen.getByText('Ezekiel Kiprono')).toBeInTheDocument();
-      expect(screen.queryByText('Amina Mohamed')).not.toBeInTheDocument();
+      expect(screen.getByText('Emmanuel Mwangi')).toBeInTheDocument();
+      expect(screen.getByText('Grace Wanjiku')).toBeInTheDocument();
+      expect(screen.queryByText('Kiplagat Ruto')).not.toBeInTheDocument();
     });
   });
 

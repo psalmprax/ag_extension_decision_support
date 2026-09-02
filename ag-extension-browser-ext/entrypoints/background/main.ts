@@ -614,15 +614,38 @@ export default defineBackground(() => {
                         sendResponse({ success: true });
                         break;
                     case 'open_sidepanel':
-                        if (chromeAPI?.sidePanel && typeof sender.tab?.windowId === 'number') {
-                            await chromeAPI.sidePanel.open({ windowId: sender.tab.windowId });
-                            if (message.tab) {
-                                setTimeout(() => {
-                                    chromeAPI.runtime.sendMessage({
-                                        action: 'switch_sidepanel_tab',
-                                        tab: message.tab,
-                                    });
-                                }, 500);
+                        if (chromeAPI?.sidePanel) {
+                            let windowId: number | undefined;
+                            if (typeof sender.tab?.windowId === 'number') {
+                                windowId = sender.tab.windowId;
+                            } else {
+                                // Fallback for popup and other contexts without sender.tab
+                                try {
+                                    const windows = await chromeAPI.windows.getAll({ populate: false, windowTypes: ['normal'] });
+                                    const focused = windows.find(w => w.focused);
+                                    windowId = focused?.id;
+                                } catch {
+                                    // Last resort: try to get last focused window
+                                    try {
+                                        const lastFocused = await chromeAPI.windows.getLastFocused();
+                                        windowId = lastFocused?.id;
+                                    } catch {
+                                        windowId = undefined;
+                                    }
+                                }
+                            }
+                            if (typeof windowId === 'number') {
+                                await chromeAPI.sidePanel.open({ windowId });
+                                if (message.tab) {
+                                    setTimeout(() => {
+                                        chromeAPI.runtime.sendMessage({
+                                            action: 'switch_sidepanel_tab',
+                                            tab: message.tab,
+                                        });
+                                    }, 500);
+                                }
+                            } else {
+                                console.warn('open_sidepanel: could not determine windowId');
                             }
                         }
                         break;

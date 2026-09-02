@@ -55,6 +55,7 @@ function safeOriginalName(name: string): string {
   return basename.slice(0, 255) || 'upload';
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export async function saveUpload(input: UploadInput): Promise<UploadResult> {
   if (input.buffer.length === 0 || input.buffer.length > MAX_UPLOAD_BYTES) {
     throw new Error('File exceeds the 10MB upload limit');

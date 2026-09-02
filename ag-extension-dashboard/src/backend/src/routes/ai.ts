@@ -297,14 +297,6 @@ const agentRegistry = [
         capabilities: ['Market Analysis', 'Crop Disease Diagnosis', 'Policy Research'],
         providerType: 'anthropic'
     },
-    {
-        id: 'openclaw',
-        name: 'OpenClaw',
-        url: process.env.OPENCLAW_URL || 'http://localhost:8002',
-        description: 'Automated code & system refactoring',
-        capabilities: ['Bug Fixes', 'Unit Testing', 'Doc Gen'],
-        providerType: 'groq'
-    },
 ];
 
 /**
@@ -323,9 +315,8 @@ function statusFromHealth(status: string): AgentLiveStatus['status'] {
 }
 
 async function pingAgent(config: (typeof agentRegistry)[number]): Promise<AgentLiveStatus> {
-    const url = config.id === 'openclaw' ? 'http://ag-openclaw:8002' : config.url;
     try {
-        const response = await fetch(`${url}/health`, { signal: AbortSignal.timeout(1000) });
+        const response = await fetch(`${config.url}/health`, { signal: AbortSignal.timeout(1000) });
         return { status: response.ok ? 'online' : 'unhealthy', load: 0, lastActive: new Date().toISOString() };
     } catch (error) {
         logger.warn(`Agent health check failed for ${config.id}:`, error);

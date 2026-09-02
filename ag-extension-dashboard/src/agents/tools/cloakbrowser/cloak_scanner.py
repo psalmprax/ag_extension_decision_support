@@ -174,8 +174,26 @@ class CloakBrowserScanner(DiscoveryScannerBase):
                 params["scroll"] = "true"
 
         endpoint = f"{self.scraper_url}{config.scrape_endpoint}"
-        response = await self.client.get(endpoint, params=params)
-        response.raise_for_status()
+        try:
+            response = await self.client.get(endpoint, params=params)
+            response.raise_for_status()
+        except httpx.ConnectError as e:
+            logger.warning(
+                f"CloakBrowser [{config.name}] discovery-scraper service not reachable at {self.scraper_url}: {e}. "
+                f"Returning empty results. Ensure discovery-scraper service is deployed."
+            )
+            return []
+        except httpx.TimeoutException as e:
+            logger.warning(
+                f"CloakBrowser [{config.name}] discovery-scraper timeout: {e}"
+            )
+            return []
+        except httpx.HTTPStatusError as e:
+            logger.error(
+                f"CloakBrowser [{config.name}] discovery-scraper HTTP error: {e.response.status_code}"
+            )
+            return []
+
         data = response.json()
 
         if not data.get("success"):

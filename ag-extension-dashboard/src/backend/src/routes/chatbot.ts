@@ -22,6 +22,8 @@ import { safeError } from '@/utils/safeResponse';
 import { authorize } from '@/middleware/authorize';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
 import { MessageAccessError } from '@/services/messageAccessService';
+import { RAGV2Service } from '@/services/ragV2Service';
+import { mcpAdapter } from '@/services/mcpAdapter';
 
 const router = Router();
 
@@ -513,26 +515,35 @@ async function loadHistoryBlock(conversationId?: string): Promise<string> {
   }
 }
 
-/** Retrieve grounded knowledge-base context via hybrid RRF search (empty on failure). */
-async function loadRagBlock(message: string): Promise<string> {
+/** Retrieve grounded knowledge-base context via RAG v2 enhanced search (empty on failure). */
+async function loadRagBlock(message: string): Promise<{ context: string; citations: string[] }> {
   try {
-    const results = await VectorService.hybridSearch(message, 3, undefined, 0.0);
-    if (results.length === 0) return '';
+    const { results, citations } = await RAGV2Service.enhancedSearch(message, {
+      limit: 3,
+      useChunks: true,
+      useGraph: true,
+      useReranking: true,
+    });
+    if (results.length === 0) return { context: '', citations: [] };
     const snippets = results
       .map((doc, i) => {
         const title = typeof doc.metadata?.title === 'string' ? doc.metadata.title : 'Knowledge article';
         return `[${i + 1}] ${title}: ${String(doc.content).slice(0, 400)}`;
       })
       .join('\n');
-    return `\n\nKNOWLEDGE BASE CONTEXT (cite sources when used):\n${snippets}`;
+    const citationList = citations.map(c => `${c.title} (${c.category})`);
+    return {
+      context: `\n\nKNOWLEDGE BASE CONTEXT (cite sources when used):\n${snippets}`,
+      citations: citationList
+    };
   } catch (err) {
-    logger.warn('RAG retrieval failed for chat completions, continuing without context:', err);
-    return '';
+    logger.warn('RAG v2 retrieval failed for chat completions, continuing without context:', err);
+    return { context: '', citations: [] };
   }
 }
 
 /**
- * POST /api/chatbot/completions — AI Assistant inference proxy.
+ * POST /api/chatbot/completions — AI Assistant inference proxy with RAG, tools, and history.
  */
 router.post('/completions', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), checkUsageLimit('ai_chat'), async (req: AuthedRequest, res: Response) => {
   try {
@@ -553,22 +564,69 @@ router.post('/completions', authorize(['admin', 'regional_manager', 'extension_o
     // eslint-disable-next-line no-control-regex
     const sanitizedMessage = rawMessage.slice(0, 2000).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
 
-    const [historyBlock, ragBlock] = await Promise.all([
+    // Fetch context in parallel: history + RAG
+    const [historyBlock, ragResult] = await Promise.all([
       loadHistoryBlock(body.conversation_id),
       loadRagBlock(sanitizedMessage),
     ]);
 
+    // Persist user message
     await query(
       `INSERT INTO chat_messages (conversation_id, role, content, language)
        VALUES ($1, 'user', $2, $3)`,
       [body.conversation_id ?? null, sanitizedMessage, body.language ?? null]
     );
 
-    const response = await AIRouter.routeRequest('generate', {
-      prompt: `You are an agricultural extension advisory assistant. Answer the farmer's or officer's message using the knowledge base context when relevant. Be concise and actionable.${historyBlock}${ragBlock}\n\nMESSAGE: ${sanitizedMessage}`,
-    });
-    const assistantText = (response?.text ?? '').toString().trim() || 'I am sorry, I could not generate a response.';
+    // Build system prompt with available tools
+    const toolDefinitions = mcpAdapter.convertToMCPTools().map((t: { name: string; description: string; inputSchema: Record<string, unknown> }) => ({
+      type: 'function' as const,
+      function: {
+        name: t.name,
+        description: t.description,
+        parameters: t.inputSchema,
+      },
+    }));
 
+    const systemPrompt = `You are an agricultural extension advisory assistant. Answer the farmer's or officer's message using the knowledge base context when relevant. You have access to specialized agricultural tools — use them when they can provide accurate, data-driven information. Be concise and actionable.${historyBlock}${ragResult.context}`;
+
+    // First pass: let the LLM decide if it needs tools
+    const response = await AIRouter.routeRequest('generate', {
+      prompt: `${systemPrompt}\n\nMESSAGE: ${sanitizedMessage}`,
+      options: {
+        tools: toolDefinitions.length > 0 ? toolDefinitions : undefined,
+        temperature: 0.2,
+      },
+    });
+
+    let assistantText = (response?.text ?? '').toString().trim();
+
+    // If the model requested tool calls, execute them
+    if (response?.toolCalls && response.toolCalls.length > 0) {
+      const toolResults: string[] = [];
+      for (const toolCall of response.toolCalls) {
+        try {
+          const toolResult = await mcpAdapter.callTool(toolCall.function.name, toolCall.function.arguments);
+          toolResults.push(`Tool ${toolCall.function.name} result: ${toolResult.content[0]?.text || 'No output'}`);
+        } catch (toolErr) {
+          logger.error(`Tool ${toolCall.function.name} execution failed:`, toolErr);
+          toolResults.push(`Tool ${toolCall.function.name} error: ${toolErr instanceof Error ? toolErr.message : String(toolErr)}`);
+        }
+      }
+
+      // Second pass: feed tool results back to the model
+      const followUpPrompt = `${systemPrompt}\n\nMESSAGE: ${sanitizedMessage}\n\nTOOL RESULTS:\n${toolResults.join('\n')}\n\nNow provide a comprehensive answer using the tool results.`;
+      const followUp = await AIRouter.routeRequest('generate', {
+        prompt: followUpPrompt,
+        options: { temperature: 0.2 },
+      });
+      assistantText = (followUp?.text ?? '').toString().trim() || assistantText;
+    }
+
+    if (!assistantText) {
+      assistantText = 'I am sorry, I could not generate a response.';
+    }
+
+    // Persist assistant message
     await query(
       `INSERT INTO chat_messages (conversation_id, role, content, language)
        VALUES ($1, 'assistant', $2, $3)`,
@@ -582,6 +640,8 @@ router.post('/completions', authorize(['admin', 'regional_manager', 'extension_o
           { role: 'user', content: sanitizedMessage },
           { role: 'assistant', content: assistantText },
         ],
+        citations: ragResult.citations,
+        usedTools: response?.toolCalls?.map((tc: { function: { name: string } }) => tc.function.name) || [],
       },
     });
   } catch (error) {

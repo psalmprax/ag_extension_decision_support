@@ -34,7 +34,9 @@ interface AgentData {
   tools: string[];
 }
 
+// Fallback fleet data used only if API is unavailable
 const DEFAULT_FLEET: AgentData[] = [
+  // ... (keep the same DEFAULT_FLEET array)
   {
     id: 'agent-zero',
     name: 'Agent Zero (Triage Orchestrator)',
@@ -331,15 +333,19 @@ const AlphaAgentOps: React.FC = () => {
 
   const now = () => new Date().toLocaleTimeString('en-US', { hour12: false });
 
-  // Fetch real health data
-  useQuery({
-    queryKey: ['agent-health'],
+  // Fetch agents from backend API
+  const { data: agentsData, isLoading: agentsLoading, error: agentsError } = useQuery({
+    queryKey: ['ai-agents'],
     queryFn: async () => {
-      const { data } = await apiClient.get('/health');
-      return data;
+      const { data } = await apiClient.get<{ success: boolean; data: AgentData[] }>('/ai/agents');
+      return data.data;
     },
     refetchInterval: 30000,
+    retry: 2,
   });
+
+  // Use fetched agents or fallback to DEFAULT_FLEET
+  const fleet = agentsData && agentsData.length > 0 ? agentsData : DEFAULT_FLEET;
 
   // Fetch real knowledge count
   useQuery({
@@ -373,7 +379,7 @@ const AlphaAgentOps: React.FC = () => {
     },
   });
 
-  const activeAgentData = DEFAULT_FLEET.find(a => a.id === activeAgent) || DEFAULT_FLEET[0];
+  const activeAgentData = fleet.find(a => a.id === activeAgent) || fleet[0];
 
   const handleRunScenario = (sc: (typeof AUTONOMOUS_SCENARIOS)[0]) => {
     setActiveAgent(sc.agent);

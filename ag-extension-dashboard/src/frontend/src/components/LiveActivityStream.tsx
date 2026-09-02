@@ -222,14 +222,13 @@ const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
 
       <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/60 mt-2">
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-          {!activity.isClaimed ? (
+{!activity.isClaimed ? (
             <button
               onClick={() => onClaim(activity.id)}
-              title="Local preview only — does not persist to backend"
               className="px-2.5 sm:px-3 py-1 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm shadow-emerald-950 shrink-0"
             >
               <UserCheck className="w-3.5 h-3.5" />
-              Claim &amp; Intervene <span className="text-[9px] opacity-70">[local]</span>
+              Claim & Intervene
             </button>
           ) : (
             <button
@@ -432,14 +431,56 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
     }
   }, [sendingSms]);
 
-  const handleClaim = useCallback((id: string) => {
+  const claimLocally = useCallback((id: string) => {
     setActivities(prev => prev.map(item => item.id === id ? { ...item, isClaimed: true, claimedBy: 'You' } : item));
+    toast.success('Claimed (demo mode)');
   }, []);
 
-  const handleRelease = useCallback((id: string) => {
+  const releaseLocally = useCallback((id: string) => {
     setActivities(prev => prev.map(item => item.id === id ? { ...item, isClaimed: false, claimedBy: undefined } : item));
-    if (activeReplyId === id) setActiveReplyId(null);
-  }, [activeReplyId]);
+    toast.success('Released to AI Autopilot (demo mode)');
+  }, []);
+
+  const handleClaim = useCallback(async (id: string) => {
+    if (isDemo) {
+      claimLocally(id);
+      return;
+    }
+
+    try {
+      const { data } = await apiClient.post<{ success: boolean; data?: { claimedBy: string; claimedAt: string }; error?: string }>(`/activities/triage/${id}/claim`);
+      if (data.success && data.data) {
+        setActivities(prev => prev.map(item => item.id === id ? { ...item, isClaimed: true, claimedBy: data.data!.claimedBy } : item));
+        toast.success(`Claimed by ${data.data.claimedBy}`);
+      } else {
+        toast.error(data.error || 'Failed to claim activity');
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to claim activity');
+    }
+  }, [isDemo, claimLocally]);
+
+  const handleRelease = useCallback(async (id: string) => {
+    if (isDemo) {
+      releaseLocally(id);
+      if (activeReplyId === id) setActiveReplyId(null);
+      return;
+    }
+
+    try {
+      const { data } = await apiClient.post<{ success: boolean; error?: string }>(`/activities/triage/${id}/release`);
+      if (data.success) {
+        setActivities(prev => prev.map(item => item.id === id ? { ...item, isClaimed: false, claimedBy: undefined } : item));
+        toast.success('Released to AI Autopilot');
+      } else {
+        toast.error(data.error || 'Failed to release activity');
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to release activity');
+    } finally {
+      if (activeReplyId === id) setActiveReplyId(null);
+    }
+  }, [isDemo, activeReplyId, releaseLocally]);
 
   const toggleBooking = useCallback((id: string) => {
     setShowBookingId(prev => prev === id ? null : id);

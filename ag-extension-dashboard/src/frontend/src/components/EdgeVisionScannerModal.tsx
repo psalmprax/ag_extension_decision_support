@@ -63,15 +63,20 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} title="Offline Edge Vision Plant Diagnosis">
       <div className="space-y-6">
-        <div className="flex justify-between items-center bg-emerald-50 dark:bg-emerald-950/20 p-3 rounded-xl border border-emerald-200 dark:border-emerald-800">
+        <div className="flex justify-between items-center bg-amber-50 dark:bg-amber-950/20 p-3 rounded-xl border border-amber-200 dark:border-amber-800">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse" />
-            <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
-              100% On-Device Zero-Connectivity Engine
+            <span className="w-2.5 h-2.5 bg-amber-500 rounded-full animate-pulse" />
+            <span className="text-xs font-bold text-amber-800 dark:text-amber-300">
+              {result?.origin === 'onnx' ? 'On-Device ONNX Model' : 'Heuristic Triage (HSV/LAB + Texture) — Confirm if <0.8'}
             </span>
           </div>
-          <span className="text-[11px] text-gray-500 font-mono">HTML5 Canvas / RGB-Space</span>
+          <span className="text-[11px] text-gray-500 font-mono">{result?.origin === 'onnx' ? 'ONNX Runtime Web' : 'Heuristic v2'}</span>
         </div>
+        {result?.heuristicDisclaimer && (
+          <p className="text-[10px] leading-relaxed bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-2.5 text-amber-800 dark:text-amber-200">
+            ⚠️ {result.heuristicDisclaimer} {navigator.onLine ? 'Tap “Verify with AI” to send to cloud diagnosis.' : 'Offline: save and verify when back online.'}
+          </p>
+        )}
 
         {/* Crop Selector */}
         <div>
@@ -172,6 +177,20 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
                       </p>
                     </div>
                   </div>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="p-2 bg-white dark:bg-gray-800 rounded-lg">
+                      <span className="text-[10px] text-gray-500">Brown Spot</span>
+                      <p className="text-xs font-bold text-orange-600 mt-0.5">{Math.round((result.metrics.brownSpotRatio ?? 0) * 100)}%</p>
+                    </div>
+                    <div className="p-2 bg-white dark:bg-gray-800 rounded-lg">
+                      <span className="text-[10px] text-gray-500">Texture Var</span>
+                      <p className="text-xs font-bold text-purple-600 mt-0.5">{(result.metrics.textureVariance ?? 0).toFixed(2)}</p>
+                    </div>
+                    <div className="p-2 bg-white dark:bg-gray-800 rounded-lg">
+                      <span className="text-[10px] text-gray-500">NGRDI</span>
+                      <p className="text-xs font-bold text-sky-600 mt-0.5">{(result.metrics.ngrdi ?? 0).toFixed(2)}</p>
+                    </div>
+                  </div>
 
                   {/* Immediate Action Drawer */}
                   <div className="space-y-2 pt-2 text-xs">
@@ -196,6 +215,26 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
                     </div>
                   </div>
                 </div>
+                {imageSrc && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!navigator.onLine) { alert('Offline: will verify when back online. Save this image via Visit Logger.'); return; }
+                      try {
+                        const form = new FormData();
+                        const blob = await (await fetch(imageSrc)).blob();
+                        form.append('file', blob, 'leaf-verify.jpg');
+                        form.append('crop', crop);
+                        const res = await fetch('/api/ai/diseases/analyze', { method: 'POST', body: form, headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` } });
+                        const j = await res.json().catch(()=>null) as unknown as { data?: { condition?: string; confidence?: number } } | null;
+                        alert(j?.data?.condition ? `Cloud verification: ${j.data.condition} (${Math.round((j.data.confidence||0)*100)}%)` : 'Verification request sent — check Reports.');
+                      } catch { alert('Verification failed — try again when online.'); }
+                    }}
+                    className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-xl transition disabled:opacity-50"
+                  >
+                    Verify with AI (Cloud)
+                  </button>
+                )}
 
                 <button
                   type="button"

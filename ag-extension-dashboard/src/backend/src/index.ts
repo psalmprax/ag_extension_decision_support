@@ -38,6 +38,7 @@ import './workers/emailWorker';
 import './workers/alertWorker';
 import './workers/ingestionWorker';
 import './workers/outreachWorker';
+import './workers/notificationWorker';
 
 const httpServer = createServer(app);
 
@@ -191,18 +192,15 @@ async function bootstrap() {
             capabilities: ['market_analysis', 'disease_diagnosis', 'policy_research', '*'],
             maxConcurrentTasks: 5,
         });
-        // OpenClaw agent - planned for future implementation
-        agentOrchestrator.registerAgent({
-            agentId: 'openclaw',
-            name: 'OpenClaw',
-            capabilities: ['bug_fixes', 'unit_testing', 'doc_gen', '*'],
-            maxConcurrentTasks: 3,
-        });
     });
 
     await initializeStep('email worker', async () => {
         const { startEmailWorker } = await import('./workers/emailWorker');
         startEmailWorker();
+    }, true);
+    await initializeStep('notification worker', async () => {
+        const { startNotificationWorker } = await import('./workers/notificationWorker');
+        startNotificationWorker();
     }, true);
     await initializeStep('email workflow service', () => emailWorkflowService.initialize());
     await initializeStep('agent telemetry', () => agentTelemetry.initialize());
@@ -218,7 +216,6 @@ async function bootstrap() {
         selfHealingService.registerComponent('cache');
         selfHealingService.registerComponent('agent-zero');
         selfHealingService.registerComponent('crew-ai');
-        selfHealingService.registerComponent('openclaw');
         selfHealingService.startMonitoring(60000);
     });
 

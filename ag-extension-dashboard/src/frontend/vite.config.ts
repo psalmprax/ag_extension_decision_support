@@ -98,6 +98,16 @@ export default defineConfig({
               cacheableResponse: { statuses: [0, 200] },
             },
           },
+          {
+            // Plant disease ONNX model — cache-first after first download, 30d
+            urlPattern: /\/models\/plant-disease\.onnx$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'ml-models',
+              expiration: { maxEntries: 4, maxAgeSeconds: 30 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
         ],
       },
     }),

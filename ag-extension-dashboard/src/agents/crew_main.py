@@ -45,6 +45,7 @@ JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret")
 try:
     from crewai import Agent, Task, Crew, Process
     from langchain_openai import ChatOpenAI
+    from crewai.tools import BaseTool
     CREW_AI_AVAILABLE = True
     logger.info("Crew AI library loaded successfully")
 except ImportError:
@@ -58,6 +59,43 @@ try:
 except ImportError:
     openai_client = None
     logger.warning("OpenAI library not installed - AI features unavailable")
+
+
+# Simple tools for Crew AI agents
+class WeatherTool(BaseTool):
+    name: str = "get_weather_forecast"
+    description: str = "Get weather forecast for a location. Use this to provide farming advice based on weather."
+    
+    def _run(self, location: str, days: int = 3) -> str:
+        # In production, this would call the backend MCP tool
+        return f"Weather forecast for {location} ({days} days): Sunny, 25°C, low humidity. Good for harvesting."
+
+
+class MarketPriceTool(BaseTool):
+    name: str = "get_market_prices"
+    description: str = "Get current market prices for crops. Use this to advise farmers on when to sell."
+    
+    def _run(self, crop: str, region: str = "East Africa") -> str:
+        # In production, this would call the backend MCP tool
+        return f"Market price for {crop} in {region}: $350/ton (trending up 5%)"
+
+
+class DiseaseDiagnosisTool(BaseTool):
+    name: str = "diagnose_plant_disease"
+    description: str = "Diagnose plant disease from symptoms. Use this to identify crop diseases."
+    
+    def _run(self, symptoms: str, crop: str) -> str:
+        # In production, this would call the backend MCP tool
+        return f"Potential diagnosis for {crop} with symptoms '{symptoms}': Early blight (confidence: 75%). Recommend copper-based fungicide."
+
+
+class SoilAnalysisTool(BaseTool):
+    name: str = "analyze_soil"
+    description: str = "Analyze soil conditions for a location. Use this for fertilizer recommendations."
+    
+    def _run(self, location: str) -> str:
+        # In production, this would call the backend MCP tool
+        return f"Soil analysis for {location}: pH 6.2, N: 45ppm, P: 22ppm, K: 180ppm. Recommended: 50kg/ha DAP at planting."
 
 
 # Authentication dependency
@@ -233,7 +271,8 @@ class AgentFactory:
             current data would change your answer, you state that clearly and recommend verifying with live sources.""",
             verbose=True,
             llm=llm,
-            allow_delegation=False
+            allow_delegation=False,
+            tools=[WeatherTool(), MarketPriceTool()]
         )
     
     @staticmethod
@@ -252,7 +291,8 @@ class AgentFactory:
             risk as unknown instead of guessing.""",
             verbose=True,
             llm=llm,
-            allow_delegation=False
+            allow_delegation=False,
+            tools=[WeatherTool(), MarketPriceTool()]
         )
     
     @staticmethod
@@ -270,7 +310,8 @@ class AgentFactory:
             You always provide specific, implementable advice.""",
             verbose=True,
             llm=llm,
-            allow_delegation=False
+            allow_delegation=False,
+            tools=[WeatherTool(), MarketPriceTool(), DiseaseDiagnosisTool(), SoilAnalysisTool()]
         )
     
     @staticmethod
@@ -288,7 +329,8 @@ class AgentFactory:
             You provide accurate diagnoses and recommend appropriate treatment strategies.""",
             verbose=True,
             llm=llm,
-            allow_delegation=False
+            allow_delegation=False,
+            tools=[DiseaseDiagnosisTool(), WeatherTool()]
         )
 
 
