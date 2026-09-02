@@ -61,6 +61,7 @@ router.post('/queue', authorize(['admin', 'regional_manager', 'extension_officer
                 headers,
                 body: (body.body ?? undefined) as never,
                 attachmentRefs: body.attachmentRefs || [],
+                retries: body.retries ?? 0,
                 maxRetries: body.maxRetries ?? 3,
                 state: normalizeState(body.state),
                 lastError: body.lastError,

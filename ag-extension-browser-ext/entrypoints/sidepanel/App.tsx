@@ -88,6 +88,7 @@ function App() {
   const [pageContext, setPageContext] = useState<PageContext | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [queuedRequests, setQueuedRequests] = useState<QueuedRequest[]>([]);
+  const [serverQueueStatus, setServerQueueStatus] = useState<{ pending: number; failed: number; conflict: number; deadLetter: number; total: number } | null>(null);
   const [showOfflineManager, setShowOfflineManager] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   
@@ -163,12 +164,29 @@ function App() {
     }
   };
 
+  // Mirrored, durable server-side queue state (survives reinstalls; shared
+  // across devices). Null when unauthenticated or unreachable.
+  const loadServerQueueStatus = async () => {
+    try {
+      const response = await fetch(`${CONFIG.API_BASE_URL}/offline/status`);
+      if (!response.ok) {
+        setServerQueueStatus(null);
+        return;
+      }
+      const result = await response.json() as { success?: boolean; data?: { pending: number; failed: number; conflict: number; deadLetter: number; total: number } };
+      setServerQueueStatus(result.success && result.data ? result.data : null);
+    } catch {
+      setServerQueueStatus(null);
+    }
+  };
+
 const handleSync = async () => {
     if (!isOnline || queuedRequests.length === 0 || isSyncing) return;
     setIsSyncing(true);
     try {
       await apiQueue.syncNow();
       await loadQueuedRequests();
+      await loadServerQueueStatus();
     } catch (error) {
       console.error('Sync failed:', error);
     } finally {
@@ -176,14 +194,17 @@ const handleSync = async () => {
     }
   };
 
+  // Retry goes through the background worker so the local IndexedDB queue
+  // (the replay source of truth) AND the server mirror stay in sync.
   const handleRetryRequest = async (requestId: string) => {
     try {
-      await apiQueue.makeRequest(`${CONFIG.API_BASE_URL}/offline/retry`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requestId }),
-      });
+      const response = await browser.runtime.sendMessage({ action: 'retry_queued_request', id: requestId });
+      if (!response?.success) throw new Error(response?.error || 'Retry failed');
       await loadQueuedRequests();
+      await loadServerQueueStatus();
+      await apiQueue.syncNow();
+      await loadQueuedRequests();
+      await loadServerQueueStatus();
     } catch (error) {
       console.error('Retry failed:', error);
     }
@@ -191,12 +212,10 @@ const handleSync = async () => {
 
   const handleDeleteRequest = async (requestId: string) => {
     try {
-      await apiQueue.makeRequest(`${CONFIG.API_BASE_URL}/offline/delete`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requestId }),
-      });
+      const response = await browser.runtime.sendMessage({ action: 'delete_queued_request', id: requestId });
+      if (!response?.success) throw new Error(response?.error || 'Delete failed');
       await loadQueuedRequests();
+      await loadServerQueueStatus();
     } catch (error) {
       console.error('Delete failed:', error);
     }
@@ -421,11 +440,13 @@ const handleSync = async () => {
         setIsOnline(statusMessage.isOnline);
       } else if (statusMessage.action === 'queue_updated') {
         loadQueuedRequests();
+        loadServerQueueStatus();
       }
     };
 
     browser.runtime.onMessage.addListener(handleStatusMessage);
     loadQueuedRequests();
+    loadServerQueueStatus();
     apiQueue.isCurrentlyOnline().then(setIsOnline);
 
     return () => {
@@ -679,6 +700,17 @@ const handleSync = async () => {
                 {isSyncing ? 'Syncing...' : 'Sync Now'}
               </button>
             </div>
+
+            {serverQueueStatus && (
+              <div className="mb-3 flex items-center justify-between px-2 py-1.5 bg-slate-900/60 border border-slate-700 rounded-lg">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Server Mirror</span>
+                <span className="text-[10px] font-mono text-slate-300">
+                  {serverQueueStatus.total === 0
+                    ? 'in sync'
+                    : `${serverQueueStatus.pending} pending • ${serverQueueStatus.failed} failed • ${serverQueueStatus.conflict} conflict • ${serverQueueStatus.deadLetter} dead`}
+                </span>
+              </div>
+            )}
 
             {queuedRequests.length === 0 ? (
               <p className="text-sm text-slate-400 Italics px-1">No pending requests</p>

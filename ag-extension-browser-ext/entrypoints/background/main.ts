@@ -22,6 +22,8 @@ type BackgroundRequestMessage =
     | { action: 'get_dead_letter_requests' }
     | { action: 'retry_dead_letter_request'; id: string }
     | { action: 'delete_dead_letter_request'; id: string }
+    | { action: 'retry_queued_request'; id: string }
+    | { action: 'delete_queued_request'; id: string }
     | { action: 'get_offline_status' }
     | { action: 'sync_now' }
     | { action: 'open_sidepanel'; tab?: string };
@@ -33,6 +35,8 @@ const BACKGROUND_ACTIONS: ReadonlySet<string> = new Set([
     'get_dead_letter_requests',
     'retry_dead_letter_request',
     'delete_dead_letter_request',
+    'retry_queued_request',
+    'delete_queued_request',
     'get_offline_status',
     'sync_now',
     'open_sidepanel',
@@ -415,6 +419,38 @@ export default defineBackground(() => {
         });
     };
 
+    // Reset a queued request (failed/conflict) back to pending for replay.
+    const retryQueuedRequest = async (id: string): Promise<void> => {
+        if (!db) await initDB();
+
+        const item = await new Promise<QueuedRequest | undefined>((resolve, reject) => {
+            const transaction = db!.transaction([QUEUE_STORE], 'readwrite');
+            const request = transaction.objectStore(QUEUE_STORE).get(id);
+            request.onsuccess = () => resolve(request.result as QueuedRequest | undefined);
+            request.onerror = () => reject(new Error(request.error?.message || 'Get queued request failed'));
+        });
+        if (!item) throw new Error('Queued request not found');
+
+        item.state = 'pending';
+        item.retries = 0;
+        item.lastError = undefined;
+
+        await new Promise<void>((resolve, reject) => {
+            const transaction = db!.transaction([QUEUE_STORE], 'readwrite');
+            const request = transaction.objectStore(QUEUE_STORE).put(item);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(new Error(request.error?.message || 'Reset queued request failed'));
+        });
+        mirrorUpsert(item);
+        notifyQueueUpdate();
+    };
+
+    // Remove a queued request entirely (user discard).
+    const deleteQueuedRequest = async (id: string): Promise<void> => {
+        await removeQueuedRequest(id);
+        mirrorDelete(id);
+    };
+
     // Get dead letter queue requests
     const getDeadLetterRequests = async (): Promise<QueuedRequest[]> => {
         if (!db) await initDB();
@@ -740,6 +776,18 @@ export default defineBackground(() => {
                     case 'delete_dead_letter_request':
                         {
                             await deleteDeadLetterRequest(message.id);
+                            sendResponse({ success: true });
+                        }
+                        break;
+                    case 'retry_queued_request':
+                        {
+                            await retryQueuedRequest(message.id);
+                            sendResponse({ success: true });
+                        }
+                        break;
+                    case 'delete_queued_request':
+                        {
+                            await deleteQueuedRequest(message.id);
                             sendResponse({ success: true });
                         }
                         break;

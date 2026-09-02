@@ -204,6 +204,80 @@ describe('Durable operation-state routes (DB-backed)', () => {
 
             expect(response.status).toBe(401);
         });
+
+        // ── Mirror lifecycle: the extension upserts on every state transition.
+        // Each upsert must land in BOTH create and update branches.
+        it('mirror lifecycle: upsert update branch persists retries and state transition', async () => {
+            prisma.offlineQueueItem.upsert.mockResolvedValue({ clientRequestId: 'req-1', state: 'failed' });
+
+            const response = await request(app)
+                .post('/api/v1/offline/queue')
+                .set('Authorization', `Bearer ${token}`)
+                .send({
+                    id: 'req-1',
+                    url: 'https://api.example.com/api/v1/visits',
+                    method: 'POST',
+                    headers: {},
+                    retries: 2,
+                    maxRetries: 3,
+                    state: 'failed',
+                    lastError: 'HTTP 500',
+                });
+
+            expect(response.status).toBe(200);
+            expect(response.body.data).toEqual({ id: 'req-1', state: 'failed' });
+            const call = prisma.offlineQueueItem.upsert.mock.calls[0][0];
+            expect(call.where).toEqual({ userId_clientRequestId: { userId: USER_ID, clientRequestId: 'req-1' } });
+            expect(call.update).toMatchObject({
+                retries: 2,
+                maxRetries: 3,
+                state: 'failed',
+                lastError: 'HTTP 500',
+            });
+        });
+
+        it('mirror lifecycle: conflict transition normalizes and records lastError', async () => {
+            prisma.offlineQueueItem.upsert.mockResolvedValue({ clientRequestId: 'req-1', state: 'conflict' });
+
+            const response = await request(app)
+                .post('/api/v1/offline/queue')
+                .set('Authorization', `Bearer ${token}`)
+                .send({
+                    id: 'req-1',
+                    url: 'https://api.example.com/api/v1/visits',
+                    method: 'POST',
+                    state: 'conflict',
+                    lastError: 'version conflict: visit was modified',
+                });
+
+            expect(response.status).toBe(200);
+            const call = prisma.offlineQueueItem.upsert.mock.calls[0][0];
+            expect(call.create.state).toBe('conflict');
+            expect(call.create.lastError).toBe('version conflict: visit was modified');
+        });
+
+        it('mirror lifecycle: dead_letter transition upsert', async () => {
+            prisma.offlineQueueItem.upsert.mockResolvedValue({ clientRequestId: 'req-1', state: 'dead_letter' });
+
+            const response = await request(app)
+                .post('/api/v1/offline/queue')
+                .set('Authorization', `Bearer ${token}`)
+                .send({
+                    id: 'req-1',
+                    url: 'https://api.example.com/api/v1/visits',
+                    method: 'POST',
+                    retries: 3,
+                    maxRetries: 3,
+                    state: 'dead_letter',
+                    lastError: 'HTTP 503',
+                });
+
+            expect(response.status).toBe(200);
+            const call = prisma.offlineQueueItem.upsert.mock.calls[0][0];
+            expect(call.create.state).toBe('dead_letter');
+            expect(call.create.retries).toBe(3);
+            expect(call.update.state).toBe('dead_letter');
+        });
     });
 
     describe('POST /api/v1/offline/retry', () => {
@@ -265,7 +339,25 @@ describe('Durable operation-state routes (DB-backed)', () => {
         });
     });
 
-    describe('GET /api/v1/offline/status', () => {
+        it('mirror lifecycle: delete clears a mirrored dead_letter item', async () => {
+            prisma.offlineQueueItem.deleteMany.mockResolvedValue({ count: 1 });
+
+            const response = await request(app)
+                .post('/api/v1/offline/delete')
+                .set('Authorization', `Bearer ${token}`)
+                .send({ id: 'req-1' });
+
+            expect(response.status).toBe(200);
+            expect(prisma.offlineQueueItem.deleteMany).toHaveBeenCalledWith({
+                where: { userId: USER_ID, clientRequestId: 'req-1' },
+            });
+        });
+
+        it('mirror lifecycle: status counts reflect transitions after upserts', async () => {
+            prisma.offlineQueueItem.groupBy.mockResolvedValue([
+                { state: 'pending', _count: { _all: 2 } },
+                { state: 'dead_letter', _count: { _all: 1 } },
+            ]);
         it('aggregates counts by state for the caller', async () => {
             prisma.offlineQueueItem.groupBy.mockResolvedValue([
                 { state: 'pending', _count: { _all: 3 } },
