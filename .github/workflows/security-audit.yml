@@ -81,8 +81,7 @@ jobs:
 
       - name: Audit Frontend Dependencies
         run: |
-          cd ag-extension-dashboard/src/frontend
-          npm audit --audit-level=high
+          node scripts/npm-audit-gate.cjs --dir ag-extension-dashboard/src/frontend --level high
 
       - name: Audit Shared Package Dependencies
         run: |
