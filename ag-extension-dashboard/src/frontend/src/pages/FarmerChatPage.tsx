@@ -88,6 +88,8 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   // Realtime: join the active conversation room and reload messages on new_message events.
   const socketRef = useRef<Socket | null>(null);
   const [socketConnected, setSocketConnected] = useState(false);
+  const [typingUser, setTypingUser] = useState<string | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (isDemo) return;
     const socket = io(window.location.origin, {
@@ -100,6 +102,8 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
     socket.on('connect', () => setSocketConnected(true));
     socket.on('disconnect', () => setSocketConnected(false));
     socket.on('connect_error', () => setSocketConnected(false));
+    socket.on('user_typing', (uid: string) => setTypingUser(uid));
+    socket.on('user_stop_typing', () => setTypingUser(null));
 
     return () => {
       socket.removeAllListeners();
@@ -126,6 +130,18 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
       socket.off('new_message', onNewMessage);
     };
   }, [activeFarmerConvId, loadFarmerMessages]);
+
+  const handleTyping = (value: string) => {
+    setFarmerChatInput(value);
+    const socket = socketRef.current;
+    if (!socket || !activeFarmerConvId || isDemo) return;
+    const userId = (JSON.parse(localStorage.getItem('user') || '{}') as { id?: string })?.id || 'me';
+    socket.emit('typing', { conversationId: activeFarmerConvId, userId });
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      socket.emit('stop_typing', { conversationId: activeFarmerConvId, userId });
+    }, 900);
+  };
 
   return (
     <div className="flex flex-col h-[calc(100dvh-150px)] md:h-[calc(100vh-140px)] gap-4 md:gap-6">
@@ -352,6 +368,13 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
 
               {/* Messages Scroll Area */}
               <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {typingUser && (
+                  <div className="flex justify-start">
+                    <div className="px-3 py-1.5 rounded-full bg-slate-800/80 border border-white/[0.06] text-[10px] font-mono text-white/60 animate-pulse">
+                      Typing…
+                    </div>
+                  </div>
+                )}
                 {farmerChatMessages.map((msg, i) => {
                   const isOfficer = msg.role === 'officer';
                   return (
@@ -411,7 +434,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                   <input
                     type="text"
                     value={farmerChatInput}
-                    onChange={e => setFarmerChatInput(e.target.value)}
+                    onChange={e => handleTyping(e.target.value)}
                     placeholder={t('farmer_chat_placeholder') || 'Type agronomic guidance or broadcast prompt...'}
                     className="flex-1 bg-slate-900 border border-white/[0.1] rounded-xl px-4 py-3 text-xs text-white placeholder-white/40 focus:ring-2 focus:ring-emerald-500/40 focus:outline-none transition-all"
                   />

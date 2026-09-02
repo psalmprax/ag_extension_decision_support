@@ -68,6 +68,53 @@ class WebRTCService {
     private userSockets: Map<string, string> = new Map(); // userId -> socketId
     private activeRooms: Map<string, Room> = new Map(); // roomId -> Room
 
+    private async cacheRoom(room: Room): Promise<void> {
+        try {
+            const { getCache } = await import('./cacheService');
+            const c = getCache();
+            if (!c) return;
+            const payload = JSON.stringify({
+                id: room.id, hostId: room.hostId, participants: Array.from(room.participants.values()),
+                createdAt: room.createdAt.toISOString(), isActive: room.isActive
+            });
+            await c.setEx(`webrtc:room:${room.id}`, Math.ceil(ROOM_TTL_MS / 1000), payload);
+        } catch { }
+    }
+
+    private async fetchRoomFromCache(roomId: string): Promise<Room | null> {
+        try {
+            const { getCache } = await import('./cacheService');
+            const c = getCache();
+            if (!c) return null;
+            const raw = await c.get(`webrtc:room:${roomId}`);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw) as { id: string; hostId: string; participants: { id: string; socketId: string; name: string }[]; createdAt: string; isActive: boolean };
+            const map = new Map<string, { id: string; socketId: string; name: string }>();
+            for (const p of parsed.participants) map.set(p.id, p);
+            return { id: parsed.id, hostId: parsed.hostId, participants: map, createdAt: new Date(parsed.createdAt), isActive: parsed.isActive };
+        } catch { return null; }
+    }
+
+    private async delRoomCache(roomId: string): Promise<void> {
+        try {
+            const { getCache } = await import('./cacheService');
+            const c = getCache();
+            if (c) await c.del(`webrtc:room:${roomId}`);
+        } catch { }
+    }
+
+    private async syncConsultationStatus(roomId: string, status: VideoConsultation['status']): Promise<void> {
+        if (!isValidUuid(roomId)) return;
+        try {
+            const prisma = getPrisma();
+            const consult = await prisma.videoConsultation.findFirst({ where: { roomId } });
+            if (consult) {
+                await prisma.videoConsultation.update({ where: { id: consult.id }, data: { status } });
+                logger.info(`Consultation ${consult.id} for room ${roomId} → ${status}`);
+            }
+        } catch (e) { logger.warn(`Consultation status sync failed for ${roomId}:`, e); }
+    }
+
     initialize(io: Server) {
         this.io = io;
         this.setupSocketHandlers();
@@ -75,19 +122,28 @@ class WebRTCService {
         setInterval(() => {
             const now = Date.now();
             for (const [id, r] of this.activeRooms.entries()) {
-                if (!r.isActive && now - r.createdAt.getTime() > 10_000) this.activeRooms.delete(id);
-                else if (now - r.createdAt.getTime() > ROOM_TTL_MS) {
+                if (!r.isActive && now - r.createdAt.getTime() > 10_000) {
+                    this.activeRooms.delete(id);
+                    void this.delRoomCache(id);
+                } else if (now - r.createdAt.getTime() > ROOM_TTL_MS) {
                     r.isActive = false;
-                    if (r.participants.size === 0) this.activeRooms.delete(id);
+                    if (r.participants.size === 0) {
+                        this.activeRooms.delete(id);
+                        void this.delRoomCache(id);
+                    } else void this.cacheRoom(r);
                 }
             }
             if (this.activeRooms.size > MAX_ACTIVE_ROOMS) {
                 const sorted = [...this.activeRooms.entries()].sort((a, b) => a[1].createdAt.getTime() - b[1].createdAt.getTime());
                 const drop = this.activeRooms.size - MAX_ACTIVE_ROOMS;
-                for (let i = 0; i < drop; i++) this.activeRooms.delete(sorted[i][0]);
+                for (let i = 0; i < drop; i++) {
+                    const rid = sorted[i][0];
+                    this.activeRooms.delete(rid);
+                    void this.delRoomCache(rid);
+                }
             }
         }, 60_000).unref?.();
-        logger.info('WebRTC service initialized with In-Memory Signaling & DB Persistence');
+        logger.info('WebRTC service initialized with Redis-hybrid Signaling & DB Persistence');
     }
 
     private setupConnectionHandlers(socket: Socket) {
@@ -149,6 +205,8 @@ class WebRTCService {
             }
 
             socket.join(roomId);
+            void this.cacheRoom(room);
+            void this.syncConsultationStatus(roomId, 'active');
             logger.info(`WebRTC room ${roomId} ready in memory (host: ${participantId})`);
 
             // Safe DB persistence (if valid UUID and user exists in DB)
@@ -188,7 +246,14 @@ class WebRTCService {
             const participantName = data.userName || 'Farmer / Guest';
             const participant = { id: participantId, socketId: socket.id, name: participantName };
 
-            let room = this.activeRooms.get(roomId);
+            let room: Room | undefined = this.activeRooms.get(roomId);
+            if (!room) {
+                const cached = await this.fetchRoomFromCache(roomId);
+                if (cached) {
+                    room = cached;
+                    this.activeRooms.set(roomId, room);
+                }
+            }
 
             if (!room && isValidUuid(roomId)) {
                 try {
@@ -197,6 +262,7 @@ class WebRTCService {
                     if (dbRoom && dbRoom.isActive) {
                         room = dbToRoom(dbRoom);
                         this.activeRooms.set(roomId, room);
+                        void this.cacheRoom(room);
                     }
                 } catch (err) {
                     logger.warn(`WebRTC DB room lookup error:`, err);
@@ -228,6 +294,8 @@ class WebRTCService {
             room.participants.set(participantId, participant);
 
             socket.join(roomId);
+            void this.cacheRoom(room);
+            void this.syncConsultationStatus(roomId, 'active');
 
             // Notify existing room members of new joiner
             socket.to(roomId).emit('user-joined', {
@@ -292,6 +360,10 @@ class WebRTCService {
             if (room) {
                 room.isActive = false;
                 room.participants.clear();
+                void this.cacheRoom(room);
+                void this.delRoomCache(data.roomId);
+            } else {
+                void this.delRoomCache(data.roomId);
             }
 
             if (isValidUuid(data.roomId)) {
@@ -305,6 +377,7 @@ class WebRTCService {
                     // ignore
                 }
             }
+            void this.syncConsultationStatus(data.roomId, 'completed');
 
             this.io?.to(data.roomId).emit('call-ended', { userId: data.userId });
             logger.info(`Call ended in room ${data.roomId} by ${data.userId}`);
@@ -325,12 +398,19 @@ class WebRTCService {
     }
 
     private async handleLeaveRoom(roomId: string, userId: string, socket: Socket) {
-        const room = this.activeRooms.get(roomId);
+        const room = this.activeRooms.get(roomId) ?? await this.fetchRoomFromCache(roomId);
         if (room) {
             room.participants.delete(userId);
             if (room.participants.size === 0) {
                 room.isActive = false;
+                this.activeRooms.set(roomId, room);
+                await this.cacheRoom(room);
+                void this.syncConsultationStatus(roomId, 'completed');
+            } else {
+                this.activeRooms.set(roomId, room);
+                await this.cacheRoom(room);
             }
+            if (!this.activeRooms.has(roomId)) this.activeRooms.set(roomId, room);
         }
 
         socket.leave(roomId);

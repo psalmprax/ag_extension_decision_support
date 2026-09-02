@@ -15,13 +15,15 @@ import { detectLanguage } from '@/utils/languageDetector';
 import { onboardingEngine } from '@/services/onboardingEngine';
 import { checkMessageAccess, MessageAccessError, resolvePrincipalRegion } from '@/services/messageAccessService';
 import { logger } from '@/utils/logger';
+import { verifyInboundWebhookSignature } from '@/middleware/webhookSignature';
 
 const router = Router();
 
 /**
  * POST /api/sms/inbound — Inbound SMS Webhook for Africa's Talking and Twilio
+ * Verifies HMAC when META_APP_SECRET/TWILIO_AUTH_TOKEN is configured; dev allows unsigned for local testing.
  */
-router.post('/inbound', async (req: Request, res: Response) => {
+router.post('/inbound', verifyInboundWebhookSignature, async (req: Request, res: Response) => {
     try {
         const from = req.body.from || req.body.From || req.body.phoneNumber;
         const text = req.body.text || req.body.Body || req.body.message;
@@ -57,16 +59,19 @@ router.post('/inbound', async (req: Request, res: Response) => {
 // Apply authentication to protected SMS management routes
 router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
 
+// Phone-string prior to E.164 formatting — allow common user entry, service validates E.164 after formatting
+const phoneInput = z.string().regex(/^\+?[0-9\s\-\(\).]{7,22}$/, 'Phone number must be 7–22 digits/space/dash');
+
 // SMS Schema
 const sendSMSSchema = z.object({
-    to: z.string().min(1, 'Phone number is required'),
+    to: phoneInput,
     message: z.string().min(1, 'Message is required'),
     farmerId: z.string().uuid().optional(),
 });
 
 // Bulk SMS Schema
 const bulkSMSSchema = z.object({
-    recipients: z.array(z.string()).min(1, 'At least one recipient required'),
+    recipients: z.array(phoneInput).min(1, 'At least one recipient required').max(1000),
     message: z.string().min(1, 'Message is required'),
     farmerId: z.string().uuid().optional(),
 });
@@ -358,7 +363,8 @@ router.post('/schedule', validate({ body: scheduleSMSSchema }), async (req: Auth
 });
 
 // Delivery receipt callback (Africa's Talking / Twilio) — provider posts messageId+status
-router.post('/delivery', async (req: Request, res: Response) => {
+// Verified when TWILIO_AUTH_TOKEN is set (Twilio DLRs carry X-Twilio-Signature); AT DLRs have no signature so dev allows unsigned
+router.post('/delivery', verifyInboundWebhookSignature, async (req: Request, res: Response) => {
     try {
         const status = (req.body.status || req.body.MessageStatus || req.body.messageStatus || '').toString().toLowerCase();
         const phone = (req.body.phoneNumber || req.body.recipient || req.body.to || req.body.To || '').toString();

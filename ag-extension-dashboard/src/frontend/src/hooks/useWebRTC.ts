@@ -21,6 +21,10 @@ interface UseWebRTCReturn {
   toggleVideo: () => void;
   endCall: () => void;
   error: string | null;
+  isRecording: boolean;
+  recordedUrl: string | null;
+  startRecording: () => void;
+  stopRecording: () => void;
 }
 
 export function useWebRTC(): UseWebRTCReturn {
@@ -31,6 +35,10 @@ export function useWebRTC(): UseWebRTCReturn {
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
 
   const socketRef = useRef<Socket | null>(null);
   const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
@@ -297,6 +305,9 @@ export function useWebRTC(): UseWebRTCReturn {
   }, []);
 
   const leaveCall = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try { mediaRecorderRef.current.stop(); } catch { }
+    }
     if (localStream) {
       localStream.getTracks().forEach(track => track.stop());
       setLocalStream(null);
@@ -359,6 +370,51 @@ export function useWebRTC(): UseWebRTCReturn {
     leaveCall();
   }, [leaveCall]);
 
+  const startRecording = useCallback(() => {
+    if (!localStream || isRecording) return;
+    try {
+      const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm';
+      const mr = new MediaRecorder(localStream, { mimeType });
+      recordedChunksRef.current = [];
+      mr.ondataavailable = e => { if (e.data.size > 0) recordedChunksRef.current.push(e.data); };
+      mr.onstop = () => {
+        const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        setRecordedUrl(prev => { if (prev) URL.revokeObjectURL(prev); return url; });
+        setIsRecording(false);
+      };
+      mr.start(1000);
+      mediaRecorderRef.current = mr;
+      setIsRecording(true);
+      setRecordedUrl(null);
+    } catch (e) { setError((e as Error).message); }
+  }, [localStream, isRecording]);
+
+  const stopRecording = useCallback(() => {
+    const mr = mediaRecorderRef.current;
+    if (mr && mr.state !== 'inactive') mr.stop();
+    else setIsRecording(false);
+  }, []);
+
+  // Bandwidth adaptation logging: poll getStats every 8s while in call (top-notch observability)
+  useEffect(() => {
+    if (!isInCall) return;
+    const id = setInterval(() => {
+      for (const [peerId, pc] of peerConnectionsRef.current.entries()) {
+        pc.getStats().then(stats => {
+          let inboundBytes = 0; let rtt: number | null = null;
+          (stats as unknown as Map<string, unknown>).forEach((value: unknown) => {
+            const rec = value as Record<string, unknown>;
+            if (rec.type === 'inbound-rtp' && typeof rec.bytesReceived === 'number') inboundBytes = rec.bytesReceived as number;
+            if (rec.type === 'candidate-pair' && rec.state === 'succeeded' && typeof rec.currentRoundTripTime === 'number') rtt = rec.currentRoundTripTime as number;
+          });
+          if (inboundBytes || rtt !== null) console.debug(`[webrtc stats] peer ${peerId.slice(0,8)} bytes=${inboundBytes} rtt=${rtt}`);
+        }).catch(() => {});
+      }
+    }, 8000);
+    return () => clearInterval(id);
+  }, [isInCall]);
+
   return {
     localStream,
     remoteStreams,
@@ -373,5 +429,9 @@ export function useWebRTC(): UseWebRTCReturn {
     toggleVideo,
     endCall,
     error,
+    isRecording,
+    recordedUrl,
+    startRecording,
+    stopRecording,
   };
 }

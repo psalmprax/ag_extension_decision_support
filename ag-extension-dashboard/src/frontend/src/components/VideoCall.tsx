@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, Video, VideoOff, PhoneOff, Phone, Users } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, PhoneOff, Phone, Users, Circle, Square, Download } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import { useWebRTC } from '../hooks/useWebRTC';
 
@@ -168,6 +168,10 @@ export function VideoCall({ roomId, userId, userName, isHost = false, onEnd }: V
     toggleVideo,
     endCall,
     error,
+    isRecording,
+    recordedUrl,
+    startRecording,
+    stopRecording,
   } = useWebRTC();
   const { t } = useLanguage();
 
@@ -277,6 +281,13 @@ export function VideoCall({ roomId, userId, userName, isHost = false, onEnd }: V
             {isVideoEnabled ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
           </button>
           <button
+            onClick={isRecording ? stopRecording : startRecording}
+            className={`p-3 rounded-full ${isRecording ? 'bg-error-600 animate-pulse text-white' : 'bg-gray-700 hover:bg-gray-600 text-white'}`}
+            title={isRecording ? t('video_stop_recording') || 'Stop recording' : t('video_start_recording') || 'Start recording'}
+          >
+            {isRecording ? <Square className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
+          </button>
+          <button
             onClick={handleEnd}
             className="p-3 rounded-full bg-error-600 hover:bg-error-700 text-white"
             title={t('video_end_call') || 'End call'}
@@ -293,6 +304,18 @@ export function VideoCall({ roomId, userId, userName, isHost = false, onEnd }: V
           )}
         </div>
       </div>
+      {recordedUrl && (
+        <div className="bg-gray-800 px-4 py-2 flex items-center justify-between border-t border-gray-700">
+          <span className="text-gray-400 text-xs">{t('video_recording_ready') || 'Recording ready'}</span>
+          <a
+            href={recordedUrl}
+            download={`consultation-${roomId}-${Date.now()}.webm`}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold"
+          >
+            <Download className="w-3.5 h-3.5" /> {t('video_download_recording') || 'Download'}
+          </a>
+        </div>
+      )}
     </div>
   );
 }
