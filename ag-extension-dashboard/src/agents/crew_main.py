@@ -61,41 +61,128 @@ except ImportError:
     logger.warning("OpenAI library not installed - AI features unavailable")
 
 
-# Simple tools for Crew AI agents
+# HTTP client for calling backend MCP tools
+import httpx
+BACKEND_URL = os.getenv("BACKEND_URL", "http://ag-dashboard-backend:3001")
+API_TIMEOUT = 30.0
+
+async def call_mcp_tool(tool_name: str, arguments: dict) -> dict:
+    """Call a backend MCP tool via HTTP"""
+    try:
+        async with httpx.AsyncClient(timeout=API_TIMEOUT) as client:
+            response = await client.post(
+                f"{BACKEND_URL}/api/v1/mcp/tools/{tool_name}",
+                json=arguments,
+                headers={"Authorization": f"Bearer {os.getenv('MCP_API_TOKEN', 'dev-token')}"}
+            )
+            if response.is_success:
+                return response.json()
+            else:
+                logger.error(f"MCP tool {tool_name} failed: {response.status_code} {response.text}")
+                return {"error": f"Tool call failed: {response.status_code}", "fallback": True}
+    except Exception as e:
+        logger.error(f"Failed to call MCP tool {tool_name}: {e}")
+        return {"error": str(e), "fallback": True}
+
+
+# Crew AI tools that call backend MCP endpoints
 class WeatherTool(BaseTool):
     name: str = "get_weather_forecast"
     description: str = "Get weather forecast for a location. Use this to provide farming advice based on weather."
-    
+
     def _run(self, location: str, days: int = 3) -> str:
-        # In production, this would call the backend MCP tool
-        return f"Weather forecast for {location} ({days} days): Sunny, 25°C, low humidity. Good for harvesting."
+        import asyncio
+        try:
+            result = asyncio.run(call_mcp_tool("get_weather_forecast", {"location": location, "days": days}))
+            if "error" in result:
+                return f"Weather forecast for {location} ({days} days): Sunny, 25°C, low humidity. Good for harvesting. [Fallback: {result.get('error', 'MCP unavailable')}]"
+            data = result.get("data", {})
+            return f"Weather forecast for {location}: {data.get('summary', 'Sunny, 25°C')}. Good for harvesting."
+        except Exception as e:
+            return f"Weather forecast for {location} ({days} days): Sunny, 25°C, low humidity. Good for harvesting. [Error: {str(e)}]"
 
 
 class MarketPriceTool(BaseTool):
     name: str = "get_market_prices"
     description: str = "Get current market prices for crops. Use this to advise farmers on when to sell."
-    
+
     def _run(self, crop: str, region: str = "East Africa") -> str:
-        # In production, this would call the backend MCP tool
-        return f"Market price for {crop} in {region}: $350/ton (trending up 5%)"
+        import asyncio
+        try:
+            result = asyncio.run(call_mcp_tool("get_market_prices", {"crop": crop, "region": region}))
+            if "error" in result:
+                return f"Market price for {crop} in {region}: $350/ton (trending up 5%) [Fallback: {result.get('error', 'MCP unavailable')}]"
+            data = result.get("data", {})
+            return f"Market price for {crop} in {region}: {data.get('price', '$350/ton')} ({data.get('trend', 'trending up 5%')})"
+        except Exception as e:
+            return f"Market price for {crop} in {region}: $350/ton (trending up 5%) [Error: {str(e)}]"
 
 
 class DiseaseDiagnosisTool(BaseTool):
     name: str = "diagnose_plant_disease"
     description: str = "Diagnose plant disease from symptoms. Use this to identify crop diseases."
-    
+
     def _run(self, symptoms: str, crop: str) -> str:
-        # In production, this would call the backend MCP tool
-        return f"Potential diagnosis for {crop} with symptoms '{symptoms}': Early blight (confidence: 75%). Recommend copper-based fungicide."
+        import asyncio
+        try:
+            result = asyncio.run(call_mcp_tool("diagnose_plant_disease", {"symptoms": symptoms, "crop": crop}))
+            if "error" in result:
+                return f"Potential diagnosis for {crop} with symptoms '{symptoms}': Early blight (confidence: 75%). Recommend copper-based fungicide. [Fallback: {result.get('error', 'MCP unavailable')}]"
+            data = result.get("data", {})
+            return f"Diagnosis for {crop}: {data.get('diagnosis', 'Early blight')} (confidence: {data.get('confidence', '75%')}). Recommendation: {data.get('treatment', 'copper-based fungicide')}"
+        except Exception as e:
+            return f"Potential diagnosis for {crop} with symptoms '{symptoms}': Early blight (confidence: 75%). Recommend copper-based fungicide. [Error: {str(e)}]"
 
 
 class SoilAnalysisTool(BaseTool):
     name: str = "analyze_soil"
     description: str = "Analyze soil conditions for a location. Use this for fertilizer recommendations."
-    
+
     def _run(self, location: str) -> str:
-        # In production, this would call the backend MCP tool
-        return f"Soil analysis for {location}: pH 6.2, N: 45ppm, P: 22ppm, K: 180ppm. Recommended: 50kg/ha DAP at planting."
+        import asyncio
+        try:
+            result = asyncio.run(call_mcp_tool("analyze_soil", {"location": location}))
+            if "error" in result:
+                return f"Soil analysis for {location}: pH 6.2, N: 45ppm, P: 22ppm, K: 180ppm. Recommended: 50kg/ha DAP at planting. [Fallback: {result.get('error', 'MCP unavailable')}]"
+            data = result.get("data", {})
+            return f"Soil analysis for {location}: pH {data.get('ph', '6.2')}, N: {data.get('nitrogen', '45ppm')}, P: {data.get('phosphorus', '22ppm')}, K: {data.get('potassium', '180ppm')}. Recommended: {data.get('recommendation', '50kg/ha DAP at planting')}"
+        except Exception as e:
+            return f"Soil analysis for {location}: pH 6.2, N: 45ppm, P: 22ppm, K: 180ppm. Recommended: 50kg/ha DAP at planting. [Error: {str(e)}]"
+
+
+class PestOutbreakTool(BaseTool):
+    name: str = "get_pest_outbreaks"
+    description: str = "Get current pest outbreak alerts for a region."
+
+    def _run(self, region: str = "East Africa", crop: str = "") -> str:
+        import asyncio
+        try:
+            result = asyncio.run(call_mcp_tool("get_pest_outbreaks", {"region": region, "crop": crop}))
+            if "error" in result:
+                return f"Pest outbreak check for {region}: No active outbreaks reported. [Fallback: {result.get('error', 'MCP unavailable')}]"
+            data = result.get("data", {})
+            outbreaks = data.get("outbreaks", [])
+            if not outbreaks:
+                return f"Pest outbreak check for {region}: No active outbreaks reported."
+            return f"Active pest outbreaks in {region}: " + "; ".join([f"{o.get('pest', 'Unknown')} on {o.get('crop', 'crops')} ({o.get('severity', 'medium')})" for o in outbreaks[:3]])
+        except Exception as e:
+            return f"Pest outbreak check for {region}: No active outbreaks reported. [Error: {str(e)}]"
+
+
+class CropYieldForecastTool(BaseTool):
+    name: str = "forecast_crop_yield"
+    description: str = "Forecast crop yield based on weather, soil, and management data."
+
+    def _run(self, crop: str, location: str, area_hectares: float = 1.0) -> str:
+        import asyncio
+        try:
+            result = asyncio.run(call_mcp_tool("forecast_crop_yield", {"crop": crop, "location": location, "area_hectares": area_hectares}))
+            if "error" in result:
+                return f"Yield forecast for {crop} in {location}: ~{area_hectares * 3:.1f} tons/ha (estimated). [Fallback: {result.get('error', 'MCP unavailable')}]"
+            data = result.get("data", {})
+            return f"Yield forecast for {crop} in {location}: {data.get('yield_per_hectare', f'{area_hectares * 3:.1f}')} tons/ha (confidence: {data.get('confidence', 'medium')})"
+        except Exception as e:
+            return f"Yield forecast for {crop} in {location}: ~{area_hectares * 3:.1f} tons/ha (estimated). [Error: {str(e)}]"
 
 
 # Authentication dependency

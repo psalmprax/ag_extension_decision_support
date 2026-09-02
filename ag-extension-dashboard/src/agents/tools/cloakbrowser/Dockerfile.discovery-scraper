@@ -1,0 +1,37 @@
+# Discovery Scraper Service
+# Lightweight Node.js service for stealth web scraping
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install dependencies for headless Chrome
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    freetype-dev \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
+
+# Tell Puppeteer to use installed Chromium
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+
+# Create app user
+RUN addgroup -g 1001 -S nodejs && adduser -S -u 1001 -G nodejs scraper
+
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY --chown=scraper:nodejs . .
+
+USER scraper
+
+EXPOSE 8010
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8010/health || exit 1
+
+CMD ["node", "server.js"]

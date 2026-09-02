@@ -26,6 +26,7 @@ import { useDemoMode, DEMO_ACTIVITIES } from '@/demo';
 
 export interface ActivityItem {
   id: string;
+  farmerId?: string;
   farmerName: string;
   phone: string;
   channel: 'USSD' | 'SMS' | 'App' | 'Voice';
@@ -215,7 +216,8 @@ const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
             farmerPhone={activity.phone}
             issue={activity.issue}
             region={activity.region}
-            onBooked={() => setTimeout(() => toggleBooking(bookingId), 1800)}
+            farmerId={activity.farmerId}
+            onBooked={() => toggleBooking(bookingId)}
           />
         </div>
       )}

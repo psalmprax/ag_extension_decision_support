@@ -1,4 +1,4 @@
-export type QueueState = 'pending' | 'failed' | 'conflict';
+export type QueueState = 'pending' | 'failed' | 'conflict' | 'dead_letter';
 
 export interface QueuedRequest<T = unknown> {
     id: string;
@@ -13,6 +13,9 @@ export interface QueuedRequest<T = unknown> {
     maxRetries: number;
     state: QueueState;
     lastError?: string;
+    // Dead letter metadata
+    movedToDeadLetterAt?: number;
+    originalRetries?: number;
 }
 
 export interface OfflineStatus {

@@ -19,11 +19,11 @@ export const uuidSchema = z
     'must be a valid UUID'
   );
 
-/** ISO-8601 date-time string (loose — format kept simple for cross-version compat). */
-export const isoStringSchema = z.string();
+/** ISO-8601 date-time string with proper validation. */
+export const isoStringSchema = z.string().datetime({ offset: true, local: true });
 
 /** ISO-8601 date-time string or null. */
-export const nullableIsoStringSchema = z.string().nullable();
+export const nullableIsoStringSchema = z.string().datetime({ offset: true, local: true }).nullable();
 
 /** Common error envelope returned by every endpoint on failure. */
 export const apiErrorSchema = z.object({

@@ -60,6 +60,28 @@ services:
       # - ./src/agents:/app
       - crew-ai-data:/app/data
 
+  # Discovery Scraper Service — used by CloakBrowser for stealth scraping
+  discovery-scraper:
+    build:
+      context: ./src/agents/tools/cloakbrowser
+      dockerfile: Dockerfile.discovery-scraper
+    container_name: ag-discovery-scraper
+    ports:
+      - "127.0.0.1:7506:8010"
+    environment:
+      - PORT=8010
+      - NODE_ENV=production
+    networks:
+      - ag-network
+    restart: always
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8010/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    volumes:
+      - discovery-scraper-data:/app/data
+
 networks:
   ag-network:
     external: true
@@ -67,3 +89,4 @@ networks:
 volumes:
   agent-zero-data:
   crew-ai-data:
+  discovery-scraper-data:

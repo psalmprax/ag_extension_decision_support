@@ -87,5 +87,5 @@ export const useAppBootstrap = (storeUser: unknown, setActiveTab: (tab: string) 
     }
   }, [setActiveTab]);
 
-  return { weatherLocation };
+  return { weatherLocation, setWeatherLocation };
 };

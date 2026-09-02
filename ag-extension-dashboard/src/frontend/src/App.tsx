@@ -132,7 +132,7 @@ function App() {
 
   // Theme, auth, and bootstrap hooks
   useAppTheme(themeName, darkMode);
-  const { weatherLocation } = useAppBootstrap(storeUser, setActiveTab);
+  const { weatherLocation, setWeatherLocation } = useAppBootstrap(storeUser, setActiveTab);
   const { user, isOfficer } = useAppAuth(storeUser, setUser as (user: unknown) => void);
   const effectiveUser = user || storeUser;
 
@@ -488,7 +488,7 @@ function App() {
           globalSearchResults={globalSearchResults}
           handleGlobalSearch={handleGlobalSearch}
           weatherLocation={weatherLocation}
-          setWeatherLocation={() => {}}
+          setWeatherLocation={setWeatherLocation}
           apiUnreadCount={apiUnreadCount}
           storeUser={storeUser}
           handleLogout={handleLogout}

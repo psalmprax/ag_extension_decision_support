@@ -18,6 +18,9 @@ type BackgroundRequestMessage =
     | { action: 'queue_request'; request: BackgroundQueueRequest }
     | { action: 'store_offline_attachment'; attachment: { file: Blob; farmerId: string } }
     | { action: 'get_queued_requests' }
+    | { action: 'get_dead_letter_requests' }
+    | { action: 'retry_dead_letter_request'; id: string }
+    | { action: 'delete_dead_letter_request'; id: string }
     | { action: 'get_offline_status' }
     | { action: 'sync_now' }
     | { action: 'open_sidepanel'; tab?: string };
@@ -26,6 +29,9 @@ const BACKGROUND_ACTIONS: ReadonlySet<string> = new Set([
     'queue_request',
     'store_offline_attachment',
     'get_queued_requests',
+    'get_dead_letter_requests',
+    'retry_dead_letter_request',
+    'delete_dead_letter_request',
     'get_offline_status',
     'sync_now',
     'open_sidepanel',
@@ -116,8 +122,9 @@ export default defineBackground(() => {
 
     // IndexedDB setup for offline queue
     const DB_NAME = 'AgExtensionOffline';
-    const DB_VERSION = 2;
+    const DB_VERSION = 3;
     const QUEUE_STORE = 'queuedRequests';
+    const DEAD_LETTER_STORE = 'deadLetterQueue';
     const STATUS_STORE = 'offlineStatus';
     const ATTACHMENT_STORE = 'offlineAttachments';
     const ATTACHMENT_BUDGET_BYTES = 50 * 1024 * 1024;
@@ -147,6 +154,13 @@ export default defineBackground(() => {
                     queueStore.createIndex('timestamp', 'timestamp', { unique: false });
                 }
 
+                // Create dead letter store
+                if (!dbInstance.objectStoreNames.contains(DEAD_LETTER_STORE)) {
+                    const dlqStore = dbInstance.createObjectStore(DEAD_LETTER_STORE, { keyPath: 'id' });
+                    dlqStore.createIndex('movedToDeadLetterAt', 'movedToDeadLetterAt', { unique: false });
+                    dlqStore.createIndex('timestamp', 'timestamp', { unique: false });
+                }
+
                 // Create status store
                 if (!dbInstance.objectStoreNames.contains(STATUS_STORE)) {
                     dbInstance.createObjectStore(STATUS_STORE, { keyPath: 'key' });
@@ -169,12 +183,12 @@ export default defineBackground(() => {
 
         // Additional connectivity check to backend
         try {
-            await fetch(`${CONFIG.API_BASE_URL}/health`, {
+            const response = await fetch(`${CONFIG.API_BASE_URL}/health`, {
                 method: 'HEAD',
-                mode: 'no-cors',
+                mode: 'cors',
                 cache: 'no-cache'
             });
-            return true;
+            return response.ok;
         } catch (error) {
             console.warn('Connectivity check failed:', error);
             return false;
@@ -222,7 +236,10 @@ export default defineBackground(() => {
 
     const storeOfflineAttachment = async (input: { file: Blob; farmerId: string }): Promise<string> => {
         if (!db) await initDB();
-        const id = `attachment-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+        const randomPart = typeof crypto !== 'undefined' && crypto.getRandomValues
+            ? crypto.getRandomValues(new Uint32Array(1))[0].toString(36).slice(2, 10)
+            : Math.random().toString(36).slice(2, 10);
+        const id = `attachment-${Date.now()}-${randomPart}`;
         const encryptedFarmerId = await encryptString(input.farmerId);
         const attachment: OfflineAttachment = { id, file: input.file, farmerId: input.farmerId, sizeBytes: input.file.size, createdAt: Date.now(), encryptedFarmerId };
         await new Promise<void>((resolve, reject) => {
@@ -316,7 +333,10 @@ export default defineBackground(() => {
     const queueRequest = async (request: Omit<QueuedRequest, 'id' | 'idempotencyKey' | 'timestamp' | 'retries' | 'state'> & { idempotencyKey?: string }): Promise<void> => {
         if (!db) await initDB();
 
-        const id = `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+        const randomPart = typeof crypto !== 'undefined' && crypto.getRandomValues
+            ? crypto.getRandomValues(new Uint32Array(1))[0].toString(36).substring(2, 11)
+            : Math.random().toString(36).substring(2, 11);
+        const id = `${Date.now()}-${randomPart}`;
         const queuedRequest: QueuedRequest = {
             ...request,
             id,
@@ -393,6 +413,82 @@ export default defineBackground(() => {
         });
     };
 
+    // Get dead letter queue requests
+    const getDeadLetterRequests = async (): Promise<QueuedRequest[]> => {
+        if (!db) await initDB();
+
+        return new Promise((resolve, reject) => {
+            const transaction = db!.transaction([DEAD_LETTER_STORE], 'readonly');
+            const store = transaction.objectStore(DEAD_LETTER_STORE);
+            const request = store.getAll();
+
+            request.onsuccess = () => {
+                resolve(request.result || []);
+            };
+            request.onerror = () => reject(new Error(request.error?.message || 'Get dead letter requests failed'));
+        });
+    };
+
+    // Retry a dead letter request - move back to pending queue
+    const retryDeadLetterRequest = async (id: string): Promise<void> => {
+        if (!db) await initDB();
+
+        return new Promise((resolve, reject) => {
+            const dlqTransaction = db!.transaction([DEAD_LETTER_STORE], 'readwrite');
+            const dlqStore = dlqTransaction.objectStore(DEAD_LETTER_STORE);
+            const getRequest = dlqStore.get(id);
+
+            getRequest.onsuccess = () => {
+                const deadLetterItem = getRequest.result;
+                if (!deadLetterItem) {
+                    reject(new Error('Dead letter request not found'));
+                    return;
+                }
+
+                // Reset state to pending and clear dead letter metadata
+                const retryItem: QueuedRequest = {
+                    ...deadLetterItem,
+                    state: 'pending',
+                    retries: 0,
+                    lastError: undefined,
+                    movedToDeadLetterAt: undefined,
+                    originalRetries: undefined,
+                };
+
+                // Add back to main queue
+                const queueTransaction = db!.transaction([QUEUE_STORE], 'readwrite');
+                const queueStore = queueTransaction.objectStore(QUEUE_STORE);
+                queueStore.put(retryItem);
+
+                // Remove from dead letter
+                const deleteRequest = dlqStore.delete(id);
+                deleteRequest.onsuccess = () => {
+                    notifyQueueUpdate();
+                    resolve();
+                };
+                deleteRequest.onerror = () => reject(new Error(deleteRequest.error?.message || 'Delete dead letter request failed'));
+            };
+            getRequest.onerror = () => reject(new Error(getRequest.error?.message || 'Get dead letter request failed'));
+        });
+    };
+
+    // Delete a dead letter request permanently
+    const deleteDeadLetterRequest = async (id: string): Promise<void> => {
+        if (!db) await initDB();
+
+        return new Promise((resolve, reject) => {
+            const transaction = db!.transaction([DEAD_LETTER_STORE], 'readwrite');
+            const store = transaction.objectStore(DEAD_LETTER_STORE);
+            const request = store.delete(id);
+
+            request.onsuccess = () => {
+                notifyQueueUpdate();
+                resolve();
+            };
+            request.onerror = () => reject(new Error(request.error?.message || 'Delete dead letter request failed'));
+        });
+    };
+
     // Process a single queued request
     const processSingleRequest = async (request: QueuedRequest): Promise<void> => {
         try {
@@ -444,12 +540,26 @@ export default defineBackground(() => {
             request.lastError = error instanceof Error ? error.message : 'Sync failed';
 
             if (request.retries >= request.maxRetries) {
+                // Move to dead letter queue instead of leaving as 'failed'
+                request.state = 'dead_letter';
+                request.movedToDeadLetterAt = Date.now();
+                request.originalRetries = request.maxRetries;
+                if (db) {
+                    // Add to dead letter store
+                    const dlqTransaction = db.transaction([DEAD_LETTER_STORE], 'readwrite');
+                    dlqTransaction.objectStore(DEAD_LETTER_STORE).put(request);
+                    // Remove from main queue
+                    await removeQueuedRequest(request.id);
+                    notifyQueueUpdate();
+                }
+            } else {
+                // Still has retries left, update state to failed and keep in queue
                 request.state = 'failed';
-            }
-            if (db) {
-                const transaction = db.transaction([QUEUE_STORE], 'readwrite');
-                transaction.objectStore(QUEUE_STORE).put(request);
-                notifyQueueUpdate();
+                if (db) {
+                    const transaction = db.transaction([QUEUE_STORE], 'readwrite');
+                    transaction.objectStore(QUEUE_STORE).put(request);
+                    notifyQueueUpdate();
+                }
             }
         }
     };
@@ -601,6 +711,24 @@ export default defineBackground(() => {
                         {
                             const requests = await getQueuedRequests();
                             sendResponse({ success: true, requests });
+                        }
+                        break;
+                    case 'get_dead_letter_requests':
+                        {
+                            const requests = await getDeadLetterRequests();
+                            sendResponse({ success: true, requests });
+                        }
+                        break;
+                    case 'retry_dead_letter_request':
+                        {
+                            await retryDeadLetterRequest(message.id);
+                            sendResponse({ success: true });
+                        }
+                        break;
+                    case 'delete_dead_letter_request':
+                        {
+                            await deleteDeadLetterRequest(message.id);
+                            sendResponse({ success: true });
                         }
                         break;
                     case 'get_offline_status':

@@ -240,20 +240,25 @@ export class WeatherService {
 
   /**
    * Fetch historical weather for parametric insurance claim auditing (WeatherAPI.com /history.json)
+   * `dataStatus` lets callers distinguish measured observations from the offline no-key mock.
    */
   // fallow-ignore-next-line unused-class-member
-  static async getHistoricalWeather(location: string, date: string): Promise<{ date: string; avgTempC: number; maxTempC: number; minTempC: number; totalPrecipMm: number }> {
+  static async getHistoricalWeather(location: string, date: string): Promise<{ date: string; avgTempC: number; maxTempC: number; minTempC: number; totalPrecipMm: number; dataStatus: 'live' | 'mock_estimate'; source: string }> {
     const apiKey = this.getWeatherApiKey();
     const baseUrl = this.getWeatherApiUrl();
 
     if (!apiKey) {
-      // Offline / no-key mock estimate for test and offline environments
+      // Offline / no-key mock estimate for test and offline environments.
+      // Explicitly marked so claim-audit callers never mistake it for real data.
+      logger.warn(`Historical weather mock returned for ${location} ${date}: WEATHER_API_KEY not configured`);
       return {
         date,
         avgTempC: 22.0,
         maxTempC: 27.0,
         minTempC: 15.0,
         totalPrecipMm: 0,
+        dataStatus: 'mock_estimate',
+        source: 'offline_mock (no WEATHER_API_KEY)',
       };
     }
 
@@ -269,6 +274,8 @@ export class WeatherService {
       maxTempC: dayData?.maxtemp_c ?? 25.0,
       minTempC: dayData?.mintemp_c ?? 14.0,
       totalPrecipMm: dayData?.totalprecip_mm ?? 0,
+      dataStatus: 'live' as const,
+      source: 'WeatherAPI.com /history.json',
     };
   }
 }

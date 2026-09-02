@@ -651,8 +651,29 @@ router.patch('/admin/config', authorize(['admin']), async (req: AuthRequest, res
  *     summary: Create PayPal subscription
  *     tags: [Billing]
  */
-// Pending PayPal payments: paymentId → { planId, amount }
-const pendingPayPalPayments = new Map<string, { planId: string; amount: number }>();
+// Pending PayPal payments persist in the DB (pending_paypal_payments) so that a
+// process restart or multi-instance deployment never loses an in-flight checkout.
+// Entries expire after 1 hour; cleanup runs opportunistically on insert.
+async function storePendingPaypalPayment(paymentId: string, userId: string, planId: string, amount: number): Promise<void> {
+    const expiresAt = new Date(Date.now() + 3600_000);
+    await prisma.pendingPaypalPayment.upsert({
+        where: { paymentId },
+        update: { planId, amount, userId, expiresAt, status: 'pending' },
+        create: { paymentId, userId, planId, amount, expiresAt },
+    });
+    // Opportunistic expiry sweep — keeps the table bounded without a worker.
+    prisma.pendingPaypalPayment.deleteMany({ where: { expiresAt: { lt: new Date() } } }).catch(err => {
+        logger.warn('Pending PayPal payment sweep failed:', err);
+    });
+}
+
+async function consumePendingPaypalPayment(paymentId: string): Promise<{ planId: string; amount: number } | null> {
+    const pending = await prisma.pendingPaypalPayment.findUnique({ where: { paymentId } });
+    if (!pending) return null;
+    await prisma.pendingPaypalPayment.delete({ where: { paymentId } });
+    if (pending.expiresAt.getTime() < Date.now()) return null;
+    return { planId: pending.planId, amount: Number(pending.amount) };
+}
 
 router.post('/paypal/subscribe', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
     try {
@@ -681,11 +702,9 @@ router.post('/paypal/subscribe', authorize(['admin', 'extension_officer', 'farme
         });
 
         if (result && result.success) {
-            // Store plan details for the success callback
+            // Store plan details for the success callback (durable across restarts)
             if (result.paymentId) {
-                pendingPayPalPayments.set(result.paymentId, { planId: selectedPlan.id, amount: selectedPlan.price });
-                // Auto-expire after 1 hour
-                setTimeout(() => pendingPayPalPayments.delete(result.paymentId!), 3600_000);
+                await storePendingPaypalPayment(result.paymentId, userId, selectedPlan.id, selectedPlan.price);
             }
             res.json({ success: true, data: { paymentId: result.paymentId, approvalUrl: result.approvalUrl } });
         } else {
@@ -720,9 +739,8 @@ router.get('/paypal/success', authorize(['admin', 'extension_officer', 'farmer']
         const success = await paymentService.executePayPalPayment(paymentId as string, PayerID as string);
 
         if (success) {
-            // Look up plan details from pending payment
-            const pending = pendingPayPalPayments.get(paymentId as string);
-            pendingPayPalPayments.delete(paymentId as string);
+            // Look up plan details from pending payment (DB-backed, restart-safe)
+            const pending = await consumePendingPaypalPayment(paymentId as string);
 
             if (!pending) {
                 logger.error(`PayPal payment ${paymentId} succeeded but no pending plan found`);

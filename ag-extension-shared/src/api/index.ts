@@ -13,3 +13,7 @@ export * from './knowledge';
 export * from './billing';
 export * from './notification';
 export * from './report';
+export * from './diseases';
+export * from './outbreaks';
+export * from './commercialKnowledge';
+export * from './autonomousCampaigns';

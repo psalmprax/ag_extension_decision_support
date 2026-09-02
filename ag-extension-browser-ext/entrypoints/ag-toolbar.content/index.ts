@@ -346,10 +346,10 @@ export default defineContentScript({
         }
         if (message.action === 'trigger_photo_capture') {
           // Trigger photo capture via toolbar button click
-          const btn = document.querySelector('#ag-toolbar-root button') as HTMLElement | null;
-          // Try to trigger the photo button specifically (first button is sync, third is photo)
-          const photoBtnCandidate = document.querySelectorAll('#ag-toolbar-root button')[2] as HTMLElement | undefined;
-          (photoBtnCandidate || btn)?.click();
+          // Use data-action attribute for robust selection (avoids brittle index-based selection)
+          const photoBtn = document.querySelector('#ag-toolbar-root button[data-action="capture-photo"]') as HTMLElement | null;
+          const fallbackBtn = document.querySelector('#ag-toolbar-root button') as HTMLElement | null;
+          (photoBtn || fallbackBtn)?.click();
           sendResponse({ success: true });
           return;
         }

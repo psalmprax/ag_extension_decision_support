@@ -39,6 +39,9 @@ model User {
   transactionSubmissions TransactionSubmission[]
   verifiedTransactions TransactionSubmission[] @relation("TransactionVerifier")
   redeemedVouchers Voucher[] @relation("RedeemedVouchers")
+  pendingPaypalPayments PendingPaypalPayment[] @relation("PendingPaypalUser")
+  offlineQueueItems OfflineQueueItem[] @relation("OfflineQueueUser")
+  activityClaims ActivityClaim[] @relation("ActivityClaimUser")
   createdShares Share[] @relation("ShareCreator")
   smsHistory SmsHistory[] @relation("SmsSender")
   hostedRooms WebRTCRoom[] @relation("RoomHost")
@@ -91,6 +94,63 @@ model OfflineMutation {
   @@index([userId])
   @@index([status])
   @@map("offline_mutations")
+}
+
+model PendingPaypalPayment {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paymentId  String   @unique @map("payment_id") @db.VarChar(255)
+  userId     String   @map("user_id") @db.Uuid
+  planId     String   @map("plan_id") @db.Uuid
+  amount     Decimal  @db.Decimal(10, 2)
+  currency   String   @default("USD") @db.VarChar(10)
+  status     String   @default("pending") @db.VarChar(20)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  expiresAt  DateTime @map("expires_at") @db.Timestamp(6)
+  user       User              @relation("PendingPaypalUser", fields: [userId], references: [id], onDelete: Cascade)
+  plan       SubscriptionPlan  @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("pending_paypal_payments")
+}
+
+model OfflineQueueItem {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  clientRequestId String    @map("client_request_id") @db.VarChar(128)
+  idempotencyKey  String?   @map("idempotency_key") @db.VarChar(128)
+  url             String    @db.VarChar(500)
+  method          String    @db.VarChar(10)
+  headers         Json      @default("{}")
+  body            Json?
+  attachmentRefs  String[]  @default([]) @map("attachment_refs")
+  retries         Int       @default(0)
+  maxRetries      Int       @default(3) @map("max_retries")
+  state           String    @default("pending") @db.VarChar(20)
+  lastError       String?   @map("last_error")
+  movedToDeadLetterAt DateTime? @map("moved_to_dead_letter_at") @db.Timestamptz(6)
+  originalRetries Int?      @map("original_retries")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  user            User      @relation("OfflineQueueUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, clientRequestId])
+  @@index([userId, state])
+  @@index([state])
+  @@map("offline_queue_items")
+}
+
+model ActivityClaim {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  activityId String   @map("activity_id") @db.VarChar(150)
+  userId     String   @map("user_id") @db.Uuid
+  claimedBy  String   @map("claimed_by") @db.VarChar(120)
+  claimedAt  DateTime @default(now()) @map("claimed_at") @db.Timestamptz(6)
+  user       User     @relation("ActivityClaimUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId])
+  @@index([userId])
+  @@map("activity_claims")
 }
 
 model OutreachMessage {
@@ -361,6 +421,7 @@ model SubscriptionPlan {
   subscriptions Subscription[]
   vouchers      Voucher[]
   transactionSubmissions TransactionSubmission[]
+  pendingPaypalPayments PendingPaypalPayment[]
 
   @@map("subscription_plans")
 }

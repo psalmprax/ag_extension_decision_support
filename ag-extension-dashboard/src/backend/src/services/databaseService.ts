@@ -199,6 +199,62 @@ export async function createTables(): Promise<void> {
     logger.warn('Offline mutation ledger provisioning failed:', error);
   }
 
+  // Provision durable operation-state tables that replace earlier in-memory
+  // stores (PayPal pending payments, extension offline queue, triage claims).
+  // All statements are idempotent.
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS pending_paypal_payments (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        payment_id VARCHAR(255) NOT NULL UNIQUE,
+        user_id UUID NOT NULL,
+        plan_id UUID NOT NULL,
+        amount DECIMAL(10,2) NOT NULL,
+        currency VARCHAR(10) NOT NULL DEFAULT 'USD',
+        status VARCHAR(20) NOT NULL DEFAULT 'pending',
+        created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        expires_at TIMESTAMP(6) NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS pending_paypal_payments_user_id_idx ON pending_paypal_payments(user_id);
+      CREATE INDEX IF NOT EXISTS pending_paypal_payments_expires_at_idx ON pending_paypal_payments(expires_at);
+
+      CREATE TABLE IF NOT EXISTS offline_queue_items (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL,
+        client_request_id VARCHAR(128) NOT NULL,
+        idempotency_key VARCHAR(128),
+        url VARCHAR(500) NOT NULL,
+        method VARCHAR(10) NOT NULL,
+        headers JSONB NOT NULL DEFAULT '{}'::jsonb,
+        body JSONB,
+        attachment_refs TEXT[] NOT NULL DEFAULT '{}',
+        retries INTEGER NOT NULL DEFAULT 0,
+        max_retries INTEGER NOT NULL DEFAULT 3,
+        state VARCHAR(20) NOT NULL DEFAULT 'pending',
+        last_error TEXT,
+        moved_to_dead_letter_at TIMESTAMPTZ,
+        original_retries INTEGER,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT offline_queue_items_user_client_request_id_key UNIQUE (user_id, client_request_id)
+      );
+      CREATE INDEX IF NOT EXISTS offline_queue_items_user_id_state_idx ON offline_queue_items(user_id, state);
+      CREATE INDEX IF NOT EXISTS offline_queue_items_state_idx ON offline_queue_items(state);
+
+      CREATE TABLE IF NOT EXISTS activity_claims (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        activity_id VARCHAR(150) NOT NULL UNIQUE,
+        user_id UUID NOT NULL,
+        claimed_by VARCHAR(120) NOT NULL,
+        claimed_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS activity_claims_user_id_idx ON activity_claims(user_id);
+    `);
+    logger.info('Durable operation-state tables provisioned (paypal pending, offline queue, activity claims)');
+  } catch (error) {
+    logger.warn('Durable operation-state provisioning failed:', error);
+  }
+
   // Provision governance tables for environments that use the legacy bootstrap
   // path instead of Prisma migrations. All statements are idempotent.
   try {

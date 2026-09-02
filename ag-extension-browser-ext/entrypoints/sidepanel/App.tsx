@@ -505,7 +505,10 @@ const handleSync = async () => {
 
           setIsLoading(true);
           try {
-            const aiResponse = await sendMessageToAI('', message.imageData);
+            const aiResponse = await sendMessageToAI(
+              'Please analyze this agricultural photo and identify any crop diseases, nutrient deficiencies, pests, or other issues visible in the image. Provide specific, actionable recommendations for the farmer.',
+              message.imageData
+            );
             const assistantMessage: Message = {
               id: (Date.now() + 1).toString(),
               role: 'assistant',

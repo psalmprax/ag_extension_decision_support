@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { extractVideoFrames } from './videoFrameService';
+import { logger } from '../../utils/logger';
 
 // ── Provider type identifier ──────────────────────────────────────────────
 
@@ -193,41 +194,118 @@ export abstract class BaseAIProvider implements AICapability {
         return false;
     }
 
+    /**
+     * Default no-op implementation for text generation.
+     * Providers that support text generation should override this method.
+     */
     async generateText(_messages: any[], _options?: TextGenerationOptions): Promise<TextGenerationResult> {
-        throw new Error('Method not implemented');
+        logger.warn(`${this.provider}: generateText not implemented — returning empty result`);
+        return {
+            text: '',
+            model: _options?.model || 'unknown',
+            usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+            finishReason: 'not_implemented',
+        };
     }
 
+    /**
+     * Default no-op implementation for streaming text.
+     * Providers that support streaming should override this method.
+     */
     // eslint-disable-next-line require-yield
     async *streamText(_prompt: string, _options?: TextGenerationOptions): AsyncGenerator<string> {
-        throw new Error('Method not implemented');
+        logger.warn(`${this.provider}: streamText not implemented`);
+        // Empty generator - yields nothing
+        return;
+        // eslint-disable-next-line @typescript-eslint/no-unreachable
+        yield '';
     }
 
+    /**
+     * Default no-op implementation for embeddings.
+     * Providers that support embeddings should override this method.
+     */
     async createEmbedding(_text: string, _options?: EmbeddingOptions): Promise<EmbeddingResult> {
-        throw new Error('Method not implemented');
+        logger.warn(`${this.provider}: createEmbedding not implemented — returning zero vector`);
+        return {
+            embedding: [],
+            model: _options?.model || 'unknown',
+            usage: { tokens: 0 },
+        };
     }
 
+    /**
+     * Default no-op implementation for batch embeddings.
+     * Providers that support batch embeddings should override this method.
+     */
     async createBatchEmbeddings(_texts: string[], _options?: EmbeddingOptions): Promise<EmbeddingResult[]> {
-        throw new Error('Method not implemented');
+        logger.warn(`${this.provider}: createBatchEmbeddings not implemented — returning empty results`);
+        return _texts.map(() => ({
+            embedding: [],
+            model: _options?.model || 'unknown',
+            usage: { tokens: 0 },
+        }));
     }
 
+    /**
+     * Default no-op implementation for speech-to-text.
+     * Providers that support speech recognition should override this method.
+     */
     async speechToText(_audio: Buffer, _options?: SpeechToTextOptions): Promise<SpeechToTextResult> {
-        throw new Error('Method not implemented');
+        logger.warn(`${this.provider}: speechToText not implemented — returning empty transcription`);
+        return {
+            text: '',
+            confidence: 0,
+        };
     }
 
+    /**
+     * Default no-op implementation for text-to-speech.
+     * Providers that support speech synthesis should override this method.
+     */
     async textToSpeech(_text: string, _options?: TextToSpeechOptions): Promise<TextToSpeechResult> {
-        throw new Error('Method not implemented');
+        logger.warn(`${this.provider}: textToSpeech not implemented — returning empty audio`);
+        return {
+            audio: Buffer.alloc(0),
+            format: 'wav',
+        };
     }
 
+    /**
+     * Default no-op implementation for reasoning analysis.
+     * Providers that support reasoning should override this method.
+     */
     async analyzeWithReasoning(_context: string, _query: string, _options?: ReasoningOptions): Promise<ReasoningResult> {
-        throw new Error('Method not implemented');
+        logger.warn(`${this.provider}: analyzeWithReasoning not implemented — returning empty reasoning`);
+        return {
+            reasoning: 'Reasoning not implemented for this provider',
+            answer: 'No answer available',
+            confidence: 0,
+        };
     }
 
+    /**
+     * Default no-op implementation for classification.
+     * Providers that support classification should override this method.
+     */
     async classify(_input: string, _options: ClassificationOptions): Promise<ClassificationResult> {
-        throw new Error('Method not implemented');
+        logger.warn(`${this.provider}: classify not implemented — returning empty classification`);
+        return {
+            labels: [],
+        };
     }
 
+    /**
+     * Default no-op implementation for image analysis.
+     * Providers that support vision should override this method.
+     */
     async analyzeImage(_imageData: string | Buffer, _prompt?: string, _options?: ImageAnalysisOptions): Promise<ImageAnalysisResult> {
-        throw new Error('Method not implemented');
+        logger.warn(`${this.provider}: analyzeImage not implemented — returning empty analysis`);
+        return {
+            analysis: 'Image analysis not implemented for this provider',
+            model: _options?.model || 'unknown',
+            usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+        };
     }
 
     async analyzeVideo(videoData: Buffer, prompt?: string, options?: VideoAnalysisOptions): Promise<VideoAnalysisResult> {

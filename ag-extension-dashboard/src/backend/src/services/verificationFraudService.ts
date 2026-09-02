@@ -302,7 +302,10 @@ export function generateFarmerCoSignToken(visitId: string, farmerId: string): {
   otp: string;
   expiresInSeconds: number;
 } {
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  // Use cryptographically secure random for OTP generation
+  const randomBuffer = new Uint32Array(1);
+  crypto.getRandomValues(randomBuffer);
+  const otp = Math.floor(100000 + (randomBuffer[0] % 900000)).toString();
   const ttlMs = 15 * 60 * 1000; // 15 minutes
   coSignStore.set(visitId, {
     otp,
