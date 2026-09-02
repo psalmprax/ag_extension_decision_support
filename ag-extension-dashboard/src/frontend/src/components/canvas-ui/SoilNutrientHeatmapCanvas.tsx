@@ -431,7 +431,7 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
       {/* Data provenance for the active layer — surfaces preview/estimated status to the user */}
       <p className={`text-[10px] leading-relaxed rounded-lg px-2.5 py-1.5 border ${isLiveLayer ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800' : 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800'}`}>
         {isLiveLayer ? '✅ ' : '⚠️ '}{provenanceOverride ?? config.description}{' '}
-        {isLiveLayer ? 'Live IDW interpolation over farmer lab points + regional SoilGrids anchors.' : 'Values are IDW interpolation over sample points — not a substitute for a laboratory soil test.'}
+        {isLiveLayer ? 'Regional 250m baseline (single SoilGrids pixel) + lab anchors — uniform field until multiple field polygons are registered.' : 'Values are IDW interpolation over sample points — not a substitute for a laboratory soil test.'}
       </p>
 
       {/* Main Canvas Frame */}

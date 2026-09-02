@@ -402,25 +402,21 @@ export function SoilDiagnosticsTab({
   const buildRealPoints = (profile: FarmerSoilProfile | null): SoilHeatmapRealPoints | undefined => {
     if (!profile?.baseline) return undefined;
     const b = profile.baseline as unknown as Record<string, number | null>;
-    const jitter = (base: number | null, spread: number) =>
-      base == null
-        ? undefined
-        : [
-            { x: 0.2, y: 0.25, val: Number((base - spread * 0.6).toFixed(2)) },
-            { x: 0.45, y: 0.55, val: Number((base + spread * 0.4).toFixed(2)) },
-            { x: 0.65, y: 0.3, val: base },
-            { x: 0.82, y: 0.35, val: Number((base - spread * 0.3).toFixed(2)) },
-            { x: 0.72, y: 0.85, val: Number((base + spread * 0.7).toFixed(2)) },
-            { x: 0.25, y: 0.78, val: Number((base - spread * 0.1).toFixed(2)) },
-          ];
-    const phPts = jitter(b.ph as number | null, 0.4);
-    const nPts = jitter(b.nitrogenMgPerKg as number | null, 8);
-    const cPts = jitter(b.organicCarbonGPerKg as number | null, 3);
+    // Honest: a single SoilGrids 250m pixel gives one value per property for the farm centroid.
+    // Do NOT synthesize spatial variation. Use a uniform field (all points same value) so the heatmap
+    // shows a flat color until the farmer has multiple field polygons or lab points with coordinates.
+    const uniform = (base: number | null) => (base == null ? undefined : [
+      { x: 0.2, y: 0.25, val: base }, { x: 0.45, y: 0.55, val: base }, { x: 0.65, y: 0.3, val: base },
+      { x: 0.82, y: 0.35, val: base }, { x: 0.72, y: 0.85, val: base }, { x: 0.25, y: 0.78, val: base },
+    ]);
+    const phPts = uniform(b.ph as number | null);
+    const nPts = uniform(b.nitrogenMgPerKg as number | null);
+    const cPts = uniform(b.organicCarbonGPerKg as number | null);
     const moistureVal =
       (profile.moisture as unknown as { soilMoisture?: { avgTop9cm?: number | null } })?.soilMoisture?.avgTop9cm != null
         ? (profile.moisture as unknown as { soilMoisture: { avgTop9cm: number } }).soilMoisture.avgTop9cm * 100
         : null;
-    const mPts = moistureVal != null ? jitter(moistureVal, 4) : undefined;
+    const mPts = moistureVal != null ? uniform(moistureVal) : undefined;
     const result: SoilHeatmapRealPoints = {};
     if (phPts) result.ph = phPts;
     if (nPts) result.nitrogen = nPts;
