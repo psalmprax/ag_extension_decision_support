@@ -205,26 +205,36 @@ class NotificationService {
     }
 
     /**
-     * Schedule notification for later
+     * Schedule notification for later — persists as pending and enqueues delayed delivery.
+     * If the scheduled time is in the past/near, it sends immediately.
      */
     async schedule(
         payload: NotificationPayload,
         scheduledAt: Date
     ): Promise<boolean> {
+        const delayMs = scheduledAt.getTime() - Date.now();
+        if (delayMs <= 60_000) {
+            return this.send(payload);
+        }
         try {
-            // Store notification in database (as unread/scheduled if we had a status, but for now just log)
-            // Ideally we'd have a 'scheduled' status in the Notification model, but we'll stick to basic persistence for now
-            await prisma.notification.create({
+            const created = await prisma.notification.create({
                 data: {
                     userId: payload.userId,
                     type: payload.type,
                     title: payload.title,
-                    message: `${payload.message} (Scheduled for ${scheduledAt.toISOString()})`,
-                    metadata: { ...payload.metadata, scheduledAt: scheduledAt.toISOString() } as Prisma.InputJsonValue,
+                    message: payload.message,
+                    channel: payload.channel,
+                    metadata: { ...payload.metadata, scheduledAt: scheduledAt.toISOString(), scheduled: true } as Prisma.InputJsonValue,
                 }
             });
-
-            logger.info(`Notification scheduled and saved for ${scheduledAt.toISOString()}`);
+            // Best-effort delayed dispatch via setTimeout (bounded); for production replace with BullMQ delayed job
+            const cappedDelay = Math.min(delayMs, 24 * 60 * 60 * 1000);
+            setTimeout(() => {
+                this.send({ ...payload, metadata: { ...payload.metadata, sourceNotificationId: created.id } }).catch(err =>
+                    logger.error('Scheduled notification dispatch failed:', err)
+                );
+            }, cappedDelay).unref?.();
+            logger.info(`Notification ${created.id} scheduled for ${scheduledAt.toISOString()} (in ${Math.round(delayMs / 1000)}s)`);
             return true;
         } catch (error) {
             logger.error('Failed to schedule notification:', error);

@@ -80,10 +80,10 @@ function evaluateMarketPair(
   const grossSpread = +(destPriceUsd - originPriceUsd).toFixed(2);
   if (grossSpread <= 0) return null;
 
-  // Approximate road freight in East Africa: ~$0.075 per ton-km
+  // DEMO freight model: single illustrative distance; real corridor requires OSRM/HERE routing
   const distanceKm = 650;
   const freightCost = +(distanceKm * 0.075).toFixed(2);
-  const borderFees = 18.5; // SPS certificate + transit bond per ton
+  const borderFees = 18.5; // DEMO per-ton SPS + bond estimate (not tariff schedule)
 
   const netProfit = +(grossSpread - (freightCost + borderFees)).toFixed(2);
   const netMarginPct = +((netProfit / originPriceUsd) * 100).toFixed(1);

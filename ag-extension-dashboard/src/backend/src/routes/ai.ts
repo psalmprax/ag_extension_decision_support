@@ -428,6 +428,36 @@ async function handleAgentControl(
         return;
     }
 
+    if (control === 'execute') {
+        try {
+            const { agentOrchestrator } = await import('@/services/agentOrchestrator');
+            const task = await agentOrchestrator.dispatchTask({
+                agentId: config.id,
+                type: 'ai.execute',
+                payload: { triggeredBy: 'api/ai/execute', at: new Date().toISOString() },
+                priority: 'medium',
+                maxRetries: 2,
+            });
+            // Kick the worker loop once (best-effort)
+            agentOrchestrator.executeNext().catch(() => {});
+            res.json({ success: true, data: task, note: `Task queued for ${config.name} via orchestrator` });
+            return;
+        } catch (e) {
+            logger.warn('Orchestrator dispatch on /ai/execute failed, falling back to 501:', e);
+        }
+    }
+
+    if (control === 'stop') {
+        try {
+            const { agentOrchestrator } = await import('@/services/agentOrchestrator');
+            const result = await agentOrchestrator.stopAgentTasks(config.id);
+            res.json({ success: true, data: result, note: `Stopped ${result.stopped} running tasks, removed ${result.queued} queued tasks for ${config.name}` });
+            return;
+        } catch (e) {
+            logger.warn('Orchestrator stop on /ai/stop failed:', e);
+        }
+    }
+
     const unavailableCode = {
         execute: 'AGENT_EXECUTION_NOT_WIRED',
         stop: 'AGENT_STOP_NOT_WIRED',

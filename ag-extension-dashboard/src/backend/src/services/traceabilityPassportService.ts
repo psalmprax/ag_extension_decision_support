@@ -54,7 +54,11 @@ export function verifyEudrDeforestationCompliance(params: {
 
   logger.info(`Running EUDR Deforestation audit for parcel ${parcelId} (${commodity} in ${country}) against cutoff ${EUDR_CUTOFF_DATE}`);
 
-  // Deforestation detected if canopy loss > 10% after 2020 cutoff
+  // NOTE: This is a heuristic estimator, not a regulatory certification.
+  // No satellite baseline is ingested; callers must supply both canopy values from a verified source.
+  if (forestCanopyBaseline2020Pct === 12.0 && currentForestCanopyPct === 12.0) {
+    logger.warn('EUDR check using default canopy values — caller did not supply verified baseline; result is ESTIMATED');
+  }
   const canopyLoss = forestCanopyBaseline2020Pct - currentForestCanopyPct;
   const isCompliant = canopyLoss <= 5.0 && polygonVertexCount >= 3;
 
@@ -99,9 +103,10 @@ export function generateFarmToForkPassport(params: {
 
   logger.info(`Generating GS1 Digital Link Passport for batch ${batchId} (${commodityName})`);
 
-  const gtin = '06164000189214'; // Sample registered 14-digit GTIN
+  const gtin = '06164000189214'; // DEMO GTIN — replace with tenant-registered value before production use
   const gs1DigitalLinkUrl = `https://id.agriextension.org/01/${gtin}/10/${batchId}`;
 
+  // DEMO signature: unsalted SHA-256 for display only; not a cryptographic attestation
   const payloadToSign = `${batchId}|${commodityName}|${farmCoordinates[0]},${farmCoordinates[1]}|${harvestDate}|${originCooperative}`;
   const digitalSignatureHash = crypto.createHash('sha256').update(payloadToSign).digest('hex');
 
@@ -116,9 +121,9 @@ export function generateFarmToForkPassport(params: {
     originCountry,
     farmCoordinates,
     harvestDate,
-    chemicalResidueMrlStatus: 'passed_zero_banned_pesticides',
+    chemicalResidueMrlStatus: 'pending_lab' as const,
     fairTradeCertified,
-    carbonFootprintKgCo2ePerKg: 0.85, // Low carbon regenerative footprint
+    carbonFootprintKgCo2ePerKg: 0.85, // ESTIMATED — requires lifecycle assessment, not measured
     digitalSignatureHash,
   };
 }

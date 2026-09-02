@@ -163,8 +163,8 @@ function App() {
     }
   };
 
-  const handleSync = async () => {
-    if (isSyncing) return;
+const handleSync = async () => {
+    if (!isOnline || queuedRequests.length === 0 || isSyncing) return;
     setIsSyncing(true);
     try {
       await apiQueue.syncNow();
@@ -173,6 +173,32 @@ function App() {
       console.error('Sync failed:', error);
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  const handleRetryRequest = async (requestId: string) => {
+    try {
+      await apiQueue.makeRequest(`${CONFIG.API_BASE_URL}/offline/retry`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId }),
+      });
+      await loadQueuedRequests();
+    } catch (error) {
+      console.error('Retry failed:', error);
+    }
+  };
+
+  const handleDeleteRequest = async (requestId: string) => {
+    try {
+      await apiQueue.makeRequest(`${CONFIG.API_BASE_URL}/offline/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId }),
+      });
+      await loadQueuedRequests();
+    } catch (error) {
+      console.error('Delete failed:', error);
     }
   };
 
@@ -655,19 +681,52 @@ function App() {
               <p className="text-sm text-slate-400 Italics px-1">No pending requests</p>
             ) : (
               <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                {queuedRequests.map((request) => (
-                  <div key={request.id} className="flex items-center justify-between p-2 bg-slate-700/50 rounded border border-slate-600">
-                    <div className="flex-1">
-                      <p className="text-xs font-mono text-slate-300">{request.method} {request.url.replace(apiEndpoint, '')}</p>
-                      <p className="text-[10px] text-slate-500">
-                        {new Date(request.timestamp).toLocaleString()} • {request.retries} retries
-                      </p>
+                {queuedRequests.map((request) => {
+                  const isConflict = request.state === 'conflict';
+                  const isFailed = request.state === 'failed';
+                  return (
+                    <div key={request.id} className="flex items-center justify-between p-2 bg-slate-700/50 rounded border border-slate-600">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-mono text-slate-300 truncate">{request.method} {request.url.replace(apiEndpoint, '')}</p>
+                        <p className="text-[10px] text-slate-500">
+                          {new Date(request.timestamp).toLocaleString()} • {request.retries} retries
+                          {isConflict && <span className="ml-1.5 px-1.5 py-0.5 bg-orange-500/20 border border-orange-500/30 rounded text-[9px] font-bold text-orange-400">CONFLICT</span>}
+                          {isFailed && <span className="ml-1.5 px-1.5 py-0.5 bg-rose-500/20 border border-rose-500/30 rounded text-[9px] font-bold text-rose-400">FAILED</span>}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`w-2 h-2 rounded-full ${request.state === 'conflict' ? 'bg-orange-500' : request.state === 'failed' ? 'bg-rose-500' : request.retries > 0 ? 'bg-orange-500' : 'bg-slate-500'}`} />
+                        {isConflict && (
+                          <button
+                            onClick={() => handleRetryRequest(request.id)}
+                            className="px-2 py-1 text-[9px] font-bold bg-orange-600 hover:bg-orange-500 text-white rounded transition-colors disabled:opacity-50"
+                            disabled={isSyncing}
+                          >
+                            Retry
+                          </button>
+                        )}
+                        {isFailed && (
+                          <>
+                            <button
+                              onClick={() => handleRetryRequest(request.id)}
+                              className="px-2 py-1 text-[9px] font-bold bg-rose-600 hover:bg-rose-500 text-white rounded transition-colors disabled:opacity-50"
+                              disabled={isSyncing}
+                            >
+                              Retry
+                            </button>
+                            <button
+                              onClick={() => handleDeleteRequest(request.id)}
+                              className="px-2 py-1 text-[9px] font-bold bg-slate-700 hover:bg-slate-600 text-white/70 rounded transition-colors disabled:opacity-50"
+                              disabled={isSyncing}
+                            >
+                              Delete
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${request.retries > 0 ? 'bg-orange-500' : 'bg-slate-500'}`} />
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

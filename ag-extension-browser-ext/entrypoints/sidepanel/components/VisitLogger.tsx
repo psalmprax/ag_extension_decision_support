@@ -120,7 +120,7 @@ export function VisitLogger({ farmerId: initialFarmerId, location, onLocationUse
         const result = await response.json();
         if (result.queued) {
           setIsSuccess(true);
-          setError('Offline: Visit queued for sync.');
+          setError('Queued for sync (offline)');
           setNotes('');
           if (attachedPhoto) URL.revokeObjectURL(attachedPhoto);
           setAttachedPhoto(null);
@@ -259,7 +259,7 @@ export function VisitLogger({ farmerId: initialFarmerId, location, onLocationUse
             ) : (
               <Save className="w-4 h-4" />
             )}
-            {isSubmitting ? 'Saving...' : isSuccess ? 'Logged!' : 'Save Visit'}
+            {isSubmitting ? 'Saving...' : isSuccess ? 'Queued for Sync' : 'Save Visit'}
           </button>
         </div>
 

@@ -145,10 +145,10 @@ async function executeGenerateStrategy(
     } else {
       toast.error('Strategy generation returned no data');
     }
-  } catch {
+  } catch (err) {
     addNotification({
-      type: 'warning',
-      message: 'Strategy generation queued. It will appear in reports when ready.',
+      type: 'error',
+      message: `Strategy generation failed: ${err instanceof Error ? err.message : 'Unknown error'} — not queued`,
     });
   } finally {
     setIsGenerating(false);
@@ -265,7 +265,7 @@ const ActionableAI = () => {
                 3 Satellite Nodes Active
               </span>
             </div>
-            <IsometricFarmOverview />
+            <IsometricFarmOverview farmerId={user?.id} />
           </div>
 
           {/* Supply Chain / Logistics Precision — Real market data */}

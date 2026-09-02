@@ -45,6 +45,7 @@ export function clusterPestSightings(
   sightings: PestSightingReport[],
   epsilonKm: number = 30.0
 ): SwarmCluster[] {
+  // Heuristic neighbor-merge clustering (not full DBSCAN) — intentionally simple for extension use
   logger.info(`Clustering ${sightings.length} pest sightings (epsilon=${epsilonKm}km)`);
 
   if (sightings.length === 0) return [];
@@ -111,6 +112,7 @@ export function forecastSwarmTrajectory(params: {
   const lat48 = +(cluster.centroid[0] + deltaLat24 * 2).toFixed(4);
   const lng48 = +(cluster.centroid[1] + deltaLng24 * 2).toFixed(4);
 
+  // DEMO: county list is illustrative; real trajectory would intersect admin boundaries
   return {
     cluster,
     windSpeedKmh,
@@ -119,9 +121,9 @@ export function forecastSwarmTrajectory(params: {
     forecast48hCentroid: [lat48, lng48],
     predictedImpactCounties: ['Nakuru', 'Baringo', 'Laikipia'],
     recommendedUrgentActions: [
-      'Issue automated 24h emergency voice broadcasts and SMS to farmers in predicted trajectory path',
-      'Pre-position biopesticide (Metarhizium acridum) and mobilize certified drone spraying fleet',
-      'Notify regional ministry phytosanitary control teams for aerial perimeter tracking',
+      '[DEMO] Issue 24h advisory (requires dispatch integration) to farmers in predicted corridor',
+      '[DEMO] Pre-position biopesticide — verify stock before mobilizing',
+      '[DEMO] Notify phytosanitary teams — requires ministry integration',
     ],
   };
 }

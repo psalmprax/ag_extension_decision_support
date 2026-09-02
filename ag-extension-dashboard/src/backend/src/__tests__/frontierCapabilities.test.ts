@@ -72,7 +72,7 @@ describe('Frontier Agricultural Capabilities (IoT, EUDR, Drone Fleet, Swarm Rada
 
       expect(passport.gs1DigitalLinkUrl).toContain('https://id.agriextension.org/01/');
       expect(passport.digitalSignatureHash).toHaveLength(64);
-      expect(passport.chemicalResidueMrlStatus).toBe('passed_zero_banned_pesticides');
+      expect(passport.chemicalResidueMrlStatus).toBe('pending_lab');
     });
   });
 

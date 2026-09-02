@@ -130,7 +130,7 @@ export function computeAgronomicCreditScore(input: FarmerCreditInput): CreditSco
 export function evaluateParametricInsuranceClaim(
   policy: ParametricInsurancePolicy,
   observedMetric: number,
-  verificationSource: string = 'NASA POWER & Sentinel Satellite Telemetry Ingestion'
+  verificationSource: string = 'caller-supplied metric (no satellite feed ingested)'
 ): ParametricClaimAssessment {
   logger.info(`Evaluating parametric claim for policy ${policy.policyId}: Observed=${observedMetric}, Strike=${policy.strikeThresholdValue}`);
 

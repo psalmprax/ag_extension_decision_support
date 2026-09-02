@@ -149,11 +149,11 @@ const STAGE_DATA_BY_PERSONA: Record<AudiencePersona, StageStoryItem[]> = {
       border: 'border-purple-500/30',
       bgGlow: 'from-purple-500/10 to-transparent',
       bullets: [
-        'EUDR deforestation and origin traceability export reports',
+        '[Status: Demonstrator] EUDR deforestation heuristic estimator (not regulatory certification)',
         'Broadcast bulk harvest instructions via 2-way SMS gateway',
-        'Direct integration with SAP, NetSuite, and warehouse ERPs',
+        '[Roadmap] SAP/NetSuite connector — not yet integrated',
       ],
-      tag: 'EUDR & ERP Ready',
+      tag: 'Export & ERP [Demo/Roadmap]',
     },
   ],
   donors: [

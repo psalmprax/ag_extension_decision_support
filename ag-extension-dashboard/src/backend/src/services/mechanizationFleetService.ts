@@ -34,8 +34,8 @@ const REGISTERED_EQUIPMENT: MechanizationAsset[] = [
   {
     id: 'asset-trac-01',
     assetType: 'tractor_75hp',
-    modelName: 'Massey Ferguson 375 (75 HP with Disc Plow)',
-    ownerName: 'Peter Kiprono',
+    modelName: '[DEMO] Massey Ferguson 375 (75 HP with Disc Plow)',
+    ownerName: '[DEMO] Peter Kiprono',
     ownerPhone: '+254711334455',
     county: 'Nakuru',
     subCounty: 'Njoro',
@@ -46,8 +46,8 @@ const REGISTERED_EQUIPMENT: MechanizationAsset[] = [
   {
     id: 'asset-drone-02',
     assetType: 'spraying_drone_t30',
-    modelName: 'DJI Agras T30 (30L Tank, 16 Spouts)',
-    ownerName: 'Equator Drone Agro Services',
+    modelName: '[DEMO] DJI Agras T30 (30L Tank, 16 Spouts)',
+    ownerName: '[DEMO] Equator Drone Agro Services',
     ownerPhone: '+254722556677',
     county: 'Nakuru',
     subCounty: 'Rongai',

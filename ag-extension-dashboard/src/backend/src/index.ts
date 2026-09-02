@@ -200,8 +200,16 @@ async function bootstrap() {
         });
     });
 
+    await initializeStep('email worker', async () => {
+        const { startEmailWorker } = await import('./workers/emailWorker');
+        startEmailWorker();
+    }, true);
     await initializeStep('email workflow service', () => emailWorkflowService.initialize());
     await initializeStep('agent telemetry', () => agentTelemetry.initialize());
+    await initializeStep('agent orchestrator loop', async () => {
+        const { agentOrchestrator } = await import('./services/agentOrchestrator');
+        agentOrchestrator.startWorkerLoop(Number(process.env.AGENT_WORKER_INTERVAL_MS || 5000));
+    }, true);
 
     // Register components for self-healing monitoring
     await initializeStep('self-healing monitoring', () => {

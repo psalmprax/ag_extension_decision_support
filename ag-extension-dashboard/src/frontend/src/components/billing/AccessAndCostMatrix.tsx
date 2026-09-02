@@ -72,7 +72,7 @@ const MATRIX_FEATURES: FeatureRow[] = [
     icon: Eye,
     free: false,
     pro: '100 scans / mo',
-    enterprise: 'Unlimited + Drone Orthomosaic AI',
+    enterprise: 'Unlimited [Roadmap] Drone Orthomosaic AI',
     unitCost: '$0.05 per high-res diagnosis scan',
     highlight: true,
   },

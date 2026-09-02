@@ -216,16 +216,16 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
 
           {/* Center/Right: Live Telemetry Badges & Mode Switcher */}
           <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
-            <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 text-xxs font-mono">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 text-xxs font-mono" title="Demo badge — replace with live /health once wired">
+              <span className="w-2 h-2 rounded-full bg-amber-400" />
               <span className="text-white/70">NASA POWER:</span>
-              <span className="text-emerald-400 font-bold">SYNCHRONIZED</span>
+              <span className="text-amber-300 font-bold">[DEMO] SYNCHRONIZED</span>
             </div>
 
-            <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 text-xxs font-mono">
+            <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 text-xxs font-mono" title="Demo badge — real RAG count is ~15 seed articles; expand via ingestion">
               <span className="w-2 h-2 rounded-full bg-cyan-400" />
               <span className="text-white/70">RAG MESH:</span>
-              <span className="text-cyan-300 font-bold">1,420 ARTICLES</span>
+              <span className="text-cyan-300 font-bold">[DEMO] 1,420 ARTICLES</span>
             </div>
 
             {/* Studio / Ops Toggle */}

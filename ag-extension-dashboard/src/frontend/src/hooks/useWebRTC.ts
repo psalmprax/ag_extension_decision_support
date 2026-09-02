@@ -60,6 +60,60 @@ export function useWebRTC(): UseWebRTCReturn {
   };
   const ICE_SERVERS = buildIceServers();
 
+  const removePeer = (peerId: string) => {
+    const pc = peerConnectionsRef.current.get(peerId);
+    if (pc) {
+      pc.close();
+      peerConnectionsRef.current.delete(peerId);
+    }
+    setRemoteStreams(prev => {
+      const newMap = new Map(prev);
+      newMap.delete(peerId);
+      return newMap;
+    });
+  };
+
+  const handleRemoteOffer = async (
+    socket: Socket,
+    data: { offer: RTCSessionDescriptionInit; from: string }
+  ) => {
+    try {
+      const pc = await createPeerConnection(data.from, false);
+      await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      socket.emit('answer', {
+        roomId: currentRoomRef.current,
+        answer,
+        from: currentUserRef.current?.id,
+      });
+    } catch (e) {
+      console.warn('Failed to handle offer:', e);
+    }
+  };
+
+  const handleRemoteAnswer = async (data: { answer: RTCSessionDescriptionInit; from: string }) => {
+    try {
+      const pc = peerConnectionsRef.current.get(data.from);
+      if (pc) {
+        await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+      }
+    } catch (e) {
+      console.warn('Failed to handle answer:', e);
+    }
+  };
+
+  const handleRemoteIce = async (data: { candidate: RTCIceCandidateInit; from: string }) => {
+    try {
+      const pc = peerConnectionsRef.current.get(data.from);
+      if (pc) {
+        await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+      }
+    } catch (e) {
+      console.warn('Failed to add ICE candidate:', e);
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
 
@@ -80,79 +134,19 @@ export function useWebRTC(): UseWebRTCReturn {
         // Socket connected — ready for WebRTC signaling
       }
     });
-
     socket.on('connect_error', err => {
       if (isMounted) {
         console.warn('Socket connection error:', err.message);
       }
     });
-
-    socket.on('user-joined', async (data: { userId: string; userName: string }) => {
+    socket.on('user-joined', async (data: { userId: string }) => {
       await createPeerConnection(data.userId, true);
     });
-
-    socket.on('user-left', (data: { userId: string }) => {
-      const pc = peerConnectionsRef.current.get(data.userId);
-      if (pc) {
-        pc.close();
-        peerConnectionsRef.current.delete(data.userId);
-      }
-      setRemoteStreams(prev => {
-        const newMap = new Map(prev);
-        newMap.delete(data.userId);
-        return newMap;
-      });
-    });
-
-    socket.on('offer', async (data: { offer: RTCSessionDescriptionInit; from: string }) => {
-      try {
-        const pc = await createPeerConnection(data.from, false);
-        await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        socket.emit('answer', {
-          roomId: currentRoomRef.current,
-          answer,
-          from: currentUserRef.current?.id,
-        });
-      } catch (e) {
-        console.warn('Failed to handle offer:', e);
-      }
-    });
-
-    socket.on('answer', async (data: { answer: RTCSessionDescriptionInit; from: string }) => {
-      try {
-        const pc = peerConnectionsRef.current.get(data.from);
-        if (pc) {
-          await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
-        }
-      } catch (e) {
-        console.warn('Failed to handle answer:', e);
-      }
-    });
-
-    socket.on('ice-candidate', async (data: { candidate: RTCIceCandidateInit; from: string }) => {
-      try {
-        const pc = peerConnectionsRef.current.get(data.from);
-        if (pc) {
-          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-        }
-      } catch (e) {
-        console.warn('Failed to add ICE candidate:', e);
-      }
-    });
-
-    socket.on('audio-toggled', (_data: { userId: string; enabled: boolean }) => {
-      // Remote peer audio state updated
-    });
-
-    socket.on('video-toggled', (_data: { userId: string; enabled: boolean }) => {
-      // Remote peer video state updated
-    });
-
-    socket.on('call-ended', () => {
-      leaveCall();
-    });
+    socket.on('user-left', (data: { userId: string }) => removePeer(data.userId));
+    socket.on('call-ended', () => leaveCall());
+    socket.on('offer', (data: { offer: RTCSessionDescriptionInit; from: string }) => handleRemoteOffer(socket, data));
+    socket.on('answer', (data: { answer: RTCSessionDescriptionInit; from: string }) => handleRemoteAnswer(data));
+    socket.on('ice-candidate', (data: { candidate: RTCIceCandidateInit; from: string }) => handleRemoteIce(data));
 
     socketRef.current = socket;
 

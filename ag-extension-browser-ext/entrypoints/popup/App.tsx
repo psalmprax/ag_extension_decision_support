@@ -35,9 +35,26 @@ function App() {
   };
   const handleLogout = async () => { setAuthToken(null); await browser.storage.local.remove('authToken'); };
 
-  const handleOpenSidepanel = () => {
-    if (browser?.runtime) {
-      browser.runtime.sendMessage({ action: 'open_sidepanel' });
+  const handleOpenSidepanel = async () => {
+    // Popup has no sender.tab; query the active tab to get its windowId
+    try {
+      if (browser?.tabs) {
+        const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+        const tab = tabs[0];
+        if (tab?.windowId) {
+          await browser.sidePanel.open({ windowId: tab.windowId });
+          return;
+        }
+      }
+      // Fallback: send message (may work if background has context)
+      if (browser?.runtime) {
+        browser.runtime.sendMessage({ action: 'open_sidepanel' });
+      }
+    } catch (err) {
+      console.warn('open_sidepanel failed:', err);
+      if (browser?.runtime) {
+        browser.runtime.sendMessage({ action: 'open_sidepanel' });
+      }
     }
   };
 

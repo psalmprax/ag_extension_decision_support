@@ -14,6 +14,7 @@ import {
   Calendar,
   Loader2,
   Link2,
+  AlertTriangle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { JourneyBreadcrumbs, JourneyStep } from './JourneyBreadcrumbs';
@@ -224,10 +225,11 @@ const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
           {!activity.isClaimed ? (
             <button
               onClick={() => onClaim(activity.id)}
+              title="Local preview only — does not persist to backend"
               className="px-2.5 sm:px-3 py-1 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm shadow-emerald-950 shrink-0"
             >
               <UserCheck className="w-3.5 h-3.5" />
-              Claim &amp; Intervene
+              Claim &amp; Intervene <span className="text-[9px] opacity-70">[local]</span>
             </button>
           ) : (
             <button
@@ -367,7 +369,7 @@ const TeleCallModal: React.FC<{
 
 async function sendActivitySms(phone: string, message: string): Promise<void> {
   const { data } = await apiClient.post<{ success: boolean; error?: string }>('/sms/send', {
-    phoneNumbers: [phone],
+    to: phone,
     message,
   });
   if (!data.success) throw new Error(data.error || 'SMS provider rejected the message');
@@ -390,6 +392,7 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
   const [sendingSms, setSendingSms] = useState(false);
   const [activeVideoCall, setActiveVideoCall] = useState<{ farmerName: string; phone: string; issue: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchActivities = useCallback(async () => {
     if (isDemo) {
@@ -400,8 +403,10 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
     try {
       const { data } = await apiClient.get<{ success: boolean; data: ActivityItem[] }>('/activities/triage');
       if (data.success) setActivities(data.data);
-    } catch { /* keep existing data */ }
-    finally { setIsLoading(false); }
+      else setError(data as unknown as string || 'Failed to load activities');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load activities');
+    } finally { setIsLoading(false); }
   }, [isDemo]);
 
   useEffect(() => {
@@ -489,6 +494,18 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-6 h-6 text-emerald-400 animate-spin" />
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <AlertTriangle className="w-8 h-8 text-amber-400 mb-2" />
+            <p className="text-sm font-bold text-amber-400 uppercase tracking-wider">Feed unavailable</p>
+            <p className="text-xs text-slate-500 mt-1">{error}</p>
+            <button
+              onClick={fetchActivities}
+              className="mt-3 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-bold text-slate-200 transition-colors"
+            >
+              Retry
+            </button>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
