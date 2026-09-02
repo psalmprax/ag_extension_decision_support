@@ -1,5 +1,6 @@
 import CONFIG from '../../shared/config';
 import type { OfflineAttachment, OfflineStatus, QueuedRequest } from '../../shared/offlineTypes';
+import { mirrorUpsert, mirrorRetry, mirrorDelete, flushMirrorQueue } from '../../shared/offlineQueueMirror';
 import type { Browser } from 'wxt/browser';
 
 /** Shape of a request the background queue accepts from the sidepanel/content script. */
@@ -356,6 +357,7 @@ export default defineBackground(() => {
                 console.log('Request queued:', queuedRequest.id);
                 // Notify UI about queue update
                 notifyQueueUpdate();
+                mirrorUpsert(queuedRequest);
                 resolve();
             };
             dbRequest.onerror = () => reject(new Error(dbRequest.error?.message || 'Queue request failed'));
@@ -459,6 +461,7 @@ export default defineBackground(() => {
                 const queueTransaction = db!.transaction([QUEUE_STORE], 'readwrite');
                 const queueStore = queueTransaction.objectStore(QUEUE_STORE);
                 queueStore.put(retryItem);
+                mirrorRetry(id);
 
                 // Remove from dead letter
                 const deleteRequest = dlqStore.delete(id);
@@ -483,6 +486,7 @@ export default defineBackground(() => {
 
             request.onsuccess = () => {
                 notifyQueueUpdate();
+                mirrorDelete(id);
                 resolve();
             };
             request.onerror = () => reject(new Error(request.error?.message || 'Delete dead letter request failed'));
@@ -523,6 +527,7 @@ export default defineBackground(() => {
                 console.log('Queued request processed successfully:', request.id);
                 for (const ref of request.attachmentRefs || []) await removeOfflineAttachment(ref);
                 await removeQueuedRequest(request.id);
+                mirrorDelete(request.id);
             } else if (response.status === 409) {
                 request.state = 'conflict';
                 request.lastError = (await response.text()).slice(0, 500);
@@ -530,6 +535,7 @@ export default defineBackground(() => {
                     const transaction = db.transaction([QUEUE_STORE], 'readwrite');
                     transaction.objectStore(QUEUE_STORE).put(request);
                 }
+                mirrorUpsert(request);
                 notifyQueueUpdate();
             } else {
                 throw new Error(`HTTP ${response.status}`);
@@ -550,6 +556,9 @@ export default defineBackground(() => {
                     dlqTransaction.objectStore(DEAD_LETTER_STORE).put(request);
                     // Remove from main queue
                     await removeQueuedRequest(request.id);
+                    // Item still exists locally (dead-letter store), so mirror
+                    // its dead_letter state instead of deleting server-side.
+                    mirrorUpsert(request);
                     notifyQueueUpdate();
                 }
             } else {
@@ -558,6 +567,7 @@ export default defineBackground(() => {
                 if (db) {
                     const transaction = db.transaction([QUEUE_STORE], 'readwrite');
                     transaction.objectStore(QUEUE_STORE).put(request);
+                    mirrorUpsert(request);
                     notifyQueueUpdate();
                 }
             }
@@ -588,6 +598,8 @@ export default defineBackground(() => {
         if (isOnline) {
             console.log('Connection restored, processing queue...');
             await processQueue();
+            // Retry any mirror calls that failed while offline.
+            await flushMirrorQueue();
         } else {
             console.log('Connection lost');
         }
