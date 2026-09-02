@@ -101,6 +101,20 @@ const API_CONFIGS: Record<string, ExternalApiConfig> = {
     cacheTtlSeconds: 15 * 60,     // 15m
     cacheKeyPrefix: 'ext:weatherapi:',
   },
+  soilGrids: {
+    domain: 'rest.isric.org',
+    maxTokens: 30,
+    refillRate: 0.5,       // ~30 req/min — SoilGrids is generous but we cache heavily
+    cacheTtlSeconds: 12 * 3600,    // 12h (soil baselines are static)
+    cacheKeyPrefix: 'ext:soilgrids:',
+  },
+  soilMoisture: {
+    domain: 'api.open-meteo.com',
+    maxTokens: 100,
+    refillRate: 2,
+    cacheTtlSeconds: 30 * 60,     // 30m (soil moisture changes daily)
+    cacheKeyPrefix: 'ext:soilmoisture:',
+  },
 };
 
 // ─── Public API ────────────────────────────────────────────────────────

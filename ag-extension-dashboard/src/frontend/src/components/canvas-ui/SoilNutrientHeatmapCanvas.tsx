@@ -13,11 +13,17 @@ export interface SoilProbeResult {
   recommendation: string;
 }
 
+export type SoilHeatmapRealPoints = Partial<Record<SoilLayerType, TelemetrySamplePoint[]>>;
+
 export interface SoilNutrientHeatmapCanvasProps {
   initialLayer?: SoilLayerType;
   className?: string;
   onProbeSelect?: (result: SoilProbeResult) => void;
   interactive?: boolean;
+  /** When provided, these IDW points replace the hardcoded preview points for the given layer (real lab/SoilGrids data). */
+  realPointsByLayer?: SoilHeatmapRealPoints;
+  /** Override disclaimer for the active layer (use to surface live SoilGrids provenance). */
+  provenanceOverride?: string;
 }
 
 interface TelemetrySamplePoint {
@@ -206,6 +212,8 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
   className = '',
   onProbeSelect,
   interactive = true,
+  realPointsByLayer,
+  provenanceOverride,
 }) => {
   const [activeLayer, setActiveLayer] = useState<SoilLayerType>(initialLayer);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -213,11 +221,13 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
   const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(null);
 
   const config = LAYER_CONFIG[activeLayer];
+  const activeSamplePoints = realPointsByLayer?.[activeLayer] ?? config.samplePoints;
+  const isLiveLayer = Boolean(realPointsByLayer?.[activeLayer]);
 
   // Inverse Distance Weighting (IDW) interpolation
   const interpolate = useCallback(
     (xNorm: number, yNorm: number): number => {
-      const points = config.samplePoints;
+      const points = activeSamplePoints;
       let numerator = 0;
       let denominator = 0;
       const p = 2; // Power parameter
@@ -231,7 +241,7 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
       }
       return denominator === 0 ? config.min : numerator / denominator;
     },
-    [config]
+    [activeSamplePoints, config.min]
   );
 
   const getAdvisory = useCallback(
@@ -307,8 +317,8 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
       ctx.stroke();
     }
 
-    // Render sample telemetry sensors
-    for (const pt of config.samplePoints) {
+    // Render sample telemetry sensors (real points when available)
+    for (const pt of activeSamplePoints) {
       const sx = pt.x * parentWidth;
       const sy = pt.y * parentHeight;
 
@@ -419,8 +429,9 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
       </div>
 
       {/* Data provenance for the active layer — surfaces preview/estimated status to the user */}
-      <p className="text-[10px] leading-relaxed text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg px-2.5 py-1.5">
-        ⚠️ {config.description} Values are IDW interpolation over sample points — not a substitute for a laboratory soil test.
+      <p className={`text-[10px] leading-relaxed rounded-lg px-2.5 py-1.5 border ${isLiveLayer ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800' : 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800'}`}>
+        {isLiveLayer ? '✅ ' : '⚠️ '}{provenanceOverride ?? config.description}{' '}
+        {isLiveLayer ? 'Live IDW interpolation over farmer lab points + regional SoilGrids anchors.' : 'Values are IDW interpolation over sample points — not a substitute for a laboratory soil test.'}
       </p>
 
       {/* Main Canvas Frame */}

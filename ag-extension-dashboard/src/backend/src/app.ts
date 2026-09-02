@@ -71,6 +71,7 @@ import channelsRoutes from './routes/channels';
 import campaignsRoutes from './routes/autonomousCampaigns';
 import verificationFraudRoutes from './routes/verificationFraud';
 import activityTriageRoutes from './routes/activityTriage';
+import soilRoutes from './routes/soil';
 
 const app: Application = express();
 app.set('trust proxy', true); // Trust all proxy hops (Traefik/Docker) for X-Forwarded-For
@@ -406,6 +407,7 @@ const routeMounts: RouteMount[] = [
   { path: '/campaigns', router: campaignsRoutes },
   { path: '/verification', router: verificationFraudRoutes },
   { path: '/activities', router: activityTriageRoutes },
+  { path: '/soil', router: soilRoutes },
 ];
 
 // Mount with i18n support (v1)

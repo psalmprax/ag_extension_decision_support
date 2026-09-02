@@ -1,7 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { AIRouter } from '@/services/aiProvider/aiProvider';
 import { query, getPool } from '@/services/databaseService';
-import { VectorService } from '@/services/vectorService';
 import type {
   ChatConversationRow,
   ChatMessageRow,
