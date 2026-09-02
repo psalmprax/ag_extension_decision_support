@@ -38,7 +38,15 @@ export type CanvasViewType =
   | 'rag_graph'
   | 'telemetry_radar';
 
-function selectCanvasForQuery(query: string): { view: CanvasViewType; label: string } {
+function selectCanvasForQuery(query: string, ragCategories?: string[]): { view: CanvasViewType; label: string } {
+  // Prefer semantic RAG categories when available; fall back to lightweight keyword heuristic
+  const cats = (ragCategories || []).join(' ').toLowerCase();
+  if (cats) {
+    if (cats.includes('pest') || cats.includes('disease') || cats.includes('path')) return { view: 'disease_saliency', label: 'Disease Saliency Scanner' };
+    if (cats.includes('soil')) return { view: 'soil_heatmap', label: 'Soil Diagnostic Grid' };
+    if (cats.includes('clim') || cats.includes('yield') || cats.includes('water')) return { view: 'agro_scrubber', label: 'Agro-Ecosystem Scrubber' };
+    if (cats.includes('research') || cats.includes('manual')) return { view: 'rag_graph', label: 'RAG Knowledge Graph' };
+  }
   const q = query.toLowerCase();
   if (['pest', 'rust', 'leaf', 'disease', 'spot'].some(term => q.includes(term))) {
     return { view: 'disease_saliency', label: 'Disease Saliency Scanner' };
@@ -113,9 +121,35 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isProcessing]);
 
+  // Drain offline queue when back online
+  useEffect(() => {
+    const drain = async () => {
+      if (!navigator.onLine) return;
+      const q = JSON.parse(localStorage.getItem('alphaAiOfflineQueue') || '[]') as string[];
+      if (q.length === 0) return;
+      for (const queued of [...q]) {
+        try { await handleSendMessage(queued); q.shift(); localStorage.setItem('alphaAiOfflineQueue', JSON.stringify(q)); } catch { break; }
+      }
+      if (q.length === 0) localStorage.removeItem('alphaAiOfflineQueue');
+    };
+    window.addEventListener('online', drain);
+    return () => window.removeEventListener('online', drain);
+  }, []);
+
   const handleSendMessage = async (overrideQuery?: string) => {
     const query = (overrideQuery || inputPrompt).trim();
     if (!query || isProcessing) return;
+
+    // Offline queue — stash and show pending when navigator is offline
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      const q = JSON.parse(localStorage.getItem('alphaAiOfflineQueue') || '[]') as string[];
+      q.push(query);
+      localStorage.setItem('alphaAiOfflineQueue', JSON.stringify(q));
+      setMessages(prev => [...prev, { id: `user-${Date.now()}`, sender: 'user', text: query, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) } as ChatMessageItem]);
+      setMessages(prev => [...prev, { id: `off-${Date.now()}`, sender: 'assistant', text: '📡 Offline — your agronomic question is queued and will be sent when back online.', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) } as ChatMessageItem]);
+      setInputPrompt('');
+      return;
+    }
 
     setInputPrompt('');
     const userMsg: ChatMessageItem = {
@@ -149,7 +183,11 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
         throw new Error('AI service returned no advisory content');
       }
 
-      const { view: matchedCanvas, label } = selectCanvasForQuery(query);
+      const ragCats: string[] = Array.isArray(data?.citations)
+        ? (data.citations as { category?: string }[]).map(c => c.category || '').filter(Boolean)
+        : Array.isArray(data?.contextUsed) ? (data.contextUsed as { metadata?: { category?: string } }[]).map(c => c.metadata?.category || '').filter(Boolean)
+        : [];
+      const { view: matchedCanvas, label } = selectCanvasForQuery(query, ragCats);
 
       setActiveCanvasView(matchedCanvas);
       setActiveReasoningStep(null);
@@ -166,16 +204,32 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
       setMessages(prev => [...prev, assistantMsg]);
     } catch (err) {
       console.error('[AlphaAI] Chatbot request error:', err);
+      const isNetwork = !navigator.onLine || String((err as { message?: string })?.message || '').toLowerCase().includes('network');
+      if (isNetwork) {
+        const q = JSON.parse(localStorage.getItem('alphaAiOfflineQueue') || '[]') as string[];
+        q.push(query);
+        localStorage.setItem('alphaAiOfflineQueue', JSON.stringify(q));
+        setMessages(prev => [
+          ...prev,
+          {
+            id: `asst-${Date.now()}`,
+            sender: 'assistant',
+            text: '📡 Network unavailable — your agronomic question was queued offline and will be sent when back online.',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          },
+        ]);
+      } else {
+        setMessages(prev => [
+          ...prev,
+          {
+            id: `asst-${Date.now()}`,
+            sender: 'assistant',
+            text: 'The advisory service is currently unavailable. No agronomic guidance was generated for this query — please retry shortly or consult your local extension officer.',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          },
+        ]);
+      }
       setActiveReasoningStep(null);
-      setMessages(prev => [
-        ...prev,
-        {
-          id: `asst-${Date.now()}`,
-          sender: 'assistant',
-          text: 'The advisory service is currently unavailable. No agronomic guidance was generated for this query — please retry shortly or consult your local extension officer.',
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        },
-      ]);
     } finally {
       setIsProcessing(false);
     }

@@ -961,8 +961,8 @@ export const KnowledgeBase: React.FC = () => {
               {activeCanvasMode === 'soil_heatmap' && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-xs font-mono text-white/70">
-                    <span>SPATIAL SOIL CHEMISTRY & PH HEATMAP (ISRIC SoilGrids v2)</span>
-                    <span className="text-amber-400">Click cells to probe micro-nutrients</span>
+                    <span className="flex items-center gap-2">SPATIAL SOIL CHEMISTRY & PH HEATMAP (ISRIC SoilGrids v2) <span className="px-1.5 py-0.5 rounded text-[9px] bg-amber-500/15 text-amber-300 border border-amber-500/20">[Preview]</span></span>
+                    <span className="text-amber-400">Preview • open Soil Diagnostics per farmer for live 250m tile</span>
                   </div>
                   <SoilNutrientHeatmapCanvas
                     onProbeSelect={(probe: SoilProbeResult) => {
@@ -970,6 +970,7 @@ export const KnowledgeBase: React.FC = () => {
                     }}
                     className="w-full h-[460px] rounded-xl border border-white/10"
                   />
+                  <p className="text-[10px] text-white/40 text-center">Preview uses 6-point IDW demo mesh — select a farmer in Soil Diagnostics for live SoilGrids + lab-anchored interpolation.</p>
                 </div>
               )}
 

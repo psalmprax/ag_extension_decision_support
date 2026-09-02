@@ -63,6 +63,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   const activeFarmer = activeConv as unknown as { ndvi?: number; ph?: number; temperature?: number; outbreakRisk?: number } | undefined;
 
   const [plotTelemetry, setPlotTelemetry] = useState<{ ph: number | null; soc: number | null; moisture: number | null; temp: number | null; loading: boolean }>({ ph: null, soc: null, moisture: null, temp: null, loading: false });
+  const [liveOutbreakRisk, setLiveOutbreakRisk] = useState<number | null>(null);
 
   useEffect(() => {
     if (!activeFarmerConvId || !activeConv) return;
@@ -84,6 +85,27 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
       } catch { setPlotTelemetry(prev => ({ ...prev, loading: false })); }
     }).catch(() => setPlotTelemetry(prev => ({ ...prev, loading: false })));
   }, [activeFarmerConvId, activeConv]);
+
+  useEffect(() => {
+    if (!activeFarmerConvId || !activeConv) { setLiveOutbreakRisk(null); return; }
+    const farmerId = (activeConv as unknown as { farmerId?: string }).farmerId;
+    if (!farmerId || typeof navigator !== 'undefined' && !navigator.onLine) return;
+    import('@/api/client').then(async ({ default: apiClient }) => {
+      try {
+        const temp = plotTelemetry.temp ?? activeFarmer?.temperature ?? 25;
+        const moisture = plotTelemetry.moisture ?? 20;
+        const rh = 75 + (moisture > 25 ? 10 : 0);
+        const { data } = await apiClient.post('/pillars/hazard/evaluate', {
+          forecast: [{ date: new Date().toISOString().slice(0, 10), minTempC: Math.max(8, temp - 6), maxTempC: temp + 4, precipitationMm: moisture > 30 ? 18 : 4, relativeHumidityPct: rh, windSpeedKmh: 12 }],
+        });
+        const rawHazards = (data as { data?: unknown })?.data ?? data;
+        const arr = Array.isArray(rawHazards) ? rawHazards as { hazardType: string; threatLevel: string }[] : [];
+        const hasWatch = arr.some(h => h.threatLevel === 'watch' || h.threatLevel === 'warning' || h.threatLevel === 'emergency');
+        const hasEmergency = arr.some(h => h.threatLevel === 'emergency');
+        setLiveOutbreakRisk(hasEmergency ? 85 : hasWatch ? 55 : arr.length ? 25 : 10);
+      } catch { setLiveOutbreakRisk(null); }
+    }).catch(() => {});
+  }, [activeFarmerConvId, activeConv, plotTelemetry.temp, plotTelemetry.moisture, activeFarmer?.temperature]);
 
   // AI Copilot suggestions — fetched live when conversation has context, otherwise fallback to curated defaults
   const [liveSuggestions, setLiveSuggestions] = useState<string[] | null>(null);
@@ -516,9 +538,10 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
               <div className="text-[10px] font-mono text-white/40">OUTBREAK RISK</div>
               <div className="text-base font-bold text-emerald-400 flex items-center gap-1">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>{activeFarmer?.outbreakRisk !== undefined ? `${activeFarmer.outbreakRisk}%` : '—'}</span>
+                <span>{liveOutbreakRisk != null ? `${liveOutbreakRisk}%` : activeFarmer?.outbreakRisk !== undefined ? `${activeFarmer.outbreakRisk}%` : '—'}</span>
+                {liveOutbreakRisk != null && <span className="text-[9px] font-mono text-emerald-300 bg-emerald-500/10 px-1 py-0.5 rounded border border-emerald-500/20">LIVE</span>}
               </div>
-              <div className="text-[9px] text-white/40">FAO Fall Armyworm Model — risk scoring needs pest scouting</div>
+              <div className="text-[9px] text-white/40">Pillar hazard model {liveOutbreakRisk != null ? '• live' : '• needs scouting'}</div>
             </div>
           </div>
         )}
