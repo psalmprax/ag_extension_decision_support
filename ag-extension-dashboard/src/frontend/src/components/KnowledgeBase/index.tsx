@@ -499,21 +499,8 @@ export const KnowledgeBase: React.FC = () => {
       setActiveCanvasMode(sc.canvasMode as SpatialCanvasMode);
     }
     setActiveTabMode('search');
-    setLastResult({
-      answer: sc.sampleAnswer,
-      contextUsed: sc.citations.map(c => ({
-        content: c.excerpt,
-        source: c.title,
-        score: c.score,
-        metadata: { title: c.title, category: c.category, crop: sc.crop },
-      })),
-      cached: true,
-      query: sc.query,
-      timestamp: new Date().toISOString(),
-      citations: sc.citations,
-      evidenceStatus: 'verified_sources',
-    });
-    toast.success(`Loaded scenario: ${sc.title}`);
+    toast(`Running live RAG for: ${sc.title}`, { icon: '🔬' });
+    performAISearch(sc.query);
   };
 
   const graphNodes = useMemo<GraphNode[] | undefined>(() => {
@@ -1011,8 +998,29 @@ export const KnowledgeBase: React.FC = () => {
 
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button
-                  onClick={() => {
-                    toast.success('Generating Factsheet PDF report...');
+                  onClick={async () => {
+                    if (!lastResult?.query && !searchQuery) {
+                      toast.error('Run a search first to generate a factsheet');
+                      return;
+                    }
+                    const query = lastResult?.query || searchQuery || 'Knowledge factsheet';
+                    try {
+                      const { generateReport } = await import('@/api/reportService');
+                      const { downloadReportPdf } = await import('@/api/reportService');
+                      const gen = await generateReport('knowledge_factsheet', query.slice(0, 80));
+                      const reportId = (gen as { data?: { id?: string } })?.data?.id || (gen as { id?: string })?.id;
+                      if (!reportId) throw new Error('No report id');
+                      const blob = await downloadReportPdf(reportId);
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `factsheet-${Date.now()}.pdf`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      toast.success('Factsheet PDF downloaded');
+                    } catch (e) {
+                      toast.error((e as Error).message || 'Factsheet export failed');
+                    }
                   }}
                   className="flex-1 sm:flex-none px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 text-xs font-bold transition-all flex items-center justify-center gap-1.5"
                 >
@@ -1021,8 +1029,19 @@ export const KnowledgeBase: React.FC = () => {
                 </button>
 
                 <button
-                  onClick={() => {
-                    toast.success('Advisory broadcast queued for registered farmers!');
+                  onClick={async () => {
+                    if (!lastResult?.answer) {
+                      toast.error('Run a search first to broadcast');
+                      return;
+                    }
+                    try {
+                      toast('Opening SMS bulk composer with last answer…');
+                      const { useAppStore } = await import('@/store/useAppStore');
+                      useAppStore.getState().setPendingSMS?.({ phone: '', message: lastResult.answer.slice(0, 300) } as never);
+                      setActiveTab('sms' as never);
+                    } catch {
+                      toast.error('Broadcast requires SMS cohort — open SMS page');
+                    }
                   }}
                   className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-all shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-1.5"
                 >
@@ -1095,13 +1114,52 @@ export const KnowledgeBase: React.FC = () => {
                 <span>Export Offline Pack</span>
               </button>
 
-              <button
-                onClick={() => toast('Document ingestion pipeline active. Upload custom agronomic PDF / Markdown.')}
-                className="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-lg shadow-purple-950/40 flex items-center justify-center gap-1.5"
+              <input
+                type="file"
+                accept=".pdf,.md,.txt,.docx"
+                className="hidden"
+                id="kb-doc-upload-input"
+                onChange={async e => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (file.size > 8 * 1024 * 1024) {
+                    toast.error('File too large — max 8MB');
+                    e.target.value = '';
+                    return;
+                  }
+                  const text = await file.text().catch(() => '');
+                  if (!text.trim()) {
+                    toast.error('Could not read file text — try a .md or .txt export');
+                    e.target.value = '';
+                    return;
+                  }
+                  try {
+                    const title = file.name.replace(/\.[^.]+$/, '').slice(0, 120) || 'Uploaded Knowledge Doc';
+                    const { data } = await (await import('@/api/client')).default.post('/knowledge', {
+                      title,
+                      content: text.slice(0, 200000),
+                      contentType: 'text',
+                      category: 'Agronomy',
+                      tags: ['upload', file.name],
+                    });
+                    if (data?.success) {
+                      toast.success(`Ingested "${title}" — ${data.data?.id ? 'indexed' : 'queued'}`);
+                      fetchStats();
+                    } else toast.error(data?.error || 'Upload failed');
+                  } catch (err) {
+                    toast.error((err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Upload failed');
+                  } finally {
+                    e.target.value = '';
+                  }
+                }}
+              />
+              <label
+                htmlFor="kb-doc-upload-input"
+                className="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-lg shadow-purple-950/40 flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Upload className="w-3.5 h-3.5" />
                 <span>Upload Technical Doc</span>
-              </button>
+              </label>
             </div>
           </div>
 

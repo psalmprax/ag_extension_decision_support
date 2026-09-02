@@ -62,6 +62,29 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   const activeConv = farmerConversations.find(c => c.id === activeFarmerConvId);
   const activeFarmer = activeConv as unknown as { ndvi?: number; ph?: number; temperature?: number; outbreakRisk?: number } | undefined;
 
+  const [plotTelemetry, setPlotTelemetry] = useState<{ ph: number | null; soc: number | null; moisture: number | null; temp: number | null; loading: boolean }>({ ph: null, soc: null, moisture: null, temp: null, loading: false });
+
+  useEffect(() => {
+    if (!activeFarmerConvId || !activeConv) return;
+    const farmerId = (activeConv as unknown as { farmerId?: string }).farmerId;
+    if (!farmerId) return;
+    setPlotTelemetry(prev => ({ ...prev, loading: true }));
+    import('@/api/soilService').then(async mod => {
+      try {
+        const res = await mod.fetchFarmerSoilProfile(farmerId);
+        const baseline = res.data?.baseline as unknown as { ph?: number; organicCarbonGPerKg?: number } | null;
+        const moisture = res.data?.moisture as unknown as { soilMoisture?: { avgTop9cm?: number }; soilTemperature?: { avgTop6cm?: number } } | null;
+        setPlotTelemetry({
+          ph: baseline?.ph ?? null,
+          soc: baseline?.organicCarbonGPerKg ?? null,
+          moisture: moisture?.soilMoisture?.avgTop9cm != null ? Number((moisture.soilMoisture.avgTop9cm * 100).toFixed(1)) : null,
+          temp: moisture?.soilTemperature?.avgTop6cm ?? null,
+          loading: false,
+        });
+      } catch { setPlotTelemetry(prev => ({ ...prev, loading: false })); }
+    }).catch(() => setPlotTelemetry(prev => ({ ...prev, loading: false })));
+  }, [activeFarmerConvId, activeConv]);
+
   // AI Copilot suggestions — fetched live when conversation has context, otherwise fallback to curated defaults
   const [liveSuggestions, setLiveSuggestions] = useState<string[] | null>(null);
   const copilotSuggestions = liveSuggestions || [
@@ -474,19 +497,19 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
             <div className="p-3.5 rounded-xl bg-slate-950/80 border border-white/[0.06] space-y-1">
               <div className="text-[10px] font-mono text-white/40">NDVI CANOPY VIGOR</div>
               <div className="text-base font-bold text-emerald-400">{activeFarmer?.ndvi ? `${activeFarmer.ndvi.toFixed(2)}` : '—'} {activeFarmer?.ndvi ? (activeFarmer.ndvi > 0.6 ? '(Optimal)' : activeFarmer.ndvi > 0.3 ? '(Moderate)' : '(Low)') : ''}</div>
-              <div className="text-[9px] text-white/40">Sentinel-2 Multispectral</div>
+              <div className="text-[9px] text-white/40">Sentinel-2 Multispectral — add field polygon for NDVI</div>
             </div>
 
             <div className="p-3.5 rounded-xl bg-slate-950/80 border border-white/[0.06] space-y-1">
               <div className="text-[10px] font-mono text-white/40">SOIL pH & CARBON</div>
-              <div className="text-base font-bold text-amber-400">{activeFarmer?.ph ? `${activeFarmer.ph.toFixed(1)} pH` : '—'}</div>
-              <div className="text-[9px] text-white/40">ISRIC SoilGrids 0-30cm</div>
+              <div className="text-base font-bold text-amber-400">{plotTelemetry.loading ? '…' : plotTelemetry.ph != null ? `${plotTelemetry.ph.toFixed(1)} pH / ${plotTelemetry.soc ?? '—'} g/kg SOC` : activeFarmer?.ph ? `${activeFarmer.ph.toFixed(1)} pH` : '—'}</div>
+              <div className="text-[9px] text-white/40">ISRIC SoilGrids 250m {plotTelemetry.ph != null ? '• live' : activeFarmer?.ph ? '• cached' : '• no farmer geo'}</div>
             </div>
 
             <div className="p-3.5 rounded-xl bg-slate-950/80 border border-white/[0.06] space-y-1">
               <div className="text-[10px] font-mono text-white/40">NASA POWER WEATHER</div>
-              <div className="text-base font-bold text-sky-400">{activeFarmer?.temperature ? `${activeFarmer.temperature}°C` : '—'}</div>
-              <div className="text-[9px] text-white/40">Per-farmer telemetry</div>
+              <div className="text-base font-bold text-sky-400">{plotTelemetry.temp != null ? `${plotTelemetry.temp}°C` : plotTelemetry.moisture != null ? `${plotTelemetry.moisture}% VWC` : activeFarmer?.temperature ? `${activeFarmer.temperature}°C` : '—'}</div>
+              <div className="text-[9px] text-white/40">Open-Meteo modeled {plotTelemetry.temp != null ? '• live' : '• no geo'}</div>
             </div>
 
             <div className="p-3.5 rounded-xl bg-slate-950/80 border border-white/[0.06] space-y-1">
@@ -495,7 +518,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                 <span>{activeFarmer?.outbreakRisk !== undefined ? `${activeFarmer.outbreakRisk}%` : '—'}</span>
               </div>
-              <div className="text-[9px] text-white/40">FAO Fall Armyworm Model</div>
+              <div className="text-[9px] text-white/40">FAO Fall Armyworm Model — risk scoring needs pest scouting</div>
             </div>
           </div>
         )}

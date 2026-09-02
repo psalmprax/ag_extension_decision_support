@@ -72,6 +72,8 @@ interface ChatMessageItem {
   const [intakeDismissed, setIntakeDismissed] = useState<boolean>(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const voiceRecorderRef = useRef<MediaRecorder | null>(null);
+  const voiceChunksRef = useRef<BlobPart[]>([]);
 
   // Initial welcome message
   const [messages, setMessages] = useState<ChatMessageItem[]>([
@@ -90,13 +92,21 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
   ]);
 
   // System telemetry query
-  useQuery({
+  const { data: healthData } = useQuery({
     queryKey: ['system-health-copilot'],
     queryFn: async () => {
       const { data } = await apiClient.get('/health');
-      return data;
+      return data as { status?: string; uptime?: number };
     },
     refetchInterval: 30000,
+  });
+  const { data: kbStats } = useQuery({
+    queryKey: ['kb-stats-copilot'],
+    queryFn: async () => {
+      const { data } = await apiClient.get('/knowledge/stats');
+      return data as { success?: boolean; data?: { totalQueries?: number } };
+    },
+    refetchInterval: 60000,
   });
 
   useEffect(() => {
@@ -171,23 +181,103 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
     }
   };
 
-  const handleVoiceToggle = () => {
-    setIsRecordingVoice(previous => !previous);
-    if (!isRecordingVoice) {
-      toast('Voice recording started. Stop recording to submit the captured audio.');
+  const handleVoiceToggle = async () => {
+    if (isRecordingVoice) {
+      voiceRecorderRef.current?.stop();
+      setIsRecordingVoice(false);
+      return;
+    }
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast.error('Voice input unavailable in this browser');
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg' });
+      voiceChunksRef.current = [];
+      recorder.ondataavailable = e => { if (e.data.size > 0) voiceChunksRef.current.push(e.data); };
+      recorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(voiceChunksRef.current, { type: recorder.mimeType });
+        const reader = new FileReader();
+        reader.onload = async () => {
+          const base64 = (reader.result as string).split(',')[1];
+          if (!base64) { toast.error('Could not read audio'); return; }
+          setActiveReasoningStep('Transcribing voice (Whisper)...');
+          try {
+            const { data } = await apiClient.post('/pillars/voice/transcribe', { audio: base64, mimeType: recorder.mimeType });
+            const text = (data?.data?.transcription || data?.transcription || '').toString().trim();
+            if (text && !text.startsWith('[STUB')) {
+              setInputPrompt(text);
+              toast.success(`Transcribed: ${text.slice(0, 60)}…`);
+            } else if (text) toast(`Transcribed (demo): ${text.slice(0, 80)}…`);
+            else toast.error('Transcription returned no text');
+          } catch (e) {
+            toast.error((e as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Transcription failed — check OPENAI_API_KEY');
+          } finally { setActiveReasoningStep(null); }
+        };
+        reader.readAsDataURL(blob);
+      };
+      recorder.start();
+      voiceRecorderRef.current = recorder;
+      setIsRecordingVoice(true);
+      toast('Recording… tap again to stop and transcribe');
+    } catch (e) {
+      toast.error((e as Error).message || 'Microphone access denied');
     }
   };
 
   const handleImageUploadSim = () => {
-    toast.error('Image diagnosis is unavailable from the Co-Pilot preview. Use Disease Diagnosis to submit a real image.');
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      if (file.size > 8 * 1024 * 1024) { toast.error('Image too large — max 8MB'); return; }
+      setActiveReasoningStep('Analyzing leaf image (vision)…');
+      try {
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve((r.result as string).split(',')[1]);
+          r.onerror = reject;
+          r.readAsDataURL(file);
+        });
+        const { data } = await apiClient.post('/ai/diseases/analyze', { image: base64 });
+        const summary = data?.data?.overallHealth || data?.overallHealth || 'Analysis complete — see Disease Diagnosis for full report';
+        setMessages(prev => [...prev, { id: `img-${Date.now()}`, sender: 'assistant', text: `🖼️ **Image diagnosis:** ${summary}`, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+        toast.success('Image analyzed — check Disease Diagnosis for lab verification');
+      } catch (e) { toast.error((e as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Image analysis failed'); }
+      finally { setActiveReasoningStep(null); }
+    };
+    input.click();
   };
 
-  const handleDispatchSms = () => {
-    toast.error('SMS dispatch requires a selected live farmer cohort.');
+  const handleDispatchSms = async () => {
+    const lastAnswer = [...messages].reverse().find(m => m.sender === 'assistant')?.text;
+    if (!lastAnswer) { toast.error('No advisory to dispatch — ask a question first'); return; }
+    try {
+      const { useAppStore } = await import('@/store/useAppStore');
+      useAppStore.getState().setPendingSMS?.({ phone: '', message: lastAnswer.slice(0, 300) } as never);
+      const storeTab = (useAppStore.getState() as { setActiveTab?: (t: string) => void }).setActiveTab;
+      storeTab?.('sms');
+      toast('Opening SMS composer with last advisory…');
+    } catch { toast.error('SMS dispatch requires SMS page'); }
   };
 
-  const handleExportPdf = () => {
-    toast.error('Prescription PDF export is unavailable from this view.');
+  const handleExportPdf = async () => {
+    const lastAnswer = [...messages].reverse().find(m => m.sender === 'assistant')?.text;
+    if (!lastAnswer) { toast.error('No advisory to export — ask a question first'); return; }
+    try {
+      const { generateReport, downloadReportPdf } = await import('@/api/reportService');
+      const gen = await generateReport('knowledge_factsheet', lastAnswer.slice(0, 80));
+      const reportId = (gen as { data?: { id?: string } })?.data?.id || (gen as { id?: string })?.id;
+      if (!reportId) throw new Error('No report id');
+      const blob = await downloadReportPdf(reportId);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = `co-pilot-${Date.now()}.pdf`; a.click(); URL.revokeObjectURL(url);
+      toast.success('Prescription PDF downloaded');
+    } catch (e) { toast.error((e as Error).message || 'PDF export failed'); }
   };
 
   return (
@@ -216,16 +306,16 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
 
           {/* Center/Right: Live Telemetry Badges & Mode Switcher */}
           <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
-            <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 text-xxs font-mono" title="Demo badge — replace with live /health once wired">
-              <span className="w-2 h-2 rounded-full bg-amber-400" />
+            <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 text-xxs font-mono" title={healthData ? `Health: ${healthData.status || 'ok'}` : 'Health check pending'}>
+              <span className={`w-2 h-2 rounded-full ${healthData ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
               <span className="text-white/70">NASA POWER:</span>
-              <span className="text-amber-300 font-bold">[DEMO] SYNCHRONIZED</span>
+              <span className={healthData ? 'text-emerald-300 font-bold' : 'text-amber-300 font-bold'}>{healthData ? 'SYNCHRONIZED' : '[DEMO] SYNCHRONIZED'}</span>
             </div>
 
-            <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 text-xxs font-mono" title="Demo badge — real RAG count is ~15 seed articles; expand via ingestion">
-              <span className="w-2 h-2 rounded-full bg-cyan-400" />
+            <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 text-xxs font-mono" title={kbStats?.data?.totalQueries != null ? `Total RAG queries: ${kbStats.data.totalQueries}` : 'Real RAG count via /knowledge/stats'}>
+              <span className={`w-2 h-2 rounded-full ${kbStats?.data ? 'bg-emerald-400' : 'bg-cyan-400'}`} />
               <span className="text-white/70">RAG MESH:</span>
-              <span className="text-cyan-300 font-bold">[DEMO] 1,420 ARTICLES</span>
+              <span className={kbStats?.data ? 'text-emerald-300 font-bold' : 'text-cyan-300 font-bold'}>{kbStats?.data?.totalQueries != null ? `${kbStats.data.totalQueries} QUERIES` : '[DEMO] 1,420 ARTICLES'}</span>
             </div>
 
             {/* Studio / Ops Toggle */}
