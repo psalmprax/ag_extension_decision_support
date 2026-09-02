@@ -162,6 +162,27 @@ router.post('/voice/transcribe', checkUsageLimit('speech'), validate({ body: z.o
         return res.json({ success: true, data: result });
     } catch (e) { logger.error('Pillar transcribe failed:', e); return safeError(res, 500, (e as Error).message); }
 });
+
+router.post('/voice/transcribe-local', checkUsageLimit('speech'), validate({ body: z.object({ audio: z.string().optional(), audioUrl: z.string().optional(), mimeType: z.string().optional(), languageHint: z.string().optional() }) }), async (req: AuthRequest, res: Response) => {
+    try {
+        const { audio, audioUrl, mimeType, languageHint } = req.body as { audio?: string; audioUrl?: string; mimeType?: string; languageHint?: string };
+        const audioBuffer = audio ? Buffer.from(audio.includes('base64,') ? audio.split('base64,')[1] : audio, 'base64') : undefined;
+        // Use local Whisper transcription service (free, offline-capable)
+        const { whisperTranscriptionService } = await import('@/services/whisperTranscriptionService');
+        if (!audioBuffer) {
+          throw new Error('No audio buffer provided');
+        }
+        const result = await whisperTranscriptionService.transcribe(audioBuffer, {
+          language: languageHint === 'sw' ? 'sw' : languageHint === 'en' ? 'en' : 'auto',
+        });
+        return res.json({ success: true, data: { ...result, provider: 'local-whisper' } });
+    } catch (e) {
+      logger.error('Local Whisper transcribe failed:', e);
+      // Fallback to OpenAI if local fails
+      const result = await transcribeVoiceNote(req.body as never);
+      return res.json({ success: true, data: { ...result, provider: 'openai-fallback' } });
+    }
+});
 router.post('/voice/synthesize', checkUsageLimit('speech'), validate({ body: z.object({ text: z.string().min(1), language: z.enum(['sw','en']).optional() }) }), async (req: AuthRequest, res: Response) => {
     try { return res.json({ success: true, data: await synthesizeVoiceAdvisory(req.body as never) }); } catch (e) { logger.error('Pillar synthesize failed:', e); return safeError(res, 500, (e as Error).message); }
 });

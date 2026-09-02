@@ -1,7 +1,10 @@
 /**
  * Voice transcription/synthesis — wired via POST /api/pillars/voice/* and /api/chatbot/speech.
+ * Uses local faster-whisper for transcription (free, offline-capable).
+ * Falls back to OpenAI Whisper API only when local model unavailable.
  */
 import { logger } from '../utils/logger';
+import { whisperTranscriptionService } from './whisperTranscriptionService';
 
 export interface VoiceTranscriptionResult {
   transcription: string;
@@ -65,7 +68,6 @@ export function detectVernacularKeywords(text: string): { keywords: string[]; de
   };
 }
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 export async function transcribeVoiceNote(params: {
   audioBuffer?: Buffer;
   audioUrl?: string;
@@ -76,6 +78,37 @@ export async function transcribeVoiceNote(params: {
 
   logger.info(`Processing inbound voice note (${audioBuffer ? `${audioBuffer.length} bytes` : audioUrl}, langHint=${languageHint})`);
 
+  // Try local Whisper first (free, offline-capable)
+  if (whisperTranscriptionService.isReady()) {
+    try {
+      const audioBuffer = params.audioBuffer;
+      if (!audioBuffer || audioBuffer.length === 0) {
+        throw new Error('No audio buffer provided');
+      }
+
+      const result = await whisperTranscriptionService.transcribe(params.audioBuffer!, {
+        language: languageHint === 'sw' ? 'sw' : languageHint === 'en' ? 'en' : 'auto',
+        beamSize: 5,
+        vadFilter: true,
+      });
+
+      const { keywords, detectedLanguage } = detectVernacularKeywords(result.text);
+      logger.info(`Local Whisper transcription succeeded (${result.text.length} chars, lang=${result.language})`);
+
+      return {
+        transcription: result.text,
+        detectedLanguage: detectedLanguage as VoiceTranscriptionResult['detectedLanguage'],
+        confidence: result.languageProbability,
+        durationSeconds: result.duration,
+        agronomicKeywords: keywords,
+      };
+    } catch (err) {
+      logger.warn('Local Whisper transcription failed, falling back to OpenAI:', err);
+      // Fall through to OpenAI fallback
+    }
+  }
+
+  // Fallback to OpenAI Whisper API if local model unavailable
   const whisperApiKey = process.env.OPENAI_API_KEY;
 
   if (whisperApiKey && audioBuffer) {
@@ -93,18 +126,16 @@ export async function transcribeVoiceNote(params: {
       const text = (tr as unknown as { text: string }).text?.trim();
       if (text) {
         const { keywords, detectedLanguage } = detectVernacularKeywords(text);
-        logger.info(`Whisper transcription succeeded (${text.length} chars)`);
+        logger.info(`OpenAI Whisper transcription succeeded (${text.length} chars)`);
         return {
           transcription: text,
           detectedLanguage,
-          // OpenAI Whisper does not return a confidence score — use a conservative estimate
-          // based on transcription length; marked as estimated in the caller.
           confidence: 0.85,
           agronomicKeywords: keywords,
         };
       }
     } catch (err) {
-      logger.warn('Whisper API call failed, falling back to local voice processor:', err);
+      logger.warn('OpenAI Whisper API call failed:', err);
     }
   }
 
@@ -130,7 +161,7 @@ export async function transcribeVoiceNote(params: {
 
   // In production with an audio buffer but no STT key configured, fail loudly — returning a fake
   // transcript would silently corrupt agronomic advice and hide an ops misconfiguration.
-  throw new Error('Voice transcription unavailable: OPENAI_API_KEY / WHISPER_MODEL not configured and no fallback STT provider is available. Audio length=' + audioBuffer.length);
+  throw new Error('Voice transcription unavailable: neither local Whisper nor OpenAI Whisper API configured. Audio length=' + (audioBuffer?.length || 0));
 }
 
 export async function synthesizeVoiceAdvisory(params: {
