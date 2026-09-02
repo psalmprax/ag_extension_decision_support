@@ -409,6 +409,23 @@ export function useWebRTC(): UseWebRTCReturn {
             if (rec.type === 'candidate-pair' && rec.state === 'succeeded' && typeof rec.currentRoundTripTime === 'number') rtt = rec.currentRoundTripTime as number;
           });
           if (inboundBytes || rtt !== null) console.debug(`[webrtc stats] peer ${peerId.slice(0,8)} bytes=${inboundBytes} rtt=${rtt}`);
+          // Adaptive bitrate: lower to 300kbps on high RTT, restore to 800kbps on low RTT
+          if (rtt !== null) {
+            for (const pc of peerConnectionsRef.current.values()) {
+              for (const sender of pc.getSenders()) {
+                if (sender.track?.kind !== 'video') continue;
+                try {
+                  const params = sender.getParameters();
+                  if (!params.encodings) params.encodings = [{}];
+                  const target = rtt > 0.3 ? 300000 : rtt < 0.15 ? 800000 : params.encodings[0].maxBitrate;
+                  if (target && params.encodings[0].maxBitrate !== target) {
+                    params.encodings[0].maxBitrate = target;
+                    void sender.setParameters(params);
+                  }
+                } catch {}
+              }
+            }
+          }
         }).catch(() => {});
       }
     }, 8000);

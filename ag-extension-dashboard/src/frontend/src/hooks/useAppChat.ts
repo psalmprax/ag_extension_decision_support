@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   fetchConversations,
   fetchMessages,
@@ -116,6 +116,17 @@ export const useAppChat = (language: string) => {
     const currentInput = farmerChatInput;
     setFarmerChatInput('');
 
+    // Offline queue: if offline or network fails, stash and retry on online
+    const queueKey = `chatOfflineQueue:${activeFarmerConvId || 'new'}`;
+    const offline = typeof navigator !== 'undefined' && !navigator.onLine;
+    if (offline) {
+      const q = JSON.parse(localStorage.getItem(queueKey) || '[]') as unknown[];
+      q.push({ conversationId: activeFarmerConvId, message: currentInput, language, at: Date.now() });
+      localStorage.setItem(queueKey, JSON.stringify(q));
+      console.warn('Chat offline queued:', currentInput.slice(0, 40));
+      return;
+    }
+
     try {
       const res = await sendMessage({
         conversationId: activeFarmerConvId || undefined,
@@ -128,9 +139,39 @@ export const useAppChat = (language: string) => {
         loadFarmerConversations();
       }
     } catch (error) {
-      console.error('Failed to send farmer message:', error);
+      const isNetwork = (error as Error)?.message?.toLowerCase().includes('network') || !navigator.onLine;
+      if (isNetwork) {
+        const q = JSON.parse(localStorage.getItem(queueKey) || '[]') as unknown[];
+        q.push({ conversationId: activeFarmerConvId, message: currentInput, language, at: Date.now() });
+        localStorage.setItem(queueKey, JSON.stringify(q));
+        console.warn('Chat queued after failure:', currentInput.slice(0, 40));
+      } else console.error('Failed to send farmer message:', error);
     }
   };
+
+  // Drain offline queue when back online
+  useEffect(() => {
+    const drain = async () => {
+      if (!navigator.onLine) return;
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key?.startsWith('chatOfflineQueue:')) continue;
+        const items = JSON.parse(localStorage.getItem(key) || '[]') as { conversationId: string | null; message: string; language: string }[];
+        if (items.length === 0) continue;
+        for (const item of [...items]) {
+          try {
+            await sendMessage({ conversationId: item.conversationId || undefined, message: item.message, mode: 'farmer', language: item.language });
+            items.shift();
+            localStorage.setItem(key, JSON.stringify(items));
+          } catch { break; }
+        }
+        if (items.length === 0) localStorage.removeItem(key);
+      }
+      if (activeFarmerConvId) loadFarmerMessages(activeFarmerConvId);
+    };
+    window.addEventListener('online', drain);
+    return () => window.removeEventListener('online', drain);
+  }, [activeFarmerConvId, language, loadFarmerMessages]);
 
   const handleStartConversation = async (farmer: Farmer, chatType: 'ai' | 'farmer' = 'farmer') => {
     try {

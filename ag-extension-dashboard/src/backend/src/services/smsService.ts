@@ -454,18 +454,39 @@ class SMSService {
         return `+${digits}`;
     }
 
-    // Send scheduled SMS (for reminders)
+    // Send scheduled SMS (for reminders) — row + BullMQ delayed job (DB polling fallback remains)
     async scheduleSMS(to: string, message: string, scheduledTime: Date, userId: string): Promise<boolean> {
         try {
             const formattedPhone = this.formatPhoneNumber(to);
+            if (!this.isValidE164(formattedPhone)) {
+                logger.warn(`scheduleSMS rejected — invalid E.164: ${formattedPhone}`);
+                return false;
+            }
             
             logger.info(`Persisting scheduled SMS to ${formattedPhone} for ${scheduledTime.toISOString()}`);
 
-            await query(
+            const { rows } = await query<{ id: string }>(
                 `INSERT INTO scheduled_sms (user_id, phone_number, message, scheduled_at, status)
-                 VALUES ($1, $2, $3, $4, $5)`,
+                 VALUES ($1, $2, $3, $4, $5) RETURNING id`,
                 [userId, formattedPhone, message, scheduledTime, 'pending']
             );
+            const scheduledSmsId = rows[0]?.id;
+            if (scheduledSmsId) {
+                const delayMs = scheduledTime.getTime() - Date.now();
+                try {
+                    const { addScheduledSmsJob } = await import('../queues/scheduledSmsQueue');
+                    await addScheduledSmsJob({
+                        scheduledSmsId,
+                        to: formattedPhone,
+                        message,
+                        senderId: userId,
+                        farmerId: null,
+                        provider: this.africaTalkingApiKey ? 'africa_talking' : this.twilioAccountSid ? 'twilio' : 'none',
+                    }, Math.max(0, delayMs));
+                } catch (qErr) {
+                    logger.warn('BullMQ scheduled SMS enqueue failed, fallback to polling:', qErr);
+                }
+            }
 
             return true;
         } catch (error) {
