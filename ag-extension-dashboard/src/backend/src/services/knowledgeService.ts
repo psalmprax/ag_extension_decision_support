@@ -8,14 +8,17 @@ import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { tavilyService } from '@/services/tavilyService';
 import { StealthScraperService } from '@/services/stealthScraperService';
+import { mcpAdapter } from '@/services/mcpAdapter';
 
 const STATS_CACHE_KEY = 'knowledge:search:stats';
 const STATS_CACHE_TTL = 300; // 5 minutes
 
 export type KnowledgeEvidenceStatus = 'verified_sources' | 'context_only' | 'no_verified_source';
 
-export function getKnowledgeEvidenceStatus(citationCount: number, contextCount: number): KnowledgeEvidenceStatus {
-    if (citationCount > 0) return 'verified_sources';
+export function getKnowledgeEvidenceStatus(citationCount: number, contextCount: number, maxScore?: number): KnowledgeEvidenceStatus {
+    const hasStrongCitations = citationCount >= 2 && (maxScore === undefined || maxScore >= 0.75);
+    if (hasStrongCitations) return 'verified_sources';
+    if (citationCount > 0 && (maxScore === undefined || maxScore >= 0.5)) return 'verified_sources';
     if (contextCount > 0) return 'context_only';
     return 'no_verified_source';
 }
@@ -181,6 +184,42 @@ export class KnowledgeService {
         return null;
     }
 
+    private static async checkExactCachesOnly(
+        queryText: string,
+        redisKey: string
+    ): Promise<(ReasoningResult & { cached: boolean; contextUsed: SearchResult[] }) | null> {
+        const cachedResponse = await cacheGet(redisKey);
+        if (cachedResponse) {
+            try {
+                const parsed = JSON.parse(cachedResponse);
+                logger.info(`Redis exact match HIT (fresh) for query: "${queryText}"`);
+                return { ...parsed, cached: true };
+            } catch (e) { logger.error('Failed to parse cached Redis response:', e); }
+        }
+        try {
+            const normalized = queryText.trim().toLowerCase();
+            const dbExact = await query(`
+                SELECT query_text as "queryText", answer, context_used as "contextUsed", visuals
+                FROM search_cache
+                WHERE normalized_query = $1
+                LIMIT 1
+            `, [normalized]);
+            if (dbExact.rows.length > 0) {
+                const cached = dbExact.rows[0];
+                const resPayload = {
+                    reasoning: 'Retrieved from exact search cache.',
+                    answer: cached.answer,
+                    contextUsed: typeof cached.contextUsed === 'string' ? JSON.parse(cached.contextUsed) : cached.contextUsed,
+                    visuals: typeof cached.visuals === 'string' ? JSON.parse(cached.visuals) : cached.visuals
+                };
+                logger.info(`Database exact match HIT (fresh) for query: "${queryText}"`);
+                await cacheSet(redisKey, JSON.stringify(resPayload), 3600 * 24);
+                return { ...resPayload, cached: true };
+            }
+        } catch (dbError) { logger.error('Exact DB cache search failed:', dbError); }
+        return null;
+    }
+
     private static async fallbackAgriQuery(queryText: string, queryCategories: string[], currentResults: SearchResult[]): Promise<SearchResult[]> {
         logger.info(`Query intent classified as agricultural [${queryCategories.join(', ')}]. Triggering StealthScraperService for: "${queryText}"`);
         try {
@@ -250,26 +289,91 @@ export class KnowledgeService {
         return currentResults;
     }
 
+    private static async fetchViaJina(url: string): Promise<string | null> {
+        try {
+            const jinaUrl = `https://r.jina.ai/${url}`;
+            const { default: axios } = await import('axios');
+            const resp = await axios.get(jinaUrl, { timeout: 8000, headers: { 'Accept': 'text/markdown' } });
+            const text = typeof resp.data === 'string' ? resp.data : JSON.stringify(resp.data);
+            return text.slice(0, 4000);
+        } catch { return null; }
+    }
+
     private static async enrichContextWithWebFallbacks(
         queryText: string,
         queryCategories: string[],
         isAgriQuery: boolean,
         contextResults: SearchResult[]
     ): Promise<SearchResult[]> {
-        if (contextResults.length > 0 && contextResults[0].score >= 0.65) {
-            return contextResults;
+        const fetchedAt = new Date().toISOString();
+        const isRealTimeIntent = queryCategories.some(c => ['market_and_commodity_prices', 'climate_and_weather'].includes(c));
+
+        // Always attempt fresh web retrieval for real-time intents or when local score is weak
+        const needsFreshWeb = isRealTimeIntent || contextResults.length === 0 || (contextResults[0].score !== undefined && contextResults[0].score < 0.85);
+        if (!needsFreshWeb && !isRealTimeIntent) {
+            // Attach fetchedAt to existing results for citation freshness
+            return contextResults.map(r => ({
+                ...r,
+                metadata: { ...r.metadata, fetchedAt: (r.metadata as Record<string, unknown>).fetchedAt || fetchedAt } as SearchResult['metadata'],
+            }));
         }
 
-        const bestScore = contextResults.length > 0 ? contextResults[0].score : 0;
-        logger.info(`Low local match score (${bestScore}). Performing fallback routing based on intent...`);
+        logger.info(`Enriching context with always-fresh Tavily (5, advanced, week) + Jina for: "${queryText}" (realTime=${isRealTimeIntent})`);
+        let webResults: SearchResult[] = [];
+        try {
+            const tavilyRes = await tavilyService.search(queryText, 5, { searchDepth: 'advanced', timeRange: 'week', includeAnswer: false });
+            if (tavilyRes?.results?.length) {
+                const enriched = await Promise.all(tavilyRes.results.slice(0, 5).map(async (r, idx) => {
+                    const jinaContent = await this.fetchViaJina(r.url);
+                    const content = jinaContent || r.content;
+                    return {
+                        id: `web-${idx}-${Date.now()}`,
+                        content,
+                        metadata: {
+                            title: r.title,
+                            category: 'External Reference',
+                            crop: 'All',
+                            sourceUrl: r.url,
+                            contentType: 'text',
+                            fetchedAt,
+                            publishedDate: (r as unknown as { published_date?: string }).published_date || fetchedAt,
+                        },
+                        score: r.score
+                    } as SearchResult;
+                }));
+                webResults = enriched;
+            }
+        } catch (e) { logger.warn('Tavily/Jina enrichment failed, continuing with local:', e); }
 
-        if (isAgriQuery) {
-            return this.fallbackAgriQuery(queryText, queryCategories, contextResults);
-        } else if (tavilyService.isConfigured()) {
-            return this.fallbackGeneralQuery(queryText, contextResults);
+        // Fallback to agri-specific scraper only if Tavily yielded nothing and is agri query
+        if (webResults.length === 0 && isAgriQuery) {
+            webResults = await this.fallbackAgriQuery(queryText, queryCategories, []);
         }
 
-        return contextResults;
+        const combined = [...webResults, ...contextResults];
+        // Deduplicate by sourceUrl/content hash, keep highest score
+        const seen = new Map<string, SearchResult>();
+        for (const r of combined) {
+            const key = (r.metadata?.sourceUrl as string) || r.content.slice(0, 200);
+            const existing = seen.get(key);
+            if (!existing || (r.score || 0) > (existing.score || 0)) seen.set(key, { ...r, metadata: { ...r.metadata, fetchedAt: (r.metadata as Record<string, unknown>).fetchedAt || fetchedAt } as SearchResult['metadata'] });
+        }
+        let merged = Array.from(seen.values());
+        // Rerank 12 candidates → top 4 using RAGv2 reranker when available
+        if (merged.length > 1) {
+            try {
+                const { RAGV2Service } = await import('@/services/ragV2Service');
+                const ranked = await RAGV2Service.rerank(queryText, merged.map(m => ({
+                    id: m.id, articleId: m.id, content: m.content, metadata: m.metadata as Record<string, unknown>, score: m.score || 0.5, citation: (m.metadata?.title as string) || ''
+                })), 4);
+                merged = ranked.map(rr => ({
+                    id: rr.id, content: rr.content, metadata: { ...rr.metadata, fetchedAt: (rr.metadata as Record<string, unknown>).fetchedAt || fetchedAt } as SearchResult['metadata'], score: rr.rerankScore ?? rr.score
+                }));
+            } catch { merged.sort((a, b) => (b.score || 0) - (a.score || 0)); merged = merged.slice(0, 4); }
+        } else {
+            merged = merged.slice(0, 4);
+        }
+        return merged;
     }
 
     private static assignUserRegion(userResult: Record<string, any>, finalData: Record<string, any>) {
@@ -500,6 +604,67 @@ Agronomic Decision Support Protocol (Phase 2):
         ]).finally(() => clearTimeout(reasoningTimeoutId));
     }
 
+    private static async callReasoningAgentic(
+        contextText: string,
+        queryText: string,
+        attachments: Array<{ type: 'image' | 'file' | 'audio'; data: string; mimeType?: string }> | undefined,
+        options: { preferredProvider?: string } | undefined,
+        queryCategories: string[]
+    ): Promise<ReasoningResult> {
+        if (process.env.KNOWLEDGE_AGENTIC_LOOP === 'false') {
+            return this.callReasoningWithTimeout(contextText, queryText, attachments, options);
+        }
+        const toolDefs = mcpAdapter.convertToMCPTools().map(t => ({
+            type: 'function' as const,
+            function: { name: t.name, description: t.description, parameters: t.inputSchema }
+        }));
+        if (toolDefs.length === 0) return this.callReasoningWithTimeout(contextText, queryText, attachments, options);
+
+        const systemPrompt = `You are an agricultural research assistant with tools. Use them to gather fresh evidence before answering. Cite sourceUrl for every claim. Current categories: ${queryCategories.join(', ') || 'general'}. Context:\n${contextText || 'No specific context found.'}`;
+        const start = Date.now();
+        const BUDGET_MS = 40000;
+        let messages: Array<{ role: string; content: string; tool_calls?: unknown; tool_call_id?: string }> = [{ role: 'user', content: queryText }];
+
+        for (let turn = 0; turn < 4; turn++) {
+            if (Date.now() - start > BUDGET_MS) break;
+            const remaining = BUDGET_MS - (Date.now() - start);
+            const res = await Promise.race([
+                AIRouter.routeRequest('reason', {
+                    context: systemPrompt,
+                    query: messages.map(m => `${m.role}: ${m.content}`).join('\n'),
+                    attachments,
+                    options: { temperature: 0.2, maxTokens: 1200, preferredProvider: options?.preferredProvider, tools: toolDefs } as unknown as Record<string, unknown>
+                }),
+                new Promise<never>((_, rej) => setTimeout(() => rej(new Error('agentic turn timeout')), Math.min(12000, remaining)))
+            ]) as unknown as (ReasoningResult & { toolCalls?: Array<{ function: { name: string; arguments: Record<string, unknown> } }> });
+            const toolCalls = (res as unknown as { toolCalls?: Array<{ function: { name: string; arguments: unknown } }> }).toolCalls;
+            if (!toolCalls || toolCalls.length === 0) return res;
+            // Execute tools with 8s per-tool timeout
+            const toolResults: string[] = [];
+            for (const tc of toolCalls) {
+                try {
+                    const result = await Promise.race([
+                        mcpAdapter.callTool(tc.function.name, tc.function.arguments as Record<string, unknown>),
+                        new Promise<never>((_, rej) => setTimeout(() => rej(new Error(`tool ${tc.function.name} timeout 8s`)), 8000))
+                    ]) as { content?: Array<{ text?: string }> };
+                    toolResults.push(`Tool ${tc.function.name} result: ${result.content?.[0]?.text?.slice(0, 2000) || 'No output'}`);
+                } catch (e) { toolResults.push(`Tool ${tc.function.name} error: ${e instanceof Error ? e.message : String(e)}`); }
+                if (Date.now() - start > BUDGET_MS) break;
+            }
+            messages.push({ role: 'assistant', content: (res as ReasoningResult).answer || '', tool_calls: toolCalls as unknown[] });
+            messages.push({ role: 'tool', content: toolResults.join('\n') });
+            // Check evidence: if last tool results yielded citations, we can break early on next loop
+            if (toolResults.join('').length > 500) continue;
+        }
+        // Final synthesis without tools if loop exhausted
+        return AIRouter.routeRequest('reason', {
+            context: systemPrompt,
+            query: messages.map(m => `${m.role}: ${m.content}`).join('\n'),
+            attachments,
+            options: { temperature: 0.2, maxTokens: 1200, preferredProvider: options?.preferredProvider }
+        }) as Promise<ReasoningResult>;
+    }
+
     private static async postProcessResponse(
         reasoningResult: ReasoningResult,
         queryText: string
@@ -599,15 +764,23 @@ Agronomic Decision Support Protocol (Phase 2):
     ): Promise<ReasoningResult & { cached: boolean; contextUsed: SearchResult[] }> {
         logger.info(`Getting RAG-based answer for query: "${queryText}" (User: ${userId}, Attachments: ${attachments?.length || 0}, PreferredProvider: ${options?.preferredProvider || 'default'})`);
 
-        const redisKey = `rag:exact:${queryText.toLowerCase().trim()}`;
+        const queryCategories = await this.categorizeQuery(queryText, options);
+        const isRealTimeIntent = queryCategories.some(c => ['market_and_commodity_prices', 'climate_and_weather', 'market_prices'].includes(c));
+        const freshSuffix = isRealTimeIntent ? `:fresh:${new Date().toISOString().slice(0, 10)}` : '';
+        const redisKey = `rag:exact:${queryText.toLowerCase().trim()}${freshSuffix}`;
 
         if (!attachments || attachments.length === 0) {
-            const cached = await this.checkCaches(queryText, redisKey);
-            if (cached) return cached;
+            // Bypass semantic cache for real-time intents (market/weather) to avoid stale 24h answers
+            if (isRealTimeIntent) {
+                const exactHit = await this.checkExactCachesOnly(queryText, redisKey);
+                if (exactHit) return exactHit;
+            } else {
+                const cached = await this.checkCaches(queryText, redisKey);
+                if (cached) return cached;
+            }
         }
 
         let contextResults = await this.searchKnowledge(queryText);
-        const queryCategories = await this.categorizeQuery(queryText, options);
         const isAgriQuery = queryCategories.length === 0 || queryCategories.some(c =>
             ['pest_and_disease', 'agronomy_and_yield', 'climate_and_weather', 'market_prices'].includes(c)
         );
@@ -626,7 +799,9 @@ Agronomic Decision Support Protocol (Phase 2):
             .join('\n\n---\n\n');
 
         try {
-            const reasoningResult = await this.callReasoningWithTimeout(contextText, queryText, attachments, options);
+            const reasoningResult = process.env.KNOWLEDGE_AGENTIC_LOOP === 'false'
+                ? await this.callReasoningWithTimeout(contextText, queryText, attachments, options)
+                : await this.callReasoningAgentic(contextText, queryText, attachments, options, queryCategories);
             const { visuals, audio } = await this.postProcessResponse(reasoningResult, queryText);
 
             const response = {

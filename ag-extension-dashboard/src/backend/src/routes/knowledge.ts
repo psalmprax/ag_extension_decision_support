@@ -898,7 +898,8 @@ router.post('/ask', async (req: Request, res: Response) => {
         }
 
         const remainingAfter = userRole === 'admin' ? 999999 : Math.max(0, dailyQuota.remaining - 1);
-        const evidenceStatus = getKnowledgeEvidenceStatus(citations.length, result.contextUsed.length);
+        const maxScore = citations.length ? Math.max(...citations.map(c => typeof c.score === 'number' ? c.score : 0)) : 0;
+        const evidenceStatus = getKnowledgeEvidenceStatus(citations.length, result.contextUsed.length, maxScore);
 
         res.json({
             success: true,
