@@ -46,8 +46,8 @@ class TransactionService {
         const receipt = params.transactionId.trim();
         const formatOk =
             params.method === 'mpesa' ? /^[A-Z0-9]{10}$/i.test(receipt)
-            : params.method === 'airtel' ? /^[A-Z0-9.\-]{8,32}$/i.test(receipt)
-            : /^[A-Z0-9\-\/ ]{6,64}$/i.test(receipt);
+            : params.method === 'airtel' ? /^[A-Z0-9.-]{8,32}$/i.test(receipt)
+            : /^[A-Z0-9-/ ]{6,64}$/i.test(receipt);
         if (!formatOk) {
             return { success: false, message: `"${receipt}" does not look like a valid ${params.method} reference.` };
         }

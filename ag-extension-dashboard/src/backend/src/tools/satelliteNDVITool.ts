@@ -52,28 +52,51 @@ function interpretNDVI(
     ? ' (trend is a climate-derived vigor proxy from NASA POWER, not satellite NDVI)'
     : '';
   if (current === undefined || current === null) {
-    if (series.length >= 2 && seriesStatus === 'estimated') {
-      const recent = series.slice(-3);
-      const trend = recent[recent.length - 1].vigor - recent[0].vigor;
-      const dir = trend > 0.05 ? 'improving' : trend < -0.05 ? 'declining' : 'stable';
-      return `No live satellite NDVI available. Climate-derived vegetation vigor proxy trend: ${dir}${proxyNote}.`;
-    }
-    return 'No NDVI data available (Sentinel Hub not configured or returned no scene; climate proxy unavailable).';
+    return interpretMissingNDVI(series, seriesStatus, proxyNote);
   }
+  return interpretCurrentNDVI(current, series, proxyNote);
+}
 
+function interpretMissingNDVI(
+  series: Array<{ date: string; vigor: number }>,
+  seriesStatus: 'estimated' | 'unavailable',
+  proxyNote: string
+): string {
+  if (series.length >= 2 && seriesStatus === 'estimated') {
+    const recent = series.slice(-3);
+    const trend = recent[recent.length - 1].vigor - recent[0].vigor;
+    const dir = trend > 0.05 ? 'improving' : trend < -0.05 ? 'declining' : 'stable';
+    return `No live satellite NDVI available. Climate-derived vegetation vigor proxy trend: ${dir}${proxyNote}.`;
+  }
+  return 'No NDVI data available (Sentinel Hub not configured or returned no scene; climate proxy unavailable).';
+}
+
+function interpretCurrentNDVI(
+  current: number,
+  series: Array<{ date: string; vigor: number }>,
+  proxyNote: string
+): string {
   let interpretation = `Current NDVI (satellite): ${current.toFixed(3)} — `;
-  if (current < 0.2) interpretation += 'bare soil or dead vegetation';
-  else if (current < 0.4) interpretation += 'sparse or stressed vegetation';
-  else if (current < 0.6) interpretation += 'moderate vegetation health';
-  else interpretation += 'healthy, dense vegetation';
+  interpretation += categorizeNDVI(current);
 
   if (series.length >= 2) {
     const recent = series.slice(-3);
     const trend = recent[recent.length - 1].vigor - recent[0].vigor;
-    if (trend > 0.05) interpretation += `. Proxy trend: improving${proxyNote}.`;
-    else if (trend < -0.05) interpretation += `. Proxy trend: declining — verify with field scouting${proxyNote}.`;
-    else interpretation += `. Proxy trend: stable${proxyNote}.`;
+    interpretation += getTrendMessage(trend, proxyNote);
   }
 
   return interpretation;
+}
+
+function categorizeNDVI(current: number): string {
+  if (current < 0.2) return 'bare soil or dead vegetation';
+  if (current < 0.4) return 'sparse or stressed vegetation';
+  if (current < 0.6) return 'moderate vegetation health';
+  return 'healthy, dense vegetation';
+}
+
+function getTrendMessage(trend: number, proxyNote: string): string {
+  if (trend > 0.05) return `. Proxy trend: improving${proxyNote}.`;
+  if (trend < -0.05) return `. Proxy trend: declining — verify with field scouting${proxyNote}.`;
+  return `. Proxy trend: stable${proxyNote}.`;
 }

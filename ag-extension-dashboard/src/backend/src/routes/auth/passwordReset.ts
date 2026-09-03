@@ -7,7 +7,7 @@ import { validate } from '@/middleware/validationMiddleware';
 import { forgotPasswordSchema, resetPasswordSchema, verifyEmailSchema } from '@/utils/schemas';
 import { passwordProblems } from '@/utils/passwordPolicy';
 import { emailService } from '@/services/emailService';
-import { revokeAllUserSessions } from '@/services/sessionService';
+import { revokeAllUserSessions, hashToken } from '@/services/sessionService';
 import { safeError } from '@/utils/safeResponse';
 import { authorize, AuthRequest } from '@/middleware/authorize';
 import { auditMiddleware } from '@/middleware/auditMiddleware';
@@ -21,9 +21,6 @@ const VERIFY_TTL_MS = 24 * 60 * 60 * 1000; // 24h
 export function newToken(): { raw: string; hash: string } {
     const raw = crypto.randomBytes(32).toString('hex');
     return { raw, hash: hashToken(raw) };
-}
-export function hashToken(raw: string): string {
-    return crypto.createHash('sha256').update(raw).digest('hex');
 }
 
 const GENERIC_FORGOT_RESPONSE = {

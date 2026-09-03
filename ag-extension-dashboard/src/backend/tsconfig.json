@@ -47,6 +47,9 @@
             ],
             "@utils/*": [
                 "./utils/*"
+            ],
+            "@shared-api/*": [
+                "./shared-api/*"
             ]
         }
     },

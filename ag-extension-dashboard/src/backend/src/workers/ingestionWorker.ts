@@ -1,6 +1,6 @@
 import { config } from '../config';
 import { logger } from '../utils/logger';
-import { StealthScraperService } from '../services/stealthScraperService';
+import { StealthScraperService, type ScrapedDocument } from '../services/stealthScraperService';
 import { VectorService } from '../services/vectorService';
 
 interface ScrapeTask {
@@ -69,59 +69,22 @@ export async function runBatchIngestion(): Promise<void> {
     isIngesting = true;
     logger.info(`Starting Batch Ingestion crawl for ${INGESTION_TASKS.length} tasks...`);
 
-    let consecutiveTransportFailures = 0;
-    let ingested = 0;
     try {
+        let ingested = 0;
         for (let i = 0; i < INGESTION_TASKS.length; i++) {
             const task = INGESTION_TASKS[i];
             logger.info(`[Ingestion ${i + 1}/${INGESTION_TASKS.length}] Crawling "${task.niche}" on "${task.platform}"...`);
 
-            try {
-                const results = await StealthScraperService.scrapeKnowledge(task.niche, task.platform, 'Global Tropics');
-                consecutiveTransportFailures = 0;
-                logger.info(`Fetched ${results.length} documents for "${task.niche}"`);
-
-                for (const item of results) {
-                    const docId = `ingested-${task.platform}-${slugify(item.title)}`;
-
-                    const content = `Topic: ${item.title}\n` +
-                        `Source platform: ${task.platform}\n` +
-                        `Crop Focus: ${task.crop}\n` +
-                        `Category: ${task.category}\n` +
-                        `Summary: ${item.summary || 'No summary available.'}\n` +
-                        (item.keywords.length ? `Keywords: ${item.keywords.join(', ')}` : '');
-
-                    // Scraped material is NOT validated by anyone. Label it as such so the
-                    // RAG layer and UI can down-weight or flag it.
-                    const metadata = {
-                        title: `Web extract (unverified): ${item.title}`,
-                        category: task.category,
-                        tags: [...item.keywords, 'unverified_scrape'],
-                        crops: [task.crop],
-                        regions: ['Global Tropics'],
-                        source: `${task.platform} via stealth scrape`,
-                        sourceUrl: item.url,
-                        contentType: 'text',
-                        dataStatus: item.dataStatus,
-                        ingestedAt: new Date().toISOString(),
-                    };
-
-                    await VectorService.upsertDocument(docId, content, metadata);
-                    ingested++;
-                }
-            } catch (taskErr) {
-                const message = taskErr instanceof Error ? taskErr.message : String(taskErr);
-                logger.error(`Error processing ingestion task "${task.niche}" on "${task.platform}": ${message}`);
-                // If the agent/scraper is unreachable, every remaining task will fail the
-                // same way — stop hammering it and surface one clear error.
-                if (/ECONNREFUSED|ENOTFOUND|timeout|401|403|unavailable/i.test(message)) {
+            const result = await processIngestionTask(task, (shouldAbort: boolean) => {
+                if (shouldAbort) {
                     consecutiveTransportFailures++;
                     if (consecutiveTransportFailures >= 2) {
                         logger.error('Batch Ingestion aborted: Agent Zero / discovery-scraper unreachable or rejecting auth. Check AGENT_ZERO_URL, JWT_SECRET parity with the agent, and that discovery-scraper is deployed.');
-                        break;
+                        throw new Error('Batch ingestion aborted due to transport failure');
                     }
                 }
-            }
+            });
+            ingested += result;
 
             // Introduce a short delay between platform requests to avoid rate limits
             if (i < INGESTION_TASKS.length - 1) {
@@ -129,7 +92,6 @@ export async function runBatchIngestion(): Promise<void> {
             }
         }
         logger.info(`Batch Ingestion crawl finished: ${ingested} document(s) upserted.`);
-
     } catch (error) {
         logger.error('Critical failure in Batch Ingestion process:', error);
     } finally {
@@ -173,4 +135,64 @@ if (process.env.NODE_ENV !== 'test') {
     setTimeout(() => {
         startIngestionWorker();
     }, 15000); // Wait 15 seconds for database to initialize
+}
+
+let consecutiveTransportFailures = 0;
+
+async function processIngestionTask(task: ScrapeTask, onTransportFailure: (shouldAbort: boolean) => void): Promise<number> {
+    try {
+        const results = await StealthScraperService.scrapeKnowledge(task.niche, task.platform, 'Global Tropics');
+        consecutiveTransportFailures = 0;
+        logger.info(`Fetched ${results.length} documents for "${task.niche}"`);
+
+        let count = 0;
+        for (const item of results) {
+            await upsertIngestedDocument(task, item);
+            count++;
+        }
+        return count;
+    } catch (taskErr) {
+        const message = taskErr instanceof Error ? taskErr.message : String(taskErr);
+        logger.error(`Error processing ingestion task "${task.niche}" on "${task.platform}": ${message}`);
+        if (/ECONNREFUSED|ENOTFOUND|timeout|401|403|unavailable/i.test(message)) {
+            onTransportFailure(true);
+        } else {
+            onTransportFailure(false);
+        }
+        return 0;
+    }
+}
+
+async function upsertIngestedDocument(task: ScrapeTask, item: ScrapedDocument): Promise<void> {
+    const docId = `ingested-${task.platform}-${slugify(item.title)}`;
+
+    const content = buildDocumentContent(item, task);
+    const metadata = buildDocumentMetadata(task, item);
+
+    await VectorService.upsertDocument(docId, content, metadata);
+}
+
+function buildDocumentContent(item: ScrapedDocument, task: ScrapeTask): string {
+    return `Topic: ${item.title}\n` +
+        `Source platform: ${task.platform}\n` +
+        `Crop Focus: ${task.crop}\n` +
+        `Category: ${task.category}\n` +
+        `Summary: ${item.summary || 'No summary available.'}\n` +
+        (item.keywords.length ? `Keywords: ${item.keywords.join(', ')}` : '');
+}
+
+function buildDocumentMetadata(task: ScrapeTask, item: ScrapedDocument): Record<string, unknown> {
+    // Scraped material is NOT validated by anyone. Label it as such so the
+    // RAG layer and UI can down-weight or flag it.
+    return {
+        title: `Web extract (unverified): ${item.title}`,
+        category: task.category,
+        tags: [...item.keywords, 'unverified_scrape'],
+        crops: [task.crop],
+        regions: ['Global Tropics'],
+        source: `${task.platform} via stealth scrape`,
+        sourceUrl: item.url,        contentType: 'text',
+        dataStatus: item.dataStatus,
+        ingestedAt: new Date().toISOString(),
+    };
 }

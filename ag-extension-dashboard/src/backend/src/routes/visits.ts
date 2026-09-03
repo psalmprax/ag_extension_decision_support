@@ -459,7 +459,6 @@ router.post('/location', async (req: Request, res: Response) => {
         }
 
         const user = req.user as { userId?: string; role?: string } | undefined;
-        const visitType = user?.role === 'farmer' ? 'farmer_location' : 'officer_location';
         const farmerId = user?.role === 'farmer' ? user.userId : undefined;
 
         // Insert location log as a visit entry, bound to the calling farmer/officer

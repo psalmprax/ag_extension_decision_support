@@ -328,9 +328,7 @@ const OverviewTabContent = ({
           >
             <action.icon className="w-5 h-5" />
           </div>
-          <span className="text-xs font-black text-white tracking-wide">
-            {action.label}
-          </span>
+          <span className="text-xs font-black text-white tracking-wide">{action.label}</span>
           <span className="text-[8px] font-mono font-bold text-slate-500 mt-0.5 uppercase tracking-wider">
             {action.badge}
           </span>
@@ -426,8 +424,11 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
           res.data.map(msg => ({
             id: msg.id,
             type: 'SMS',
-            date: new Date(msg.created_at).toLocaleDateString(),
-            status: msg.status === 'sent' ? 'delivered' : msg.status,
+            date: new Date(msg.created_at || Date.now()).toLocaleDateString(),
+            status:
+              msg.status === 'sent' || msg.status === 'delivered'
+                ? 'delivered'
+                : msg.status || 'pending',
             content: msg.message,
           }))
         );
@@ -623,7 +624,8 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="fixed right-0 top-0 bottom-0 w-full max-w-xl z-[70] shadow-2xl shadow-emerald-950/80 overflow-hidden flex flex-col bg-slate-950/95 backdrop-blur-2xl border-l border-emerald-500/30 text-slate-100" onClick={() => onFarmerClick?.(farmer)}
+            className="fixed right-0 top-0 bottom-0 w-full max-w-xl z-[70] shadow-2xl shadow-emerald-950/80 overflow-hidden flex flex-col bg-slate-950/95 backdrop-blur-2xl border-l border-emerald-500/30 text-slate-100"
+            onClick={() => onFarmerClick?.(farmer)}
           >
             {/* Header Section */}
             <FarmerDetailHeader
@@ -789,7 +791,10 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
               <VideoCall
                 roomId={`farmer-${farmer.id}`}
                 userId={storeUser?.id || 'host-user'}
-                userName={`${storeUser?.firstName || ''} ${storeUser?.lastName || ''}`.trim() || 'Extension Officer'}
+                userName={
+                  `${storeUser?.firstName || ''} ${storeUser?.lastName || ''}`.trim() ||
+                  'Extension Officer'
+                }
                 isHost={true}
                 onEnd={() => setShowVideoCall(false)}
               />

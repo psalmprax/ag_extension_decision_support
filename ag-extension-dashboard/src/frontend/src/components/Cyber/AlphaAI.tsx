@@ -36,60 +36,25 @@ import {
 import { StudioTabSwitcher, CanvasWorkbench, type LastImageAnalysis } from './alpha/StudioTabs';
 import { MessageStream } from './alpha/MessageStream';
 import { NasaPowerBadge, RagMeshBadge } from './alpha/badges';
-
-/** Validate, upload, and analyze a leaf image; resolves to the health summary text. */
-interface LeafAnalysisOutcome {
-  summary: string;
-  analysis: LastImageAnalysis;
-}
-
-async function analyzeLeafImage(file: File): Promise<LeafAnalysisOutcome> {
-  if (file.size > 8 * 1024 * 1024) throw new Error('Image too large — max 8MB');
-  const dataUrl = await new Promise<string>((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result as string);
-    r.onerror = reject;
-    r.readAsDataURL(file);
-  });
-  const base64 = dataUrl.split(',')[1];
-  const { data } = await apiClient.post('/ai/diseases/analyze', { image: base64 });
-  const payload = (data?.data ?? data ?? {}) as {
-    overallHealth?: string;
-    confidence?: number;
-    diseases?: Array<{ disease: string; confidence: number; severity?: string }>;
-    reviewStatus?: string;
-  };
-  const overallHealth = payload.overallHealth || 'unknown';
-  const diseases = Array.isArray(payload.diseases) ? payload.diseases : [];
-  // The analyzer returns whole-image findings without coordinates, so each finding
-  // is drawn as a centred marker; the label states that it is not localised.
-  const detections = diseases.slice(0, 4).map((d, i) => {
-    const conf = d.confidence > 1 ? d.confidence / 100 : d.confidence;
-    const sev = d.severity === 'severe' || d.severity === 'moderate' || d.severity === 'mild' ? d.severity : 'moderate';
-    return {
-      id: `finding-${i}`,
-      x: 0.5 + (i % 2 === 0 ? -0.12 : 0.12) * Math.ceil(i / 2),
-      y: 0.5 + (i < 2 ? -0.1 : 0.1),
-      radius: 0.18,
-      label: `${d.disease} (whole-image, not localised)`,
-      confidence: Number.isFinite(conf) ? conf : 0,
-      severity: sev as 'mild' | 'moderate' | 'severe',
-    };
-  });
-  const summary = `${overallHealth}${diseases.length ? ` — ${diseases.map(d => `${d.disease} ${Math.round((d.confidence > 1 ? d.confidence : d.confidence * 100))}%`).join(', ')}` : ''}${payload.reviewStatus === 'needs_expert_review' ? ' · needs expert review' : ''}`;
-  return { summary, analysis: { imageSrc: dataUrl, overallHealth, detections } };
-}
+import { analyzeLeafImage } from './alpha/utils/leafAnalysis';
 
 /** Begin voice capture and hand the recorded blob to onReady; null when unsupported. */
-async function startVoiceCapture(onReady: (blob: Blob, mimeType: string) => Promise<void>): Promise<MediaRecorder | null> {
+async function startVoiceCapture(
+  onReady: (blob: Blob, mimeType: string) => Promise<void>
+): Promise<MediaRecorder | null> {
   if (!navigator.mediaDevices?.getUserMedia) {
     toast.error('Voice input unavailable in this browser');
     return null;
   }
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  const recorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg' });
+  const recorder = new MediaRecorder(stream, {
+    mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg',
+  });
   const chunks: BlobPart[] = [];
-  recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+  recorder.ondataavailable = e => {
+    if (e.data.size > 0) chunks.push(e.data);
+  };
+
   recorder.onstop = async () => {
     stream.getTracks().forEach(t => t.stop());
     await onReady(new Blob(chunks, { type: recorder.mimeType }), recorder.mimeType);
@@ -117,7 +82,10 @@ async function transcribeVoiceBlob(blob: Blob, mimeType: string): Promise<string
     else toast.error('Transcription returned no text');
     return null;
   } catch (e) {
-    toast.error((e as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Transcription failed — check OPENAI_API_KEY');
+    toast.error(
+      (e as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        'Transcription failed — check OPENAI_API_KEY'
+    );
     return null;
   }
 }
@@ -137,7 +105,9 @@ export const AlphaAI: React.FC = () => {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const voiceRecorderRef = useRef<MediaRecorder | null>(null);
-  const handleSendRef = useRef<(overrideQuery?: string, opts?: { fromQueue?: boolean }) => Promise<boolean>>(async () => false);
+  const handleSendRef = useRef<
+    (overrideQuery?: string, opts?: { fromQueue?: boolean }) => Promise<boolean>
+  >(async () => false);
 
   // Initial welcome message
   const [messages, setMessages] = useState<ChatMessageItem[]>([
@@ -180,25 +150,39 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
   // Drain offline queue when back online — the sender is read through a ref so the
   // subscription survives re-renders without re-binding the listener.
   useEffect(() => {
-    const drain = () => { void drainAlphaOfflineQueue(queued => handleSendRef.current(queued, { fromQueue: true })); };
+    const drain = () => {
+      void drainAlphaOfflineQueue(queued => handleSendRef.current(queued, { fromQueue: true }));
+    };
     window.addEventListener('online', drain);
     return () => window.removeEventListener('online', drain);
   }, []);
 
   /** Returns true when an advisory was delivered, false when it failed/was queued. */
-  const handleSendMessage = async (overrideQuery?: string, opts: { fromQueue?: boolean } = {}): Promise<boolean> => {
+  const handleSendMessage = async (
+    overrideQuery?: string,
+    opts: { fromQueue?: boolean } = {}
+  ): Promise<boolean> => {
     const query = (overrideQuery || inputPrompt).trim();
     if (!query || isProcessing) return false;
 
-    // Offline queue — stash and show pending when navigator is offline
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    if (isOffline()) {
       if (!opts.fromQueue) stashQueryOffline(query, setMessages);
       setInputPrompt('');
       return false;
     }
 
+    await processMessage(query, opts);
+    return true;
+  };
+  handleSendRef.current = handleSendMessage;
+
+  function isOffline(): boolean {
+    return typeof navigator !== 'undefined' && !navigator.onLine;
+  }
+
+  async function processMessage(query: string, opts: { fromQueue?: boolean }): Promise<void> {
     setInputPrompt('');
-    setMessages(prev => [...prev, { id: `user-${Date.now()}`, sender: 'user', text: query, timestamp: nowStamp() } as ChatMessageItem]);
+    appendUserMessage(query);
     setIsProcessing(true);
     setActiveReasoningStep('Retrieving knowledge-base context...');
 
@@ -206,21 +190,36 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
       const assistantMsg = await requestAdvisoryMessage(query);
       if (assistantMsg.canvasTrigger) setActiveCanvasView(assistantMsg.canvasTrigger);
       setMessages(prev => [...prev, assistantMsg]);
-      return true;
     } catch (err) {
-      // Replays from the offline queue must not re-enqueue themselves; the drain keeps them.
-      if (opts.fromQueue) {
-        setMessages(prev => [...prev, { id: `asst-${Date.now()}`, sender: 'assistant', text: 'Still unable to reach the advisory service — your queued question will be retried when the connection recovers.', timestamp: nowStamp() } as ChatMessageItem]);
-      } else {
-        handleAdvisoryFailure(err, query, setMessages);
-      }
-      return false;
+      handleSendFailure(err, query, opts);
     } finally {
       setActiveReasoningStep(null);
       setIsProcessing(false);
     }
-  };
-  handleSendRef.current = handleSendMessage;
+  }
+
+  function appendUserMessage(text: string): void {
+    setMessages(prev => [
+      ...prev,
+      { id: `user-${Date.now()}`, sender: 'user', text, timestamp: nowStamp() } as ChatMessageItem,
+    ]);
+  }
+
+  function handleSendFailure(err: unknown, query: string, opts: { fromQueue?: boolean }): void {
+    if (opts.fromQueue) {
+      setMessages(prev => [
+        ...prev,
+        {
+          id: `asst-${Date.now()}`,
+          sender: 'assistant',
+          text: 'Still unable to reach the advisory service — your queued question will be retried when the connection recovers.',
+          timestamp: nowStamp(),
+        } as ChatMessageItem,
+      ]);
+    } else {
+      handleAdvisoryFailure(err, query, setMessages);
+    }
+  }
 
   const handleVoiceToggle = async () => {
     if (isRecordingVoice) {
@@ -262,32 +261,62 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
         const { summary, analysis } = await analyzeLeafImage(file);
         setLastImageAnalysis(analysis);
         setActiveCanvasView('disease_saliency');
-        setMessages(prev => [...prev, { id: `img-${Date.now()}`, sender: 'assistant', text: `🖼️ **Image diagnosis:** ${summary}`, timestamp: nowStamp(), canvasTrigger: 'disease_saliency', canvasLabel: 'Leaf Image Assessment' }]);
+        setMessages(prev => [
+          ...prev,
+          {
+            id: `img-${Date.now()}`,
+            sender: 'assistant',
+            text: `🖼️ **Image diagnosis:** ${summary}`,
+            timestamp: nowStamp(),
+            canvasTrigger: 'disease_saliency',
+            canvasLabel: 'Leaf Image Assessment',
+          },
+        ]);
         toast.success('Image analyzed — check Disease Diagnosis for lab verification');
-      } catch (e) { toast.error((e as { response?: { data?: { error?: string } } })?.response?.data?.error || (e as Error)?.message || 'Image analysis failed'); }
-      finally { setActiveReasoningStep(null); }
+      } catch (e) {
+        toast.error(
+          (e as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+            (e as Error)?.message ||
+            'Image analysis failed'
+        );
+      } finally {
+        setActiveReasoningStep(null);
+      }
     };
     input.click();
   };
 
   const handleDispatchSms = async () => {
     const lastAnswer = [...messages].reverse().find(m => m.sender === 'assistant')?.text;
-    if (!lastAnswer) { toast.error('No advisory to dispatch — ask a question first'); return; }
+    if (!lastAnswer) {
+      toast.error('No advisory to dispatch — ask a question first');
+      return;
+    }
     try {
       const { useAppStore } = await import('@/store/useAppStore');
       // SMS body limit: 160 GSM-7 chars per segment; keep to ~2 segments and mark truncation.
       const body = lastAnswer.replace(/\*\*/g, '').trim();
       const truncated = body.length > 300 ? `${body.slice(0, 297)}…` : body;
       useAppStore.getState().setPendingSMS({ phone: '', message: truncated });
-      const storeTab = (useAppStore.getState() as { setActiveTab?: (t: string) => void }).setActiveTab;
+      const storeTab = (useAppStore.getState() as { setActiveTab?: (t: string) => void })
+        .setActiveTab;
       storeTab?.('sms');
-      toast(truncated.length < body.length ? 'Opening SMS composer (advisory truncated to 300 chars)…' : 'Opening SMS composer with last advisory…');
-    } catch { toast.error('SMS dispatch requires SMS page'); }
+      toast(
+        truncated.length < body.length
+          ? 'Opening SMS composer (advisory truncated to 300 chars)…'
+          : 'Opening SMS composer with last advisory…'
+      );
+    } catch {
+      toast.error('SMS dispatch requires SMS page');
+    }
   };
 
   const handleExportPdf = async () => {
     const lastAnswer = [...messages].reverse().find(m => m.sender === 'assistant')?.text;
-    if (!lastAnswer) { toast.error('No advisory to export — ask a question first'); return; }
+    if (!lastAnswer) {
+      toast.error('No advisory to export — ask a question first');
+      return;
+    }
     try {
       const { generateReport, downloadReportPdf } = await import('@/api/reportService');
       const lastQuestion = [...messages].reverse().find(m => m.sender === 'user')?.text;
@@ -297,13 +326,20 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
         undefined,
         { content: lastAnswer, question: lastQuestion }
       );
-      const reportId = (gen as { data?: { id?: string } })?.data?.id || (gen as { id?: string })?.id;
+      const reportId =
+        (gen as { data?: { id?: string } })?.data?.id || (gen as { id?: string })?.id;
       if (!reportId) throw new Error('No report id');
       const blob = await downloadReportPdf(reportId);
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = `co-pilot-${Date.now()}.pdf`; a.click(); URL.revokeObjectURL(url);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `co-pilot-${Date.now()}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
       toast.success('Prescription PDF downloaded');
-    } catch (e) { toast.error((e as Error).message || 'PDF export failed'); }
+    } catch (e) {
+      toast.error((e as Error).message || 'PDF export failed');
+    }
   };
 
   return (
@@ -318,7 +354,9 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-xl font-bold tracking-tight text-white">AI Agronomic Co-Pilot</h1>
+                <h1 className="text-xl font-bold tracking-tight text-white">
+                  AI Agronomic Co-Pilot
+                </h1>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-black tracking-wider uppercase bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                   <Sparkles className="w-2.5 h-2.5 text-emerald-400" />
                   AG-AGRONOMIST 4.5 PRO
@@ -336,10 +374,7 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
             <RagMeshBadge data={kbStats} />
 
             {/* Studio / Ops Toggle */}
-            <StudioTabSwitcher
-              active={activeStudioTab}
-              onSelect={setActiveStudioTab}
-            />
+            <StudioTabSwitcher active={activeStudioTab} onSelect={setActiveStudioTab} />
           </div>
         </div>
       </div>
@@ -356,14 +391,14 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
           <div className="lg:col-span-5 flex flex-col space-y-4">
             {/* Conversational Stream Card */}
             <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-4 flex-1 flex flex-col justify-between shadow-xl min-h-[480px] max-h-[620px]">
-            {/* Message List */}
-            <MessageStream
-              messages={messages}
-              isProcessing={isProcessing}
-              activeReasoningStep={activeReasoningStep}
-              onSelectCanvas={setActiveCanvasView}
-              messagesEndRef={messagesEndRef}
-            />
+              {/* Message List */}
+              <MessageStream
+                messages={messages}
+                isProcessing={isProcessing}
+                activeReasoningStep={activeReasoningStep}
+                onSelectCanvas={setActiveCanvasView}
+                messagesEndRef={messagesEndRef}
+              />
 
               {/* Input Bar & Multi-Modal Controls (knockknockapp.ai voice/leaf standard) */}
               <div className="pt-3 border-t border-white/5 space-y-2">
@@ -423,7 +458,11 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
                         : 'text-white/40 hover:text-emerald-400 hover:bg-white/5'
                     }`}
                   >
-                    {isRecordingVoice ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                    {isRecordingVoice ? (
+                      <MicOff className="w-4 h-4" />
+                    ) : (
+                      <Mic className="w-4 h-4" />
+                    )}
                   </button>
 
                   <textarea
@@ -496,7 +535,9 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
             </div>
 
             {/* Generative Interactive Canvas Container (canvasui.dev glassmorphic standard) */}
-            <div className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-xl p-5 shadow-2xl relative overflow-hidden min-h-[500px] flex flex-col justify-between">              {/* Dynamic Mounted Canvas */}
+            <div className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-xl p-5 shadow-2xl relative overflow-hidden min-h-[500px] flex flex-col justify-between">
+              {' '}
+              {/* Dynamic Mounted Canvas */}
               <div className="flex-1 flex flex-col justify-center">
                 <CanvasWorkbench
                   view={activeCanvasView}
@@ -507,11 +548,14 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
                   selectedGraphNode={selectedGraphNode}
                   onGraphNodeSelect={setSelectedGraphNode}
                   onDispatchSms={handleDispatchSms}
-                  citations={[...messages].reverse().find(m => m.sender === 'assistant' && m.citations?.length)?.citations ?? []}
+                  citations={
+                    [...messages]
+                      .reverse()
+                      .find(m => m.sender === 'assistant' && m.citations?.length)?.citations ?? []
+                  }
                   lastImageAnalysis={lastImageAnalysis}
                 />
               </div>
-
               {/* ── Workbench Action Footer Dock ── */}
               <div className="pt-4 mt-4 border-t border-white/5 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-xxs text-white/50 font-mono">

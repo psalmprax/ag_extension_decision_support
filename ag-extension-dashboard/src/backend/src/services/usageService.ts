@@ -284,57 +284,55 @@ class UsageService {
                     status: data?.status || 'active',
                     isFree,
                 },
-                usage: [
-                    {
-                        type: 'knowledge',
-                        current: dailyKnowledge.current,
-                        limit: dailyKnowledge.limit,
-                        remaining: dailyKnowledge.remaining,
-                        label: 'DAILY KNOWLEDGE SEARCHES (FREE 3/DAY)',
-                    },
-                    {
-                        type: 'ai_chat',
-                        current: data?.usage?.aiChatCount || 0,
-                        limit: isFree ? 0 : (features.aiChatLimit || 0),
-                        label: 'AI ADVISOR CREDITS',
-                    },
-                    {
-                        type: 'sms',
-                        current: data?.usage?.smsCount || 0,
-                        limit: isFree ? 0 : (features.smsLimit || 0),
-                        label: 'SMS BROADCASTS',
-                    },
-                    {
-                        type: 'report',
-                        current: data?.usage?.reportCount || 0,
-                        limit: isFree ? 0 : (features.reportLimit || 0),
-                        label: 'ANALYTIC REPORTS',
-                    },
-                    {
-                        type: 'ai_vision',
-                        current: data?.usage?.aiVisionCount || 0,
-                        limit: isFree ? 0 : (features.aiVisionLimit || 0),
-                        label: 'AI VISION SCANS',
-                    },
-                    {
-                        type: 'speech',
-                        current: data?.usage?.speechCount || 0,
-                        limit: isFree ? 0 : (features.speechLimit || 0),
-                        label: 'SPEECH MINUTES',
-                    },
-                    {
-                        type: 'whatsapp',
-                        current: data?.usage?.whatsappCount || 0,
-                        limit: isFree ? 0 : (features.whatsappLimit || 0),
-                        label: 'WHATSAPP BROADCASTS',
-                    }
-                ],
+                usage: this.buildUsageArray(data, isFree, features, dailyKnowledge),
                 periodEnd: data?.currentPeriodEnd,
             };
         } catch (error) {
             logger.error('Failed to get usage status:', error);
             throw error;
         }
+    }
+
+    private buildUsageArray(
+        data: Awaited<ReturnType<UsageService['getUsage']>>,
+        isFree: boolean,
+        features: Record<string, unknown>,
+        dailyKnowledge: { current: number; limit: number; remaining: number }
+    ): Array<{ type: string; current: number; limit: number; remaining?: number; label: string }> {
+        const usageTypes: Array<{ type: UsageType; label: string }> = [
+            { type: 'knowledge', label: 'DAILY KNOWLEDGE SEARCHES (FREE 3/DAY)' },
+            { type: 'ai_chat', label: 'AI ADVISOR CREDITS' },
+            { type: 'sms', label: 'SMS BROADCASTS' },
+            { type: 'report', label: 'ANALYTIC REPORTS' },
+            { type: 'ai_vision', label: 'AI VISION SCANS' },
+            { type: 'speech', label: 'SPEECH MINUTES' },
+            { type: 'whatsapp', label: 'WHATSAPP BROADCASTS' },
+        ];
+        return usageTypes.map(({ type, label }) => ({
+            type,
+            current: this.getUsageCount(data, type),
+            limit: this.getLimit(features, type, isFree),
+            remaining: type === 'knowledge' ? dailyKnowledge.remaining : undefined,
+            label,
+        }));
+    }
+
+    private getUsageCount(data: Awaited<ReturnType<UsageService['getUsage']>>, type: UsageType): number {
+        switch (type) {
+            case 'sms': return data?.usage?.smsCount || 0;
+            case 'ai_chat': return data?.usage?.aiChatCount || 0;
+            case 'report': return data?.usage?.reportCount || 0;
+            case 'ai_vision': return data?.usage?.aiVisionCount || 0;
+            case 'speech': return data?.usage?.speechCount || 0;
+            case 'whatsapp': return data?.usage?.whatsappCount || 0;
+            default: return 0;
+        }
+    }
+
+    private getLimit(features: Record<string, unknown>, type: UsageType, isFree: boolean): number {
+        if (isFree) return 0;
+        const key = `${type}Limit` as keyof typeof features;
+        return typeof features[key] === 'number' ? features[key] : 0;
     }
 
     async resetUsage(subscriptionId: string) {

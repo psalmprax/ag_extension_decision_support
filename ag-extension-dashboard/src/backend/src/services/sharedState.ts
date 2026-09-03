@@ -31,15 +31,23 @@ export async function incrWindow(key: string, windowMs: number): Promise<{ count
     const r = redis();
     if (r) {
         try {
-            const count = await r.incr(key);
-            if (typeof count !== 'number') throw new Error('non-numeric INCR reply');
-            if (count === 1) await r.pExpire(key, windowMs);
-            const ttl = await r.pTTL(key);
-            return { count, resetAt: Date.now() + (typeof ttl === 'number' && ttl > 0 ? ttl : windowMs) };
+            return await incrementViaRedis(r, key, windowMs);
         } catch (err) {
             logger.warn('[sharedState] incrWindow redis error, falling back:', err);
         }
     }
+    return incrementLocally(key, windowMs);
+}
+
+async function incrementViaRedis(r: NonNullable<ReturnType<typeof redis>>, key: string, windowMs: number): Promise<{ count: number; resetAt: number }> {
+    const count = await r.incr(key);
+    if (typeof count !== 'number') throw new Error('non-numeric INCR reply');
+    if (count === 1) await r.pExpire(key, windowMs);
+    const ttl = await r.pTTL(key);
+    return { count, resetAt: Date.now() + (typeof ttl === 'number' && ttl > 0 ? ttl : windowMs) };
+}
+
+function incrementLocally(key: string, windowMs: number): { count: number; resetAt: number } {
     fallbackWarn('rate limiting');
     const now = Date.now();
     const cur = localCounters.get(key);

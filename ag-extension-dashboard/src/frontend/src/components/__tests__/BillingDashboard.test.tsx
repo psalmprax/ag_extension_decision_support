@@ -55,6 +55,7 @@ vi.mock('@/api/billingService', () => ({
   addPaymentMethod: vi.fn(),
   deletePaymentMethod: vi.fn(),
   fetchUsage: vi.fn().mockResolvedValue({ success: true, data: [] }),
+  fetchPlanQuotas: vi.fn().mockResolvedValue({ success: true, data: [] }),
 }));
 
 // Mock framer-motion to avoid animation issues in tests

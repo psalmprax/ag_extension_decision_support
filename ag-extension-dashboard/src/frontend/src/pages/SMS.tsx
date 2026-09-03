@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Sparkles, MapPin, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import { useAppStore } from '../store/useAppStore';
@@ -8,7 +8,7 @@ import { fetchUsage } from '../api/billingService';
 import { ChannelOnboardingModal } from '../components/channels/ChannelOnboardingModal';
 import { GoalModeCampaignModal } from '../components/campaigns/GoalModeCampaignModal';
 import toast from 'react-hot-toast';
-import type { Contact, SMSMessage } from './sms/types';
+import type { Contact, SMSHistoryRecord, SMSMessage } from './sms/types';
 import { SMSComposerPanel } from './sms/ComposerPanel';
 import { SMSContactsPanel } from './sms/ContactsPanel';
 import { SMSRightPanel } from './sms/RightPanel';
@@ -69,29 +69,39 @@ export function SMSPage() {
   const [history, setHistory] = useState<SMSMessage[]>([]);
 
   // Quota State - fetched from billing API
-  const [quota, setQuota] = useState<{ current: number; limit: number; sent: number; failed: number } | null>(null);
+  const [quota, setQuota] = useState<{
+    current: number;
+    limit: number;
+    sent: number;
+    failed: number;
+  } | null>(null);
   const [isLoadingQuota, setIsLoadingQuota] = useState(false);
 
   // Fetch History
-  const loadHistory = async () => {
+  const loadHistory = useCallback(async () => {
     try {
       const data = await fetchSMSHistory();
       if (!data.success) throw new Error('SMS history request failed');
-      setHistory(
-        data.data.map(msg => ({
-          id: msg.id,
-          to: msg.recipient_phone,
-          message: msg.message,
-          status: msg.status === 'sent' ? 'success' : msg.status === 'failed' ? 'failed' : 'pending',
-          timestamp: new Date(msg.created_at),
-        }))
-      );
+      setHistory(data.data.map(normalizeSmsHistory));
     } catch (err) {
       console.error('Failed to fetch SMS history:', err);
       setHistory([]);
       toast.error('SMS history is unavailable');
     }
-  };
+  }, []);
+
+  const normalizeSmsHistory = (msg: SMSHistoryRecord): SMSMessage => ({
+    id: msg.id,
+    to: msg.recipient_phone,
+    message: msg.message,
+    status:
+      msg.status === 'sent' || msg.status === 'delivered'
+        ? 'success'
+        : msg.status === 'failed'
+          ? 'failed'
+          : 'pending',
+    timestamp: new Date(msg.created_at || Date.now()),
+  });
 
   const loadContacts = async () => {
     setIsLoadingContacts(true);
@@ -145,7 +155,7 @@ export function SMSPage() {
     loadHistory();
     loadContacts();
     loadQuota();
-  }, []);
+  }, [loadHistory]);
 
   // Check for pending SMS on mount
   useEffect(() => {
@@ -166,11 +176,17 @@ export function SMSPage() {
       if (res.success) {
         setMessage(res.data.translatedText);
       } else {
-        toast.error((res as { error?: string }).error || 'Translation was not accepted by the server');
+        toast.error(
+          (res as { error?: string }).error || 'Translation was not accepted by the server'
+        );
       }
     } catch (err) {
       console.error('Translation failed:', err);
-      toast.error(((err as { response?: { data?: { error?: string } } })?.response?.data?.error || (err as Error)?.message || 'Translation failed'));
+      toast.error(
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+          (err as Error)?.message ||
+          'Translation failed'
+      );
     } finally {
       setIsTranslating(false);
     }
@@ -304,16 +320,10 @@ export function SMSPage() {
       )}
 
       {/* Channel Gateways & Farmer Onboarding Modal */}
-      <ChannelOnboardingModal
-        isOpen={isGatewaysOpen}
-        onClose={() => setIsGatewaysOpen(false)}
-      />
+      <ChannelOnboardingModal isOpen={isGatewaysOpen} onClose={() => setIsGatewaysOpen(false)} />
 
       {/* Goal Mode Autonomous Campaigns & Closed Loop Skills Modal */}
-      <GoalModeCampaignModal
-        isOpen={isGoalModeOpen}
-        onClose={() => setIsGoalModeOpen(false)}
-      />
+      <GoalModeCampaignModal isOpen={isGoalModeOpen} onClose={() => setIsGoalModeOpen(false)} />
     </div>
   );
 }

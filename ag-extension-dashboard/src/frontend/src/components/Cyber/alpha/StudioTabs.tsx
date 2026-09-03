@@ -24,19 +24,22 @@ const CITATION_CATEGORY: Record<string, GraphNode['category']> = {
 };
 
 /** Map advisory citations to graph nodes (category inferred from citation category text). */
-export function citationsToGraphNodes(citations: AdvisoryCitation[]): GraphNode[] {
-  return citations.map(c => {
-    const key = c.category.toLowerCase();
-    const category = CITATION_CATEGORY[key]
-      ?? (Object.keys(CITATION_CATEGORY).find(k => key.includes(k)) ? CITATION_CATEGORY[Object.keys(CITATION_CATEGORY).find(k => key.includes(k)) as string] : 'rule');
-    return {
-      id: c.sourceId,
-      label: c.title,
-      category,
-      snippet: c.excerpt || `Category: ${c.category}`,
-      score: c.score,
-    };
-  });
+function citationsToGraphNodes(citations: AdvisoryCitation[]): GraphNode[] {
+  return citations.map(c => ({
+    id: c.sourceId,
+    label: c.title,
+    category: mapCategory(c.category),
+    snippet: c.excerpt || `Category: ${c.category}`,
+    score: c.score,
+  }));
+}
+
+function mapCategory(category: string): GraphNode['category'] {
+  const key = category.toLowerCase();
+  const directMatch = CITATION_CATEGORY[key];
+  if (directMatch) return directMatch;
+  const matchedKey = Object.keys(CITATION_CATEGORY).find(k => key.includes(k));
+  return matchedKey ? CITATION_CATEGORY[matchedKey as string] : 'rule';
 }
 
 /** Studio / Ops mode switcher for the co-pilot header. */
@@ -71,7 +74,7 @@ export const StudioTabSwitcher: React.FC<{
 );
 
 /** Header strip shared by every canvas workbench panel. */
-export const CanvasPanelHeader: React.FC<{ icon: React.ReactNode; title: string; hint: string; hintClass: string }> = ({ icon, title, hint, hintClass }) => (
+const CanvasPanelHeader: React.FC<{ icon: React.ReactNode; title: string; hint: string; hintClass: string }> = ({ icon, title, hint, hintClass }) => (
   <div className="flex justify-between items-center text-xs pb-2 border-b border-white/5">
     <span className="font-bold text-white uppercase tracking-wider flex items-center gap-1.5">{icon}{title}</span>
     <span className={`text-xxs font-mono ${hintClass}`}>{hint}</span>

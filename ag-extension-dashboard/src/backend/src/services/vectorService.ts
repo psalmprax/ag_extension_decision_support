@@ -204,61 +204,69 @@ export class VectorService {
         logger.info(`Performing hybrid search (Vector + Keyword) for: "${queryText}"`);
 
         try {
-            // Run both searches in parallel for faster response
-            const [vectorResults, keywordResults] = await Promise.all([
-                this.search(queryText, limit * 2, filters, 0.0),
-                this.keywordSearch(queryText, limit * 2, filters)
-            ]);
-
-            if (vectorResults.length === 0 && keywordResults.length === 0) {
-                return [];
-            }
-
-            // Reciprocal Rank Fusion (RRF)
-            const k = 60;
-            const rrfMap = new Map<string, { doc: SearchResult; score: number; cosineScore: number }>();
-
-            vectorResults.forEach((doc, idx) => {
-                const rank = idx + 1;
-                rrfMap.set(doc.id, {
-                    doc,
-                    score: 1 / (k + rank),
-                    cosineScore: doc.score
-                });
-            });
-
-            keywordResults.forEach((doc, idx) => {
-                const rank = idx + 1;
-                const rrfWeight = 1 / (k + rank);
-                const existing = rrfMap.get(doc.id);
-                if (existing) {
-                    existing.score += rrfWeight;
-                    // Keep the cosine score
-                } else {
-                    rrfMap.set(doc.id, {
-                        doc,
-                        score: rrfWeight,
-                        cosineScore: 0.5 // Default baseline score for keyword-only matches
-                    });
-                }
-            });
-
-            // Sort by RRF score descending, preserve RRF score as the relevance score
-            const merged = Array.from(rrfMap.values())
-                .sort((a, b) => b.score - a.score)
-                .map(item => {
-                    // Use the RRF fusion score (not cosine) as the final relevance score
-                    item.doc.score = item.score;
-                    return item.doc;
-                });
-
-            // Apply limit (minScore filtering is less meaningful for RRF scores which are small fractions)
-            return merged.slice(0, limit);
+            return await this.performHybridSearch(queryText, limit, filters);
         } catch (error) {
             logger.error('Hybrid search execution failed:', error);
             // Fall back to simple search on error
             return this.search(queryText, limit, filters, minScore);
         }
+    }
+
+    private static async performHybridSearch(
+        queryText: string,
+        limit: number,
+        filters: { category?: string; crop?: string }
+    ): Promise<SearchResult[]> {
+        const [vectorResults, keywordResults] = await Promise.all([
+            this.search(queryText, limit * 2, filters, 0.0),
+            this.keywordSearch(queryText, limit * 2, filters)
+        ]);
+
+        if (vectorResults.length === 0 && keywordResults.length === 0) {
+            return [];
+        }
+
+        const rrfMap = new Map<string, { doc: SearchResult; score: number }>();
+        const k = 60;
+
+        this.addToRrfMap(rrfMap, vectorResults, k);
+        this.addToRrfMap(rrfMap, keywordResults, k, 0.5);
+
+        return this.mergeAndSortRrfResults(rrfMap, limit);
+    }
+
+    private static addToRrfMap(
+        rrfMap: Map<string, { doc: SearchResult; score: number }>,
+        results: SearchResult[],
+        k: number,
+        defaultScore: number = 0
+    ): void {
+        results.forEach((doc, idx) => {
+            const rank = idx + 1;
+            const rrfWeight = 1 / (k + rank);
+            const existing = rrfMap.get(doc.id);
+            if (existing) {
+                existing.score += rrfWeight;
+            } else {
+                rrfMap.set(doc.id, {
+                    doc,
+                    score: rrfWeight + defaultScore
+                });
+            }
+        });
+    }
+
+    private static mergeAndSortRrfResults(
+        rrfMap: Map<string, { doc: SearchResult; score: number }>,
+        limit: number
+    ): SearchResult[] {
+        return Array.from(rrfMap.values())
+            .sort((a, b) => b.score - a.score)
+            .slice(0, limit)
+            .map(item => {
+                item.doc.score = item.score;
+                return item.doc;
+            });
     }
 
     /**
@@ -346,41 +354,58 @@ export class VectorService {
     }
 
     static async backfillMissingEmbeddings(batchSize = 50): Promise<{ processed: number; failed: number; aborted?: string }> {
+        const result = await this.processEmbeddingBatch(batchSize);
+        if (result.processed || result.failed) {
+            logger.info(`Embedding backfill: ${result.processed} embedded, ${result.failed} failed`);
+        }
+        return result;
+    }
+
+    private static async processEmbeddingBatch(batchSize: number): Promise<{ processed: number; failed: number; aborted?: string }> {
         let processed = 0;
-        let failed = 0;
+        const failed: number[] = [];
         let aborted: string | undefined;
         try {
-            const res = await query(
-                `SELECT id, title, content, category, tags, crops, regions, source, source_url, content_type
-                   FROM knowledge_articles WHERE embedding IS NULL ORDER BY created_at ASC LIMIT $1`,
-                [batchSize]
-            );
-            for (const row of res.rows as Array<Record<string, unknown>>) {
+            const rows = await this.fetchRowsMissingEmbeddings(batchSize);
+            for (const row of rows) {
                 try {
-                    await this.upsertDocument(String(row.id), String(row.content || ''), {
-                        title: row.title,
-                        category: row.category,
-                        tags: row.tags || [],
-                        crops: row.crops || [],
-                        regions: row.regions || [],
-                        source: row.source || null,
-                        sourceUrl: row.source_url || null,
-                        contentType: row.content_type || 'text',
-                    });
+                    await this.processSingleEmbedding(row);
                     processed++;
-                } catch (err) {
-                    failed++;
-                    if ((err as Error)?.name === 'EmbeddingDimensionError') {
-                        aborted = (err as Error).message;
-                        logger.error(`Embedding backfill aborted: ${aborted}`);
-                        break;
-                    }
+                } catch {
+                    failed.push(1);
                 }
             }
         } catch (err) {
             logger.warn('Embedding backfill query failed:', err);
         }
-        if (processed || failed) logger.info(`Embedding backfill: ${processed} embedded, ${failed} failed`);
-        return { processed, failed, aborted };
+        return { processed, failed: failed.length, aborted };
+    }
+
+    private static async fetchRowsMissingEmbeddings(batchSize: number): Promise<Array<Record<string, unknown>>> {
+        const res = await query(
+            `SELECT id, title, content, category, tags, crops, regions, source, source_url, content_type
+               FROM knowledge_articles WHERE embedding IS NULL ORDER BY created_at ASC LIMIT $1`,
+            [batchSize]
+        );
+        return res.rows as Array<Record<string, unknown>>;
+    }
+
+    private static async processSingleEmbedding(row: Record<string, unknown>): Promise<void> {
+        try {
+            await this.upsertDocument(String(row.id), String(row.content || ''), {
+                title: row.title,
+                category: row.category,
+                tags: row.tags || [],
+                crops: row.crops || [],
+                regions: row.regions || [],
+                source: row.source || null,
+                sourceUrl: row.source_url || null,
+                contentType: row.content_type || 'text',
+            });
+        } catch (err) {
+            if ((err as Error)?.name === 'EmbeddingDimensionError') {
+                throw err;
+            }
+        }
     }
 }
