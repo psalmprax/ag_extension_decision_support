@@ -54,16 +54,59 @@ function loadAllowlist(file) {
   return parsed;
 }
 
-function runAudit(dir) {
-  const res = spawnSync('npm', ['audit', '--json'], { cwd: dir, encoding: 'utf8' });
-  if (res.error) throw new Error(`Failed to run npm audit: ${res.error.message}`);
-  let parsed;
-  try {
-    parsed = JSON.parse(res.stdout);
-  } catch (err) {
-    throw new Error(`npm audit produced unparseable output (exit ${res.status}): ${res.stdout.slice(0, 400)}`);
+function sleepSync(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+function runAudit(dir, maxRetries = 3) {
+  let attempt = 0;
+  while (true) {
+    attempt++;
+    const res = spawnSync('npm', ['audit', '--json'], { cwd: dir, encoding: 'utf8' });
+    if (res.error) {
+      if (attempt <= maxRetries) {
+        console.warn(`[npm-audit-gate] npm audit execution error (${res.error.message}), retry ${attempt}/${maxRetries} in ${attempt * 2}s...`);
+        sleepSync(attempt * 2000);
+        continue;
+      }
+      throw new Error(`Failed to run npm audit: ${res.error.message}`);
+    }
+
+    let parsed;
+    try {
+      parsed = JSON.parse(res.stdout);
+    } catch (err) {
+      if (attempt <= maxRetries) {
+        console.warn(`[npm-audit-gate] npm audit produced unparseable output (exit ${res.status}), retry ${attempt}/${maxRetries} in ${attempt * 2}s...`);
+        sleepSync(attempt * 2000);
+        continue;
+      }
+      throw new Error(`npm audit produced unparseable output (exit ${res.status}): ${res.stdout.slice(0, 400)}`);
+    }
+
+    if (parsed.error) {
+      const errMsg = typeof parsed.error === 'object'
+        ? (parsed.error.summary || parsed.error.detail || JSON.stringify(parsed.error))
+        : String(parsed.error);
+      if (attempt <= maxRetries) {
+        console.warn(`[npm-audit-gate] npm audit registry error (${errMsg}), retry ${attempt}/${maxRetries} in ${attempt * 2}s...`);
+        sleepSync(attempt * 2000);
+        continue;
+      }
+      throw new Error(`npm audit registry endpoint error: ${errMsg}`);
+    }
+
+    if (!parsed.vulnerabilities && !parsed.metadata) {
+      if (attempt <= maxRetries) {
+        console.warn(`[npm-audit-gate] unexpected audit output structure, retry ${attempt}/${maxRetries} in ${attempt * 2}s...`);
+        sleepSync(attempt * 2000);
+        continue;
+      }
+      throw new Error(`npm audit returned payload missing vulnerabilities and metadata: ${res.stdout.slice(0, 400)}`);
+    }
+
+    return parsed;
   }
-  return parsed;
 }
 
 function advisoryIdsOf(vuln) {
@@ -109,7 +152,7 @@ function main() {
       errors.push(`Allowlist entry for "${name}" EXPIRED on ${entry.expires}. Re-evaluate: ${entry.reason}`);
     }
     exemptPackages.add(name);
-    usedEntries.add(entry.package + (entry.scope ? `@${entry.scope}` : ''));
+    usedEntries.add(entry);
   }
 
   // Pass 2: propagate exemption to packages vulnerable only through exempt deps.
@@ -122,7 +165,13 @@ function main() {
       const vias = vuln.via || [];
       const directIds = advisoryIdsOf(vuln);
       const allViasExempt = vias.every((via) =>
-        typeof via === 'object' ? directIds.every((id) => isAllowlisted(name, [id], allowlist.entries, scope)) : exemptPackages.has(via)
+        typeof via === 'object'
+          ? directIds.every((id) => {
+              const e = isAllowlisted(name, [id], allowlist.entries, scope);
+              if (e) usedEntries.add(e);
+              return !!e;
+            })
+          : exemptPackages.has(via)
       );
       if (vias.length > 0 && allViasExempt) {
         exemptPackages.add(name);
@@ -142,7 +191,7 @@ function main() {
   // Stale entries: allowlisted but not present in the audit output → remove them.
   for (const entry of allowlist.entries) {
     if (Array.isArray(entry.scope) && !entry.scope.includes(scope)) continue;
-    if (!usedEntries.has(entry.package + (entry.scope ? `@${entry.scope}` : ''))) {
+    if (!usedEntries.has(entry)) {
       errors.push(`Stale allowlist entry for "${entry.package}" — advisory no longer reported. Remove it from scripts/audit-allowlist.json`);
     }
   }

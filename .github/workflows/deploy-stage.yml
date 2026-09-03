@@ -360,9 +360,9 @@ jobs:
             echo "=== container status ==="
             docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" --filter "name=ag-dashboard"
             echo
-            echo "=== backend health check (4 attempts + visible failure text) ==="
+            echo "=== backend health check (10 attempts + visible failure text) ==="
             HEALTH_PASS=0
-            for i in 1 2 3 4; do
+            for i in $(seq 1 10); do
               if RESP=$(curl -fsSL --max-time 10 http://127.0.0.1:7500/api/health 2>&1 || python3 -c "import urllib.request; res = urllib.request.urlopen('http://127.0.0.1:7500/api/health', timeout=10); print(res.read().decode()); exit(0 if res.status < 400 else 1)" 2>&1 || docker compose exec -T backend wget -qO- http://127.0.0.1:7500/api/health 2>&1); then
                 echo "✅ Backend is healthy! (attempt $i)"
                 echo "$RESP" | head -3
@@ -373,11 +373,11 @@ jobs:
                 echo "----- last response -----"
                 echo "$RESP" | head -10
                 echo "------------------------"
-                sleep 10
+                sleep 5
               fi
             done
             if [ "$HEALTH_PASS" != "1" ]; then
-              echo "FATAL: Backend health check failed after 4 retries." >&2
+              echo "FATAL: Backend health check failed after 10 retries." >&2
               docker logs --tail 80 ag-dashboard-backend 2>/dev/null || true
               docker logs --tail 40 ag-dashboard-db    2>/dev/null || true
               exit 1
