@@ -1,5 +1,12 @@
 import { OmniRouteService } from '../services/omniRouteService';
 
+jest.mock('../services/aiProvider/providers/ollama', () => ({
+  OllamaProvider: jest.fn().mockImplementation(() => ({
+    isConfigured: () => true,
+    generateText: jest.fn().mockRejectedValue(new Error('Ollama unavailable in test')),
+  })),
+}));
+
 describe('OmniRouteService (Ported from money_time_revenue)', () => {
   it('should reject when no candidate model can serve the request', async () => {
     const messages = [{ role: 'user', content: 'What treatment is recommended for maize leaf blight?' }];

@@ -2,6 +2,7 @@
   "entries": [
     {
       "package": "extract-zip",
+      "scope": ["ag_extension_decision_support"],
       "advisories": ["GHSA-jmr9-qjv8-65gv"],
       "reason": "Development-only transitive dependency of @opengsd/gsd-pi; npm reports no patched version. Re-evaluate when upstream releases a fix or before this expiry.",
       "expires": "2026-12-31"
