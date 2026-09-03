@@ -350,11 +350,16 @@ class AIProcessingService:
     def _parse_analysis_response(region: str, data_type: str, time_period: str, text: str) -> AnalysisResult:
         """Parse AI text response into structured AnalysisResult"""
 
-        risk_level = "medium"
-        if "high risk" in text.lower() or "critical" in text.lower():
+        # Risk level is only asserted when the model states it; otherwise 'unknown'.
+        lowered = text.lower()
+        if "high risk" in lowered or "critical" in lowered:
             risk_level = "high"
-        elif "low risk" in text.lower() or "minimal" in text.lower():
+        elif "low risk" in lowered or "minimal" in lowered:
             risk_level = "low"
+        elif "medium risk" in lowered or "moderate" in lowered:
+            risk_level = "medium"
+        else:
+            risk_level = "unknown"
 
         recommendations = []
         for line in text.split('\n'):
@@ -362,16 +367,13 @@ class AIProcessingService:
             if line and any(keyword in line.lower() for keyword in ['recommend', 'suggest', 'consider', 'should']):
                 recommendations.append(line)
 
-        if not recommendations:
-            recommendations = [
-                "Monitor weather conditions regularly",
-                "Check soil moisture levels",
-                "Review market prices before selling"
-            ]
-
-        # Confidence reflects how much structure was extracted from the model output.
-        # This is an AI interpretation over a general context — no farm-level data is ingested.
-        confidence = 0.85 if recommendations and len(recommendations) > 2 else 0.6
+        # No canned fallbacks: if the model produced no actionable lines we say so.
+        # Confidence is a parse-quality signal over a general (non farm-specific)
+        # context, so it is deliberately capped low.
+        if recommendations:
+            confidence = 0.6 if len(recommendations) > 2 else 0.4
+        else:
+            confidence = 0.2
 
         return AnalysisResult(
             region=region,
@@ -381,11 +383,11 @@ class AIProcessingService:
                 "analysis": text[:500] + "..." if len(text) > 500 else text,
                 "note": "General agronomic interpretation only — no farm-level telemetry ingested for this request.",
             },
-            recommendations=recommendations[:5],
+            recommendations=recommendations[:5] if recommendations else ["No specific recommendations could be extracted from the model output — request a targeted analysis with farm data."],
             risk_level=risk_level,
             confidence=confidence,
             generated_at=datetime.utcnow().isoformat(),
-            data_sources=["ai_interpretation"]
+            data_sources=["ai_interpretation_general_context_no_farm_data"]
         )
 
     @staticmethod
@@ -737,9 +739,21 @@ async def handle_report(params: Dict[str, Any]) -> Dict[str, Any]:
 
 async def handle_stealth_scrape(params: Dict[str, Any]) -> Dict[str, Any]:
     """Handle stealth scraping task for tropical data retrieval"""
-    platform = params.get("platform", "facebook")
+    from tools.cloakbrowser.cloak_platform_config import get_platform_config, CLOAK_PLATFORMS
+    platform = params.get("platform", "cabi_plantwise")
     niche = params.get("niche", "agriculture")
     region = params.get("region", "Kenya")
+
+    if not get_platform_config(platform):
+        return {
+            "success": False,
+            "error": f"Unknown scrape platform '{platform}'. Known: {sorted(CLOAK_PLATFORMS.keys())}",
+            "platform": platform,
+            "niche": niche,
+            "region": region,
+            "results": [],
+            "count": 0,
+        }
 
     try:
         scanner = CloakBrowserScanner(platform=platform)

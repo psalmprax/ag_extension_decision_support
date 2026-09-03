@@ -106,9 +106,9 @@ export function Demo() {
                   </div>
                   <div>
                     <div className="text-sm font-bold text-white/90 flex items-center gap-2">
-                      Real-World Agronomic Intelligence Trail
-                      <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
-                        Verified
+                      Agronomic Intelligence Trail
+                      <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/25">
+                        Illustrative sample
                       </span>
                     </div>
                     <div className="text-xs text-white/50">
@@ -118,8 +118,8 @@ export function Demo() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-xs font-medium text-white/60">
-                  <Activity className="w-4 h-4 text-emerald-400 animate-pulse" />
-                  <span>Telemetry Live</span>
+                  <Activity className="w-4 h-4 text-white/40" />
+                  <span>Example values — not a live feed</span>
                 </div>
               </div>
 
@@ -172,7 +172,7 @@ export function Demo() {
               className="mt-10 pt-8 border-t border-white/[0.06] grid grid-cols-2 sm:grid-cols-4 gap-6 text-center"
             >
               {[
-                { title: 'FAOSTAT Integrated', sub: 'Verified Agro Standards', target: '#capabilities' },
+                { title: 'FAOSTAT Integrated', sub: 'Production & price statistics', target: '#capabilities' },
                 { title: 'Voice Synthesis', sub: 'Automated Visit Logs', target: '#features' },
                 { title: 'Multi-District', sub: 'Climatic Zone Profiling', target: '#agent-os' },
                 { title: 'Encrypted Store', sub: 'Tamper-Proof Records', target: '#faq' },

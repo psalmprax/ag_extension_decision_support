@@ -13,8 +13,13 @@ interface JWTPayload {
     role: string;
 }
 
-// Refresh token
-router.post('/refresh', (req: Request, res: Response) => {
+// Refresh token.
+// Accepts a token that expired up to REFRESH_GRACE_SECONDS ago so a client that
+// was offline through expiry can recover its session without re-login, provided
+// the underlying session was never revoked. Issues a fresh token + session row.
+const REFRESH_GRACE_SECONDS = 7 * 24 * 3600;
+
+router.post('/refresh', async (req: Request, res: Response) => {
     try {
         const { token } = req.body;
 
@@ -25,8 +30,18 @@ router.post('/refresh', (req: Request, res: Response) => {
             });
         }
 
-        // Verify and refresh token
-        const decoded = jwt.verify(token, config.jwt.secret as jwt.Secret) as JWTPayload;
+        const decoded = jwt.verify(token, config.jwt.secret as jwt.Secret, { ignoreExpiration: true }) as JWTPayload & { exp?: number; mfaPending?: boolean };
+        if (decoded.mfaPending) {
+            return res.status(401).json({ success: false, error: 'MFA challenge tokens cannot be refreshed' });
+        }
+        if (decoded.exp && decoded.exp * 1000 + REFRESH_GRACE_SECONDS * 1000 < Date.now()) {
+            return res.status(401).json({ success: false, error: 'Token expired beyond refresh window; please log in again' });
+        }
+
+        const { isSessionValid, createSession, revokeToken } = await import('@/services/sessionService');
+        if (!(await isSessionValid(token))) {
+            return res.status(401).json({ success: false, error: 'Session has been revoked' });
+        }
 
         const newToken = jwt.sign(
             { userId: decoded.userId, email: decoded.email, role: decoded.role },
@@ -34,12 +49,25 @@ router.post('/refresh', (req: Request, res: Response) => {
             { expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
         );
 
+        // Rotate: the old token is retired locally and a new session row is recorded.
+        revokeToken(token);
+        try {
+            await createSession({
+                userId: decoded.userId,
+                token: newToken,
+                ipAddress: req.ip ?? null,
+                userAgent: req.get('user-agent') ?? null,
+            });
+        } catch (sessionErr) {
+            logger.warn('Refresh: failed to record rotated session (continuing):', sessionErr);
+        }
+
         res.json({
             success: true,
             data: { token: newToken },
         });
     } catch (error) {
-        logger.error('Token refresh error:', error);
+        logger.warn('Token refresh rejected:', error instanceof Error ? error.message : error);
         res.status(401).json({ success: false, error: 'Invalid token' });
     }
 });

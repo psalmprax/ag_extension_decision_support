@@ -50,8 +50,13 @@ export class HuggingFaceProvider extends BaseAIProvider {
     if (!this.isConfigured()) return false;
     try {
       await axios.post(`${this.baseUrl}/chat/completions`, { model: 'meta-llama/Llama-3.1-8B-Instruct', messages: [{ role: 'user', content: 'ping' }], max_tokens: 2 }, { headers: { Authorization: `Bearer ${this.getApiKey()}` }, timeout: 3000 });
+      this.recordHealthError();
       return true;
-    } catch { return this.isConfigured(); }
+    } catch (err) {
+      const status = (err as { response?: { status?: number } }).response?.status;
+      this.recordHealthError(status ? `HTTP ${status}` : (err as Error).message);
+      return false;
+    }
   }
 
   public override async generateText(prompt: string | Array<{ role: string; content: string }>, options?: TextGenerationOptions): Promise<TextGenerationResult> {

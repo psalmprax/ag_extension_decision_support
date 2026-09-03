@@ -14,7 +14,7 @@ export type AuthRequest = Request;
  * Checks if the user has the required role(s)
  */
 export const authorize = (allowedRoles: UserRole[]) => {
-    return (req: Request, res: Response, next: NextFunction): void => {
+    return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             // Get token from Authorization header
             const authHeader = req.headers.authorization;
@@ -35,8 +35,8 @@ export const authorize = (allowedRoles: UserRole[]) => {
                 role: UserRole;
             };
 
-            // Check if session has been revoked
-            const sessionActive = isSessionValid(token);
+            // Check if session has been revoked (DB-backed; see sessionService)
+            const sessionActive = await isSessionValid(token);
             if (!sessionActive) {
                 res.status(401).json({
                     success: false,

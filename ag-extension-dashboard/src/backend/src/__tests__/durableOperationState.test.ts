@@ -539,6 +539,7 @@ describe('Durable operation-state routes (DB-backed)', () => {
         it('consumes the pending payment and activates the subscription', async () => {
             prisma.pendingPaypalPayment.findUnique.mockResolvedValue({
                 paymentId: 'PAYID-TEST-1',
+                userId: USER_ID,
                 planId: PLAN_ID,
                 amount: 19.99,
                 expiresAt: new Date(Date.now() + 3600_000),
@@ -560,6 +561,26 @@ describe('Durable operation-state routes (DB-backed)', () => {
                     data: expect.objectContaining({ amount: 19.99, paymentMethod: 'paypal', transactionId: 'PAYID-TEST-1' }),
                 })
             );
+        });
+
+        it('refuses to bind the plan when the return URL is replayed by a different user', async () => {
+            prisma.pendingPaypalPayment.findUnique.mockResolvedValue({
+                paymentId: 'PAYID-TEST-1',
+                userId: '11111111-2222-3333-4444-555555555555', // the actual payer
+                planId: PLAN_ID,
+                amount: 19.99,
+                expiresAt: new Date(Date.now() + 3600_000),
+            });
+
+            const response = await request(app)
+                .get('/api/v1/billing/paypal/success')
+                .query({ paymentId: 'PAYID-TEST-1', PayerID: 'PAYER-1' })
+                .set('Authorization', `Bearer ${token}`); // token belongs to USER_ID, not the payer
+
+            expect(response.status).toBe(302);
+            expect(response.headers.location).toContain('error=payer_mismatch');
+            expect(prisma.subscription.upsert).not.toHaveBeenCalled();
+            expect(prisma.payment.create).not.toHaveBeenCalled();
         });
 
         it('redirects with plan_not_found when no pending row exists', async () => {

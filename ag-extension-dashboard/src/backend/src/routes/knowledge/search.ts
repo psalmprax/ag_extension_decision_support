@@ -10,6 +10,9 @@ import {
   mapCountRow,
 } from '@/types/dtos';
 import { logger } from '@/utils/logger';
+import { z } from 'zod';
+import { validate } from '@/middleware/validate';
+import { knowledgeSearchSchema } from '@/shared-api/knowledge';
 import { tavilyService } from '@/services/tavilyService';
 import { SearchResult } from '@/services/vectorService';
 import type { Citation } from '@/services/ragV2Service';
@@ -106,9 +109,20 @@ async function fetchKnowledgeArticles(q: unknown, limit: unknown, offset: unknow
 }
 
 // Search knowledge base
-router.get('/search', async (req: Request, res: Response) => {
+// Query contract = shared `knowledgeSearchSchema` (uses `query`), with the legacy `q` alias.
+// Both `query` (canonical) and `q` (legacy) are optional: no term = browse/list mode.
+const knowledgeSearchQuery = knowledgeSearchSchema
+  .extend({ q: z.string().max(500).optional(), v2: z.union([z.boolean(), z.string()]).optional() });
+
+router.get('/search', validate({ query: knowledgeSearchQuery }), async (req: Request, res: Response) => {
     try {
-        const { q, category, crop, limit = '10', offset = '0', v2 } = req.query;
+        const qv = req.query as unknown as z.infer<typeof knowledgeSearchQuery>;
+        const q = qv.query ?? qv.q;
+        const category = qv.category;
+        const crop = qv.crop;
+        const limit = String(qv.limit ?? 10);
+        const offset = String(qv.offset ?? 0);
+        const v2 = qv.v2;
 
         const cacheKey = 'knowledge:search:' + q + ':' + category + ':' + crop + ':' + limit + ':' + offset + ':' + (v2 || 'false');
         const cached = await cacheGet(cacheKey);
@@ -328,7 +342,9 @@ router.post('/ask', async (req: Request, res: Response) => {
             });
             citations = enhanced.citations;
         } catch (ragErr) {
-            // Non-fatal
+            // Non-fatal for the answer, but never silent: an empty citation list is
+            // otherwise indistinguishable from "retrieval found nothing".
+            logger.warn('RAG v2 citation retrieval failed for /knowledge/ask; evidenceStatus will reflect zero citations:', ragErr);
         }
 
         const remainingAfter = userRole === 'admin' ? 999999 : Math.max(0, dailyQuota.remaining - 1);

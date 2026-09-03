@@ -25,6 +25,11 @@ model User {
   isActive      Boolean?           @default(true) @map("is_active")
   resetToken    String?            @map("reset_token") @db.VarChar(255)
   resetTokenExpires DateTime?      @map("reset_token_expires") @db.Timestamp(6)
+  emailVerified            Boolean   @default(false) @map("email_verified")
+  emailVerificationToken   String?   @map("email_verification_token") @db.VarChar(255)
+  emailVerificationExpires DateTime? @map("email_verification_expires") @db.Timestamp(6)
+  lastTotpStep             BigInt?   @map("last_totp_step")
+  auditLogs                AuditLog[]
   createdAt     DateTime?          @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt     DateTime?          @default(now()) @map("updated_at") @db.Timestamp(6)
   farmers       Farmer[]
@@ -366,6 +371,30 @@ model Report {
   @@map("reports")
 }
 
+/// Immutable record of privileged / sensitive mutations (who did what to which
+/// resource, from where, with what outcome). Written by auditMiddleware.
+model AuditLog {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorId      String?   @map("actor_id") @db.Uuid
+  actorRole    String?   @map("actor_role") @db.VarChar(50)
+  action       String    @db.VarChar(120)
+  method       String    @db.VarChar(10)
+  path         String    @db.VarChar(512)
+  resourceType String?   @map("resource_type") @db.VarChar(80)
+  resourceId   String?   @map("resource_id") @db.VarChar(120)
+  statusCode   Int       @map("status_code")
+  ipAddress    String?   @map("ip_address") @db.VarChar(64)
+  userAgent    String?   @map("user_agent") @db.VarChar(512)
+  requestBody  Json?     @map("request_body")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  actor        User?     @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId, createdAt])
+  @@index([action, createdAt])
+  @@index([resourceType, resourceId])
+  @@map("audit_logs")
+}
+
 model AnalyticsEvent {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   eventType String    @map("event_type") @db.VarChar(100)
@@ -468,6 +497,9 @@ model Usage {
   smsCount        Int          @default(0) @map("sms_count")
   aiChatCount     Int          @default(0) @map("ai_chat_count")
   reportCount     Int          @default(0) @map("report_count")
+  aiVisionCount   Int          @default(0) @map("ai_vision_count")
+  speechCount     Int          @default(0) @map("speech_count")
+  whatsappCount   Int          @default(0) @map("whatsapp_count")
   lastResetAt     DateTime     @default(now()) @map("last_reset_at") @db.Timestamp(6)
   createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt       DateTime     @default(now()) @map("updated_at") @db.Timestamp(6)

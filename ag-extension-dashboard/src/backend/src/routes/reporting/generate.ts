@@ -30,6 +30,13 @@ interface ReportContent {
     officerId?: string | null;
     cropType?: string | null;
   };
+  // knowledge_factsheet: the advisory text being exported plus its sources
+  factsheet?: {
+    question?: string | null;
+    body: string;
+    citations?: string[];
+    sourceNote: string;
+  };
   // Disease diagnosis fields
   overallHealth?: 'healthy' | 'stressed' | 'diseased' | 'unknown';
   confidence?: number;
@@ -69,8 +76,27 @@ interface ReportContent {
   cropSuitability?: string[];
 }
 
+const SUPPORTED_REPORT_TYPES = new Set(['visit_summary', 'activity_report', 'impact_metrics', 'knowledge_factsheet']);
+
 async function generateReportData(type: string, effectiveStartDate: string, effectiveEndDate: string, officerId: string | undefined, region: string | undefined, title: string | undefined, req: AuthRequest, res: Response) {
     const reportData: Partial<ReportContent> = {};
+
+    if (type === 'knowledge_factsheet') {
+        const body = typeof req.body?.content === 'string' ? req.body.content.trim() : '';
+        if (!body) {
+            return res.status(400).json({ success: false, error: 'knowledge_factsheet requires a non-empty `content` field' });
+        }
+        const citations = Array.isArray(req.body?.citations) ? req.body.citations.map(String).slice(0, 20) : [];
+        reportData.factsheet = {
+            question: typeof req.body?.question === 'string' ? req.body.question.slice(0, 500) : null,
+            body: body.slice(0, 20000),
+            citations,
+            sourceNote: citations.length
+                ? 'AI-generated advisory grounded in the cited knowledge-base articles. Verify locally before acting.'
+                : 'AI-generated advisory without knowledge-base citations. Treat as general guidance only.',
+        };
+    }
+
     if (type === 'visit_summary' || type === 'activity_report') {
         const visitResult = await query<VisitStatsRow>(`
             SELECT COUNT(*) as total,
@@ -146,9 +172,21 @@ async function generateReportData(type: string, effectiveStartDate: string, effe
 }
 
 // Generate report
-router.post('/generate', checkUsageLimit('report'), async (req: AuthRequest, res: Response) => {
+router.post('/generate', checkUsageLimit('report', { meter: false }), async (req: AuthRequest, res: Response) => {
     try {
-        const { type, startDate, endDate, officerId, region, title } = req.body;
+        const { type, startDate, endDate, region, title } = req.body;
+        if (!SUPPORTED_REPORT_TYPES.has(String(type))) {
+            return res.status(400).json({
+                success: false,
+                error: `Unsupported report type "${type}". Supported: ${Array.from(SUPPORTED_REPORT_TYPES).join(', ')}`,
+            });
+        }
+        // officerId defaults to the authenticated user; do NOT accept it from the
+        // request body — that would allow callers (including farmer) to mint reports
+        // as any other officer.  If no officer is authenticated, fall back to the
+        // JWT subject (req.user!.userId).
+        const officerId = req.user!.userId;
+
         const pool = getPool();
 
         if (!pool) {

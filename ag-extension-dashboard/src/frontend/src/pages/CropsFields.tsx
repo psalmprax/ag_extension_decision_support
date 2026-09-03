@@ -9,7 +9,6 @@ import {
   Loader2,
 } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
-import { useLanguage } from '../lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '../store/useAppStore';
 import {
@@ -33,7 +32,6 @@ import { GrowthCycleModal } from '@/components/crops/GrowthCycleModal';
 import { HarvestModal } from '@/components/crops/HarvestModal';
 
 export function CropsFields() {
-  const { t: _t } = useLanguage();
   const { radiusClass, btnClass, cardClass } = useThemeClasses();
   const { addNotification, user } = useAppStore();
   const { isDemo } = useDemoMode();

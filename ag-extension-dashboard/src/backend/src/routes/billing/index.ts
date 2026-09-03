@@ -7,6 +7,7 @@ import paypalRouter from './paypal';
 import voucherRouter from './voucher';
 import transactionsRouter from './transactions';
 import webhookRouter from './webhook';
+import mpesaRouter from './mpesa';
 
 const router = Router();
 
@@ -21,5 +22,6 @@ router.use(paypalRouter);
 router.use(voucherRouter);
 router.use(transactionsRouter);
 router.use(webhookRouter);
+router.use('/mpesa', mpesaRouter);
 
 export default router;

@@ -45,6 +45,17 @@ describe('data governance contracts', () => {
       .resolves.toMatchObject({ id: 'farmer-1' });
   });
 
+  it('rejects an upload that would exceed the per-user storage quota before scanning or writing', async () => {
+    queryMock.mockResolvedValueOnce({ rows: [{ used: String(500 * 1024 * 1024) }] });
+    await expect(saveUpload({
+      buffer: Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.from('image')]),
+      originalName: 'photo.png',
+      mimeType: 'image/png',
+      ownerUserId: 'officer-1',
+    })).rejects.toThrow(/Storage quota exceeded/);
+    expect(queryMock).toHaveBeenCalledTimes(1); // no INSERT after the quota rejection
+  });
+
   it('rejects a PNG whose bytes do not match the declared MIME type', async () => {
     await expect(saveUpload({
       buffer: Buffer.from('not a png'),
@@ -56,7 +67,10 @@ describe('data governance contracts', () => {
   });
 
   it('stores a content-validated upload with an opaque key', async () => {
-    queryMock.mockResolvedValueOnce({ rows: [{ id: 'upload-1', tenant_id: 'tenant-a' }] });
+    // 1) per-user quota lookup  2) insert of the upload record
+    queryMock
+      .mockResolvedValueOnce({ rows: [{ used: 0 }] })
+      .mockResolvedValueOnce({ rows: [{ id: 'upload-1', tenant_id: 'tenant-a' }] });
     const result = await saveUpload({
       buffer: Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.from('image')]),
       originalName: '../../field photo.png',

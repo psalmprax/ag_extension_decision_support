@@ -1419,6 +1419,14 @@
         "documentation": {}
     },
     {
+        "label": "Path",
+        "importPath": "pathlib",
+        "description": "pathlib",
+        "isExtraImport": true,
+        "detail": "pathlib",
+        "documentation": {}
+    },
+    {
         "label": "paramiko",
         "kind": 6,
         "isExtraImport": true,
@@ -1434,6 +1442,24 @@
         "importPath": "shutil",
         "description": "shutil",
         "detail": "shutil",
+        "documentation": {}
+    },
+    {
+        "label": "pytest",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "pytest",
+        "description": "pytest",
+        "detail": "pytest",
+        "documentation": {}
+    },
+    {
+        "label": "crew_main",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "crew_main",
+        "description": "crew_main",
+        "detail": "crew_main",
         "documentation": {}
     },
     {
@@ -2826,15 +2852,6 @@
         "documentation": {}
     },
     {
-        "label": "pytest",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "pytest",
-        "description": "pytest",
-        "detail": "pytest",
-        "documentation": {}
-    },
-    {
         "label": "open_gsd_hermes",
         "kind": 6,
         "isExtraImport": true,
@@ -3949,6 +3966,105 @@
         "documentation": {}
     },
     {
+        "label": "_Transport",
+        "kind": 6,
+        "importPath": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "description": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "peekOfCode": "class _Transport(httpx.MockTransport):\n    \"\"\"Records the last request so tests can assert the wire contract.\"\"\"\n    def __init__(self, handler):\n        self.last_request = None\n        def wrapped(request: httpx.Request) -> httpx.Response:\n            self.last_request = request\n            return handler(request)\n        super().__init__(wrapped)\n@pytest.fixture\ndef patch_client(monkeypatch):",
+        "detail": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "documentation": {}
+    },
+    {
+        "label": "patch_client",
+        "kind": 2,
+        "importPath": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "description": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "peekOfCode": "def patch_client(monkeypatch):\n    \"\"\"Route httpx.Client(...) through a MockTransport.\"\"\"\n    def _install(handler):\n        transport = _Transport(handler)\n        def fake_client(*args, **kwargs):\n            kwargs[\"transport\"] = transport\n            return _REAL_CLIENT(*args, **kwargs)\n        monkeypatch.setattr(crew_main.httpx, \"Client\", fake_client)\n        return transport\n    return _install",
+        "detail": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "documentation": {}
+    },
+    {
+        "label": "test_call_mcp_tool_uses_tools_call_route_and_parses_content",
+        "kind": 2,
+        "importPath": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "description": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "peekOfCode": "def test_call_mcp_tool_uses_tools_call_route_and_parses_content(patch_client):\n    def handler(request: httpx.Request) -> httpx.Response:\n        assert request.url.path == \"/api/v1/mcp/tools/call\"\n        assert request.method == \"POST\"\n        assert request.headers[\"authorization\"] == \"Bearer svc-token\"\n        body = request.read().decode()\n        assert '\"name\": \"get_weather_forecast\"' in body or '\"name\":\"get_weather_forecast\"' in body\n        return httpx.Response(200, json={\"success\": True, \"data\": {\"content\": [{\"type\": \"text\", \"text\": \"Sunny, 25C\"}]}})\n    transport = patch_client(handler)\n    out = crew_main.call_mcp_tool(\"get_weather_forecast\", {\"location\": \"Nakuru\", \"days\": 3})",
+        "detail": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "documentation": {}
+    },
+    {
+        "label": "test_call_mcp_tool_surfaces_auth_and_route_errors",
+        "kind": 2,
+        "importPath": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "description": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "peekOfCode": "def test_call_mcp_tool_surfaces_auth_and_route_errors(patch_client):\n    patch_client(lambda r: httpx.Response(401, json={\"success\": False}))\n    with pytest.raises(crew_main.MCPToolError, match=\"401\"):\n        crew_main.call_mcp_tool(\"get_market_prices\", {})\n    patch_client(lambda r: httpx.Response(404, json={\"success\": False}))\n    with pytest.raises(crew_main.MCPToolError, match=\"404\"):\n        crew_main.call_mcp_tool(\"get_market_prices\", {})\ndef test_call_mcp_tool_treats_isError_as_failure(patch_client):\n    patch_client(lambda r: httpx.Response(200, json={\"success\": True, \"data\": {\"isError\": True, \"content\": [{\"type\": \"text\", \"text\": \"boom\"}]}}))\n    with pytest.raises(crew_main.MCPToolError, match=\"boom\"):",
+        "detail": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "documentation": {}
+    },
+    {
+        "label": "test_call_mcp_tool_treats_isError_as_failure",
+        "kind": 2,
+        "importPath": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "description": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "peekOfCode": "def test_call_mcp_tool_treats_isError_as_failure(patch_client):\n    patch_client(lambda r: httpx.Response(200, json={\"success\": True, \"data\": {\"isError\": True, \"content\": [{\"type\": \"text\", \"text\": \"boom\"}]}}))\n    with pytest.raises(crew_main.MCPToolError, match=\"boom\"):\n        crew_main.call_mcp_tool(\"diagnose_plant_disease\", {\"symptoms\": [\"spots\"]})\ndef test_tool_result_never_fabricates_on_failure(patch_client, monkeypatch):\n    monkeypatch.setattr(crew_main, \"MCP_API_TOKEN\", \"\")\n    text = crew_main._tool_result(\"get_weather_forecast\", {\"location\": \"X\"})\n    assert text.startswith(\"[TOOL UNAVAILABLE: get_weather_forecast]\")\n    assert \"Do not guess\" in text\ndef test_tool_classes_mirror_backend_names_and_arguments(patch_client):",
+        "detail": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "documentation": {}
+    },
+    {
+        "label": "test_tool_result_never_fabricates_on_failure",
+        "kind": 2,
+        "importPath": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "description": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "peekOfCode": "def test_tool_result_never_fabricates_on_failure(patch_client, monkeypatch):\n    monkeypatch.setattr(crew_main, \"MCP_API_TOKEN\", \"\")\n    text = crew_main._tool_result(\"get_weather_forecast\", {\"location\": \"X\"})\n    assert text.startswith(\"[TOOL UNAVAILABLE: get_weather_forecast]\")\n    assert \"Do not guess\" in text\ndef test_tool_classes_mirror_backend_names_and_arguments(patch_client):\n    seen = {}\n    def handler(request: httpx.Request) -> httpx.Response:\n        import json\n        payload = json.loads(request.read().decode())",
+        "detail": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "documentation": {}
+    },
+    {
+        "label": "test_tool_classes_mirror_backend_names_and_arguments",
+        "kind": 2,
+        "importPath": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "description": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "peekOfCode": "def test_tool_classes_mirror_backend_names_and_arguments(patch_client):\n    seen = {}\n    def handler(request: httpx.Request) -> httpx.Response:\n        import json\n        payload = json.loads(request.read().decode())\n        seen[\"payload\"] = payload\n        return httpx.Response(200, json={\"success\": True, \"data\": {\"content\": [{\"type\": \"text\", \"text\": \"ok\"}]}})\n    patch_client(handler)\n    tool = crew_main.DiseaseDiagnosisTool()\n    assert tool.name == \"diagnose_plant_disease\"",
+        "detail": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "documentation": {}
+    },
+    {
+        "label": "test_cloak_scanner_generic_parser_reads_description",
+        "kind": 2,
+        "importPath": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "description": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "peekOfCode": "def test_cloak_scanner_generic_parser_reads_description():\n    from tools.cloakbrowser.cloak_scanner import CloakBrowserScanner\n    from tools.cloakbrowser.cloak_platform_config import get_platform_config\n    scanner = CloakBrowserScanner(scraper_url=\"http://scraper.test\", platform=\"cabi_plantwise\")\n    config = get_platform_config(\"cabi_plantwise\")\n    assert config is not None\n    parser = scanner._get_parser(\"cabi_plantwise\")\n    items = [{\"id\": \"1\", \"url\": \"https://x/1\", \"title\": \"Maize lethal necrosis\", \"description\": \"Symptoms and control\", \"author\": \"CABI\"}]\n    out = parser(items, config, \"maize\", \"KE\")\n    assert len(out) == 1",
+        "detail": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "documentation": {}
+    },
+    {
+        "label": "os.environ[\"MCP_API_TOKEN\"]",
+        "kind": 5,
+        "importPath": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "description": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "peekOfCode": "os.environ[\"MCP_API_TOKEN\"] = \"svc-token\"\nos.environ[\"BACKEND_URL\"] = \"http://backend.test\"\nimport crew_main  # noqa: E402\n# `crew_main.httpx` is the global httpx module; capture the real Client once so\n# successive patches never wrap an earlier fake.\n_REAL_CLIENT = httpx.Client\nclass _Transport(httpx.MockTransport):\n    \"\"\"Records the last request so tests can assert the wire contract.\"\"\"\n    def __init__(self, handler):\n        self.last_request = None",
+        "detail": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "documentation": {}
+    },
+    {
+        "label": "os.environ[\"BACKEND_URL\"]",
+        "kind": 5,
+        "importPath": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "description": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "peekOfCode": "os.environ[\"BACKEND_URL\"] = \"http://backend.test\"\nimport crew_main  # noqa: E402\n# `crew_main.httpx` is the global httpx module; capture the real Client once so\n# successive patches never wrap an earlier fake.\n_REAL_CLIENT = httpx.Client\nclass _Transport(httpx.MockTransport):\n    \"\"\"Records the last request so tests can assert the wire contract.\"\"\"\n    def __init__(self, handler):\n        self.last_request = None\n        def wrapped(request: httpx.Request) -> httpx.Response:",
+        "detail": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "documentation": {}
+    },
+    {
+        "label": "_REAL_CLIENT",
+        "kind": 5,
+        "importPath": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "description": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "peekOfCode": "_REAL_CLIENT = httpx.Client\nclass _Transport(httpx.MockTransport):\n    \"\"\"Records the last request so tests can assert the wire contract.\"\"\"\n    def __init__(self, handler):\n        self.last_request = None\n        def wrapped(request: httpx.Request) -> httpx.Response:\n            self.last_request = request\n            return handler(request)\n        super().__init__(wrapped)\n@pytest.fixture",
+        "detail": "ag-extension-dashboard.src.agents.tests.test_mcp_bridge",
+        "documentation": {}
+    },
+    {
         "label": "TestAgentSecurity",
         "kind": 6,
         "importPath": "ag-extension-dashboard.src.agents.tests.test_security",
@@ -4070,7 +4186,7 @@
         "kind": 6,
         "importPath": "ag-extension-dashboard.src.agents.tools.cloakbrowser.cloak_scanner",
         "description": "ag-extension-dashboard.src.agents.tools.cloakbrowser.cloak_scanner",
-        "peekOfCode": "class CloakBrowserScanner(DiscoveryScannerBase):\n    \"\"\"\n    Scanner that delegates to the containerized discovery-scraper service\n    powered by CloakBrowser + Playwright for stealth browsing.\n    Supports multiple platforms via the platform config registry.\n    \"\"\"\n    def __init__(\n        self,\n        scraper_url: str = \"http://discovery-scraper:8010\",\n        timeout: float = 45.0,",
+        "peekOfCode": "class CloakBrowserScanner(DiscoveryScannerBase):\n    \"\"\"\n    Scanner that delegates to the containerized discovery-scraper service\n    powered by CloakBrowser + Playwright for stealth browsing.\n    Supports multiple platforms via the platform config registry.\n    \"\"\"\n    def __init__(\n        self,\n        scraper_url: Optional[str] = None,\n        timeout: float = 45.0,",
         "detail": "ag-extension-dashboard.src.agents.tools.cloakbrowser.cloak_scanner",
         "documentation": {}
     },
@@ -4088,7 +4204,7 @@
         "kind": 5,
         "importPath": "ag-extension-dashboard.src.agents.tools.cloakbrowser.cloak_scanner",
         "description": "ag-extension-dashboard.src.agents.tools.cloakbrowser.cloak_scanner",
-        "peekOfCode": "_CLOAK_SEMAPHORE = asyncio.Semaphore(3)\nclass CloakBrowserScanner(DiscoveryScannerBase):\n    \"\"\"\n    Scanner that delegates to the containerized discovery-scraper service\n    powered by CloakBrowser + Playwright for stealth browsing.\n    Supports multiple platforms via the platform config registry.\n    \"\"\"\n    def __init__(\n        self,\n        scraper_url: str = \"http://discovery-scraper:8010\",",
+        "peekOfCode": "_CLOAK_SEMAPHORE = asyncio.Semaphore(3)\nclass CloakBrowserScanner(DiscoveryScannerBase):\n    \"\"\"\n    Scanner that delegates to the containerized discovery-scraper service\n    powered by CloakBrowser + Playwright for stealth browsing.\n    Supports multiple platforms via the platform config registry.\n    \"\"\"\n    def __init__(\n        self,\n        scraper_url: Optional[str] = None,",
         "detail": "ag-extension-dashboard.src.agents.tools.cloakbrowser.cloak_scanner",
         "documentation": {}
     },
@@ -4300,11 +4416,20 @@
         "documentation": {}
     },
     {
+        "label": "MCPToolError",
+        "kind": 6,
+        "importPath": "ag-extension-dashboard.src.agents.crew_main",
+        "description": "ag-extension-dashboard.src.agents.crew_main",
+        "peekOfCode": "class MCPToolError(Exception):\n    pass\ndef call_mcp_tool(tool_name: str, arguments: dict) -> str:\n    \"\"\"Synchronously invoke a backend MCP tool and return its text output.\n    Uses a blocking httpx client on purpose: CrewAI executes tool `_run` methods\n    synchronously inside `crew.kickoff()`, which we run in a worker thread — so\n    `asyncio.run()` here would raise \"cannot be called from a running event loop\".\n    \"\"\"\n    if not MCP_API_TOKEN:\n        raise MCPToolError(\"MCP_API_TOKEN is not configured for the Crew AI service\")",
+        "detail": "ag-extension-dashboard.src.agents.crew_main",
+        "documentation": {}
+    },
+    {
         "label": "WeatherTool",
         "kind": 6,
         "importPath": "ag-extension-dashboard.src.agents.crew_main",
         "description": "ag-extension-dashboard.src.agents.crew_main",
-        "peekOfCode": "class WeatherTool(BaseTool):\n    name: str = \"get_weather_forecast\"\n    description: str = \"Get weather forecast for a location. Use this to provide farming advice based on weather.\"\n    def _run(self, location: str, days: int = 3) -> str:\n        import asyncio\n        try:\n            result = asyncio.run(call_mcp_tool(\"get_weather_forecast\", {\"location\": location, \"days\": days}))\n            if \"error\" in result:\n                return f\"Weather forecast for {location} ({days} days): Sunny, 25°C, low humidity. Good for harvesting. [Fallback: {result.get('error', 'MCP unavailable')}]\"\n            data = result.get(\"data\", {})",
+        "peekOfCode": "class WeatherTool(BaseTool):\n    name: str = \"get_weather_forecast\"\n    description: str = \"Get the weather forecast for a location (city or region). Args: location (str), days (int, 1-7).\"\n    def _run(self, location: str, days: int = 3) -> str:\n        return _tool_result(\"get_weather_forecast\", {\"location\": location, \"days\": int(days)})\nclass MarketPriceTool(BaseTool):\n    name: str = \"get_market_prices\"\n    description: str = \"Get latest crop market prices (each row has a dataStatus: live vs estimated). Args: crop (str, optional).\"\n    def _run(self, crop: str = \"\") -> str:\n        args = {\"crop\": crop} if crop else {}",
         "detail": "ag-extension-dashboard.src.agents.crew_main",
         "documentation": {}
     },
@@ -4313,7 +4438,7 @@
         "kind": 6,
         "importPath": "ag-extension-dashboard.src.agents.crew_main",
         "description": "ag-extension-dashboard.src.agents.crew_main",
-        "peekOfCode": "class MarketPriceTool(BaseTool):\n    name: str = \"get_market_prices\"\n    description: str = \"Get current market prices for crops. Use this to advise farmers on when to sell.\"\n    def _run(self, crop: str, region: str = \"East Africa\") -> str:\n        import asyncio\n        try:\n            result = asyncio.run(call_mcp_tool(\"get_market_prices\", {\"crop\": crop, \"region\": region}))\n            if \"error\" in result:\n                return f\"Market price for {crop} in {region}: $350/ton (trending up 5%) [Fallback: {result.get('error', 'MCP unavailable')}]\"\n            data = result.get(\"data\", {})",
+        "peekOfCode": "class MarketPriceTool(BaseTool):\n    name: str = \"get_market_prices\"\n    description: str = \"Get latest crop market prices (each row has a dataStatus: live vs estimated). Args: crop (str, optional).\"\n    def _run(self, crop: str = \"\") -> str:\n        args = {\"crop\": crop} if crop else {}\n        return _tool_result(\"get_market_prices\", args)\nclass DiseaseDiagnosisTool(BaseTool):\n    name: str = \"diagnose_plant_disease\"\n    description: str = \"Heuristic symptom matcher over an internal disease corpus (not a verified diagnosis). Args: symptoms (list[str]), cropType (str, optional).\"\n    def _run(self, symptoms, cropType: str = \"\") -> str:",
         "detail": "ag-extension-dashboard.src.agents.crew_main",
         "documentation": {}
     },
@@ -4322,25 +4447,16 @@
         "kind": 6,
         "importPath": "ag-extension-dashboard.src.agents.crew_main",
         "description": "ag-extension-dashboard.src.agents.crew_main",
-        "peekOfCode": "class DiseaseDiagnosisTool(BaseTool):\n    name: str = \"diagnose_plant_disease\"\n    description: str = \"Diagnose plant disease from symptoms. Use this to identify crop diseases.\"\n    def _run(self, symptoms: str, crop: str) -> str:\n        import asyncio\n        try:\n            result = asyncio.run(call_mcp_tool(\"diagnose_plant_disease\", {\"symptoms\": symptoms, \"crop\": crop}))\n            if \"error\" in result:\n                return f\"Potential diagnosis for {crop} with symptoms '{symptoms}': Early blight (confidence: 75%). Recommend copper-based fungicide. [Fallback: {result.get('error', 'MCP unavailable')}]\"\n            data = result.get(\"data\", {})",
+        "peekOfCode": "class DiseaseDiagnosisTool(BaseTool):\n    name: str = \"diagnose_plant_disease\"\n    description: str = \"Heuristic symptom matcher over an internal disease corpus (not a verified diagnosis). Args: symptoms (list[str]), cropType (str, optional).\"\n    def _run(self, symptoms, cropType: str = \"\") -> str:\n        if isinstance(symptoms, str):\n            symptoms = [part.strip() for part in symptoms.split(\",\") if part.strip()]\n        args = {\"symptoms\": list(symptoms)}\n        if cropType:\n            args[\"cropType\"] = cropType\n        return _tool_result(\"diagnose_plant_disease\", args)",
         "detail": "ag-extension-dashboard.src.agents.crew_main",
         "documentation": {}
     },
     {
-        "label": "SoilAnalysisTool",
+        "label": "DiseaseAlertTool",
         "kind": 6,
         "importPath": "ag-extension-dashboard.src.agents.crew_main",
         "description": "ag-extension-dashboard.src.agents.crew_main",
-        "peekOfCode": "class SoilAnalysisTool(BaseTool):\n    name: str = \"analyze_soil\"\n    description: str = \"Analyze soil conditions for a location. Use this for fertilizer recommendations.\"\n    def _run(self, location: str) -> str:\n        import asyncio\n        try:\n            result = asyncio.run(call_mcp_tool(\"analyze_soil\", {\"location\": location}))\n            if \"error\" in result:\n                return f\"Soil analysis for {location}: pH 6.2, N: 45ppm, P: 22ppm, K: 180ppm. Recommended: 50kg/ha DAP at planting. [Fallback: {result.get('error', 'MCP unavailable')}]\"\n            data = result.get(\"data\", {})",
-        "detail": "ag-extension-dashboard.src.agents.crew_main",
-        "documentation": {}
-    },
-    {
-        "label": "PestOutbreakTool",
-        "kind": 6,
-        "importPath": "ag-extension-dashboard.src.agents.crew_main",
-        "description": "ag-extension-dashboard.src.agents.crew_main",
-        "peekOfCode": "class PestOutbreakTool(BaseTool):\n    name: str = \"get_pest_outbreaks\"\n    description: str = \"Get current pest outbreak alerts for a region.\"\n    def _run(self, region: str = \"East Africa\", crop: str = \"\") -> str:\n        import asyncio\n        try:\n            result = asyncio.run(call_mcp_tool(\"get_pest_outbreaks\", {\"region\": region, \"crop\": crop}))\n            if \"error\" in result:\n                return f\"Pest outbreak check for {region}: No active outbreaks reported. [Fallback: {result.get('error', 'MCP unavailable')}]\"\n            data = result.get(\"data\", {})",
+        "peekOfCode": "class DiseaseAlertTool(BaseTool):\n    name: str = \"get_disease_alerts\"\n    description: str = \"FAOSTAT production-anomaly proxy for disease/pest pressure (lagging, not real-time). Args: region (str), crop (str, optional).\"\n    def _run(self, region: str, crop: str = \"\") -> str:\n        args = {\"region\": region}\n        if crop:\n            args[\"crop\"] = crop\n        return _tool_result(\"get_disease_alerts\", args)\nclass CropYieldForecastTool(BaseTool):\n    name: str = \"crop_yield_forecast\"",
         "detail": "ag-extension-dashboard.src.agents.crew_main",
         "documentation": {}
     },
@@ -4349,7 +4465,25 @@
         "kind": 6,
         "importPath": "ag-extension-dashboard.src.agents.crew_main",
         "description": "ag-extension-dashboard.src.agents.crew_main",
-        "peekOfCode": "class CropYieldForecastTool(BaseTool):\n    name: str = \"forecast_crop_yield\"\n    description: str = \"Forecast crop yield based on weather, soil, and management data.\"\n    def _run(self, crop: str, location: str, area_hectares: float = 1.0) -> str:\n        import asyncio\n        try:\n            result = asyncio.run(call_mcp_tool(\"forecast_crop_yield\", {\"crop\": crop, \"location\": location, \"area_hectares\": area_hectares}))\n            if \"error\" in result:\n                return f\"Yield forecast for {crop} in {location}: ~{area_hectares * 3:.1f} tons/ha (estimated). [Fallback: {result.get('error', 'MCP unavailable')}]\"\n            data = result.get(\"data\", {})",
+        "peekOfCode": "class CropYieldForecastTool(BaseTool):\n    name: str = \"crop_yield_forecast\"\n    description: str = \"Order-of-magnitude yield estimate from a coefficient table x weather favourability (isEstimate=true). Args: crop, region, areaHectares (optional), plantingDate (optional).\"\n    def _run(self, crop: str, region: str, areaHectares: float = None, plantingDate: str = \"\") -> str:  # type: ignore[assignment]\n        args = {\"crop\": crop, \"region\": region}\n        if areaHectares is not None:\n            args[\"areaHectares\"] = float(areaHectares)\n        if plantingDate:\n            args[\"plantingDate\"] = plantingDate\n        return _tool_result(\"crop_yield_forecast\", args)",
+        "detail": "ag-extension-dashboard.src.agents.crew_main",
+        "documentation": {}
+    },
+    {
+        "label": "SoilAnalysisTool",
+        "kind": 6,
+        "importPath": "ag-extension-dashboard.src.agents.crew_main",
+        "description": "ag-extension-dashboard.src.agents.crew_main",
+        "peekOfCode": "class SoilAnalysisTool(BaseTool):\n    name: str = \"satellite_ndvi_analysis\"\n    description: str = \"Satellite spectral indices when configured plus a climate-derived vegetation vigor proxy. Args: latitude (float), longitude (float), daysBack (int, optional).\"\n    def _run(self, latitude: float, longitude: float, daysBack: int = 90) -> str:\n        return _tool_result(\"satellite_ndvi_analysis\", {\"latitude\": float(latitude), \"longitude\": float(longitude), \"daysBack\": int(daysBack)})\nclass PestOutbreakTool(DiseaseAlertTool):\n    \"\"\"Alias kept for existing agent wiring.\"\"\"\n    name: str = \"get_disease_alerts\"\n# Authentication dependency\nasync def verify_token(authorization: Optional[str] = Header(None)):",
+        "detail": "ag-extension-dashboard.src.agents.crew_main",
+        "documentation": {}
+    },
+    {
+        "label": "PestOutbreakTool",
+        "kind": 6,
+        "importPath": "ag-extension-dashboard.src.agents.crew_main",
+        "description": "ag-extension-dashboard.src.agents.crew_main",
+        "peekOfCode": "class PestOutbreakTool(DiseaseAlertTool):\n    \"\"\"Alias kept for existing agent wiring.\"\"\"\n    name: str = \"get_disease_alerts\"\n# Authentication dependency\nasync def verify_token(authorization: Optional[str] = Header(None)):\n    \"\"\"Verify JWT token from Authorization header\"\"\"\n    if not authorization or not authorization.startswith(\"Bearer \"):\n        raise HTTPException(status_code=401, detail=\"Missing or invalid authorization header\")\n    token = authorization.split(\" \")[1]\n    if not token or token == \"dev-token\":",
         "detail": "ag-extension-dashboard.src.agents.crew_main",
         "documentation": {}
     },
@@ -4453,6 +4587,15 @@
         "documentation": {}
     },
     {
+        "label": "call_mcp_tool",
+        "kind": 2,
+        "importPath": "ag-extension-dashboard.src.agents.crew_main",
+        "description": "ag-extension-dashboard.src.agents.crew_main",
+        "peekOfCode": "def call_mcp_tool(tool_name: str, arguments: dict) -> str:\n    \"\"\"Synchronously invoke a backend MCP tool and return its text output.\n    Uses a blocking httpx client on purpose: CrewAI executes tool `_run` methods\n    synchronously inside `crew.kickoff()`, which we run in a worker thread — so\n    `asyncio.run()` here would raise \"cannot be called from a running event loop\".\n    \"\"\"\n    if not MCP_API_TOKEN:\n        raise MCPToolError(\"MCP_API_TOKEN is not configured for the Crew AI service\")\n    url = f\"{BACKEND_URL}/api/v1/mcp/tools/call\"\n    try:",
+        "detail": "ag-extension-dashboard.src.agents.crew_main",
+        "documentation": {}
+    },
+    {
         "label": "logger",
         "kind": 5,
         "importPath": "ag-extension-dashboard.src.agents.crew_main",
@@ -4520,16 +4663,25 @@
         "kind": 5,
         "importPath": "ag-extension-dashboard.src.agents.crew_main",
         "description": "ag-extension-dashboard.src.agents.crew_main",
-        "peekOfCode": "BACKEND_URL = os.getenv(\"BACKEND_URL\", \"http://ag-dashboard-backend:3001\")\nAPI_TIMEOUT = 30.0\nasync def call_mcp_tool(tool_name: str, arguments: dict) -> dict:\n    \"\"\"Call a backend MCP tool via HTTP\"\"\"\n    try:\n        async with httpx.AsyncClient(timeout=API_TIMEOUT) as client:\n            response = await client.post(\n                f\"{BACKEND_URL}/api/v1/mcp/tools/{tool_name}\",\n                json=arguments,\n                headers={\"Authorization\": f\"Bearer {os.getenv('MCP_API_TOKEN', 'dev-token')}\"}",
+        "peekOfCode": "BACKEND_URL = os.getenv(\"BACKEND_URL\", \"http://ag-dashboard-backend:3001\").rstrip(\"/\")\nMCP_API_TOKEN = os.getenv(\"MCP_API_TOKEN\", \"\")\nMCP_TIMEOUT_S = float(os.getenv(\"MCP_TIMEOUT_S\", \"30\"))\nclass MCPToolError(Exception):\n    pass\ndef call_mcp_tool(tool_name: str, arguments: dict) -> str:\n    \"\"\"Synchronously invoke a backend MCP tool and return its text output.\n    Uses a blocking httpx client on purpose: CrewAI executes tool `_run` methods\n    synchronously inside `crew.kickoff()`, which we run in a worker thread — so\n    `asyncio.run()` here would raise \"cannot be called from a running event loop\".",
         "detail": "ag-extension-dashboard.src.agents.crew_main",
         "documentation": {}
     },
     {
-        "label": "API_TIMEOUT",
+        "label": "MCP_API_TOKEN",
         "kind": 5,
         "importPath": "ag-extension-dashboard.src.agents.crew_main",
         "description": "ag-extension-dashboard.src.agents.crew_main",
-        "peekOfCode": "API_TIMEOUT = 30.0\nasync def call_mcp_tool(tool_name: str, arguments: dict) -> dict:\n    \"\"\"Call a backend MCP tool via HTTP\"\"\"\n    try:\n        async with httpx.AsyncClient(timeout=API_TIMEOUT) as client:\n            response = await client.post(\n                f\"{BACKEND_URL}/api/v1/mcp/tools/{tool_name}\",\n                json=arguments,\n                headers={\"Authorization\": f\"Bearer {os.getenv('MCP_API_TOKEN', 'dev-token')}\"}\n            )",
+        "peekOfCode": "MCP_API_TOKEN = os.getenv(\"MCP_API_TOKEN\", \"\")\nMCP_TIMEOUT_S = float(os.getenv(\"MCP_TIMEOUT_S\", \"30\"))\nclass MCPToolError(Exception):\n    pass\ndef call_mcp_tool(tool_name: str, arguments: dict) -> str:\n    \"\"\"Synchronously invoke a backend MCP tool and return its text output.\n    Uses a blocking httpx client on purpose: CrewAI executes tool `_run` methods\n    synchronously inside `crew.kickoff()`, which we run in a worker thread — so\n    `asyncio.run()` here would raise \"cannot be called from a running event loop\".\n    \"\"\"",
+        "detail": "ag-extension-dashboard.src.agents.crew_main",
+        "documentation": {}
+    },
+    {
+        "label": "MCP_TIMEOUT_S",
+        "kind": 5,
+        "importPath": "ag-extension-dashboard.src.agents.crew_main",
+        "description": "ag-extension-dashboard.src.agents.crew_main",
+        "peekOfCode": "MCP_TIMEOUT_S = float(os.getenv(\"MCP_TIMEOUT_S\", \"30\"))\nclass MCPToolError(Exception):\n    pass\ndef call_mcp_tool(tool_name: str, arguments: dict) -> str:\n    \"\"\"Synchronously invoke a backend MCP tool and return its text output.\n    Uses a blocking httpx client on purpose: CrewAI executes tool `_run` methods\n    synchronously inside `crew.kickoff()`, which we run in a worker thread — so\n    `asyncio.run()` here would raise \"cannot be called from a running event loop\".\n    \"\"\"\n    if not MCP_API_TOKEN:",
         "detail": "ag-extension-dashboard.src.agents.crew_main",
         "documentation": {}
     },

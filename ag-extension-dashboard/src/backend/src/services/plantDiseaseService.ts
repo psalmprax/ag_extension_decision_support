@@ -476,3 +476,5 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
 }
 
 export const plantDiseaseService = new PlantDiseaseService();
+/** Size of the internal symptom corpus — surfaced to callers so heuristic scope is explicit. */
+export const PLANT_DISEASE_CORPUS_SIZE = Object.keys((PlantDiseaseService as unknown as { DISEASE_DATABASE: Record<string, unknown> }).DISEASE_DATABASE).length;

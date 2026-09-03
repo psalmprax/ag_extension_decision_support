@@ -85,12 +85,16 @@ class UsageService {
             }
 
             const updateData: Record<string, { increment: number }> = {};
-            if (type === 'sms') updateData.smsCount = { increment: count };
+            if (type === 'sms' || type === 'sms_feedback') updateData.smsCount = { increment: count };
             if (type === 'ai_chat') updateData.aiChatCount = { increment: count };
             if (type === 'report') updateData.reportCount = { increment: count };
+            if (type === 'ai_vision') updateData.aiVisionCount = { increment: count };
+            if (type === 'speech') updateData.speechCount = { increment: count };
+            if (type === 'whatsapp') updateData.whatsappCount = { increment: count };
 
             if (Object.keys(updateData).length === 0) {
-                return true;
+                // 'knowledge' is metered separately via knowledgeSearch rows.
+                return type === 'knowledge';
             }
 
             await getPrisma().usage.update({
@@ -171,11 +175,11 @@ class UsageService {
             case 'report':
                 return { current: data?.usage?.reportCount || 0, limit: features.reportLimit ?? 50 };
             case 'ai_vision':
-                return { current: 0, limit: features.aiVisionLimit ?? 100 };
+                return { current: data?.usage?.aiVisionCount || 0, limit: features.aiVisionLimit ?? 100 };
             case 'speech':
-                return { current: 0, limit: features.speechLimit ?? 200 };
+                return { current: data?.usage?.speechCount || 0, limit: features.speechLimit ?? 200 };
             case 'whatsapp':
-                return { current: 0, limit: features.whatsappLimit ?? 500 };
+                return { current: data?.usage?.whatsappCount || 0, limit: features.whatsappLimit ?? 500 };
             default:
                 return { current: 0, limit: 100 };
         }
@@ -305,6 +309,24 @@ class UsageService {
                         current: data?.usage?.reportCount || 0,
                         limit: isFree ? 0 : (features.reportLimit || 0),
                         label: 'ANALYTIC REPORTS',
+                    },
+                    {
+                        type: 'ai_vision',
+                        current: data?.usage?.aiVisionCount || 0,
+                        limit: isFree ? 0 : (features.aiVisionLimit || 0),
+                        label: 'AI VISION SCANS',
+                    },
+                    {
+                        type: 'speech',
+                        current: data?.usage?.speechCount || 0,
+                        limit: isFree ? 0 : (features.speechLimit || 0),
+                        label: 'SPEECH MINUTES',
+                    },
+                    {
+                        type: 'whatsapp',
+                        current: data?.usage?.whatsappCount || 0,
+                        limit: isFree ? 0 : (features.whatsappLimit || 0),
+                        label: 'WHATSAPP BROADCASTS',
                     }
                 ],
                 periodEnd: data?.currentPeriodEnd,
@@ -323,6 +345,9 @@ class UsageService {
                     smsCount: 0,
                     aiChatCount: 0,
                     reportCount: 0,
+                    aiVisionCount: 0,
+                    speechCount: 0,
+                    whatsappCount: 0,
                     lastResetAt: new Date(),
                     updatedAt: new Date(),
                 },

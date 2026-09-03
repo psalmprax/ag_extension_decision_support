@@ -168,8 +168,42 @@ const mcpAdapter = MCPAdapter.getInstance();
 
 export { mcpAdapter };
 
+/**
+ * MCP auth: accept either an authenticated dashboard user (admin / regional
+ * manager / extension officer — set by `optionalAuth`) or a service-to-service
+ * shared secret (`MCP_API_TOKEN`) used by the Python agent containers. Anything
+ * else is rejected. `/health` stays public for liveness probes.
+ */
+function mcpAuth(req: Request, res: Response, next: () => void): void {
+  const role = req.user?.role;
+  if (role === 'admin' || role === 'regional_manager' || role === 'extension_officer') {
+    return next();
+  }
+  const serviceToken = process.env.MCP_API_TOKEN;
+  const header = req.headers.authorization;
+  if (serviceToken && header === `Bearer ${serviceToken}`) {
+    return next();
+  }
+  res.status(401).json({ success: false, error: 'MCP access requires an authenticated officer session or a valid MCP_API_TOKEN' });
+}
+
 export function createMCPRouter(): Router {
   const router = Router();
+
+  router.get('/health', (_req: Request, res: Response) => {
+    res.json({
+      success: true,
+      data: {
+        status: 'healthy',
+        protocol: 'MCP',
+        version: '1.0.0',
+        toolsAvailable: toolRegistry.length,
+        tools: toolRegistry.map(t => t.name),
+      }
+    });
+  });
+
+  router.use(mcpAuth);
 
   router.post('/message', async (req: Request, res: Response) => {
     try {
@@ -263,19 +297,6 @@ export function createMCPRouter(): Router {
       logger.error('MCP tool call error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
-  });
-
-  router.get('/health', (_req: Request, res: Response) => {
-    res.json({
-      success: true,
-      data: {
-        status: 'healthy',
-        protocol: 'MCP',
-        version: '1.0.0',
-        toolsAvailable: toolRegistry.length,
-        tools: toolRegistry.map(t => t.name),
-      }
-    });
   });
 
   return router;

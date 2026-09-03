@@ -5,8 +5,9 @@ import { config } from '@/config';
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import { recordLoginAttempt, resolveLocationFromHeaders } from '@/services/loginHistoryService';
-import { generateMfaSecret, verifyTotp, verifyAndConsumeBackupCode } from '@/services/mfaService';
+import { generateMfaSecret, verifyTotp, matchTotpStep, verifyAndConsumeBackupCode, hashBackupCodes } from '@/services/mfaService';
 import { createSession } from '@/services/sessionService';
+import { isAccountLocked, recordFailedLogin, resetFailedAttempts } from '@/services/lockoutService';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
@@ -47,26 +48,64 @@ router.post('/mfa/verify', async (req: Request, res: Response) => {
             return res.status(404).json({ success: false, error: 'User not found' });
         }
 
+        // MFA challenges share the account lockout counter with password login so
+        // a 6-digit TOTP cannot be brute-forced within the tempToken lifetime.
+        const lockoutStatus = isAccountLocked(user.lockout_until);
+        if (lockoutStatus.locked) {
+            return res.status(423).json({
+                success: false,
+                error: `Account is temporarily locked. Please try again in ${lockoutStatus.remainingSeconds} seconds.`,
+                lockoutRemainingSeconds: lockoutStatus.remainingSeconds,
+            });
+        }
+
         let isValid = false;
+        let failureReasonOverride: string | null = null;
         if (isBackupCode) {
             const backupRes = await verifyAndConsumeBackupCode(user.id, code, user.mfa_backup_codes || []);
             isValid = backupRes.valid;
         } else {
-            isValid = verifyTotp(code, user.mfa_secret);
+            const step = matchTotpStep(code, user.mfa_secret);
+            if (step !== null) {
+                // Replay guard: a code is single-use. Reject anything at or before the last
+                // accepted step, then advance the watermark atomically.
+                const lastStep = user.last_totp_step !== null && user.last_totp_step !== undefined ? Number(user.last_totp_step) : -1;
+                if (step <= lastStep) {
+                    failureReasonOverride = 'totp_code_replayed';
+                } else {
+                    const claim = await query(
+                        `UPDATE users SET last_totp_step = $1 WHERE id = $2 AND (last_totp_step IS NULL OR last_totp_step < $1) RETURNING id`,
+                        [step, user.id]
+                    );
+                    isValid = claim.rows.length > 0;
+                    if (!isValid) failureReasonOverride = 'totp_code_replayed';
+                }
+            }
         }
 
         if (!isValid) {
+            const failedInfo = await recordFailedLogin(user.id);
             await recordLoginAttempt({
                 userId: user.id,
                 email: user.email,
                 status: 'failed',
-                failureReason: isBackupCode ? 'invalid_backup_code' : 'invalid_totp_code',
+                failureReason: failureReasonOverride ?? (isBackupCode ? 'invalid_backup_code' : 'invalid_totp_code'),
                 ipAddress: clientIp,
                 userAgent: req.get('user-agent'),
                 location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
             });
-            return res.status(401).json({ success: false, error: 'Invalid verification code' });
+            return res.status(401).json({
+                success: false,
+                error: failureReasonOverride === 'totp_code_replayed'
+                    ? 'That code was already used. Wait for the next code.'
+                    : failedInfo.locked
+                    ? 'Too many invalid codes. Account temporarily locked.'
+                    : `Invalid verification code. ${failedInfo.remainingAttempts} attempt(s) remaining.`,
+                remainingAttempts: failedInfo.remainingAttempts,
+            });
         }
+
+        await resetFailedAttempts(user.id);
 
         // Record successful login
         await recordLoginAttempt({
@@ -181,6 +220,8 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, error: 'Invalid verification code' });
         }
 
+        // Backup codes are stored hashed; the plaintext set is shown to the user
+        // exactly once by /mfa/setup and never persisted.
         await query(
             `
             UPDATE users
@@ -189,7 +230,7 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
                 mfa_backup_codes = $2
             WHERE id = $3
         `,
-            [secret, backupCodes, decoded.userId]
+            [secret, hashBackupCodes(backupCodes.map(String)), decoded.userId]
         );
 
         res.json({

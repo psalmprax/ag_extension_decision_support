@@ -40,7 +40,7 @@ CLOAK_PLATFORMS: dict[str, CloakPlatformConfig] = {
         max_results=5,
         category="document",
         wait_selector=".gsc-result",
-        tags_extra=["fao", "tropical-agriculture", "validated"],
+        tags_extra=["fao", "tropical-agriculture"],
     ),
     "iita_agronomy": CloakPlatformConfig(
         name="IITA Agronomy",
@@ -51,7 +51,7 @@ CLOAK_PLATFORMS: dict[str, CloakPlatformConfig] = {
         max_results=5,
         category="document",
         wait_selector="article",
-        tags_extra=["cgiar", "iita", "roots", "tubers", "validated"],
+        tags_extra=["cgiar", "iita", "roots", "tubers"],
     ),
     "cabi_plantwise": CloakPlatformConfig(
         name="CABI Plantwise",
@@ -62,7 +62,7 @@ CLOAK_PLATFORMS: dict[str, CloakPlatformConfig] = {
         max_results=5,
         category="document",
         wait_selector=".search-resultItem",
-        tags_extra=["cabi", "plant-health", "pest", "disease", "validated"],
+        tags_extra=["cabi", "plant-health", "pest", "disease"],
     ),
     "fews_net": CloakPlatformConfig(
         name="FEWS NET",
@@ -73,7 +73,7 @@ CLOAK_PLATFORMS: dict[str, CloakPlatformConfig] = {
         max_results=5,
         category="document",
         wait_selector=".search-result",
-        tags_extra=["fews-net", "climate", "food-security", "validated"],
+        tags_extra=["fews-net", "climate", "food-security"],
     ),
     "africarice": CloakPlatformConfig(
         name="AfricaRice",
@@ -84,7 +84,7 @@ CLOAK_PLATFORMS: dict[str, CloakPlatformConfig] = {
         max_results=5,
         category="document",
         wait_selector=".g",
-        tags_extra=["africarice", "rice", "agronomy", "validated"],
+        tags_extra=["africarice", "rice", "agronomy"],
     ),
 }
 

@@ -134,6 +134,12 @@ jobs:
           cd ag-extension-dashboard/src/backend
           npm run lint
       
+      - name: Verify vendored shared API contract is current
+        run: |
+          cd ag-extension-dashboard/src/backend
+          npm run shared:sync
+          npm run shared:check
+
       - name: Type check backend
         run: |
           cd ag-extension-dashboard/src/backend
@@ -182,7 +188,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: ag-extension-browser-ext/package.json
+          cache-dependency-path: ag-extension-browser-ext/package-lock.json
 
       - name: Install extension dependencies
         run: |
@@ -193,6 +199,11 @@ jobs:
         run: |
           cd ag-extension-browser-ext
           npm run typecheck
+
+      - name: Test extension
+        run: |
+          cd ag-extension-browser-ext
+          npm test
 
       - name: Build extension
         run: |
@@ -327,7 +338,12 @@ jobs:
         run: |
           cd ag-extension-dashboard/src/agents
           python -m pip install -r requirements.txt pytest httpx
-          python -m pytest tests/test_security.py
+          python -m pytest tests/
+
+      - name: Test discovery-scraper extractor
+        run: |
+          cd ag-extension-dashboard/src/agents/tools/cloakbrowser
+          node --test extract.test.mjs
         env:
           NODE_ENV: test
           JWT_SECRET: test_jwt_secret_32_characters_minimum!!

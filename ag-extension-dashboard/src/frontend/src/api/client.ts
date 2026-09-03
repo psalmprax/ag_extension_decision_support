@@ -46,14 +46,26 @@ apiClient.interceptors.request.use(config => {
   return config;
 });
 
+const IDEMPOTENT_METHODS = new Set(['get', 'head', 'options', 'delete', 'put']);
+
+function hasIdempotencyKey(config: AxiosError['config']): boolean {
+  const headers = (config?.headers ?? {}) as Record<string, unknown>;
+  return Object.keys(headers).some(k => k.toLowerCase() === 'idempotency-key' || k.toLowerCase() === 'x-idempotency-key');
+}
+
 // Retry configuration for specific HTTP methods and status codes
 export const shouldRetry = (error: AxiosError): boolean => {
   const config = error.config;
   if (!config) return false;
 
-  // Don't retry if retry count exceeds max or if it's a non-idempotent method with a body
   const retryCount = ((config as unknown as Record<string, unknown>).__retryCount as number) || 0;
   if (retryCount >= MAX_RETRIES) return false;
+
+  // Never auto-retry a non-idempotent request (POST/PATCH) unless the caller
+  // attached an Idempotency-Key: a 502/504 from a proxy can arrive *after* the
+  // server processed the write, and replaying would duplicate SMS/payments/visits.
+  const method = (config.method || 'get').toLowerCase();
+  if (!IDEMPOTENT_METHODS.has(method) && !hasIdempotencyKey(config)) return false;
 
   // Only retry on specific status codes (excluding 429 to prevent rate-limit loops)
   const retryStatusCodes = [408, 500, 502, 503, 504];
@@ -81,24 +93,63 @@ export const getRetryDelay = (retryCount: number): number => {
   return RETRY_DELAY * Math.pow(RETRY_BACKOFF, retryCount);
 };
 
-/** Check for remote-wipe or account-revocation signals in 403 responses. */
-function handleAuthErrors(error: AxiosError): Promise<never> {
+function forceLogout(): void {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  window.dispatchEvent(new Event('auth-unauthorized'));
+  const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email'];
+  if (!publicRoutes.includes(window.location.pathname)) {
+    window.location.href = '/login';
+  }
+}
+
+// Single in-flight refresh shared by concurrent 401s.
+let refreshPromise: Promise<string | null> | null = null;
+
+async function tryRefreshToken(): Promise<string | null> {
+  if (refreshPromise) return refreshPromise;
+  const current = localStorage.getItem('token');
+  if (!current) return null;
+  refreshPromise = axios
+    .post(`${API_BASE_URL}/auth/refresh`, { token: current }, { withCredentials: true, timeout: 15000 })
+    .then(res => {
+      const next = (res.data as { data?: { token?: string } })?.data?.token;
+      if (typeof next === 'string' && next.length > 0) {
+        localStorage.setItem('token', next);
+        return next;
+      }
+      return null;
+    })
+    .catch(() => null)
+    .finally(() => {
+      refreshPromise = null;
+    });
+  return refreshPromise;
+}
+
+/** Check for remote-wipe or account-revocation signals in 403 responses; refresh-then-retry on 401. */
+async function handleAuthErrors(error: AxiosError): Promise<unknown> {
   if (error.response?.status === 403) {
     const data = error.response?.data as Record<string, unknown> | undefined;
     RemoteWipeService.evaluateSignal(
       (data as unknown as { error?: string; wipeSignal?: boolean }) || null,
       403
     );
+    return Promise.reject(error);
   }
 
   if (error.response?.status === 401) {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.dispatchEvent(new Event('auth-unauthorized'));
-    const publicRoutes = ['/login', '/register', '/forgot-password'];
-    if (!publicRoutes.includes(window.location.pathname)) {
-      window.location.href = '/login';
+    const config = error.config as (AxiosError['config'] & { __authRetried?: boolean }) | undefined;
+    const isAuthEndpoint = /\/auth\/(login|refresh|register|mfa)/.test(config?.url || '');
+    if (config && !config.__authRetried && !isAuthEndpoint && localStorage.getItem('token')) {
+      const fresh = await tryRefreshToken();
+      if (fresh) {
+        config.__authRetried = true;
+        config.headers = { ...(config.headers as Record<string, string>), Authorization: `Bearer ${fresh}` } as typeof config.headers;
+        return apiClient(config);
+      }
     }
+    forceLogout();
     const nonRetryable = Object.assign(error, { __nonRetryable: true });
     return Promise.reject(nonRetryable);
   }

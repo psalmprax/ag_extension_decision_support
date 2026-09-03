@@ -34,6 +34,9 @@ SECRET_PATTERNS=(
   "-----BEGIN (RSA|EC|OPENSSH|DSA|PRIVATE) KEY-----"
   "AIza[0-9A-Za-z-_]{35}"
   "sk-[a-zA-Z0-9]{20,48}"
+  "gsk_[a-zA-Z0-9]{20,}"
+  "sk-ant-[a-zA-Z0-9_-]{20,}"
+  "AIza[0-9A-Za-z_-]{35}"
   "ghp_[a-zA-Z0-9]{36}"
   "eyJhbGciOi[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.[A-Za-z0-9-_.+/=]+"
 )
@@ -56,7 +59,8 @@ done
 if [ "$LEAKS_DETECTED" -eq 0 ]; then
   echo -e "${GREEN}✅ No exposed secrets or private keys detected in source code.${NC}"
 else
-  echo -e "${YELLOW}⚠️  $LEAKS_DETECTED potential secret pattern(s) flagged for review.${NC}"
+  echo -e "${RED}❌ $LEAKS_DETECTED potential secret pattern(s) detected — failing audit.${NC}"
+  ERRORS_FOUND=$((ERRORS_FOUND + LEAKS_DETECTED))
 fi
 
 # ------------------------------------------------------------------------------
@@ -74,8 +78,9 @@ audit_npm_package() {
       if npm audit --audit-level=high > /dev/null 2>&1; then
         echo -e "    ${GREEN}✅ $name: No high or critical vulnerabilities.${NC}"
       else
-        echo -e "    ${YELLOW}⚠️  $name: Vulnerabilities detected by npm audit.${NC}"
+        echo -e "    ${RED}❌ $name: High/critical vulnerabilities detected by npm audit.${NC}"
         npm audit --audit-level=high || true
+        ERRORS_FOUND=$((ERRORS_FOUND + 1))
       fi
     )
   else
@@ -94,7 +99,10 @@ echo -e "  🔍 Checking Python agent dependencies..."
 if command -v pip-audit > /dev/null 2>&1; then
   (
     cd "$ROOT_DIR/ag-extension-dashboard/src/agents"
-    pip-audit -r requirements.txt || true
+    if ! pip-audit -r requirements.txt; then
+      echo -e "    ${RED}❌ Python agents: vulnerable dependencies detected by pip-audit.${NC}"
+      ERRORS_FOUND=$((ERRORS_FOUND + 1))
+    fi
   )
 else
   echo -e "    ${YELLOW}ℹ️  pip-audit not installed locally (audited in CI/CD pipeline).${NC}"
@@ -160,6 +168,13 @@ echo -e "\n${BLUE}${BOLD}[5/5] Running AI Agents FastAPI Security Test Suite...$
   fi
 )
 echo -e "${GREEN}✅ AI Agents Security Tests Passed (5/5 tests).${NC}"
+
+if [ "$ERRORS_FOUND" -gt 0 ]; then
+  echo -e "\n${RED}${BOLD}================================================================================"
+  echo "❌ CYBERSECURITY AUDIT FAILED — $ERRORS_FOUND blocking finding(s) above"
+  echo "================================================================================${NC}\n"
+  exit 1
+fi
 
 echo -e "\n${GREEN}${BOLD}================================================================================"
 echo "🎉 CYBERSECURITY PROTOCOL VERIFICATION COMPLETE — ALL SYSTEMS COMPLIANT"

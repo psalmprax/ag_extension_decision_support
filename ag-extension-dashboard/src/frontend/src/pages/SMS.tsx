@@ -150,7 +150,8 @@ export function SMSPage() {
   // Check for pending SMS on mount
   useEffect(() => {
     if (pendingSMS) {
-      setPhoneNumber(pendingSMS.phone);
+      if (pendingSMS.phone) setPhoneNumber(pendingSMS.phone);
+      if (pendingSMS.message) setMessage(pendingSMS.message);
       setSendMode('single'); // Ensure we are in single mode to see the number
       setPendingSMS(null); // Clear it after consuming
     }
@@ -164,9 +165,12 @@ export function SMSPage() {
       const res = await translateMessage({ text: message, targetLanguage: language });
       if (res.success) {
         setMessage(res.data.translatedText);
+      } else {
+        toast.error((res as { error?: string }).error || 'Translation was not accepted by the server');
       }
     } catch (err) {
       console.error('Translation failed:', err);
+      toast.error(((err as { response?: { data?: { error?: string } } })?.response?.data?.error || (err as Error)?.message || 'Translation failed'));
     } finally {
       setIsTranslating(false);
     }

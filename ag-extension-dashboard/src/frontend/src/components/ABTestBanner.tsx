@@ -1,6 +1,5 @@
 import React from 'react';
 import { useFeatureFlags } from '@/store/useFeatureFlags';
-import { useLanguage } from '@/lib/LanguageContext';
 
 interface DesignToggleProps {
   className?: string;
@@ -8,7 +7,6 @@ interface DesignToggleProps {
 
 export const DesignToggle: React.FC<DesignToggleProps> = ({ className }) => {
   const { designVariant, setDesignVariant } = useFeatureFlags();
-  const { t: _t } = useLanguage();
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>

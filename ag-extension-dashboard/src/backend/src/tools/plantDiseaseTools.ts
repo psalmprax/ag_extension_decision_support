@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { outbreakService } from '@/services/outbreakService';
 import { logger } from '@/utils/logger';
 import { Tool } from './types';
-import { plantDiseaseService } from '@/services/plantDiseaseService';
+import { plantDiseaseService, PLANT_DISEASE_CORPUS_SIZE } from '@/services/plantDiseaseService';
 
 const diagnoseFromSymptomsSchema = z.object({
   symptoms: z.array(z.string()).describe('List of observed symptoms (e.g., "yellow leaves", "brown spots", "wilting")'),
@@ -37,14 +37,25 @@ export const diagnoseFromSymptomsTool: Tool<typeof diagnoseFromSymptomsSchema> =
     return JSON.stringify({
       cropType: cropType || null,
       symptoms,
+      // Honesty fields are surfaced verbatim: the matcher is a keyword heuristic over a
+      // small internal corpus and `severity` reflects text-match strength, not disease
+      // severity. Consumers must not present this as a verified diagnosis.
+      method: 'tfidf_symptom_keyword_match',
+      evidenceStatus: diagnoses[0]?.provenance?.evidenceStatus ?? 'no_verified_source',
+      reviewStatus: diagnoses[0]?.reviewStatus,
+      safetyNotice: diagnoses[0]?.safetyNotice,
+      corpusSize: PLANT_DISEASE_CORPUS_SIZE,
+      cropFilterApplied: false,
       possibleDiseases: diagnoses.map(d => ({
         disease: d.disease,
         confidence: `${d.confidence}%`,
-        severity: d.severity,
+        matchStrength: d.severity,
         description: d.description,
         matchedSymptoms: d.symptoms,
         immediateActions: d.treatment.slice(0, 2),
         prevention: d.prevention.slice(0, 2),
+        provenance: d.provenance,
+        reviewStatus: d.reviewStatus,
       })),
       generalAdvice: [
         'Isolate affected plants to prevent spread',

@@ -7,6 +7,37 @@ import { AgroEcosystemCanvasScrubber } from '../../canvas-ui/AgroEcosystemCanvas
 import { RagKnowledgeGraphCanvas, type GraphNode } from '../../canvas-ui/RagKnowledgeGraphCanvas';
 import { TelemetryRadarCanvas } from '../../canvas-ui/TelemetryRadarCanvas';
 import type { CanvasViewType } from './rules';
+import type { AdvisoryCitation } from './response';
+
+/** Result of the last /ai/diseases/analyze call, kept by AlphaAI for the saliency canvas. */
+export interface LastImageAnalysis {
+  imageSrc: string;
+  overallHealth: string;
+  detections: LesionDetectionZone[];
+}
+
+const CITATION_CATEGORY: Record<string, GraphNode['category']> = {
+  fao: 'fao', cgiar: 'fao', iita: 'fao', irri: 'fao',
+  soil: 'soil', 'soil health': 'soil', 'soil amendments': 'soil', 'water management': 'soil',
+  weather: 'nasa', climate: 'nasa', 'climate and weather': 'nasa',
+  farmer: 'farmer', market: 'farmer', 'market access': 'farmer',
+};
+
+/** Map advisory citations to graph nodes (category inferred from citation category text). */
+export function citationsToGraphNodes(citations: AdvisoryCitation[]): GraphNode[] {
+  return citations.map(c => {
+    const key = c.category.toLowerCase();
+    const category = CITATION_CATEGORY[key]
+      ?? (Object.keys(CITATION_CATEGORY).find(k => key.includes(k)) ? CITATION_CATEGORY[Object.keys(CITATION_CATEGORY).find(k => key.includes(k)) as string] : 'rule');
+    return {
+      id: c.sourceId,
+      label: c.title,
+      category,
+      snippet: c.excerpt || `Category: ${c.category}`,
+      score: c.score,
+    };
+  });
+}
 
 /** Studio / Ops mode switcher for the co-pilot header. */
 export const StudioTabSwitcher: React.FC<{
@@ -57,6 +88,10 @@ export const CanvasWorkbench: React.FC<{
   selectedGraphNode: GraphNode | null;
   onGraphNodeSelect: (n: GraphNode) => void;
   onDispatchSms: () => void;
+  /** Real citations from the latest advisory; empty → honest empty state. */
+  citations?: AdvisoryCitation[];
+  /** Real image analysis from the latest upload; undefined → prompt to upload. */
+  lastImageAnalysis?: LastImageAnalysis | null;
 }> = ({
   view,
   selectedProbeResult,
@@ -66,6 +101,8 @@ export const CanvasWorkbench: React.FC<{
   selectedGraphNode,
   onGraphNodeSelect,
   onDispatchSms,
+  citations = [],
+  lastImageAnalysis = null,
 }) => (
   <>
     {view === 'soil_heatmap' && (
@@ -108,11 +145,21 @@ export const CanvasWorkbench: React.FC<{
       <div className="space-y-3">
         <CanvasPanelHeader
           icon={<Eye className="w-4 h-4 text-rose-400" />}
-          title="Neural Foliar Saliency & Pathology Scanner"
-          hint="Wait for a real image analysis"
-          hintClass="text-slate-500"
+          title="Leaf Image Assessment"
+          hint={lastImageAnalysis ? `Whole-image assessment: ${lastImageAnalysis.overallHealth} (no lesion localisation)` : 'Upload a leaf photo to populate'}
+          hintClass={lastImageAnalysis ? 'text-rose-300' : 'text-slate-500'}
         />
-        <DiseaseSaliencyCanvas onSelectZone={onLesionZoneSelect} />
+        {lastImageAnalysis ? (
+          <DiseaseSaliencyCanvas
+            imageSrc={lastImageAnalysis.imageSrc}
+            detections={lastImageAnalysis.detections}
+            onSelectZone={onLesionZoneSelect}
+          />
+        ) : (
+          <div className="h-56 rounded-xl border border-dashed border-white/10 bg-slate-950/40 flex items-center justify-center text-xs text-white/40 font-mono text-center px-6">
+            No image analysed yet. Use the image upload action to run a real diagnosis; results appear here.
+          </div>
+        )}
         {selectedLesionZone && (
           <motion.div
             initial={{ opacity: 0, y: 5 }}
@@ -154,11 +201,17 @@ export const CanvasWorkbench: React.FC<{
       <div className="space-y-3">
         <CanvasPanelHeader
           icon={<Network className="w-4 h-4 text-purple-400" />}
-          title="RAG Knowledge Citation & Ontology Mesh"
-          hint="Click graph nodes to inspect excerpts"
-          hintClass="text-purple-400"
+          title="Knowledge Citations for Last Advisory"
+          hint={citations.length ? `${citations.length} cited article${citations.length === 1 ? '' : 's'} — click to inspect` : 'No citations for the last answer'}
+          hintClass={citations.length ? 'text-purple-400' : 'text-slate-500'}
         />
-        <RagKnowledgeGraphCanvas onNodeSelect={onGraphNodeSelect} />
+        {citations.length ? (
+          <RagKnowledgeGraphCanvas customNodes={citationsToGraphNodes(citations)} onNodeSelect={onGraphNodeSelect} />
+        ) : (
+          <div className="h-56 rounded-xl border border-dashed border-white/10 bg-slate-950/40 flex items-center justify-center text-xs text-white/40 font-mono text-center px-6">
+            The last advisory did not cite knowledge-base articles (or none has been asked yet).
+          </div>
+        )}
         {selectedGraphNode && (
           <motion.div
             initial={{ opacity: 0, y: 5 }}
@@ -179,9 +232,9 @@ export const CanvasWorkbench: React.FC<{
       <div className="space-y-3">
         <CanvasPanelHeader
           icon={<Radio className="w-4 h-4 text-emerald-400" />}
-          title="Live Field Telemetry & Sensor Mesh Radar"
-          hint="12 Active Transceivers"
-          hintClass="text-emerald-400"
+          title="Sensor Mesh Radar (visual simulation)"
+          hint="No live IoT feed is connected — decorative animation only"
+          hintClass="text-amber-300"
         />
         <div className="h-64 flex items-center justify-center">
           <TelemetryRadarCanvas />

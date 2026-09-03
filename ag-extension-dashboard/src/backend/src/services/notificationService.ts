@@ -206,8 +206,12 @@ class NotificationService {
     }
 
     /**
-     * Schedule notification for later — persists as pending and enqueues delayed delivery via BullMQ.
-     * If the scheduled time is in the past/near (<= 60s), it sends immediately.
+     * Schedule notification for later via a BullMQ delayed job.
+     *
+     * The delayed job is the single durable record: no notification row is written
+     * until delivery time, so the user never sees a "scheduled" item early and the
+     * worker never creates a duplicate. If the scheduled time is within 60s (or in
+     * the past) the notification is sent immediately.
      */
     async schedule(
         payload: NotificationPayload,
@@ -218,28 +222,43 @@ class NotificationService {
             return this.send(payload);
         }
         try {
-            const created = await prisma.notification.create({
-                data: {
-                    userId: payload.userId,
-                    type: payload.type,
-                    title: payload.title,
-                    message: payload.message,
-                    channel: payload.channel,
-                    metadata: { ...payload.metadata, scheduledAt: scheduledAt.toISOString(), scheduled: true } as Prisma.InputJsonValue,
-                }
-            });
-            // Use BullMQ delayed job for reliable scheduled delivery (max 24h delay)
+            // BullMQ delayed jobs are capped at 24h here to keep Redis bounded; the
+            // worker re-schedules anything further out when it fires.
             const cappedDelay = Math.min(delayMs, 24 * 60 * 60 * 1000);
             await addNotificationJob(
-                { ...payload, metadata: { ...payload.metadata, sourceNotificationId: created.id } },
+                {
+                    ...payload,
+                    metadata: { ...payload.metadata, scheduledAt: scheduledAt.toISOString() },
+                },
                 { delay: cappedDelay }
             );
-            logger.info(`Notification ${created.id} scheduled for ${scheduledAt.toISOString()} (in ${Math.round(delayMs / 1000)}s) via BullMQ`);
+            logger.info(`Notification for ${payload.userId} scheduled at ${scheduledAt.toISOString()} (in ${Math.round(delayMs / 1000)}s) via BullMQ`);
             return true;
         } catch (error) {
             logger.error('Failed to schedule notification:', error);
             return false;
         }
+    }
+
+    /**
+     * Like send(), but propagates failures so a queue worker can retry.
+     */
+    async sendOrThrow(payload: NotificationPayload): Promise<void> {
+        let ok = false;
+        switch (payload.channel) {
+            case 'in_app':
+                ok = await this.sendInApp(payload);
+                break;
+            case 'email':
+                ok = await this.sendEmail(payload);
+                break;
+            case 'sms':
+                ok = await this.sendSMS(payload);
+                break;
+            default:
+                throw new Error(`Unknown notification channel: ${payload.channel}`);
+        }
+        if (!ok) throw new Error(`Notification delivery via ${payload.channel} failed for user ${payload.userId}`);
     }
 }
 

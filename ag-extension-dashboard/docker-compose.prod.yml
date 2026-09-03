@@ -50,14 +50,16 @@ services:
 
   backend:
     build:
-      context: ./src/backend
+      context: ..
+      dockerfile: ag-extension-dashboard/src/backend/Dockerfile
       target: production
     environment:
       NODE_ENV: production
       LOG_LEVEL: ${LOG_LEVEL:-warn}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://www.gpexts.com}
-      DEMO_ENABLED: true
-      DEMO_PASSWORD: ${DEMO_PASSWORD:-Demo@123}
+      # Demo login is opt-in in production and must never ship with a default password.
+      DEMO_ENABLED: ${DEMO_ENABLED:-false}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-}
       WEATHER_API_KEY: ${WEATHER_API_KEY:-}
     labels:
       # Enable Traefik service discovery

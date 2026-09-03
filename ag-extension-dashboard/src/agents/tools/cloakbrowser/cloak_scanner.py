@@ -38,11 +38,12 @@ class CloakBrowserScanner(DiscoveryScannerBase):
 
     def __init__(
         self,
-        scraper_url: str = "http://discovery-scraper:8010",
+        scraper_url: Optional[str] = None,
         timeout: float = 45.0,
-        platform: str = "youtube",
+        platform: str = "cabi_plantwise",
     ):
-        self.scraper_url = scraper_url
+        import os
+        self.scraper_url = (scraper_url or os.getenv("DISCOVERY_SCRAPER_URL") or "http://discovery-scraper:8010").rstrip("/")
         self.timeout = timeout
         self.default_platform = platform
         self._client: Optional[httpx.AsyncClient] = None
@@ -428,7 +429,8 @@ class CloakBrowserScanner(DiscoveryScannerBase):
                     platform=config.platform_label,
                     source_uri=item.get("url", ""),
                     creator_name=item.get("author", "Unknown"),
-                    title=item.get("title", "No Title")[:100],
+                    title=(item.get("title") or "No Title")[:200],
+                    description=(item.get("description") or item.get("snippet") or "")[:2000] or None,
                     thumbnail_uri=item.get("thumbnail", ""),
                     view_count=self._safe_int(item.get("views", 0)),
                     region=region or "US",

@@ -40,12 +40,12 @@ async function storePendingPaypalPayment(paymentId: string, userId: string, plan
     });
 }
 
-async function consumePendingPaypalPayment(paymentId: string): Promise<{ planId: string; amount: number } | null> {
+async function consumePendingPaypalPayment(paymentId: string): Promise<{ planId: string; amount: number; userId: string } | null> {
     const pending = await prisma.pendingPaypalPayment.findUnique({ where: { paymentId } });
     if (!pending) return null;
     await prisma.pendingPaypalPayment.delete({ where: { paymentId } });
     if (pending.expiresAt.getTime() < Date.now()) return null;
-    return { planId: pending.planId, amount: Number(pending.amount) };
+    return { planId: pending.planId, amount: Number(pending.amount), userId: pending.userId };
 }
 
 router.post('/paypal/subscribe', authorize(['admin', 'extension_officer', 'farmer']), async (req: AuthRequest, res) => {
@@ -120,9 +120,17 @@ router.get('/paypal/success', authorize(['admin', 'extension_officer', 'farmer']
                 return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=plan_not_found`);
             }
 
+            // The subscription belongs to whoever initiated the checkout, not to
+            // whoever follows the return URL. Reject mismatches (admins excepted).
+            if (pending.userId !== userId && req.user!.role !== 'admin') {
+                logger.warn(`PayPal payment ${paymentId} initiated by ${pending.userId} but completed by ${userId} — refusing to bind`);
+                return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?error=payer_mismatch`);
+            }
+            const targetUserId = pending.userId;
+
             // Update subscription in database
             const subscription = await prisma.subscription.upsert({
-                where: { userId },
+                where: { userId: targetUserId },
                 update: {
                     status: 'active',
                     planId: pending.planId,
@@ -130,7 +138,7 @@ router.get('/paypal/success', authorize(['admin', 'extension_officer', 'farmer']
                     currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
                 },
                 create: {
-                    userId,
+                    userId: targetUserId,
                     planId: pending.planId,
                     status: 'active',
                     currentPeriodStart: new Date(),

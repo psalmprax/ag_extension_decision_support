@@ -17,7 +17,17 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req: e
 
     try {
         const event = paymentService.verifyWebhookSignature(req.body, sig as string);
-        if (event) await paymentService.handleWebhook(event);
+        if (!event) {
+            // Either STRIPE_WEBHOOK_SECRET is unset or the signature failed. Returning
+            // 2xx here would make Stripe consider the event delivered and never retry,
+            // silently dropping subscription/invoice state changes. Fail loudly instead.
+            const reason = process.env.STRIPE_WEBHOOK_SECRET
+                ? 'signature verification failed'
+                : 'STRIPE_WEBHOOK_SECRET is not configured';
+            logger.error(`Stripe webhook rejected: ${reason}`);
+            return res.status(400).send(`Webhook Error: ${reason}`);
+        }
+        await paymentService.handleWebhook(event);
         res.json({ received: true });
     } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';

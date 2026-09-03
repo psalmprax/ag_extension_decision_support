@@ -1,44 +1,18 @@
-import { cacheGet, cacheSet } from '@/services/cacheService';
+import { cacheGet, cacheSet, getCache } from '@/services/cacheService';
+import { incrWindow } from '@/services/sharedState';
 import { logger } from '@/utils/logger';
 
-// ─── In-Process Rate Limiter (token-bucket, per external API domain) ──
+// ─── Cross-replica Rate Limiter (fixed window per external API domain) ──
+//
+// The token-bucket parameters (maxTokens, refillRate) are mapped to an
+// equivalent fixed window: `maxTokens` requests per `maxTokens / refillRate`
+// seconds. Counters live in Redis (sharedState) so N replicas share the same
+// upstream quota; in-memory fallback applies when Redis is unavailable.
 
-interface Bucket {
-  tokens: number;
-  maxTokens: number;
-  refillRate: number; // tokens per second
-  lastRefill: number;
-}
-
-const buckets = new Map<string, Bucket>();
-
-function getBucket(domain: string, maxTokens: number, refillRate: number): Bucket {
-  let bucket = buckets.get(domain);
-  if (!bucket) {
-    bucket = { tokens: maxTokens, maxTokens, refillRate, lastRefill: Date.now() };
-    buckets.set(domain, bucket);
-  }
-  return bucket;
-}
-
-function refillBucket(bucket: Bucket): void {
-  const now = Date.now();
-  const elapsed = (now - bucket.lastRefill) / 1000;
-  const refill = Math.floor(elapsed * bucket.refillRate);
-  if (refill > 0) {
-    bucket.tokens = Math.min(bucket.maxTokens, bucket.tokens + refill);
-    bucket.lastRefill = now;
-  }
-}
-
-function tryAcquireToken(domain: string, maxTokens: number, refillRate: number): boolean {
-  const bucket = getBucket(domain, maxTokens, refillRate);
-  refillBucket(bucket);
-  if (bucket.tokens > 0) {
-    bucket.tokens--;
-    return true;
-  }
-  return false;
+async function tryAcquireToken(domain: string, maxTokens: number, refillRate: number): Promise<boolean> {
+  const windowMs = Math.max(1000, Math.round((maxTokens / Math.max(refillRate, 0.001)) * 1000));
+  const { count } = await incrWindow(`ext-api:${domain}`, windowMs);
+  return count <= maxTokens;
 }
 
 // ─── Rate-Limit Config per External API ────────────────────────────────
@@ -148,7 +122,7 @@ export async function rateLimitedFetch<T>(
   }
 
   // 2. Check rate limit
-  if (!tryAcquireToken(config.domain, config.maxTokens, config.refillRate)) {
+  if (!(await tryAcquireToken(config.domain, config.maxTokens, config.refillRate))) {
     // Rate limited — try stale cache one more time
     try {
       const staleCached = await cacheGet(fullCacheKey);
@@ -183,11 +157,15 @@ export async function rateLimitedFetch<T>(
 /**
  * Returns a safe subset of API config for diagnostics / health checks.
  */
-export function getExternalApiStatus(): Record<string, { tokens: number; maxTokens: number }> {
-  const status: Record<string, { tokens: number; maxTokens: number }> = {};
-  for (const bucket of buckets.entries()) {
-    refillBucket(bucket[1]);
-    status[bucket[0]] = { tokens: bucket[1].tokens, maxTokens: bucket[1].maxTokens };
+export function getExternalApiStatus(): Record<string, { maxRequests: number; windowSeconds: number; store: 'redis' | 'process-local' }> {
+  const store = getCache()?.isOpen ? 'redis' : 'process-local';
+  const status: Record<string, { maxRequests: number; windowSeconds: number; store: 'redis' | 'process-local' }> = {};
+  for (const [name, cfg] of Object.entries(API_CONFIGS)) {
+    status[name] = {
+      maxRequests: cfg.maxTokens,
+      windowSeconds: Math.round(cfg.maxTokens / Math.max(cfg.refillRate, 0.001)),
+      store,
+    };
   }
   return status;
 }

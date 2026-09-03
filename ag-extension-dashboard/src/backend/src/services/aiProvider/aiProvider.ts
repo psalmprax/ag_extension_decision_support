@@ -215,6 +215,14 @@ export class AIProviderFactory {
                 const { OllamaProvider } = await import('./providers/ollama');
                 return new OllamaProvider();
             }
+            case 'nvidia': {
+                const { NVIDIAProvider } = await import('./providers/nvidia');
+                return new NVIDIAProvider();
+            }
+            case 'huggingface': {
+                const { HuggingFaceProvider } = await import('./providers/huggingface');
+                return new HuggingFaceProvider();
+            }
             default:
                 throw new Error(`Unknown AI provider type: ${type}`);
         }

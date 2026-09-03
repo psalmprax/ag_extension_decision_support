@@ -7,12 +7,19 @@
     "dev": "ts-node-dev -r tsconfig-paths/register --respawn --transpile-only src/index.ts",
     "build": "tsc && tsc-alias",
     "start": "node dist/index.js",
+    "backfill:embeddings": "ts-node -r tsconfig-paths/register --transpile-only src/scripts/backfillEmbeddings.ts",
+    "migrate:deploy": "prisma migrate deploy",
     "lint": "eslint src/**/*.ts",
     "test": "jest",
     "test:coverage": "jest --coverage",
     "check:drift": "node ../../../scripts/prisma-drift-check.cjs",
     "lint-staged": "lint-staged",
-    "prepare": "husky || true"
+    "prepare": "husky || true",
+    "shared:sync": "node scripts/sync-shared-api.js",
+    "shared:check": "node scripts/sync-shared-api.js --check",
+    "predev": "node scripts/sync-shared-api.js",
+    "prebuild": "node scripts/sync-shared-api.js",
+    "pretest": "node scripts/sync-shared-api.js"
   },
   "lint-staged": {
     "src/**/*.ts": [

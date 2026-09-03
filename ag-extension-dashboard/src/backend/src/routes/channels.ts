@@ -4,6 +4,7 @@ import { authorize, AuthRequest } from '@/middleware/authorize';
 import { getPrincipalTenantId } from '@/services/dataGovernanceService';
 import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
+import { verifyInboundWebhookSignature } from '@/middleware/webhookSignature';
 import { telegramService } from '@/services/telegramService';
 import { whatsappService } from '@/services/whatsappService';
 import { smsService } from '@/services/smsService';
@@ -70,7 +71,7 @@ async function handleTelegramPrices(chatId: string) {
     }
 }
 
-router.post('/telegram/webhook', async (req: Request, res: Response) => {
+router.post('/telegram/webhook', verifyInboundWebhookSignature, async (req: Request, res: Response) => {
     try {
         const update = req.body;
         if (!update || !update.message) {

@@ -1,5 +1,6 @@
 // API Queue Service for offline synchronization
 
+import { isJwtExpired } from './authToken';
 import type { OfflineStatus, QueuedRequest as PersistedQueuedRequest } from './offlineTypes';
 
 export type { OfflineStatus };
@@ -206,16 +207,31 @@ class APIQueueService {
         }
     }
 
+    /** Last auth-injection problem, exposed so the UI can show "not signed in / storage error". */
+    public lastAuthWarning: string | null = null;
+
     private async injectAuthToken(headers: Headers): Promise<void> {
+        if (headers.has('Authorization')) return;
         try {
             const stored = await browser.storage.local.get('authToken');
             const token = (stored as Record<string, unknown>)?.authToken as string | undefined;
-            if (token && !headers.has('Authorization')) {
+            if (token && isJwtExpired(token)) {
+                // Sending a known-expired token only produces 401s; drop it so the popup
+                // shows "signed out" and the user re-authenticates.
+                this.lastAuthWarning = 'Session expired — sign in again from the extension popup';
+                await browser.storage.local.remove('authToken').catch(() => {});
+            } else if (token) {
                 headers.set('Authorization', `Bearer ${token}`);
+                this.lastAuthWarning = null;
+            } else {
+                this.lastAuthWarning = 'Not signed in — open the extension popup to log in';
             }
         } catch (error) {
+            // Do NOT throw: a storage hiccup must not lose an offline-first write.
+            // The request proceeds unauthenticated (backend returns 401 → queued item is
+            // parked as failed for re-login), and the warning is surfaced to the UI.
+            this.lastAuthWarning = 'Could not read auth token from extension storage';
             console.error('Failed to inject auth token (storage error):', error);
-            throw new Error('Authentication unavailable: storage error');
         }
     }
 

@@ -16,19 +16,34 @@ export function enqueueOfflineQuery(query: string): void {
   writeOfflineQueue([...readOfflineQueue(), query]);
 }
 
-/** Resend every queued offline query in order; stops at the first failure. */
-export async function drainAlphaOfflineQueue(send: (query: string) => Promise<void>): Promise<void> {
+/**
+ * Resend every queued offline query in order.
+ *
+ * `send` must resolve to `true` when the query was delivered and `false` when it
+ * failed (the AlphaAI sender swallows errors into chat messages, so a thrown error
+ * is not a reliable signal). A failed item stays at the head of the queue and the
+ * drain stops; it will be retried on the next `online` event. The queue is always
+ * re-read from storage before writing so a re-enqueue performed by `send` during a
+ * failure is never overwritten by a stale local copy.
+ */
+export async function drainAlphaOfflineQueue(send: (query: string) => Promise<boolean>): Promise<void> {
   if (!navigator.onLine) return;
-  const q = readOfflineQueue();
-  if (q.length === 0) return;
-  for (const queued of [...q]) {
+  const initial = readOfflineQueue();
+  if (initial.length === 0) return;
+  for (const queued of initial) {
+    let ok = false;
     try {
-      await send(queued);
-      q.shift();
-      writeOfflineQueue(q);
+      ok = await send(queued);
     } catch {
-      return;
+      ok = false;
     }
+    if (!ok) return;
+    // Remove exactly this item from the *current* stored queue.
+    const current = readOfflineQueue();
+    const idx = current.indexOf(queued);
+    if (idx !== -1) current.splice(idx, 1);
+    writeOfflineQueue(current);
+    if (!navigator.onLine) return;
   }
-  if (q.length === 0) localStorage.removeItem(OFFLINE_QUEUE_KEY);
+  if (readOfflineQueue().length === 0) localStorage.removeItem(OFFLINE_QUEUE_KEY);
 }

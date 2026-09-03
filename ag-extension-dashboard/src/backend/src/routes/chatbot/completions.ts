@@ -12,6 +12,11 @@ import {
   mapSatisfactionAvgRow,
 } from '@/types/dtos';
 import { logger } from '@/utils/logger';
+import { z } from 'zod';
+import { validate } from '@/middleware/validate';
+import { chatCompletionSchema } from '@/shared-api/chatbot';
+import { parseToolArguments } from '@/services/aiProvider/toolCalling';
+import { VectorService } from '@/services/vectorService';
 import { safeError } from '@/utils/safeResponse';
 import { authorize } from '@/middleware/authorize';
 import { checkUsageLimit } from '@/middleware/usageMiddleware';
@@ -41,14 +46,39 @@ async function loadHistoryBlock(conversationId?: string): Promise<string> {
 }
 
 /** Retrieve grounded knowledge-base context via RAG v2 enhanced search (empty on failure). */
-async function loadRagBlock(message: string): Promise<{ context: string; citations: string[] }> {
+interface CompletionCitation { sourceId: string; title: string; category: string; excerpt: string; score: number }
+
+async function loadRagBlock(message: string): Promise<{ context: string; citations: CompletionCitation[] }> {
   try {
-    const { results, citations } = await RAGV2Service.enhancedSearch(message, {
+    let { results, citations } = await RAGV2Service.enhancedSearch(message, {
       limit: 3,
       useChunks: true,
       useGraph: true,
       useReranking: true,
     });
+    // Chunk table can be empty (fresh deploy, embeddings still backfilling). Fall
+    // back to article-level hybrid search rather than answering with no context.
+    if (results.length === 0) {
+      const fallback = await VectorService.hybridSearch(message, 3, undefined, 0.0);
+      results = fallback.map(doc => {
+        const title = typeof doc.metadata?.title === 'string' ? doc.metadata.title : 'Knowledge article';
+        return {
+          id: String(doc.id),
+          articleId: String(doc.id),
+          content: String(doc.content),
+          metadata: doc.metadata,
+          score: doc.score,
+          citation: title,
+        };
+      });
+      citations = fallback.map(doc => ({
+        sourceId: String(doc.id),
+        title: typeof doc.metadata?.title === 'string' ? doc.metadata.title : 'Knowledge article',
+        category: typeof doc.metadata?.category === 'string' ? doc.metadata.category : 'general',
+        excerpt: String(doc.content).slice(0, 200),
+        score: doc.score,
+      }));
+    }
     if (results.length === 0) return { context: '', citations: [] };
     const snippets = results
       .map((doc, i) => {
@@ -56,7 +86,13 @@ async function loadRagBlock(message: string): Promise<{ context: string; citatio
         return `[${i + 1}] ${title}: ${String(doc.content).slice(0, 400)}`;
       })
       .join('\n');
-    const citationList = citations.map(c => `${c.title} (${c.category})`);
+    const citationList: CompletionCitation[] = citations.map(c => ({
+      sourceId: c.sourceId,
+      title: c.title,
+      category: c.category,
+      excerpt: c.excerpt,
+      score: c.score,
+    }));
     return {
       context: `\n\nKNOWLEDGE BASE CONTEXT (cite sources when used):\n${snippets}`,
       citations: citationList
@@ -81,58 +117,96 @@ const buildToolDefinitions = (): ChatToolDefinition[] =>
     function: { name: t.name, description: t.description, parameters: t.inputSchema },
   }));
 
-const executeToolCalls = async (toolCalls: Array<{ function: { name: string; arguments: unknown } }>): Promise<string[]> => {
-  const results: string[] = [];
+const MAX_TOOL_ROUNDS = 3;
+
+type ToolCall = { id?: string; function: { name: string; arguments: unknown } };
+
+const executeToolCalls = async (toolCalls: ToolCall[]): Promise<Array<{ call: ToolCall; output: string }>> => {
+  const results: Array<{ call: ToolCall; output: string }> = [];
   for (const toolCall of toolCalls) {
+    const args = parseToolArguments(toolCall.function.arguments);
     try {
-      const toolResult = await mcpAdapter.callTool(toolCall.function.name, toolCall.function.arguments as Record<string, unknown>);
-      results.push(`Tool ${toolCall.function.name} result: ${toolResult.content[0]?.text || 'No output'}`);
+      const toolResult = await mcpAdapter.callTool(toolCall.function.name, args);
+      const text = toolResult.content.map(c => c.text).join('\n') || 'No output';
+      results.push({ call: toolCall, output: toolResult.isError ? `ERROR: ${text}` : text });
     } catch (toolErr) {
       logger.error(`Tool ${toolCall.function.name} execution failed:`, toolErr);
-      results.push(`Tool ${toolCall.function.name} error: ${toolErr instanceof Error ? toolErr.message : String(toolErr)}`);
+      results.push({ call: toolCall, output: `ERROR: ${toolErr instanceof Error ? toolErr.message : String(toolErr)}` });
     }
   }
   return results;
 };
 
-/** First pass: let the LLM decide if it needs tools; executes any requested tools and synthesizes the final answer. */
+/**
+ * Agentic turn: the model may request tools; results are fed back as proper
+ * `tool` role messages (OpenAI-compatible) for up to MAX_TOOL_ROUNDS before a
+ * final answer is required. Providers that ignore `tools` simply return text on
+ * the first pass, so this degrades gracefully.
+ */
 const runAssistantTurn = async (systemPrompt: string, message: string, tools: ChatToolDefinition[]): Promise<{ text: string; usedToolNames: string[] }> => {
-  const response = await AIRouter.routeRequest('generate', {
-    prompt: `${systemPrompt}\n\nMESSAGE: ${message}`,
-    options: {
-      tools: tools.length > 0 ? tools : undefined,
-      temperature: 0.2,
-    },
-  });
+  const messages: Array<Record<string, unknown>> = [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: message },
+  ];
+  const usedToolNames: string[] = [];
+  let assistantText = '';
 
-  let assistantText = (response?.text ?? '').toString().trim();
-  const toolCalls = (response?.toolCalls ?? []) as Array<{ function: { name: string; arguments: unknown } }>;
-  if (toolCalls.length > 0) {
-    const toolResults = await executeToolCalls(toolCalls);
-
-    // Second pass: feed tool results back to the model
-    const followUpPrompt = `${systemPrompt}\n\nMESSAGE: ${message}\n\nTOOL RESULTS:\n${toolResults.join('\n')}\n\nNow provide a comprehensive answer using the tool results.`;
-    const followUp = await AIRouter.routeRequest('generate', {
-      prompt: followUpPrompt,
-      options: { temperature: 0.2 },
+  for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
+    const allowTools = tools.length > 0 && round < MAX_TOOL_ROUNDS;
+    const response = await AIRouter.routeRequest('generate', {
+      prompt: messages,
+      options: {
+        tools: allowTools ? tools : undefined,
+        temperature: 0.2,
+      },
     });
-    assistantText = (followUp?.text ?? '').toString().trim() || assistantText;
+
+    assistantText = (response?.text ?? '').toString().trim();
+    const toolCalls = (response?.toolCalls ?? []) as ToolCall[];
+    if (toolCalls.length === 0 || !allowTools) break;
+
+    // Echo the assistant's tool request, then one tool message per call.
+    messages.push({
+      role: 'assistant',
+      content: assistantText || null,
+      tool_calls: toolCalls.map((tc, i) => ({
+        id: tc.id || `call_${round}_${i}`,
+        type: 'function',
+        function: {
+          name: tc.function.name,
+          arguments: typeof tc.function.arguments === 'string' ? tc.function.arguments : JSON.stringify(tc.function.arguments ?? {}),
+        },
+      })),
+    });
+    const results = await executeToolCalls(toolCalls);
+    results.forEach((r, i) => {
+      usedToolNames.push(r.call.function.name);
+      messages.push({
+        role: 'tool',
+        tool_call_id: r.call.id || `call_${round}_${i}`,
+        name: r.call.function.name,
+        content: r.output.slice(0, 8000),
+      });
+    });
   }
-  return { text: assistantText || 'I am sorry, I could not generate a response.', usedToolNames: toolCalls.map((tc) => tc.function.name) };
+
+  return { text: assistantText || 'I am sorry, I could not generate a response.', usedToolNames: [...new Set(usedToolNames)] };
 };
 
-router.post('/completions', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), checkUsageLimit('ai_chat'), async (req: AuthedRequest, res: Response) => {
+// Request contract = shared `chatCompletionSchema` (camelCase) + legacy `conversation_id`.
+const completionsBodySchema = chatCompletionSchema
+  .extend({ conversation_id: z.string().uuid().optional() })
+  .transform(b => ({ ...b, conversationId: b.conversationId ?? b.conversation_id }));
+
+router.post('/completions', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), checkUsageLimit('ai_chat'), validate({ body: completionsBodySchema }), async (req: AuthedRequest, res: Response) => {
   try {
     const user = req.user;
     if (!user) {
       return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 
-    const body = req.body as {
-      message?: string;
-      conversation_id?: string;
-      language?: string;
-    };
+    const parsed = req.body as z.infer<typeof completionsBodySchema>;
+    const body = { message: parsed.message, conversation_id: parsed.conversationId, language: parsed.language };
     const rawMessage = body.message?.trim();
     if (!rawMessage) {
       return res.status(400).json({ success: false, error: 'message is required' });
@@ -153,9 +227,13 @@ router.post('/completions', authorize(['admin', 'regional_manager', 'extension_o
       [body.conversation_id ?? null, sanitizedMessage, body.language ?? null]
     );
 
-    const systemPrompt = `You are an agricultural extension advisory assistant. Answer the farmer's or officer's message using the knowledge base context when relevant. You have access to specialized agricultural tools — use them when they can provide accurate, data-driven information. Be concise and actionable.${historyBlock}${ragResult.context}`;
+    const tools = buildToolDefinitions();
+    const toolsClause = tools.length > 0
+      ? ' You have access to specialized agricultural tools — call them when they can provide accurate, data-driven information; never claim to have used a tool you did not call.'
+      : '';
+    const systemPrompt = `You are an agricultural extension advisory assistant. Answer the farmer's or officer's message using the knowledge base context when relevant.${toolsClause} Be concise and actionable.${historyBlock}${ragResult.context}`;
 
-    const { text: assistantText, usedToolNames } = await runAssistantTurn(systemPrompt, sanitizedMessage, buildToolDefinitions());
+    const { text: assistantText, usedToolNames } = await runAssistantTurn(systemPrompt, sanitizedMessage, tools);
 
     // Persist assistant message
     await query(

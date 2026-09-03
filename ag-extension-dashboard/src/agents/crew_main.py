@@ -52,6 +52,18 @@ except ImportError:
     CREW_AI_AVAILABLE = False
     logger.warning("Crew AI library not installed - using fallback implementation")
 
+    class BaseTool:  # type: ignore[no-redef]
+        """Minimal stand-in so tool classes below can be defined (and unit-tested)
+        when crewai is not installed. Never used for real agent runs."""
+        name: str = ""
+        description: str = ""
+
+        def run(self, *args, **kwargs):
+            return self._run(*args, **kwargs)
+
+        def _run(self, *args, **kwargs):  # pragma: no cover
+            raise NotImplementedError
+
 # Import OpenAI for direct AI processing
 try:
     from openai import OpenAI
@@ -61,161 +73,138 @@ except ImportError:
     logger.warning("OpenAI library not installed - AI features unavailable")
 
 
-# HTTP client for calling backend MCP tools
+# ─── Backend MCP tool bridge ────────────────────────────────────────────────
+# Contract (backend/src/services/mcpAdapter.ts createMCPRouter):
+#   POST {BACKEND_URL}/api/v1/mcp/tools/call   body: {"name": <tool>, "arguments": {...}}
+#   -> 200 {"success": true, "data": {"content": [{"type":"text","text": "..."}], "isError"?: bool}}
+#   Auth: Authorization: Bearer <MCP_API_TOKEN>  (shared secret; see mcpAuth)
 import httpx
-BACKEND_URL = os.getenv("BACKEND_URL", "http://ag-dashboard-backend:3001")
-API_TIMEOUT = 30.0
 
-async def call_mcp_tool(tool_name: str, arguments: dict) -> dict:
-    """Call a backend MCP tool via HTTP"""
+BACKEND_URL = os.getenv("BACKEND_URL", "http://ag-dashboard-backend:3001").rstrip("/")
+MCP_API_TOKEN = os.getenv("MCP_API_TOKEN", "")
+MCP_TIMEOUT_S = float(os.getenv("MCP_TIMEOUT_S", "30"))
+
+
+class MCPToolError(Exception):
+    pass
+
+
+def call_mcp_tool(tool_name: str, arguments: dict) -> str:
+    """Synchronously invoke a backend MCP tool and return its text output.
+
+    Uses a blocking httpx client on purpose: CrewAI executes tool `_run` methods
+    synchronously inside `crew.kickoff()`, which we run in a worker thread — so
+    `asyncio.run()` here would raise "cannot be called from a running event loop".
+    """
+    if not MCP_API_TOKEN:
+        raise MCPToolError("MCP_API_TOKEN is not configured for the Crew AI service")
+    url = f"{BACKEND_URL}/api/v1/mcp/tools/call"
     try:
-        async with httpx.AsyncClient(timeout=API_TIMEOUT) as client:
-            response = await client.post(
-                f"{BACKEND_URL}/api/v1/mcp/tools/{tool_name}",
-                json=arguments,
-                headers={"Authorization": f"Bearer {os.getenv('MCP_API_TOKEN', 'dev-token')}"}
+        with httpx.Client(timeout=MCP_TIMEOUT_S) as client:
+            resp = client.post(
+                url,
+                json={"name": tool_name, "arguments": arguments},
+                headers={"Authorization": f"Bearer {MCP_API_TOKEN}"},
             )
-            if response.is_success:
-                return response.json()
-            else:
-                logger.error(f"MCP tool {tool_name} failed: {response.status_code} {response.text}")
-                return {"error": f"Tool call failed: {response.status_code}", "fallback": True}
-    except Exception as e:
-        logger.error(f"Failed to call MCP tool {tool_name}: {e}")
-        return {"error": str(e), "fallback": True}
+    except httpx.HTTPError as exc:
+        raise MCPToolError(f"backend unreachable at {url}: {exc}") from exc
+
+    if resp.status_code == 401:
+        raise MCPToolError("backend rejected MCP_API_TOKEN (401)")
+    if resp.status_code == 404:
+        raise MCPToolError(f"MCP route not found at {url} (404)")
+    if not resp.is_success:
+        raise MCPToolError(f"backend returned HTTP {resp.status_code}: {resp.text[:200]}")
+
+    body = resp.json()
+    data = body.get("data") or {}
+    content = data.get("content") or []
+    text = "\n".join(str(c.get("text", "")) for c in content if isinstance(c, dict)).strip()
+    if data.get("isError"):
+        raise MCPToolError(text or f"tool {tool_name} reported an error")
+    if not text:
+        raise MCPToolError(f"tool {tool_name} returned no content")
+    return text
 
 
-# Crew AI tools that call backend MCP endpoints.
-#
-# Honesty contract: when the MCP backend is unreachable or a tool fails, the tools
-# below return an explicit [UNAVAILABLE] marker — never invented numbers (weather
-# values, prices, diagnoses). LLM agents consuming these strings must treat
-# [UNAVAILABLE] as "no data", not as content to paraphrase.
+def _tool_result(tool_name: str, arguments: dict) -> str:
+    """Wrapper that never raises into the agent loop but is explicit on failure."""
+    try:
+        return call_mcp_tool(tool_name, arguments)
+    except MCPToolError as exc:
+        logger.warning(f"MCP tool {tool_name} unavailable: {exc}")
+        return f"[TOOL UNAVAILABLE: {tool_name}] {exc}. Do not guess this data; tell the user it could not be retrieved."
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.error(f"MCP tool {tool_name} crashed: {exc}")
+        return f"[TOOL ERROR: {tool_name}] {exc}"
 
-def _unavailable(tool: str, reason: str) -> str:
-    return f"[UNAVAILABLE] {tool}: {reason}. No data was retrieved; do not estimate values."
 
-
+# Tool classes mirror backend tool names and argument names exactly.
 class WeatherTool(BaseTool):
     name: str = "get_weather_forecast"
-    description: str = "Get weather forecast for a location. Use this to provide farming advice based on weather."
+    description: str = "Get the weather forecast for a location (city or region). Args: location (str), days (int, 1-7)."
 
     def _run(self, location: str, days: int = 3) -> str:
-        import asyncio
-        try:
-            result = asyncio.run(call_mcp_tool("get_weather_forecast", {"location": location, "days": days}))
-            if "error" in result:
-                return _unavailable("get_weather_forecast", result.get('error', 'MCP unavailable'))
-            data = result.get("data", {})
-            summary = data.get("summary")
-            if not summary:
-                return _unavailable("get_weather_forecast", "service returned no forecast summary")
-            return f"Weather forecast for {location}: {summary}."
-        except Exception as e:
-            return _unavailable("get_weather_forecast", str(e))
+        return _tool_result("get_weather_forecast", {"location": location, "days": int(days)})
 
 
 class MarketPriceTool(BaseTool):
     name: str = "get_market_prices"
-    description: str = "Get current market prices for crops. Use this to advise farmers on when to sell. Returns an [UNAVAILABLE] marker when the data service is unreachable — state that price data is unavailable rather than estimating."
+    description: str = "Get latest crop market prices (each row has a dataStatus: live vs estimated). Args: crop (str, optional)."
 
-    def _run(self, crop: str, region: str = "East Africa") -> str:
-        import asyncio
-        try:
-            result = asyncio.run(call_mcp_tool("get_market_prices", {"crop": crop, "region": region}))
-            if "error" in result:
-                return _unavailable("get_market_prices", result.get('error', 'MCP unavailable'))
-            data = result.get("data", {})
-            price = data.get("price")
-            if not price:
-                return _unavailable("get_market_prices", "service returned no price for this crop/region")
-            trend = data.get("trend", "trend unknown")
-            return f"Market price for {crop} in {region}: {price} ({trend})."
-        except Exception as e:
-            return _unavailable("get_market_prices", str(e))
+    def _run(self, crop: str = "") -> str:
+        args = {"crop": crop} if crop else {}
+        return _tool_result("get_market_prices", args)
 
 
 class DiseaseDiagnosisTool(BaseTool):
     name: str = "diagnose_plant_disease"
-    description: str = "Diagnose plant disease from symptoms. Use this to identify crop diseases. Returns an [UNAVAILABLE] marker when the diagnosis service is unreachable — state that a diagnosis could not be generated rather than guessing."
+    description: str = "Heuristic symptom matcher over an internal disease corpus (not a verified diagnosis). Args: symptoms (list[str]), cropType (str, optional)."
 
-    def _run(self, symptoms: str, crop: str) -> str:
-        import asyncio
-        try:
-            result = asyncio.run(call_mcp_tool("diagnose_plant_disease", {"symptoms": symptoms, "crop": crop}))
-            if "error" in result:
-                return _unavailable("diagnose_plant_disease", result.get('error', 'MCP unavailable'))
-            data = result.get("data", {})
-            diagnosis = data.get("diagnosis")
-            if not diagnosis:
-                return _unavailable("diagnose_plant_disease", "service returned no diagnosis")
-            confidence = data.get("confidence")
-            treatment = data.get("treatment", "treatment unspecified")
-            return f"Diagnosis for {crop}: {diagnosis} (confidence: {confidence if confidence is not None else 'not stated'}). Recommendation: {treatment}"
-        except Exception as e:
-            return _unavailable("diagnose_plant_disease", str(e))
+    def _run(self, symptoms, cropType: str = "") -> str:
+        if isinstance(symptoms, str):
+            symptoms = [part.strip() for part in symptoms.split(",") if part.strip()]
+        args = {"symptoms": list(symptoms)}
+        if cropType:
+            args["cropType"] = cropType
+        return _tool_result("diagnose_plant_disease", args)
 
 
-class SoilAnalysisTool(BaseTool):
-    name: str = "analyze_soil"
-    description: str = "Analyze soil conditions for a location. Use this for fertilizer recommendations. Returns an [UNAVAILABLE] marker when the soil service is unreachable — state that soil data is unavailable rather than estimating."
+class DiseaseAlertTool(BaseTool):
+    name: str = "get_disease_alerts"
+    description: str = "FAOSTAT production-anomaly proxy for disease/pest pressure (lagging, not real-time). Args: region (str), crop (str, optional)."
 
-    def _run(self, location: str) -> str:
-        import asyncio
-        try:
-            result = asyncio.run(call_mcp_tool("analyze_soil", {"location": location}))
-            if "error" in result:
-                return _unavailable("analyze_soil", result.get('error', 'MCP unavailable'))
-            data = result.get("data", {})
-            ph = data.get("ph")
-            if ph is None:
-                return _unavailable("analyze_soil", "service returned no soil analysis")
-            nitrogen = data.get("nitrogen", "N unknown")
-            phosphorus = data.get("phosphorus", "P unknown")
-            potassium = data.get("potassium", "K unknown")
-            recommendation = data.get("recommendation", "no fertilizer recommendation returned")
-            return f"Soil analysis for {location}: pH {ph}, N: {nitrogen}, P: {phosphorus}, K: {potassium}. Recommended: {recommendation}"
-        except Exception as e:
-            return _unavailable("analyze_soil", str(e))
-
-
-class PestOutbreakTool(BaseTool):
-    name: str = "get_pest_outbreaks"
-    description: str = "Get current pest outbreak alerts for a region. Returns an [UNAVAILABLE] marker when the outbreak service is unreachable — state that outbreak data is unavailable rather than assuming there are no outbreaks."
-
-    def _run(self, region: str = "East Africa", crop: str = "") -> str:
-        import asyncio
-        try:
-            result = asyncio.run(call_mcp_tool("get_pest_outbreaks", {"region": region, "crop": crop}))
-            if "error" in result:
-                return _unavailable("get_pest_outbreaks", result.get('error', 'MCP unavailable'))
-            data = result.get("data", {})
-            outbreaks = data.get("outbreaks", [])
-            if not outbreaks:
-                return f"Pest outbreak check for {region}: No active outbreaks reported."
-            return f"Active pest outbreaks in {region}: " + "; ".join([f"{o.get('pest', 'Unknown')} on {o.get('crop', 'crops')} ({o.get('severity', 'medium')})" for o in outbreaks[:3]])
-        except Exception as e:
-            return _unavailable("get_pest_outbreaks", str(e))
+    def _run(self, region: str, crop: str = "") -> str:
+        args = {"region": region}
+        if crop:
+            args["crop"] = crop
+        return _tool_result("get_disease_alerts", args)
 
 
 class CropYieldForecastTool(BaseTool):
-    name: str = "forecast_crop_yield"
-    description: str = "Forecast crop yield based on weather, soil, and management data. Returns an [UNAVAILABLE] marker when the forecast service is unreachable — state that a yield forecast is unavailable rather than estimating."
+    name: str = "crop_yield_forecast"
+    description: str = "Order-of-magnitude yield estimate from a coefficient table x weather favourability (isEstimate=true). Args: crop, region, areaHectares (optional), plantingDate (optional)."
 
-    def _run(self, crop: str, location: str, area_hectares: float = 1.0) -> str:
-        import asyncio
-        try:
-            result = asyncio.run(call_mcp_tool("forecast_crop_yield", {"crop": crop, "location": location, "area_hectares": area_hectares}))
-            if "error" in result:
-                return _unavailable("forecast_crop_yield", result.get('error', 'MCP unavailable'))
-            data = result.get("data", {})
-            yield_per_ha = data.get("yield_per_hectare")
-            if yield_per_ha is None:
-                return _unavailable("forecast_crop_yield", "service returned no yield estimate")
-            confidence = data.get("confidence", "confidence not stated")
-            return f"Yield forecast for {crop} in {location}: {yield_per_ha} tons/ha (confidence: {confidence})"
-        except Exception as e:
-            return _unavailable("forecast_crop_yield", str(e))
+    def _run(self, crop: str, region: str, areaHectares: float = None, plantingDate: str = "") -> str:  # type: ignore[assignment]
+        args = {"crop": crop, "region": region}
+        if areaHectares is not None:
+            args["areaHectares"] = float(areaHectares)
+        if plantingDate:
+            args["plantingDate"] = plantingDate
+        return _tool_result("crop_yield_forecast", args)
+
+
+class SoilAnalysisTool(BaseTool):
+    name: str = "satellite_ndvi_analysis"
+    description: str = "Satellite spectral indices when configured plus a climate-derived vegetation vigor proxy. Args: latitude (float), longitude (float), daysBack (int, optional)."
+
+    def _run(self, latitude: float, longitude: float, daysBack: int = 90) -> str:
+        return _tool_result("satellite_ndvi_analysis", {"latitude": float(latitude), "longitude": float(longitude), "daysBack": int(daysBack)})
+
+
+class PestOutbreakTool(DiseaseAlertTool):
+    """Alias kept for existing agent wiring."""
+    name: str = "get_disease_alerts"
 
 
 # Authentication dependency
@@ -516,7 +505,10 @@ class MultiAgentService:
                 process=Process.sequential
             )
             
-            result = crew.kickoff(inputs={
+            # kickoff() is synchronous and can run for minutes; keep the event loop
+            # (and /health) responsive by running it in a worker thread.
+            import asyncio
+            result = await asyncio.to_thread(crew.kickoff, inputs={
                 "region": request.region,
                 "analysis_type": request.analysis_type.value
             })
@@ -752,7 +744,8 @@ class ResearchService:
                     verbose=True
                 )
                 
-                result = crew.kickoff()
+                import asyncio
+                result = await asyncio.to_thread(crew.kickoff)
                 processing_time = (datetime.utcnow() - start_time).total_seconds() * 1000
                 
                 return {

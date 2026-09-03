@@ -105,7 +105,7 @@ const scheduleSMSSchema = z.object({
 });
 
 // Send single SMS
-router.post('/send', checkUsageLimit('sms'), validate({ body: sendSMSSchema }), async (req: AuthRequest, res: Response) => {
+router.post('/send', checkUsageLimit('sms', { meter: false }), validate({ body: sendSMSSchema }), async (req: AuthRequest, res: Response) => {
     try {
         const { to, message, farmerId } = req.body;
         const senderId = req.user!.userId;
@@ -138,7 +138,7 @@ router.post('/send', checkUsageLimit('sms'), validate({ body: sendSMSSchema }), 
 });
 
 // Send bulk SMS
-router.post('/bulk', checkUsageLimit('sms'), validate({ body: bulkSMSSchema }), async (req: AuthRequest, res: Response) => {
+router.post('/bulk', checkUsageLimit('sms', { meter: false }), validate({ body: bulkSMSSchema }), async (req: AuthRequest, res: Response) => {
     try {
         const { recipients, message, farmerId } = req.body;
         const senderId = req.user!.userId;
@@ -403,7 +403,7 @@ router.post('/feedback', validate({
 
         // Persist feedback to database
         await query(
-            `INSERT INTO sms_feedback (user_id, farmer_id, rating, feedback, created_at)
+            `INSERT INTO sms_feedback (tenant_id, farmer_id, rating, comment, created_at)
              VALUES ($1, $2, $3, $4, NOW())`,
             [userId, farmerId || null, rating, feedback || '']
         );

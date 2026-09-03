@@ -7,6 +7,9 @@ import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
 import { safeError } from '@/utils/safeResponse';
 
+// Fields that users may be updated with – no role, no password_hash, no resetToken.
+const ALLOWED_USER_FIELDS = ['first_name', 'last_name', 'region', 'phone', 'is_active', 'preferred_language'];
+
 const router = Router();
 
 router.use(authorize(['admin', 'regional_manager']));
@@ -83,6 +86,11 @@ router.post('/', async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, error: 'email and password are required' });
         }
 
+        // Only allow explicitly permitted role values
+        const allowedRoles = ['farmer', 'extension_officer', 'regional_manager', 'admin'];
+        const safeRole = (role ?? 'farmer').trim().toLowerCase();
+        const normalizedRole = allowedRoles.includes(safeRole) ? safeRole : 'farmer';
+
         const password_hash = await bcrypt.hash(password, 10);
 
         const { rows } = await query<UserPublicRow>(
@@ -90,7 +98,7 @@ router.post('/', async (req: Request, res: Response) => {
              VALUES ($1, $2, $3, $4, $5, $6, $7, true)
              RETURNING id, email, first_name, last_name, role, region, phone, is_active,
                        preferred_language, avatar_url, last_login`,
-            [email, password_hash, first_name ?? null, last_name ?? null, role ?? 'farmer', region ?? null, phone ?? null]
+            [email, password_hash, first_name ?? null, last_name ?? null, normalizedRole, region ?? null, phone ?? null]
         );
 
         const created = rows[0];
@@ -121,26 +129,25 @@ router.put('/:id', async (req: Request, res: Response) => {
             preferred_language: string;
         }>;
 
-        const fields: string[] = [];
-        const params: unknown[] = [];
-        let i = 1;
-
+        // Field allowlist: reject any key not in the permitted set
+        const safeUpdates: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(updates)) {
-            if (value === undefined) continue;
-            fields.push(`${key} = $${i++}`);
-            params.push(value);
+            if (ALLOWED_USER_FIELDS.includes(key) && value !== undefined) {
+                safeUpdates[key] = value;
+            }
         }
-        if (fields.length === 0) {
-            return res.status(400).json({ success: false, error: 'No updates supplied' });
+        if (Object.keys(safeUpdates).length === 0) {
+            return res.status(400).json({ success: false, error: 'No valid updates supplied' });
         }
-        params.push(id);
+
+        safeUpdates.updated_at = new Date();
 
         const { rows } = await query<UserPublicRow>(
-            `UPDATE users SET ${fields.join(', ')}, updated_at = NOW()
-              WHERE id = $${i}
+            `UPDATE users SET ${Object.keys(safeUpdates).map((k, i) => `${k} = $${i + 1}`).join(', ')}, updated_at = NOW()
+              WHERE id = $${Object.keys(safeUpdates).length + 1}
          RETURNING id, email, first_name, last_name, role, region, phone, is_active,
                    preferred_language, avatar_url, last_login`,
-            params
+            Object.values(safeUpdates).concat(id)
         );
 
         if (rows.length === 0) {

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Settings, Shield, Zap, ChevronRight, BarChart3, Cloud, ArrowLeft, Globe, Server, Bot, Save, LogIn, LogOut, User as UserIcon } from 'lucide-react';
 import { usePersistence } from '@/shared/hooks/usePersistence';
-import CONFIG from '../../shared/config';
+import CONFIG, { resolveApiBase } from '../../shared/config';
+import { decodeJwtExpiry } from '../../shared/authToken';
 
 function App() {
   const [activeAgent, setActiveAgent] = usePersistence('activeAgent', 'AGENT ALPHA');
@@ -14,11 +15,26 @@ function App() {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
+  // Surface an expired token as "signed out" instead of letting every request 401.
+  const tokenExpiry = authToken ? decodeJwtExpiry(authToken) : null;
+  const tokenExpired = tokenExpiry !== null && tokenExpiry <= Date.now();
+  React.useEffect(() => {
+    if (tokenExpired) {
+      setAuthToken(null);
+      browser.storage.local.remove('authToken').catch(() => {});
+      setLoginError('Your session expired — please sign in again');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tokenExpired]);
+
   const handleLogin = async () => {
     setLoginError(null);
     setIsLoggingIn(true);
     try {
-      const res = await fetch(`${apiEndpoint}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+      // The persisted endpoint may be a non-absolute value from an older build;
+      // resolveApiBase() validates it and falls back to the build default.
+      const base = await resolveApiBase();
+      const res = await fetch(`${base}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
       const data = await res.json() as { success?: boolean; token?: string; data?: { token?: string }; error?: string };
       const token = data.token || data.data?.token;
       if (res.ok && token) {

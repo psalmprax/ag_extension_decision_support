@@ -273,12 +273,18 @@ export class WeatherService {
     });
 
     const dayData = resp.data?.forecast?.forecastday?.[0]?.day;
+    // A 200 with no forecastday means the provider has no observation for that
+    // date/location. Never substitute defaults under a 'live' label — this path
+    // feeds claim auditing.
+    if (!dayData || typeof dayData.avgtemp_c !== 'number') {
+      throw new Error(`Historical weather unavailable for ${location} ${date}: provider returned no daily observation`);
+    }
     return {
       date,
-      avgTempC: dayData?.avgtemp_c ?? 20.0,
-      maxTempC: dayData?.maxtemp_c ?? 25.0,
-      minTempC: dayData?.mintemp_c ?? 14.0,
-      totalPrecipMm: dayData?.totalprecip_mm ?? 0,
+      avgTempC: dayData.avgtemp_c,
+      maxTempC: typeof dayData.maxtemp_c === 'number' ? dayData.maxtemp_c : dayData.avgtemp_c,
+      minTempC: typeof dayData.mintemp_c === 'number' ? dayData.mintemp_c : dayData.avgtemp_c,
+      totalPrecipMm: typeof dayData.totalprecip_mm === 'number' ? dayData.totalprecip_mm : 0,
       dataStatus: 'live' as const,
       source: 'WeatherAPI.com /history.json',
     };

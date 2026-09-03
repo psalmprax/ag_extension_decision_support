@@ -265,33 +265,122 @@ export class VectorService {
      * Seed initial knowledge into DB
      */
     static async seedKnowledge(articles: Array<{ id: string; title: string; content: string; category: string; tags?: string[]; crop: string; regions?: string[]; source?: string; sourceUrl?: string | null }>): Promise<void> {
+        // Determine which seed articles still need an embedding. The plain-SQL
+        // seeder (routes/knowledge) inserts rows with embedding = NULL, so a simple
+        // "count >= N → skip" check would leave vector search permanently empty.
+        let pending = articles;
         try {
-            const countResult = await query(`SELECT COUNT(*)::integer as count FROM knowledge_articles`);
-            const count = countResult.rows[0]?.count || 0;
-            if (count >= 15) {
-                logger.info(`Vector store already has ${count} articles. Skipping seeding.`);
-                return;
-            }
+            const res = await query(
+                `SELECT id FROM knowledge_articles WHERE id = ANY($1::uuid[]) AND embedding IS NOT NULL`,
+                [articles.map(a => a.id)]
+            );
+            const embedded = new Set((res.rows as Array<{ id: string }>).map(r => r.id));
+            pending = articles.filter(a => !embedded.has(a.id));
         } catch (err) {
-            logger.warn(`Could not check knowledge_articles count (table might not exist yet):`, err);
+            logger.warn(`Could not check embedded seed articles (table might not exist yet):`, err);
         }
 
-        logger.info(`Seeding persistent vector store with ${articles.length} articles`);
-        for (const article of articles) {
-            await this.upsertDocument(
-                article.id,
-                article.content,
-                {
-                    title: article.title,
-                    category: article.category,
-                    tags: article.tags || [],
-                    crops: [article.crop],
-                    regions: article.regions || (article.crop === 'maize' ? ['East Africa'] : ['tropical']),
-                    source: article.source || 'AG Extension Tropical Agronomy Seed',
-                    sourceUrl: article.sourceUrl || null,
-                    contentType: 'text'
-                }
-            );
+        if (pending.length === 0) {
+            logger.info(`Vector store: all ${articles.length} seed articles already embedded.`);
+            return;
         }
+
+        logger.info(`Seeding persistent vector store: embedding ${pending.length}/${articles.length} articles`);
+        let failures = 0;
+        for (const article of pending) {
+            try {
+                await this.upsertDocument(
+                    article.id,
+                    article.content,
+                    {
+                        title: article.title,
+                        category: article.category,
+                        tags: article.tags || [],
+                        crops: [article.crop],
+                        regions: article.regions || (article.crop === 'maize' ? ['East Africa'] : ['tropical']),
+                        source: article.source || 'AG Extension Tropical Agronomy Seed',
+                        sourceUrl: article.sourceUrl || null,
+                        contentType: 'text'
+                    }
+                );
+            } catch (err) {
+                failures++;
+                // A dimension mismatch will fail every article identically — stop early.
+                if ((err as Error)?.name === 'EmbeddingDimensionError') {
+                    logger.error(`Vector seeding aborted: ${(err as Error).message}`);
+                    return;
+                }
+                logger.warn(`Vector seeding: failed to embed "${article.title}":`, err);
+            }
+        }
+        if (failures > 0) logger.warn(`Vector seeding finished with ${failures} failure(s)`);
+    }
+
+    /**
+     * Backfill embeddings for any knowledge_articles rows that lack one (e.g. rows
+     * inserted by plain SQL seeders or ingestion paths that bypassed upsertDocument).
+     */
+    /**
+     * Drain every NULL-embedding row in batches until none remain (or the provider
+     * is misconfigured). Used by the boot sequence and the backfill CLI so large
+     * existing corpora are indexed in one run rather than one batch per restart.
+     */
+    static async backfillAllMissingEmbeddings(batchSize = 100, maxBatches = 10_000): Promise<{ processed: number; failed: number; remaining: number; aborted?: string }> {
+        let processed = 0;
+        let failed = 0;
+        let aborted: string | undefined;
+        for (let i = 0; i < maxBatches; i++) {
+            const r = await this.backfillMissingEmbeddings(batchSize);
+            processed += r.processed;
+            failed += r.failed;
+            if (r.aborted) { aborted = r.aborted; break; }
+            if (r.processed === 0 && r.failed === 0) break; // nothing left
+            if (r.processed === 0 && r.failed > 0) break;   // every row in the batch failed — stop looping
+        }
+        let remaining = 0;
+        try {
+            const c = await query(`SELECT COUNT(*)::int AS n FROM knowledge_articles WHERE embedding IS NULL`);
+            remaining = Number(c.rows[0]?.n ?? 0);
+        } catch { /* table may not exist */ }
+        return { processed, failed, remaining, aborted };
+    }
+
+    static async backfillMissingEmbeddings(batchSize = 50): Promise<{ processed: number; failed: number; aborted?: string }> {
+        let processed = 0;
+        let failed = 0;
+        let aborted: string | undefined;
+        try {
+            const res = await query(
+                `SELECT id, title, content, category, tags, crops, regions, source, source_url, content_type
+                   FROM knowledge_articles WHERE embedding IS NULL ORDER BY created_at ASC LIMIT $1`,
+                [batchSize]
+            );
+            for (const row of res.rows as Array<Record<string, unknown>>) {
+                try {
+                    await this.upsertDocument(String(row.id), String(row.content || ''), {
+                        title: row.title,
+                        category: row.category,
+                        tags: row.tags || [],
+                        crops: row.crops || [],
+                        regions: row.regions || [],
+                        source: row.source || null,
+                        sourceUrl: row.source_url || null,
+                        contentType: row.content_type || 'text',
+                    });
+                    processed++;
+                } catch (err) {
+                    failed++;
+                    if ((err as Error)?.name === 'EmbeddingDimensionError') {
+                        aborted = (err as Error).message;
+                        logger.error(`Embedding backfill aborted: ${aborted}`);
+                        break;
+                    }
+                }
+            }
+        } catch (err) {
+            logger.warn('Embedding backfill query failed:', err);
+        }
+        if (processed || failed) logger.info(`Embedding backfill: ${processed} embedded, ${failed} failed`);
+        return { processed, failed, aborted };
     }
 }

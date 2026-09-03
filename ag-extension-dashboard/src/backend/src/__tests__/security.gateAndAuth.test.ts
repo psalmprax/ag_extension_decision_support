@@ -98,7 +98,7 @@ describe('Cybersecurity Suite — Perimeter Security Gate & RBAC Authorization',
       expect(nextFunction).not.toHaveBeenCalled();
     });
 
-    it('should reject requests when user lacks required role', () => {
+    it('should reject requests when user lacks required role', async () => {
       const officerToken = jwt.sign(
         { userId: 'user_123', email: 'officer@example.com', role: 'extension_officer' },
         config.jwt.secret,
@@ -107,7 +107,8 @@ describe('Cybersecurity Suite — Perimeter Security Gate & RBAC Authorization',
       mockRequest.headers = { authorization: `Bearer ${officerToken}` };
       const middleware = authorize(['admin']);
 
-      middleware(mockRequest as Request, mockResponse as Response, nextFunction);
+      // authorize is async: session validity is checked against the DB.
+      await middleware(mockRequest as Request, mockResponse as Response, nextFunction);
 
       expect(mockResponse.status).toHaveBeenCalledWith(403);
       expect(mockResponse.json).toHaveBeenCalledWith(
@@ -119,7 +120,7 @@ describe('Cybersecurity Suite — Perimeter Security Gate & RBAC Authorization',
       expect(nextFunction).not.toHaveBeenCalled();
     });
 
-    it('should permit access when user has an authorized role', () => {
+    it('should permit access when user has an authorized role', async () => {
       const adminToken = jwt.sign(
         { userId: 'admin_123', email: 'admin@gpexts.com', role: 'admin' },
         config.jwt.secret,
@@ -128,7 +129,7 @@ describe('Cybersecurity Suite — Perimeter Security Gate & RBAC Authorization',
       mockRequest.headers = { authorization: `Bearer ${adminToken}` };
       const middleware = authorize(['admin', 'extension_officer']);
 
-      middleware(mockRequest as Request, mockResponse as Response, nextFunction);
+      await middleware(mockRequest as Request, mockResponse as Response, nextFunction);
 
       expect(nextFunction).toHaveBeenCalled();
       expect(mockResponse.status).not.toHaveBeenCalled();

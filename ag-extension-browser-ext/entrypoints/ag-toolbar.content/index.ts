@@ -10,7 +10,8 @@ type ContentRequestMessage =
     | { action: 'extract_tables' }
     | { action: 'extract_agricultural_data' }
     | { action: 'trigger_photo_capture' }
-    | { action: 'highlight_terms'; terms: string[] };
+    | { action: 'highlight_terms'; terms: string[] }
+    | { action: 'clear_highlights' };
 
 const isContentRequestMessage = (message: unknown): message is ContentRequestMessage => {
     if (!message || typeof message !== 'object') return false;
@@ -22,6 +23,7 @@ const isContentRequestMessage = (message: unknown): message is ContentRequestMes
         action === 'extract_tables' ||
         action === 'extract_agricultural_data' ||
         action === 'trigger_photo_capture' ||
+        action === 'clear_highlights' ||
         action === 'highlight_terms'
     );
 };
@@ -52,6 +54,7 @@ export default defineContentScript({
 
         // Photo Capture Button
         const photoBtn = document.createElement('button');
+        photoBtn.dataset.action = 'capture-photo';
         safeSetHTML(photoBtn, `
           <div style="
             width: 48px;
@@ -85,27 +88,36 @@ export default defineContentScript({
             const canvas = document.createElement('canvas');
             const canvasCtx = canvas.getContext('2d');
 
-            video.addEventListener('loadedmetadata', () => {
-              canvas.width = video.videoWidth;
-              canvas.height = video.videoHeight;
+            video.addEventListener('loadedmetadata', async () => {
+              // Downscale to <=1280px on the long edge: keeps the base64 payload in the
+              // low hundreds of KB (vs multi-MB for a 4K frame) for the message port,
+              // the JSON body limit and the offline queue.
+              const MAX_EDGE = 1280;
+              const scale = Math.min(1, MAX_EDGE / Math.max(video.videoWidth || 1, video.videoHeight || 1));
+              canvas.width = Math.round((video.videoWidth || 640) * scale);
+              canvas.height = Math.round((video.videoHeight || 480) * scale);
+
+              try { await video.play(); } catch { /* autoplay may already be running */ }
 
               // Capture after a short delay to let camera focus
-              setTimeout(() => {
+              setTimeout(async () => {
                 if (canvasCtx) {
-                  canvasCtx.drawImage(video, 0, 0);
+                  canvasCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
                   const imageData = canvas.toDataURL('image/jpeg', 0.8);
 
-                  // Stop camera stream
+                  // Stop camera stream and release the element
                   stream.getTracks().forEach(track => track.stop());
+                  video.srcObject = null;
+                  video.remove();
 
-                  // Send to sidepanel for analysis
-                  browser.runtime.sendMessage({
-                    action: 'photo_captured',
-                    imageData: imageData
-                  });
+                  // Persist first: if the sidepanel is not open yet there is no listener
+                  // for `photo_captured`, and the frame would otherwise be lost.
+                  try { await browser.storage.local.set({ lastCapturedPhoto: { imageData, capturedAt: Date.now() } }); } catch { /* ignore */ }
 
-                  // Open sidepanel
-                  browser.runtime.sendMessage({ action: 'open_sidepanel' });
+                  // Open sidepanel, then notify (an open panel consumes the message and
+                  // clears the stored copy; a cold panel restores it on mount).
+                  await browser.runtime.sendMessage({ action: 'open_sidepanel' }).catch(() => {});
+                  browser.runtime.sendMessage({ action: 'photo_captured', imageData }).catch(() => {});
                 }
               }, 1000);
             });
@@ -266,20 +278,13 @@ export default defineContentScript({
             if (accuracy > 100) accuracyStatus = 'acceptable';
             if (accuracy > 1000) accuracyStatus = 'poor';
 
-            // Send location data to sidepanel with validation
-            browser.runtime.sendMessage({
-              action: 'location_captured',
-              location: {
-                latitude,
-                longitude,
-                accuracy,
-                accuracyStatus,
-                timestamp
-              }
-            });
+            const location = { latitude, longitude, accuracy, accuracyStatus, timestamp };
 
-            // Open sidepanel
-            browser.runtime.sendMessage({ action: 'open_sidepanel' });
+            // Persist first so a closed sidepanel can restore the fix on mount, then
+            // open the panel, then notify any already-open panel.
+            try { await browser.storage.local.set({ lastCapturedLocation: location }); } catch { /* ignore */ }
+            await browser.runtime.sendMessage({ action: 'open_sidepanel' }).catch(() => {});
+            browser.runtime.sendMessage({ action: 'location_captured', location }).catch(() => {});
           } catch (error: unknown) {
             console.error('Location access failed:', error);
 
@@ -355,6 +360,11 @@ export default defineContentScript({
         }
         if (message.action === 'highlight_terms') {
           highlightTermsOnPage(message.terms);
+          sendResponse({ success: true });
+          return;
+        }
+        if (message.action === 'clear_highlights') {
+          clearHighlightsOnPage();
           sendResponse({ success: true });
           return;
         }
@@ -581,15 +591,26 @@ function extractAgriculturalData(): {
   dates: string[];
   locations: string[];
 } {
-  const text = document.body?.textContent || '';
+  // Bound the scan: body text on large pages can be megabytes and this runs on every
+  // sidepanel open. 200KB is plenty for a heuristic extractor.
+  const text = (document.body?.textContent || '').slice(0, 200_000);
+  const lowerText = text.toLowerCase();
   const cropPatterns = ['maize', 'wheat', 'rice', 'coffee', 'beans', 'sorghum', 'cassava', 'potatoes', 'tomatoes', 'cotton', 'tea', 'sugarcane', 'millet', 'groundnuts', 'sunflower'];
-  const cropNames = cropPatterns.filter(crop => text.toLowerCase().includes(crop));
+  const cropNames = cropPatterns.filter(crop => new RegExp(`\\b${crop}\\b`).test(lowerText));
 
+  // A "price" needs a currency marker OR an agricultural unit next to the number,
+  // and the label must be a known crop word. Bare "Page 12" / "Copyright 2024" no longer match.
   const prices: Array<{ crop: string; price: string; unit: string; location?: string }> = [];
-  const priceRegex = /(\w+)\s*[:\-]?\s*\$?(\d[\d,.]*)\s*(per|\/|for)?\s*(kg|ton|bag|bushel|tonne)?/gi;
-  let match;
-  while ((match = priceRegex.exec(text)) !== null) {
-    prices.push({ crop: match[1], price: match[2], unit: match[4] || 'unit', location: undefined });
+  const cropAlternation = cropPatterns.join('|');
+  const priceRegex = new RegExp(
+    `\\b(${cropAlternation})\\b[^\\d$€£₦Ksh]{0,30}?(?:(\\$|€|£|USD|KES|Ksh|UGX|TZS|NGN|GHS|ZAR)\\s*)?(\\d{1,3}(?:[,\\d]{0,9})(?:\\.\\d{1,2})?)\\s*(?:per|\\/)?\\s*(kg|ton|tonne|bag|bushel|90kg|50kg|crate)?`,
+    'gi'
+  );
+  let match: RegExpExecArray | null;
+  while ((match = priceRegex.exec(text)) !== null && prices.length < 25) {
+    const [, crop, currency, amount, unit] = match;
+    if (!currency && !unit) continue; // number next to a crop word is not a price by itself
+    prices.push({ crop: crop.toLowerCase(), price: `${currency ? currency + ' ' : ''}${amount}`, unit: unit || 'unit', location: undefined });
   }
 
   const weatherElements = document.querySelectorAll('[class*="weather"], [class*="temperature"], [class*="forecast"], [id*="weather"]');
@@ -600,10 +621,11 @@ function extractAgriculturalData(): {
   });
 
   const contactInfo: Array<{ name: string; phone?: string; email?: string; address?: string }> = [];
-  const phoneRegex = /[\+]?[\d\s\-\(\)]{7,20}/g;
-  const emailRegex = /[\w.-]+@[\w.-]+\.\w+/g;
-  const phones = text.match(phoneRegex) || [];
-  const emails = text.match(emailRegex) || [];
+  // Phone: requires an international prefix or a 10+ digit run, not any 7 digits/spaces.
+  const phoneRegex = /(?:\+\d{1,3}[\s-]?)?(?:\(?\d{2,4}\)?[\s-]?)\d{3}[\s-]?\d{3,4}\b/g;
+  const emailRegex = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g;
+  const phones = (text.match(phoneRegex) || []).filter(p => p.replace(/\D/g, '').length >= 9).slice(0, 5);
+  const emails = (text.match(emailRegex) || []).slice(0, 5);
   if (phones.length > 0 || emails.length > 0) {
     contactInfo.push({ name: 'Page Contact', phone: phones[0], email: emails[0] });
   }
@@ -611,8 +633,14 @@ function extractAgriculturalData(): {
   const dateRegex = /\b(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}|\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4})\b/gi;
   const dates = (text.match(dateRegex) || []).slice(0, 10);
 
-  const locationRegex = /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:,\s*[A-Z][a-z]+)*)\b/g;
-  const locations = [...new Set((text.match(locationRegex) || []).filter(l => l.length > 3))].slice(0, 10);
+  // Locations: only accept capitalised phrases that follow a locative cue ("in Nakuru",
+  // "near Arusha", "County of Kiambu") — every capitalised word is NOT a place.
+  const locationRegex = /\b(?:in|near|at|from|around|county of|district of|region of)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})\b/g;
+  const locations: string[] = [];
+  let locMatch: RegExpExecArray | null;
+  while ((locMatch = locationRegex.exec(text)) !== null && locations.length < 10) {
+    if (!locations.includes(locMatch[1])) locations.push(locMatch[1]);
+  }
 
   return { cropNames, prices, weatherData, contactInfo, dates, locations };
 }
@@ -631,13 +659,25 @@ function getFieldLabel(field: Element): string {
   return name ? name.replace(/[_-]/g, ' ') : '';
 }
 
+/** Remove every highlight this extension added, restoring the original text nodes. */
+function clearHighlightsOnPage(): void {
+  document.querySelectorAll('mark[data-ag-highlight]').forEach(mark => {
+    const parent = mark.parentNode;
+    if (!parent) return;
+    parent.replaceChild(document.createTextNode(mark.textContent || ''), mark);
+    parent.normalize();
+  });
+}
+
 function highlightTermsOnPage(terms: string[]): void {
+  // Idempotent: always start from a clean page so repeated calls never nest <mark>s.
+  clearHighlightsOnPage();
   if (!terms.length) return;
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   const textNodes: Text[] = [];
   let node: Text | null;
   while ((node = walker.nextNode() as Text | null)) {
-    if (node.parentElement?.closest('#ag-toolbar-root, #ag-selection-bubble, script, style')) continue;
+    if (node.parentElement?.closest('#ag-toolbar-root, #ag-selection-bubble, script, style, textarea, input, [contenteditable="true"]')) continue;
     textNodes.push(node);
   }
   const escaped = terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');

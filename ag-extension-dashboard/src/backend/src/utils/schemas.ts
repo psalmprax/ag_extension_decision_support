@@ -1,4 +1,10 @@
 import { z } from 'zod';
+import { passwordSchema } from './passwordPolicy';
+import {
+  createVisitSchema as sharedCreateVisitSchema,
+  visitTypeSchema as sharedVisitTypeSchema,
+  visitStatusSchema as sharedVisitStatusSchema,
+} from '@/shared-api/visits';
 
 /**
  * @swagger
@@ -111,13 +117,28 @@ export const loginSchema = z.object({
 export const registerSchema = z.object({
   body: z.object({
     email: z.string().email('Invalid email format'),
-    password: z.string().min(6, 'Password must be at least 6 characters'),
+    password: passwordSchema,
     firstName: z.string().min(2, 'First name is required'),
     lastName: z.string().min(2, 'Last name is required'),
     role: z.enum(['extension_officer', 'regional_manager', 'admin', 'farmer']).optional(),
     region: z.string().optional(),
     phone: z.string().optional(),
   }),
+});
+
+export const forgotPasswordSchema = z.object({
+  body: z.object({ email: z.string().email('Invalid email format') }),
+});
+
+export const resetPasswordSchema = z.object({
+  body: z.object({
+    token: z.string().min(32, 'Invalid token'),
+    password: passwordSchema,
+  }),
+});
+
+export const verifyEmailSchema = z.object({
+  body: z.object({ token: z.string().min(32, 'Invalid token') }),
 });
 
 // Farmer Schemas
@@ -137,27 +158,42 @@ export const createFarmerSchema = z.object({
   }),
 });
 
-// Visit Schemas
+// Visit Schemas — the body contract is the SHARED schema (ag-extension-shared/src/api/visits.ts,
+// vendored to src/shared-api). Legacy snake_case aliases are accepted and normalised so
+// older clients keep working, but the canonical field names/enums are enforced.
+const legacyVisitAliases = z.object({
+  farmer_id: z.string().uuid().optional(),
+  visit_type: z.string().optional(),
+  type: z.string().optional(),
+  scheduled_at: z.string().optional(),
+  officerId: z.string().uuid().optional(),
+});
+
 export const createVisitSchema = z.object({
-  body: z.object({
-    farmerId: z.string().uuid().optional(),
-    farmer_id: z.string().uuid().optional(),
-    visitType: z.string().min(1).optional(),
-    visit_type: z.string().min(1).optional(),
-    type: z.string().min(1).optional(),
-    scheduledAt: z.string().datetime().optional(),
-    scheduled_at: z.string().datetime().optional(),
-    notes: z.string().optional(),
-  }).refine(
-    body => Boolean(body.farmerId || body.farmer_id),
-    { message: 'farmerId is required' }
-  ).refine(
-    body => Boolean(body.visitType || body.visit_type || body.type),
-    { message: 'visitType is required' }
-  ).refine(
-    body => Boolean(body.scheduledAt || body.scheduled_at),
-    { message: 'scheduledAt is required' }
-  ),
+  body: legacyVisitAliases
+    .merge(sharedCreateVisitSchema.partial({ farmerId: true, visitType: true, status: true }))
+    .transform(b => ({
+      ...b,
+      farmerId: b.farmerId ?? b.farmer_id,
+      visitType: (b.visitType ?? b.visit_type ?? b.type ?? 'routine') as string,
+      scheduledAt: b.scheduledAt ?? b.scheduled_at,
+      status: b.status ?? 'scheduled',
+    }))
+    .pipe(
+      z.object({
+        farmerId: z.string().uuid({ message: 'farmerId is required' }),
+        visitType: sharedVisitTypeSchema,
+        scheduledAt: z.string().datetime({ offset: true, message: 'scheduledAt must be an ISO-8601 datetime' }),
+        status: sharedVisitStatusSchema,
+        notes: z.string().optional(),
+        locationLat: z.number().min(-90).max(90).nullable().optional(),
+        locationLng: z.number().min(-180).max(180).nullable().optional(),
+        locationAccuracy: z.number().min(0).nullable().optional(),
+        attachmentIds: z.array(z.string().uuid()).optional(),
+        attachmentRefs: z.array(z.string()).optional(),
+        officerId: z.string().uuid().optional(),
+      })
+    ),
 });
 
 export const updateFarmerSchema = z.object({

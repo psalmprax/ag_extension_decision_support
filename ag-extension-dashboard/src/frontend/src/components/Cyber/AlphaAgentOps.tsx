@@ -20,84 +20,48 @@ import { searchKnowledge } from '@/api/knowledgeService';
 import { fetchFarmers } from '@/api/farmerService';
 import toast from 'react-hot-toast';
 
+/** Shape returned by GET /api/ai/agents (routes/ai.ts agentRegistry + live status). */
+interface ApiAgent {
+  id: string;
+  name: string;
+  url?: string;
+  description?: string;
+  capabilities?: string[];
+  providerType?: string;
+  status?: 'online' | 'running' | 'idle' | 'offline' | 'unhealthy' | string;
+  load?: number;
+  lastActive?: string;
+}
+
 interface AgentData {
   id: string;
   name: string;
   role: string;
-  status: 'online' | 'running' | 'idle' | 'offline';
-  load: number;
-  memoryUsage: number;
-  latencyMs: number;
+  status: 'online' | 'running' | 'idle' | 'offline' | 'unhealthy';
+  /** 0-100 when the backend reports it, otherwise null (rendered as "—"). */
+  load: number | null;
   description: string;
   capabilities: string[];
   lastActive?: string;
-  tools: string[];
+  providerType?: string;
 }
 
-// Fallback fleet data used only if API is unavailable
-const DEFAULT_FLEET: AgentData[] = [
-  // ... (keep the same DEFAULT_FLEET array)
-  {
-    id: 'agent-zero',
-    name: 'Agent Zero (Triage Orchestrator)',
-    role: 'Root Dispatcher & Multi-Agent Conductor',
-    status: 'online',
-    load: 28,
-    memoryUsage: 340,
-    latencyMs: 85,
-    description: 'Master autonomous router classifying farmer inquiries, allocating specialist agents, and arbitrating conflicting agronomic rules.',
-    capabilities: ['Dynamic Role Routing', 'Multi-Turn Goal Planning', 'Conflict Arbitration', 'Context Pruning'],
-    tools: ['triage_farmer_query', 'dispatch_specialist_agent', 'audit_advisory_history'],
-  },
-  {
-    id: 'crew-ai',
-    name: 'CrewAI Agronomy Squad',
-    role: 'Biophysical & Crop Phenology Crew',
-    status: 'running',
-    load: 64,
-    memoryUsage: 780,
-    latencyMs: 140,
-    description: 'Collaborative agent cluster specializing in nutrient uptake kinetics, split CAN top-dressing schedules, and soil texture profiling.',
-    capabilities: ['Crop Stage Modeling', 'NPK Mass-Balance Balancing', 'SoilGrids v2 Ingestion'],
-    tools: ['query_soilgrids_api', 'calc_liming_dosage', 'simulate_yield_curve'],
-  },
-  {
-    id: 'pathology-agent',
-    name: 'Bio-Pest & Pathology Diagnostic Agent',
-    role: 'Edge Vision & IPM Action Specialist',
-    status: 'online',
-    load: 42,
-    memoryUsage: 512,
-    latencyMs: 95,
-    description: 'Neural disease saliency classifier detecting foliar blights, maize streak virus, and calculating Fall Armyworm economic injury thresholds.',
-    capabilities: ['Foliar Lesion Saliency', 'Biological Parasitoid Protocols', 'Pesticide Toxicity Checks'],
-    tools: ['classify_leaf_image', 'get_fao_ipm_thresholds', 'verify_pesticide_safety'],
-  },
-  {
-    id: 'nasa-weather-agent',
-    name: 'NASA POWER Climatology Agent',
-    role: 'Satellite Weather & Moisture Forecaster',
-    status: 'online',
-    load: 18,
-    memoryUsage: 256,
-    latencyMs: 110,
-    description: 'Real-time satellite agroclimatology synthesizer tracking 14-day rainfall anomalies, VPD, and GDD phenology tracking.',
-    capabilities: ['Rainfall Anomaly Detection', 'Soil Moisture Saturation Index', 'Drought Early-Warning'],
-    tools: ['fetch_nasa_power_daily', 'compute_moisture_deficit', 'forecast_sowing_window'],
-  },
-  {
-    id: 'omni-dispatch-agent',
-    name: 'Omni-Channel Farmer Dispatcher',
-    role: 'SMS, WhatsApp & USSD Synthesis Gateway',
-    status: 'idle',
-    load: 12,
-    memoryUsage: 190,
-    latencyMs: 60,
-    description: 'Localized natural-language translation generator synthesizing Swahili, Luganda, and English advisory broadcasts directly to registered farmers.',
-    capabilities: ['Multi-Lingual Localization', 'SMS Byte Compression', 'USSD Session State Sync'],
-    tools: ['send_sms_batch', 'queue_whatsapp_advisory', 'synthesize_voice_stt'],
-  },
-];
+const KNOWN_STATUSES = new Set(['online', 'running', 'idle', 'offline', 'unhealthy']);
+
+function normalizeAgent(a: ApiAgent): AgentData {
+  const status = KNOWN_STATUSES.has(String(a.status)) ? (a.status as AgentData['status']) : 'offline';
+  return {
+    id: a.id,
+    name: a.name,
+    role: a.providerType ? `${a.providerType} runtime` : 'agent runtime',
+    status,
+    load: typeof a.load === 'number' && Number.isFinite(a.load) ? Math.max(0, Math.min(100, a.load)) : null,
+    description: a.description || '',
+    capabilities: Array.isArray(a.capabilities) ? a.capabilities : [],
+    lastActive: a.lastActive,
+    providerType: a.providerType,
+  };
+}
 
 interface TopologyNode {
   id: string;
@@ -108,21 +72,27 @@ interface TopologyNode {
   status: string;
 }
 
-const TOPOLOGY_NODES: TopologyNode[] = [
-  { id: 'agent-zero', name: 'Agent Zero (Triage)', x: 0.5, y: 0.2, color: '#10b981', status: 'online' },
-  { id: 'crew-ai', name: 'CrewAI (Agronomy)', x: 0.22, y: 0.55, color: '#06b6d4', status: 'running' },
-  { id: 'pathology-agent', name: 'Pathology & IPM', x: 0.78, y: 0.55, color: '#ec4899', status: 'online' },
-  { id: 'nasa-weather-agent', name: 'NASA Climatology', x: 0.35, y: 0.85, color: '#f59e0b', status: 'online' },
-  { id: 'omni-dispatch-agent', name: 'Omni Dispatcher', x: 0.65, y: 0.85, color: '#8b5cf6', status: 'idle' },
-];
+const NODE_COLORS = ['#10b981', '#06b6d4', '#ec4899', '#f59e0b', '#8b5cf6', '#22d3ee'];
 
-const TOPOLOGY_LINKS = [
-  { from: 'agent-zero', to: 'crew-ai' },
-  { from: 'agent-zero', to: 'pathology-agent' },
-  { from: 'crew-ai', to: 'nasa-weather-agent' },
-  { from: 'pathology-agent', to: 'omni-dispatch-agent' },
-  { from: 'nasa-weather-agent', to: 'omni-dispatch-agent' },
-];
+/** Lay agents out as a hub (first agent) + ring; links hub -> each spoke. */
+function buildTopology(fleet: AgentData[]): { nodes: TopologyNode[]; links: Array<{ from: string; to: string }> } {
+  if (fleet.length === 0) return { nodes: [], links: [] };
+  const [hub, ...spokes] = fleet;
+  const nodes: TopologyNode[] = [{ id: hub.id, name: hub.name, x: 0.5, y: 0.5, color: NODE_COLORS[0], status: hub.status }];
+  spokes.forEach((a, i) => {
+    const angle = (i / Math.max(spokes.length, 1)) * Math.PI * 2 - Math.PI / 2;
+    nodes.push({
+      id: a.id,
+      name: a.name,
+      x: 0.5 + Math.cos(angle) * 0.32,
+      y: 0.5 + Math.sin(angle) * 0.32,
+      color: NODE_COLORS[(i + 1) % NODE_COLORS.length],
+      status: a.status,
+    });
+  });
+  const links = spokes.map(a => ({ from: hub.id, to: a.id }));
+  return { nodes, links };
+}
 
 const drawGrid = (ctx: CanvasRenderingContext2D, w: number, h: number) => {
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
@@ -142,10 +112,10 @@ const drawGrid = (ctx: CanvasRenderingContext2D, w: number, h: number) => {
   }
 };
 
-const drawLinks = (ctx: CanvasRenderingContext2D, w: number, h: number, packetT: number) => {
-  TOPOLOGY_LINKS.forEach(link => {
-    const fromNode = TOPOLOGY_NODES.find(n => n.id === link.from);
-    const toNode = TOPOLOGY_NODES.find(n => n.id === link.to);
+const drawLinks = (ctx: CanvasRenderingContext2D, w: number, h: number, packetT: number, nodes: TopologyNode[], links: Array<{ from: string; to: string }>) => {
+  links.forEach(link => {
+    const fromNode = nodes.find(n => n.id === link.from);
+    const toNode = nodes.find(n => n.id === link.to);
     if (!fromNode || !toNode) return;
 
     const x1 = fromNode.x * w;
@@ -176,8 +146,8 @@ const drawLinks = (ctx: CanvasRenderingContext2D, w: number, h: number, packetT:
   });
 };
 
-const drawNodes = (ctx: CanvasRenderingContext2D, w: number, h: number, activeAgent: string) => {
-  TOPOLOGY_NODES.forEach(node => {
+const drawNodes = (ctx: CanvasRenderingContext2D, w: number, h: number, activeAgent: string, nodes: TopologyNode[]) => {
+  nodes.forEach(node => {
     const nx = node.x * w;
     const ny = node.y * h;
     const isSelected = activeAgent === node.id;
@@ -216,9 +186,11 @@ const drawNodes = (ctx: CanvasRenderingContext2D, w: number, h: number, activeAg
 
 const MultiAgentTopologyCanvas: React.FC<{
   activeAgent: string;
+  fleet: AgentData[];
   onSelectAgent: (id: string) => void;
-}> = ({ activeAgent, onSelectAgent }) => {
+}> = ({ activeAgent, fleet, onSelectAgent }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const { nodes, links } = React.useMemo(() => buildTopology(fleet), [fleet]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -235,8 +207,8 @@ const MultiAgentTopologyCanvas: React.FC<{
 
       ctx.clearRect(0, 0, w, h);
       drawGrid(ctx, w, h);
-      drawLinks(ctx, w, h, packetT);
-      drawNodes(ctx, w, h, activeAgent);
+      drawLinks(ctx, w, h, packetT, nodes, links);
+      drawNodes(ctx, w, h, activeAgent, nodes);
 
       packetT = (packetT + 0.008) % 1;
       animFrame = requestAnimationFrame(render);
@@ -245,16 +217,17 @@ const MultiAgentTopologyCanvas: React.FC<{
     render();
 
     return () => cancelAnimationFrame(animFrame);
-  }, [activeAgent]);
+  }, [activeAgent, nodes, links]);
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = (e.clientX - rect.left) / rect.width;
     const clickY = (e.clientY - rect.top) / rect.height;
 
-    let nearest = TOPOLOGY_NODES[0];
+    if (nodes.length === 0) return;
+    let nearest = nodes[0];
     let minDist = 999;
-    TOPOLOGY_NODES.forEach(n => {
+    nodes.forEach(n => {
       const d = Math.hypot(n.x - clickX, n.y - clickY);
       if (d < minDist) {
         minDist = d;
@@ -275,8 +248,13 @@ const MultiAgentTopologyCanvas: React.FC<{
       />
       <div className="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-black/60 border border-white/10 text-[10px] font-mono text-emerald-400 flex items-center gap-1.5">
         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-        <span>AUTONOMOUS MESH TOPOLOGY</span>
+        <span>{nodes.length > 0 ? `${nodes.length} REGISTERED AGENT${nodes.length === 1 ? '' : 'S'}` : 'NO AGENTS REGISTERED'}</span>
       </div>
+      {nodes.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center text-xs font-mono text-white/40">
+          Agent registry unavailable — check /api/ai/agents
+        </div>
+      )}
     </div>
   );
 };
@@ -287,7 +265,7 @@ const AUTONOMOUS_SCENARIOS = [
     title: 'Emergency Fall Armyworm Region-Wide Sweep',
     desc: 'Orchestrates vision models, queries FAO IPM rules, and drafts SMS alerts.',
     tag: 'ENTOMOLOGY',
-    agent: 'pathology-agent',
+    agent: 'crew-ai',
     initialLog: 'Initiating regional pest triage... Processing 142 smallholder scout reports.',
   },
   {
@@ -303,7 +281,7 @@ const AUTONOMOUS_SCENARIOS = [
     title: 'NASA Satellite Precipitation Anomaly Sweep',
     desc: 'Fetches 14-day rainfall anomalies and detects drought/waterlogging risk zones.',
     tag: 'CLIMATOLOGY',
-    agent: 'nasa-weather-agent',
+    agent: 'agent-zero',
     initialLog: 'Syncing NASA POWER surface meteorology... 14-day rainfall anomaly: +18.4% above median.',
   },
   {
@@ -311,75 +289,98 @@ const AUTONOMOUS_SCENARIOS = [
     title: 'Automated WhatsApp Advisory Follow-Up Loop',
     desc: 'Translates agronomic prescriptions to Swahili/Luganda and triggers dispatch.',
     tag: 'DISPATCH',
-    agent: 'omni-dispatch-agent',
+    agent: 'agent-zero',
     initialLog: 'Queueing multi-lingual advisory dispatches: 86 SMS, 42 WhatsApp audio notes.',
   },
 ];
 
 const AlphaAgentOps: React.FC = () => {
-  const { t: _t } = useLanguage();
+  const { t } = useLanguage();
   const { addNotification } = useAppStore();
   const [activeAgent, setActiveAgent] = useState<string>('agent-zero');
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionMode, setExecutionMode] = useState<'supervised' | 'autonomous' | 'edge'>('supervised');
-  const [consoleOutput, setConsoleOutput] = useState<string[]>([
-    '05:00:12 [SYSTEM] Multi-agent fleet orchestrator initialized.',
-    '05:00:14 [AGENT_ZERO] Root triage dispatcher standing by on channel #0.',
-    '05:00:15 [CREW_AI] Biophysical soil & crop squad synchronized with SoilGrids v2.',
-    '05:00:16 [PATHOLOGY] Neural foliar saliency model loaded (YOLOv8-Agro-v4).',
-    '05:00:18 [NASA_CLIM] NASA POWER 14-day satellite moisture feed active.',
-    '05:00:20 [OK] Fleet operational mesh status: 100% HEALTHY.',
-  ]);
+  const [consoleOutput, setConsoleOutput] = useState<string[]>([]);
 
   const now = () => new Date().toLocaleTimeString('en-US', { hour12: false });
 
-  // Fetch agents from backend API
-  const { data: agentsData } = useQuery({
+  // Fetch agents from backend API — the only source of fleet data. No fabricated fallback.
+  const { data: agentsData, isLoading: agentsLoading, isError: agentsError } = useQuery({
     queryKey: ['ai-agents'],
     queryFn: async () => {
-      const { data } = await apiClient.get<{ success: boolean; data: AgentData[] }>('/ai/agents');
-      return data.data;
+      const { data } = await apiClient.get<{ success: boolean; data: ApiAgent[] }>('/ai/agents');
+      return (data.data || []).map(normalizeAgent);
     },
     refetchInterval: 30000,
     retry: 2,
   });
+  const fleet: AgentData[] = agentsData ?? [];
 
-  // Use fetched agents or fallback to DEFAULT_FLEET
-  const fleet = agentsData && agentsData.length > 0 ? agentsData : DEFAULT_FLEET;
+  // Real MCP tool registry (shared by all agents).
+  const { data: mcpTools } = useQuery({
+    queryKey: ['mcp-tools'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ success: boolean; data: Array<{ name: string }> }>('/mcp/tools');
+      return (data.data || []).map(t => t.name);
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
 
-  // Fetch real knowledge count
-  useQuery({
+  const { data: knowledgeCount } = useQuery({
     queryKey: ['knowledge-count'],
     queryFn: async () => {
       const res = await searchKnowledge('');
       return res.data?.total || 0;
     },
+    staleTime: 60_000,
   });
 
-  // Fetch real farmer count
-  useQuery({
+  const { data: farmerCount } = useQuery({
     queryKey: ['farmer-count'],
     queryFn: async () => {
       const res = await fetchFarmers();
       return res.data?.total || 0;
     },
+    staleTime: 60_000,
   });
 
-  // Fetch real alerts count
-  useQuery({
+  const { data: alertsCount } = useQuery({
     queryKey: ['alerts-count'],
     queryFn: async () => {
-      try {
-        const { data } = await apiClient.get('/alerts');
-        const alerts = data?.data || data || [];
-        return Array.isArray(alerts) ? alerts.length : 0;
-      } catch {
-        return 0;
-      }
+      const { data } = await apiClient.get('/alerts');
+      const alerts = data?.data || data || [];
+      return Array.isArray(alerts) ? alerts.length : 0;
     },
+    staleTime: 60_000,
   });
 
-  const activeAgentData = fleet.find(a => a.id === activeAgent) || fleet[0];
+  // Boot log reflects what the API actually reported.
+  useEffect(() => {
+    if (agentsLoading) return;
+    const ts = now();
+    if (agentsError) {
+      setConsoleOutput([`${ts} [ERROR] Agent registry unavailable (GET /api/ai/agents failed).`]);
+      return;
+    }
+    const online = fleet.filter(a => a.status === 'online' || a.status === 'running').length;
+    const lines = [
+      `${ts} [SYSTEM] Agent registry loaded: ${fleet.length} agent(s), ${online} reachable.`,
+      ...fleet.map(a => `${ts} [${a.id.toUpperCase().replace(/-/g, '_')}] ${a.status}${a.lastActive ? ` · last seen ${new Date(a.lastActive).toLocaleTimeString()}` : ''}`),
+      `${ts} [SYSTEM] ${mcpTools ? `${mcpTools.length} MCP tools registered.` : 'MCP tool registry not loaded.'}`,
+    ];
+    setConsoleOutput(lines);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agentsLoading, agentsError, agentsData, mcpTools]);
+
+  useEffect(() => {
+    if (fleet.length > 0 && !fleet.some(a => a.id === activeAgent)) setActiveAgent(fleet[0].id);
+  }, [fleet, activeAgent]);
+
+  const activeAgentData: AgentData | undefined = fleet.find(a => a.id === activeAgent) || fleet[0];
+  const loads = fleet.map(a => a.load).filter((v): v is number => v !== null);
+  const avgLoad = loads.length ? Math.round(loads.reduce((a, b) => a + b, 0) / loads.length) : null;
+  const reachable = fleet.filter(a => a.status === 'online' || a.status === 'running').length;
 
   const handleRunScenario = (sc: (typeof AUTONOMOUS_SCENARIOS)[0]) => {
     setActiveAgent(sc.agent);
@@ -407,11 +408,15 @@ const AlphaAgentOps: React.FC = () => {
   };
 
   const handlePlay = async () => {
+    if (!activeAgentData) {
+      toast.error('No agent available to execute');
+      return;
+    }
     setIsExecuting(true);
     const ts = now();
     setConsoleOutput(prev => [...prev, `${ts} [EXEC] Starting ${activeAgent} task execution...`]);
     try {
-      const { data } = await apiClient.post('/ai/execute', { agent: activeAgent });
+      const { data } = await apiClient.post('/ai/execute', { agent: activeAgent, mode: executionMode });
       if (data.success) {
         setConsoleOutput(prev => [
           ...prev,
@@ -429,6 +434,10 @@ const AlphaAgentOps: React.FC = () => {
   };
 
   const handleStop = async () => {
+    if (!activeAgentData) {
+      toast.error('No agent available to stop');
+      return;
+    }
     setIsExecuting(true);
     const ts = now();
     setConsoleOutput(prev => [...prev, `${ts} [EXEC] Pausing ${activeAgent} agent...`]);
@@ -475,7 +484,7 @@ const AlphaAgentOps: React.FC = () => {
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Agent Fleet Command</h1>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-black tracking-wider uppercase bg-purple-500/10 text-purple-300 border border-purple-500/20">
                   <Sparkles className="w-2.5 h-2.5 text-purple-400" />
-                  DEMO FLEET VIEW
+                  LIVE REGISTRY · SCENARIOS ARE DEMOS
                 </span>
               </div>
               <p className="text-xs text-white/60 mt-0.5">
@@ -488,14 +497,19 @@ const AlphaAgentOps: React.FC = () => {
           <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
             <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 text-xxs font-mono">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-              <span className="text-white/70">FLEET LOAD:</span>
-              <span className="text-amber-300 font-bold">STATUS UNKNOWN</span>
+              <span className="text-white/70">{t('agentops_fleet')}</span>
+              <span className={`${reachable === fleet.length && fleet.length > 0 ? 'text-emerald-300' : 'text-amber-300'} font-bold`}>
+                {agentsLoading ? t('agentops_loading') : agentsError ? t('agentops_unavailable') : t('agentops_reachable', { reachable, total: fleet.length })}
+              </span>
+              {avgLoad !== null && <span className="text-white/50">· LOAD {avgLoad}%</span>}
             </div>
 
             <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 text-xxs font-mono">
               <span className="w-2 h-2 rounded-full bg-cyan-400" />
-              <span className="text-white/70">THROUGHPUT:</span>
-              <span className="text-amber-300 font-bold">STATUS UNKNOWN</span>
+              <span className="text-white/70">{t('agentops_data')}</span>
+              <span className="text-cyan-300 font-bold">
+                {knowledgeCount ?? '—'} KB · {farmerCount ?? '—'} FARMERS · {alertsCount ?? '—'} ALERTS
+              </span>
             </div>
 
             {/* Execution Mode Switcher */}
@@ -537,7 +551,7 @@ const AlphaAgentOps: React.FC = () => {
           <span className="text-xxs font-mono font-bold tracking-widest text-purple-400 uppercase">
             Instant Autonomous Dispatches (1-Click Pipeline Triggers)
           </span>
-          <span className="text-[10px] font-mono text-white/40">Real-Time Routing</span>
+          <span className="text-[10px] font-mono text-amber-300/80">Illustrative previews — no live task is created</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -579,13 +593,20 @@ const AlphaAgentOps: React.FC = () => {
         <div className="lg:col-span-4 flex flex-col space-y-3">
           <div className="flex items-center justify-between px-1">
             <span className="text-xxs font-mono font-bold tracking-widest text-white/50 uppercase">
-              Instance Registry (5 Units)
+              {t('agentops_registry_title', { count: fleet.length })}
             </span>
-            <span className="text-xxs font-mono text-emerald-400">All Connected</span>
+            <span className={`text-xxs font-mono ${reachable === fleet.length && fleet.length > 0 ? 'text-emerald-400' : 'text-amber-300'}`}>
+              {agentsLoading ? t('agentops_loading') : agentsError ? t('agentops_registry_unavailable') : t('agentops_reachable', { reachable, total: fleet.length })}
+            </span>
           </div>
 
           <div className="space-y-2.5">
-            {DEFAULT_FLEET.map(agent => {
+            {!agentsLoading && fleet.length === 0 && (
+              <div className="p-4 rounded-xl border border-white/10 bg-slate-950/50 text-xs text-white/50 font-mono">
+                {t('agentops_registry_empty')}
+              </div>
+            )}
+            {fleet.map(agent => {
               const isSelected = activeAgent === agent.id;
               return (
                 <button
@@ -621,6 +642,8 @@ const AlphaAgentOps: React.FC = () => {
                         ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 animate-pulse'
                         : agent.status === 'online'
                         ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                        : agent.status === 'unhealthy'
+                        ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
                         : 'bg-white/5 text-white/40 border border-white/10'
                     }`}>
                       {agent.status}
@@ -631,32 +654,27 @@ const AlphaAgentOps: React.FC = () => {
                     {agent.description}
                   </p>
 
-                  {/* Real-Time Meter Bars */}
+                  {/* Reported load (backend-provided); "—" when the agent does not report it */}
                   <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5 text-[10px] font-mono text-white/50">
                     <div>
                       <div className="flex justify-between mb-1">
-                        <span>CPU Compute</span>
-                        <span className="text-white/80">{agent.load}%</span>
+                        <span>Reported load</span>
+                        <span className="text-white/80">{agent.load === null ? '—' : `${agent.load}%`}</span>
                       </div>
                       <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-purple-500 transition-all duration-500"
-                          style={{ width: `${agent.load}%` }}
+                          style={{ width: `${agent.load ?? 0}%` }}
                         />
                       </div>
                     </div>
 
                     <div>
                       <div className="flex justify-between mb-1">
-                        <span>Latency</span>
-                        <span className="text-cyan-300">{agent.latencyMs}ms</span>
+                        <span>Last seen</span>
+                        <span className="text-cyan-300">{agent.lastActive ? new Date(agent.lastActive).toLocaleTimeString() : '—'}</span>
                       </div>
-                      <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-cyan-400 transition-all duration-500"
-                          style={{ width: `${Math.min(agent.latencyMs, 100)}%` }}
-                        />
-                      </div>
+                      <div className="text-white/40 truncate">{agent.providerType || 'runtime n/a'}</div>
                     </div>
                   </div>
                 </button>
@@ -674,13 +692,14 @@ const AlphaAgentOps: React.FC = () => {
             <div className="flex items-center justify-between text-xs font-mono text-white/70">
               <span className="flex items-center gap-2">
                 <Workflow className="w-4 h-4 text-purple-400" />
-                <span>ACTIVE MULTI-AGENT HANDOFF TOPOLOGY (WebGL Mesh)</span>
+                <span>AGENT TOPOLOGY (registry-derived; hub = first registered agent)</span>
               </span>
               <span className="text-emerald-400">Click node to inspect agent memory</span>
             </div>
 
             <MultiAgentTopologyCanvas
               activeAgent={activeAgent}
+              fleet={fleet}
               onSelectAgent={id => {
                 setActiveAgent(id);
                 toast(`Inspecting: ${id}`);
@@ -697,10 +716,12 @@ const AlphaAgentOps: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-white">
-                    Operational Console — {activeAgentData.name}
+                    {activeAgentData ? t('agentops_console_title', { name: activeAgentData.name }) : t('agentops_console_none')}
                   </h3>
                   <p className="text-[11px] font-mono text-white/50">
-                    Active Context Window: {activeAgentData.memoryUsage} KB / 128K Tokens
+                    {activeAgentData
+                      ? `${activeAgentData.role} · status ${activeAgentData.status}${activeAgentData.load !== null ? ` · load ${activeAgentData.load}%` : ''}`
+                      : 'Agent registry unavailable'}
                   </p>
                 </div>
               </div>
@@ -743,7 +764,10 @@ const AlphaAgentOps: React.FC = () => {
                   Autonomous Capabilities
                 </span>
                 <div className="flex flex-wrap gap-1.5">
-                  {activeAgentData.capabilities.map(cap => (
+                  {(activeAgentData?.capabilities ?? []).length === 0 && (
+                    <span className="text-[10px] font-mono text-white/40">No capabilities reported</span>
+                  )}
+                  {(activeAgentData?.capabilities ?? []).map(cap => (
                     <span
                       key={cap}
                       className="px-2 py-0.5 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-300 text-[10px] font-mono"
@@ -756,10 +780,13 @@ const AlphaAgentOps: React.FC = () => {
 
               <div className="p-3 rounded-xl bg-slate-950/60 border border-white/5 space-y-1.5">
                 <span className="text-[10px] font-mono font-bold text-white/40 uppercase tracking-widest">
-                  Registered MCP Tools
+                  {t('agentops_tools_title')}
                 </span>
                 <div className="flex flex-wrap gap-1.5">
-                  {activeAgentData.tools.map(tool => (
+                  {(mcpTools ?? []).length === 0 && (
+                    <span className="text-[10px] font-mono text-white/40">{t('agentops_tools_unavailable')}</span>
+                  )}
+                  {(mcpTools ?? []).map(tool => (
                     <span
                       key={tool}
                       className="px-2 py-0.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-[10px] font-mono"
@@ -774,13 +801,13 @@ const AlphaAgentOps: React.FC = () => {
             {/* High-Contrast Live Terminal Log */}
             <div className="rounded-xl bg-slate-950 border border-white/10 overflow-hidden font-mono text-xs shadow-inner">
               <div className="px-4 py-2 bg-white/[0.03] border-b border-white/5 flex items-center justify-between text-[10px] text-white/40">
-                <span>RUNTIME TRACE STREAM</span>
-                <span className="text-emerald-400 font-bold">ONLINE (100 Hz)</span>
+                <span>OPERATIONS LOG</span>
+                <span className="text-white/50">{consoleOutput.length} entries</span>
               </div>
               <div className="p-4 space-y-2 max-h-56 overflow-y-auto scrollbar-hide text-xxs">
                 {consoleOutput.map((line, i) => {
                   const isOk = line.includes('[OK]');
-                  const isErr = line.includes('[ERR]');
+                  const isErr = line.includes('[ERROR]') || line.includes('[ERR]');
                   const isExec = line.includes('[EXEC]') || line.includes('[DISPATCH]');
                   const isHandoff = line.includes('[HANDOFF]');
 

@@ -2,7 +2,6 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Cloud, CloudRain, Sun, MapPin } from 'lucide-react';
 import { fetchWeather } from '@/api/weatherService';
-import { useLanguage } from '@/lib/LanguageContext';
 
 interface WeatherWidgetProps {
   location?: string;
@@ -17,7 +16,6 @@ interface WeatherData {
 }
 
 export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location = 'Kenya' }) => {
-  const { t: _t } = useLanguage();
   const { data: weatherResponse, isLoading } = useQuery<{ success: boolean; data: WeatherData }>({
     queryKey: ['weather', location],
     queryFn: () => fetchWeather(location),

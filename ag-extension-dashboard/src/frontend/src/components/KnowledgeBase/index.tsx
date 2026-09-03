@@ -746,7 +746,7 @@ export const KnowledgeBase: React.FC = () => {
                     try {
                       toast('Opening SMS bulk composer with last answer…');
                       const { useAppStore } = await import('@/store/useAppStore');
-                      useAppStore.getState().setPendingSMS?.({ phone: '', message: lastResult.answer.slice(0, 300) } as never);
+                      useAppStore.getState().setPendingSMS({ phone: '', message: lastResult.answer.replace(/\*\*/g, '').slice(0, 300) });
                       setActiveTab('sms' as never);
                     } catch {
                       toast.error('Broadcast requires SMS cohort — open SMS page');

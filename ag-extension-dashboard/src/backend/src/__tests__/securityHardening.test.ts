@@ -122,13 +122,29 @@ describe('Security Hardening Pillar (MFA, Sessions, Lockout)', () => {
       expect(mockQuery.mock.calls[0][1][1]).toBe(hashToken('sample.jwt.token'));
     });
 
-    it('validates active session and rejects revoked sessions', () => {
-      const valid = isSessionValid('token-1');
+    it('validates active session (no session row → valid) and rejects locally revoked tokens', async () => {
+      // No row for this token hash: legacy/demo token, allowed on JWT alone.
+      mockQuery.mockResolvedValueOnce({ rows: [] });
+      const valid = await isSessionValid('token-1');
       expect(valid).toBe(true);
+      expect(mockQuery.mock.calls[0][0]).toContain('FROM user_sessions');
 
       revokeToken('token-2');
-      const revokedValid = isSessionValid('token-2');
+      // Locally revoked → false without a DB round-trip.
+      const callsBefore = mockQuery.mock.calls.length;
+      const revokedValid = await isSessionValid('token-2');
       expect(revokedValid).toBe(false);
+      expect(mockQuery.mock.calls.length).toBe(callsBefore);
+    });
+
+    it('rejects sessions revoked in the DB by another instance', async () => {
+      mockQuery.mockResolvedValueOnce({ rows: [{ is_revoked: true, expires_at: '2099-01-01T00:00:00Z' }] });
+      expect(await isSessionValid('token-revoked-elsewhere')).toBe(false);
+    });
+
+    it('rejects sessions whose DB row has expired', async () => {
+      mockQuery.mockResolvedValueOnce({ rows: [{ is_revoked: false, expires_at: '2000-01-01T00:00:00Z' }] });
+      expect(await isSessionValid('token-expired-row')).toBe(false);
     });
 
     it('revokes a specific session', async () => {
@@ -136,7 +152,7 @@ describe('Security Hardening Pillar (MFA, Sessions, Lockout)', () => {
       const revoked = await revokeSession('sess-1', 'user-1');
       expect(revoked).toBe(true);
       expect(mockQuery.mock.calls[0][0]).toContain('is_revoked = true');
-      expect(isSessionValid('token-to-revoke')).toBe(false);
+      expect(await isSessionValid('token-to-revoke')).toBe(false);
     });
 
     it('revokes all other active sessions', async () => {
@@ -146,7 +162,7 @@ describe('Security Hardening Pillar (MFA, Sessions, Lockout)', () => {
       });
       const count = await revokeAllOtherSessions('user-1', 'current.token');
       expect(count).toBe(3);
-      expect(isSessionValid('other-1')).toBe(false);
+      expect(await isSessionValid('other-1')).toBe(false);
     });
 
     it('retrieves user sessions and marks current session', async () => {

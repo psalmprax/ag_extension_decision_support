@@ -1,4 +1,4 @@
-import CONFIG from '../../shared/config';
+import CONFIG, { healthUrl, apiUrl } from '../../shared/config';
 import type { OfflineAttachment, OfflineStatus, QueuedRequest } from '../../shared/offlineTypes';
 import { mirrorUpsert, mirrorRetry, mirrorDelete, flushMirrorQueue } from '../../shared/offlineQueueMirror';
 import type { Browser } from 'wxt/browser';
@@ -186,14 +186,17 @@ export default defineBackground(() => {
             return false;
         }
 
-        // Additional connectivity check to backend
+        // Additional connectivity check to backend (GET: some proxies drop HEAD).
         try {
-            const response = await fetch(`${CONFIG.API_BASE_URL}/health`, {
-                method: 'HEAD',
+            const response = await fetch(await healthUrl(), {
+                method: 'GET',
                 mode: 'cors',
-                cache: 'no-cache'
+                cache: 'no-cache',
+                signal: AbortSignal.timeout(8000),
             });
-            return response.ok;
+            // 200 healthy / 200 degraded both mean "reachable"; 503 means the API is up
+            // but unhealthy — still reachable for queue replay purposes.
+            return response.status < 500 || response.status === 503;
         } catch (error) {
             console.warn('Connectivity check failed:', error);
             return false;
@@ -321,7 +324,7 @@ export default defineBackground(() => {
         const uploadHeaders = { ...headers };
         delete uploadHeaders['Content-Type'];
         delete uploadHeaders['content-type'];
-        const response = await fetch(`${CONFIG.API_BASE_URL}/upload/upload`, { method: 'POST', headers: uploadHeaders, body: formData });
+        const response = await fetch(await apiUrl('/upload/upload'), { method: 'POST', headers: uploadHeaders, body: formData });
         const result = await response.json() as { success?: boolean; data?: { id?: string }; error?: string };
         if (!response.ok || !result.success || !result.data?.id) throw new Error(result.error || `Attachment upload failed (${response.status})`);
         attachment.uploadedId = result.data.id;
@@ -333,6 +336,32 @@ export default defineBackground(() => {
         });
         return result.data.id;
     };
+
+    // Promise-wrapped put so callers can await durability (MV3 workers can be
+    // suspended mid-transaction; an un-awaited put may never commit).
+    const idbPut = (storeName: string, value: unknown): Promise<void> => new Promise((resolve, reject) => {
+        if (!db) return reject(new Error('IndexedDB not initialised'));
+        const tx = db.transaction([storeName], 'readwrite');
+        const req = tx.objectStore(storeName).put(value);
+        req.onerror = () => reject(new Error(req.error?.message || `put into ${storeName} failed`));
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(new Error(tx.error?.message || `transaction on ${storeName} failed`));
+    });
+
+    // Replays must carry the *current* token, not the one captured at queue time
+    // (which may have expired while offline).
+    const freshAuthHeader = async (): Promise<Record<string, string>> => {
+        try {
+            const stored = await browser.storage.local.get('authToken');
+            const token = (stored as Record<string, unknown>)?.authToken;
+            return typeof token === 'string' && token ? { Authorization: `Bearer ${token}` } : {};
+        } catch {
+            return {};
+        }
+    };
+
+    // Exponential backoff for automatic retries: 30s, 1m, 2m, ... capped at 30m.
+    const backoffMs = (retries: number): number => Math.min(30 * 60 * 1000, 30_000 * 2 ** Math.max(0, retries - 1));
 
     // Queue a request
     const queueRequest = async (request: Omit<QueuedRequest, 'id' | 'idempotencyKey' | 'timestamp' | 'retries' | 'state'> & { idempotencyKey?: string }): Promise<void> => {
@@ -493,19 +522,19 @@ export default defineBackground(() => {
                     originalRetries: undefined,
                 };
 
-                // Add back to main queue
-                const queueTransaction = db!.transaction([QUEUE_STORE], 'readwrite');
-                const queueStore = queueTransaction.objectStore(QUEUE_STORE);
-                queueStore.put(retryItem);
-                mirrorRetry(id);
-
-                // Remove from dead letter
-                const deleteRequest = dlqStore.delete(id);
-                deleteRequest.onsuccess = () => {
-                    notifyQueueUpdate();
-                    resolve();
-                };
-                deleteRequest.onerror = () => reject(new Error(deleteRequest.error?.message || 'Delete dead letter request failed'));
+                // Write to the live queue first; only delete from DLQ once that commits.
+                idbPut(QUEUE_STORE, retryItem)
+                    .then(() => {
+                        mirrorRetry(id);
+                        const delTx = db!.transaction([DEAD_LETTER_STORE], 'readwrite');
+                        const deleteRequest = delTx.objectStore(DEAD_LETTER_STORE).delete(id);
+                        deleteRequest.onerror = () => reject(new Error(deleteRequest.error?.message || 'Delete dead letter request failed'));
+                        delTx.oncomplete = () => {
+                            notifyQueueUpdate();
+                            resolve();
+                        };
+                    })
+                    .catch(reject);
             };
             getRequest.onerror = () => reject(new Error(getRequest.error?.message || 'Get dead letter request failed'));
         });
@@ -534,6 +563,7 @@ export default defineBackground(() => {
         try {
             const headers = {
                 ...request.headers,
+                ...(await freshAuthHeader()),
                 ...(request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : {}),
             };
             let requestBody = request.body === undefined
@@ -567,11 +597,27 @@ export default defineBackground(() => {
             } else if (response.status === 409) {
                 request.state = 'conflict';
                 request.lastError = (await response.text()).slice(0, 500);
-                if (db) {
-                    const transaction = db.transaction([QUEUE_STORE], 'readwrite');
-                    transaction.objectStore(QUEUE_STORE).put(request);
-                }
+                await idbPut(QUEUE_STORE, request);
                 mirrorUpsert(request);
+                notifyQueueUpdate();
+            } else if (response.status === 401 || response.status === 403) {
+                // Auth problem: retrying without a new login cannot succeed. Park it as
+                // failed (not dead-letter) so a re-login + "Sync Now" recovers it.
+                request.state = 'failed';
+                request.lastError = `HTTP ${response.status} — re-login required`;
+                request.nextAttemptAt = undefined;
+                await idbPut(QUEUE_STORE, request);
+                mirrorUpsert(request);
+                notifyQueueUpdate();
+            } else if (response.status >= 400 && response.status < 500) {
+                // Deterministic client error: replaying the same body will fail the same way.
+                request.state = 'dead_letter';
+                request.movedToDeadLetterAt = Date.now();
+                request.originalRetries = request.maxRetries;
+                request.lastError = `HTTP ${response.status}: ${(await response.text()).slice(0, 300)}`;
+                await idbPut(DEAD_LETTER_STORE, request);
+                await removeQueuedRequest(request.id);
+                mirrorUpsert(request); // server mirror learns the dead_letter state
                 notifyQueueUpdate();
             } else {
                 throw new Error(`HTTP ${response.status}`);
@@ -582,30 +628,22 @@ export default defineBackground(() => {
             request.lastError = error instanceof Error ? error.message : 'Sync failed';
 
             if (request.retries >= request.maxRetries) {
-                // Move to dead letter queue instead of leaving as 'failed'
+                // Exhausted: move to the dead-letter store. Write DLQ first, then remove from
+                // the live queue, so a suspended worker can never lose the item.
                 request.state = 'dead_letter';
                 request.movedToDeadLetterAt = Date.now();
                 request.originalRetries = request.maxRetries;
-                if (db) {
-                    // Add to dead letter store
-                    const dlqTransaction = db.transaction([DEAD_LETTER_STORE], 'readwrite');
-                    dlqTransaction.objectStore(DEAD_LETTER_STORE).put(request);
-                    // Remove from main queue
-                    await removeQueuedRequest(request.id);
-                    // Item still exists locally (dead-letter store), so mirror
-                    // its dead_letter state instead of deleting server-side.
-                    mirrorUpsert(request);
-                    notifyQueueUpdate();
-                }
+                await idbPut(DEAD_LETTER_STORE, request);
+                await removeQueuedRequest(request.id);
+                mirrorUpsert(request);
+                notifyQueueUpdate();
             } else {
-                // Still has retries left, update state to failed and keep in queue
-                request.state = 'failed';
-                if (db) {
-                    const transaction = db.transaction([QUEUE_STORE], 'readwrite');
-                    transaction.objectStore(QUEUE_STORE).put(request);
-                    mirrorUpsert(request);
-                    notifyQueueUpdate();
-                }
+                // Keep it pending with a backoff so processQueue retries automatically.
+                request.state = 'pending';
+                request.nextAttemptAt = Date.now() + backoffMs(request.retries);
+                await idbPut(QUEUE_STORE, request);
+                mirrorUpsert(request);
+                notifyQueueUpdate();
             }
         }
     };
@@ -613,8 +651,12 @@ export default defineBackground(() => {
     // Process queued requests
     const processQueue = async (): Promise<void> => {
         const requests = await getQueuedRequests();
+        const now = Date.now();
 
-        for (const request of requests.filter(item => item.state === 'pending')) {
+        const due = requests
+            .filter(item => item.state === 'pending' && (!item.nextAttemptAt || item.nextAttemptAt <= now))
+            .sort((a, b) => a.timestamp - b.timestamp);
+        for (const request of due) {
             await processSingleRequest(request);
         }
     };

@@ -85,18 +85,21 @@ export class KnowledgeService {
             }
 
             logger.debug('Search stats cache MISS — querying database');
-            const [topCrops, topCategories, totalQueriesResult, cachedResult] = await Promise.all([
+            const [topCrops, topCategories, totalQueriesResult, cachedResult, articleResult] = await Promise.all([
                 query(`SELECT crop, COUNT(*) as count FROM knowledge_searches WHERE crop IS NOT NULL GROUP BY crop ORDER BY count DESC LIMIT 5`),
                 query(`SELECT category, COUNT(*) as count FROM knowledge_searches WHERE category IS NOT NULL GROUP BY category ORDER BY count DESC LIMIT 5`),
                 query(`SELECT COUNT(*) as count FROM knowledge_searches`),
                 query(`SELECT COUNT(*) as count FROM search_cache`),
+                query(`SELECT COUNT(*)::int AS total, COUNT(embedding)::int AS embedded FROM knowledge_articles`),
             ]);
 
             const stats = {
                 crops: topCrops.rows,
                 categories: topCategories.rows,
-                totalQueries: totalQueriesResult.rows[0]?.count || 0,
-                cachedQueries: cachedResult.rows[0]?.count || 0,
+                totalQueries: Number(totalQueriesResult.rows[0]?.count || 0),
+                cachedQueries: Number(cachedResult.rows[0]?.count || 0),
+                totalArticles: Number(articleResult.rows[0]?.total || 0),
+                embeddedArticles: Number(articleResult.rows[0]?.embedded || 0),
             };
 
             // Cache in Redis with 5-minute TTL (non-blocking)

@@ -13,6 +13,8 @@ export interface QueuedRequest<T = unknown> {
     maxRetries: number;
     state: QueueState;
     lastError?: string;
+    /** Epoch ms before which automatic replay must not run (exponential backoff). */
+    nextAttemptAt?: number;
     // Dead letter metadata
     movedToDeadLetterAt?: number;
     originalRetries?: number;

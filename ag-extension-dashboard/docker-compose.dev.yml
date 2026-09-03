@@ -15,7 +15,8 @@
 services:
   backend:
     build:
-      context: ./src/backend
+      context: ..
+      dockerfile: ag-extension-dashboard/src/backend/Dockerfile
       target: development
     # Bind-mount source for hot-reload (changes reflect without rebuild)
     volumes:

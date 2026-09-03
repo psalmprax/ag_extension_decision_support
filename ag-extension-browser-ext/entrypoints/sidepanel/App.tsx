@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, Bot, User, Sparkles, Brain, Code, Terminal, Zap, Wifi, WifiOff, Mic, MicOff, Paperclip, X, Image as ImageIcon, FileText, AlertCircle } from 'lucide-react';
 import { apiQueue } from '../../shared/apiQueue';
 import { usePersistence } from '../../shared/hooks/usePersistence';
-import CONFIG from '../../shared/config';
+import CONFIG, { apiUrl } from '../../shared/config';
 import type { QueuedRequest } from '../../shared/offlineTypes';
 import { VisitLogger } from './components/VisitLogger';
 
@@ -88,6 +88,7 @@ function App() {
   const [pageContext, setPageContext] = useState<PageContext | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [queuedRequests, setQueuedRequests] = useState<QueuedRequest[]>([]);
+  const [deadLetterRequests, setDeadLetterRequests] = useState<QueuedRequest[]>([]);
   const [serverQueueStatus, setServerQueueStatus] = useState<{ pending: number; failed: number; conflict: number; deadLetter: number; total: number } | null>(null);
   const [showOfflineManager, setShowOfflineManager] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -131,7 +132,7 @@ function App() {
         payload.file = fileData;
       }
 
-      const response = await apiQueue.makeRequest(`${apiEndpoint}/chatbot/message`, {
+      const response = await apiQueue.makeRequest(await apiUrl('/chatbot/message'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -159,6 +160,8 @@ function App() {
     try {
       const requests = await apiQueue.getQueuedRequests();
       setQueuedRequests(requests);
+      const dlq = await browser.runtime.sendMessage({ action: 'get_dead_letter_requests' }) as { success?: boolean; requests?: QueuedRequest[] };
+      setDeadLetterRequests(dlq?.success && Array.isArray(dlq.requests) ? dlq.requests : []);
     } catch (error) {
       console.error('Failed to load queued requests:', error);
     }
@@ -168,7 +171,8 @@ function App() {
   // across devices). Null when unauthenticated or unreachable.
   const loadServerQueueStatus = async () => {
     try {
-      const response = await fetch(`${CONFIG.API_BASE_URL}/offline/status`);
+      // Authenticated via apiQueue (bare fetch has no Authorization header → 401 → always null).
+      const response = await apiQueue.makeRequest(await apiUrl('/offline/status'), { method: 'GET' });
       if (!response.ok) {
         setServerQueueStatus(null);
         return;
@@ -221,13 +225,38 @@ const handleSync = async () => {
     }
   };
 
+  // Dead-letter items exhausted automatic retries (or hit a 4xx). They are kept
+  // for review and can be re-queued or discarded from here.
+  const handleRetryDeadLetter = async (requestId: string) => {
+    try {
+      const response = await browser.runtime.sendMessage({ action: 'retry_dead_letter_request', id: requestId });
+      if (!response?.success) throw new Error(response?.error || 'Retry failed');
+      await loadQueuedRequests();
+      await apiQueue.syncNow();
+      await loadQueuedRequests();
+      await loadServerQueueStatus();
+    } catch (error) {
+      console.error('Dead-letter retry failed:', error);
+    }
+  };
+
+  const handleDeleteDeadLetter = async (requestId: string) => {
+    try {
+      const response = await browser.runtime.sendMessage({ action: 'delete_dead_letter_request', id: requestId });
+      if (!response?.success) throw new Error(response?.error || 'Delete failed');
+      await loadQueuedRequests();
+    } catch (error) {
+      console.error('Dead-letter delete failed:', error);
+    }
+  };
+
   const handleFileUpload = async (file: File) => {
     setIsUploading(true);
     try {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await apiQueue.makeRequest(`${CONFIG.API_BASE_URL}/upload/upload`, {
+      const response = await apiQueue.makeRequest(await apiUrl('/upload/upload'), {
         method: 'POST',
         body: formData,
         // Remove content-type to let browser generate boundary
@@ -390,38 +419,80 @@ const handleSync = async () => {
     }
   };
 
+  // Shared handler for photos arriving live (message) or restored from storage.
+  const analyzeCapturedPhoto = async (imageData: string) => {
+    setMessages((prev: Message[]) => [...prev, {
+      id: Date.now().toString(),
+      role: 'user',
+      content: '📸 Photo captured - analyzing with AI...',
+      timestamp: new Date().toISOString()
+    }]);
+    setIsLoading(true);
+    try {
+      const aiResponse = await sendMessageToAI(
+        'Please analyze this agricultural photo and identify any crop diseases, nutrient deficiencies, pests, or other issues visible in the image. Provide specific, actionable recommendations for the farmer.',
+        imageData
+      );
+      setMessages((prev: Message[]) => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: aiResponse,
+        timestamp: new Date().toISOString()
+      }]);
+    } catch (error) {
+      console.error('Photo analysis error:', error);
+      setMessages((prev: Message[]) => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: 'Photo analysis failed — the request has been kept in the offline queue if you were disconnected.',
+        timestamp: new Date().toISOString()
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Get page context on mount
   useEffect(() => {
     const getPageContext = async () => {
       try {
-        // Fetch farmers
+        // Fetch farmers — backend returns { data: { farmers, total } }.
         try {
-          const fRes = await apiQueue.makeRequest(`${CONFIG.API_BASE_URL}/farmers`);
+          const fRes = await apiQueue.makeRequest(await apiUrl('/farmers'));
           if (fRes.ok) {
-            const fData = await fRes.json();
-            setFarmers(fData.data || []);
+            const fData = await fRes.json() as { data?: { farmers?: typeof farmers } | typeof farmers };
+            setFarmers(Array.isArray(fData.data) ? fData.data : (fData.data?.farmers ?? []));
           }
         } catch (fErr) {
           console.error('Failed to fetch farmers:', fErr);
         }
 
+        // Restore a GPS fix / photo captured while the panel was closed.
+        try {
+          const stored = await browser.storage.local.get(['lastCapturedLocation', 'lastCapturedPhoto']);
+          const loc = (stored as Record<string, unknown>).lastCapturedLocation as typeof capturedLocation | undefined;
+          if (loc && typeof loc.latitude === 'number') setCapturedLocation(loc);
+          const photo = (stored as Record<string, unknown>).lastCapturedPhoto as { imageData: string; capturedAt: number } | undefined;
+          if (photo?.imageData && Date.now() - photo.capturedAt < 10 * 60 * 1000) {
+            await browser.storage.local.remove('lastCapturedPhoto');
+            void analyzeCapturedPhoto(photo.imageData);
+          }
+        } catch { /* storage unavailable */ }
+
         const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
         if (tab && tab.id) {
-          browser.tabs.sendMessage(tab.id, { action: 'get_page_context' }, (response: PageContext) => {
-            if (response) {
-              setPageContext(response);
-              // Only add welcome message if no history
-              if (messages.length === 0) {
-                const welcomeMessage: Message = {
-                  id: 'welcome',
-                  role: 'assistant',
-                  content: `I've loaded the page "${response.title}". I can help you summarize content, extract data, or analyze this page. What would you like to do?`,
-                  timestamp: new Date().toISOString()
-                };
-                setMessages([welcomeMessage]);
-              }
-            }
-          });
+          // Promise form: the callback form never fires under the WebExtension `browser` namespace.
+          const response = await browser.tabs.sendMessage(tab.id, { action: 'get_page_context' }).catch(() => null) as PageContext | null;
+          if (response) {
+            setPageContext(response);
+            // Only add welcome message if no history (read current value, not the mount-time closure)
+            setMessages((prev: Message[]) => prev.length === 0 ? [{
+              id: 'welcome',
+              role: 'assistant',
+              content: `I've loaded the page "${response.title}". I can help you summarize content, extract data, or analyze this page. What would you like to do?`,
+              timestamp: new Date().toISOString()
+            }] : prev);
+          }
         }
       } catch (error) {
         console.error('Error getting page context:', error);
@@ -516,32 +587,9 @@ const handleSync = async () => {
           };
           setMessages((prev: Message[]) => [...prev, locMsg]);
         } else if (message.action === 'photo_captured' && message.imageData) {
-          const photoMessage: Message = {
-            id: Date.now().toString(),
-            role: 'user',
-            content: '📸 Photo captured - analyzing with AI...',
-            timestamp: new Date().toISOString()
-          };
-          setMessages((prev: Message[]) => [...prev, photoMessage]);
-
-          setIsLoading(true);
-          try {
-            const aiResponse = await sendMessageToAI(
-              'Please analyze this agricultural photo and identify any crop diseases, nutrient deficiencies, pests, or other issues visible in the image. Provide specific, actionable recommendations for the farmer.',
-              message.imageData
-            );
-            const assistantMessage: Message = {
-              id: (Date.now() + 1).toString(),
-              role: 'assistant',
-              content: aiResponse,
-              timestamp: new Date().toISOString()
-            };
-            setMessages((prev: Message[]) => [...prev, assistantMessage]);
-          } catch (error) {
-            console.error('Photo analysis error:', error);
-          } finally {
-            setIsLoading(false);
-          }
+          // Consumed live — drop the stored copy so it is not re-analysed on next mount.
+          browser.storage.local.remove('lastCapturedPhoto').catch(() => {});
+          await analyzeCapturedPhoto(message.imageData);
         } else if (message.action === 'switch_sidepanel_tab') {
           if (message.tab === 'log' || message.tab === 'chat') {
             setActiveTab(message.tab);
@@ -573,9 +621,9 @@ const handleSync = async () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {queuedRequests.length > 0 && (
-            <span className="px-2 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full text-[10px] font-bold text-amber-400">
-              {queuedRequests.length}
+          {(queuedRequests.length + deadLetterRequests.length) > 0 && (
+            <span className={`px-2 py-1 border rounded-full text-[10px] font-bold ${deadLetterRequests.length > 0 ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' : 'bg-amber-500/10 border-amber-500/20 text-amber-400'}`}>
+              {queuedRequests.length + deadLetterRequests.length}
             </span>
           )}
           <button
@@ -709,6 +757,46 @@ const handleSync = async () => {
                     ? 'in sync'
                     : `${serverQueueStatus.pending} pending • ${serverQueueStatus.failed} failed • ${serverQueueStatus.conflict} conflict • ${serverQueueStatus.deadLetter} dead`}
                 </span>
+              </div>
+            )}
+
+            {apiQueue.lastAuthWarning && (
+              <div className="mb-3 px-2 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-lg text-[10px] font-bold text-amber-300">
+                {apiQueue.lastAuthWarning}
+              </div>
+            )}
+
+            {deadLetterRequests.length > 0 && (
+              <div className="mb-3 space-y-2">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-rose-400">Needs attention ({deadLetterRequests.length})</span>
+                  <span className="text-[9px] text-slate-500">exhausted retries or rejected by server</span>
+                </div>
+                {deadLetterRequests.map(request => (
+                  <div key={request.id} className="flex items-center justify-between p-2 bg-rose-950/30 rounded border border-rose-500/30">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-mono text-slate-300 truncate">{request.method} {request.url.replace(apiEndpoint, '')}</p>
+                      <p className="text-[10px] text-slate-500 truncate">
+                        {new Date(request.timestamp).toLocaleString()}{request.lastError ? ` • ${request.lastError}` : ''}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => handleRetryDeadLetter(request.id)}
+                        className="px-2 py-1 text-[9px] font-bold bg-rose-600 hover:bg-rose-500 text-white rounded transition-colors disabled:opacity-50"
+                        disabled={isSyncing || !isOnline}
+                      >
+                        Re-queue
+                      </button>
+                      <button
+                        onClick={() => handleDeleteDeadLetter(request.id)}
+                        className="px-2 py-1 text-[9px] font-bold bg-slate-700 hover:bg-slate-600 text-white/70 rounded transition-colors"
+                      >
+                        Discard
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
 

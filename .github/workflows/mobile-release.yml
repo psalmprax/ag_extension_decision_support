@@ -39,7 +39,7 @@ jobs:
 
       - name: Sync Capacitor Assets
         working-directory: ag-extension-dashboard/src/frontend
-        run: npx --yes @capacitor/cli sync || echo "Capacitor sync complete"
+        run: npx --yes @capacitor/cli sync
 
       - name: Upload Web Build Artifacts
         uses: actions/upload-artifact@v4
@@ -78,7 +78,7 @@ jobs:
         working-directory: ag-extension-dashboard/src/frontend
         run: |
           npm ci
-          npx --yes @capacitor/cli sync android || echo "Capacitor android synced"
+          npx --yes @capacitor/cli sync android
 
       - name: Build Signed Android APK/AAB
         working-directory: ag-extension-dashboard/src/frontend/android

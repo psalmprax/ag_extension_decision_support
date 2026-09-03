@@ -77,7 +77,7 @@ function normalizeVisitSynthesisResult(rawResponse: string, originalNotes: strin
  *     security:
  *       - bearerAuth: []
  */
-router.post('/synthesize-visit', [checkUsageLimit('ai_chat'), validate({ body: aiSchemas.synthesizeVisit })], async (req: AuthRequest, res: Response) => {
+router.post('/synthesize-visit', [checkUsageLimit('ai_chat', { meter: false }), validate({ body: aiSchemas.synthesizeVisit })], async (req: AuthRequest, res: Response) => {
     try {
         const { notes } = req.body;
         const userId = req.user!.userId;
@@ -156,7 +156,7 @@ router.post('/synthesize-visit', [checkUsageLimit('ai_chat'), validate({ body: a
  *     security:
  *       - bearerAuth: []
  */
-router.post('/transcribe-audio', [checkUsageLimit('ai_chat')], async (req: AuthRequest, res: Response) => {
+router.post('/transcribe-audio', [checkUsageLimit('ai_chat', { meter: false })], async (req: AuthRequest, res: Response) => {
     try {
         const { audio, language } = req.body;
         const userId = req.user!.userId;
@@ -201,7 +201,7 @@ router.post('/transcribe-audio', [checkUsageLimit('ai_chat')], async (req: AuthR
  *     security:
  *       - bearerAuth: []
  */
-router.post('/analyze-image', [checkUsageLimit('ai_vision')], async (req: AuthRequest, res: Response) => {
+router.post('/analyze-image', [checkUsageLimit('ai_vision', { meter: false })], async (req: AuthRequest, res: Response) => {
     try {
         const { image, prompt } = req.body;
         const userId = req.user!.userId;
@@ -233,7 +233,7 @@ router.post('/analyze-image', [checkUsageLimit('ai_vision')], async (req: AuthRe
  *     security:
  *       - bearerAuth: []
  */
-router.post('/analyze-video', [checkUsageLimit('ai_vision')], async (req: AuthRequest, res: Response) => {
+router.post('/analyze-video', [checkUsageLimit('ai_vision', { meter: false })], async (req: AuthRequest, res: Response) => {
     try {
         const { video, prompt, frameInterval, maxFrames } = req.body;
         const userId = req.user!.userId;
@@ -405,6 +405,7 @@ async function handleAgentControl(
     agentId: string | undefined,
     control: AgentControl,
     res: Response,
+    options: { mode?: unknown } = {},
 ): Promise<void> {
     const config = agentRegistry.find(agent => agent.id === agentId);
     if (!config) {
@@ -425,7 +426,11 @@ async function handleAgentControl(
             const task = await agentOrchestrator.dispatchTask({
                 agentId: config.id,
                 type: 'ai.execute',
-                payload: { triggeredBy: 'api/ai/execute', at: new Date().toISOString() },
+                payload: {
+                    triggeredBy: 'api/ai/execute',
+                    at: new Date().toISOString(),
+                    mode: ['supervised', 'autonomous', 'edge'].includes(String(options.mode)) ? String(options.mode) : 'supervised',
+                },
                 priority: 'medium',
                 maxRetries: 2,
             });
@@ -470,7 +475,7 @@ async function handleAgentControl(
  */
 router.post('/execute', async (req: AuthRequest, res: Response) => {
     try {
-        await handleAgentControl(req.body?.agent, 'execute', res);
+        await handleAgentControl(req.body?.agent, 'execute', res, { mode: req.body?.mode });
     } catch (error) {
         logger.error('Failed to execute agent:', error);
         safeError(res, 500, 'Failed to start agent execution');

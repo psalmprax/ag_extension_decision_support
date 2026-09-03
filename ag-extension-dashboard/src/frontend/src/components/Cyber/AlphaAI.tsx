@@ -33,21 +33,51 @@ import {
   requestAdvisoryMessage,
   handleAdvisoryFailure,
 } from './alpha/response';
-import { StudioTabSwitcher, CanvasWorkbench } from './alpha/StudioTabs';
+import { StudioTabSwitcher, CanvasWorkbench, type LastImageAnalysis } from './alpha/StudioTabs';
 import { MessageStream } from './alpha/MessageStream';
 import { NasaPowerBadge, RagMeshBadge } from './alpha/badges';
 
 /** Validate, upload, and analyze a leaf image; resolves to the health summary text. */
-async function analyzeLeafImage(file: File): Promise<string> {
+interface LeafAnalysisOutcome {
+  summary: string;
+  analysis: LastImageAnalysis;
+}
+
+async function analyzeLeafImage(file: File): Promise<LeafAnalysisOutcome> {
   if (file.size > 8 * 1024 * 1024) throw new Error('Image too large — max 8MB');
-  const base64 = await new Promise<string>((resolve, reject) => {
+  const dataUrl = await new Promise<string>((resolve, reject) => {
     const r = new FileReader();
-    r.onload = () => resolve((r.result as string).split(',')[1]);
+    r.onload = () => resolve(r.result as string);
     r.onerror = reject;
     r.readAsDataURL(file);
   });
+  const base64 = dataUrl.split(',')[1];
   const { data } = await apiClient.post('/ai/diseases/analyze', { image: base64 });
-  return data?.data?.overallHealth || data?.overallHealth || 'Analysis complete — see Disease Diagnosis for full report';
+  const payload = (data?.data ?? data ?? {}) as {
+    overallHealth?: string;
+    confidence?: number;
+    diseases?: Array<{ disease: string; confidence: number; severity?: string }>;
+    reviewStatus?: string;
+  };
+  const overallHealth = payload.overallHealth || 'unknown';
+  const diseases = Array.isArray(payload.diseases) ? payload.diseases : [];
+  // The analyzer returns whole-image findings without coordinates, so each finding
+  // is drawn as a centred marker; the label states that it is not localised.
+  const detections = diseases.slice(0, 4).map((d, i) => {
+    const conf = d.confidence > 1 ? d.confidence / 100 : d.confidence;
+    const sev = d.severity === 'severe' || d.severity === 'moderate' || d.severity === 'mild' ? d.severity : 'moderate';
+    return {
+      id: `finding-${i}`,
+      x: 0.5 + (i % 2 === 0 ? -0.12 : 0.12) * Math.ceil(i / 2),
+      y: 0.5 + (i < 2 ? -0.1 : 0.1),
+      radius: 0.18,
+      label: `${d.disease} (whole-image, not localised)`,
+      confidence: Number.isFinite(conf) ? conf : 0,
+      severity: sev as 'mild' | 'moderate' | 'severe',
+    };
+  });
+  const summary = `${overallHealth}${diseases.length ? ` — ${diseases.map(d => `${d.disease} ${Math.round((d.confidence > 1 ? d.confidence : d.confidence * 100))}%`).join(', ')}` : ''}${payload.reviewStatus === 'needs_expert_review' ? ' · needs expert review' : ''}`;
+  return { summary, analysis: { imageSrc: dataUrl, overallHealth, detections } };
 }
 
 /** Begin voice capture and hand the recorded blob to onReady; null when unsupported. */
@@ -102,11 +132,12 @@ export const AlphaAI: React.FC = () => {
   const [selectedProbeResult, setSelectedProbeResult] = useState<SoilProbeResult | null>(null);
   const [selectedLesionZone, setSelectedLesionZone] = useState<LesionDetectionZone | null>(null);
   const [selectedGraphNode, setSelectedGraphNode] = useState<GraphNode | null>(null);
+  const [lastImageAnalysis, setLastImageAnalysis] = useState<LastImageAnalysis | null>(null);
   const [intakeDismissed, setIntakeDismissed] = useState<boolean>(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const voiceRecorderRef = useRef<MediaRecorder | null>(null);
-  const handleSendRef = useRef<(overrideQuery?: string) => Promise<void>>(async () => {});
+  const handleSendRef = useRef<(overrideQuery?: string, opts?: { fromQueue?: boolean }) => Promise<boolean>>(async () => false);
 
   // Initial welcome message
   const [messages, setMessages] = useState<ChatMessageItem[]>([
@@ -149,35 +180,41 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
   // Drain offline queue when back online — the sender is read through a ref so the
   // subscription survives re-renders without re-binding the listener.
   useEffect(() => {
-    const drain = () => { void drainAlphaOfflineQueue(queued => handleSendRef.current(queued)); };
+    const drain = () => { void drainAlphaOfflineQueue(queued => handleSendRef.current(queued, { fromQueue: true })); };
     window.addEventListener('online', drain);
     return () => window.removeEventListener('online', drain);
   }, []);
 
-  const handleSendMessage = async (overrideQuery?: string) => {
+  /** Returns true when an advisory was delivered, false when it failed/was queued. */
+  const handleSendMessage = async (overrideQuery?: string, opts: { fromQueue?: boolean } = {}): Promise<boolean> => {
     const query = (overrideQuery || inputPrompt).trim();
-    if (!query || isProcessing) return;
+    if (!query || isProcessing) return false;
 
     // Offline queue — stash and show pending when navigator is offline
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      stashQueryOffline(query, setMessages);
+      if (!opts.fromQueue) stashQueryOffline(query, setMessages);
       setInputPrompt('');
-      return;
+      return false;
     }
 
     setInputPrompt('');
     setMessages(prev => [...prev, { id: `user-${Date.now()}`, sender: 'user', text: query, timestamp: nowStamp() } as ChatMessageItem]);
     setIsProcessing(true);
-    setActiveReasoningStep('Querying RAG Agronomic Knowledge Store...');
-    await new Promise(r => setTimeout(r, 500));
-    setActiveReasoningStep('Synthesizing NASA POWER Agro-Climatology & Soil Models...');
+    setActiveReasoningStep('Retrieving knowledge-base context...');
 
     try {
       const assistantMsg = await requestAdvisoryMessage(query);
       if (assistantMsg.canvasTrigger) setActiveCanvasView(assistantMsg.canvasTrigger);
       setMessages(prev => [...prev, assistantMsg]);
+      return true;
     } catch (err) {
-      handleAdvisoryFailure(err, query, setMessages);
+      // Replays from the offline queue must not re-enqueue themselves; the drain keeps them.
+      if (opts.fromQueue) {
+        setMessages(prev => [...prev, { id: `asst-${Date.now()}`, sender: 'assistant', text: 'Still unable to reach the advisory service — your queued question will be retried when the connection recovers.', timestamp: nowStamp() } as ChatMessageItem]);
+      } else {
+        handleAdvisoryFailure(err, query, setMessages);
+      }
+      return false;
     } finally {
       setActiveReasoningStep(null);
       setIsProcessing(false);
@@ -222,8 +259,10 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
       if (!file) return;
       setActiveReasoningStep('Analyzing leaf image (vision)…');
       try {
-        const summary = await analyzeLeafImage(file);
-        setMessages(prev => [...prev, { id: `img-${Date.now()}`, sender: 'assistant', text: `🖼️ **Image diagnosis:** ${summary}`, timestamp: nowStamp() }]);
+        const { summary, analysis } = await analyzeLeafImage(file);
+        setLastImageAnalysis(analysis);
+        setActiveCanvasView('disease_saliency');
+        setMessages(prev => [...prev, { id: `img-${Date.now()}`, sender: 'assistant', text: `🖼️ **Image diagnosis:** ${summary}`, timestamp: nowStamp(), canvasTrigger: 'disease_saliency', canvasLabel: 'Leaf Image Assessment' }]);
         toast.success('Image analyzed — check Disease Diagnosis for lab verification');
       } catch (e) { toast.error((e as { response?: { data?: { error?: string } } })?.response?.data?.error || (e as Error)?.message || 'Image analysis failed'); }
       finally { setActiveReasoningStep(null); }
@@ -236,10 +275,13 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
     if (!lastAnswer) { toast.error('No advisory to dispatch — ask a question first'); return; }
     try {
       const { useAppStore } = await import('@/store/useAppStore');
-      useAppStore.getState().setPendingSMS?.({ phone: '', message: lastAnswer.slice(0, 300) } as never);
+      // SMS body limit: 160 GSM-7 chars per segment; keep to ~2 segments and mark truncation.
+      const body = lastAnswer.replace(/\*\*/g, '').trim();
+      const truncated = body.length > 300 ? `${body.slice(0, 297)}…` : body;
+      useAppStore.getState().setPendingSMS({ phone: '', message: truncated });
       const storeTab = (useAppStore.getState() as { setActiveTab?: (t: string) => void }).setActiveTab;
       storeTab?.('sms');
-      toast('Opening SMS composer with last advisory…');
+      toast(truncated.length < body.length ? 'Opening SMS composer (advisory truncated to 300 chars)…' : 'Opening SMS composer with last advisory…');
     } catch { toast.error('SMS dispatch requires SMS page'); }
   };
 
@@ -248,7 +290,13 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
     if (!lastAnswer) { toast.error('No advisory to export — ask a question first'); return; }
     try {
       const { generateReport, downloadReportPdf } = await import('@/api/reportService');
-      const gen = await generateReport('knowledge_factsheet', lastAnswer.slice(0, 80));
+      const lastQuestion = [...messages].reverse().find(m => m.sender === 'user')?.text;
+      const gen = await generateReport(
+        'knowledge_factsheet',
+        `Advisory: ${(lastQuestion || lastAnswer).slice(0, 80)}`,
+        undefined,
+        { content: lastAnswer, question: lastQuestion }
+      );
       const reportId = (gen as { data?: { id?: string } })?.data?.id || (gen as { id?: string })?.id;
       if (!reportId) throw new Error('No report id');
       const blob = await downloadReportPdf(reportId);
@@ -459,6 +507,8 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
                   selectedGraphNode={selectedGraphNode}
                   onGraphNodeSelect={setSelectedGraphNode}
                   onDispatchSms={handleDispatchSms}
+                  citations={[...messages].reverse().find(m => m.sender === 'assistant' && m.citations?.length)?.citations ?? []}
+                  lastImageAnalysis={lastImageAnalysis}
                 />
               </div>
 

@@ -8,6 +8,9 @@ import { auditMiddleware } from '@/middleware/auditMiddleware';
 import { validate } from '@/middleware/validationMiddleware';
 import { registerSchema } from '@/utils/schemas';
 import { safeError } from '@/utils/safeResponse';
+import { passwordProblems } from '@/utils/passwordPolicy';
+import { issueEmailVerification } from './passwordReset';
+import { incrWindow } from '@/services/sharedState';
 
 const router = Router();
 
@@ -73,6 +76,11 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
             });
         }
 
+        const problems = passwordProblems(password, email);
+        if (problems.length > 0) {
+            return res.status(400).json({ success: false, error: `Password must have ${problems.join(', ')}`, errorCode: 'WEAK_PASSWORD' });
+        }
+
         // Check if user already exists
         const existingUser = await query('SELECT id FROM users WHERE email = $1', [email]);
         if (existingUser.rows.length > 0) {
@@ -83,12 +91,12 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
         }
 
         // Hash password
-        const passwordHash = await bcrypt.hash(password, 10);
+        const passwordHash = await bcrypt.hash(password, 12);
 
-        // Save to database
+        // Save to database (email unverified until the link in the welcome mail is clicked)
         const result = await query(`
-            INSERT INTO users (email, password_hash, first_name, last_name, role, region, phone, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+            INSERT INTO users (email, password_hash, first_name, last_name, role, region, phone, email_verified, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, false, NOW())
             RETURNING id, email, first_name, last_name, role, region, phone
         `, [email, passwordHash, firstName, lastName, role || 'extension_officer', region, phone]);
 
@@ -96,6 +104,11 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
 
         // Assign Free Subscription Plan
         await createFreeSubscription(newUser.id);
+
+        // Verification mail is best-effort: registration must not fail if SMTP is down.
+        issueEmailVerification(newUser.id, newUser.email).catch(err =>
+            logger.warn(`Verification email for ${newUser.id} could not be sent:`, err)
+        );
 
         // Generate JWT token
         const token = jwt.sign(
@@ -115,8 +128,10 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
                     lastName: newUser.last_name,
                     role: newUser.role,
                     region: newUser.region,
+                    emailVerified: false,
                 },
             },
+            message: 'Account created. Check your inbox to verify your email address.',
         });
     } catch (error) {
         logger.error('Registration error:', error);
@@ -141,8 +156,7 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
  *       500:
  *         description: Demo login failed
  */
-// Simple in-memory rate limiter for demo endpoint (per IP)
-const demoAttempts = new Map<string, { count: number; resetAt: number }>();
+// Demo endpoint rate limit (per IP), shared across replicas via sharedState
 const DEMO_RATE_LIMIT = 100; // max attempts per window
 const DEMO_RATE_WINDOW = 15 * 60 * 1000; // 15 minutes
 
@@ -153,15 +167,9 @@ router.post('/demo', async (req: Request, res: Response) => {
 
     // Rate limit by IP
     const ip = req.ip || req.socket.remoteAddress || 'unknown';
-    const now = Date.now();
-    const entry = demoAttempts.get(ip);
-    if (entry && now < entry.resetAt) {
-        if (entry.count >= DEMO_RATE_LIMIT) {
-            return res.status(429).json({ success: false, error: 'Too many demo attempts. Try again later.' });
-        }
-        entry.count++;
-    } else {
-        demoAttempts.set(ip, { count: 1, resetAt: now + DEMO_RATE_WINDOW });
+    const { count } = await incrWindow(`demo-login:${ip}`, DEMO_RATE_WINDOW);
+    if (count > DEMO_RATE_LIMIT) {
+        return res.status(429).json({ success: false, error: 'Too many demo attempts. Try again later.' });
     }
     try {
         const email = 'demo@agridemo.com';

@@ -10,8 +10,7 @@ const cropYieldForecastSchema = z.object({
   expectedHarvestDate: z.string().optional().describe('Expected harvest date (YYYY-MM-DD)'),
 });
 
-function getCropCoefficients(crop: string) {
-  const cropCoefficients: Record<string, { baseYield: number; weatherFactor: number; growthDays: number }> = {
+const CROP_COEFFICIENT_TABLE: Record<string, { baseYield: number; weatherFactor: number; growthDays: number }> = {
     maize: { baseYield: 4.5, weatherFactor: 0.15, growthDays: 120 },
     wheat: { baseYield: 3.2, weatherFactor: 0.12, growthDays: 110 },
     rice: { baseYield: 5.8, weatherFactor: 0.18, growthDays: 140 },
@@ -22,9 +21,10 @@ function getCropCoefficients(crop: string) {
     potatoes: { baseYield: 18.0, weatherFactor: 0.13, growthDays: 90 },
     tomatoes: { baseYield: 40.0, weatherFactor: 0.16, growthDays: 75 },
     cotton: { baseYield: 2.5, weatherFactor: 0.11, growthDays: 160 },
-  };
+};
 
-  return cropCoefficients[crop.toLowerCase()] || { baseYield: 3.0, weatherFactor: 0.12, growthDays: 120 };
+function getCropCoefficients(crop: string) {
+  return CROP_COEFFICIENT_TABLE[crop.toLowerCase()] || { baseYield: 3.0, weatherFactor: 0.12, growthDays: 120 };
 }
 
 export function calculateWeatherScore(weather: WeatherData | null, crop: string): { score: number; dataStatus: 'complete' | 'partial' | 'unavailable' } {
@@ -52,7 +52,7 @@ export function calculateWeatherScore(weather: WeatherData | null, crop: string)
 
 export const cropYieldForecastTool: Tool<typeof cropYieldForecastSchema> = {
   name: 'crop_yield_forecast',
-  description: 'Predicts crop yield and agricultural output using weather patterns, historical data, and growth stage analysis. Use when forecasting production, estimating harvest volumes, or planning agricultural output.',
+  description: 'Rough yield estimate from a static per-crop coefficient table adjusted by current weather favourability. It uses NO farm-specific history, soil data or satellite data. Present results as an order-of-magnitude planning estimate, never as a prediction.',
   schema: cropYieldForecastSchema,
   execute: async ({ crop, region, areaHectares, plantingDate, expectedHarvestDate }) => {
     try {
@@ -67,6 +67,7 @@ export const cropYieldForecastTool: Tool<typeof cropYieldForecastSchema> = {
 
       const growthStage = estimateGrowthStage(crop, plantingDate, cropData.growthDays);
 
+      const knownCrop = crop.toLowerCase() in CROP_COEFFICIENT_TABLE;
       const forecast = {
         crop,
         region,
@@ -74,7 +75,13 @@ export const cropYieldForecastTool: Tool<typeof cropYieldForecastSchema> = {
         totalEstimatedYield: areaHectares ? Math.round(totalYield * 100) / 100 : null,
         unit: 'tonnes',
         areaHectares: areaHectares || null,
-        confidence: Math.round(weatherScore * 100),
+        isEstimate: true,
+        method: 'static_coefficient_table_x_weather_favourability',
+        cropCoefficientSource: knownCrop ? 'internal_table' : 'generic_default_3t_ha',
+        // Weather favourability is NOT model confidence; there is no calibrated confidence for this heuristic.
+        weatherFavourability: Math.round(weatherScore * 100),
+        confidence: null as number | null,
+        confidenceNote: 'No calibrated confidence available — heuristic estimate without historical yield data.',
         weatherScore: Math.round(weatherScore * 100) / 100,
         weatherDataStatus: weatherAssessment.dataStatus,
         currentGrowthStage: growthStage,

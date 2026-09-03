@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import { useState, useCallback, useEffect } from 'react';
 import {
   fetchConversations,
@@ -88,6 +89,7 @@ export const useAppChat = (language: string) => {
       }
     } catch (error) {
       console.error('Failed to update conversation:', error);
+      toast.error('Could not rename conversation');
     }
   };
 
@@ -109,6 +111,7 @@ export const useAppChat = (language: string) => {
       }
     } catch (error) {
       console.error('Failed to delete conversation:', error);
+      toast.error('Could not delete conversation');
     }
   };
 
@@ -233,6 +236,7 @@ export const useAppChat = (language: string) => {
       }
     } catch (error) {
       console.error('Failed to start conversation:', error);
+      toast.error('Could not start a new conversation');
     }
     return false;
   };

@@ -126,6 +126,17 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
         // Reset failed login attempts on valid password
         await resetFailedAttempts(user.id);
 
+        // Optional hard gate: REQUIRE_EMAIL_VERIFICATION=true blocks sign-in until the
+        // address is confirmed. Accounts created before the feature were grandfathered
+        // as verified by the migration, so enabling this never locks out existing users.
+        if (process.env.REQUIRE_EMAIL_VERIFICATION === 'true' && user.email_verified === false) {
+            return res.status(403).json({
+                success: false,
+                error: 'Please verify your email address before signing in. Check your inbox for the verification link.',
+                errorCode: 'EMAIL_NOT_VERIFIED',
+            });
+        }
+
         // Check if MFA is required
         if (user.mfa_enabled) {
             const tempToken = jwt.sign(

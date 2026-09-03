@@ -144,13 +144,11 @@ run git push origin master
 
 # ── Step 6: Tag the release ────────────────────────────
 echo -e "${BOLD}🏷️  Step 6/8: Tag release ${CYA}${TAG}${RST}${RST}"
-if git tag -l "$TAG" | grep -q "$TAG"; then
-  echo -e "  ${YEL}⚠  Tag $TAG already exists locally${RST}"
-  read -r -p "  Overwrite? [y/N] " TAG_OVERRIDE
-  if [ "$TAG_OVERRIDE" = "y" ] || [ "$TAG_OVERRIDE" = "Y" ]; then
-    run git tag -f -a "$TAG" -m "Release ${TAG}"
-    run git push origin "$TAG" --force-with-lease
-  fi
+if git tag -l "$TAG" | grep -q "^$TAG$"; then
+  # Release tags are immutable: a tag that already exists must never be moved.
+  # Pick a new tag (e.g. append -1) instead of rewriting history for downstream deploys.
+  echo -e "  ${RED}✖  Tag $TAG already exists. Release tags are immutable — choose a new tag.${RST}" >&2
+  exit 1
 else
   run git tag -a "$TAG" -m "Release ${TAG}"
   run git push origin "$TAG"

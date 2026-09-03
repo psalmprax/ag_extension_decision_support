@@ -78,15 +78,23 @@ export class SoilGridsService {
             });
 
             const raw = resp.data;
-            // SoilGrids d_factors: phh2o=10, soc=10 (dg/kg -> g/kg), nitrogen=10 (cg/kg), cec=10, bdod=100 (cg/cm3 -> g/cm3 -> *1000 kg/m3)
+            // extractMean already divides by the layer's d_factor, so every value below is
+            // in SoilGrids' *target* unit (ISRIC v2.0 docs):
+            //   phh2o  -> pH (d_factor 10)
+            //   soc    -> g/kg (dg/kg, d_factor 10)
+            //   nitrogen -> g/kg (cg/kg, d_factor 100)
+            //   cec    -> cmol(c)/kg (mmol(c)/kg, d_factor 10)
+            //   bdod   -> kg/dm3 == g/cm3 (cg/cm3, d_factor 100)
+            //   sand/silt/clay -> % (g/kg, d_factor 10 => g/100g)
+            // Do NOT divide again after extractMean.
             const ph = extractMean(raw, 'phh2o', 10);
-            const soc = extractMean(raw, 'soc', 10); // dg/kg -> g/kg
-            const nitrogen = extractMean(raw, 'nitrogen', 10); // cg/kg
+            const soc = extractMean(raw, 'soc', 10);
+            const nitrogenGPerKg = extractMean(raw, 'nitrogen', 100);
             const cec = extractMean(raw, 'cec', 10);
-            const bdodCg = extractMean(raw, 'bdod', 100); // cg/cm3 -> g/cm3
-            const sand = extractMean(raw, 'sand', 10);
-            const silt = extractMean(raw, 'silt', 10);
-            const clay = extractMean(raw, 'clay', 10);
+            const bdodGPerCm3 = extractMean(raw, 'bdod', 100);
+            const sandPct = extractMean(raw, 'sand', 10);
+            const siltPct = extractMean(raw, 'silt', 10);
+            const clayPct = extractMean(raw, 'clay', 10);
 
             return {
                 source: 'ISRIC SoilGrids v2.0 (250m)',
@@ -96,13 +104,14 @@ export class SoilGridsService {
                 depth: DEFAULT_DEPTH,
                 ph: ph !== null ? Number(ph.toFixed(2)) : null,
                 organicCarbonGPerKg: soc !== null ? Number(soc.toFixed(2)) : null,
-                nitrogenCgPerKg: nitrogen !== null ? Number(nitrogen.toFixed(1)) : null,
-                nitrogenMgPerKg: nitrogen !== null ? Number((nitrogen * 10).toFixed(1)) : null,
+                // cg/kg is kept for API compatibility; g/kg * 100 = cg/kg.
+                nitrogenCgPerKg: nitrogenGPerKg !== null ? Number((nitrogenGPerKg * 100).toFixed(1)) : null,
+                nitrogenMgPerKg: nitrogenGPerKg !== null ? Number((nitrogenGPerKg * 1000).toFixed(0)) : null,
                 cecCmolPerKg: cec !== null ? Number(cec.toFixed(2)) : null,
-                bulkDensityKgPerM3: bdodCg !== null ? Number((bdodCg * 1000).toFixed(0)) : null,
-                sandPct: sand !== null ? Number((sand / 10).toFixed(1)) : null,
-                siltPct: silt !== null ? Number((silt / 10).toFixed(1)) : null,
-                clayPct: clay !== null ? Number((clay / 10).toFixed(1)) : null,
+                bulkDensityKgPerM3: bdodGPerCm3 !== null ? Number((bdodGPerCm3 * 1000).toFixed(0)) : null,
+                sandPct: sandPct !== null ? Number(sandPct.toFixed(1)) : null,
+                siltPct: siltPct !== null ? Number(siltPct.toFixed(1)) : null,
+                clayPct: clayPct !== null ? Number(clayPct.toFixed(1)) : null,
                 raw,
             };
         });

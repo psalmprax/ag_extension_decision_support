@@ -170,12 +170,19 @@ router.post('/', async (req: Request, res: Response) => {
         if (!farmerId || !name || typeof areaHectares !== 'number') {
             return res.status(400).json({ success: false, error: 'farmerId, name, and areaHectares are required' });
         }
-        // farmer_id is a UUID FK — reject malformed ids up front. Mirrors the
-        // shared createFieldSchema contract (see __tests__/apiContract.test.ts).
+        // farmer_id is a UUID FK — reject malformed ids up front.
         if (!UUID_REGEX.test(String(farmerId))) {
             return res.status(400).json({ success: false, error: 'farmerId must be a valid UUID' });
         }
         const prisma = getPrisma();
+        // Verify farmer ownership: the calling farmer must own this farmer record
+        const farmer = await prisma.farmer.findFirst({ where: { userId: req.user!.userId } });
+        if (!farmer) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+        if (farmerId !== farmer.id) {
+            return res.status(403).json({ success: false, error: 'Field must belong to your farm' });
+        }
         const field = await prisma.field.create({
             data: {
                 farmerId,
@@ -203,6 +210,27 @@ router.put('/:id', async (req: Request, res: Response) => {
         if (!id) {
             return res.status(400).json({ success: false, error: 'Field id is required' });
         }
+        const prisma = getPrisma();
+        // First, verify the field exists and get its farmerId
+        const foundField = await prisma.field.findUnique({ where: { id } });
+        if (!foundField) {
+            return res.status(404).json({ success: false, error: 'Field not found' });
+        }
+        // Verify ownership: farmer sees own, officer sees assigned, admin/manager see all
+        const user = req.user as { userId?: string; role?: string } | undefined;
+        if (user?.role === 'farmer' && foundField.farmerId !== user.userId) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+        if (user?.role === 'extension_officer') {
+            const assigned = await prisma.farmer.findFirst({
+                where: { id: foundField.farmerId, assignedOfficerId: user.userId },
+                select: { id: true },
+            });
+            if (!assigned) {
+                return res.status(403).json({ success: false, error: 'Access denied' });
+            }
+        }
+
         const body = req.body as Partial<{
             name: string;
             areaHectares: number;
@@ -215,7 +243,6 @@ router.put('/:id', async (req: Request, res: Response) => {
             boundary_coordinates: Prisma.JsonValue;
         }>;
 
-        const prisma = getPrisma();
         const data: Prisma.FieldUpdateInput = {};
         if (body.name !== undefined) data.name = body.name;
 
@@ -249,6 +276,24 @@ router.delete('/:id', async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, error: 'Field id is required' });
         }
         const prisma = getPrisma();
+        // Verify ownership: farmer sees own, officer sees assigned, admin/manager see all
+        const user = req.user as { userId?: string; role?: string } | undefined;
+        const field = await prisma.field.findUnique({ where: { id } });
+        if (!field) {
+            return res.status(404).json({ success: false, error: 'Field not found' });
+        }
+        if (user?.role === 'farmer' && field.farmerId !== user.userId) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+        if (user?.role === 'extension_officer') {
+            const assigned = await prisma.farmer.findFirst({
+                where: { id: field.farmerId, assignedOfficerId: user.userId },
+                select: { id: true },
+            });
+            if (!assigned) {
+                return res.status(403).json({ success: false, error: 'Access denied' });
+            }
+        }
         await prisma.field.update({ where: { id }, data: { isActive: false } });
         return res.json({ success: true });
     } catch (error) {

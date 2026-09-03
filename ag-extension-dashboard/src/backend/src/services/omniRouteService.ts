@@ -310,10 +310,21 @@ export class OmniRouteService {
       return null;
     } catch (err: unknown) {
       const errorMsg = (err as Error).message || '';
-      if (errorMsg.includes('QUOTA') || errorMsg.includes('429') || errorMsg.includes('402')) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      const body = JSON.stringify((err as { response?: { data?: unknown } })?.response?.data ?? '');
+      if (errorMsg.includes('QUOTA') || errorMsg.includes('429') || errorMsg.includes('402') || status === 429 || status === 402) {
         logger.warn(`[OmniRoute] Quota hit for ${key}. Adding to 15m blocklist.`);
         this.blocklist.add(key);
-        setTimeout(() => this.blocklist.delete(key), 15 * 60 * 1000);
+        setTimeout(() => this.blocklist.delete(key), 15 * 60 * 1000).unref?.();
+      } else if (
+        status === 404 || status === 400 || status === 401 || status === 403 ||
+        /model.*not (found|exist|available)|invalid model|unknown model|does not exist/i.test(errorMsg + body)
+      ) {
+        // The catalog id is wrong / unavailable on this provider. Block it for
+        // longer so a bad entry does not cost a live HTTP call on every request.
+        logger.warn(`[OmniRoute] ${key} rejected by provider (HTTP ${status ?? 'n/a'}). Blocklisting for 6h.`);
+        this.blocklist.add(key);
+        setTimeout(() => this.blocklist.delete(key), 6 * 60 * 60 * 1000).unref?.();
       }
       this.recordFailure(key);
       logger.warn(`[OmniRoute] ${isPrimary ? 'Primary ' : ''}${key} failed. Transitioning to next candidate...`);

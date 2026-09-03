@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { logger } from '../../../utils/logger';
+import { normalizeToolDefinitions, normalizeMessages, normalizeToolCalls } from '../toolCalling';
 import {
   BaseAIProvider,
   AIProviderType,
@@ -14,9 +15,10 @@ import { REASONING_SYSTEM_PROMPT, extractVisuals, buildGroundedReasoningPrompt }
 
 export interface OpenRouterRequest {
   model?: string;
-  messages: Array<{ role: string; content: string }>;
+  messages: Array<{ role: string; content: string | null; [k: string]: unknown }>;
   temperature?: number;
   max_tokens?: number;
+  tools?: unknown[];
 }
 
 export interface OpenRouterResponse {
@@ -25,10 +27,12 @@ export interface OpenRouterResponse {
   choices: Array<{
     message: {
       role: string;
-      content: string;
+      content: string | null;
+      tool_calls?: unknown[];
     };
     finish_reason: string;
   }>;
+  usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
 }
 
 /**
@@ -64,13 +68,26 @@ export class OpenRouterProvider extends BaseAIProvider {
         { model: 'meta-llama/llama-3.3-70b-instruct:free', messages: [{ role: 'user', content: 'ping' }], max_tokens: 2 },
         { headers: { Authorization: `Bearer ${this.getApiKey()}` }, timeout: 3000 }
       );
+      this.recordHealthError();
       return true;
-    } catch {
-      return this.isConfigured();
+    } catch (err) {
+      const status = (err as { response?: { status?: number } }).response?.status;
+      this.recordHealthError(status ? `HTTP ${status}` : (err as Error).message);
+      return false;
     }
   }
 
   public async chat(req: OpenRouterRequest): Promise<string> {
+    const raw = await this.chatRaw(req);
+    const content = raw.choices?.[0]?.message?.content;
+    if (!content && !raw.choices?.[0]?.message?.tool_calls?.length) {
+      throw new Error('Empty completion content returned from OpenRouter.');
+    }
+    return content || '';
+  }
+
+  /** Full chat completion including tool_calls (OpenAI-compatible). */
+  public async chatRaw(req: OpenRouterRequest): Promise<OpenRouterResponse> {
     const key = this.getApiKey();
     if (!key) {
       throw new Error('OpenRouter API key not configured (OPENROUTER_API_KEY missing).');
@@ -88,6 +105,7 @@ export class OpenRouterProvider extends BaseAIProvider {
           messages: req.messages,
           temperature: req.temperature ?? 0.7,
           max_tokens: req.max_tokens ?? 1024,
+          ...(req.tools && req.tools.length > 0 ? { tools: req.tools, tool_choice: 'auto' } : {}),
         },
         {
           headers: {
@@ -100,12 +118,11 @@ export class OpenRouterProvider extends BaseAIProvider {
         }
       );
 
-      const content = response.data.choices?.[0]?.message?.content;
-      if (!content) {
-        throw new Error('Empty completion content returned from OpenRouter.');
+      if (!response.data?.choices?.length) {
+        throw new Error('Empty completion returned from OpenRouter.');
       }
 
-      return content;
+      return response.data;
     } catch (err: unknown) {
       const axiosError = err as { response?: { status?: number; data?: unknown }; message?: string };
       const status = axiosError.response?.status;
@@ -125,18 +142,28 @@ export class OpenRouterProvider extends BaseAIProvider {
     prompt: string | Array<{ role: string; content: string }>,
     options?: TextGenerationOptions
   ): Promise<TextGenerationResult> {
-    const messages = typeof prompt === 'string' ? [{ role: 'user', content: prompt }] : prompt;
+    const messages = normalizeMessages(prompt) as OpenRouterRequest['messages'];
     const model = options?.model || process.env.AI_FALLBACK_MODEL || 'meta-llama/llama-3.3-70b-instruct:free';
-    const text = await this.chat({
+    const tools = normalizeToolDefinitions(options?.tools);
+    const raw = await this.chatRaw({
       model,
       messages,
       temperature: options?.temperature,
       max_tokens: options?.maxTokens,
+      tools,
     });
+    const choice = raw.choices[0];
 
     return {
-      text,
+      text: choice?.message?.content ?? '',
+      toolCalls: normalizeToolCalls(choice?.message?.tool_calls as unknown[]),
       model,
+      usage: raw.usage ? {
+        promptTokens: raw.usage.prompt_tokens ?? 0,
+        completionTokens: raw.usage.completion_tokens ?? 0,
+        totalTokens: raw.usage.total_tokens ?? 0,
+      } : undefined,
+      finishReason: choice?.finish_reason,
     };
   }
 

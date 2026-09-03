@@ -3,7 +3,7 @@ import { paymentService } from '../../services/paymentService';
 import { getPrisma } from '../../services/prismaService';
 import { logger } from '../../utils/logger';
 import { authorize, AuthRequest } from '../../middleware/authorize';
-import { usageService } from '../../services/usageService';
+import { usageService, FREE_TIER_LIMITS } from '../../services/usageService';
 import { safeError } from '@/utils/safeResponse';
 
 const router = Router();
@@ -32,6 +32,49 @@ const isSubscriptionActive = (subscription: { status: string }): boolean => {
  *     summary: Get available pricing plans
  *     tags: [Billing]
  */
+/**
+ * GET /api/v1/billing/quotas
+ * The *enforced* per-plan limits (from subscription_plans.features) — the same
+ * numbers usageService applies at request time. Public so pricing UIs never
+ * hardcode quotas that drift from enforcement.
+ */
+router.get('/quotas', async (_req, res) => {
+    try {
+        const plans = await getPrisma().subscriptionPlan.findMany({
+            where: { isActive: true },
+            orderBy: { price: 'asc' },
+            select: { id: true, name: true, price: true, currency: true, interval: true, features: true, stripePriceId: true },
+        });
+        const data = plans.map(p => {
+            const f = (p.features ?? {}) as Record<string, unknown>;
+            const isFree = Number(p.price) === 0 || p.name.toLowerCase() === 'free';
+            const lim = (k: string, fallback: number) => (typeof f[k] === 'number' ? (f[k] as number) : fallback);
+            return {
+                id: p.id,
+                stripePriceId: p.stripePriceId,
+                name: p.name,
+                price: Number(p.price),
+                currency: p.currency,
+                interval: p.interval,
+                quotas: isFree ? { ...FREE_TIER_LIMITS } : {
+                    smsLimit: lim('smsLimit', 500),
+                    aiChatLimit: lim('aiChatLimit', 1000),
+                    reportLimit: lim('reportLimit', 50),
+                    aiVisionLimit: lim('aiVisionLimit', 100),
+                    speechLimit: lim('speechLimit', 200),
+                    whatsappLimit: lim('whatsappLimit', 500),
+                    knowledgeDailyLimit: lim('knowledgeDailyLimit', -1),
+                },
+                enforcement: 'hard_limit',
+            };
+        });
+        res.json({ success: true, data });
+    } catch (error) {
+        logger.error('Failed to get quotas:', error);
+        safeError(res, 500, 'Failed to load plan quotas');
+    }
+});
+
 router.get('/plans', async (req, res) => {
     try {
         const plans = await paymentService.getPricingPlans();

@@ -137,9 +137,8 @@ export class SelfHealingService {
 
   private async checkAgentService(component: string): Promise<boolean> {
     const urls: Record<string, string> = {
-      'agent-zero': 'http://ag-agent-zero:8000',
-      'crew-ai': 'http://ag-crew-ai:8001',
-      'openclaw': 'http://ag-openclaw:8002',
+      'agent-zero': process.env.AGENT_ZERO_URL || 'http://ag-agent-zero:8000',
+      'crew-ai': process.env.CREW_AI_URL || 'http://ag-crew-ai:8001',
     };
     const url = urls[component];
     if (!url) return false;
@@ -157,7 +156,7 @@ export class SelfHealingService {
   }
 
   async requestRecovery(component: string): Promise<RecoveryRequestResult> {
-    const allowedComponents = new Set(['ai-provider', 'database', 'cache', 'agent-zero', 'crew-ai', 'openclaw']);
+    const allowedComponents = new Set(['ai-provider', 'database', 'cache', 'agent-zero', 'crew-ai']);
     if (!allowedComponents.has(component)) {
       return {
         success: false,
@@ -208,10 +207,11 @@ export class SelfHealingService {
           return await this.checkCache();
         case 'agent-zero':
         case 'crew-ai':
-        case 'openclaw':
           return await this.checkAgentService(component);
         default:
-          return true;
+          // Unknown components have no probe; report unknown rather than "healthy".
+          logger.debug(`selfHealing: no health probe registered for component "${component}"`);
+          return false;
       }
     } catch {
       return false;
@@ -243,7 +243,6 @@ export class SelfHealingService {
         break;
       case 'agent-zero':
       case 'crew-ai':
-      case 'openclaw':
         await this.recoverAgent(component);
         break;
       default:
@@ -263,12 +262,16 @@ export class SelfHealingService {
         const fallbackHealthy = await fallback.healthCheck();
 
         if (fallbackHealthy) {
-          await this.triggerRecovery('ai-provider', 'switched_to_fallback', true);
+          // The router already prefers healthy providers on each request, so there is
+          // no state to flip here. Record what is true: primary down, fallback serving.
+          await this.triggerRecovery('ai-provider', 'primary_unhealthy_fallback_available', false, primary.getLastHealthError?.());
           return;
         }
+        await this.triggerRecovery('ai-provider', 'primary_and_fallback_unhealthy', false, primary.getLastHealthError?.());
+        return;
       }
 
-      await this.triggerRecovery('ai-provider', 'health_check_retried', primaryHealthy);
+      await this.triggerRecovery('ai-provider', 'health_check_retried', true);
     } catch (error) {
       await this.triggerRecovery('ai-provider', 'recovery_failed', false, error instanceof Error ? error.message : undefined);
     }
@@ -276,9 +279,13 @@ export class SelfHealingService {
 
   private async recoverDatabase(): Promise<void> {
     try {
-      const { initializeDatabase } = await import('@/services/databaseService');
+      const { initializeDatabase, getPool } = await import('@/services/databaseService');
       await initializeDatabase();
-      await this.triggerRecovery('database', 'reconnection_attempted', true);
+      // Verify the reconnect actually works before claiming success.
+      const pool = getPool();
+      if (!pool) throw new Error('database pool not initialized after reconnect');
+      await pool.query('SELECT 1');
+      await this.triggerRecovery('database', 'reconnected_and_verified', true);
     } catch (error) {
       await this.triggerRecovery('database', 'recovery_failed', false, error instanceof Error ? error.message : undefined);
     }
@@ -286,9 +293,11 @@ export class SelfHealingService {
 
   private async recoverCache(): Promise<void> {
     try {
-      const { initializeCache } = await import('@/services/cacheService');
+      const { initializeCache, getCache } = await import('@/services/cacheService');
       await initializeCache();
-      await this.triggerRecovery('cache', 'reconnection_attempted', true);
+      const redis = getCache();
+      if (!redis?.isOpen) throw new Error('cache client not open after reconnect');
+      await this.triggerRecovery('cache', 'reconnected_and_verified', true);
     } catch (error) {
       await this.triggerRecovery('cache', 'recovery_failed', false, error instanceof Error ? error.message : undefined);
     }
@@ -297,17 +306,20 @@ export class SelfHealingService {
   private async recoverAgent(agentId: string): Promise<void> {
     try {
       const urls: Record<string, string> = {
-        'agent-zero': 'http://ag-agent-zero:8000',
-        'crew-ai': 'http://ag-crew-ai:8001',
-        'openclaw': 'http://ag-openclaw:8002',
+        'agent-zero': process.env.AGENT_ZERO_URL || 'http://ag-agent-zero:8000',
+        'crew-ai': process.env.CREW_AI_URL || 'http://ag-crew-ai:8001',
       };
 
       const url = urls[agentId];
       if (!url) return;
 
-      // For openclaw, if it's not running yet (planned agent), don't fail recovery
-      await fetch(`${url}/health`, { signal: AbortSignal.timeout(5000) });
-      await this.triggerRecovery(agentId, 'health_check_retried', true);
+      // fetch() resolves on 5xx — only a 2xx counts as recovered.
+      const res = await fetch(`${url}/health`, { signal: AbortSignal.timeout(5000) });
+      if (!res.ok) {
+        await this.triggerRecovery(agentId, 'agent_unhealthy', false, `HTTP ${res.status}`);
+        return;
+      }
+      await this.triggerRecovery(agentId, 'health_check_passed', true);
     } catch {
       await this.triggerRecovery(agentId, 'agent_unreachable', false);
     }

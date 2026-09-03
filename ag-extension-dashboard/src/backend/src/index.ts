@@ -113,33 +113,34 @@ async function bootstrap() {
 
     await initializeStep('AI Provider Factory', () => AIProviderFactory.initialize());
 
-    // Seed Knowledge Articles (async)
-    await initializeStep('knowledge articles', async () => {
-        const { seedKnowledgeArticles, seedKnowledgeArticlesData } = await import('./routes/knowledge');
-        seedKnowledgeArticles().catch((err: unknown) =>
-            logger.error('Failed to seed knowledge articles:', err)
-        );
+    // Knowledge bootstrap runs in the background but *sequentially*: rows must exist
+    // before embeddings are generated, embeddings must exist before RAG v2 chunks
+    // them, and the seeders must not race each other on the same ids.
+    await initializeStep('knowledge bootstrap (background)', async () => {
+        void (async () => {
+            try {
+                const { seedKnowledgeArticles, seedKnowledgeArticlesData } = await import('./routes/knowledge');
+                await seedKnowledgeArticles();
+                await VectorService.seedKnowledge(seedKnowledgeArticlesData);
 
-        // Seed Vector Knowledge Base (async)
-        VectorService.seedKnowledge(seedKnowledgeArticlesData).catch(err =>
-            logger.error('Failed to seed vector knowledge:', err)
-        );
-    });
+                const { KnowledgeSyncOrchestrator } = await import('./services/data/knowledgeSyncOrchestrator');
+                await KnowledgeSyncOrchestrator.syncLightweight();
 
-    // Sync external knowledge sources (curated tropical articles — fast, no API calls)
-    await initializeStep('knowledge sync orchestrator', async () => {
-        const { KnowledgeSyncOrchestrator } = await import('./services/data/knowledgeSyncOrchestrator');
-        KnowledgeSyncOrchestrator.syncLightweight().catch(err =>
-            logger.error('Failed to sync lightweight knowledge sources:', err)
-        );
-    });
+                // Anything inserted without a vector (legacy rows, plain-SQL paths) gets one now.
+                // Drains fully (batched) so a large existing corpus is indexed in one boot,
+                // not one batch per restart. Disable with EMBEDDING_BACKFILL_ON_BOOT=false.
+                if (process.env.EMBEDDING_BACKFILL_ON_BOOT !== 'false') {
+                    const bf = await VectorService.backfillAllMissingEmbeddings(100);
+                    if (bf.remaining > 0) logger.warn(`Embedding backfill left ${bf.remaining} rows unindexed${bf.aborted ? ` — ${bf.aborted}` : ''}`);
+                }
 
-    // Bootstrap RAG v2 (chunking + knowledge graph)
-    await initializeStep('RAG v2 service', async () => {
-        const { RAGV2Service } = await import('./services/ragV2Service');
-        RAGV2Service.bootstrap().catch(err =>
-            logger.error('Failed to bootstrap RAG v2:', err)
-        );
+                const { RAGV2Service } = await import('./services/ragV2Service');
+                await RAGV2Service.bootstrap();
+                logger.info('Knowledge bootstrap complete');
+            } catch (err) {
+                logger.error('Knowledge bootstrap failed:', err);
+            }
+        })();
     });
 
     await initializeStep('persistent memory layer', () => persistentMemory.initialize());

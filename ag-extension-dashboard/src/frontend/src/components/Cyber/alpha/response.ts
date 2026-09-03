@@ -6,6 +6,14 @@ import { selectCanvasForQuery } from './rules';
 import type { CanvasViewType } from './rules';
 import { enqueueOfflineQuery, nowStamp } from './offlineQueue';
 
+export interface AdvisoryCitation {
+  sourceId: string;
+  title: string;
+  category: string;
+  excerpt: string;
+  score: number;
+}
+
 export interface ChatMessageItem {
   id: string;
   sender: 'user' | 'assistant';
@@ -13,6 +21,22 @@ export interface ChatMessageItem {
   timestamp: string;
   canvasTrigger?: CanvasViewType;
   canvasLabel?: string;
+  citations?: AdvisoryCitation[];
+  usedTools?: string[];
+}
+
+function extractCitations(data: unknown): AdvisoryCitation[] {
+  const d = data as { citations?: unknown } | null | undefined;
+  if (!Array.isArray(d?.citations)) return [];
+  return (d.citations as Array<Record<string, unknown>>)
+    .filter(c => c && typeof c === 'object' && typeof c.title === 'string')
+    .map(c => ({
+      sourceId: String(c.sourceId ?? c.id ?? c.title),
+      title: String(c.title),
+      category: String(c.category ?? 'general'),
+      excerpt: String(c.excerpt ?? ''),
+      score: typeof c.score === 'number' ? c.score : 0,
+    }));
 }
 
 /** Pull the advisory text out of the chatbot payload, whatever shape it takes. */
@@ -51,6 +75,9 @@ export async function requestAdvisoryMessage(query: string): Promise<ChatMessage
   }
   const ragCats = extractRagCategories(data);
   const { view, label } = selectCanvasForQuery(query, ragCats);
+  const usedTools = Array.isArray((data as { usedTools?: unknown })?.usedTools)
+    ? ((data as { usedTools: unknown[] }).usedTools).map(String)
+    : [];
   return {
     id: `asst-${Date.now()}`,
     sender: 'assistant',
@@ -58,6 +85,8 @@ export async function requestAdvisoryMessage(query: string): Promise<ChatMessage
     timestamp: nowStamp(),
     canvasTrigger: view,
     canvasLabel: label,
+    citations: extractCitations(data),
+    usedTools,
   };
 }
 

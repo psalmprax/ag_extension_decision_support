@@ -29,6 +29,7 @@ import {
 } from '../api/systemHealthService';
 import { runDiagnostics, DiagnosticResult } from '../api/diagnosticsService';
 import { LoadingHeaderSkeleton } from '@/components/ui/LoadingHeaderSkeleton';
+import { SyncQueuePanel } from '@/components/SyncQueuePanel';
 import { RATE_LIMIT_STATUS, CERT_EXPIRY_WARN_DAYS, ERROR_COOLDOWN_MS } from '@/lib/constants';
 
 function IssuesSummary({ issues, summary }: { issues?: string[]; summary?: string }) {
@@ -726,6 +727,9 @@ export function SystemHealth() {
 
       {/* ── Deep Diagnostics Output ── */}
       {diagnostics && <DiagnosticsPanel diagnostics={diagnostics} />}
+
+      {/* ── Offline write queue (client-side) ── */}
+      <SyncQueuePanel />
 
       {/* ── Recovery Audit Log ── */}
       <RecoveryLogList actions={recoveryLog} t={t} />

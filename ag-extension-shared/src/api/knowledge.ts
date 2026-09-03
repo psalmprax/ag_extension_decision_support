@@ -4,7 +4,8 @@
 import { z } from 'zod';
 
 export const knowledgeSearchSchema = z.object({
-    query: z.string().min(1).max(500),
+    /** Omit to browse (list) articles; provide to run hybrid/vector search. */
+    query: z.string().max(500).optional(),
     category: z.string().optional(),
     crop: z.string().optional(),
     limit: z.coerce.number().min(1).max(50).optional(),

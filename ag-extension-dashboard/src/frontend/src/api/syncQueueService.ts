@@ -14,10 +14,13 @@ export interface SyncQueueItem {
   retryCount: number;
   state: SyncState;
   lastError?: string;
+  /** Epoch ms before which an automatic retry must not run (exponential backoff). */
+  nextAttemptAt?: number;
 }
 
 const STORAGE_KEY = 'ag-sync-queue';
-const MAX_RETRIES = 3;
+const MAX_RETRIES = 5;
+const BASE_BACKOFF_MS = 30_000; // 30s, 1m, 2m, 4m, 8m
 const IDB_NAME = 'ag-sync-queue-db';
 const IDB_STORE = 'queue';
 
@@ -164,8 +167,10 @@ class SyncQueueService {
       item.retryCount++;
       if (item.retryCount >= MAX_RETRIES) {
         item.state = 'failed';
+        item.nextAttemptAt = undefined;
         return 'failed';
       }
+      item.nextAttemptAt = Date.now() + BASE_BACKOFF_MS * 2 ** (item.retryCount - 1);
       return 'retry';
     }
   }
@@ -181,7 +186,10 @@ class SyncQueueService {
     let conflicts = 0;
     const toRemove: string[] = [];
 
-    const pendingItems = this.queue.filter(queueItem => queueItem.state === 'pending');
+    const now = Date.now();
+    const pendingItems = this.queue.filter(
+      queueItem => queueItem.state === 'pending' && (!queueItem.nextAttemptAt || queueItem.nextAttemptAt <= now)
+    );
     for (const item of pendingItems) {
       const result = await this.executeSyncItem(item);
       if (result === 'success') {
@@ -205,12 +213,30 @@ class SyncQueueService {
   getQueue(): SyncQueueItem[] {
     return [...this.queue];
   }
+
+  /** Items that need a human decision (exhausted retries or server-side conflict). */
+  getStuckItems(): SyncQueueItem[] {
+    return this.queue.filter(i => i.state === 'failed' || i.state === 'conflict');
+  }
+
+  /** Earliest scheduled automatic retry among pending items, if any. */
+  getNextRetryAt(): number | null {
+    const times = this.queue
+      .filter(i => i.state === 'pending' && typeof i.nextAttemptAt === 'number')
+      .map(i => i.nextAttemptAt as number);
+    return times.length ? Math.min(...times) : null;
+  }
 }
 
 export const syncQueue = new SyncQueueService();
 
 if (typeof window !== 'undefined') {
-  window.addEventListener('online', () => {
-    syncQueue.processQueue();
-  });
+  // Background scheduler: retries backed-off items while online so a single
+  // transient failure never strands a write until the next connectivity flip.
+  const tick = () => {
+    if (navigator.onLine) void syncQueue.processQueue();
+  };
+  window.setInterval(tick, 20_000);
+  // `online` is handled by useAppSync (which owns user feedback); avoid a second,
+  // competing listener here that would race it for `isProcessing`.
 }
