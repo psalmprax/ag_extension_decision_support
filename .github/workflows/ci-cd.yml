@@ -172,6 +172,11 @@ jobs:
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
 
+      - name: Generate vendored shared API contract
+        run: |
+          cd ag-extension-dashboard/src/backend
+          npm run shared:sync
+
       - name: Fallow dead-code regression gate
         run: npm run fallow:check
 
