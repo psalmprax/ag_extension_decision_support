@@ -22,10 +22,13 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { getChatCompletion, analyzeImage } from '@/api/aiService';
 import { useFieldVoiceRecorder } from '@/hooks/useFieldVoiceRecorder';
 import { ProgressiveProfileChips, ProfileParameter } from './ProgressiveProfileChips';
-import { VideoCall } from './VideoCall';
 import { useAppStore } from '@/store/useAppStore';
 import toast from 'react-hot-toast';
 import { AgronomicIntakeCard, isAgronomicQueryAmbiguous } from './AgronomicIntakeCard';
+
+// Lazy: WebRTC stack (~200KB with deps) must not sit in the entry chunk for a
+// call modal that only mounts on explicit user action.
+const VideoCall = React.lazy(() => import('./VideoCall').then(m => ({ default: m.VideoCall })));
 
 interface FloatingAIPillProps {
   onOpenUSSDSandbox?: () => void;
@@ -719,13 +722,17 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
               </button>
             </div>
             <div className="overflow-y-auto max-h-[80vh]">
-              <VideoCall
+              <React.Suspense fallback={
+                <div className="p-8 text-center text-xs font-mono text-slate-400">Loading video consultation…</div>
+              }>
+                <VideoCall
                 roomId={callSessionId}
                 userId={storeUser?.id || 'host-user'}
                 userName={`${storeUser?.firstName || ''} ${storeUser?.lastName || ''}`.trim() || 'Extension Officer'}
                 isHost={true}
                 onEnd={() => setShowVideoCall(false)}
               />
+              </React.Suspense>
             </div>
           </div>
         </div>

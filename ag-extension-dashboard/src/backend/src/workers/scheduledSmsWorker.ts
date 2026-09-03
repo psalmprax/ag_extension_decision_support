@@ -45,8 +45,6 @@ function getScheduledSmsWorker(): Worker<ScheduledSmsJobData> | null {
     return _worker;
 }
 
-export { getScheduledSmsWorker };
-
 export function startScheduledSmsWorker(): void {
     try { getScheduledSmsWorker(); logger.info('Scheduled SMS worker started (scheduled-sms-queue)'); }
     catch (err) { logger.warn('Scheduled SMS worker not started:', err instanceof Error ? err.message : err); }

@@ -157,6 +157,12 @@ router.post('/hazard/scan', checkUsageLimit('ai_chat'), validate({ body: z.objec
 router.post('/voice/transcribe', checkUsageLimit('speech'), validate({ body: z.object({ audio: z.string().optional(), audioUrl: z.string().optional(), mimeType: z.string().optional(), languageHint: z.string().optional() }) }), async (req: AuthRequest, res: Response) => {
     try {
         const { audio, audioUrl, mimeType, languageHint } = req.body as { audio?: string; audioUrl?: string; mimeType?: string; languageHint?: string };
+        if (!audio && !audioUrl) {
+            // Fail loudly at the boundary: without input audio the service can
+            // only return its offline CI stub transcript, which must never be
+            // served over HTTP as if it were a real transcription.
+            return res.status(400).json({ success: false, error: 'Audio data or audioUrl is required' });
+        }
         const audioBuffer = audio ? Buffer.from(audio.includes('base64,') ? audio.split('base64,')[1] : audio, 'base64') : undefined;
         const result = await transcribeVoiceNote({ audioBuffer, audioUrl, mimeType, languageHint });
         return res.json({ success: true, data: result });

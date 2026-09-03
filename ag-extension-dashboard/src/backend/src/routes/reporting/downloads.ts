@@ -1,32 +1,20 @@
 import { Router, Request, Response } from 'express';
-import { query, getPool } from '@/services/databaseService';
+import { query } from '@/services/databaseService';
 import type {
   ReportListRow,
-  VisitStatsRow,
-  ConversationStatsRow,
 } from '@/types/rowTypes';
 import {
-  mapReportListRow,
-  mapReportListRows,
-  mapVisitStatsRow,
-  mapConversationStatsRow,
   type VisitStatsDTO,
   type ConversationStatsDTO,
 } from '@/types/dtos';
 import { logger } from '@/utils/logger';
-import { authorize, AuthRequest } from '@/middleware/authorize';
-import { checkUsageLimit } from '@/middleware/usageMiddleware';
-import { usageService } from '../services/usageService';
+import { safeError } from '@/utils/safeResponse';
+import { getPrincipalTenantId } from '@/services/dataGovernanceService';
 import PDFDocument from 'pdfkit';
 import type PDFKit from 'pdfkit';
 import * as XLSX from 'xlsx';
-import { safeError } from '@/utils/safeResponse';
-import { getPrincipalTenantId } from '@/services/dataGovernanceService';
 
 const router = Router();
-
-// Apply authentication to all reporting routes
-router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
 
 interface ReportContent {
   visits?: VisitStatsDTO;
@@ -97,201 +85,6 @@ async function getReportScope(req: Request, parameterIndex: number): Promise<{ c
         params: [req.user.userId],
     };
 }
-
-// Get reports
-router.get('/', async (req: AuthRequest, res: Response) => {
-    try {
-        const { type, startDate, endDate, officerId, limit = '20', offset = '0' } = req.query;
-        const pool = getPool();
-
-        if (!pool) {
-            return res.status(503).json({ success: false, error: 'Database connection unavailable' });
-        }
-
-        let sql = 'SELECT * FROM reports WHERE 1=1';
-        const params: unknown[] = [];
-        let paramIndex = 1;
-        const scope = await getReportScope(req, paramIndex);
-        if (!scope) return res.status(403).json({ success: false, error: 'Tenant membership required' });
-        sql += scope.clause;
-        params.push(...scope.params);
-        paramIndex += scope.params.length;
-
-        if (type) {
-            sql += ' AND report_type = $' + paramIndex++;
-            params.push(type);
-        }
-        if (officerId) {
-            sql += ' AND officer_id = $' + paramIndex++;
-            params.push(officerId);
-        }
-        if (startDate) {
-            sql += ' AND created_at >= $' + paramIndex++;
-            params.push(startDate);
-        }
-        if (endDate) {
-            sql += ' AND created_at <= $' + paramIndex++;
-            params.push(endDate);
-        }
-
-        sql += ' ORDER BY created_at DESC LIMIT $' + paramIndex++ + ' OFFSET $' + paramIndex;
-        params.push(parseInt(limit as string), parseInt(offset as string));
-
-        const result = await query<ReportListRow>(sql, params);
-        const reports = mapReportListRows(result.rows);
-
-        res.json({
-            success: true,
-            data: {
-                reports: reports.map(r => ({
-                    id: r.id,
-                    type: r.type,
-                    title: r.title,
-                    generatedAt: r.generatedAt,
-                    status: r.status,
-                    data: r.content,
-                })),
-                total: result.rowCount ?? result.rows.length,
-            },
-        });
-    } catch (error) {
-        logger.error('Get reports error:', error);
-        safeError(res, 500, 'Failed to get reports');
-    }
-});
-
-async function generateReportData(type: string, effectiveStartDate: string, effectiveEndDate: string, officerId: string | undefined, region: string | undefined, title: string | undefined, req: AuthRequest, res: Response) {
-    const reportData: Partial<ReportContent> = {};
-    if (type === 'visit_summary' || type === 'activity_report') {
-        const visitResult = await query<VisitStatsRow>(`
-            SELECT COUNT(*) as total,
-                   SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
-                   SUM(duration_minutes) as total_minutes
-            FROM visits
-            WHERE scheduled_at >= $1 AND scheduled_at <= $2
-            ${officerId ? 'AND officer_id = $3' : ''}
-        `, [effectiveStartDate, effectiveEndDate, officerId].filter(Boolean));
-
-        if (visitResult.rows[0]) {
-            reportData.visits = mapVisitStatsRow(visitResult.rows[0]);
-        }
-    }
-
-    if (type === 'impact_metrics' || type === 'activity_report') {
-        const convResult = await query<ConversationStatsRow>(`
-            SELECT COUNT(*) as total_conversations,
-                   SUM(CASE WHEN satisfaction_score IS NOT NULL THEN 1 ELSE 0 END) as rated,
-                   AVG(satisfaction_score) as avg_satisfaction
-            FROM conversations
-            WHERE created_at >= $1 AND created_at <= $2
-        `, [effectiveStartDate, effectiveEndDate]);
-
-        if (convResult.rows[0]) {
-            reportData.conversations = mapConversationStatsRow(convResult.rows[0]);
-        }
-    }
-
-    const reportTitle = title || `${type.replace('_', ' ')} - ${new Date(effectiveStartDate).toLocaleDateString()} to ${new Date(effectiveEndDate).toLocaleDateString()}`;
-
-    // Combine all metadata into the content JSONB column as per schema
-    const fullReportContent: ReportContent = {
-        ...reportData,
-        metadata: {
-            region,
-            startDate: effectiveStartDate,
-            endDate: effectiveEndDate,
-            officerId
-        }
-    };
-
-    const reportAuthorId = officerId || req.user!.userId;
-    const authorTenant = await query<{ tenant_id: string | null }>(
-        'SELECT tenant_id FROM users WHERE id = $1 LIMIT 1',
-        [reportAuthorId]
-    );
-    const result = await query<ReportListRow>(`
-        INSERT INTO reports (type, title, generated_by, content, status, tenant_id, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, 'completed', $5, NOW(), NOW())
-        RETURNING *
-    `, [type, reportTitle, reportAuthorId, JSON.stringify(fullReportContent), authorTenant.rows[0]?.tenant_id ?? null]);
-
-    await usageService.incrementUsage(req.user!.userId, 'report');
-
-    const created = result.rows[0] ? mapReportListRow(result.rows[0]) : null;
-    // Flatten the response: fullReportContent fields (visits, conversations,
-    // metadata, plus disease/soil diagnostics) live at `data.*` alongside
-    // the DTO metadata, rather than nested under `data.data.*`.
-    // DTO fields are spread LAST so they win on any future key collision
-    // with ReportContent (e.g. if a future schema adds a `metadata.id`).
-    return res.status(201).json({
-        success: true,
-        data: {
-            ...fullReportContent,
-            id: created?.id,
-            type: created?.type,
-            title: created?.title,
-            generatedAt: created?.generatedAt,
-            status: created?.status,
-        },
-    });
-}
-
-// Generate report
-router.post('/generate', checkUsageLimit('report'), async (req: AuthRequest, res: Response) => {
-    try {
-        const { type, startDate, endDate, officerId, region, title } = req.body;
-        const pool = getPool();
-
-        if (!pool) {
-            return res.status(503).json({ success: false, error: 'Database connection unavailable' });
-        }
-
-        // Use default date range if not provided (last 30 days)
-        const effectiveStartDate = startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-        const effectiveEndDate = endDate || new Date().toISOString();
-
-        await generateReportData(type, effectiveStartDate, effectiveEndDate, officerId, region, title, req, res);
-    } catch (error) {
-        logger.error('Generate report error:', error);
-        safeError(res, 500, 'Failed to generate report');
-    }
-});
-
-// Get report by ID
-router.get('/:id', async (req: Request, res: Response) => {
-    try {
-        const { id } = req.params;
-        const pool = getPool();
-
-        let report: ReportListRow | null = null;
-        if (pool) {
-            const scope = await getReportScope(req, 2);
-            if (!scope) return res.status(403).json({ success: false, error: 'Tenant membership required' });
-            const result = await query<ReportListRow>(`SELECT * FROM reports WHERE id = $1${scope.clause}`, [id, ...scope.params]);
-            report = result.rows[0] ?? null;
-        }
-
-        if (!report) {
-            return res.status(404).json({ success: false, error: 'Report not found' });
-        }
-
-        const dto = mapReportListRow(report);
-        res.json({
-            success: true,
-            data: {
-                id: dto.id,
-                type: dto.type,
-                title: dto.title,
-                generatedAt: dto.generatedAt,
-                status: dto.status,
-                data: dto.content,
-            },
-        });
-    } catch (error) {
-        logger.error('Get report error:', error);
-        safeError(res, 500, 'Failed to get report');
-    }
-});
 
 // Download report as CSV
 router.get('/:id/download', async (req: Request, res: Response) => {
@@ -849,8 +642,5 @@ router.get('/:id/download/excel', async (req: Request, res: Response) => {
         safeError(res, 500, 'Failed to download Excel');
     }
 });
-
-import { createShareRoute } from './shareRouteFactory';
-router.use(createShareRoute('report'));
 
 export default router;

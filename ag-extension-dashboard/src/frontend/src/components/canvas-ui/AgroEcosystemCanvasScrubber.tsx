@@ -588,8 +588,11 @@ export function AgroEcosystemCanvasScrubber({
     }
   }, [externalProgress]);
 
-  const activeProgress = internalProgress;
-  const currentStage = Math.min(3, Math.floor(activeProgress * 4));
+  const activeProgress = Number.isFinite(internalProgress) ? internalProgress : 0;
+  const currentStage = Math.min(
+    AGRO_STAGES.length - 1,
+    Math.max(0, Math.floor(Math.max(0, Math.min(1, activeProgress)) * AGRO_STAGES.length))
+  );
 
   const updateProgress = useCallback(
     (nextProgress: number) => {
@@ -620,8 +623,9 @@ export function AgroEcosystemCanvasScrubber({
       if (!isDraggingRef.current) {
         setInternalProgress((prev) => {
           const next = (prev + delta * 0.04) % 1;
-          onProgressChange?.(next);
-          return next;
+          const wrapped = Number.isFinite(next) ? ((next % 1) + 1) % 1 : 0;
+          onProgressChange?.(wrapped);
+          return wrapped;
         });
       }
       frameId = requestAnimationFrame(loop);

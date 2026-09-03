@@ -8,6 +8,7 @@ import { createClient } from 'redis';
 import { config } from './config';
 import { logger } from './utils/logger';
 import { initializeSocketHandlers } from './services/socketService';
+import { setRealtimeServer } from './services/realtimeHub';
 import { webrtcService } from './services/webrtcService';
 import { initializeDatabase } from './services/databaseService';
 import { initializeCache } from './services/cacheService';
@@ -105,6 +106,7 @@ async function bootstrap() {
 
     // Initialize Socket.IO handlers
     await initializeStep('WebRTC service', () => {
+        setRealtimeServer(io);
         initializeSocketHandlers(io);
         webrtcService.initialize(io);
     });

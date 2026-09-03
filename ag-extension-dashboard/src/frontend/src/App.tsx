@@ -47,7 +47,8 @@ const TeleCallJoinPage = lazy(() =>
   import('./pages/TeleCallJoinPage').then(m => ({ default: m.TeleCallJoinPage }))
 );
 const KnowledgeBase = lazy(() =>
-  import('./components/KnowledgeBase').then(m => ({ default: m.KnowledgeBase }))
+  // webpackChunkName guides Rollup's async-chunk naming (was generic "index")
+  import(/* webpackChunkName: "knowledge-base" */ './components/KnowledgeBase').then(m => ({ default: m.KnowledgeBase }))
 );
 
 const TAB_TO_PATH: Record<string, string> = {

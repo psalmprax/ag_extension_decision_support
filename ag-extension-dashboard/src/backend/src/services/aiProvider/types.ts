@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { extractVideoFrames } from './videoFrameService';
-import { logger } from '../../utils/logger';
 
 // ── Provider type identifier ──────────────────────────────────────────────
 
@@ -195,117 +194,81 @@ export abstract class BaseAIProvider implements AICapability {
     }
 
     /**
-     * Default no-op implementation for text generation.
-     * Providers that support text generation should override this method.
+     * Base default: throw so the provider fallback chain (`getWithFallback`)
+     * can try the next provider. Returning an empty result here would look
+     * like success and silently corrupt downstream answers.
+     * Providers that support text generation must override this method.
      */
     async generateText(_messages: any[], _options?: TextGenerationOptions): Promise<TextGenerationResult> {
-        logger.warn(`${this.provider}: generateText not implemented — returning empty result`);
-        return {
-            text: '',
-            model: _options?.model || 'unknown',
-            usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
-            finishReason: 'not_implemented',
-        };
+        throw new Error(`${this.provider} does not support text generation. Use a provider that lists it in capabilities.`);
     }
 
     /**
-     * Default no-op implementation for streaming text.
-     * Providers that support streaming should override this method.
+     * Base default: throw so callers fail loudly instead of streaming nothing.
+     * Providers that support streaming must override this method.
      */
     // eslint-disable-next-line require-yield
     async *streamText(_prompt: string, _options?: TextGenerationOptions): AsyncGenerator<string> {
-        logger.warn(`${this.provider}: streamText not implemented`);
-        // Empty generator - yields nothing
-        return;
+        throw new Error(`${this.provider} does not support streaming. Use a provider that lists it in capabilities.`);
         // eslint-disable-next-line @typescript-eslint/no-unreachable
         yield '';
     }
 
     /**
-     * Default no-op implementation for embeddings.
-     * Providers that support embeddings should override this method.
+     * Base default: throw — an empty/zero vector would poison similarity
+     * search. Providers that support embeddings must override this method.
      */
     async createEmbedding(_text: string, _options?: EmbeddingOptions): Promise<EmbeddingResult> {
-        logger.warn(`${this.provider}: createEmbedding not implemented — returning zero vector`);
-        return {
-            embedding: [],
-            model: _options?.model || 'unknown',
-            usage: { tokens: 0 },
-        };
+        throw new Error(`${this.provider} does not support embeddings. Use OpenAI, Ollama, or Google Vertex instead.`);
     }
 
     /**
-     * Default no-op implementation for batch embeddings.
-     * Providers that support batch embeddings should override this method.
+     * Base default: throw (see createEmbedding).
+     * Providers that support embeddings must override this method.
      */
     async createBatchEmbeddings(_texts: string[], _options?: EmbeddingOptions): Promise<EmbeddingResult[]> {
-        logger.warn(`${this.provider}: createBatchEmbeddings not implemented — returning empty results`);
-        return _texts.map(() => ({
-            embedding: [],
-            model: _options?.model || 'unknown',
-            usage: { tokens: 0 },
-        }));
+        throw new Error(`${this.provider} does not support embeddings. Use OpenAI, Ollama, or Google Vertex instead.`);
     }
 
     /**
-     * Default no-op implementation for speech-to-text.
-     * Providers that support speech recognition should override this method.
+     * Base default: throw — an empty transcription would corrupt agronomic
+     * advice. Providers that support speech recognition must override this.
      */
     async speechToText(_audio: Buffer, _options?: SpeechToTextOptions): Promise<SpeechToTextResult> {
-        logger.warn(`${this.provider}: speechToText not implemented — returning empty transcription`);
-        return {
-            text: '',
-            confidence: 0,
-        };
+        throw new Error(`${this.provider} does not support speech-to-text. Use a provider that lists it in capabilities.`);
     }
 
     /**
-     * Default no-op implementation for text-to-speech.
-     * Providers that support speech synthesis should override this method.
+     * Base default: throw — empty audio would present as a successful
+     * synthesis. Providers that support speech synthesis must override this.
      */
     async textToSpeech(_text: string, _options?: TextToSpeechOptions): Promise<TextToSpeechResult> {
-        logger.warn(`${this.provider}: textToSpeech not implemented — returning empty audio`);
-        return {
-            audio: Buffer.alloc(0),
-            format: 'wav',
-        };
+        throw new Error(`${this.provider} does not support text-to-speech. Use a provider that lists it in capabilities.`);
     }
 
     /**
-     * Default no-op implementation for reasoning analysis.
-     * Providers that support reasoning should override this method.
+     * Base default: throw instead of returning a canned "no answer".
+     * Providers that support reasoning must override this method.
      */
     async analyzeWithReasoning(_context: string, _query: string, _options?: ReasoningOptions): Promise<ReasoningResult> {
-        logger.warn(`${this.provider}: analyzeWithReasoning not implemented — returning empty reasoning`);
-        return {
-            reasoning: 'Reasoning not implemented for this provider',
-            answer: 'No answer available',
-            confidence: 0,
-        };
+        throw new Error(`${this.provider} does not support reasoning analysis. Use a provider that lists it in capabilities.`);
     }
 
     /**
-     * Default no-op implementation for classification.
-     * Providers that support classification should override this method.
+     * Base default: throw — an empty label set would look like a successful
+     * classification. Providers that support classification must override this.
      */
     async classify(_input: string, _options: ClassificationOptions): Promise<ClassificationResult> {
-        logger.warn(`${this.provider}: classify not implemented — returning empty classification`);
-        return {
-            labels: [],
-        };
+        throw new Error(`${this.provider} does not support classification. Use a provider that lists it in capabilities.`);
     }
 
     /**
-     * Default no-op implementation for image analysis.
-     * Providers that support vision should override this method.
+     * Base default: throw — a canned "not implemented" string would flow into
+     * diagnosis parsing as if it were a model answer. Providers that support
+     * vision must override this method.
      */
     async analyzeImage(_imageData: string | Buffer, _prompt?: string, _options?: ImageAnalysisOptions): Promise<ImageAnalysisResult> {
-        logger.warn(`${this.provider}: analyzeImage not implemented — returning empty analysis`);
-        return {
-            analysis: 'Image analysis not implemented for this provider',
-            model: _options?.model || 'unknown',
-            usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
-        };
+        throw new Error(`${this.provider} does not support image analysis. Use a provider that lists vision in capabilities.`);
     }
 
     async analyzeVideo(videoData: Buffer, prompt?: string, options?: VideoAnalysisOptions): Promise<VideoAnalysisResult> {

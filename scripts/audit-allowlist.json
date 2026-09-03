@@ -1,11 +1,3 @@
 {
-  "entries": [
-    {
-      "package": "image-size",
-      "advisories": ["GHSA-5p2g-fcmc-qvqq", "GHSA-w3rx-r6r6-pgpr"],
-      "scope": ["frontend"],
-      "reason": "No patched version exists: both advisories cover every published image-size release (<=2.0.2), so no override pin can clear them. The vulnerable copy is pulled by texture-compressor (deck.gl -> @loaders.gl/textures) and is a Node-side CLI image parser used only at texture-conversion time by loaders.gl tooling; it is not reachable from the browser bundle at runtime. Re-check when @loaders.gl/textures ships a release dropping texture-compressor, or when image-size publishes >2.0.2, and remove this entry.",
-      "expires": "2026-12-02"
-    }
-  ]
+  "entries": []
 }

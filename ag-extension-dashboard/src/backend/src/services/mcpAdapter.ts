@@ -166,7 +166,7 @@ class MCPAdapter {
 
 const mcpAdapter = MCPAdapter.getInstance();
 
-export { mcpAdapter, MCPAdapter };
+export { mcpAdapter };
 
 export function createMCPRouter(): Router {
   const router = Router();

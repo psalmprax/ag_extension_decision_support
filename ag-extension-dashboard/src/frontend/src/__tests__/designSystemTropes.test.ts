@@ -26,7 +26,22 @@ const FORBIDDEN_TOKENS: { token: string; allow: string[]; reason: string }[] = [
   {
     token: 'bg-clip-text',
     // The marketing landing page is a one-shot accent, not part of the dashboard shell.
-    allow: ['LandingPage.tsx'],
+    // Sections live under pages/landing/sections/ after the LandingPage decompose (pure move).
+    allow: [
+      'LandingPage.tsx',
+      'AgentOS.tsx',
+      'CTA.tsx',
+      'Demo.tsx',
+      'FAQ.tsx',
+      'Features.tsx',
+      'Footer.tsx',
+      'Hero.tsx',
+      'HowItWorks.tsx',
+      'Mission.tsx',
+      'Navbar.tsx',
+      'Problem.tsx',
+      'ROI.tsx',
+    ],
     reason: 'gradient text fill (GRP-11 "No Gradient Keywords")',
   },
   {

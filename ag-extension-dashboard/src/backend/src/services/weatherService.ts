@@ -250,6 +250,11 @@ export class WeatherService {
     if (!apiKey) {
       // Offline / no-key mock estimate for test and offline environments.
       // Explicitly marked so claim-audit callers never mistake it for real data.
+      // In production this is a hard error: serving estimates as claim evidence
+      // would silently corrupt insurance auditing.
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error(`Historical weather unavailable for ${location} ${date}: WEATHER_API_KEY not configured`);
+      }
       logger.warn(`Historical weather mock returned for ${location} ${date}: WEATHER_API_KEY not configured`);
       return {
         date,

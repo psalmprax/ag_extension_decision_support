@@ -49,8 +49,6 @@ function getNotificationWorker(): Worker<NotificationJobData> | null {
     return _notificationWorker;
 }
 
-export { getNotificationWorker };
-
 export function startNotificationWorker(): void {
     try {
         getNotificationWorker();

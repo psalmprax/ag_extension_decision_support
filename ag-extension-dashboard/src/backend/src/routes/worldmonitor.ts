@@ -21,7 +21,8 @@ const layersQuery = z.object({
 
 /**
  * GET /api/worldmonitor/layers?region=&crop=&county=&limit=
- * Officer-only: 4 live GIS layers (soil, NDVI, pest, satellite orbit stub)
+ * Officer-only: 4 GIS layers (soil, NDVI, pest live; satellite orbit is a
+ * deterministic preview — see `live: false` on the orbit payload).
  * Each layer is filtered by the same region/crop/county so the globe stays coherent.
  */
 router.get('/layers', validate({ query: layersQuery }), async (req: AuthRequest, res: Response) => {
@@ -42,9 +43,13 @@ router.get('/layers', validate({ query: layersQuery }), async (req: AuthRequest,
     const ndviPoints = await fetchNdviPoints(whereSql, params, nextIdx, limit);
     const pestSwarm = await fetchPestSwarm();
 
-    // 5. Satellite orbit stub — static ISS/Terra-Aqua two-line elements are live via isDemo=false, but orbit is deterministic; return stub with timestamp
+    // 5. Satellite orbit — DETERMINISTIC PREVIEW, not live telemetry.
+    // Static ISS/Terra-Aqua two-line elements propagated with Kepler math.
+    // `live: false` lets clients badge this layer as preview until the orbit
+    // layer is promoted beyond officer preview (live TLE fetch via celestrak.org/NORAD).
     const satelliteOrbit = {
-      source: 'orbit_stub',
+      source: 'deterministic_preview',
+      live: false,
       note: 'Deterministic Kepler propagation — replace with live TLE fetch (celestrak.org/NORAD) when orbit layer is promoted beyond officer preview.',
       generatedAt: new Date().toISOString(),
       tracks: [] as unknown[],

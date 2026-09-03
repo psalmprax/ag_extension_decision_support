@@ -13,24 +13,8 @@ import { mcpAdapter } from '@/services/mcpAdapter';
 const STATS_CACHE_KEY = 'knowledge:search:stats';
 const STATS_CACHE_TTL = 300; // 5 minutes
 
-export type KnowledgeEvidenceStatus = 'verified_sources' | 'context_only' | 'no_verified_source';
-
-export function getKnowledgeEvidenceStatus(citationCount: number, contextCount: number, maxScore?: number): KnowledgeEvidenceStatus {
-    const hasStrongCitations = citationCount >= 2 && (maxScore === undefined || maxScore >= 0.75);
-    if (hasStrongCitations) return 'verified_sources';
-    if (citationCount > 0 && (maxScore === undefined || maxScore >= 0.5)) return 'verified_sources';
-    if (contextCount > 0) return 'context_only';
-    return 'no_verified_source';
-}
-
-export interface KnowledgeArticle {
-    id: string;
-    title: string;
-    content: string;
-    category: string;
-    crop: string;
-    tags: string[];
-}
+export { getKnowledgeEvidenceStatus } from './knowledge/evidence';
+export type { KnowledgeEvidenceStatus, KnowledgeArticle } from './knowledge/evidence';
 
 export class KnowledgeService {
     /**
