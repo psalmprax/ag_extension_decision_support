@@ -122,6 +122,7 @@
     "js-yaml": "^4.3.1",
     "minimatch": "^9.0.7",
     "protobufjs": "^8.6.6",
+    "qs": "^6.16.0",
     "socket.io-parser": "^4.2.7",
     "uuid": "^11.1.1",
     "multer": "^2.2.0",

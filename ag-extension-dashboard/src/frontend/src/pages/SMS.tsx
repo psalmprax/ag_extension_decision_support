@@ -315,12 +315,3 @@ export function SMSPage() {
 }
 
 export default SMSPage;
-// Backward-compat re-exports (pure move: subcomponents now live in ./sms/*).
-export { ContactListItem } from './sms/ContactListItem';
-export { SMSComposerComposeTab } from './sms/ComposeTab';
-export { SMSComposerHistoryTab } from './sms/HistoryTab';
-export { SMSComposerPanel } from './sms/ComposerPanel';
-export { SMSContactsPanel } from './sms/ContactsPanel';
-export { SMSRightPanel } from './sms/RightPanel';
-export { getQuotaPercent, QuotaSummary, MessageStats, TemplateList } from './sms/widgets';
-export type { Contact, SMSMessage } from './sms/types';

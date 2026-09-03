@@ -2,11 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Loader2, BarChart3 } from 'lucide-react';
 import type { SMSMessage } from './types';
-
-export function getQuotaPercent(current: number, limit: number): number {
-  if (limit <= 0) return 0;
-  return Math.min((current / limit) * 100, 100);
-}
+import { getQuotaPercent } from './quota';
 
 export function QuotaSummary({ quota, isLoadingQuota, radiusClass }: { quota: { current: number; limit: number }; isLoadingQuota: boolean; radiusClass: string }) {
   const usedPercent = getQuotaPercent(quota.current, quota.limit);

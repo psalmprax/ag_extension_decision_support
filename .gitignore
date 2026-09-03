@@ -18,6 +18,12 @@ coverage/
 .agent/
 _agents/
 _agent/
+# Refact buddy runtime state (append-only ops logs, queues, chat transcripts)
+.refact/buddy/state.json
+.refact/buddy/memory_ops.jsonl
+.refact/buddy/runtime_queue.jsonl
+.refact/buddy/briefings/
+.refact/buddy/chats/
 brain/
 .kilo/
 tmp/
