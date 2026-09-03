@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Layers, Globe, Bug, Satellite, Droplets, AlertTriangle } from 'lucide-react';
 import { useDemoMode } from '@/demo';
 import { useAppStore } from '@/store/useAppStore';
@@ -7,10 +7,11 @@ import apiClient from '@/api/client';
 type Filters = { region?: string; crop?: string; county?: string };
 
 /**
- * Officer-only WorldMonitor — Deck.gl GlobeView with 4 live GIS layers.
+ * Officer-only WorldMonitor — live GIS layer status with 4 live data feeds.
  * Farmer role sees a gated placeholder (per navItems). Layers are filtered by
- * region/crop/county so the globe stays coherent with the officer's cohort.
- * Heavy globe is officer-desktop only (farmer PWA stays Leaflet).
+ * region/crop/county so the feeds stay coherent with the officer's cohort.
+ * Heavy globe canvas is intentionally deferred (bundle budget); this page
+ * surfaces the live layer data without shipping the deck.gl payload.
  */
 export const WorldMonitor: React.FC = () => {
   const { isDemo } = useDemoMode();
@@ -26,16 +27,7 @@ export const WorldMonitor: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Deck.gl is lazy-loaded so farmer bundle is not bloated
-  const [DeckGL, setDeckGL] = useState<React.ComponentType<Record<string, unknown>> | null>(null);
-  const [viewState, setViewState] = useState({ longitude: 36.8, latitude: -1.3, zoom: 2.2, pitch: 0, bearing: 0 });
-
-  useEffect(() => {
-    if (!isOfficer) return;
-    let cancelled = false;
-    import('deck.gl').then(m => { if (!cancelled) setDeckGL(() => m.default as unknown as React.ComponentType<Record<string, unknown>>); });
-    return () => { cancelled = true; };
-  }, [isOfficer]);
+  const viewState = { longitude: 36.8, latitude: -1.3, zoom: 2.2 };
 
   const fetchLayers = async (f: Filters = filters) => {
     setLoading(true);
@@ -52,15 +44,11 @@ export const WorldMonitor: React.FC = () => {
     finally { setLoading(false); }
   };
 
+  // Initial fetch only — subsequent loads are user-triggered via the Apply button,
+  // so fetchLayers is intentionally not a dependency (it closes over filter state).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (isOfficer) void fetchLayers({}); }, [isOfficer]);
 
-  const layers = useMemo(() => {
-    if (!data || !DeckGL) return { farmers: [], ndviPoints: [], pestSwarm: { clusters: [] } } as unknown as NonNullable<typeof data>;
-    return data;
-  }, [data, DeckGL]);
-
-  // Keep DeckGL import side-effect free; layers are rendered via ScatterplotLayer/PathLayer when DeckGL is present
-  // For the initial ship we render a lightweight fallback list + Deck canvas when available
   if (!isOfficer) {
     return (
       <div className="max-w-3xl mx-auto p-8 text-center space-y-3">
@@ -77,7 +65,7 @@ export const WorldMonitor: React.FC = () => {
         <div className="flex items-center gap-2">
           <Globe className="w-5 h-5 text-cyan-400" />
           <h1 className="text-base font-bold text-white">WorldMonitor — Live Spatial GIS</h1>
-          <span className="px-2 py-0.5 rounded text-xxs font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">DECK.GL GLOBE</span>
+          <span className="px-2 py-0.5 rounded text-xxs font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">LIVE SPATIAL GIS</span>
           {isDemo && <span className="px-2 py-0.5 rounded text-xxs font-mono bg-amber-500/15 text-amber-300 border border-amber-500/20">Demo filters</span>}
         </div>
         <div className="flex items-center gap-2">
@@ -110,27 +98,17 @@ export const WorldMonitor: React.FC = () => {
       {error && <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</div>}
 
       <div className="rounded-xl overflow-hidden border border-white/10 bg-slate-950 h-[520px] relative">
-        {!DeckGL ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-            <Globe className="w-10 h-10 text-white/20 mb-2" />
-            <p className="text-sm font-bold text-white">Deck.gl Globe</p>
-            <p className="text-xs text-white/50 mt-1 max-w-md">4 live layers (farmers, NDVI 30d, SoilGrids 250m centroid, pest swarm) filtered by region/crop/county. Globe is officer-desktop only to keep the farmer PWA lightweight.</p>
-            <div className="mt-4 grid grid-cols-2 gap-2 text-left text-xs font-mono w-full max-w-2xl">
-              <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-emerald-400">Farmers:</span> {data?.farmers?.length ?? 0}</div>
-              <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-amber-400">Soil centroid:</span> {data?.soilHorizon ? `${Number(data.soilHorizon.centroid.lat).toFixed(2)}, ${Number(data.soilHorizon.centroid.lon).toFixed(2)}` : '—'}</div>
-              <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-rose-400">Swarm clusters:</span> {data?.pestSwarm?.clusters?.map(c => c.clusterId.slice(0, 8)).join(', ') || '—'}</div>
-              <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-cyan-400">View:</span> {viewState.longitude.toFixed(1)}, {viewState.latitude.toFixed(1)} z{viewState.zoom}</div>
-            </div>
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+          <Globe className="w-10 h-10 text-white/20 mb-2" />
+          <p className="text-sm font-bold text-white">Spatial Layer Status</p>
+          <p className="text-xs text-white/50 mt-1 max-w-md">4 live layers (farmers, NDVI 30d, SoilGrids 250m centroid, pest swarm) filtered by region/crop/county. Globe canvas is officer-desktop only to keep the farmer PWA lightweight.</p>
+          <div className="mt-4 grid grid-cols-2 gap-2 text-left text-xs font-mono w-full max-w-2xl">
+            <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-emerald-400">Farmers:</span> {data?.farmers?.length ?? 0}</div>
+            <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-amber-400">Soil centroid:</span> {data?.soilHorizon ? `${Number(data.soilHorizon.centroid.lat).toFixed(2)}, ${Number(data.soilHorizon.centroid.lon).toFixed(2)}` : '—'}</div>
+            <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-rose-400">Swarm clusters:</span> {data?.pestSwarm?.clusters?.map(c => c.clusterId.slice(0, 8)).join(', ') || '—'}</div>
+            <div className="p-2 rounded bg-black/40 border border-white/5"><span className="text-cyan-400">View:</span> {viewState.longitude.toFixed(1)}, {viewState.latitude.toFixed(1)} z{viewState.zoom}</div>
           </div>
-        ) : (
-          // DeckGL GlobeView — lazy, officer-only, not shipped to farmer bundle
-          <div className="absolute inset-0">
-            {/* DeckGL renders here when available; fallback above covers initial load */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-xs text-white/40">Deck.gl globe ready — {layers.farmers?.length ?? 0} farmer points, {layers.ndviPoints?.length ?? 0} NDVI, {layers.pestSwarm?.clusters?.length ?? 0} swarm clusters</div>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
 
       <p className="text-[10px] text-white/40 text-center">Live GIS: farmers + NDVI (diagnosis_events 30d) + SoilGrids horizon + pest swarm (14d). Satellite orbit is deterministic stub — replace with Celestrak TLE when promoted.</p>

@@ -47,6 +47,11 @@ COPY ag-extension-dashboard/src/frontend/nginx.conf /etc/nginx/conf.d/default.co
 # Copy built assets from build stage
 COPY --from=build /app/dist /usr/share/nginx/html
 
+# Copy ML models to a separate path (served by nginx location /models/) so the
+# multi-MB ONNX binary is fetched on demand by the classifier, not shipped in
+# the SPA payload or precached by the service worker.
+COPY ag-extension-dashboard/src/frontend/models/ /usr/share/nginx/ml/
+
 EXPOSE 80
 
 ENTRYPOINT ["/sbin/tini", "--"]

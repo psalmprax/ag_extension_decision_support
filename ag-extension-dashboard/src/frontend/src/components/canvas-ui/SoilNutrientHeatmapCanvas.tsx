@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { Layers, Droplets, Activity, Gauge, Flame } from 'lucide-react';
 import { useDemoMode } from '@/demo';
 
@@ -31,6 +31,105 @@ interface TelemetrySamplePoint {
   x: number; // Normalized 0..1
   y: number; // Normalized 0..1
   val: number;
+}
+
+interface HeatmapPaintSpec {
+  ctx: CanvasRenderingContext2D;
+  width: number;
+  height: number;
+  config: { min: number; max: number; colorStop: (t: number) => string };
+  interpolate: (xNorm: number, yNorm: number) => number;
+  samplePoints: TelemetrySamplePoint[];
+  hoverPos: { x: number; y: number } | null;
+}
+
+/** Build the probe payload for a canvas position from the interpolated value. */
+function buildProbeResult(
+  x: number,
+  y: number,
+  value: number,
+  config: { unit: string; label: string },
+  advisory: { status: 'optimal' | 'warning' | 'critical'; recommendation: string }
+): SoilProbeResult {
+  return {
+    x: Math.round(x),
+    y: Math.round(y),
+    value: Number(value.toFixed(2)),
+    unit: config.unit,
+    label: config.label,
+    status: advisory.status,
+    recommendation: advisory.recommendation,
+  };
+}
+
+/** Paint the interpolated nutrient raster, contour rings, sensor dots, and hover crosshair. */
+function drawSoilHeatmap({ ctx, width, height, config, interpolate, samplePoints, hoverPos }: HeatmapPaintSpec): void {
+  // Raster interpolation grid
+  const step = 8; // Pixel step for smooth rendering
+  const cols = Math.ceil(width / step);
+  const rows = Math.ceil(height / step);
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const px = c * step;
+      const py = r * step;
+      const val = interpolate(px / width, py / height);
+      const normVal = Math.max(0, Math.min(1, (val - config.min) / (config.max - config.min)));
+
+      ctx.fillStyle = config.colorStop(normVal);
+      ctx.fillRect(px, py, step, step);
+    }
+  }
+
+  // Overlay iso-contour lines
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+  ctx.lineWidth = 1;
+  for (let i = 1; i <= 4; i++) {
+    ctx.beginPath();
+    const radius = (width * 0.15) * i;
+    ctx.arc(width * 0.5, height * 0.5, radius, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Render sample telemetry sensors (real points when available)
+  for (const pt of samplePoints) {
+    const sx = pt.x * width;
+    const sy = pt.y * height;
+
+    // Outer ripple
+    ctx.beginPath();
+    ctx.arc(sx, sy, 7, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.fill();
+
+    // Core point
+    ctx.beginPath();
+    ctx.arc(sx, sy, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+  }
+
+  // Hover crosshair and probe marker
+  if (!hoverPos) return;
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3, 3]);
+
+  // Crosshair lines
+  ctx.beginPath();
+  ctx.moveTo(hoverPos.x, 0);
+  ctx.lineTo(hoverPos.x, height);
+  ctx.moveTo(0, hoverPos.y);
+  ctx.lineTo(width, hoverPos.y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Probe ring
+  ctx.beginPath();
+  ctx.arc(hoverPos.x, hoverPos.y, 8, 0, Math.PI * 2);
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 2;
+  ctx.stroke();
 }
 
 const LAYER_CONFIG: Record<
@@ -208,6 +307,32 @@ const LAYER_CONFIG: Record<
   },
 };
 
+const ProbeTooltip: React.FC<{ probe: SoilProbeResult }> = ({ probe }) => (
+  <div className="absolute top-3 left-3 bg-gray-900/90 border border-white/10 backdrop-blur-md p-3 rounded-xl shadow-xl text-xs text-white max-w-xs pointer-events-none animate-in fade-in duration-150">
+    <div className="flex items-center justify-between gap-2 mb-1.5">
+      <span className="font-semibold text-gray-200">{probe.label}</span>
+      <span
+        className={`px-1.5 py-0.5 rounded text-xxs font-bold uppercase ${
+          probe.status === 'optimal'
+            ? 'bg-emerald-500/20 text-emerald-400'
+            : probe.status === 'warning'
+              ? 'bg-amber-500/20 text-amber-400'
+              : 'bg-rose-500/20 text-rose-400'
+        }`}
+      >
+        {probe.status}
+      </span>
+    </div>
+    <div className="text-lg font-bold font-mono text-emerald-400">
+      {probe.value} <span className="text-xs text-gray-400 font-normal">{probe.unit}</span>
+    </div>
+    <p className="text-xxs text-gray-300 mt-1 leading-snug">{probe.recommendation}</p>
+    <div className="mt-2 text-xxs font-mono text-gray-500">
+      Field Grid: ({probe.x}px, {probe.y}px)
+    </div>
+  </div>
+);
+
 export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps> = ({
   initialLayer = 'ph',
   className = '',
@@ -223,7 +348,10 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
   const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(null);
 
   const config = LAYER_CONFIG[activeLayer];
-  const activeSamplePoints = realPointsByLayer?.[activeLayer] ?? (isDemo ? config.samplePoints : []);
+  const activeSamplePoints = useMemo(
+    () => realPointsByLayer?.[activeLayer] ?? (isDemo ? config.samplePoints : []),
+    [realPointsByLayer, activeLayer, isDemo, config.samplePoints]
+  );
   const isLiveLayer = Boolean(realPointsByLayer?.[activeLayer]);
   const hasNoData = !isLiveLayer && !isDemo && activeSamplePoints.length === 0;
 
@@ -290,77 +418,16 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
     ctx.scale(dpr, dpr);
     ctx.clearRect(0, 0, parentWidth, parentHeight);
 
-    // Raster interpolation grid
-    const step = 8; // Pixel step for smooth rendering
-    const cols = Math.ceil(parentWidth / step);
-    const rows = Math.ceil(parentHeight / step);
-
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        const px = c * step;
-        const py = r * step;
-        const xNorm = px / parentWidth;
-        const yNorm = py / parentHeight;
-
-        const val = interpolate(xNorm, yNorm);
-        const normVal = Math.max(0, Math.min(1, (val - config.min) / (config.max - config.min)));
-
-        ctx.fillStyle = config.colorStop(normVal);
-        ctx.fillRect(px, py, step, step);
-      }
-    }
-
-    // Overlay iso-contour lines
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
-    ctx.lineWidth = 1;
-    for (let i = 1; i <= 4; i++) {
-      ctx.beginPath();
-      const radius = (parentWidth * 0.15) * i;
-      ctx.arc(parentWidth * 0.5, parentHeight * 0.5, radius, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-
-    // Render sample telemetry sensors (real points when available)
-    for (const pt of activeSamplePoints) {
-      const sx = pt.x * parentWidth;
-      const sy = pt.y * parentHeight;
-
-      // Outer ripple
-      ctx.beginPath();
-      ctx.arc(sx, sy, 7, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-      ctx.fill();
-
-      // Core point
-      ctx.beginPath();
-      ctx.arc(sx, sy, 3.5, 0, Math.PI * 2);
-      ctx.fillStyle = '#ffffff';
-      ctx.fill();
-    }
-
-    // Hover crosshair and probe marker
-    if (hoverPos) {
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-      ctx.lineWidth = 1;
-      ctx.setLineDash([3, 3]);
-
-      // Crosshair lines
-      ctx.beginPath();
-      ctx.moveTo(hoverPos.x, 0);
-      ctx.lineTo(hoverPos.x, parentHeight);
-      ctx.moveTo(0, hoverPos.y);
-      ctx.lineTo(parentWidth, hoverPos.y);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      // Probe ring
-      ctx.beginPath();
-      ctx.arc(hoverPos.x, hoverPos.y, 8, 0, Math.PI * 2);
-      ctx.strokeStyle = '#10b981';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
-  }, [activeLayer, config, interpolate, hoverPos]);
+    drawSoilHeatmap({
+      ctx,
+      width: parentWidth,
+      height: parentHeight,
+      config,
+      interpolate,
+      samplePoints: activeSamplePoints,
+      hoverPos,
+    });
+  }, [activeLayer, config, interpolate, activeSamplePoints, hoverPos]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!interactive) return;
@@ -375,17 +442,7 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
     const yNorm = Math.max(0, Math.min(1, y / rect.height));
 
     const val = interpolate(xNorm, yNorm);
-    const advisory = getAdvisory(val);
-
-    const probeData: SoilProbeResult = {
-      x: Math.round(x),
-      y: Math.round(y),
-      value: Number(val.toFixed(2)),
-      unit: config.unit,
-      label: config.label,
-      status: advisory.status,
-      recommendation: advisory.recommendation,
-    };
+    const probeData = buildProbeResult(x, y, val, config, getAdvisory(val));
 
     setHoverPos({ x, y });
     setProbe(probeData);
@@ -455,31 +512,7 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
         )}
 
         {/* Live probe card tooltip overlay */}
-        {probe && (
-          <div className="absolute top-3 left-3 bg-gray-900/90 border border-white/10 backdrop-blur-md p-3 rounded-xl shadow-xl text-xs text-white max-w-xs pointer-events-none animate-in fade-in duration-150">
-            <div className="flex items-center justify-between gap-2 mb-1.5">
-              <span className="font-semibold text-gray-200">{probe.label}</span>
-              <span
-                className={`px-1.5 py-0.5 rounded text-xxs font-bold uppercase ${
-                  probe.status === 'optimal'
-                    ? 'bg-emerald-500/20 text-emerald-400'
-                    : probe.status === 'warning'
-                      ? 'bg-amber-500/20 text-amber-400'
-                      : 'bg-rose-500/20 text-rose-400'
-                }`}
-              >
-                {probe.status}
-              </span>
-            </div>
-            <div className="text-lg font-bold font-mono text-emerald-400">
-              {probe.value} <span className="text-xs text-gray-400 font-normal">{probe.unit}</span>
-            </div>
-            <p className="text-xxs text-gray-300 mt-1 leading-snug">{probe.recommendation}</p>
-            <div className="mt-2 text-xxs font-mono text-gray-500">
-              Field Grid: ({probe.x}px, {probe.y}px)
-            </div>
-          </div>
-        )}
+        {probe && <ProbeTooltip probe={probe} />}
 
         {/* Legend strip at bottom */}
         <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-white/10 flex items-center gap-2 text-xxs font-mono text-gray-300 pointer-events-none">

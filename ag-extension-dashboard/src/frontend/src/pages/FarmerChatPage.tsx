@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { io, Socket } from 'socket.io-client';
 import {
   Users,
@@ -32,6 +32,27 @@ interface FarmerChatPageProps {
   loadFarmers: () => void;
   setShowFarmerModal: (show: boolean) => void;
   onDeleteConversation?: (id: string) => void;
+}
+
+/** Map hazard evaluation to a 0–100 outbreak risk score. */
+function scoreOutbreakRisk(hazards: { threatLevel: string }[]): number {
+  const hasWatch = hazards.some(h => h.threatLevel === 'watch' || h.threatLevel === 'warning' || h.threatLevel === 'emergency');
+  const hasEmergency = hazards.some(h => h.threatLevel === 'emergency');
+  return hasEmergency ? 85 : hasWatch ? 55 : hazards.length ? 25 : 10;
+}
+
+/** Evaluate live outbreak risk for a farmer's plot from current telemetry. */
+async function fetchOutbreakRisk(telemetry: { temp: number | null; moisture: number | null }, fallbackTemp: number | undefined): Promise<number> {
+  const { default: apiClient } = await import('@/api/client');
+  const temp = telemetry.temp ?? fallbackTemp ?? 25;
+  const moisture = telemetry.moisture ?? 20;
+  const rh = 75 + (moisture > 25 ? 10 : 0);
+  const { data } = await apiClient.post('/pillars/hazard/evaluate', {
+    forecast: [{ date: new Date().toISOString().slice(0, 10), minTempC: Math.max(8, temp - 6), maxTempC: temp + 4, precipitationMm: moisture > 30 ? 18 : 4, relativeHumidityPct: rh, windSpeedKmh: 12 }],
+  });
+  const rawHazards = (data as { data?: unknown })?.data ?? data;
+  const hazards = Array.isArray(rawHazards) ? rawHazards as { threatLevel: string }[] : [];
+  return scoreOutbreakRisk(hazards);
 }
 
 export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
@@ -86,29 +107,25 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
     }).catch(() => setPlotTelemetry(prev => ({ ...prev, loading: false })));
   }, [activeFarmerConvId, activeConv]);
 
+  const { temp: plotTemp, moisture: plotMoisture } = plotTelemetry;
   useEffect(() => {
     if (!activeFarmerConvId || !activeConv) { setLiveOutbreakRisk(null); return; }
     const farmerId = (activeConv as unknown as { farmerId?: string }).farmerId;
     if (!farmerId || typeof navigator !== 'undefined' && !navigator.onLine) return;
-    import('@/api/client').then(async ({ default: apiClient }) => {
-      try {
-        const temp = plotTelemetry.temp ?? activeFarmer?.temperature ?? 25;
-        const moisture = plotTelemetry.moisture ?? 20;
-        const rh = 75 + (moisture > 25 ? 10 : 0);
-        const { data } = await apiClient.post('/pillars/hazard/evaluate', {
-          forecast: [{ date: new Date().toISOString().slice(0, 10), minTempC: Math.max(8, temp - 6), maxTempC: temp + 4, precipitationMm: moisture > 30 ? 18 : 4, relativeHumidityPct: rh, windSpeedKmh: 12 }],
-        });
-        const rawHazards = (data as { data?: unknown })?.data ?? data;
-        const arr = Array.isArray(rawHazards) ? rawHazards as { hazardType: string; threatLevel: string }[] : [];
-        const hasWatch = arr.some(h => h.threatLevel === 'watch' || h.threatLevel === 'warning' || h.threatLevel === 'emergency');
-        const hasEmergency = arr.some(h => h.threatLevel === 'emergency');
-        setLiveOutbreakRisk(hasEmergency ? 85 : hasWatch ? 55 : arr.length ? 25 : 10);
-      } catch { setLiveOutbreakRisk(null); }
-    }).catch(() => {});
-  }, [activeFarmerConvId, activeConv, plotTelemetry.temp, plotTelemetry.moisture, activeFarmer?.temperature]);
+    let cancelled = false;
+    fetchOutbreakRisk({ temp: plotTemp, moisture: plotMoisture }, activeFarmer?.temperature)
+      .then(risk => { if (!cancelled) setLiveOutbreakRisk(risk); })
+      .catch(() => { if (!cancelled) setLiveOutbreakRisk(null); });
+    return () => { cancelled = true; };
+  }, [activeFarmerConvId, activeConv, plotTemp, plotMoisture, activeFarmer?.temperature]);
 
-  // AI Copilot suggestions — fetched live when conversation has context, otherwise fallback to curated defaults
+  // AI Copilot suggestions — fetched live when conversation has context, otherwise fallback to
+  // curated defaults. Re-fires when the last officer/user message changes.
   const [liveSuggestions, setLiveSuggestions] = useState<string[] | null>(null);
+  const lastUserMessage = useMemo(
+    () => [...farmerChatMessages].reverse().find(m => m.role === 'user' || m.role === 'officer')?.content ?? null,
+    [farmerChatMessages]
+  );
   const copilotSuggestions = liveSuggestions || [
     '🌾 Inspect maize leaf whorls today at sunset for early instar caterpillars.',
     '🥔 Damp overcast forecast. Apply preventive copper spray before Thursday.',
@@ -116,19 +133,18 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   ];
   useEffect(() => {
     if (!activeFarmerConvId) { setLiveSuggestions(null); return; }
-    const lastUserMsg = [...farmerChatMessages].reverse().find(m => m.role === 'user' || m.role === 'officer')?.content;
-    if (!lastUserMsg) return;
+    if (!lastUserMessage) return;
     import('@/api/aiService').then(async mod => {
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const res = await (mod as any).getChatCompletion?.([{ role: 'user', content: `Given farmer said: "${lastUserMsg.slice(0,300)}", suggest 3 short advisory follow-ups (<=15 words each), one per line, no numbering.` }], { model: 'gpt-4o-mini', maxTokens: 120 });
+        const res = await (mod as any).getChatCompletion?.([{ role: 'user', content: `Given farmer said: "${lastUserMessage.slice(0,300)}", suggest 3 short advisory follow-ups (<=15 words each), one per line, no numbering.` }], { model: 'gpt-4o-mini', maxTokens: 120 });
         const text = (res as unknown as { text?: string })?.text || (res as unknown as string) || '';
         // eslint-disable-next-line no-useless-escape
         const lines = String(text).split('\n').map(s => s.replace(/^[\d\-*\.\s]+/, '').trim()).filter(Boolean).slice(0,3);
         if (lines.length >= 2) setLiveSuggestions(lines);
       } catch { /* fallback to static */ }
     }).catch(()=>{});
-  }, [activeFarmerConvId, farmerChatMessages.length]);
+  }, [activeFarmerConvId, lastUserMessage]);
 
   // Realtime: join the active conversation room and reload messages on new_message events.
   const socketRef = useRef<Socket | null>(null);

@@ -28,9 +28,6 @@
   "dependencies": {
     "@ag-extension/shared": "file:../../../ag-extension-shared",
     "@capacitor/core": "^7.6.8",
-    "@deck.gl/core": "^9.3.11",
-    "@deck.gl/layers": "^9.3.11",
-    "@deck.gl/react": "^9.3.11",
     "@headlessui/react": "^1.7.17",
     "@hookform/resolvers": "^5.2.2",
     "@tailwindcss/typography": "^0.5.19",
@@ -41,7 +38,6 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.0.0",
     "date-fns": "^3.0.6",
-    "deck.gl": "^9.3.11",
     "dompurify": "^3.4.13",
     "framer-motion": "^10.17.4",
     "leaflet": "^1.9.4",

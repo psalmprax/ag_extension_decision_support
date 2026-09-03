@@ -334,7 +334,7 @@ const AlphaAgentOps: React.FC = () => {
   const now = () => new Date().toLocaleTimeString('en-US', { hour12: false });
 
   // Fetch agents from backend API
-  const { data: agentsData, isLoading: agentsLoading, error: agentsError } = useQuery({
+  const { data: agentsData } = useQuery({
     queryKey: ['ai-agents'],
     queryFn: async () => {
       const { data } = await apiClient.get<{ success: boolean; data: AgentData[] }>('/ai/agents');

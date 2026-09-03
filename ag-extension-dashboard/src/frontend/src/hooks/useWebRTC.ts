@@ -27,6 +27,46 @@ interface UseWebRTCReturn {
   stopRecording: () => void;
 }
 
+type PeerConnections = Map<string, RTCPeerConnection>;
+
+interface RtcSample {
+  inboundBytes: number;
+  rtt: number | null;
+}
+
+/** Pull the inbound byte count and round-trip time from a getStats report. */
+function extractInboundSample(stats: RTCStatsReport): RtcSample {
+  let inboundBytes = 0;
+  let rtt: number | null = null;
+  (stats as unknown as Map<string, unknown>).forEach((value: unknown) => {
+    const rec = value as Record<string, unknown>;
+    if (rec.type === 'inbound-rtp' && typeof rec.bytesReceived === 'number') inboundBytes = rec.bytesReceived as number;
+    if (rec.type === 'candidate-pair' && rec.state === 'succeeded' && typeof rec.currentRoundTripTime === 'number') rtt = rec.currentRoundTripTime as number;
+  });
+  return { inboundBytes, rtt };
+}
+
+/** Adaptive bitrate: lower video senders to 300kbps on high RTT, restore to 800kbps on low RTT. */
+function applyBitrateTargets(connections: PeerConnections, rtt: number): void {
+  const target = rtt > 0.3 ? 300000 : rtt < 0.15 ? 800000 : null;
+  if (target === null) return;
+  for (const pc of connections.values()) {
+    pc.getSenders().forEach(sender => applySenderBitrate(sender, target));
+  }
+}
+
+function applySenderBitrate(sender: RTCRtpSender, target: number): void {
+  if (sender.track?.kind !== 'video') return;
+  try {
+    const params = sender.getParameters();
+    if (!params.encodings) params.encodings = [{}];
+    if (params.encodings[0].maxBitrate !== target) {
+      params.encodings[0].maxBitrate = target;
+      void sender.setParameters(params);
+    }
+  } catch { /* sender parameter negotiation unsupported on this browser */ }
+}
+
 export function useWebRTC(): UseWebRTCReturn {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
@@ -306,7 +346,7 @@ export function useWebRTC(): UseWebRTCReturn {
 
   const leaveCall = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      try { mediaRecorderRef.current.stop(); } catch { }
+      try { mediaRecorderRef.current.stop(); } catch { /* recorder already stopping */ }
     }
     if (localStream) {
       localStream.getTracks().forEach(track => track.stop());
@@ -402,31 +442,10 @@ export function useWebRTC(): UseWebRTCReturn {
     const id = setInterval(() => {
       for (const [peerId, pc] of peerConnectionsRef.current.entries()) {
         pc.getStats().then(stats => {
-          let inboundBytes = 0; let rtt: number | null = null;
-          (stats as unknown as Map<string, unknown>).forEach((value: unknown) => {
-            const rec = value as Record<string, unknown>;
-            if (rec.type === 'inbound-rtp' && typeof rec.bytesReceived === 'number') inboundBytes = rec.bytesReceived as number;
-            if (rec.type === 'candidate-pair' && rec.state === 'succeeded' && typeof rec.currentRoundTripTime === 'number') rtt = rec.currentRoundTripTime as number;
-          });
-          if (inboundBytes || rtt !== null) console.debug(`[webrtc stats] peer ${peerId.slice(0,8)} bytes=${inboundBytes} rtt=${rtt}`);
-          // Adaptive bitrate: lower to 300kbps on high RTT, restore to 800kbps on low RTT
-          if (rtt !== null) {
-            for (const pc of peerConnectionsRef.current.values()) {
-              for (const sender of pc.getSenders()) {
-                if (sender.track?.kind !== 'video') continue;
-                try {
-                  const params = sender.getParameters();
-                  if (!params.encodings) params.encodings = [{}];
-                  const target = rtt > 0.3 ? 300000 : rtt < 0.15 ? 800000 : params.encodings[0].maxBitrate;
-                  if (target && params.encodings[0].maxBitrate !== target) {
-                    params.encodings[0].maxBitrate = target;
-                    void sender.setParameters(params);
-                  }
-                } catch {}
-              }
-            }
-          }
-        }).catch(() => {});
+          const { inboundBytes, rtt } = extractInboundSample(stats);
+          if (inboundBytes || rtt !== null) console.debug(`[webrtc stats] peer ${peerId.slice(0, 8)} bytes=${inboundBytes} rtt=${rtt}`);
+          if (rtt !== null) applyBitrateTargets(peerConnectionsRef.current, rtt);
+        }).catch(() => { /* stats unavailable this tick */ });
       }
     }, 8000);
     return () => clearInterval(id);

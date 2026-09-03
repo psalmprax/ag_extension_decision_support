@@ -395,6 +395,26 @@ const matchesArticle = (art: DocumentArticle, category: string, query: string): 
   );
 };
 
+const QuotaChip: React.FC<{ quota: KnowledgeQuotaData; onUpgrade: () => void }> = ({ quota, onUpgrade }) => (
+  <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 text-xxs font-mono">
+    <Zap className="w-3 h-3 text-amber-400 shrink-0" />
+    <span className="text-white/70">DAILY QUOTA:</span>
+    {quota.isFree === false || quota.limit === -1 ? (
+      <span className="text-emerald-300 font-bold">Unlimited</span>
+    ) : (
+      <span className="text-white font-bold">{quota.remaining}/{quota.limit}</span>
+    )}
+    {quota.isFree !== false && quota.remaining <= 1 && quota.limit !== -1 && (
+      <button
+        onClick={onUpgrade}
+        className="ml-1 underline font-bold text-amber-300 hover:text-amber-200"
+      >
+        Upgrade
+      </button>
+    )}
+  </div>
+);
+
 export const KnowledgeBase: React.FC = () => {
   const { addNotification, setActiveTab } = useAppStore();
   const { isDemo } = useDemoMode();
@@ -544,25 +564,7 @@ export const KnowledgeBase: React.FC = () => {
 
           <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
             {/* Quota Telemetry Chip — free 3/3 daily, Pro/Admin Unlimited */}
-            {quota && (
-              <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 text-xxs font-mono">
-                <Zap className="w-3 h-3 text-amber-400 shrink-0" />
-                <span className="text-white/70">DAILY QUOTA:</span>
-                {quota.isFree === false || quota.limit === -1 ? (
-                  <span className="text-emerald-300 font-bold">Unlimited</span>
-                ) : (
-                  <span className="text-white font-bold">{quota.remaining}/{quota.limit}</span>
-                )}
-                {quota.isFree !== false && quota.remaining <= 1 && quota.limit !== -1 && (
-                  <button
-                    onClick={() => setActiveTab('billing')}
-                    className="ml-1 underline font-bold text-amber-300 hover:text-amber-200"
-                  >
-                    Upgrade
-                  </button>
-                )}
-              </div>
-            )}
+            {quota && <QuotaChip quota={quota} onUpgrade={() => setActiveTab('billing')} />}
 
             {/* 5-Segmented Mode Switcher */}
             <div className="flex items-center bg-white/[0.04] p-1 rounded-xl border border-white/10 shadow-inner overflow-x-auto">

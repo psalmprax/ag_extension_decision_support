@@ -9,6 +9,38 @@ import {
 } from '@/api/chatbotService';
 import { Conversation, ChatMessage, Farmer } from '../types/dashboard';
 
+interface QueuedChatItem {
+  conversationId: string | null;
+  message: string;
+  language: string;
+}
+
+/** Send one queued item; true when it drained (caller may drop it from the queue). */
+async function sendQueuedChatItem(item: QueuedChatItem): Promise<boolean> {
+  try {
+    await sendMessage({
+      conversationId: item.conversationId || undefined,
+      message: item.message,
+      mode: 'farmer',
+      language: item.language,
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Drain one conversation's offline chat queue out of localStorage. */
+async function drainChatOfflineQueue(key: string): Promise<void> {
+  const items = JSON.parse(localStorage.getItem(key) || '[]') as QueuedChatItem[];
+  for (const item of [...items]) {
+    if (!(await sendQueuedChatItem(item))) return;
+    items.shift();
+    localStorage.setItem(key, JSON.stringify(items));
+  }
+  if (items.length === 0) localStorage.removeItem(key);
+}
+
 export const useAppChat = (language: string) => {
   // AI Assistant Chat State
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -107,12 +139,6 @@ export const useAppChat = (language: string) => {
     if (e) e.preventDefault();
     if (!farmerChatInput.trim()) return;
 
-    const userMsg: ChatMessage = {
-      role: 'officer',
-      content: farmerChatInput,
-      timestamp: new Date().toISOString(),
-    };
-    setFarmerChatMessages(prev => [...prev, userMsg]);
     const currentInput = farmerChatInput;
     setFarmerChatInput('');
 
@@ -156,16 +182,7 @@ export const useAppChat = (language: string) => {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (!key?.startsWith('chatOfflineQueue:')) continue;
-        const items = JSON.parse(localStorage.getItem(key) || '[]') as { conversationId: string | null; message: string; language: string }[];
-        if (items.length === 0) continue;
-        for (const item of [...items]) {
-          try {
-            await sendMessage({ conversationId: item.conversationId || undefined, message: item.message, mode: 'farmer', language: item.language });
-            items.shift();
-            localStorage.setItem(key, JSON.stringify(items));
-          } catch { break; }
-        }
-        if (items.length === 0) localStorage.removeItem(key);
+        await drainChatOfflineQueue(key);
       }
       if (activeFarmerConvId) loadFarmerMessages(activeFarmerConvId);
     };

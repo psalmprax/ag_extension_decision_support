@@ -153,6 +153,46 @@ const LocalVideo = ({
   </div>
 );
 
+const CallControlButton: React.FC<{
+  onClick: () => void;
+  title: string;
+  active: boolean;
+  danger?: boolean;
+  pulsing?: boolean;
+  children: React.ReactNode;
+}> = ({ onClick, title, active, danger = false, pulsing = false, children }) => (
+  <button
+    onClick={onClick}
+    title={title}
+    className={`p-3 rounded-full ${
+      danger || pulsing
+        ? 'bg-error-600 hover:bg-error-700 text-white'
+        : active
+          ? 'bg-gray-700 hover:bg-gray-600 text-white'
+          : 'bg-error-600 hover:bg-error-700 text-white'
+    } ${pulsing ? 'animate-pulse' : ''}`}
+  >
+    {children}
+  </button>
+);
+
+const RecordingBar: React.FC<{ recordedUrl: string; roomId: string; t: (k: string) => string }> = ({
+  recordedUrl,
+  roomId,
+  t,
+}) => (
+  <div className="bg-gray-800 px-4 py-2 flex items-center justify-between border-t border-gray-700">
+    <span className="text-gray-400 text-xs">{t('video_recording_ready') || 'Recording ready'}</span>
+    <a
+      href={recordedUrl}
+      download={`consultation-${roomId}-${Date.now()}.webm`}
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold"
+    >
+      <Download className="w-3.5 h-3.5" /> {t('video_download_recording') || 'Download'}
+    </a>
+  </div>
+);
+
 export function VideoCall({ roomId, userId, userName, isHost = false, onEnd }: VideoCallProps) {
   const {
     localStream,
@@ -262,38 +302,35 @@ export function VideoCall({ roomId, userId, userName, isHost = false, onEnd }: V
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <button
+          <CallControlButton
             onClick={toggleAudio}
-            className={`p-3 rounded-full ${isAudioEnabled ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-error-600 hover:bg-error-700 text-white'}`}
             title={isAudioEnabled ? t('video_mute') || 'Mute' : t('video_unmute') || 'Unmute'}
+            active={isAudioEnabled}
           >
             {isAudioEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
-          </button>
-          <button
+          </CallControlButton>
+          <CallControlButton
             onClick={toggleVideo}
-            className={`p-3 rounded-full ${isVideoEnabled ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-error-600 hover:bg-error-700 text-white'}`}
             title={
               isVideoEnabled
                 ? t('video_camera_off') || 'Turn off camera'
                 : t('video_camera_on') || 'Turn on camera'
             }
+            active={isVideoEnabled}
           >
             {isVideoEnabled ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
-          </button>
-          <button
+          </CallControlButton>
+          <CallControlButton
             onClick={isRecording ? stopRecording : startRecording}
-            className={`p-3 rounded-full ${isRecording ? 'bg-error-600 animate-pulse text-white' : 'bg-gray-700 hover:bg-gray-600 text-white'}`}
             title={isRecording ? t('video_stop_recording') || 'Stop recording' : t('video_start_recording') || 'Start recording'}
+            active={!isRecording}
+            pulsing={isRecording}
           >
             {isRecording ? <Square className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
-          </button>
-          <button
-            onClick={handleEnd}
-            className="p-3 rounded-full bg-error-600 hover:bg-error-700 text-white"
-            title={t('video_end_call') || 'End call'}
-          >
+          </CallControlButton>
+          <CallControlButton onClick={handleEnd} title={t('video_end_call') || 'End call'} active={false} danger>
             <PhoneOff className="w-5 h-5" />
-          </button>
+          </CallControlButton>
           {!isHost && (
             <button
               onClick={handleLeave}
@@ -304,18 +341,7 @@ export function VideoCall({ roomId, userId, userName, isHost = false, onEnd }: V
           )}
         </div>
       </div>
-      {recordedUrl && (
-        <div className="bg-gray-800 px-4 py-2 flex items-center justify-between border-t border-gray-700">
-          <span className="text-gray-400 text-xs">{t('video_recording_ready') || 'Recording ready'}</span>
-          <a
-            href={recordedUrl}
-            download={`consultation-${roomId}-${Date.now()}.webm`}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold"
-          >
-            <Download className="w-3.5 h-3.5" /> {t('video_download_recording') || 'Download'}
-          </a>
-        </div>
-      )}
+      {recordedUrl && <RecordingBar recordedUrl={recordedUrl} roomId={roomId} t={t} />}
     </div>
   );
 }

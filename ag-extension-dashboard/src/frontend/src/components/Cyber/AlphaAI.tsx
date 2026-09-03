@@ -38,26 +38,38 @@ export type CanvasViewType =
   | 'rag_graph'
   | 'telemetry_radar';
 
-function selectCanvasForQuery(query: string, ragCategories?: string[]): { view: CanvasViewType; label: string } {
+interface CanvasSelection {
+  view: CanvasViewType;
+  label: string;
+}
+
+const CATEGORY_CANVAS_RULES: Array<{ terms: string[] } & CanvasSelection> = [
+  { terms: ['pest', 'disease', 'path'], view: 'disease_saliency', label: 'Disease Saliency Scanner' },
+  { terms: ['soil'], view: 'soil_heatmap', label: 'Soil Diagnostic Grid' },
+  { terms: ['clim', 'yield', 'water'], view: 'agro_scrubber', label: 'Agro-Ecosystem Scrubber' },
+  { terms: ['research', 'manual'], view: 'rag_graph', label: 'RAG Knowledge Graph' },
+];
+
+const KEYWORD_CANVAS_RULES: Array<{ terms: string[] } & CanvasSelection> = [
+  { terms: ['pest', 'rust', 'leaf', 'disease', 'spot'], view: 'disease_saliency', label: 'Disease Saliency Scanner' },
+  { terms: ['rain', 'weather', 'season', 'yield', 'water'], view: 'agro_scrubber', label: 'Agro-Ecosystem Scrubber' },
+  { terms: ['fao', 'research', 'manual', 'guide'], view: 'rag_graph', label: 'RAG Knowledge Graph' },
+];
+
+function matchCanvasRule(haystack: string, rules: typeof CATEGORY_CANVAS_RULES): CanvasSelection | null {
+  const rule = rules.find(r => r.terms.some(term => haystack.includes(term)));
+  return rule ? { view: rule.view, label: rule.label } : null;
+}
+
+function selectCanvasForQuery(query: string, ragCategories?: string[]): CanvasSelection {
   // Prefer semantic RAG categories when available; fall back to lightweight keyword heuristic
   const cats = (ragCategories || []).join(' ').toLowerCase();
   if (cats) {
-    if (cats.includes('pest') || cats.includes('disease') || cats.includes('path')) return { view: 'disease_saliency', label: 'Disease Saliency Scanner' };
-    if (cats.includes('soil')) return { view: 'soil_heatmap', label: 'Soil Diagnostic Grid' };
-    if (cats.includes('clim') || cats.includes('yield') || cats.includes('water')) return { view: 'agro_scrubber', label: 'Agro-Ecosystem Scrubber' };
-    if (cats.includes('research') || cats.includes('manual')) return { view: 'rag_graph', label: 'RAG Knowledge Graph' };
+    const byCategory = matchCanvasRule(cats, CATEGORY_CANVAS_RULES);
+    if (byCategory) return byCategory;
   }
-  const q = query.toLowerCase();
-  if (['pest', 'rust', 'leaf', 'disease', 'spot'].some(term => q.includes(term))) {
-    return { view: 'disease_saliency', label: 'Disease Saliency Scanner' };
-  }
-  if (['rain', 'weather', 'season', 'yield', 'water'].some(term => q.includes(term))) {
-    return { view: 'agro_scrubber', label: 'Agro-Ecosystem Scrubber' };
-  }
-  if (['fao', 'research', 'manual', 'guide'].some(term => q.includes(term))) {
-    return { view: 'rag_graph', label: 'RAG Knowledge Graph' };
-  }
-  return { view: 'soil_heatmap', label: 'Soil Diagnostic Grid' };
+  return matchCanvasRule(query.toLowerCase(), KEYWORD_CANVAS_RULES)
+    ?? { view: 'soil_heatmap', label: 'Soil Diagnostic Grid' };
 }
 
 interface ChatMessageItem {
@@ -67,7 +79,426 @@ interface ChatMessageItem {
   timestamp: string;
   canvasTrigger?: CanvasViewType;
   canvasLabel?: string;
-}export const AlphaAI: React.FC = () => {
+}
+
+const OFFLINE_QUEUE_KEY = 'alphaAiOfflineQueue';
+
+const nowStamp = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+function readOfflineQueue(): string[] {
+  return JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]') as string[];
+}
+
+function writeOfflineQueue(queue: string[]): void {
+  localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
+}
+
+function enqueueOfflineQuery(query: string): void {
+  writeOfflineQueue([...readOfflineQueue(), query]);
+}
+
+/** Pull the advisory text out of the chatbot payload, whatever shape it takes. */
+function extractResponseText(data: unknown): string | null {
+  const d = data as { messages?: { content?: string }[]; response?: string; text?: string } | string | null | undefined;
+  if (typeof d === 'string') return d;
+  return d?.messages?.[1]?.content || d?.response || d?.text || null;
+}
+
+/** Collect RAG categories from either citations or contextUsed metadata. */
+function extractRagCategories(data: unknown): string[] {
+  const d = data as { citations?: { category?: string }[]; contextUsed?: { metadata?: { category?: string } }[] } | null | undefined;
+  if (Array.isArray(d?.citations)) return (d.citations).map(c => c.category || '').filter(Boolean);
+  if (Array.isArray(d?.contextUsed)) return (d.contextUsed).map(c => c.metadata?.category || '').filter(Boolean);
+  return [];
+}
+
+type SetChatMessages = React.Dispatch<React.SetStateAction<ChatMessageItem[]>>;
+
+/** Stash a query in the offline queue and reflect the pending state in the chat. */
+function stashQueryOffline(query: string, setMessages: SetChatMessages): void {
+  enqueueOfflineQuery(query);
+  setMessages(prev => [...prev,
+    { id: `user-${Date.now()}`, sender: 'user', text: query, timestamp: nowStamp() } as ChatMessageItem,
+    { id: `off-${Date.now()}`, sender: 'assistant', text: '📡 Offline — your agronomic question is queued and will be sent when back online.', timestamp: nowStamp() } as ChatMessageItem,
+  ]);
+}
+
+/** Fetch the advisory for a query and build the assistant chat item (throws when empty). */
+async function requestAdvisoryMessage(query: string): Promise<ChatMessageItem> {
+  const res = await apiClient.post('/chatbot/completions', { message: query });
+  const data = res.data?.data || res.data;
+  const responseText = extractResponseText(data);
+  if (typeof responseText !== 'string' || responseText.trim().length === 0) {
+    throw new Error('AI service returned no advisory content');
+  }
+  const ragCats = extractRagCategories(data);
+  const { view, label } = selectCanvasForQuery(query, ragCats);
+  return {
+    id: `asst-${Date.now()}`,
+    sender: 'assistant',
+    text: responseText,
+    timestamp: nowStamp(),
+    canvasTrigger: view,
+    canvasLabel: label,
+  };
+}
+
+/** Record the failure state: queue on network errors, surface a clear fallback message. */
+function handleAdvisoryFailure(err: unknown, query: string, setMessages: SetChatMessages): void {
+  console.error('[AlphaAI] Chatbot request error:', err);
+  const isNetwork = !navigator.onLine || String((err as { message?: string })?.message || '').toLowerCase().includes('network');
+  if (isNetwork) enqueueOfflineQuery(query);
+  setMessages(prev => [...prev, {
+    id: `asst-${Date.now()}`,
+    sender: 'assistant',
+    text: isNetwork
+      ? '📡 Network unavailable — your agronomic question was queued offline and will be sent when back online.'
+      : 'The advisory service is currently unavailable. No agronomic guidance was generated for this query — please retry shortly or consult your local extension officer.',
+    timestamp: nowStamp(),
+  } as ChatMessageItem]);
+}
+
+/** Resend every queued offline query in order; stops at the first failure. */
+async function drainAlphaOfflineQueue(send: (query: string) => Promise<void>): Promise<void> {
+  if (!navigator.onLine) return;
+  const q = readOfflineQueue();
+  if (q.length === 0) return;
+  for (const queued of [...q]) {
+    try {
+      await send(queued);
+      q.shift();
+      writeOfflineQueue(q);
+    } catch {
+      return;
+    }
+  }
+  if (q.length === 0) localStorage.removeItem(OFFLINE_QUEUE_KEY);
+}
+
+/** Validate, upload, and analyze a leaf image; resolves to the health summary text. */
+async function analyzeLeafImage(file: File): Promise<string> {
+  if (file.size > 8 * 1024 * 1024) throw new Error('Image too large — max 8MB');
+  const base64 = await new Promise<string>((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve((r.result as string).split(',')[1]);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+  const { data } = await apiClient.post('/ai/diseases/analyze', { image: base64 });
+  return data?.data?.overallHealth || data?.overallHealth || 'Analysis complete — see Disease Diagnosis for full report';
+}
+
+/** Begin voice capture and hand the recorded blob to onReady; null when unsupported. */
+async function startVoiceCapture(onReady: (blob: Blob, mimeType: string) => Promise<void>): Promise<MediaRecorder | null> {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    toast.error('Voice input unavailable in this browser');
+    return null;
+  }
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const recorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg' });
+  const chunks: BlobPart[] = [];
+  recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+  recorder.onstop = async () => {
+    stream.getTracks().forEach(t => t.stop());
+    await onReady(new Blob(chunks, { type: recorder.mimeType }), recorder.mimeType);
+  };
+  recorder.start();
+  return recorder;
+}
+
+/** Transcribe a recorded voice blob via the backend Whisper endpoint; null when unusable. */
+async function transcribeVoiceBlob(blob: Blob, mimeType: string): Promise<string | null> {
+  const base64 = await new Promise<string | null>(resolve => {
+    const reader = new FileReader();
+    reader.onload = () => resolve((reader.result as string).split(',')[1] || null);
+    reader.readAsDataURL(blob);
+  });
+  if (!base64) {
+    toast.error('Could not read audio');
+    return null;
+  }
+  try {
+    const { data } = await apiClient.post('/pillars/voice/transcribe', { audio: base64, mimeType });
+    const text = (data?.data?.transcription || data?.transcription || '').toString().trim();
+    if (text && !text.startsWith('[STUB')) return text;
+    if (text) toast(`Transcribed (demo): ${text.slice(0, 80)}…`);
+    else toast.error('Transcription returned no text');
+    return null;
+  } catch (e) {
+    toast.error((e as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Transcription failed — check OPENAI_API_KEY');
+    return null;
+  }
+}
+
+/** Studio / Ops mode switcher for the co-pilot header. */
+const StudioTabSwitcher: React.FC<{
+  active: 'copilot' | 'agent_ops';
+  onSelect: (tab: 'copilot' | 'agent_ops') => void;
+}> = ({ active, onSelect }) => (
+  <div className="flex items-center bg-white/[0.04] p-1 rounded-xl border border-white/10">
+    <button
+      onClick={() => onSelect('copilot')}
+      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+        active === 'copilot'
+          ? 'bg-emerald-500 text-white shadow-md shadow-emerald-950/40'
+          : 'text-white/50 hover:text-white'
+      }`}
+    >
+      <Zap className="w-3.5 h-3.5" />
+      <span>Co-Pilot Studio</span>
+    </button>
+    <button
+      onClick={() => onSelect('agent_ops')}
+      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+        active === 'agent_ops'
+          ? 'bg-purple-600 text-white shadow-md shadow-purple-950/40'
+          : 'text-white/50 hover:text-white'
+      }`}
+    >
+      <Cpu className="w-3.5 h-3.5" />
+      <span>Agent Fleet Ops</span>
+    </button>
+  </div>
+);
+
+/** Header strip shared by every canvas workbench panel. */
+const CanvasPanelHeader: React.FC<{ icon: React.ReactNode; title: string; hint: string; hintClass: string }> = ({ icon, title, hint, hintClass }) => (
+  <div className="flex justify-between items-center text-xs pb-2 border-b border-white/5">
+    <span className="font-bold text-white uppercase tracking-wider flex items-center gap-1.5">{icon}{title}</span>
+    <span className={`text-xxs font-mono ${hintClass}`}>{hint}</span>
+  </div>
+);
+
+/** Dynamic mounted canvas — renders the active spatial view and its selection detail card. */
+const CanvasWorkbench: React.FC<{
+  view: CanvasViewType;
+  selectedProbeResult: SoilProbeResult | null;
+  onProbeSelect: (res: SoilProbeResult) => void;
+  selectedLesionZone: LesionDetectionZone | null;
+  onLesionZoneSelect: (z: LesionDetectionZone) => void;
+  selectedGraphNode: GraphNode | null;
+  onGraphNodeSelect: (n: GraphNode) => void;
+  onDispatchSms: () => void;
+}> = ({
+  view,
+  selectedProbeResult,
+  onProbeSelect,
+  selectedLesionZone,
+  onLesionZoneSelect,
+  selectedGraphNode,
+  onGraphNodeSelect,
+  onDispatchSms,
+}) => (
+  <>
+    {view === 'soil_heatmap' && (
+      <div className="space-y-3">
+        <CanvasPanelHeader
+          icon={<Droplets className="w-4 h-4 text-emerald-400" />}
+          title="Spatial Soil Chemistry & pH Heatmap (0–15cm)"
+          hint="Click cells to probe micro-nutrients"
+          hintClass="text-emerald-400"
+        />
+        <SoilNutrientHeatmapCanvas interactive onProbeSelect={onProbeSelect} />
+        {selectedProbeResult && (
+          <motion.div
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-3 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-between text-xs"
+          >
+            <div>
+              <strong className="text-white">{selectedProbeResult.label}:</strong>{' '}
+              <span className="font-mono text-emerald-400 font-bold">
+                {selectedProbeResult.value} {selectedProbeResult.unit}
+              </span>
+              <p className="text-xxs text-white/60 mt-0.5">{selectedProbeResult.recommendation}</p>
+            </div>
+            <span
+              className={`px-2 py-0.5 rounded text-xxs font-bold uppercase ${
+                selectedProbeResult.status === 'optimal'
+                  ? 'bg-emerald-500/20 text-emerald-400'
+                  : 'bg-amber-500/20 text-amber-400'
+              }`}
+            >
+              {selectedProbeResult.status}
+            </span>
+          </motion.div>
+        )}
+      </div>
+    )}
+
+    {view === 'disease_saliency' && (
+      <div className="space-y-3">
+        <CanvasPanelHeader
+          icon={<Eye className="w-4 h-4 text-rose-400" />}
+          title="Neural Foliar Saliency & Pathology Scanner"
+          hint="Wait for a real image analysis"
+          hintClass="text-slate-500"
+        />
+        <DiseaseSaliencyCanvas onSelectZone={onLesionZoneSelect} />
+        {selectedLesionZone && (
+          <motion.div
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-between text-xs"
+          >
+            <div>
+              <strong className="text-rose-300">{selectedLesionZone.label}</strong>
+              <p className="text-xxs text-white/60 mt-0.5">
+                Confidence: {(selectedLesionZone.confidence * 100).toFixed(1)}% • Severity: {selectedLesionZone.severity}
+              </p>
+            </div>
+            <button
+              onClick={onDispatchSms}
+              className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xxs font-bold shadow transition-all"
+            >
+              Dispatch Alert
+            </button>
+          </motion.div>
+        )}
+      </div>
+    )}
+
+    {view === 'agro_scrubber' && (
+      <div className="space-y-3">
+        <CanvasPanelHeader
+          icon={<Sliders className="w-4 h-4 text-cyan-400" />}
+          title="Agro-Ecosystem Phenology Scrubber (NASA POWER & NDVI)"
+          hint="Drag scrubber to simulate growth phases"
+          hintClass="text-cyan-400"
+        />
+        <div className="w-full h-[460px]">
+          <AgroEcosystemCanvasScrubber showControls interactive className="w-full h-full" />
+        </div>
+      </div>
+    )}
+
+    {view === 'rag_graph' && (
+      <div className="space-y-3">
+        <CanvasPanelHeader
+          icon={<Network className="w-4 h-4 text-purple-400" />}
+          title="RAG Knowledge Citation & Ontology Mesh"
+          hint="Click graph nodes to inspect excerpts"
+          hintClass="text-purple-400"
+        />
+        <RagKnowledgeGraphCanvas onNodeSelect={onGraphNodeSelect} />
+        {selectedGraphNode && (
+          <motion.div
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs"
+          >
+            <div className="flex items-center justify-between mb-1">
+              <strong className="text-purple-300 font-bold">{selectedGraphNode.label}</strong>
+              <span className="text-xxs font-mono text-white/40 uppercase">Category: {selectedGraphNode.category}</span>
+            </div>
+            <p className="text-xxs text-white/70 leading-relaxed">{selectedGraphNode.snippet}</p>
+          </motion.div>
+        )}
+      </div>
+    )}
+
+    {view === 'telemetry_radar' && (
+      <div className="space-y-3">
+        <CanvasPanelHeader
+          icon={<Radio className="w-4 h-4 text-emerald-400" />}
+          title="Live Field Telemetry & Sensor Mesh Radar"
+          hint="12 Active Transceivers"
+          hintClass="text-emerald-400"
+        />
+        <div className="h-64 flex items-center justify-center">
+          <TelemetryRadarCanvas />
+        </div>
+      </div>
+    )}
+  </>
+);
+
+const NasaPowerBadge: React.FC<{ data: { status?: string; uptime?: number } | undefined }> = ({ data }) => (
+  <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 text-xxs font-mono" title={data ? `Health: ${data.status || 'ok'}` : 'Health check pending'}>
+    <span className={`w-2 h-2 rounded-full ${data ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+    <span className="text-white/70">NASA POWER:</span>
+    <span className={data ? 'text-emerald-300 font-bold' : 'text-amber-300 font-bold'}>{data ? 'SYNCHRONIZED' : '[DEMO] SYNCHRONIZED'}</span>
+  </div>
+);
+
+const RagMeshBadge: React.FC<{ data: { data?: { totalQueries?: number } } | undefined }> = ({ data }) => (
+  <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 text-xxs font-mono" title={data?.data?.totalQueries != null ? `Total RAG queries: ${data.data.totalQueries}` : 'Real RAG count via /knowledge/stats'}>
+    <span className={`w-2 h-2 rounded-full ${data?.data ? 'bg-emerald-400' : 'bg-cyan-400'}`} />
+    <span className="text-white/70">RAG MESH:</span>
+    <span className={data?.data ? 'text-emerald-300 font-bold' : 'text-cyan-300 font-bold'}>{data?.data?.totalQueries != null ? `${data.data.totalQueries} QUERIES` : '[DEMO] 1,420 ARTICLES'}</span>
+  </div>
+);
+
+interface MessageStreamProps {
+  messages: ChatMessageItem[];
+  isProcessing: boolean;
+  activeReasoningStep: string | null;
+  onSelectCanvas: (view: CanvasViewType) => void;
+  messagesEndRef: React.RefObject<HTMLDivElement>;
+}
+
+/** Scrollable co-pilot message stream with reasoning-status pill and scroll anchor. */
+const MessageStream: React.FC<MessageStreamProps> = ({ messages, isProcessing, activeReasoningStep, onSelectCanvas, messagesEndRef }) => (
+  <div className="overflow-y-auto space-y-4 pr-1 custom-scrollbar flex-1 mb-4">
+    <AnimatePresence initial={false}>
+      {messages.map(msg => (
+        <motion.div
+          key={msg.id}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
+        >
+          <div className="flex items-center gap-1.5 mb-1 text-[10px] text-white/40 font-mono">
+            <span>{msg.sender === 'user' ? 'Extension Officer' : 'AI Agronomist'}</span>
+            <span>•</span>
+            <span>{msg.timestamp}</span>
+          </div>
+
+          <div
+            className={`max-w-[92%] rounded-xl p-4 text-xs leading-relaxed ${
+              msg.sender === 'user'
+                ? 'bg-emerald-600 text-white rounded-tr-none shadow-md shadow-emerald-950/40'
+                : 'bg-white/[0.04] border border-white/10 text-white/90 rounded-tl-none space-y-3'
+            }`}
+          >
+            <div className="whitespace-pre-line prose-invert font-sans">
+              {msg.text}
+            </div>
+
+            {/* Interactive Canvas Pill Trigger in Assistant Message */}
+            {msg.canvasTrigger && (
+              <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2">
+                <button
+                  onClick={() => msg.canvasTrigger && onSelectCanvas(msg.canvasTrigger)}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xxs font-bold flex items-center gap-1.5 transition-colors"
+                >
+                  <Sparkles className="w-3 h-3 text-emerald-400" />
+                  <span>View {msg.canvasLabel || 'Interactive Canvas'} →</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      ))}
+    </AnimatePresence>
+
+    {/* Multi-Step Reasoning Live Badge */}
+    {isProcessing && activeReasoningStep && (
+      <motion.div
+        initial={{ opacity: 0, y: 5 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center gap-2.5 text-xs text-purple-300"
+      >
+        <Radio className="w-4 h-4 text-purple-400 animate-spin" />
+        <span className="font-mono text-xxs font-semibold">{activeReasoningStep}</span>
+      </motion.div>
+    )}
+
+    <div ref={messagesEndRef} />
+  </div>
+);
+
+export const AlphaAI: React.FC = () => {
   const [activeStudioTab, setActiveStudioTab] = useState<'copilot' | 'agent_ops'>('copilot');
   const [activeCanvasView, setActiveCanvasView] = useState<CanvasViewType>('soil_heatmap');
   const [inputPrompt, setInputPrompt] = useState('');
@@ -81,7 +512,7 @@ interface ChatMessageItem {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const voiceRecorderRef = useRef<MediaRecorder | null>(null);
-  const voiceChunksRef = useRef<BlobPart[]>([]);
+  const handleSendRef = useRef<(overrideQuery?: string) => Promise<void>>(async () => {});
 
   // Initial welcome message
   const [messages, setMessages] = useState<ChatMessageItem[]>([
@@ -121,17 +552,10 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isProcessing]);
 
-  // Drain offline queue when back online
+  // Drain offline queue when back online — the sender is read through a ref so the
+  // subscription survives re-renders without re-binding the listener.
   useEffect(() => {
-    const drain = async () => {
-      if (!navigator.onLine) return;
-      const q = JSON.parse(localStorage.getItem('alphaAiOfflineQueue') || '[]') as string[];
-      if (q.length === 0) return;
-      for (const queued of [...q]) {
-        try { await handleSendMessage(queued); q.shift(); localStorage.setItem('alphaAiOfflineQueue', JSON.stringify(q)); } catch { break; }
-      }
-      if (q.length === 0) localStorage.removeItem('alphaAiOfflineQueue');
-    };
+    const drain = () => { void drainAlphaOfflineQueue(queued => handleSendRef.current(queued)); };
     window.addEventListener('online', drain);
     return () => window.removeEventListener('online', drain);
   }, []);
@@ -142,98 +566,30 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
 
     // Offline queue — stash and show pending when navigator is offline
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      const q = JSON.parse(localStorage.getItem('alphaAiOfflineQueue') || '[]') as string[];
-      q.push(query);
-      localStorage.setItem('alphaAiOfflineQueue', JSON.stringify(q));
-      setMessages(prev => [...prev, { id: `user-${Date.now()}`, sender: 'user', text: query, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) } as ChatMessageItem]);
-      setMessages(prev => [...prev, { id: `off-${Date.now()}`, sender: 'assistant', text: '📡 Offline — your agronomic question is queued and will be sent when back online.', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) } as ChatMessageItem]);
+      stashQueryOffline(query, setMessages);
       setInputPrompt('');
       return;
     }
 
     setInputPrompt('');
-    const userMsg: ChatMessageItem = {
-      id: `user-${Date.now()}`,
-      sender: 'user',
-      text: query,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
-
-    setMessages(prev => [...prev, userMsg]);
+    setMessages(prev => [...prev, { id: `user-${Date.now()}`, sender: 'user', text: query, timestamp: nowStamp() } as ChatMessageItem]);
     setIsProcessing(true);
-
-    // Dynamic reasoning steps
     setActiveReasoningStep('Querying RAG Agronomic Knowledge Store...');
     await new Promise(r => setTimeout(r, 500));
     setActiveReasoningStep('Synthesizing NASA POWER Agro-Climatology & Soil Models...');
 
     try {
-      const res = await apiClient.post('/chatbot/completions', {
-        message: query,
-      });
-
-      const data = res.data?.data || res.data;
-      const responseText =
-        data?.messages?.[1]?.content ||
-        data?.response ||
-        data?.text ||
-        (typeof data === 'string' ? data : null);
-
-      if (typeof responseText !== 'string' || responseText.trim().length === 0) {
-        throw new Error('AI service returned no advisory content');
-      }
-
-      const ragCats: string[] = Array.isArray(data?.citations)
-        ? (data.citations as { category?: string }[]).map(c => c.category || '').filter(Boolean)
-        : Array.isArray(data?.contextUsed) ? (data.contextUsed as { metadata?: { category?: string } }[]).map(c => c.metadata?.category || '').filter(Boolean)
-        : [];
-      const { view: matchedCanvas, label } = selectCanvasForQuery(query, ragCats);
-
-      setActiveCanvasView(matchedCanvas);
-      setActiveReasoningStep(null);
-
-      const assistantMsg: ChatMessageItem = {
-        id: `asst-${Date.now()}`,
-        sender: 'assistant',
-        text: responseText,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        canvasTrigger: matchedCanvas,
-        canvasLabel: label,
-      };
-
+      const assistantMsg = await requestAdvisoryMessage(query);
+      if (assistantMsg.canvasTrigger) setActiveCanvasView(assistantMsg.canvasTrigger);
       setMessages(prev => [...prev, assistantMsg]);
     } catch (err) {
-      console.error('[AlphaAI] Chatbot request error:', err);
-      const isNetwork = !navigator.onLine || String((err as { message?: string })?.message || '').toLowerCase().includes('network');
-      if (isNetwork) {
-        const q = JSON.parse(localStorage.getItem('alphaAiOfflineQueue') || '[]') as string[];
-        q.push(query);
-        localStorage.setItem('alphaAiOfflineQueue', JSON.stringify(q));
-        setMessages(prev => [
-          ...prev,
-          {
-            id: `asst-${Date.now()}`,
-            sender: 'assistant',
-            text: '📡 Network unavailable — your agronomic question was queued offline and will be sent when back online.',
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          },
-        ]);
-      } else {
-        setMessages(prev => [
-          ...prev,
-          {
-            id: `asst-${Date.now()}`,
-            sender: 'assistant',
-            text: 'The advisory service is currently unavailable. No agronomic guidance was generated for this query — please retry shortly or consult your local extension officer.',
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          },
-        ]);
-      }
-      setActiveReasoningStep(null);
+      handleAdvisoryFailure(err, query, setMessages);
     } finally {
+      setActiveReasoningStep(null);
       setIsProcessing(false);
     }
   };
+  handleSendRef.current = handleSendMessage;
 
   const handleVoiceToggle = async () => {
     if (isRecordingVoice) {
@@ -241,38 +597,20 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
       setIsRecordingVoice(false);
       return;
     }
-    if (!navigator.mediaDevices?.getUserMedia) {
-      toast.error('Voice input unavailable in this browser');
-      return;
-    }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg' });
-      voiceChunksRef.current = [];
-      recorder.ondataavailable = e => { if (e.data.size > 0) voiceChunksRef.current.push(e.data); };
-      recorder.onstop = async () => {
-        stream.getTracks().forEach(t => t.stop());
-        const blob = new Blob(voiceChunksRef.current, { type: recorder.mimeType });
-        const reader = new FileReader();
-        reader.onload = async () => {
-          const base64 = (reader.result as string).split(',')[1];
-          if (!base64) { toast.error('Could not read audio'); return; }
-          setActiveReasoningStep('Transcribing voice (Whisper)...');
-          try {
-            const { data } = await apiClient.post('/pillars/voice/transcribe', { audio: base64, mimeType: recorder.mimeType });
-            const text = (data?.data?.transcription || data?.transcription || '').toString().trim();
-            if (text && !text.startsWith('[STUB')) {
-              setInputPrompt(text);
-              toast.success(`Transcribed: ${text.slice(0, 60)}…`);
-            } else if (text) toast(`Transcribed (demo): ${text.slice(0, 80)}…`);
-            else toast.error('Transcription returned no text');
-          } catch (e) {
-            toast.error((e as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Transcription failed — check OPENAI_API_KEY');
-          } finally { setActiveReasoningStep(null); }
-        };
-        reader.readAsDataURL(blob);
-      };
-      recorder.start();
+      const recorder = await startVoiceCapture(async (blob, mimeType) => {
+        setActiveReasoningStep('Transcribing voice (Whisper)...');
+        try {
+          const text = await transcribeVoiceBlob(blob, mimeType);
+          if (text) {
+            setInputPrompt(text);
+            toast.success(`Transcribed: ${text.slice(0, 60)}…`);
+          }
+        } finally {
+          setActiveReasoningStep(null);
+        }
+      });
+      if (!recorder) return;
       voiceRecorderRef.current = recorder;
       setIsRecordingVoice(true);
       toast('Recording… tap again to stop and transcribe');
@@ -288,20 +626,12 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;
-      if (file.size > 8 * 1024 * 1024) { toast.error('Image too large — max 8MB'); return; }
       setActiveReasoningStep('Analyzing leaf image (vision)…');
       try {
-        const base64 = await new Promise<string>((resolve, reject) => {
-          const r = new FileReader();
-          r.onload = () => resolve((r.result as string).split(',')[1]);
-          r.onerror = reject;
-          r.readAsDataURL(file);
-        });
-        const { data } = await apiClient.post('/ai/diseases/analyze', { image: base64 });
-        const summary = data?.data?.overallHealth || data?.overallHealth || 'Analysis complete — see Disease Diagnosis for full report';
-        setMessages(prev => [...prev, { id: `img-${Date.now()}`, sender: 'assistant', text: `🖼️ **Image diagnosis:** ${summary}`, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+        const summary = await analyzeLeafImage(file);
+        setMessages(prev => [...prev, { id: `img-${Date.now()}`, sender: 'assistant', text: `🖼️ **Image diagnosis:** ${summary}`, timestamp: nowStamp() }]);
         toast.success('Image analyzed — check Disease Diagnosis for lab verification');
-      } catch (e) { toast.error((e as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Image analysis failed'); }
+      } catch (e) { toast.error((e as { response?: { data?: { error?: string } } })?.response?.data?.error || (e as Error)?.message || 'Image analysis failed'); }
       finally { setActiveReasoningStep(null); }
     };
     input.click();
@@ -360,43 +690,14 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
 
           {/* Center/Right: Live Telemetry Badges & Mode Switcher */}
           <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
-            <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 text-xxs font-mono" title={healthData ? `Health: ${healthData.status || 'ok'}` : 'Health check pending'}>
-              <span className={`w-2 h-2 rounded-full ${healthData ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-              <span className="text-white/70">NASA POWER:</span>
-              <span className={healthData ? 'text-emerald-300 font-bold' : 'text-amber-300 font-bold'}>{healthData ? 'SYNCHRONIZED' : '[DEMO] SYNCHRONIZED'}</span>
-            </div>
-
-            <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 text-xxs font-mono" title={kbStats?.data?.totalQueries != null ? `Total RAG queries: ${kbStats.data.totalQueries}` : 'Real RAG count via /knowledge/stats'}>
-              <span className={`w-2 h-2 rounded-full ${kbStats?.data ? 'bg-emerald-400' : 'bg-cyan-400'}`} />
-              <span className="text-white/70">RAG MESH:</span>
-              <span className={kbStats?.data ? 'text-emerald-300 font-bold' : 'text-cyan-300 font-bold'}>{kbStats?.data?.totalQueries != null ? `${kbStats.data.totalQueries} QUERIES` : '[DEMO] 1,420 ARTICLES'}</span>
-            </div>
+            <NasaPowerBadge data={healthData} />
+            <RagMeshBadge data={kbStats} />
 
             {/* Studio / Ops Toggle */}
-            <div className="flex items-center bg-white/[0.04] p-1 rounded-xl border border-white/10">
-              <button
-                onClick={() => setActiveStudioTab('copilot')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  activeStudioTab === 'copilot'
-                    ? 'bg-emerald-500 text-white shadow-md shadow-emerald-950/40'
-                    : 'text-white/50 hover:text-white'
-                }`}
-              >
-                <Zap className="w-3.5 h-3.5" />
-                <span>Co-Pilot Studio</span>
-              </button>
-              <button
-                onClick={() => setActiveStudioTab('agent_ops')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  activeStudioTab === 'agent_ops'
-                    ? 'bg-purple-600 text-white shadow-md shadow-purple-950/40'
-                    : 'text-white/50 hover:text-white'
-                }`}
-              >
-                <Cpu className="w-3.5 h-3.5" />
-                <span>Agent Fleet Ops</span>
-              </button>
-            </div>
+            <StudioTabSwitcher
+              active={activeStudioTab}
+              onSelect={setActiveStudioTab}
+            />
           </div>
         </div>
       </div>
@@ -413,64 +714,14 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
           <div className="lg:col-span-5 flex flex-col space-y-4">
             {/* Conversational Stream Card */}
             <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-4 flex-1 flex flex-col justify-between shadow-xl min-h-[480px] max-h-[620px]">
-              {/* Message List */}
-              <div className="overflow-y-auto space-y-4 pr-1 custom-scrollbar flex-1 mb-4">
-                <AnimatePresence initial={false}>
-                  {messages.map(msg => (
-                    <motion.div
-                      key={msg.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
-                    >
-                      <div className="flex items-center gap-1.5 mb-1 text-[10px] text-white/40 font-mono">
-                        <span>{msg.sender === 'user' ? 'Extension Officer' : 'AI Agronomist'}</span>
-                        <span>•</span>
-                        <span>{msg.timestamp}</span>
-                      </div>
-
-                      <div
-                        className={`max-w-[92%] rounded-xl p-4 text-xs leading-relaxed ${
-                          msg.sender === 'user'
-                            ? 'bg-emerald-600 text-white rounded-tr-none shadow-md shadow-emerald-950/40'
-                            : 'bg-white/[0.04] border border-white/10 text-white/90 rounded-tl-none space-y-3'
-                        }`}
-                      >
-                        <div className="whitespace-pre-line prose-invert font-sans">
-                          {msg.text}
-                        </div>
-
-                        {/* Interactive Canvas Pill Trigger in Assistant Message */}
-                        {msg.canvasTrigger && (
-                          <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2">
-                            <button
-                              onClick={() => msg.canvasTrigger && setActiveCanvasView(msg.canvasTrigger)}
-                              className="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xxs font-bold flex items-center gap-1.5 transition-colors"
-                            >
-                              <Sparkles className="w-3 h-3 text-emerald-400" />
-                              <span>View {msg.canvasLabel || 'Interactive Canvas'} →</span>
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-
-                {/* Multi-Step Reasoning Live Badge */}
-                {isProcessing && activeReasoningStep && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center gap-2.5 text-xs text-purple-300"
-                  >
-                    <Radio className="w-4 h-4 text-purple-400 animate-spin" />
-                    <span className="font-mono text-xxs font-semibold">{activeReasoningStep}</span>
-                  </motion.div>
-                )}
-
-                <div ref={messagesEndRef} />
-              </div>
+            {/* Message List */}
+            <MessageStream
+              messages={messages}
+              isProcessing={isProcessing}
+              activeReasoningStep={activeReasoningStep}
+              onSelectCanvas={setActiveCanvasView}
+              messagesEndRef={messagesEndRef}
+            />
 
               {/* Input Bar & Multi-Modal Controls (knockknockapp.ai voice/leaf standard) */}
               <div className="pt-3 border-t border-white/5 space-y-2">
@@ -603,137 +854,18 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
             </div>
 
             {/* Generative Interactive Canvas Container (canvasui.dev glassmorphic standard) */}
-            <div className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-xl p-5 shadow-2xl relative overflow-hidden min-h-[500px] flex flex-col justify-between">
-              {/* Dynamic Mounted Canvas */}
+            <div className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-xl p-5 shadow-2xl relative overflow-hidden min-h-[500px] flex flex-col justify-between">              {/* Dynamic Mounted Canvas */}
               <div className="flex-1 flex flex-col justify-center">
-                {activeCanvasView === 'soil_heatmap' && (
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center text-xs pb-2 border-b border-white/5">
-                      <span className="font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                        <Droplets className="w-4 h-4 text-emerald-400" />
-                        Spatial Soil Chemistry & pH Heatmap (0–15cm)
-                      </span>
-                      <span className="text-xxs font-mono text-emerald-400">Click cells to probe micro-nutrients</span>
-                    </div>
-                    <SoilNutrientHeatmapCanvas
-                      interactive
-                      onProbeSelect={res => setSelectedProbeResult(res)}
-                    />
-                    {selectedProbeResult && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="p-3 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-between text-xs"
-                      >
-                        <div>
-                          <strong className="text-white">{selectedProbeResult.label}:</strong>{' '}
-                          <span className="font-mono text-emerald-400 font-bold">
-                            {selectedProbeResult.value} {selectedProbeResult.unit}
-                          </span>
-                          <p className="text-xxs text-white/60 mt-0.5">{selectedProbeResult.recommendation}</p>
-                        </div>
-                        <span
-                          className={`px-2 py-0.5 rounded text-xxs font-bold uppercase ${
-                            selectedProbeResult.status === 'optimal'
-                              ? 'bg-emerald-500/20 text-emerald-400'
-                              : 'bg-amber-500/20 text-amber-400'
-                          }`}
-                        >
-                          {selectedProbeResult.status}
-                        </span>
-                      </motion.div>
-                    )}
-                  </div>
-                )}
-
-                {activeCanvasView === 'disease_saliency' && (
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center text-xs pb-2 border-b border-white/5">
-                      <span className="font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                        <Eye className="w-4 h-4 text-rose-400" />
-                        Neural Foliar Saliency & Pathology Scanner
-                      </span>
-                      <span className="text-xxs font-mono text-slate-500">Wait for a real image analysis</span>
-                    </div>
-                    <DiseaseSaliencyCanvas onSelectZone={z => setSelectedLesionZone(z)} />
-                    {selectedLesionZone && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-between text-xs"
-                      >
-                        <div>
-                          <strong className="text-rose-300">{selectedLesionZone.label}</strong>
-                          <p className="text-xxs text-white/60 mt-0.5">
-                            Confidence: {(selectedLesionZone.confidence * 100).toFixed(1)}% • Severity: {selectedLesionZone.severity}
-                          </p>
-                        </div>
-                        <button
-                          onClick={handleDispatchSms}
-                          className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xxs font-bold shadow transition-all"
-                        >
-                          Dispatch Alert
-                        </button>
-                      </motion.div>
-                    )}
-                  </div>
-                )}
-
-                {activeCanvasView === 'agro_scrubber' && (
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center text-xs pb-2 border-b border-white/5">
-                      <span className="font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                        <Sliders className="w-4 h-4 text-cyan-400" />
-                        Agro-Ecosystem Phenology Scrubber (NASA POWER & NDVI)
-                      </span>
-                      <span className="text-xxs font-mono text-cyan-400">Drag scrubber to simulate growth phases</span>
-                    </div>
-                    <div className="w-full h-[460px]">
-                      <AgroEcosystemCanvasScrubber showControls interactive className="w-full h-full" />
-                    </div>
-                  </div>
-                )}
-
-                {activeCanvasView === 'rag_graph' && (
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center text-xs pb-2 border-b border-white/5">
-                      <span className="font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                        <Network className="w-4 h-4 text-purple-400" />
-                        RAG Knowledge Citation & Ontology Mesh
-                      </span>
-                      <span className="text-xxs font-mono text-purple-400">Click graph nodes to inspect excerpts</span>
-                    </div>
-                    <RagKnowledgeGraphCanvas onNodeSelect={n => setSelectedGraphNode(n)} />
-                    {selectedGraphNode && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs"
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <strong className="text-purple-300 font-bold">{selectedGraphNode.label}</strong>
-                          <span className="text-xxs font-mono text-white/40 uppercase">Category: {selectedGraphNode.category}</span>
-                        </div>
-                        <p className="text-xxs text-white/70 leading-relaxed">{selectedGraphNode.snippet}</p>
-                      </motion.div>
-                    )}
-                  </div>
-                )}
-
-                {activeCanvasView === 'telemetry_radar' && (
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center text-xs pb-2 border-b border-white/5">
-                      <span className="font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                        <Radio className="w-4 h-4 text-emerald-400" />
-                        Live Field Telemetry & Sensor Mesh Radar
-                      </span>
-                      <span className="text-xxs font-mono text-emerald-400">12 Active Transceivers</span>
-                    </div>
-                    <div className="h-64 flex items-center justify-center">
-                      <TelemetryRadarCanvas />
-                    </div>
-                  </div>
-                )}
+                <CanvasWorkbench
+                  view={activeCanvasView}
+                  selectedProbeResult={selectedProbeResult}
+                  onProbeSelect={setSelectedProbeResult}
+                  selectedLesionZone={selectedLesionZone}
+                  onLesionZoneSelect={setSelectedLesionZone}
+                  selectedGraphNode={selectedGraphNode}
+                  onGraphNodeSelect={setSelectedGraphNode}
+                  onDispatchSms={handleDispatchSms}
+                />
               </div>
 
               {/* ── Workbench Action Footer Dock ── */}
