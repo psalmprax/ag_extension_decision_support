@@ -10,7 +10,7 @@ const router = Router();
 router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
 
 const pstnSchema = z.object({
-  to: z.string().regex(/^\+?[0-9\s\-\(\).]{7,22}$/),
+  to: z.string().regex(/^\+?[0-9\s\-().]{7,22}$/),
   message: z.string().min(1).max(500).optional(),
   farmerId: z.string().uuid().optional(),
   url: z.string().url().optional(),

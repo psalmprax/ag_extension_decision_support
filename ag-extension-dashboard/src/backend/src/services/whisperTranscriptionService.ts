@@ -1,30 +1,29 @@
+import { promises as fsp } from 'fs';
 import { logger } from '../utils/logger';
 
-interface WhisperTranscriptionResult {
-  transcription: string;
-  detectedLanguage: string;
-  confidence: number;
-  durationSeconds?: number;
-  segments?: Array<{
-    start: number;
-    end: number;
-    text: string;
-    probability: number;
-  }>;
+type WhisperModule = typeof import('@napi-rs/whisper');
+
+interface WhisperSegment {
+  start: number;
+  end: number;
+  text: string;
 }
 
-interface WhisperTranscriptionOptions {
+/** Shape returned by both transcribe() and transcribeFile(). */
+interface WhisperTranscriptionResult {
+  text: string;
+  language: string;
+  /** Rough transcription confidence proxy: 0.95 with real segments, 0.5 from the text-only fallback. */
+  languageProbability: number;
+  /** Wall-clock processing time in seconds (this binding exposes no audio-duration readout). */
+  duration: number;
+  segments: WhisperSegment[];
+}
+
+interface WhisperTranscribeOptions {
   language?: 'sw' | 'en' | 'auto';
-  model?: 'tiny' | 'base' | 'small' | 'medium' | 'large-v3';
-  computeType?: 'int8' | 'int8_float16' | 'float16' | 'float32';
-  device?: 'cpu' | 'cuda' | 'auto';
-  beamSize?: number;
+  /** Closest equivalent to VAD in this binding: suppress non-speech tokens. */
   vadFilter?: boolean;
-  vadParameters?: {
-    threshold?: number;
-    minSpeechDurationMs?: number;
-    maxSpeechDurationMs?: number;
-  };
 }
 
 /**
@@ -34,7 +33,8 @@ interface WhisperTranscriptionOptions {
  */
 class WhisperTranscriptionService {
   private static instance: WhisperTranscriptionService | null = null;
-  private model: any = null;
+  private lib: WhisperModule | null = null;
+  private model: InstanceType<WhisperModule['Whisper']> | null = null;
   private modelName: string = 'small';
   private initialized = false;
 
@@ -60,8 +60,8 @@ class WhisperTranscriptionService {
     }
 
     try {
-      // Dynamic import to avoid loading heavy dependencies at startup
-      const { Whisper } = await import('@napi-rs/whisper');
+      // Dynamic import to avoid loading heavy native dependencies at startup
+      const lib = await import('@napi-rs/whisper');
 
       const modelName = options.model || 'small';
       const device = options.device || 'auto';
@@ -69,7 +69,7 @@ class WhisperTranscriptionService {
       logger.info(`Initializing Whisper model: ${modelName} on ${device}`);
 
       // @napi-rs/whisper uses whisper.cpp - requires model file
-      const modelPath = process.env.WHISPER_MODEL_DIR 
+      const modelPath = process.env.WHISPER_MODEL_DIR
         ? `${process.env.WHISPER_MODEL_DIR}/ggml-${modelName}.bin`
         : undefined;
 
@@ -77,7 +77,8 @@ class WhisperTranscriptionService {
         throw new Error('WHISPER_MODEL_DIR environment variable must be set to the directory containing Whisper model files (ggml-*.bin)');
       }
 
-      this.model = new Whisper(modelPath);
+      this.lib = lib;
+      this.model = new lib.Whisper(modelPath);
       this.modelName = modelName;
       this.initialized = true;
 
@@ -91,94 +92,19 @@ class WhisperTranscriptionService {
   /**
    * Transcribe audio buffer to text
    */
-  async transcribe(
-    audioBuffer: Buffer,
-    options: {
-      language?: 'sw' | 'en' | 'auto';
-      beamSize?: number;
-      vadFilter?: boolean;
-      vadParameters?: {
-        threshold?: number;
-        minSpeechDurationMs?: number;
-        maxSpeechDurationMs?: number;
-      };
-      wordTimestamps?: boolean;
-    } = {}
-  ): Promise<{
-    text: string;
-    language: string;
-    languageProbability: number;
-    duration: number;
-    segments: Array<{
-      start: number;
-      end: number;
-      text: string;
-      probability: number;
-    }>;
-  }> {
-    if (!this.model) {
-      await this.initialize();
-    }
+  async transcribe(audioBuffer: Buffer, options: WhisperTranscribeOptions = {}): Promise<WhisperTranscriptionResult> {
+    const { lib, model } = await this.requireModel();
 
     const startTime = Date.now();
 
     try {
-      // @napi-rs/whisper accepts Float32Array or Int16Array
-      // Convert buffer to Float32Array (assuming 16kHz mono PCM)
-      const audioData = new Float32Array(audioBuffer.buffer);
-      
-      const language = options.language === 'auto' ? undefined : options.language;
-      
-      const result = await this.model.transcribe(audioData, {
-        language,
-        beamSize: options.beamSize || 5,
-        bestOf: 5,
-        temperature: 0,
-      });
-
-      const segments: Array<{ start: number; end: number; text: string; probability: number }> = [];
-      let fullText = '';
-      let detectedLanguage = 'en';
-      let languageProbability = 0;
-
-      // @napi-rs/whisper returns segments with start, end, text, avgLogProb
-      if (result.segments) {
-        for (const segment of result.segments) {
-          const prob = segment.avgLogProb ? Math.exp(segment.avgLogProb) : 1.0;
-          segments.push({
-            start: segment.start,
-            end: segment.end,
-            text: segment.text,
-            probability: prob,
-          });
-          fullText += segment.text + ' ';
-          if (prob > languageProbability) {
-            languageProbability = prob;
-          }
-        }
-      } else if (result.text) {
-        // Fallback if no segments
-        fullText = result.text;
-        segments.push({
-          start: 0,
-          end: result.duration || 0,
-          text: result.text,
-          probability: 0.95,
-        });
-      }
-
-      // Detect language from result
-      detectedLanguage = result.language || (options.language === 'auto' ? 'en' : (options.language || 'en'));
-
-      const duration = (Date.now() - startTime) / 1000;
-
-      return {
-        text: fullText.trim(),
-        language: detectedLanguage,
-        languageProbability: languageProbability || 0.95,
-        duration,
-        segments,
-      };
+      // decodeAudioAsync handles any container/codec (ogg, wav, mp3, ...) and
+      // resamples to the 16 kHz mono Float32 samples whisper.cpp expects.
+      const samples = await lib.decodeAudioAsync(new Uint8Array(audioBuffer));
+      const segments: WhisperSegment[] = [];
+      const params = this.buildParams(lib, options, segments);
+      const text = model.full(params, samples);
+      return this.buildResult(lib, model, text, segments, startTime, options.language);
     } catch (error) {
       logger.error('Whisper transcription failed:', error);
       throw new Error(`Transcription failed: ${(error as Error).message}`);
@@ -188,62 +114,76 @@ class WhisperTranscriptionService {
   /**
    * Transcribe from file path (useful for large files)
    */
-  async transcribeFile(filePath: string, options: {
-    language?: 'sw' | 'en' | 'auto';
-  } = {}): Promise<{
-    text: string;
-    language: string;
-    duration: number;
-    segments: Array<{ start: number; end: number; text: string; probability: number }>;
-  }> {
-    if (!this.model) {
-      await this.initialize();
-    }
+  async transcribeFile(filePath: string, options: { language?: 'sw' | 'en' | 'auto' } = {}): Promise<WhisperTranscriptionResult> {
+    const { lib, model } = await this.requireModel();
+
+    const startTime = Date.now();
 
     try {
-      const language = options.language === 'auto' ? undefined : options.language;
-      
-      const result = await this.model.transcribe(filePath, {
-        language,
-        beamSize: 5,
-        bestOf: 5,
-        temperature: 0,
-      });
-
-      const segments: Array<{ start: number; end: number; text: string; probability: number }> = [];
-      let fullText = '';
-      
-      if (result.segments) {
-        for (const segment of result.segments) {
-          const prob = segment.avgLogProb ? Math.exp(segment.avgLogProb) : 1.0;
-          segments.push({
-            start: segment.start,
-            end: segment.end,
-            text: segment.text,
-            probability: prob,
-          });
-          fullText += segment.text + ' ';
-        }
-      } else if (result.text) {
-        fullText = result.text;
-        segments.push({
-          start: 0,
-          end: result.duration || 0,
-          text: result.text,
-          probability: 0.95,
-        });
-      }
-
-      return {
-        text: fullText.trim(),
-        language: result.language || options.language || 'en',
-        duration: result.duration || (segments[segments.length - 1]?.end || 0),
-        segments,
-      };
+      const fileBuffer = await fsp.readFile(filePath);
+      const samples = await lib.decodeAudioAsync(new Uint8Array(fileBuffer), filePath);
+      const segments: WhisperSegment[] = [];
+      const params = this.buildParams(lib, options, segments);
+      const text = model.full(params, samples);
+      return this.buildResult(lib, model, text, segments, startTime, options.language);
     } catch (error) {
       logger.error('Whisper file transcription failed:', error);
       throw new Error(`File transcription failed: ${(error as Error).message}`);
     }
+  }
+
+  /** Load the native module + model on demand; both are required for any transcription call. */
+  private async requireModel(): Promise<{ lib: WhisperModule; model: InstanceType<WhisperModule['Whisper']> }> {
+    if (!this.model) {
+      await this.initialize();
+    }
+    if (!this.lib || !this.model) {
+      throw new Error('Whisper model failed to initialize');
+    }
+    return { lib: this.lib, model: this.model };
+  }
+
+  private buildParams(lib: WhisperModule, options: WhisperTranscribeOptions, segments: WhisperSegment[]): InstanceType<WhisperModule['WhisperFullParams']> {
+    const params = new lib.WhisperFullParams(lib.WhisperSamplingStrategy.Greedy);
+    if (options.language === 'auto') {
+      params.detectLanguage = true;
+    } else {
+      params.language = options.language || 'en';
+    }
+    params.temperature = 0;
+    if (options.vadFilter) {
+      params.suppressNonSpeechTokens = true;
+    }
+    params.onNewSegment = (segment) => {
+      segments.push({ start: segment.start, end: segment.end, text: segment.text.trim() });
+    };
+    return params;
+  }
+
+  private buildResult(
+    lib: WhisperModule,
+    model: InstanceType<WhisperModule['Whisper']>,
+    text: string,
+    segments: WhisperSegment[],
+    startTime: number,
+    requestedLanguage: 'sw' | 'en' | 'auto' | undefined
+  ): WhisperTranscriptionResult {
+    let language: string;
+    if (requestedLanguage === 'auto') {
+      // whisper.cpp exposes the language detected during the last full() run via the state's lang id
+      const langId = model.state?.fullLangId ?? -1;
+      language = lib.Whisper.lang(langId) || 'en';
+    } else {
+      language = requestedLanguage || 'en';
+    }
+
+    return {
+      text: text.trim() || segments.map((s) => s.text).join(' ').trim(),
+      language,
+      languageProbability: segments.length > 0 ? 0.95 : 0.5,
+      duration: (Date.now() - startTime) / 1000,
+      segments,
+    };
   }
 
   /**
@@ -269,6 +209,7 @@ class WhisperTranscriptionService {
   async shutdown(): Promise<void> {
     if (this.model) {
       this.model = null;
+      this.lib = null;
       this.initialized = false;
       logger.info('Whisper transcription service shut down');
     }

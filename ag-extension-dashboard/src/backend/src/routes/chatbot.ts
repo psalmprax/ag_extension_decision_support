@@ -544,6 +544,57 @@ async function loadRagBlock(message: string): Promise<{ context: string; citatio
 /**
  * POST /api/chatbot/completions — AI Assistant inference proxy with RAG, tools, and history.
  */
+interface ChatToolDefinition {
+  type: 'function';
+  function: { name: string; description: string; parameters: Record<string, unknown> };
+}
+
+const buildToolDefinitions = (): ChatToolDefinition[] =>
+  mcpAdapter.convertToMCPTools().map((t: { name: string; description: string; inputSchema: Record<string, unknown> }) => ({
+    type: 'function' as const,
+    function: { name: t.name, description: t.description, parameters: t.inputSchema },
+  }));
+
+const executeToolCalls = async (toolCalls: Array<{ function: { name: string; arguments: unknown } }>): Promise<string[]> => {
+  const results: string[] = [];
+  for (const toolCall of toolCalls) {
+    try {
+      const toolResult = await mcpAdapter.callTool(toolCall.function.name, toolCall.function.arguments as Record<string, unknown>);
+      results.push(`Tool ${toolCall.function.name} result: ${toolResult.content[0]?.text || 'No output'}`);
+    } catch (toolErr) {
+      logger.error(`Tool ${toolCall.function.name} execution failed:`, toolErr);
+      results.push(`Tool ${toolCall.function.name} error: ${toolErr instanceof Error ? toolErr.message : String(toolErr)}`);
+    }
+  }
+  return results;
+};
+
+/** First pass: let the LLM decide if it needs tools; executes any requested tools and synthesizes the final answer. */
+const runAssistantTurn = async (systemPrompt: string, message: string, tools: ChatToolDefinition[]): Promise<{ text: string; usedToolNames: string[] }> => {
+  const response = await AIRouter.routeRequest('generate', {
+    prompt: `${systemPrompt}\n\nMESSAGE: ${message}`,
+    options: {
+      tools: tools.length > 0 ? tools : undefined,
+      temperature: 0.2,
+    },
+  });
+
+  let assistantText = (response?.text ?? '').toString().trim();
+  const toolCalls = (response?.toolCalls ?? []) as Array<{ function: { name: string; arguments: unknown } }>;
+  if (toolCalls.length > 0) {
+    const toolResults = await executeToolCalls(toolCalls);
+
+    // Second pass: feed tool results back to the model
+    const followUpPrompt = `${systemPrompt}\n\nMESSAGE: ${message}\n\nTOOL RESULTS:\n${toolResults.join('\n')}\n\nNow provide a comprehensive answer using the tool results.`;
+    const followUp = await AIRouter.routeRequest('generate', {
+      prompt: followUpPrompt,
+      options: { temperature: 0.2 },
+    });
+    assistantText = (followUp?.text ?? '').toString().trim() || assistantText;
+  }
+  return { text: assistantText || 'I am sorry, I could not generate a response.', usedToolNames: toolCalls.map((tc) => tc.function.name) };
+};
+
 router.post('/completions', authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), checkUsageLimit('ai_chat'), async (req: AuthedRequest, res: Response) => {
   try {
     const user = req.user;
@@ -576,54 +627,9 @@ router.post('/completions', authorize(['admin', 'regional_manager', 'extension_o
       [body.conversation_id ?? null, sanitizedMessage, body.language ?? null]
     );
 
-    // Build system prompt with available tools
-    const toolDefinitions = mcpAdapter.convertToMCPTools().map((t: { name: string; description: string; inputSchema: Record<string, unknown> }) => ({
-      type: 'function' as const,
-      function: {
-        name: t.name,
-        description: t.description,
-        parameters: t.inputSchema,
-      },
-    }));
-
     const systemPrompt = `You are an agricultural extension advisory assistant. Answer the farmer's or officer's message using the knowledge base context when relevant. You have access to specialized agricultural tools — use them when they can provide accurate, data-driven information. Be concise and actionable.${historyBlock}${ragResult.context}`;
 
-    // First pass: let the LLM decide if it needs tools
-    const response = await AIRouter.routeRequest('generate', {
-      prompt: `${systemPrompt}\n\nMESSAGE: ${sanitizedMessage}`,
-      options: {
-        tools: toolDefinitions.length > 0 ? toolDefinitions : undefined,
-        temperature: 0.2,
-      },
-    });
-
-    let assistantText = (response?.text ?? '').toString().trim();
-
-    // If the model requested tool calls, execute them
-    if (response?.toolCalls && response.toolCalls.length > 0) {
-      const toolResults: string[] = [];
-      for (const toolCall of response.toolCalls) {
-        try {
-          const toolResult = await mcpAdapter.callTool(toolCall.function.name, toolCall.function.arguments);
-          toolResults.push(`Tool ${toolCall.function.name} result: ${toolResult.content[0]?.text || 'No output'}`);
-        } catch (toolErr) {
-          logger.error(`Tool ${toolCall.function.name} execution failed:`, toolErr);
-          toolResults.push(`Tool ${toolCall.function.name} error: ${toolErr instanceof Error ? toolErr.message : String(toolErr)}`);
-        }
-      }
-
-      // Second pass: feed tool results back to the model
-      const followUpPrompt = `${systemPrompt}\n\nMESSAGE: ${sanitizedMessage}\n\nTOOL RESULTS:\n${toolResults.join('\n')}\n\nNow provide a comprehensive answer using the tool results.`;
-      const followUp = await AIRouter.routeRequest('generate', {
-        prompt: followUpPrompt,
-        options: { temperature: 0.2 },
-      });
-      assistantText = (followUp?.text ?? '').toString().trim() || assistantText;
-    }
-
-    if (!assistantText) {
-      assistantText = 'I am sorry, I could not generate a response.';
-    }
+    const { text: assistantText, usedToolNames } = await runAssistantTurn(systemPrompt, sanitizedMessage, buildToolDefinitions());
 
     // Persist assistant message
     await query(
@@ -640,7 +646,7 @@ router.post('/completions', authorize(['admin', 'regional_manager', 'extension_o
           { role: 'assistant', content: assistantText },
         ],
         citations: ragResult.citations,
-        usedTools: response?.toolCalls?.map((tc: { function: { name: string } }) => tc.function.name) || [],
+        usedTools: usedToolNames,
       },
     });
   } catch (error) {
@@ -699,7 +705,7 @@ router.post('/conversations/:id/read', authorize(['admin', 'regional_manager', '
     try {
       const mod = await import('@/index').catch(() => ({}) as { io?: { to: (r: string) => { emit: (e: string, d: unknown) => void } } });
       (mod as { io?: { to: (r: string) => { emit: (e: string, d: unknown) => void } } }).io?.to(`conversation:${convId}`).emit('messages_read', { conversationId: convId, userId: user.userId, at: new Date().toISOString() });
-    } catch {}
+    } catch (e) { logger.debug('messages_read notify skipped:', e); }
     return res.json({ success: true });
   } catch (e) { logger.error('Read receipt failed:', e); return safeError(res, 500, 'Read failed'); }
 });

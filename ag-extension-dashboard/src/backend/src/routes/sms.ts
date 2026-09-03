@@ -60,7 +60,7 @@ router.post('/inbound', verifyInboundWebhookSignature, async (req: Request, res:
 router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
 
 // Phone-string prior to E.164 formatting — allow common user entry, service validates E.164 after formatting
-const phoneInput = z.string().regex(/^\+?[0-9\s\-\(\).]{7,22}$/, 'Phone number must be 7–22 digits/space/dash');
+const phoneInput = z.string().regex(/^\+?[0-9\s\-().]{7,22}$/, 'Phone number must be 7–22 digits/space/dash');
 
 // SMS Schema
 const sendSMSSchema = z.object({
@@ -294,6 +294,10 @@ router.post('/ai-diagnosis', checkUsageLimit('ai_vision'), validate({ body: aiDi
 
 // Helper function to parse diagnosis fields from AI response
 // Previously defined above, now moved after the route handler
+/** Map provider-specific delivery statuses onto the app's sms_history states. */
+const normalizeDeliveryStatus = (status: string): string =>
+    status === 'success' ? 'delivered' : status === 'sent' ? 'sent' : status === 'failed' || status === 'undelivered' ? 'failed' : status;
+
 // Helper function to parse diagnosis fields from AI response
 const parseDiagnosisField = (response: string, field: string): string => {
     const lines = response.split('\n');
@@ -370,7 +374,7 @@ router.post('/delivery', verifyInboundWebhookSignature, async (req: Request, res
         const phone = (req.body.phoneNumber || req.body.recipient || req.body.to || req.body.To || '').toString();
         const messageId = (req.body.messageId || req.body.MessageSid || req.body.id || '').toString();
         if (status) {
-            const normalized = status === 'success' ? 'delivered' : status === 'sent' ? 'sent' : status === 'failed' || status === 'undelivered' ? 'failed' : status;
+            const normalized = normalizeDeliveryStatus(status);
             if (messageId) {
                 await query(`UPDATE sms_history SET status = $1 WHERE id = $2`, [normalized, messageId]);
             } else if (phone) {

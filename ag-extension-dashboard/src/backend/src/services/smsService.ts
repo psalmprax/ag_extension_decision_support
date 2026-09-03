@@ -279,7 +279,7 @@ class SMSService {
             const c = getCache();
             if (!c) return;
             await c.del(SMSService.USSD_REDIS_PREFIX + sessionId);
-        } catch { }
+        } catch (e) { logger.debug(`USSD session ${sessionId} redis delete skipped:`, e); }
     }
 
     private async getUssdSession(sessionId: string): Promise<{ phoneNumber: string; step: number; data: Record<string, string>; lastActiveAt: number } | null> {

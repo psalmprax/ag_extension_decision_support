@@ -268,22 +268,8 @@ export class OmniRouteService {
     if (primary) {
       const key = `${primary.providerName}:${primary.model}`;
       if (!this.blocklist.has(key)) {
-        try {
-          const result = await this.tryCandidate(primary, messages);
-          if (result) {
-            this.recordSuccess(key);
-            return result;
-          }
-        } catch (err: unknown) {
-          const errorMsg = (err as Error).message || '';
-          if (errorMsg.includes('QUOTA') || errorMsg.includes('429') || errorMsg.includes('402')) {
-            logger.warn(`[OmniRoute] Quota hit for ${key}. Adding to 15m blocklist.`);
-            this.blocklist.add(key);
-            setTimeout(() => this.blocklist.delete(key), 15 * 60 * 1000);
-          }
-          this.recordFailure(key);
-          logger.warn(`[OmniRoute] Primary ${key} failed. Transitioning to next candidate...`);
-        }
+        const result = await this.attemptCandidate(primary, messages, /* isPrimary */ true);
+        if (result) return result;
       }
     }
 
@@ -296,22 +282,8 @@ export class OmniRouteService {
         continue;
       }
 
-      try {
-        const result = await this.tryCandidate(candidate, messages);
-        if (result) {
-          this.recordSuccess(key);
-          return result;
-        }
-      } catch (err: unknown) {
-        const errorMsg = (err as Error).message || '';
-        if (errorMsg.includes('QUOTA') || errorMsg.includes('429') || errorMsg.includes('402')) {
-          logger.warn(`[OmniRoute] Quota hit for ${key}. Adding to 15m blocklist.`);
-          this.blocklist.add(key);
-          setTimeout(() => this.blocklist.delete(key), 15 * 60 * 1000);
-        }
-        this.recordFailure(key);
-        logger.warn(`[OmniRoute] ${key} failed. Transitioning to next candidate...`);
-      }
+      const result = await this.attemptCandidate(candidate, messages, /* isPrimary */ false);
+      if (result) return result;
     }
 
     // Fail loudly: serving a canned diagnosis-shaped response in an agricultural
@@ -320,5 +292,32 @@ export class OmniRouteService {
     throw new Error(
       `OmniRoute exhausted all ${sorted.length} candidate model(s) — no free or paid fallback provider is configured and healthy`
     );
+  }
+
+  /** Try one candidate; on quota errors add it to the 15m blocklist, record success/failure, and log the transition. */
+  private static async attemptCandidate(
+    candidate: RouteCandidate,
+    messages: Array<{ role: string; content: string }>,
+    isPrimary: boolean
+  ): Promise<{ text: string; providerUsed: string; modelUsed: string; isFreeModel: boolean } | null> {
+    const key = `${candidate.providerName}:${candidate.model}`;
+    try {
+      const result = await this.tryCandidate(candidate, messages);
+      if (result) {
+        this.recordSuccess(key);
+        return result;
+      }
+      return null;
+    } catch (err: unknown) {
+      const errorMsg = (err as Error).message || '';
+      if (errorMsg.includes('QUOTA') || errorMsg.includes('429') || errorMsg.includes('402')) {
+        logger.warn(`[OmniRoute] Quota hit for ${key}. Adding to 15m blocklist.`);
+        this.blocklist.add(key);
+        setTimeout(() => this.blocklist.delete(key), 15 * 60 * 1000);
+      }
+      this.recordFailure(key);
+      logger.warn(`[OmniRoute] ${isPrimary ? 'Primary ' : ''}${key} failed. Transitioning to next candidate...`);
+      return null;
+    }
   }
 }

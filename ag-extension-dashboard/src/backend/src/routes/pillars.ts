@@ -11,7 +11,7 @@ import { computeAgronomicCreditScore, evaluateParametricInsuranceClaim } from '@
 import { clusterPestSightings, forecastSwarmTrajectory } from '@/services/pestSwarmRadarService';
 import { findCrossBorderArbitrage } from '@/services/crossBorderTradeService';
 import { findAvailableEquipment, planDroneSprayMission } from '@/services/mechanizationFleetService';
-import { findNearbySuppliers, findNearbySuppliersLive, verifyBatchNumber } from '@/services/inputSupplierService';
+import { findNearbySuppliersLive, verifyBatchNumber } from '@/services/inputSupplierService';
 import { aggregateHarvestProjections, matchOfftakerContracts } from '@/services/harvestOfftakeService';
 import { calculateVpdKPa, evaluateSmartIrrigation } from '@/services/iotTelemetryService';
 import { analyzeParcelMultispectral } from '@/services/satelliteNdviService';
@@ -165,7 +165,7 @@ router.post('/voice/transcribe', checkUsageLimit('speech'), validate({ body: z.o
 
 router.post('/voice/transcribe-local', checkUsageLimit('speech'), validate({ body: z.object({ audio: z.string().optional(), audioUrl: z.string().optional(), mimeType: z.string().optional(), languageHint: z.string().optional() }) }), async (req: AuthRequest, res: Response) => {
     try {
-        const { audio, audioUrl, mimeType, languageHint } = req.body as { audio?: string; audioUrl?: string; mimeType?: string; languageHint?: string };
+        const { audio, languageHint } = req.body as { audio?: string; audioUrl?: string; mimeType?: string; languageHint?: string };
         const audioBuffer = audio ? Buffer.from(audio.includes('base64,') ? audio.split('base64,')[1] : audio, 'base64') : undefined;
         // Use local Whisper transcription service (free, offline-capable)
         const { whisperTranscriptionService } = await import('@/services/whisperTranscriptionService');
