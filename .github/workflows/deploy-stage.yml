@@ -93,6 +93,7 @@ jobs:
           npm ci
           npx prisma generate
           npx prisma db push --skip-generate
+          npm run shared:sync
           npm run lint
           npx tsc --noEmit
           npm run build

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import React from 'react';
 import { FarmerMap } from '../FarmerMap';
 import { LanguageProvider } from '../../lib/LanguageContext';
@@ -33,13 +33,17 @@ vi.mock('@/components/outbreaks/OutbreakLayer', () => ({
   OutbreakLayer: () => <div data-testid="outbreak-layer" />,
 }));
 
-const renderWithProviders = (ui: React.ReactElement) => {
-  return render(<LanguageProvider>{ui}</LanguageProvider>);
+const renderWithProviders = async (ui: React.ReactElement) => {
+  const result = render(<LanguageProvider>{ui}</LanguageProvider>);
+  await act(async () => {
+    await new Promise(resolve => setTimeout(resolve, 0));
+  });
+  return result;
 };
 
 describe('FarmerMap Component - Unexpanded State', () => {
-  it('renders unexpanded map container with default 400px height and children', () => {
-    renderWithProviders(<FarmerMap />);
+  it('renders unexpanded map container with default 400px height and children', async () => {
+    await renderWithProviders(<FarmerMap />);
 
     const mapContainer = screen.getByTestId('map-container');
     expect(mapContainer).toBeDefined();
@@ -60,15 +64,15 @@ describe('FarmerMap Component - Unexpanded State', () => {
     expect(screen.getByTestId('outbreak-layer')).toBeDefined();
   });
 
-  it('renders with custom height prop when not expanded', () => {
-    const { container } = renderWithProviders(<FarmerMap height="350px" />);
+  it('renders with custom height prop when not expanded', async () => {
+    const { container } = await renderWithProviders(<FarmerMap height="350px" />);
 
     const outerWrapper = container.firstChild as HTMLElement;
     expect(outerWrapper).toBeDefined();
     expect(outerWrapper.style.height).toBe('350px');
   });
 
-  it('renders farmer markers from props', () => {
+  it('renders farmer markers from props', async () => {
     const customFarmers = [
       {
         id: 'f-1',
@@ -90,7 +94,7 @@ describe('FarmerMap Component - Unexpanded State', () => {
       },
     ];
 
-    renderWithProviders(<FarmerMap farmers={customFarmers} />);
+    await renderWithProviders(<FarmerMap farmers={customFarmers} />);
 
     const markers = screen.getAllByTestId('map-marker');
     expect(markers.length).toBe(2);

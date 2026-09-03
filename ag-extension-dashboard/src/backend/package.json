@@ -18,6 +18,7 @@
     "shared:sync": "node scripts/sync-shared-api.js",
     "shared:check": "node scripts/sync-shared-api.js --check",
     "predev": "node scripts/sync-shared-api.js",
+    "prelint": "node scripts/sync-shared-api.js",
     "prebuild": "node scripts/sync-shared-api.js",
     "pretest": "node scripts/sync-shared-api.js"
   },

@@ -129,6 +129,11 @@ jobs:
         env:
           DATABASE_URL: postgres://psalmprax:password@localhost:5432/ag_extension
 
+      - name: Generate vendored shared API contract for backend checks
+        run: |
+          cd ag-extension-dashboard/src/backend
+          npm run shared:sync
+
       - name: Lint backend
         run: |
           cd ag-extension-dashboard/src/backend
@@ -286,15 +291,13 @@ jobs:
         run: |
           PATTERNS=(
             "-----BEGIN (RSA|EC|OPENSSH|DSA|PRIVATE) KEY-----"
-            "AIza[0-9A-Za-z-_]{35}"
+            "AIza[0-9A-Za-z_-]{35}"
             "sk-[a-zA-Z0-9]{20,48}"
             "ghp_[a-zA-Z0-9]{36}"
           )
           for pattern in "${PATTERNS[@]}"; do
-            MATCHES=$(grep -rnEI "$pattern" \
-              --exclude-dir={node_modules,.git,dist,.output,.wxt,coverage,logs} \
-              --exclude={"*.lock","package-lock.json","*.min.js",".env.example"} \
-              . || true)
+            MATCHES=$(git grep -nEI -- "$pattern" -- \
+              ':!*.lock' ':!package-lock.json' ':!*.min.js' ':!.env.example' || true)
             if [ -n "$MATCHES" ]; then
               echo "::error::Secret pattern detected: $pattern"
               exit 1
@@ -304,6 +307,9 @@ jobs:
       - name: Audit frontend dependencies
         run: |
           node scripts/npm-audit-gate.cjs --dir ag-extension-dashboard/src/frontend --level high
+
+      - name: Audit root tooling dependencies
+        run: node scripts/npm-audit-gate.cjs --dir . --level high
 
       - name: Audit backend dependencies
         run: |
