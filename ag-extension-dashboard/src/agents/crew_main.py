@@ -85,7 +85,17 @@ async def call_mcp_tool(tool_name: str, arguments: dict) -> dict:
         return {"error": str(e), "fallback": True}
 
 
-# Crew AI tools that call backend MCP endpoints
+# Crew AI tools that call backend MCP endpoints.
+#
+# Honesty contract: when the MCP backend is unreachable or a tool fails, the tools
+# below return an explicit [UNAVAILABLE] marker — never invented numbers (weather
+# values, prices, diagnoses). LLM agents consuming these strings must treat
+# [UNAVAILABLE] as "no data", not as content to paraphrase.
+
+def _unavailable(tool: str, reason: str) -> str:
+    return f"[UNAVAILABLE] {tool}: {reason}. No data was retrieved; do not estimate values."
+
+
 class WeatherTool(BaseTool):
     name: str = "get_weather_forecast"
     description: str = "Get weather forecast for a location. Use this to provide farming advice based on weather."
@@ -95,94 +105,117 @@ class WeatherTool(BaseTool):
         try:
             result = asyncio.run(call_mcp_tool("get_weather_forecast", {"location": location, "days": days}))
             if "error" in result:
-                return f"Weather forecast for {location} ({days} days): Sunny, 25°C, low humidity. Good for harvesting. [Fallback: {result.get('error', 'MCP unavailable')}]"
+                return _unavailable("get_weather_forecast", result.get('error', 'MCP unavailable'))
             data = result.get("data", {})
-            return f"Weather forecast for {location}: {data.get('summary', 'Sunny, 25°C')}. Good for harvesting."
+            summary = data.get("summary")
+            if not summary:
+                return _unavailable("get_weather_forecast", "service returned no forecast summary")
+            return f"Weather forecast for {location}: {summary}."
         except Exception as e:
-            return f"Weather forecast for {location} ({days} days): Sunny, 25°C, low humidity. Good for harvesting. [Error: {str(e)}]"
+            return _unavailable("get_weather_forecast", str(e))
 
 
 class MarketPriceTool(BaseTool):
     name: str = "get_market_prices"
-    description: str = "Get current market prices for crops. Use this to advise farmers on when to sell."
+    description: str = "Get current market prices for crops. Use this to advise farmers on when to sell. Returns an [UNAVAILABLE] marker when the data service is unreachable — state that price data is unavailable rather than estimating."
 
     def _run(self, crop: str, region: str = "East Africa") -> str:
         import asyncio
         try:
             result = asyncio.run(call_mcp_tool("get_market_prices", {"crop": crop, "region": region}))
             if "error" in result:
-                return f"Market price for {crop} in {region}: $350/ton (trending up 5%) [Fallback: {result.get('error', 'MCP unavailable')}]"
+                return _unavailable("get_market_prices", result.get('error', 'MCP unavailable'))
             data = result.get("data", {})
-            return f"Market price for {crop} in {region}: {data.get('price', '$350/ton')} ({data.get('trend', 'trending up 5%')})"
+            price = data.get("price")
+            if not price:
+                return _unavailable("get_market_prices", "service returned no price for this crop/region")
+            trend = data.get("trend", "trend unknown")
+            return f"Market price for {crop} in {region}: {price} ({trend})."
         except Exception as e:
-            return f"Market price for {crop} in {region}: $350/ton (trending up 5%) [Error: {str(e)}]"
+            return _unavailable("get_market_prices", str(e))
 
 
 class DiseaseDiagnosisTool(BaseTool):
     name: str = "diagnose_plant_disease"
-    description: str = "Diagnose plant disease from symptoms. Use this to identify crop diseases."
+    description: str = "Diagnose plant disease from symptoms. Use this to identify crop diseases. Returns an [UNAVAILABLE] marker when the diagnosis service is unreachable — state that a diagnosis could not be generated rather than guessing."
 
     def _run(self, symptoms: str, crop: str) -> str:
         import asyncio
         try:
             result = asyncio.run(call_mcp_tool("diagnose_plant_disease", {"symptoms": symptoms, "crop": crop}))
             if "error" in result:
-                return f"Potential diagnosis for {crop} with symptoms '{symptoms}': Early blight (confidence: 75%). Recommend copper-based fungicide. [Fallback: {result.get('error', 'MCP unavailable')}]"
+                return _unavailable("diagnose_plant_disease", result.get('error', 'MCP unavailable'))
             data = result.get("data", {})
-            return f"Diagnosis for {crop}: {data.get('diagnosis', 'Early blight')} (confidence: {data.get('confidence', '75%')}). Recommendation: {data.get('treatment', 'copper-based fungicide')}"
+            diagnosis = data.get("diagnosis")
+            if not diagnosis:
+                return _unavailable("diagnose_plant_disease", "service returned no diagnosis")
+            confidence = data.get("confidence")
+            treatment = data.get("treatment", "treatment unspecified")
+            return f"Diagnosis for {crop}: {diagnosis} (confidence: {confidence if confidence is not None else 'not stated'}). Recommendation: {treatment}"
         except Exception as e:
-            return f"Potential diagnosis for {crop} with symptoms '{symptoms}': Early blight (confidence: 75%). Recommend copper-based fungicide. [Error: {str(e)}]"
+            return _unavailable("diagnose_plant_disease", str(e))
 
 
 class SoilAnalysisTool(BaseTool):
     name: str = "analyze_soil"
-    description: str = "Analyze soil conditions for a location. Use this for fertilizer recommendations."
+    description: str = "Analyze soil conditions for a location. Use this for fertilizer recommendations. Returns an [UNAVAILABLE] marker when the soil service is unreachable — state that soil data is unavailable rather than estimating."
 
     def _run(self, location: str) -> str:
         import asyncio
         try:
             result = asyncio.run(call_mcp_tool("analyze_soil", {"location": location}))
             if "error" in result:
-                return f"Soil analysis for {location}: pH 6.2, N: 45ppm, P: 22ppm, K: 180ppm. Recommended: 50kg/ha DAP at planting. [Fallback: {result.get('error', 'MCP unavailable')}]"
+                return _unavailable("analyze_soil", result.get('error', 'MCP unavailable'))
             data = result.get("data", {})
-            return f"Soil analysis for {location}: pH {data.get('ph', '6.2')}, N: {data.get('nitrogen', '45ppm')}, P: {data.get('phosphorus', '22ppm')}, K: {data.get('potassium', '180ppm')}. Recommended: {data.get('recommendation', '50kg/ha DAP at planting')}"
+            ph = data.get("ph")
+            if ph is None:
+                return _unavailable("analyze_soil", "service returned no soil analysis")
+            nitrogen = data.get("nitrogen", "N unknown")
+            phosphorus = data.get("phosphorus", "P unknown")
+            potassium = data.get("potassium", "K unknown")
+            recommendation = data.get("recommendation", "no fertilizer recommendation returned")
+            return f"Soil analysis for {location}: pH {ph}, N: {nitrogen}, P: {phosphorus}, K: {potassium}. Recommended: {recommendation}"
         except Exception as e:
-            return f"Soil analysis for {location}: pH 6.2, N: 45ppm, P: 22ppm, K: 180ppm. Recommended: 50kg/ha DAP at planting. [Error: {str(e)}]"
+            return _unavailable("analyze_soil", str(e))
 
 
 class PestOutbreakTool(BaseTool):
     name: str = "get_pest_outbreaks"
-    description: str = "Get current pest outbreak alerts for a region."
+    description: str = "Get current pest outbreak alerts for a region. Returns an [UNAVAILABLE] marker when the outbreak service is unreachable — state that outbreak data is unavailable rather than assuming there are no outbreaks."
 
     def _run(self, region: str = "East Africa", crop: str = "") -> str:
         import asyncio
         try:
             result = asyncio.run(call_mcp_tool("get_pest_outbreaks", {"region": region, "crop": crop}))
             if "error" in result:
-                return f"Pest outbreak check for {region}: No active outbreaks reported. [Fallback: {result.get('error', 'MCP unavailable')}]"
+                return _unavailable("get_pest_outbreaks", result.get('error', 'MCP unavailable'))
             data = result.get("data", {})
             outbreaks = data.get("outbreaks", [])
             if not outbreaks:
                 return f"Pest outbreak check for {region}: No active outbreaks reported."
             return f"Active pest outbreaks in {region}: " + "; ".join([f"{o.get('pest', 'Unknown')} on {o.get('crop', 'crops')} ({o.get('severity', 'medium')})" for o in outbreaks[:3]])
         except Exception as e:
-            return f"Pest outbreak check for {region}: No active outbreaks reported. [Error: {str(e)}]"
+            return _unavailable("get_pest_outbreaks", str(e))
 
 
 class CropYieldForecastTool(BaseTool):
     name: str = "forecast_crop_yield"
-    description: str = "Forecast crop yield based on weather, soil, and management data."
+    description: str = "Forecast crop yield based on weather, soil, and management data. Returns an [UNAVAILABLE] marker when the forecast service is unreachable — state that a yield forecast is unavailable rather than estimating."
 
     def _run(self, crop: str, location: str, area_hectares: float = 1.0) -> str:
         import asyncio
         try:
             result = asyncio.run(call_mcp_tool("forecast_crop_yield", {"crop": crop, "location": location, "area_hectares": area_hectares}))
             if "error" in result:
-                return f"Yield forecast for {crop} in {location}: ~{area_hectares * 3:.1f} tons/ha (estimated). [Fallback: {result.get('error', 'MCP unavailable')}]"
+                return _unavailable("forecast_crop_yield", result.get('error', 'MCP unavailable'))
             data = result.get("data", {})
-            return f"Yield forecast for {crop} in {location}: {data.get('yield_per_hectare', f'{area_hectares * 3:.1f}')} tons/ha (confidence: {data.get('confidence', 'medium')})"
+            yield_per_ha = data.get("yield_per_hectare")
+            if yield_per_ha is None:
+                return _unavailable("forecast_crop_yield", "service returned no yield estimate")
+            confidence = data.get("confidence", "confidence not stated")
+            return f"Yield forecast for {crop} in {location}: {yield_per_ha} tons/ha (confidence: {confidence})"
         except Exception as e:
-            return f"Yield forecast for {crop} in {location}: ~{area_hectares * 3:.1f} tons/ha (estimated). [Error: {str(e)}]"
+            return _unavailable("forecast_crop_yield", str(e))
 
 
 # Authentication dependency
@@ -584,21 +617,17 @@ Consider:
                 elif any(kw in content.lower() for kw in ['recommend', 'suggest', 'should', 'action']):
                     recommendations.append(content)
         
-        # Ensure we have content
+        # Ensure we have content — mark as unstated rather than fabricating findings
         if not findings:
             findings = [
-                f"Analysis completed for {region} focusing on {analysis_type}",
-                "Multiple data sources were analyzed",
-                "Key patterns and trends were identified"
+                f"[UNAVAILABLE] The model output for {region} ({analysis_type}) contained no parseable findings.",
+                "No findings are reported rather than inventing them."
             ]
         
         if not recommendations:
             recommendations = [
-                "Monitor local conditions regularly",
-                "Consult with extension officers for specific advice",
-                "Implement best practices for crop management",
-                "Stay informed about market trends",
-                "Prepare for seasonal changes"
+                "[UNAVAILABLE] The model output contained no parseable recommendations.",
+                "Consult your local extension officer for region-specific guidance."
             ]
         
         return MultiAgentResult(
@@ -647,21 +676,17 @@ Consider:
             elif in_recommendations and (line.startswith('- ') or line.startswith('* ') or line.startswith('1.') or line.startswith('2.')):
                 recommendations.append(line.lstrip('- *1234567890. '))
         
-        # Ensure minimum content
+        # Ensure minimum content — mark as unstated rather than fabricating findings
         if not findings:
             findings = [
-                f"Comprehensive {analysis_type} analysis completed for {region}",
-                "Data was analyzed from multiple sources",
-                "Key trends and patterns were identified"
+                f"[UNAVAILABLE] The model output for {region} ({analysis_type}) contained no parseable findings.",
+                "No findings are reported rather than inventing them."
             ]
         
         if not recommendations:
             recommendations = [
-                "Continue monitoring local conditions",
-                "Follow recommended agricultural practices",
-                "Consult with local extension services",
-                "Stay updated on market conditions",
-                "Implement risk mitigation strategies"
+                "[UNAVAILABLE] The model output contained no parseable recommendations.",
+                "Consult your local extension officer for region-specific guidance."
             ]
         
         return MultiAgentResult(
@@ -769,13 +794,13 @@ class ResearchService:
             except Exception as e:
                 logger.error(f"Direct research failed: {e}")
         
-        # Complete fallback
+        # Complete fallback — explicit unavailable state, no invented content
         processing_time = (datetime.utcnow() - start_time).total_seconds() * 1000
         return {
             "status": "fallback",
             "topic": request.topic,
             "depth": request.depth.value,
-            "findings": f"Research on {request.topic} at {request.depth.value} depth. AI services unavailable - using basic information.",
+            "findings": f"[UNAVAILABLE] Research on {request.topic} could not be generated: AI services (CrewAI and OpenAI) are unavailable. No research was conducted and no content was invented. Retry when the AI provider is available.",
             "generated_at": datetime.utcnow().isoformat(),
             "processing_time_ms": int(processing_time)
         }

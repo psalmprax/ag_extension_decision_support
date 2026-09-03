@@ -57,6 +57,22 @@ describe('Frontier Agricultural Capabilities (IoT, EUDR, Drone Fleet, Swarm Rada
       expect(result.isDeforestationFree).toBe(true);
       expect(result.auditConclusion).toBe('compliant_for_eu_export');
       expect(result.eudrDueDiligenceReference).toContain('EUDR-DDS-KEN-');
+      expect(result.provenance.kind).toBe('computed_from_supplied_inputs');
+    });
+
+    it('fails CLOSED when canopy evidence is missing — never fabricates a compliance claim', () => {
+      const result = verifyEudrDeforestationCompliance({
+        parcelId: 'coffee-plot-no-evidence',
+        country: 'Kenya',
+        commodity: 'coffee',
+        centroid: [-0.18, 35.95],
+        polygonVertexCount: 4,
+        // No canopy values supplied — defaults were removed deliberately
+      });
+
+      expect(result.auditConclusion).toBe('assessment_unavailable');
+      expect(result.isDeforestationFree).toBeNull();
+      expect(result.provenance.kind).toBe('unavailable');
     });
 
     it('generates verifiable GS1 Digital Link farm-to-fork batch passports', () => {
@@ -73,14 +89,20 @@ describe('Frontier Agricultural Capabilities (IoT, EUDR, Drone Fleet, Swarm Rada
       expect(passport.gs1DigitalLinkUrl).toContain('https://id.agriextension.org/01/');
       expect(passport.digitalSignatureHash).toHaveLength(64);
       expect(passport.chemicalResidueMrlStatus).toBe('pending_lab');
+      // Passport provenance must disclose the demo GTIN / display-only hash
+      expect(passport.provenance.kind).toBe('demo_reference_data');
+      expect(passport.provenance.demoData).toBe(true);
+      expect(passport.provenance.assumptions.some(a => a.includes('DEMO'))).toBe(true);
     });
   });
 
   describe('Shared Mechanization & Agricultural Drone Fleet Dispatcher', () => {
     it('searches for available tractor and drone mechanization assets', () => {
-      const equipment = findAvailableEquipment({ county: 'Nakuru' });
+      const { equipment } = findAvailableEquipment({ county: 'Nakuru' });
       expect(equipment.length).toBeGreaterThan(0);
       expect(equipment.some(e => e.assetType === 'spraying_drone_t30')).toBe(true);
+      // Demo directory must be disclosed as such
+      expect(findAvailableEquipment({ county: 'Nakuru' }).provenance.kind).toBe('demo_reference_data');
     });
 
     it('plans ULV drone spraying missions across smallholder cluster blocks', () => {
@@ -147,7 +169,9 @@ describe('Frontier Agricultural Capabilities (IoT, EUDR, Drone Fleet, Swarm Rada
 
       expect(forecast.forecast24hCentroid[0]).toBeLessThan(0.5); // Moved South
       expect(forecast.forecast48hCentroid[0]).toBeLessThan(forecast.forecast24hCentroid[0]);
-      expect(forecast.predictedImpactCounties.length).toBeGreaterThan(0);
+      // Counties come only from sighting data — none invented for this cluster
+      expect(forecast.predictedImpactCounties).toEqual([]);
+      expect(forecast.provenance.kind).toBe('deterministic_estimation');
     });
   });
 

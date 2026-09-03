@@ -1,9 +1,12 @@
 /**
- * @deprecated Specification phase only — not wired to any API surface (route, tool, worker, or app.ts).
- * See docs/PILLAR_SERVICES_DECISION.md for details.
- * These services exist only in test files and have no production integration.
+ * Soil Organic Carbon MRV (IPCC Tier 2 math) — wired via POST /api/pillars/soil/*.
+ *
+ * Computation is exact IPCC-formula math over caller-supplied lab samples. Credit
+ * revenue is indicative only: it is not a Verra-verified inventory and uses a default
+ * carbon price and fixed FX rate. Disclosed via the `provenance` block.
  */
 import { logger } from '../utils/logger';
+import { pillarProvenance } from './provenance';
 
 export interface SoilSamplePoint {
   sampleId: string;
@@ -25,6 +28,7 @@ export interface SoilCarbonAuditResult {
   estimatedCarbonRevenueKes: number;
   complianceTier: 'IPCC Tier 1' | 'IPCC Tier 2 (Soil-Specific MRV)' | 'Verra VM0042 Verified';
   recommendations: string[];
+  provenance: ReturnType<typeof pillarProvenance>;
 }
 
 const VAN_BEMMELEN_FACTOR = 0.58; // SOM to SOC conversion factor (58% of SOM is Organic Carbon)
@@ -82,5 +86,15 @@ export function auditSoilCarbonSequestration(params: {
       'Adopt minimum tillage / direct seeding to prevent aeration oxidation of topsoil organic carbon',
       'Apply 2-3 tons/ha biochar or composted manure annually to build recalcitrant carbon fractions',
     ],
+    provenance: pillarProvenance(
+      'computed_from_supplied_inputs',
+      'SOC stock and delta are IPCC Tier 2 math over caller-supplied lab samples. Revenue is indicative only — not a verified carbon inventory and not a registry credit.',
+      [
+        'SOM→SOC factor 0.58 (Van Bemmelen); CO2 ratio 44/12',
+        'Default carbon price $22.5/tCO2e when not supplied',
+        'FX fixed at 130 KES/USD',
+      ],
+      false
+    ),
   };
 }

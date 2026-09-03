@@ -1,9 +1,14 @@
 /**
- * @deprecated Specification phase only — not wired to any API surface (route, tool, worker, or app.ts).
- * See docs/PILLAR_SERVICES_DECISION.md for details.
- * These services exist only in test files and have no production integration.
+ * Pest swarm clustering and wind-drift trajectory estimation — wired via POST /api/pillars/pest/*
+ * and GET /api/worldmonitor/layers.
+ *
+ * Clustering is a heuristic neighbor-merge over caller-supplied sightings; trajectory is
+ * deterministic wind-vector math with fixed flight-window assumptions. Impact counties
+ * are geometric guesses, not boundary intersections; urgent actions are generic agronomic
+ * guidance, not dispatch commands. Disclosed via the `provenance` block.
  */
 import { logger } from '../utils/logger';
+import { pillarProvenance } from './provenance';
 
 export interface PestSightingReport {
   id: string;
@@ -23,6 +28,8 @@ export interface SwarmCluster {
   sightingCount: number;
   radiusKm: number;
   severityLevel: 'moderate' | 'high' | 'critical';
+  /** Counties of the sightings in this cluster, when the caller supplies them. */
+  counties?: string[];
 }
 
 export interface SwarmTrajectoryForecast {
@@ -33,6 +40,7 @@ export interface SwarmTrajectoryForecast {
   forecast48hCentroid: [number, number];
   predictedImpactCounties: string[];
   recommendedUrgentActions: string[];
+  provenance: ReturnType<typeof pillarProvenance>;
 }
 
 function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -80,6 +88,7 @@ export function clusterPestSightings(
         sightingCount: neighbors.length,
         radiusKm: epsilonKm,
         severityLevel: hasCritical ? 'critical' : hasModerate ? 'high' : 'moderate',
+        counties: Array.from(new Set(neighbors.map(n => n.county).filter(Boolean))),
       });
     }
   }
@@ -117,18 +126,33 @@ export function forecastSwarmTrajectory(params: {
   const lat48 = +(cluster.centroid[0] + deltaLat24 * 2).toFixed(4);
   const lng48 = +(cluster.centroid[1] + deltaLng24 * 2).toFixed(4);
 
-  // DEMO: county list is illustrative; real trajectory would intersect admin boundaries
+  // Impact counties: only the counties observed in the cluster's sightings, when the
+  // caller supplies them. Trajectory-to-boundary intersection is not implemented, so
+  // no counties are invented when the data is absent.
+  const affectedCounties = Array.isArray(cluster.counties)
+    ? Array.from(new Set(cluster.counties.filter(Boolean)))
+    : [];
+
   return {
     cluster,
     windSpeedKmh,
     windDirectionDegrees,
     forecast24hCentroid: [lat24, lng24],
     forecast48hCentroid: [lat48, lng48],
-    predictedImpactCounties: ['Nakuru', 'Baringo', 'Laikipia'],
+    predictedImpactCounties: affectedCounties,
     recommendedUrgentActions: [
-      '[DEMO] Issue 24h advisory (requires dispatch integration) to farmers in predicted corridor',
-      '[DEMO] Pre-position biopesticide — verify stock before mobilizing',
-      '[DEMO] Notify phytosanitary teams — requires ministry integration',
+      'Issue a 24h advisory to farmers in the projected downwind corridor',
+      'Verify biopesticide stock before requesting pre-positioning',
+      'Notify county phytosanitary teams',
     ],
+    provenance: pillarProvenance(
+      'deterministic_estimation',
+      'Wind-drift trajectory from deterministic math (swarm flies ~60% of wind speed, 8h flight window). Impact counties are a geometric approximation from sighting data, not admin-boundary intersection.',
+      [
+        'Flight speed assumed 60% of wind speed',
+        'Assumed 8 hours of flight per 24h window',
+        'County impact derived from cluster sighting counties, not boundary geometry',
+      ]
+    ),
   };
 }

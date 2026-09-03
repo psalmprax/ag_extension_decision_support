@@ -17,7 +17,7 @@ import { calculateVpdKPa, evaluateSmartIrrigation } from '@/services/iotTelemetr
 import { analyzeParcelMultispectral } from '@/services/satelliteNdviService';
 import { calculateSocStock, auditSoilCarbonSequestration } from '@/services/soilCarbonMrvService';
 import { calculateAgronomicRoi } from '@/services/agronomicRoiService';
-import { evaluateWeatherHazards, runProactiveHazardScan } from '@/services/weatherHazardDaemonService';
+import { evaluateWeatherHazardsWithProvenance, runProactiveHazardScan } from '@/services/weatherHazardDaemonService';
 import { transcribeVoiceNote, synthesizeVoiceAdvisory } from '@/services/voiceAudioService';
 import { generateIvrXml, processDtmfResponse, dispatchVoiceBroadcast } from '@/services/ivrBroadcastService';
 import { getTenantBySlug, validateTenantAdvisoryCompliance } from '@/services/multiTenantFederationService';
@@ -87,13 +87,16 @@ router.post('/offtake/match', checkUsageLimit('ai_chat'), validate({ body: z.obj
 
 // ── Inputs & Mechanization ─────────────────────────────────────────────────
 router.post('/suppliers/nearby', checkUsageLimit('ai_chat'), validate({ body: z.object({ lat: z.number(), lng: z.number(), radiusKm: z.number().optional() }) }), async (req: AuthRequest, res: Response) => {
-    try { return res.json({ success: true, data: await findNearbySuppliersLive(req.body) }); } catch (e) { return safeError(res, 500, (e as Error).message); }
+    try {
+        const { dealers, provenance } = await findNearbySuppliersLive(req.body);
+        return res.json({ success: true, data: { dealers, provenance } });
+    } catch (e) { return safeError(res, 500, (e as Error).message); }
 });
 router.post('/suppliers/verify-batch', checkUsageLimit('ai_chat'), validate({ body: z.object({ batchNumber: z.string().min(1) }) }), async (req: AuthRequest, res: Response) => {
     try { return res.json({ success: true, data: verifyBatchNumber(req.body.batchNumber) }); } catch (e) { return safeError(res, 500, (e as Error).message); }
 });
 router.post('/mechanization/search', checkUsageLimit('ai_chat'), validate({ body: z.object({ county: z.string().min(1), assetType: z.string().optional() }) }), async (req: AuthRequest, res: Response) => {
-    try { return res.json({ success: true, data: findAvailableEquipment(req.body as never) }); } catch (e) { return safeError(res, 500, (e as Error).message); }
+    try { return res.json({ success: true, data: findAvailableEquipment(req.body as never).equipment }); } catch (e) { return safeError(res, 500, (e as Error).message); }
 });
 router.post('/mechanization/drone-plan', checkUsageLimit('ai_chat'), validate({ body: z.object({ targetCrop: z.string().min(1), pestTarget: z.string().min(1), totalHectares: z.number().positive(), farmerIds: z.array(z.string()), tankCapacityLiters: z.number().optional(), applicationRateLPerHa: z.number().optional() }) }), async (req: AuthRequest, res: Response) => {
     try { return res.json({ success: true, data: planDroneSprayMission(req.body as never) }); } catch (e) { return safeError(res, 500, (e as Error).message); }
@@ -145,7 +148,7 @@ router.post('/roi/calculate', checkUsageLimit('ai_chat'), validate({ body: z.obj
 router.post('/hazard/evaluate', checkUsageLimit('ai_chat'), validate({ body: z.object({
     forecast: z.array(z.object({ date: z.string(), minTempC: z.number(), maxTempC: z.number(), precipitationMm: z.number(), relativeHumidityPct: z.number(), windSpeedKmh: z.number() })),
 })}), async (req: AuthRequest, res: Response) => {
-    try { return res.json({ success: true, data: evaluateWeatherHazards(req.body.forecast as never) }); } catch (e) { return safeError(res, 500, (e as Error).message); }
+    try { return res.json({ success: true, data: evaluateWeatherHazardsWithProvenance(req.body.forecast as never) }); } catch (e) { return safeError(res, 500, (e as Error).message); }
 });
 router.post('/hazard/scan', checkUsageLimit('ai_chat'), validate({ body: z.object({
     county: z.string().min(1), forecast: z.array(z.object({ date: z.string(), minTempC: z.number(), maxTempC: z.number(), precipitationMm: z.number(), relativeHumidityPct: z.number(), windSpeedKmh: z.number() })), farmerCount: z.number().optional(),

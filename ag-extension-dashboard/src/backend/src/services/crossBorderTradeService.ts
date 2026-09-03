@@ -1,9 +1,13 @@
 /**
- * @deprecated Specification phase only — not wired to any API surface (route, tool, worker, or app.ts).
- * See docs/PILLAR_SERVICES_DECISION.md for details.
- * These services exist only in test files and have no production integration.
+ * Cross-border commodity arbitrage estimator — wired via POST /api/pillars/trade/arbitrage.
+ *
+ * Market prices are a static reference snapshot (not live quotes); freight uses a fixed
+ * illustrative corridor distance and border fees are flat estimates, not tariff schedules.
+ * All of this is disclosed per response via the `provenance` block. Integrate OSRM/HERE
+ * routing and a live price feed before treating outputs as actionable trade signals.
  */
 import { logger } from '../utils/logger';
+import { pillarProvenance } from './provenance';
 
 export interface RegionalMarketHub {
   marketId: string;
@@ -29,6 +33,7 @@ export interface ArbitrageOpportunity {
   netArbitrageProfitUsdPerTon: number;
   netMarginPct: number;
   recommendedTrade: boolean;
+  provenance: ReturnType<typeof pillarProvenance>;
 }
 
 const REGIONAL_MARKETS: RegionalMarketHub[] = [
@@ -85,10 +90,10 @@ function evaluateMarketPair(
   const grossSpread = +(destPriceUsd - originPriceUsd).toFixed(2);
   if (grossSpread <= 0) return null;
 
-  // DEMO freight model: single illustrative distance; real corridor requires OSRM/HERE routing
+  // Illustrative freight model: fixed corridor distance; real corridors require OSRM/HERE routing
   const distanceKm = 650;
   const freightCost = +(distanceKm * 0.075).toFixed(2);
-  const borderFees = 18.5; // DEMO per-ton SPS + bond estimate (not tariff schedule)
+  const borderFees = 18.5; // Flat per-ton SPS + bond estimate (not a tariff schedule)
 
   const netProfit = +(grossSpread - (freightCost + borderFees)).toFixed(2);
   const netMarginPct = +((netProfit / originPriceUsd) * 100).toFixed(1);
@@ -110,6 +115,16 @@ function evaluateMarketPair(
     netArbitrageProfitUsdPerTon: netProfit,
     netMarginPct,
     recommendedTrade: true,
+    provenance: pillarProvenance(
+      'demo_reference_data',
+      'Computed over a static reference price snapshot with an illustrative freight model. Not a live market feed; treat as a screening estimate only.',
+      [
+        'Prices are a static in-code snapshot (no live feed)',
+        'Freight distance fixed at 650km for all corridors',
+        'Border fees flat at $18.50/ton (not a tariff schedule)',
+      ],
+      true
+    ),
   };
 }
 

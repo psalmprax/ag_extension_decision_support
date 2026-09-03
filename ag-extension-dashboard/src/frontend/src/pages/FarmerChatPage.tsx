@@ -18,6 +18,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useDeviceThermalMemoryBudget } from '@/hooks/useDeviceThermalMemoryBudget';
 import { VirtualizedList } from '@/components/common/VirtualizedList';
+import { ProvenanceBadge } from '@/components/ProvenanceBadge';
 import { useDemoMode } from '@/demo';
 
 interface FarmerChatPageProps {
@@ -34,6 +35,8 @@ interface FarmerChatPageProps {
   onDeleteConversation?: (id: string) => void;
 }
 
+type HazardProvenance = import('@/components/ProvenanceBadge').PillarProvenance;
+
 /** Map hazard evaluation to a 0–100 outbreak risk score. */
 function scoreOutbreakRisk(hazards: { threatLevel: string }[]): number {
   const hasWatch = hazards.some(h => h.threatLevel === 'watch' || h.threatLevel === 'warning' || h.threatLevel === 'emergency');
@@ -42,7 +45,10 @@ function scoreOutbreakRisk(hazards: { threatLevel: string }[]): number {
 }
 
 /** Evaluate live outbreak risk for a farmer's plot from current telemetry. */
-async function fetchOutbreakRisk(telemetry: { temp: number | null; moisture: number | null }, fallbackTemp: number | undefined): Promise<number> {
+async function fetchOutbreakRisk(
+  telemetry: { temp: number | null; moisture: number | null },
+  fallbackTemp: number | undefined
+): Promise<{ risk: number; provenance: HazardProvenance | null }> {
   const { default: apiClient } = await import('@/api/client');
   const temp = telemetry.temp ?? fallbackTemp ?? 25;
   const moisture = telemetry.moisture ?? 20;
@@ -50,9 +56,10 @@ async function fetchOutbreakRisk(telemetry: { temp: number | null; moisture: num
   const { data } = await apiClient.post('/pillars/hazard/evaluate', {
     forecast: [{ date: new Date().toISOString().slice(0, 10), minTempC: Math.max(8, temp - 6), maxTempC: temp + 4, precipitationMm: moisture > 30 ? 18 : 4, relativeHumidityPct: rh, windSpeedKmh: 12 }],
   });
-  const rawHazards = (data as { data?: unknown })?.data ?? data;
-  const hazards = Array.isArray(rawHazards) ? rawHazards as { threatLevel: string }[] : [];
-  return scoreOutbreakRisk(hazards);
+  const payload = ((data as { data?: unknown })?.data ?? data) as { hazards?: { threatLevel: string }[]; provenance?: HazardProvenance } | { threatLevel: string }[];
+  const hazards = Array.isArray(payload) ? payload : payload.hazards ?? [];
+  const provenance = Array.isArray(payload) ? null : payload.provenance ?? null;
+  return { risk: scoreOutbreakRisk(hazards), provenance };
 }
 
 export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
@@ -85,6 +92,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
 
   const [plotTelemetry, setPlotTelemetry] = useState<{ ph: number | null; soc: number | null; moisture: number | null; temp: number | null; loading: boolean }>({ ph: null, soc: null, moisture: null, temp: null, loading: false });
   const [liveOutbreakRisk, setLiveOutbreakRisk] = useState<number | null>(null);
+  const [outbreakProvenance, setOutbreakProvenance] = useState<HazardProvenance | null>(null);
 
   useEffect(() => {
     if (!activeFarmerConvId || !activeConv) return;
@@ -109,13 +117,15 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
 
   const { temp: plotTemp, moisture: plotMoisture } = plotTelemetry;
   useEffect(() => {
-    if (!activeFarmerConvId || !activeConv) { setLiveOutbreakRisk(null); return; }
+    if (!activeFarmerConvId || !activeConv) { setLiveOutbreakRisk(null); setOutbreakProvenance(null); return; }
     const farmerId = (activeConv as unknown as { farmerId?: string }).farmerId;
     if (!farmerId || typeof navigator !== 'undefined' && !navigator.onLine) return;
     let cancelled = false;
     fetchOutbreakRisk({ temp: plotTemp, moisture: plotMoisture }, activeFarmer?.temperature)
-      .then(risk => { if (!cancelled) setLiveOutbreakRisk(risk); })
-      .catch(() => { if (!cancelled) setLiveOutbreakRisk(null); });
+      .then(({ risk, provenance }) => {
+        if (!cancelled) { setLiveOutbreakRisk(risk); setOutbreakProvenance(provenance); }
+      })
+      .catch(() => { if (!cancelled) { setLiveOutbreakRisk(null); setOutbreakProvenance(null); } });
     return () => { cancelled = true; };
   }, [activeFarmerConvId, activeConv, plotTemp, plotMoisture, activeFarmer?.temperature]);
 
@@ -557,7 +567,10 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                 <span>{liveOutbreakRisk != null ? `${liveOutbreakRisk}%` : activeFarmer?.outbreakRisk !== undefined ? `${activeFarmer.outbreakRisk}%` : '—'}</span>
                 {liveOutbreakRisk != null && <span className="text-[9px] font-mono text-emerald-300 bg-emerald-500/10 px-1 py-0.5 rounded border border-emerald-500/20">LIVE</span>}
               </div>
-              <div className="text-[9px] text-white/40">Pillar hazard model {liveOutbreakRisk != null ? '• live' : '• needs scouting'}</div>
+              <div className="text-[9px] text-white/40 flex items-center gap-1">
+                <span>Pillar hazard model {liveOutbreakRisk != null ? '• live' : '• needs scouting'}</span>
+                {outbreakProvenance && <ProvenanceBadge provenance={outbreakProvenance} />}
+              </div>
             </div>
           </div>
         )}

@@ -241,6 +241,7 @@ function checkExternalAPIs(): { status: string; error?: string } {
         const weatherKey = config.externalApis.weather.apiKey;
         const weatherUrl = config.externalApis.weather.url;
         const faoConfigured = !!config.externalApis.fao.url;
+        // NASA POWER requires no API key (public endpoints), so it counts as configured.
         const nasaConfigured = true;
 
         if (weatherKey || weatherUrl || faoConfigured || nasaConfigured) {

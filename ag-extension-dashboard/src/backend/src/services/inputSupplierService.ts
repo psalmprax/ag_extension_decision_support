@@ -1,9 +1,11 @@
 /**
  * Agro-input dealer directory — wired via POST /api/pillars/suppliers/*.
- * Demo dealers are used when no DB-backed registry is populated; verified-source
- * stamping reflects whether the match came from the demo list or a DB row.
+ * Live results come from the agro_input_dealers table; when the table is missing or
+ * empty the fallback demo directory is returned with an explicit demo_reference_data
+ * provenance flag so callers can never mistake it for a live registry.
  */
 import { logger } from '../utils/logger';
+import { pillarProvenance } from './provenance';
 
 export interface AgroInputItem {
   id: string;
@@ -36,6 +38,8 @@ export interface CertifiedAgroDealer {
 }
 
 const SEED_DEALERS: CertifiedAgroDealer[] = [
+  // DEMO directory: in-code reference records used until the agro_input_dealers table
+  // is populated. The `demo_reference_data` provenance block on every result says so.
   {
     id: 'dealer-nakuru-01',
     dealerName: 'Rift Valley Certified Farm Care',
@@ -157,13 +161,13 @@ export function findNearbySuppliers(params: {
     .sort((a, b) => (a.location.distanceKm || 0) - (b.location.distanceKm || 0));
 }
 
-/** DB-backed variant — queries agro_input_dealers when the table exists, otherwise falls back to demo. */
+/** DB-backed variant — queries agro_input_dealers when the table exists, otherwise falls back to demo (flagged). */
 export async function findNearbySuppliersLive(params: {
   lat: number;
   lng: number;
   radiusKm?: number;
   category?: 'seed' | 'fertilizer' | 'pesticide' | 'lime' | 'biological';
-}): Promise<CertifiedAgroDealer[]> {
+}): Promise<{ dealers: CertifiedAgroDealer[]; provenance: ReturnType<typeof pillarProvenance> }> {
   try {
     const { query } = await import('./databaseService');
     const { rows } = await query<{
@@ -178,13 +182,31 @@ export async function findNearbySuppliersLive(params: {
         phone: r.phone, isVerifiedStockist: r.is_verified, inventory: [],
       }));
       const { lat, lng, radiusKm = 50 } = params;
-      return dealers
+      const filtered = dealers
         .map(d => ({ ...d, location: { ...d.location, distanceKm: haversineKm(lat, lng, d.location.lat, d.location.lng) } }))
         .filter(d => (d.location.distanceKm || 0) <= radiusKm)
         .sort((a, b) => (a.location.distanceKm || 0) - (b.location.distanceKm || 0));
+      return {
+        dealers: filtered,
+        provenance: pillarProvenance(
+          'computed_from_supplied_inputs',
+          'Dealers queried live from the agro_input_dealers table (verified stockists only). Inventory is not seeded per dealer yet.',
+          ['Distance computed via haversine over caller coordinates'],
+          false
+        ),
+      };
     }
   } catch { /* table missing or DB unavailable — fall through to demo */ }
-  return findNearbySuppliers(params);
+  const demo = findNearbySuppliers(params);
+  return {
+    dealers: demo,
+    provenance: pillarProvenance(
+      'demo_reference_data',
+      'Live dealer DB unavailable or empty — results come from an in-code demo directory. Do not treat as a real dealer registry.',
+      ['Demo directory covers Nakuru county only'],
+      true
+    ),
+  };
 }
 
 export function verifyBatchNumber(batchNumber: string): {

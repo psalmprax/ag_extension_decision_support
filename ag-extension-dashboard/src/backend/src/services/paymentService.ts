@@ -39,13 +39,13 @@ class PaymentService {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     apiVersion: '2024-12-18.acacia' as unknown as Stripe.LatestApiVersion,
                 });
-                logger.info('Stripe payment service initialized (Real Mode)');                } catch (error) {
-                logger.warn('Failed to initialize Stripe with provided key - payments will be simulated (Demo Mode):', error);
+                logger.info('Stripe payment service initialized (Real Mode)');            } catch (error) {
+                logger.warn('Failed to initialize Stripe with provided key - card payments unavailable (PAYMENT_GATEWAY_NOT_CONFIGURED):', error);
                 this.stripe = null;
             }
         } else {
             const reason = !stripeKey ? 'Key missing' : 'Key is placeholder/invalid';
-            logger.warn(`Stripe not configured (${reason}) - payments will be simulated (Demo Mode)`);
+            logger.warn(`Stripe not configured (${reason}) - card payments unavailable (PAYMENT_GATEWAY_NOT_CONFIGURED)`);
             this.stripe = null;
         }
     }

@@ -1,8 +1,12 @@
 /**
  * Weather hazard detection — wired via POST /api/pillars/hazard/* and advisoryWorker.
  * runProactiveHazardScan will attempt real notification dispatch when a critical hazard is detected.
+ *
+ * Hazards are threshold rules over caller-supplied forecasts (deterministic_estimation);
+ * no live weather feed is ingested here. Responses carry a `provenance` block.
  */
 import { logger } from '../utils/logger';
+import { pillarProvenance } from './provenance';
 
 export interface WeatherForecastDay {
   date: string;
@@ -86,6 +90,11 @@ function evaluateDayHazards(day: WeatherForecastDay, leadHours: number): Detecte
   return dayHazards;
 }
 
+export interface HazardEvaluationResult {
+  hazards: DetectedWeatherHazard[];
+  provenance: ReturnType<typeof pillarProvenance>;
+}
+
 export function evaluateWeatherHazards(forecast: WeatherForecastDay[]): DetectedWeatherHazard[] {
   const hazards: DetectedWeatherHazard[] = [];
 
@@ -95,6 +104,19 @@ export function evaluateWeatherHazards(forecast: WeatherForecastDay[]): Detected
   }
 
   return hazards;
+}
+
+/** Threshold-rule hazard evaluation over the caller-supplied forecast, with provenance. */
+export function evaluateWeatherHazardsWithProvenance(forecast: WeatherForecastDay[]): HazardEvaluationResult {
+  return {
+    hazards: evaluateWeatherHazards(forecast),
+    provenance: pillarProvenance(
+      'deterministic_estimation',
+      'Hazards are fixed threshold rules (frost <= 3.5°C, rain >= 55mm/24h, heat >= 34°C dry, pest window 24-29°C & RH >= 80% & rain > 15mm) applied to the caller-supplied forecast. No live weather feed is ingested by this service.',
+      ['Thresholds are fixed; lead time assumes 24h per forecast day index'],
+      false
+    ),
+  };
 }
 
 export async function runProactiveHazardScan(params: {
@@ -109,6 +131,7 @@ export async function runProactiveHazardScan(params: {
   autoAlertTriggered: boolean;
   dispatchedNotificationCount: number;
   dispatchErrors?: number;
+  provenance: ReturnType<typeof pillarProvenance>;
 }> {
   const { county, forecast, farmerCount = 250, farmerIds } = params;
 
@@ -125,6 +148,7 @@ export async function runProactiveHazardScan(params: {
     autoAlertTriggered: hasCriticalHazard,
     dispatchedNotificationCount: dispatch.dispatchedCount,
     ...(dispatch.dispatchErrors ? { dispatchErrors: dispatch.dispatchErrors } : {}),
+    provenance: evaluateWeatherHazardsWithProvenance(forecast).provenance,
   };
 }
 

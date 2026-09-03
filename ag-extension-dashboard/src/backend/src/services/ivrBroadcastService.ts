@@ -1,7 +1,10 @@
 /**
- * @deprecated Specification phase only — not wired to any API surface (route, tool, worker, or app.ts).
- * See docs/PILLAR_SERVICES_DECISION.md for details.
- * These services exist only in test files and have no production integration.
+ * IVR voice broadcast — wired via POST /api/pillars/voice/*.
+ *
+ * dispatchVoiceBroadcast reports only calls actually placed through Twilio.
+ * When voice credentials or the public callback URL are missing, nothing is
+ * dispatched and the response says so (dispatchedCount: 0, provider: 'not_configured')
+ * — it never reports success for calls that were not made.
  */
 import { logger } from '../utils/logger';
 
@@ -82,11 +85,19 @@ export async function dispatchVoiceBroadcast(params: {
   alertTitle: string;
   advisorySwahili: string;
   advisoryEnglish: string;
-}): Promise<{ dispatchedCount: number; batchId: string; provider?: string; attempted?: number; failed?: number }> {
+}): Promise<{
+  dispatchedCount: number;
+  batchId: string;
+  provider?: string;
+  attempted?: number;
+  failed?: number;
+  provenance?: ReturnType<typeof import('./provenance').pillarProvenance>;
+}> {
   const { farmerPhones, alertTitle, advisorySwahili, advisoryEnglish } = params;
   const batchId = `ivr_batch_${Date.now()}`;
 
   logger.info(`Starting IVR voice broadcast ${batchId} to ${farmerPhones.length} farmers for "${alertTitle}"`);
+
 
   // Generates XML prompt for the batch (served by TwiML callback; Africa's Talking uses same XML)
   const promptXml = generateIvrXml({
@@ -128,14 +139,22 @@ export async function dispatchVoiceBroadcast(params: {
     } catch (e) {
       logger.error('Twilio IVR dispatch error:', e);
     }
-  } else if (process.env.NODE_ENV === 'production') {
-    logger.warn('IVR broadcast running in log-only mode: TWILIO_ACCOUNT_SID/TWILIO_AUTH_TOKEN/TWILIO_PHONE_NUMBER/PUBLIC_BASE_URL not fully set');
   }
 
+  // No real dispatch path configured: report zero calls, never a phantom success.
+  logger.warn(
+    `IVR broadcast ${batchId} not dispatched: TWILIO_ACCOUNT_SID/TWILIO_AUTH_TOKEN/TWILIO_PHONE_NUMBER/PUBLIC_BASE_URL not fully set (${farmerPhones.length} recipients affected)`
+  );
   return {
-    dispatchedCount: farmerPhones.length,
+    dispatchedCount: 0,
     batchId,
-    provider: 'log_only',
+    provider: 'not_configured',
     attempted: farmerPhones.length,
+    provenance: {
+      kind: 'unavailable' as const,
+      assumptions: ['Twilio voice credentials or public callback URL missing'],
+      demoData: false,
+      note: 'No calls were placed. Configure Twilio voice credentials and PUBLIC_BASE_URL to dispatch IVR broadcasts.',
+    },
   };
 }

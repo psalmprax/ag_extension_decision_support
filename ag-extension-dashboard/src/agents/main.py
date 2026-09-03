@@ -541,9 +541,9 @@ class ReportService:
         """Fallback section content when AI is unavailable — clearly marked"""
 
         content_map = {
-            "Executive Summary": f"[UNAVAILABLE] Live data for {region} is currently unavailable. This is a placeholder summary based on regional norms.",
-            "Weather Overview": f"[UNAVAILABLE] Live weather data for {region} is currently unavailable. Seasonal norms suggest moderate conditions.",
-            "Crop Status": f"[UNAVAILABLE] Live crop status for {region} is currently unavailable. Crop progress may vary from seasonal norms.",
+            "Executive Summary": f"[UNAVAILABLE] Live data for {region} is currently unavailable. No summary was generated; no regional-norm estimates are substituted.",
+            "Weather Overview": f"[UNAVAILABLE] Live weather data for {region} is currently unavailable. No weather estimates are provided.",
+            "Crop Status": f"[UNAVAILABLE] Live crop status for {region} is currently unavailable. No crop-condition estimates are provided.",
             "Market Prices": f"[UNAVAILABLE] Live market data for {region} is currently unavailable. Check local markets for current prices.",
             "Recommendations": f"[UNAVAILABLE] Without live data, specific recommendations for {region} cannot be generated. Consult your local extension officer."
         }

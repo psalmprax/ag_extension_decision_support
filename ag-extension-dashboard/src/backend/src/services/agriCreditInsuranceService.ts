@@ -1,9 +1,14 @@
 /**
- * @deprecated Specification phase only — not wired to any API surface (route, tool, worker, or app.ts).
- * See docs/PILLAR_SERVICES_DECISION.md for details.
- * These services exist only in test files and have no production integration.
+ * Agronomic credit scoring and parametric insurance claim evaluation — wired via
+ * POST /api/pillars/credit/*.
+ *
+ * Both computations are deterministic scoring formulas over caller-supplied metrics —
+ * no bureau data, satellite feed, or credit model is ingested. Loan ceilings, interest
+ * discounts, and the payout scale are fixed illustrative parameters, disclosed per
+ * response via the `provenance` block.
  */
 import { logger } from '../utils/logger';
+import { pillarProvenance } from './provenance';
 
 export interface FarmerCreditInput {
   farmerId: string;
@@ -33,6 +38,7 @@ export interface CreditScoreResult {
   maxRecommendedLoanUsd: number;
   interestRateDiscountPct: number;
   approvalStatus: 'approved' | 'review_required' | 'declined';
+  provenance: ReturnType<typeof pillarProvenance>;
 }
 
 export interface ParametricInsurancePolicy {
@@ -57,6 +63,7 @@ export interface ParametricClaimAssessment {
   approvedPayoutKes: number;
   approvedPayoutUsd: number;
   verificationSource: string;
+  provenance: ReturnType<typeof pillarProvenance>;
 }
 
 const KES_TO_USD = 0.0077;
@@ -129,6 +136,15 @@ export function computeAgronomicCreditScore(input: FarmerCreditInput): CreditSco
     maxRecommendedLoanUsd: Math.round(maxLoanKes * KES_TO_USD),
     interestRateDiscountPct: interestDiscount,
     approvalStatus,
+    provenance: pillarProvenance(
+      'computed_from_supplied_inputs',
+      'Score is a fixed-weight formula over caller-supplied performance metrics. It is not a credit-bureau product; loan ceilings and discounts are illustrative, not lender offers.',
+      [
+        'Weights: compliance 300, yield 250, soil 200, market 150, climate 100',
+        'Loan ceilings: KES 25k-95k per acre by tier (illustrative)',
+        'FX fixed at 130 KES/USD',
+      ]
+    ),
   };
 }
 
@@ -160,5 +176,11 @@ export function evaluateParametricInsuranceClaim(
     approvedPayoutKes,
     approvedPayoutUsd,
     verificationSource,
+    provenance: pillarProvenance(
+      'computed_from_supplied_inputs',
+      'Payout math over the caller-supplied observed metric and policy terms. No satellite or weather feed is ingested — the metric\'s provenance is whatever verificationSource states.',
+      ['Payout scale: 50% at strike + 10pp per unit excess, capped at 100%', 'FX fixed at 130 KES/USD'],
+      false
+    ),
   };
 }

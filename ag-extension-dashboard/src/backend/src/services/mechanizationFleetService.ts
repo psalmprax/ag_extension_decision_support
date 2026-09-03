@@ -1,9 +1,13 @@
 /**
- * @deprecated Specification phase only — not wired to any API surface (route, tool, worker, or app.ts).
- * See docs/PILLAR_SERVICES_DECISION.md for details.
- * These services exist only in test files and have no production integration.
+ * Shared mechanization fleet directory and drone-mission planner — wired via
+ * POST /api/pillars/mechanization/*.
+ *
+ * The equipment directory is in-code demo data clearly labeled '[DEMO]' at the record
+ * level; mission planning is deterministic math over caller inputs. Disclosed per
+ * response via the `provenance` block.
  */
 import { logger } from '../utils/logger';
+import { pillarProvenance } from './provenance';
 
 export interface MechanizationAsset {
   id: string;
@@ -33,6 +37,7 @@ export interface DroneSprayMissionPlan {
   batterySwapsRequired: number;
   costEstimateKes: number;
   safetyBufferWindSpeedMaxKmh: number;
+  provenance: ReturnType<typeof pillarProvenance>;
 }
 
 const REGISTERED_EQUIPMENT: MechanizationAsset[] = [
@@ -62,19 +67,34 @@ const REGISTERED_EQUIPMENT: MechanizationAsset[] = [
   },
 ];
 
+export interface EquipmentSearchResult {
+  equipment: MechanizationAsset[];
+  provenance: ReturnType<typeof pillarProvenance>;
+}
+
 export function findAvailableEquipment(params: {
   county: string;
   assetType?: MechanizationAsset['assetType'];
-}): MechanizationAsset[] {
+}): EquipmentSearchResult {
   const { county, assetType } = params;
   logger.info(`Searching mechanization equipment in ${county} (type=${assetType || 'all'})`);
 
-  return REGISTERED_EQUIPMENT.filter(
+  const equipment = REGISTERED_EQUIPMENT.filter(
     item =>
       item.county.toLowerCase() === county.toLowerCase() &&
       item.isAvailable &&
       (!assetType || item.assetType === assetType)
   );
+
+  return {
+    equipment,
+    provenance: pillarProvenance(
+      'demo_reference_data',
+      'Equipment records come from an in-code demo directory (records are prefixed [DEMO]); availability is static, not live tracking.',
+      ['Demo directory holds 2 Nakuru assets (1 tractor, 1 drone)'],
+      true
+    ),
+  };
 }
 
 export function planDroneSprayMission(params: {
@@ -121,5 +141,14 @@ export function planDroneSprayMission(params: {
     batterySwapsRequired: batterySwaps,
     costEstimateKes,
     safetyBufferWindSpeedMaxKmh: 18.0, // Do not spray if wind > 18 km/h to prevent chemical drift
+    provenance: pillarProvenance(
+      'deterministic_estimation',
+      'Mission logistics are deterministic math (sorties, flight time, battery swaps). Cost uses a fixed per-acre rate against a specific drone model — no live fleet availability is checked.',
+      [
+        'Application rate default 15 L/ha ULV',
+        'Flight time modeled at 5.5 min/ha; battery runtime 12 min',
+        'Cost fixed at KES 1,200/acre (illustrative)',
+      ]
+    ),
   };
 }

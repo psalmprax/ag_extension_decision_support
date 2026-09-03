@@ -1,9 +1,12 @@
 /**
- * @deprecated Specification phase only — not wired to any API surface (route, tool, worker, or app.ts).
- * See docs/PILLAR_SERVICES_DECISION.md for details.
- * These services exist only in test files and have no production integration.
+ * Multispectral parcel analysis (NDVI/EVI/NDWI indices) — wired via POST /api/pillars/satellite/analyze.
+ *
+ * All indices are computed from caller-supplied band reflectances; this service ingests
+ * no satellite imagery itself. Defaults for missing cloud cover and baseline are flagged
+ * in the result via the `provenance` block.
  */
 import { logger } from '../utils/logger';
+import { pillarProvenance } from './provenance';
 
 export interface MultispectralPixel {
   bandRed: number; // Sentinel-2 B4 (0.665 µm)
@@ -25,6 +28,7 @@ export interface ParcelSatelliteAnalysis {
   stressAnomaliesDetected: boolean;
   anomalyDescription?: string;
   recommendedAction: string;
+  provenance: ReturnType<typeof pillarProvenance>;
 }
 
 export interface TemporalNdviTrend {
@@ -88,7 +92,13 @@ export function analyzeParcelMultispectral(params: {
 }): ParcelSatelliteAnalysis {
   const { parcelId, pixels, cloudCoverPct = 5.0, baselineNdvi = 0.62 } = params;
 
-  logger.info(`Analyzing Sentinel-2 imagery for parcel ${parcelId} across ${pixels.length} raster pixels`);
+  logger.info(`Analyzing multispectral raster for parcel ${parcelId} across ${pixels.length} pixels`);
+
+  const derivedAssumptions = [
+    ...(params.cloudCoverPct === undefined ? ['Cloud cover not supplied — assumed 5%'] : []),
+    ...(params.baselineNdvi === undefined ? ['Baseline NDVI not supplied — assumed 0.62 for anomaly detection'] : []),
+    ...(pixels.some(p => p.bandSwir === undefined) ? ['SWIR missing on some pixels — NDWI assumes 0.15'] : []),
+  ];
 
   if (pixels.length === 0) {
     return {
@@ -102,7 +112,13 @@ export function analyzeParcelMultispectral(params: {
       chlorophyllDensityIndex: 0,
       moistureStressIndex: 1.0,
       stressAnomaliesDetected: false,
-      recommendedAction: 'No clear multispectral satellite data available. Schedule manual ground scouting.',
+      recommendedAction: 'No multispectral pixels supplied. Schedule manual ground scouting.',
+      provenance: pillarProvenance(
+        'unavailable',
+        'No pixel data in request — nothing was analyzed.',
+        [],
+        false
+      ),
     };
   }
 
@@ -144,5 +160,11 @@ export function analyzeParcelMultispectral(params: {
     stressAnomaliesDetected: isAnomaly,
     anomalyDescription: isAnomaly ? `Abrupt NDVI drop of ${deviationFromBaselinePct}% compared to historical baseline (${baselineNdvi})` : undefined,
     recommendedAction,
+    provenance: pillarProvenance(
+      'computed_from_supplied_inputs',
+      'Indices computed from caller-supplied band reflectances. This service does not ingest satellite imagery — data provenance is whatever the caller supplies.',
+      derivedAssumptions,
+      false
+    ),
   };
 }
