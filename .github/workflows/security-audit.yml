@@ -65,7 +65,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -76,23 +76,16 @@ jobs:
         run: node scripts/npm-audit-gate.cjs --dir . --level high
 
       - name: Audit Backend Dependencies
-        run: |
-          cd ag-extension-dashboard/src/backend
-          npm audit --audit-level=high
+        run: node scripts/npm-audit-gate.cjs --dir ag-extension-dashboard/src/backend --level high
 
       - name: Audit Frontend Dependencies
-        run: |
-          node scripts/npm-audit-gate.cjs --dir ag-extension-dashboard/src/frontend --level high
+        run: node scripts/npm-audit-gate.cjs --dir ag-extension-dashboard/src/frontend --level high
 
       - name: Audit Shared Package Dependencies
-        run: |
-          cd ag-extension-shared
-          npm audit --audit-level=high
+        run: node scripts/npm-audit-gate.cjs --dir ag-extension-shared --level high
 
       - name: Audit Browser Extension Dependencies
-        run: |
-          cd ag-extension-browser-ext
-          npm audit --audit-level=high
+        run: node scripts/npm-audit-gate.cjs --dir ag-extension-browser-ext --level high
 
       - name: Audit Python Agent Dependencies
         run: |

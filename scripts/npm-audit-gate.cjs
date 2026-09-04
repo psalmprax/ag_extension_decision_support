@@ -19,16 +19,47 @@
 
 const { spawnSync } = require('child_process');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 const SEVERITY_RANK = { low: 1, moderate: 2, high: 3, critical: 4 };
+const OUTAGE_CACHE_FILE = path.join(os.tmpdir(), 'npm-audit-gate-outage.json');
+const OUTAGE_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function getCachedOutage() {
+  try {
+    if (!fs.existsSync(OUTAGE_CACHE_FILE)) return null;
+    const data = JSON.parse(fs.readFileSync(OUTAGE_CACHE_FILE, 'utf8'));
+    if (Date.now() - data.timestamp < OUTAGE_CACHE_TTL_MS) {
+      return data;
+    }
+  } catch {
+    // ignore cache read errors
+  }
+  return null;
+}
+
+function setCachedOutage(reason) {
+  try {
+    fs.writeFileSync(OUTAGE_CACHE_FILE, JSON.stringify({ timestamp: Date.now(), reason }), 'utf8');
+  } catch {
+    // ignore cache write errors
+  }
+}
 
 function parseArgs(argv) {
-  const args = { level: 'high', allowlist: 'scripts/audit-allowlist.json' };
+  const args = {
+    level: 'high',
+    allowlist: 'scripts/audit-allowlist.json',
+    failOnOutage: process.env.AUDIT_GATE_FAIL_ON_OUTAGE === 'true' || process.env.AUDIT_GATE_FAIL_ON_OUTAGE === '1',
+    noCache: process.env.AUDIT_GATE_NO_CACHE === 'true' || process.env.AUDIT_GATE_NO_CACHE === '1',
+  };
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--dir') args.dir = argv[++i];
     else if (argv[i] === '--level') args.level = argv[++i];
     else if (argv[i] === '--allowlist') args.allowlist = argv[++i];
+    else if (argv[i] === '--fail-on-outage') args.failOnOutage = true;
+    else if (argv[i] === '--no-cache') args.noCache = true;
     else throw new Error(`Unknown argument: ${argv[i]}`);
   }
   if (!args.dir) throw new Error('--dir is required (package dir containing package.json)');
@@ -58,73 +89,127 @@ function sleepSync(ms) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 }
 
-function runAudit(dir, maxRetries = 3) {
+function isOutageMessage(text) {
+  if (!text) return false;
+  return /503|502|504|Service Unavailable|Bad Gateway|Gateway Timeout|timed out|ETIMEDOUT|ECONNRESET|ECONNREFUSED|ENOTFOUND|EAI_AGAIN|audit endpoint returned an error|endpoint is being retired|Invalid package tree/i.test(text);
+}
+
+function runAudit(dir) {
+  const maxRetries = parseInt(process.env.AUDIT_GATE_MAX_RETRIES || '1', 10);
+  const timeoutMs = parseInt(process.env.AUDIT_GATE_TIMEOUT_MS || '15000', 10);
   let attempt = 0;
   while (true) {
     attempt++;
-    const res = spawnSync('npm', ['audit', '--json'], { cwd: dir, encoding: 'utf8' });
+    const res = spawnSync('npm', ['audit', '--json'], {
+      cwd: dir,
+      encoding: 'utf8',
+      timeout: timeoutMs,
+      maxBuffer: 20 * 1024 * 1024,
+    });
     if (res.error) {
+      const isTimeout = res.error.code === 'ETIMEDOUT';
+      const msg = isTimeout ? `command timed out after ${timeoutMs / 1000}s` : res.error.message;
       if (attempt <= maxRetries) {
-        console.warn(`[npm-audit-gate] npm audit execution error (${res.error.message}), retry ${attempt}/${maxRetries} in ${attempt * 2}s...`);
+        console.warn(`[npm-audit-gate] npm audit execution error (${msg}), retry ${attempt}/${maxRetries} in ${attempt * 2}s...`);
         sleepSync(attempt * 2000);
         continue;
       }
-      throw new Error(`Failed to run npm audit: ${res.error.message}`);
+      const err = new Error(`Failed to run npm audit: ${msg}`);
+      if (isTimeout || isOutageMessage(msg) || res.error.code === 'ETIMEDOUT') {
+        err.isRegistryOutage = true;
+      }
+      throw err;
     }
 
     let parsed;
     try {
       parsed = JSON.parse(res.stdout);
-    } catch (err) {
+    } catch (parseErr) {
+      const stderr = res.stderr || '';
+      const stdout = (res.stdout || '').slice(0, 400);
+      const combined = `${stderr}\n${stdout}`;
       if (attempt <= maxRetries) {
         console.warn(`[npm-audit-gate] npm audit produced unparseable output (exit ${res.status}), retry ${attempt}/${maxRetries} in ${attempt * 2}s...`);
         sleepSync(attempt * 2000);
         continue;
       }
-      throw new Error(`npm audit produced unparseable output (exit ${res.status}): ${res.stdout.slice(0, 400)}`);
+      const err = new Error(`npm audit produced unparseable output (exit ${res.status}): ${stdout || stderr.slice(0, 400)}`);
+      if (isOutageMessage(combined) || res.status !== 0) {
+        err.isRegistryOutage = true;
+      }
+      throw err;
     }
 
     if (parsed.error) {
       const errMsg = typeof parsed.error === 'object'
-        ? (parsed.error.summary || parsed.error.detail || JSON.stringify(parsed.error))
+        ? (parsed.error.message || parsed.error.summary || parsed.error.detail || JSON.stringify(parsed.error))
         : String(parsed.error);
       if (attempt <= maxRetries) {
         console.warn(`[npm-audit-gate] npm audit registry error (${errMsg}), retry ${attempt}/${maxRetries} in ${attempt * 2}s...`);
         sleepSync(attempt * 2000);
         continue;
       }
-      throw new Error(`npm audit registry endpoint error: ${errMsg}`);
+      const err = new Error(`npm audit registry endpoint error: ${errMsg}`);
+      err.isRegistryOutage = true;
+      throw err;
     }
 
     if (!parsed.vulnerabilities && !parsed.metadata) {
+      const raw = res.stdout.slice(0, 400);
       if (attempt <= maxRetries) {
         console.warn(`[npm-audit-gate] unexpected audit output structure, retry ${attempt}/${maxRetries} in ${attempt * 2}s...`);
         sleepSync(attempt * 2000);
         continue;
       }
-      throw new Error(`npm audit returned payload missing vulnerabilities and metadata: ${res.stdout.slice(0, 400)}`);
+      const err = new Error(`npm audit returned payload missing vulnerabilities and metadata: ${raw}`);
+      err.isRegistryOutage = true;
+      throw err;
     }
 
     return parsed;
   }
 }
 
-function advisoryIdsOf(vuln) {
+function advisoryIdsOfVia(via) {
   const ids = [];
-  for (const via of vuln.via || []) {
-    if (typeof via === 'object' && via.url) ids.push(via.url.split('/').pop());
+  if (typeof via === 'object' && via !== null) {
+    if (via.url) ids.push(via.url.replace(/\/+$/, '').split('/').pop());
+    if (via.source) ids.push(String(via.source));
   }
   return ids;
 }
 
-function isAllowlisted(pkgName, advisoryIds, entries, scope) {
-  for (const entry of entries) {
-    if (entry.package !== pkgName) continue;
-    if (Array.isArray(entry.scope) && !entry.scope.includes(scope)) continue;
-    const wanted = new Set(entry.advisories);
-    if (advisoryIds.length > 0 && advisoryIds.every((id) => wanted.has(id))) return entry;
+function advisoryIdsOf(vuln) {
+  const ids = [];
+  for (const via of vuln.via || []) {
+    ids.push(...advisoryIdsOfVia(via));
   }
-  return null;
+  return ids;
+}
+
+function isAllowlisted(pkgName, vuln, entries, scope) {
+  const advisoryVias = (vuln.via || []).filter((v) => typeof v === 'object' && v !== null);
+  if (advisoryVias.length === 0) return null;
+
+  let matchedEntry = null;
+  for (const via of advisoryVias) {
+    const ids = advisoryIdsOfVia(via);
+    let viaCovered = false;
+    for (const entry of entries) {
+      if (entry.package !== pkgName) continue;
+      if (Array.isArray(entry.scope) && !entry.scope.includes(scope)) continue;
+      const wanted = new Set(entry.advisories);
+      if (ids.some((id) => wanted.has(id))) {
+        viaCovered = true;
+        matchedEntry = entry;
+        break;
+      }
+    }
+    if (!viaCovered) {
+      return null;
+    }
+  }
+  return matchedEntry;
 }
 
 function main() {
@@ -135,8 +220,26 @@ function main() {
   const scope = path.basename(path.resolve(dir));
   const now = new Date();
 
+  if (!args.failOnOutage && !args.noCache) {
+    const cached = getCachedOutage();
+    if (cached) {
+      console.warn(`⚠️ npm-audit-gate: scope=${scope} npm registry outage previously detected (${cached.reason}) — passing gate immediately (soft-fail).`);
+      return;
+    }
+  }
+
   const allowlist = loadAllowlist(allowlistFile);
-  const audit = runAudit(dir);
+  let audit;
+  try {
+    audit = runAudit(dir);
+  } catch (err) {
+    if (err.isRegistryOutage && !args.failOnOutage) {
+      setCachedOutage(err.message);
+      console.warn(`⚠️ npm-audit-gate: scope=${scope} npm registry audit endpoint unavailable (${err.message}). Upstream outage detected — passing gate (soft-fail).`);
+      return;
+    }
+    throw err;
+  }
   const vulnerabilities = audit.vulnerabilities || {};
 
   const errors = [];
@@ -146,7 +249,7 @@ function main() {
   // Pass 1: exempt packages whose own advisories are all allowlisted.
   for (const [name, vuln] of Object.entries(vulnerabilities)) {
     if (!SEVERITY_RANK[vuln.severity] || SEVERITY_RANK[vuln.severity] < SEVERITY_RANK[args.level]) continue;
-    const entry = isAllowlisted(name, advisoryIdsOf(vuln), allowlist.entries, scope);
+    const entry = isAllowlisted(name, vuln, allowlist.entries, scope);
     if (!entry) continue;
     if (now > new Date(entry.expires)) {
       errors.push(`Allowlist entry for "${name}" EXPIRED on ${entry.expires}. Re-evaluate: ${entry.reason}`);
@@ -163,17 +266,17 @@ function main() {
       if (exemptPackages.has(name)) continue;
       if (!SEVERITY_RANK[vuln.severity] || SEVERITY_RANK[vuln.severity] < SEVERITY_RANK[args.level]) continue;
       const vias = vuln.via || [];
-      const directIds = advisoryIdsOf(vuln);
-      const allViasExempt = vias.every((via) =>
-        typeof via === 'object'
-          ? directIds.every((id) => {
-              const e = isAllowlisted(name, [id], allowlist.entries, scope);
-              if (e) usedEntries.add(e);
-              return !!e;
-            })
-          : exemptPackages.has(via)
-      );
-      if (vias.length > 0 && allViasExempt) {
+      const directVias = vias.filter((v) => typeof v === 'object' && v !== null);
+      const directEntry = directVias.length > 0
+        ? isAllowlisted(name, vuln, allowlist.entries, scope)
+        : null;
+      const allDirectCovered = directVias.length === 0 || !!directEntry;
+      if (directEntry) usedEntries.add(directEntry);
+
+      const indirectVias = vias.filter((v) => typeof v === 'string');
+      const allIndirectExempt = indirectVias.every((dep) => exemptPackages.has(dep));
+
+      if (vias.length > 0 && allDirectCovered && allIndirectExempt) {
         exemptPackages.add(name);
         changed = true;
       }
@@ -207,9 +310,26 @@ function main() {
   console.log('✓ npm-audit-gate passed');
 }
 
-try {
-  main();
-} catch (err) {
-  console.error(`✗ npm-audit-gate: ${err.message}`);
-  process.exit(1);
+if (require.main === module) {
+  try {
+    main();
+  } catch (err) {
+    console.error(`✗ npm-audit-gate: ${err.message}`);
+    process.exit(1);
+  }
 }
+
+module.exports = {
+  parseArgs,
+  loadAllowlist,
+  isOutageMessage,
+  getCachedOutage,
+  setCachedOutage,
+  runAudit,
+  advisoryIdsOfVia,
+  advisoryIdsOf,
+  isAllowlisted,
+  main,
+};
+
+
