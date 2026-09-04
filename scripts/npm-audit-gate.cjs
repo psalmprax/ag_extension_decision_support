@@ -62,14 +62,21 @@ function runAudit(dir, maxRetries = 3) {
   let attempt = 0;
   while (true) {
     attempt++;
-    const res = spawnSync('npm', ['audit', '--json'], { cwd: dir, encoding: 'utf8' });
+    const res = spawnSync('npm', ['audit', '--json'], {
+      cwd: dir,
+      encoding: 'utf8',
+      timeout: 60000,
+      maxBuffer: 20 * 1024 * 1024,
+    });
     if (res.error) {
+      const isTimeout = res.error.code === 'ETIMEDOUT';
+      const msg = isTimeout ? 'command timed out after 60s' : res.error.message;
       if (attempt <= maxRetries) {
-        console.warn(`[npm-audit-gate] npm audit execution error (${res.error.message}), retry ${attempt}/${maxRetries} in ${attempt * 2}s...`);
+        console.warn(`[npm-audit-gate] npm audit execution error (${msg}), retry ${attempt}/${maxRetries} in ${attempt * 2}s...`);
         sleepSync(attempt * 2000);
         continue;
       }
-      throw new Error(`Failed to run npm audit: ${res.error.message}`);
+      throw new Error(`Failed to run npm audit: ${msg}`);
     }
 
     let parsed;
@@ -86,7 +93,7 @@ function runAudit(dir, maxRetries = 3) {
 
     if (parsed.error) {
       const errMsg = typeof parsed.error === 'object'
-        ? (parsed.error.summary || parsed.error.detail || JSON.stringify(parsed.error))
+        ? (parsed.error.message || parsed.error.summary || parsed.error.detail || JSON.stringify(parsed.error))
         : String(parsed.error);
       if (attempt <= maxRetries) {
         console.warn(`[npm-audit-gate] npm audit registry error (${errMsg}), retry ${attempt}/${maxRetries} in ${attempt * 2}s...`);

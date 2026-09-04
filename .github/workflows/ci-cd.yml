@@ -280,7 +280,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -312,14 +312,10 @@ jobs:
         run: node scripts/npm-audit-gate.cjs --dir . --level high
 
       - name: Audit backend dependencies
-        run: |
-          cd ag-extension-dashboard/src/backend
-          npm audit --audit-level=high
+        run: node scripts/npm-audit-gate.cjs --dir ag-extension-dashboard/src/backend --level high
 
       - name: Audit shared package dependencies
-        run: |
-          cd ag-extension-shared
-          npm audit --audit-level=high
+        run: node scripts/npm-audit-gate.cjs --dir ag-extension-shared --level high
 
       - name: Run Backend Security Tests
         run: |
