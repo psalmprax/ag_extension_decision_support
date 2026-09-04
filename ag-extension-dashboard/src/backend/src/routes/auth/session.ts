@@ -91,9 +91,10 @@ router.get('/me', async (req: Request, res: Response) => {
         const decoded = jwt.verify(token, config.jwt.secret as string) as JWTPayload;
 
         const result = await query(`
-            SELECT u.id, u.email, u.first_name, u.last_name, u.role, u.region,
-                   COALESCE(sp.name, 'Free') as plan_name,
-                   COALESCE(s.status, 'active') as subscription_status
+            SELECT u.id, u.email, u.first_name, u.last_name, u.role, u.region, u.is_demo,
+                   sp.name as plan_name,
+                   sp.price as plan_price,
+                   s.status as subscription_status
             FROM users u
             LEFT JOIN subscriptions s ON s.user_id = u.id
             LEFT JOIN subscription_plans sp ON sp.id = s.plan_id
@@ -105,7 +106,19 @@ router.get('/me', async (req: Request, res: Response) => {
             return res.status(401).json({ success: false, error: 'User not found' });
         }
 
-        const planName = user.plan_name || 'Free';
+        let planName = 'Free';
+        let isFree = true;
+        if (user.role === 'admin') {
+            planName = 'Admin';
+            isFree = false;
+        } else if (user.is_demo || user.email === 'demo@agridemo.com') {
+            planName = 'Free';
+            isFree = true;
+        } else if (user.plan_name && (user.subscription_status === 'active' || user.subscription_status === 'trialing')) {
+            const price = user.plan_price != null ? Number(user.plan_price) : 0;
+            planName = user.plan_name;
+            isFree = price === 0 || planName.toLowerCase().includes('free');
+        }
 
         res.json({
             success: true,
@@ -117,7 +130,7 @@ router.get('/me', async (req: Request, res: Response) => {
                 role: user.role,
                 region: user.region,
                 planName,
-                isFree: planName.toLowerCase() === 'free',
+                isFree,
             },
         });
     } catch {

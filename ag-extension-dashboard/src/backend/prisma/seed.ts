@@ -169,7 +169,7 @@ async function main() {
     },
   });
 
-  // Assign Pro plan to the default user if they don't have a subscription
+  // Assign Free plan to the demo user (demo/free users get 3 searches/day)
   const existingSubscription = await prisma.subscription.findUnique({
     where: { userId: user.id }
   });
@@ -178,7 +178,7 @@ async function main() {
     const subscription = await prisma.subscription.create({
       data: {
         userId: user.id,
-        planId: proPlan.id,
+        planId: freePlan.id,
         status: 'active',
         currentPeriodStart: new Date(),
         currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),

@@ -103,7 +103,7 @@ const matchesArticle = (art: DocumentArticle, category: string, query: string): 
 };
 
 export const KnowledgeBase: React.FC = () => {
-  const { addNotification, setActiveTab } = useAppStore();
+  const { user, addNotification, setActiveTab } = useAppStore();
   const { isDemo } = useDemoMode();
   const [activeTabMode, setActiveTabMode] = useState<KnowledgeTabMode>('search');
   const [searchQuery, setSearchQuery] = useState('');
@@ -111,7 +111,12 @@ export const KnowledgeBase: React.FC = () => {
   const [isAsking, setIsAsking] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [lastResult, setLastResult] = useState<Result | null>(null);
-  const [quota, setQuota] = useState<KnowledgeQuotaData | null>(null);
+  const [quota, setQuota] = useState<KnowledgeQuotaData | null>(() => {
+    if (user?.role === 'admin') {
+      return { allowed: true, current: 0, limit: -1, remaining: 999999, isFree: false };
+    }
+    return { allowed: true, current: 0, limit: 3, remaining: 3, isFree: true };
+  });
   const [activeCanvasMode, setActiveCanvasMode] = useState<SpatialCanvasMode>('phenology');
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [retrievalStep, setRetrievalStep] = useState<number>(0);
@@ -134,7 +139,10 @@ export const KnowledgeBase: React.FC = () => {
       const res = await fetchKnowledgeQuota();
       if (res.success) setQuota(res.data);
     } catch {
-      // ignore
+      // In demo or guest mode, keep standard 3/day free tier quota
+      if (user?.role !== 'admin') {
+        setQuota(prev => prev ?? { allowed: true, current: 0, limit: 3, remaining: 3, isFree: true });
+      }
     }
   };
 
@@ -173,6 +181,15 @@ export const KnowledgeBase: React.FC = () => {
         timestamp: new Date().toISOString(),
       });
       setAttachments([]);
+      if (typeof res.data.dailyRemaining === 'number' && typeof res.data.dailyLimit === 'number') {
+        setQuota(prev => ({
+          allowed: res.data.dailyRemaining! > 0,
+          current: res.data.dailyLimit! - res.data.dailyRemaining!,
+          limit: res.data.dailyLimit!,
+          remaining: res.data.dailyRemaining!,
+          isFree: prev?.isFree ?? (user?.role !== 'admin'),
+        }));
+      }
       fetchQuotaData();
 
       if (res.data.cached) {
@@ -185,7 +202,13 @@ export const KnowledgeBase: React.FC = () => {
       clearInterval(stepInterval);
       const err = error as { response?: { data?: { error?: string; limitReached?: boolean } } };
       if (err.response?.data?.limitReached) {
-        setQuota(prev => (prev ? { ...prev, remaining: 0, allowed: false } : null));
+        setQuota(prev => ({
+          allowed: false,
+          current: prev?.limit ?? 3,
+          limit: prev?.limit ?? 3,
+          remaining: 0,
+          isFree: true,
+        }));
       }
       addNotification({
         type: 'error',

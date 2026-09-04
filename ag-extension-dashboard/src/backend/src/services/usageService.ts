@@ -123,20 +123,27 @@ class UsageService {
             }
             const user = await getPrisma().user.findUnique({
                 where: { id: userId },
-                select: { role: true }
+                select: { role: true, isDemo: true, email: true }
             });
             // Only admin is exempted; all other roles use their subscription or the 3 queries/day free limit
             if (user?.role === 'admin') {
                 return false;
             }
+            if (user?.isDemo || user?.email === 'demo@agridemo.com') {
+                return true;
+            }
             const data = await this.getUsage(userId);
             if (!data || !data.plan) {
-                return process.env.NODE_ENV !== 'test';
+                if (process.env.NODE_ENV === 'test') {
+                    return false;
+                }
+                return true;
             }
             const planName = (data.plan.name?.toLowerCase() || '').trim();
-            const price = data.plan.price != null ? Number(data.plan.price) : NaN;
+            const price = data.plan.price != null ? Number(data.plan.price) : 0;
             const isFreeName = planName === 'free' || planName.startsWith('free ') || planName.includes(' free');
-            return isFreeName || price === 0;
+            const isActive = data.status === 'active' || data.status === 'trialing';
+            return isFreeName || price === 0 || !isActive;
         } catch (error) {
             logger.error(`Failed to check if user ${userId} is free:`, error);
             return process.env.NODE_ENV !== 'test';
@@ -225,11 +232,61 @@ class UsageService {
 
     async checkDailyKnowledgeLimit(userId: string, role?: string): Promise<{ allowed: boolean; current: number; limit: number; remaining: number }> {
         try {
-            const isFree = await this.isFreeUser(userId, role);
-            if (!isFree) {
+            if (role === 'admin') {
                 return { allowed: true, current: 0, limit: -1, remaining: 999999 };
             }
 
+            const user = await getPrisma().user.findUnique({
+                where: { id: userId },
+                select: { role: true, isDemo: true, email: true }
+            });
+
+            if (user?.role === 'admin') {
+                return { allowed: true, current: 0, limit: -1, remaining: 999999 };
+            }
+
+            const isDemo = Boolean(user?.isDemo || user?.email === 'demo@agridemo.com');
+            const data = await this.getUsage(userId);
+            const plan = data?.plan;
+            const price = plan?.price != null ? Number(plan.price) : 0;
+            const planName = (plan?.name?.toLowerCase() || '').trim();
+            const isFreePlan = !plan || price === 0 || planName === 'free' || planName.startsWith('free ') || planName.includes(' free');
+            const isActive = data?.status === 'active' || data?.status === 'trialing';
+
+            // Free tier users and demo users are strictly limited to 3 searches a day
+            const isFree = isDemo || isFreePlan || !isActive;
+
+            if (!isFree) {
+                // Paid subscribers: access governed by plan features
+                const features = (plan?.features || {}) as Record<string, unknown>;
+                const planLimit = typeof features.knowledgeDailyLimit === 'number' ? features.knowledgeDailyLimit : -1;
+
+                if (planLimit === -1) {
+                    return { allowed: true, current: 0, limit: -1, remaining: 999999 };
+                }
+
+                const startOfDay = new Date();
+                startOfDay.setHours(0, 0, 0, 0);
+
+                const count = await getPrisma().knowledgeSearch.count({
+                    where: {
+                        userId,
+                        createdAt: {
+                            gte: startOfDay,
+                        },
+                    },
+                });
+
+                const remaining = Math.max(0, planLimit - count);
+                return {
+                    allowed: count < planLimit,
+                    current: count,
+                    limit: planLimit,
+                    remaining
+                };
+            }
+
+            // Free or Demo user: strict 3 queries per day
             const startOfDay = new Date();
             startOfDay.setHours(0, 0, 0, 0);
 
@@ -310,8 +367,8 @@ class UsageService {
         ];
         return usageTypes.map(({ type, label }) => ({
             type,
-            current: this.getUsageCount(data, type),
-            limit: this.getLimit(features, type, isFree),
+            current: type === 'knowledge' ? dailyKnowledge.current : this.getUsageCount(data, type),
+            limit: type === 'knowledge' ? dailyKnowledge.limit : this.getLimit(features, type, isFree),
             remaining: type === 'knowledge' ? dailyKnowledge.remaining : undefined,
             label,
         }));

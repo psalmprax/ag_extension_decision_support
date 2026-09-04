@@ -14,6 +14,7 @@ import {
   askAI,
   fetchKnowledgeHistory,
   fetchKnowledgeStats,
+  fetchKnowledgeQuota,
 } from '@/api/knowledgeService';
 
 const mockGet = vi.mocked(apiClient.get);
@@ -135,6 +136,31 @@ describe('knowledgeService', () => {
 
       expect(mockGet).toHaveBeenCalledWith('/knowledge/stats');
       expect(result.data.totalQueries).toBe('15');
+    });
+  });
+
+  describe('fetchKnowledgeQuota', () => {
+    it('should fetch knowledge daily quota', async () => {
+      const mockResponse = {
+        data: {
+          success: true,
+          data: {
+            allowed: true,
+            current: 1,
+            limit: 3,
+            remaining: 2,
+            isFree: true,
+          },
+        },
+      };
+      mockGet.mockResolvedValue(mockResponse);
+
+      const result = await fetchKnowledgeQuota();
+
+      expect(mockGet).toHaveBeenCalledWith('/knowledge/quota');
+      expect(result.data.remaining).toBe(2);
+      expect(result.data.limit).toBe(3);
+      expect(result.data.isFree).toBe(true);
     });
   });
 });

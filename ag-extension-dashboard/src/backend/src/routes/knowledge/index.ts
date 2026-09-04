@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { logger } from '@/utils/logger';
-import { authorize } from '@/middleware/authorize';
+import { authorize, optionalAuth } from '@/middleware/authorize';
 import { safeError } from '@/utils/safeResponse';
 import { usageService } from '@/services/usageService';
 import searchRouter from './search';
@@ -11,17 +11,23 @@ import { createShareRoute } from '../shareRouteFactory';
 
 const router = Router();
 
-// Check daily knowledge query quota (3 per day for Free tier)
-// NOTE: stays ahead of the authorize gate (as in the original flat file) so
-// callers with an optional/expired identity still get a quota payload or 401
-// from the handler itself instead of the auth middleware.
-router.get('/quota', async (req: Request, res: Response) => {
+// Check daily knowledge query quota (3 per day for Free tier; admin is Unlimited; paid plans per subscription)
+router.get('/quota', optionalAuth, async (req: Request, res: Response) => {
     try {
         const user = (req as Request & { user?: Record<string, unknown> }).user;
-        const userId = (user?.userId || user?.id) as string;
+        const userId = (user?.userId || user?.id) as string | undefined;
         const userRole = (user?.role) as string | undefined;
         if (!userId) {
-            return res.status(401).json({ success: false, error: 'Unauthorized' });
+            return res.json({
+                success: true,
+                data: {
+                    allowed: true,
+                    current: 0,
+                    limit: 3,
+                    remaining: 3,
+                    isFree: true,
+                }
+            });
         }
         const quota = await usageService.checkDailyKnowledgeLimit(userId, userRole);
         const isFree = await usageService.isFreeUser(userId, userRole);
