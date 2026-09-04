@@ -70,13 +70,15 @@ function buildReportCsv(report: ReportListRow): Buffer {
   let csv = 'Metric,Value\n';
 
   if (data.visits) {
-    csv += `Total Visits,${data.visits.total || 0}\n`;
-    csv += `Completed Visits,${data.visits.completed || 0}\n`;
-    csv += `Total Minutes,${data.visits.totalMinutes || 0}\n`;
+    const visits = data.visits as unknown as Record<string, unknown>;
+    csv += `Total Visits,${visits.total || 0}\n`;
+    csv += `Completed Visits,${visits.completed || 0}\n`;
+    csv += `Total Minutes,${visits.totalMinutes || visits.total_minutes || 0}\n`;
   }
   if (data.conversations) {
-    csv += `Total Conversations,${data.conversations.totalConversations || 0}\n`;
-    csv += `Average Satisfaction,${data.conversations.avgSatisfaction || 0}\n`;
+    const conv = data.conversations as unknown as Record<string, unknown>;
+    csv += `Total Conversations,${conv.totalConversations || conv.total_conversations || 0}\n`;
+    csv += `Average Satisfaction,${conv.avgSatisfaction || conv.avg_satisfaction || 0}\n`;
   }
 
   return Buffer.from(csv, 'utf8');
@@ -100,26 +102,28 @@ function buildReportExcel(report: ReportListRow): Buffer {
   XLSX.utils.book_append_sheet(wb, summarySheet, 'Summary');
 
   if (data.visits) {
+    const visits = data.visits as unknown as Record<string, unknown>;
     const visitsData = [
       ['Visit Statistics'],
       [''],
       ['Metric', 'Value'],
-      ['Total Visits', data.visits.total || 0],
-      ['Completed Visits', data.visits.completed || 0],
-      ['Total Minutes', data.visits.totalMinutes || 0],
+      ['Total Visits', visits.total || 0],
+      ['Completed Visits', visits.completed || 0],
+      ['Total Minutes', visits.totalMinutes || visits.total_minutes || 0],
     ];
     const visitsSheet = XLSX.utils.aoa_to_sheet(visitsData);
     XLSX.utils.book_append_sheet(wb, visitsSheet, 'Visits');
   }
 
   if (data.conversations) {
+    const conv = data.conversations as unknown as Record<string, unknown>;
     const convData = [
       ['Conversation Statistics'],
       [''],
       ['Metric', 'Value'],
-      ['Total Conversations', data.conversations.totalConversations || 0],
-      ['Rated Conversations', data.conversations.rated || 0],
-      ['Average Satisfaction', data.conversations.avgSatisfaction || 0],
+      ['Total Conversations', conv.totalConversations || conv.total_conversations || 0],
+      ['Rated Conversations', conv.rated || 0],
+      ['Average Satisfaction', conv.avgSatisfaction || conv.avg_satisfaction || 0],
     ];
     const convSheet = XLSX.utils.aoa_to_sheet(convData);
     XLSX.utils.book_append_sheet(wb, convSheet, 'Conversations');
@@ -390,22 +394,25 @@ function drawGeneralReportDetails(doc: PDFKit.PDFDocument, report: ReportListRow
   doc.moveDown(1);
 
   if (data.visits) {
+    const visits = data.visits as unknown as Record<string, unknown>;
     doc.fontSize(12).fillColor('#2c3e50').text('Visit Statistics', { underline: true });
     doc.moveDown(0.5);
     doc.fontSize(10).fillColor('#34495e');
-    doc.text(`Total Visits: ${data.visits.total || 0}`);
-    doc.text(`Completed Visits: ${data.visits.completed || 0}`);
-    doc.text(`Total Minutes: ${data.visits.totalMinutes || 0}`);
+    doc.text(`Total Visits: ${visits.total || 0}`);
+    doc.text(`Completed Visits: ${visits.completed || 0}`);
+    doc.text(`Total Minutes: ${visits.totalMinutes || visits.total_minutes || 0}`);
     doc.moveDown(1);
   }
 
   if (data.conversations) {
+    const conv = data.conversations as unknown as Record<string, unknown>;
+    const avgSat = conv.avgSatisfaction || conv.avg_satisfaction;
     doc.fontSize(12).fillColor('#2c3e50').text('Conversation Statistics', { underline: true });
     doc.moveDown(0.5);
     doc.fontSize(10).fillColor('#34495e');
-    doc.text(`Total Conversations: ${data.conversations.totalConversations || 0}`);
-    doc.text(`Rated Conversations: ${data.conversations.rated || 0}`);
-    doc.text(`Average Satisfaction: ${data.conversations.avgSatisfaction ? Number(data.conversations.avgSatisfaction).toFixed(1) + '/5' : 'N/A'}`);
+    doc.text(`Total Conversations: ${conv.totalConversations || conv.total_conversations || 0}`);
+    doc.text(`Rated Conversations: ${conv.rated || 0}`);
+    doc.text(`Average Satisfaction: ${avgSat ? Number(avgSat).toFixed(1) + '/5' : 'N/A'}`);
     doc.moveDown(1);
   }
 

@@ -22,6 +22,10 @@ jest.mock('@/services/databaseService', () => ({
 import { query } from '@/services/databaseService';
 const queryMock = query as jest.MockedFunction<typeof query>;
 
+function mockQueryResult<T>(rows: T[], rowCount = rows.length) {
+  return { rows, rowCount, command: 'SELECT', oid: 0, fields: [] };
+}
+
 describe('Object Storage & Media Pipeline', () => {
   beforeEach(() => {
     queryMock.mockReset();
@@ -177,8 +181,8 @@ describe('Object Storage & Media Pipeline', () => {
   describe('Upload Pipeline with Quotas and Records', () => {
     it('stores a content-validated video file to object storage and writes upload record', async () => {
       queryMock
-        .mockResolvedValueOnce({ rows: [{ used: 0 }] }) // quota
-        .mockResolvedValueOnce({ rows: [{ id: 'video-rec-1', tenant_id: 'tenant-1' }] }); // insert
+        .mockResolvedValueOnce(mockQueryResult([{ used: 0 }])) // quota
+        .mockResolvedValueOnce(mockQueryResult([{ id: 'video-rec-1', tenant_id: 'tenant-1' }])); // insert
 
       const mp4Buffer = Buffer.concat([
         Buffer.from([0x00, 0x00, 0x00, 0x18]),
@@ -219,8 +223,8 @@ describe('Object Storage & Media Pipeline', () => {
 
     it('creates presigned upload and confirms direct upload', async () => {
       queryMock
-        .mockResolvedValueOnce({ rows: [{ used: 0 }] }) // quota
-        .mockResolvedValueOnce({ rows: [{ id: 'presign-row-1' }] }); // insert
+        .mockResolvedValueOnce(mockQueryResult([{ used: 0 }])) // quota
+        .mockResolvedValueOnce(mockQueryResult([{ id: 'presign-row-1' }])); // insert
 
       // In local mode, getPresignedUploadUrl errors because cloud storage is required
       await expect(createDirectUploadPresign({
@@ -239,15 +243,13 @@ describe('Object Storage & Media Pipeline', () => {
         contentType: 'video/mp4',
       });
 
-      queryMock.mockResolvedValueOnce({
-        rows: [{
-          id: 'confirm-rec-1',
-          original_name: 'test-direct.mp4',
-          mime_type: 'video/mp4',
-          size_bytes: 33,
-          sha256: 'abc123sha256',
-        }],
-      });
+      queryMock.mockResolvedValueOnce(mockQueryResult([{
+        id: 'confirm-rec-1',
+        original_name: 'test-direct.mp4',
+        mime_type: 'video/mp4',
+        size_bytes: 33,
+        sha256: 'abc123sha256',
+      }]));
 
       const confirmed = await confirmDirectUpload(testKey, 'officer-1');
       expect(confirmed.id).toBe('confirm-rec-1');
@@ -264,8 +266,8 @@ describe('Object Storage & Media Pipeline', () => {
       type: 'activity_report',
       title: 'Monthly Extension Advisory Report',
       content: {
-        visits: { total: 42, completed: 38, totalMinutes: 1950 },
-        conversations: { totalConversations: 120, rated: 95, avgSatisfaction: 4.8 },
+        visits: { total: '42', completed: '38', total_minutes: '1950' },
+        conversations: { total_conversations: '120', rated: '95', avg_satisfaction: 4.8 },
         metadata: {
           region: 'Rift Valley',
           startDate: '2026-08-01',
@@ -281,8 +283,8 @@ describe('Object Storage & Media Pipeline', () => {
 
     it('archives report bundle (PDF, CSV, Excel) to Object Storage and updates reports table', async () => {
       queryMock
-        .mockResolvedValueOnce({ rows: [sampleReport] }) // SELECT report
-        .mockResolvedValueOnce({ rows: [{ id: sampleReport.id }] }); // UPDATE reports
+        .mockResolvedValueOnce(mockQueryResult([sampleReport])) // SELECT report
+        .mockResolvedValueOnce(mockQueryResult([{ id: sampleReport.id }])); // UPDATE reports
 
       const archiveResult = await archiveReportToObjectStorage(sampleReport.id);
 
