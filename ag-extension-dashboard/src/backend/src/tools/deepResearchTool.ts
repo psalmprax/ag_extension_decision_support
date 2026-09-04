@@ -66,18 +66,37 @@ export const deepResearchTool: Tool<typeof deepResearchSchema> = {
       await fetchFaoAlerts(region, focus, results);
       await fetchWeatherContext(region, results);
 
+      // Never synthesize from nothing: an LLM asked to write "Sources consulted"
+      // over an empty corpus will invent them.
+      if (results.length === 0) {
+        return JSON.stringify({
+          topic,
+          depth,
+          focus: focus || null,
+          region: region || null,
+          sourcesConsulted: [],
+          sourceCount: 0,
+          synthesis: null,
+          status: 'no_sources',
+          message: 'No external sources were retrievable (web search, FAOSTAT and weather all returned nothing or are not configured). No synthesis was produced to avoid unsupported claims.',
+          generatedAt: new Date().toISOString(),
+        }, null, 2);
+      }
+
       // Source 4: AI synthesis
       const synthesisPrompt = `Synthesize the following research data on "${topic}" into a comprehensive agricultural analysis.
 
 Research Data:
 ${results.map(r => `--- ${r.source} ---\n${r.data}`).join('\n\n')}
 
+Rules: Only state facts supported by the research data above. If the data does not cover a point, say so explicitly rather than filling the gap. List only the sources that appear above.
+
 Provide:
 1. Executive Summary (2-3 sentences)
 2. Key Findings (bullet points)
 3. Risk Assessment (if applicable)
 4. Actionable Recommendations
-5. Sources consulted`;
+5. Sources consulted (only from the data above)`;
 
       const provider = await AIProviderFactory.getProvider('groq');
       const synthesis = await provider.generateText([

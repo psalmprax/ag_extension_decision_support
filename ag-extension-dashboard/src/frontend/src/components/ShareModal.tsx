@@ -14,7 +14,6 @@ import {
   AlertCircle,
   RefreshCcw,
 } from 'lucide-react';
-import { useLanguage } from '@/lib/LanguageContext';
 import { createShare, ShareResponse } from '@/api/shareService';
 
 interface ShareModalProps {
@@ -32,7 +31,6 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   entityId,
   entityName,
 }) => {
-  const { t: _t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [shareData, setShareData] = useState<ShareResponse['data'] | null>(null);
   const [copied, setCopied] = useState(false);

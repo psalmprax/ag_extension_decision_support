@@ -350,11 +350,16 @@ class AIProcessingService:
     def _parse_analysis_response(region: str, data_type: str, time_period: str, text: str) -> AnalysisResult:
         """Parse AI text response into structured AnalysisResult"""
 
-        risk_level = "medium"
-        if "high risk" in text.lower() or "critical" in text.lower():
+        # Risk level is only asserted when the model states it; otherwise 'unknown'.
+        lowered = text.lower()
+        if "high risk" in lowered or "critical" in lowered:
             risk_level = "high"
-        elif "low risk" in text.lower() or "minimal" in text.lower():
+        elif "low risk" in lowered or "minimal" in lowered:
             risk_level = "low"
+        elif "medium risk" in lowered or "moderate" in lowered:
+            risk_level = "medium"
+        else:
+            risk_level = "unknown"
 
         recommendations = []
         for line in text.split('\n'):
@@ -362,12 +367,13 @@ class AIProcessingService:
             if line and any(keyword in line.lower() for keyword in ['recommend', 'suggest', 'consider', 'should']):
                 recommendations.append(line)
 
-        if not recommendations:
-            recommendations = [
-                "Monitor weather conditions regularly",
-                "Check soil moisture levels",
-                "Review market prices before selling"
-            ]
+        # No canned fallbacks: if the model produced no actionable lines we say so.
+        # Confidence is a parse-quality signal over a general (non farm-specific)
+        # context, so it is deliberately capped low.
+        if recommendations:
+            confidence = 0.6 if len(recommendations) > 2 else 0.4
+        else:
+            confidence = 0.2
 
         return AnalysisResult(
             region=region,
@@ -375,12 +381,13 @@ class AIProcessingService:
             time_period=time_period,
             summary={
                 "analysis": text[:500] + "..." if len(text) > 500 else text,
+                "note": "General agronomic interpretation only — no farm-level telemetry ingested for this request.",
             },
-            recommendations=recommendations[:5],
+            recommendations=recommendations[:5] if recommendations else ["No specific recommendations could be extracted from the model output — request a targeted analysis with farm data."],
             risk_level=risk_level,
-            confidence=None,
+            confidence=confidence,
             generated_at=datetime.utcnow().isoformat(),
-            data_sources=["ai_interpretation"]
+            data_sources=["ai_interpretation_general_context_no_farm_data"]
         )
 
     @staticmethod
@@ -536,9 +543,9 @@ class ReportService:
         """Fallback section content when AI is unavailable — clearly marked"""
 
         content_map = {
-            "Executive Summary": f"[UNAVAILABLE] Live data for {region} is currently unavailable. This is a placeholder summary based on regional norms.",
-            "Weather Overview": f"[UNAVAILABLE] Live weather data for {region} is currently unavailable. Seasonal norms suggest moderate conditions.",
-            "Crop Status": f"[UNAVAILABLE] Live crop status for {region} is currently unavailable. Crop progress may vary from seasonal norms.",
+            "Executive Summary": f"[UNAVAILABLE] Live data for {region} is currently unavailable. No summary was generated; no regional-norm estimates are substituted.",
+            "Weather Overview": f"[UNAVAILABLE] Live weather data for {region} is currently unavailable. No weather estimates are provided.",
+            "Crop Status": f"[UNAVAILABLE] Live crop status for {region} is currently unavailable. No crop-condition estimates are provided.",
             "Market Prices": f"[UNAVAILABLE] Live market data for {region} is currently unavailable. Check local markets for current prices.",
             "Recommendations": f"[UNAVAILABLE] Without live data, specific recommendations for {region} cannot be generated. Consult your local extension officer."
         }
@@ -604,6 +611,14 @@ async def execute_task(request: TaskRequest, current_user: dict = Depends(verify
             "created_at": datetime.utcnow().isoformat(),
         }
         await redis_sessions.save_session(task_id, session)
+        # Webhook callback when caller supplied callback URL
+        if request.callback:
+            try:
+                import httpx
+                async with httpx.AsyncClient(timeout=5) as client:
+                    await client.post(request.callback, json={"task_id": task_id, "status": "completed", "result": serialized})
+            except Exception as cb_err:
+                logger.warn(f"Callback POST to {request.callback} failed: {cb_err}")
 
         return result
 
@@ -724,9 +739,21 @@ async def handle_report(params: Dict[str, Any]) -> Dict[str, Any]:
 
 async def handle_stealth_scrape(params: Dict[str, Any]) -> Dict[str, Any]:
     """Handle stealth scraping task for tropical data retrieval"""
-    platform = params.get("platform", "facebook")
+    from tools.cloakbrowser.cloak_platform_config import get_platform_config, CLOAK_PLATFORMS
+    platform = params.get("platform", "cabi_plantwise")
     niche = params.get("niche", "agriculture")
     region = params.get("region", "Kenya")
+
+    if not get_platform_config(platform):
+        return {
+            "success": False,
+            "error": f"Unknown scrape platform '{platform}'. Known: {sorted(CLOAK_PLATFORMS.keys())}",
+            "platform": platform,
+            "niche": niche,
+            "region": region,
+            "results": [],
+            "count": 0,
+        }
 
     try:
         scanner = CloakBrowserScanner(platform=platform)

@@ -39,8 +39,8 @@ describe('Deep-Tier Network Reliability — Idempotency Key Middleware', () => {
     nextFunction = jest.fn();
   });
 
-  it('should process first request and cache the 201 response', () => {
-    idempotencyMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
+  it('should process first request and cache the 201 response', async () => {
+    await idempotencyMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
 
     expect(nextFunction).toHaveBeenCalled();
 
@@ -51,9 +51,9 @@ describe('Deep-Tier Network Reliability — Idempotency Key Middleware', () => {
     expect(mockResponse.body).toEqual({ success: true, visitId: 'visit_999' });
   });
 
-  it('should replay cached response on duplicate retry without calling next() handler again', () => {
+  it('should replay cached response on duplicate retry without calling next() handler again', async () => {
     // 1st request
-    idempotencyMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
+    await idempotencyMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
     mockResponse.json!({ success: true, visitId: 'visit_999' });
 
     // 2nd request (spotty 2G retry with identical key)
@@ -66,7 +66,7 @@ describe('Deep-Tier Network Reliability — Idempotency Key Middleware', () => {
     };
     const secondNext = jest.fn();
 
-    idempotencyMiddleware(secondReq as Request, secondRes as Response, secondNext);
+    await idempotencyMiddleware(secondReq as Request, secondRes as Response, secondNext);
 
     // Should NOT call handler a second time!
     expect(secondNext).not.toHaveBeenCalled();

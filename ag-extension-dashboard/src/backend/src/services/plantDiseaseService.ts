@@ -2,6 +2,12 @@
 import { logger } from '@/utils/logger';
 import { AIProviderFactory } from '@/services/aiProvider/aiProvider';
 
+// NOTE: A backend ONNX inference path was removed during the truthfulness remediation:
+// it fed a uniform tensor derived from the first byte of the JPEG header into an
+// untrained surrogate model and stamped healthy outputs as `verified_source`.
+// Image diagnosis goes through the LLM vision provider below until a trained
+// on-device model is wired with real pixel decoding (see the frontend classifier).
+
 export type DiagnosticEvidenceStatus = 'verified_source' | 'no_verified_source';
 export type DiagnosticReviewStatus = 'ready' | 'needs_expert_review';
 
@@ -413,9 +419,9 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
 
         const confidence = normalizeConfidence(similarity);
         const provenance = createProvenance(
-          'Internal Plant Disease Knowledge Base',
+          'Internal heuristic knowledge base (TF-IDF symptom keyword matcher) — not a laboratory or field-verified source',
           new Date().toISOString(),
-          { evidenceStatus: 'verified_source', model: 'tfidf-symptom-matcher' }
+          { evidenceStatus: 'no_verified_source', model: 'tfidf-symptom-matcher' }
         );
         diagnoses.push({
           disease: diseaseId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
@@ -470,3 +476,5 @@ IMPORTANT: Return ONLY the JSON object, surrounded by \`\`\`json and \`\`\`. Do 
 }
 
 export const plantDiseaseService = new PlantDiseaseService();
+/** Size of the internal symptom corpus — surfaced to callers so heuristic scope is explicit. */
+export const PLANT_DISEASE_CORPUS_SIZE = Object.keys((PlantDiseaseService as unknown as { DISEASE_DATABASE: Record<string, unknown> }).DISEASE_DATABASE).length;

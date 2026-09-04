@@ -1,5 +1,6 @@
-import CONFIG from '../../shared/config';
+import CONFIG, { healthUrl, apiUrl } from '../../shared/config';
 import type { OfflineAttachment, OfflineStatus, QueuedRequest } from '../../shared/offlineTypes';
+import { mirrorUpsert, mirrorRetry, mirrorDelete, flushMirrorQueue } from '../../shared/offlineQueueMirror';
 import type { Browser } from 'wxt/browser';
 
 /** Shape of a request the background queue accepts from the sidepanel/content script. */
@@ -18,6 +19,11 @@ type BackgroundRequestMessage =
     | { action: 'queue_request'; request: BackgroundQueueRequest }
     | { action: 'store_offline_attachment'; attachment: { file: Blob; farmerId: string } }
     | { action: 'get_queued_requests' }
+    | { action: 'get_dead_letter_requests' }
+    | { action: 'retry_dead_letter_request'; id: string }
+    | { action: 'delete_dead_letter_request'; id: string }
+    | { action: 'retry_queued_request'; id: string }
+    | { action: 'delete_queued_request'; id: string }
     | { action: 'get_offline_status' }
     | { action: 'sync_now' }
     | { action: 'open_sidepanel'; tab?: string };
@@ -26,6 +32,11 @@ const BACKGROUND_ACTIONS: ReadonlySet<string> = new Set([
     'queue_request',
     'store_offline_attachment',
     'get_queued_requests',
+    'get_dead_letter_requests',
+    'retry_dead_letter_request',
+    'delete_dead_letter_request',
+    'retry_queued_request',
+    'delete_queued_request',
     'get_offline_status',
     'sync_now',
     'open_sidepanel',
@@ -116,8 +127,9 @@ export default defineBackground(() => {
 
     // IndexedDB setup for offline queue
     const DB_NAME = 'AgExtensionOffline';
-    const DB_VERSION = 2;
+    const DB_VERSION = 3;
     const QUEUE_STORE = 'queuedRequests';
+    const DEAD_LETTER_STORE = 'deadLetterQueue';
     const STATUS_STORE = 'offlineStatus';
     const ATTACHMENT_STORE = 'offlineAttachments';
     const ATTACHMENT_BUDGET_BYTES = 50 * 1024 * 1024;
@@ -147,6 +159,13 @@ export default defineBackground(() => {
                     queueStore.createIndex('timestamp', 'timestamp', { unique: false });
                 }
 
+                // Create dead letter store
+                if (!dbInstance.objectStoreNames.contains(DEAD_LETTER_STORE)) {
+                    const dlqStore = dbInstance.createObjectStore(DEAD_LETTER_STORE, { keyPath: 'id' });
+                    dlqStore.createIndex('movedToDeadLetterAt', 'movedToDeadLetterAt', { unique: false });
+                    dlqStore.createIndex('timestamp', 'timestamp', { unique: false });
+                }
+
                 // Create status store
                 if (!dbInstance.objectStoreNames.contains(STATUS_STORE)) {
                     dbInstance.createObjectStore(STATUS_STORE, { keyPath: 'key' });
@@ -167,14 +186,17 @@ export default defineBackground(() => {
             return false;
         }
 
-        // Additional connectivity check to backend
+        // Additional connectivity check to backend (GET: some proxies drop HEAD).
         try {
-            await fetch(`${CONFIG.API_BASE_URL}/health`, {
-                method: 'HEAD',
-                mode: 'no-cors',
-                cache: 'no-cache'
+            const response = await fetch(await healthUrl(), {
+                method: 'GET',
+                mode: 'cors',
+                cache: 'no-cache',
+                signal: AbortSignal.timeout(8000),
             });
-            return true;
+            // 200 healthy / 200 degraded both mean "reachable"; 503 means the API is up
+            // but unhealthy — still reachable for queue replay purposes.
+            return response.status < 500 || response.status === 503;
         } catch (error) {
             console.warn('Connectivity check failed:', error);
             return false;
@@ -222,7 +244,10 @@ export default defineBackground(() => {
 
     const storeOfflineAttachment = async (input: { file: Blob; farmerId: string }): Promise<string> => {
         if (!db) await initDB();
-        const id = `attachment-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+        const randomPart = typeof crypto !== 'undefined' && crypto.getRandomValues
+            ? crypto.getRandomValues(new Uint32Array(1))[0].toString(36).slice(2, 10)
+            : Math.random().toString(36).slice(2, 10);
+        const id = `attachment-${Date.now()}-${randomPart}`;
         const encryptedFarmerId = await encryptString(input.farmerId);
         const attachment: OfflineAttachment = { id, file: input.file, farmerId: input.farmerId, sizeBytes: input.file.size, createdAt: Date.now(), encryptedFarmerId };
         await new Promise<void>((resolve, reject) => {
@@ -299,7 +324,7 @@ export default defineBackground(() => {
         const uploadHeaders = { ...headers };
         delete uploadHeaders['Content-Type'];
         delete uploadHeaders['content-type'];
-        const response = await fetch(`${CONFIG.API_BASE_URL}/upload/upload`, { method: 'POST', headers: uploadHeaders, body: formData });
+        const response = await fetch(await apiUrl('/upload/upload'), { method: 'POST', headers: uploadHeaders, body: formData });
         const result = await response.json() as { success?: boolean; data?: { id?: string }; error?: string };
         if (!response.ok || !result.success || !result.data?.id) throw new Error(result.error || `Attachment upload failed (${response.status})`);
         attachment.uploadedId = result.data.id;
@@ -312,11 +337,40 @@ export default defineBackground(() => {
         return result.data.id;
     };
 
+    // Promise-wrapped put so callers can await durability (MV3 workers can be
+    // suspended mid-transaction; an un-awaited put may never commit).
+    const idbPut = (storeName: string, value: unknown): Promise<void> => new Promise((resolve, reject) => {
+        if (!db) return reject(new Error('IndexedDB not initialised'));
+        const tx = db.transaction([storeName], 'readwrite');
+        const req = tx.objectStore(storeName).put(value);
+        req.onerror = () => reject(new Error(req.error?.message || `put into ${storeName} failed`));
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(new Error(tx.error?.message || `transaction on ${storeName} failed`));
+    });
+
+    // Replays must carry the *current* token, not the one captured at queue time
+    // (which may have expired while offline).
+    const freshAuthHeader = async (): Promise<Record<string, string>> => {
+        try {
+            const stored = await browser.storage.local.get('authToken');
+            const token = (stored as Record<string, unknown>)?.authToken;
+            return typeof token === 'string' && token ? { Authorization: `Bearer ${token}` } : {};
+        } catch {
+            return {};
+        }
+    };
+
+    // Exponential backoff for automatic retries: 30s, 1m, 2m, ... capped at 30m.
+    const backoffMs = (retries: number): number => Math.min(30 * 60 * 1000, 30_000 * 2 ** Math.max(0, retries - 1));
+
     // Queue a request
     const queueRequest = async (request: Omit<QueuedRequest, 'id' | 'idempotencyKey' | 'timestamp' | 'retries' | 'state'> & { idempotencyKey?: string }): Promise<void> => {
         if (!db) await initDB();
 
-        const id = `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+        const randomPart = typeof crypto !== 'undefined' && crypto.getRandomValues
+            ? crypto.getRandomValues(new Uint32Array(1))[0].toString(36).substring(2, 11)
+            : Math.random().toString(36).substring(2, 11);
+        const id = `${Date.now()}-${randomPart}`;
         const queuedRequest: QueuedRequest = {
             ...request,
             id,
@@ -336,6 +390,7 @@ export default defineBackground(() => {
                 console.log('Request queued:', queuedRequest.id);
                 // Notify UI about queue update
                 notifyQueueUpdate();
+                mirrorUpsert(queuedRequest);
                 resolve();
             };
             dbRequest.onerror = () => reject(new Error(dbRequest.error?.message || 'Queue request failed'));
@@ -393,11 +448,122 @@ export default defineBackground(() => {
         });
     };
 
+    // Reset a queued request (failed/conflict) back to pending for replay.
+    const retryQueuedRequest = async (id: string): Promise<void> => {
+        if (!db) await initDB();
+
+        const item = await new Promise<QueuedRequest | undefined>((resolve, reject) => {
+            const transaction = db!.transaction([QUEUE_STORE], 'readwrite');
+            const request = transaction.objectStore(QUEUE_STORE).get(id);
+            request.onsuccess = () => resolve(request.result as QueuedRequest | undefined);
+            request.onerror = () => reject(new Error(request.error?.message || 'Get queued request failed'));
+        });
+        if (!item) throw new Error('Queued request not found');
+
+        item.state = 'pending';
+        item.retries = 0;
+        item.lastError = undefined;
+
+        await new Promise<void>((resolve, reject) => {
+            const transaction = db!.transaction([QUEUE_STORE], 'readwrite');
+            const request = transaction.objectStore(QUEUE_STORE).put(item);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(new Error(request.error?.message || 'Reset queued request failed'));
+        });
+        mirrorUpsert(item);
+        notifyQueueUpdate();
+    };
+
+    // Remove a queued request entirely (user discard).
+    const deleteQueuedRequest = async (id: string): Promise<void> => {
+        await removeQueuedRequest(id);
+        mirrorDelete(id);
+    };
+
+    // Get dead letter queue requests
+    const getDeadLetterRequests = async (): Promise<QueuedRequest[]> => {
+        if (!db) await initDB();
+
+        return new Promise((resolve, reject) => {
+            const transaction = db!.transaction([DEAD_LETTER_STORE], 'readonly');
+            const store = transaction.objectStore(DEAD_LETTER_STORE);
+            const request = store.getAll();
+
+            request.onsuccess = () => {
+                resolve(request.result || []);
+            };
+            request.onerror = () => reject(new Error(request.error?.message || 'Get dead letter requests failed'));
+        });
+    };
+
+    // Retry a dead letter request - move back to pending queue
+    const retryDeadLetterRequest = async (id: string): Promise<void> => {
+        if (!db) await initDB();
+
+        return new Promise((resolve, reject) => {
+            const dlqTransaction = db!.transaction([DEAD_LETTER_STORE], 'readwrite');
+            const dlqStore = dlqTransaction.objectStore(DEAD_LETTER_STORE);
+            const getRequest = dlqStore.get(id);
+
+            getRequest.onsuccess = () => {
+                const deadLetterItem = getRequest.result;
+                if (!deadLetterItem) {
+                    reject(new Error('Dead letter request not found'));
+                    return;
+                }
+
+                // Reset state to pending and clear dead letter metadata
+                const retryItem: QueuedRequest = {
+                    ...deadLetterItem,
+                    state: 'pending',
+                    retries: 0,
+                    lastError: undefined,
+                    movedToDeadLetterAt: undefined,
+                    originalRetries: undefined,
+                };
+
+                // Write to the live queue first; only delete from DLQ once that commits.
+                idbPut(QUEUE_STORE, retryItem)
+                    .then(() => {
+                        mirrorRetry(id);
+                        const delTx = db!.transaction([DEAD_LETTER_STORE], 'readwrite');
+                        const deleteRequest = delTx.objectStore(DEAD_LETTER_STORE).delete(id);
+                        deleteRequest.onerror = () => reject(new Error(deleteRequest.error?.message || 'Delete dead letter request failed'));
+                        delTx.oncomplete = () => {
+                            notifyQueueUpdate();
+                            resolve();
+                        };
+                    })
+                    .catch(reject);
+            };
+            getRequest.onerror = () => reject(new Error(getRequest.error?.message || 'Get dead letter request failed'));
+        });
+    };
+
+    // Delete a dead letter request permanently
+    const deleteDeadLetterRequest = async (id: string): Promise<void> => {
+        if (!db) await initDB();
+
+        return new Promise((resolve, reject) => {
+            const transaction = db!.transaction([DEAD_LETTER_STORE], 'readwrite');
+            const store = transaction.objectStore(DEAD_LETTER_STORE);
+            const request = store.delete(id);
+
+            request.onsuccess = () => {
+                notifyQueueUpdate();
+                mirrorDelete(id);
+                resolve();
+            };
+            request.onerror = () => reject(new Error(request.error?.message || 'Delete dead letter request failed'));
+        });
+    };
+
     // Process a single queued request
     const processSingleRequest = async (request: QueuedRequest): Promise<void> => {
         try {
             const headers = {
                 ...request.headers,
+                ...(await freshAuthHeader()),
                 ...(request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : {}),
             };
             let requestBody = request.body === undefined
@@ -427,13 +593,31 @@ export default defineBackground(() => {
                 console.log('Queued request processed successfully:', request.id);
                 for (const ref of request.attachmentRefs || []) await removeOfflineAttachment(ref);
                 await removeQueuedRequest(request.id);
+                mirrorDelete(request.id);
             } else if (response.status === 409) {
                 request.state = 'conflict';
                 request.lastError = (await response.text()).slice(0, 500);
-                if (db) {
-                    const transaction = db.transaction([QUEUE_STORE], 'readwrite');
-                    transaction.objectStore(QUEUE_STORE).put(request);
-                }
+                await idbPut(QUEUE_STORE, request);
+                mirrorUpsert(request);
+                notifyQueueUpdate();
+            } else if (response.status === 401 || response.status === 403) {
+                // Auth problem: retrying without a new login cannot succeed. Park it as
+                // failed (not dead-letter) so a re-login + "Sync Now" recovers it.
+                request.state = 'failed';
+                request.lastError = `HTTP ${response.status} — re-login required`;
+                request.nextAttemptAt = undefined;
+                await idbPut(QUEUE_STORE, request);
+                mirrorUpsert(request);
+                notifyQueueUpdate();
+            } else if (response.status >= 400 && response.status < 500) {
+                // Deterministic client error: replaying the same body will fail the same way.
+                request.state = 'dead_letter';
+                request.movedToDeadLetterAt = Date.now();
+                request.originalRetries = request.maxRetries;
+                request.lastError = `HTTP ${response.status}: ${(await response.text()).slice(0, 300)}`;
+                await idbPut(DEAD_LETTER_STORE, request);
+                await removeQueuedRequest(request.id);
+                mirrorUpsert(request); // server mirror learns the dead_letter state
                 notifyQueueUpdate();
             } else {
                 throw new Error(`HTTP ${response.status}`);
@@ -444,11 +628,21 @@ export default defineBackground(() => {
             request.lastError = error instanceof Error ? error.message : 'Sync failed';
 
             if (request.retries >= request.maxRetries) {
-                request.state = 'failed';
-            }
-            if (db) {
-                const transaction = db.transaction([QUEUE_STORE], 'readwrite');
-                transaction.objectStore(QUEUE_STORE).put(request);
+                // Exhausted: move to the dead-letter store. Write DLQ first, then remove from
+                // the live queue, so a suspended worker can never lose the item.
+                request.state = 'dead_letter';
+                request.movedToDeadLetterAt = Date.now();
+                request.originalRetries = request.maxRetries;
+                await idbPut(DEAD_LETTER_STORE, request);
+                await removeQueuedRequest(request.id);
+                mirrorUpsert(request);
+                notifyQueueUpdate();
+            } else {
+                // Keep it pending with a backoff so processQueue retries automatically.
+                request.state = 'pending';
+                request.nextAttemptAt = Date.now() + backoffMs(request.retries);
+                await idbPut(QUEUE_STORE, request);
+                mirrorUpsert(request);
                 notifyQueueUpdate();
             }
         }
@@ -457,8 +651,12 @@ export default defineBackground(() => {
     // Process queued requests
     const processQueue = async (): Promise<void> => {
         const requests = await getQueuedRequests();
+        const now = Date.now();
 
-        for (const request of requests.filter(item => item.state === 'pending')) {
+        const due = requests
+            .filter(item => item.state === 'pending' && (!item.nextAttemptAt || item.nextAttemptAt <= now))
+            .sort((a, b) => a.timestamp - b.timestamp);
+        for (const request of due) {
             await processSingleRequest(request);
         }
     };
@@ -478,6 +676,8 @@ export default defineBackground(() => {
         if (isOnline) {
             console.log('Connection restored, processing queue...');
             await processQueue();
+            // Retry any mirror calls that failed while offline.
+            await flushMirrorQueue();
         } else {
             console.log('Connection lost');
         }
@@ -603,6 +803,36 @@ export default defineBackground(() => {
                             sendResponse({ success: true, requests });
                         }
                         break;
+                    case 'get_dead_letter_requests':
+                        {
+                            const requests = await getDeadLetterRequests();
+                            sendResponse({ success: true, requests });
+                        }
+                        break;
+                    case 'retry_dead_letter_request':
+                        {
+                            await retryDeadLetterRequest(message.id);
+                            sendResponse({ success: true });
+                        }
+                        break;
+                    case 'delete_dead_letter_request':
+                        {
+                            await deleteDeadLetterRequest(message.id);
+                            sendResponse({ success: true });
+                        }
+                        break;
+                    case 'retry_queued_request':
+                        {
+                            await retryQueuedRequest(message.id);
+                            sendResponse({ success: true });
+                        }
+                        break;
+                    case 'delete_queued_request':
+                        {
+                            await deleteQueuedRequest(message.id);
+                            sendResponse({ success: true });
+                        }
+                        break;
                     case 'get_offline_status':
                         {
                             const status = await getOfflineStatus();
@@ -614,15 +844,38 @@ export default defineBackground(() => {
                         sendResponse({ success: true });
                         break;
                     case 'open_sidepanel':
-                        if (chromeAPI?.sidePanel && typeof sender.tab?.windowId === 'number') {
-                            await chromeAPI.sidePanel.open({ windowId: sender.tab.windowId });
-                            if (message.tab) {
-                                setTimeout(() => {
-                                    chromeAPI.runtime.sendMessage({
-                                        action: 'switch_sidepanel_tab',
-                                        tab: message.tab,
-                                    });
-                                }, 500);
+                        if (chromeAPI?.sidePanel) {
+                            let windowId: number | undefined;
+                            if (typeof sender.tab?.windowId === 'number') {
+                                windowId = sender.tab.windowId;
+                            } else {
+                                // Fallback for popup and other contexts without sender.tab
+                                try {
+                                    const windows = await chromeAPI.windows.getAll({ populate: false, windowTypes: ['normal'] });
+                                    const focused = windows.find(w => w.focused);
+                                    windowId = focused?.id;
+                                } catch {
+                                    // Last resort: try to get last focused window
+                                    try {
+                                        const lastFocused = await chromeAPI.windows.getLastFocused();
+                                        windowId = lastFocused?.id;
+                                    } catch {
+                                        windowId = undefined;
+                                    }
+                                }
+                            }
+                            if (typeof windowId === 'number') {
+                                await chromeAPI.sidePanel.open({ windowId });
+                                if (message.tab) {
+                                    setTimeout(() => {
+                                        chromeAPI.runtime.sendMessage({
+                                            action: 'switch_sidepanel_tab',
+                                            tab: message.tab,
+                                        });
+                                    }, 500);
+                                }
+                            } else {
+                                console.warn('open_sidepanel: could not determine windowId');
                             }
                         }
                         break;

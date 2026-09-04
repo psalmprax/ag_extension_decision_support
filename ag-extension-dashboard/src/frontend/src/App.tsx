@@ -3,6 +3,8 @@ import { useNavigate, useLocation, Routes, Route } from 'react-router-dom';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { ForgotPassword } from './pages/ForgotPassword';
+import { ResetPassword } from './pages/ResetPassword';
+import { VerifyEmail } from './pages/VerifyEmail';
 import { useState, Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
@@ -47,7 +49,8 @@ const TeleCallJoinPage = lazy(() =>
   import('./pages/TeleCallJoinPage').then(m => ({ default: m.TeleCallJoinPage }))
 );
 const KnowledgeBase = lazy(() =>
-  import('./components/KnowledgeBase').then(m => ({ default: m.KnowledgeBase }))
+  // webpackChunkName guides Rollup's async-chunk naming (was generic "index")
+  import(/* webpackChunkName: "knowledge-base" */ './components/KnowledgeBase').then(m => ({ default: m.KnowledgeBase }))
 );
 
 const TAB_TO_PATH: Record<string, string> = {
@@ -60,6 +63,7 @@ const TAB_TO_PATH: Record<string, string> = {
   knowledge: '/knowledge',
   aiassistant: '/ai-assistant',
   farmerchat: '/farmer-chat',
+  worldmonitor: '/world-monitor',
   sms: '/sms',
   telemetry: '/telemetry',
   agents: '/agents',
@@ -132,7 +136,7 @@ function App() {
 
   // Theme, auth, and bootstrap hooks
   useAppTheme(themeName, darkMode);
-  const { weatherLocation } = useAppBootstrap(storeUser, setActiveTab);
+  const { weatherLocation, setWeatherLocation } = useAppBootstrap(storeUser, setActiveTab);
   const { user, isOfficer } = useAppAuth(storeUser, setUser as (user: unknown) => void);
   const effectiveUser = user || storeUser;
 
@@ -402,6 +406,8 @@ function App() {
                 </div>
               }
             />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
             <Route
               path="/tele-call/:roomId"
               element={
@@ -488,7 +494,7 @@ function App() {
           globalSearchResults={globalSearchResults}
           handleGlobalSearch={handleGlobalSearch}
           weatherLocation={weatherLocation}
-          setWeatherLocation={() => {}}
+          setWeatherLocation={setWeatherLocation}
           apiUnreadCount={apiUnreadCount}
           storeUser={storeUser}
           handleLogout={handleLogout}

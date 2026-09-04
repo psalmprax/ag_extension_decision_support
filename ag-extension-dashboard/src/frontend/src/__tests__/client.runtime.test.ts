@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AxiosError } from 'axios';
+import axios, { type AxiosError } from 'axios';
 import apiClient, { getRetryDelay, shouldRetry } from '@/api/client';
 import { RemoteWipeService } from '@/services/remoteWipeService';
 
@@ -31,6 +31,7 @@ describe('API client runtime behavior', () => {
   });
 
   it('clears the session and rejects unauthorized responses without retrying', async () => {
+    vi.spyOn(axios, 'post').mockRejectedValue(new Error('refresh unavailable'));
     localStorage.setItem('token', 'token-123');
     localStorage.setItem('user', JSON.stringify({ id: 'user-1' }));
     const handler = apiClient.interceptors.response.handlers![0].rejected!;

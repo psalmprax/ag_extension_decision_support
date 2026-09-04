@@ -126,8 +126,8 @@ export interface AppState {
   setSubscription: (subscription: AppState['subscription']) => void;
 
   // Cross-route data
-  pendingSMS: { phone: string; name: string } | null;
-  setPendingSMS: (data: { phone: string; name: string } | null) => void;
+  pendingSMS: { phone: string; name?: string; message?: string } | null;
+  setPendingSMS: (data: { phone: string; name?: string; message?: string } | null) => void;
 
   // UI Elements
   contextMenu: {

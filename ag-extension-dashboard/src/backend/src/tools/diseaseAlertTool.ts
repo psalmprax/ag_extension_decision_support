@@ -10,11 +10,15 @@ const DiseaseAlertSchema = z.object({
 });
 
 /**
- * A tool that fetches real-time agricultural disease and pest alerts from the FAO Global Information and Early Warning System.
+ * Production-anomaly proxy for disease/pest pressure.
+ *
+ * This is NOT a live FAO/GIEWS alert feed. It compares FAOSTAT annual production for
+ * the two most recent available years and flags crops whose output fell sharply.
+ * FAOSTAT lags 1-2 years, so "no alerts" usually means "no recent data", not "safe".
  */
 export const diseaseAlertTool: Tool<typeof DiseaseAlertSchema> = {
   name: 'get_disease_alerts',
-  description: 'Fetches active disease, pest, and climate alerts from the FAO for a specific region. Use this to warn extension officers about imminent threats to their assigned farmers.',
+  description: 'Returns a crop-production anomaly signal derived from FAOSTAT annual statistics (a lagging proxy for disease/pest pressure, NOT real-time alerts). Use for background context only; tell the user that live field scouting and national plant-protection bulletins are the authoritative source.',
   schema: DiseaseAlertSchema,
   execute: async ({ region, crop }) => {
     logger.info(`AI Advisor fetching disease alerts for region: ${region}${crop ? `, crop: ${crop}` : ''}`);
@@ -23,19 +27,26 @@ export const diseaseAlertTool: Tool<typeof DiseaseAlertSchema> = {
       const alerts = await FAOService.getDiseaseAlerts(region, crop);
       
       if (alerts.length === 0) {
-        return `No critical disease or pest alerts found for the "${region}" region${crop ? ` regarding "${crop}"` : ''}. Situation is currently stable.`;
+        return JSON.stringify({
+          success: true,
+          alerts: [],
+          dataStatus: 'faostat_yield_anomaly_proxy',
+          message: `No FAOSTAT production anomaly detected for "${region}"${crop ? ` (${crop})` : ''}. This is a lagging statistical proxy (1–2 year delay) and does not confirm the absence of current disease or pest pressure.`,
+        });
       }
 
       return JSON.stringify({
         success: true,
+        dataStatus: 'faostat_yield_anomaly_proxy',
         alerts: alerts,
-        message: `Retrieved ${alerts.length} active alerts for the "${region}" region.`
+        message: `${alerts.length} production anomaly signal(s) for "${region}" derived from FAOSTAT year-over-year declines. Verify against current field scouting before acting.`
       });
     } catch (error) {
       logger.error('Error in diseaseAlertTool:', error);
       return JSON.stringify({
         success: false,
-        message: 'FAO Alert synchronization failed. Internal monitoring should be used as a fallback.'
+        dataStatus: 'unavailable',
+        message: 'FAOSTAT lookup failed; no anomaly signal is available. Do not infer safety from this.'
       });
     }
   },

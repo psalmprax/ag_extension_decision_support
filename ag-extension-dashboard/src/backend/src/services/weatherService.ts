@@ -240,20 +240,30 @@ export class WeatherService {
 
   /**
    * Fetch historical weather for parametric insurance claim auditing (WeatherAPI.com /history.json)
+   * `dataStatus` lets callers distinguish measured observations from the offline no-key mock.
    */
   // fallow-ignore-next-line unused-class-member
-  static async getHistoricalWeather(location: string, date: string): Promise<{ date: string; avgTempC: number; maxTempC: number; minTempC: number; totalPrecipMm: number }> {
+  static async getHistoricalWeather(location: string, date: string): Promise<{ date: string; avgTempC: number; maxTempC: number; minTempC: number; totalPrecipMm: number; dataStatus: 'live' | 'mock_estimate'; source: string }> {
     const apiKey = this.getWeatherApiKey();
     const baseUrl = this.getWeatherApiUrl();
 
     if (!apiKey) {
-      // Offline / no-key mock estimate for test and offline environments
+      // Offline / no-key mock estimate for test and offline environments.
+      // Explicitly marked so claim-audit callers never mistake it for real data.
+      // In production this is a hard error: serving estimates as claim evidence
+      // would silently corrupt insurance auditing.
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error(`Historical weather unavailable for ${location} ${date}: WEATHER_API_KEY not configured`);
+      }
+      logger.warn(`Historical weather mock returned for ${location} ${date}: WEATHER_API_KEY not configured`);
       return {
         date,
         avgTempC: 22.0,
         maxTempC: 27.0,
         minTempC: 15.0,
         totalPrecipMm: 0,
+        dataStatus: 'mock_estimate',
+        source: 'offline_mock (no WEATHER_API_KEY)',
       };
     }
 
@@ -263,12 +273,20 @@ export class WeatherService {
     });
 
     const dayData = resp.data?.forecast?.forecastday?.[0]?.day;
+    // A 200 with no forecastday means the provider has no observation for that
+    // date/location. Never substitute defaults under a 'live' label — this path
+    // feeds claim auditing.
+    if (!dayData || typeof dayData.avgtemp_c !== 'number') {
+      throw new Error(`Historical weather unavailable for ${location} ${date}: provider returned no daily observation`);
+    }
     return {
       date,
-      avgTempC: dayData?.avgtemp_c ?? 20.0,
-      maxTempC: dayData?.maxtemp_c ?? 25.0,
-      minTempC: dayData?.mintemp_c ?? 14.0,
-      totalPrecipMm: dayData?.totalprecip_mm ?? 0,
+      avgTempC: dayData.avgtemp_c,
+      maxTempC: typeof dayData.maxtemp_c === 'number' ? dayData.maxtemp_c : dayData.avgtemp_c,
+      minTempC: typeof dayData.mintemp_c === 'number' ? dayData.mintemp_c : dayData.avgtemp_c,
+      totalPrecipMm: typeof dayData.totalprecip_mm === 'number' ? dayData.totalprecip_mm : 0,
+      dataStatus: 'live' as const,
+      source: 'WeatherAPI.com /history.json',
     };
   }
 }

@@ -45,7 +45,10 @@ class BulkOperationsService {
     }
 
     private generateOperationId(): string {
-        return `bulk_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const randomPart = typeof crypto !== 'undefined' && crypto.getRandomValues
+            ? crypto.getRandomValues(new Uint32Array(1))[0].toString(36).substring(2, 9)
+            : Math.random().toString(36).substring(2, 9);
+        return `bulk_${Date.now()}_${randomPart}`;
     }
 
     private async executeBulkDelete(

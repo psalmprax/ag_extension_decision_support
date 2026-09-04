@@ -316,10 +316,16 @@ export function useBillingActions() {
   const handleVerifyTransaction = async (id: string) => {
     setActionLoading(`verify-${id}`);
     try {
-      await verifyTransaction(id);
+      const res = await verifyTransaction(id);
+      if (res && (res as { success?: boolean }).success === false) {
+        toast.error((res as { message?: string }).message || 'Verification was rejected by the server');
+      } else {
+        toast.success('Transaction verified and subscription activated');
+      }
       fetchData();
     } catch (error) {
       console.error('Verification failed:', error);
+      toast.error(((error as { response?: { data?: { error?: string } } })?.response?.data?.error || (error as Error)?.message || 'Verification failed'));
     } finally {
       setActionLoading(null);
     }
@@ -334,9 +340,13 @@ export function useBillingActions() {
         setSelectedTransactionId(null);
         setRejectReason('');
         fetchData();
+        toast.success('Transaction rejected');
+      } else {
+        toast.error((res as { message?: string }).message || 'Rejection was not accepted by the server');
       }
     } catch (error) {
       console.error('Rejection failed:', error);
+      toast.error(((error as { response?: { data?: { error?: string } } })?.response?.data?.error || (error as Error)?.message || 'Rejection failed'));
     } finally {
       setActionLoading(null);
     }
@@ -353,9 +363,12 @@ export function useBillingActions() {
       if (res.success) {
         fetchData();
         toast.success(`Successfully generated ${voucherBatch.count} vouchers!`);
+      } else {
+        toast.error((res as { message?: string }).message || 'Voucher generation was rejected by the server');
       }
     } catch (error) {
       console.error('Generation failed:', error);
+      toast.error(((error as { response?: { data?: { error?: string } } })?.response?.data?.error || (error as Error)?.message || 'Voucher generation failed'));
     } finally {
       setActionLoading(null);
     }

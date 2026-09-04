@@ -139,9 +139,12 @@ export class AgentTelemetry {
   }
 
   async record(event: Omit<TelemetryEvent, 'id' | 'timestamp'>): Promise<void> {
+    const randomPart = typeof crypto !== 'undefined' && crypto.getRandomValues
+        ? crypto.getRandomValues(new Uint32Array(1))[0].toString(36).substring(2, 8)
+        : Math.random().toString(36).substring(2, 8);
     const telemetryEvent: TelemetryEvent = {
       ...event,
-      id: `evt_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+      id: `evt_${Date.now()}_${randomPart}`,
       timestamp: new Date().toISOString(),
       correlationId: event.correlationId,
     };

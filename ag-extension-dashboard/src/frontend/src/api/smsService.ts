@@ -1,19 +1,9 @@
 import apiClient from './client';
-
-export interface SMSMessage {
-  id: string;
-  sender_id?: string;
-  recipient_phone: string;
-  farmer_id?: string;
-  message: string;
-  status: 'sent' | 'failed' | 'delivered';
-  provider?: string;
-  created_at: string;
-}
+import type { SMSHistoryRecord } from '../pages/sms/types';
 
 export interface SMSHistoryResponse {
   success: boolean;
-  data: SMSMessage[];
+  data: SMSHistoryRecord[];
 }
 
 export const fetchSMSHistory = async (farmerId?: string): Promise<SMSHistoryResponse> => {
@@ -39,5 +29,15 @@ export const sendBulkSMS = async (params: {
 
 export const translateMessage = async (params: { text: string; targetLanguage: string }) => {
   const response = await apiClient.post('/sms/translate', params);
+  return response.data;
+};
+
+export const scheduleSMS = async (params: {
+  to: string;
+  message: string;
+  scheduledTime: string;
+  farmerId?: string;
+}) => {
+  const response = await apiClient.post('/sms/schedule', params);
   return response.data;
 };

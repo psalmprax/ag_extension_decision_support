@@ -1,3 +1,4 @@
+import { setWithTtl, getTtl, delKey, incrWindow, resetWindow } from '@/services/sharedState';
 import { query } from '@/services/databaseService';
 import crypto from 'crypto';
 
@@ -48,7 +49,11 @@ export interface InputQuotaResult {
 }
 
 // In-memory co-sign OTP store (with 15 min TTL)
-const coSignStore = new Map<string, { otp: string; expiresAt: number; farmerId: string }>();
+// Co-sign OTPs live in Redis (sharedState) so the farmer can confirm on any replica.
+const COSIGN_KEY = (visitId: string) => `cosign:${visitId}`;
+const COSIGN_ATTEMPTS_KEY = (visitId: string) => `cosign:attempts:${visitId}`;
+const COSIGN_TTL_MS = 15 * 60 * 1000;
+const COSIGN_MAX_ATTEMPTS = 5;
 
 /**
  * Calculates Haversine distance between two GPS coordinates in meters.
@@ -298,43 +303,48 @@ export async function auditCropLossAnomaly(params: {
  * 4. Two-Party Farmer Co-Sign Verification Token
  * Generates an ephemeral cryptographic 6-digit OTP code for physical handshake confirmation.
  */
-export function generateFarmerCoSignToken(visitId: string, farmerId: string): {
+export async function generateFarmerCoSignToken(visitId: string, farmerId: string): Promise<{
   otp: string;
   expiresInSeconds: number;
-} {
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const ttlMs = 15 * 60 * 1000; // 15 minutes
-  coSignStore.set(visitId, {
-    otp,
-    expiresAt: Date.now() + ttlMs,
-    farmerId,
-  });
+}> {
+  // Cryptographically secure 6-digit code; only its hash is stored.
+  const otp = String(crypto.randomInt(100000, 1000000));
+  const otpHash = crypto.createHash('sha256').update(`${visitId}:${otp}`).digest('hex');
+  await setWithTtl(COSIGN_KEY(visitId), JSON.stringify({ otpHash, farmerId }), COSIGN_TTL_MS);
+  await resetWindow(COSIGN_ATTEMPTS_KEY(visitId));
 
   return {
     otp,
-    expiresInSeconds: 900,
+    expiresInSeconds: COSIGN_TTL_MS / 1000,
   };
 }
 
-export function verifyFarmerCoSignToken(visitId: string, enteredOtp: string): {
+export async function verifyFarmerCoSignToken(visitId: string, enteredOtp: string): Promise<{
   verified: boolean;
   message: string;
-} {
-  const entry = coSignStore.get(visitId);
-  if (!entry) {
-    return { verified: false, message: 'No active co-sign request found for this visit.' };
+}> {
+  const raw = await getTtl(COSIGN_KEY(visitId));
+  if (!raw) {
+    return { verified: false, message: 'No active co-sign request found for this visit (or it has expired). Please generate a new code.' };
   }
 
-  if (Date.now() > entry.expiresAt) {
-    coSignStore.delete(visitId);
-    return { verified: false, message: 'Co-sign verification OTP has expired. Please generate a new code.' };
+  // Attempt counter shares the OTP's lifetime; too many guesses burns the code.
+  const { count } = await incrWindow(COSIGN_ATTEMPTS_KEY(visitId), COSIGN_TTL_MS);
+  if (count > COSIGN_MAX_ATTEMPTS) {
+    await delKey(COSIGN_KEY(visitId));
+    return { verified: false, message: 'Too many incorrect attempts. The co-sign code has been invalidated — generate a new one.' };
   }
 
-  if (entry.otp !== enteredOtp.trim()) {
-    return { verified: false, message: 'Invalid verification OTP entered.' };
+  const { otpHash } = JSON.parse(raw) as { otpHash: string; farmerId: string };
+  const enteredHash = crypto.createHash('sha256').update(`${visitId}:${enteredOtp.trim()}`).digest('hex');
+  const a = Buffer.from(otpHash, 'hex');
+  const b = Buffer.from(enteredHash, 'hex');
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+    return { verified: false, message: `Invalid verification OTP entered. ${Math.max(0, COSIGN_MAX_ATTEMPTS - count)} attempt(s) remaining.` };
   }
 
-  coSignStore.delete(visitId);
+  await delKey(COSIGN_KEY(visitId));
+  await resetWindow(COSIGN_ATTEMPTS_KEY(visitId));
   return { verified: true, message: 'Two-party farmer presence successfully verified.' };
 }
 

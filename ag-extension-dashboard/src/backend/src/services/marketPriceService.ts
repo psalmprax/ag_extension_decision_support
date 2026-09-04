@@ -356,7 +356,6 @@ function buildBaselinePrices(
   targetCurrency: string,
   fetchedAt: string,
 ): MarketPrice[] {
-  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
   const basePrices = [
     { crop: 'White Maize (90kg)', baseUSD: 32.4 },
     { crop: 'Dry Beans (90kg)', baseUSD: 96.5 },
@@ -364,16 +363,13 @@ function buildBaselinePrices(
     { crop: 'Finger Millet (90kg)', baseUSD: 71 },
   ];
   return basePrices.map((item, index) => {
-    const fluctuation = 1 + Math.sin(dayOfYear + item.baseUSD) * 0.04;
-    const finalPrice = roundPrice(item.baseUSD * exchangeRate.rate * fluctuation, targetCurrency);
-    const percentageChange = Math.round((fluctuation - 1) * 100);
-    const trend = percentageChange > 0 ? `+${percentageChange}%` : percentageChange < 0 ? `${percentageChange}%` : 'Stable';
+    const finalPrice = roundPrice(item.baseUSD * exchangeRate.rate, targetCurrency);
     return {
       id: `baseline-${targetCurrency.toLowerCase()}-${index + 1}`,
       crop: item.crop,
       price: `${targetCurrency} ${finalPrice.toLocaleString()}`,
       priceValue: finalPrice,
-      trend,
+      trend: 'Stable' as const,
       updatedAt: new Date(fetchedAt),
       source: 'baseline_estimate' as const,
       dataStatus: 'estimated' as const,

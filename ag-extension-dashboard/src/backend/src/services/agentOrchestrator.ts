@@ -156,7 +156,10 @@ class AgentOrchestrator {
 
   async dispatchTask(task: Omit<AgentTask, 'id' | 'status' | 'createdAt' | 'retryCount'>): Promise<AgentTask> {
     await this.ensurePersistenceLoaded();
-    const taskId = `task_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    const randomPart = typeof crypto !== 'undefined' && crypto.getRandomValues
+        ? crypto.getRandomValues(new Uint32Array(1))[0].toString(36).substring(2, 8)
+        : Math.random().toString(36).substring(2, 8);
+    const taskId = `task_${Date.now()}_${randomPart}`;
     const fullTask: AgentTask = {
       ...task,
       id: taskId,
@@ -310,6 +313,15 @@ class AgentOrchestrator {
     return [...this.handoffLog];
   }
 
+  startWorkerLoop(intervalMs = 5000): NodeJS.Timeout {
+    const t = setInterval(() => {
+      this.executeNext().catch(err => logger.warn('Agent worker loop tick failed:', err instanceof Error ? err.message : err));
+    }, intervalMs);
+    (t as unknown as { unref?: () => void }).unref?.();
+    logger.info(`Agent orchestrator worker loop started (interval=${intervalMs}ms)`);
+    return t;
+  }
+
   private selectBestAgent(taskType: string, preferredAgentId?: string): AgentCapability | null {
     if (preferredAgentId) {
       const preferred = this.agentRegistry.get(preferredAgentId);
@@ -365,6 +377,48 @@ Priority: ${task.priority}
 Payload: ${JSON.stringify(task.payload, null, 2)}
 
 Execute this task and return a clear, structured result. Include any relevant data, recommendations, or next steps.`;
+  }
+
+  async stopAgentTasks(agentId: string): Promise<{ stopped: number; queued: number }> {
+    await this.ensurePersistenceLoaded();
+
+    let stopped = 0;
+    let queued = 0;
+
+    // Stop running tasks for this agent
+    for (const [taskId, task] of this.activeTasks.entries()) {
+      if (task.agentId === agentId) {
+        const agent = this.agentRegistry.get(agentId);
+        if (agent) agent.currentLoad--;
+        this.activeTasks.delete(taskId);
+
+        task.status = 'failed';
+        task.error = 'Stopped by user request';
+        task.completedAt = new Date().toISOString();
+        this.completedTasks.push(task);
+        await this.persistTask(task);
+        stopped++;
+      }
+    }
+
+    // Remove pending tasks for this agent from queue
+    const remainingQueue: AgentTask[] = [];
+    for (const task of this.taskQueue) {
+      if (task.agentId === agentId) {
+        task.status = 'failed';
+        task.error = 'Stopped by user request (removed from queue)';
+        task.completedAt = new Date().toISOString();
+        this.completedTasks.push(task);
+        await this.persistTask(task);
+        queued++;
+      } else {
+        remainingQueue.push(task);
+      }
+    }
+    this.taskQueue = remainingQueue;
+
+    logger.info(`Agent ${agentId} stop requested: ${stopped} running tasks stopped, ${queued} queued tasks removed`);
+    return { stopped, queued };
   }
 }
 

@@ -85,7 +85,7 @@ describe('syncQueueService', () => {
     expect(syncQueue.getQueue()[0].state).toBe('pending');
   });
 
-  it('retries transient failures and marks the mutation failed at the retry limit', async () => {
+  it('backs off between transient failures and marks the mutation failed at the retry limit', async () => {
     mockRequest.mockRejectedValue(new Error('Network unavailable'));
     syncQueue.enqueue({
       action: 'create',
@@ -95,13 +95,33 @@ describe('syncQueueService', () => {
       data: { farmer_id: 'farmer-1' },
     });
 
+    // First attempt fails and schedules a backoff.
     expect((await syncQueue.processQueue()).failed).toBe(0);
-    expect((await syncQueue.processQueue()).failed).toBe(0);
-    expect((await syncQueue.processQueue()).failed).toBe(1);
+    let [item] = syncQueue.getQueue();
+    expect(item.state).toBe('pending');
+    expect(item.retryCount).toBe(1);
+    expect(typeof item.nextAttemptAt).toBe('number');
+    expect(item.nextAttemptAt! > Date.now()).toBe(true);
 
-    const [item] = syncQueue.getQueue();
+    // Not due yet → processQueue must NOT hammer the server.
+    const callsBefore = mockRequest.mock.calls.length;
+    await syncQueue.processQueue();
+    expect(mockRequest.mock.calls.length).toBe(callsBefore);
+
+    // Simulate the clock passing each backoff window until retries are exhausted (MAX_RETRIES = 5).
+    let result = { success: 0, failed: 0, conflicts: 0 };
+    for (let i = 0; i < 4; i++) {
+      [item] = syncQueue.getQueue();
+      item.nextAttemptAt = Date.now() - 1;
+      result = await syncQueue.processQueue();
+    }
+    expect(result.failed).toBe(1);
+
+    [item] = syncQueue.getQueue();
     expect(item.state).toBe('failed');
-    expect(item.retryCount).toBe(3);
+    expect(item.retryCount).toBe(5);
+    expect(item.nextAttemptAt).toBeUndefined();
     expect(item.lastError).toBe('Network unavailable');
+    expect(syncQueue.getStuckItems()).toHaveLength(1);
   });
 });

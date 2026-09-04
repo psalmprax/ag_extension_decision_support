@@ -80,7 +80,13 @@ export function FarmerMap({
   const { t } = useLanguage();
 
   const farmers = useMemo(
-    () => (propFarmers && propFarmers.length > 0 ? propFarmers : (isDemo || !propFarmers || propFarmers.length === 0 ? DEFAULT_DEMO_MAP_FARMERS : [])),
+    () => {
+      if (propFarmers && propFarmers.length > 0) return propFarmers;
+      if (isDemo) return DEFAULT_DEMO_MAP_FARMERS;
+      // When real data is empty and not in demo mode, show empty (not demo) to avoid data leak
+      if (propFarmers && propFarmers.length === 0) return [];
+      return DEFAULT_DEMO_MAP_FARMERS;
+    },
     [propFarmers, isDemo]
   );
 

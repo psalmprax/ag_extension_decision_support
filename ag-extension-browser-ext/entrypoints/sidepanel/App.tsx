@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, Bot, User, Sparkles, Brain, Code, Terminal, Zap, Wifi, WifiOff, Mic, MicOff, Paperclip, X, Image as ImageIcon, FileText, AlertCircle } from 'lucide-react';
 import { apiQueue } from '../../shared/apiQueue';
 import { usePersistence } from '../../shared/hooks/usePersistence';
-import CONFIG from '../../shared/config';
+import CONFIG, { apiUrl } from '../../shared/config';
 import type { QueuedRequest } from '../../shared/offlineTypes';
 import { VisitLogger } from './components/VisitLogger';
 
@@ -59,6 +59,7 @@ type PopupMessage =
   | { action: 'analyze_selection'; text?: string }
   | { action: 'trigger_capture' }
   | { action: 'photo_captured'; imageData?: string }
+  | { action: 'location_captured'; location: { latitude: number; longitude: number; accuracy: number; accuracyStatus: string; timestamp: string } }
   | { action: 'switch_sidepanel_tab'; tab?: string };
 
 const isPopupMessage = (message: unknown): message is PopupMessage => {
@@ -69,6 +70,7 @@ const isPopupMessage = (message: unknown): message is PopupMessage => {
     action === 'analyze_selection' ||
     action === 'trigger_capture' ||
     action === 'photo_captured' ||
+    action === 'location_captured' ||
     action === 'switch_sidepanel_tab'
   );
 };
@@ -86,6 +88,8 @@ function App() {
   const [pageContext, setPageContext] = useState<PageContext | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [queuedRequests, setQueuedRequests] = useState<QueuedRequest[]>([]);
+  const [deadLetterRequests, setDeadLetterRequests] = useState<QueuedRequest[]>([]);
+  const [serverQueueStatus, setServerQueueStatus] = useState<{ pending: number; failed: number; conflict: number; deadLetter: number; total: number } | null>(null);
   const [showOfflineManager, setShowOfflineManager] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   
@@ -95,6 +99,7 @@ function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [farmers, setFarmers] = useState<{ id: string; firstName: string; lastName: string }[]>([]);
+  const [capturedLocation, setCapturedLocation] = useState<{ latitude: number; longitude: number; accuracy: number; accuracyStatus: string; timestamp: string } | null>(null);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -127,7 +132,7 @@ function App() {
         payload.file = fileData;
       }
 
-      const response = await apiQueue.makeRequest(`${apiEndpoint}/chatbot/message`, {
+      const response = await apiQueue.makeRequest(await apiUrl('/chatbot/message'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -155,21 +160,93 @@ function App() {
     try {
       const requests = await apiQueue.getQueuedRequests();
       setQueuedRequests(requests);
+      const dlq = await browser.runtime.sendMessage({ action: 'get_dead_letter_requests' }) as { success?: boolean; requests?: QueuedRequest[] };
+      setDeadLetterRequests(dlq?.success && Array.isArray(dlq.requests) ? dlq.requests : []);
     } catch (error) {
       console.error('Failed to load queued requests:', error);
     }
   };
 
-  const handleSync = async () => {
-    if (isSyncing) return;
+  // Mirrored, durable server-side queue state (survives reinstalls; shared
+  // across devices). Null when unauthenticated or unreachable.
+  const loadServerQueueStatus = async () => {
+    try {
+      // Authenticated via apiQueue (bare fetch has no Authorization header → 401 → always null).
+      const response = await apiQueue.makeRequest(await apiUrl('/offline/status'), { method: 'GET' });
+      if (!response.ok) {
+        setServerQueueStatus(null);
+        return;
+      }
+      const result = await response.json() as { success?: boolean; data?: { pending: number; failed: number; conflict: number; deadLetter: number; total: number } };
+      setServerQueueStatus(result.success && result.data ? result.data : null);
+    } catch {
+      setServerQueueStatus(null);
+    }
+  };
+
+const handleSync = async () => {
+    if (!isOnline || queuedRequests.length === 0 || isSyncing) return;
     setIsSyncing(true);
     try {
       await apiQueue.syncNow();
       await loadQueuedRequests();
+      await loadServerQueueStatus();
     } catch (error) {
       console.error('Sync failed:', error);
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  // Retry goes through the background worker so the local IndexedDB queue
+  // (the replay source of truth) AND the server mirror stay in sync.
+  const handleRetryRequest = async (requestId: string) => {
+    try {
+      const response = await browser.runtime.sendMessage({ action: 'retry_queued_request', id: requestId });
+      if (!response?.success) throw new Error(response?.error || 'Retry failed');
+      await loadQueuedRequests();
+      await loadServerQueueStatus();
+      await apiQueue.syncNow();
+      await loadQueuedRequests();
+      await loadServerQueueStatus();
+    } catch (error) {
+      console.error('Retry failed:', error);
+    }
+  };
+
+  const handleDeleteRequest = async (requestId: string) => {
+    try {
+      const response = await browser.runtime.sendMessage({ action: 'delete_queued_request', id: requestId });
+      if (!response?.success) throw new Error(response?.error || 'Delete failed');
+      await loadQueuedRequests();
+      await loadServerQueueStatus();
+    } catch (error) {
+      console.error('Delete failed:', error);
+    }
+  };
+
+  // Dead-letter items exhausted automatic retries (or hit a 4xx). They are kept
+  // for review and can be re-queued or discarded from here.
+  const handleRetryDeadLetter = async (requestId: string) => {
+    try {
+      const response = await browser.runtime.sendMessage({ action: 'retry_dead_letter_request', id: requestId });
+      if (!response?.success) throw new Error(response?.error || 'Retry failed');
+      await loadQueuedRequests();
+      await apiQueue.syncNow();
+      await loadQueuedRequests();
+      await loadServerQueueStatus();
+    } catch (error) {
+      console.error('Dead-letter retry failed:', error);
+    }
+  };
+
+  const handleDeleteDeadLetter = async (requestId: string) => {
+    try {
+      const response = await browser.runtime.sendMessage({ action: 'delete_dead_letter_request', id: requestId });
+      if (!response?.success) throw new Error(response?.error || 'Delete failed');
+      await loadQueuedRequests();
+    } catch (error) {
+      console.error('Dead-letter delete failed:', error);
     }
   };
 
@@ -179,7 +256,7 @@ function App() {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await apiQueue.makeRequest(`${CONFIG.API_BASE_URL}/upload`, {
+      const response = await apiQueue.makeRequest(await apiUrl('/upload/upload'), {
         method: 'POST',
         body: formData,
         // Remove content-type to let browser generate boundary
@@ -342,38 +419,80 @@ function App() {
     }
   };
 
+  // Shared handler for photos arriving live (message) or restored from storage.
+  const analyzeCapturedPhoto = async (imageData: string) => {
+    setMessages((prev: Message[]) => [...prev, {
+      id: Date.now().toString(),
+      role: 'user',
+      content: '📸 Photo captured - analyzing with AI...',
+      timestamp: new Date().toISOString()
+    }]);
+    setIsLoading(true);
+    try {
+      const aiResponse = await sendMessageToAI(
+        'Please analyze this agricultural photo and identify any crop diseases, nutrient deficiencies, pests, or other issues visible in the image. Provide specific, actionable recommendations for the farmer.',
+        imageData
+      );
+      setMessages((prev: Message[]) => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: aiResponse,
+        timestamp: new Date().toISOString()
+      }]);
+    } catch (error) {
+      console.error('Photo analysis error:', error);
+      setMessages((prev: Message[]) => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: 'Photo analysis failed — the request has been kept in the offline queue if you were disconnected.',
+        timestamp: new Date().toISOString()
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Get page context on mount
   useEffect(() => {
     const getPageContext = async () => {
       try {
-        // Fetch farmers
+        // Fetch farmers — backend returns { data: { farmers, total } }.
         try {
-          const fRes = await apiQueue.makeRequest(`${CONFIG.API_BASE_URL}/farmers`);
+          const fRes = await apiQueue.makeRequest(await apiUrl('/farmers'));
           if (fRes.ok) {
-            const fData = await fRes.json();
-            setFarmers(fData.data || []);
+            const fData = await fRes.json() as { data?: { farmers?: typeof farmers } | typeof farmers };
+            setFarmers(Array.isArray(fData.data) ? fData.data : (fData.data?.farmers ?? []));
           }
         } catch (fErr) {
           console.error('Failed to fetch farmers:', fErr);
         }
 
+        // Restore a GPS fix / photo captured while the panel was closed.
+        try {
+          const stored = await browser.storage.local.get(['lastCapturedLocation', 'lastCapturedPhoto']);
+          const loc = (stored as Record<string, unknown>).lastCapturedLocation as typeof capturedLocation | undefined;
+          if (loc && typeof loc.latitude === 'number') setCapturedLocation(loc);
+          const photo = (stored as Record<string, unknown>).lastCapturedPhoto as { imageData: string; capturedAt: number } | undefined;
+          if (photo?.imageData && Date.now() - photo.capturedAt < 10 * 60 * 1000) {
+            await browser.storage.local.remove('lastCapturedPhoto');
+            void analyzeCapturedPhoto(photo.imageData);
+          }
+        } catch { /* storage unavailable */ }
+
         const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
         if (tab && tab.id) {
-          browser.tabs.sendMessage(tab.id, { action: 'get_page_context' }, (response: PageContext) => {
-            if (response) {
-              setPageContext(response);
-              // Only add welcome message if no history
-              if (messages.length === 0) {
-                const welcomeMessage: Message = {
-                  id: 'welcome',
-                  role: 'assistant',
-                  content: `I've loaded the page "${response.title}". I can help you summarize content, extract data, or analyze this page. What would you like to do?`,
-                  timestamp: new Date().toISOString()
-                };
-                setMessages([welcomeMessage]);
-              }
-            }
-          });
+          // Promise form: the callback form never fires under the WebExtension `browser` namespace.
+          const response = await browser.tabs.sendMessage(tab.id, { action: 'get_page_context' }).catch(() => null) as PageContext | null;
+          if (response) {
+            setPageContext(response);
+            // Only add welcome message if no history (read current value, not the mount-time closure)
+            setMessages((prev: Message[]) => prev.length === 0 ? [{
+              id: 'welcome',
+              role: 'assistant',
+              content: `I've loaded the page "${response.title}". I can help you summarize content, extract data, or analyze this page. What would you like to do?`,
+              timestamp: new Date().toISOString()
+            }] : prev);
+          }
         }
       } catch (error) {
         console.error('Error getting page context:', error);
@@ -392,11 +511,13 @@ function App() {
         setIsOnline(statusMessage.isOnline);
       } else if (statusMessage.action === 'queue_updated') {
         loadQueuedRequests();
+        loadServerQueueStatus();
       }
     };
 
     browser.runtime.onMessage.addListener(handleStatusMessage);
     loadQueuedRequests();
+    loadServerQueueStatus();
     apiQueue.isCurrentlyOnline().then(setIsOnline);
 
     return () => {
@@ -440,32 +561,35 @@ function App() {
             setIsLoading(false);
           }
         } else if (message.action === 'trigger_capture') {
-          // Trigger the 'Analyze Page' quick action as a capture proxy for now
-          handleQuickAction('Analyze Page');
-        } else if (message.action === 'photo_captured' && message.imageData) {
-          const photoMessage: Message = {
-            id: Date.now().toString(),
-            role: 'user',
-            content: '📸 Photo captured - analyzing with AI...',
-            timestamp: new Date().toISOString()
-          };
-          setMessages((prev: Message[]) => [...prev, photoMessage]);
-
-          setIsLoading(true);
+          // Capture photo: delegate to content-script camera (requires user gesture on page)
+          // Fall back to page analysis if content script not available
           try {
-            const aiResponse = await sendMessageToAI('', message.imageData);
-            const assistantMessage: Message = {
-              id: (Date.now() + 1).toString(),
-              role: 'assistant',
-              content: aiResponse,
-              timestamp: new Date().toISOString()
-            };
-            setMessages((prev: Message[]) => [...prev, assistantMessage]);
-          } catch (error) {
-            console.error('Photo analysis error:', error);
-          } finally {
-            setIsLoading(false);
+            const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+            if (tab?.id) {
+              await browser.tabs.sendMessage(tab.id, { action: 'trigger_photo_capture' }).catch(() => {
+                handleQuickAction('Analyze Page');
+              });
+            } else {
+              handleQuickAction('Analyze Page');
+            }
+          } catch {
+            handleQuickAction('Analyze Page');
           }
+        } else if (message.action === 'location_captured' && message.location) {
+          setCapturedLocation(message.location);
+          // Persist so VisitLogger can pick it up even after tab switch
+          browser.storage.local.set({ lastCapturedLocation: message.location }).catch(() => {});
+          const locMsg: Message = {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: `📍 Location captured: ${message.location.latitude.toFixed(5)}, ${message.location.longitude.toFixed(5)} (±${Math.round(message.location.accuracy)}m, ${message.location.accuracyStatus}). This will be attached to your next visit log.`,
+            timestamp: new Date().toISOString(),
+          };
+          setMessages((prev: Message[]) => [...prev, locMsg]);
+        } else if (message.action === 'photo_captured' && message.imageData) {
+          // Consumed live — drop the stored copy so it is not re-analysed on next mount.
+          browser.storage.local.remove('lastCapturedPhoto').catch(() => {});
+          await analyzeCapturedPhoto(message.imageData);
         } else if (message.action === 'switch_sidepanel_tab') {
           if (message.tab === 'log' || message.tab === 'chat') {
             setActiveTab(message.tab);
@@ -497,9 +621,9 @@ function App() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {queuedRequests.length > 0 && (
-            <span className="px-2 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full text-[10px] font-bold text-amber-400">
-              {queuedRequests.length}
+          {(queuedRequests.length + deadLetterRequests.length) > 0 && (
+            <span className={`px-2 py-1 border rounded-full text-[10px] font-bold ${deadLetterRequests.length > 0 ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' : 'bg-amber-500/10 border-amber-500/20 text-amber-400'}`}>
+              {queuedRequests.length + deadLetterRequests.length}
             </span>
           )}
           <button
@@ -552,11 +676,19 @@ function App() {
           </div>
         )}
       </div>
+      {capturedLocation && (
+        <div className="mx-4 mt-2 p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center justify-between">
+          <span className="text-[10px] font-mono text-emerald-300">
+            📍 {capturedLocation.latitude.toFixed(4)}, {capturedLocation.longitude.toFixed(4)} (±{Math.round(capturedLocation.accuracy)}m)
+          </span>
+          <button onClick={() => { setCapturedLocation(null); browser.storage.local.remove('lastCapturedLocation').catch(()=>{}); }} className="text-[10px] text-slate-400 hover:text-white">Clear</button>
+        </div>
+      )}
 
       {/* Messages / Logger */}
       <main className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
         {activeTab === 'log' ? (
-          <VisitLogger farmerId={activeFarmerId} />
+          <VisitLogger farmerId={activeFarmerId} location={capturedLocation} onLocationUsed={() => { setCapturedLocation(null); browser.storage.local.remove('lastCapturedLocation').catch(()=>{}); }} />
         ) : (
           <>
             {messages.map((msg) => (
@@ -617,23 +749,107 @@ function App() {
               </button>
             </div>
 
+            {serverQueueStatus && (
+              <div className="mb-3 flex items-center justify-between px-2 py-1.5 bg-slate-900/60 border border-slate-700 rounded-lg">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Server Mirror</span>
+                <span className="text-[10px] font-mono text-slate-300">
+                  {serverQueueStatus.total === 0
+                    ? 'in sync'
+                    : `${serverQueueStatus.pending} pending • ${serverQueueStatus.failed} failed • ${serverQueueStatus.conflict} conflict • ${serverQueueStatus.deadLetter} dead`}
+                </span>
+              </div>
+            )}
+
+            {apiQueue.lastAuthWarning && (
+              <div className="mb-3 px-2 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-lg text-[10px] font-bold text-amber-300">
+                {apiQueue.lastAuthWarning}
+              </div>
+            )}
+
+            {deadLetterRequests.length > 0 && (
+              <div className="mb-3 space-y-2">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-rose-400">Needs attention ({deadLetterRequests.length})</span>
+                  <span className="text-[9px] text-slate-500">exhausted retries or rejected by server</span>
+                </div>
+                {deadLetterRequests.map(request => (
+                  <div key={request.id} className="flex items-center justify-between p-2 bg-rose-950/30 rounded border border-rose-500/30">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-mono text-slate-300 truncate">{request.method} {request.url.replace(apiEndpoint, '')}</p>
+                      <p className="text-[10px] text-slate-500 truncate">
+                        {new Date(request.timestamp).toLocaleString()}{request.lastError ? ` • ${request.lastError}` : ''}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => handleRetryDeadLetter(request.id)}
+                        className="px-2 py-1 text-[9px] font-bold bg-rose-600 hover:bg-rose-500 text-white rounded transition-colors disabled:opacity-50"
+                        disabled={isSyncing || !isOnline}
+                      >
+                        Re-queue
+                      </button>
+                      <button
+                        onClick={() => handleDeleteDeadLetter(request.id)}
+                        className="px-2 py-1 text-[9px] font-bold bg-slate-700 hover:bg-slate-600 text-white/70 rounded transition-colors"
+                      >
+                        Discard
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {queuedRequests.length === 0 ? (
               <p className="text-sm text-slate-400 Italics px-1">No pending requests</p>
             ) : (
               <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                {queuedRequests.map((request) => (
-                  <div key={request.id} className="flex items-center justify-between p-2 bg-slate-700/50 rounded border border-slate-600">
-                    <div className="flex-1">
-                      <p className="text-xs font-mono text-slate-300">{request.method} {request.url.replace(apiEndpoint, '')}</p>
-                      <p className="text-[10px] text-slate-500">
-                        {new Date(request.timestamp).toLocaleString()} • {request.retries} retries
-                      </p>
+                {queuedRequests.map((request) => {
+                  const isConflict = request.state === 'conflict';
+                  const isFailed = request.state === 'failed';
+                  return (
+                    <div key={request.id} className="flex items-center justify-between p-2 bg-slate-700/50 rounded border border-slate-600">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-mono text-slate-300 truncate">{request.method} {request.url.replace(apiEndpoint, '')}</p>
+                        <p className="text-[10px] text-slate-500">
+                          {new Date(request.timestamp).toLocaleString()} • {request.retries} retries
+                          {isConflict && <span className="ml-1.5 px-1.5 py-0.5 bg-orange-500/20 border border-orange-500/30 rounded text-[9px] font-bold text-orange-400">CONFLICT</span>}
+                          {isFailed && <span className="ml-1.5 px-1.5 py-0.5 bg-rose-500/20 border border-rose-500/30 rounded text-[9px] font-bold text-rose-400">FAILED</span>}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`w-2 h-2 rounded-full ${request.state === 'conflict' ? 'bg-orange-500' : request.state === 'failed' ? 'bg-rose-500' : request.retries > 0 ? 'bg-orange-500' : 'bg-slate-500'}`} />
+                        {isConflict && (
+                          <button
+                            onClick={() => handleRetryRequest(request.id)}
+                            className="px-2 py-1 text-[9px] font-bold bg-orange-600 hover:bg-orange-500 text-white rounded transition-colors disabled:opacity-50"
+                            disabled={isSyncing}
+                          >
+                            Retry
+                          </button>
+                        )}
+                        {isFailed && (
+                          <>
+                            <button
+                              onClick={() => handleRetryRequest(request.id)}
+                              className="px-2 py-1 text-[9px] font-bold bg-rose-600 hover:bg-rose-500 text-white rounded transition-colors disabled:opacity-50"
+                              disabled={isSyncing}
+                            >
+                              Retry
+                            </button>
+                            <button
+                              onClick={() => handleDeleteRequest(request.id)}
+                              className="px-2 py-1 text-[9px] font-bold bg-slate-700 hover:bg-slate-600 text-white/70 rounded transition-colors disabled:opacity-50"
+                              disabled={isSyncing}
+                            >
+                              Delete
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${request.retries > 0 ? 'bg-orange-500' : 'bg-slate-500'}`} />
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

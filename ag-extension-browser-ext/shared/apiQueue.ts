@@ -1,5 +1,6 @@
 // API Queue Service for offline synchronization
 
+import { isJwtExpired } from './authToken';
 import type { OfflineStatus, QueuedRequest as PersistedQueuedRequest } from './offlineTypes';
 
 export type { OfflineStatus };
@@ -146,10 +147,14 @@ class APIQueueService {
         const idempotencyKey = isMutation
             ? (typeof crypto !== 'undefined' && crypto.randomUUID
                 ? crypto.randomUUID()
-                : `ext_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`)
+                : (typeof crypto !== 'undefined' && crypto.getRandomValues
+                    ? `ext_${Date.now()}_${crypto.getRandomValues(new Uint32Array(1))[0].toString(36).slice(2, 10)}`
+                    : `ext_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`))
             : undefined;
         const requestHeaders = new Headers(options.headers);
         if (idempotencyKey) requestHeaders.set('Idempotency-Key', idempotencyKey);
+        // Inject JWT if stored by extension login (graceful fallback when not logged in)
+        await this.injectAuthToken(requestHeaders);
         const requestOptions: RequestInit = { ...options, method, headers: requestHeaders };
 
         const attachmentRefs = this.getAttachmentRefs(options.body);
@@ -199,6 +204,34 @@ class APIQueueService {
             });
 
             throw error;
+        }
+    }
+
+    /** Last auth-injection problem, exposed so the UI can show "not signed in / storage error". */
+    public lastAuthWarning: string | null = null;
+
+    private async injectAuthToken(headers: Headers): Promise<void> {
+        if (headers.has('Authorization')) return;
+        try {
+            const stored = await browser.storage.local.get('authToken');
+            const token = (stored as Record<string, unknown>)?.authToken as string | undefined;
+            if (token && isJwtExpired(token)) {
+                // Sending a known-expired token only produces 401s; drop it so the popup
+                // shows "signed out" and the user re-authenticates.
+                this.lastAuthWarning = 'Session expired — sign in again from the extension popup';
+                await browser.storage.local.remove('authToken').catch(() => {});
+            } else if (token) {
+                headers.set('Authorization', `Bearer ${token}`);
+                this.lastAuthWarning = null;
+            } else {
+                this.lastAuthWarning = 'Not signed in — open the extension popup to log in';
+            }
+        } catch (error) {
+            // Do NOT throw: a storage hiccup must not lose an offline-first write.
+            // The request proceeds unauthenticated (backend returns 401 → queued item is
+            // parked as failed for re-login), and the warning is surfaced to the UI.
+            this.lastAuthWarning = 'Could not read auth token from extension storage';
+            console.error('Failed to inject auth token (storage error):', error);
         }
     }
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLanguage } from '@/lib/LanguageContext';
 import { motion } from 'framer-motion';
 import {
   Check,
@@ -72,7 +73,7 @@ const MATRIX_FEATURES: FeatureRow[] = [
     icon: Eye,
     free: false,
     pro: '100 scans / mo',
-    enterprise: 'Unlimited + Drone Orthomosaic AI',
+    enterprise: 'Unlimited',
     unitCost: '$0.05 per high-res diagnosis scan',
     highlight: true,
   },
@@ -144,7 +145,7 @@ const MATRIX_FEATURES: FeatureRow[] = [
   {
     category: 'Platform & Infrastructure',
     name: 'Developer REST API & Webhooks',
-    description: 'Programmatic API tokens, real-time webhook events, ERP integrations',
+    description: 'Programmatic API tokens and real-time webhook events',
     icon: Key,
     free: false,
     pro: '10k requests / mo',
@@ -243,6 +244,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
   onSelectPlan,
   className = '',
 }) => {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'matrix' | 'costs' | 'calculator'>('matrix');
 
   // Calculator State
@@ -253,22 +255,35 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
   const [calcWhatsapp, setCalcWhatsapp] = useState(400);
 
   // Calculate costs
-  const calculateProTotal = () => {
-    const baseProPrice = 29.0;
-    const extraSms = Math.max(0, calcSms - 500) * 0.018;
-    const extraAiChat = Math.max(0, calcAiChat - 1000) * 0.005;
-    const extraVision = Math.max(0, calcVision - 100) * 0.05;
-    const extraWhatsapp = Math.max(0, calcWhatsapp - 500) * 0.015;
+  // Quotas are HARD limits enforced server-side (usageService.checkLimit → 403) and
+  // are fetched from /billing/quotas so this page can never drift from enforcement.
+  // There is no metered overage billing, so the estimator reports quota fit.
+  const [proQuotas, setProQuotas] = React.useState<{ sms: number; aiChat: number; vision: number; whatsapp: number } | null>(null);
+  const [proPrice, setProPrice] = React.useState<number | null>(null);
+  const [quotaSource, setQuotaSource] = React.useState<'server' | 'unavailable'>('unavailable');
+  React.useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const { fetchPlanQuotas } = await import('@/api/billingService');
+      const res = await fetchPlanQuotas();
+      if (cancelled || !res.success || !res.data) return;
+      const pro = res.data.find(p => /pro/i.test(p.name)) ?? res.data.find(p => p.price > 0);
+      if (!pro) return;
+      setProQuotas({ sms: pro.quotas.smsLimit, aiChat: pro.quotas.aiChatLimit, vision: pro.quotas.aiVisionLimit, whatsapp: pro.quotas.whatsappLimit ?? 0 });
+      setProPrice(pro.price);
+      setQuotaSource('server');
+    })();
+    return () => { cancelled = true; };
+  }, []);
+  const quotaFit = proQuotas ? [
+    { label: 'SMS', used: calcSms, limit: proQuotas.sms },
+    { label: 'AI chats', used: calcAiChat, limit: proQuotas.aiChat },
+    { label: 'Vision scans', used: calcVision, limit: proQuotas.vision },
+    { label: 'WhatsApp', used: calcWhatsapp, limit: proQuotas.whatsapp },
+  ].map(q => ({ ...q, over: Math.max(0, q.used - q.limit), fits: q.limit < 0 || q.used <= q.limit })) : [];
+  const fitsPro = quotaFit.length > 0 && quotaFit.every(q => q.fits);
 
-    const overage = extraSms + extraAiChat + extraVision + extraWhatsapp;
-    return {
-      base: baseProPrice,
-      overage,
-      total: baseProPrice + overage,
-    };
-  };
-
-  const proCost = calculateProTotal();
+  const proCost = { base: proPrice ?? 29.0 };
 
   const renderValue = (val: string | boolean) => {
     if (typeof val === 'boolean') {
@@ -318,7 +333,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            <span>Tier Access</span>
+            <span>{t('billing_matrix_tab_access')}</span>
           </button>
           <button
             onClick={() => {
@@ -332,7 +347,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
             }`}
           >
             <DollarSign className="w-3.5 h-3.5" />
-            <span>Unit Rates</span>
+            <span>{t('billing_matrix_tab_costs')}</span>
           </button>
           <button
             onClick={() => {
@@ -346,7 +361,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
             }`}
           >
             <Calculator className="w-3.5 h-3.5" />
-            <span>Cost Estimator</span>
+            <span>{t('billing_matrix_tab_calculator')}</span>
           </button>
         </div>
       </div>
@@ -377,7 +392,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                     <div className="flex flex-col items-center gap-1">
                       <div className="flex items-center gap-1">
                         <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>Pro Officer</span>
+                        <span>{t('billing_matrix_tier_pro')}</span>
                       </div>
                       <span className="text-xxs px-2.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold font-mono">
                         $29 / month
@@ -388,7 +403,7 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                     <div className="flex flex-col items-center gap-1">
                       <div className="flex items-center gap-1">
                         <Building2 className="w-3.5 h-3.5 text-purple-400" />
-                        <span>Enterprise Org</span>
+                        <span>{t('billing_matrix_tier_enterprise')}</span>
                       </div>
                       <span className="text-xxs px-2.5 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30 font-bold">
                         Custom Tier
@@ -456,12 +471,12 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
               <button
                 onClick={() => {
                   triggerHaptic('medium');
-                  onSelectPlan('pro-monthly');
+                  onSelectPlan('price_pro_monthly');
                 }}
                 className="px-5 py-2.5 text-xs font-bold rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white transition-all shadow-lg shadow-emerald-950/40 flex items-center gap-2 active:scale-95"
               >
                 <Sparkles className="w-4 h-4" />
-                <span>Upgrade to Pro Plan</span>
+                <span>{t('billing_matrix_upgrade_pro')}</span>
               </button>
             )}
           </div>
@@ -475,6 +490,12 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"
         >
+          <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 text-xs text-amber-100 flex items-start gap-3">
+            <Info className="w-4 h-4 mt-0.5 text-amber-300 shrink-0" />
+            <p>
+              {t('billing_matrix_costs_disclaimer')}
+            </p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {COST_BREAKDOWN_UNITS.map(svc => {
               const Icon = svc.icon;
@@ -690,54 +711,36 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
             <div className="p-6 rounded-xl border border-emerald-500/30 bg-slate-900/60 backdrop-blur-xl shadow-xl space-y-6 relative overflow-hidden">
               <div className="relative z-10">
                 <span className="text-xxs font-bold uppercase tracking-widest text-emerald-400">
-                  Estimated Monthly Total (Pro Tier)
+                  {t('billing_matrix_fit_title')}
                 </span>
                 <div className="flex items-baseline gap-2 mt-1">
                   <span className="text-4xl font-bold text-white font-mono tracking-tight">
-                    ${proCost.total.toFixed(2)}
+                    ${proCost.base.toFixed(2)}
                   </span>
-                  <span className="text-xs text-white/60 font-semibold">/ month</span>
+                  <span className="text-xs text-white/60 font-semibold">{t('billing_matrix_fit_flat')}</span>
                 </div>
+                <p className="text-xxs text-white/50 mt-2 leading-relaxed">
+                  {t('billing_matrix_fit_note')}
+                  {quotaSource === 'unavailable' && <span className="block text-amber-300 mt-1">{t('billing_matrix_fit_unavailable')}</span>}
+                </p>
               </div>
 
               <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-2 text-xs relative z-10">
-                <div className="flex justify-between items-center text-white/80">
-                  <span>Pro Plan Base Price:</span>
-                  <span className="font-mono font-bold text-white">
-                    ${proCost.base.toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center text-white/80">
-                  <span>Extra SMS ({Math.max(0, calcSms - 500)} units):</span>
-                  <span className="font-mono font-bold text-white">
-                    ${(Math.max(0, calcSms - 500) * 0.018).toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center text-white/80">
-                  <span>Extra AI Chats ({Math.max(0, calcAiChat - 1000)} units):</span>
-                  <span className="font-mono font-bold text-white">
-                    ${(Math.max(0, calcAiChat - 1000) * 0.005).toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center text-white/80">
-                  <span>Extra Vision Scans ({Math.max(0, calcVision - 100)} units):</span>
-                  <span className="font-mono font-bold text-white">
-                    ${(Math.max(0, calcVision - 100) * 0.05).toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center text-white/80">
-                  <span>Extra WhatsApp ({Math.max(0, calcWhatsapp - 500)} units):</span>
-                  <span className="font-mono font-bold text-white">
-                    ${(Math.max(0, calcWhatsapp - 500) * 0.015).toFixed(2)}
-                  </span>
-                </div>
+                {quotaFit.map(q => (
+                  <div key={q.label} className="flex justify-between items-center text-white/80">
+                    <span>{q.label}: {q.used.toLocaleString()} / {q.limit.toLocaleString()}</span>
+                    <span className={`font-mono font-bold ${q.fits ? 'text-emerald-400' : 'text-amber-300'}`}>
+                      {q.fits ? t('billing_matrix_within_quota') : t('billing_matrix_over_quota', { count: q.over.toLocaleString() })}
+                    </span>
+                  </div>
+                ))}
 
                 <div className="pt-3 border-t border-white/10 flex justify-between items-center font-bold text-xs">
                   <span className="text-emerald-400 uppercase tracking-wider text-xxs">
-                    Total Net Estimate:
+                    {t('billing_matrix_verdict')}
                   </span>
-                  <span className="font-mono text-base font-bold text-emerald-400">
-                    ${proCost.total.toFixed(2)}
+                  <span className={`font-mono text-sm font-bold ${quotaFit.length === 0 ? 'text-white/40' : fitsPro ? 'text-emerald-400' : 'text-amber-300'}`}>
+                    {quotaFit.length === 0 ? t('billing_matrix_verdict_unknown') : fitsPro ? t('billing_matrix_verdict_fits') : t('billing_matrix_verdict_exceeds')}
                   </span>
                 </div>
               </div>
@@ -746,12 +749,12 @@ export const AccessAndCostMatrix: React.FC<AccessAndCostMatrixProps> = ({
                 <button
                   onClick={() => {
                     triggerHaptic('medium');
-                    onSelectPlan('pro-monthly');
+                    onSelectPlan('price_pro_monthly');
                   }}
                   className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-2 relative z-10 active:scale-95"
                 >
                   <Sparkles className="w-4 h-4" />
-                  <span>Select Pro Plan</span>
+                  <span>{t('billing_matrix_select_pro')}</span>
                 </button>
               )}
             </div>

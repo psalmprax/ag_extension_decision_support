@@ -96,6 +96,10 @@ class EmailService {
         const recipients = Array.isArray(to) ? to.join(', ') : to;
 
         if (!this.transporter) {
+            if (config.nodeEnv === 'production') {
+                logger.error(`Email not sent — no SMTP/SendGrid configured (production guard): To=${recipients}, Subject=${subject}`);
+                return false;
+            }
             logger.info(`[DEV EMAIL] To: ${recipients}, Subject: ${subject}`);
             return true;
         }

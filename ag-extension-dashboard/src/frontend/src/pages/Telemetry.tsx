@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '../store/useAppStore';
+import { useDemoMode } from '@/demo';
 import {
   fetchTelemetrySummary,
   fetchTelemetryEvents,
@@ -32,6 +33,7 @@ export function Telemetry() {
   const { t } = useLanguage();
   const { headingClass, radiusClass, btnClass } = useThemeClasses();
   const { addNotification } = useAppStore();
+  const { isDemo } = useDemoMode();
 
   // State
   const [summary, setSummary] = useState<TelemetrySummary | null>(null);
@@ -147,12 +149,16 @@ export function Telemetry() {
               color="blue"
             />
             <div className="mt-3 pt-2 border-t border-gray-100 dark:border-gray-800">
-              <LiveSparklineCanvas
-                data={[12, 19, 15, 27, 24, 32, 28, 41, 38, (summary.totalRequests % 50) + 20]}
-                color="#0284c7"
-                fillColor="rgba(2, 132, 199, 0.12)"
-                height={28}
-              />
+              {isDemo ? (
+                <LiveSparklineCanvas
+                  data={[12, 19, 15, 27, 24, 32, 28, 41, 38, (summary.totalRequests % 50) + 20]}
+                  color="#0284c7"
+                  fillColor="rgba(2, 132, 199, 0.12)"
+                  height={28}
+                />
+              ) : (
+                <div className="h-[28px] flex items-center text-[10px] font-mono text-slate-400">Live count — sparkline history available in demo account</div>
+              )}
             </div>
           </div>
 
@@ -164,23 +170,27 @@ export function Telemetry() {
               color="green"
             />
             <div className="mt-3 pt-2 border-t border-gray-100 dark:border-gray-800">
-              <LiveSparklineCanvas
-                data={[
-                  340,
-                  290,
-                  310,
-                  280,
-                  260,
-                  240,
-                  250,
-                  230,
-                  210,
-                  summary.avgResponseTimeMs || 220,
-                ]}
-                color="#10b981"
-                fillColor="rgba(16, 185, 129, 0.12)"
-                height={28}
-              />
+              {isDemo ? (
+                <LiveSparklineCanvas
+                  data={[
+                    340,
+                    290,
+                    310,
+                    280,
+                    260,
+                    240,
+                    250,
+                    230,
+                    210,
+                    summary.avgResponseTimeMs || 220,
+                  ]}
+                  color="#10b981"
+                  fillColor="rgba(16, 185, 129, 0.12)"
+                  height={28}
+                />
+              ) : (
+                <div className="h-[28px] flex items-center text-[10px] font-mono text-slate-400">Live latency — history in demo</div>
+              )}
             </div>
           </div>
 
@@ -192,12 +202,16 @@ export function Telemetry() {
               color="red"
             />
             <div className="mt-3 pt-2 border-t border-gray-100 dark:border-gray-800">
-              <LiveSparklineCanvas
-                data={[4.2, 3.8, 5.1, 2.9, 3.2, 2.1, 1.8, 1.2, 0.9, summary.errorRate * 100]}
-                color="#ef4444"
-                fillColor="rgba(239, 68, 68, 0.12)"
-                height={28}
-              />
+              {isDemo ? (
+                <LiveSparklineCanvas
+                  data={[4.2, 3.8, 5.1, 2.9, 3.2, 2.1, 1.8, 1.2, 0.9, summary.errorRate * 100]}
+                  color="#ef4444"
+                  fillColor="rgba(239, 68, 68, 0.12)"
+                  height={28}
+                />
+              ) : (
+                <div className="h-[28px] flex items-center text-[10px] font-mono text-slate-400">Live error rate — history in demo</div>
+              )}
             </div>
           </div>
 
@@ -209,12 +223,16 @@ export function Telemetry() {
               color="purple"
             />
             <div className="mt-3 pt-2 border-t border-gray-100 dark:border-gray-800">
-              <LiveSparklineCanvas
-                data={[0.4, 0.8, 1.1, 1.7, 2.3, 3.1, 3.8, 4.4, 5.1, summary.totalCostUsd]}
-                color="#a855f7"
-                fillColor="rgba(168, 85, 247, 0.12)"
-                height={28}
-              />
+              {isDemo ? (
+                <LiveSparklineCanvas
+                  data={[0.4, 0.8, 1.1, 1.7, 2.3, 3.1, 3.8, 4.4, 5.1, summary.totalCostUsd]}
+                  color="#a855f7"
+                  fillColor="rgba(168, 85, 247, 0.12)"
+                  height={28}
+                />
+              ) : (
+                <div className="h-[28px] flex items-center text-[10px] font-mono text-slate-400">Live cost — history in demo</div>
+              )}
             </div>
           </div>
         </div>

@@ -21,6 +21,50 @@ interface UseWebRTCReturn {
   toggleVideo: () => void;
   endCall: () => void;
   error: string | null;
+  isRecording: boolean;
+  recordedUrl: string | null;
+  startRecording: () => void;
+  stopRecording: () => void;
+}
+
+type PeerConnections = Map<string, RTCPeerConnection>;
+
+interface RtcSample {
+  inboundBytes: number;
+  rtt: number | null;
+}
+
+/** Pull the inbound byte count and round-trip time from a getStats report. */
+function extractInboundSample(stats: RTCStatsReport): RtcSample {
+  let inboundBytes = 0;
+  let rtt: number | null = null;
+  (stats as unknown as Map<string, unknown>).forEach((value: unknown) => {
+    const rec = value as Record<string, unknown>;
+    if (rec.type === 'inbound-rtp' && typeof rec.bytesReceived === 'number') inboundBytes = rec.bytesReceived as number;
+    if (rec.type === 'candidate-pair' && rec.state === 'succeeded' && typeof rec.currentRoundTripTime === 'number') rtt = rec.currentRoundTripTime as number;
+  });
+  return { inboundBytes, rtt };
+}
+
+/** Adaptive bitrate: lower video senders to 300kbps on high RTT, restore to 800kbps on low RTT. */
+function applyBitrateTargets(connections: PeerConnections, rtt: number): void {
+  const target = rtt > 0.3 ? 300000 : rtt < 0.15 ? 800000 : null;
+  if (target === null) return;
+  for (const pc of connections.values()) {
+    pc.getSenders().forEach(sender => applySenderBitrate(sender, target));
+  }
+}
+
+function applySenderBitrate(sender: RTCRtpSender, target: number): void {
+  if (sender.track?.kind !== 'video') return;
+  try {
+    const params = sender.getParameters();
+    if (!params.encodings) params.encodings = [{}];
+    if (params.encodings[0].maxBitrate !== target) {
+      params.encodings[0].maxBitrate = target;
+      void sender.setParameters(params);
+    }
+  } catch { /* sender parameter negotiation unsupported on this browser */ }
 }
 
 export function useWebRTC(): UseWebRTCReturn {
@@ -31,17 +75,91 @@ export function useWebRTC(): UseWebRTCReturn {
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
 
   const socketRef = useRef<Socket | null>(null);
   const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
   const currentRoomRef = useRef<string | null>(null);
   const currentUserRef = useRef<{ id: string; name: string } | null>(null);
 
-  const ICE_SERVERS = {
-    iceServers: [
+  const buildIceServers = () => {
+    const turnUrl = import.meta.env.VITE_TURN_URL as string | undefined;
+    const turnUser = import.meta.env.VITE_TURN_USERNAME as string | undefined;
+    const turnCred = import.meta.env.VITE_TURN_CREDENTIAL as string | undefined;
+    const allowPublicFallback = import.meta.env.VITE_ALLOW_PUBLIC_TURN === 'true';
+    const servers: RTCIceServer[] = [
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'stun:stun1.l.google.com:19302' },
-    ],
+    ];
+    if (turnUrl && turnUser && turnCred) {
+      servers.push({ urls: turnUrl, username: turnUser, credential: turnCred });
+    } else if (allowPublicFallback) {
+      // Explicit opt-in only: public TURN for dev/preview NAT traversal
+      servers.push({
+        urls: 'turn:openrelay.metered.ca:80',
+        username: 'openrelayproject',
+        credential: 'openrelayproject',
+      });
+    }
+    return { iceServers: servers };
+  };
+  const ICE_SERVERS = buildIceServers();
+
+  const removePeer = (peerId: string) => {
+    const pc = peerConnectionsRef.current.get(peerId);
+    if (pc) {
+      pc.close();
+      peerConnectionsRef.current.delete(peerId);
+    }
+    setRemoteStreams(prev => {
+      const newMap = new Map(prev);
+      newMap.delete(peerId);
+      return newMap;
+    });
+  };
+
+  const handleRemoteOffer = async (
+    socket: Socket,
+    data: { offer: RTCSessionDescriptionInit; from: string }
+  ) => {
+    try {
+      const pc = await createPeerConnection(data.from, false);
+      await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      socket.emit('answer', {
+        roomId: currentRoomRef.current,
+        answer,
+        from: currentUserRef.current?.id,
+      });
+    } catch (e) {
+      console.warn('Failed to handle offer:', e);
+    }
+  };
+
+  const handleRemoteAnswer = async (data: { answer: RTCSessionDescriptionInit; from: string }) => {
+    try {
+      const pc = peerConnectionsRef.current.get(data.from);
+      if (pc) {
+        await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+      }
+    } catch (e) {
+      console.warn('Failed to handle answer:', e);
+    }
+  };
+
+  const handleRemoteIce = async (data: { candidate: RTCIceCandidateInit; from: string }) => {
+    try {
+      const pc = peerConnectionsRef.current.get(data.from);
+      if (pc) {
+        await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+      }
+    } catch (e) {
+      console.warn('Failed to add ICE candidate:', e);
+    }
   };
 
   useEffect(() => {
@@ -64,67 +182,19 @@ export function useWebRTC(): UseWebRTCReturn {
         // Socket connected — ready for WebRTC signaling
       }
     });
-
     socket.on('connect_error', err => {
       if (isMounted) {
         console.warn('Socket connection error:', err.message);
       }
     });
-
-    socket.on('user-joined', async (data: { userId: string; userName: string }) => {
+    socket.on('user-joined', async (data: { userId: string }) => {
       await createPeerConnection(data.userId, true);
     });
-
-    socket.on('user-left', (data: { userId: string }) => {
-      const pc = peerConnectionsRef.current.get(data.userId);
-      if (pc) {
-        pc.close();
-        peerConnectionsRef.current.delete(data.userId);
-      }
-      setRemoteStreams(prev => {
-        const newMap = new Map(prev);
-        newMap.delete(data.userId);
-        return newMap;
-      });
-    });
-
-    socket.on('offer', async (data: { offer: RTCSessionDescriptionInit; from: string }) => {
-      const pc = await createPeerConnection(data.from, false);
-      await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      socket.emit('answer', {
-        roomId: currentRoomRef.current,
-        answer,
-        from: currentUserRef.current?.id,
-      });
-    });
-
-    socket.on('answer', async (data: { answer: RTCSessionDescriptionInit; from: string }) => {
-      const pc = peerConnectionsRef.current.get(data.from);
-      if (pc) {
-        await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
-      }
-    });
-
-    socket.on('ice-candidate', async (data: { candidate: RTCIceCandidateInit; from: string }) => {
-      const pc = peerConnectionsRef.current.get(data.from);
-      if (pc) {
-        await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-      }
-    });
-
-    socket.on('audio-toggled', (_data: { userId: string; enabled: boolean }) => {
-      // Remote peer audio state updated
-    });
-
-    socket.on('video-toggled', (_data: { userId: string; enabled: boolean }) => {
-      // Remote peer video state updated
-    });
-
-    socket.on('call-ended', () => {
-      leaveCall();
-    });
+    socket.on('user-left', (data: { userId: string }) => removePeer(data.userId));
+    socket.on('call-ended', () => leaveCall());
+    socket.on('offer', (data: { offer: RTCSessionDescriptionInit; from: string }) => handleRemoteOffer(socket, data));
+    socket.on('answer', (data: { answer: RTCSessionDescriptionInit; from: string }) => handleRemoteAnswer(data));
+    socket.on('ice-candidate', (data: { candidate: RTCIceCandidateInit; from: string }) => handleRemoteIce(data));
 
     socketRef.current = socket;
 
@@ -275,6 +345,9 @@ export function useWebRTC(): UseWebRTCReturn {
   }, []);
 
   const leaveCall = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try { mediaRecorderRef.current.stop(); } catch { /* recorder already stopping */ }
+    }
     if (localStream) {
       localStream.getTracks().forEach(track => track.stop());
       setLocalStream(null);
@@ -337,6 +410,47 @@ export function useWebRTC(): UseWebRTCReturn {
     leaveCall();
   }, [leaveCall]);
 
+  const startRecording = useCallback(() => {
+    if (!localStream || isRecording) return;
+    try {
+      const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm';
+      const mr = new MediaRecorder(localStream, { mimeType });
+      recordedChunksRef.current = [];
+      mr.ondataavailable = e => { if (e.data.size > 0) recordedChunksRef.current.push(e.data); };
+      mr.onstop = () => {
+        const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        setRecordedUrl(prev => { if (prev) URL.revokeObjectURL(prev); return url; });
+        setIsRecording(false);
+      };
+      mr.start(1000);
+      mediaRecorderRef.current = mr;
+      setIsRecording(true);
+      setRecordedUrl(null);
+    } catch (e) { setError((e as Error).message); }
+  }, [localStream, isRecording]);
+
+  const stopRecording = useCallback(() => {
+    const mr = mediaRecorderRef.current;
+    if (mr && mr.state !== 'inactive') mr.stop();
+    else setIsRecording(false);
+  }, []);
+
+  // Bandwidth adaptation logging: poll getStats every 8s while in call (top-notch observability)
+  useEffect(() => {
+    if (!isInCall) return;
+    const id = setInterval(() => {
+      for (const [peerId, pc] of peerConnectionsRef.current.entries()) {
+        pc.getStats().then(stats => {
+          const { inboundBytes, rtt } = extractInboundSample(stats);
+          if (inboundBytes || rtt !== null) console.debug(`[webrtc stats] peer ${peerId.slice(0, 8)} bytes=${inboundBytes} rtt=${rtt}`);
+          if (rtt !== null) applyBitrateTargets(peerConnectionsRef.current, rtt);
+        }).catch(() => { /* stats unavailable this tick */ });
+      }
+    }, 8000);
+    return () => clearInterval(id);
+  }, [isInCall]);
+
   return {
     localStream,
     remoteStreams,
@@ -351,5 +465,9 @@ export function useWebRTC(): UseWebRTCReturn {
     toggleVideo,
     endCall,
     error,
+    isRecording,
+    recordedUrl,
+    startRecording,
+    stopRecording,
   };
 }

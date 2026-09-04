@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles,
-  Zap,
   Brain,
   Layers,
   Activity,
@@ -37,6 +36,7 @@ import { SearchBar } from './SearchBar';
 import { AIResult } from './AIResult';
 import type { VisualsData } from './types';
 import { AgronomicIntakeCard, isAgronomicQueryAmbiguous } from '../AgronomicIntakeCard';
+import { useDemoMode } from '@/demo';
 
 // Interactive Canvas UI Components (canvasui.dev standard)
 import { RagKnowledgeGraphCanvas, GraphNode } from '../canvas-ui/RagKnowledgeGraphCanvas';
@@ -68,303 +68,11 @@ interface Result {
   evidenceStatus?: KnowledgeEvidenceStatus;
   dailyRemaining?: number;
 }
+import { DOCUMENT_CATALOG, type DocumentArticle } from './catalog';
+import { RESEARCH_SCENARIOS, type ResearchScenario, type SpatialCanvasMode } from './scenarios';
+import { QuotaChip } from './QuotaChip';
 
-type SpatialCanvasMode = 'phenology' | 'soil_heatmap' | 'pathology';
 type KnowledgeTabMode = 'search' | 'graph' | 'workbench' | 'library' | 'telemetry';
-
-interface ResearchScenario {
-  id: string;
-  title: string;
-  crop: string;
-  category: string;
-  badge: string;
-  query: string;
-  canvasMode: SpatialCanvasMode | 'rag_graph';
-  sampleAnswer: string;
-  citations: Citation[];
-}
-
-interface DocumentArticle {
-  id: string;
-  title: string;
-  author: string;
-  category: 'Agronomy' | 'IPM & Pest' | 'Soil Chemistry' | 'Climatology' | 'Horticulture';
-  crop: string;
-  verified: boolean;
-  readingTime: string;
-  chunks: number;
-  excerpt: string;
-  fullText: string;
-}
-
-const DOCUMENT_CATALOG: DocumentArticle[] = [
-  {
-    id: 'fao-faw-guidelines',
-    title: 'FAO Fall Armyworm (Spodoptera frugiperda) Integrated Pest Management Field Guide',
-    author: 'Food and Agriculture Organization (FAO) & CIMMYT',
-    category: 'IPM & Pest',
-    crop: 'Maize & Cereals',
-    verified: true,
-    readingTime: '6 min read',
-    chunks: 42,
-    excerpt: 'Comprehensive biological, parasitoid (Telenomus remus), and low-toxicity thresholds for smallholder maize whorl protection.',
-    fullText: `## Executive Protocol: Fall Armyworm (FAW) Management in Sub-Saharan Africa
-
-### 1. Scouting and Thresholds
-* Scout at least 50 plants in a 'W' trajectory across each 1-hectare plot.
-* **Early Vegetative:** If >= 20% of plants display window-pane feeding damage, initiate biological or botanical intervention immediately.
-* **Mid-Whorl to Tasseling:** If >= 10% of plants show fresh frass and active larvae in whorls, apply targeted bio-pesticides directly into leaf funnels.
-
-### 2. Biological Control Agents
-* **Bacillus thuringiensis (Bt) kurstaki:** Apply at 1.5–2.0 kg/ha during late afternoon to prevent UV degradation.
-* **Cold-Pressed Neem Oil (Azadirachtin 0.03%):** Dilute 5 ml/L water with mild surfactant. Interrupts ecdysone molting cycle.
-* **Push-Pull Technology:** Intercrop with *Desmodium uncinatum* (repellent) and plant *Brachiaria* grass border trap strips.
-
-### 3. Approved Chemical Options (Rescue Phase)
-* Emamectin Benzoate 5% SG (0.4 g/L)
-* Chlorantraniliprole 18.5% SC (0.3 ml/L)
-* Direct sprays into the central whorl with a solid-cone nozzle. Avoid broad-spectrum synthetic pyrethroids to preserve native parasitoids.`,
-  },
-  {
-    id: 'isric-soil-acidity',
-    title: 'ISRIC SoilGrids v2 Smallholder Liming & Aluminum Toxicity Neutralization Guide',
-    author: 'ISRIC World Soil Information & IFDC',
-    category: 'Soil Chemistry',
-    crop: 'Multi-Crop',
-    verified: true,
-    readingTime: '8 min read',
-    chunks: 58,
-    excerpt: 'Quantitative lime requirement equations (CaCO3) for tropical Ferralsols and Acrisols with exchangeable aluminum saturation >30%.',
-    fullText: `## Diagnostic Matrix & Remediation for Acidic Tropical Soils
-
-### 1. Soil Acidity Profile
-* **Target pH:** 6.0 – 6.5 for optimal CEC and phosphorus bioavailability.
-* **Critical Threshold:** Soil pH < 5.0 triggers soluble Al3+ mobilization, causing acute root tip swelling and stunting.
-
-### 2. Liming Rate Calculation
-* **Equation:** $\text{Lime Required (t/ha)} = 1.5 \times \text{Exchangeable Al (cmol/kg)} \times \text{Buffer Factor}$.
-* For typical volcanic Ferralsols (pH 4.8, 35% Al saturation), apply **2.5 to 3.0 tonnes/ha** of fine agricultural lime (CaCO3, ENV > 80%).
-* Broadcast and incorporate into the upper 0–15 cm depth at least **3 to 4 weeks before sowing**.
-
-### 3. Integrated Nutrient Strategy
-* Co-apply with organic compost ($5\text{ t/ha}$) to complex residual aluminum ions.
-* Use Single Superphosphate (SSP) or rock phosphate to supply calcium and sulfur alongside bioavailable phosphorus.`,
-  },
-  {
-    id: 'nasa-clim-planting',
-    title: 'NASA POWER Agroclimatology Surface Meteorology & Sowing Window Almanac',
-    author: 'NASA Earth Science Applied Sciences & CIAT',
-    category: 'Climatology',
-    crop: 'Cassava, Maize & Legumes',
-    verified: true,
-    readingTime: '5 min read',
-    chunks: 36,
-    excerpt: 'Utilizing 14-day rainfall anomalies, root-zone saturation indices, and growing degree days (GDD) for precision planting.',
-    fullText: `## Satellite Agroclimatology & Moisture Calibration
-
-### 1. Satellite Moisture Index Interpretation
-* **Root-Zone Saturation (0–100 cm):** Minimum 0.32 m³/m³ required for uniform germination.
-* **14-Day Rainfall Anomaly:** Positive anomalies (+15% to +35% above 10-year median) confirm sustained bimodal onset.
-
-### 2. Sowing Window Protocols
-* Ensure at least **25 mm of cumulative rainfall** over 3 consecutive days prior to seeding.
-* For Cassava: Plant stem cuttings at 45° angle, burying 2/3 of nodes into warm moist topsoil.
-* For Maize: Seed at 5 cm depth; apply basal fertilizer at planting when soil temperature is 18°C–28°C.`,
-  },
-  {
-    id: 'kalro-push-pull-manual',
-    title: 'KALRO Push-Pull Agroecological Crop Protection Technical Bulletin',
-    author: 'Kenya Agricultural & Livestock Research Organization (KALRO) & ICIPE',
-    category: 'Agronomy',
-    crop: 'Maize & Sorghum',
-    verified: true,
-    readingTime: '7 min read',
-    chunks: 48,
-    excerpt: 'Intercropping Desmodium and Napier/Brachiaria grasses for simultaneous Striga weed suppression and stemborer deterrence.',
-    fullText: `## Climate-Adapted Push-Pull Protocol
-
-### 1. Mechanism
-* **The "Push":** Greenleaf Desmodium (*Desmodium intortum*) intercropped between maize rows emits volatile monoterpenes that repel ovipositing moths.
-* **The "Pull":** Border strips of Napier (*Pennisetum purpureum*) or Brachiaria grass attract moths to lay eggs on gummy trap leaves where larvae cannot develop.
-
-### 2. Striga Weed (*Striga hermonthica*) Suppression
-* Root exudates of Desmodium contain isoflavonones that induce suicidal germination of Striga seeds without attaching to maize roots.
-* Reduces Striga seed bank by over 80% within two cropping seasons while fixing up to 100 kg N/ha.`,
-  },
-  {
-    id: 'horticulture-drip-fertigation',
-    title: 'Precision Smallholder Drip Fertigation & NPK Uptake Kinetics',
-    author: 'AVRDC World Vegetable Center',
-    category: 'Horticulture',
-    crop: 'Tomato, Capsicum & Onion',
-    verified: true,
-    readingTime: '6 min read',
-    chunks: 39,
-    excerpt: 'Split soluble fertilizer application schedules, electrical conductivity (EC) thresholds, and blossom-end rot calcium prevention.',
-    fullText: `## Solanaceous Crop Fertigation Management
-
-### 1. Nutrient Scheduling
-* **Vegetative Stage:** N:P:K ratio of 2:1:1 to establish robust foliage and root structure.
-* **Flowering & Fruit Set:** Shift to 1:1:2 ratio with high potassium and soluble calcium nitrate to prevent blossom-end rot.
-
-### 2. Irrigation Calibration
-* Maintain EC at 1.8–2.2 mS/cm and pH between 5.8 and 6.5.
-* Pulse irrigate 2–3 times daily during peak evapotranspiration (11:00 AM – 2:00 PM) to maintain continuous capillary moisture.`,
-  },
-];
-
-const RESEARCH_SCENARIOS: ResearchScenario[] = [
-  {
-    id: 'fall_armyworm_ipm',
-    title: 'Fall Armyworm Integrated Pest Protocol',
-    crop: 'Maize',
-    category: 'Entomology & IPM',
-    badge: 'FAO / CIMMYT IPM Protocol',
-    query: 'What are the biological and low-toxicity chemical control thresholds for Fall Armyworm (Spodoptera frugiperda) in maize?',
-    canvasMode: 'rag_graph',
-    sampleAnswer: `### Verified Agro-RAG Synthesis: Fall Armyworm (*Spodoptera frugiperda*) IPM
-
-**1. Action Thresholds:**
-* **Whorl Stage:** Intervene when **20% of plants** show fresh leaf damage (window-paning / shot holes) with live early-instar larvae.
-* **Tasseling / Silking:** Intervene immediately if **5% of plants** show larval infestation before ear penetration.
-
-**2. Biological & Cultural Controls:**
-* **Bio-Pesticides:** Apply *Bacillus thuringiensis* (Bt) kurstaki or *Beauveria bassiana* foliar spray in late afternoon to protect UV sensitivity.
-* **Botanicals:** Cold-pressed Neem oil (Azadirachtin 0.03% EC at 5 ml/L water) disrupts larval molting and oviposition.
-* **Parasitoid Conservation:** Encourage local *Telenomus remus* and *Trichogramma* wasp populations by avoiding broad-spectrum pyrethroids.
-
-**3. Targeted Chemical Intervention (High Infestation):**
-* Apply *Emamectin benzoate* 5% SG (0.4 g/L) or *Chlorantraniliprole* 18.5% SC (0.3 ml/L) directed into the central leaf whorl.`,
-    citations: [
-      {
-        sourceId: 'fao-faw-2024',
-        title: 'FAO Fall Armyworm Guidance Note 14',
-        category: 'IPM Guidelines',
-        excerpt: 'Action thresholds and biological control mechanisms for smallholder maize systems.',
-        score: 0.96,
-      },
-      {
-        sourceId: 'cimmyt-ent-88',
-        title: 'CIMMYT Tropical Maize Pathology Manual v4.1',
-        category: 'Entomological Studies',
-        excerpt: 'Neem and Bt application protocols during early vegetative development.',
-        score: 0.92,
-      },
-      {
-        sourceId: 'kalro-crop-112',
-        title: 'KALRO Push-Pull Desmodium Pest Control Bulletin',
-        category: 'Agroecology',
-        excerpt: 'Intercropping Desmodium uncinatum to deter oviposition and repel Spodoptera moths.',
-        score: 0.89,
-      },
-    ],
-  },
-  {
-    id: 'soil_acidity_liming',
-    title: 'Severe Soil Acidity (pH 4.8) & Liming Protocol',
-    crop: 'Multi-Crop',
-    category: 'Soil Chemistry & Agronomy',
-    badge: 'ISRIC SoilGrids v2 Verified',
-    query: 'How to calculate agricultural lime (CaCO3) requirement for soils with pH below 5.0 and high aluminum toxicity?',
-    canvasMode: 'soil_heatmap',
-    sampleAnswer: `### Verified Agro-RAG Synthesis: Soil Acidity Neutralization & Aluminum Shielding
-
-**1. Diagnostic Soil Matrix:**
-* **Soil pH:** $4.8$ (Strongly Acidic, volcanic/ferralsol profile).
-* **Exchangeable Aluminum:** >35% saturation, causing acute root tip necrosis and phosphorus fixation.
-
-**2. Liming Prescription Calculation:**
-* **Dosage:** Broadcast **2.5 to 3.0 tonnes/ha** of finely ground agricultural lime (CaCO3, Effective Neutralizing Value >80%).
-* **Incorporation Depth:** Evenly disc into top 0–15 cm root zone at least **21 to 30 days prior to sowing**.
-
-**3. Phosphorus Availability Restoration:**
-* Apply single superphosphate (SSP) or DAP alongside well-decomposed manure ($5\text{ tonnes/ha}$) to shield phosphate ions from aluminum chelation.`,
-    citations: [
-      {
-        sourceId: 'isric-soilgrids-2024',
-        title: 'ISRIC SoilGrids v2 Global Acidity & Base Saturation Map',
-        category: 'Pedology',
-        excerpt: 'Exchangeable aluminum saturation dynamics in sub-Saharan African oxisols.',
-        score: 0.97,
-      },
-      {
-        sourceId: 'ifdc-lime-09',
-        title: 'IFDC Smallholder Soil Amendment & Liming Field Guide',
-        category: 'Soil Fertility',
-        excerpt: 'Dosage equations and reaction kinetics of calcitic lime in humid tropics.',
-        score: 0.94,
-      },
-    ],
-  },
-  {
-    id: 'nasa_precipitation_window',
-    title: 'NASA POWER Satellite Moisture & Planting Sowing Window',
-    crop: 'Cassava & Cereals',
-    category: 'Agroclimatology',
-    badge: 'NASA POWER 14-Day Sync',
-    query: 'What is the optimal planting window based on NASA POWER rainfall anomalies and soil moisture for cassava?',
-    canvasMode: 'phenology',
-    sampleAnswer: `### Verified Agro-RAG Synthesis: NASA POWER Agroclimatological Planting Window
-
-**1. Climatological Window:**
-* **Precipitation Trend:** 14-day cumulative rainfall forecast indicates $>45\text{ mm}$ with steady soil saturation index ($0.38\text{ m}^3/\text{m}^3$).
-* **Sowing Window:** Commencing within the next **4 to 8 days** once topsoil drains to field capacity.
-
-**2. Stem Cutting & Planting Depth:**
-* Select disease-free stem cuttings ($20\text{–}25\text{ cm}$ length, 4–6 nodes).
-* Plant at a 45° angle with buds facing upward, leaving $2/3$ of the cutting buried to prevent desiccation.
-
-**3. Disease Precaution:**
-* Monitor for Cassava Mosaic Disease (CMD) and Whitefly vectors during early establishment.`,
-    citations: [
-      {
-        sourceId: 'nasa-power-clim',
-        title: 'NASA POWER Agroclimatology Surface Meteorology API',
-        category: 'Satellite Telemetry',
-        excerpt: 'Daily precipitation, root-zone soil moisture, and solar radiation index.',
-        score: 0.98,
-      },
-      {
-        sourceId: 'iita-cassava-30',
-        title: 'IITA Cassava Agronomy & Phenology Manual',
-        category: 'Crop Production',
-        excerpt: 'Moisture requirements during nodal sprouting and root bulking stages.',
-        score: 0.91,
-      },
-    ],
-  },
-  {
-    id: 'maize_foliar_rust_pathology',
-    title: 'Maize Foliar Rust & Chlorosis Pathology',
-    crop: 'Maize',
-    category: 'Pathology & Vision AI',
-    badge: 'YOLOv8 Foliar Saliency',
-    query: 'How to diagnose and mitigate Common Rust (Puccinia sorghi) versus Southern Corn Rust (Puccinia polysora)?',
-    canvasMode: 'pathology',
-    sampleAnswer: `### Verified Agro-RAG Synthesis: Foliar Rust Pathology Saliency & Protocol
-
-**1. Saliency Differentiation:**
-* **Common Rust (*P. sorghi*):** Golden-brown pustules on both upper and lower leaf surfaces, prevalent in cooler highland areas (16–23°C).
-* **Southern Rust (*P. polysora*):** Smaller, densely clustered orange pustules primarily on upper surface, thrives in warm humid lowlands (25–32°C).
-
-**2. Cultural & Resistance Strategy:**
-* Deploy resistant hybrids (e.g. highland tolerant composites).
-* Rotate with non-grass crops (legumes/potatoes) to reduce residual teliospore inoculum.
-
-**3. Chemical Fungicide Threshold:**
-* Apply Azoxystrobin + Difenoconazole (0.5 L/ha) if pustules reach ear leaves before the R3 milk stage.`,
-    citations: [
-      {
-        sourceId: 'cimmyt-path-44',
-        title: 'CIMMYT Maize Pathology & Diagnostic Compendium',
-        category: 'Plant Pathology',
-        excerpt: 'Epidemiological distinctions between Puccinia sorghi and Puccinia polysora.',
-        score: 0.95,
-      },
-    ],
-  },
-];
-
 // Helper functions extracted to maintain cognitive complexity < 15
 const mapCitationCategory = (category?: string): GraphNode['category'] => {
   const cat = (category || '').toLowerCase();
@@ -396,6 +104,7 @@ const matchesArticle = (art: DocumentArticle, category: string, query: string): 
 
 export const KnowledgeBase: React.FC = () => {
   const { addNotification, setActiveTab } = useAppStore();
+  const { isDemo } = useDemoMode();
   const [activeTabMode, setActiveTabMode] = useState<KnowledgeTabMode>('search');
   const [searchQuery, setSearchQuery] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -499,21 +208,8 @@ export const KnowledgeBase: React.FC = () => {
       setActiveCanvasMode(sc.canvasMode as SpatialCanvasMode);
     }
     setActiveTabMode('search');
-    setLastResult({
-      answer: sc.sampleAnswer,
-      contextUsed: sc.citations.map(c => ({
-        content: c.excerpt,
-        source: c.title,
-        score: c.score,
-        metadata: { title: c.title, category: c.category, crop: sc.crop },
-      })),
-      cached: true,
-      query: sc.query,
-      timestamp: new Date().toISOString(),
-      citations: sc.citations,
-      evidenceStatus: 'verified_sources',
-    });
-    toast.success(`Loaded scenario: ${sc.title}`);
+    toast(`Running live RAG for: ${sc.title}`, { icon: '🔬' });
+    performAISearch(sc.query);
   };
 
   const graphNodes = useMemo<GraphNode[] | undefined>(() => {
@@ -554,22 +250,8 @@ export const KnowledgeBase: React.FC = () => {
           </div>
 
           <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
-            {/* Quota Telemetry Chip */}
-            {quota && (
-              <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 text-xxs font-mono">
-                <Zap className="w-3 h-3 text-amber-400 shrink-0" />
-                <span className="text-white/70">DAILY QUOTA:</span>
-                <span className="text-white font-bold">{quota.remaining}/{quota.limit}</span>
-                {quota.remaining <= 3 && (
-                  <button
-                    onClick={() => setActiveTab('billing')}
-                    className="ml-1 underline font-bold text-amber-300 hover:text-amber-200"
-                  >
-                    Upgrade
-                  </button>
-                )}
-              </div>
-            )}
+            {/* Quota Telemetry Chip — free 3/3 daily, Pro/Admin Unlimited */}
+            {quota && <QuotaChip quota={quota} onUpgrade={() => setActiveTab('billing')} />}
 
             {/* 5-Segmented Mode Switcher */}
             <div className="flex items-center bg-white/[0.04] p-1 rounded-xl border border-white/10 shadow-inner overflow-x-auto">
@@ -640,46 +322,52 @@ export const KnowledgeBase: React.FC = () => {
       {/* ── TAB 1: Search & AI Discovery ── */}
       {activeTabMode === 'search' && (
         <div className="space-y-6">
-          {/* Quick Agronomic Research Scenarios */}
-          <div className="backdrop-blur-xl bg-slate-900/70 border border-white/10 rounded-xl p-5 space-y-4 shadow-xl">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xxs font-mono font-bold tracking-widest text-emerald-400 uppercase">
-                  Verified Research Scenarios
-                </span>
-                <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-300 text-xxs font-mono border border-emerald-500/20">
-                  1-Click Traversal
-                </span>
+          {/* Quick Agronomic Research Scenarios — demo curated, live search for real users */}
+          {isDemo ? (
+            <div className="backdrop-blur-xl bg-slate-900/70 border border-white/10 rounded-xl p-5 space-y-4 shadow-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xxs font-mono font-bold tracking-widest text-emerald-400 uppercase">
+                    Verified Research Scenarios
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 text-xxs font-mono border border-amber-500/20">
+                    Demo
+                  </span>
+                </div>
+                <span className="text-xs font-mono text-white/40">Select a verified benchmark to run semantic inquiry</span>
               </div>
-              <span className="text-xs font-mono text-white/40">Select a verified benchmark to run semantic inquiry</span>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {RESEARCH_SCENARIOS.map(sc => (
-                <button
-                  key={sc.id}
-                  onClick={() => handleTriggerScenario(sc)}
-                  className="p-4 rounded-xl bg-slate-950/50 hover:bg-emerald-500/10 border border-white/5 hover:border-emerald-500/30 text-left transition-all group flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                        {sc.crop}
-                      </span>
-                      <span className="text-[9px] text-white/40 font-mono">{sc.category}</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {RESEARCH_SCENARIOS.map(sc => (
+                  <button
+                    key={sc.id}
+                    onClick={() => handleTriggerScenario(sc)}
+                    className="p-4 rounded-xl bg-slate-950/50 hover:bg-emerald-500/10 border border-white/5 hover:border-emerald-500/30 text-left transition-all group flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          {sc.crop}
+                        </span>
+                        <span className="text-[9px] text-white/40 font-mono">{sc.category}</span>
+                      </div>
+                      <h4 className="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors line-clamp-2">
+                        {sc.title}
+                      </h4>
                     </div>
-                    <h4 className="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors line-clamp-2">
-                      {sc.title}
-                    </h4>
-                  </div>
-                  <div className="mt-3 pt-2 border-t border-white/5 text-[10px] text-white/40 group-hover:text-emerald-400 flex items-center justify-between font-mono">
-                    <span>Load Grounded Protocol</span>
-                    <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                  </div>
-                </button>
-              ))}
+                    <div className="mt-3 pt-2 border-t border-white/5 text-[10px] text-white/40 group-hover:text-emerald-400 flex items-center justify-between font-mono">
+                      <span>Load Grounded Protocol</span>
+                      <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="backdrop-blur-xl bg-slate-900/40 border border-white/5 rounded-xl p-4 text-center">
+              <p className="text-xs text-white/60">Demo scenarios are available in the demo account — use Search & Discovery above for live RAG over your ingested knowledge base.</p>
+            </div>
+          )}
 
           {/* Multi-Modal Research Search Bar */}
           <div className="backdrop-blur-xl bg-slate-900/70 border border-white/10 rounded-xl p-5 shadow-xl space-y-4">
@@ -962,22 +650,35 @@ export const KnowledgeBase: React.FC = () => {
                     <span>AGRO-ECOSYSTEM 4-STAGE PHENOLOGY SCRUBBER</span>
                     <span className="text-cyan-400">NASA POWER Synchronized</span>
                   </div>
-                  <AgroEcosystemCanvasScrubber className="w-full h-[460px] rounded-xl border border-white/10" />
+                  <AgroEcosystemCanvasScrubber
+                    interactive={true}
+                    showControls={true}
+                    autoPlay={true}
+                    className="w-full h-[460px] rounded-xl border border-white/10"
+                  />
                 </div>
               )}
 
               {activeCanvasMode === 'soil_heatmap' && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-xs font-mono text-white/70">
-                    <span>SPATIAL SOIL CHEMISTRY & PH HEATMAP (ISRIC SoilGrids v2)</span>
-                    <span className="text-amber-400">Click cells to probe micro-nutrients</span>
+                    <span className="flex items-center gap-2">SPATIAL SOIL CHEMISTRY & PH HEATMAP (ISRIC SoilGrids v2) {!isDemo && <span className="px-1.5 py-0.5 rounded text-[9px] bg-slate-700 text-white/60 border border-white/10">Live requires farmer</span>}</span>
+                    <span className="text-amber-400">{isDemo ? 'Demo preview — click cells' : 'Select farmer in Soil Diagnostics for live tile'}</span>
                   </div>
-                  <SoilNutrientHeatmapCanvas
-                    onProbeSelect={(probe: SoilProbeResult) => {
-                      toast(`Soil ${probe.label}: ${probe.value.toFixed(1)} ${probe.unit} (${probe.status})`);
-                    }}
-                    className="w-full h-[460px] rounded-xl border border-white/10"
-                  />
+                  {isDemo ? (
+                    <SoilNutrientHeatmapCanvas
+                      onProbeSelect={(probe: SoilProbeResult) => {
+                        toast(`Soil ${probe.label}: ${probe.value.toFixed(1)} ${probe.unit} (${probe.status})`);
+                      }}
+                      className="w-full h-[460px] rounded-xl border border-white/10"
+                    />
+                  ) : (
+                    <div className="w-full h-[460px] rounded-xl border border-white/10 bg-slate-950/40 flex flex-col items-center justify-center p-8 text-center">
+                      <Layers className="w-10 h-10 text-white/20 mb-2" />
+                      <p className="text-sm font-bold text-white">Live Soil Tile — Per-Farmer</p>
+                      <p className="text-xs text-white/50 mt-1 max-w-md">This demo mesh is visible only in the demo account. For your farmers, open <span className="text-emerald-300">Disease Diagnosis → Soil Diagnostics</span>, select a farmer, and the heatmap will render live ISRIC 250m + lab-anchored interpolation.</p>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1006,8 +707,29 @@ export const KnowledgeBase: React.FC = () => {
 
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button
-                  onClick={() => {
-                    toast.success('Generating Factsheet PDF report...');
+                  onClick={async () => {
+                    if (!lastResult?.query && !searchQuery) {
+                      toast.error('Run a search first to generate a factsheet');
+                      return;
+                    }
+                    const query = lastResult?.query || searchQuery || 'Knowledge factsheet';
+                    try {
+                      const { generateReport } = await import('@/api/reportService');
+                      const { downloadReportPdf } = await import('@/api/reportService');
+                      const gen = await generateReport('knowledge_factsheet', query.slice(0, 80));
+                      const reportId = (gen as { data?: { id?: string } })?.data?.id || (gen as { id?: string })?.id;
+                      if (!reportId) throw new Error('No report id');
+                      const blob = await downloadReportPdf(reportId);
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `factsheet-${Date.now()}.pdf`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      toast.success('Factsheet PDF downloaded');
+                    } catch (e) {
+                      toast.error((e as Error).message || 'Factsheet export failed');
+                    }
                   }}
                   className="flex-1 sm:flex-none px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 text-xs font-bold transition-all flex items-center justify-center gap-1.5"
                 >
@@ -1016,8 +738,19 @@ export const KnowledgeBase: React.FC = () => {
                 </button>
 
                 <button
-                  onClick={() => {
-                    toast.success('Advisory broadcast queued for registered farmers!');
+                  onClick={async () => {
+                    if (!lastResult?.answer) {
+                      toast.error('Run a search first to broadcast');
+                      return;
+                    }
+                    try {
+                      toast('Opening SMS bulk composer with last answer…');
+                      const { useAppStore } = await import('@/store/useAppStore');
+                      useAppStore.getState().setPendingSMS({ phone: '', message: lastResult.answer.replace(/\*\*/g, '').slice(0, 300) });
+                      setActiveTab('sms' as never);
+                    } catch {
+                      toast.error('Broadcast requires SMS cohort — open SMS page');
+                    }
                   }}
                   className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-all shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-1.5"
                 >
@@ -1090,63 +823,110 @@ export const KnowledgeBase: React.FC = () => {
                 <span>Export Offline Pack</span>
               </button>
 
-              <button
-                onClick={() => toast('Document ingestion pipeline active. Upload custom agronomic PDF / Markdown.')}
-                className="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-lg shadow-purple-950/40 flex items-center justify-center gap-1.5"
+              <input
+                type="file"
+                accept=".pdf,.md,.txt,.docx"
+                className="hidden"
+                id="kb-doc-upload-input"
+                onChange={async e => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (file.size > 8 * 1024 * 1024) {
+                    toast.error('File too large — max 8MB');
+                    e.target.value = '';
+                    return;
+                  }
+                  const text = await file.text().catch(() => '');
+                  if (!text.trim()) {
+                    toast.error('Could not read file text — try a .md or .txt export');
+                    e.target.value = '';
+                    return;
+                  }
+                  try {
+                    const title = file.name.replace(/\.[^.]+$/, '').slice(0, 120) || 'Uploaded Knowledge Doc';
+                    const { data } = await (await import('@/api/client')).default.post('/knowledge', {
+                      title,
+                      content: text.slice(0, 200000),
+                      contentType: 'text',
+                      category: 'Agronomy',
+                      tags: ['upload', file.name],
+                    });
+                    if (data?.success) {
+                      toast.success(`Ingested "${title}" — ${data.data?.id ? 'indexed' : 'queued'}`);
+                      fetchStats();
+                    } else toast.error(data?.error || 'Upload failed');
+                  } catch (err) {
+                    toast.error((err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Upload failed');
+                  } finally {
+                    e.target.value = '';
+                  }
+                }}
+              />
+              <label
+                htmlFor="kb-doc-upload-input"
+                className="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-lg shadow-purple-950/40 flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Upload className="w-3.5 h-3.5" />
                 <span>Upload Technical Doc</span>
-              </button>
+              </label>
             </div>
           </div>
 
-          {/* Articles Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredArticles.map(art => (
-              <motion.div
-                key={art.id}
-                layout
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="backdrop-blur-xl bg-slate-900/70 border border-white/10 hover:border-purple-500/40 rounded-xl p-5 flex flex-col justify-between shadow-xl transition-all group"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="px-2.5 py-1 rounded-md text-xxs font-mono font-bold uppercase bg-purple-500/10 text-purple-300 border border-purple-500/20">
-                      {art.category}
-                    </span>
-                    <span className="text-[10px] font-mono text-white/40">{art.readingTime}</span>
+          {/* Articles Grid — demo catalog only in demo account; real users see ingested docs via Search */}
+          {isDemo ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filteredArticles.map(art => (
+                <motion.div
+                  key={art.id}
+                  layout
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="backdrop-blur-xl bg-slate-900/70 border border-white/10 hover:border-purple-500/40 rounded-xl p-5 flex flex-col justify-between shadow-xl transition-all group"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="px-2.5 py-1 rounded-md text-xxs font-mono font-bold uppercase bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                        {art.category}
+                      </span>
+                      <span className="text-[10px] font-mono text-white/40">{art.readingTime}</span>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-bold text-white group-hover:text-purple-300 transition-colors line-clamp-2">
+                        {art.title}
+                      </h3>
+                      <p className="text-xxs text-white/50 font-mono mt-1">{art.author}</p>
+                    </div>
+
+                    <p className="text-xs text-white/70 leading-relaxed line-clamp-3">
+                      {art.excerpt}
+                    </p>
                   </div>
 
-                  <div>
-                    <h3 className="text-sm font-bold text-white group-hover:text-purple-300 transition-colors line-clamp-2">
-                      {art.title}
-                    </h3>
-                    <p className="text-xxs text-white/50 font-mono mt-1">{art.author}</p>
+                  <div className="mt-5 pt-3.5 border-t border-white/5 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xxs font-mono text-emerald-400">
+                      <CheckCircle2 className="w-3 h-3" />
+                      <span>{art.chunks} Embed Chunks</span>
+                    </div>
+
+                    <button
+                      onClick={() => setSelectedArticle(art)}
+                      className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-purple-500/20 border border-white/10 hover:border-purple-500/30 text-white/80 hover:text-white text-xxs font-bold uppercase transition-all flex items-center gap-1.5"
+                    >
+                      <span>Read Article</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </button>
                   </div>
-
-                  <p className="text-xs text-white/70 leading-relaxed line-clamp-3">
-                    {art.excerpt}
-                  </p>
-                </div>
-
-                <div className="mt-5 pt-3.5 border-t border-white/5 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xxs font-mono text-emerald-400">
-                    <CheckCircle2 className="w-3 h-3" />
-                    <span>{art.chunks} Embed Chunks</span>
-                  </div>
-
-                  <button
-                    onClick={() => setSelectedArticle(art)}
-                    className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-purple-500/20 border border-white/10 hover:border-purple-500/30 text-white/80 hover:text-white text-xxs font-bold uppercase transition-all flex items-center gap-1.5"
-                  >
-                    <span>Read Article</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <div className="backdrop-blur-xl bg-slate-900/40 border border-white/5 rounded-xl p-8 text-center">
+              <BookOpen className="w-8 h-8 text-white/20 mx-auto mb-2" />
+              <p className="text-sm font-bold text-white">Document Library — Demo Preview</p>
+              <p className="text-xs text-white/50 mt-1 max-w-md mx-auto">The 4 curated FAO/ISRIC/KALRO demo docs are visible only in the demo account. Your ingested technical docs (Upload Technical Doc above) will appear here and in Search after indexing.</p>
+            </div>
+          )}
 
           {/* Detailed Document Reader Modal */}
           <AnimatePresence>

@@ -13,8 +13,10 @@ pipeline {
         stage('Setup') {
             steps {
                 sh "docker network create ag-network || true"
-                // Deep clean: Stop and remove containers and their volumes to clear stale frontend assets
-                sh "docker compose -p ${COMPOSE_PROJECT_NAME} -f ${PROJECT_DIR}/docker-compose.yml -f ${PROJECT_DIR}/docker-compose.agents.yml down -v --remove-orphans || true"
+                // Stop containers only. NEVER pass `-v` here: it deletes the Postgres,
+                // Redis and agent data volumes on every pipeline run. Stale frontend
+                // assets are handled by `--build --force-recreate` in the Deploy stage.
+                sh "docker compose -p ${COMPOSE_PROJECT_NAME} -f ${PROJECT_DIR}/docker-compose.yml -f ${PROJECT_DIR}/docker-compose.agents.yml down --remove-orphans || true"
             }
         }
         stage('Debug Config') {
@@ -25,10 +27,10 @@ pipeline {
         }
         stage('Test') {
             steps {
-                // Run backend tests inside a temporary container
-                sh "docker compose -p ${COMPOSE_PROJECT_NAME} -f ${PROJECT_DIR}/docker-compose.yml run --rm --no-deps backend npm test -- --passWithNoTests 2>&1 || true"
-                // Run frontend typecheck
-                sh "docker compose -p ${COMPOSE_PROJECT_NAME} -f ${PROJECT_DIR}/docker-compose.yml run --rm --no-deps frontend npm run typecheck 2>&1 || true"
+                // Tests and typechecks gate the deploy — a failure here must fail the build.
+                sh "docker compose -p ${COMPOSE_PROJECT_NAME} -f ${PROJECT_DIR}/docker-compose.yml run --rm --no-deps backend npm test -- --passWithNoTests 2>&1"
+                sh "docker compose -p ${COMPOSE_PROJECT_NAME} -f ${PROJECT_DIR}/docker-compose.yml run --rm --no-deps backend npx tsc --noEmit 2>&1"
+                sh "docker compose -p ${COMPOSE_PROJECT_NAME} -f ${PROJECT_DIR}/docker-compose.yml run --rm --no-deps frontend npm run typecheck 2>&1"
             }
         }
         stage('Deploy') {

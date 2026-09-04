@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { logger } from '../../../utils/logger';
+import { BaseAIProvider, AIProviderType, TextGenerationOptions, TextGenerationResult } from '../types';
 
 export interface NVIDIARequest {
   model?: string;
@@ -25,11 +26,14 @@ export interface NVIDIAResponse {
  * build API (https://integrate.api.nvidia.com/v1). Reads NVIDIA_API_KEY
  * (nvapi-...) from the environment.
  */
-export class NVIDIAProvider {
+export class NVIDIAProvider extends BaseAIProvider {
+  readonly provider: AIProviderType = 'nvidia';
+  readonly capabilities: string[] = ['text', 'chat'];
   private apiKey: string;
   private baseUrl: string;
 
   constructor(apiKey?: string, baseUrl = 'https://integrate.api.nvidia.com/v1') {
+    super();
     this.apiKey = apiKey || process.env.NVIDIA_API_KEY || '';
     this.baseUrl = baseUrl;
   }
@@ -38,8 +42,27 @@ export class NVIDIAProvider {
     return this.apiKey || process.env.NVIDIA_API_KEY || '';
   }
 
-  public isConfigured(): boolean {
+  public override isConfigured(): boolean {
     return Boolean(this.getApiKey());
+  }
+
+  public override async healthCheck(): Promise<boolean> {
+    if (!this.isConfigured()) return false;
+    try {
+      await axios.post(`${this.baseUrl}/chat/completions`, { model: 'meta/llama-3.1-8b-instruct', messages: [{ role: 'user', content: 'ping' }], max_tokens: 2 }, { headers: { Authorization: `Bearer ${this.getApiKey()}` }, timeout: 3000 });
+      this.recordHealthError();
+      return true;
+    } catch (err) {
+      const status = (err as { response?: { status?: number } }).response?.status;
+      this.recordHealthError(status ? `HTTP ${status}` : (err as Error).message);
+      return false;
+    }
+  }
+
+  public override async generateText(prompt: string | Array<{ role: string; content: string }>, options?: TextGenerationOptions): Promise<TextGenerationResult> {
+    const messages = typeof prompt === 'string' ? [{ role: 'user', content: prompt }] : prompt;
+    const text = await this.chat({ model: options?.model, messages, temperature: options?.temperature, max_tokens: options?.maxTokens });
+    return { text, model: options?.model || 'meta/llama-3.1-8B-Instruct' };
   }
 
   public async chat(req: NVIDIARequest): Promise<string> {

@@ -15,9 +15,7 @@ import { REASONING_SYSTEM_PROMPT, extractVisuals, buildGroundedReasoningPrompt }
 import { config } from '@/config';
 import { logger } from '@/utils/logger';
 import Groq from 'groq-sdk';
-import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
-import { Tool } from '../../../tools/types';
+import { normalizeToolDefinitions, normalizeMessages, normalizeToolCalls } from '../toolCalling';
 
 
 export class GroqProvider extends BaseAIProvider {
@@ -30,17 +28,12 @@ export class GroqProvider extends BaseAIProvider {
         this.client = new Groq({ apiKey: config.groq.apiKey });
     }
 
-    async generateText(messages: any[], options?: TextGenerationOptions): Promise<TextGenerationResult> {
+    async generateText(prompt: string | any[], options?: TextGenerationOptions): Promise<TextGenerationResult> {
         const model = options?.model || 'llama-3.3-70b-versatile';
 
-        const toolSchemas = options?.tools?.map((tool: Tool<z.ZodType<any, any>>) => ({
-            type: 'function',
-            function: {
-                name: tool.name,
-                description: tool.description,
-                parameters: zodToJsonSchema(tool.schema as any),
-            },
-        }));
+        // Accepts internal Tool objects or OpenAI function definitions; string prompts or messages.
+        const toolSchemas = normalizeToolDefinitions(options?.tools);
+        const messages = normalizeMessages(prompt) as any[];
 
         try {
             const response = await this.client.chat.completions.create({
@@ -59,14 +52,7 @@ export class GroqProvider extends BaseAIProvider {
             const choice = response.choices[0];
             return {
                 text: choice.message.content,
-                toolCalls: choice.message.tool_calls?.map(tc => ({
-                    id: tc.id,
-                    type: tc.type,
-                    function: {
-                        name: tc.function.name,
-                        arguments: tc.function.arguments,
-                    },
-                })),
+                toolCalls: normalizeToolCalls(choice.message.tool_calls as any[]),
                 model,
                 usage: {
                     promptTokens: response.usage?.prompt_tokens || 0,

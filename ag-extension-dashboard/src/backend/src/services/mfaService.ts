@@ -97,6 +97,34 @@ export function generateTotpCode(secret: string, timeStep: number = 30, timestam
   return otp.toString().padStart(6, '0');
 }
 
+/**
+ * Returns the 30-second time-step that the token matched, or null.
+ * Callers persist the step (users.last_totp_step) and reject any token whose step
+ * is <= the stored one, so an intercepted code cannot be replayed inside its window.
+ */
+export function matchTotpStep(
+  token: string,
+  secret: string,
+  window: number = 1,
+  timeStep: number = 30,
+  currentTimestampMs: number = Date.now()
+): number | null {
+  if (!token || !secret) return null;
+  const cleanToken = token.trim().replace(/\s+/g, '');
+  if (!/^\d{6}$/.test(cleanToken)) return null;
+
+  for (let offset = -window; offset <= window; offset++) {
+    const timestampToCheck = currentTimestampMs + offset * timeStep * 1000;
+    const expected = generateTotpCode(secret, timeStep, timestampToCheck);
+    const a = Buffer.from(expected);
+    const b = Buffer.from(cleanToken);
+    if (a.length === b.length && crypto.timingSafeEqual(a, b)) {
+      return Math.floor(timestampToCheck / (timeStep * 1000));
+    }
+  }
+  return null;
+}
+
 export function verifyTotp(
   token: string,
   secret: string,
@@ -120,16 +148,47 @@ export function verifyTotp(
   return false;
 }
 
+const HASH_PREFIX = 'sha256:';
+
+function normalizeBackupCode(code: string): string {
+  return code.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+/** One-way hash used for at-rest storage of backup codes. */
+export function hashBackupCode(code: string): string {
+  return HASH_PREFIX + crypto.createHash('sha256').update(normalizeBackupCode(code)).digest('hex');
+}
+
+/** Hash a freshly generated set of backup codes for storage. */
+export function hashBackupCodes(codes: string[]): string[] {
+  return codes.map(hashBackupCode);
+}
+
+function backupCodeMatches(stored: string, candidateNormalized: string): boolean {
+  if (stored.startsWith(HASH_PREFIX)) {
+    const expected = Buffer.from(stored.slice(HASH_PREFIX.length), 'hex');
+    const actual = crypto.createHash('sha256').update(candidateNormalized).digest();
+    return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
+  }
+  // Legacy plaintext rows (pre-hashing). Constant-time compare on normalized form.
+  const a = Buffer.from(normalizeBackupCode(stored));
+  const b = Buffer.from(candidateNormalized);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
 export async function verifyAndConsumeBackupCode(
   userId: string,
   candidateCode: string,
   storedBackupCodes: string[]
 ): Promise<{ valid: boolean; remainingCodes: string[] }> {
-  const normalizedCandidate = candidateCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const normalizedCandidate = normalizeBackupCode(candidateCode);
+  if (!normalizedCandidate) return { valid: false, remainingCodes: storedBackupCodes };
 
-  const matchedIndex = storedBackupCodes.findIndex(
-    code => code.replace(/[^A-Z0-9]/g, '') === normalizedCandidate
-  );
+  // Evaluate every entry (no early exit) to keep timing uniform across positions.
+  let matchedIndex = -1;
+  storedBackupCodes.forEach((code, idx) => {
+    if (backupCodeMatches(code, normalizedCandidate) && matchedIndex === -1) matchedIndex = idx;
+  });
 
   if (matchedIndex === -1) {
     return { valid: false, remainingCodes: storedBackupCodes };

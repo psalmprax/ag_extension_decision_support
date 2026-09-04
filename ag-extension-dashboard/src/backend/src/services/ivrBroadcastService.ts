@@ -1,3 +1,11 @@
+/**
+ * IVR voice broadcast — wired via POST /api/pillars/voice/*.
+ *
+ * dispatchVoiceBroadcast reports only calls actually placed through Twilio.
+ * When voice credentials or the public callback URL are missing, nothing is
+ * dispatched and the response says so (dispatchedCount: 0, provider: 'not_configured')
+ * — it never reports success for calls that were not made.
+ */
 import { logger } from '../utils/logger';
 
 export interface IvrCallOptions {
@@ -77,13 +85,21 @@ export async function dispatchVoiceBroadcast(params: {
   alertTitle: string;
   advisorySwahili: string;
   advisoryEnglish: string;
-}): Promise<{ dispatchedCount: number; batchId: string }> {
+}): Promise<{
+  dispatchedCount: number;
+  batchId: string;
+  provider?: string;
+  attempted?: number;
+  failed?: number;
+  provenance?: ReturnType<typeof import('./provenance').pillarProvenance>;
+}> {
   const { farmerPhones, alertTitle, advisorySwahili, advisoryEnglish } = params;
   const batchId = `ivr_batch_${Date.now()}`;
 
   logger.info(`Starting IVR voice broadcast ${batchId} to ${farmerPhones.length} farmers for "${alertTitle}"`);
 
-  // Generates XML prompt for the batch
+
+  // Generates XML prompt for the batch (served by TwiML callback; Africa's Talking uses same XML)
   const promptXml = generateIvrXml({
     alertTitle,
     advisorySwahili,
@@ -92,8 +108,53 @@ export async function dispatchVoiceBroadcast(params: {
 
   logger.debug(`Generated IVR XML for batch ${batchId}: ${promptXml.slice(0, 120)}...`);
 
+  const twilioSid = process.env.TWILIO_ACCOUNT_SID;
+  const twilioToken = process.env.TWILIO_AUTH_TOKEN;
+  const twilioFrom = process.env.TWILIO_PHONE_NUMBER;
+  const callbackBase = process.env.PUBLIC_BASE_URL || process.env.API_PUBLIC_URL || '';
+
+  // If Twilio voice credentials + callback URL are present, actually place calls; otherwise log-only in dev/test.
+  if (twilioSid && twilioToken && twilioFrom && callbackBase) {
+    try {
+      const axios = (await import('axios')).default;
+      const url = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Calls.json`;
+      const auth = Buffer.from(`${twilioSid}:${twilioToken}`).toString('base64');
+      const twimlUrl = `${callbackBase.replace(/\/$/, '')}/api/v1/voice/ivr?batchId=${encodeURIComponent(batchId)}`;
+      let dispatched = 0;
+      let failed = 0;
+      for (const to of farmerPhones) {
+        try {
+          await axios.post(
+            url,
+            new URLSearchParams({ To: to, From: twilioFrom, Url: twimlUrl }).toString(),
+            { headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 8000 }
+          );
+          dispatched++;
+        } catch (e) {
+          failed++;
+          logger.warn(`IVR call to ${to} failed:`, e instanceof Error ? e.message : e);
+        }
+      }
+      return { dispatchedCount: dispatched, batchId, provider: 'twilio', attempted: farmerPhones.length, failed };
+    } catch (e) {
+      logger.error('Twilio IVR dispatch error:', e);
+    }
+  }
+
+  // No real dispatch path configured: report zero calls, never a phantom success.
+  logger.warn(
+    `IVR broadcast ${batchId} not dispatched: TWILIO_ACCOUNT_SID/TWILIO_AUTH_TOKEN/TWILIO_PHONE_NUMBER/PUBLIC_BASE_URL not fully set (${farmerPhones.length} recipients affected)`
+  );
   return {
-    dispatchedCount: farmerPhones.length,
+    dispatchedCount: 0,
     batchId,
+    provider: 'not_configured',
+    attempted: farmerPhones.length,
+    provenance: {
+      kind: 'unavailable' as const,
+      assumptions: ['Twilio voice credentials or public callback URL missing'],
+      demoData: false,
+      note: 'No calls were placed. Configure Twilio voice credentials and PUBLIC_BASE_URL to dispatch IVR broadcasts.',
+    },
   };
 }

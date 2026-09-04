@@ -147,7 +147,9 @@ router.get('/insurance/weather-index', async (req: AuthedRequest, res: Response)
         if (!district) return res.status(400).json({ success: false, error: 'district query param required' });
         const index = await weatherIndexService.computeDistrictIndex(district);
         if (!index) return res.status(404).json({ success: false, error: 'No geolocated farmers in district' });
-        return res.json({ success: true, data: index, partnerIntegration: 'pending — see docs/specs/PHASE3-MARKETPLACE-CREDIT-CARBON.md' });
+        const marketplaceSpec = process.env.MARKETPLACE_PHASE3_SPEC || 'docs/specs/PHASE3-MARKETPLACE-CREDIT-CARBON.md';
+        const partnerStatus = process.env.PARTNER_INTEGRATION_STATUS || 'not_configured';
+        return res.json({ success: true, data: index, partnerIntegration: { status: partnerStatus, spec: marketplaceSpec } });
     } catch (error) {
         logger.error('Weather index failed:', error);
         return safeError(res, 500, 'Failed to compute weather index');

@@ -118,7 +118,7 @@ router.post('/cosign/generate', async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: 'visitId and farmerId are required' });
     }
 
-    const result = generateFarmerCoSignToken(visitId, farmerId);
+    const result = await generateFarmerCoSignToken(visitId, farmerId);
     return res.json({ success: true, data: result });
   } catch (error) {
     logger.error('Generate co-sign token error', { error });
@@ -137,7 +137,7 @@ router.post('/cosign/verify', async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: 'visitId and enteredOtp are required' });
     }
 
-    const result = verifyFarmerCoSignToken(visitId, enteredOtp);
+    const result = await verifyFarmerCoSignToken(visitId, enteredOtp);
     return res.json({ success: result.verified, data: result });
   } catch (error) {
     logger.error('Verify co-sign token error', { error });

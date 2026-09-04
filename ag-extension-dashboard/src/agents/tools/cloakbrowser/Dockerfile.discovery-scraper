@@ -1,0 +1,34 @@
+# Discovery Scraper Service — headless Chromium scraper used by CloakBrowserScanner.
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Chromium + fonts for headless rendering. `wget` (busybox) is used for the healthcheck.
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
+
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
+    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    NODE_ENV=production
+
+RUN addgroup -g 1001 -S nodejs && adduser -S -u 1001 -G nodejs scraper
+
+# No lockfile is committed for this small service, so use `npm install` (not `npm ci`).
+COPY package.json ./
+RUN npm install --omit=dev --no-audit --no-fund && npm cache clean --force
+
+COPY --chown=scraper:nodejs server.js extract.js ./
+
+USER scraper
+
+EXPOSE 8010
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:8010/health >/dev/null 2>&1 || exit 1
+
+CMD ["node", "server.js"]

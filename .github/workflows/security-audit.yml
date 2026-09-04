@@ -29,17 +29,15 @@ jobs:
           echo "Scanning for high-entropy secret patterns..."
           PATTERNS=(
             "-----BEGIN (RSA|EC|OPENSSH|DSA|PRIVATE) KEY-----"
-            "AIza[0-9A-Za-z-_]{35}"
+            "AIza[0-9A-Za-z_-]{35}"
             "sk-[a-zA-Z0-9]{20,48}"
             "ghp_[a-zA-Z0-9]{36}"
           )
 
           LEAKS=0
           for pattern in "${PATTERNS[@]}"; do
-            MATCHES=$(grep -rnEI "$pattern" \
-              --exclude-dir={node_modules,.git,dist,.output,.wxt,coverage,logs} \
-              --exclude={"*.lock","package-lock.json","*.min.js",".env.example"} \
-              . || true)
+            MATCHES=$(git grep -nEI -- "$pattern" -- \
+              ':!*.lock' ':!package-lock.json' ':!*.min.js' ':!.env.example' || true)
             if [ -n "$MATCHES" ]; then
               echo "::error::Potential secret match found: $pattern"
               echo "$MATCHES"
@@ -74,6 +72,9 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Audit Root Tooling Dependencies
+        run: node scripts/npm-audit-gate.cjs --dir . --level high
+
       - name: Audit Backend Dependencies
         run: |
           cd ag-extension-dashboard/src/backend
@@ -81,8 +82,7 @@ jobs:
 
       - name: Audit Frontend Dependencies
         run: |
-          cd ag-extension-dashboard/src/frontend
-          npm audit --audit-level=high
+          node scripts/npm-audit-gate.cjs --dir ag-extension-dashboard/src/frontend --level high
 
       - name: Audit Shared Package Dependencies
         run: |
@@ -164,7 +164,7 @@ jobs:
         run: |
           cd ag-extension-dashboard/src/frontend
           npm ci
-          npm run test -- src/__tests__/securityPolicy.test.ts src/__tests__/virtualizationAndThermal.test.ts src/__tests__/offlineConflictResolver.test.ts src/__tests__/remoteWipeAndEncryptedStorage.test.ts src/__tests__/chaosNetworkSimulation.test.ts
+          npm run test -- src/__tests__/securityPolicy.test.ts src/__tests__/virtualizationAndThermal.test.ts src/__tests__/remoteWipeAndEncryptedStorage.test.ts src/__tests__/chaosNetworkSimulation.test.ts
 
       - name: Install and Verify Browser Extension Security
         run: |

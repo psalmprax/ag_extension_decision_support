@@ -39,7 +39,7 @@ jobs:
 
       - name: Sync Capacitor Assets
         working-directory: ag-extension-dashboard/src/frontend
-        run: npx --yes @capacitor/cli sync || echo "Capacitor sync complete"
+        run: npx --yes @capacitor/cli sync
 
       - name: Upload Web Build Artifacts
         uses: actions/upload-artifact@v4
@@ -57,11 +57,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Java 17
+      - name: Setup Java 21
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: '21'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -78,19 +78,50 @@ jobs:
         working-directory: ag-extension-dashboard/src/frontend
         run: |
           npm ci
-          npx --yes @capacitor/cli sync android || echo "Capacitor android synced"
+          npx --yes @capacitor/cli sync android
+
+      - name: Build Signed Android APK/AAB
+        working-directory: ag-extension-dashboard/src/frontend/android
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > app/keystore.jks
+            ./gradlew assembleRelease bundleRelease \
+              -Pandroid.injected.signing.store.file=app/keystore.jks \
+              -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
+              -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
+              -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
+          else
+            echo "No keystore secrets — building unsigned debug APK for validation"
+            ./gradlew assembleDebug
+          fi
 
       - name: Create Release Summary
         run: |
           mkdir -p build/outputs
-          echo "GPExts Native App Store Build for com.gpexts.app ready." > build/outputs/BUILD_MANIFEST.txt
-          echo "Package ID: com.gpexts.app" >> build/outputs/BUILD_MANIFEST.txt
-          echo "Version: 1.0.0" >> build/outputs/BUILD_MANIFEST.txt
-          echo "Build Timestamp: $(date -u)" >> build/outputs/BUILD_MANIFEST.txt
+          cp ag-extension-dashboard/src/frontend/android/app/build/outputs/bundle/release/*.aab build/outputs/ 2>/dev/null || true
+          cp ag-extension-dashboard/src/frontend/android/app/build/outputs/apk/release/*.apk build/outputs/ 2>/dev/null || true
+          cp ag-extension-dashboard/src/frontend/android/app/build/outputs/apk/debug/*.apk build/outputs/ 2>/dev/null || true
+          ARTIFACT_COUNT=$(ls build/outputs/*.aab build/outputs/*.apk 2>/dev/null | wc -l)
+          if [ "$ARTIFACT_COUNT" -eq 0 ]; then
+            echo "::error::No APK/AAB produced by gradle — refusing to upload a manifest-only artifact claiming the build is ready."
+            exit 1
+          fi
+          ls -lh build/outputs/
+          {
+            echo "GPExts Native App Store Build for com.gpexts.app"
+            echo "Package ID: com.gpexts.app"
+            echo "Artifacts: ${ARTIFACT_COUNT} file(s)"
+            echo "Build Timestamp: $(date -u)"
+          } > build/outputs/BUILD_MANIFEST.txt
 
-      - name: Upload Native Release Metadata
+      - name: Upload Native Release Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: gpexts-native-manifest
+          name: gpexts-native-build
           path: build/outputs/
           retention-days: 30

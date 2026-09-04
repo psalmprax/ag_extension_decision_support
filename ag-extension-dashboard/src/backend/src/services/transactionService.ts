@@ -25,6 +25,33 @@ class TransactionService {
             return { success: false, message: 'Invalid plan selected.' };
         }
 
+        // The submitted amount must cover the plan price. Client-supplied amounts are
+        // otherwise trusted verbatim by the admin approval step.
+        const planPrice = Number(plan.price);
+        const submittedAmount = Number(params.amount);
+        if (!Number.isFinite(submittedAmount) || submittedAmount <= 0) {
+            return { success: false, message: 'A valid payment amount is required.' };
+        }
+        if (Number.isFinite(planPrice) && submittedAmount + 0.005 < planPrice) {
+            return {
+                success: false,
+                message: `Submitted amount (${submittedAmount.toFixed(2)}) is below the ${plan.name} plan price (${planPrice.toFixed(2)} ${plan.currency}).`,
+            };
+        }
+        if (params.currency && plan.currency && params.currency.toUpperCase() !== String(plan.currency).toUpperCase()) {
+            return { success: false, message: `Payment currency must be ${plan.currency}.` };
+        }
+
+        // Basic receipt-format sanity per provider (prevents obvious junk reaching admins).
+        const receipt = params.transactionId.trim();
+        const formatOk =
+            params.method === 'mpesa' ? /^[A-Z0-9]{10}$/i.test(receipt)
+            : params.method === 'airtel' ? /^[A-Z0-9.-]{8,32}$/i.test(receipt)
+            : /^[A-Z0-9-/ ]{6,64}$/i.test(receipt);
+        if (!formatOk) {
+            return { success: false, message: `"${receipt}" does not look like a valid ${params.method} reference.` };
+        }
+
         // Check for duplicate transaction ID
         const existing = await prisma.transactionSubmission.findUnique({
             where: { transactionId: params.transactionId },
@@ -60,6 +87,19 @@ class TransactionService {
      * Admin: Verify (approve) a pending transaction and activate the user's subscription.
      */
     async verifyTransaction(submissionId: string, adminUserId: string): Promise<{ success: boolean; message: string }> {
+        return this.activateSubmission(submissionId, { verifiedBy: adminUserId, source: 'admin' });
+    }
+
+    /**
+     * Mark a submission verified and activate the plan. Shared by the admin
+     * verification path and automated provider callbacks (M-Pesa STK). For
+     * automated verification `verifiedBy` is null and `providerReceipt` replaces the
+     * user-supplied reference so the payment row carries the authoritative receipt.
+     */
+    async activateSubmission(
+        submissionId: string,
+        opts: { verifiedBy: string | null; source: 'admin' | 'mpesa_callback'; providerReceipt?: string; providerAmount?: number }
+    ): Promise<{ success: boolean; message: string }> {
         const prisma = getPrisma();
         const submission = await prisma.transactionSubmission.findUnique({
             where: { id: submissionId },
@@ -69,12 +109,16 @@ class TransactionService {
         if (!submission) {
             return { success: false, message: 'Transaction submission not found.' };
         }
-        if (submission.status !== 'pending') {
+        if (submission.status !== 'pending' && submission.status !== 'awaiting_payment') {
             return { success: false, message: `Transaction is already ${submission.status}.` };
+        }
+        if (opts.source === 'mpesa_callback' && typeof opts.providerAmount === 'number' && opts.providerAmount + 0.005 < Number(submission.amount)) {
+            return { success: false, message: `Provider reported ${opts.providerAmount}, below expected ${Number(submission.amount)}.` };
         }
 
         const now = new Date();
         const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        const transactionRef = opts.providerReceipt || submission.transactionId;
 
         await prisma.$transaction([
             prisma.transactionSubmission.update({
@@ -82,7 +126,8 @@ class TransactionService {
                 data: {
                     status: 'verified',
                     verifiedAt: now,
-                    verifiedBy: adminUserId,
+                    verifiedBy: opts.verifiedBy,
+                    ...(opts.providerReceipt ? { transactionId: opts.providerReceipt } : {}),
                 },
             }),
             prisma.subscription.upsert({
@@ -115,13 +160,13 @@ class TransactionService {
                     currency: submission.currency,
                     status: 'completed',
                     paymentMethod: submission.method,
-                    transactionId: submission.transactionId,
+                    transactionId: transactionRef,
                     paidAt: now,
                 },
             });
         }
 
-        logger.info(`Transaction ${submission.transactionId} verified by admin ${adminUserId}. User ${submission.userId} upgraded to ${submission.plan.name}.`);
+        logger.info(`Transaction ${transactionRef} verified via ${opts.source}${opts.verifiedBy ? ` by ${opts.verifiedBy}` : ''}. User ${submission.userId} upgraded to ${submission.plan.name}.`);
         return { success: true, message: `Transaction verified. User upgraded to ${submission.plan.name}.` };
     }
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useLanguage } from '@/lib/LanguageContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Activity,
@@ -14,6 +15,7 @@ import {
   Calendar,
   Loader2,
   Link2,
+  AlertTriangle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { JourneyBreadcrumbs, JourneyStep } from './JourneyBreadcrumbs';
@@ -25,6 +27,7 @@ import { useDemoMode, DEMO_ACTIVITIES } from '@/demo';
 
 export interface ActivityItem {
   id: string;
+  farmerId?: string;
   farmerName: string;
   phone: string;
   channel: 'USSD' | 'SMS' | 'App' | 'Voice';
@@ -142,6 +145,7 @@ interface ActivityCardProps {
   replyId: string | null;
   replyText: string;
   setReplyText: (t: string) => void;
+  toggleReply: (id: string) => void;
   sendingSms: boolean;
   sendSms: (phone: string, msg: string) => void;
   bookingId: string | null;
@@ -150,9 +154,10 @@ interface ActivityCardProps {
 
 const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
   activity, onClaim, onRelease, startCall, startChat,
-  replyId, replyText, setReplyText, sendingSms, sendSms,
+  replyId, replyText, setReplyText, toggleReply, sendingSms, sendSms,
   bookingId, toggleBooking,
 }) => {
+  const { t } = useLanguage();
   const isCritical = activity.severityScore >= 70;
 
   return (
@@ -202,7 +207,7 @@ const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
             <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500/20 text-emerald-300 rounded uppercase tracking-wider">LIVE</span>
           </div>
           <button onClick={() => onRelease(activity.id)} className="text-[11px] text-slate-400 hover:text-rose-400 underline font-medium transition-colors">
-            Release to AI Autopilot
+            {t('activity_release')}
           </button>
         </div>
       )}
@@ -214,28 +219,29 @@ const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
             farmerPhone={activity.phone}
             issue={activity.issue}
             region={activity.region}
-            onBooked={() => setTimeout(() => toggleBooking(bookingId), 1800)}
+            farmerId={activity.farmerId}
+            onBooked={() => toggleBooking(bookingId)}
           />
         </div>
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/60 mt-2">
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-          {!activity.isClaimed ? (
+{!activity.isClaimed ? (
             <button
               onClick={() => onClaim(activity.id)}
               className="px-2.5 sm:px-3 py-1 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm shadow-emerald-950 shrink-0"
             >
               <UserCheck className="w-3.5 h-3.5" />
-              Claim &amp; Intervene
+              {t('activity_claim')}
             </button>
           ) : (
             <button
-              onClick={() => setReplyText(replyId === activity.id ? '' : (replyText || ''))}
+              onClick={() => toggleReply(activity.id)}
               className="px-2.5 sm:px-3 py-1 bg-emerald-700 hover:bg-emerald-600 active:scale-[0.98] text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shrink-0"
             >
               <MessageSquare className="w-3.5 h-3.5" />
-              {replyId === activity.id ? 'Close Composer' : 'Direct SMS Reply'}
+              {replyId === activity.id ? t('activity_close_composer') : t('activity_reply')}
             </button>
           )}
 
@@ -354,8 +360,8 @@ const TeleCallModal: React.FC<{
         <div className="overflow-y-auto max-h-[80vh]">
           <VideoCall
             roomId={roomId}
-            userId={(storeUser as { userId?: string } | null | undefined)?.userId || 'unknown'}
-            userName={`${storeUser?.firstName} ${storeUser?.lastName}` || 'Extension Officer'}
+            userId={storeUser?.id || 'host-user'}
+            userName={`${storeUser?.firstName || ''} ${storeUser?.lastName || ''}`.trim() || 'Extension Officer'}
             isHost={true}
             onEnd={onClose}
           />
@@ -367,7 +373,7 @@ const TeleCallModal: React.FC<{
 
 async function sendActivitySms(phone: string, message: string): Promise<void> {
   const { data } = await apiClient.post<{ success: boolean; error?: string }>('/sms/send', {
-    phoneNumbers: [phone],
+    to: phone,
     message,
   });
   if (!data.success) throw new Error(data.error || 'SMS provider rejected the message');
@@ -381,15 +387,23 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
   onStartChat,
 }) => {
   const { isDemo } = useDemoMode();
+  const { t } = useLanguage();
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [filterSeverity, setFilterSeverity] = useState<FilterSeverity>('all');
   const [sortByUrgency, setSortByUrgency] = useState(true);
   const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
   const [showBookingId, setShowBookingId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
+  const toggleReply = useCallback((id: string) => {
+    setActiveReplyId(prev => {
+      if (prev === id) { setReplyText(''); return null; }
+      return id;
+    });
+  }, []);
   const [sendingSms, setSendingSms] = useState(false);
   const [activeVideoCall, setActiveVideoCall] = useState<{ farmerName: string; phone: string; issue: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchActivities = useCallback(async () => {
     if (isDemo) {
@@ -400,8 +414,10 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
     try {
       const { data } = await apiClient.get<{ success: boolean; data: ActivityItem[] }>('/activities/triage');
       if (data.success) setActivities(data.data);
-    } catch { /* keep existing data */ }
-    finally { setIsLoading(false); }
+      else setError((data as unknown as { error?: string }).error || 'Failed to load activities');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load activities');
+    } finally { setIsLoading(false); }
   }, [isDemo]);
 
   useEffect(() => {
@@ -427,14 +443,56 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
     }
   }, [sendingSms]);
 
-  const handleClaim = useCallback((id: string) => {
+  const claimLocally = useCallback((id: string) => {
     setActivities(prev => prev.map(item => item.id === id ? { ...item, isClaimed: true, claimedBy: 'You' } : item));
+    toast.success('Claimed (demo mode)');
   }, []);
 
-  const handleRelease = useCallback((id: string) => {
+  const releaseLocally = useCallback((id: string) => {
     setActivities(prev => prev.map(item => item.id === id ? { ...item, isClaimed: false, claimedBy: undefined } : item));
-    if (activeReplyId === id) setActiveReplyId(null);
-  }, [activeReplyId]);
+    toast.success('Released to AI Autopilot (demo mode)');
+  }, []);
+
+  const handleClaim = useCallback(async (id: string) => {
+    if (isDemo) {
+      claimLocally(id);
+      return;
+    }
+
+    try {
+      const { data } = await apiClient.post<{ success: boolean; data?: { claimedBy: string; claimedAt: string }; error?: string }>(`/activities/triage/${id}/claim`);
+      if (data.success && data.data) {
+        setActivities(prev => prev.map(item => item.id === id ? { ...item, isClaimed: true, claimedBy: data.data!.claimedBy } : item));
+        toast.success(`Claimed by ${data.data.claimedBy}`);
+      } else {
+        toast.error(data.error || 'Failed to claim activity');
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to claim activity');
+    }
+  }, [isDemo, claimLocally]);
+
+  const handleRelease = useCallback(async (id: string) => {
+    if (isDemo) {
+      releaseLocally(id);
+      if (activeReplyId === id) setActiveReplyId(null);
+      return;
+    }
+
+    try {
+      const { data } = await apiClient.post<{ success: boolean; error?: string }>(`/activities/triage/${id}/release`);
+      if (data.success) {
+        setActivities(prev => prev.map(item => item.id === id ? { ...item, isClaimed: false, claimedBy: undefined } : item));
+        toast.success('Released to AI Autopilot');
+      } else {
+        toast.error(data.error || 'Failed to release activity');
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to release activity');
+    } finally {
+      if (activeReplyId === id) setActiveReplyId(null);
+    }
+  }, [isDemo, activeReplyId, releaseLocally]);
 
   const toggleBooking = useCallback((id: string) => {
     setShowBookingId(prev => prev === id ? null : id);
@@ -463,7 +521,7 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h3 className="font-bold text-sm sm:text-base text-gray-900 dark:text-white tracking-wide">
-                Live Intelligence Stream
+                {t('activity_stream_title')}
               </h3>
               <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold border ${hasData ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
                 <Radio className={`w-2.5 h-2.5 ${hasData ? 'animate-ping text-emerald-400' : 'text-amber-400'}`} />
@@ -490,6 +548,18 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-6 h-6 text-emerald-400 animate-spin" />
           </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <AlertTriangle className="w-8 h-8 text-amber-400 mb-2" />
+            <p className="text-sm font-bold text-amber-400 uppercase tracking-wider">Feed unavailable</p>
+            <p className="text-xs text-slate-500 mt-1">{error}</p>
+            <button
+              onClick={fetchActivities}
+              className="mt-3 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-bold text-slate-200 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Activity className="w-8 h-8 text-slate-500 mb-2" />
@@ -510,6 +580,7 @@ export const LiveActivityStream: React.FC<LiveActivityStreamProps> = ({
               replyId={activeReplyId}
               replyText={replyText}
               setReplyText={setReplyText}
+              toggleReply={toggleReply}
               sendingSms={sendingSms}
               sendSms={handleSendSms}
               bookingId={showBookingId}

@@ -39,6 +39,26 @@ export const requestPasswordReset = async (
   return response.data;
 };
 
+export const resetPassword = async (
+  token: string,
+  password: string
+): Promise<{ success: boolean; message?: string; error?: string; errorCode?: string }> => {
+  const response = await apiClient.post('/auth/reset-password', { token, password });
+  return response.data;
+};
+
+export const verifyEmail = async (
+  token: string
+): Promise<{ success: boolean; message?: string; error?: string }> => {
+  const response = await apiClient.post('/auth/verify-email', { token });
+  return response.data;
+};
+
+export const resendVerificationEmail = async (): Promise<{ success: boolean; message?: string }> => {
+  const response = await apiClient.post('/auth/resend-verification');
+  return response.data;
+};
+
 export interface LoginHistoryItem {
   id: string;
   userId: string | null;

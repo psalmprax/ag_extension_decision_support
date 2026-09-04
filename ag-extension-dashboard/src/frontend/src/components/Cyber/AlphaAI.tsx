@@ -1,10 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useRef, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
   Brain,
   Sparkles,
-  Zap,
-  Cpu,
   Send,
   Mic,
   MicOff,
@@ -22,44 +20,77 @@ import toast from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '@/api/client';
 
-// Canvas UI Components
-import { SoilNutrientHeatmapCanvas, SoilProbeResult } from '../canvas-ui/SoilNutrientHeatmapCanvas';
-import { DiseaseSaliencyCanvas, LesionDetectionZone } from '../canvas-ui/DiseaseSaliencyCanvas';
-import { AgroEcosystemCanvasScrubber } from '../canvas-ui/AgroEcosystemCanvasScrubber';
-import { RagKnowledgeGraphCanvas, GraphNode } from '../canvas-ui/RagKnowledgeGraphCanvas';
-import { TelemetryRadarCanvas } from '../canvas-ui/TelemetryRadarCanvas';
+import type { SoilProbeResult } from '../canvas-ui/SoilNutrientHeatmapCanvas';
+import type { LesionDetectionZone } from '../canvas-ui/DiseaseSaliencyCanvas';
+import type { GraphNode } from '../canvas-ui/RagKnowledgeGraphCanvas';
 import AlphaAgentOps from './AlphaAgentOps';
 import { AgronomicIntakeCard, isAgronomicQueryAmbiguous } from '../AgronomicIntakeCard';
+import type { CanvasViewType } from './alpha/rules';
+import { nowStamp, drainAlphaOfflineQueue } from './alpha/offlineQueue';
+import {
+  type ChatMessageItem,
+  stashQueryOffline,
+  requestAdvisoryMessage,
+  handleAdvisoryFailure,
+} from './alpha/response';
+import { StudioTabSwitcher, CanvasWorkbench, type LastImageAnalysis } from './alpha/StudioTabs';
+import { MessageStream } from './alpha/MessageStream';
+import { NasaPowerBadge, RagMeshBadge } from './alpha/badges';
+import { analyzeLeafImage } from './alpha/utils/leafAnalysis';
 
-export type CanvasViewType =
-  | 'soil_heatmap'
-  | 'disease_saliency'
-  | 'agro_scrubber'
-  | 'rag_graph'
-  | 'telemetry_radar';
+/** Begin voice capture and hand the recorded blob to onReady; null when unsupported. */
+async function startVoiceCapture(
+  onReady: (blob: Blob, mimeType: string) => Promise<void>
+): Promise<MediaRecorder | null> {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    toast.error('Voice input unavailable in this browser');
+    return null;
+  }
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const recorder = new MediaRecorder(stream, {
+    mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg',
+  });
+  const chunks: BlobPart[] = [];
+  recorder.ondataavailable = e => {
+    if (e.data.size > 0) chunks.push(e.data);
+  };
 
-function selectCanvasForQuery(query: string): { view: CanvasViewType; label: string } {
-  const q = query.toLowerCase();
-  if (['pest', 'rust', 'leaf', 'disease', 'spot'].some(term => q.includes(term))) {
-    return { view: 'disease_saliency', label: 'Disease Saliency Scanner' };
-  }
-  if (['rain', 'weather', 'season', 'yield', 'water'].some(term => q.includes(term))) {
-    return { view: 'agro_scrubber', label: 'Agro-Ecosystem Scrubber' };
-  }
-  if (['fao', 'research', 'manual', 'guide'].some(term => q.includes(term))) {
-    return { view: 'rag_graph', label: 'RAG Knowledge Graph' };
-  }
-  return { view: 'soil_heatmap', label: 'Soil Diagnostic Grid' };
+  recorder.onstop = async () => {
+    stream.getTracks().forEach(t => t.stop());
+    await onReady(new Blob(chunks, { type: recorder.mimeType }), recorder.mimeType);
+  };
+  recorder.start();
+  return recorder;
 }
 
-interface ChatMessageItem {
-  id: string;
-  sender: 'user' | 'assistant';
-  text: string;
-  timestamp: string;
-  canvasTrigger?: CanvasViewType;
-  canvasLabel?: string;
-}export const AlphaAI: React.FC = () => {
+/** Transcribe a recorded voice blob via the backend Whisper endpoint; null when unusable. */
+async function transcribeVoiceBlob(blob: Blob, mimeType: string): Promise<string | null> {
+  const base64 = await new Promise<string | null>(resolve => {
+    const reader = new FileReader();
+    reader.onload = () => resolve((reader.result as string).split(',')[1] || null);
+    reader.readAsDataURL(blob);
+  });
+  if (!base64) {
+    toast.error('Could not read audio');
+    return null;
+  }
+  try {
+    const { data } = await apiClient.post('/pillars/voice/transcribe', { audio: base64, mimeType });
+    const text = (data?.data?.transcription || data?.transcription || '').toString().trim();
+    if (text && !text.startsWith('[STUB')) return text;
+    if (text) toast(`Transcribed (demo): ${text.slice(0, 80)}…`);
+    else toast.error('Transcription returned no text');
+    return null;
+  } catch (e) {
+    toast.error(
+      (e as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        'Transcription failed — check OPENAI_API_KEY'
+    );
+    return null;
+  }
+}
+
+export const AlphaAI: React.FC = () => {
   const [activeStudioTab, setActiveStudioTab] = useState<'copilot' | 'agent_ops'>('copilot');
   const [activeCanvasView, setActiveCanvasView] = useState<CanvasViewType>('soil_heatmap');
   const [inputPrompt, setInputPrompt] = useState('');
@@ -69,9 +100,14 @@ interface ChatMessageItem {
   const [selectedProbeResult, setSelectedProbeResult] = useState<SoilProbeResult | null>(null);
   const [selectedLesionZone, setSelectedLesionZone] = useState<LesionDetectionZone | null>(null);
   const [selectedGraphNode, setSelectedGraphNode] = useState<GraphNode | null>(null);
+  const [lastImageAnalysis, setLastImageAnalysis] = useState<LastImageAnalysis | null>(null);
   const [intakeDismissed, setIntakeDismissed] = useState<boolean>(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const voiceRecorderRef = useRef<MediaRecorder | null>(null);
+  const handleSendRef = useRef<
+    (overrideQuery?: string, opts?: { fromQueue?: boolean }) => Promise<boolean>
+  >(async () => false);
 
   // Initial welcome message
   const [messages, setMessages] = useState<ChatMessageItem[]>([
@@ -90,104 +126,220 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
   ]);
 
   // System telemetry query
-  useQuery({
+  const { data: healthData } = useQuery({
     queryKey: ['system-health-copilot'],
     queryFn: async () => {
       const { data } = await apiClient.get('/health');
-      return data;
+      return data as { status?: string; uptime?: number };
     },
     refetchInterval: 30000,
+  });
+  const { data: kbStats } = useQuery({
+    queryKey: ['kb-stats-copilot'],
+    queryFn: async () => {
+      const { data } = await apiClient.get('/knowledge/stats');
+      return data as { success?: boolean; data?: { totalQueries?: number } };
+    },
+    refetchInterval: 60000,
   });
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isProcessing]);
 
-  const handleSendMessage = async (overrideQuery?: string) => {
-    const query = (overrideQuery || inputPrompt).trim();
-    if (!query || isProcessing) return;
-
-    setInputPrompt('');
-    const userMsg: ChatMessageItem = {
-      id: `user-${Date.now()}`,
-      sender: 'user',
-      text: query,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+  // Drain offline queue when back online — the sender is read through a ref so the
+  // subscription survives re-renders without re-binding the listener.
+  useEffect(() => {
+    const drain = () => {
+      void drainAlphaOfflineQueue(queued => handleSendRef.current(queued, { fromQueue: true }));
     };
+    window.addEventListener('online', drain);
+    return () => window.removeEventListener('online', drain);
+  }, []);
 
-    setMessages(prev => [...prev, userMsg]);
+  /** Returns true when an advisory was delivered, false when it failed/was queued. */
+  const handleSendMessage = async (
+    overrideQuery?: string,
+    opts: { fromQueue?: boolean } = {}
+  ): Promise<boolean> => {
+    const query = (overrideQuery || inputPrompt).trim();
+    if (!query || isProcessing) return false;
+
+    if (isOffline()) {
+      if (!opts.fromQueue) stashQueryOffline(query, setMessages);
+      setInputPrompt('');
+      return false;
+    }
+
+    await processMessage(query, opts);
+    return true;
+  };
+  handleSendRef.current = handleSendMessage;
+
+  function isOffline(): boolean {
+    return typeof navigator !== 'undefined' && !navigator.onLine;
+  }
+
+  async function processMessage(query: string, opts: { fromQueue?: boolean }): Promise<void> {
+    setInputPrompt('');
+    appendUserMessage(query);
     setIsProcessing(true);
-
-    // Dynamic reasoning steps
-    setActiveReasoningStep('Querying RAG Agronomic Knowledge Store...');
-    await new Promise(r => setTimeout(r, 500));
-    setActiveReasoningStep('Synthesizing NASA POWER Agro-Climatology & Soil Models...');
+    setActiveReasoningStep('Retrieving knowledge-base context...');
 
     try {
-      const res = await apiClient.post('/chatbot/completions', {
-        message: query,
-      });
-
-      const data = res.data?.data || res.data;
-      const responseText =
-        data?.messages?.[1]?.content ||
-        data?.response ||
-        data?.text ||
-        (typeof data === 'string' ? data : null);
-
-      if (typeof responseText !== 'string' || responseText.trim().length === 0) {
-        throw new Error('AI service returned no advisory content');
-      }
-
-      const { view: matchedCanvas, label } = selectCanvasForQuery(query);
-
-      setActiveCanvasView(matchedCanvas);
-      setActiveReasoningStep(null);
-
-      const assistantMsg: ChatMessageItem = {
-        id: `asst-${Date.now()}`,
-        sender: 'assistant',
-        text: responseText,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        canvasTrigger: matchedCanvas,
-        canvasLabel: label,
-      };
-
+      const assistantMsg = await requestAdvisoryMessage(query);
+      if (assistantMsg.canvasTrigger) setActiveCanvasView(assistantMsg.canvasTrigger);
       setMessages(prev => [...prev, assistantMsg]);
     } catch (err) {
-      console.error('[AlphaAI] Chatbot request error:', err);
+      handleSendFailure(err, query, opts);
+    } finally {
       setActiveReasoningStep(null);
+      setIsProcessing(false);
+    }
+  }
+
+  function appendUserMessage(text: string): void {
+    setMessages(prev => [
+      ...prev,
+      { id: `user-${Date.now()}`, sender: 'user', text, timestamp: nowStamp() } as ChatMessageItem,
+    ]);
+  }
+
+  function handleSendFailure(err: unknown, query: string, opts: { fromQueue?: boolean }): void {
+    if (opts.fromQueue) {
       setMessages(prev => [
         ...prev,
         {
           id: `asst-${Date.now()}`,
           sender: 'assistant',
-          text: 'The advisory service is currently unavailable. No agronomic guidance was generated for this query — please retry shortly or consult your local extension officer.',
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        },
+          text: 'Still unable to reach the advisory service — your queued question will be retried when the connection recovers.',
+          timestamp: nowStamp(),
+        } as ChatMessageItem,
       ]);
-    } finally {
-      setIsProcessing(false);
+    } else {
+      handleAdvisoryFailure(err, query, setMessages);
     }
-  };
+  }
 
-  const handleVoiceToggle = () => {
-    setIsRecordingVoice(previous => !previous);
-    if (!isRecordingVoice) {
-      toast('Voice recording started. Stop recording to submit the captured audio.');
+  const handleVoiceToggle = async () => {
+    if (isRecordingVoice) {
+      voiceRecorderRef.current?.stop();
+      setIsRecordingVoice(false);
+      return;
+    }
+    try {
+      const recorder = await startVoiceCapture(async (blob, mimeType) => {
+        setActiveReasoningStep('Transcribing voice (Whisper)...');
+        try {
+          const text = await transcribeVoiceBlob(blob, mimeType);
+          if (text) {
+            setInputPrompt(text);
+            toast.success(`Transcribed: ${text.slice(0, 60)}…`);
+          }
+        } finally {
+          setActiveReasoningStep(null);
+        }
+      });
+      if (!recorder) return;
+      voiceRecorderRef.current = recorder;
+      setIsRecordingVoice(true);
+      toast('Recording… tap again to stop and transcribe');
+    } catch (e) {
+      toast.error((e as Error).message || 'Microphone access denied');
     }
   };
 
   const handleImageUploadSim = () => {
-    toast.error('Image diagnosis is unavailable from the Co-Pilot preview. Use Disease Diagnosis to submit a real image.');
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      setActiveReasoningStep('Analyzing leaf image (vision)…');
+      try {
+        const { summary, analysis } = await analyzeLeafImage(file);
+        setLastImageAnalysis(analysis);
+        setActiveCanvasView('disease_saliency');
+        setMessages(prev => [
+          ...prev,
+          {
+            id: `img-${Date.now()}`,
+            sender: 'assistant',
+            text: `🖼️ **Image diagnosis:** ${summary}`,
+            timestamp: nowStamp(),
+            canvasTrigger: 'disease_saliency',
+            canvasLabel: 'Leaf Image Assessment',
+          },
+        ]);
+        toast.success('Image analyzed — check Disease Diagnosis for lab verification');
+      } catch (e) {
+        toast.error(
+          (e as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+            (e as Error)?.message ||
+            'Image analysis failed'
+        );
+      } finally {
+        setActiveReasoningStep(null);
+      }
+    };
+    input.click();
   };
 
-  const handleDispatchSms = () => {
-    toast.error('SMS dispatch requires a selected live farmer cohort.');
+  const handleDispatchSms = async () => {
+    const lastAnswer = [...messages].reverse().find(m => m.sender === 'assistant')?.text;
+    if (!lastAnswer) {
+      toast.error('No advisory to dispatch — ask a question first');
+      return;
+    }
+    try {
+      const { useAppStore } = await import('@/store/useAppStore');
+      // SMS body limit: 160 GSM-7 chars per segment; keep to ~2 segments and mark truncation.
+      const body = lastAnswer.replace(/\*\*/g, '').trim();
+      const truncated = body.length > 300 ? `${body.slice(0, 297)}…` : body;
+      useAppStore.getState().setPendingSMS({ phone: '', message: truncated });
+      const storeTab = (useAppStore.getState() as { setActiveTab?: (t: string) => void })
+        .setActiveTab;
+      storeTab?.('sms');
+      toast(
+        truncated.length < body.length
+          ? 'Opening SMS composer (advisory truncated to 300 chars)…'
+          : 'Opening SMS composer with last advisory…'
+      );
+    } catch {
+      toast.error('SMS dispatch requires SMS page');
+    }
   };
 
-  const handleExportPdf = () => {
-    toast.error('Prescription PDF export is unavailable from this view.');
+  const handleExportPdf = async () => {
+    const lastAnswer = [...messages].reverse().find(m => m.sender === 'assistant')?.text;
+    if (!lastAnswer) {
+      toast.error('No advisory to export — ask a question first');
+      return;
+    }
+    try {
+      const { generateReport, downloadReportPdf } = await import('@/api/reportService');
+      const lastQuestion = [...messages].reverse().find(m => m.sender === 'user')?.text;
+      const gen = await generateReport(
+        'knowledge_factsheet',
+        `Advisory: ${(lastQuestion || lastAnswer).slice(0, 80)}`,
+        undefined,
+        { content: lastAnswer, question: lastQuestion }
+      );
+      const reportId =
+        (gen as { data?: { id?: string } })?.data?.id || (gen as { id?: string })?.id;
+      if (!reportId) throw new Error('No report id');
+      const blob = await downloadReportPdf(reportId);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `co-pilot-${Date.now()}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Prescription PDF downloaded');
+    } catch (e) {
+      toast.error((e as Error).message || 'PDF export failed');
+    }
   };
 
   return (
@@ -202,7 +354,9 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-xl font-bold tracking-tight text-white">AI Agronomic Co-Pilot</h1>
+                <h1 className="text-xl font-bold tracking-tight text-white">
+                  AI Agronomic Co-Pilot
+                </h1>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xxs font-black tracking-wider uppercase bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                   <Sparkles className="w-2.5 h-2.5 text-emerald-400" />
                   AG-AGRONOMIST 4.5 PRO
@@ -216,43 +370,11 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
 
           {/* Center/Right: Live Telemetry Badges & Mode Switcher */}
           <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
-            <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 text-xxs font-mono">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-              <span className="text-white/70">NASA POWER:</span>
-              <span className="text-emerald-400 font-bold">SYNCHRONIZED</span>
-            </div>
-
-            <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 text-xxs font-mono">
-              <span className="w-2 h-2 rounded-full bg-cyan-400" />
-              <span className="text-white/70">RAG MESH:</span>
-              <span className="text-cyan-300 font-bold">1,420 ARTICLES</span>
-            </div>
+            <NasaPowerBadge data={healthData} />
+            <RagMeshBadge data={kbStats} />
 
             {/* Studio / Ops Toggle */}
-            <div className="flex items-center bg-white/[0.04] p-1 rounded-xl border border-white/10">
-              <button
-                onClick={() => setActiveStudioTab('copilot')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  activeStudioTab === 'copilot'
-                    ? 'bg-emerald-500 text-white shadow-md shadow-emerald-950/40'
-                    : 'text-white/50 hover:text-white'
-                }`}
-              >
-                <Zap className="w-3.5 h-3.5" />
-                <span>Co-Pilot Studio</span>
-              </button>
-              <button
-                onClick={() => setActiveStudioTab('agent_ops')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  activeStudioTab === 'agent_ops'
-                    ? 'bg-purple-600 text-white shadow-md shadow-purple-950/40'
-                    : 'text-white/50 hover:text-white'
-                }`}
-              >
-                <Cpu className="w-3.5 h-3.5" />
-                <span>Agent Fleet Ops</span>
-              </button>
-            </div>
+            <StudioTabSwitcher active={activeStudioTab} onSelect={setActiveStudioTab} />
           </div>
         </div>
       </div>
@@ -270,63 +392,13 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
             {/* Conversational Stream Card */}
             <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-4 flex-1 flex flex-col justify-between shadow-xl min-h-[480px] max-h-[620px]">
               {/* Message List */}
-              <div className="overflow-y-auto space-y-4 pr-1 custom-scrollbar flex-1 mb-4">
-                <AnimatePresence initial={false}>
-                  {messages.map(msg => (
-                    <motion.div
-                      key={msg.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
-                    >
-                      <div className="flex items-center gap-1.5 mb-1 text-[10px] text-white/40 font-mono">
-                        <span>{msg.sender === 'user' ? 'Extension Officer' : 'AI Agronomist'}</span>
-                        <span>•</span>
-                        <span>{msg.timestamp}</span>
-                      </div>
-
-                      <div
-                        className={`max-w-[92%] rounded-xl p-4 text-xs leading-relaxed ${
-                          msg.sender === 'user'
-                            ? 'bg-emerald-600 text-white rounded-tr-none shadow-md shadow-emerald-950/40'
-                            : 'bg-white/[0.04] border border-white/10 text-white/90 rounded-tl-none space-y-3'
-                        }`}
-                      >
-                        <div className="whitespace-pre-line prose-invert font-sans">
-                          {msg.text}
-                        </div>
-
-                        {/* Interactive Canvas Pill Trigger in Assistant Message */}
-                        {msg.canvasTrigger && (
-                          <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2">
-                            <button
-                              onClick={() => msg.canvasTrigger && setActiveCanvasView(msg.canvasTrigger)}
-                              className="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xxs font-bold flex items-center gap-1.5 transition-colors"
-                            >
-                              <Sparkles className="w-3 h-3 text-emerald-400" />
-                              <span>View {msg.canvasLabel || 'Interactive Canvas'} →</span>
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-
-                {/* Multi-Step Reasoning Live Badge */}
-                {isProcessing && activeReasoningStep && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center gap-2.5 text-xs text-purple-300"
-                  >
-                    <Radio className="w-4 h-4 text-purple-400 animate-spin" />
-                    <span className="font-mono text-xxs font-semibold">{activeReasoningStep}</span>
-                  </motion.div>
-                )}
-
-                <div ref={messagesEndRef} />
-              </div>
+              <MessageStream
+                messages={messages}
+                isProcessing={isProcessing}
+                activeReasoningStep={activeReasoningStep}
+                onSelectCanvas={setActiveCanvasView}
+                messagesEndRef={messagesEndRef}
+              />
 
               {/* Input Bar & Multi-Modal Controls (knockknockapp.ai voice/leaf standard) */}
               <div className="pt-3 border-t border-white/5 space-y-2">
@@ -386,7 +458,11 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
                         : 'text-white/40 hover:text-emerald-400 hover:bg-white/5'
                     }`}
                   >
-                    {isRecordingVoice ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                    {isRecordingVoice ? (
+                      <MicOff className="w-4 h-4" />
+                    ) : (
+                      <Mic className="w-4 h-4" />
+                    )}
                   </button>
 
                   <textarea
@@ -460,138 +536,26 @@ Select a quick agronomic scenario below, ask a custom field question, or upload 
 
             {/* Generative Interactive Canvas Container (canvasui.dev glassmorphic standard) */}
             <div className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-xl p-5 shadow-2xl relative overflow-hidden min-h-[500px] flex flex-col justify-between">
+              {' '}
               {/* Dynamic Mounted Canvas */}
               <div className="flex-1 flex flex-col justify-center">
-                {activeCanvasView === 'soil_heatmap' && (
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center text-xs pb-2 border-b border-white/5">
-                      <span className="font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                        <Droplets className="w-4 h-4 text-emerald-400" />
-                        Spatial Soil Chemistry & pH Heatmap (0–15cm)
-                      </span>
-                      <span className="text-xxs font-mono text-emerald-400">Click cells to probe micro-nutrients</span>
-                    </div>
-                    <SoilNutrientHeatmapCanvas
-                      interactive
-                      onProbeSelect={res => setSelectedProbeResult(res)}
-                    />
-                    {selectedProbeResult && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="p-3 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-between text-xs"
-                      >
-                        <div>
-                          <strong className="text-white">{selectedProbeResult.label}:</strong>{' '}
-                          <span className="font-mono text-emerald-400 font-bold">
-                            {selectedProbeResult.value} {selectedProbeResult.unit}
-                          </span>
-                          <p className="text-xxs text-white/60 mt-0.5">{selectedProbeResult.recommendation}</p>
-                        </div>
-                        <span
-                          className={`px-2 py-0.5 rounded text-xxs font-bold uppercase ${
-                            selectedProbeResult.status === 'optimal'
-                              ? 'bg-emerald-500/20 text-emerald-400'
-                              : 'bg-amber-500/20 text-amber-400'
-                          }`}
-                        >
-                          {selectedProbeResult.status}
-                        </span>
-                      </motion.div>
-                    )}
-                  </div>
-                )}
-
-                {activeCanvasView === 'disease_saliency' && (
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center text-xs pb-2 border-b border-white/5">
-                      <span className="font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                        <Eye className="w-4 h-4 text-rose-400" />
-                        Neural Foliar Saliency & Pathology Scanner
-                      </span>
-                      <span className="text-xxs font-mono text-slate-500">Wait for a real image analysis</span>
-                    </div>
-                    <DiseaseSaliencyCanvas onSelectZone={z => setSelectedLesionZone(z)} />
-                    {selectedLesionZone && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-between text-xs"
-                      >
-                        <div>
-                          <strong className="text-rose-300">{selectedLesionZone.label}</strong>
-                          <p className="text-xxs text-white/60 mt-0.5">
-                            Confidence: {(selectedLesionZone.confidence * 100).toFixed(1)}% • Severity: {selectedLesionZone.severity}
-                          </p>
-                        </div>
-                        <button
-                          onClick={handleDispatchSms}
-                          className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xxs font-bold shadow transition-all"
-                        >
-                          Dispatch Alert
-                        </button>
-                      </motion.div>
-                    )}
-                  </div>
-                )}
-
-                {activeCanvasView === 'agro_scrubber' && (
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center text-xs pb-2 border-b border-white/5">
-                      <span className="font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                        <Sliders className="w-4 h-4 text-cyan-400" />
-                        Agro-Ecosystem Phenology Scrubber (NASA POWER & NDVI)
-                      </span>
-                      <span className="text-xxs font-mono text-cyan-400">Drag scrubber to simulate growth phases</span>
-                    </div>
-                    <div className="w-full h-[460px]">
-                      <AgroEcosystemCanvasScrubber showControls interactive className="w-full h-full" />
-                    </div>
-                  </div>
-                )}
-
-                {activeCanvasView === 'rag_graph' && (
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center text-xs pb-2 border-b border-white/5">
-                      <span className="font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                        <Network className="w-4 h-4 text-purple-400" />
-                        RAG Knowledge Citation & Ontology Mesh
-                      </span>
-                      <span className="text-xxs font-mono text-purple-400">Click graph nodes to inspect excerpts</span>
-                    </div>
-                    <RagKnowledgeGraphCanvas onNodeSelect={n => setSelectedGraphNode(n)} />
-                    {selectedGraphNode && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs"
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <strong className="text-purple-300 font-bold">{selectedGraphNode.label}</strong>
-                          <span className="text-xxs font-mono text-white/40 uppercase">Category: {selectedGraphNode.category}</span>
-                        </div>
-                        <p className="text-xxs text-white/70 leading-relaxed">{selectedGraphNode.snippet}</p>
-                      </motion.div>
-                    )}
-                  </div>
-                )}
-
-                {activeCanvasView === 'telemetry_radar' && (
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center text-xs pb-2 border-b border-white/5">
-                      <span className="font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                        <Radio className="w-4 h-4 text-emerald-400" />
-                        Live Field Telemetry & Sensor Mesh Radar
-                      </span>
-                      <span className="text-xxs font-mono text-emerald-400">12 Active Transceivers</span>
-                    </div>
-                    <div className="h-64 flex items-center justify-center">
-                      <TelemetryRadarCanvas />
-                    </div>
-                  </div>
-                )}
+                <CanvasWorkbench
+                  view={activeCanvasView}
+                  selectedProbeResult={selectedProbeResult}
+                  onProbeSelect={setSelectedProbeResult}
+                  selectedLesionZone={selectedLesionZone}
+                  onLesionZoneSelect={setSelectedLesionZone}
+                  selectedGraphNode={selectedGraphNode}
+                  onGraphNodeSelect={setSelectedGraphNode}
+                  onDispatchSms={handleDispatchSms}
+                  citations={
+                    [...messages]
+                      .reverse()
+                      .find(m => m.sender === 'assistant' && m.citations?.length)?.citations ?? []
+                  }
+                  lastImageAnalysis={lastImageAnalysis}
+                />
               </div>
-
               {/* ── Workbench Action Footer Dock ── */}
               <div className="pt-4 mt-4 border-t border-white/5 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-xxs text-white/50 font-mono">

@@ -6,6 +6,9 @@ __pycache__/
 *.py[cod]
 .env
 .env.*
+!.env.example
+!**/.env.example
+!.env.*.example
 *.bak
 *.log
 *.tsbuildinfo
@@ -18,6 +21,12 @@ coverage/
 .agent/
 _agents/
 _agent/
+# Refact buddy runtime state (append-only ops logs, queues, chat transcripts)
+.refact/buddy/state.json
+.refact/buddy/memory_ops.jsonl
+.refact/buddy/runtime_queue.jsonl
+.refact/buddy/briefings/
+.refact/buddy/chats/
 brain/
 .kilo/
 tmp/
@@ -65,3 +74,6 @@ ag-extension-dashboard/src/frontend/400
 
 # AutoClaw KDream data
 .autoclaw/
+
+# Large ONNX model binaries — only the documented 4.2MB frontend surrogate ships
+ag-extension-dashboard/src/backend/models/*.onnx

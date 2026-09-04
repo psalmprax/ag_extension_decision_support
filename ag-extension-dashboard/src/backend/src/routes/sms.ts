@@ -15,13 +15,15 @@ import { detectLanguage } from '@/utils/languageDetector';
 import { onboardingEngine } from '@/services/onboardingEngine';
 import { checkMessageAccess, MessageAccessError, resolvePrincipalRegion } from '@/services/messageAccessService';
 import { logger } from '@/utils/logger';
+import { verifyInboundWebhookSignature } from '@/middleware/webhookSignature';
 
 const router = Router();
 
 /**
  * POST /api/sms/inbound — Inbound SMS Webhook for Africa's Talking and Twilio
+ * Verifies HMAC when META_APP_SECRET/TWILIO_AUTH_TOKEN is configured; dev allows unsigned for local testing.
  */
-router.post('/inbound', async (req: Request, res: Response) => {
+router.post('/inbound', verifyInboundWebhookSignature, async (req: Request, res: Response) => {
     try {
         const from = req.body.from || req.body.From || req.body.phoneNumber;
         const text = req.body.text || req.body.Body || req.body.message;
@@ -57,16 +59,19 @@ router.post('/inbound', async (req: Request, res: Response) => {
 // Apply authentication to protected SMS management routes
 router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
 
+// Phone-string prior to E.164 formatting — allow common user entry, service validates E.164 after formatting
+const phoneInput = z.string().regex(/^\+?[0-9\s\-().]{7,22}$/, 'Phone number must be 7–22 digits/space/dash');
+
 // SMS Schema
 const sendSMSSchema = z.object({
-    to: z.string().min(1, 'Phone number is required'),
+    to: phoneInput,
     message: z.string().min(1, 'Message is required'),
     farmerId: z.string().uuid().optional(),
 });
 
 // Bulk SMS Schema
 const bulkSMSSchema = z.object({
-    recipients: z.array(z.string()).min(1, 'At least one recipient required'),
+    recipients: z.array(phoneInput).min(1, 'At least one recipient required').max(1000),
     message: z.string().min(1, 'Message is required'),
     farmerId: z.string().uuid().optional(),
 });
@@ -100,7 +105,7 @@ const scheduleSMSSchema = z.object({
 });
 
 // Send single SMS
-router.post('/send', checkUsageLimit('sms'), validate({ body: sendSMSSchema }), async (req: AuthRequest, res: Response) => {
+router.post('/send', checkUsageLimit('sms', { meter: false }), validate({ body: sendSMSSchema }), async (req: AuthRequest, res: Response) => {
     try {
         const { to, message, farmerId } = req.body;
         const senderId = req.user!.userId;
@@ -133,7 +138,7 @@ router.post('/send', checkUsageLimit('sms'), validate({ body: sendSMSSchema }), 
 });
 
 // Send bulk SMS
-router.post('/bulk', checkUsageLimit('sms'), validate({ body: bulkSMSSchema }), async (req: AuthRequest, res: Response) => {
+router.post('/bulk', checkUsageLimit('sms', { meter: false }), validate({ body: bulkSMSSchema }), async (req: AuthRequest, res: Response) => {
     try {
         const { recipients, message, farmerId } = req.body;
         const senderId = req.user!.userId;
@@ -289,6 +294,10 @@ router.post('/ai-diagnosis', checkUsageLimit('ai_vision'), validate({ body: aiDi
 
 // Helper function to parse diagnosis fields from AI response
 // Previously defined above, now moved after the route handler
+/** Map provider-specific delivery statuses onto the app's sms_history states. */
+const normalizeDeliveryStatus = (status: string): string =>
+    status === 'success' ? 'delivered' : status === 'sent' ? 'sent' : status === 'failed' || status === 'undelivered' ? 'failed' : status;
+
 // Helper function to parse diagnosis fields from AI response
 const parseDiagnosisField = (response: string, field: string): string => {
     const lines = response.split('\n');
@@ -357,6 +366,29 @@ router.post('/schedule', validate({ body: scheduleSMSSchema }), async (req: Auth
     }
 });
 
+// Delivery receipt callback (Africa's Talking / Twilio) — provider posts messageId+status
+// Verified when TWILIO_AUTH_TOKEN is set (Twilio DLRs carry X-Twilio-Signature); AT DLRs have no signature so dev allows unsigned
+router.post('/delivery', verifyInboundWebhookSignature, async (req: Request, res: Response) => {
+    try {
+        const status = (req.body.status || req.body.MessageStatus || req.body.messageStatus || '').toString().toLowerCase();
+        const phone = (req.body.phoneNumber || req.body.recipient || req.body.to || req.body.To || '').toString();
+        const messageId = (req.body.messageId || req.body.MessageSid || req.body.id || '').toString();
+        if (status) {
+            const normalized = normalizeDeliveryStatus(status);
+            if (messageId) {
+                await query(`UPDATE sms_history SET status = $1 WHERE id = $2`, [normalized, messageId]);
+            } else if (phone) {
+                const digits = phone.replace(/\D/g, '');
+                await query(`UPDATE sms_history SET status = $1 WHERE regexp_replace(recipient_phone, '\\D', '', 'g') = $2 AND status IN ('sent','queued','pending')`, [normalized, digits]);
+            }
+        }
+        return res.json({ success: true });
+    } catch (error) {
+        logger.error('SMS delivery callback failed:', error);
+        return res.json({ success: false });
+    }
+});
+
 // SMS Feedback endpoint
 router.post('/feedback', validate({
     body: z.object({
@@ -371,7 +403,7 @@ router.post('/feedback', validate({
 
         // Persist feedback to database
         await query(
-            `INSERT INTO sms_feedback (user_id, farmer_id, rating, feedback, created_at)
+            `INSERT INTO sms_feedback (tenant_id, farmer_id, rating, comment, created_at)
              VALUES ($1, $2, $3, $4, NOW())`,
             [userId, farmerId || null, rating, feedback || '']
         );

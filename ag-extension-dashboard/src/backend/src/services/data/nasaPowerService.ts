@@ -36,6 +36,7 @@ export interface NasaPowerParams {
 /**
  * Service to interact with the NASA POWER API for agroclimatology data.
  */
+/** @deprecated — use NasaPowerService from '@/services/nasaPowerService' */
 export class NasaPowerService {
     private readonly baseUrl = 'https://power.larc.nasa.gov/api/temporal/daily/point';
 

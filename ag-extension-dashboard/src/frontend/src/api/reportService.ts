@@ -10,11 +10,17 @@ export const fetchReports = async (): Promise<ReportListResponse> => {
   return response.data;
 };
 
-export const generateReport = async (type: string, title?: string, farmerId?: string) => {
+export const generateReport = async (
+  type: string,
+  title?: string,
+  farmerId?: string,
+  extra?: { content?: string; citations?: string[]; question?: string }
+) => {
   const response = await apiClient.post('/reporting/generate', {
     type,
     title,
     farmerId,
+    ...(extra || {}),
   });
   return response.data;
 };

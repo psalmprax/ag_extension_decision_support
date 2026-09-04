@@ -10,3 +10,8 @@ dist
 **/.planning
 **/playwright-report
 **/test-results
+**/.env
+**/.env.*
+!**/.env.example
+**/__tests__
+**/*.log

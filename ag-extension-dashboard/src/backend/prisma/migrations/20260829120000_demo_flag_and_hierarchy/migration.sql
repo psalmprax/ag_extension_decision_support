@@ -10,8 +10,8 @@ UPDATE "users" SET "is_demo" = true WHERE id = '00000000-0000-0000-0000-00000000
 UPDATE "users" SET "is_demo" = true WHERE lower("email") LIKE '%@agridemo.com';
 UPDATE "farmers" SET "is_demo" = true WHERE id = '00000000-0000-0000-0000-000000000002';
 UPDATE "farmers" SET "is_demo" = true
-  WHERE id LIKE 'd1000000-0000-0000-0000-0000000000%'
-     OR id LIKE 'd1%';
+  WHERE id::text LIKE 'd1000000-0000-0000-0000-0000000000%'
+     OR id::text LIKE 'd1%';
 
 -- Manager self-reference for the people/region hierarchy (regional manager -> officers).
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "manager_id" UUID;

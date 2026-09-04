@@ -62,14 +62,11 @@ describe('Page readiness — Accessibility & smoke', () => {
     await settleLanguage();
     expectAccessibleLandmarks(container);
     // Heading or region that communicates the visits context exists.
-    expect(within(container as HTMLElement).getAllByRole('heading').length).toBeGreaterThanOrEqual(0);
+    expect(within(container as HTMLElement).getAllByRole('heading').length).toBeGreaterThan(0);
     expectFormControlsLabelled(container);
   });
 
-  it('FarmerChatPage exposes an interactive chat input region', async () => {
-    // FarmerChat's prop shape (Conversation/ChatMessage) needs the real
-    // store; covered by integration tests. Here we assert the page module
-    // is importable and the visits/farmer data path renders.
+  it('VisitsPage empty state renders accessible landmarks (FarmerChat covered by integration tests)', async () => {
     const noop = () => {};
     const { container } = render(
       wrap(

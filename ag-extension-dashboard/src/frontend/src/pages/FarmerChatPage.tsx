@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { io, Socket } from 'socket.io-client';
 import {
   Users,
   Plus,
@@ -17,6 +18,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useDeviceThermalMemoryBudget } from '@/hooks/useDeviceThermalMemoryBudget';
 import { VirtualizedList } from '@/components/common/VirtualizedList';
+import { ProvenanceBadge } from '@/components/ProvenanceBadge';
 import { useDemoMode } from '@/demo';
 
 interface FarmerChatPageProps {
@@ -33,6 +35,33 @@ interface FarmerChatPageProps {
   onDeleteConversation?: (id: string) => void;
 }
 
+type HazardProvenance = import('@/components/ProvenanceBadge').PillarProvenance;
+
+/** Map hazard evaluation to a 0–100 outbreak risk score. */
+function scoreOutbreakRisk(hazards: { threatLevel: string }[]): number {
+  const hasWatch = hazards.some(h => h.threatLevel === 'watch' || h.threatLevel === 'warning' || h.threatLevel === 'emergency');
+  const hasEmergency = hazards.some(h => h.threatLevel === 'emergency');
+  return hasEmergency ? 85 : hasWatch ? 55 : hazards.length ? 25 : 10;
+}
+
+/** Evaluate live outbreak risk for a farmer's plot from current telemetry. */
+async function fetchOutbreakRisk(
+  telemetry: { temp: number | null; moisture: number | null },
+  fallbackTemp: number | undefined
+): Promise<{ risk: number; provenance: HazardProvenance | null }> {
+  const { default: apiClient } = await import('@/api/client');
+  const temp = telemetry.temp ?? fallbackTemp ?? 25;
+  const moisture = telemetry.moisture ?? 20;
+  const rh = 75 + (moisture > 25 ? 10 : 0);
+  const { data } = await apiClient.post('/pillars/hazard/evaluate', {
+    forecast: [{ date: new Date().toISOString().slice(0, 10), minTempC: Math.max(8, temp - 6), maxTempC: temp + 4, precipitationMm: moisture > 30 ? 18 : 4, relativeHumidityPct: rh, windSpeedKmh: 12 }],
+  });
+  const payload = ((data as { data?: unknown })?.data ?? data) as { hazards?: { threatLevel: string }[]; provenance?: HazardProvenance } | { threatLevel: string }[];
+  const hazards = Array.isArray(payload) ? payload : payload.hazards ?? [];
+  const provenance = Array.isArray(payload) ? null : payload.provenance ?? null;
+  return { risk: scoreOutbreakRisk(hazards), provenance };
+}
+
 export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   farmerConversations,
   activeFarmerConvId,
@@ -45,6 +74,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   loadFarmers,
   setShowFarmerModal,
   onDeleteConversation,
+  // eslint-disable-next-line sonarjs/cognitive-complexity
 }) => {
   const { t } = useLanguage();
   const { headingClass, btnClass } = useThemeClasses();
@@ -52,14 +82,137 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   const { isDemo } = useDemoMode();
   const [selectedChannel, setSelectedChannel] = useState<'all' | 'sms' | 'whatsapp' | 'telegram'>('all');
 
-  const activeConv = farmerConversations.find(c => c.id === activeFarmerConvId);
+  const filteredConversations = selectedChannel === 'all' ? farmerConversations : farmerConversations.filter(c => {
+    const ch = (c as unknown as { channel?: string; lastChannel?: string }).channel || (c as unknown as { lastChannel?: string }).lastChannel || '';
+    return !ch || ch.toLowerCase() === selectedChannel;
+  });
 
-  // AI Copilot quick suggestions
-  const copilotSuggestions = [
+  const activeConv = farmerConversations.find(c => c.id === activeFarmerConvId);
+  const activeFarmer = activeConv as unknown as { ndvi?: number; ph?: number; temperature?: number; outbreakRisk?: number } | undefined;
+
+  const [plotTelemetry, setPlotTelemetry] = useState<{ ph: number | null; soc: number | null; moisture: number | null; temp: number | null; loading: boolean }>({ ph: null, soc: null, moisture: null, temp: null, loading: false });
+  const [liveOutbreakRisk, setLiveOutbreakRisk] = useState<number | null>(null);
+  const [outbreakProvenance, setOutbreakProvenance] = useState<HazardProvenance | null>(null);
+
+  useEffect(() => {
+    if (!activeFarmerConvId || !activeConv) return;
+    const farmerId = (activeConv as unknown as { farmerId?: string }).farmerId;
+    if (!farmerId) return;
+    setPlotTelemetry(prev => ({ ...prev, loading: true }));
+    import('@/api/soilService').then(async mod => {
+      try {
+        const res = await mod.fetchFarmerSoilProfile(farmerId);
+        const baseline = res.data?.baseline as unknown as { ph?: number; organicCarbonGPerKg?: number } | null;
+        const moisture = res.data?.moisture as unknown as { soilMoisture?: { avgTop9cm?: number }; soilTemperature?: { avgTop6cm?: number } } | null;
+        setPlotTelemetry({
+          ph: baseline?.ph ?? null,
+          soc: baseline?.organicCarbonGPerKg ?? null,
+          moisture: moisture?.soilMoisture?.avgTop9cm != null ? Number((moisture.soilMoisture.avgTop9cm * 100).toFixed(1)) : null,
+          temp: moisture?.soilTemperature?.avgTop6cm ?? null,
+          loading: false,
+        });
+      } catch { setPlotTelemetry(prev => ({ ...prev, loading: false })); }
+    }).catch(() => setPlotTelemetry(prev => ({ ...prev, loading: false })));
+  }, [activeFarmerConvId, activeConv]);
+
+  const { temp: plotTemp, moisture: plotMoisture } = plotTelemetry;
+  useEffect(() => {
+    if (!activeFarmerConvId || !activeConv) { setLiveOutbreakRisk(null); setOutbreakProvenance(null); return; }
+    const farmerId = (activeConv as unknown as { farmerId?: string }).farmerId;
+    if (!farmerId || typeof navigator !== 'undefined' && !navigator.onLine) return;
+    let cancelled = false;
+    fetchOutbreakRisk({ temp: plotTemp, moisture: plotMoisture }, activeFarmer?.temperature)
+      .then(({ risk, provenance }) => {
+        if (!cancelled) { setLiveOutbreakRisk(risk); setOutbreakProvenance(provenance); }
+      })
+      .catch(() => { if (!cancelled) { setLiveOutbreakRisk(null); setOutbreakProvenance(null); } });
+    return () => { cancelled = true; };
+  }, [activeFarmerConvId, activeConv, plotTemp, plotMoisture, activeFarmer?.temperature]);
+
+  // AI Copilot suggestions — fetched live when conversation has context, otherwise fallback to
+  // curated defaults. Re-fires when the last officer/user message changes.
+  const [liveSuggestions, setLiveSuggestions] = useState<string[] | null>(null);
+  const lastUserMessage = useMemo(
+    () => [...farmerChatMessages].reverse().find(m => m.role === 'user' || m.role === 'officer')?.content ?? null,
+    [farmerChatMessages]
+  );
+  const copilotSuggestions = liveSuggestions || [
     '🌾 Inspect maize leaf whorls today at sunset for early instar caterpillars.',
     '🥔 Damp overcast forecast. Apply preventive copper spray before Thursday.',
     '🌧️ 45mm rainfall recorded. Apply second split CAN top-dressing once topsoil drains.',
   ];
+  useEffect(() => {
+    if (!activeFarmerConvId) { setLiveSuggestions(null); return; }
+    if (!lastUserMessage) return;
+    import('@/api/aiService').then(async mod => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const res = await (mod as any).getChatCompletion?.([{ role: 'user', content: `Given farmer said: "${lastUserMessage.slice(0,300)}", suggest 3 short advisory follow-ups (<=15 words each), one per line, no numbering.` }], { model: 'gpt-4o-mini', maxTokens: 120 });
+        const text = (res as unknown as { text?: string })?.text || (res as unknown as string) || '';
+        // eslint-disable-next-line no-useless-escape
+        const lines = String(text).split('\n').map(s => s.replace(/^[\d\-*\.\s]+/, '').trim()).filter(Boolean).slice(0,3);
+        if (lines.length >= 2) setLiveSuggestions(lines);
+      } catch { /* fallback to static */ }
+    }).catch(()=>{});
+  }, [activeFarmerConvId, lastUserMessage]);
+
+  // Realtime: join the active conversation room and reload messages on new_message events.
+  const socketRef = useRef<Socket | null>(null);
+  const [socketConnected, setSocketConnected] = useState(false);
+  const [typingUser, setTypingUser] = useState<string | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (isDemo) return;
+    const socket = io(window.location.origin, {
+      path: '/socket.io',
+      transports: ['websocket', 'polling'],
+      auth: cb => cb({ token: localStorage.getItem('token') || undefined }),
+    });
+    socketRef.current = socket;
+
+    socket.on('connect', () => setSocketConnected(true));
+    socket.on('disconnect', () => setSocketConnected(false));
+    socket.on('connect_error', () => setSocketConnected(false));
+    socket.on('user_typing', (uid: string) => setTypingUser(uid));
+    socket.on('user_stop_typing', () => setTypingUser(null));
+
+    return () => {
+      socket.removeAllListeners();
+      if (socket.connected) socket.close();
+      socketRef.current = null;
+      setSocketConnected(false);
+    };
+  }, [isDemo]);
+
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket) return;
+    if (activeFarmerConvId) {
+      socket.emit('join_conversation', activeFarmerConvId);
+    }
+    const onNewMessage = (msg: unknown) => {
+      const convId = (msg as { conversationId?: string } | null)?.conversationId;
+      if (!convId || convId === activeFarmerConvId) {
+        loadFarmerMessages(convId || activeFarmerConvId!);
+      }
+    };
+    socket.on('new_message', onNewMessage);
+    return () => {
+      socket.off('new_message', onNewMessage);
+    };
+  }, [activeFarmerConvId, loadFarmerMessages]);
+
+  const handleTyping = (value: string) => {
+    setFarmerChatInput(value);
+    const socket = socketRef.current;
+    if (!socket || !activeFarmerConvId || isDemo) return;
+    const userId = (JSON.parse(localStorage.getItem('user') || '{}') as { id?: string })?.id || 'me';
+    socket.emit('typing', { conversationId: activeFarmerConvId, userId });
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      socket.emit('stop_typing', { conversationId: activeFarmerConvId, userId });
+    }, 900);
+  };
 
   return (
     <div className="flex flex-col h-[calc(100dvh-150px)] md:h-[calc(100vh-140px)] gap-4 md:gap-6">
@@ -81,9 +234,16 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md backdrop-blur-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
-            <Radio className="w-3.5 h-3.5" />
-            <span>CHANNELS ONLINE (4/4)</span>
+          <span
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md backdrop-blur-md border text-xs font-mono ${
+              socketConnected
+                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                : 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+            }`}
+            title={socketConnected ? 'Realtime updates connected' : 'Realtime updates unavailable — messages refresh on open'}
+          >
+            <Radio className={`w-3.5 h-3.5 ${socketConnected ? '' : 'opacity-60'}`} />
+            <span>{socketConnected ? 'REALTIME CONNECTED' : 'REALTIME OFFLINE'}</span>
           </span>
         </div>
       </div>
@@ -141,7 +301,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
           </div>
 
           <VirtualizedList
-            items={farmerConversations}
+            items={filteredConversations}
             itemHeight={76}
             overscan={isLowEndDevice ? 2 : 5}
             keyExtractor={conv => conv.id}
@@ -279,6 +439,13 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
 
               {/* Messages Scroll Area */}
               <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {typingUser && (
+                  <div className="flex justify-start">
+                    <div className="px-3 py-1.5 rounded-full bg-slate-800/80 border border-white/[0.06] text-[10px] font-mono text-white/60 animate-pulse">
+                      Typing…
+                    </div>
+                  </div>
+                )}
                 {farmerChatMessages.map((msg, i) => {
                   const isOfficer = msg.role === 'officer';
                   return (
@@ -338,7 +505,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                   <input
                     type="text"
                     value={farmerChatInput}
-                    onChange={e => setFarmerChatInput(e.target.value)}
+                    onChange={e => handleTyping(e.target.value)}
                     placeholder={t('farmer_chat_placeholder') || 'Type agronomic guidance or broadcast prompt...'}
                     className="flex-1 bg-slate-900 border border-white/[0.1] rounded-xl px-4 py-3 text-xs text-white placeholder-white/40 focus:ring-2 focus:ring-emerald-500/40 focus:outline-none transition-all"
                   />
@@ -377,29 +544,33 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
 
             <div className="p-3.5 rounded-xl bg-slate-950/80 border border-white/[0.06] space-y-1">
               <div className="text-[10px] font-mono text-white/40">NDVI CANOPY VIGOR</div>
-              <div className="text-base font-bold text-emerald-400">0.78 (Optimal)</div>
-              <div className="text-[9px] text-white/40">Sentinel-2 Multispectral</div>
+              <div className="text-base font-bold text-emerald-400">{activeFarmer?.ndvi ? `${activeFarmer.ndvi.toFixed(2)}` : '—'} {activeFarmer?.ndvi ? (activeFarmer.ndvi > 0.6 ? '(Optimal)' : activeFarmer.ndvi > 0.3 ? '(Moderate)' : '(Low)') : ''}</div>
+              <div className="text-[9px] text-white/40">Sentinel-2 Multispectral — add field polygon for NDVI</div>
             </div>
 
             <div className="p-3.5 rounded-xl bg-slate-950/80 border border-white/[0.06] space-y-1">
               <div className="text-[10px] font-mono text-white/40">SOIL pH & CARBON</div>
-              <div className="text-base font-bold text-amber-400">6.4 pH / 2.1% C</div>
-              <div className="text-[9px] text-white/40">ISRIC SoilGrids 0-30cm</div>
+              <div className="text-base font-bold text-amber-400">{plotTelemetry.loading ? '…' : plotTelemetry.ph != null ? `${plotTelemetry.ph.toFixed(1)} pH / ${plotTelemetry.soc ?? '—'} g/kg SOC` : activeFarmer?.ph ? `${activeFarmer.ph.toFixed(1)} pH` : '—'}</div>
+              <div className="text-[9px] text-white/40">ISRIC SoilGrids 250m {plotTelemetry.ph != null ? '• live' : activeFarmer?.ph ? '• cached' : '• no farmer geo'}</div>
             </div>
 
             <div className="p-3.5 rounded-xl bg-slate-950/80 border border-white/[0.06] space-y-1">
               <div className="text-[10px] font-mono text-white/40">NASA POWER WEATHER</div>
-              <div className="text-base font-bold text-sky-400">22°C • 74% Humidity</div>
-              <div className="text-[9px] text-white/40">3-Day Forecast: Mild Rain</div>
+              <div className="text-base font-bold text-sky-400">{plotTelemetry.temp != null ? `${plotTelemetry.temp}°C` : plotTelemetry.moisture != null ? `${plotTelemetry.moisture}% VWC` : activeFarmer?.temperature ? `${activeFarmer.temperature}°C` : '—'}</div>
+              <div className="text-[9px] text-white/40">Open-Meteo modeled {plotTelemetry.temp != null ? '• live' : '• no geo'}</div>
             </div>
 
             <div className="p-3.5 rounded-xl bg-slate-950/80 border border-white/[0.06] space-y-1">
               <div className="text-[10px] font-mono text-white/40">OUTBREAK RISK</div>
               <div className="text-base font-bold text-emerald-400 flex items-center gap-1">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>Low (8%)</span>
+                <span>{liveOutbreakRisk != null ? `${liveOutbreakRisk}%` : activeFarmer?.outbreakRisk !== undefined ? `${activeFarmer.outbreakRisk}%` : '—'}</span>
+                {liveOutbreakRisk != null && <span className="text-[9px] font-mono text-emerald-300 bg-emerald-500/10 px-1 py-0.5 rounded border border-emerald-500/20">LIVE</span>}
               </div>
-              <div className="text-[9px] text-white/40">FAO Fall Armyworm Model</div>
+              <div className="text-[9px] text-white/40 flex items-center gap-1">
+                <span>Pillar hazard model {liveOutbreakRisk != null ? '• live' : '• needs scouting'}</span>
+                {outbreakProvenance && <ProvenanceBadge provenance={outbreakProvenance} />}
+              </div>
             </div>
           </div>
         )}

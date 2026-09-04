@@ -19,6 +19,36 @@ export const fetchPlans = async () => {
   }
 };
 
+export interface PlanQuotas {
+  id: string;
+  stripePriceId: string | null;
+  name: string;
+  price: number;
+  currency: string;
+  interval: string;
+  quotas: {
+    smsLimit: number;
+    aiChatLimit: number;
+    reportLimit: number;
+    aiVisionLimit: number;
+    speechLimit?: number;
+    whatsappLimit?: number;
+    knowledgeDailyLimit?: number;
+  };
+  enforcement: 'hard_limit';
+}
+
+/** Enforced per-plan quotas (same numbers the backend applies). */
+export const fetchPlanQuotas = async (): Promise<{ success: boolean; data?: PlanQuotas[]; error?: string }> => {
+  try {
+    const { data } = await apiClient.get('/billing/quotas');
+    return data;
+  } catch (err: unknown) {
+    const body = isAxiosError(err) ? err.response?.data : null;
+    return { success: false, error: body?.error || 'Failed to fetch plan quotas' };
+  }
+};
+
 export const fetchSubscription = async () => {
   try {
     const { data } = await apiClient.get('/billing/subscription');

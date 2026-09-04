@@ -170,12 +170,19 @@ router.post('/', async (req: Request, res: Response) => {
         if (!farmerId || !name || typeof areaHectares !== 'number') {
             return res.status(400).json({ success: false, error: 'farmerId, name, and areaHectares are required' });
         }
-        // farmer_id is a UUID FK — reject malformed ids up front. Mirrors the
-        // shared createFieldSchema contract (see __tests__/apiContract.test.ts).
+        // farmer_id is a UUID FK — reject malformed ids up front.
         if (!UUID_REGEX.test(String(farmerId))) {
             return res.status(400).json({ success: false, error: 'farmerId must be a valid UUID' });
         }
         const prisma = getPrisma();
+        // Verify farmer ownership: the calling farmer must own this farmer record
+        const farmer = await prisma.farmer.findFirst({ where: { userId: req.user!.userId } });
+        if (!farmer) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+        if (farmerId !== farmer.id) {
+            return res.status(403).json({ success: false, error: 'Field must belong to your farm' });
+        }
         const field = await prisma.field.create({
             data: {
                 farmerId,
@@ -203,6 +210,27 @@ router.put('/:id', async (req: Request, res: Response) => {
         if (!id) {
             return res.status(400).json({ success: false, error: 'Field id is required' });
         }
+        const prisma = getPrisma();
+        // First, verify the field exists and get its farmerId
+        const foundField = await prisma.field.findUnique({ where: { id } });
+        if (!foundField) {
+            return res.status(404).json({ success: false, error: 'Field not found' });
+        }
+        // Verify ownership: farmer sees own, officer sees assigned, admin/manager see all
+        const user = req.user as { userId?: string; role?: string } | undefined;
+        if (user?.role === 'farmer' && foundField.farmerId !== user.userId) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+        if (user?.role === 'extension_officer') {
+            const assigned = await prisma.farmer.findFirst({
+                where: { id: foundField.farmerId, assignedOfficerId: user.userId },
+                select: { id: true },
+            });
+            if (!assigned) {
+                return res.status(403).json({ success: false, error: 'Access denied' });
+            }
+        }
+
         const body = req.body as Partial<{
             name: string;
             areaHectares: number;
@@ -215,21 +243,8 @@ router.put('/:id', async (req: Request, res: Response) => {
             boundary_coordinates: Prisma.JsonValue;
         }>;
 
-        const prisma = getPrisma();
         const data: Prisma.FieldUpdateInput = {};
-        if (body.name !== undefined) data.name = body.name;
-
-        const areaHectares = body.areaHectares !== undefined ? body.areaHectares : body.area_hectares;
-        if (areaHectares !== undefined) data.areaHectares = areaHectares;
-
-        const soilType = body.soilType !== undefined ? body.soilType : body.soil_type;
-        if (soilType !== undefined) data.soilType = soilType;
-
-        const soilPh = body.soilPh !== undefined ? body.soilPh : body.soil_ph;
-        if (soilPh !== undefined) data.soilPh = soilPh;
-
-        const boundaryCoordinates = body.boundaryCoordinates !== undefined ? body.boundaryCoordinates : body.boundary_coordinates;
-        if (boundaryCoordinates !== undefined) data.boundaryCoordinates = boundaryCoordinates as Prisma.InputJsonValue;
+        updateFieldData(data, body);
 
         const field = await prisma.field.update({ where: { id }, data });
         return res.json({ success: true, data: field });
@@ -249,6 +264,24 @@ router.delete('/:id', async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, error: 'Field id is required' });
         }
         const prisma = getPrisma();
+        // Verify ownership: farmer sees own, officer sees assigned, admin/manager see all
+        const user = req.user as { userId?: string; role?: string } | undefined;
+        const field = await prisma.field.findUnique({ where: { id } });
+        if (!field) {
+            return res.status(404).json({ success: false, error: 'Field not found' });
+        }
+        if (user?.role === 'farmer' && field.farmerId !== user.userId) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+        if (user?.role === 'extension_officer') {
+            const assigned = await prisma.farmer.findFirst({
+                where: { id: field.farmerId, assignedOfficerId: user.userId },
+                select: { id: true },
+            });
+            if (!assigned) {
+                return res.status(403).json({ success: false, error: 'Access denied' });
+            }
+        }
         await prisma.field.update({ where: { id }, data: { isActive: false } });
         return res.json({ success: true });
     } catch (error) {
@@ -312,39 +345,73 @@ type CropCycleUpdateBody = Partial<{
 }>;
 
 function mapCropCycleUpdate(body: CropCycleUpdateBody): Prisma.CropCycleUpdateInput {
-    const data: Prisma.CropCycleUpdateInput = {};
-    const getVal = <K extends keyof CropCycleUpdateBody>(camel: K, snake: K): CropCycleUpdateBody[K] =>
-        body[camel] !== undefined ? body[camel] : body[snake];
-    const getDateVal = (camel: keyof CropCycleUpdateBody, snake: keyof CropCycleUpdateBody) => {
-        const val = getVal(camel, snake);
-        return val ? new Date(val) : (val === null ? null : undefined);
-    };
+    const data: Record<string, Date | null | undefined> = {};
+    applyFieldIfDefined(data, 'cropName', getVal(body, 'cropName', 'crop_name'));
+    applyFieldIfDefined(data, 'variety', body.variety);
+    applyFieldIfDefined(data, 'status', body.status);
+    applyDateFieldIfDefined(data, 'plantingDate', getDateVal(body, 'plantingDate', 'planting_date'));
+    applyDateFieldIfDefined(data, 'expectedHarvestDate', getDateVal(body, 'expectedHarvestDate', 'expected_harvest_date'));
+    applyDateFieldIfDefined(data, 'actualHarvestDate', getDateVal(body, 'actualHarvestDate', 'actual_harvest_date'));
+    applyFieldIfDefined(data, 'yieldKg', getVal(body, 'yieldKg', 'yield_kg'));
+    applyFieldIfDefined(data, 'notes', body.notes);
+    return data as Prisma.CropCycleUpdateInput;
+}
 
-    const cropName = getVal('cropName', 'crop_name');
-    if (cropName !== undefined) data.cropName = cropName;
+function getVal<K extends keyof CropCycleUpdateBody>(body: CropCycleUpdateBody, camel: K, snake: K): CropCycleUpdateBody[K] {
+    return body[camel] !== undefined ? body[camel] : body[snake];
+}
 
-    const variety = body.variety;
-    if (variety !== undefined) data.variety = variety;
+function getDateVal(body: CropCycleUpdateBody, camel: keyof CropCycleUpdateBody, snake: keyof CropCycleUpdateBody): Date | null | undefined {
+    const val = getVal(body, camel, snake);
+    return typeof val === 'string' && val ? new Date(val) : (val === null ? null : undefined);
+}
 
-    const status = body.status;
-    if (status !== undefined) data.status = status;
+function applyFieldIfDefined(
+    data: Prisma.CropCycleUpdateInput,
+    key: 'cropName' | 'variety' | 'status' | 'yieldKg' | 'notes',
+    value: string | number | null | undefined
+): void {
+    if (value === undefined) return;
+    switch (key) {
+        case 'cropName': if (typeof value === 'string') data.cropName = value; break;
+        case 'variety': if (typeof value === 'string' || value === null) data.variety = value; break;
+        case 'status': if (typeof value === 'string') data.status = value; break;
+        case 'yieldKg': if (typeof value === 'number' || value === null) data.yieldKg = value; break;
+        case 'notes': if (typeof value === 'string' || value === null) data.notes = value; break;
+    }
+}
 
-    const plantingDate = getDateVal('plantingDate', 'planting_date');
-    if (plantingDate !== undefined) data.plantingDate = plantingDate;
+function applyDateFieldIfDefined(
+    data: Prisma.CropCycleUpdateInput,
+    key: 'plantingDate' | 'expectedHarvestDate' | 'actualHarvestDate',
+    value: Date | null | undefined
+): void {
+    if (value === undefined) return;
+    if (key === 'plantingDate') data.plantingDate = value;
+    if (key === 'expectedHarvestDate') data.expectedHarvestDate = value;
+    if (key === 'actualHarvestDate') data.actualHarvestDate = value;
+}
 
-    const expectedHarvestDate = getDateVal('expectedHarvestDate', 'expected_harvest_date');
-    if (expectedHarvestDate !== undefined) data.expectedHarvestDate = expectedHarvestDate;
-
-    const actualHarvestDate = getDateVal('actualHarvestDate', 'actual_harvest_date');
-    if (actualHarvestDate !== undefined) data.actualHarvestDate = actualHarvestDate;
-
-    const yieldKg = getVal('yieldKg', 'yield_kg');
-    if (yieldKg !== undefined) data.yieldKg = yieldKg;
-
-    const notes = body.notes;
-    if (notes !== undefined) data.notes = notes;
-
-    return data;
+function updateFieldData(data: Prisma.FieldUpdateInput, body: Partial<{
+    name: string;
+    areaHectares: number;
+    area_hectares: number;
+    soilType: string;
+    soil_type: string;
+    soilPh: number;
+    soil_ph: number;
+    boundaryCoordinates: Prisma.JsonValue;
+    boundary_coordinates: Prisma.JsonValue;
+}>): void {
+    if (body.name !== undefined) data.name = body.name;
+    const areaHectares = body.areaHectares !== undefined ? body.areaHectares : body.area_hectares;
+    if (areaHectares !== undefined) data.areaHectares = areaHectares;
+    const soilType = body.soilType !== undefined ? body.soilType : body.soil_type;
+    if (soilType !== undefined) data.soilType = soilType;
+    const soilPh = body.soilPh !== undefined ? body.soilPh : body.soil_ph;
+    if (soilPh !== undefined) data.soilPh = soilPh;
+    const boundaryCoordinates = body.boundaryCoordinates !== undefined ? body.boundaryCoordinates : body.boundary_coordinates;
+    if (boundaryCoordinates !== undefined) data.boundaryCoordinates = boundaryCoordinates as Prisma.InputJsonValue;
 }
 
 /**

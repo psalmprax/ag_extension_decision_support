@@ -6,7 +6,10 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const GROQ_API_KEY = process.env.GROQ_API_KEY || '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';
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+if (!GROQ_API_KEY) {
+    throw new Error('GROQ_API_KEY is required to run the translation script');
+}
 const groq = new Groq({ apiKey: GROQ_API_KEY });
 
 const I18N_FILE = '/home/psalmprax/ALL_PROJECTS/ag_extension_decision_support/ag-extension-dashboard/src/frontend/src/lib/i18n.ts';

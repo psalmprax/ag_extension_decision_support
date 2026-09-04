@@ -1,8 +1,38 @@
 /// <reference types="vitest" />
-import { defineConfig, type UserConfig } from 'vite';
+import { defineConfig, type UserConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
+import fs from 'node:fs';
 import path from 'node:path';
 import { VitePWA } from 'vite-plugin-pwa';
+
+/**
+ * Locale JSON in public/ is pretty-printed for diff review, but shipping it that
+ * way costs ~30% of the payload. Minifies dist/locales/*.json after the build;
+ * files are fetched on demand by the language provider, so content is unchanged.
+ */
+function minifyLocaleJson(): Plugin {
+  let outDir = 'dist';
+  return {
+    name: 'minify-locale-json',
+    configResolved(config) {
+      outDir = config.build.outDir;
+    },
+    apply: 'build',
+    closeBundle() {
+      const localeDir = path.join(outDir, 'locales');
+      if (!fs.existsSync(localeDir)) return;
+      for (const file of fs.readdirSync(localeDir)) {
+        if (!file.endsWith('.json')) continue;
+        const full = path.join(localeDir, file);
+        const before = fs.statSync(full).size;
+        const parsed = JSON.parse(fs.readFileSync(full, 'utf8')) as object;
+        fs.writeFileSync(full, JSON.stringify(parsed));
+        const saved = before - fs.statSync(full).size;
+        if (saved > 0) console.log(`  minified locales/${file} (-${(saved / 1024).toFixed(0)}KB)`);
+      }
+    },
+  };
+}
 
 interface VitestConfigExport extends UserConfig {
   test?: UserConfig['test'];
@@ -11,6 +41,7 @@ interface VitestConfigExport extends UserConfig {
 export default defineConfig({
   plugins: [
     react(),
+    minifyLocaleJson(),
     VitePWA({
       strategies: 'injectManifest',
       srcDir: 'src',
@@ -67,9 +98,11 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // Locale files are fetched on demand by the language provider and are
-        // intentionally excluded from the precache to keep the install payload small.
         globPatterns: ['**/*.{js,css,html,ico,svg,woff2}'],
+        // The multi-MB ONNX model is fetched on demand by the classifier (served by
+        // nginx from the ml/ image path) and runtime-cached, never precached.
+        // Locale JSON files are fetched on demand by the language provider and are
+        // intentionally excluded from the precache to keep the install payload small.
         // Large raster icons remain available by URL but are not precached;
         // this keeps service-worker installation from duplicating static payload.
         additionalManifestEntries: [],
@@ -95,6 +128,18 @@ export default defineConfig({
                 maxEntries: 8000,
                 maxAgeSeconds: 30 * 24 * 60 * 60,
               },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            // Plant disease ONNX model — cache-first after first download, 30d
+            // Plant disease ONNX model — fetched on first use (served on demand by
+            // nginx), then cache-first for 30d so field diagnosis works offline.
+            urlPattern: /\/models\/plant-disease\.onnx$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'ml-models',
+              expiration: { maxEntries: 4, maxAgeSeconds: 30 * 24 * 60 * 60 },
               cacheableResponse: { statuses: [0, 200] },
             },
           },
@@ -131,7 +176,7 @@ export default defineConfig({
     // Keep the warning threshold aligned with the largest intentionally shared
     // application chunk (602 kB minified, approximately 121 kB gzip).
     chunkSizeWarningLimit: 650,
-    // CDN configuration for production
+    // CDN: when VITE_CDN_URL is set (e.g. https://cdn.gpexts.com), Vite rewrites asset URLs to the CDN origin
     assetsDir: 'assets',
     sourcemap: process.env.NODE_ENV !== 'production',
     minify: 'esbuild',

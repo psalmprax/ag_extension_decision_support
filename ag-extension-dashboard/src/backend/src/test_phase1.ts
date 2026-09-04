@@ -1,5 +1,5 @@
 import { VectorService } from '@/services/vectorService';
-import { initializeDatabase, closeDatabase, query } from '@/services/databaseService';
+import { initializeDatabase, closeDatabase, query, getPool } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 
 async function testPhase1() {
@@ -7,7 +7,7 @@ async function testPhase1() {
         logger.info('Starting Phase 1 Verification...');
         await initializeDatabase();
         const { createTables } = await import('@/services/databaseService');
-        await createTables();
+        await createTables(getPool()!);
 
         const { AIProviderFactory } = await import('@/services/aiProvider/aiProvider');
         AIProviderFactory.initialize();

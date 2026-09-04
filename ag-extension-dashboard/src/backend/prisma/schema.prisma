@@ -25,6 +25,11 @@ model User {
   isActive      Boolean?           @default(true) @map("is_active")
   resetToken    String?            @map("reset_token") @db.VarChar(255)
   resetTokenExpires DateTime?      @map("reset_token_expires") @db.Timestamp(6)
+  emailVerified            Boolean   @default(false) @map("email_verified")
+  emailVerificationToken   String?   @map("email_verification_token") @db.VarChar(255)
+  emailVerificationExpires DateTime? @map("email_verification_expires") @db.Timestamp(6)
+  lastTotpStep             BigInt?   @map("last_totp_step")
+  auditLogs                AuditLog[]
   createdAt     DateTime?          @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt     DateTime?          @default(now()) @map("updated_at") @db.Timestamp(6)
   farmers       Farmer[]
@@ -39,6 +44,9 @@ model User {
   transactionSubmissions TransactionSubmission[]
   verifiedTransactions TransactionSubmission[] @relation("TransactionVerifier")
   redeemedVouchers Voucher[] @relation("RedeemedVouchers")
+  pendingPaypalPayments PendingPaypalPayment[] @relation("PendingPaypalUser")
+  offlineQueueItems OfflineQueueItem[] @relation("OfflineQueueUser")
+  activityClaims ActivityClaim[] @relation("ActivityClaimUser")
   createdShares Share[] @relation("ShareCreator")
   smsHistory SmsHistory[] @relation("SmsSender")
   hostedRooms WebRTCRoom[] @relation("RoomHost")
@@ -55,6 +63,8 @@ model User {
   uploads         UploadRecord[]
   recordedConsents DataConsent[] @relation("ConsentRecorder")
   dataExportRequests DataExportRequest[]
+  createdSupportTickets SupportTicket[] @relation("SupportTicketCreator")
+  assignedSupportTickets SupportTicket[] @relation("SupportTicketAssignee")
   lastLoginAt   DateTime?          @map("last_login_at") @db.Timestamp(6)
   loginHistories LoginHistory[]
   mfaEnabled    Boolean            @default(false) @map("mfa_enabled")
@@ -89,6 +99,63 @@ model OfflineMutation {
   @@index([userId])
   @@index([status])
   @@map("offline_mutations")
+}
+
+model PendingPaypalPayment {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paymentId  String   @unique @map("payment_id") @db.VarChar(255)
+  userId     String   @map("user_id") @db.Uuid
+  planId     String   @map("plan_id") @db.Uuid
+  amount     Decimal  @db.Decimal(10, 2)
+  currency   String   @default("USD") @db.VarChar(10)
+  status     String   @default("pending") @db.VarChar(20)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  expiresAt  DateTime @map("expires_at") @db.Timestamp(6)
+  user       User              @relation("PendingPaypalUser", fields: [userId], references: [id], onDelete: Cascade)
+  plan       SubscriptionPlan  @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("pending_paypal_payments")
+}
+
+model OfflineQueueItem {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  clientRequestId String    @map("client_request_id") @db.VarChar(128)
+  idempotencyKey  String?   @map("idempotency_key") @db.VarChar(128)
+  url             String    @db.VarChar(500)
+  method          String    @db.VarChar(10)
+  headers         Json      @default("{}")
+  body            Json?
+  attachmentRefs  String[]  @default([]) @map("attachment_refs")
+  retries         Int       @default(0)
+  maxRetries      Int       @default(3) @map("max_retries")
+  state           String    @default("pending") @db.VarChar(20)
+  lastError       String?   @map("last_error")
+  movedToDeadLetterAt DateTime? @map("moved_to_dead_letter_at") @db.Timestamptz(6)
+  originalRetries Int?      @map("original_retries")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  user            User      @relation("OfflineQueueUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, clientRequestId])
+  @@index([userId, state])
+  @@index([state])
+  @@map("offline_queue_items")
+}
+
+model ActivityClaim {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  activityId String   @map("activity_id") @db.VarChar(150)
+  userId     String   @map("user_id") @db.Uuid
+  claimedBy  String   @map("claimed_by") @db.VarChar(120)
+  claimedAt  DateTime @default(now()) @map("claimed_at") @db.Timestamptz(6)
+  user       User     @relation("ActivityClaimUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId])
+  @@index([userId])
+  @@map("activity_claims")
 }
 
 model OutreachMessage {
@@ -175,6 +242,8 @@ model Farmer {
    smsHistory               SmsHistory[] @relation("SmsFarmer")
    exportRequests           DataExportRequest[]
    uploads                  UploadRecord[]
+   whatsappMessages         WhatsappMessage[]
+   smsFeedbacks             SmsFeedback[]
 
   @@index([assignedOfficerId])
   @@index([region])
@@ -302,6 +371,30 @@ model Report {
   @@map("reports")
 }
 
+/// Immutable record of privileged / sensitive mutations (who did what to which
+/// resource, from where, with what outcome). Written by auditMiddleware.
+model AuditLog {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorId      String?   @map("actor_id") @db.Uuid
+  actorRole    String?   @map("actor_role") @db.VarChar(50)
+  action       String    @db.VarChar(120)
+  method       String    @db.VarChar(10)
+  path         String    @db.VarChar(512)
+  resourceType String?   @map("resource_type") @db.VarChar(80)
+  resourceId   String?   @map("resource_id") @db.VarChar(120)
+  statusCode   Int       @map("status_code")
+  ipAddress    String?   @map("ip_address") @db.VarChar(64)
+  userAgent    String?   @map("user_agent") @db.VarChar(512)
+  requestBody  Json?     @map("request_body")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  actor        User?     @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId, createdAt])
+  @@index([action, createdAt])
+  @@index([resourceType, resourceId])
+  @@map("audit_logs")
+}
+
 model AnalyticsEvent {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   eventType String    @map("event_type") @db.VarChar(100)
@@ -357,6 +450,7 @@ model SubscriptionPlan {
   subscriptions Subscription[]
   vouchers      Voucher[]
   transactionSubmissions TransactionSubmission[]
+  pendingPaypalPayments PendingPaypalPayment[]
 
   @@map("subscription_plans")
 }
@@ -403,6 +497,9 @@ model Usage {
   smsCount        Int          @default(0) @map("sms_count")
   aiChatCount     Int          @default(0) @map("ai_chat_count")
   reportCount     Int          @default(0) @map("report_count")
+  aiVisionCount   Int          @default(0) @map("ai_vision_count")
+  speechCount     Int          @default(0) @map("speech_count")
+  whatsappCount   Int          @default(0) @map("whatsapp_count")
   lastResetAt     DateTime     @default(now()) @map("last_reset_at") @db.Timestamp(6)
   createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt       DateTime     @default(now()) @map("updated_at") @db.Timestamp(6)
@@ -748,6 +845,9 @@ model Tenant {
   recommendationReviews RecommendationReview[]
   shares           Share[]
   exportRequests   DataExportRequest[]
+  supportTickets   SupportTicket[]
+  whatsappMessages WhatsappMessage[]
+  smsFeedbacks     SmsFeedback[]
 
   @@map("tenants")
 }
@@ -1068,6 +1168,69 @@ model UserSession {
   @@index([userId, isRevoked])
   @@index([tokenHash])
   @@map("user_sessions")
+}
+
+model SupportTicket {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String?   @map("tenant_id") @db.Uuid
+  createdBy   String    @map("created_by") @db.Uuid
+  subject     String    @db.VarChar(255)
+  description String
+  category    String    @default("general") @db.VarChar(50)
+  priority    String    @default("medium") @db.VarChar(20)
+  status      String    @default("open") @db.VarChar(20)
+  assignedTo  String?   @map("assigned_to") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  creator     User      @relation("SupportTicketCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  assignee    User?     @relation("SupportTicketAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
+  tenant      Tenant?   @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@index([createdBy])
+  @@index([tenantId])
+  @@index([status])
+  @@map("support_tickets")
+}
+
+model WhatsappMessage {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String?   @map("tenant_id") @db.Uuid
+  fromPhone      String?   @map("from_phone") @db.VarChar(20)
+  toPhone        String    @map("to_phone") @db.VarChar(20)
+  body           String
+  direction      String    @default("outbound") @db.VarChar(20)
+  status         String    @default("queued") @db.VarChar(20)
+  providerId     String?   @map("provider_id") @db.VarChar(255)
+  farmerId       String?   @map("farmer_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  farmer         Farmer?   @relation(fields: [farmerId], references: [id], onDelete: SetNull)
+  tenant         Tenant?   @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@index([toPhone])
+  @@index([farmerId])
+  @@index([tenantId])
+  @@index([status])
+  @@map("whatsapp_messages")
+}
+
+model SmsFeedback {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String?   @map("tenant_id") @db.Uuid
+  smsHistoryId String?  @map("sms_history_id") @db.Uuid
+  farmerId    String?   @map("farmer_id") @db.Uuid
+  rating      Int?
+  comment     String?
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+
+  farmer      Farmer?   @relation(fields: [farmerId], references: [id], onDelete: SetNull)
+  tenant      Tenant?   @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@index([farmerId])
+  @@index([tenantId])
+  @@map("sms_feedback")
 }
 
 

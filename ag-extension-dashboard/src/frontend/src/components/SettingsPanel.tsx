@@ -368,7 +368,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                       localStorage.setItem('ag-notification-prefs', JSON.stringify(defaults));
                       apiClient
                         .patch('/users/profile', { notificationPreferences: defaults })
-                        .catch(() => {});
+                        .catch(err => {
+                          console.warn('Failed to persist notification prefs:', err);
+                        });
                       toast.success('Settings reset to defaults');
                     }}
                     className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"

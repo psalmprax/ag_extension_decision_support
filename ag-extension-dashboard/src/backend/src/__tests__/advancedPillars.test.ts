@@ -27,7 +27,9 @@ describe('Strategic Architecture Pillars (Voice, Economics, Carbon, Hazards)', (
     it('transcribes voice notes and extracts agronomic payload', async () => {
       const result = await transcribeVoiceNote({ languageHint: 'sw' });
       expect(result.detectedLanguage).toBe('sw');
-      expect(result.confidence).toBeGreaterThan(0.9);
+      // No audioBuffer supplied → stub path: marked [STUB] with 0 confidence (honest, not a real STT result)
+      expect(result.confidence).toBe(0);
+      expect(result.transcription).toContain('[STUB');
       expect(result.transcription.length).toBeGreaterThan(10);
     });
 
@@ -57,15 +59,18 @@ describe('Strategic Architecture Pillars (Voice, Economics, Carbon, Hazards)', (
       expect(dtmf3.action).toBe('connect_agro_dealer');
     });
 
-    it('dispatches batch voice calls to farmer lists', async () => {
+    it('refuses to report phantom IVR dispatches when no voice provider is configured', async () => {
       const res = await dispatchVoiceBroadcast({
         farmerPhones: ['+254711111111', '+254722222222'],
         alertTitle: 'Frost Warning',
         advisorySwahili: 'Maji majira ya jioni.',
         advisoryEnglish: 'Irrigate in evening.',
       });
-      expect(res.dispatchedCount).toBe(2);
+      // No Twilio credentials in the test env: zero calls were actually placed.
+      expect(res.dispatchedCount).toBe(0);
+      expect(res.provider).toBe('not_configured');
       expect(res.batchId).toContain('ivr_batch_');
+      expect(res.provenance?.kind).toBe('unavailable');
     });
   });
 
@@ -115,7 +120,14 @@ describe('Strategic Architecture Pillars (Voice, Economics, Carbon, Hazards)', (
       expect(roi.differential.yieldGainPct).toBeGreaterThan(100);
       expect(roi.differential.netProfitGainKes).toBeGreaterThan(0);
       expect(roi.differential.benefitCostRatio).toBeGreaterThan(1.0);
-      expect(roi.executiveSummary).toContain('Benefit-Cost Ratio');
+      // Provenance must disclose the fixed illustrative input budgets
+      expect(roi.provenance.kind).toBe('deterministic_estimation');
+      expect(roi.provenance.assumptions.length).toBeGreaterThan(0);
+    });
+
+    it('refuses to invent default yields when the caller supplies none', () => {
+      expect(() => calculateAgronomicRoi({ crop: 'Maize' })).toThrow(/required and must be positive/);
+      expect(() => calculateAgronomicRoi({ crop: 'Maize', controlYieldTons: 2.4 })).toThrow(/required and must be positive/);
     });
 
     it('quantifies Soil Organic Carbon stock (tC/ha) via IPCC Tier 2 methodology', () => {

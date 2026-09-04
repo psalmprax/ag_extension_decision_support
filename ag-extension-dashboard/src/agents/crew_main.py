@@ -45,11 +45,24 @@ JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret")
 try:
     from crewai import Agent, Task, Crew, Process
     from langchain_openai import ChatOpenAI
+    from crewai.tools import BaseTool
     CREW_AI_AVAILABLE = True
     logger.info("Crew AI library loaded successfully")
 except ImportError:
     CREW_AI_AVAILABLE = False
     logger.warning("Crew AI library not installed - using fallback implementation")
+
+    class BaseTool:  # type: ignore[no-redef]
+        """Minimal stand-in so tool classes below can be defined (and unit-tested)
+        when crewai is not installed. Never used for real agent runs."""
+        name: str = ""
+        description: str = ""
+
+        def run(self, *args, **kwargs):
+            return self._run(*args, **kwargs)
+
+        def _run(self, *args, **kwargs):  # pragma: no cover
+            raise NotImplementedError
 
 # Import OpenAI for direct AI processing
 try:
@@ -60,15 +73,151 @@ except ImportError:
     logger.warning("OpenAI library not installed - AI features unavailable")
 
 
+# ─── Backend MCP tool bridge ────────────────────────────────────────────────
+# Contract (backend/src/services/mcpAdapter.ts createMCPRouter):
+#   POST {BACKEND_URL}/api/v1/mcp/tools/call   body: {"name": <tool>, "arguments": {...}}
+#   -> 200 {"success": true, "data": {"content": [{"type":"text","text": "..."}], "isError"?: bool}}
+#   Auth: Authorization: Bearer <MCP_API_TOKEN>  (shared secret; see mcpAuth)
+import httpx
+
+BACKEND_URL = os.getenv("BACKEND_URL", "http://ag-dashboard-backend:3001").rstrip("/")
+MCP_API_TOKEN = os.getenv("MCP_API_TOKEN", "")
+MCP_TIMEOUT_S = float(os.getenv("MCP_TIMEOUT_S", "30"))
+
+
+class MCPToolError(Exception):
+    pass
+
+
+def call_mcp_tool(tool_name: str, arguments: dict) -> str:
+    """Synchronously invoke a backend MCP tool and return its text output.
+
+    Uses a blocking httpx client on purpose: CrewAI executes tool `_run` methods
+    synchronously inside `crew.kickoff()`, which we run in a worker thread — so
+    `asyncio.run()` here would raise "cannot be called from a running event loop".
+    """
+    if not MCP_API_TOKEN:
+        raise MCPToolError("MCP_API_TOKEN is not configured for the Crew AI service")
+    url = f"{BACKEND_URL}/api/v1/mcp/tools/call"
+    try:
+        with httpx.Client(timeout=MCP_TIMEOUT_S) as client:
+            resp = client.post(
+                url,
+                json={"name": tool_name, "arguments": arguments},
+                headers={"Authorization": f"Bearer {MCP_API_TOKEN}"},
+            )
+    except httpx.HTTPError as exc:
+        raise MCPToolError(f"backend unreachable at {url}: {exc}") from exc
+
+    if resp.status_code == 401:
+        raise MCPToolError("backend rejected MCP_API_TOKEN (401)")
+    if resp.status_code == 404:
+        raise MCPToolError(f"MCP route not found at {url} (404)")
+    if not resp.is_success:
+        raise MCPToolError(f"backend returned HTTP {resp.status_code}: {resp.text[:200]}")
+
+    body = resp.json()
+    data = body.get("data") or {}
+    content = data.get("content") or []
+    text = "\n".join(str(c.get("text", "")) for c in content if isinstance(c, dict)).strip()
+    if data.get("isError"):
+        raise MCPToolError(text or f"tool {tool_name} reported an error")
+    if not text:
+        raise MCPToolError(f"tool {tool_name} returned no content")
+    return text
+
+
+def _tool_result(tool_name: str, arguments: dict) -> str:
+    """Wrapper that never raises into the agent loop but is explicit on failure."""
+    try:
+        return call_mcp_tool(tool_name, arguments)
+    except MCPToolError as exc:
+        logger.warning(f"MCP tool {tool_name} unavailable: {exc}")
+        return f"[TOOL UNAVAILABLE: {tool_name}] {exc}. Do not guess this data; tell the user it could not be retrieved."
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.error(f"MCP tool {tool_name} crashed: {exc}")
+        return f"[TOOL ERROR: {tool_name}] {exc}"
+
+
+# Tool classes mirror backend tool names and argument names exactly.
+class WeatherTool(BaseTool):
+    name: str = "get_weather_forecast"
+    description: str = "Get the weather forecast for a location (city or region). Args: location (str), days (int, 1-7)."
+
+    def _run(self, location: str, days: int = 3) -> str:
+        return _tool_result("get_weather_forecast", {"location": location, "days": int(days)})
+
+
+class MarketPriceTool(BaseTool):
+    name: str = "get_market_prices"
+    description: str = "Get latest crop market prices (each row has a dataStatus: live vs estimated). Args: crop (str, optional)."
+
+    def _run(self, crop: str = "") -> str:
+        args = {"crop": crop} if crop else {}
+        return _tool_result("get_market_prices", args)
+
+
+class DiseaseDiagnosisTool(BaseTool):
+    name: str = "diagnose_plant_disease"
+    description: str = "Heuristic symptom matcher over an internal disease corpus (not a verified diagnosis). Args: symptoms (list[str]), cropType (str, optional)."
+
+    def _run(self, symptoms, cropType: str = "") -> str:
+        if isinstance(symptoms, str):
+            symptoms = [part.strip() for part in symptoms.split(",") if part.strip()]
+        args = {"symptoms": list(symptoms)}
+        if cropType:
+            args["cropType"] = cropType
+        return _tool_result("diagnose_plant_disease", args)
+
+
+class DiseaseAlertTool(BaseTool):
+    name: str = "get_disease_alerts"
+    description: str = "FAOSTAT production-anomaly proxy for disease/pest pressure (lagging, not real-time). Args: region (str), crop (str, optional)."
+
+    def _run(self, region: str, crop: str = "") -> str:
+        args = {"region": region}
+        if crop:
+            args["crop"] = crop
+        return _tool_result("get_disease_alerts", args)
+
+
+class CropYieldForecastTool(BaseTool):
+    name: str = "crop_yield_forecast"
+    description: str = "Order-of-magnitude yield estimate from a coefficient table x weather favourability (isEstimate=true). Args: crop, region, areaHectares (optional), plantingDate (optional)."
+
+    def _run(self, crop: str, region: str, areaHectares: float = None, plantingDate: str = "") -> str:  # type: ignore[assignment]
+        args = {"crop": crop, "region": region}
+        if areaHectares is not None:
+            args["areaHectares"] = float(areaHectares)
+        if plantingDate:
+            args["plantingDate"] = plantingDate
+        return _tool_result("crop_yield_forecast", args)
+
+
+class SoilAnalysisTool(BaseTool):
+    name: str = "satellite_ndvi_analysis"
+    description: str = "Satellite spectral indices when configured plus a climate-derived vegetation vigor proxy. Args: latitude (float), longitude (float), daysBack (int, optional)."
+
+    def _run(self, latitude: float, longitude: float, daysBack: int = 90) -> str:
+        return _tool_result("satellite_ndvi_analysis", {"latitude": float(latitude), "longitude": float(longitude), "daysBack": int(daysBack)})
+
+
+class PestOutbreakTool(DiseaseAlertTool):
+    """Alias kept for existing agent wiring."""
+    name: str = "get_disease_alerts"
+
+
 # Authentication dependency
 async def verify_token(authorization: Optional[str] = Header(None)):
     """Verify JWT token from Authorization header"""
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
-    
+
     token = authorization.split(" ")[1]
-    
+
     if not token or token == "dev-token":
+        if NODE_ENV == "production":
+            raise HTTPException(status_code=401, detail="Invalid or expired token")
         return {"user_id": "dev-user", "role": "admin"}
     
     try:
@@ -80,53 +229,76 @@ async def verify_token(authorization: Optional[str] = Header(None)):
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
 
-# Database connection
+# Database connection — pooled (mirrors main.py) + Redis session persistence
+try:
+    import redis.asyncio as redis_asyncio
+    REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    _redis_client = None
+except ImportError:
+    redis_asyncio = None
+    REDIS_URL = ""
+    _redis_client = None
+
 class DatabaseManager:
-    """Simple database manager for PostgreSQL"""
-    
+    """Pooled database manager for PostgreSQL (ThreadedConnectionPool)"""
+
     def __init__(self):
+        self.pool = None
         self.connection = None
-        
+
     def connect(self):
-        """Establish database connection"""
+        """Establish database connection pool"""
         if not DATABASE_URL:
             logger.warning("DATABASE_URL not configured")
             return None
-            
         try:
             import psycopg2
-            self.connection = psycopg2.connect(DATABASE_URL)
-            logger.info("Database connection established")
-            return self.connection
+            from psycopg2.pool import ThreadedConnectionPool
+            self.pool = ThreadedConnectionPool(1, 10, DATABASE_URL)
+            self.connection = self.pool.getconn()
+            # Return immediately so pool remains usable
+            self.pool.putconn(self.connection)
+            self.connection = None
+            logger.info("Database pool established (1-10)")
+            return self.pool
         except ImportError:
             logger.warning("psycopg2 not installed - database features unavailable")
             return None
         except Exception as e:
-            logger.error(f"Database connection failed: {e}")
+            logger.error(f"Database pool failed: {e}")
             return None
     
     def execute_query(self, query: str, params: tuple = None):
-        """Execute a database query"""
-        if not self.connection:
+        """Execute a database query via pool"""
+        if not self.pool:
             self.connect()
-            
-        if not self.connection:
+        if not self.pool:
             return None
-            
+        conn = None
         try:
-            cursor = self.connection.cursor()
+            conn = self.pool.getconn()
+            cursor = conn.cursor()
             cursor.execute(query, params)
-            self.connection.commit()
-            return cursor.fetchall()
+            conn.commit()
+            try:
+                return cursor.fetchall()
+            except Exception:
+                return []
         except Exception as e:
             logger.error(f"Query execution failed: {e}")
             return None
-    
+        finally:
+            if conn and self.pool:
+                self.pool.putconn(conn)
+
     def close(self):
-        """Close database connection"""
-        if self.connection:
-            self.connection.close()
-            self.connection = None
+        """Close database pool"""
+        if self.pool:
+            try:
+                self.pool.closeall()
+            except Exception:
+                pass
+            self.pool = None
 
 db = DatabaseManager()
 
@@ -152,6 +324,7 @@ class AnalysisRequest(BaseModel):
     analysis_type: AnalysisType = AnalysisType.GENERAL
     include_recommendations: bool = True
     priority: str = "normal"
+    callback: Optional[str] = None
 
 
 class ResearchRequest(BaseModel):
@@ -200,13 +373,15 @@ class AgentFactory:
         llm = AgentFactory.get_llm()
         return Agent(
             role="Agricultural Research Specialist",
-            goal="Collect and synthesize comprehensive data about farming practices, weather patterns, market conditions, and crop health",
+            goal="Synthesize general agronomic knowledge about farming practices, seasonal patterns, and crop health for the requested region",
             backstory="""You are an expert agricultural researcher with deep knowledge of farming practices across Africa.
-            You have access to multiple data sources including weather stations, satellite imagery, market reports, and scientific literature.
-            You excel at gathering relevant information and identifying key patterns and trends.""",
+            You reason from established agronomic knowledge and the task inputs provided to you.
+            You do NOT have live access to weather stations, satellite imagery, or market feeds — when specific
+            current data would change your answer, you state that clearly and recommend verifying with live sources.""",
             verbose=True,
             llm=llm,
-            allow_delegation=False
+            allow_delegation=False,
+            tools=[WeatherTool(), MarketPriceTool()]
         )
     
     @staticmethod
@@ -218,13 +393,15 @@ class AgentFactory:
         llm = AgentFactory.get_llm()
         return Agent(
             role="Agricultural Data Analyst",
-            goal="Analyze collected data and provide actionable insights with risk assessments for farmers and extension officers",
+            goal="Analyze the provided research summary and produce risk assessments with stated confidence",
             backstory="""You are a data scientist specializing in agricultural analytics.
-            You excel at identifying patterns and trends in farming data, assessing risks, and providing clear, data-driven recommendations.
-            You consider multiple factors including weather, soil health, market prices, and crop conditions.""",
+            You identify plausible risks and trends from the research notes given to you.
+            You do not receive live telemetry — when the input lacks data for a factor, you mark that
+            risk as unknown instead of guessing.""",
             verbose=True,
             llm=llm,
-            allow_delegation=False
+            allow_delegation=False,
+            tools=[WeatherTool(), MarketPriceTool()]
         )
     
     @staticmethod
@@ -242,7 +419,8 @@ class AgentFactory:
             You always provide specific, implementable advice.""",
             verbose=True,
             llm=llm,
-            allow_delegation=False
+            allow_delegation=False,
+            tools=[WeatherTool(), MarketPriceTool(), DiseaseDiagnosisTool(), SoilAnalysisTool()]
         )
     
     @staticmethod
@@ -260,7 +438,8 @@ class AgentFactory:
             You provide accurate diagnoses and recommend appropriate treatment strategies.""",
             verbose=True,
             llm=llm,
-            allow_delegation=False
+            allow_delegation=False,
+            tools=[DiseaseDiagnosisTool(), WeatherTool()]
         )
 
 
@@ -326,7 +505,10 @@ class MultiAgentService:
                 process=Process.sequential
             )
             
-            result = crew.kickoff(inputs={
+            # kickoff() is synchronous and can run for minutes; keep the event loop
+            # (and /health) responsive by running it in a worker thread.
+            import asyncio
+            result = await asyncio.to_thread(crew.kickoff, inputs={
                 "region": request.region,
                 "analysis_type": request.analysis_type.value
             })
@@ -351,19 +533,21 @@ class MultiAgentService:
             # Build analysis prompt
             prompt = f"""Perform a comprehensive {request.analysis_type.value} analysis for {request.region}.
 
+IMPORTANT: You have NO live data feeds (no weather API, no satellite, no market feed).
+Base your analysis on general agronomic knowledge for the region and mark uncertainty explicitly.
+
 Provide your analysis in the following format:
 1. KEY FINDINGS: List 3-5 key findings
-2. RISK ASSESSMENT: Assess risks (low/medium/high) for weather, market, disease
+2. RISK ASSESSMENT: State each as "weather: low|medium|high", "market: low|medium|high", "disease: low|medium|high" — use unknown when data is insufficient
 3. RECOMMENDATIONS: Provide 5 actionable recommendations
-4. CONFIDENCE: Overall confidence level (0-1)
-5. DATA SOURCES: List data sources used
+4. CONFIDENCE: State a single number between 0 and 1
+5. DATA SOURCES: State which knowledge you relied on
 
 Consider:
-- Current weather patterns and forecasts
-- Soil conditions and health
-- Market prices and trends
-- Crop health and growth stages
-- Pest and disease pressures
+- Typical seasonal weather patterns for the region
+- Common soil constraints
+- Regional market dynamics
+- Prevalent crop health and pest pressures
 - Seasonal factors"""
 
             response = openai_client.chat.completions.create(
@@ -388,15 +572,32 @@ Consider:
             return MultiAgentService._get_fallback_analysis(request, start_time)
     
     @staticmethod
+    def _extract_risk_and_confidence(result_text: str) -> tuple:
+        """Extract risk levels and confidence from model output; unknown when not stated."""
+        import re
+        text = result_text.lower()
+        risks = {}
+        for factor in ("weather", "market", "disease"):
+            m = re.search(rf"{factor}[^a-z]{{0,20}}(low|medium|high)", text)
+            risks[factor] = m.group(1) if m else "unknown"
+        conf_m = re.search(r"confidence[^0-9]{0,20}(0?\.\d{1,2}|1\.0|100|\d{1,2})\s*%?", text)
+        confidence = float(conf_m.group(1)) if conf_m else None
+        if confidence is not None and confidence > 1.0:
+            confidence = confidence / 100.0
+        return risks, confidence
+
+    @staticmethod
     def _parse_crew_result(region: str, analysis_type: str, result_text: str, processing_time: float) -> MultiAgentResult:
         """Parse Crew AI result into structured format"""
         result_text = clean_slop(result_text)
         # Extract sections from the result text
         findings = []
         recommendations = []
-        risk_assessment = {"weather": "medium", "market": "medium", "disease": "medium"}
-        confidence = 0.75
+        risks, confidence = MultiAgentService._extract_risk_and_confidence(result_text)
         data_sources = ["multi_agent_analysis", "research_data"]
+        if confidence is None:
+            confidence = 0.0
+            data_sources.append("confidence_not_stated")
         
         # Parse findings
         for line in result_text.split('\n'):
@@ -408,21 +609,17 @@ Consider:
                 elif any(kw in content.lower() for kw in ['recommend', 'suggest', 'should', 'action']):
                     recommendations.append(content)
         
-        # Ensure we have content
+        # Ensure we have content — mark as unstated rather than fabricating findings
         if not findings:
             findings = [
-                f"Analysis completed for {region} focusing on {analysis_type}",
-                "Multiple data sources were analyzed",
-                "Key patterns and trends were identified"
+                f"[UNAVAILABLE] The model output for {region} ({analysis_type}) contained no parseable findings.",
+                "No findings are reported rather than inventing them."
             ]
         
         if not recommendations:
             recommendations = [
-                "Monitor local conditions regularly",
-                "Consult with extension officers for specific advice",
-                "Implement best practices for crop management",
-                "Stay informed about market trends",
-                "Prepare for seasonal changes"
+                "[UNAVAILABLE] The model output contained no parseable recommendations.",
+                "Consult your local extension officer for region-specific guidance."
             ]
         
         return MultiAgentResult(
@@ -431,7 +628,7 @@ Consider:
             analysis_type=analysis_type,
             findings=findings[:5],
             recommendations=recommendations[:5],
-            risk_assessment=risk_assessment,
+            risk_assessment=risks,
             confidence=confidence,
             data_sources=data_sources,
             generated_at=datetime.utcnow().isoformat(),
@@ -444,6 +641,11 @@ Consider:
         text = clean_slop(text)
         findings = []
         recommendations = []
+        risks, confidence = MultiAgentService._extract_risk_and_confidence(text)
+        data_sources = ["openai_analysis"]
+        if confidence is None:
+            confidence = 0.0
+            data_sources.append("confidence_not_stated")
         
         # Simple parsing logic
         in_findings = False
@@ -466,21 +668,17 @@ Consider:
             elif in_recommendations and (line.startswith('- ') or line.startswith('* ') or line.startswith('1.') or line.startswith('2.')):
                 recommendations.append(line.lstrip('- *1234567890. '))
         
-        # Ensure minimum content
+        # Ensure minimum content — mark as unstated rather than fabricating findings
         if not findings:
             findings = [
-                f"Comprehensive {analysis_type} analysis completed for {region}",
-                "Data was analyzed from multiple sources",
-                "Key trends and patterns were identified"
+                f"[UNAVAILABLE] The model output for {region} ({analysis_type}) contained no parseable findings.",
+                "No findings are reported rather than inventing them."
             ]
         
         if not recommendations:
             recommendations = [
-                "Continue monitoring local conditions",
-                "Follow recommended agricultural practices",
-                "Consult with local extension services",
-                "Stay updated on market conditions",
-                "Implement risk mitigation strategies"
+                "[UNAVAILABLE] The model output contained no parseable recommendations.",
+                "Consult your local extension officer for region-specific guidance."
             ]
         
         return MultiAgentResult(
@@ -489,9 +687,9 @@ Consider:
             analysis_type=analysis_type,
             findings=findings[:5],
             recommendations=recommendations[:5],
-            risk_assessment={"weather": "medium", "market": "medium", "disease": "medium"},
-            confidence=0.7,
-            data_sources=["openai_analysis", "agricultural_data"],
+            risk_assessment=risks,
+            confidence=confidence,
+            data_sources=data_sources,
             generated_at=datetime.utcnow().isoformat(),
             processing_time_ms=int(processing_time)
         )
@@ -546,7 +744,8 @@ class ResearchService:
                     verbose=True
                 )
                 
-                result = crew.kickoff()
+                import asyncio
+                result = await asyncio.to_thread(crew.kickoff)
                 processing_time = (datetime.utcnow() - start_time).total_seconds() * 1000
                 
                 return {
@@ -588,13 +787,13 @@ class ResearchService:
             except Exception as e:
                 logger.error(f"Direct research failed: {e}")
         
-        # Complete fallback
+        # Complete fallback — explicit unavailable state, no invented content
         processing_time = (datetime.utcnow() - start_time).total_seconds() * 1000
         return {
             "status": "fallback",
             "topic": request.topic,
             "depth": request.depth.value,
-            "findings": f"Research on {request.topic} at {request.depth.value} depth. AI services unavailable - using basic information.",
+            "findings": f"[UNAVAILABLE] Research on {request.topic} could not be generated: AI services (CrewAI and OpenAI) are unavailable. No research was conducted and no content was invented. Retry when the AI provider is available.",
             "generated_at": datetime.utcnow().isoformat(),
             "processing_time_ms": int(processing_time)
         }
@@ -635,9 +834,9 @@ class ReportGenerationService:
             "status": "completed",
             "processing_time_ms": int(processing_time)
         }
-        
+
         # Store in database if available
-        if db.connection:
+        if db.pool:
             try:
                 db.execute_query(
                     """INSERT INTO reports 
@@ -674,23 +873,30 @@ class ReportGenerationService:
     
     @staticmethod
     def _get_fallback_section_content(region: str, period: str, section: str) -> str:
-        """Fallback section content when AI is unavailable"""
-        
+        """Fallback section content when AI is unavailable — clearly marked"""
+        prefix = "[UNAVAILABLE] Live AI generation failed — no live data was consulted."
         content_map = {
-            "Executive Summary": f"This {period} report provides a comprehensive overview of agricultural activities and conditions in {region}. Key highlights include weather patterns, crop development stages, market conditions, and actionable recommendations for farmers and extension officers.",
-            "Weather Analysis": f"Weather conditions in {region} during this {period} showed typical seasonal patterns. Temperature ranges were within normal bounds, rainfall was adequate for crop development, and no extreme weather events were recorded. Farmers should continue monitoring local forecasts.",
-            "Crop Status": f"Crops across {region} are progressing according to seasonal expectations. Most fields show healthy growth patterns with appropriate development stages for this time of year. Some areas may require attention to pest management and nutrient application.",
-            "Market Analysis": f"Market conditions in {region} remain relatively stable with slight variations in cereal crop prices. Current prices are favorable for sellers, and demand is steady. Farmers should consider timing their sales to maximize returns.",
-            "Recommendations": f"Based on current conditions in {region}, farmers should: 1) Continue regular field monitoring, 2) Implement integrated pest management practices, 3) Plan for upcoming seasonal activities, 4) Review market opportunities, 5) Maintain proper records of farming operations."
+            "Executive Summary": f"{prefix} {period} overview for {region} could not be generated.",
+            "Weather Analysis": f"{prefix} Weather for {region} during {period} is unavailable.",
+            "Crop Status": f"{prefix} Crop status for {region} is unavailable.",
+            "Market Analysis": f"{prefix} Market analysis for {region} is unavailable.",
+            "Recommendations": f"{prefix} Recommendations for {region}: retry when AI is available and consult your extension officer.",
         }
-        
-        return content_map.get(section, f"Content for {section} in {region} during {period}. Detailed analysis requires AI services.")
+        return content_map.get(section, f"{prefix} {section} for {region} during {period} is unavailable.")
 
 
 # API Endpoints
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
+    redis_ok = False
+    if redis_asyncio and REDIS_URL:
+        try:
+            import redis as _r
+            _r.Redis.from_url(REDIS_URL).ping()
+            redis_ok = True
+        except Exception:
+            redis_ok = False
     return {
         "status": "healthy",
         "service": "crew-ai",
@@ -699,7 +905,8 @@ async def health_check():
         "dependencies": {
             "crewai": "available" if CREW_AI_AVAILABLE else "not_available",
             "openai": "configured" if openai_client else "not_configured",
-            "database": "connected" if db.connection else "not_connected"
+            "database": "connected" if db.pool else "not_connected",
+            "redis": "connected" if redis_ok else "not_configured",
         }
     }
 
@@ -711,7 +918,15 @@ async def run_analysis(request: AnalysisRequest, current_user: dict = Depends(ve
     
     try:
         result = await MultiAgentService.run_analysis_workflow(request)
-        return result.dict()
+        data = result.dict()
+        if request.callback:
+            try:
+                import httpx
+                async with httpx.AsyncClient(timeout=5) as client:
+                    await client.post(request.callback, json={"region": request.region, "status": data.get("status"), "result": data})
+            except Exception as cb_err:
+                logger.warning(f"Callback POST to {request.callback} failed: {cb_err}")
+        return data
     except Exception as e:
         logger.error(f"Analysis failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))

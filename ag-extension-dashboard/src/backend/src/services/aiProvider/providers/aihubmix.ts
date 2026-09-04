@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { logger } from '../../../utils/logger';
+import { normalizeToolDefinitions, normalizeMessages, normalizeToolCalls } from '../toolCalling';
 import {
   BaseAIProvider,
   AIProviderType,
@@ -16,9 +17,10 @@ import { REASONING_SYSTEM_PROMPT, extractVisuals, buildGroundedReasoningPrompt }
 
 export interface AIHubMixRequest {
   model?: string;
-  messages: Array<{ role: string; content: string }>;
+  messages: Array<{ role: string; content: string | null; [k: string]: unknown }>;
   temperature?: number;
   max_tokens?: number;
+  tools?: unknown[];
 }
 
 export interface AIHubMixResponse {
@@ -27,7 +29,8 @@ export interface AIHubMixResponse {
   choices: Array<{
     message: {
       role: string;
-      content: string;
+      content: string | null;
+      tool_calls?: unknown[];
     };
     finish_reason: string;
   }>;
@@ -308,10 +311,36 @@ export class AIHubMixProvider extends BaseAIProvider {
   }
 
   public override async healthCheck(): Promise<boolean> {
-    return this.isConfigured();
+    if (!this.isConfigured()) return false;
+    try {
+      // Lightweight probe — 3s timeout so health check never blocks startup
+      await axios.post(
+        `${this.baseUrl}/chat/completions`,
+        { model: 'gpt-4o-mini', messages: [{ role: 'user', content: 'ping' }], max_tokens: 2 },
+        { headers: { Authorization: `Bearer ${this.apiKey || process.env.AIHUBMIX_API_KEY}` }, timeout: 3000 }
+      );
+      this.recordHealthError();
+      return true;
+    } catch (err) {
+      // A configured-but-failing provider is unhealthy; reporting "configured"
+      // here would route live traffic into a dead endpoint.
+      const status = (err as { response?: { status?: number } }).response?.status;
+      this.recordHealthError(status ? `HTTP ${status}` : (err as Error).message);
+      return false;
+    }
   }
 
   public async chat(req: AIHubMixRequest): Promise<string> {
+    const result = await this.chatRaw(req);
+    const content = result.choices?.[0]?.message?.content;
+    if (!content && !result.choices?.[0]?.message?.tool_calls?.length) {
+      throw new Error('Empty completion content returned from AIHubMix.');
+    }
+    return content || '';
+  }
+
+  /** Full chat completion including tool_calls (OpenAI-compatible). */
+  public async chatRaw(req: AIHubMixRequest): Promise<AIHubMixResponse> {
     const key = await this.resolveApiKey();
     if (!key) {
       throw new Error('AIHubMix API key not configured (AIHUBMIX_API_KEY or AIHUBMIX_ACCESS_KEY missing).');
@@ -329,6 +358,7 @@ export class AIHubMixProvider extends BaseAIProvider {
           messages: req.messages,
           temperature: req.temperature ?? 0.7,
           max_tokens: req.max_tokens ?? 1024,
+          ...(req.tools && req.tools.length > 0 ? { tools: req.tools, tool_choice: 'auto' } : {}),
         },
         {
           headers: {
@@ -339,12 +369,11 @@ export class AIHubMixProvider extends BaseAIProvider {
         }
       );
 
-      const content = response.data.choices?.[0]?.message?.content;
-      if (!content) {
-        throw new Error('Empty completion content returned from AIHubMix.');
+      if (!response.data?.choices?.length) {
+        throw new Error('Empty completion returned from AIHubMix.');
       }
 
-      return content;
+      return response.data;
     } catch (err: unknown) {
       const axiosError = err as { response?: { status?: number; data?: unknown }; message?: string };
       const status = axiosError.response?.status;
@@ -364,18 +393,28 @@ export class AIHubMixProvider extends BaseAIProvider {
     prompt: string | Array<{ role: string; content: string }>,
     options?: TextGenerationOptions
   ): Promise<TextGenerationResult> {
-    const messages = typeof prompt === 'string' ? [{ role: 'user', content: prompt }] : prompt;
+    const messages = normalizeMessages(prompt) as AIHubMixRequest['messages'];
     const model = options?.model || process.env.AI_PRIMARY_MODEL || 'claude-3-5-sonnet-20241022';
-    const text = await this.chat({
+    const tools = normalizeToolDefinitions(options?.tools);
+    const raw = await this.chatRaw({
       model,
       messages,
       temperature: options?.temperature,
       max_tokens: options?.maxTokens,
+      tools,
     });
+    const choice = raw.choices[0];
 
     return {
-      text,
+      text: choice?.message?.content ?? '',
+      toolCalls: normalizeToolCalls(choice?.message?.tool_calls as unknown[]),
       model,
+      usage: raw.usage ? {
+        promptTokens: raw.usage.prompt_tokens ?? 0,
+        completionTokens: raw.usage.completion_tokens ?? 0,
+        totalTokens: raw.usage.total_tokens ?? 0,
+      } : undefined,
+      finishReason: choice?.finish_reason,
     };
   }
 

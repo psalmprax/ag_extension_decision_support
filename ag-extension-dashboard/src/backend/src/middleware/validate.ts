@@ -31,14 +31,18 @@ export const validate = (schema: ZodSchema | { body?: ZodSchema; query?: ZodSche
 
     return (req: Request, res: Response, next: NextFunction) => {
         try {
+            // Assign the parsed output back so defaults, coercions and transforms
+            // (e.g. snake_case → camelCase normalisation) reach the handler.
             if (bodySchema) {
-                bodySchema.parse(req.body);
+                req.body = bodySchema.parse(req.body);
             }
             if (querySchema) {
-                querySchema.parse(req.query);
+                const parsedQuery = querySchema.parse(req.query);
+                // req.query is a getter in Express 5; mutate in place to stay compatible.
+                Object.assign(req.query as Record<string, unknown>, parsedQuery);
             }
             if (paramsSchema) {
-                paramsSchema.parse(req.params);
+                Object.assign(req.params, paramsSchema.parse(req.params));
             }
             next();
         } catch (error) {

@@ -85,12 +85,16 @@ class UsageService {
             }
 
             const updateData: Record<string, { increment: number }> = {};
-            if (type === 'sms') updateData.smsCount = { increment: count };
+            if (type === 'sms' || type === 'sms_feedback') updateData.smsCount = { increment: count };
             if (type === 'ai_chat') updateData.aiChatCount = { increment: count };
             if (type === 'report') updateData.reportCount = { increment: count };
+            if (type === 'ai_vision') updateData.aiVisionCount = { increment: count };
+            if (type === 'speech') updateData.speechCount = { increment: count };
+            if (type === 'whatsapp') updateData.whatsappCount = { increment: count };
 
             if (Object.keys(updateData).length === 0) {
-                return true;
+                // 'knowledge' is metered separately via knowledgeSearch rows.
+                return type === 'knowledge';
             }
 
             await getPrisma().usage.update({
@@ -129,9 +133,10 @@ class UsageService {
             if (!data || !data.plan) {
                 return process.env.NODE_ENV !== 'test';
             }
-            const planName = data.plan.name?.toLowerCase() || '';
-            const price = Number(data.plan.price);
-            return planName === 'free' || price === 0;
+            const planName = (data.plan.name?.toLowerCase() || '').trim();
+            const price = data.plan.price != null ? Number(data.plan.price) : NaN;
+            const isFreeName = planName === 'free' || planName.startsWith('free ') || planName.includes(' free');
+            return isFreeName || price === 0;
         } catch (error) {
             logger.error(`Failed to check if user ${userId} is free:`, error);
             return process.env.NODE_ENV !== 'test';
@@ -170,11 +175,11 @@ class UsageService {
             case 'report':
                 return { current: data?.usage?.reportCount || 0, limit: features.reportLimit ?? 50 };
             case 'ai_vision':
-                return { current: 0, limit: features.aiVisionLimit ?? 100 };
+                return { current: data?.usage?.aiVisionCount || 0, limit: features.aiVisionLimit ?? 100 };
             case 'speech':
-                return { current: 0, limit: features.speechLimit ?? 200 };
+                return { current: data?.usage?.speechCount || 0, limit: features.speechLimit ?? 200 };
             case 'whatsapp':
-                return { current: 0, limit: features.whatsappLimit ?? 500 };
+                return { current: data?.usage?.whatsappCount || 0, limit: features.whatsappLimit ?? 500 };
             default:
                 return { current: 0, limit: 100 };
         }
@@ -279,39 +284,55 @@ class UsageService {
                     status: data?.status || 'active',
                     isFree,
                 },
-                usage: [
-                    {
-                        type: 'knowledge',
-                        current: dailyKnowledge.current,
-                        limit: dailyKnowledge.limit,
-                        remaining: dailyKnowledge.remaining,
-                        label: 'DAILY KNOWLEDGE SEARCHES (FREE 3/DAY)',
-                    },
-                    {
-                        type: 'ai_chat',
-                        current: data?.usage?.aiChatCount || 0,
-                        limit: isFree ? 0 : (features.aiChatLimit || 0),
-                        label: 'AI ADVISOR CREDITS',
-                    },
-                    {
-                        type: 'sms',
-                        current: data?.usage?.smsCount || 0,
-                        limit: isFree ? 0 : (features.smsLimit || 0),
-                        label: 'SMS BROADCASTS',
-                    },
-                    {
-                        type: 'report',
-                        current: data?.usage?.reportCount || 0,
-                        limit: isFree ? 0 : (features.reportLimit || 0),
-                        label: 'ANALYTIC REPORTS',
-                    }
-                ],
+                usage: this.buildUsageArray(data, isFree, features, dailyKnowledge),
                 periodEnd: data?.currentPeriodEnd,
             };
         } catch (error) {
             logger.error('Failed to get usage status:', error);
             throw error;
         }
+    }
+
+    private buildUsageArray(
+        data: Awaited<ReturnType<UsageService['getUsage']>>,
+        isFree: boolean,
+        features: Record<string, unknown>,
+        dailyKnowledge: { current: number; limit: number; remaining: number }
+    ): Array<{ type: string; current: number; limit: number; remaining?: number; label: string }> {
+        const usageTypes: Array<{ type: UsageType; label: string }> = [
+            { type: 'knowledge', label: 'DAILY KNOWLEDGE SEARCHES (FREE 3/DAY)' },
+            { type: 'ai_chat', label: 'AI ADVISOR CREDITS' },
+            { type: 'sms', label: 'SMS BROADCASTS' },
+            { type: 'report', label: 'ANALYTIC REPORTS' },
+            { type: 'ai_vision', label: 'AI VISION SCANS' },
+            { type: 'speech', label: 'SPEECH MINUTES' },
+            { type: 'whatsapp', label: 'WHATSAPP BROADCASTS' },
+        ];
+        return usageTypes.map(({ type, label }) => ({
+            type,
+            current: this.getUsageCount(data, type),
+            limit: this.getLimit(features, type, isFree),
+            remaining: type === 'knowledge' ? dailyKnowledge.remaining : undefined,
+            label,
+        }));
+    }
+
+    private getUsageCount(data: Awaited<ReturnType<UsageService['getUsage']>>, type: UsageType): number {
+        switch (type) {
+            case 'sms': return data?.usage?.smsCount || 0;
+            case 'ai_chat': return data?.usage?.aiChatCount || 0;
+            case 'report': return data?.usage?.reportCount || 0;
+            case 'ai_vision': return data?.usage?.aiVisionCount || 0;
+            case 'speech': return data?.usage?.speechCount || 0;
+            case 'whatsapp': return data?.usage?.whatsappCount || 0;
+            default: return 0;
+        }
+    }
+
+    private getLimit(features: Record<string, unknown>, type: UsageType, isFree: boolean): number {
+        if (isFree) return 0;
+        const key = `${type}Limit` as keyof typeof features;
+        return typeof features[key] === 'number' ? features[key] : 0;
     }
 
     async resetUsage(subscriptionId: string) {
@@ -322,6 +343,9 @@ class UsageService {
                     smsCount: 0,
                     aiChatCount: 0,
                     reportCount: 0,
+                    aiVisionCount: 0,
+                    speechCount: 0,
+                    whatsappCount: 0,
                     lastResetAt: new Date(),
                     updatedAt: new Date(),
                 },

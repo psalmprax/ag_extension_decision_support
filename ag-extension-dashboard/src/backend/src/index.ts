@@ -8,6 +8,7 @@ import { createClient } from 'redis';
 import { config } from './config';
 import { logger } from './utils/logger';
 import { initializeSocketHandlers } from './services/socketService';
+import { setRealtimeServer } from './services/realtimeHub';
 import { webrtcService } from './services/webrtcService';
 import { initializeDatabase } from './services/databaseService';
 import { initializeCache } from './services/cacheService';
@@ -38,6 +39,7 @@ import './workers/emailWorker';
 import './workers/alertWorker';
 import './workers/ingestionWorker';
 import './workers/outreachWorker';
+import './workers/notificationWorker';
 
 const httpServer = createServer(app);
 
@@ -104,39 +106,41 @@ async function bootstrap() {
 
     // Initialize Socket.IO handlers
     await initializeStep('WebRTC service', () => {
+        setRealtimeServer(io);
         initializeSocketHandlers(io);
         webrtcService.initialize(io);
     });
 
     await initializeStep('AI Provider Factory', () => AIProviderFactory.initialize());
 
-    // Seed Knowledge Articles (async)
-    await initializeStep('knowledge articles', async () => {
-        const { seedKnowledgeArticles, seedKnowledgeArticlesData } = await import('./routes/knowledge');
-        seedKnowledgeArticles().catch((err: unknown) =>
-            logger.error('Failed to seed knowledge articles:', err)
-        );
+    // Knowledge bootstrap runs in the background but *sequentially*: rows must exist
+    // before embeddings are generated, embeddings must exist before RAG v2 chunks
+    // them, and the seeders must not race each other on the same ids.
+    await initializeStep('knowledge bootstrap (background)', async () => {
+        void (async () => {
+            try {
+                const { seedKnowledgeArticles, seedKnowledgeArticlesData } = await import('./routes/knowledge');
+                await seedKnowledgeArticles();
+                await VectorService.seedKnowledge(seedKnowledgeArticlesData);
 
-        // Seed Vector Knowledge Base (async)
-        VectorService.seedKnowledge(seedKnowledgeArticlesData).catch(err =>
-            logger.error('Failed to seed vector knowledge:', err)
-        );
-    });
+                const { KnowledgeSyncOrchestrator } = await import('./services/data/knowledgeSyncOrchestrator');
+                await KnowledgeSyncOrchestrator.syncLightweight();
 
-    // Sync external knowledge sources (curated tropical articles — fast, no API calls)
-    await initializeStep('knowledge sync orchestrator', async () => {
-        const { KnowledgeSyncOrchestrator } = await import('./services/data/knowledgeSyncOrchestrator');
-        KnowledgeSyncOrchestrator.syncLightweight().catch(err =>
-            logger.error('Failed to sync lightweight knowledge sources:', err)
-        );
-    });
+                // Anything inserted without a vector (legacy rows, plain-SQL paths) gets one now.
+                // Drains fully (batched) so a large existing corpus is indexed in one boot,
+                // not one batch per restart. Disable with EMBEDDING_BACKFILL_ON_BOOT=false.
+                if (process.env.EMBEDDING_BACKFILL_ON_BOOT !== 'false') {
+                    const bf = await VectorService.backfillAllMissingEmbeddings(100);
+                    if (bf.remaining > 0) logger.warn(`Embedding backfill left ${bf.remaining} rows unindexed${bf.aborted ? ` — ${bf.aborted}` : ''}`);
+                }
 
-    // Bootstrap RAG v2 (chunking + knowledge graph)
-    await initializeStep('RAG v2 service', async () => {
-        const { RAGV2Service } = await import('./services/ragV2Service');
-        RAGV2Service.bootstrap().catch(err =>
-            logger.error('Failed to bootstrap RAG v2:', err)
-        );
+                const { RAGV2Service } = await import('./services/ragV2Service');
+                await RAGV2Service.bootstrap();
+                logger.info('Knowledge bootstrap complete');
+            } catch (err) {
+                logger.error('Knowledge bootstrap failed:', err);
+            }
+        })();
     });
 
     await initializeStep('persistent memory layer', () => persistentMemory.initialize());
@@ -191,17 +195,22 @@ async function bootstrap() {
             capabilities: ['market_analysis', 'disease_diagnosis', 'policy_research', '*'],
             maxConcurrentTasks: 5,
         });
-        // OpenClaw agent - planned for future implementation
-        agentOrchestrator.registerAgent({
-            agentId: 'openclaw',
-            name: 'OpenClaw',
-            capabilities: ['bug_fixes', 'unit_testing', 'doc_gen', '*'],
-            maxConcurrentTasks: 3,
-        });
     });
 
+    await initializeStep('email worker', async () => {
+        const { startEmailWorker } = await import('./workers/emailWorker');
+        startEmailWorker();
+    }, true);
+    await initializeStep('notification worker', async () => {
+        const { startNotificationWorker } = await import('./workers/notificationWorker');
+        startNotificationWorker();
+    }, true);
     await initializeStep('email workflow service', () => emailWorkflowService.initialize());
     await initializeStep('agent telemetry', () => agentTelemetry.initialize());
+    await initializeStep('agent orchestrator loop', async () => {
+        const { agentOrchestrator } = await import('./services/agentOrchestrator');
+        agentOrchestrator.startWorkerLoop(Number(process.env.AGENT_WORKER_INTERVAL_MS || 5000));
+    }, true);
 
     // Register components for self-healing monitoring
     await initializeStep('self-healing monitoring', () => {
@@ -210,7 +219,6 @@ async function bootstrap() {
         selfHealingService.registerComponent('cache');
         selfHealingService.registerComponent('agent-zero');
         selfHealingService.registerComponent('crew-ai');
-        selfHealingService.registerComponent('openclaw');
         selfHealingService.startMonitoring(60000);
     });
 
@@ -221,6 +229,31 @@ async function bootstrap() {
             await startAdvisoryScheduler();
         } catch (error) {
             logger.error('Advisory scheduler startup failed:', error);
+        }
+    })();
+
+    // Scheduled SMS dispatcher — BullMQ delayed jobs (primary) + polling fallback (covers pre-existing rows / Redis outage)
+    void (async () => {
+        try {
+            const { startScheduledSmsWorker } = await import('./workers/scheduledSmsWorker');
+            startScheduledSmsWorker();
+        } catch (error) {
+            logger.error('Scheduled SMS BullMQ worker startup failed:', error);
+        }
+        try {
+            const { smsService } = await import('./services/smsService');
+            const intervalMs = Number(process.env.SCHEDULED_SMS_POLL_MS || 60_000);
+            setInterval(async () => {
+                try {
+                    const n = await smsService.processScheduledSMS();
+                    if (n > 0) logger.info(`Scheduled SMS polling fallback dispatched ${n} messages`);
+                } catch (e) {
+                    logger.warn('Scheduled SMS polling tick failed:', e);
+                }
+            }, intervalMs).unref?.();
+            logger.info(`Scheduled SMS polling fallback armed (poll=${intervalMs}ms)`);
+        } catch (error) {
+            logger.error('Scheduled SMS polling startup failed:', error);
         }
     })();
 

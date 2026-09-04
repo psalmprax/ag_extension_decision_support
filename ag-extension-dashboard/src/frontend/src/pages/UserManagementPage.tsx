@@ -20,7 +20,6 @@ import {
   KeyRound,
 } from 'lucide-react';
 import apiClient from '@/api/client';
-import { useLanguage } from '@/lib/LanguageContext';
 import { useDemoMode, DEMO_USERS } from '@/demo';
 import { fetchLoginHistory, fetchLoginStats } from '@/api/authService';
 
@@ -61,7 +60,6 @@ const ROLES = [
 const getRoleBadge = (role: string) => ROLES.find(r => r.value === role) || ROLES[2];
 
 export function UserManagementPage() {
-  const { t: _t } = useLanguage();
   const { isDemo } = useDemoMode();
   const queryClient = useQueryClient();
 

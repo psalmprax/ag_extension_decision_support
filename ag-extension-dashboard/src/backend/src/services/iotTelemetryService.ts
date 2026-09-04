@@ -1,4 +1,13 @@
+/**
+ * IoT soil-probe telemetry evaluation (VPD + smart irrigation trigger) — wired via
+ * POST /api/pillars/iot/evaluate.
+ *
+ * Pure math over caller-supplied sensor readings using fixed agronomic VWC/VPD
+ * thresholds for loam/clay-loam soils. No device registry or live sensor feed is
+ * ingested. Disclosed via the `provenance` block.
+ */
 import { logger } from '../utils/logger';
+import { pillarProvenance } from './provenance';
 
 export interface SoilProbeTelemetry {
   deviceId: string;
@@ -20,6 +29,7 @@ export interface IrrigationDecision {
   irrigationTriggered: boolean;
   recommendedWaterVolumeLitersPerHa: number;
   decisionReason: string;
+  provenance: ReturnType<typeof pillarProvenance>;
 }
 
 /**
@@ -86,5 +96,14 @@ export function evaluateSmartIrrigation(telemetry: SoilProbeTelemetry): Irrigati
     irrigationTriggered: trigger,
     recommendedWaterVolumeLitersPerHa: recommendedWater,
     decisionReason: reason,
+    provenance: pillarProvenance(
+      'computed_from_supplied_inputs',
+      'Irrigation decision from Tetens-formula VPD and fixed VWC thresholds over caller-supplied sensor readings. No live device feed is ingested.',
+      [
+        'VWC thresholds: >38% saturated, <18% wilting point, <25% drying (loam/clay-loam)',
+        'Wilting-point refill fixed at 28,000 L/ha; stressed dry-down 18,000 L/ha',
+      ],
+      false
+    ),
   };
 }

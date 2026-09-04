@@ -154,7 +154,7 @@ export function Agents() {
           {agents.length > 0 && (
             <div className="hidden lg:inline-flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
               <Radio className="w-3.5 h-3.5" />
-              <span>{agents.length} NODES ONLINE</span>
+              <span>{agents.filter(a => a.health === 'healthy').length}/{agents.length} NODES HEALTHY</span>
             </div>
           )}
 

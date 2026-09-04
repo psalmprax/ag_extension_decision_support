@@ -34,7 +34,7 @@ class TavilyService {
         this.apiKey = config.externalApis.tavily?.apiKey || process.env.TAVILY_API_KEY || '';
     }
 
-    async search(query: string, numResults = 5): Promise<TavilySearchResponse | null> {
+    async search(query: string, numResults = 5, options?: { searchDepth?: 'basic' | 'advanced'; timeRange?: 'day' | 'week' | 'month'; includeAnswer?: boolean }): Promise<TavilySearchResponse | null> {
         if (!this.apiKey) {
             logger.warn('Tavily API key not configured, skipping web search');
             return null;
@@ -46,7 +46,9 @@ class TavilyService {
                 {
                     query,
                     num_results: numResults,
-                    include_answer: true,
+                    search_depth: options?.searchDepth || 'advanced',
+                    time_range: options?.timeRange || 'week',
+                    include_answer: options?.includeAnswer ?? false,
                     include_raw_content: false,
                 },
                 {

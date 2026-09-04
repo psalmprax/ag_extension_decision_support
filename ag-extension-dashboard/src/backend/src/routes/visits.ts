@@ -154,6 +154,9 @@ interface InsertVisitParams {
     notes?: string;
     userId?: string;
     attachmentIds?: string[];
+    status?: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+    locationLat?: number;
+    locationLng?: number;
 }
 
 async function resolveVisitFarmerContext(farmerId: string, officerId?: string): Promise<{ tenantId: string | null; resolvedOfficerId: string }> {
@@ -207,7 +210,7 @@ async function performInsertVisit(
     params: InsertVisitParams,
     executor: typeof query | PoolClient
 ) {
-    const { farmerId, officerId, visitType, scheduledAt, notes, userId, attachmentIds = [] } = params;
+    const { farmerId, officerId, visitType, scheduledAt, notes, userId, attachmentIds = [], status = 'scheduled', locationLat, locationLng } = params;
     const farmerContext = await resolveVisitFarmerContext(farmerId, officerId);
     const farmerTenantId = farmerContext.tenantId;
     // A visit's officer defaults to the farmer's assigned officer when not supplied
@@ -218,13 +221,22 @@ async function performInsertVisit(
     if (attachmentIds.length > 0 && !userId) throw new Error('Attachment owner is required');
     if (attachmentIds.length > 0) await validateAttachments(attachmentIds, userId as string, farmerId, executor);
 
-    const sql = `INSERT INTO visits (farmer_id, officer_id, visit_type, status, scheduled_at, notes, tenant_id, created_at)
-                 VALUES ($1, $2, $3, 'scheduled', $4, $5, $6, NOW())
+    // A visit logged as completed from the field records completed_at = scheduled_at
+    // (the officer is reporting something that already happened).
+    const completedAt = status === 'completed' ? scheduledAt : null;
+    const hasLocation = typeof locationLat === 'number' && typeof locationLng === 'number';
+    const sql = `INSERT INTO visits (farmer_id, officer_id, visit_type, status, scheduled_at, completed_at, location_lat, location_lng, notes, tenant_id, created_at)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
                  RETURNING *`;
+    const values = [
+        farmerId, effectiveOfficerId, visitType, status, scheduledAt, completedAt,
+        hasLocation ? locationLat : null, hasLocation ? locationLng : null,
+        notes, farmerTenantId,
+    ];
 
     const result = executor === query
-        ? await query<VisitInsertRow>(sql, [farmerId, effectiveOfficerId, visitType, scheduledAt, notes, farmerTenantId])
-        : await (executor as PoolClient).query(sql, [farmerId, effectiveOfficerId, visitType, scheduledAt, notes, farmerTenantId]) as { rows: VisitInsertRow[] };
+        ? await query<VisitInsertRow>(sql, values)
+        : await (executor as PoolClient).query(sql, values) as { rows: VisitInsertRow[] };
     const created = result.rows[0];
     if (created) await linkAttachments(created.id, attachmentIds, executor);
     return { success: true, data: created ? mapVisitInsertRow(created) : null };
@@ -353,17 +365,23 @@ async function executeVisitMutation(
 // Create visit
 router.post('/', validate(createVisitSchema), async (req: Request, res: Response) => {
     try {
-        const body = req.body as Record<string, unknown>;
+        // Body has been normalised by validate(createVisitSchema) to the shared contract.
+        const body = req.body as {
+            farmerId: string; officerId?: string; visitType: string; scheduledAt: string;
+            status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | 'no_show';
+            notes?: string; attachmentIds?: string[]; locationLat?: number | null; locationLng?: number | null;
+        };
         const insertParams: InsertVisitParams = {
-            farmerId: (body.farmerId ?? body.farmer_id) as string,
-            officerId: body.officerId as string | undefined,
-            visitType: (body.visitType ?? body.visit_type ?? body.type ?? 'routine') as string,
-            scheduledAt: (body.scheduledAt ?? body.scheduled_at) as string,
-            notes: body.notes as string | undefined,
+            farmerId: body.farmerId,
+            officerId: body.officerId,
+            visitType: body.visitType,
+            scheduledAt: body.scheduledAt,
+            notes: body.notes,
             userId: req.user?.userId,
-            attachmentIds: Array.isArray(body.attachmentIds)
-                ? body.attachmentIds.filter((id): id is string => typeof id === 'string')
-                : [],
+            attachmentIds: body.attachmentIds ?? [],
+            status: body.status === 'no_show' ? 'cancelled' : body.status,
+            locationLat: typeof body.locationLat === 'number' ? body.locationLat : undefined,
+            locationLng: typeof body.locationLng === 'number' ? body.locationLng : undefined,
         };
 
         if (!getPool()) {
@@ -440,12 +458,15 @@ router.post('/location', async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, error: 'Invalid coordinates' });
         }
 
-        // Insert location log as a visit entry
+        const user = req.user as { userId?: string; role?: string } | undefined;
+        const farmerId = user?.role === 'farmer' ? user.userId : undefined;
+
+        // Insert location log as a visit entry, bound to the calling farmer/officer
         const result = await query<VisitIdRow>(
-            `INSERT INTO visits (visit_type, status, location_lat, location_lng, notes, created_at)
-             VALUES ('location_capture', 'completed', $1, $2, $3, $4)
+            `INSERT INTO visits (visit_type, status, location_lat, location_lng, notes, created_at, farmer_id, officer_id)
+             VALUES ('location_capture', 'completed', $1, $2, $3, $4, $5, $6)
              RETURNING id`,
-            [latitude, longitude, `GPS accuracy: ${accuracy}m (${accuracyStatus})`, timestamp || new Date().toISOString()]
+            [latitude, longitude, `GPS accuracy: ${accuracy}m (${accuracyStatus})`, timestamp || new Date().toISOString(), farmerId, user?.userId]
         );
 
         const id = result.rows[0] ? mapVisitIdRow(result.rows[0]) : null;

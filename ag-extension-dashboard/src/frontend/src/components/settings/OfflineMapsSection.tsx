@@ -2,19 +2,21 @@ import { useState } from 'react';
 import { Map as MapIcon, Download, Trash2 } from 'lucide-react';
 import { prefetchDistrictTiles, getTileCacheSize, clearTileCache, estimateDownload } from '@/lib/offlineTiles';
 
-// Malawi country bbox — officers prefetch what they drive through.
-const MALAWI_BBOX = { minLat: -17.2, minLng: 32.6, maxLat: -9.3, maxLng: 36.0 };
+// Default country bbox (Malawi) — users can override with custom district bounds.
+const DEFAULT_BBOX = { minLat: -17.2, minLng: 32.6, maxLat: -9.3, maxLng: 36.0 };
 
 export function OfflineMapsSection() {
     const [status, setStatus] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
-    const estimate = estimateDownload(MALAWI_BBOX, 8, 12);
+    const [bbox, setBbox] = useState(DEFAULT_BBOX);
+    const [customMode, setCustomMode] = useState(false);
+    const estimate = estimateDownload(bbox, 8, 12);
 
     const handlePrefetch = async () => {
         setBusy(true);
         setStatus('Downloading maps…');
         try {
-            const result = await prefetchDistrictTiles(MALAWI_BBOX, (done, total) =>
+            const result = await prefetchDistrictTiles(bbox, (done, total) =>
                 setStatus(`Downloading maps… ${done}/${total}`)
             );
             setStatus(`Maps ready offline — ${result.downloaded} new, ${result.skipped} already saved (${result.total} total)`);
@@ -38,7 +40,7 @@ export function OfflineMapsSection() {
                     <div className="min-w-0">
                         <p className="text-sm font-semibold">Offline maps</p>
                         <p className="text-xs text-gray-400 truncate">
-                            Country-wide tiles, zoom 8–12 · ~{Math.round(estimate.approxKb / 1024)} MB
+                            {customMode ? `Custom bbox, zoom 8–12 · ~${Math.round(estimate.approxKb / 1024)} MB` : `Country-wide tiles, zoom 8–12 · ~${Math.round(estimate.approxKb / 1024)} MB`}
                         </p>
                     </div>
                 </div>
@@ -62,6 +64,21 @@ export function OfflineMapsSection() {
                     </button>
                 </div>
             </div>
+            <div className="flex items-center gap-2">
+                <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
+                    <input type="checkbox" checked={customMode} onChange={e => setCustomMode(e.target.checked)} className="rounded" /> Custom bbox
+                </label>
+            </div>
+            {customMode && (
+                <div className="grid grid-cols-2 gap-2">
+                    {(['minLat','minLng','maxLat','maxLng'] as const).map(k => (
+                        <label key={k} className="text-xs text-gray-500 flex flex-col gap-1">
+                            {k}
+                            <input type="number" step="0.1" value={bbox[k]} onChange={e => setBbox(prev => ({ ...prev, [k]: parseFloat(e.target.value) || prev[k] }))} className="px-2 py-1 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-xs" />
+                        </label>
+                    ))}
+                </div>
+            )}
             {status && <p className="text-xs text-gray-500 dark:text-gray-400" role="status">{status}</p>}
         </div>
     );

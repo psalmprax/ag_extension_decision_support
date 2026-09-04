@@ -151,7 +151,9 @@ export const config: AppConfig = {
         model: getEnv('OLLAMA_MODEL', 'llama3'),
     },
     ingestion: {
-        enabled: getEnv('INGESTION_ENABLED', 'true') === 'true',
+        // Either name is accepted; default OFF because the crawl depends on the
+        // agent + discovery-scraper containers being deployed.
+        enabled: (process.env.INGESTION_ENABLED ?? process.env.ENABLE_KNOWLEDGE_INGESTION ?? 'false') === 'true',
         schedule: getEnv('INGESTION_SCHEDULE', 'weekly') as 'daily' | 'weekly',
     },
 };

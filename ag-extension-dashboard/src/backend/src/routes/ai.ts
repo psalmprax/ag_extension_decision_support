@@ -77,7 +77,7 @@ function normalizeVisitSynthesisResult(rawResponse: string, originalNotes: strin
  *     security:
  *       - bearerAuth: []
  */
-router.post('/synthesize-visit', [checkUsageLimit('ai_chat'), validate({ body: aiSchemas.synthesizeVisit })], async (req: AuthRequest, res: Response) => {
+router.post('/synthesize-visit', [checkUsageLimit('ai_chat', { meter: false }), validate({ body: aiSchemas.synthesizeVisit })], async (req: AuthRequest, res: Response) => {
     try {
         const { notes } = req.body;
         const userId = req.user!.userId;
@@ -156,7 +156,7 @@ router.post('/synthesize-visit', [checkUsageLimit('ai_chat'), validate({ body: a
  *     security:
  *       - bearerAuth: []
  */
-router.post('/transcribe-audio', [checkUsageLimit('ai_chat')], async (req: AuthRequest, res: Response) => {
+router.post('/transcribe-audio', [checkUsageLimit('ai_chat', { meter: false })], async (req: AuthRequest, res: Response) => {
     try {
         const { audio, language } = req.body;
         const userId = req.user!.userId;
@@ -201,7 +201,7 @@ router.post('/transcribe-audio', [checkUsageLimit('ai_chat')], async (req: AuthR
  *     security:
  *       - bearerAuth: []
  */
-router.post('/analyze-image', [checkUsageLimit('ai_vision')], async (req: AuthRequest, res: Response) => {
+router.post('/analyze-image', [checkUsageLimit('ai_vision', { meter: false })], async (req: AuthRequest, res: Response) => {
     try {
         const { image, prompt } = req.body;
         const userId = req.user!.userId;
@@ -233,7 +233,7 @@ router.post('/analyze-image', [checkUsageLimit('ai_vision')], async (req: AuthRe
  *     security:
  *       - bearerAuth: []
  */
-router.post('/analyze-video', [checkUsageLimit('ai_vision')], async (req: AuthRequest, res: Response) => {
+router.post('/analyze-video', [checkUsageLimit('ai_vision', { meter: false })], async (req: AuthRequest, res: Response) => {
     try {
         const { video, prompt, frameInterval, maxFrames } = req.body;
         const userId = req.user!.userId;
@@ -297,14 +297,6 @@ const agentRegistry = [
         capabilities: ['Market Analysis', 'Crop Disease Diagnosis', 'Policy Research'],
         providerType: 'anthropic'
     },
-    {
-        id: 'openclaw',
-        name: 'OpenClaw',
-        url: process.env.OPENCLAW_URL || 'http://localhost:8002',
-        description: 'Automated code & system refactoring',
-        capabilities: ['Bug Fixes', 'Unit Testing', 'Doc Gen'],
-        providerType: 'groq'
-    },
 ];
 
 /**
@@ -323,9 +315,8 @@ function statusFromHealth(status: string): AgentLiveStatus['status'] {
 }
 
 async function pingAgent(config: (typeof agentRegistry)[number]): Promise<AgentLiveStatus> {
-    const url = config.id === 'openclaw' ? 'http://ag-openclaw:8002' : config.url;
     try {
-        const response = await fetch(`${url}/health`, { signal: AbortSignal.timeout(1000) });
+        const response = await fetch(`${config.url}/health`, { signal: AbortSignal.timeout(1000) });
         return { status: response.ok ? 'online' : 'unhealthy', load: 0, lastActive: new Date().toISOString() };
     } catch (error) {
         logger.warn(`Agent health check failed for ${config.id}:`, error);
@@ -414,6 +405,7 @@ async function handleAgentControl(
     agentId: string | undefined,
     control: AgentControl,
     res: Response,
+    options: { mode?: unknown } = {},
 ): Promise<void> {
     const config = agentRegistry.find(agent => agent.id === agentId);
     if (!config) {
@@ -426,6 +418,40 @@ async function handleAgentControl(
         const unavailable = unreachableAgentResponse(config);
         res.status(unavailable.status).json(unavailable.body);
         return;
+    }
+
+    if (control === 'execute') {
+        try {
+            const { agentOrchestrator } = await import('@/services/agentOrchestrator');
+            const task = await agentOrchestrator.dispatchTask({
+                agentId: config.id,
+                type: 'ai.execute',
+                payload: {
+                    triggeredBy: 'api/ai/execute',
+                    at: new Date().toISOString(),
+                    mode: ['supervised', 'autonomous', 'edge'].includes(String(options.mode)) ? String(options.mode) : 'supervised',
+                },
+                priority: 'medium',
+                maxRetries: 2,
+            });
+            // Kick the worker loop once (best-effort)
+            agentOrchestrator.executeNext().catch(() => {});
+            res.json({ success: true, data: task, note: `Task queued for ${config.name} via orchestrator` });
+            return;
+        } catch (e) {
+            logger.warn('Orchestrator dispatch on /ai/execute failed, falling back to 501:', e);
+        }
+    }
+
+    if (control === 'stop') {
+        try {
+            const { agentOrchestrator } = await import('@/services/agentOrchestrator');
+            const result = await agentOrchestrator.stopAgentTasks(config.id);
+            res.json({ success: true, data: result, note: `Stopped ${result.stopped} running tasks, removed ${result.queued} queued tasks for ${config.name}` });
+            return;
+        } catch (e) {
+            logger.warn('Orchestrator stop on /ai/stop failed:', e);
+        }
     }
 
     const unavailableCode = {
@@ -449,7 +475,7 @@ async function handleAgentControl(
  */
 router.post('/execute', async (req: AuthRequest, res: Response) => {
     try {
-        await handleAgentControl(req.body?.agent, 'execute', res);
+        await handleAgentControl(req.body?.agent, 'execute', res, { mode: req.body?.mode });
     } catch (error) {
         logger.error('Failed to execute agent:', error);
         safeError(res, 500, 'Failed to start agent execution');

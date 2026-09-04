@@ -14,8 +14,10 @@ export interface AgroEcosystemCanvasScrubberProps {
   onStageChange?: (stage: number) => void;
   /** Whether to show interactive scrubbing HUD overlay controls */
   showControls?: boolean;
-  /** Optional interactive mode (internal animation loop if no scroll provided) */
+  /** Optional interactive mode */
   interactive?: boolean;
+  /** Whether to auto play simulation loop */
+  autoPlay?: boolean;
   className?: string;
 }
 
@@ -563,25 +565,34 @@ export function AgroEcosystemCanvasScrubber({
   onStageChange,
   showControls = true,
   interactive = false,
+  autoPlay,
   className = '',
 }: AgroEcosystemCanvasScrubberProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [internalProgress, setInternalProgress] = useState(externalProgress ?? 0);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const isDraggingRef = useRef(false);
+
+  // Auto play when explicitly set, or when controls are hidden (e.g. login background) or in standalone interactive mode
+  const shouldAutoPlay = autoPlay !== undefined ? autoPlay : (!showControls || interactive);
+  const [isPlaying, setIsPlaying] = useState(shouldAutoPlay);
   const [audioMuted, setLocalAudioMuted] = useState(!isAudioEnabled());
   const [mousePos, setMousePos] = useState({ x: 0, y: 0, rawX: 0, rawY: 0 });
   const prevStageRef = useRef<number>(-1);
 
-  // Synchronize external progress if controlled by parent
+  // Synchronize external progress if controlled by parent (e.g. stage button click)
   useEffect(() => {
-    if (externalProgress !== undefined) {
-      setInternalProgress(externalProgress);
+    if (externalProgress !== undefined && !isDraggingRef.current) {
+      const clamped = Math.max(0, Math.min(1, externalProgress));
+      setInternalProgress(clamped);
     }
   }, [externalProgress]);
 
-  const activeProgress = internalProgress;
-  const currentStage = Math.min(3, Math.floor(activeProgress * 4));
+  const activeProgress = Number.isFinite(internalProgress) ? internalProgress : 0;
+  const currentStage = Math.min(
+    AGRO_STAGES.length - 1,
+    Math.max(0, Math.floor(Math.max(0, Math.min(1, activeProgress)) * AGRO_STAGES.length))
+  );
 
   const updateProgress = useCallback(
     (nextProgress: number) => {
@@ -600,17 +611,28 @@ export function AgroEcosystemCanvasScrubber({
     prevStageRef.current = currentStage;
   }, [currentStage, onStageChange]);
 
+  // Smooth 60fps requestAnimationFrame continuous simulation loop
   useEffect(() => {
     if (!isPlaying) return;
-    const interval = setInterval(() => {
-      setInternalProgress((prev) => {
-        const next = prev + 0.003;
-        const clamped = next > 1 ? 0 : next;
-        onProgressChange?.(clamped);
-        return clamped;
-      });
-    }, 16);
-    return () => clearInterval(interval);
+    let frameId: number;
+    let lastTime = performance.now();
+
+    const loop = (now: number) => {
+      const delta = (now - lastTime) * 0.001;
+      lastTime = now;
+      if (!isDraggingRef.current) {
+        setInternalProgress((prev) => {
+          const next = (prev + delta * 0.04) % 1;
+          const wrapped = Number.isFinite(next) ? ((next % 1) + 1) % 1 : 0;
+          onProgressChange?.(wrapped);
+          return wrapped;
+        });
+      }
+      frameId = requestAnimationFrame(loop);
+    };
+
+    frameId = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(frameId);
   }, [isPlaying, onProgressChange]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -622,9 +644,47 @@ export function AgroEcosystemCanvasScrubber({
     const x = (rawX / rect.width - 0.5) * 2;
     const y = (rawY / rect.height - 0.5) * 2;
     setMousePos({ x, y, rawX, rawY });
+
+    if (isDraggingRef.current) {
+      const p = Math.max(0, Math.min(1, rawX / rect.width));
+      updateProgress(p);
+      playScrubTick();
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!interactive || !containerRef.current) return;
+    isDraggingRef.current = true;
+    const rect = containerRef.current.getBoundingClientRect();
+    if (rect.width) {
+      const p = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      updateProgress(p);
+      playScrubTick();
+    }
+  };
+
+  const handleMouseUp = () => {
+    isDraggingRef.current = false;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!containerRef.current || !e.touches[0]) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const rawX = e.touches[0].clientX - rect.left;
+    const rawY = e.touches[0].clientY - rect.top;
+    const x = (rawX / rect.width - 0.5) * 2;
+    const y = (rawY / rect.height - 0.5) * 2;
+    setMousePos({ x, y, rawX, rawY });
+    if (interactive) {
+      const p = Math.max(0, Math.min(1, rawX / rect.width));
+      updateProgress(p);
+      playScrubTick();
+    }
   };
 
   const handleMouseLeave = () => {
+    isDraggingRef.current = false;
     setMousePos({ x: 0, y: 0, rawX: 0, rawY: 0 });
   };
 
@@ -674,8 +734,11 @@ export function AgroEcosystemCanvasScrubber({
     <div
       ref={containerRef}
       onMouseMove={handleMouseMove}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onTouchMove={handleTouchMove}
       onMouseLeave={handleMouseLeave}
-      className={`relative w-full h-full min-h-[360px] rounded-xl overflow-hidden border border-white/[0.08] shadow-2xl bg-slate-950 ${className}`}
+      className={`relative w-full h-full min-h-[360px] rounded-xl overflow-hidden border border-white/[0.08] shadow-2xl bg-slate-950 select-none ${className}`}
     >
       <canvas ref={canvasRef} className="w-full h-full block" />
 
@@ -702,42 +765,38 @@ export function AgroEcosystemCanvasScrubber({
       </div>
 
       {showControls && (
-        <div className="absolute bottom-4 left-4 right-4 bg-slate-900/90 backdrop-blur-md border border-white/10 p-3 rounded-xl flex flex-col gap-2 shadow-xl">
+        <div className="absolute bottom-4 left-4 right-4 bg-slate-900/90 backdrop-blur-md border border-white/10 p-3 rounded-xl flex flex-col gap-2 shadow-xl z-20">
           <div className="flex items-center justify-between text-xs text-white/70">
             <span className="font-mono text-[11px] text-emerald-400 font-semibold">
               SCROLL // SCRUB TIMELINE
             </span>
             <div className="flex items-center gap-2">
-              {interactive && (
-                <button
-                  type="button"
-                  aria-label={isPlaying ? 'Pause simulation' : 'Auto play simulation'}
-                  onClick={() => setIsPlaying(!isPlaying)}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-[11px] font-medium transition-colors"
-                >
-                  {isPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-                  <span>{isPlaying ? 'Pause' : 'Auto Play'}</span>
-                </button>
-              )}
-              {interactive && (
-                <button
-                  type="button"
-                  aria-label="Reset simulation to start"
-                  onClick={() => {
-                    updateProgress(0);
-                    playScrubTick();
-                  }}
-                  className="p-1 rounded-md bg-slate-800 hover:bg-slate-700 text-white/60 hover:text-white transition-colors"
-                  title="Reset to 0%"
-                >
-                  <RotateCcw className="w-3 h-3" />
-                </button>
-              )}
+              <button
+                type="button"
+                aria-label={isPlaying ? 'Pause simulation' : 'Auto play simulation'}
+                onClick={() => setIsPlaying(!isPlaying)}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-[11px] font-medium transition-colors cursor-pointer"
+              >
+                {isPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+                <span>{isPlaying ? 'Pause' : 'Auto Play'}</span>
+              </button>
+              <button
+                type="button"
+                aria-label="Reset simulation to start"
+                onClick={() => {
+                  updateProgress(0);
+                  playScrubTick();
+                }}
+                className="p-1 rounded-md bg-slate-800 hover:bg-slate-700 text-white/60 hover:text-white transition-colors cursor-pointer"
+                title="Reset to 0%"
+              >
+                <RotateCcw className="w-3 h-3" />
+              </button>
               <button
                 type="button"
                 aria-label={audioMuted ? 'Unmute procedural audio' : 'Mute procedural audio'}
                 onClick={toggleAudio}
-                className={`p-1 rounded-md transition-colors ${
+                className={`p-1 rounded-md transition-colors cursor-pointer ${
                   audioMuted
                     ? 'bg-slate-800 text-white/40 hover:text-white'
                     : 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
@@ -777,7 +836,7 @@ export function AgroEcosystemCanvasScrubber({
                     updateProgress(nextVal);
                     playStageChime(s.id);
                   }}
-                  className={`text-[10px] font-mono py-1 px-1.5 rounded-lg border transition-all text-center truncate ${
+                  className={`text-[10px] font-mono py-1 px-1.5 rounded-lg border transition-all text-center truncate cursor-pointer ${
                     isActive
                       ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300 font-bold shadow-sm shadow-emerald-950'
                       : 'bg-slate-800/40 border-white/[0.06] text-white/40 hover:text-white/80 hover:bg-slate-800'

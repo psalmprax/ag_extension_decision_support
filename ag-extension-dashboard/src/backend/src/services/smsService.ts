@@ -87,11 +87,11 @@ class SMSService {
         try {
             const response = await axios.post(
                 'https://api.africastalking.com/version1/messaging',
-                {
+                new URLSearchParams({
                     username: this.africaTalkingUsername!,
                     to,
                     message,
-                },
+                }).toString(),
                 {
                     headers: {
                         'ApiKey': this.africaTalkingApiKey!,
@@ -152,6 +152,11 @@ class SMSService {
 
         // Format phone number (ensure E.164 format)
         const formattedPhone = this.formatPhoneNumber(to);
+        if (!this.isValidE164(formattedPhone)) {
+            logger.warn(`SMS rejected — invalid E.164 after formatting: ${formattedPhone} (input: ${to})`);
+            await this.persistSMS({ ...options, to: formattedPhone, provider: 'none' }, 'failed');
+            return false;
+        }
 
         let success = false;
         let provider = 'none';
@@ -162,9 +167,19 @@ class SMSService {
             return false;
         } else if (this.africaTalkingApiKey) {
             provider = 'africa_talking';
+            if (!this.checkProviderRateLimit(provider)) {
+                logger.warn(`SMS rate-limited (${provider}) — dropping message to ${formattedPhone}`);
+                await this.persistSMS({ ...options, to: formattedPhone, provider }, 'failed');
+                return false;
+            }
             success = await this.sendViaAfricaTalking(formattedPhone, message);
         } else if (this.twilioAccountSid) {
             provider = 'twilio';
+            if (!this.checkProviderRateLimit(provider)) {
+                logger.warn(`SMS rate-limited (${provider}) — dropping message to ${formattedPhone}`);
+                await this.persistSMS({ ...options, to: formattedPhone, provider }, 'failed');
+                return false;
+            }
             success = await this.sendViaTwilio(formattedPhone, message);
         }
 
@@ -183,43 +198,153 @@ class SMSService {
         const results: Array<{ to: string; success: boolean }> = [];
         let sent = 0;
         let failed = 0;
+        const concurrency = Math.min(5, options.recipients.length);
+        let idx = 0;
 
-        for (const recipient of options.recipients) {
-            const success = await this.sendSMS({
-                to: recipient,
-                message: options.message,
-            });
+        const worker = async () => {
+            while (idx < options.recipients.length) {
+                const i = idx++;
+                const recipient = options.recipients[i];
+                const success = await this.sendSMS({
+                    to: recipient,
+                    message: options.message,
+                    farmerId: options.farmerId,
+                    senderId: options.senderId,
+                });
+                results[i] = { to: recipient, success };
+                if (success) sent++;
+                else failed++;
+            }
+        };
 
-            results.push({ to: recipient, success });
-            if (success) sent++;
-            else failed++;
-        }
+        await Promise.all(Array.from({ length: concurrency }, () => worker()));
 
         return { sent, failed, results };
     }
 
-    // USSD Session Management
-    private ussdSessions: Map<string, { phoneNumber: string; step: number; data: Record<string, string> }> = new Map();
+    // USSD Session Management — Redis-backed with Map fallback for multi-instance
+    private ussdSessions: Map<string, { phoneNumber: string; step: number; data: Record<string, string>; lastActiveAt: number }> = new Map();
+    private static readonly USSD_TTL_MS = 3 * 60 * 1000; // 3 min per Africa's Talking spec
+    private static readonly USSD_MAX_SESSIONS = 5000;
+    private static readonly USSD_REDIS_PREFIX = 'ussd:session:';
+    private static readonly USSD_REDIS_TTL_S = 180;
+
+    // Provider token-bucket (30 req/min per provider, per instance)
+    private smsRateBuckets: Map<string, { tokens: number; resetAt: number }> = new Map();
+    private readonly SMS_RATE_MAX = 30;
+    private readonly SMS_RATE_WINDOW_MS = 60_000;
+
+    private checkProviderRateLimit(provider: string): boolean {
+        const now = Date.now();
+        let bucket = this.smsRateBuckets.get(provider);
+        if (!bucket || now >= bucket.resetAt) {
+            bucket = { tokens: this.SMS_RATE_MAX, resetAt: now + this.SMS_RATE_WINDOW_MS };
+            this.smsRateBuckets.set(provider, bucket);
+        }
+        if (bucket.tokens <= 0) return false;
+        bucket.tokens--;
+        return true;
+    }
+
+    private isValidE164(phone: string): boolean {
+        return /^\+[1-9]\d{7,14}$/.test(phone);
+    }
+
+    private async ussdRedisGet(sessionId: string): Promise<{ phoneNumber: string; step: number; data: Record<string, string>; lastActiveAt: number } | null> {
+        try {
+            const { getCache } = await import('./cacheService');
+            const c = getCache();
+            if (!c) return null;
+            const raw = await c.get(SMSService.USSD_REDIS_PREFIX + sessionId);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw) as { phoneNumber: string; step: number; data: Record<string, string>; lastActiveAt: number };
+            // refresh TTL on access
+            await c.expire(SMSService.USSD_REDIS_PREFIX + sessionId, SMSService.USSD_REDIS_TTL_S);
+            return parsed;
+        } catch { return null; }
+    }
+
+    private async ussdRedisSet(sessionId: string, data: { phoneNumber: string; step: number; data: Record<string, string>; lastActiveAt: number }): Promise<void> {
+        try {
+            const { getCache } = await import('./cacheService');
+            const c = getCache();
+            if (!c) return;
+            await c.setEx(SMSService.USSD_REDIS_PREFIX + sessionId, SMSService.USSD_REDIS_TTL_S, JSON.stringify(data));
+        } catch { /* redis unavailable — Map fallback covers */ }
+    }
+
+    private async ussdRedisDel(sessionId: string): Promise<void> {
+        try {
+            const { getCache } = await import('./cacheService');
+            const c = getCache();
+            if (!c) return;
+            await c.del(SMSService.USSD_REDIS_PREFIX + sessionId);
+        } catch (e) { logger.debug(`USSD session ${sessionId} redis delete skipped:`, e); }
+    }
+
+    private async getUssdSession(sessionId: string): Promise<{ phoneNumber: string; step: number; data: Record<string, string>; lastActiveAt: number } | null> {
+        const fromRedis = await this.ussdRedisGet(sessionId);
+        if (fromRedis) {
+            // mirror to Map for fast fallback
+            this.ussdSessions.set(sessionId, fromRedis);
+            return fromRedis;
+        }
+        return this.ussdSessions.get(sessionId) ?? null;
+    }
+
+    private touchUssdSession(sessionId: string): void {
+        const s = this.ussdSessions.get(sessionId);
+        if (s) {
+            s.lastActiveAt = Date.now();
+            void this.ussdRedisSet(sessionId, s);
+        }
+    }
+
+    private reapExpiredUssdSessions(): void {
+        const now = Date.now();
+        for (const [k, v] of this.ussdSessions.entries()) {
+            if (now - v.lastActiveAt > SMSService.USSD_TTL_MS) {
+                this.ussdSessions.delete(k);
+                void this.ussdRedisDel(k);
+            }
+        }
+        if (this.ussdSessions.size > SMSService.USSD_MAX_SESSIONS) {
+            const sorted = [...this.ussdSessions.entries()].sort((a, b) => a[1].lastActiveAt - b[1].lastActiveAt);
+            const toDrop = this.ussdSessions.size - SMSService.USSD_MAX_SESSIONS;
+            for (let i = 0; i < toDrop; i++) {
+                const key = sorted[i][0];
+                this.ussdSessions.delete(key);
+                void this.ussdRedisDel(key);
+            }
+        }
+    }
 
     async startUSSDSession(options: USSDOptions): Promise<string> {
-        // Initialize session
-        this.ussdSessions.set(options.sessionId, {
+        this.reapExpiredUssdSessions();
+        const payload = {
             phoneNumber: options.phoneNumber,
             step: 0,
-            data: {},
-        });
+            data: {} as Record<string, string>,
+            lastActiveAt: Date.now(),
+        };
+        this.ussdSessions.set(options.sessionId, payload);
+        await this.ussdRedisSet(options.sessionId, payload);
 
         // Return welcome message
         return this.handleUSSDInput(options.sessionId, '');
     }
 
     async handleUSSDInput(sessionId: string, text: string): Promise<string> {
-        const session = this.ussdSessions.get(sessionId);
+        this.reapExpiredUssdSessions();
+        const session = await this.getUssdSession(sessionId);
         if (!session) {
             return 'END Session expired. Please try again.';
         }
 
+        this.touchUssdSession(sessionId);
         session.step++;
+        // persist step increment
+        void this.ussdRedisSet(sessionId, session);
 
         // Helper to get dynamic weather
         const getWeatherSummary = async () => {
@@ -273,30 +398,37 @@ class SMSService {
                     }
                     case '6':
                         this.ussdSessions.delete(sessionId);
+                        void this.ussdRedisDel(sessionId);
                         return 'END Thank you for using Ag Extension!';
                     default:
+                        void this.ussdRedisSet(sessionId, session);
                         return 'CON Invalid option. Try again.\n1. Back to menu';
                 }
             }
 
             case 3:
                 if (session.data.choice === '1') {
+                    void this.ussdRedisSet(sessionId, session);
                     return 'CON AI disease diagnosis is unavailable over USSD. Please contact an extension officer.\n1. Back to menu';
                 }
+                void this.ussdRedisSet(sessionId, session);
                 return 'CON Invalid option. Try again.\n1. Back to menu';
 
             default:
                 if (text === '1') {
                     session.step = 0;
+                    void this.ussdRedisSet(sessionId, session);
                     return this.handleUSSDInput(sessionId, '');
                 }
                 this.ussdSessions.delete(sessionId);
+                void this.ussdRedisDel(sessionId);
                 return 'END Session ended.';
         }
     }
 
     async endUSSDSession(sessionId: string): Promise<void> {
         this.ussdSessions.delete(sessionId);
+        await this.ussdRedisDel(sessionId);
     }
 
     // Helper: Format phone number to E.164
@@ -322,18 +454,39 @@ class SMSService {
         return `+${digits}`;
     }
 
-    // Send scheduled SMS (for reminders)
+    // Send scheduled SMS (for reminders) — row + BullMQ delayed job (DB polling fallback remains)
     async scheduleSMS(to: string, message: string, scheduledTime: Date, userId: string): Promise<boolean> {
         try {
             const formattedPhone = this.formatPhoneNumber(to);
+            if (!this.isValidE164(formattedPhone)) {
+                logger.warn(`scheduleSMS rejected — invalid E.164: ${formattedPhone}`);
+                return false;
+            }
             
             logger.info(`Persisting scheduled SMS to ${formattedPhone} for ${scheduledTime.toISOString()}`);
 
-            await query(
+            const { rows } = await query<{ id: string }>(
                 `INSERT INTO scheduled_sms (user_id, phone_number, message, scheduled_at, status)
-                 VALUES ($1, $2, $3, $4, $5)`,
+                 VALUES ($1, $2, $3, $4, $5) RETURNING id`,
                 [userId, formattedPhone, message, scheduledTime, 'pending']
             );
+            const scheduledSmsId = rows[0]?.id;
+            if (scheduledSmsId) {
+                const delayMs = scheduledTime.getTime() - Date.now();
+                try {
+                    const { addScheduledSmsJob } = await import('../queues/scheduledSmsQueue');
+                    await addScheduledSmsJob({
+                        scheduledSmsId,
+                        to: formattedPhone,
+                        message,
+                        senderId: userId,
+                        farmerId: null,
+                        provider: this.africaTalkingApiKey ? 'africa_talking' : this.twilioAccountSid ? 'twilio' : 'none',
+                    }, Math.max(0, delayMs));
+                } catch (qErr) {
+                    logger.warn('BullMQ scheduled SMS enqueue failed, fallback to polling:', qErr);
+                }
+            }
 
             return true;
         } catch (error) {

@@ -73,6 +73,10 @@ jobs:
         env:
           DATABASE_URL: postgres://psalmprax:password@localhost:5432/ag_extension
 
+      - name: Generate vendored shared API contract for application checks
+        working-directory: ag-extension-dashboard/src/backend
+        run: npm run shared:sync
+
       - name: Lint
         run: npm run lint
 
@@ -114,6 +118,10 @@ jobs:
         run: npm install --no-audit --no-fund
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+
+      - name: Generate vendored shared API contract
+        working-directory: ag-extension-dashboard/src/backend
+        run: npm run shared:sync
 
       - name: Fallow dead-code regression gate
         run: npm run fallow:check
@@ -159,16 +167,8 @@ jobs:
             'ghp_[a-zA-Z0-9]{36}'
           )
           for pattern in "${patterns[@]}"; do
-            if grep -rnEI "$pattern" \
-              --exclude-dir=.git \
-              --exclude-dir=node_modules \
-              --exclude-dir=dist \
-              --exclude-dir=.output \
-              --exclude-dir=coverage \
-              --exclude='*.lock' \
-              --exclude='*.min.js' \
-              --exclude='.env.example' \
-              .; then
+            if git grep -nEI -- "$pattern" -- \
+              ':!*.lock' ':!package-lock.json' ':!*.min.js' ':!.env.example'; then
               echo "Potential secret pattern detected: $pattern" >&2
               exit 1
             fi

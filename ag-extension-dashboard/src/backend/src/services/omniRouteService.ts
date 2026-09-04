@@ -2,6 +2,8 @@ import { AIHubMixProvider } from './aiProvider/providers/aihubmix';
 import { OpenRouterProvider } from './aiProvider/providers/openRouter';
 import { HuggingFaceProvider } from './aiProvider/providers/huggingface';
 import { NVIDIAProvider } from './aiProvider/providers/nvidia';
+import { GroqProvider } from './aiProvider/providers/groq';
+import { OpenAIProvider } from './aiProvider/providers/openAI';
 import { logger } from '../utils/logger';
 
 export interface RouteCandidate {
@@ -22,6 +24,8 @@ export class OmniRouteService {
   private static openrouter = new OpenRouterProvider();
   private static huggingface = new HuggingFaceProvider();
   private static nvidia = new NVIDIAProvider();
+  private static groq = new GroqProvider();
+  private static openai = new OpenAIProvider();
 
   // Dynamic 2-model switching configuration
   private static primaryCandidates: RouteCandidate[] = [];
@@ -193,6 +197,7 @@ export class OmniRouteService {
     { providerName: 'openai', model: 'gpt-4o-mini', score: 80, isFree: false },
   ];
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   private static async tryCandidate(
     candidate: RouteCandidate,
     messages: Array<{ role: string; content: string }>
@@ -217,6 +222,30 @@ export class OmniRouteService {
       return { text, providerUsed: 'nvidia', modelUsed: candidate.model, isFreeModel: !!candidate.isFree };
     }
 
+    if (candidate.providerName === 'groq' && this.groq.isConfigured()) {
+      const gen = await this.groq.generateText(messages, { model: candidate.model });
+      return { text: gen.text || '', providerUsed: 'groq', modelUsed: candidate.model, isFreeModel: !!candidate.isFree };
+    }
+
+    if (candidate.providerName === 'openai' && this.openai.isConfigured()) {
+      const gen = await this.openai.generateText(messages, { model: candidate.model });
+      return { text: gen.text || '', providerUsed: 'openai', modelUsed: candidate.model, isFreeModel: !!candidate.isFree };
+    }
+
+    if (candidate.providerName === 'ollama') {
+      // Ollama is local-only; try if configured
+      try {
+        const { OllamaProvider } = await import('./aiProvider/providers/ollama');
+        const oll = new OllamaProvider();
+        if (oll.isConfigured()) {
+          const gen = await oll.generateText(messages, { model: candidate.model });
+          return { text: gen.text || '', providerUsed: 'ollama', modelUsed: candidate.model, isFreeModel: !!candidate.isFree };
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
     return null;
   }
 
@@ -227,8 +256,24 @@ export class OmniRouteService {
     messages: Array<{ role: string; content: string }>,
     candidates: RouteCandidate[] = OmniRouteService.FREE_LLM_CATALOG
   ): Promise<{ text: string; providerUsed: string; modelUsed: string; isFreeModel: boolean }> {
+    // Initialize dynamic switching if not already done
+    if (this.primaryCandidates.length === 0) {
+      this.initializeDynamicSwitching(candidates);
+    }
+
     const sorted = [...candidates].sort((a, b) => b.score - a.score);
 
+    // Try dynamic primary first
+    const primary = this.getCurrentPrimary();
+    if (primary) {
+      const key = `${primary.providerName}:${primary.model}`;
+      if (!this.blocklist.has(key)) {
+        const result = await this.attemptCandidate(primary, messages, /* isPrimary */ true);
+        if (result) return result;
+      }
+    }
+
+    // Fallback: try all candidates in score order (excluding blocked)
     for (const candidate of sorted) {
       const key = `${candidate.providerName}:${candidate.model}`;
 
@@ -237,18 +282,8 @@ export class OmniRouteService {
         continue;
       }
 
-      try {
-        const result = await this.tryCandidate(candidate, messages);
-        if (result) return result;
-      } catch (err: unknown) {
-        const errorMsg = (err as Error).message || '';
-        if (errorMsg.includes('QUOTA') || errorMsg.includes('429') || errorMsg.includes('402')) {
-          logger.warn(`[OmniRoute] Quota hit for ${key}. Adding to 15m blocklist.`);
-          this.blocklist.add(key);
-          setTimeout(() => this.blocklist.delete(key), 15 * 60 * 1000);
-        }
-        logger.warn(`[OmniRoute] ${key} failed. Transitioning to next candidate...`);
-      }
+      const result = await this.attemptCandidate(candidate, messages, /* isPrimary */ false);
+      if (result) return result;
     }
 
     // Fail loudly: serving a canned diagnosis-shaped response in an agricultural
@@ -257,5 +292,43 @@ export class OmniRouteService {
     throw new Error(
       `OmniRoute exhausted all ${sorted.length} candidate model(s) — no free or paid fallback provider is configured and healthy`
     );
+  }
+
+  /** Try one candidate; on quota errors add it to the 15m blocklist, record success/failure, and log the transition. */
+  private static async attemptCandidate(
+    candidate: RouteCandidate,
+    messages: Array<{ role: string; content: string }>,
+    isPrimary: boolean
+  ): Promise<{ text: string; providerUsed: string; modelUsed: string; isFreeModel: boolean } | null> {
+    const key = `${candidate.providerName}:${candidate.model}`;
+    try {
+      const result = await this.tryCandidate(candidate, messages);
+      if (result) {
+        this.recordSuccess(key);
+        return result;
+      }
+      return null;
+    } catch (err: unknown) {
+      const errorMsg = (err as Error).message || '';
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      const body = JSON.stringify((err as { response?: { data?: unknown } })?.response?.data ?? '');
+      if (errorMsg.includes('QUOTA') || errorMsg.includes('429') || errorMsg.includes('402') || status === 429 || status === 402) {
+        logger.warn(`[OmniRoute] Quota hit for ${key}. Adding to 15m blocklist.`);
+        this.blocklist.add(key);
+        setTimeout(() => this.blocklist.delete(key), 15 * 60 * 1000).unref?.();
+      } else if (
+        status === 404 || status === 400 || status === 401 || status === 403 ||
+        /model.*not (found|exist|available)|invalid model|unknown model|does not exist/i.test(errorMsg + body)
+      ) {
+        // The catalog id is wrong / unavailable on this provider. Block it for
+        // longer so a bad entry does not cost a live HTTP call on every request.
+        logger.warn(`[OmniRoute] ${key} rejected by provider (HTTP ${status ?? 'n/a'}). Blocklisting for 6h.`);
+        this.blocklist.add(key);
+        setTimeout(() => this.blocklist.delete(key), 6 * 60 * 60 * 1000).unref?.();
+      }
+      this.recordFailure(key);
+      logger.warn(`[OmniRoute] ${isPrimary ? 'Primary ' : ''}${key} failed. Transitioning to next candidate...`);
+      return null;
+    }
   }
 }

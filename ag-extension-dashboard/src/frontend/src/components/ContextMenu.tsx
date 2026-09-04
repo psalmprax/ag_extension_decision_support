@@ -19,7 +19,6 @@ import {
   XCircle,
   MoreVertical,
 } from 'lucide-react';
-import { useLanguage } from '@/lib/LanguageContext';
 import { fetchContextMenu, getUnavailableMenu } from '@/api/contextMenuService';
 
 interface ContextMenuItem {
@@ -83,7 +82,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   const [menuData, setMenuData] = useState<ContextMenuData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const menuRef = useRef<HTMLDivElement>(null);
-  const { t: _t } = useLanguage();
 
   useEffect(() => {
     const loadMenu = async () => {

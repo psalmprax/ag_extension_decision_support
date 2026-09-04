@@ -46,5 +46,13 @@ function getEmailWorker(): Worker<EmailJobData> | null {
         });
     }
     return _emailWorker;
-}// Export the lazy getter — no Redis connection until first call
-export { getEmailWorker };
+}
+
+export function startEmailWorker(): void {
+    try {
+        getEmailWorker();
+        logger.info('Email worker started (email-queue)');
+    } catch (err) {
+        logger.warn('Email worker not started (redis unavailable in this env):', err instanceof Error ? err.message : err);
+    }
+}

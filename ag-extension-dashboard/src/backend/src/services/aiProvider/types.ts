@@ -193,41 +193,82 @@ export abstract class BaseAIProvider implements AICapability {
         return false;
     }
 
+    /**
+     * Base default: throw so the provider fallback chain (`getWithFallback`)
+     * can try the next provider. Returning an empty result here would look
+     * like success and silently corrupt downstream answers.
+     * Providers that support text generation must override this method.
+     */
     async generateText(_messages: any[], _options?: TextGenerationOptions): Promise<TextGenerationResult> {
-        throw new Error('Method not implemented');
+        throw new Error(`${this.provider} does not support text generation. Use a provider that lists it in capabilities.`);
     }
 
+    /**
+     * Base default: throw so callers fail loudly instead of streaming nothing.
+     * Providers that support streaming must override this method.
+     */
     // eslint-disable-next-line require-yield
     async *streamText(_prompt: string, _options?: TextGenerationOptions): AsyncGenerator<string> {
-        throw new Error('Method not implemented');
+        throw new Error(`${this.provider} does not support streaming. Use a provider that lists it in capabilities.`);
+        // eslint-disable-next-line @typescript-eslint/no-unreachable
+        yield '';
     }
 
+    /**
+     * Base default: throw — an empty/zero vector would poison similarity
+     * search. Providers that support embeddings must override this method.
+     */
     async createEmbedding(_text: string, _options?: EmbeddingOptions): Promise<EmbeddingResult> {
-        throw new Error('Method not implemented');
+        throw new Error(`${this.provider} does not support embeddings. Use OpenAI, Ollama, or Google Vertex instead.`);
     }
 
+    /**
+     * Base default: throw (see createEmbedding).
+     * Providers that support embeddings must override this method.
+     */
     async createBatchEmbeddings(_texts: string[], _options?: EmbeddingOptions): Promise<EmbeddingResult[]> {
-        throw new Error('Method not implemented');
+        throw new Error(`${this.provider} does not support embeddings. Use OpenAI, Ollama, or Google Vertex instead.`);
     }
 
+    /**
+     * Base default: throw — an empty transcription would corrupt agronomic
+     * advice. Providers that support speech recognition must override this.
+     */
     async speechToText(_audio: Buffer, _options?: SpeechToTextOptions): Promise<SpeechToTextResult> {
-        throw new Error('Method not implemented');
+        throw new Error(`${this.provider} does not support speech-to-text. Use a provider that lists it in capabilities.`);
     }
 
+    /**
+     * Base default: throw — empty audio would present as a successful
+     * synthesis. Providers that support speech synthesis must override this.
+     */
     async textToSpeech(_text: string, _options?: TextToSpeechOptions): Promise<TextToSpeechResult> {
-        throw new Error('Method not implemented');
+        throw new Error(`${this.provider} does not support text-to-speech. Use a provider that lists it in capabilities.`);
     }
 
+    /**
+     * Base default: throw instead of returning a canned "no answer".
+     * Providers that support reasoning must override this method.
+     */
     async analyzeWithReasoning(_context: string, _query: string, _options?: ReasoningOptions): Promise<ReasoningResult> {
-        throw new Error('Method not implemented');
+        throw new Error(`${this.provider} does not support reasoning analysis. Use a provider that lists it in capabilities.`);
     }
 
+    /**
+     * Base default: throw — an empty label set would look like a successful
+     * classification. Providers that support classification must override this.
+     */
     async classify(_input: string, _options: ClassificationOptions): Promise<ClassificationResult> {
-        throw new Error('Method not implemented');
+        throw new Error(`${this.provider} does not support classification. Use a provider that lists it in capabilities.`);
     }
 
+    /**
+     * Base default: throw — a canned "not implemented" string would flow into
+     * diagnosis parsing as if it were a model answer. Providers that support
+     * vision must override this method.
+     */
     async analyzeImage(_imageData: string | Buffer, _prompt?: string, _options?: ImageAnalysisOptions): Promise<ImageAnalysisResult> {
-        throw new Error('Method not implemented');
+        throw new Error(`${this.provider} does not support image analysis. Use a provider that lists vision in capabilities.`);
     }
 
     async analyzeVideo(videoData: Buffer, prompt?: string, options?: VideoAnalysisOptions): Promise<VideoAnalysisResult> {

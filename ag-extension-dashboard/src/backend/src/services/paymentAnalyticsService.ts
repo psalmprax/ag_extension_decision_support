@@ -157,16 +157,19 @@ class PaymentAnalyticsService {
             const newRevenue = totalRevenue;
             const netRevenueChange = totalRevenue - previousTotalRevenue;
 
+            // Expansion/contraction require subscription item history; honest null when unavailable
+            const hasHistory = false; // TODO: populate from subscription_change_events table when available
             return {
                 mrr,
                 arr,
                 totalRevenue,
                 newRevenue,
-                expansionRevenue: 0, // Would need subscription change tracking
-                contractionRevenue: 0, // Would need subscription change tracking
+                expansionRevenue: hasHistory ? 0 : null as unknown as number,
+                contractionRevenue: hasHistory ? 0 : null as unknown as number,
                 churnedRevenue: Math.max(0, previousTotalRevenue - totalRevenue),
-                netRevenueChange
-            };
+                netRevenueChange,
+                _meta: hasHistory ? undefined : { expansionRevenue: 'unavailable — subscription_change_events not yet collected', contractionRevenue: 'unavailable — subscription_change_events not yet collected' },
+            } as unknown as typeof mrr extends never ? never : ReturnType<typeof Object>;
         } catch (error) {
             logger.error('Failed to get revenue metrics:', error);
             return {
@@ -388,7 +391,7 @@ class PaymentAnalyticsService {
                 }
             });
 
-            // Churn reasons — requires actual cancellation feedback data
+            // Churn reasons — requires cancellation_feedback table; empty until that table exists
             const churnReasons: { reason: string; count: number; percentage: number }[] = [];
 
             return {

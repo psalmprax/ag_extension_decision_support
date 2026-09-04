@@ -55,7 +55,8 @@ services:
 
   backend:
     build:
-      context: ./src/backend
+      context: ..
+      dockerfile: ag-extension-dashboard/src/backend/Dockerfile
       target: production
     env_file:
       - .env

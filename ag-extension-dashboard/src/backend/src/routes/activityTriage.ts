@@ -1,5 +1,6 @@
 import { Router, Response } from 'express';
 import { query } from '@/services/databaseService';
+import { getPrisma } from '@/services/prismaService';
 import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 import { authorize, AuthRequest } from '@/middleware/authorize';
@@ -16,6 +17,7 @@ interface JourneyStep {
 
 interface ActivityItem {
   id: string;
+  farmerId?: string;
   farmerName: string;
   phone: string;
   channel: 'USSD' | 'SMS' | 'App' | 'Voice';
@@ -125,6 +127,7 @@ interface SmsRow {
   status: string;
   provider: string;
   created_at: string;
+  farmer_id?: string;
   farmer_name?: string;
   farmer_phone?: string;
   farmer_region?: string;
@@ -138,6 +141,7 @@ interface ChatRow {
   language: string;
   is_voice: boolean;
   created_at: string;
+  farmer_id?: string;
   farmer_name?: string;
   farmer_phone?: string;
   farmer_region?: string;
@@ -159,6 +163,7 @@ async function fetchSmsEvents(userId: string, role: string): Promise<ActivityIte
   const sql = `
     SELECT sh.id, sh.recipient_phone, sh.message, sh.status,
            COALESCE(sh.provider, 'sms') AS provider, sh.created_at,
+           f.id AS farmer_id,
            TRIM(CONCAT(f.first_name, ' ', f.last_name)) AS farmer_name,
            f.phone AS farmer_phone,
            f.region AS farmer_region,
@@ -182,6 +187,7 @@ function mapSmsToActivity(row: SmsRow): ActivityItem {
   const lang = normalizeLanguage(row.farmer_language);
   return {
     id: `sms-${row.id}`,
+    farmerId: row.farmer_id,
     farmerName: row.farmer_name || 'Unknown Farmer',
     phone: row.farmer_phone || row.recipient_phone || '',
     channel,
@@ -213,6 +219,7 @@ async function fetchChatEvents(userId: string, role: string): Promise<ActivityIt
   const sql = `
     SELECT cm.id, cm.role, cm.content, COALESCE(cm.language, 'EN') AS language,
            COALESCE(cm.is_voice, false) AS is_voice, cm.created_at,
+           f.id AS farmer_id,
            TRIM(CONCAT(f.first_name, ' ', f.last_name)) AS farmer_name,
            f.phone AS farmer_phone,
            f.region AS farmer_region
@@ -239,6 +246,7 @@ function mapChatToActivity(row: ChatRow): ActivityItem {
   const lang = normalizeLanguage(row.language);
   return {
     id: `chat-${row.id}`,
+    farmerId: row.farmer_id,
     farmerName: row.farmer_name || 'Unknown Farmer',
     phone: row.farmer_phone || '',
     channel,
@@ -307,6 +315,88 @@ router.get(
     } catch (error) {
       logger.error('Activity triage aggregation failed:', error);
       safeError(res, 500, 'Failed to aggregate activity triage data');
+    }
+  }
+);
+
+// POST /api/v1/activities/triage/:id/claim — Claim an activity for intervention
+router.post(
+  '/triage/:id/claim',
+  authorize(['admin', 'regional_manager', 'extension_officer']),
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user!.userId;
+      const userName = `${req.user!.firstName || ''} ${req.user!.lastName || ''}`.trim() || 'Officer';
+
+      // Check if already claimed by someone else (claims persist across restarts)
+      const existing = await getPrisma().activityClaim.findUnique({ where: { activityId: id } });
+      if (existing && existing.userId !== userId) {
+        return res.status(409).json({
+          success: false,
+          error: `Already claimed by ${existing.claimedBy}`,
+        });
+      }
+
+      const claim = await getPrisma().activityClaim.upsert({
+        where: { activityId: id },
+        update: { claimedBy: userName },
+        create: { activityId: id, userId, claimedBy: userName },
+      });
+
+      logger.info(`Activity ${id} claimed by ${userName} (${userId})`);
+      res.json({ success: true, data: { id, claimedBy: userName, claimedAt: claim.claimedAt.toISOString() } });
+    } catch (error) {
+      logger.error('Claim activity failed:', error);
+      safeError(res, 500, 'Failed to claim activity');
+    }
+  }
+);
+
+// POST /api/v1/activities/triage/:id/release — Release a claimed activity
+router.post(
+  '/triage/:id/release',
+  authorize(['admin', 'regional_manager', 'extension_officer']),
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user!.userId;
+
+      const existing = await getPrisma().activityClaim.findUnique({ where: { activityId: id } });
+      if (!existing) {
+        return res.status(404).json({ success: false, error: 'Activity not claimed' });
+      }
+
+      // Only allow release by the claimer or admin
+      if (existing.userId !== userId && req.user!.role !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Cannot release activity claimed by another officer' });
+      }
+
+      await getPrisma().activityClaim.delete({ where: { activityId: id } });
+      logger.info(`Activity ${id} released by ${userId}`);
+      res.json({ success: true, data: { id, released: true } });
+    } catch (error) {
+      logger.error('Release activity failed:', error);
+      safeError(res, 500, 'Failed to release activity');
+    }
+  }
+);
+
+// GET /api/v1/activities/triage/:id/claim-status — Get claim status for an activity
+router.get(
+  '/triage/:id/claim-status',
+  authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']),
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const claim = await getPrisma().activityClaim.findUnique({ where: { activityId: id } });
+      res.json({
+        success: true,
+        data: claim ? { claimed: true, claimedBy: claim.claimedBy, claimedAt: claim.claimedAt.toISOString() } : { claimed: false },
+      });
+    } catch (error) {
+      logger.error('Get claim status failed:', error);
+      safeError(res, 500, 'Failed to get claim status');
     }
   }
 );

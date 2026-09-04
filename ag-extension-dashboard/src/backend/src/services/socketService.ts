@@ -11,6 +11,8 @@ interface UserSocket {
 }
 
 // Simple rate limiter for socket events
+// Intentionally process-local: a socket.id is bound to the node that accepted the
+// connection, so per-socket limits never need cross-replica visibility.
 const socketRateLimits = new Map<string, { count: number, resetTime: number }>();
 const RATE_LIMIT_MAX = 60; // 60 events per minute
 const RATE_LIMIT_WINDOW = 60000; // 1 minute

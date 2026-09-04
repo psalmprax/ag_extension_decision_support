@@ -106,7 +106,7 @@ const STAGE_DATA_BY_PERSONA: Record<AudiencePersona, StageStoryItem[]> = {
       bullets: [
         'Predict seasonal drought risks across outgrower clusters',
         'Verify planting rainfall windows before fertilizer procurement',
-        'Continuous supply risk scoring across 10,000+ farmer contracts',
+        'Continuous supply risk scoring across your farmer contract portfolio',
       ],
       tag: 'Yield Risk Modeling',
     },
@@ -120,7 +120,7 @@ const STAGE_DATA_BY_PERSONA: Record<AudiencePersona, StageStoryItem[]> = {
       bgGlow: 'from-emerald-500/10 to-transparent',
       bullets: [
         'Sub-meter field boundaries eliminate phantom smallholder acreage',
-        'NDVI anomaly detection flags crop failures 3 weeks early',
+        'Vegetation-anomaly signals to flag emerging crop stress early',
         'Predict harvest tonnage volume for warehouse logistics',
       ],
       tag: 'Supply Assurance',
@@ -135,7 +135,7 @@ const STAGE_DATA_BY_PERSONA: Record<AudiencePersona, StageStoryItem[]> = {
       bgGlow: 'from-amber-500/10 to-transparent',
       bullets: [
         'Custom N-P-K & lime blend recommendations per district',
-        'Reduce smallholder fertilizer wastage by up to 28%',
+        'Targeted fertilizer guidance to cut smallholder input wastage',
         'Protect topsoil fertility against long-term acidification',
       ],
       tag: 'Optimized Input Spend',
@@ -149,11 +149,11 @@ const STAGE_DATA_BY_PERSONA: Record<AudiencePersona, StageStoryItem[]> = {
       border: 'border-purple-500/30',
       bgGlow: 'from-purple-500/10 to-transparent',
       bullets: [
-        'EUDR deforestation and origin traceability export reports',
+        '[Status: Demonstrator] EUDR deforestation heuristic estimator (not regulatory certification)',
         'Broadcast bulk harvest instructions via 2-way SMS gateway',
-        'Direct integration with SAP, NetSuite, and warehouse ERPs',
+        '[Roadmap] SAP/NetSuite connector — not yet integrated',
       ],
-      tag: 'EUDR & ERP Ready',
+      tag: 'Export & ERP [Demo/Roadmap]',
     },
   ],
   donors: [
@@ -167,7 +167,7 @@ const STAGE_DATA_BY_PERSONA: Record<AudiencePersona, StageStoryItem[]> = {
       bgGlow: 'from-sky-500/10 to-transparent',
       bullets: [
         'Track climate vulnerability across vulnerable rural zones',
-        'Early-warning food shortage flags 60 days before harvest',
+        'Early-warning food-supply signals ahead of harvest',
         'Satellite-backed transparency for grant reporting',
       ],
       tag: 'UN SDG 2: Zero Hunger',
@@ -213,7 +213,7 @@ const STAGE_DATA_BY_PERSONA: Record<AudiencePersona, StageStoryItem[]> = {
       bullets: [
         'Serve basic 2G feature phones without requiring internet access',
         'Multi-language advisory in local dialects and voice synthesis',
-        'Measurable +34% median smallholder yield & income increase',
+        'Track measured smallholder yield & income change per programme',
       ],
       tag: 'Last-Mile Impact',
     },
@@ -299,8 +299,12 @@ export function AgroStorytellingSection() {
           <div className="lg:col-span-7 flex flex-col min-h-[440px] sm:min-h-[500px] w-full rounded-xl overflow-hidden shadow-2xl border border-white/10 bg-slate-900/60 backdrop-blur-md">
             <AgroEcosystemCanvasScrubber
               progress={activeStage * 0.28 + 0.05}
+              onStageChange={(stage) => {
+                if (stage !== activeStage) setActiveStage(stage);
+              }}
               interactive={true}
               showControls={true}
+              autoPlay={true}
               className="h-full w-full"
             />
           </div>

@@ -129,11 +129,22 @@ jobs:
         env:
           DATABASE_URL: postgres://psalmprax:password@localhost:5432/ag_extension
 
+      - name: Generate vendored shared API contract for backend checks
+        run: |
+          cd ag-extension-dashboard/src/backend
+          npm run shared:sync
+
       - name: Lint backend
         run: |
           cd ag-extension-dashboard/src/backend
           npm run lint
       
+      - name: Verify vendored shared API contract is current
+        run: |
+          cd ag-extension-dashboard/src/backend
+          npm run shared:sync
+          npm run shared:check
+
       - name: Type check backend
         run: |
           cd ag-extension-dashboard/src/backend
@@ -166,6 +177,11 @@ jobs:
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
 
+      - name: Generate vendored shared API contract
+        run: |
+          cd ag-extension-dashboard/src/backend
+          npm run shared:sync
+
       - name: Fallow dead-code regression gate
         run: npm run fallow:check
 
@@ -182,7 +198,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: ag-extension-browser-ext/package.json
+          cache-dependency-path: ag-extension-browser-ext/package-lock.json
 
       - name: Install extension dependencies
         run: |
@@ -194,6 +210,11 @@ jobs:
           cd ag-extension-browser-ext
           npm run typecheck
 
+      - name: Test extension
+        run: |
+          cd ag-extension-browser-ext
+          npm test
+
       - name: Build extension
         run: |
           cd ag-extension-browser-ext
@@ -203,6 +224,49 @@ jobs:
         run: |
           cd ag-extension-browser-ext
           test -n "$(find .output -name manifest.json -print -quit)"
+
+  # Migration replay gate: every migration must apply cleanly to a fresh
+  # database AND the replayed schema must match prisma/schema.prisma.
+  # Catches migration SQL bugs and schema/migration drift that dev-side
+  # `prisma db push` hides until a fresh deploy fails.
+  migration-replay:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: migration_gate
+          POSTGRES_PASSWORD: gate
+          POSTGRES_DB: migration_gate
+        options: >-
+          --health-cmd "pg_isready -U migration_gate -d migration_gate"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ag-extension-dashboard/src/backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: |
+          cd ag-extension-dashboard/src/backend
+          npm ci
+
+      - name: Replay migrations on fresh DB and diff against schema
+        run: node scripts/prisma-migration-replay-check.cjs
+        env:
+          MIGRATION_CHECK_DATABASE_URL: postgres://migration_gate:gate@localhost:5432/migration_gate
 
   # Full-Spectrum Security & Compliance Audit
   security:
@@ -227,15 +291,13 @@ jobs:
         run: |
           PATTERNS=(
             "-----BEGIN (RSA|EC|OPENSSH|DSA|PRIVATE) KEY-----"
-            "AIza[0-9A-Za-z-_]{35}"
+            "AIza[0-9A-Za-z_-]{35}"
             "sk-[a-zA-Z0-9]{20,48}"
             "ghp_[a-zA-Z0-9]{36}"
           )
           for pattern in "${PATTERNS[@]}"; do
-            MATCHES=$(grep -rnEI "$pattern" \
-              --exclude-dir={node_modules,.git,dist,.output,.wxt,coverage,logs} \
-              --exclude={"*.lock","package-lock.json","*.min.js",".env.example"} \
-              . || true)
+            MATCHES=$(git grep -nEI -- "$pattern" -- \
+              ':!*.lock' ':!package-lock.json' ':!*.min.js' ':!.env.example' || true)
             if [ -n "$MATCHES" ]; then
               echo "::error::Secret pattern detected: $pattern"
               exit 1
@@ -244,8 +306,10 @@ jobs:
 
       - name: Audit frontend dependencies
         run: |
-          cd ag-extension-dashboard/src/frontend
-          npm audit --audit-level=high
+          node scripts/npm-audit-gate.cjs --dir ag-extension-dashboard/src/frontend --level high
+
+      - name: Audit root tooling dependencies
+        run: node scripts/npm-audit-gate.cjs --dir . --level high
 
       - name: Audit backend dependencies
         run: |
@@ -273,7 +337,7 @@ jobs:
 
       - name: Run Frontend Security & Resilience Tests
         working-directory: ag-extension-dashboard/src/frontend
-        run: npm run test -- src/__tests__/securityPolicy.test.ts src/__tests__/virtualizationAndThermal.test.ts src/__tests__/offlineConflictResolver.test.ts src/__tests__/remoteWipeAndEncryptedStorage.test.ts src/__tests__/chaosNetworkSimulation.test.ts
+        run: npm run test -- src/__tests__/securityPolicy.test.ts src/__tests__/virtualizationAndThermal.test.ts src/__tests__/remoteWipeAndEncryptedStorage.test.ts src/__tests__/chaosNetworkSimulation.test.ts
 
       - name: Run Browser Extension Security Check
         run: |
@@ -285,7 +349,12 @@ jobs:
         run: |
           cd ag-extension-dashboard/src/agents
           python -m pip install -r requirements.txt pytest httpx
-          python -m pytest tests/test_security.py
+          python -m pytest tests/
+
+      - name: Test discovery-scraper extractor
+        run: |
+          cd ag-extension-dashboard/src/agents/tools/cloakbrowser
+          node --test extract.test.mjs
         env:
           NODE_ENV: test
           JWT_SECRET: test_jwt_secret_32_characters_minimum!!

@@ -1,4 +1,11 @@
+/**
+ * Harvest aggregation and offtaker matchmaking — wired via POST /api/pillars/offtake/*.
+ *
+ * Yields, spot/bulk prices, harvest windows, and the buyer directory are fixed reference
+ * values, not live market or CRM data. Disclosed per response via the `provenance` block.
+ */
 import { logger } from '../utils/logger';
+import { pillarProvenance } from './provenance';
 
 export interface OfftakerBuyer {
   id: string;
@@ -23,6 +30,7 @@ export interface HarvestAggregationSummary {
   spotMarketValueKes: number;
   bulkContractValueKes: number;
   projectedCooperativePremiumKes: number;
+  provenance: ReturnType<typeof pillarProvenance>;
 }
 
 export interface OfftakerMatchResult {
@@ -33,6 +41,7 @@ export interface OfftakerMatchResult {
     totalOfferValueKes: number;
     premiumOverSpotPct: number;
   }>;
+  provenance: ReturnType<typeof pillarProvenance>;
 }
 
 const ACCREDITED_BUYERS: OfftakerBuyer[] = [
@@ -86,8 +95,8 @@ export function aggregateHarvestProjections(params: {
   const yieldPerAcreTons = crop.toLowerCase().includes('maize') ? 1.8 : 2.2;
   const projectedMetricTons = Math.round(totalAcreage * yieldPerAcreTons);
 
-  const spotPricePerTonKes = 40000; // Local middlemen spot price
-  const bulkPricePerTonKes = 48500; // Direct institutional offtake price
+  const spotPricePerTonKes = 40000; // Local middlemen spot price (reference estimate)
+  const bulkPricePerTonKes = 48500; // Direct institutional offtake price (reference estimate)
 
   const spotMarketValueKes = projectedMetricTons * spotPricePerTonKes;
   const bulkContractValueKes = projectedMetricTons * bulkPricePerTonKes;
@@ -103,6 +112,15 @@ export function aggregateHarvestProjections(params: {
     spotMarketValueKes,
     bulkContractValueKes,
     projectedCooperativePremiumKes,
+    provenance: pillarProvenance(
+      'deterministic_estimation',
+      'Projection uses fixed reference yields and prices, not live market data or per-farm records. Default acreage (450) and farmer count (180) apply when not supplied.',
+      [
+        'Yield: 1.8 t/acre maize, 2.2 t/acre other crops (reference)',
+        'Spot price fixed at KES 40,000/ton, bulk at KES 48,500/ton (reference)',
+        'Harvest window is a fixed illustrative string',
+      ]
+    ),
   };
 }
 
@@ -136,5 +154,11 @@ export function matchOfftakerContracts(params: {
   return {
     aggregation,
     matchedBuyers: matched,
+    provenance: pillarProvenance(
+      'demo_reference_data',
+      'Buyer directory is a static in-code reference list, not a live offtaker registry. Offer values are projections from reference prices, not binding quotes.',
+      ['Accredited-buyer list is in-code demo data (3 buyers)', 'Premium computed against the fixed KES 40,000/ton spot reference'],
+      true
+    ),
   };
 }

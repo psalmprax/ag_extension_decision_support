@@ -11,14 +11,18 @@ services:
     ports:
       - "127.0.0.1:7504:8000"
     environment:
+      - NODE_ENV=${NODE_ENV:-production}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - DATABASE_URL=postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@app-db:5432/${DATABASE_NAME:-ag_extension}
       - REDIS_URL=redis://:${REDIS_PASSWORD:-agext_redis_2024}@redis:6379
-      - JWT_SECRET=${JWT_SECRET:-dev-secret}
+      # Must match the backend's JWT_SECRET: the ingestion worker mints HS256 tokens with it.
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set}
+      - DISCOVERY_SCRAPER_URL=http://discovery-scraper:8010
     depends_on:
       - app-db
       - redis
+      - discovery-scraper
     networks:
       - ag-network
     restart: always
@@ -40,11 +44,15 @@ services:
     ports:
       - "127.0.0.1:7505:8001"
     environment:
+      - NODE_ENV=${NODE_ENV:-production}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - DATABASE_URL=postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@app-db:5432/${DATABASE_NAME:-ag_extension}
       - REDIS_URL=redis://:${REDIS_PASSWORD:-agext_redis_2024}@redis:6379
-      - JWT_SECRET=${JWT_SECRET:-dev-secret}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set}
+      # CrewAI tools call backend MCP tools with this shared service token.
+      - BACKEND_URL=http://ag-dashboard-backend:3001
+      - MCP_API_TOKEN=${MCP_API_TOKEN:?MCP_API_TOKEN must be set}
     depends_on:
       - app-db
       - redis
@@ -60,6 +68,30 @@ services:
       # - ./src/agents:/app
       - crew-ai-data:/app/data
 
+  # Discovery Scraper Service — used by CloakBrowser for stealth scraping
+  discovery-scraper:
+    build:
+      context: ./src/agents/tools/cloakbrowser
+      dockerfile: Dockerfile.discovery-scraper
+    container_name: ag-discovery-scraper
+    ports:
+      - "127.0.0.1:7506:8010"
+    environment:
+      - PORT=8010
+      - NODE_ENV=production
+    networks:
+      - ag-network
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://127.0.0.1:8010/health >/dev/null 2>&1 || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    shm_size: "512m"
+    volumes:
+      - discovery-scraper-data:/app/data
+
 networks:
   ag-network:
     external: true
@@ -67,3 +99,4 @@ networks:
 volumes:
   agent-zero-data:
   crew-ai-data:
+  discovery-scraper-data:

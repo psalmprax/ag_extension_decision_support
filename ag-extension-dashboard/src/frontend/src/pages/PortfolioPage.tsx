@@ -12,7 +12,6 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { Farmer } from '../types/dashboard';
-import { useLanguage } from '@/lib/LanguageContext';
 import { useDemoMode } from '@/demo';
 
 interface PortfolioPageProps {
@@ -44,7 +43,6 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
   handleBulkDelete,
   setSelectedFarmers,
 }) => {
-  const { t: _t } = useLanguage();
   const { isDemo } = useDemoMode();
   const [searchQuery, setSearchQuery] = useState('');
 

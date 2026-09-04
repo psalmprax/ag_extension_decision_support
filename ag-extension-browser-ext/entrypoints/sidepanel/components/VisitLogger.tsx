@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Calendar, User, Clipboard, MapPin, Camera, Save, Loader2, CheckCircle2, X } from 'lucide-react';
 import { apiQueue } from '../../../shared/apiQueue';
-import CONFIG from '../../../shared/config';
+import { apiUrl } from '../../../shared/config';
 
 interface Farmer {
   id: string;
@@ -9,10 +9,18 @@ interface Farmer {
   lastName: string;
 }
 
-export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }) {
+export function VisitLogger({ farmerId: initialFarmerId, location, onLocationUsed }: { farmerId?: string; location?: { latitude: number; longitude: number; accuracy: number; accuracyStatus?: string; timestamp?: string } | null; onLocationUsed?: () => void }) {
   const [farmers, setFarmers] = useState<Farmer[]>([]);
   const [selectedFarmerId, setSelectedFarmerId] = useState(initialFarmerId || '');
-  const [observationType, setObservationType] = useState('Routine Inspection');
+  // Labels shown to the officer map to the shared visit_type enum
+  // (ag-extension-shared/src/api/visits.ts): routine | follow_up | emergency | training | assessment.
+  const VISIT_TYPES: Array<{ label: string; value: string }> = [
+    { label: 'Routine Inspection', value: 'routine' },
+    { label: 'Pest Outbreak', value: 'emergency' },
+    { label: 'Soil Analysis', value: 'assessment' },
+    { label: 'Growth Check', value: 'follow_up' },
+  ];
+  const [observationType, setObservationType] = useState(VISIT_TYPES[0].value);
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -24,13 +32,20 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
   useEffect(() => {
     async function loadFarmers() {
       try {
-        const response = await apiQueue.makeRequest(`${CONFIG.API_BASE_URL}/farmers`);
+        const response = await apiQueue.makeRequest(await apiUrl('/farmers'));
+        if (response.status === 401) {
+          setError('Sign in via the extension popup to load farmers');
+          return;
+        }
         if (response.ok) {
-          const data = await response.json();
-          setFarmers(data.data || []);
+          const data = await response.json() as { data?: { farmers?: Farmer[] } | Farmer[] };
+          // Backend returns { data: { farmers, total } }; tolerate a bare array too.
+          const list = Array.isArray(data.data) ? data.data : (data.data?.farmers ?? []);
+          setFarmers(list);
         }
       } catch (err) {
         console.error('Failed to load farmers:', err);
+        setError('Could not load farmers — check connection or API endpoint');
       }
     }
     loadFarmers();
@@ -75,7 +90,7 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
         const formData = new FormData();
         formData.append('file', attachedFile);
         formData.append('farmerId', selectedFarmerId);
-        const uploadResponse = await apiQueue.makeRequest(`${CONFIG.API_BASE_URL}/upload/upload`, {
+        const uploadResponse = await apiQueue.makeRequest(await apiUrl('/upload/upload'), {
           method: 'POST',
           body: formData,
         });
@@ -91,7 +106,8 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
         visit_type: observationType,
         notes,
         scheduled_at: new Date().toISOString(),
-        status: 'completed'
+        status: 'completed',
+        ...(location ? { locationLat: location.latitude, locationLng: location.longitude, locationAccuracy: location.accuracy } : {}),
       };
 
       if (attachmentIds.length > 0) {
@@ -101,31 +117,36 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
         payload.attachmentRefs = attachmentRefs;
       }
 
-      const response = await apiQueue.makeRequest(`${CONFIG.API_BASE_URL}/visits`, {
+      const response = await apiQueue.makeRequest(await apiUrl('/visits'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
-      if (response.ok) {
-        setIsSuccess(true);
+      const resetForm = () => {
         setNotes('');
         if (attachedPhoto) URL.revokeObjectURL(attachedPhoto);
         setAttachedPhoto(null);
         setAttachedFile(null);
+        onLocationUsed?.();
+      };
+
+      // apiQueue returns a synthetic 202 { queued: true } when offline. 202 is
+      // `ok`, so check it *before* treating the response as a server save.
+      const result = await response.json().catch(() => ({})) as { success?: boolean; queued?: boolean; error?: string };
+      if (response.status === 202 && result.queued) {
+        setIsSuccess(true);
+        setError('Saved locally — will sync when back online');
+        resetForm();
+        setTimeout(() => setIsSuccess(false), 4000);
+      } else if (response.ok && result.success !== false) {
+        setIsSuccess(true);
+        resetForm();
         setTimeout(() => setIsSuccess(false), 3000);
+      } else if (response.status === 401) {
+        throw new Error('Session expired — sign in again from the extension popup');
       } else {
-        const result = await response.json();
-        if (result.queued) {
-          setIsSuccess(true);
-          setError('Offline: Visit queued for sync.');
-          setNotes('');
-          if (attachedPhoto) URL.revokeObjectURL(attachedPhoto);
-          setAttachedPhoto(null);
-          setAttachedFile(null);
-        } else {
-          throw new Error('Failed to save visit');
-        }
+        throw new Error(result.error || `Failed to save visit (HTTP ${response.status})`);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to log visit. Please try again.');
@@ -167,20 +188,20 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
         <div className="space-y-1.5">
           <span id="visit-type-label" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Type</span>
           <div className="grid grid-cols-2 gap-2">
-            {['Routine Inspection', 'Pest Outbreak', 'Soil Analysis', 'Growth Check'].map(type => (
+            {VISIT_TYPES.map(type => (
               <button
-                key={type}
+                key={type.value}
                 type="button"
-                onClick={() => setObservationType(type)}
-                aria-pressed={observationType === type}
+                onClick={() => setObservationType(type.value)}
+                aria-pressed={observationType === type.value}
                 aria-labelledby="visit-type-label"
                 className={`text-[10px] font-black uppercase tracking-tight py-2 rounded-lg border transition-all ${
-                  observationType === type 
+                  observationType === type.value 
                     ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400' 
                     : 'bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-700'
                 }`}
               >
-                {type}
+                {type.label}
               </button>
             ))}
           </div>
@@ -197,6 +218,15 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
             className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm min-h-[80px] outline-none focus:border-emerald-500 transition-all text-slate-200"
           />
         </div>
+        {location && (
+          <div className="flex items-center gap-2 p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+            <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="text-[10px] font-mono text-emerald-300">
+              {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)} (±{Math.round(location.accuracy)}m)
+            </span>
+            <span className="ml-auto text-[10px] font-bold text-emerald-400 uppercase">{location.accuracyStatus || 'good'}</span>
+          </div>
+        )}
 
         {/* Photo Preview */}
         {attachedPhoto && (
@@ -247,7 +277,7 @@ export function VisitLogger({ farmerId: initialFarmerId }: { farmerId?: string }
             ) : (
               <Save className="w-4 h-4" />
             )}
-            {isSubmitting ? 'Saving...' : isSuccess ? 'Logged!' : 'Save Visit'}
+            {isSubmitting ? 'Saving...' : isSuccess ? 'Queued for Sync' : 'Save Visit'}
           </button>
         </div>
 

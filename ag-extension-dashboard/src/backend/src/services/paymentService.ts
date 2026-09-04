@@ -3,56 +3,13 @@ import paypal from 'paypal-rest-sdk';
 
 import { logger } from '../utils/logger';
 import { systemConfigService } from './systemConfigService';
-
-function errorMessage(error: unknown): string {
-    return error instanceof Error ? error.message : String(error);
-}
-
-function productFeatures(product: Stripe.Product | Stripe.DeletedProduct): string[] {
-    const raw = (product as Stripe.Product & { features?: unknown }).features;
-    return Array.isArray(raw) ? raw.filter((f): f is string => typeof f === 'string') : [];
-}
-
-interface CreateCheckoutSessionParams {
-    userId: string;
-    priceId: string;
-    successUrl: string;
-    cancelUrl: string;
-    trialEnd?: number; // timestamp in seconds
-}
-
-interface CreatePaymentIntentParams {
-    userId: string;
-    amount: number; // in cents
-    currency: string;
-    metadata?: Record<string, string>;
-}
-
-interface InvoiceSummary {
-    id: string;
-    amount_paid: number;
-    currency: string;
-    status: string;
-    created: number;
-    invoice_pdf: string;
-}
-
-interface StripeSubscription {
-    id: string;
-    status: string;
-    current_period_start: number;
-    current_period_end: number;
-    cancel_at_period_end: boolean;
-    items: {
-        data: Array<{
-            id: string;
-            price: {
-                id: string;
-                nickname?: string;
-            };
-        }>;
-    };
-}
+import { errorMessage, productFeatures } from './payment/types';
+import type {
+    CreateCheckoutSessionParams,
+    CreatePaymentIntentParams,
+    InvoiceSummary,
+    StripeSubscription,
+} from './payment/types';
 
 class PaymentService {
     private stripe: Stripe | null = null;
@@ -82,13 +39,13 @@ class PaymentService {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     apiVersion: '2024-12-18.acacia' as unknown as Stripe.LatestApiVersion,
                 });
-                logger.info('Stripe payment service initialized (Real Mode)');                } catch (error) {
-                logger.warn('Failed to initialize Stripe with provided key - payments will be simulated (Demo Mode):', error);
+                logger.info('Stripe payment service initialized (Real Mode)');            } catch (error) {
+                logger.warn('Failed to initialize Stripe with provided key - card payments unavailable (PAYMENT_GATEWAY_NOT_CONFIGURED):', error);
                 this.stripe = null;
             }
         } else {
             const reason = !stripeKey ? 'Key missing' : 'Key is placeholder/invalid';
-            logger.warn(`Stripe not configured (${reason}) - payments will be simulated (Demo Mode)`);
+            logger.warn(`Stripe not configured (${reason}) - card payments unavailable (PAYMENT_GATEWAY_NOT_CONFIGURED)`);
             this.stripe = null;
         }
     }

@@ -21,6 +21,7 @@ import { config } from '@/config';
 import { logger } from '@/utils/logger';
 
 import { REASONING_SYSTEM_PROMPT, extractVisuals, buildGroundedReasoningPrompt } from '../assetLibrary';
+import { normalizeToolDefinitions, normalizeMessages, normalizeToolCalls } from '../toolCalling';
 
 export class OpenAIProvider extends BaseAIProvider {
     readonly provider: AIProviderType = 'openai';
@@ -55,15 +56,8 @@ export class OpenAIProvider extends BaseAIProvider {
         const client = await this.getClient();
         const model = options?.model || config.ai.primary.model || 'gpt-4';
 
-        let messages: any[] = [];
-        if (Array.isArray(prompt) && prompt.length > 0 && typeof prompt[0] === 'object' && 'role' in prompt[0]) {
-            messages = prompt;
-        } else {
-            messages = [
-                { role: 'system', content: 'You are a helpful agricultural extension assistant.' },
-                { role: 'user', content: prompt }
-            ];
-        }
+        const messages = normalizeMessages(prompt) as any[];
+        const tools = normalizeToolDefinitions(options?.tools);
 
         try {
             const response = await client.chat.completions.create({
@@ -71,14 +65,20 @@ export class OpenAIProvider extends BaseAIProvider {
                 messages,
                 temperature: options?.temperature ?? 0.7,
                 max_tokens: options?.maxTokens ?? 1000,
+                ...(tools ? { tools, tool_choice: 'auto' } : {}),
             });
 
             const choice = response.choices[0];
             return {
                 text: choice.message.content,
+                toolCalls: normalizeToolCalls(choice.message.tool_calls as any[]),
                 model,
-                usage: response.usage,
-                finishReason: choice.finishReason,
+                usage: response.usage ? {
+                    promptTokens: response.usage.prompt_tokens ?? 0,
+                    completionTokens: response.usage.completion_tokens ?? 0,
+                    totalTokens: response.usage.total_tokens ?? 0,
+                } : undefined,
+                finishReason: choice.finish_reason,
             };
         } catch (error) {
             logger.error('OpenAI generateText error:', error);

@@ -18,6 +18,8 @@ import { setRequestUserId } from './services/requestContext';
 import { correlationIdMiddleware } from './middleware/correlationIdMiddleware';
 import { perUserRateLimit } from './middleware/rateLimitMiddleware';
 import { optionalAuth } from './middleware/authorize';
+import { globalAuditMiddleware } from './middleware/auditMiddleware';
+import { idempotencyMiddleware } from './middleware/idempotencyMiddleware';
 import { AIProviderFactory } from './services/aiProvider/aiProvider';
 import { AI_CASCADE_FALLBACK } from './services/aiProvider/cascade';
 import { selfHealingService } from './services/selfHealing';
@@ -70,9 +72,20 @@ import channelsRoutes from './routes/channels';
 import campaignsRoutes from './routes/autonomousCampaigns';
 import verificationFraudRoutes from './routes/verificationFraud';
 import activityTriageRoutes from './routes/activityTriage';
+import soilRoutes from './routes/soil';
+import pillarsRoutes from './routes/pillars';
+import callRoutes from './routes/call';
+import worldmonitorRoutes from './routes/worldmonitor';
+import offlineRoutes from './routes/offline';
+import auditLogsRoutes from './routes/auditLogs';
+import accountRoutes from './routes/account';
 
 const app: Application = express();
-app.set('trust proxy', true); // Trust all proxy hops (Traefik/Docker) for X-Forwarded-For
+// Trust exactly the number of reverse-proxy hops in front of the app (default 1 = Traefik).
+// `true` would take the left-most X-Forwarded-For value, which the client controls, and
+// let an attacker spoof req.ip to bypass per-IP rate limits and lockouts.
+const trustProxyHops = Number.parseInt(process.env.TRUST_PROXY_HOPS || '1', 10);
+app.set('trust proxy', Number.isFinite(trustProxyHops) && trustProxyHops >= 0 ? trustProxyHops : 1);
 
 const limiter = perUserRateLimit;
 
@@ -113,6 +126,8 @@ app.use((req, _res, next) => {
     setRequestUserId(req.user?.userId);
     next();
 });
+app.use(globalAuditMiddleware); // privileged / sensitive mutations → audit_logs
+app.use(idempotencyMiddleware);
 
 // Request timeout middleware — AI-heavy routes (knowledge/ask, chatbot) get 120s, rest get 30s
 app.use((req, res, next) => {
@@ -234,6 +249,7 @@ function checkExternalAPIs(): { status: string; error?: string } {
         const weatherKey = config.externalApis.weather.apiKey;
         const weatherUrl = config.externalApis.weather.url;
         const faoConfigured = !!config.externalApis.fao.url;
+        // NASA POWER requires no API key (public endpoints), so it counts as configured.
         const nasaConfigured = true;
 
         if (weatherKey || weatherUrl || faoConfigured || nasaConfigured) {
@@ -250,11 +266,11 @@ function checkExternalAPIs(): { status: string; error?: string } {
     }
 }
 
-// Agents registered for orchestration but intentionally not yet implemented as a
-// service (e.g. OpenClaw is "planned for future implementation"). They are kept in
-// the registry so the UI can show them, but a permanently-absent service must not
-// flag the production health check as unhealthy.
-const PLANNED_AGENTS = new Set(['openclaw']);
+// Components registered for monitoring that are intentionally absent in this
+// deployment can be listed here (comma-separated env) so they don't flag /health.
+const PLANNED_AGENTS = new Set(
+    (process.env.PLANNED_AGENTS || '').split(',').map(s => s.trim()).filter(Boolean)
+);
 
 function checkAgentServices(): { status: string; error?: string } {
     try {
@@ -346,6 +362,11 @@ const healthHandler = async (_req: Request, res: Response) => {
 
 app.get('/health', healthHandler);
 app.get('/api/health', healthHandler);
+// Versioned alias so clients that only know the /api/v1 base (browser extension,
+// mobile) can probe connectivity without hard-coding the unversioned path.
+app.get('/api/v1/health', healthHandler);
+app.head('/api/v1/health', (_req: Request, res: Response) => res.status(200).end());
+app.head('/health', (_req: Request, res: Response) => res.status(200).end());
 
 app.get('/health/live', (_req: Request, res: Response) => res.json({ status: 'ok' }));
 app.get('/health/ready', (_req: Request, res: Response) => res.json({ status: 'ready' }));
@@ -404,6 +425,13 @@ const routeMounts: RouteMount[] = [
   { path: '/campaigns', router: campaignsRoutes },
   { path: '/verification', router: verificationFraudRoutes },
   { path: '/activities', router: activityTriageRoutes },
+  { path: '/soil', router: soilRoutes },
+  { path: '/pillars', router: pillarsRoutes },
+  { path: '/call', router: callRoutes },
+  { path: '/worldmonitor', router: worldmonitorRoutes },
+  { path: '/offline', router: offlineRoutes },
+  { path: '/audit-logs', router: auditLogsRoutes },
+  { path: '/account', router: accountRoutes },
 ];
 
 // Mount with i18n support (v1)

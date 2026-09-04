@@ -98,10 +98,16 @@ export function useFieldVoiceRecorder({ language, onTranscriptChunk }: UseFieldV
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         audioChunksRef.current = [];
         const base64Audio = await blobToBase64(audioBlob);
-        
+        // Stop underlying MediaStream tracks to avoid mic leak
+        try {
+          (recorder.stream as MediaStream | undefined)?.getTracks().forEach(t => t.stop());
+        } catch {
+          /* ignore */
+        }
+
         toast.loading('Transcribing field audio with Whisper AI...', { id: 'whisper-stt' });
         const res = await transcribeAudio(base64Audio, language);
-        
+
         if (res.success && res.data?.text) {
           onChunkRef.current(res.data.text.trim());
           toast.success('Audio memo transcribed!', { id: 'whisper-stt' });

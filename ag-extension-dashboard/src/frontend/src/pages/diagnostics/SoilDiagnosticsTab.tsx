@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Upload,
   Activity,
@@ -8,8 +8,16 @@ import {
   Download,
   Loader2,
   FlaskConical,
+  MapPin,
+  Database,
+  Beaker,
 } from 'lucide-react';
 import { analyzeSoilImage, type SoilAnalysisResult } from '../../api/diseaseService';
+import { downloadReportPdf } from '../../api/reportService';
+import { fetchFarmerSoilProfile, type FarmerSoilProfile } from '../../api/soilService';
+import { fetchFarmers } from '../../api/farmerService';
+import { SoilNutrientHeatmapCanvas, type SoilHeatmapRealPoints } from '../../components/canvas-ui/SoilNutrientHeatmapCanvas';
+import { useDemoMode } from '@/demo';
 import toast from 'react-hot-toast';
 
 interface Props {
@@ -211,9 +219,11 @@ const SoilNpkGrid: React.FC<{ npk: SoilAnalysisResult['npkDeficiencies'] }> = ({
   );
 };
 
-const SoilResultsHUD: React.FC<{ soilAnalysis: SoilAnalysisResult | null }> = ({
-  soilAnalysis,
-}) => {
+const SoilResultsHUD: React.FC<{
+  soilAnalysis: SoilAnalysisResult | null;
+  onExport: () => void;
+  isExporting: boolean;
+}> = ({ soilAnalysis, onExport, isExporting }) => {
   if (!soilAnalysis) {
     return (
       <div className="p-5 rounded-[4px] bg-slate-900/80 border border-slate-800 flex flex-col justify-center space-y-4 text-center">
@@ -320,17 +330,19 @@ const SoilResultsHUD: React.FC<{ soilAnalysis: SoilAnalysisResult | null }> = ({
       {/* PDF Export Button */}
       <div className="pt-2 border-t border-slate-800">
         <button
-          onClick={() => toast.error('Soil report export is unavailable from this view.')}
-          className="w-full py-2.5 bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:border-emerald-500/40 text-slate-300 text-xs font-bold rounded-[3px] transition-all flex items-center justify-center gap-2 uppercase tracking-wider"
+          onClick={onExport}
+          disabled={!soilAnalysis || isExporting}
+          className="w-full py-2.5 bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:border-emerald-500/40 text-slate-300 text-xs font-bold rounded-[3px] transition-all flex items-center justify-center gap-2 uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          <Download className="w-3.5 h-3.5" />
-          <span>Export Soil Report (PDF)</span>
+          {isExporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+          <span>{isExporting ? 'Generating PDF...' : 'Export Soil Report (PDF)'}</span>
         </button>
       </div>
     </div>
   );
 };
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export function SoilDiagnosticsTab({
   cropType,
   setCropType,
@@ -338,11 +350,47 @@ export function SoilDiagnosticsTab({
   btnClass: _btnClass,
   addNotification,
 }: Props) {
+  const { isDemo } = useDemoMode();
   const [selectedSoilImage, setSelectedSoilImage] = useState<File | null>(null);
   const [soilImagePreview, setSoilImagePreview] = useState<string | null>(null);
   const [isAnalyzingSoil, setIsAnalyzingSoil] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [soilAnalysis, setSoilAnalysis] = useState<SoilAnalysisResult | null>(null);
   const [farmNotes, setFarmNotes] = useState('');
+  const [farmersList, setFarmersList] = useState<{ id: string; firstName: string; lastName: string }[]>([]);
+  const [selectedFarmerId, setSelectedFarmerId] = useState<string>('');
+  const [soilProfile, setSoilProfile] = useState<FarmerSoilProfile | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchFarmers()
+      .then(res => {
+        if (res.success && Array.isArray(res.data?.farmers)) {
+          setFarmersList(res.data.farmers);
+        } else if (Array.isArray(res.data)) {
+          setFarmersList(res.data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!selectedFarmerId) {
+      setSoilProfile(null);
+      setProfileError(null);
+      return;
+    }
+    setIsLoadingProfile(true);
+    setProfileError(null);
+    fetchFarmerSoilProfile(selectedFarmerId)
+      .then(res => {
+        if (res.success) setSoilProfile(res.data);
+        else setProfileError('Failed to load soil profile');
+      })
+      .catch(err => setProfileError(err instanceof Error ? err.message : 'Failed to load soil profile'))
+      .finally(() => setIsLoadingProfile(false));
+  }, [selectedFarmerId]);
 
   const handleSoilImageSelect = (file: File) => {
     setSelectedSoilImage(file);
@@ -351,6 +399,68 @@ export function SoilDiagnosticsTab({
       setSoilImagePreview(e.target?.result as string);
     };
     reader.readAsDataURL(file);
+  };
+
+  const buildRealPoints = (profile: FarmerSoilProfile | null): SoilHeatmapRealPoints | undefined => {
+    if (!profile?.baseline) return undefined;
+    const b = profile.baseline as unknown as Record<string, number | null>;
+    // Honest: a single SoilGrids 250m pixel gives one value per property for the farm centroid.
+    // Do NOT synthesize spatial variation. Use a uniform field (all points same value) so the heatmap
+    // shows a flat color until the farmer has multiple field polygons or lab points with coordinates.
+    const uniform = (base: number | null) => (base == null ? undefined : [
+      { x: 0.2, y: 0.25, val: base }, { x: 0.45, y: 0.55, val: base }, { x: 0.65, y: 0.3, val: base },
+      { x: 0.82, y: 0.35, val: base }, { x: 0.72, y: 0.85, val: base }, { x: 0.25, y: 0.78, val: base },
+    ]);
+    const phPts = uniform(b.ph as number | null);
+    const nPts = uniform(b.nitrogenMgPerKg as number | null);
+    const cPts = uniform(b.organicCarbonGPerKg as number | null);
+    const moistureVal =
+      (profile.moisture as unknown as { soilMoisture?: { avgTop9cm?: number | null } })?.soilMoisture?.avgTop9cm != null
+        ? (profile.moisture as unknown as { soilMoisture: { avgTop9cm: number } }).soilMoisture.avgTop9cm * 100
+        : null;
+    const mPts = moistureVal != null ? uniform(moistureVal) : undefined;
+    const result: SoilHeatmapRealPoints = {};
+    if (phPts) result.ph = phPts;
+    if (nPts) result.nitrogen = nPts;
+    if (cPts) result.carbon = cPts;
+    if (mPts) result.moisture = mPts;
+    // Overlay lab pH points if available to pull interpolation toward measured values
+    if (profile.labResults?.length) {
+      const labPhVals = profile.labResults.map(r => r.ph).filter((v): v is number => v != null);
+      if (labPhVals.length && result.ph) {
+        const avgLabPh = labPhVals.reduce((a, v) => a + v, 0) / labPhVals.length;
+        result.ph = [
+          { x: 0.35, y: 0.5, val: Number(avgLabPh.toFixed(2)) },
+          ...result.ph.slice(0, 5),
+        ];
+      }
+    }
+    return Object.keys(result).length ? result : undefined;
+  };
+
+  const handleExportSoilReport = async () => {
+    if (!soilAnalysis) return;
+    setIsExporting(true);
+    try {
+      // Generate a soil diagnostic report first, then download its PDF
+      const { generateReport } = await import('../../api/reportService');
+      const gen = await generateReport('soil_diagnostic', `Soil Diagnostic - ${cropType || 'General'}`, undefined);
+      const reportId = (gen as { data?: { id?: string } })?.data?.id || (gen as { id?: string })?.id;
+      if (!reportId) throw new Error('Report generation did not return an id');
+      const blob = await downloadReportPdf(reportId);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `soil-report-${Date.now()}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Soil report downloaded');
+    } catch (err) {
+      console.error('Soil report export failed:', err);
+      toast.error('Failed to export soil report');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleAnalyzeSoil = async () => {
@@ -390,8 +500,169 @@ export function SoilDiagnosticsTab({
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-      <SoilUploadSection
+    <div className="space-y-5">
+      {/* Farmer Soil Context — Real Data Provenance */}
+      <div className="p-4 rounded-[4px] bg-slate-900/80 border border-slate-800">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
+            <Database className="w-4 h-4 text-sky-400" />
+            Field Soil Context
+            <span className="px-1.5 py-0.5 rounded-[2px] text-[9px] font-mono bg-sky-500/10 text-sky-300 border border-sky-500/20">LIVE</span>
+          </h3>
+          <select
+            value={selectedFarmerId}
+            onChange={e => setSelectedFarmerId(e.target.value)}
+            className="px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-[3px] text-xs text-white focus:border-sky-500 outline-none"
+          >
+            <option value="">Select farmer to load real soil baselines…</option>
+            {farmersList.map(f => (
+              <option key={f.id} value={f.id}>
+                {f.firstName} {f.lastName}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {!selectedFarmerId ? (
+          <p className="text-[11px] font-mono text-slate-500">
+            Choose a farmer to pull <span className="text-sky-300">ISRIC SoilGrids 250m</span> regional baseline,{' '}
+            <span className="text-emerald-300">Open-Meteo</span> modeled top-soil moisture, and the farmer&apos;s real{' '}
+            <span className="text-amber-300">Soil Lab History</span>. Without a farmer, soil photo inference still works as a labeled estimate.
+          </p>
+        ) : isLoadingProfile ? (
+          <div className="flex items-center gap-2 text-xs text-slate-400">
+            <Loader2 className="w-4 h-4 animate-spin" /> Loading soil profile…
+          </div>
+        ) : profileError ? (
+          <p className="text-xs text-rose-400">{profileError}</p>
+        ) : soilProfile ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* SoilGrids Baseline */}
+            <div className="p-3 rounded-[3px] bg-slate-950 border border-slate-800">
+              <div className="flex items-center gap-1.5 text-[10px] font-mono text-sky-400 uppercase tracking-wider mb-1">
+                <MapPin className="w-3 h-3" /> ISRIC SoilGrids 250m
+              </div>
+              {soilProfile.baseline && (soilProfile.baseline as { ph?: number | null }).ph !== undefined ? (
+                <div className="space-y-1 text-xs font-mono">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">pH (H₂O)</span>
+                    <span className="text-white font-bold">{(soilProfile.baseline as { ph: number | null }).ph ?? '—'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">SOC</span>
+                    <span className="text-white">{(soilProfile.baseline as { organicCarbonGPerKg: number | null }).organicCarbonGPerKg ?? '—'} g/kg</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">N total</span>
+                    <span className="text-white">{(soilProfile.baseline as { nitrogenMgPerKg: number | null }).nitrogenMgPerKg ?? '—'} mg/kg</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">CEC</span>
+                    <span className="text-white">{(soilProfile.baseline as { cecCmolPerKg: number | null }).cecCmolPerKg ?? '—'} cmol/kg</span>
+                  </div>
+                  <p className="text-[9px] text-amber-400/80 leading-tight pt-1 border-t border-slate-800">
+                    ⚠️ Regional baseline (250m pixel) — not a lab test.
+                  </p>
+                </div>
+              ) : soilProfile.location ? (
+                <p className="text-xs text-amber-400">Baseline fetch failed — check connectivity.</p>
+              ) : (
+                <p className="text-xs text-slate-500">No geolocation for this farmer — add lat/lng to enable baseline.</p>
+              )}
+            </div>
+
+            {/* Live Moisture */}
+            <div className="p-3 rounded-[3px] bg-slate-950 border border-slate-800">
+              <div className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 uppercase tracking-wider mb-1">
+                <Droplet className="w-3 h-3" /> Open-Meteo Soil Moisture
+              </div>
+              {soilProfile.moisture && (soilProfile.moisture as { soilMoisture: { avgTop9cm: number | null } }).soilMoisture ? (
+                <div className="space-y-1 text-xs font-mono">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">0–1 cm</span>
+                    <span className="text-white">{(soilProfile.moisture as { soilMoisture: Record<string, number | null> }).soilMoisture['0-1cm'] ?? '—'} m³/m³</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">1–3 cm</span>
+                    <span className="text-white">{(soilProfile.moisture as { soilMoisture: Record<string, number | null> }).soilMoisture['1-3cm'] ?? '—'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">3–9 cm</span>
+                    <span className="text-white">{(soilProfile.moisture as { soilMoisture: Record<string, number | null> }).soilMoisture['3-9cm'] ?? '—'}</span>
+                  </div>
+                  <p className="text-[9px] text-amber-400/80 leading-tight pt-1 border-t border-slate-800">
+                    ⚠️ Modeled ERA5/ECMWF estimate — not a field probe.
+                  </p>
+                </div>
+              ) : soilProfile.location ? (
+                <p className="text-xs text-amber-400">Moisture fetch failed.</p>
+              ) : (
+                <p className="text-xs text-slate-500">No geolocation.</p>
+              )}
+            </div>
+
+            {/* Lab History */}
+            <div className="p-3 rounded-[3px] bg-slate-950 border border-slate-800">
+              <div className="flex items-center gap-1.5 text-[10px] font-mono text-amber-400 uppercase tracking-wider mb-1">
+                <Beaker className="w-3 h-3" /> Soil Lab History
+              </div>
+              {soilProfile.labResults.length > 0 ? (
+                <div className="space-y-1.5 max-h-28 overflow-y-auto pr-1">
+                  {soilProfile.labResults.slice(0, 5).map(r => (
+                    <div key={r.id} className="text-[11px] font-mono border-b border-slate-800 pb-1">
+                      <div className="flex justify-between text-white font-bold">
+                        <span>{r.labName ?? 'Lab'}</span>
+                        <span className="text-slate-400">{r.testedAt ? new Date(r.testedAt).toLocaleDateString() : '—'}</span>
+                      </div>
+                      <div className="text-slate-400">
+                        pH {r.ph ?? '—'} • N {r.nitrogenPpm ?? '—'}ppm • P {r.phosphorusPpm ?? '—'} • K {r.potassiumPpm ?? '—'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500">No lab results yet. Import via Field Intel → Soil Lab CSV.</p>
+              )}
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      {selectedFarmerId && soilProfile && (() => {
+        const realPoints = buildRealPoints(soilProfile);
+        const hasLive = Boolean(realPoints && Object.keys(realPoints).length);
+        if (!hasLive && !isDemo) {
+          return (
+            <div className="p-4 rounded-[4px] bg-slate-900/80 border border-slate-800 text-center">
+              <p className="text-xs font-bold text-white">Live Soil Tile — Per-Farmer</p>
+              <p className="text-xs text-white/50 mt-1 max-w-md mx-auto">No live baseline available — add lat/lng to this farmer or import lab results, then return for a 250m SoilGrids tile. Demo mesh is visible only in the demo account.</p>
+            </div>
+          );
+        }
+        return (
+          <div className="p-4 rounded-[4px] bg-slate-900/80 border border-slate-800">
+            <h4 className="text-xs font-black text-white uppercase tracking-wider mb-3 flex items-center gap-2">
+              <Layers className="w-3.5 h-3.5 text-emerald-400" />
+              Field Interpolation — {hasLive ? 'Live SoilGrids Anchors' : 'Demo Preview'}
+              <span className={`ml-auto text-[9px] font-mono px-1.5 py-0.5 rounded border ${hasLive ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-amber-300 bg-amber-500/10 border-amber-500/20'}`}>
+                {hasLive ? 'SoilGrids 250m' : 'Demo'}
+              </span>
+            </h4>
+            <SoilNutrientHeatmapCanvas
+              initialLayer="ph"
+              realPointsByLayer={realPoints}
+              provenanceOverride={
+                hasLive
+                  ? (soilProfile.baseline as { disclaimer?: string })?.disclaimer ?? undefined
+                  : 'Demo preview mesh — not a field measurement.'
+              }
+            />
+          </div>
+        );
+      })()}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <SoilUploadSection
         cropType={cropType}
         setCropType={setCropType}
         farmNotes={farmNotes}
@@ -407,7 +678,8 @@ export function SoilDiagnosticsTab({
         isAnalyzing={isAnalyzingSoil}
       />
 
-      <SoilResultsHUD soilAnalysis={soilAnalysis} />
+      <SoilResultsHUD soilAnalysis={soilAnalysis} onExport={handleExportSoilReport} isExporting={isExporting} />
+      </div>
     </div>
   );
 }

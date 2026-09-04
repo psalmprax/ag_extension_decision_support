@@ -39,7 +39,15 @@ export default defineConfig({
       },
       default_title: 'GPExts - Agricultural Decision Support',
     },
-    host_permissions: ['<all_urls>'],
+    // Restricted to API origins only — prevents overbroad host access
+    // Adjust these patterns for your deployment domain
+    host_permissions: [
+      'https://*.gpexts.com/*',
+      'https://api.gpexts.com/*',
+      'http://localhost:7500/*',
+      'http://127.0.0.1:7500/*',
+      'https://127.0.0.1:7500/*',
+    ],
     commands: {
       '_execute_action': {
         suggested_key: {

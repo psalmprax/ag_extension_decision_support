@@ -3,7 +3,7 @@
     "target": "ES2020",
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "types": ["vitest/globals"],
+    "types": ["vitest/globals", "node"],
     "module": "ESNext",
     "skipLibCheck": true,
     "moduleResolution": "bundler",
@@ -22,6 +22,7 @@
       "@/*": ["./src/*"]
     }
   },
+  "exclude": ["src/__tests__", "src/components/__tests__", "src/test", "tests", "**/*.test.*", "**/*.spec.*"],
   "include": ["src"],
   "references": [
     {

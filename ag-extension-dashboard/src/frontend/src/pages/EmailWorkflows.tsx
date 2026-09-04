@@ -8,6 +8,7 @@ import {
   fetchPendingApprovals,
   approveEmail,
   rejectEmail,
+  updateEmailTemplate,
   type EmailTemplate,
   type EmailApproval,
 } from '../api/emailWorkflowService';
@@ -150,12 +151,26 @@ export function EmailWorkflows() {
     });
   };
 
-  const handleSaveTemplate = () => {
-    addNotification({
-      type: 'info',
-      message: 'Template editing functionality will be implemented in the next update',
-    });
-    setShowEditModal(null);
+  const handleSaveTemplate = async () => {
+    if (!showEditModal) return;
+    try {
+      const res = await updateEmailTemplate(showEditModal.id, {
+        subject: editForm.subject,
+        body: editForm.body,
+        category: editForm.category,
+        variables: editForm.variables,
+      });
+      if (res.success) {
+        addNotification({ type: 'success', message: res.message || 'Template updated' });
+        setShowEditModal(null);
+        reload();
+      } else {
+        addNotification({ type: 'error', message: res.message || 'Failed to update template' });
+      }
+    } catch (error) {
+      console.error('Failed to update template:', error);
+      addNotification({ type: 'error', message: 'Failed to update template' });
+    }
   };
 
   const closeApprovalModal = () => {

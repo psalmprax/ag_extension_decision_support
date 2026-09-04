@@ -27,10 +27,11 @@ export const useAppSync = (
           message: `Back online - syncing ${count} queued action(s)...`,
         });
         const result = await syncQueue.processQueue();
-        if (result.failed > 0) {
+        const stuck = syncQueue.getStuckItems().length;
+        if (result.failed > 0 || result.conflicts > 0 || stuck > 0) {
           addNotification({
             type: 'warning',
-            message: `${result.success} synced, ${result.failed} failed (will retry)`,
+            message: `${result.success} synced · ${stuck} need attention (${result.conflicts} conflict${result.conflicts === 1 ? '' : 's'}, ${result.failed} exhausted retries). Open System Health → Offline Sync Queue to retry or discard.`,
           });
         } else if (result.success > 0) {
           addNotification({
@@ -49,7 +50,7 @@ export const useAppSync = (
       setIsOnline(false);
       addNotification({
         type: 'warning',
-        message: 'You are offline - changes will be queued and synced when connection returns',
+        message: 'You are offline — field visits and offline diagnoses are queued for sync; other edits need a connection',
       });
     };
 

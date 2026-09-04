@@ -204,56 +204,7 @@ export class VectorService {
         logger.info(`Performing hybrid search (Vector + Keyword) for: "${queryText}"`);
 
         try {
-            // Run both searches in parallel for faster response
-            const [vectorResults, keywordResults] = await Promise.all([
-                this.search(queryText, limit * 2, filters, 0.0),
-                this.keywordSearch(queryText, limit * 2, filters)
-            ]);
-
-            if (vectorResults.length === 0 && keywordResults.length === 0) {
-                return [];
-            }
-
-            // Reciprocal Rank Fusion (RRF)
-            const k = 60;
-            const rrfMap = new Map<string, { doc: SearchResult; score: number; cosineScore: number }>();
-
-            vectorResults.forEach((doc, idx) => {
-                const rank = idx + 1;
-                rrfMap.set(doc.id, {
-                    doc,
-                    score: 1 / (k + rank),
-                    cosineScore: doc.score
-                });
-            });
-
-            keywordResults.forEach((doc, idx) => {
-                const rank = idx + 1;
-                const rrfWeight = 1 / (k + rank);
-                const existing = rrfMap.get(doc.id);
-                if (existing) {
-                    existing.score += rrfWeight;
-                    // Keep the cosine score
-                } else {
-                    rrfMap.set(doc.id, {
-                        doc,
-                        score: rrfWeight,
-                        cosineScore: 0.5 // Default baseline score for keyword-only matches
-                    });
-                }
-            });
-
-            // Sort by RRF score descending, preserve RRF score as the relevance score
-            const merged = Array.from(rrfMap.values())
-                .sort((a, b) => b.score - a.score)
-                .map(item => {
-                    // Use the RRF fusion score (not cosine) as the final relevance score
-                    item.doc.score = item.score;
-                    return item.doc;
-                });
-
-            // Apply limit (minScore filtering is less meaningful for RRF scores which are small fractions)
-            return merged.slice(0, limit);
+            return await this.performHybridSearch(queryText, limit, filters);
         } catch (error) {
             logger.error('Hybrid search execution failed:', error);
             // Fall back to simple search on error
@@ -261,37 +212,200 @@ export class VectorService {
         }
     }
 
+    private static async performHybridSearch(
+        queryText: string,
+        limit: number,
+        filters: { category?: string; crop?: string }
+    ): Promise<SearchResult[]> {
+        const [vectorResults, keywordResults] = await Promise.all([
+            this.search(queryText, limit * 2, filters, 0.0),
+            this.keywordSearch(queryText, limit * 2, filters)
+        ]);
+
+        if (vectorResults.length === 0 && keywordResults.length === 0) {
+            return [];
+        }
+
+        const rrfMap = new Map<string, { doc: SearchResult; score: number }>();
+        const k = 60;
+
+        this.addToRrfMap(rrfMap, vectorResults, k);
+        this.addToRrfMap(rrfMap, keywordResults, k, 0.5);
+
+        return this.mergeAndSortRrfResults(rrfMap, limit);
+    }
+
+    private static addToRrfMap(
+        rrfMap: Map<string, { doc: SearchResult; score: number }>,
+        results: SearchResult[],
+        k: number,
+        defaultScore: number = 0
+    ): void {
+        results.forEach((doc, idx) => {
+            const rank = idx + 1;
+            const rrfWeight = 1 / (k + rank);
+            const existing = rrfMap.get(doc.id);
+            if (existing) {
+                existing.score += rrfWeight;
+            } else {
+                rrfMap.set(doc.id, {
+                    doc,
+                    score: rrfWeight + defaultScore
+                });
+            }
+        });
+    }
+
+    private static mergeAndSortRrfResults(
+        rrfMap: Map<string, { doc: SearchResult; score: number }>,
+        limit: number
+    ): SearchResult[] {
+        return Array.from(rrfMap.values())
+            .sort((a, b) => b.score - a.score)
+            .slice(0, limit)
+            .map(item => {
+                item.doc.score = item.score;
+                return item.doc;
+            });
+    }
+
     /**
      * Seed initial knowledge into DB
      */
     static async seedKnowledge(articles: Array<{ id: string; title: string; content: string; category: string; tags?: string[]; crop: string; regions?: string[]; source?: string; sourceUrl?: string | null }>): Promise<void> {
+        // Determine which seed articles still need an embedding. The plain-SQL
+        // seeder (routes/knowledge) inserts rows with embedding = NULL, so a simple
+        // "count >= N → skip" check would leave vector search permanently empty.
+        let pending = articles;
         try {
-            const countResult = await query(`SELECT COUNT(*)::integer as count FROM knowledge_articles`);
-            const count = countResult.rows[0]?.count || 0;
-            if (count >= 15) {
-                logger.info(`Vector store already has ${count} articles. Skipping seeding.`);
-                return;
-            }
+            const res = await query(
+                `SELECT id FROM knowledge_articles WHERE id = ANY($1::uuid[]) AND embedding IS NOT NULL`,
+                [articles.map(a => a.id)]
+            );
+            const embedded = new Set((res.rows as Array<{ id: string }>).map(r => r.id));
+            pending = articles.filter(a => !embedded.has(a.id));
         } catch (err) {
-            logger.warn(`Could not check knowledge_articles count (table might not exist yet):`, err);
+            logger.warn(`Could not check embedded seed articles (table might not exist yet):`, err);
         }
 
-        logger.info(`Seeding persistent vector store with ${articles.length} articles`);
-        for (const article of articles) {
-            await this.upsertDocument(
-                article.id,
-                article.content,
-                {
-                    title: article.title,
-                    category: article.category,
-                    tags: article.tags || [],
-                    crops: [article.crop],
-                    regions: article.regions || (article.crop === 'maize' ? ['East Africa'] : ['tropical']),
-                    source: article.source || 'AG Extension Tropical Agronomy Seed',
-                    sourceUrl: article.sourceUrl || null,
-                    contentType: 'text'
+        if (pending.length === 0) {
+            logger.info(`Vector store: all ${articles.length} seed articles already embedded.`);
+            return;
+        }
+
+        logger.info(`Seeding persistent vector store: embedding ${pending.length}/${articles.length} articles`);
+        let failures = 0;
+        for (const article of pending) {
+            try {
+                await this.upsertDocument(
+                    article.id,
+                    article.content,
+                    {
+                        title: article.title,
+                        category: article.category,
+                        tags: article.tags || [],
+                        crops: [article.crop],
+                        regions: article.regions || (article.crop === 'maize' ? ['East Africa'] : ['tropical']),
+                        source: article.source || 'AG Extension Tropical Agronomy Seed',
+                        sourceUrl: article.sourceUrl || null,
+                        contentType: 'text'
+                    }
+                );
+            } catch (err) {
+                failures++;
+                // A dimension mismatch will fail every article identically — stop early.
+                if ((err as Error)?.name === 'EmbeddingDimensionError') {
+                    logger.error(`Vector seeding aborted: ${(err as Error).message}`);
+                    return;
                 }
-            );
+                logger.warn(`Vector seeding: failed to embed "${article.title}":`, err);
+            }
+        }
+        if (failures > 0) logger.warn(`Vector seeding finished with ${failures} failure(s)`);
+    }
+
+    /**
+     * Backfill embeddings for any knowledge_articles rows that lack one (e.g. rows
+     * inserted by plain SQL seeders or ingestion paths that bypassed upsertDocument).
+     */
+    /**
+     * Drain every NULL-embedding row in batches until none remain (or the provider
+     * is misconfigured). Used by the boot sequence and the backfill CLI so large
+     * existing corpora are indexed in one run rather than one batch per restart.
+     */
+    static async backfillAllMissingEmbeddings(batchSize = 100, maxBatches = 10_000): Promise<{ processed: number; failed: number; remaining: number; aborted?: string }> {
+        let processed = 0;
+        let failed = 0;
+        let aborted: string | undefined;
+        for (let i = 0; i < maxBatches; i++) {
+            const r = await this.backfillMissingEmbeddings(batchSize);
+            processed += r.processed;
+            failed += r.failed;
+            if (r.aborted) { aborted = r.aborted; break; }
+            if (r.processed === 0 && r.failed === 0) break; // nothing left
+            if (r.processed === 0 && r.failed > 0) break;   // every row in the batch failed — stop looping
+        }
+        let remaining = 0;
+        try {
+            const c = await query(`SELECT COUNT(*)::int AS n FROM knowledge_articles WHERE embedding IS NULL`);
+            remaining = Number(c.rows[0]?.n ?? 0);
+        } catch { /* table may not exist */ }
+        return { processed, failed, remaining, aborted };
+    }
+
+    static async backfillMissingEmbeddings(batchSize = 50): Promise<{ processed: number; failed: number; aborted?: string }> {
+        const result = await this.processEmbeddingBatch(batchSize);
+        if (result.processed || result.failed) {
+            logger.info(`Embedding backfill: ${result.processed} embedded, ${result.failed} failed`);
+        }
+        return result;
+    }
+
+    private static async processEmbeddingBatch(batchSize: number): Promise<{ processed: number; failed: number; aborted?: string }> {
+        let processed = 0;
+        const failed: number[] = [];
+        let aborted: string | undefined;
+        try {
+            const rows = await this.fetchRowsMissingEmbeddings(batchSize);
+            for (const row of rows) {
+                try {
+                    await this.processSingleEmbedding(row);
+                    processed++;
+                } catch {
+                    failed.push(1);
+                }
+            }
+        } catch (err) {
+            logger.warn('Embedding backfill query failed:', err);
+        }
+        return { processed, failed: failed.length, aborted };
+    }
+
+    private static async fetchRowsMissingEmbeddings(batchSize: number): Promise<Array<Record<string, unknown>>> {
+        const res = await query(
+            `SELECT id, title, content, category, tags, crops, regions, source, source_url, content_type
+               FROM knowledge_articles WHERE embedding IS NULL ORDER BY created_at ASC LIMIT $1`,
+            [batchSize]
+        );
+        return res.rows as Array<Record<string, unknown>>;
+    }
+
+    private static async processSingleEmbedding(row: Record<string, unknown>): Promise<void> {
+        try {
+            await this.upsertDocument(String(row.id), String(row.content || ''), {
+                title: row.title,
+                category: row.category,
+                tags: row.tags || [],
+                crops: row.crops || [],
+                regions: row.regions || [],
+                source: row.source || null,
+                sourceUrl: row.source_url || null,
+                contentType: row.content_type || 'text',
+            });
+        } catch (err) {
+            if ((err as Error)?.name === 'EmbeddingDimensionError') {
+                throw err;
+            }
         }
     }
 }
