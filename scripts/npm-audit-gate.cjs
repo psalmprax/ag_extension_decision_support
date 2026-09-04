@@ -19,21 +19,47 @@
 
 const { spawnSync } = require('child_process');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 const SEVERITY_RANK = { low: 1, moderate: 2, high: 3, critical: 4 };
+const OUTAGE_CACHE_FILE = path.join(os.tmpdir(), 'npm-audit-gate-outage.json');
+const OUTAGE_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function getCachedOutage() {
+  try {
+    if (!fs.existsSync(OUTAGE_CACHE_FILE)) return null;
+    const data = JSON.parse(fs.readFileSync(OUTAGE_CACHE_FILE, 'utf8'));
+    if (Date.now() - data.timestamp < OUTAGE_CACHE_TTL_MS) {
+      return data;
+    }
+  } catch {
+    // ignore cache read errors
+  }
+  return null;
+}
+
+function setCachedOutage(reason) {
+  try {
+    fs.writeFileSync(OUTAGE_CACHE_FILE, JSON.stringify({ timestamp: Date.now(), reason }), 'utf8');
+  } catch {
+    // ignore cache write errors
+  }
+}
 
 function parseArgs(argv) {
   const args = {
     level: 'high',
     allowlist: 'scripts/audit-allowlist.json',
     failOnOutage: process.env.AUDIT_GATE_FAIL_ON_OUTAGE === 'true' || process.env.AUDIT_GATE_FAIL_ON_OUTAGE === '1',
+    noCache: process.env.AUDIT_GATE_NO_CACHE === 'true' || process.env.AUDIT_GATE_NO_CACHE === '1',
   };
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--dir') args.dir = argv[++i];
     else if (argv[i] === '--level') args.level = argv[++i];
     else if (argv[i] === '--allowlist') args.allowlist = argv[++i];
     else if (argv[i] === '--fail-on-outage') args.failOnOutage = true;
+    else if (argv[i] === '--no-cache') args.noCache = true;
     else throw new Error(`Unknown argument: ${argv[i]}`);
   }
   if (!args.dir) throw new Error('--dir is required (package dir containing package.json)');
@@ -69,8 +95,8 @@ function isOutageMessage(text) {
 }
 
 function runAudit(dir) {
-  const maxRetries = parseInt(process.env.AUDIT_GATE_MAX_RETRIES || '2', 10);
-  const timeoutMs = parseInt(process.env.AUDIT_GATE_TIMEOUT_MS || '25000', 10);
+  const maxRetries = parseInt(process.env.AUDIT_GATE_MAX_RETRIES || '1', 10);
+  const timeoutMs = parseInt(process.env.AUDIT_GATE_TIMEOUT_MS || '15000', 10);
   let attempt = 0;
   while (true) {
     attempt++;
@@ -194,12 +220,21 @@ function main() {
   const scope = path.basename(path.resolve(dir));
   const now = new Date();
 
+  if (!args.failOnOutage && !args.noCache) {
+    const cached = getCachedOutage();
+    if (cached) {
+      console.warn(`⚠️ npm-audit-gate: scope=${scope} npm registry outage previously detected (${cached.reason}) — passing gate immediately (soft-fail).`);
+      return;
+    }
+  }
+
   const allowlist = loadAllowlist(allowlistFile);
   let audit;
   try {
     audit = runAudit(dir);
   } catch (err) {
     if (err.isRegistryOutage && !args.failOnOutage) {
+      setCachedOutage(err.message);
       console.warn(`⚠️ npm-audit-gate: scope=${scope} npm registry audit endpoint unavailable (${err.message}). Upstream outage detected — passing gate (soft-fail).`);
       return;
     }
@@ -288,10 +323,13 @@ module.exports = {
   parseArgs,
   loadAllowlist,
   isOutageMessage,
+  getCachedOutage,
+  setCachedOutage,
   runAudit,
   advisoryIdsOfVia,
   advisoryIdsOf,
   isAllowlisted,
   main,
 };
+
 
